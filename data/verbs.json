@@ -1,0 +1,40 @@
+{
+  "する": {
+    "class": "Irregular",
+    "meaning": "to do/make",
+
+    "tenses": [
+      {
+        "t": "Present Indicative",
+        "romaji": { "plain": "suru", "polite": "shimasu" }
+      },
+      {
+        "t": "Past Indicative",
+        "romaji": { "plain": "shita", "polite": "shimashita" }
+      },
+      {
+        "t": "Present Progressive",
+        "romaji": { "plain": "", "polite": "shite imasu" }
+      },
+      {
+        "t": "Past Progressive",
+        "romaji": { "plain": "", "polite": "shite imashita" }
+      }
+    ]
+  },
+  "来る": {
+    "class": "Irregular",
+    "meaning": "to come",
+
+    "tenses": [
+      {
+        "t": "Present Indicative",
+        "romaji": { "plain": "kuru", "polite": "kimasu" }
+      },
+      {
+        "t": "Past Indicative",
+        "romaji": { "plain": "kita", "polite": "kimashita" }
+      }
+    ]
+  }
+}

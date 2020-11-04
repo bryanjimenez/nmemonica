@@ -1,0 +1,47 @@
+.home .info {
+  display: flex;
+}
+
+.home .split-image {
+  background-size: cover !important;
+  height: 70vh;
+}
+
+.home .info div {
+  flex-grow: 1;
+  padding: 30px;
+  color: rgb(58, 65, 73);
+
+  flex-basis: 33.3%;
+  min-width: 250px;
+}
+
+.home .info div:nth-child(1) {
+  /* background-color: cadetblue; */
+}
+
+.home .info div:nth-child(2) {
+  /* background-color: mediumblue; */
+}
+
+.home .info div:nth-child(3) {
+  /* background-color: midnightblue; */
+}
+
+.home canvas {
+  width: 100%;
+}
+
+@media screen and (max-width: 800px) {
+  .home .info div {
+    padding: 10px;
+  }
+
+  .home .info {
+    flex-wrap: wrap;
+  }
+
+  .home .split-image {
+    height: 60vh;
+  }
+}
