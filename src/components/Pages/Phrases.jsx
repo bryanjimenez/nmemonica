@@ -2,16 +2,18 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { UnmuteIcon } from "@primer/octicons-react";
 
+import { getPhrases } from "../../actions/phrasesAct";
+
 // import PropTypes from "prop-types";
 
 import "./Verbs.css";
 
-const VerbsMeta = {
-  location: "/",
-  label: "Verbs",
+const PhrasesMeta = {
+  location: "/phrases",
+  label: "Phrases",
 };
 
-class Verbs extends Component {
+class Phrases extends Component {
   constructor(props) {
     super(props);
 
@@ -20,6 +22,8 @@ class Verbs extends Component {
       selectedTense: 0,
       meaningShow: false,
     };
+
+    this.props.getPhrases();
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -30,12 +34,12 @@ class Verbs extends Component {
   componentDidMount() {}
 
   componentDidUpdate() {
-    // console.log("verbs.jsx");
+    // console.log("phrases.jsx");
     // console.log(this.state);
   }
 
   gotoNext() {
-    const l = this.props.verbs.length;
+    const l = this.props.phrases.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
@@ -45,7 +49,7 @@ class Verbs extends Component {
   }
 
   gotoPrev() {
-    const l = this.props.verbs.length;
+    const l = this.props.phrases.length;
     const newSel = Math.abs((this.state.selectedIndex - 1) % l);
     this.setState({
       selectedIndex: newSel,
@@ -65,30 +69,30 @@ class Verbs extends Component {
 
   render() {
     // TODO: cleanup
-    if (this.props.verbs.length < 1) return <div />;
+    if (!this.props.phrases || this.props.phrases.length < 1) return <div />;
 
-    const v = this.props.verbs[this.state.selectedIndex];
-    const leftshift = v.tenses.length % 2 === 0 ? 0 : 1;
-    const splitIdx = Math.trunc(v.tenses.length / 2) + leftshift;
+    const phrase = this.props.phrases[this.state.selectedIndex];
+    // const leftshift = v.tenses.length % 2 === 0 ? 0 : 1;
+    // const splitIdx = Math.trunc(v.tenses.length / 2) + leftshift;
 
-    const t1 = v.tenses.slice(0, splitIdx);
-    const t2 = v.tenses.slice(splitIdx, v.tenses.length);
+    // const t1 = v.tenses.slice(0, splitIdx);
+    // const t2 = v.tenses.slice(splitIdx, v.tenses.length);
 
     return (
-      <div className="verbs" style={{ height: "75%" }}>
+      <div className="phrases" style={{ height: "75%" }}>
         <div
           className="d-flex justify-content-between"
           style={{ height: "100%" }}
         >
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-success"
             onClick={this.gotoPrev}
           >
             prev
           </button>
 
-          <div className="pt-3 d-flex flex-column justify-content-around">
+          {/* <div className="pt-3 d-flex flex-column justify-content-around">
             {t1.map((t, idx) => (
               <div
                 onClick={() => {
@@ -98,23 +102,27 @@ class Verbs extends Component {
                 {t.t}
               </div>
             ))}
-          </div>
+          </div> */}
           <div
             onClick={this.showMeaning}
             className="pt-3 d-flex flex-column justify-content-around"
           >
-            <h1>{v.japanese}</h1>
-            <h2>{v.tenses[this.state.selectedTense].romaji.plain_pos}</h2>
-            {this.state.showMeaning ? <div>{v.english}</div> : <div>{"-"}</div>}
+            <h1>{phrase.japanese}</h1>
+            <h2>{phrase.romaji}</h2>
+            {this.state.showMeaning ? (
+              <div>{phrase.english}</div>
+            ) : (
+              <div>{"-"}</div>
+            )}
             {
-              // TODO: implement sound
+              // TODO: implement pronunciation
             }
             {/* <div className="d-flex">
               <UnmuteIcon size="medium" aria-label="pronunciation" />
             </div> */}
           </div>
 
-          <div className="pt-3 d-flex flex-column justify-content-around">
+          {/* <div className="pt-3 d-flex flex-column justify-content-around">
             {t2.map((t, idx) => (
               <div
                 onClick={() => {
@@ -124,11 +132,11 @@ class Verbs extends Component {
                 {t.t}
               </div>
             ))}
-          </div>
+          </div> */}
 
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-success"
             onClick={this.gotoNext}
           >
             next
@@ -140,12 +148,9 @@ class Verbs extends Component {
 }
 
 const mapStateToProps = (state) => {
-  return { verbs: state.verbs.value };
+  return { phrases: state.phrases.value };
 };
 
-export default connect(
-  mapStateToProps
-  // { getMenu }
-)(Verbs);
+export default connect(mapStateToProps, { getPhrases })(Phrases);
 
-export { VerbsMeta };
+export { PhrasesMeta };

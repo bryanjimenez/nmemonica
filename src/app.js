@@ -6,7 +6,8 @@ import PropTypes from "prop-types";
 import Navigation from "./components/Navigation/Navigation";
 import NotFound from "./components/Navigation/NotFound";
 import Verbs from "./components/Pages/Verbs";
-import {initialize} from "./actions/firebase"
+import { initialize } from "./actions/firebase";
+import Phrases from "./components/Pages/Phrases";
 import { getVerbs } from "./actions/verbsAct";
 
 import "./styles.css";
@@ -29,10 +30,8 @@ class App extends Component {
           {/* <div className="blackbelt h-80" /> */}
           <Switch>
             <Route path="/" exact component={Verbs} />
-            {/* <Route path="/program/" component={Programs} /> */}
-            {/* <Route path="/price/" component={Pricing} /> */}
-            {/* <Route path="/schedule/" component={Schedule} /> */}
             <Route path="/verbs/" component={Verbs} />
+            <Route path="/phrases/" component={Phrases} />
             <Route component={NotFound} />
           </Switch>
         </div>
