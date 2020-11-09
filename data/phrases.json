@@ -1,0 +1,60 @@
+[
+  { "japanese": "", "romaji": "Arigato gozaimasu", "english": "Thank you" },
+  { "japanese": "", "romaji": "Itashimashite", "english": "You’re welcome" },
+  { "japanese": "", "romaji": "youkoso", "english": "Welcome" },
+  { "japanese": "", "romaji": "kudasai", "english": "(action) Please" },
+  {
+    "japanese": "",
+    "romaji": "Onegai shimasu",
+    "english": "(thing/person) Please"
+  },
+  { "japanese": "", "romaji": "sumimasen", "english": "Excuse me" },
+  { "japanese": "", "romaji": "Gomen nasai", "english": "I’m sorry" },
+  {
+    "japanese": "",
+    "romaji": "Yurushite kudasai",
+    "english": "Please forgive me"
+  },
+  { "japanese": "", "romaji": "hajimemashite", "english": "Nice to meet you" },
+  { "japanese": "", "romaji": "o-genki desu ka?", "english": "How are you?" },
+  { "japanese": "", "romaji": "Ki ni shinai de", "english": "Don’t worry" },
+  { "japanese": "", "romaji": "douzo", "english": "Here you go" },
+  { "japanese": "", "romaji": "honto", "english": "Really?" },
+  { "japanese": "", "romaji": "wakarimashita", "english": "I understood" },
+  { "japanese": "", "romaji": "wakarimasen", "english": "I don’t understand" },
+  {
+    "japanese": "",
+    "romaji": "Mo ichido onegaishimasu",
+    "english": "Once again please"
+  },
+  {
+    "japanese": "",
+    "romaji": "O-namae wa nan desu ka",
+    "english": "What is your name?"
+  },
+  {
+    "japanese": "",
+    "romaji": "O-ikutsu desu ka",
+    "english": "How old are you?"
+  },
+  {
+    "japanese": "",
+    "romaji": "O-susume wa nan desu ka",
+    "english": "What do you recommend?"
+  },
+  {
+    "japanese": "",
+    "romaji": "Kono ryouri o onegaishimasu",
+    "english": "This dish please"
+  },
+  {
+    "japanese": "",
+    "romaji": "Kore wa ikura desu ka",
+    "english": "How much is this?"
+  },
+  { "japanese": "", "romaji": "subarashi", "english": "awesome/great" },
+  { "japanese": "", "romaji": "konnichiwa", "english": "Hello" },
+  { "japanese": "", "romaji": "ohayo", "english": "Good morning/day" },
+  { "japanese": "", "romaji": "konbanwa", "english": "Good evening" },
+  { "japanese": "", "romaji": "oyasuminasai", "english": "Good night" }
+]

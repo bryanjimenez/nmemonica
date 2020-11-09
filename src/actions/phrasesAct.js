@@ -1,19 +1,18 @@
-import data from "../../data/verbs.json";
+import phrases from "../../data/phrases.json";
 import firebase from "firebase/app";
 import "firebase/database";
-import { firebaseConfig } from "../../environment.development";
-// TODO: clean
-export const GET_VERBS = "get_verbs";
 
-export function getVerbs() {
+export const GET_PHRASES = "get_phrases";
+
+export function getPhrases() {
   return (dispatch) => {
     firebase
       .database()
-      .ref("lambda/verbs")
+      .ref("lambda/phrases")
       .once("value")
       .then((snapshot) => {
         dispatch({
-          type: GET_VERBS,
+          type: GET_PHRASES,
           value: snapshot.val(),
         });
       })
@@ -21,8 +20,8 @@ export function getVerbs() {
         // pull static data here
         console.warn("Remote pull failed. Using local data.");
         dispatch({
-          type: GET_VERBS,
-          value: data,
+          type: GET_PHRASES,
+          value: phrases,
         });
       });
   };
