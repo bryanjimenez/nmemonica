@@ -6,6 +6,7 @@ import PropTypes from "prop-types";
 import Navigation from "./components/Navigation/Navigation";
 import NotFound from "./components/Navigation/NotFound";
 import Verbs from "./components/Pages/Verbs";
+import {initialize} from "./actions/firebase"
 import { getVerbs } from "./actions/verbsAct";
 
 import "./styles.css";
@@ -14,6 +15,7 @@ class App extends Component {
   constructor(props) {
     super(props);
 
+    this.props.initialize();
     this.props.getVerbs();
     this.state = {};
   }
@@ -44,4 +46,4 @@ App.propTypes = {
   getVerbs: PropTypes.func,
 };
 
-export default connect(null, { getVerbs })(App);
+export default connect(null, { initialize, getVerbs })(App);

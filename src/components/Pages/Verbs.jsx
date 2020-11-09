@@ -64,6 +64,9 @@ class Verbs extends Component {
   }
 
   render() {
+    // TODO: cleanup
+    if (this.props.verbs.length < 1) return <div />;
+
     const v = this.props.verbs[this.state.selectedIndex];
     const leftshift = v.tenses.length % 2 === 0 ? 0 : 1;
     const splitIdx = Math.trunc(v.tenses.length / 2) + leftshift;
@@ -100,9 +103,9 @@ class Verbs extends Component {
             onClick={this.showMeaning}
             className="pt-3 d-flex flex-column justify-content-around"
           >
-            <h1>{v.auid}</h1>
-            <h2>{v.tenses[this.state.selectedTense].romaji.plain}</h2>
-            {this.state.showMeaning ? <div>{v.meaning}</div> : <div>{"-"}</div>}
+            <h1>{v.japanese}</h1>
+            <h2>{v.tenses[this.state.selectedTense].romaji.plain_pos}</h2>
+            {this.state.showMeaning ? <div>{v.english}</div> : <div>{"-"}</div>}
             <div className="d-flex">
               <UnmuteIcon size="medium" aria-label="pronunciation" />
             </div>
