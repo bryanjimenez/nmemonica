@@ -15,19 +15,39 @@ class Verbs extends Component {
   constructor(props) {
     super(props);
 
+    const query = this.props.location.search;
+    // const toggle = new URLSearchParams(useLocation().search).toggle;
+    const toggle = query
+      ? query.split("?")[1].split("toggle=")[1].split("&")[0]
+      : "english";
+
     this.state = {
       selectedIndex: 0,
       selectedTense: 0,
-      meaningShow: false,
+      toggle,
+      showToggle: false,
+      showMeaning: false,
+      showRomaji: true,
     };
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
-    this.showMeaning = this.showMeaning.bind(this);
+    this.toggle = this.toggle.bind(this);
     this.setTense = this.setTense.bind(this);
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    let hint = {};
+    if (this.state.toggle === "english") {
+      hint = { showMeaning: false, showRomaji: true };
+    } else if (this.state.toggle === "romaji") {
+      hint = { showRomaji: false, showMeaning: true };
+    } else {
+      hint = { showMeaning: false, showRomaji: true };
+    }
+
+    this.setState(hint);
+  }
 
   componentDidUpdate() {
     // console.log("verbs.jsx");
@@ -39,24 +59,39 @@ class Verbs extends Component {
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: false,
+      showMeaning: this.state.toggle === "romaji",
+      showRomaji: this.state.toggle === "english",
       selectedTense: 0,
     });
   }
 
   gotoPrev() {
     const l = this.props.verbs.length;
-    const newSel = Math.abs((this.state.selectedIndex - 1) % l);
+    const i = this.state.selectedIndex - 1;
+    const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: false,
+      showMeaning: this.state.toggle === "romaji",
+      showRomaji: this.state.toggle === "english",
       selectedTense: 0,
     });
   }
 
-  showMeaning() {
-    const newVal = !this.state.showMeaning;
-    this.setState({ showMeaning: newVal });
+  toggle() {
+    let hint = {};
+    if (this.state.toggle === "english") {
+      hint = {
+        showMeaning: !this.state.showToggle,
+        showToggle: !this.state.showToggle,
+      };
+    } else if (this.state.toggle === "romaji") {
+      hint = {
+        showRomaji: !this.state.showToggle,
+        showToggle: !this.state.showToggle,
+      };
+    }
+
+    this.setState(hint);
   }
 
   setTense(index) {
@@ -100,12 +135,16 @@ class Verbs extends Component {
             ))}
           </div>
           <div
-            onClick={this.showMeaning}
-            className="pt-3 d-flex flex-column justify-content-around"
+            onClick={this.toggle}
+            className="pt-3 d-flex flex-column justify-content-around text-center"
           >
             <h1>{v.japanese}</h1>
-            <h2>{v.tenses[this.state.selectedTense].romaji.plain_pos}</h2>
-            {this.state.showMeaning ? <div>{v.english}</div> : <div>{"-"}</div>}
+            <h2>
+              {this.state.showRomaji
+                ? v.tenses[this.state.selectedTense].romaji.plain_pos
+                : "-"}
+            </h2>
+            <div>{this.state.showMeaning ? v.english : "-"}</div>
             {
               // TODO: implement sound
             }

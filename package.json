@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "node ./node_modules/webpack/bin/webpack.js --mode production",
-    "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica.github.io.git -b master",
+    "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica-demo -b main",
     "start": "webpack serve",
     "pretty": "./node_modules/.bin/prettier --write ./src/**/**/*.{js,jsx,css} ./data",
     "lint": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx}"

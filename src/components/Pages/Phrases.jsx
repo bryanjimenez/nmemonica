@@ -17,21 +17,40 @@ class Phrases extends Component {
   constructor(props) {
     super(props);
 
+    const query = this.props.location.search;
+    // const toggle = new URLSearchParams(useLocation().search).toggle;
+    const toggle = query
+      ? query.split("?")[1].split("toggle=")[1].split("&")[0]
+      : "english";
+
     this.state = {
       selectedIndex: 0,
       selectedTense: 0,
-      meaningShow: false,
+      toggle,
+      showToggle: false,
+      showMeaning: false,
+      showRomaji: true,
     };
 
     this.props.getPhrases();
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
-    this.showMeaning = this.showMeaning.bind(this);
-    this.setTense = this.setTense.bind(this);
+    this.toggleHint = this.toggleHint.bind(this);
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    let hint = {};
+    if (this.state.toggle === "english") {
+      hint = { showMeaning: false, showRomaji: true };
+    } else if (this.state.toggle === "romaji") {
+      hint = { showRomaji: false, showMeaning: true };
+    } else {
+      hint = { showMeaning: false, showRomaji: true };
+    }
+
+    this.setState(hint);
+  }
 
   componentDidUpdate() {
     // console.log("phrases.jsx");
@@ -43,28 +62,39 @@ class Phrases extends Component {
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: false,
+      showMeaning: this.state.toggle === "romaji",
+      showRomaji: this.state.toggle === "english",
       selectedTense: 0,
     });
   }
 
   gotoPrev() {
     const l = this.props.phrases.length;
-    const newSel = Math.abs((this.state.selectedIndex - 1) % l);
+    const i = this.state.selectedIndex - 1;
+    const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: false,
+      showMeaning: this.state.toggle === "romaji",
+      showRomaji: this.state.toggle === "english",
       selectedTense: 0,
     });
   }
 
-  showMeaning() {
-    const newVal = !this.state.showMeaning;
-    this.setState({ showMeaning: newVal });
-  }
+  toggleHint() {
+    let hint = {};
+    if (this.state.toggle === "english") {
+      hint = {
+        showMeaning: !this.state.showToggle,
+        showToggle: !this.state.showToggle,
+      };
+    } else if (this.state.toggle === "romaji") {
+      hint = {
+        showRomaji: !this.state.showToggle,
+        showToggle: !this.state.showToggle,
+      };
+    }
 
-  setTense(index) {
-    this.setState({ selectedTense: index });
+    this.setState(hint);
   }
 
   render() {
@@ -72,11 +102,6 @@ class Phrases extends Component {
     if (!this.props.phrases || this.props.phrases.length < 1) return <div />;
 
     const phrase = this.props.phrases[this.state.selectedIndex];
-    // const leftshift = v.tenses.length % 2 === 0 ? 0 : 1;
-    // const splitIdx = Math.trunc(v.tenses.length / 2) + leftshift;
-
-    // const t1 = v.tenses.slice(0, splitIdx);
-    // const t2 = v.tenses.slice(splitIdx, v.tenses.length);
 
     return (
       <div className="phrases" style={{ height: "75%" }}>
@@ -91,29 +116,13 @@ class Phrases extends Component {
           >
             prev
           </button>
-
-          {/* <div className="pt-3 d-flex flex-column justify-content-around">
-            {t1.map((t, idx) => (
-              <div
-                onClick={() => {
-                  this.setTense(idx);
-                }}
-              >
-                {t.t}
-              </div>
-            ))}
-          </div> */}
           <div
-            onClick={this.showMeaning}
-            className="pt-3 d-flex flex-column justify-content-around"
+            onClick={this.toggleHint}
+            className="pt-3 d-flex flex-column justify-content-around text-center"
           >
             <h1>{phrase.japanese}</h1>
-            <h2>{phrase.romaji}</h2>
-            {this.state.showMeaning ? (
-              <div>{phrase.english}</div>
-            ) : (
-              <div>{"-"}</div>
-            )}
+            <h2>{this.state.showRomaji ? phrase.romaji : ""}</h2>
+            <div>{this.state.showMeaning ? phrase.english : "-"}</div>
             {
               // TODO: implement pronunciation
             }
@@ -121,19 +130,6 @@ class Phrases extends Component {
               <UnmuteIcon size="medium" aria-label="pronunciation" />
             </div> */}
           </div>
-
-          {/* <div className="pt-3 d-flex flex-column justify-content-around">
-            {t2.map((t, idx) => (
-              <div
-                onClick={() => {
-                  this.setTense(splitIdx + idx);
-                }}
-              >
-                {t.t}
-              </div>
-            ))}
-          </div> */}
-
           <button
             type="button"
             className="btn btn-success"
