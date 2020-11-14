@@ -1,0 +1,80 @@
+[
+  {
+    "opposites": [
+      { "japanese": "熱い", "romaji": "atsui", "english": "hot" },
+      { "japanese": "さむい", "romaji": "samui", "english": "cold" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "ゆっくり", "romaji": "yukkuri", "english": "slowly" },
+      { "japanese": "速い", "romaji": "hayai", "english": "fast" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "近い", "romaji": "chikai", "english": "near" },
+      { "japanese": "遠い", "romaji": "toui", "english": "far" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "簡単", "romaji": "kantan", "english": "easy" },
+      { "japanese": "難しい", "romaji": "muzikashi", "english": "difficult" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "きれい", "romaji": "kirei", "english": "clean" },
+      { "japanese": "汚い", "romaji": "kitanai", "english": "dirty" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "きれい", "romaji": "kirei", "english": "beautiful" },
+      { "japanese": "醜い", "romaji": "minikui", "english": "ugly" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "低い", "romaji": "hikui", "english": "low" },
+      { "japanese": "高い", "romaji": "takai", "english": "high/tall" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "嬉しい", "romaji": "ureshii", "english": "happy" },
+      { "japanese": "悲しい", "romaji": "kanashii", "english": "sad" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "強い", "romaji": "tsuyoi", "english": "strong" },
+      { "japanese": "弱い", "romaji": "yowai", "english": "weak" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "はい", "romaji": "hai", "english": "yes" },
+      { "japanese": "いいえ", "romaji": "iie", "english": "no" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "こんにちわ", "romaji": "konnichiwa", "english": "hello" },
+      { "japanese": "さよおなら", "romaji": "sayoonara", "english": "good bye" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "いい", "romaji": "ii", "english": "good" },
+      { "japanese": "悪い", "romaji": "warui", "english": "bad" }
+    ]
+  },
+  {
+    "opposites": [
+      { "japanese": "大きい", "romaji": "oukii", "english": "large" },
+      { "japanese": "小さい", "romaji": "chiisai", "english": "small" }
+    ]
+  }
+]

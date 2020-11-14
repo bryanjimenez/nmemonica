@@ -5,12 +5,13 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFont } from "@fortawesome/free-solid-svg-icons";
+import { faFont, faYinYang } from "@fortawesome/free-solid-svg-icons";
 
 import { AboutMeta } from "../Pages/About";
 // import { NewsMeta } from "../News/News";
 import { VerbsMeta } from "../Pages/Verbs";
 import { PhrasesMeta } from "../Pages/Phrases";
+import { OppositesMeta } from "../Pages/Opposites";
 import "./Navigation.css";
 
 class Navigation extends Component {
@@ -65,6 +66,14 @@ class Navigation extends Component {
                       <div>
                         <FontAwesomeIcon icon={faFont} size="2x" />
                         <div className="nav-caption">{PhrasesMeta.label}</div>
+                      </div>
+                    </Link>
+                  </div>
+                  <div className="shortcut-item">
+                    <Link to={OppositesMeta.location}>
+                      <div>
+                        <FontAwesomeIcon icon={faYinYang} size="2x" />
+                        <div className="nav-caption">{OppositesMeta.label}</div>
                       </div>
                     </Link>
                   </div>
