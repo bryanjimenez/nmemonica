@@ -5,15 +5,12 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPhone,
-  faMapMarkerAlt,
-  faMap,
-} from "@fortawesome/free-solid-svg-icons";
+import { faFont } from "@fortawesome/free-solid-svg-icons";
 
 import { AboutMeta } from "../Pages/About";
 // import { NewsMeta } from "../News/News";
 import { VerbsMeta } from "../Pages/Verbs";
+import { PhrasesMeta } from "../Pages/Phrases";
 import "./Navigation.css";
 
 class Navigation extends Component {
@@ -23,7 +20,7 @@ class Navigation extends Component {
         <nav className="navbar navbar-expand-lg navbar-dark">
           <Link className="navbar-brand" to="/">
             <span>Nmemonica</span>
-            <span>Language Flash Cards</span>
+            {/* <span>Language Flash Cards</span> */}
           </Link>
           <div>
             <button
@@ -56,30 +53,18 @@ class Navigation extends Component {
 
                 <div className="shortcuts">
                   <div className="shortcut-item">
-                    <a href={"tel: " + this.props.phone}>
+                    <Link to={VerbsMeta.location}>
                       <div>
-                        <FontAwesomeIcon icon={faPhone} size="2x" />
-                        <div className="nav-caption">Phone</div>
+                        <FontAwesomeIcon icon={faFont} size="2x" />
+                        <div className="nav-caption">{VerbsMeta.label}</div>
                       </div>
-                    </a>
+                    </Link>
                   </div>
                   <div className="shortcut-item">
-                    <a
-                      href={this.props.gmaps}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <Link to={PhrasesMeta.location}>
                       <div>
-                        <FontAwesomeIcon icon={faMapMarkerAlt} size="2x" />
-                        <div className="nav-caption">Directions</div>
-                      </div>
-                    </a>
-                  </div>
-                  <div className="shortcut-item">
-                    <Link to="/menu/">
-                      <div>
-                        <FontAwesomeIcon icon={faMap} size="2x" />
-                        <div className="nav-caption">Menu</div>
+                        <FontAwesomeIcon icon={faFont} size="2x" />
+                        <div className="nav-caption">{PhrasesMeta.label}</div>
                       </div>
                     </Link>
                   </div>
@@ -94,19 +79,8 @@ class Navigation extends Component {
                 </Link>
               </li>
               <li className="nav-item  d-none d-lg-block">
-                <Link className="nav-link" to="/menu/">
-                  Menu
-                </Link>
-              </li>
-              <li className="nav-item">
-                {/* <Link className="nav-link" to={AboutMeta.location}> */}
-                <Link className="nav-link" to="/menu/">
-                  menu
-                </Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/menu/">
-                  Menu
+                <Link className="nav-link" to={PhrasesMeta.location}>
+                  {PhrasesMeta.label}
                 </Link>
               </li>
             </ul>
