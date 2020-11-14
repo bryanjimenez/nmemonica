@@ -25,7 +25,6 @@ class Phrases extends Component {
 
     this.state = {
       selectedIndex: 0,
-      selectedTense: 0,
       toggle,
       showToggle: false,
       showMeaning: false,
@@ -64,7 +63,6 @@ class Phrases extends Component {
       selectedIndex: newSel,
       showMeaning: this.state.toggle === "romaji",
       showRomaji: this.state.toggle === "english",
-      selectedTense: 0,
     });
   }
 
@@ -76,7 +74,6 @@ class Phrases extends Component {
       selectedIndex: newSel,
       showMeaning: this.state.toggle === "romaji",
       showRomaji: this.state.toggle === "english",
-      selectedTense: 0,
     });
   }
 

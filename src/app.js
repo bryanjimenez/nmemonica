@@ -6,8 +6,9 @@ import PropTypes from "prop-types";
 import Navigation from "./components/Navigation/Navigation";
 import NotFound from "./components/Navigation/NotFound";
 import Verbs from "./components/Pages/Verbs";
-import { initialize } from "./actions/firebase";
 import Phrases from "./components/Pages/Phrases";
+import Opposites from "./components/Pages/Opposites";
+import { initialize } from "./actions/firebase";
 import { getVerbs } from "./actions/verbsAct";
 
 import "./styles.css";
@@ -32,6 +33,7 @@ class App extends Component {
             <Route path="/" exact component={Verbs} />
             <Route path="/verbs/" component={Verbs} />
             <Route path="/phrases/" component={Phrases} />
+            <Route path="/opposites/" component={Opposites} />
             <Route component={NotFound} />
           </Switch>
         </div>
