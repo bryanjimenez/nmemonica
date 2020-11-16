@@ -7,11 +7,10 @@ import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFont, faYinYang } from "@fortawesome/free-solid-svg-icons";
 
-import { AboutMeta } from "../Pages/About";
-// import { NewsMeta } from "../News/News";
 import { VerbsMeta } from "../Pages/Verbs";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { OppositesMeta } from "../Pages/Opposites";
+import { HiraganaGameMeta } from "../Pages/HiraganaGame";
 import "./Navigation.css";
 
 class Navigation extends Component {
@@ -52,7 +51,7 @@ class Navigation extends Component {
               <li className="nav-item d-lg-none">
                 {/* <div className="dropdown-divider" /> */}
 
-                <div className="shortcuts">
+                <div className="shortcuts mt-2">
                   <div className="shortcut-item">
                     <Link to={VerbsMeta.location}>
                       <div>
@@ -77,12 +76,22 @@ class Navigation extends Component {
                       </div>
                     </Link>
                   </div>
+                  <div className="shortcut-item">
+                    <Link to={HiraganaGameMeta.location}>
+                      <div>
+                        <div className="not-a-real-icon">あ</div>
+                        <div className="nav-caption">
+                          {HiraganaGameMeta.label}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
                 </div>
 
-                <div className="dropdown-divider" />
+                {/* <div className="dropdown-divider" /> */}
               </li>
 
-              <li className="nav-item">
+              <li className="nav-item d-none d-lg-block">
                 <Link className="nav-link" to={VerbsMeta.location}>
                   {VerbsMeta.label}
                 </Link>

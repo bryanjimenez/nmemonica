@@ -1,13 +1,14 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { UnmuteIcon } from "@primer/octicons-react";
+import { getVerbs } from "../../actions/verbsAct";
 
 // import PropTypes from "prop-types";
 
 import "./Verbs.css";
 
 const VerbsMeta = {
-  location: "/",
+  location: "/verbs/",
   label: "Verbs",
 };
 
@@ -29,6 +30,8 @@ class Verbs extends Component {
       showMeaning: false,
       showRomaji: true,
     };
+
+    this.props.getVerbs();
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -182,9 +185,6 @@ const mapStateToProps = (state) => {
   return { verbs: state.verbs.value };
 };
 
-export default connect(
-  mapStateToProps
-  // { getMenu }
-)(Verbs);
+export default connect(mapStateToProps, { getVerbs })(Verbs);
 
 export { VerbsMeta };

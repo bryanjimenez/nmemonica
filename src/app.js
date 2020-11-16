@@ -5,11 +5,13 @@ import PropTypes from "prop-types";
 
 import Navigation from "./components/Navigation/Navigation";
 import NotFound from "./components/Navigation/NotFound";
-import Verbs from "./components/Pages/Verbs";
-import Phrases from "./components/Pages/Phrases";
-import Opposites from "./components/Pages/Opposites";
+import Verbs, { VerbsMeta } from "./components/Pages/Verbs";
+import Phrases, { PhrasesMeta } from "./components/Pages/Phrases";
+import Opposites, { OppositesMeta } from "./components/Pages/Opposites";
+import HiraganaGame, {
+  HiraganaGameMeta,
+} from "./components/Pages/HiraganaGame";
 import { initialize } from "./actions/firebase";
-import { getVerbs } from "./actions/verbsAct";
 
 import "./styles.css";
 
@@ -18,7 +20,6 @@ class App extends Component {
     super(props);
 
     this.props.initialize();
-    this.props.getVerbs();
     this.state = {};
   }
 
@@ -26,25 +27,23 @@ class App extends Component {
     return (
       <Router basename="/">
         <div id="page-content">
-          {/* <Specials /> */}
           <Navigation />
-          {/* <div className="blackbelt h-80" /> */}
           <Switch>
             <Route path="/" exact component={Verbs} />
-            <Route path="/verbs/" component={Verbs} />
-            <Route path="/phrases/" component={Phrases} />
-            <Route path="/opposites/" component={Opposites} />
+            <Route path={VerbsMeta.location} component={Verbs} />
+            <Route path={PhrasesMeta.location} component={Phrases} />
+            <Route path={OppositesMeta.location} component={Opposites} />
+            <Route path={HiraganaGameMeta.location} component={HiraganaGame} />
             <Route component={NotFound} />
           </Switch>
         </div>
-        {/* <Footer /> */}
       </Router>
     );
   }
 }
 
 App.propTypes = {
-  getVerbs: PropTypes.func,
+  initialize: PropTypes.func,
 };
 
-export default connect(null, { initialize, getVerbs })(App);
+export default connect(null, { initialize })(App);

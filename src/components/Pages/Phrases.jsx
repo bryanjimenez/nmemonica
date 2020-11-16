@@ -9,7 +9,7 @@ import { getPhrases } from "../../actions/phrasesAct";
 import "./Verbs.css";
 
 const PhrasesMeta = {
-  location: "/phrases",
+  location: "/phrases/",
   label: "Phrases",
 };
 
