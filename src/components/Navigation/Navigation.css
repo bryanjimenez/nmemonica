@@ -24,7 +24,9 @@
 }
 
 .navigation > nav {
-  background-color: #404040;
+  height: 20px;
+  margin-top: 5px;
+  margin-bottom: 20px;
 }
 
 .navItems {
@@ -87,11 +89,12 @@
   #navbarSupportedContent {
     position: absolute;
     width: 100%;
-    top: 70px;
+    top: -5px;
     left: 0;
     color: white;
     z-index: 999;
     background: rgba(0, 0, 0, 0.7);
     padding: 0 5px;
+    height:100vh;
   }
 }
