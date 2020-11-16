@@ -17,9 +17,9 @@ class Navigation extends Component {
   render() {
     return (
       <div className="navigation">
-        <nav className="navbar navbar-expand-lg navbar-dark">
+        <nav className="navbar navbar-expand-lg">
           <Link className="navbar-brand" to="/">
-            <span>Nmemonica</span>
+            {/* <span>Nmemonica</span> */}
             {/* <span>Language Flash Cards</span> */}
           </Link>
           <div>
