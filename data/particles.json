@@ -1,0 +1,31 @@
+[
+  { "sentence": ["Okinawa", "atsui"], "particles": ["wa"], "japanese": "" },
+  { "sentence": ["Petto", "imasu"], "particles": ["ga"], "japanese": "" },
+  { "sentence": ["Sushi", "hoshii desu"], "particles": ["ga"], "japanese": "" },
+  { "sentence": ["Mizu", "nomitai desu"], "particles": ["ga"], "japanese": "" },
+  {
+    "sentence": ["Watashi", "tomodachi", "hana", "ageta"],
+    "particles": ["wa", "ni", "o"],
+    "japanese": ""
+  },
+  {
+    "sentence": ["Tomodachi", "haha", "hon", "kureta"],
+    "particles": ["wa", "ni", "o"],
+    "japanese": ""
+  },
+  {
+    "sentence": ["Tomodachi", "watashi", "hana", "moratta"],
+    "particles": ["wa", "ni", "o"],
+    "japanese": ""
+  },
+  {
+    "sentence": ["Kanojo", "otokonoko", "hanashimasu"],
+    "particles": ["ga", "e"],
+    "japanese": ""
+  },
+  {
+    "sentence": ["Supamaketto", "pan", "kaimasu"],
+    "particles": ["de"],
+    "japanese": ""
+  }
+]

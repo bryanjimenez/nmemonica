@@ -1,16 +1,16 @@
 import React, { Component } from "react";
-import PropTypes from "prop-types";
 import { connect } from "react-redux";
+import PropTypes from "prop-types";
 
 import { Link } from "react-router-dom";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFont, faYinYang } from "@fortawesome/free-solid-svg-icons";
-
+import { faAtom, faFont, faYinYang } from "@fortawesome/free-solid-svg-icons";
 import { VerbsMeta } from "../Pages/Verbs";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { OppositesMeta } from "../Pages/Opposites";
 import { HiraganaGameMeta } from "../Pages/HiraganaGame";
+import { ParticlesGameMeta } from "../Pages/ParticlesGame";
 import "./Navigation.css";
 
 class Navigation extends Component {
@@ -82,6 +82,16 @@ class Navigation extends Component {
                         <div className="not-a-real-icon">あ</div>
                         <div className="nav-caption">
                           {HiraganaGameMeta.label}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                  <div className="shortcut-item">
+                    <Link to={ParticlesGameMeta.location}>
+                      <div>
+                        <FontAwesomeIcon icon={faAtom} size="2x" />
+                        <div className="nav-caption">
+                          {ParticlesGameMeta.label}
                         </div>
                       </div>
                     </Link>
