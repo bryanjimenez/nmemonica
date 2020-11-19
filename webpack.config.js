@@ -4,8 +4,7 @@ const webpack = require("webpack");
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const ManifestPlugin = require("webpack-manifest-plugin");
-const ignoredFiles = require('react-dev-utils/ignoredFiles');
-
+const ignoredFiles = require("react-dev-utils/ignoredFiles");
 
 const webpackDevClientEntry = require.resolve(
   "react-dev-utils/webpackHotDevClient"
@@ -145,11 +144,9 @@ module.exports = function (webpackEnv) {
       // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
       // You can remove this if you don't use Moment.js:
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-
     ].filter(Boolean),
 
     performance: false,
-
 
     resolve: {
       extensions: [".js", ".jsx"],
@@ -190,17 +187,17 @@ module.exports = function (webpackEnv) {
       host: "localhost", // Change to '0.0.0.0' for external facing server
       disableHostCheck: true,
       // historyApiFallback: true,
-      clientLogLevel: 'none',
+      clientLogLevel: "none",
       // Prevent a WS client from getting injected as we're already including
       // `webpackHotDevClient`.
       injectClient: false,
-    // Reportedly, this avoids CPU overload on some systems.
-    // https://github.com/facebook/create-react-app/issues/293
-    // src/node_modules is not ignored to support absolute imports
-    // https://github.com/facebook/create-react-app/issues/1065
-    watchOptions: {
-      ignored: ignoredFiles(appSrc),
-    },
+      // Reportedly, this avoids CPU overload on some systems.
+      // https://github.com/facebook/create-react-app/issues/293
+      // src/node_modules is not ignored to support absolute imports
+      // https://github.com/facebook/create-react-app/issues/1065
+      watchOptions: {
+        ignored: ignoredFiles(appSrc),
+      },
     },
   };
 };

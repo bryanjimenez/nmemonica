@@ -4,6 +4,7 @@ import "firebase/database";
 
 export const GET_OPPOSITES = "get_opposites";
 
+// TODO: use firebase for opposites
 export function getOpposites() {
   return (dispatch) => {
     // firebase

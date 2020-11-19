@@ -9,7 +9,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import "./CustomBtn.css";
 
 const OppositesMeta = {
-  location: "/opposites",
+  location: "/opposites/",
   label: "Opposites",
 };
 
@@ -44,7 +44,7 @@ class Opposites extends Component {
   }
 
   componentDidMount() {
-    console.log("mount");
+    // console.log("mount");
     let hint = {};
     if (this.state.toggle === "english") {
       hint = { showMeaning: false, showRomaji: true };
