@@ -25,7 +25,7 @@
   },
   {
     "sentence": ["Supamaketto", "pan", "kaimasu"],
-    "particles": ["de"],
+    "particles": ["de", "o"],
     "japanese": ""
   }
 ]
