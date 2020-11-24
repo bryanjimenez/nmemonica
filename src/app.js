@@ -11,6 +11,9 @@ import Opposites, { OppositesMeta } from "./components/Pages/Opposites";
 import HiraganaGame, {
   HiraganaGameMeta,
 } from "./components/Pages/HiraganaGame";
+import ParticlesGame, {
+  ParticlesGameMeta,
+} from "./components/Pages/ParticlesGame";
 import { initialize } from "./actions/firebase";
 
 import "./styles.css";
@@ -34,6 +37,10 @@ class App extends Component {
             <Route path={PhrasesMeta.location} component={Phrases} />
             <Route path={OppositesMeta.location} component={Opposites} />
             <Route path={HiraganaGameMeta.location} component={HiraganaGame} />
+            <Route
+              path={ParticlesGameMeta.location}
+              component={ParticlesGame}
+            />
             <Route component={NotFound} />
           </Switch>
         </div>
