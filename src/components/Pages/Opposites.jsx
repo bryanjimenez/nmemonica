@@ -92,18 +92,31 @@ class Opposites extends Component {
       ].opposites;
 
       const choices = [];
+      const antiHomophones = [answer.romaji, question.romaji];
       choices.push(answer);
 
-      // TODO: cleanup, do better randoms
-      for (let i = 0; i < 3; i++) {
-        const min = 0;
+      while (choices.length < 4) {
         const max = Math.floor(this.props.opposites.length);
-        const idx = Math.floor(Math.random() * (max - min) + min);
+        const idx = Math.floor(Math.random() * max);
 
         const [wrongAnswer1, wrongAnswer2] = this.props.opposites[
           idx
         ].opposites;
-        choices.push(wrongAnswer1);
+
+        if (
+          antiHomophones.indexOf(wrongAnswer1.romaji) === -1 &&
+          antiHomophones.indexOf(wrongAnswer2.romaji) === -1
+        ) {
+          const headsOrTails = Math.floor(Math.random() * 2);
+
+          if (headsOrTails === 0) {
+            choices.push(wrongAnswer1);
+            antiHomophones.push(wrongAnswer1.romaji);
+          } else {
+            choices.push(wrongAnswer2);
+            antiHomophones.push(wrongAnswer2.romaji);
+          }
+        }
       }
 
       shuffleArray(choices);
