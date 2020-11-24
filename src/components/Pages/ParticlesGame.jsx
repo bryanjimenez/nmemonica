@@ -27,6 +27,7 @@ class ParticlesGame extends Component {
       question: false,
       answer: false,
       choices: [],
+      english: false,
       gameOrder: false,
     };
 
@@ -84,7 +85,8 @@ class ParticlesGame extends Component {
     if (this.props.particles.length > 0) {
       const { sentence, particles } = this.props.particles[
         this.state.selectedIndex
-      ];
+      ].romaji;
+      const english  = this.props.particles[this.state.selectedIndex].english || '';
       const max = Math.floor(particles.length);
       const idx = Math.floor(Math.random() * max);
 
@@ -103,7 +105,7 @@ class ParticlesGame extends Component {
       const japanseParticles = [
         "は",
         "が",
-        "お/を",
+        "を",
         "に",
         "で",
         "へ",
@@ -138,7 +140,7 @@ class ParticlesGame extends Component {
       });
       shuffleArray(choices);
 
-      this.setState({ question, answer, choices });
+      this.setState({ question, answer, choices , english});
     }
   }
 
@@ -201,6 +203,7 @@ class ParticlesGame extends Component {
     const question = this.state.question;
     const answer = this.state.answer;
     const choices = this.state.choices;
+    const english = this.state.english;
 
     // console.log(question);
     // console.log(answer);
@@ -224,8 +227,8 @@ class ParticlesGame extends Component {
             className="pt-3 d-flex flex-column justify-content-around text-center w-50"
           >
             <h1>{question}</h1>
-            {/* <h2>{this.state.showRomaji ? question.romaji : ""}</h2>
-            <div>{this.state.showMeaning ? question.english : "-"}</div> */}
+            {/* <h2>{this.state.showRomaji ? question.romaji : ""}</h2> */}
+            <div>{this.state.showMeaning ? english : "."}</div>
             {
               // TODO: implement pronunciation
             }
