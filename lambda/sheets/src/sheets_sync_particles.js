@@ -74,18 +74,20 @@ export async function sheets_sync_particles(req, res) {
       });
     });
 
-    const japanseParticles = [
-      "は",
-      "が",
-      "を",
-      "に",
-      "で",
-      "へ",
-      "の",
-      "と",
-      "も",
-    ];
-    const allChoices = ["wa", "ga", "o", "ni", "de", "e", "no", "to", "mo"];
+    const suffixes = sheetData.reduce((acc2, el, i) => {
+      if (i > 0) {
+        if(el[0] && el[0] !== "" && el[1] && el[1] !== ""){
+          acc2.push({japanese:el[0],romaji:el[1]});
+        }
+      }
+      return acc2;
+    },[]);
+
+    const [japanseParticles,romajiParticles] = suffixes.reduce((acc,curr)=>{
+      acc[0].push(curr.japanese);
+      acc[1].push(curr.romaji);
+      return acc;
+    },[[],[]]);
 
     const particles = sheetData.reduce((acc2, el, i) => {
       if (i > 0) {
@@ -94,7 +96,7 @@ export async function sheets_sync_particles(req, res) {
         const jpSentences = el[5] ? el[5].split("\n") : [];
 
         const obj = sentences.map((s, idx) => {
-          const romajiObj = parser(s,allChoices);
+          const romajiObj = parser(s,romajiParticles);
           // const jpObj = parser(jpSentences,japanseParticles);
 
           const o = {romaji:romajiObj};
@@ -110,6 +112,7 @@ export async function sheets_sync_particles(req, res) {
     }, []);
 
     admin.database().ref("lambda/particles").set(particles);
+    admin.database().ref("lambda/suffixes").set(suffixes);
 
     return res.status(200).json({ particles });
   } catch (e) {

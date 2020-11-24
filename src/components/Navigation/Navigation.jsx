@@ -15,6 +15,23 @@ import "./Navigation.css";
 
 class Navigation extends Component {
   render() {
+    const shortcuts = [
+      { meta: VerbsMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
+      { meta: PhrasesMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
+      {
+        meta: OppositesMeta,
+        icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
+      },
+      {
+        meta: HiraganaGameMeta,
+        icon: <div className="not-a-real-icon">あ</div>,
+      },
+      {
+        meta: ParticlesGameMeta,
+        icon: <FontAwesomeIcon icon={faAtom} size="2x" />,
+      },
+    ];
+
     return (
       <div className="navigation">
         <nav className="navbar navbar-expand-lg">
@@ -52,65 +69,27 @@ class Navigation extends Component {
                 {/* <div className="dropdown-divider" /> */}
 
                 <div className="shortcuts mt-2">
-                  <div className="shortcut-item">
-                    <Link to={VerbsMeta.location}>
-                      <div>
-                        <FontAwesomeIcon icon={faFont} size="2x" />
-                        <div className="nav-caption">{VerbsMeta.label}</div>
-                      </div>
-                    </Link>
-                  </div>
-                  <div className="shortcut-item">
-                    <Link to={PhrasesMeta.location}>
-                      <div>
-                        <FontAwesomeIcon icon={faFont} size="2x" />
-                        <div className="nav-caption">{PhrasesMeta.label}</div>
-                      </div>
-                    </Link>
-                  </div>
-                  <div className="shortcut-item">
-                    <Link to={OppositesMeta.location}>
-                      <div>
-                        <FontAwesomeIcon icon={faYinYang} size="2x" />
-                        <div className="nav-caption">{OppositesMeta.label}</div>
-                      </div>
-                    </Link>
-                  </div>
-                  <div className="shortcut-item">
-                    <Link to={HiraganaGameMeta.location}>
-                      <div>
-                        <div className="not-a-real-icon">あ</div>
-                        <div className="nav-caption">
-                          {HiraganaGameMeta.label}
+                  {shortcuts.map((l) => (
+                    <div className="shortcut-item">
+                      <Link to={l.meta.location}>
+                        <div>
+                          {l.icon}
+                          <div className="nav-caption">{l.meta.label}</div>
                         </div>
-                      </div>
-                    </Link>
-                  </div>
-                  <div className="shortcut-item">
-                    <Link to={ParticlesGameMeta.location}>
-                      <div>
-                        <FontAwesomeIcon icon={faAtom} size="2x" />
-                        <div className="nav-caption">
-                          {ParticlesGameMeta.label}
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
+                      </Link>
+                    </div>
+                  ))}
                 </div>
-
                 {/* <div className="dropdown-divider" /> */}
               </li>
 
-              <li className="nav-item d-none d-lg-block">
-                <Link className="nav-link" to={VerbsMeta.location}>
-                  {VerbsMeta.label}
-                </Link>
-              </li>
-              <li className="nav-item  d-none d-lg-block">
-                <Link className="nav-link" to={PhrasesMeta.location}>
-                  {PhrasesMeta.label}
-                </Link>
-              </li>
+              {shortcuts.map((s) => (
+                <li className="nav-item d-none d-lg-block">
+                  <Link className="nav-link" to={s.meta.location}>
+                    {s.meta.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </nav>

@@ -1,13 +1,82 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
-import { getParticles } from "../../actions/particlesAct";
+import { getParticles, getSuffixes } from "../../actions/particlesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 
 const ParticlesGameMeta = {
   location: "/particles",
   label: "Particles Game",
 };
+
+/**
+ * maps the romaji particle to japanese
+ * @param {*} particle a single or multiple (space separated particle)
+ * @param {*} romajiParticlesList
+ * @param {*} japanseParticlesList
+ */
+function buildJapaneseParticle(
+  particle,
+  romajiParticlesList,
+  japanseParticlesList
+) {
+  return particle
+    .split(" ")
+    .reduce(
+      (acc, p) => acc + japanseParticlesList[romajiParticlesList.indexOf(p)],
+      ""
+    );
+}
+
+/**
+ * creates a sentence with a blank over the randomly selected particle to quiz
+ * @param {*} sentence
+ * @param {*} idx index of randomly selected particle to quiz in the sentence
+ * @param {*} particles
+ */
+function buildQuestionSentence(sentence, idx, particles) {
+  return sentence.reduce((acc, curr, i) => {
+    if (i === idx) {
+      acc += curr + " __ ";
+    } else {
+      acc += curr + " " + (particles[i] || "") + " ";
+    }
+
+    return acc;
+  }, "");
+}
+
+// FIXME: if the answer is a multiple particle, then the choices should also be multiples
+/**
+ * returns a list of choices which includes the right answer
+ * @param {*} answer
+ * @param {*} romajiParticlesList
+ * @param {*} japanseParticlesList
+ */
+function createChoices(answer, romajiParticlesList, japanseParticlesList) {
+  const choices = [answer];
+  while (choices.length < 4) {
+    const max = Math.floor(romajiParticlesList.length);
+    const i = Math.floor(Math.random() * max);
+
+    const romaji = romajiParticlesList[i];
+    const japanese = buildJapaneseParticle(
+      romaji,
+      romajiParticlesList,
+      japanseParticlesList
+    );
+    const choice = { japanese, romaji };
+
+    // should not be same choices or the right answer
+    if (choices.filter((c) => c.romaji === choice.romaji).length === 0) {
+      choices.push(choice);
+    }
+  }
+
+  shuffleArray(choices);
+
+  return choices;
+}
 
 class ParticlesGame extends Component {
   constructor(props) {
@@ -38,6 +107,7 @@ class ParticlesGame extends Component {
     this.checkAnswer = this.checkAnswer.bind(this);
 
     this.props.getParticles();
+    this.props.getSuffixes();
   }
 
   componentDidMount() {
@@ -61,86 +131,75 @@ class ParticlesGame extends Component {
     if (this.state.selectedIndex != prevState.selectedIndex) {
       // console.log("index");
       this.prepareGame();
-    }
-
-    if (
+    } else if (
       this.props.particles &&
       prevProps.particles &&
-      this.props.particles.length != prevProps.particles.length
+      this.props.particles.length != prevProps.particles.length &&
+      this.props.suffixes &&
+      this.props.suffixes.length > 0
     ) {
       // console.log("getting game data");
       this.prepareGame();
     } else if (
+      this.props.suffixes &&
+      prevProps.suffixes &&
+      this.props.suffixes.length != prevProps.suffixes.length &&
+      this.props.particles &&
+      this.props.particles.length > 0
+    ) {
+      // console.log("getting game data 2");
+      this.prepareGame();
+    } else if (
       this.state.question === false &&
-      this.state.answer === false &&
-      this.state.choices.length === 0
+      this.props.particles &&
+      this.props.particles.length > 0 &&
+      this.props.suffixes &&
+      this.props.suffixes.length > 0
     ) {
       // page navigation after initial
       // opposites retrival done
+      // console.log('last')
       this.prepareGame();
     }
   }
 
   prepareGame() {
-    if (this.props.particles.length > 0) {
+    // console.log('prepare game')
+    if (this.props.particles.length > 0 || this.props.suffixes.length > 0) {
       const { sentence, particles } = this.props.particles[
         this.state.selectedIndex
       ].romaji;
-      const english  = this.props.particles[this.state.selectedIndex].english || '';
+      const english =
+        this.props.particles[this.state.selectedIndex].english || "";
       const max = Math.floor(particles.length);
       const idx = Math.floor(Math.random() * max);
 
-      // console.log(this.props.particles[this.state.selectedIndex]);
+      const [japanseParticles, romajiParticles] = this.props.suffixes.reduce(
+        (acc, curr) => {
+          acc[0].push(curr.japanese);
+          acc[1].push(curr.romaji);
+          return acc;
+        },
+        [[], []]
+      );
 
-      const question = sentence.reduce((acc, curr, i) => {
-        if (i === idx) {
-          acc += curr + " __ ";
-        } else {
-          acc += curr + " " + (particles[i] || "") + " ";
-        }
+      const question = buildQuestionSentence(sentence, idx, particles);
 
-        return acc;
-      }, "");
-
-      const japanseParticles = [
-        "は",
-        "が",
-        "を",
-        "に",
-        "で",
-        "へ",
-        "の",
-        "と",
-        "も",
-      ];
-      const allChoices = ["wa", "ga", "o", "ni", "de", "e", "no", "to", "mo"];
+      const romaji = particles[idx];
+      const japanese = buildJapaneseParticle(
+        romaji,
+        romajiParticles,
+        japanseParticles
+      );
 
       const answer = {
-        japanese: japanseParticles[allChoices.indexOf(particles[idx])],
-        romaji: particles[idx],
+        japanese,
+        romaji,
       };
 
-      let choices = [answer.romaji];
+      const choices = createChoices(answer, romajiParticles, japanseParticles);
 
-      while (choices.length < 4) {
-        const max = Math.floor(allChoices.length);
-        const i = Math.floor(Math.random() * max);
-
-        const choice = allChoices[i];
-
-        // should not be same choices or the right answer
-        if (choices.indexOf(choice) === -1) {
-          choices.push(choice);
-        }
-      }
-
-      choices = choices.map((c) => {
-        const j = allChoices.indexOf(c);
-        return { japanese: japanseParticles[j], romaji: c };
-      });
-      shuffleArray(choices);
-
-      this.setState({ question, answer, choices , english});
+      this.setState({ question, answer, choices, english });
     }
   }
 
@@ -193,12 +252,7 @@ class ParticlesGame extends Component {
 
   render() {
     // TODO: cleanup
-    if (
-      !this.props.particles ||
-      this.props.particles.length < 1 ||
-      this.state.question === false
-    )
-      return <div />;
+    if (this.state.question === false) return <div />;
 
     const question = this.state.question;
     const answer = this.state.answer;
@@ -296,9 +350,14 @@ class ParticlesGame extends Component {
 }
 
 const mapStateToProps = (state) => {
-  return { particles: state.particles.value };
+  return {
+    particles: state.particles.value,
+    suffixes: state.particles.suffixes,
+  };
 };
 
-export default connect(mapStateToProps, { getParticles })(ParticlesGame);
+export default connect(mapStateToProps, { getParticles, getSuffixes })(
+  ParticlesGame
+);
 
 export { ParticlesGameMeta };
