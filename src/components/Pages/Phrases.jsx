@@ -1,8 +1,9 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { UnmuteIcon } from "@primer/octicons-react";
+import { UnmuteIcon, MuteIcon } from "@primer/octicons-react";
 
 import { getPhrases } from "../../actions/phrasesAct";
+import { gStorageAudioPath } from "../../constants/paths";
 
 // import PropTypes from "prop-types";
 
@@ -113,19 +114,32 @@ class Phrases extends Component {
           >
             prev
           </button>
-          <div
-            onClick={this.toggleHint}
-            className="pt-3 d-flex flex-column justify-content-around text-center"
-          >
-            <h1>{phrase.japanese}</h1>
-            <h2>{this.state.showRomaji ? phrase.romaji : ""}</h2>
+          <div className="pt-3 d-flex flex-column justify-content-around text-center">
+            <h1 onClick={this.toggleHint}>{phrase.japanese}</h1>
+            <h2 onClick={this.toggleHint}>
+              {this.state.showRomaji ? phrase.romaji : ""}
+            </h2>
             <div>{this.state.showMeaning ? phrase.english : "-"}</div>
-            {
-              // TODO: implement pronunciation
-            }
-            {/* <div className="d-flex">
-              <UnmuteIcon size="medium" aria-label="pronunciation" />
-            </div> */}
+            {phrase.uid ? (
+              <div
+                className="d-flex justify-content-center"
+                onClick={() => {
+                  // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
+                  this.player.src = gStorageAudioPath + phrase.uid + ".mp3";
+                  this.player.play();
+                }}
+              >
+                <audio ref={(ref) => (this.player = ref)} />
+                <UnmuteIcon size="medium" aria-label="pronunciation" />
+              </div>
+            ) : (
+              <div
+                className="d-flex justify-content-center"
+                style={{ color: "lightgray" }}
+              >
+                <MuteIcon size="medium"></MuteIcon>
+              </div>
+            )}
           </div>
           <button
             type="button"
