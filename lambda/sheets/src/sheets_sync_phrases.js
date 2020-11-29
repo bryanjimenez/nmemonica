@@ -21,7 +21,7 @@ import { googleSheetId } from "../../../environment.development.js";
 export async function sheets_sync_phrases(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Phrases!A1:C";
+    const range = "Phrases!A1:D";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -39,21 +39,9 @@ export async function sheets_sync_phrases(req, res) {
       });
     });
 
-    const dupCheck = {};
-    let duplicate = "";
-    let emptyId = -1;
     let sheetHeaders = [];
 
     const phrases = sheetData.reduce((acc, el, i) => {
-      if (el[0] === "") {
-        emptyId = i;
-      }
-
-      if (dupCheck[el[0]]) {
-        duplicate = el[0];
-      } else {
-        dupCheck[el[0]] = { id: el[0], name: el[1], price: el[3] };
-      }
 
       if (i > 0) {
         const phrase = {
@@ -62,6 +50,10 @@ export async function sheets_sync_phrases(req, res) {
           english: el[2],
         };
 
+        if(el[3] && el[3] !== ''){
+          phrase.uid = el[3];
+        }
+
         acc.push(phrase);
       } else {
         sheetHeaders = el;
@@ -69,18 +61,6 @@ export async function sheets_sync_phrases(req, res) {
 
       return acc;
     }, []);
-
-    if (emptyId > -1) {
-      const err = new Error("Missing Id");
-      err.details = { error: "Missing Id", details: sheetData[emptyId] };
-      throw err;
-    }
-
-    if (duplicate) {
-      const err = new Error("Duplicate");
-      err.details = { error: "Duplicate", details: dupCheck[duplicate] };
-      throw err;
-    }
 
     admin.database().ref("lambda/phrases").set(phrases);
 
