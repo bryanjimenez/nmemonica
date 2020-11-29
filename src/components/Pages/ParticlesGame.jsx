@@ -276,11 +276,10 @@ class ParticlesGame extends Component {
           >
             prev
           </button>
-          <div
-            onClick={this.toggleHint}
-            className="pt-3 d-flex flex-column justify-content-around text-center w-50"
-          >
-            <h1>{question}</h1>
+          <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
+            <h1 onClick={this.toggleHint} className="clickable">
+              {question}
+            </h1>
             {/* <h2>{this.state.showRomaji ? question.romaji : ""}</h2> */}
             <div>{this.state.showMeaning ? english : "."}</div>
             {
@@ -296,7 +295,7 @@ class ParticlesGame extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[0]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <h2>{choices[0].japanese}</h2>
                 <div>{this.state.showRomaji ? choices[0].romaji : ""}</div>
@@ -306,7 +305,7 @@ class ParticlesGame extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[1]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <h2>{choices[1].japanese}</h2>
                 <div>{this.state.showRomaji ? choices[1].romaji : ""}</div>
@@ -318,7 +317,7 @@ class ParticlesGame extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[2]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <h2>{choices[2].japanese}</h2>
                 <div>{this.state.showRomaji ? choices[2].romaji : ""}</div>
@@ -328,7 +327,7 @@ class ParticlesGame extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[3]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <h2>{choices[3].japanese}</h2>
                 <div>{this.state.showRomaji ? choices[3].romaji : ""}</div>

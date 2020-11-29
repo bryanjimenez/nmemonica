@@ -209,12 +209,13 @@ class Opposites extends Component {
           >
             prev
           </button>
-          <div
-            onClick={this.toggleHint}
-            className="pt-3 d-flex flex-column justify-content-around text-center w-50"
-          >
-            <h1>{question.japanese}</h1>
-            <h2>{this.state.showRomaji ? question.romaji : ""}</h2>
+          <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
+            <h1 onClick={this.toggleHint} className="clickable">
+              {question.japanese}
+            </h1>
+            <h2 onClick={this.toggleHint} className="clickable">
+              {this.state.showRomaji ? question.romaji : ""}
+            </h2>
             <div>{this.state.showMeaning ? question.english : "-"}</div>
             {
               // TODO: implement pronunciation
@@ -229,7 +230,7 @@ class Opposites extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[0]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <div>{choices[0].japanese}</div>
                 <div>{this.state.showRomaji ? choices[0].romaji : ""}</div>
@@ -239,7 +240,7 @@ class Opposites extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[1]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <div>{choices[1].japanese}</div>
                 <div>{this.state.showRomaji ? choices[1].romaji : ""}</div>
@@ -251,7 +252,7 @@ class Opposites extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[2]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <div>{choices[2].japanese}</div>
                 <div>{this.state.showRomaji ? choices[2].romaji : ""}</div>
@@ -261,7 +262,7 @@ class Opposites extends Component {
                 onClick={() => {
                   this.checkAnswer(choices[3]);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
+                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
                 <div>{choices[3].japanese}</div>
                 <div>{this.state.showRomaji ? choices[3].romaji : ""}</div>

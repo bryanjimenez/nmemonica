@@ -1,0 +1,30 @@
+html,
+body {
+  height: 100%;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+a {
+  color: inherit;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+#page-content {
+  flex: 1 0 auto;
+}
+
+.appContainer {
+  /* width: 95%; */
+  /* max-width: 600px; */
+  /* margin: auto; */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}

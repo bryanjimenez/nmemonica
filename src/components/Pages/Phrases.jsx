@@ -115,14 +115,16 @@ class Phrases extends Component {
             prev
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            <h1 onClick={this.toggleHint}>{phrase.japanese}</h1>
-            <h2 onClick={this.toggleHint}>
+            <h1 onClick={this.toggleHint} className="clickable">
+              {phrase.japanese}
+            </h1>
+            <h2 onClick={this.toggleHint} className="clickable">
               {this.state.showRomaji ? phrase.romaji : ""}
             </h2>
             <div>{this.state.showMeaning ? phrase.english : "-"}</div>
             {phrase.uid ? (
               <div
-                className="d-flex justify-content-center"
+                className="d-flex justify-content-center clickable"
                 onClick={() => {
                   // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
                   this.player.src = gStorageAudioPath + phrase.uid + ".mp3";

@@ -257,7 +257,7 @@ class HiraganaGame extends Component {
         onClick={() => {
           this.checkAnswer(choices[index]);
         }}
-        className="text-center"
+        className="text-center clickable"
         style={{ color, width }}
       >
         <h2>{choices[index].val}</h2>
@@ -296,7 +296,10 @@ class HiraganaGame extends Component {
             prev
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1 style={{ color: this.state.correct ? "green" : undefined }}>
+            <h1
+              style={{ color: this.state.correct ? "green" : undefined }}
+              className="clickable"
+            >
               {question}
             </h1>
           </div>
