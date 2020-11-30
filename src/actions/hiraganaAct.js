@@ -9,6 +9,7 @@ export function getHiragana() {
       hiragana: data.hiragana,
       vowels: data.vowels,
       consonants: data.consonants,
+      sounds: data.sounds,
     });
   };
 }

@@ -19,12 +19,17 @@ class HiraganaGame extends Component {
       answer: false,
       choices: [],
       gameOrder: false,
+      wrongs: [],
+      correct: false,
+      difficult: true,
     };
+    // TODO: set difficulty on nav page
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
     this.prepareGame = this.prepareGame.bind(this);
     this.checkAnswer = this.checkAnswer.bind(this);
+    this.choiceButton = this.choiceButton.bind(this);
 
     // only fetch data on very first initialization
     if (!this.props.hiragana || this.props.hiragana.length === 0) {
@@ -92,38 +97,70 @@ class HiraganaGame extends Component {
       const xIdx = gameOrder[this.state.selectedIndex].x;
       const yIdx = gameOrder[this.state.selectedIndex].y;
 
-      const question = { japanese: this.props.hiragana[yIdx][xIdx] };
+      const difficult = this.state.difficult;
 
-      const answer = { japanese: consonants[yIdx] + vowels[xIdx] };
+      let question;
+      if (difficult) {
+        const sound = consonants[yIdx] + vowels[xIdx];
+        question = this.props.sounds[sound] || sound;
+      } else {
+        question = this.props.hiragana[yIdx][xIdx];
+      }
 
-      let choices = [answer.japanese];
+      const sound = consonants[yIdx] + vowels[xIdx];
+      let answer;
+      if (difficult) {
+        answer = {
+          val: this.props.hiragana[yIdx][xIdx],
+          hint: this.props.sounds[sound] || sound,
+        };
+      } else {
+        answer = { val: this.props.sounds[sound] || sound, hint: question };
+      }
+
+      let choices = [answer];
 
       while (choices.length < 4) {
         const min = 0;
         const max = Math.floor(gameOrder.length);
         const idx = Math.floor(Math.random() * (max - min) + min);
 
-        const choice = consonants[gameOrder[idx].y] + vowels[gameOrder[idx].x];
+        const sound = consonants[gameOrder[idx].y] + vowels[gameOrder[idx].x];
+        const hint = this.props.hiragana[gameOrder[idx].y][gameOrder[idx].x];
+        let choice;
+        if (difficult) {
+          choice = {
+            val: hint,
+            hint: this.props.sounds[sound] || sound,
+          };
+        } else {
+          choice = {
+            val: this.props.sounds[sound] || sound,
+            hint,
+          };
+        }
 
         // should not add duplicates or the right answer
-        if (choices.indexOf(choice) === -1) {
+        if (!choices.some((c) => c.val === choice.val)) {
           choices.push(choice);
         }
       }
 
-      choices = choices.map((c) => ({ japanese: c }));
       shuffleArray(choices);
       this.setState({ question, answer, choices, gameOrder });
     }
   }
 
   checkAnswer(answered) {
-    if (answered.japanese === this.state.answer.japanese) {
+    if (answered.val === this.state.answer.val) {
       // console.log("RIGHT!");
-      this.gotoNext();
+
+      this.setState({ correct: true });
+      setTimeout(this.gotoNext, 500);
     } else {
       // console.log("WRONG");
-      // TODO: show hiragana of wrong selection
+      const wrong = this.state.choices.findIndex((c) => c.val === answered.val);
+      this.setState({ wrongs: [...this.state.wrongs, wrong] });
     }
   }
 
@@ -132,6 +169,8 @@ class HiraganaGame extends Component {
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
+      wrongs: [],
+      correct: false,
     });
   }
 
@@ -141,7 +180,31 @@ class HiraganaGame extends Component {
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
       selectedIndex: newSel,
+      wrongs: [],
+      correct: false,
     });
+  }
+
+  choiceButton(index) {
+    const choices = this.state.choices;
+    const visibility = this.state.wrongs.includes(index) ? undefined : "hidden";
+    const color =
+      choices[index].val === this.state.answer.val && this.state.correct
+        ? "green"
+        : undefined;
+
+    return (
+      <div
+        onClick={() => {
+          this.checkAnswer(choices[index]);
+        }}
+        className="pt-3 d-flex flex-column justify-content-around text-center"
+        style={{ color }}
+      >
+        <h2>{choices[index].val}</h2>
+        <h6 style={{ visibility }}>{choices[index].hint}</h6>
+      </div>
+    );
   }
 
   render() {
@@ -175,44 +238,18 @@ class HiraganaGame extends Component {
             prev
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1>{question.japanese}</h1>
+            <h1 style={{ color: this.state.correct ? "green" : undefined }}>
+              {question}
+            </h1>
           </div>
           <div className="choices-row d-flex justify-content-around w-50">
             <div className="choices-column d-flex flex-column justify-content-around">
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[0]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[0].japanese}</h2>
-              </div>
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[1]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[1].japanese}</h2>
-              </div>
+              {this.choiceButton(0)}
+              {this.choiceButton(1)}
             </div>
             <div className="choices-column d-flex flex-column justify-content-around">
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[2]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[2].japanese}</h2>
-              </div>
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[3]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[3].japanese}</h2>
-              </div>
+              {this.choiceButton(2)}
+              {this.choiceButton(3)}
             </div>
           </div>
           <button
@@ -233,6 +270,7 @@ const mapStateToProps = (state) => {
     hiragana: state.hiragana.characters,
     vowels: state.hiragana.vowels,
     consonants: state.hiragana.consonants,
+    sounds: state.hiragana.sounds,
   };
 };
 
