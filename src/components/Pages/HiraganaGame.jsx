@@ -21,9 +21,11 @@ class HiraganaGame extends Component {
       gameOrder: false,
       wrongs: [],
       correct: false,
-      difficult: true,
+
+      // TODO: set difficulty on nav page
+      difficult: false,
+      choiceN: 16,
     };
-    // TODO: set difficulty on nav page
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -99,49 +101,58 @@ class HiraganaGame extends Component {
 
       const difficult = this.state.difficult;
 
-      let question;
-      if (difficult) {
-        const sound = consonants[yIdx] + vowels[xIdx];
-        question = this.props.sounds[sound] || sound;
-      } else {
-        question = this.props.hiragana[yIdx][xIdx];
-      }
-
       const sound = consonants[yIdx] + vowels[xIdx];
+      const pronunciation = this.props.sounds[sound] || sound;
+      const character = this.props.hiragana[yIdx][xIdx];
+
+      let question;
       let answer;
+
       if (difficult) {
+        question = pronunciation;
         answer = {
-          val: this.props.hiragana[yIdx][xIdx],
-          hint: this.props.sounds[sound] || sound,
+          val: character,
+          hint: pronunciation,
         };
       } else {
-        answer = { val: this.props.sounds[sound] || sound, hint: question };
+        question = character;
+        answer = {
+          val: pronunciation,
+          hint: character,
+        };
       }
 
       let choices = [answer];
 
-      while (choices.length < 4) {
+      while (choices.length < this.state.choiceN) {
         const min = 0;
         const max = Math.floor(gameOrder.length);
         const idx = Math.floor(Math.random() * (max - min) + min);
 
         const sound = consonants[gameOrder[idx].y] + vowels[gameOrder[idx].x];
-        const hint = this.props.hiragana[gameOrder[idx].y][gameOrder[idx].x];
+        const cPronunciation = this.props.sounds[sound] || sound;
+        const cCharacter = this.props.hiragana[gameOrder[idx].y][
+          gameOrder[idx].x
+        ];
         let choice;
         if (difficult) {
           choice = {
-            val: hint,
-            hint: this.props.sounds[sound] || sound,
+            val: cCharacter,
+            hint: cPronunciation,
           };
         } else {
           choice = {
-            val: this.props.sounds[sound] || sound,
-            hint,
+            val: cPronunciation,
+            hint: cCharacter,
           };
         }
 
         // should not add duplicates or the right answer
-        if (!choices.some((c) => c.val === choice.val)) {
+        // duplicate check based on pronunciation
+        if (
+          (difficult && !choices.some((c) => c.hint === choice.hint)) ||
+          (!difficult && !choices.some((c) => c.val === choice.val))
+        ) {
           choices.push(choice);
         }
       }
@@ -187,19 +198,23 @@ class HiraganaGame extends Component {
 
   choiceButton(index) {
     const choices = this.state.choices;
+    const answer = this.state.answer;
+    const correct = this.state.correct;
+    const choiceN = this.state.choiceN;
+
     const visibility = this.state.wrongs.includes(index) ? undefined : "hidden";
     const color =
-      choices[index].val === this.state.answer.val && this.state.correct
-        ? "green"
-        : undefined;
+      choices[index].val === answer.val && correct ? "green" : undefined;
+
+    const width = Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * 100) + "%";
 
     return (
       <div
         onClick={() => {
           this.checkAnswer(choices[index]);
         }}
-        className="pt-3 d-flex flex-column justify-content-around text-center"
-        style={{ color }}
+        className="text-center"
+        style={{ color, width }}
       >
         <h2>{choices[index].val}</h2>
         <h6 style={{ visibility }}>{choices[index].hint}</h6>
@@ -243,13 +258,8 @@ class HiraganaGame extends Component {
             </h1>
           </div>
           <div className="choices-row d-flex justify-content-around w-50">
-            <div className="choices-column d-flex flex-column justify-content-around">
-              {this.choiceButton(0)}
-              {this.choiceButton(1)}
-            </div>
-            <div className="choices-column d-flex flex-column justify-content-around">
-              {this.choiceButton(2)}
-              {this.choiceButton(3)}
+            <div className="choices-column w-100 d-flex flex-wrap ">
+              {choices.map((c, i) => this.choiceButton(i))}
             </div>
           </div>
           <button
