@@ -19,7 +19,8 @@ class HiraganaGame extends Component {
       answer: false,
       choices: [],
       gameOrder: false,
-      wrongs: [],
+      wrongs: [], // list of index of current wrong answered choices used for visual hints
+      reinforce: [], // list of recently wrong chosen hiragana used to reinforce
       correct: false,
 
       // TODO: set difficulty on nav page
@@ -32,6 +33,8 @@ class HiraganaGame extends Component {
     this.prepareGame = this.prepareGame.bind(this);
     this.checkAnswer = this.checkAnswer.bind(this);
     this.choiceButton = this.choiceButton.bind(this);
+    this.initiateGameOrder = this.initiateGameOrder.bind(this);
+    this.populateChoices = this.populateChoices.bind(this);
 
     // only fetch data on very first initialization
     if (!this.props.hiragana || this.props.hiragana.length === 0) {
@@ -69,95 +72,133 @@ class HiraganaGame extends Component {
     }
   }
 
-  prepareGame() {
-    if (this.props.hiragana.length > 0) {
-      // console.log("preparing");
-      const vowels = this.props.vowels;
-      const consonants = this.props.consonants;
-
+  /**
+   * based on the hiragana 2d array returns a shuffled list
+   * of {consonant,vowel} corresponding to hiragana
+   * consonant and vowel are indexes
+   */
+  initiateGameOrder() {
+    let gameOrder = [];
+    if (this.state.gameOrder === false) {
       const xMax = Math.floor(this.props.hiragana[0].length);
       const yMax = Math.floor(this.props.hiragana.length);
 
-      let gameOrder = [];
-      if (this.state.gameOrder === false) {
-        for (let x = 0; x < xMax; x++) {
-          for (let y = 0; y < yMax; y++) {
-            // should not include yi, ye or wu
-            if (
-              (x != 1 || y != 12) &&
-              (x != 3 || y != 12) &&
-              (x != 2 || y != 14)
-            )
-              gameOrder.push({ x, y });
-          }
+      for (let vowel = 0; vowel < xMax; vowel++) {
+        for (let consonant = 0; consonant < yMax; consonant++) {
+          // should not include yi, ye or wu
+          if (
+            (vowel != 1 || consonant != 12) &&
+            (vowel != 3 || consonant != 12) &&
+            (vowel != 2 || consonant != 14)
+          )
+            gameOrder.push({ vowel, consonant });
         }
-        shuffleArray(gameOrder);
+      }
+      shuffleArray(gameOrder);
+    } else {
+      gameOrder = this.state.gameOrder;
+    }
+
+    return gameOrder;
+  }
+
+  /**
+   * returns a shuffled list of choices containing the answer
+   * @param {*} answer
+   * @param {*} gameOrder
+   */
+  populateChoices(answer, gameOrder) {
+    const choices = [answer];
+
+    const difficult = this.state.difficult;
+    const vowels = this.props.vowels;
+    const consonants = this.props.consonants;
+
+    while (choices.length < this.state.choiceN) {
+      const min = 0;
+      const max = Math.floor(gameOrder.length);
+      const idx = Math.floor(Math.random() * (max - min) + min);
+
+      const sound =
+        consonants[gameOrder[idx].consonant] + vowels[gameOrder[idx].vowel];
+      const cPronunciation = this.props.sounds[sound] || sound;
+      const cCharacter = this.props.hiragana[gameOrder[idx].consonant][
+        gameOrder[idx].vowel
+      ];
+      let choice;
+      if (difficult) {
+        choice = {
+          val: cCharacter,
+          hint: cPronunciation,
+        };
       } else {
-        gameOrder = this.state.gameOrder;
+        choice = {
+          val: cPronunciation,
+          hint: cCharacter,
+        };
       }
 
-      const xIdx = gameOrder[this.state.selectedIndex].x;
-      const yIdx = gameOrder[this.state.selectedIndex].y;
+      // should not add duplicates or the right answer
+      // duplicate check based on pronunciation
+      if (
+        (difficult && !choices.some((c) => c.hint === choice.hint)) ||
+        (!difficult && !choices.some((c) => c.val === choice.val))
+      ) {
+        choices.push(choice);
+      }
+    }
+
+    shuffleArray(choices);
+    return choices;
+  }
+
+  prepareGame() {
+    if (this.props.hiragana.length > 0) {
+      // console.log("preparing");
 
       const difficult = this.state.difficult;
+      const vowels = this.props.vowels;
+      const consonants = this.props.consonants;
 
-      const sound = consonants[yIdx] + vowels[xIdx];
-      const pronunciation = this.props.sounds[sound] || sound;
-      const character = this.props.hiragana[yIdx][xIdx];
+      const gameOrder = this.initiateGameOrder();
 
       let question;
       let answer;
 
-      if (difficult) {
-        question = pronunciation;
-        answer = {
-          val: character,
-          hint: pronunciation,
-        };
+      // some games will come from the reinforced list
+      const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
+      if (reinforced && this.state.reinforce.length > 0) {
+        // console.log('reinforced')
+        answer = this.state.reinforce.pop();
+        question = answer.hint;
       } else {
-        question = character;
-        answer = {
-          val: pronunciation,
-          hint: character,
-        };
-      }
+        // console.log('regular')
 
-      let choices = [answer];
+        const thisGame = gameOrder[this.state.selectedIndex];
 
-      while (choices.length < this.state.choiceN) {
-        const min = 0;
-        const max = Math.floor(gameOrder.length);
-        const idx = Math.floor(Math.random() * (max - min) + min);
-
-        const sound = consonants[gameOrder[idx].y] + vowels[gameOrder[idx].x];
-        const cPronunciation = this.props.sounds[sound] || sound;
-        const cCharacter = this.props.hiragana[gameOrder[idx].y][
-          gameOrder[idx].x
+        const sound = consonants[thisGame.consonant] + vowels[thisGame.vowel];
+        const pronunciation = this.props.sounds[sound] || sound;
+        const character = this.props.hiragana[thisGame.consonant][
+          thisGame.vowel
         ];
-        let choice;
+
         if (difficult) {
-          choice = {
-            val: cCharacter,
-            hint: cPronunciation,
+          question = pronunciation;
+          answer = {
+            val: character,
+            hint: pronunciation,
           };
         } else {
-          choice = {
-            val: cPronunciation,
-            hint: cCharacter,
+          question = character;
+          answer = {
+            val: pronunciation,
+            hint: character,
           };
-        }
-
-        // should not add duplicates or the right answer
-        // duplicate check based on pronunciation
-        if (
-          (difficult && !choices.some((c) => c.hint === choice.hint)) ||
-          (!difficult && !choices.some((c) => c.val === choice.val))
-        ) {
-          choices.push(choice);
         }
       }
 
-      shuffleArray(choices);
+      const choices = this.populateChoices(answer, gameOrder);
+
       this.setState({ question, answer, choices, gameOrder });
     }
   }
@@ -171,7 +212,10 @@ class HiraganaGame extends Component {
     } else {
       // console.log("WRONG");
       const wrong = this.state.choices.findIndex((c) => c.val === answered.val);
-      this.setState({ wrongs: [...this.state.wrongs, wrong] });
+      this.setState({
+        wrongs: [...this.state.wrongs, wrong],
+        reinforce: [...this.state.reinforce, answered],
+      });
     }
   }
 
@@ -232,7 +276,6 @@ class HiraganaGame extends Component {
       return <div className="text-center">loading</div>;
 
     const question = this.state.question;
-    const answer = this.state.answer;
     const choices = this.state.choices;
 
     // console.log(question);

@@ -5,6 +5,9 @@ flash cards
 ### TODO or not TODO
 - [ ] add tenses in verbs page
 - [ ] fix static/sample data
+- [ ] hiragana pronunciation
+- [ ] hiragana give up/skip and reinforce
+- [ ] settings page
 
 
 ## Thanks
