@@ -19,12 +19,22 @@ class HiraganaGame extends Component {
       answer: false,
       choices: [],
       gameOrder: false,
+      wrongs: [], // list of index of current wrong answered choices used for visual hints
+      reinforce: [], // list of recently wrong chosen hiragana used to reinforce
+      correct: false,
+
+      // TODO: set difficulty on nav page
+      difficult: false,
+      choiceN: 16,
     };
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
     this.prepareGame = this.prepareGame.bind(this);
     this.checkAnswer = this.checkAnswer.bind(this);
+    this.choiceButton = this.choiceButton.bind(this);
+    this.initiateGameOrder = this.initiateGameOrder.bind(this);
+    this.populateChoices = this.populateChoices.bind(this);
 
     // only fetch data on very first initialization
     if (!this.props.hiragana || this.props.hiragana.length === 0) {
@@ -62,68 +72,150 @@ class HiraganaGame extends Component {
     }
   }
 
-  prepareGame() {
-    if (this.props.hiragana.length > 0) {
-      // console.log("preparing");
-      const vowels = this.props.vowels;
-      const consonants = this.props.consonants;
-
+  /**
+   * based on the hiragana 2d array returns a shuffled list
+   * of {consonant,vowel} corresponding to hiragana
+   * consonant and vowel are indexes
+   */
+  initiateGameOrder() {
+    let gameOrder = [];
+    if (this.state.gameOrder === false) {
       const xMax = Math.floor(this.props.hiragana[0].length);
       const yMax = Math.floor(this.props.hiragana.length);
 
-      let gameOrder = [];
-      if (this.state.gameOrder === false) {
-        for (let x = 0; x < xMax; x++) {
-          for (let y = 0; y < yMax; y++) {
-            // should not include yi, ye or wu
-            if (
-              (x != 1 || y != 12) &&
-              (x != 3 || y != 12) &&
-              (x != 2 || y != 14)
-            )
-              gameOrder.push({ x, y });
-          }
+      for (let vowel = 0; vowel < xMax; vowel++) {
+        for (let consonant = 0; consonant < yMax; consonant++) {
+          // should not include yi, ye or wu
+          if (
+            (vowel != 1 || consonant != 12) &&
+            (vowel != 3 || consonant != 12) &&
+            (vowel != 2 || consonant != 14)
+          )
+            gameOrder.push({ vowel, consonant });
         }
-        shuffleArray(gameOrder);
+      }
+      shuffleArray(gameOrder);
+    } else {
+      gameOrder = this.state.gameOrder;
+    }
+
+    return gameOrder;
+  }
+
+  /**
+   * returns a shuffled list of choices containing the answer
+   * @param {*} answer
+   * @param {*} gameOrder
+   */
+  populateChoices(answer, gameOrder) {
+    const choices = [answer];
+
+    const difficult = this.state.difficult;
+    const vowels = this.props.vowels;
+    const consonants = this.props.consonants;
+
+    while (choices.length < this.state.choiceN) {
+      const min = 0;
+      const max = Math.floor(gameOrder.length);
+      const idx = Math.floor(Math.random() * (max - min) + min);
+
+      const sound =
+        consonants[gameOrder[idx].consonant] + vowels[gameOrder[idx].vowel];
+      const cPronunciation = this.props.sounds[sound] || sound;
+      const cCharacter = this.props.hiragana[gameOrder[idx].consonant][
+        gameOrder[idx].vowel
+      ];
+      let choice;
+      if (difficult) {
+        choice = {
+          val: cCharacter,
+          hint: cPronunciation,
+        };
       } else {
-        gameOrder = this.state.gameOrder;
+        choice = {
+          val: cPronunciation,
+          hint: cCharacter,
+        };
       }
 
-      const xIdx = gameOrder[this.state.selectedIndex].x;
-      const yIdx = gameOrder[this.state.selectedIndex].y;
+      // should not add duplicates or the right answer
+      // duplicate check based on pronunciation
+      if (
+        (difficult && !choices.some((c) => c.hint === choice.hint)) ||
+        (!difficult && !choices.some((c) => c.val === choice.val))
+      ) {
+        choices.push(choice);
+      }
+    }
 
-      const question = { japanese: this.props.hiragana[yIdx][xIdx] };
+    shuffleArray(choices);
+    return choices;
+  }
 
-      const answer = { japanese: consonants[yIdx] + vowels[xIdx] };
+  prepareGame() {
+    if (this.props.hiragana.length > 0) {
+      // console.log("preparing");
 
-      let choices = [answer.japanese];
+      const difficult = this.state.difficult;
+      const vowels = this.props.vowels;
+      const consonants = this.props.consonants;
 
-      while (choices.length < 4) {
-        const min = 0;
-        const max = Math.floor(gameOrder.length);
-        const idx = Math.floor(Math.random() * (max - min) + min);
+      const gameOrder = this.initiateGameOrder();
 
-        const choice = consonants[gameOrder[idx].y] + vowels[gameOrder[idx].x];
+      let question;
+      let answer;
 
-        // should not add duplicates or the right answer
-        if (choices.indexOf(choice) === -1) {
-          choices.push(choice);
+      // some games will come from the reinforced list
+      const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
+      if (reinforced && this.state.reinforce.length > 0) {
+        // console.log('reinforced')
+        answer = this.state.reinforce.pop();
+        question = answer.hint;
+      } else {
+        // console.log('regular')
+
+        const thisGame = gameOrder[this.state.selectedIndex];
+
+        const sound = consonants[thisGame.consonant] + vowels[thisGame.vowel];
+        const pronunciation = this.props.sounds[sound] || sound;
+        const character = this.props.hiragana[thisGame.consonant][
+          thisGame.vowel
+        ];
+
+        if (difficult) {
+          question = pronunciation;
+          answer = {
+            val: character,
+            hint: pronunciation,
+          };
+        } else {
+          question = character;
+          answer = {
+            val: pronunciation,
+            hint: character,
+          };
         }
       }
 
-      choices = choices.map((c) => ({ japanese: c }));
-      shuffleArray(choices);
+      const choices = this.populateChoices(answer, gameOrder);
+
       this.setState({ question, answer, choices, gameOrder });
     }
   }
 
   checkAnswer(answered) {
-    if (answered.japanese === this.state.answer.japanese) {
+    if (answered.val === this.state.answer.val) {
       // console.log("RIGHT!");
-      this.gotoNext();
+
+      this.setState({ correct: true });
+      setTimeout(this.gotoNext, 500);
     } else {
       // console.log("WRONG");
-      // TODO: show hiragana of wrong selection
+      const wrong = this.state.choices.findIndex((c) => c.val === answered.val);
+      this.setState({
+        wrongs: [...this.state.wrongs, wrong],
+        reinforce: [...this.state.reinforce, answered],
+      });
     }
   }
 
@@ -132,6 +224,8 @@ class HiraganaGame extends Component {
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
+      wrongs: [],
+      correct: false,
     });
   }
 
@@ -141,7 +235,35 @@ class HiraganaGame extends Component {
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
       selectedIndex: newSel,
+      wrongs: [],
+      correct: false,
     });
+  }
+
+  choiceButton(index) {
+    const choices = this.state.choices;
+    const answer = this.state.answer;
+    const correct = this.state.correct;
+    const choiceN = this.state.choiceN;
+
+    const visibility = this.state.wrongs.includes(index) ? undefined : "hidden";
+    const color =
+      choices[index].val === answer.val && correct ? "green" : undefined;
+
+    const width = Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * 100) + "%";
+
+    return (
+      <div
+        onClick={() => {
+          this.checkAnswer(choices[index]);
+        }}
+        className="text-center"
+        style={{ color, width }}
+      >
+        <h2>{choices[index].val}</h2>
+        <h6 style={{ visibility }}>{choices[index].hint}</h6>
+      </div>
+    );
   }
 
   render() {
@@ -154,7 +276,6 @@ class HiraganaGame extends Component {
       return <div className="text-center">loading</div>;
 
     const question = this.state.question;
-    const answer = this.state.answer;
     const choices = this.state.choices;
 
     // console.log(question);
@@ -175,44 +296,13 @@ class HiraganaGame extends Component {
             prev
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1>{question.japanese}</h1>
+            <h1 style={{ color: this.state.correct ? "green" : undefined }}>
+              {question}
+            </h1>
           </div>
           <div className="choices-row d-flex justify-content-around w-50">
-            <div className="choices-column d-flex flex-column justify-content-around">
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[0]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[0].japanese}</h2>
-              </div>
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[1]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[1].japanese}</h2>
-              </div>
-            </div>
-            <div className="choices-column d-flex flex-column justify-content-around">
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[2]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[2].japanese}</h2>
-              </div>
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[3]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center"
-              >
-                <h2>{choices[3].japanese}</h2>
-              </div>
+            <div className="choices-column w-100 d-flex flex-wrap ">
+              {choices.map((c, i) => this.choiceButton(i))}
             </div>
           </div>
           <button
@@ -233,6 +323,7 @@ const mapStateToProps = (state) => {
     hiragana: state.hiragana.characters,
     vowels: state.hiragana.vowels,
     consonants: state.hiragana.consonants,
+    sounds: state.hiragana.sounds,
   };
 };
 
