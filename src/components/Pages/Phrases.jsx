@@ -4,10 +4,7 @@ import { UnmuteIcon, MuteIcon } from "@primer/octicons-react";
 
 import { getPhrases } from "../../actions/phrasesAct";
 import { gStorageAudioPath } from "../../constants/paths";
-
-// import PropTypes from "prop-types";
-
-import "./Verbs.css";
+import { furiganaParse } from "../../helper/parser";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -18,39 +15,19 @@ class Phrases extends Component {
   constructor(props) {
     super(props);
 
-    const query = this.props.location.search;
-    // const toggle = new URLSearchParams(useLocation().search).toggle;
-    const toggle = query
-      ? query.split("?")[1].split("toggle=")[1].split("&")[0]
-      : "english";
-
     this.state = {
       selectedIndex: 0,
-      toggle,
-      showToggle: false,
       showMeaning: false,
-      showRomaji: true,
+      showRomaji: false,
     };
 
     this.props.getPhrases();
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
-    this.toggleHint = this.toggleHint.bind(this);
   }
 
-  componentDidMount() {
-    let hint = {};
-    if (this.state.toggle === "english") {
-      hint = { showMeaning: false, showRomaji: true };
-    } else if (this.state.toggle === "romaji") {
-      hint = { showRomaji: false, showMeaning: true };
-    } else {
-      hint = { showMeaning: false, showRomaji: true };
-    }
-
-    this.setState(hint);
-  }
+  componentDidMount() {}
 
   componentDidUpdate() {
     // console.log("phrases.jsx");
@@ -62,8 +39,8 @@ class Phrases extends Component {
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: this.state.toggle === "romaji",
-      showRomaji: this.state.toggle === "english",
+      showMeaning: false,
+      showRomaji: false,
     });
   }
 
@@ -73,26 +50,9 @@ class Phrases extends Component {
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: this.state.toggle === "romaji",
-      showRomaji: this.state.toggle === "english",
+      showMeaning: false,
+      showRomaji: false,
     });
-  }
-
-  toggleHint() {
-    let hint = {};
-    if (this.state.toggle === "english") {
-      hint = {
-        showMeaning: !this.state.showToggle,
-        showToggle: !this.state.showToggle,
-      };
-    } else if (this.state.toggle === "romaji") {
-      hint = {
-        showRomaji: !this.state.showToggle,
-        showToggle: !this.state.showToggle,
-      };
-    }
-
-    this.setState(hint);
   }
 
   render() {
@@ -100,6 +60,21 @@ class Phrases extends Component {
     if (!this.props.phrases || this.props.phrases.length < 1) return <div />;
 
     const phrase = this.props.phrases[this.state.selectedIndex];
+
+    let japanesePhrase;
+
+    try {
+      japanesePhrase = furiganaParse(phrase.japanese);
+    } catch (e) {
+      console.error(e);
+      japanesePhrase = (
+        <div style={{ color: "red" }}>
+          {phrase.japanese.split("\n").map((p) => (
+            <div>{p}</div>
+          ))}
+        </div>
+      );
+    }
 
     return (
       <div className="phrases" style={{ height: "75%" }}>
@@ -115,13 +90,23 @@ class Phrases extends Component {
             prev
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            <h1 onClick={this.toggleHint} className="clickable">
-              {phrase.japanese}
-            </h1>
-            <h2 onClick={this.toggleHint} className="clickable">
-              {this.state.showRomaji ? phrase.romaji : ""}
+            <h1>{japanesePhrase}</h1>
+            <h2
+              onClick={() => {
+                this.setState((state) => ({ showRomaji: !state.showRomaji }));
+              }}
+              className="clickable"
+            >
+              {this.state.showRomaji ? phrase.romaji : "[romaji]"}
             </h2>
-            <div>{this.state.showMeaning ? phrase.english : "-"}</div>
+            <div
+              onClick={() => {
+                this.setState((state) => ({ showMeaning: !state.showMeaning }));
+              }}
+              className="clickable"
+            >
+              {this.state.showMeaning ? phrase.english : "[english]"}
+            </div>
             {phrase.uid ? (
               <div
                 className="d-flex justify-content-center clickable"
