@@ -4,7 +4,7 @@ import { UnmuteIcon, MuteIcon } from "@primer/octicons-react";
 
 import { getPhrases } from "../../actions/phrasesAct";
 import { gStorageAudioPath } from "../../constants/paths";
-import { furiganaParse } from "../../helper/parser";
+import { buildHTMLElement, furiganaParse } from "../../helper/parser";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -63,17 +63,29 @@ class Phrases extends Component {
 
     let japanesePhrase;
 
-    try {
-      japanesePhrase = furiganaParse(phrase.japanese);
-    } catch (e) {
-      console.error(e);
-      japanesePhrase = (
-        <div style={{ color: "red" }}>
-          {phrase.japanese.split("\n").map((p) => (
-            <div>{p}</div>
-          ))}
-        </div>
-      );
+    if (phrase.japanese.indexOf("\n") === -1) {
+      japanesePhrase = <div>{phrase.japanese}</div>;
+    } else {
+      try {
+        const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+          phrase.japanese
+        );
+        japanesePhrase = buildHTMLElement(
+          kanjis,
+          furiganas,
+          nonKanjis,
+          startsWHiragana
+        );
+      } catch (e) {
+        console.error(e);
+        japanesePhrase = (
+          <div style={{ color: "red" }}>
+            {phrase.japanese.split("\n").map((p) => (
+              <div>{p}</div>
+            ))}
+          </div>
+        );
+      }
     }
 
     return (
