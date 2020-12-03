@@ -4,6 +4,12 @@ import { connect } from "react-redux";
 import { getHiragana } from "../../actions/hiraganaAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faPencilAlt,
+  faGlasses,
+} from "@fortawesome/free-solid-svg-icons";
+
 const HiraganaGameMeta = {
   location: "/hiragana/",
   label: "ひらがな Game",
@@ -24,7 +30,7 @@ class HiraganaGame extends Component {
       correct: false,
 
       // TODO: set difficulty on nav page
-      difficult: false,
+      practiceSide: false, //false=hiragana q shown (read), true=romaji q shown (write)
       choiceN: 16,
     };
 
@@ -70,6 +76,10 @@ class HiraganaGame extends Component {
       // console.log("got game data");
       this.prepareGame();
     }
+
+    if (this.state.practiceSide != prevState.practiceSide) {
+      this.prepareGame();
+    }
   }
 
   /**
@@ -110,7 +120,7 @@ class HiraganaGame extends Component {
   populateChoices(answer, gameOrder) {
     const choices = [answer];
 
-    const difficult = this.state.difficult;
+    const difficult = this.state.practiceSide;
     const vowels = this.props.vowels;
     const consonants = this.props.consonants;
 
@@ -156,7 +166,7 @@ class HiraganaGame extends Component {
     if (this.props.hiragana.length > 0) {
       // console.log("preparing");
 
-      const difficult = this.state.difficult;
+      const difficult = this.state.practiceSide;
       const vowels = this.props.vowels;
       const consonants = this.props.consonants;
 
@@ -257,7 +267,7 @@ class HiraganaGame extends Component {
         onClick={() => {
           this.checkAnswer(choices[index]);
         }}
-        className="text-center clickable"
+        className="clickable"
         style={{ color, width }}
       >
         <h2>{choices[index].val}</h2>
@@ -315,6 +325,18 @@ class HiraganaGame extends Component {
           >
             next
           </button>
+        </div>
+        <div
+          className="clickable mt-2 ml-3"
+          onClick={() => {
+            this.setState((state) => ({ practiceSide: !state.practiceSide }));
+          }}
+        >
+          {this.state.practiceSide ? (
+            <FontAwesomeIcon icon={faGlasses} />
+          ) : (
+            <FontAwesomeIcon icon={faPencilAlt} />
+          )}
         </div>
       </div>
     );
