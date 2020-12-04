@@ -7,9 +7,11 @@ import {
   isHiragana,
 } from "../../src/helper/parser";
 
+import { masuForm, dictionaryVerbClass } from "../../src/helper/verbForms";
+
 configure({ adapter: new Adapter() });
 
-describe("Helper tests", function () {
+describe("parser", function () {
   describe("buildHTMLElement", function () {
     it("starting and ending with hiragana", function () {
       const kanjis = ["会計", "願"];
@@ -64,5 +66,11 @@ describe("Helper tests", function () {
       const actual = isHiragana("雨");
       expect(actual).to.be.false;
     });
+  });
+
+  describe("kanjiWithFurigana", function () {
+    it.skip("simple Hiragana");
+    it.skip("good input");
+    it.skip("bad input should throw");
   });
 });

@@ -21,7 +21,7 @@ import { googleSheetId } from "../../../environment.development.js";
 export async function sheets_sync_verbs(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Verbs!A1:K";
+    const range = "Verbs!A1:B";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -52,35 +52,15 @@ export async function sheets_sync_verbs(req, res) {
       if (dupCheck[el[0]]) {
         duplicate = el[0];
       } else {
-        dupCheck[el[0]] = { id: el[0], name: el[1], price: el[3] };
+        dupCheck[el[0]] = { japanese: el[0], english: el[2] };
       }
 
       if (i > 0) {
-        const id = el[0];
-
-        let tenses = [];
-        let idx = 3;
-
-        const t = {
-          t: sheetHeaders[idx],
-          romaji: {
-            plain_pos: el[idx] || "",
-            plain_pos_wav: el[idx + 1] || "",
-            plain_neg: el[idx + 2] || "",
-            plain_neg_wav: el[idx + 3] || "",
-            polite_pos: el[idx + 4] || "",
-            polite_pos_wav: el[idx + 5] || "",
-            polite_neg: el[idx + 6] || "",
-            polite_neg_wav: el[idx + 7] || "",
-          },
-        };
-        tenses.push(t);
+        const dictionary = el[0];
 
         const v = {
-          japanese: el[0],
-          class: el[1] || "",
-          english: el[2],
-          tenses,
+          japanese: { dictionary },
+          english: el[1],
         };
 
         acc.push(v);
@@ -92,18 +72,6 @@ export async function sheets_sync_verbs(req, res) {
     }, []);
 
     console.log(verbs);
-
-    if (emptyId > -1) {
-      const err = new Error("Missing Id");
-      err.details = { error: "Missing Id", details: sheetData[emptyId] };
-      throw err;
-    }
-
-    if (duplicate) {
-      const err = new Error("Duplicate");
-      err.details = { error: "Duplicate", details: dupCheck[duplicate] };
-      throw err;
-    }
 
     admin.database().ref("lambda/verbs").set(verbs);
 
