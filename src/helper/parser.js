@@ -1,4 +1,5 @@
 import React from "react";
+import data from "../../data/hiragana.json";
 
 /**
  * @returns a boolean
@@ -199,4 +200,61 @@ export function buildHTMLElement(
   }
 
   return <div>{sentence}</div>;
+}
+
+/**
+ *
+ * @param {*} phrase
+ */
+export function kanjiWithFurigana(phrase) {
+  let japanesePhrase;
+  if (phrase.indexOf("\n") === -1) {
+    japanesePhrase = <div>{phrase}</div>;
+  } else {
+    try {
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        phrase
+      );
+      japanesePhrase = buildHTMLElement(
+        kanjis,
+        furiganas,
+        nonKanjis,
+        startsWHiragana
+      );
+    } catch (e) {
+      console.error(e);
+      japanesePhrase = (
+        <div style={{ color: "red" }}>
+          {phrase.split("\n").map((p) => (
+            <div>{p}</div>
+          ))}
+        </div>
+      );
+    }
+  }
+  return japanesePhrase;
+}
+
+export function getConsonantVowel(character) {
+  const hiragana = data.hiragana;
+  const xMax = Math.floor(hiragana[0].length);
+  const yMax = Math.floor(hiragana.length);
+  let iConsonant;
+  let iVowel;
+
+  for (let vowel = 0; vowel < xMax; vowel++) {
+    if (!iConsonant) {
+      for (let consonant = 0; consonant < yMax; consonant++) {
+        if (hiragana[consonant][vowel] === character) {
+          iConsonant = consonant;
+          iVowel = vowel;
+          break;
+        }
+      }
+    } else {
+      break;
+    }
+  }
+
+  return { iConsonant, iVowel };
 }

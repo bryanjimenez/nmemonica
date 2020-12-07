@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import classNames from "classnames";
 import { connect } from "react-redux";
 import { UnmuteIcon } from "@primer/octicons-react";
 import { getVerbs } from "../../actions/verbsAct";
@@ -6,6 +7,8 @@ import { getVerbs } from "../../actions/verbsAct";
 // import PropTypes from "prop-types";
 
 import "./Verbs.css";
+import { kanjiWithFurigana } from "../../helper/parser";
+import { masuForm, teForm } from "../../helper/verbForms";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -18,39 +21,28 @@ class Verbs extends Component {
 
     const query = this.props.location.search;
     // const toggle = new URLSearchParams(useLocation().search).toggle;
-    const toggle = query
-      ? query.split("?")[1].split("toggle=")[1].split("&")[0]
-      : "english";
+    // const toggle = query
+    //   ? query.split("?")[1].split("toggle=")[1].split("&")[0]
+    //   : "english";
 
     this.state = {
       selectedIndex: 0,
       selectedTense: 0,
-      toggle,
-      showToggle: false,
       showMeaning: false,
-      showRomaji: true,
+      showRomaji: false,
+      shownVerb: "",
+      shownForm: "",
     };
 
     this.props.getVerbs();
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
-    this.toggle = this.toggle.bind(this);
     this.setTense = this.setTense.bind(this);
+    this.buildTenseElement = this.buildTenseElement.bind(this);
   }
 
-  componentDidMount() {
-    let hint = {};
-    if (this.state.toggle === "english") {
-      hint = { showMeaning: false, showRomaji: true };
-    } else if (this.state.toggle === "romaji") {
-      hint = { showRomaji: false, showMeaning: true };
-    } else {
-      hint = { showMeaning: false, showRomaji: true };
-    }
-
-    this.setState(hint);
-  }
+  componentDidMount() {}
 
   componentDidUpdate() {
     // console.log("verbs.jsx");
@@ -62,9 +54,11 @@ class Verbs extends Component {
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: this.state.toggle === "romaji",
-      showRomaji: this.state.toggle === "english",
+      showMeaning: false,
+      showRomaji: false,
       selectedTense: 0,
+      shownVerb: "",
+      shownForm: "",
     });
   }
 
@@ -74,43 +68,64 @@ class Verbs extends Component {
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: this.state.toggle === "romaji",
-      showRomaji: this.state.toggle === "english",
+      showMeaning: false,
+      showRomaji: false,
       selectedTense: 0,
+      shownVerb: "",
+      shownForm: "",
     });
-  }
-
-  toggle() {
-    let hint = {};
-    if (this.state.toggle === "english") {
-      hint = {
-        showMeaning: !this.state.showToggle,
-        showToggle: !this.state.showToggle,
-      };
-    } else if (this.state.toggle === "romaji") {
-      hint = {
-        showRomaji: !this.state.showToggle,
-        showToggle: !this.state.showToggle,
-      };
-    }
-
-    this.setState(hint);
   }
 
   setTense(index) {
     this.setState({ selectedTense: index });
   }
 
+  buildTenseElement(tense) {
+    return tense.map((t, i) => {
+      const tenseClass = classNames({
+        clickable: true,
+        "font-weight-bold": this.state.shownForm === t.t,
+      });
+
+      return (
+        <div
+          className={tenseClass}
+          key={i}
+          onClick={() => {
+            this.setState({ shownVerb: t.j, shownForm: t.t });
+          }}
+        >
+          {this.state.shownForm === t.t ? t.t : "[" + t.t + "]"}
+        </div>
+      );
+    });
+  }
+
   render() {
-    // TODO: cleanup
     if (this.props.verbs.length < 1) return <div />;
 
     const v = this.props.verbs[this.state.selectedIndex];
-    const leftshift = v.tenses.length % 2 === 0 ? 0 : 1;
-    const splitIdx = Math.trunc(v.tenses.length / 2) + leftshift;
+    const tenses = [
+      { t: "te_form", j: teForm(v.japanese.dictionary) },
+      { t: "dictionary", j: v.japanese.dictionary },
+      { t: "masu", j: masuForm(v.japanese.dictionary) },
+    ];
 
-    const t1 = v.tenses.slice(0, splitIdx);
-    const t2 = v.tenses.slice(splitIdx, v.tenses.length);
+    const leftshift = tenses.length % 2 === 0 ? 0 : 1;
+    const splitIdx = Math.trunc(tenses.length / 2) + leftshift;
+
+    const t1 = tenses.slice(0, splitIdx);
+    const t2 = tenses.slice(splitIdx, tenses.length);
+
+    const romaji = ".";
+    const english = v.english;
+
+    let japanesePhrase;
+    if (this.state.shownVerb) {
+      japanesePhrase = kanjiWithFurigana(this.state.shownVerb);
+    } else {
+      japanesePhrase = kanjiWithFurigana(v.japanese.dictionary);
+    }
 
     return (
       <div className="verbs" style={{ height: "75%" }}>
@@ -127,27 +142,30 @@ class Verbs extends Component {
           </button>
 
           <div className="pt-3 d-flex flex-column justify-content-around">
-            {t1.map((t, idx) => (
-              <div
-                onClick={() => {
-                  this.setTense(idx);
-                }}
-              >
-                {t.t}
-              </div>
-            ))}
+            {this.buildTenseElement(t1)}
           </div>
-          <div
-            onClick={this.toggle}
-            className="pt-3 d-flex flex-column justify-content-around text-center"
-          >
-            <h1>{v.japanese}</h1>
-            <h2>
-              {this.state.showRomaji
-                ? v.tenses[this.state.selectedTense].romaji.plain_pos
-                : "-"}
+          <div className="pt-3 d-flex flex-column justify-content-around text-center">
+            <h1>{japanesePhrase}</h1>
+            <h2
+              className="clickable"
+              onClick={() => {
+                this.setState((state) => ({
+                  showRomaji: !state.showRomaji,
+                }));
+              }}
+            >
+              {this.state.showRomaji ? romaji : "[romaji]"}
             </h2>
-            <div>{this.state.showMeaning ? v.english : "-"}</div>
+            <div
+              className="clickable"
+              onClick={() => {
+                this.setState((state) => ({
+                  showMeaning: !state.showMeaning,
+                }));
+              }}
+            >
+              {this.state.showMeaning ? english : "[english]"}
+            </div>
             {
               // TODO: implement sound
             }
@@ -157,15 +175,7 @@ class Verbs extends Component {
           </div>
 
           <div className="pt-3 d-flex flex-column justify-content-around">
-            {t2.map((t, idx) => (
-              <div
-                onClick={() => {
-                  this.setTense(splitIdx + idx);
-                }}
-              >
-                {t.t}
-              </div>
-            ))}
+            {this.buildTenseElement(t2)}
           </div>
 
           <button
