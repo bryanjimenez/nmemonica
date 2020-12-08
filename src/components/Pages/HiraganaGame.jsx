@@ -5,10 +5,7 @@ import { getHiragana } from "../../actions/hiraganaAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPencilAlt,
-  faGlasses,
-} from "@fortawesome/free-solid-svg-icons";
+import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
 
 const HiraganaGameMeta = {
   location: "/hiragana/",
@@ -29,9 +26,7 @@ class HiraganaGame extends Component {
       reinforce: [], // list of recently wrong chosen hiragana used to reinforce
       correct: false,
 
-      // TODO: set difficulty on nav page
       practiceSide: false, //false=hiragana q shown (read), true=romaji q shown (write)
-      choiceN: 16,
     };
 
     this.gotoNext = this.gotoNext.bind(this);
@@ -124,7 +119,7 @@ class HiraganaGame extends Component {
     const vowels = this.props.vowels;
     const consonants = this.props.consonants;
 
-    while (choices.length < this.state.choiceN) {
+    while (choices.length < this.props.choiceN) {
       const min = 0;
       const max = Math.floor(gameOrder.length);
       const idx = Math.floor(Math.random() * (max - min) + min);
@@ -254,7 +249,7 @@ class HiraganaGame extends Component {
     const choices = this.state.choices;
     const answer = this.state.answer;
     const correct = this.state.correct;
-    const choiceN = this.state.choiceN;
+    const choiceN = this.props.choiceN;
 
     const visibility = this.state.wrongs.includes(index) ? undefined : "hidden";
     const color =
@@ -349,6 +344,7 @@ const mapStateToProps = (state) => {
     vowels: state.hiragana.vowels,
     consonants: state.hiragana.consonants,
     sounds: state.hiragana.sounds,
+    choiceN: state.settings.hiragana.choiceN,
   };
 };
 

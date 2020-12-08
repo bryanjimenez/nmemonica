@@ -17,6 +17,7 @@ import ParticlesGame, {
 import { initialize } from "./actions/firebase";
 
 import "./styles.css";
+import Settings, { SettingsMeta } from "./components/Pages/Settings";
 
 class App extends Component {
   constructor(props) {
@@ -41,6 +42,7 @@ class App extends Component {
               path={ParticlesGameMeta.location}
               component={ParticlesGame}
             />
+            <Route path={SettingsMeta.location} component={Settings} />
             <Route component={NotFound} />
           </Switch>
         </div>

@@ -5,12 +5,19 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAtom, faFont, faYinYang } from "@fortawesome/free-solid-svg-icons";
+import {
+  faAtom,
+  faFont,
+  faWrench,
+  faYinYang,
+} from "@fortawesome/free-solid-svg-icons";
 import { VerbsMeta } from "../Pages/Verbs";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { OppositesMeta } from "../Pages/Opposites";
 import { HiraganaGameMeta } from "../Pages/HiraganaGame";
 import { ParticlesGameMeta } from "../Pages/ParticlesGame";
+import { SettingsMeta } from "../Pages/Settings";
+
 import "./Navigation.css";
 
 class Navigation extends Component {
@@ -29,6 +36,10 @@ class Navigation extends Component {
       {
         meta: ParticlesGameMeta,
         icon: <FontAwesomeIcon icon={faAtom} size="2x" />,
+      },
+      {
+        meta: SettingsMeta,
+        icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
       },
     ];
 

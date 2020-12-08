@@ -4,6 +4,7 @@ import phrasesReducer from "./phrasesRed";
 import oppositesReducer from "./oppositesRed";
 import hiraganaReducer from "./hiraganaRed";
 import particlesReducer from "./particlesRed";
+import settingsReducer from "./settingsRed";
 
 const rootReducer = combineReducers({
   verbs: verbsReducer,
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
   opposites: oppositesReducer,
   hiragana: hiraganaReducer,
   particles: particlesReducer,
+  settings: settingsReducer,
 });
 
 export default rootReducer;
