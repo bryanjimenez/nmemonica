@@ -9,6 +9,7 @@ import { getVerbs } from "../../actions/verbsAct";
 import "./Verbs.css";
 import { kanjiWithFurigana } from "../../helper/parser";
 import { masuForm, taForm, teForm } from "../../helper/verbForms";
+import { shuffleArray } from "../../helper/arrayHelper";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -19,15 +20,8 @@ class Verbs extends Component {
   constructor(props) {
     super(props);
 
-    const query = this.props.location.search;
-    // const toggle = new URLSearchParams(useLocation().search).toggle;
-    // const toggle = query
-    //   ? query.split("?")[1].split("toggle=")[1].split("&")[0]
-    //   : "english";
-
     this.state = {
       selectedIndex: 0,
-      selectedTense: 0,
       showMeaning: false,
       showRomaji: false,
       shownVerb: "",
@@ -38,15 +32,38 @@ class Verbs extends Component {
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
-    this.setTense = this.setTense.bind(this);
     this.buildTenseElement = this.buildTenseElement.bind(this);
+    this.setVerbsOrder = this.setVerbsOrder.bind(this);
   }
 
   componentDidMount() {}
 
-  componentDidUpdate() {
-    // console.log("verbs.jsx");
-    // console.log(this.state);
+  componentWillMount() {
+    if (this.props.verbs && this.props.verbs.length > 0) {
+      // page navigation after initial mount
+      // data retrival done, set up game
+      this.setVerbsOrder();
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      this.props.verbs.length != prevProps.verbs.length ||
+      this.props.isOrdered != prevProps.isOrdered
+    ) {
+      // console.log("got game data");
+      this.setVerbsOrder();
+    }
+  }
+
+  setVerbsOrder() {
+    let newOrder = [];
+    this.props.verbs.forEach((v, i) => newOrder.push(i));
+    if (!this.props.isOrdered) {
+      shuffleArray(newOrder);
+    }
+
+    this.setState({ order: newOrder });
   }
 
   gotoNext() {
@@ -56,7 +73,6 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      selectedTense: 0,
       shownVerb: "",
       shownForm: "",
     });
@@ -70,14 +86,9 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      selectedTense: 0,
       shownVerb: "",
       shownForm: "",
     });
-  }
-
-  setTense(index) {
-    this.setState({ selectedTense: index });
   }
 
   buildTenseElement(tense) {
@@ -104,7 +115,14 @@ class Verbs extends Component {
   render() {
     if (this.props.verbs.length < 1) return <div />;
 
-    const v = this.props.verbs[this.state.selectedIndex];
+    let v;
+    if (this.state.order) {
+      const index = this.state.order[this.state.selectedIndex];
+      v = this.props.verbs[index];
+    } else {
+      v = this.props.verbs[this.state.selectedIndex];
+    }
+
     const tenses = [
       { t: "dictionary", j: v.japanese.dictionary },
       { t: "masu", j: masuForm(v.japanese.dictionary) },
@@ -193,7 +211,7 @@ class Verbs extends Component {
 }
 
 const mapStateToProps = (state) => {
-  return { verbs: state.verbs.value };
+  return { verbs: state.verbs.value, isOrdered: state.settings.verbs.ordered };
 };
 
 export default connect(mapStateToProps, { getVerbs })(Verbs);

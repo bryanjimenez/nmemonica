@@ -6,8 +6,7 @@ flash cards
 - [ ] add tenses in verbs page
 - [ ] fix static/sample data
 - [ ] hiragana give up/skip and reinforce
-- [ ] settings page
-
+- [ ] login
 
 ## Thanks
  - http://www.japaneseverbconjugator.com/
