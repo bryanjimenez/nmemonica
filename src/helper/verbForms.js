@@ -102,14 +102,50 @@ export function dictionaryVerbClass(verb) {
   }
 }
 
-// TODO: da/desu
+const taRule = {
+  g1: {
+    u_tsu_ru: "った",
+    mu_nu_bu: "んだ",
+    ku: "いた",
+    gu: "いだ",
+    su: "した",
+    iku: "いった\n行った",
+  },
+  g2: { ru: "た" },
+  g3: { suru: "した", kuru: "きた\n来た" },
+};
+const teRule = {
+  g1: {
+    u_tsu_ru: "って",
+    mu_nu_bu: "んで",
+    ku: "いて",
+    gu: "いで",
+    su: "して",
+    iku: "いって\n行って",
+  },
+  g2: { ru: "て" },
+  g3: { suru: "して", kuru: "きて\n来て" },
+};
+
+/**
+ * @returns the ta form of a verb
+ * @param {*} dictionaryForm verb in dictionary form
+ */
+export function taForm(dictionaryForm) {
+  return t_Form(dictionaryForm, taRule);
+}
 /**
  * @returns the te form of a verb
  * @param {*} dictionaryForm verb in dictionary form
  */
 export function teForm(dictionaryForm) {
+  return t_Form(dictionaryForm, teRule);
+}
+
+// TODO: da/desu
+function t_Form(dictionaryForm, rule) {
   const type = dictionaryVerbClass(dictionaryForm);
-  let teCon;
+  let t_Con;
   let verb = dictionaryForm;
   let hiragana;
   let furigana = dictionaryForm.indexOf("\n") > -1 ? true : false;
@@ -125,64 +161,63 @@ export function teForm(dictionaryForm) {
 
   if (type === 1) {
     if (verb === "行く" || verb === "いく") {
-      return "いって" + "\n" + "行って";
+      return rule.g1.iku;
     }
 
     switch (lastCharacter) {
       case "う":
       case "つ":
       case "る":
-        ending = "って";
+        ending = rule.g1.u_tsu_ru;
         break;
       case "く":
-        ending = "いて";
+        ending = rule.g1.ku;
         break;
       case "ぐ":
-        ending = "いで";
+        ending = rule.g1.gu;
         break;
       case "ぬ":
       case "ぶ":
       case "む":
-        ending = "んで";
+        ending = rule.g1.mu_nu_bu;
         break;
       case "す":
-        ending = "して";
+        ending = rule.g1.su;
         break;
     }
 
     if (furigana) {
-      teCon =
+      t_Con =
         hiragana.substr(0, hiragana.length - 1) +
         ending +
         "\n" +
         verb.substr(0, verb.length - 1) +
         ending;
     } else {
-      teCon = verb.substr(0, verb.length - 1) + ending;
+      t_Con = verb.substr(0, verb.length - 1) + ending;
     }
   } else if (type === 2) {
-    ending = "て";
+    ending = rule.g2.ru;
     if (furigana) {
-      teCon =
+      t_Con =
         hiragana.substr(0, hiragana.length - 1) +
         ending +
         "\n" +
         verb.substr(0, verb.length - 1) +
         ending;
     } else {
-      teCon = verb.substr(0, verb.length - 1) + ending;
+      t_Con = verb.substr(0, verb.length - 1) + ending;
     }
   } else if (type === 3) {
     if (verb === "来る" || verb === "くる") {
-      return "きて" + "\n" + "来て";
+      t_Con = rule.g3.kuru;
     } else if (verb === "する") {
-      return "して";
+      t_Con = rule.g3.suru;
     }
-
-    return "irregular";
+    return t_Con;
   } else {
     throw "missing class/type";
   }
 
-  return teCon;
+  return t_Con;
 }
