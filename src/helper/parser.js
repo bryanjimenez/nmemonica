@@ -112,7 +112,7 @@ export function furiganaParse(phrases) {
   let nword = "";
   let prevWasKanji = false;
 
-  orthography.split("").map((thisChar) => {
+  orthography.split("").forEach((thisChar, i) => {
     if (isHiragana(thisChar)) {
       //hiragana
       if (prevWasKanji) {
@@ -148,9 +148,18 @@ export function furiganaParse(phrases) {
         nonKanjis.push(nword);
         nword = "";
       }
+
+      if (orthography.length - i === 1) {
+        // (this) last character is a kanji
+        fword += pronunciation.substr(start);
+        furiganas.push(fword);
+        kanjis.push(kword);
+      }
     }
   });
-  nonKanjis.push(nword);
+  if (nword !== "") {
+    nonKanjis.push(nword);
+  }
 
   // console.log(furiganas);
   // console.log(kanjis);

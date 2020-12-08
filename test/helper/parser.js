@@ -1,13 +1,11 @@
 import { expect } from "chai";
-import { configure, shallow, render } from "enzyme";
+import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
 import {
   furiganaParse,
   buildHTMLElement,
   isHiragana,
 } from "../../src/helper/parser";
-
-import { masuForm, dictionaryVerbClass } from "../../src/helper/verbForms";
 
 configure({ adapter: new Adapter() });
 
@@ -38,6 +36,24 @@ describe("parser", function () {
     it.skip("starting kanji ending hiragana", function () {});
     it.skip("starting hiragana ending kanji", function () {});
     it.skip("starting and ending with kanji", function () {});
+    it("one kanji", function () {
+      const expectedKanjis = ["氷"];
+      const expectedFuriganas = ["こおり"];
+      const expectedNonKanjis = [];
+      const expectedStartsWHiragana = false;
+
+      const phrase = "こおり\n氷";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        phrase
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
     it("starting and ending with hiragana", function () {
       const expectedKanjis = ["会計", "願"];
       const expectedFuriganas = ["かいけい", "ねが"];

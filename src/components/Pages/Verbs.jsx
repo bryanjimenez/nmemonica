@@ -8,7 +8,7 @@ import { getVerbs } from "../../actions/verbsAct";
 
 import "./Verbs.css";
 import { kanjiWithFurigana } from "../../helper/parser";
-import { masuForm, teForm } from "../../helper/verbForms";
+import { masuForm, taForm, teForm } from "../../helper/verbForms";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -106,9 +106,10 @@ class Verbs extends Component {
 
     const v = this.props.verbs[this.state.selectedIndex];
     const tenses = [
-      { t: "te_form", j: teForm(v.japanese.dictionary) },
       { t: "dictionary", j: v.japanese.dictionary },
       { t: "masu", j: masuForm(v.japanese.dictionary) },
+      { t: "te_form", j: teForm(v.japanese.dictionary) },
+      { t: "ta_form", j: taForm(v.japanese.dictionary) },
     ];
 
     const leftshift = tenses.length % 2 === 0 ? 0 : 1;

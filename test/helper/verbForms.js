@@ -3,10 +3,21 @@ import {
   masuForm,
   dictionaryVerbClass,
   teForm,
+  taForm,
 } from "../../src/helper/verbForms";
 
 describe("verbForms", function () {
   describe("masuForm", function () {
+    it("irregular", function () {
+      const verb = ["する", "くる\n来る"];
+      const expected = ["します", "きます\n来ます"];
+
+      verb.forEach((v, i) => {
+        const actual = masuForm(v);
+        expect(actual).to.eq(expected[i]);
+      });
+    });
+
     it("ru-verb", function () {
       const verb = [
         // "見る",
@@ -28,19 +39,10 @@ describe("verbForms", function () {
         expect(actual).to.eq(expected[i]);
       });
     });
+
     it("u-verb", function () {
       const verb = ["読む", "いく\n行く", "きく\n聞く"];
       const expected = ["読みます", "いきます\n行きます", "ききます\n聞きます"];
-
-      verb.forEach((v, i) => {
-        const actual = masuForm(v);
-        expect(actual).to.eq(expected[i]);
-      });
-    });
-
-    it("irregular", function () {
-      const verb = ["する", "くる\n来る"];
-      const expected = ["します", "きます\n来ます"];
 
       verb.forEach((v, i) => {
         const actual = masuForm(v);
@@ -51,29 +53,31 @@ describe("verbForms", function () {
 
   describe("dictionaryVerbClass", function () {
     it("irregular", function () {
-      const verb = ["する", "くる\n来る"];
+      const verbs = ["する", "くる\n来る"];
 
-      verb.forEach((v, i) => {
+      verbs.forEach((v) => {
         const actual = dictionaryVerbClass(v);
         expect(actual).to.eq(3);
       });
     });
-    it("godan", function () {
-      // non eru/iru verbs
-      const verb = ["つくる\n作る", "いく\n行く"];
 
-      verb.forEach((v, i) => {
-        const actual = dictionaryVerbClass(v);
-        expect(actual).to.eq(1);
-      });
-    });
     it("ichidan", function () {
       // eru/iru verbs
-      const verb = ["くれる\n呉れる", "みる\n見る", "わすれる\n忘れる"];
+      const verbs = ["くれる\n呉れる", "みる\n見る", "わすれる\n忘れる"];
 
-      verb.forEach((v, i) => {
+      verbs.forEach((v) => {
         const actual = dictionaryVerbClass(v);
         expect(actual, v).to.eq(2);
+      });
+    });
+
+    it("godan", function () {
+      // non eru/iru verbs
+      const verbs = ["つくる\n作る", "いく\n行く"];
+
+      verbs.forEach((v) => {
+        const actual = dictionaryVerbClass(v);
+        expect(actual).to.eq(1);
       });
     });
   });
@@ -82,8 +86,26 @@ describe("verbForms", function () {
       const verbs = ["だ"];
       const expected = ["で"];
 
-      verbs.forEach((inp, i) => {
-        expect(teForm(inp)).to.eq(expected[i]);
+      verbs.forEach((v, i) => {
+        expect(teForm(v)).to.eq(expected[i]);
+      });
+    });
+
+    it("irregular", function () {
+      const verbs = ["する", "くる\n来る"];
+      const expected = ["して", "きて\n来て"];
+
+      verbs.forEach((v, i) => {
+        expect(teForm(v)).to.eq(expected[i]);
+      });
+    });
+
+    it("ichidan", function () {
+      const verbs = ["食べる", "起きる", "閉じる"];
+      const expected = ["食べて", "起きて", "閉じて"];
+
+      verbs.forEach((v, i) => {
+        expect(teForm(v)).to.eq(expected[i]);
       });
     });
 
@@ -108,20 +130,33 @@ describe("verbForms", function () {
         "遊んで",
         "休んで",
       ];
-      //会う　→　会って
-      //立つ　→　立って
-      //変わる　→　変わって
-      //書く　→　書いて
-      //泳ぐ　→　泳いで
-      //死ぬ　→　死んで
-      //遊ぶ　→　遊んで
-      //休む　→　休んで
-      verbs.forEach((inp, i) => {
-        expect(teForm(inp)).to.eq(expected[i]);
+
+      verbs.forEach((v, i) => {
+        expect(teForm(v)).to.eq(expected[i]);
       });
     });
+  });
+  describe("taForm", function () {
+    it("irregular", function () {
+      const verbs = ["する", "くる\n来る"];
+      const expected = ["した", "きた\n来た"];
+
+      verbs.forEach((v, i) => {
+        expect(taForm(v)).to.eq(expected[i]);
+      });
+    });
+
+    it("ichidan", function () {
+      const verbs = ["食べる", "起きる", "閉じる"];
+      const expected = ["食べた", "起きた", "閉じた"];
+
+      verbs.forEach((v, i) => {
+        expect(taForm(v)).to.eq(expected[i]);
+      });
+    });
+
     it("godan", function () {
-      const input = [
+      const verbs = [
         "会う",
         "立つ",
         "変わる",
@@ -132,36 +167,18 @@ describe("verbForms", function () {
         "休む",
       ];
       const expected = [
-        "会って",
-        "立って",
-        "変わって",
-        "書いて",
-        "泳いで",
-        "死んで",
-        "遊んで",
-        "休んで",
+        "会った",
+        "立った",
+        "変わった",
+        "書いた",
+        "泳いだ",
+        "死んだ",
+        "遊んだ",
+        "休んだ",
       ];
-      //会う　→　会って
-      //立つ　→　立って
-      //変わる　→　変わって
-      //書く　→　書いて
-      //泳ぐ　→　泳いで
-      //死ぬ　→　死んで
-      //遊ぶ　→　遊んで
-      //休む　→　休んで
-      input.forEach((inp, i) => {
-        expect(teForm(inp, "godan")).to.eq(expected[i]);
-      });
-    });
 
-    it("ichidan", function () {
-      const input = ["食べる", "起きる", "閉じる"];
-      const expected = ["食べて", "起きて", "閉じて"];
-      // 食べる　→　食べて
-      // 起きる　→　起きて
-      // 閉じる　→　閉じて
-      input.forEach((inp, i) => {
-        expect(teForm(inp, "ichidan")).to.eq(expected[i]);
+      verbs.forEach((v, i) => {
+        expect(taForm(v)).to.eq(expected[i]);
       });
     });
   });
