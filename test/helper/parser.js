@@ -35,7 +35,26 @@ describe("parser", function () {
     it.skip("non matching input should throw", function () {});
     it.skip("starting kanji ending hiragana", function () {});
     it.skip("starting hiragana ending kanji", function () {});
-    it.skip("starting and ending with kanji", function () {});
+
+    it("starts and ends in kanji", function () {
+      const expectedKanjis = ["早起", "三文", "得"];
+      const expectedFuriganas = ["はやお", "さんもん", "とく"];
+      const expectedNonKanjis = ["きは", "の"];
+      const expectedStartsWHiragana = false;
+
+      const phrase = "はやおきはさんもんのとく\n早起きは三文の得";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        phrase
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
+
     it("one kanji", function () {
       const expectedKanjis = ["氷"];
       const expectedFuriganas = ["こおり"];
