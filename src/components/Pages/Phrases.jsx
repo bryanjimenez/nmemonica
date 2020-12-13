@@ -5,6 +5,10 @@ import { UnmuteIcon, MuteIcon } from "@primer/octicons-react";
 import { getPhrases } from "../../actions/phrasesAct";
 import { gStorageAudioPath } from "../../constants/paths";
 import { kanjiWithFurigana } from "../../helper/parser";
+import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { flipPhrasesPracticeSide } from "../../actions/settingsAct";
+import { shuffleArray } from "../../helper/arrayHelper";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -25,13 +29,37 @@ class Phrases extends Component {
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
+    this.setOrder = this.setOrder.bind(this);
+  }
+
+  componentWillMount() {
+    if (this.props.phrases && this.props.phrases.length > 0) {
+      // page navigation after initial mount
+      // data retrival done, set up game
+      this.setOrder();
+    }
   }
 
   componentDidMount() {}
 
-  componentDidUpdate() {
-    // console.log("phrases.jsx");
-    // console.log(this.state);
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      this.props.phrases.length != prevProps.phrases.length ||
+      this.props.isOrdered != prevProps.isOrdered
+    ) {
+      // console.log("got game data");
+      this.setOrder();
+    }
+  }
+
+  setOrder() {
+    let newOrder = [];
+    this.props.phrases.forEach((v, i) => newOrder.push(i));
+    if (!this.props.isOrdered) {
+      shuffleArray(newOrder);
+    }
+
+    this.setState({ order: newOrder });
   }
 
   gotoNext() {
@@ -56,12 +84,29 @@ class Phrases extends Component {
   }
 
   render() {
-    // TODO: cleanup
-    if (!this.props.phrases || this.props.phrases.length < 1) return <div />;
+    if (this.props.phrases.length < 1) return <div />;
 
-    const phrase = this.props.phrases[this.state.selectedIndex];
+    let phrase;
+    if (this.state.order) {
+      const index = this.state.order[this.state.selectedIndex];
+      phrase = this.props.phrases[index];
+    } else {
+      phrase = this.props.phrases[this.state.selectedIndex];
+    }
 
     let japanesePhrase = kanjiWithFurigana(phrase.japanese);
+    let englishPhrase = phrase.english;
+
+    let shownSide, hiddenSide, hiddenCaption;
+    if (this.props.practiceSide) {
+      shownSide = englishPhrase;
+      hiddenSide = japanesePhrase;
+      hiddenCaption = "[Japanese]";
+    } else {
+      shownSide = japanesePhrase;
+      hiddenSide = englishPhrase;
+      hiddenCaption = "[English]";
+    }
 
     return (
       <div className="phrases" style={{ height: "75%" }}>
@@ -77,23 +122,15 @@ class Phrases extends Component {
             prev
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            <h1>{japanesePhrase}</h1>
+            <h1>{shownSide}</h1>
             <h2
-              onClick={() => {
-                this.setState((state) => ({ showRomaji: !state.showRomaji }));
-              }}
-              className="clickable"
-            >
-              {this.state.showRomaji ? phrase.romaji : "[romaji]"}
-            </h2>
-            <div
               onClick={() => {
                 this.setState((state) => ({ showMeaning: !state.showMeaning }));
               }}
               className="clickable"
             >
-              {this.state.showMeaning ? phrase.english : "[english]"}
-            </div>
+              {this.state.showMeaning ? hiddenSide : hiddenCaption}
+            </h2>
             {phrase.uid ? (
               <div
                 className="d-flex justify-content-center clickable"
@@ -123,15 +160,30 @@ class Phrases extends Component {
             next
           </button>
         </div>
+        <div
+          className="clickable mt-2 ml-3"
+          onClick={this.props.flipPhrasesPracticeSide}
+        >
+          <FontAwesomeIcon
+            icon={this.props.practiceSide ? faGlasses : faPencilAlt}
+          />
+        </div>
       </div>
     );
   }
 }
 
 const mapStateToProps = (state) => {
-  return { phrases: state.phrases.value };
+  return {
+    phrases: state.phrases.value,
+    practiceSide: state.settings.phrases.practiceSide,
+    isOrdered: state.settings.phrases.ordered,
+  };
 };
 
-export default connect(mapStateToProps, { getPhrases })(Phrases);
+export default connect(mapStateToProps, {
+  getPhrases,
+  flipPhrasesPracticeSide,
+})(Phrases);
 
 export { PhrasesMeta };
