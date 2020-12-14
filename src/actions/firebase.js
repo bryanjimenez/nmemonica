@@ -1,13 +1,11 @@
 import firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/database";
-import axios from "axios";
-import {
-  firebaseConfig,
-  // inventoryEndPoint,
-} from "../../environment.development";
+import { firebaseConfig } from "../../environment.development";
 
-export const FIREBASE_GET_INVENTORY = "firebase_get_inventory";
+export const FIREBASE_LOGIN = "firebase_login";
+export const FIREBASE_LOGOUT = "firebase_logout";
+export const GET_USER_SETTINGS = "get_user_settings";
 
 export function initialize() {
   return () => {
@@ -20,34 +18,43 @@ export function initialize() {
   };
 }
 
-export function pushAppointment() {
+export function logout() {
   return (dispatch) => {
-    return firebase
-      .database()
-      .ref("test")
-      .push({ test: "test" })
+    firebase
+      .auth()
+      .signOut()
       .then(() => {
         dispatch({
-          type: "TEST_OP_START",
-        });
-      })
-      .catch(() => {
-        dispatch({
-          type: "TEST_OP_FAILED",
+          type: FIREBASE_LOGOUT,
         });
       });
   };
 }
 
-/*
-export function getInventory() {
+export function authenticated(value) {
   return (dispatch) => {
-    return axios.get(inventoryEndPoint).then((res) => {
-      dispatch({
-        type: FIREBASE_GET_INVENTORY,
-        value: res.data,
-      });
+    dispatch({
+      type: FIREBASE_LOGIN,
+      value,
     });
   };
 }
-*/
+
+export function getUserSettings() {
+  // TODO: no settings?
+  const user = firebase.auth().currentUser;
+  const ref = "user/" + user.uid;
+
+  return (dispatch) => {
+    return firebase
+      .database()
+      .ref(ref)
+      .once("value")
+      .then((snapshot) => {
+        dispatch({
+          type: GET_USER_SETTINGS,
+          value: snapshot.val(),
+        });
+      });
+  };
+}
