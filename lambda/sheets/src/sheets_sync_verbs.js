@@ -39,20 +39,12 @@ export async function sheets_sync_verbs(req, res) {
       });
     });
 
-    const dupCheck = {};
-    let duplicate = "";
     let emptyId = -1;
     let sheetHeaders = [];
 
     const verbs = sheetData.reduce((acc, el, i) => {
       if (el[0] === "") {
         emptyId = i;
-      }
-
-      if (dupCheck[el[0]]) {
-        duplicate = el[0];
-      } else {
-        dupCheck[el[0]] = { japanese: el[0], english: el[2] };
       }
 
       if (i > 0) {
@@ -70,8 +62,6 @@ export async function sheets_sync_verbs(req, res) {
 
       return acc;
     }, []);
-
-    console.log(verbs);
 
     admin.database().ref("lambda/verbs").set(verbs);
 

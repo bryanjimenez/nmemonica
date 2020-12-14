@@ -1,7 +1,12 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import classNames from "classnames";
-import { setHiraganaBtnN, setVerbsOrdering } from "../../actions/settingsAct";
+import {
+  flipPhrasesPracticeSide,
+  setHiraganaBtnN,
+  setVerbsOrdering,
+  setPhrasesOrdering,
+} from "../../actions/settingsAct";
 import NumberField from "../Form/NumberField";
 import Toggle from "../Form/Toggle";
 
@@ -39,6 +44,24 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <h2>Phrases</h2>
+            <div className="mb-2">
+              <Toggle
+                active={this.props.phraseOrder}
+                action={this.props.setPhrasesOrdering}
+                statusText="List"
+                activeText="Ordered"
+                inactiveText="Random"
+              />
+            </div>
+            <div>
+              <Toggle
+                active={this.props.phraseSide}
+                action={this.props.flipPhrasesPracticeSide}
+                statusText="Side"
+                activeText="English"
+                inactiveText="Japanese"
+              />
+            </div>
           </div>
           <div className={pageClassName}>
             <h2>Opposites</h2>
@@ -66,11 +89,16 @@ const mapStateToProps = (state) => {
   return {
     choiceN: state.settings.hiragana.choiceN,
     verbOrder: state.settings.verbs.ordered,
+    phraseOrder: state.settings.phrases.ordered,
+    phraseSide: state.settings.phrases.practiceSide,
   };
 };
 
-export default connect(mapStateToProps, { setHiraganaBtnN, setVerbsOrdering })(
-  Settings
-);
+export default connect(mapStateToProps, {
+  setHiraganaBtnN,
+  setVerbsOrdering,
+  flipPhrasesPracticeSide,
+  setPhrasesOrdering,
+})(Settings);
 
 export { SettingsMeta };
