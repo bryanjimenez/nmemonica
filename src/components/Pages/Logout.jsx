@@ -18,7 +18,7 @@ class Logout extends Component {
     this.props.logout();
   }
 
-  componentWillMount() {}
+  UNSAFE_componentWillMount() {}
 
   componentDidMount() {}
 

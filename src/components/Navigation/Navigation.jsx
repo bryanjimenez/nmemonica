@@ -96,8 +96,8 @@ class Navigation extends Component {
                 {/* <div className="dropdown-divider" /> */}
 
                 <div className="shortcuts mt-2">
-                  {shortcuts.map((l) => (
-                    <div className="shortcut-item">
+                  {shortcuts.map((l, i) => (
+                    <div key={i} className="shortcut-item">
                       <Link to={l.meta.location}>
                         <div>
                           {l.icon}
@@ -110,8 +110,8 @@ class Navigation extends Component {
                 {/* <div className="dropdown-divider" /> */}
               </li>
 
-              {shortcuts.map((s) => (
-                <li className="nav-item d-none d-lg-block">
+              {shortcuts.map((s, i) => (
+                <li key={i} className="nav-item d-none d-lg-block">
                   <Link className="nav-link" to={s.meta.location}>
                     {s.meta.label}
                   </Link>
