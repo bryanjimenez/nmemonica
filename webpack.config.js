@@ -22,9 +22,11 @@ const appNodeModules = resolveApp("node_modules");
 const appSrc = resolveApp("src");
 const publicUrlOrPath = require(resolveApp("package.json")).homepage;
 
-module.exports = function (webpackEnv) {
+module.exports = function (webpackEnv, argv) {
   const isEnvDevelopment = webpackEnv === "development";
   const isEnvProduction = webpackEnv === "production";
+
+  const envFile = /^(.*\.)(development|production)(\.js|\.json|)$/;
 
   return {
     module: {
@@ -144,6 +146,17 @@ module.exports = function (webpackEnv) {
       // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
       // You can remove this if you don't use Moment.js:
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+
+      new webpack.NormalModuleReplacementPlugin(envFile, function (res) {
+        // https://webpack.js.org/plugins/normal-module-replacement-plugin/
+        // https://webpack.js.org/guides/environment-variables/#root
+        // webpack-dev-server has requests that need to be excluded
+
+        if (res.context.indexOf("node_modules") === -1) {
+          const match = new RegExp(envFile).exec(res.request);
+          res.request = match[1] + argv.mode + match[3];
+        }
+      }),
     ].filter(Boolean),
 
     performance: false,
