@@ -8,6 +8,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAtom,
   faFont,
+  faSignInAlt,
+  faSignOutAlt,
   faWrench,
   faYinYang,
 } from "@fortawesome/free-solid-svg-icons";
@@ -17,12 +19,14 @@ import { OppositesMeta } from "../Pages/Opposites";
 import { HiraganaGameMeta } from "../Pages/HiraganaGame";
 import { ParticlesGameMeta } from "../Pages/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
+import { OAuthLoginMeta } from "../Pages/OAuthLogin";
+import { LogoutMeta } from "../Pages/Logout";
 
 import "./Navigation.css";
 
 class Navigation extends Component {
   render() {
-    const shortcuts = [
+    let shortcuts = [
       { meta: VerbsMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
       { meta: PhrasesMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
       {
@@ -42,6 +46,18 @@ class Navigation extends Component {
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
       },
     ];
+
+    if (this.props.user) {
+      shortcuts.push({
+        meta: LogoutMeta,
+        icon: <FontAwesomeIcon icon={faSignOutAlt} size="2x" />,
+      });
+    } else {
+      shortcuts.push({
+        meta: OAuthLoginMeta,
+        icon: <FontAwesomeIcon icon={faSignInAlt} size="2x" />,
+      });
+    }
 
     return (
       <div className="navigation">
@@ -109,15 +125,10 @@ class Navigation extends Component {
   }
 }
 
-Navigation.propTypes = {
-  phone: PropTypes.string,
-  gmaps: PropTypes.string,
-};
+Navigation.propTypes = {};
 
 const mapStateToProps = (state) => {
-  // let { phone, gmaps } = state.contact;
-
-  return { phone: "", gmaps: "" };
+  return { user: state.login.user };
 };
 
 export default connect(mapStateToProps, {})(Navigation);

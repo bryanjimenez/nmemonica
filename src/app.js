@@ -14,10 +14,11 @@ import HiraganaGame, {
 import ParticlesGame, {
   ParticlesGameMeta,
 } from "./components/Pages/ParticlesGame";
-import { initialize } from "./actions/firebase";
-
-import "./styles.css";
 import Settings, { SettingsMeta } from "./components/Pages/Settings";
+import Logout, { LogoutMeta } from "./components/Pages/Logout";
+import OAuthLogin, { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
+import { initialize } from "./actions/firebase";
+import "./styles.css";
 
 class App extends Component {
   constructor(props) {
@@ -43,6 +44,8 @@ class App extends Component {
               component={ParticlesGame}
             />
             <Route path={SettingsMeta.location} component={Settings} />
+            <Route path={OAuthLoginMeta.location} component={OAuthLogin} />
+            <Route path={LogoutMeta.location} component={Logout} />
             <Route component={NotFound} />
           </Switch>
         </div>
