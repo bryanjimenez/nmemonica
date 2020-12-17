@@ -44,7 +44,7 @@ class HiraganaGame extends Component {
     }
   }
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     // page navigation after initialcenter
     // data retrival done, set up game
     if (this.props.hiragana && this.props.hiragana.length > 0) {
@@ -259,6 +259,7 @@ class HiraganaGame extends Component {
 
     return (
       <div
+        key={index}
         onClick={() => {
           this.checkAnswer(choices[index]);
         }}
