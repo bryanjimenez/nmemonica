@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getOpposites } from "../../actions/oppositesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 
@@ -197,7 +197,7 @@ class Opposites extends Component {
     // console.log(choices);
 
     return (
-      <div className="opposites" style={{ height: "75%" }}>
+      <div className="opposites main-panel">
         <div
           className="d-flex justify-content-between"
           style={{ height: "100%" }}
@@ -207,7 +207,7 @@ class Opposites extends Component {
             className="btn btn-orange"
             onClick={this.gotoPrev}
           >
-            prev
+            <ChevronLeftIcon size={16} />
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
             <h1 onClick={this.toggleHint} className="clickable">
@@ -275,7 +275,7 @@ class Opposites extends Component {
             className="btn btn-orange"
             onClick={this.gotoNext}
           >
-            next
+            <ChevronRightIcon size={16} />
           </button>
         </div>
       </div>

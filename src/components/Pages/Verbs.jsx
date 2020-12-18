@@ -1,12 +1,15 @@
 import React, { Component } from "react";
 import classNames from "classnames";
 import { connect } from "react-redux";
-import { UnmuteIcon } from "@primer/octicons-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  UnmuteIcon,
+} from "@primer/octicons-react";
 import { getVerbs } from "../../actions/verbsAct";
 
 // import PropTypes from "prop-types";
 
-import "./Verbs.css";
 import { kanjiWithFurigana } from "../../helper/parser";
 import { masuForm, taForm, teForm } from "../../helper/verbForms";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -147,7 +150,7 @@ class Verbs extends Component {
     }
 
     return (
-      <div className="verbs" style={{ height: "75%" }}>
+      <div className="verbs main-panel">
         <div
           className="d-flex justify-content-between"
           style={{ height: "100%" }}
@@ -157,7 +160,7 @@ class Verbs extends Component {
             className="btn btn-primary"
             onClick={this.gotoPrev}
           >
-            prev
+            <ChevronLeftIcon size={16} />
           </button>
 
           <div className="pt-3 d-flex flex-column justify-content-around">
@@ -202,7 +205,7 @@ class Verbs extends Component {
             className="btn btn-primary"
             onClick={this.gotoNext}
           >
-            next
+            <ChevronRightIcon size={16} />
           </button>
         </div>
       </div>

@@ -76,7 +76,7 @@ class OAuthLogin extends Component {
       content = <Redirect to="/" />;
     } else {
       content = (
-        <div className="userPage">
+        <div className="userPage mt-5 pt-3">
           <StyledFirebaseAuth
             uiConfig={this.uiConfig()}
             firebaseAuth={firebase.auth()}

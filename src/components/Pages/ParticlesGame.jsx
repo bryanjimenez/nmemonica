@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getParticles, getSuffixes } from "../../actions/particlesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 
@@ -264,7 +264,7 @@ class ParticlesGame extends Component {
     // console.log(choices);
 
     return (
-      <div className="particles" style={{ height: "75%" }}>
+      <div className="particles main-panel">
         <div
           className="d-flex justify-content-between"
           style={{ height: "100%" }}
@@ -274,7 +274,7 @@ class ParticlesGame extends Component {
             className="btn btn-warning"
             onClick={this.gotoPrev}
           >
-            prev
+            <ChevronLeftIcon size={16} />
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
             <h1 onClick={this.toggleHint} className="clickable">
@@ -340,7 +340,7 @@ class ParticlesGame extends Component {
             className="btn btn-warning"
             onClick={this.gotoNext}
           >
-            next
+            <ChevronRightIcon size={16} />
           </button>
         </div>
       </div>

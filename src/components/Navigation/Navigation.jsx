@@ -93,11 +93,13 @@ class Navigation extends Component {
               data-target=".navbar-collapse.show"
             >
               <li className="nav-item d-lg-none">
-                {/* <div className="dropdown-divider" /> */}
-
-                <div className="shortcuts mt-2">
+                <div className="shortcuts w-100 d-flex flex-wrap p-4">
                   {shortcuts.map((l, i) => (
-                    <div key={i} className="shortcut-item">
+                    <div
+                      key={i}
+                      className="shortcut-item text-center m-3"
+                      style={{ width: "25%" }}
+                    >
                       <Link to={l.meta.location}>
                         <div>
                           {l.icon}

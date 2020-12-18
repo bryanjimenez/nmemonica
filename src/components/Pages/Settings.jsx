@@ -10,6 +10,8 @@ import {
 import NumberField from "../Form/NumberField";
 import Toggle from "../Form/Toggle";
 
+import "./Settings.css";
+
 const SettingsMeta = {
   location: "/settings/",
   label: "Settings",
@@ -34,33 +36,37 @@ class Settings extends Component {
         >
           <div className={pageClassName}>
             <h2>Verbs</h2>
-            <Toggle
-              active={this.props.verbOrder}
-              action={this.props.setVerbsOrdering}
-              statusText="List"
-              activeText="Ordered"
-              inactiveText="Random"
-            />
-          </div>
-          <div className={pageClassName}>
-            <h2>Phrases</h2>
-            <div className="mb-2">
+            <div className="setting-block">
               <Toggle
-                active={this.props.phraseOrder}
-                action={this.props.setPhrasesOrdering}
+                active={this.props.verbOrder}
+                action={this.props.setVerbsOrdering}
                 statusText="List"
                 activeText="Ordered"
                 inactiveText="Random"
               />
             </div>
-            <div>
-              <Toggle
-                active={this.props.phraseSide}
-                action={this.props.flipPhrasesPracticeSide}
-                statusText="Side"
-                activeText="English"
-                inactiveText="Japanese"
-              />
+          </div>
+          <div className={pageClassName}>
+            <h2>Phrases</h2>
+            <div className="setting-block">
+              <div className="mb-2">
+                <Toggle
+                  active={this.props.phraseOrder}
+                  action={this.props.setPhrasesOrdering}
+                  statusText="List"
+                  activeText="Ordered"
+                  inactiveText="Random"
+                />
+              </div>
+              <div>
+                <Toggle
+                  active={this.props.phraseSide}
+                  action={this.props.flipPhrasesPracticeSide}
+                  statusText="Side"
+                  activeText="English"
+                  inactiveText="Japanese"
+                />
+              </div>
             </div>
           </div>
           <div className={pageClassName}>
@@ -68,13 +74,15 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <h2>HiraganaGame</h2>
-            <NumberField
-              active={true}
-              action={this.props.setHiraganaBtnN}
-              initial={this.props.choiceN}
-              min={4}
-              max={16}
-            />
+            <div className="setting-block">
+              <NumberField
+                active={true}
+                action={this.props.setHiraganaBtnN}
+                initial={this.props.choiceN}
+                min={4}
+                max={16}
+              />
+            </div>
           </div>
           <div className={pageClassName}>
             <h2>ParticlesGame</h2>
