@@ -28,3 +28,16 @@ a {
   flex-direction: column;
   height: 100%;
 }
+
+.main-panel {
+  height: 70%;
+}
+
+.main-panel > div button {
+  margin: 2em 0;
+}
+
+/* override */
+.btn-warning {
+  color: white !important;
+}

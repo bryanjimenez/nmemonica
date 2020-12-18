@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getHiragana } from "../../actions/hiraganaAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 
@@ -267,7 +267,9 @@ class HiraganaGame extends Component {
         style={{ color, width }}
       >
         <h2>{choices[index].val}</h2>
-        <h6 style={{ visibility }}>{choices[index].hint}</h6>
+        <h6 className="mb-0" style={{ visibility }}>
+          {choices[index].hint}
+        </h6>
       </div>
     );
   }
@@ -289,7 +291,7 @@ class HiraganaGame extends Component {
     // console.log(choices);
 
     return (
-      <div className="hiragana" style={{ height: "75%" }}>
+      <div className="hiragana main-panel">
         <div
           className="d-flex justify-content-between"
           style={{ height: "100%" }}
@@ -299,7 +301,7 @@ class HiraganaGame extends Component {
             className="btn btn-danger"
             onClick={this.gotoPrev}
           >
-            prev
+            <ChevronLeftIcon size={16} />
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
             <h1
@@ -319,7 +321,7 @@ class HiraganaGame extends Component {
             className="btn btn-danger"
             onClick={this.gotoNext}
           >
-            next
+            <ChevronRightIcon size={16} />
           </button>
         </div>
         <div

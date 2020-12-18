@@ -1,7 +1,11 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { UnmuteIcon, MuteIcon } from "@primer/octicons-react";
-
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  UnmuteIcon,
+  MuteIcon,
+} from "@primer/octicons-react";
 import { getPhrases } from "../../actions/phrasesAct";
 import { gStorageAudioPath } from "../../constants/paths";
 import { kanjiWithFurigana } from "../../helper/parser";
@@ -109,7 +113,7 @@ class Phrases extends Component {
     }
 
     return (
-      <div className="phrases" style={{ height: "75%" }}>
+      <div className="phrases main-panel">
         <div
           className="d-flex justify-content-between"
           style={{ height: "100%" }}
@@ -119,7 +123,7 @@ class Phrases extends Component {
             className="btn btn-success"
             onClick={this.gotoPrev}
           >
-            prev
+            <ChevronLeftIcon size={16} />
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownSide}</h1>
@@ -157,7 +161,7 @@ class Phrases extends Component {
             className="btn btn-success"
             onClick={this.gotoNext}
           >
-            next
+            <ChevronRightIcon size={16} />
           </button>
         </div>
         <div
