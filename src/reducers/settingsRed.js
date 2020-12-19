@@ -2,14 +2,19 @@ import { FIREBASE_LOGOUT, GET_USER_SETTINGS } from "../actions/firebase";
 import {
   FLIP_PHRASES_PRACTICE_SIDE,
   SET_HIRAGANA_BTN_N,
+  SET_OPPOSITES_A_ROMAJI,
+  SET_OPPOSITES_Q_ROMAJI,
   SET_PHRASES_ORDERING,
   SET_VERB_ORDERING,
+  SET_PARTICLES_A_ROMAJI,
 } from "../actions/settingsAct";
 
 const DEFAULT_STATE = {
   hiragana: { choiceN: 16 },
   verbs: { ordered: true },
   phrases: { ordered: true, practiceSide: false },
+  opposites: { qRomaji: false, aRomaji: false },
+  particles: { aRomaji: false },
 };
 const DEFAULT_ACTION = {};
 
@@ -32,6 +37,24 @@ const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
       return {
         ...state,
         phrases: { ...state.phrases, ordered: newOrder },
+      };
+    case SET_OPPOSITES_Q_ROMAJI:
+      const qRomaji = action.value ? action.value : !state.opposites.qRomaji;
+      return {
+        ...state,
+        opposites: { ...state.opposites, qRomaji },
+      };
+    case SET_OPPOSITES_A_ROMAJI:
+      const aRomaji = action.value ? action.value : !state.opposites.aRomaji;
+      return {
+        ...state,
+        opposites: { ...state.opposites, aRomaji },
+      };
+    case SET_PARTICLES_A_ROMAJI:
+      const paRomaji = action.value ? action.value : !state.particles.aRomaji;
+      return {
+        ...state,
+        particles: { ...state.particles, aRomaji: paRomaji },
       };
     case FLIP_PHRASES_PRACTICE_SIDE:
       const practiceSide = action.value

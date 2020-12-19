@@ -114,10 +114,7 @@ class Phrases extends Component {
 
     return (
       <div className="phrases main-panel">
-        <div
-          className="d-flex justify-content-between"
-          style={{ height: "100%" }}
-        >
+        <div className="d-flex justify-content-between h-100">
           <button
             type="button"
             className="btn btn-success"
