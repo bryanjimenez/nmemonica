@@ -7,6 +7,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 // import PropTypes from "prop-types";
 
 import "./CustomBtn.css";
+import { kanjiWithFurigana } from "../../helper/parser";
 
 const OppositesMeta = {
   location: "/opposites/",
@@ -17,18 +18,9 @@ class Opposites extends Component {
   constructor(props) {
     super(props);
 
-    const query = this.props.location.search;
-    // const toggle = new URLSearchParams(useLocation().search).toggle;
-    const toggle = query
-      ? query.split("?")[1].split("toggle=")[1].split("&")[0]
-      : "english";
-
     this.state = {
       selectedIndex: 0,
-      toggle,
-      showToggle: false,
       showMeaning: false,
-      showRomaji: true,
       question: false,
       answer: false,
       choices: [],
@@ -36,27 +28,13 @@ class Opposites extends Component {
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
-    this.toggleHint = this.toggleHint.bind(this);
     this.prepareGame = this.prepareGame.bind(this);
     this.checkAnswer = this.checkAnswer.bind(this);
 
     this.props.getOpposites();
   }
 
-  componentDidMount() {
-    // console.log("mount");
-    let hint = {};
-    if (this.state.toggle === "english") {
-      hint = { showMeaning: false, showRomaji: true };
-    } else if (this.state.toggle === "romaji") {
-      hint = { showRomaji: false, showMeaning: true };
-    } else {
-      hint = { showMeaning: false, showRomaji: true };
-    }
-
-    this.setState(hint);
-    // this.prepareGame();
-  }
+  componentDidMount() {}
 
   componentDidUpdate(prevProps, prevState) {
     // console.log("componentDidUpdate");
@@ -87,9 +65,10 @@ class Opposites extends Component {
   prepareGame() {
     if (this.props.opposites.length > 0) {
       // console.log("preparing");
-      const [question, answer] = this.props.opposites[
-        this.state.selectedIndex
-      ].opposites;
+      let [question, answer] = this.props.opposites[this.state.selectedIndex];
+
+      question = { ...question, pretty: kanjiWithFurigana(question.japanese) };
+      answer = { ...answer, pretty: kanjiWithFurigana(answer.japanese) };
 
       const choices = [];
       const antiHomophones = [answer.romaji, question.romaji];
@@ -99,9 +78,7 @@ class Opposites extends Component {
         const max = Math.floor(this.props.opposites.length);
         const idx = Math.floor(Math.random() * max);
 
-        const [wrongAnswer1, wrongAnswer2] = this.props.opposites[
-          idx
-        ].opposites;
+        const [wrongAnswer1, wrongAnswer2] = this.props.opposites[idx];
 
         if (
           antiHomophones.indexOf(wrongAnswer1.romaji) === -1 &&
@@ -110,10 +87,12 @@ class Opposites extends Component {
           const headsOrTails = Math.floor(Math.random() * 2);
 
           if (headsOrTails === 0) {
-            choices.push(wrongAnswer1);
+            const pretty = kanjiWithFurigana(wrongAnswer1.japanese);
+            choices.push({ ...wrongAnswer1, pretty });
             antiHomophones.push(wrongAnswer1.romaji);
           } else {
-            choices.push(wrongAnswer2);
+            const pretty = kanjiWithFurigana(wrongAnswer2.japanese);
+            choices.push({ ...wrongAnswer2, pretty });
             antiHomophones.push(wrongAnswer2.romaji);
           }
         }
@@ -139,8 +118,7 @@ class Opposites extends Component {
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: this.state.toggle === "romaji",
-      showRomaji: this.state.toggle === "english",
+      showMeaning: false,
     });
   }
 
@@ -150,43 +128,14 @@ class Opposites extends Component {
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
       selectedIndex: newSel,
-      showMeaning: this.state.toggle === "romaji",
-      showRomaji: this.state.toggle === "english",
+      showMeaning: false,
     });
-  }
-
-  /*
-  TODO: difficulty level
-  easy: japanese on, romaji on, toggle english on off
-  medium: japanese on, romaji on , toggle english on individually
-  hard: japanese on, romaji toggle individually
-  */
-  toggleHint() {
-    let hint = {};
-    if (this.state.toggle === "english") {
-      hint = {
-        showMeaning: !this.state.showToggle,
-        showToggle: !this.state.showToggle,
-      };
-    } else if (this.state.toggle === "romaji") {
-      hint = {
-        showRomaji: !this.state.showToggle,
-        showToggle: !this.state.showToggle,
-      };
-    }
-
-    this.setState(hint);
   }
 
   render() {
     // console.log("render");
     // TODO: cleanup
-    if (
-      !this.props.opposites ||
-      this.props.opposites.length < 1 ||
-      this.state.question === false
-    )
-      return <div />;
+    if (this.state.question === false) return <div />;
 
     const question = this.state.question;
     const answer = this.state.answer;
@@ -198,10 +147,7 @@ class Opposites extends Component {
 
     return (
       <div className="opposites main-panel">
-        <div
-          className="d-flex justify-content-between"
-          style={{ height: "100%" }}
-        >
+        <div className="d-flex justify-content-between h-100">
           <button
             type="button"
             className="btn btn-orange"
@@ -209,66 +155,33 @@ class Opposites extends Component {
           >
             <ChevronLeftIcon size={16} />
           </button>
-          <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1 onClick={this.toggleHint} className="clickable">
-              {question.japanese}
-            </h1>
-            <h2 onClick={this.toggleHint} className="clickable">
-              {this.state.showRomaji ? question.romaji : ""}
-            </h2>
-            <div>{this.state.showMeaning ? question.english : "-"}</div>
-            {
-              // TODO: implement pronunciation
-            }
-            {/* <div className="d-flex">
-              <UnmuteIcon size="medium" aria-label="pronunciation" />
-            </div> */}
+          <div className="question pt-3 pb-3 d-flex flex-column justify-content-around text-center w-50">
+            <h1 className="clickable">{question.pretty}</h1>
+            <h2>{this.props.qRomaji ? question.romaji : ""}</h2>
+            <div
+              onClick={() => {
+                this.setState((state) => ({
+                  showMeaning: !state.showMeaning,
+                }));
+              }}
+            >
+              {this.state.showMeaning ? question.english : "[English]"}
+            </div>
           </div>
-          <div className="choices-row d-flex justify-content-around w-50">
-            <div className="choices-column d-flex flex-column justify-content-around">
+          <div className="choices pt-3 d-flex justify-content-around flex-wrap w-50">
+            {choices.map((c, i) => (
               <div
+                key={i}
+                className="w-50 pt-3 d-flex flex-column text-center clickable"
                 onClick={() => {
-                  this.checkAnswer(choices[0]);
+                  this.checkAnswer(c);
                 }}
-                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
               >
-                <div>{choices[0].japanese}</div>
-                <div>{this.state.showRomaji ? choices[0].romaji : ""}</div>
-                <div>{this.state.showMeaning ? choices[0].english : ""}</div>
+                <h4>{c.pretty}</h4>
+                <div>{this.props.aRomaji ? c.romaji : ""}</div>
+                {/* <div>{this.state.showMeaning ? c.english : ""}</div> */}
               </div>
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[1]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
-              >
-                <div>{choices[1].japanese}</div>
-                <div>{this.state.showRomaji ? choices[1].romaji : ""}</div>
-                <div>{this.state.showMeaning ? choices[1].english : ""}</div>
-              </div>
-            </div>
-            <div className="choices-column d-flex flex-column justify-content-around">
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[2]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
-              >
-                <div>{choices[2].japanese}</div>
-                <div>{this.state.showRomaji ? choices[2].romaji : ""}</div>
-                <div>{this.state.showMeaning ? choices[2].english : ""}</div>
-              </div>
-              <div
-                onClick={() => {
-                  this.checkAnswer(choices[3]);
-                }}
-                className="pt-3 d-flex flex-column justify-content-around text-center clickable"
-              >
-                <div>{choices[3].japanese}</div>
-                <div>{this.state.showRomaji ? choices[3].romaji : ""}</div>
-                <div>{this.state.showMeaning ? choices[3].english : ""}</div>
-              </div>
-            </div>
+            ))}
           </div>
           <button
             type="button"
@@ -284,7 +197,11 @@ class Opposites extends Component {
 }
 
 const mapStateToProps = (state) => {
-  return { opposites: state.opposites.value };
+  return {
+    opposites: state.opposites.value,
+    qRomaji: state.settings.opposites.qRomaji,
+    aRomaji: state.settings.opposites.aRomaji,
+  };
 };
 
 export default connect(mapStateToProps, { getOpposites })(Opposites);

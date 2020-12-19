@@ -18,6 +18,7 @@ admin.initializeApp();
 import { sheets_sync_verbs } from "./sheets_sync_verbs";
 import { sheets_sync_phrases } from "./sheets_sync_phrases";
 import { sheets_sync_particles } from "./sheets_sync_particles";
+import { sheets_sync_opposites } from "./sheets_sync_opposites";
 const PROJECT_REGION = "us-east1";
 
 exports.sheets_sync_verbs = functions
@@ -31,3 +32,7 @@ exports.sheets_sync_phrases = functions
 exports.sheets_sync_particles = functions
   .region(PROJECT_REGION)
   .https.onRequest(sheets_sync_particles);
+
+exports.sheets_sync_opposites = functions
+  .region(PROJECT_REGION)
+  .https.onRequest(sheets_sync_opposites);

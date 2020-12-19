@@ -33,7 +33,24 @@ describe("parser", function () {
 
   describe("furiganaParse", function () {
     it.skip("non matching input should throw", function () {});
-    it.skip("starting kanji ending hiragana", function () {});
+    it("starting kanji ending hiragana", function () {
+      const expectedKanjis = ["汚"];
+      const expectedFuriganas = ["きたな"];
+      const expectedNonKanjis = ["い"];
+      const expectedStartsWHiragana = false;
+
+      const phrase = "きたない\n汚い";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        phrase
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
     it.skip("starting hiragana ending kanji", function () {});
 
     it("starts and ends in kanji", function () {
@@ -43,6 +60,25 @@ describe("parser", function () {
       const expectedStartsWHiragana = false;
 
       const phrase = "はやおきはさんもんのとく\n早起きは三文の得";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        phrase
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
+
+    it("only kanjis", function () {
+      const expectedKanjis = ["上記"];
+      const expectedFuriganas = ["ほおき"];
+      const expectedNonKanjis = [];
+      const expectedStartsWHiragana = false;
+
+      const phrase = "ほおき\n上記";
       const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
         phrase
       );
