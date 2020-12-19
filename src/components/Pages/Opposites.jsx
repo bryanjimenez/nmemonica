@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getOpposites } from "../../actions/oppositesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -24,6 +25,7 @@ class Opposites extends Component {
       question: false,
       answer: false,
       choices: [],
+      incorrect: [],
     };
 
     this.gotoNext = this.gotoNext.bind(this);
@@ -104,12 +106,14 @@ class Opposites extends Component {
     }
   }
 
-  checkAnswer(answered) {
+  checkAnswer(answered, i) {
     if (answered.japanese === this.state.answer.japanese) {
       // console.log("RIGHT!");
-      this.gotoNext();
+      this.setState({ correct: true });
+      setTimeout(this.gotoNext, 500);
     } else {
       // console.log("WRONG");
+      this.setState((state) => ({ incorrect: [...state.incorrect, i] }));
     }
   }
 
@@ -119,6 +123,8 @@ class Opposites extends Component {
     this.setState({
       selectedIndex: newSel,
       showMeaning: false,
+      correct: false,
+      incorrect: [],
     });
   }
 
@@ -129,6 +135,8 @@ class Opposites extends Component {
     this.setState({
       selectedIndex: newSel,
       showMeaning: false,
+      correct: false,
+      incorrect: [],
     });
   }
 
@@ -169,19 +177,31 @@ class Opposites extends Component {
             </div>
           </div>
           <div className="choices pt-3 d-flex justify-content-around flex-wrap w-50">
-            {choices.map((c, i) => (
-              <div
-                key={i}
-                className="w-50 pt-3 d-flex flex-column text-center clickable"
-                onClick={() => {
-                  this.checkAnswer(c);
-                }}
-              >
-                <h4>{c.pretty}</h4>
-                <div>{this.props.aRomaji ? c.romaji : ""}</div>
-                {/* <div>{this.state.showMeaning ? c.english : ""}</div> */}
-              </div>
-            ))}
+            {choices.map((c, i) => {
+              const isRight =
+                choices[i].japanese === answer.japanese && this.state.correct;
+              const isWrong = this.state.incorrect.indexOf(i) > -1;
+
+              const choiceCSS = classNames({
+                "w-50 pt-3 d-flex flex-column text-center clickable": true,
+                "correct-color": isRight,
+                "incorrect-color": isWrong,
+              });
+
+              return (
+                <div
+                  key={i}
+                  className={choiceCSS}
+                  onClick={() => {
+                    this.checkAnswer(c, i);
+                  }}
+                >
+                  <h4>{c.pretty}</h4>
+                  <div>{this.props.aRomaji ? c.romaji : ""}</div>
+                  {/* <div>{this.state.showMeaning ? c.english : ""}</div> */}
+                </div>
+              );
+            })}
           </div>
           <button
             type="button"

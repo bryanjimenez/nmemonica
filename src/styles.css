@@ -41,3 +41,11 @@ a {
 .btn-warning {
   color: white !important;
 }
+
+.correct-color {
+  color: #28a745 !important;
+}
+
+.incorrect-color {
+  color: #ee3000 !important;
+}

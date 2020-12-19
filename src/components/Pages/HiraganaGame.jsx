@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getHiragana } from "../../actions/hiraganaAct";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -44,15 +45,13 @@ class HiraganaGame extends Component {
     }
   }
 
-  UNSAFE_componentWillMount() {
+  componentDidMount() {
     // page navigation after initialcenter
     // data retrival done, set up game
     if (this.props.hiragana && this.props.hiragana.length > 0) {
       this.prepareGame();
     }
   }
-
-  componentDidMount() {}
 
   componentDidUpdate(prevProps, prevState) {
     // console.log("componentDidUpdate");
@@ -211,7 +210,6 @@ class HiraganaGame extends Component {
   checkAnswer(answered) {
     if (answered.val === this.state.answer.val) {
       // console.log("RIGHT!");
-
       this.setState({ correct: true });
       setTimeout(this.gotoNext, 500);
     } else {
@@ -251,9 +249,14 @@ class HiraganaGame extends Component {
     const correct = this.state.correct;
     const choiceN = this.props.choiceN;
 
-    const visibility = this.state.wrongs.includes(index) ? undefined : "hidden";
-    const color =
-      choices[index].val === answer.val && correct ? "green" : undefined;
+    const isWrong = this.state.wrongs.includes(index);
+    const isRight = choices[index].val === answer.val && correct;
+    const visibility = isWrong ? undefined : "hidden";
+    const choiceCSS = classNames({
+      clickable: true,
+      "correct-color": isRight,
+      "incorrect-color": isWrong,
+    });
 
     const width = Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * 100) + "%";
 
@@ -263,8 +266,8 @@ class HiraganaGame extends Component {
         onClick={() => {
           this.checkAnswer(choices[index]);
         }}
-        className="clickable"
-        style={{ color, width }}
+        className={choiceCSS}
+        style={{ color: isRight, width }}
       >
         <h2>{choices[index].val}</h2>
         <h6 className="mb-0" style={{ visibility }}>

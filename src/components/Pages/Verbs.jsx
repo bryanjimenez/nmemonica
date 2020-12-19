@@ -39,9 +39,7 @@ class Verbs extends Component {
     this.setVerbsOrder = this.setVerbsOrder.bind(this);
   }
 
-  componentDidMount() {}
-
-  UNSAFE_componentWillMount() {
+  componentDidMount() {
     if (this.props.verbs && this.props.verbs.length > 0) {
       // page navigation after initial mount
       // data retrival done, set up game
