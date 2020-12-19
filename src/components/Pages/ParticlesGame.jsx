@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getParticles, getSuffixes } from "../../actions/particlesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -89,7 +90,7 @@ class ParticlesGame extends Component {
       answer: false,
       choices: [],
       english: false,
-      gameOrder: false,
+      incorrect: [],
     };
 
     this.gotoNext = this.gotoNext.bind(this);
@@ -181,12 +182,14 @@ class ParticlesGame extends Component {
     }
   }
 
-  checkAnswer(answered) {
+  checkAnswer(answered, i) {
     if (answered.japanese === this.state.answer.japanese) {
       // console.log("RIGHT!");
-      this.gotoNext();
+      this.setState({ correct: true });
+      setTimeout(this.gotoNext, 500);
     } else {
       // console.log("WRONG");
+      this.setState((state) => ({ incorrect: [...state.incorrect, i] }));
     }
   }
 
@@ -196,6 +199,8 @@ class ParticlesGame extends Component {
     this.setState({
       selectedIndex: newSel,
       showMeaning: false,
+      correct: false,
+      incorrect: [],
     });
   }
 
@@ -206,6 +211,8 @@ class ParticlesGame extends Component {
     this.setState({
       selectedIndex: newSel,
       showMeaning: false,
+      correct: false,
+      incorrect: [],
     });
   }
 
@@ -245,18 +252,29 @@ class ParticlesGame extends Component {
             </div>
           </div>
           <div className="choices d-flex flex-wrap justify-content-around w-50">
-            {choices.map((c, i) => (
-              <div
-                key={i}
-                onClick={() => {
-                  this.checkAnswer(c);
-                }}
-                className="pt-3 w-50 d-flex flex-column text-center clickable"
-              >
-                <h2>{c.japanese}</h2>
-                <div>{this.props.aRomaji ? c.romaji : ""}</div>
-              </div>
-            ))}
+            {choices.map((c, i) => {
+              const isRight =
+                choices[i].japanese === answer.japanese && this.state.correct;
+              const isWrong = this.state.incorrect.indexOf(i) > -1;
+              const choiceCSS = classNames({
+                "pt-3 w-50 d-flex flex-column text-center clickable": true,
+                "correct-color": isRight,
+                "incorrect-color": isWrong,
+              });
+
+              return (
+                <div
+                  key={i}
+                  onClick={() => {
+                    this.checkAnswer(c, i);
+                  }}
+                  className={choiceCSS}
+                >
+                  <h2>{c.japanese}</h2>
+                  <div>{this.props.aRomaji ? c.romaji : ""}</div>
+                </div>
+              );
+            })}
           </div>
           <button
             type="button"

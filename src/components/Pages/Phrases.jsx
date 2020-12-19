@@ -36,15 +36,13 @@ class Phrases extends Component {
     this.setOrder = this.setOrder.bind(this);
   }
 
-  UNSAFE_componentWillMount() {
+  componentDidMount() {
     if (this.props.phrases && this.props.phrases.length > 0) {
       // page navigation after initial mount
       // data retrival done, set up game
       this.setOrder();
     }
   }
-
-  componentDidMount() {}
 
   componentDidUpdate(prevProps, prevState) {
     if (
