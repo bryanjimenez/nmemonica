@@ -15,7 +15,7 @@ import { googleSheetId } from "../../../environment.development.js";
  * https://stackoverflow.com/questions/44448029/how-to-use-google-sheets-api-while-inside-a-google-cloud-function
  */
 
-function parser(s, particleList){
+function parser(s, particleList) {
   let lastChunk = "";
   return s.split(" ").reduce(
     (acc, word) => {
@@ -76,18 +76,21 @@ export async function sheets_sync_particles(req, res) {
 
     const suffixes = sheetData.reduce((acc2, el, i) => {
       if (i > 0) {
-        if(el[0] && el[0] !== "" && el[1] && el[1] !== ""){
-          acc2.push({japanese:el[0],romaji:el[1]});
+        if (el[0] && el[0] !== "" && el[1] && el[1] !== "") {
+          acc2.push({ japanese: el[0], romaji: el[1] });
         }
       }
       return acc2;
-    },[]);
+    }, []);
 
-    const [japanseParticles,romajiParticles] = suffixes.reduce((acc,curr)=>{
-      acc[0].push(curr.japanese);
-      acc[1].push(curr.romaji);
-      return acc;
-    },[[],[]]);
+    const [japanseParticles, romajiParticles] = suffixes.reduce(
+      (acc, curr) => {
+        acc[0].push(curr.japanese);
+        acc[1].push(curr.romaji);
+        return acc;
+      },
+      [[], []]
+    );
 
     const particles = sheetData.reduce((acc2, el, i) => {
       if (i > 0) {
@@ -96,10 +99,10 @@ export async function sheets_sync_particles(req, res) {
         const jpSentences = el[5] ? el[5].split("\n") : [];
 
         const obj = sentences.map((s, idx) => {
-          const romajiObj = parser(s,romajiParticles);
+          const romajiObj = parser(s, romajiParticles);
           // const jpObj = parser(jpSentences,japanseParticles);
 
-          const o = {romaji:romajiObj};
+          const o = { romaji: romajiObj };
           if (engSentences[idx]) o.english = engSentences[idx];
           if (jpSentences[idx]) o.japanese = jpSentences[idx];
 

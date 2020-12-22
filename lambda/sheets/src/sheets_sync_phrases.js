@@ -42,7 +42,6 @@ export async function sheets_sync_phrases(req, res) {
     let sheetHeaders = [];
 
     const phrases = sheetData.reduce((acc, el, i) => {
-
       if (i > 0) {
         const phrase = {
           japanese: el[0],
@@ -50,7 +49,7 @@ export async function sheets_sync_phrases(req, res) {
           english: el[2],
         };
 
-        if(el[3] && el[3] !== ''){
+        if (el[3] && el[3] !== "") {
           phrase.uid = el[3];
         }
 
