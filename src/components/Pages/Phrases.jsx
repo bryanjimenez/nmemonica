@@ -98,6 +98,7 @@ class Phrases extends Component {
 
     let japanesePhrase = kanjiWithFurigana(phrase.japanese);
     let englishPhrase = phrase.english;
+    let romaji = phrase.romaji;
 
     let shownSide, hiddenSide, hiddenCaption;
     if (this.props.practiceSide) {
@@ -122,6 +123,16 @@ class Phrases extends Component {
           </button>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownSide}</h1>
+            {this.props.romajiActive && (
+              <h5
+                onClick={() => {
+                  this.setState((state) => ({ showRomaji: !state.showRomaji }));
+                }}
+                className="clickable"
+              >
+                {this.state.showRomaji ? romaji : "[Romaji]"}
+              </h5>
+            )}
             <h2
               onClick={() => {
                 this.setState((state) => ({ showMeaning: !state.showMeaning }));
@@ -177,6 +188,7 @@ const mapStateToProps = (state) => {
     phrases: state.phrases.value,
     practiceSide: state.settings.phrases.practiceSide,
     isOrdered: state.settings.phrases.ordered,
+    romajiActive: state.settings.phrases.romaji,
   };
 };
 

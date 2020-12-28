@@ -19,7 +19,7 @@ import { sheets_sync_verbs } from "./sheets_sync_verbs";
 import { sheets_sync_phrases } from "./sheets_sync_phrases";
 import { sheets_sync_particles } from "./sheets_sync_particles";
 import { sheets_sync_opposites } from "./sheets_sync_opposites";
-import { sheets_sync_translate } from "./sheets_sync_translate";
+import { g_translate_romaji } from "./g_translate_romaji";
 const PROJECT_REGION = "us-east1";
 
 exports.sheets_sync_verbs = functions
@@ -38,6 +38,6 @@ exports.sheets_sync_opposites = functions
   .region(PROJECT_REGION)
   .https.onRequest(sheets_sync_opposites);
 
-exports.sheets_sync_translate = functions
+exports.g_translate_romaji = functions
   .region(PROJECT_REGION)
-  .https.onRequest(sheets_sync_translate);
+  .https.onRequest(g_translate_romaji);

@@ -5,6 +5,7 @@ export const SET_HIRAGANA_BTN_N = "set_hiragana_btn_n";
 export const SET_VERB_ORDERING = "set_verb_ordering";
 export const SET_PHRASES_ORDERING = "set_phrases_ordering";
 export const FLIP_PHRASES_PRACTICE_SIDE = "flip_phrases_practice_side";
+export const TOGGLE_PHRASES_ROMAJI = "toggle_phrases_romaji";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -86,6 +87,26 @@ export function flipPhrasesPracticeSide() {
     } else {
       dispatch({
         type: FLIP_PHRASES_PRACTICE_SIDE,
+      });
+    }
+  };
+}
+
+export function togglePhrasesRomaji() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    if (user) {
+      firebaseAttrToggle(
+        dispatch,
+        user.uid,
+        "/phrases/",
+        "romaji",
+        TOGGLE_PHRASES_ROMAJI
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_PHRASES_ROMAJI,
       });
     }
   };
