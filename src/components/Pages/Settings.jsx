@@ -6,6 +6,7 @@ import {
   setHiraganaBtnN,
   setVerbsOrdering,
   setPhrasesOrdering,
+  togglePhrasesRomaji,
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,
@@ -56,6 +57,15 @@ class Settings extends Component {
                   statusText="List"
                   activeText="Ordered"
                   inactiveText="Random"
+                />
+              </div>
+              <div className="mb-2">
+                <Toggle
+                  active={this.props.phraseRomaji}
+                  action={this.props.togglePhrasesRomaji}
+                  statusText="Romaji"
+                  activeText="Shown"
+                  inactiveText="Hidden"
                 />
               </div>
               <div>
@@ -128,6 +138,7 @@ const mapStateToProps = (state) => {
     verbOrder: state.settings.verbs.ordered,
     phraseOrder: state.settings.phrases.ordered,
     phraseSide: state.settings.phrases.practiceSide,
+    phraseRomaji: state.settings.phrases.romaji,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -139,6 +150,7 @@ export default connect(mapStateToProps, {
   setVerbsOrdering,
   flipPhrasesPracticeSide,
   setPhrasesOrdering,
+  togglePhrasesRomaji,
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,

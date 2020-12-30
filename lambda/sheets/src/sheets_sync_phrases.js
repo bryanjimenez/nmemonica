@@ -12,6 +12,7 @@ import { default as admin } from "firebase-admin";
 
 import { google } from "googleapis";
 import { googleSheetId } from "../../../environment.development.js";
+import md5 from "md5";
 
 /**
  * syncs google sheet data with firebase
@@ -29,7 +30,7 @@ export async function sheets_sync_phrases(req, res) {
 
     const api = google.sheets({ version: "v4", auth });
 
-    let sheetData = await new Promise((res, rej) => {
+    const sheetDataPromise = new Promise((res, rej) => {
       api.spreadsheets.values.get({ spreadsheetId, range }, (err, response) => {
         if (err) {
           rej(new Error("The API returned an error: " + err));
@@ -38,40 +39,50 @@ export async function sheets_sync_phrases(req, res) {
         res(rows);
       });
     });
+    const phrasesPromise = admin.database().ref("lambda/phrases").once("value");
+
+    const [sheetData, phrasesSnapshot] = await Promise.all([
+      sheetDataPromise,
+      phrasesPromise,
+    ]);
+    const phrasesBefore = phrasesSnapshot.val();
 
     let sheetHeaders = [];
-
-    const phrases = sheetData.reduce((acc, el, i) => {
-
+    const phrasesAfter = sheetData.reduce((acc, el, i) => {
       if (i > 0) {
         const phrase = {
           japanese: el[0],
-          romaji: el[1],
           english: el[2],
         };
 
-        if(el[3] && el[3] !== ''){
+        const key = md5(phrase.japanese);
+
+        if (el[3] && el[3] !== "") {
           phrase.uid = el[3];
         }
 
-        acc.push(phrase);
+        if (el[1] && el[1] !== "") {
+          phrase.romaji = el[1];
+        } else if (
+          phrasesBefore &&
+          phrasesBefore[key] &&
+          phrasesBefore[key].romaji
+        ) {
+          phrase.romaji = phrasesBefore[key].romaji;
+        }
+
+        acc[key] = phrase;
       } else {
         sheetHeaders = el;
       }
-
       return acc;
-    }, []);
+    }, {});
 
-    admin.database().ref("lambda/phrases").set(phrases);
+    admin.database().ref("lambda/phrases").set(phrasesAfter);
 
-    return res.status(200).json({ phrases });
+    return res.sendStatus(200);
   } catch (e) {
-    if (e.details) {
-      console.error(e.details);
-      return res.status(500).json(e.details);
-    } else {
-      console.error(e);
-      return res.sendStatus(500);
-    }
+    console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
+    return res.sendStatus(500);
   }
 }

@@ -5,6 +5,7 @@ import {
   SET_OPPOSITES_A_ROMAJI,
   SET_OPPOSITES_Q_ROMAJI,
   SET_PHRASES_ORDERING,
+  TOGGLE_PHRASES_ROMAJI,
   SET_VERB_ORDERING,
   SET_PARTICLES_A_ROMAJI,
 } from "../actions/settingsAct";
@@ -12,7 +13,7 @@ import {
 const DEFAULT_STATE = {
   hiragana: { choiceN: 16 },
   verbs: { ordered: true },
-  phrases: { ordered: true, practiceSide: false },
+  phrases: { ordered: true, practiceSide: false, romaji: false },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
 };
@@ -63,6 +64,12 @@ const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
       return {
         ...state,
         phrases: { ...state.phrases, practiceSide },
+      };
+    case TOGGLE_PHRASES_ROMAJI:
+      const phraRomaji = action.value ? action.value : !state.phrases.romaji;
+      return {
+        ...state,
+        phrases: { ...state.phrases, romaji: phraRomaji },
       };
     case GET_USER_SETTINGS:
       return {
