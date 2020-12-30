@@ -2,6 +2,7 @@ import { FIREBASE_LOGOUT, GET_USER_SETTINGS } from "../actions/firebase";
 import {
   FLIP_PHRASES_PRACTICE_SIDE,
   SET_HIRAGANA_BTN_N,
+  TOGGLE_HIRAGANA_WIDEMODE,
   SET_OPPOSITES_A_ROMAJI,
   SET_OPPOSITES_Q_ROMAJI,
   SET_PHRASES_ORDERING,
@@ -11,7 +12,7 @@ import {
 } from "../actions/settingsAct";
 
 const DEFAULT_STATE = {
-  hiragana: { choiceN: 16 },
+  hiragana: { choiceN: 16, wideMode: false },
   verbs: { ordered: true },
   phrases: { ordered: true, practiceSide: false, romaji: false },
   opposites: { qRomaji: false, aRomaji: false },
@@ -26,6 +27,12 @@ const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
       return {
         ...state,
         hiragana: { ...state.hiragana, choiceN },
+      };
+    case TOGGLE_HIRAGANA_WIDEMODE:
+      const wideMode = action.value ? action.value : !state.hiragana.wideMode;
+      return {
+        ...state,
+        hiragana: { ...state.hiragana, wideMode },
       };
     case SET_VERB_ORDERING:
       const ordered = action.value ? action.value : !state.verbs.ordered;

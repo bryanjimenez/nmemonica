@@ -35,7 +35,7 @@ class HiraganaGame extends Component {
     this.prepareGame = this.prepareGame.bind(this);
     this.checkAnswer = this.checkAnswer.bind(this);
     this.choiceButton = this.choiceButton.bind(this);
-    this.initiateGameOrder = this.initiateGameOrder.bind(this);
+    this.shuffleGameOrder = this.shuffleGameOrder.bind(this);
     this.populateChoices = this.populateChoices.bind(this);
 
     // only fetch data on very first initialization
@@ -81,7 +81,7 @@ class HiraganaGame extends Component {
    * of {consonant,vowel} corresponding to hiragana
    * consonant and vowel are indexes
    */
-  initiateGameOrder() {
+  shuffleGameOrder() {
     let gameOrder = [];
     if (this.state.gameOrder === false) {
       const xMax = Math.floor(this.props.hiragana[0].length);
@@ -160,11 +160,12 @@ class HiraganaGame extends Component {
     if (this.props.hiragana.length > 0) {
       // console.log("preparing");
 
-      const difficult = this.state.practiceSide;
+      const practiceSide = this.state.practiceSide;
       const vowels = this.props.vowels;
       const consonants = this.props.consonants;
+      const sounds = this.props.sounds;
 
-      const gameOrder = this.initiateGameOrder();
+      const gameOrder = this.shuffleGameOrder();
 
       let question;
       let answer;
@@ -173,27 +174,28 @@ class HiraganaGame extends Component {
       const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
       if (reinforced && this.state.reinforce.length > 0) {
         // console.log('reinforced')
-        answer = this.state.reinforce.pop();
-        question = answer.hint;
+        const missedQuestion = this.state.reinforce.pop();
+
+        if (practiceSide === missedQuestion.practiceSide) {
+          answer = missedQuestion;
+        } else {
+          const { val, hint } = missedQuestion;
+          answer = { val: hint, hint: val };
+        }
       } else {
         // console.log('regular')
+        const { consonant, vowel } = gameOrder[this.state.selectedIndex];
+        const sound = consonants[consonant] + vowels[vowel];
 
-        const thisGame = gameOrder[this.state.selectedIndex];
+        const pronunciation = sounds[sound] || sound;
+        const character = this.props.hiragana[consonant][vowel];
 
-        const sound = consonants[thisGame.consonant] + vowels[thisGame.vowel];
-        const pronunciation = this.props.sounds[sound] || sound;
-        const character = this.props.hiragana[thisGame.consonant][
-          thisGame.vowel
-        ];
-
-        if (difficult) {
-          question = pronunciation;
+        if (practiceSide) {
           answer = {
             val: character,
             hint: pronunciation,
           };
         } else {
-          question = character;
           answer = {
             val: pronunciation,
             hint: character,
@@ -201,9 +203,22 @@ class HiraganaGame extends Component {
         }
       }
 
+      question = answer.hint;
+
       const choices = this.populateChoices(answer, gameOrder);
 
-      this.setState({ question, answer, choices, gameOrder });
+      if (this.props.wideMode) {
+        choices.push({ val: question, q: true });
+      }
+
+      this.setState({
+        question,
+        answer,
+        choices,
+        gameOrder,
+        wrongs: [],
+        correct: false,
+      });
     }
   }
 
@@ -217,7 +232,10 @@ class HiraganaGame extends Component {
       const wrong = this.state.choices.findIndex((c) => c.val === answered.val);
       this.setState({
         wrongs: [...this.state.wrongs, wrong],
-        reinforce: [...this.state.reinforce, answered],
+        reinforce: [
+          ...this.state.reinforce,
+          { ...answered, practiceSide: this.state.practiceSide },
+        ],
       });
     }
   }
@@ -254,11 +272,20 @@ class HiraganaGame extends Component {
     const visibility = isWrong ? undefined : "hidden";
     const choiceCSS = classNames({
       clickable: true,
+      "text-center": true,
       "correct-color": isRight,
       "incorrect-color": isWrong,
+      "question-color": this.props.wideMode && choices[index].q,
     });
 
-    const width = Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * 100) + "%";
+    const choiceH2CSS = classNames({
+      "mb-0": this.props.wideMode,
+    });
+
+    const wide = this.props.wideMode ? 3 / 4 : 1;
+
+    const width =
+      Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * wide * 100) + "%";
 
     return (
       <div
@@ -269,7 +296,7 @@ class HiraganaGame extends Component {
         className={choiceCSS}
         style={{ color: isRight, width }}
       >
-        <h2>{choices[index].val}</h2>
+        <h2 className={choiceH2CSS}>{choices[index].val}</h2>
         <h6 className="mb-0" style={{ visibility }}>
           {choices[index].hint}
         </h6>
@@ -292,6 +319,11 @@ class HiraganaGame extends Component {
     // console.log(question);
     // console.log(answer);
     // console.log(choices);
+    const choiceAreaCSS = classNames({
+      "choices-row d-flex justify-content-around": true,
+      "w-50": !this.props.wideMode,
+      "w-100": this.props.wideMode,
+    });
 
     return (
       <div className="hiragana main-panel">
@@ -303,15 +335,17 @@ class HiraganaGame extends Component {
           >
             <ChevronLeftIcon size={16} />
           </button>
-          <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1
-              style={{ color: this.state.correct ? "green" : undefined }}
-              className="clickable"
-            >
-              {question}
-            </h1>
-          </div>
-          <div className="choices-row d-flex justify-content-around w-50">
+          {!this.props.wideMode && (
+            <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
+              <h1
+                style={{ color: this.state.correct ? "green" : undefined }}
+                className="clickable"
+              >
+                {question}
+              </h1>
+            </div>
+          )}
+          <div className={choiceAreaCSS}>
             <div className="choices-column w-100 d-flex flex-wrap ">
               {choices.map((c, i) => this.choiceButton(i))}
             </div>
@@ -347,7 +381,10 @@ const mapStateToProps = (state) => {
     vowels: state.hiragana.vowels,
     consonants: state.hiragana.consonants,
     sounds: state.hiragana.sounds,
-    choiceN: state.settings.hiragana.choiceN,
+    choiceN: state.settings.hiragana.wideMode
+      ? 31
+      : state.settings.hiragana.choiceN,
+    wideMode: state.settings.hiragana.wideMode,
   };
 };
 

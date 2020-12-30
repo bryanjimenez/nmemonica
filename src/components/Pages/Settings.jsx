@@ -4,6 +4,7 @@ import classNames from "classnames";
 import {
   flipPhrasesPracticeSide,
   setHiraganaBtnN,
+  toggleHiraganaWideMode,
   setVerbsOrdering,
   setPhrasesOrdering,
   togglePhrasesRomaji,
@@ -11,7 +12,7 @@ import {
   setOppositesARomaji,
   setParticlesARomaji,
 } from "../../actions/settingsAct";
-import NumberField from "../Form/NumberField";
+import HiraganaSettings from "../Form/HiraganaSettings";
 import Toggle from "../Form/Toggle";
 
 import "./Settings.css";
@@ -105,13 +106,19 @@ class Settings extends Component {
           <div className={pageClassName}>
             <h2>HiraganaGame</h2>
             <div className="setting-block">
-              <NumberField
-                active={true}
-                action={this.props.setHiraganaBtnN}
-                initial={this.props.choiceN}
-                min={4}
-                max={16}
-              />
+              <div className="mb-2 w-50" style={{ marginLeft: "auto" }}>
+                <HiraganaSettings
+                  active={!this.props.wideMode}
+                  action={this.props.setHiraganaBtnN}
+                  initial={this.props.choiceN}
+                  activeText="WideMode ON_"
+                  inactiveText="WideMode OFF"
+                  initial2={this.props.wideMode}
+                  action2={this.props.toggleHiraganaWideMode}
+                  min={4}
+                  max={16}
+                />
+              </div>
             </div>
           </div>
           <div className={pageClassName}>
@@ -135,6 +142,7 @@ class Settings extends Component {
 const mapStateToProps = (state) => {
   return {
     choiceN: state.settings.hiragana.choiceN,
+    wideMode: state.settings.hiragana.wideMode,
     verbOrder: state.settings.verbs.ordered,
     phraseOrder: state.settings.phrases.ordered,
     phraseSide: state.settings.phrases.practiceSide,
@@ -147,6 +155,7 @@ const mapStateToProps = (state) => {
 
 export default connect(mapStateToProps, {
   setHiraganaBtnN,
+  toggleHiraganaWideMode,
   setVerbsOrdering,
   flipPhrasesPracticeSide,
   setPhrasesOrdering,

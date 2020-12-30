@@ -2,6 +2,7 @@ import firebase from "firebase/app";
 import "firebase/database";
 
 export const SET_HIRAGANA_BTN_N = "set_hiragana_btn_n";
+export const TOGGLE_HIRAGANA_WIDEMODE = "set_hiragana_widemode";
 export const SET_VERB_ORDERING = "set_verb_ordering";
 export const SET_PHRASES_ORDERING = "set_phrases_ordering";
 export const FLIP_PHRASES_PRACTICE_SIDE = "flip_phrases_practice_side";
@@ -27,6 +28,26 @@ export function setHiraganaBtnN(number) {
       dispatch({
         type: SET_HIRAGANA_BTN_N,
         value: number,
+      });
+    }
+  };
+}
+
+export function toggleHiraganaWideMode() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    if (user) {
+      firebaseAttrToggle(
+        dispatch,
+        user.uid,
+        "/hiragana/",
+        "wideMode",
+        TOGGLE_HIRAGANA_WIDEMODE
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_HIRAGANA_WIDEMODE,
       });
     }
   };
