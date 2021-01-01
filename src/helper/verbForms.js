@@ -6,6 +6,7 @@ import { getConsonantVowel } from "./parser";
  * @param {*} dictionaryForm verb in dictionary form
  */
 export function masuForm(dictionaryForm) {
+  const ending = "ます";
   // irregulars
   let masu;
   switch (dictionaryForm) {
@@ -25,54 +26,98 @@ export function masuForm(dictionaryForm) {
 
   if (!masu) {
     // not irregular
-    const hiragana = data.hiragana;
-
-    let pronunciation = dictionaryForm;
-    const kanji = dictionaryForm.indexOf("\n") > -1 ? true : false;
-
-    let orthography, orVerbArr, orLastChar, orFirstPart;
-
-    if (kanji) {
-      [pronunciation, orthography] = dictionaryForm.split("\n");
-      orVerbArr = orthography.split("");
-      orLastChar = orVerbArr.pop();
-      orFirstPart = orVerbArr.join("");
-    }
-
-    const verbArr = pronunciation.split("");
-    const lastChar = verbArr.pop();
-    const firstPart = verbArr.join("");
-
-    // u-verbs
-    if (dictionaryVerbClass(dictionaryForm) === 1 || lastChar !== "る") {
-      const iVowel = 1;
-      const { iConsonant } = getConsonantVowel(lastChar);
-
-      if (kanji) {
-        masu =
-          firstPart +
-          hiragana[iConsonant][iVowel] +
-          "ます" +
-          "\n" +
-          orFirstPart +
-          hiragana[iConsonant][iVowel] +
-          "ます";
-      } else {
-        masu = firstPart + hiragana[iConsonant][iVowel] + "ます";
-      }
-    } else if (lastChar === "る") {
-      // ru-verbs
-
-      // つくる\n作る
-      if (kanji) {
-        masu = firstPart + "ます" + "\n" + orFirstPart + "ます";
-      } else {
-        masu = firstPart + "ます";
-      }
-    }
+    const [furiganaStem, kanjiStem] = getStem(dictionaryForm);
+    masu = furiganaStem + ending + (kanjiStem ? "\n" + kanjiStem + ending : "");
   }
 
   return masu;
+}
+
+/**
+ * takes a dictionary form verb and returns the stem
+ * @param {String} dictionaryForm
+ * @returns {String[]} stem [hiragana] or [furigana,kanji]
+ */
+function getStem(dictionaryForm) {
+  let stem;
+
+  const hiragana = data.hiragana;
+
+  let pronunciation = dictionaryForm;
+  const kanji = dictionaryForm.indexOf("\n") > -1 ? true : false;
+
+  let orthography, orVerbArr, orLastChar, ortoStem;
+
+  if (kanji) {
+    [pronunciation, orthography] = dictionaryForm.split("\n");
+    orVerbArr = orthography.split("");
+    orLastChar = orVerbArr.pop();
+    ortoStem = orVerbArr.join("");
+  }
+
+  const verbArr = pronunciation.split("");
+  const lastChar = verbArr.pop();
+  const furiganaStem = verbArr.join("");
+
+  // u-verbs
+  if (dictionaryVerbClass(dictionaryForm) === 1 || lastChar !== "る") {
+    const iVowel = 1;
+    const { iConsonant } = getConsonantVowel(lastChar);
+
+    if (kanji) {
+      stem = [
+        furiganaStem + hiragana[iConsonant][iVowel],
+        ortoStem + hiragana[iConsonant][iVowel],
+      ];
+    } else {
+      stem = [furiganaStem + hiragana[iConsonant][iVowel]];
+    }
+  } else if (lastChar === "る") {
+    // ru-verbs
+
+    // つくる\n作る
+    if (kanji) {
+      stem = [furiganaStem, ortoStem];
+    } else {
+      stem = [furiganaStem];
+    }
+  }
+
+  return stem;
+}
+
+/**
+ * @returns {String} the mashou form of a verb
+ * @param {String} dictionaryForm verb in dictionary form
+ */
+export function mashouForm(dictionaryForm) {
+  const ending = "ましょう";
+  // irregulars
+  let mashou;
+  switch (dictionaryForm) {
+    case "する":
+      mashou = "しよう";
+      break;
+    case "くる\n来る":
+      mashou = "こよう\n来よう";
+      break;
+    case "ある":
+      mashou = "あいましょう";
+      break;
+    // FIXME: desu/da -mashou?
+    case "だ":
+      mashou = "?";
+      break;
+  }
+
+  if (!mashou) {
+    // not irregular
+    const [furiganaStem, kanjiStem] = getStem(dictionaryForm);
+    mashou =
+      furiganaStem + ending + (kanjiStem ? "\n" + kanjiStem + ending : "");
+  }
+
+  return mashou;
 }
 
 /**

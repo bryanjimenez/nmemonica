@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import {
   masuForm,
+  mashouForm,
   dictionaryVerbClass,
   teForm,
   taForm,
@@ -46,6 +47,50 @@ describe("verbForms", function () {
 
       verb.forEach((v, i) => {
         const actual = masuForm(v);
+        expect(actual).to.eq(expected[i]);
+      });
+    });
+  });
+
+  describe("mashouForm", function () {
+    it("irregular", function () {
+      const verb = ["する", "くる\n来る"];
+      const expected = ["します", "きます\n来ます"];
+
+      verb.forEach((v, i) => {
+        const actual = mashouForm(v);
+        expect(actual).to.eq(expected[i]);
+      });
+    });
+
+    it("ru-verb", function () {
+      const verb = [
+        // "見る",
+        "みる",
+        "みる\n見る",
+        "つくる\n作る",
+        "わすれる\n忘れる",
+      ];
+      const expected = [
+        // "見ます",
+        "みます",
+        "みます\n見ます",
+        "つくります\n作ります",
+        "わすれます\n忘れます",
+      ];
+
+      verb.forEach((v, i) => {
+        const actual = mashouForm(v);
+        expect(actual).to.eq(expected[i]);
+      });
+    });
+
+    it("u-verb", function () {
+      const verb = ["読む", "いく\n行く", "きく\n聞く"];
+      const expected = ["読みます", "いきます\n行きます", "ききます\n聞きます"];
+
+      verb.forEach((v, i) => {
+        const actual = mashouForm(v);
         expect(actual).to.eq(expected[i]);
       });
     });

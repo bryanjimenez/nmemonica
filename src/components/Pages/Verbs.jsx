@@ -11,7 +11,7 @@ import { getVerbs } from "../../actions/verbsAct";
 // import PropTypes from "prop-types";
 
 import { kanjiWithFurigana } from "../../helper/parser";
-import { masuForm, taForm, teForm } from "../../helper/verbForms";
+import { mashouForm, masuForm, taForm, teForm } from "../../helper/verbForms";
 import { shuffleArray } from "../../helper/arrayHelper";
 
 const VerbsMeta = {
@@ -127,6 +127,7 @@ class Verbs extends Component {
     const tenses = [
       { t: "dictionary", j: v.japanese.dictionary },
       { t: "masu", j: masuForm(v.japanese.dictionary) },
+      { t: "mashou", j: mashouForm(v.japanese.dictionary) },
       { t: "te_form", j: teForm(v.japanese.dictionary) },
       { t: "ta_form", j: taForm(v.japanese.dictionary) },
     ];

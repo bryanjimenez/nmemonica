@@ -244,6 +244,11 @@ export function kanjiWithFurigana(phrase) {
   return japanesePhrase;
 }
 
+/**
+ * gets the indexes of the character in the hiragana chart
+ * @param {*} character
+ * @returns {{iConsonant:Number, iVowel:Number}}
+ */
 export function getConsonantVowel(character) {
   const hiragana = data.hiragana;
   const xMax = Math.floor(hiragana[0].length);
