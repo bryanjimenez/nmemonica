@@ -96,7 +96,7 @@ class Phrases extends Component {
       phrase = this.props.phrases[this.state.selectedIndex];
     }
 
-    let japanesePhrase = new JapaneseText().parse(phrase.japanese).toHTML();
+    let japanesePhrase = JapaneseText.parse(phrase.japanese).toHTML();
     let englishPhrase = phrase.english;
     let romaji = phrase.romaji;
 

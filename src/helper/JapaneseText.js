@@ -3,43 +3,43 @@ import { isHiragana } from "./parser";
 
 export class JapaneseText {
   constructor(furigana, kanji) {
-    this.furigana = furigana;
-    this.kanji = kanji;
+    this._furigana = furigana;
+    this._kanji = kanji;
   }
 
-  // get furigana(){
-  //     return this.furigana;
-  // }
+  get furigana() {
+    return this._furigana;
+  }
 
-  // set furigana(furigana){
-  //     this.furigana = furigana;
-  // }
+  set furigana(furigana) {
+    this._furigana = furigana;
+  }
 
-  // get kanji() {
-  //     return this.kanji;
-  // }
+  get kanji() {
+    return this._kanji;
+  }
 
-  // set kanji(kanji){
-  //     this.kanji = kanji
-  // }
+  set kanji(kanji) {
+    this._kanji = kanji;
+  }
 
   hasFurigana() {
-    return this.kanji ? true : false;
+    return this._kanji ? true : false;
   }
 
   getObject() {
-    return { furigana: this.furigana, kanji: this.kanji };
+    return { furigana: this._furigana, kanji: this._kanji };
   }
 
-  parse(text) {
+  static parse(text) {
+    let obj;
     if (text.indexOf("\n") > -1) {
       const [furigana, kanji] = text.split("\n");
-      this.furigana = furigana;
-      this.kanji = kanji;
+      obj = new JapaneseText(furigana, kanji);
     } else {
-      this.furigana = text;
+      obj = new JapaneseText(text);
     }
-    return this;
+    return obj;
   }
 
   debug() {
@@ -47,18 +47,18 @@ export class JapaneseText {
   }
 
   toString() {
-    return this.furigana + (this.kanji ? "\n" + this.kanji : "");
+    return this._furigana + (this._kanji ? "\n" + this._kanji : "");
   }
 
   toHTML() {
     let htmlElement;
     if (!this.hasFurigana()) {
-      htmlElement = <div>{this.furigana}</div>;
+      htmlElement = <div>{this._furigana}</div>;
     } else {
       try {
         const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
-          this.furigana,
-          this.kanji
+          this._furigana,
+          this._kanji
         );
         htmlElement = buildHTMLElement(
           kanjis,
@@ -70,8 +70,8 @@ export class JapaneseText {
         console.error(e);
         htmlElement = (
           <div style={{ color: "red" }}>
-            <div>{this.furigana}</div>
-            <div>{this.kanji}</div>
+            <div>{this._furigana}</div>
+            <div>{this._kanji}</div>
           </div>
         );
       }

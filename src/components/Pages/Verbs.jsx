@@ -28,7 +28,7 @@ class Verbs extends Component {
       showMeaning: false,
       showRomaji: false,
       shownVerb: null,
-      shownForm: "",
+      shownForm: "dictionary",
     };
 
     this.props.getVerbs();
@@ -75,7 +75,7 @@ class Verbs extends Component {
       showMeaning: false,
       showRomaji: false,
       shownVerb: null,
-      shownForm: "",
+      shownForm: "dictionary",
     });
   }
 
@@ -88,7 +88,7 @@ class Verbs extends Component {
       showMeaning: false,
       showRomaji: false,
       shownVerb: null,
-      shownForm: "",
+      shownForm: "dictionary",
     });
   }
 
@@ -124,7 +124,7 @@ class Verbs extends Component {
       v = this.props.verbs[this.state.selectedIndex];
     }
 
-    const dictionaryForm = new JapaneseText().parse(v.japanese.dictionary);
+    const dictionaryForm = JapaneseText.parse(v.japanese.dictionary);
 
     const tenses = [
       { t: "masu", j: masuForm(dictionaryForm) },

@@ -91,9 +91,7 @@ function getStem(dictionaryForm) {
   let orthography, orVerbArr, orLastChar, ortoStem;
 
   if (kanji) {
-    // pronunciation = dictionaryForm.furigana;
     orthography = dictionaryForm.kanji;
-    // [pronunciation, orthography] = dictionaryForm.split("\n");
     orVerbArr = orthography.split("");
     orLastChar = orVerbArr.pop();
     ortoStem = orVerbArr.join("");
@@ -225,7 +223,7 @@ function t_Form(dictionaryForm, rule) {
 
   if (type === 1) {
     if (verb === "行く" || verb === "いく") {
-      t_Con = new JapaneseText().parse(rule.g1.iku);
+      t_Con = JapaneseText.parse(rule.g1.iku);
     }
 
     switch (lastCharacter) {
@@ -269,13 +267,12 @@ function t_Form(dictionaryForm, rule) {
       t_Con = new JapaneseText(verb.substr(0, verb.length - 1) + ending);
     }
   } else if (type === 3) {
-    const v = new JapaneseText();
     if (verb === "来る" || verb === "くる") {
-      t_Con = v.parse(rule.g3.kuru);
+      t_Con = JapaneseText.parse(rule.g3.kuru);
     } else if (verb === "する") {
-      t_Con = v.parse(rule.g3.suru);
+      t_Con = JapaneseText.parse(rule.g3.suru);
     } else if (verb === "だ") {
-      t_Con = v.parse(rule.g3.da);
+      t_Con = JapaneseText.parse(rule.g3.da);
     }
   } else {
     throw "missing class/type";
