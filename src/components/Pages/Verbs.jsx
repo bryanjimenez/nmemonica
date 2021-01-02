@@ -7,12 +7,9 @@ import {
   UnmuteIcon,
 } from "@primer/octicons-react";
 import { getVerbs } from "../../actions/verbsAct";
-
 // import PropTypes from "prop-types";
-
-import { mashouForm, masuForm, taForm, teForm } from "../../helper/verbForms";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { JapaneseText } from "../../helper/JapaneseText";
+import { JapaneseVerb } from "../../helper/JapaneseVerb";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -124,14 +121,14 @@ class Verbs extends Component {
       v = this.props.verbs[this.state.selectedIndex];
     }
 
-    const dictionaryForm = JapaneseText.parse(v.japanese.dictionary);
+    const dictionaryForm = JapaneseVerb.parse(v.japanese.dictionary);
 
     const tenses = [
-      { t: "masu", j: masuForm(dictionaryForm) },
-      { t: "mashou", j: mashouForm(dictionaryForm) },
+      { t: "masu", j: dictionaryForm.masuForm() },
+      { t: "mashou", j: dictionaryForm.mashouForm() },
       { t: "dictionary", j: dictionaryForm },
-      { t: "te_form", j: teForm(dictionaryForm) },
-      { t: "ta_form", j: taForm(dictionaryForm) },
+      { t: "te_form", j: dictionaryForm.teForm() },
+      { t: "ta_form", j: dictionaryForm.taForm() },
     ];
 
     const rightShift = tenses.length % 2 === 0 ? 1 : 0;

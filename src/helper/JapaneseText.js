@@ -1,5 +1,5 @@
 import React from "react";
-import { isHiragana } from "./parser";
+import { isHiragana } from "./hiraganaHelper";
 
 export class JapaneseText {
   constructor(furigana, kanji) {
@@ -108,7 +108,7 @@ export function furiganaParse(pronunciation, orthography) {
           start++;
 
           if (start > pronunciation.length) {
-            throw "The two phrases do not match";
+            throw new Error("The two phrases do not match");
           }
         }
         furiganas.push(fword);
