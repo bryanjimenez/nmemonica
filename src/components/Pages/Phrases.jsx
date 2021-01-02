@@ -8,11 +8,11 @@ import {
 } from "@primer/octicons-react";
 import { getPhrases } from "../../actions/phrasesAct";
 import { gStorageAudioPath } from "../../constants/paths";
-import { kanjiWithFurigana } from "../../helper/parser";
 import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { flipPhrasesPracticeSide } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { JapaneseText } from "../../helper/JapaneseText";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -96,7 +96,7 @@ class Phrases extends Component {
       phrase = this.props.phrases[this.state.selectedIndex];
     }
 
-    let japanesePhrase = kanjiWithFurigana(phrase.japanese);
+    let japanesePhrase = new JapaneseText().parse(phrase.japanese).toHTML();
     let englishPhrase = phrase.english;
     let romaji = phrase.romaji;
 

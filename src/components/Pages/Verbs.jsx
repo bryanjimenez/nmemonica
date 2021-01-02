@@ -10,9 +10,9 @@ import { getVerbs } from "../../actions/verbsAct";
 
 // import PropTypes from "prop-types";
 
-import { kanjiWithFurigana } from "../../helper/parser";
 import { mashouForm, masuForm, taForm, teForm } from "../../helper/verbForms";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { JapaneseText } from "../../helper/JapaneseText";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -27,7 +27,7 @@ class Verbs extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
-      shownVerb: "",
+      shownVerb: null,
       shownForm: "",
     };
 
@@ -74,7 +74,7 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      shownVerb: "",
+      shownVerb: null,
       shownForm: "",
     });
   }
@@ -87,7 +87,7 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      shownVerb: "",
+      shownVerb: null,
       shownForm: "",
     });
   }
@@ -124,16 +124,18 @@ class Verbs extends Component {
       v = this.props.verbs[this.state.selectedIndex];
     }
 
+    const dictionaryForm = new JapaneseText().parse(v.japanese.dictionary);
+
     const tenses = [
-      { t: "dictionary", j: v.japanese.dictionary },
-      { t: "masu", j: masuForm(v.japanese.dictionary) },
-      { t: "mashou", j: mashouForm(v.japanese.dictionary) },
-      { t: "te_form", j: teForm(v.japanese.dictionary) },
-      { t: "ta_form", j: taForm(v.japanese.dictionary) },
+      { t: "masu", j: masuForm(dictionaryForm) },
+      { t: "mashou", j: mashouForm(dictionaryForm) },
+      { t: "dictionary", j: dictionaryForm },
+      { t: "te_form", j: teForm(dictionaryForm) },
+      { t: "ta_form", j: taForm(dictionaryForm) },
     ];
 
-    const leftshift = tenses.length % 2 === 0 ? 0 : 1;
-    const splitIdx = Math.trunc(tenses.length / 2) + leftshift;
+    const rightShift = tenses.length % 2 === 0 ? 1 : 0;
+    const splitIdx = Math.trunc(tenses.length / 2) + rightShift;
 
     const t1 = tenses.slice(0, splitIdx);
     const t2 = tenses.slice(splitIdx, tenses.length);
@@ -143,9 +145,9 @@ class Verbs extends Component {
 
     let japanesePhrase;
     if (this.state.shownVerb) {
-      japanesePhrase = kanjiWithFurigana(this.state.shownVerb);
+      japanesePhrase = this.state.shownVerb.toHTML();
     } else {
-      japanesePhrase = kanjiWithFurigana(v.japanese.dictionary);
+      japanesePhrase = dictionaryForm.toHTML();
     }
 
     return (

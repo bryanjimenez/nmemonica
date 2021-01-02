@@ -4,11 +4,11 @@ import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getOpposites } from "../../actions/oppositesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { JapaneseText } from "../../helper/JapaneseText";
 
 // import PropTypes from "prop-types";
 
 import "./CustomBtn.css";
-import { kanjiWithFurigana } from "../../helper/parser";
 
 const OppositesMeta = {
   location: "/opposites/",
@@ -68,9 +68,11 @@ class Opposites extends Component {
     if (this.props.opposites.length > 0) {
       // console.log("preparing");
       let [question, answer] = this.props.opposites[this.state.selectedIndex];
+      const q = new JapaneseText().parse(question.japanese);
+      const a = new JapaneseText().parse(answer.japanese);
 
-      question = { ...question, pretty: kanjiWithFurigana(question.japanese) };
-      answer = { ...answer, pretty: kanjiWithFurigana(answer.japanese) };
+      question = { ...question, toHTML: () => q.toHTML() };
+      answer = { ...answer, toHTML: () => a.toHTML() };
 
       const choices = [];
       const antiHomophones = [answer.romaji, question.romaji];
@@ -89,12 +91,12 @@ class Opposites extends Component {
           const headsOrTails = Math.floor(Math.random() * 2);
 
           if (headsOrTails === 0) {
-            const pretty = kanjiWithFurigana(wrongAnswer1.japanese);
-            choices.push({ ...wrongAnswer1, pretty });
+            const w1 = new JapaneseText().parse(wrongAnswer1.japanese);
+            choices.push({ ...wrongAnswer1, toHTML: () => w1.toHTML() });
             antiHomophones.push(wrongAnswer1.romaji);
           } else {
-            const pretty = kanjiWithFurigana(wrongAnswer2.japanese);
-            choices.push({ ...wrongAnswer2, pretty });
+            const w2 = new JapaneseText().parse(wrongAnswer2.japanese);
+            choices.push({ ...wrongAnswer2, toHTML: () => w2.toHTML() });
             antiHomophones.push(wrongAnswer2.romaji);
           }
         }
@@ -164,7 +166,7 @@ class Opposites extends Component {
             <ChevronLeftIcon size={16} />
           </button>
           <div className="question pt-3 pb-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1 className="clickable">{question.pretty}</h1>
+            <h1 className="clickable">{question.toHTML()}</h1>
             <h2>{this.props.qRomaji ? question.romaji : ""}</h2>
             <div
               onClick={() => {
@@ -196,7 +198,7 @@ class Opposites extends Component {
                     this.checkAnswer(c, i);
                   }}
                 >
-                  <h4>{c.pretty}</h4>
+                  <h4>{c.toHTML()}</h4>
                   <div>{this.props.aRomaji ? c.romaji : ""}</div>
                   {/* <div>{this.state.showMeaning ? c.english : ""}</div> */}
                 </div>

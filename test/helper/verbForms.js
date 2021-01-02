@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { JapaneseText } from "../../src/helper/JapaneseText";
 import {
   masuForm,
   mashouForm,
@@ -14,8 +15,9 @@ describe("verbForms", function () {
       const expected = ["します", "きます\n来ます"];
 
       verb.forEach((v, i) => {
-        const actual = masuForm(v);
-        expect(actual).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        const actual = masuForm(jtObj.parse(v));
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -36,8 +38,9 @@ describe("verbForms", function () {
       ];
 
       verb.forEach((v, i) => {
-        const actual = masuForm(v);
-        expect(actual).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        const actual = masuForm(jtObj.parse(v));
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -46,20 +49,22 @@ describe("verbForms", function () {
       const expected = ["読みます", "いきます\n行きます", "ききます\n聞きます"];
 
       verb.forEach((v, i) => {
-        const actual = masuForm(v);
-        expect(actual).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        const actual = masuForm(jtObj.parse(v));
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
   });
 
   describe("mashouForm", function () {
     it("irregular", function () {
-      const verb = ["する", "くる\n来る"];
-      const expected = ["します", "きます\n来ます"];
+      const verb = ["する"];
+      const expected = ["しましょう"];
 
       verb.forEach((v, i) => {
-        const actual = mashouForm(v);
-        expect(actual).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        const actual = mashouForm(jtObj.parse(v));
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -73,25 +78,31 @@ describe("verbForms", function () {
       ];
       const expected = [
         // "見ます",
-        "みます",
-        "みます\n見ます",
-        "つくります\n作ります",
-        "わすれます\n忘れます",
+        "みましょう",
+        "みましょう\n見ましょう",
+        "つくりましょう\n作りましょう",
+        "わすれましょう\n忘れましょう",
       ];
 
       verb.forEach((v, i) => {
-        const actual = mashouForm(v);
-        expect(actual).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        const actual = mashouForm(jtObj.parse(v));
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
     it("u-verb", function () {
       const verb = ["読む", "いく\n行く", "きく\n聞く"];
-      const expected = ["読みます", "いきます\n行きます", "ききます\n聞きます"];
+      const expected = [
+        "読みましょう",
+        "いきましょう\n行きましょう",
+        "ききましょう\n聞きましょう",
+      ];
 
       verb.forEach((v, i) => {
-        const actual = mashouForm(v);
-        expect(actual).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        const actual = mashouForm(jtObj.parse(v));
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
   });
@@ -101,7 +112,8 @@ describe("verbForms", function () {
       const verbs = ["する", "くる\n来る"];
 
       verbs.forEach((v) => {
-        const actual = dictionaryVerbClass(v);
+        const jtObj = new JapaneseText();
+        const actual = dictionaryVerbClass(jtObj.parse(v));
         expect(actual).to.eq(3);
       });
     });
@@ -111,7 +123,8 @@ describe("verbForms", function () {
       const verbs = ["くれる\n呉れる", "みる\n見る", "わすれる\n忘れる"];
 
       verbs.forEach((v) => {
-        const actual = dictionaryVerbClass(v);
+        const jtObj = new JapaneseText();
+        const actual = dictionaryVerbClass(jtObj.parse(v));
         expect(actual, v).to.eq(2);
       });
     });
@@ -121,7 +134,8 @@ describe("verbForms", function () {
       const verbs = ["つくる\n作る", "いく\n行く"];
 
       verbs.forEach((v) => {
-        const actual = dictionaryVerbClass(v);
+        const jtObj = new JapaneseText();
+        const actual = dictionaryVerbClass(jtObj.parse(v));
         expect(actual).to.eq(1);
       });
     });
@@ -132,7 +146,9 @@ describe("verbForms", function () {
       const expected = ["で"];
 
       verbs.forEach((v, i) => {
-        expect(teForm(v)).to.eq(expected[i]);
+        const jtObj = new JapaneseText().parse(v);
+        const actual = teForm(jtObj);
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -141,7 +157,10 @@ describe("verbForms", function () {
       const expected = ["して", "きて\n来て"];
 
       verbs.forEach((v, i) => {
-        expect(teForm(v)).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        jtObj.parse(v);
+        const actual = teForm(jtObj);
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -150,7 +169,10 @@ describe("verbForms", function () {
       const expected = ["食べて", "起きて", "閉じて"];
 
       verbs.forEach((v, i) => {
-        expect(teForm(v)).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        jtObj.parse(v);
+        const actual = teForm(jtObj);
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -177,7 +199,10 @@ describe("verbForms", function () {
       ];
 
       verbs.forEach((v, i) => {
-        expect(teForm(v)).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        jtObj.parse(v);
+        const actual = teForm(jtObj);
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
   });
@@ -187,7 +212,10 @@ describe("verbForms", function () {
       const expected = ["した", "きた\n来た"];
 
       verbs.forEach((v, i) => {
-        expect(taForm(v)).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        jtObj.parse(v);
+        const actual = taForm(jtObj);
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -196,7 +224,10 @@ describe("verbForms", function () {
       const expected = ["食べた", "起きた", "閉じた"];
 
       verbs.forEach((v, i) => {
-        expect(taForm(v)).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        jtObj.parse(v);
+        const actual = taForm(jtObj);
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
 
@@ -223,7 +254,10 @@ describe("verbForms", function () {
       ];
 
       verbs.forEach((v, i) => {
-        expect(taForm(v)).to.eq(expected[i]);
+        const jtObj = new JapaneseText();
+        jtObj.parse(v);
+        const actual = taForm(jtObj);
+        expect(actual.toString()).to.eq(expected[i]);
       });
     });
   });
