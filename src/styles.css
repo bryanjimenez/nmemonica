@@ -49,3 +49,7 @@ a {
 .incorrect-color {
   color: #ee3000 !important;
 }
+
+.question-color {
+  color: orange;
+}
