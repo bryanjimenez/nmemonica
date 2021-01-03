@@ -1,15 +1,30 @@
 import { expect } from "chai";
 import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
-import {
-  furiganaParse,
-  buildHTMLElement,
-  isHiragana,
-} from "../../src/helper/parser";
+import { JapaneseText } from "../../src/helper/JapaneseText";
+import { buildHTMLElement, furiganaParse } from "../../src/helper/JapaneseText";
 
 configure({ adapter: new Adapter() });
 
-describe("parser", function () {
+describe("JapanseText", function () {
+  describe("toString", function () {
+    it("hiragana", function () {
+      const hiragana = "する";
+
+      const text = new JapaneseText(hiragana);
+
+      expect("" + text).to.equal(hiragana);
+    });
+
+    it("hiragana and kanji", function () {
+      const phrase = "きたない\n汚い";
+
+      const text = new JapaneseText("きたない", "汚い");
+
+      expect("" + text).to.equal(phrase);
+    });
+  });
+
   describe("buildHTMLElement", function () {
     it("starting and ending with hiragana", function () {
       const kanjis = ["会計", "願"];
@@ -32,16 +47,26 @@ describe("parser", function () {
   });
 
   describe("furiganaParse", function () {
-    it.skip("non matching input should throw", function () {});
+    it("non matching input should throw", function () {
+      // TODO: do more edge case testing
+      const furigana = "きたな"; //い
+      const kanji = "汚い";
+
+      const actual = () => furiganaParse(furigana, kanji);
+
+      expect(actual).to.throw(Error, "The two phrases do not match");
+    });
     it("starting kanji ending hiragana", function () {
       const expectedKanjis = ["汚"];
       const expectedFuriganas = ["きたな"];
       const expectedNonKanjis = ["い"];
       const expectedStartsWHiragana = false;
 
-      const phrase = "きたない\n汚い";
+      const furigana = "きたない";
+      const kanji = "汚い";
       const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
-        phrase
+        furigana,
+        kanji
       );
 
       expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
@@ -59,9 +84,11 @@ describe("parser", function () {
       const expectedNonKanjis = ["きは", "の"];
       const expectedStartsWHiragana = false;
 
-      const phrase = "はやおきはさんもんのとく\n早起きは三文の得";
+      const furigana = "はやおきはさんもんのとく";
+      const kanji = "早起きは三文の得";
       const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
-        phrase
+        furigana,
+        kanji
       );
 
       expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
@@ -78,9 +105,11 @@ describe("parser", function () {
       const expectedNonKanjis = [];
       const expectedStartsWHiragana = false;
 
-      const phrase = "ほおき\n上記";
+      const furigana = "ほおき";
+      const kanji = "上記";
       const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
-        phrase
+        furigana,
+        kanji
       );
 
       expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
@@ -97,9 +126,11 @@ describe("parser", function () {
       const expectedNonKanjis = [];
       const expectedStartsWHiragana = false;
 
-      const phrase = "こおり\n氷";
+      const furigana = "こおり";
+      const kanji = "氷";
       const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
-        phrase
+        furigana,
+        kanji
       );
 
       expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
@@ -115,10 +146,11 @@ describe("parser", function () {
       const expectedNonKanjis = ["お", "をお", "いします。"];
       const expectedStartsWHiragana = true;
 
-      const phrase =
-        "おかいけいをおねがいします。" + "\n" + "お会計をお願いします。";
+      const furigana = "おかいけいをおねがいします。";
+      const kanji = "お会計をお願いします。";
       const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
-        phrase
+        furigana,
+        kanji
       );
 
       expect(kanjis).to.deep.eq(expectedKanjis);
@@ -126,22 +158,5 @@ describe("parser", function () {
       expect(nonKanjis).to.deep.eq(expectedNonKanjis);
       expect(startsWHiragana).to.deep.eq(expectedStartsWHiragana);
     });
-  });
-
-  describe("isHiragana", function () {
-    it("a Hiragana character", function () {
-      const actual = isHiragana("っ");
-      expect(actual).to.be.true;
-    });
-    it("a Kanji character", function () {
-      const actual = isHiragana("雨");
-      expect(actual).to.be.false;
-    });
-  });
-
-  describe("kanjiWithFurigana", function () {
-    it.skip("simple Hiragana");
-    it.skip("good input");
-    it.skip("bad input should throw");
   });
 });
