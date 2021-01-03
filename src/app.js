@@ -7,6 +7,7 @@ import Navigation from "./components/Navigation/Navigation";
 import NotFound from "./components/Navigation/NotFound";
 import Verbs, { VerbsMeta } from "./components/Pages/Verbs";
 import Phrases, { PhrasesMeta } from "./components/Pages/Phrases";
+import Vocabulary, { VocabularyMeta } from "./components/Pages/Vocabulary";
 import Opposites, { OppositesMeta } from "./components/Pages/Opposites";
 import HiraganaGame, {
   HiraganaGameMeta,
@@ -37,6 +38,7 @@ class App extends Component {
             <Route path="/" exact component={Verbs} />
             <Route path={VerbsMeta.location} component={Verbs} />
             <Route path={PhrasesMeta.location} component={Phrases} />
+            <Route path={VocabularyMeta.location} component={Vocabulary} />
             <Route path={OppositesMeta.location} component={Opposites} />
             <Route path={HiraganaGameMeta.location} component={HiraganaGame} />
             <Route

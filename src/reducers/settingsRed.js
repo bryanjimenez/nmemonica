@@ -6,6 +6,9 @@ import {
   SET_OPPOSITES_Q_ROMAJI,
   SET_PHRASES_ORDERING,
   TOGGLE_PHRASES_ROMAJI,
+  SET_VOCABULARY_ORDERING,
+  TOGGLE_VOCABULARY_ROMAJI,
+  FLIP_VOCABULARY_PRACTICE_SIDE,
   SET_VERB_ORDERING,
   SET_PARTICLES_A_ROMAJI,
 } from "../actions/settingsAct";
@@ -14,6 +17,7 @@ const DEFAULT_STATE = {
   hiragana: { choiceN: 16 },
   verbs: { ordered: true },
   phrases: { ordered: true, practiceSide: false, romaji: false },
+  vocabulary: { ordered: true, practiceSide: false, romaji: false },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
 };
@@ -38,6 +42,24 @@ const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
       return {
         ...state,
         phrases: { ...state.phrases, ordered: newOrder },
+      };
+    case SET_VOCABULARY_ORDERING:
+      const newVOrder = action.value || !state.vocabulary.ordered;
+      return {
+        ...state,
+        vocabulary: { ...state.vocabulary, ordered: newVOrder },
+      };
+    case TOGGLE_VOCABULARY_ROMAJI:
+      const vocabRomaji = action.value || !state.vocabulary.romaji;
+      return {
+        ...state,
+        vocabulary: { ...state.vocabulary, romaji: vocabRomaji },
+      };
+    case FLIP_VOCABULARY_PRACTICE_SIDE:
+      const practiceVSide = action.value || !state.vocabulary.practiceSide;
+      return {
+        ...state,
+        vocabulary: { ...state.vocabulary, practiceSide: practiceVSide },
       };
     case SET_OPPOSITES_Q_ROMAJI:
       const qRomaji = action.value ? action.value : !state.opposites.qRomaji;

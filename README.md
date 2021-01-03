@@ -4,8 +4,10 @@ flash cards
 
 ### TODO or not TODO
 - [ ] add tenses in verbs page
-- [ ] fix static/sample data
+- [ ] remove static/sample data
 - [ ] hiragana give up/skip and reinforce
+- [ ] configure lint
+- [ ] portait view
 
 
 ## Thanks
