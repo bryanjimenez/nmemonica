@@ -3,11 +3,14 @@ import { connect } from "react-redux";
 import classNames from "classnames";
 import {
   flipPhrasesPracticeSide,
+  flipVocabularyPracticeSide,
   setHiraganaBtnN,
   toggleHiraganaWideMode,
   setVerbsOrdering,
+  setVocabularyOrdering,
   setPhrasesOrdering,
   togglePhrasesRomaji,
+  toggleVocabularyRomaji,
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,
@@ -73,6 +76,38 @@ class Settings extends Component {
                 <Toggle
                   active={this.props.phraseSide}
                   action={this.props.flipPhrasesPracticeSide}
+                  statusText="Side"
+                  activeText="English"
+                  inactiveText="Japanese"
+                />
+              </div>
+            </div>
+          </div>
+          <div className={pageClassName}>
+            <h2>Vocabulary</h2>
+            <div className="setting-block">
+              <div className="mb-2">
+                <Toggle
+                  active={this.props.vocabOrder}
+                  action={this.props.setVocabularyOrdering}
+                  statusText="List"
+                  activeText="Ordered"
+                  inactiveText="Random"
+                />
+              </div>
+              <div className="mb-2">
+                <Toggle
+                  active={this.props.vocabRomaji}
+                  action={this.props.toggleVocabularyRomaji}
+                  statusText="Romaji"
+                  activeText="Shown"
+                  inactiveText="Hidden"
+                />
+              </div>
+              <div>
+                <Toggle
+                  active={this.props.vocabSide}
+                  action={this.props.flipVocabularyPracticeSide}
                   statusText="Side"
                   activeText="English"
                   inactiveText="Japanese"
@@ -147,6 +182,9 @@ const mapStateToProps = (state) => {
     phraseOrder: state.settings.phrases.ordered,
     phraseSide: state.settings.phrases.practiceSide,
     phraseRomaji: state.settings.phrases.romaji,
+    vocabOrder: state.settings.vocabulary.ordered,
+    vocabSide: state.settings.vocabulary.practiceSide,
+    vocabRomaji: state.settings.vocabulary.romaji,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -158,8 +196,11 @@ export default connect(mapStateToProps, {
   toggleHiraganaWideMode,
   setVerbsOrdering,
   flipPhrasesPracticeSide,
+  flipVocabularyPracticeSide,
   setPhrasesOrdering,
+  setVocabularyOrdering,
   togglePhrasesRomaji,
+  toggleVocabularyRomaji,
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,

@@ -46,3 +46,49 @@ fieldset[disabled] .btn-orange.active {
   color: #e06b1d;
   background-color: #ffffff;
 }
+
+.btn-indigo {
+  color: #ffffff;
+  background-color: #8540f5;
+  border-color: #140330;
+}
+
+.btn-indigo:hover,
+.btn-indigo:focus,
+.btn-indigo:active,
+.btn-indigo.active,
+.open .dropdown-toggle.btn-indigo {
+  color: #ffffff;
+  background-color: #520dc2;
+  border-color: #140330;
+}
+
+.btn-indigo:active,
+.btn-indigo.active,
+.open .dropdown-toggle.btn-indigo {
+  background-image: none;
+}
+
+.btn-indigo.disabled,
+.btn-indigo[disabled],
+fieldset[disabled] .btn-indigo,
+.btn-indigo.disabled:hover,
+.btn-indigo[disabled]:hover,
+fieldset[disabled] .btn-indigo:hover,
+.btn-indigo.disabled:focus,
+.btn-indigo[disabled]:focus,
+fieldset[disabled] .btn-indigo:focus,
+.btn-indigo.disabled:active,
+.btn-indigo[disabled]:active,
+fieldset[disabled] .btn-indigo:active,
+.btn-indigo.disabled.active,
+.btn-indigo[disabled].active,
+fieldset[disabled] .btn-indigo.active {
+  background-color: #8540f5;
+  border-color: #140330;
+}
+
+.btn-indigo .badge {
+  color: #8540f5;
+  background-color: #ffffff;
+}

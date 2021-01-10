@@ -15,6 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { VerbsMeta } from "../Pages/Verbs";
 import { PhrasesMeta } from "../Pages/Phrases";
+import { VocabularyMeta } from "../Pages/Vocabulary";
 import { OppositesMeta } from "../Pages/Opposites";
 import { HiraganaGameMeta } from "../Pages/HiraganaGame";
 import { ParticlesGameMeta } from "../Pages/ParticlesGame";
@@ -29,6 +30,10 @@ class Navigation extends Component {
     let shortcuts = [
       { meta: VerbsMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
       { meta: PhrasesMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
+      {
+        meta: VocabularyMeta,
+        icon: <FontAwesomeIcon icon={faFont} size="2x" />,
+      },
       {
         meta: OppositesMeta,
         icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,

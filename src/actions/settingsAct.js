@@ -7,6 +7,9 @@ export const SET_VERB_ORDERING = "set_verb_ordering";
 export const SET_PHRASES_ORDERING = "set_phrases_ordering";
 export const FLIP_PHRASES_PRACTICE_SIDE = "flip_phrases_practice_side";
 export const TOGGLE_PHRASES_ROMAJI = "toggle_phrases_romaji";
+export const SET_VOCABULARY_ORDERING = "set_vocabulary_ordering";
+export const FLIP_VOCABULARY_PRACTICE_SIDE = "flip_vocabulary_practice_side";
+export const TOGGLE_VOCABULARY_ROMAJI = "toggle_vocabulary_romaji";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -128,6 +131,66 @@ export function togglePhrasesRomaji() {
     } else {
       dispatch({
         type: TOGGLE_PHRASES_ROMAJI,
+      });
+    }
+  };
+}
+
+export function setVocabularyOrdering() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    if (user) {
+      firebaseAttrToggle(
+        dispatch,
+        user.uid,
+        "/vocabulary/",
+        "ordered",
+        SET_VOCABULARY_ORDERING
+      );
+    } else {
+      dispatch({
+        type: SET_VOCABULARY_ORDERING,
+      });
+    }
+  };
+}
+
+export function flipVocabularyPracticeSide() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    if (user) {
+      firebaseAttrToggle(
+        dispatch,
+        user.uid,
+        "/vocabulary/",
+        "practiceSide",
+        FLIP_VOCABULARY_PRACTICE_SIDE
+      );
+    } else {
+      dispatch({
+        type: FLIP_VOCABULARY_PRACTICE_SIDE,
+      });
+    }
+  };
+}
+
+export function toggleVocabularyRomaji() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    if (user) {
+      firebaseAttrToggle(
+        dispatch,
+        user.uid,
+        "/vocabulary/",
+        "romaji",
+        TOGGLE_VOCABULARY_ROMAJI
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_VOCABULARY_ROMAJI,
       });
     }
   };
