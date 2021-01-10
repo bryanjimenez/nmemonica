@@ -9,7 +9,7 @@ import md5 from "md5";
 export async function sheets_sync_jlpt_n5(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "JLPT_N5!A1:C";
+    const range = "JLPT_N5!A1:D";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -34,7 +34,11 @@ export async function sheets_sync_jlpt_n5(req, res) {
     ]);
     const phrasesBefore = phrasesSnapshot.val();
 
-    const JP = 0,RM = 1,EN = 2,UID = 3;
+    const JP = 0,
+      RM = 1,
+      EN = 2,
+      GRP = 3,
+      UID = 4;
 
     let sheetHeaders = [];
     const phrasesAfter = sheetData.reduce((acc, el, i) => {
@@ -46,6 +50,10 @@ export async function sheets_sync_jlpt_n5(req, res) {
         };
 
         const key = md5(phrase.japanese);
+
+        if (el[GRP] && el[GRP] !== "") {
+          phrase.grp = el[GRP];
+        }
 
         // if (el[UID] && el[UID] !== "") {
         //   phrase.uid = el[UID];

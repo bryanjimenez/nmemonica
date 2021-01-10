@@ -10,6 +10,7 @@ export const TOGGLE_PHRASES_ROMAJI = "toggle_phrases_romaji";
 export const SET_VOCABULARY_ORDERING = "set_vocabulary_ordering";
 export const FLIP_VOCABULARY_PRACTICE_SIDE = "flip_vocabulary_practice_side";
 export const TOGGLE_VOCABULARY_ROMAJI = "toggle_vocabulary_romaji";
+export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -191,6 +192,26 @@ export function toggleVocabularyRomaji() {
     } else {
       dispatch({
         type: TOGGLE_VOCABULARY_ROMAJI,
+      });
+    }
+  };
+}
+
+export function toggleVocabularyHint() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    if (user) {
+      firebaseAttrToggle(
+        dispatch,
+        user.uid,
+        "/vocabulary/",
+        "hint",
+        TOGGLE_VOCABULARY_HINT
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_VOCABULARY_HINT,
       });
     }
   };

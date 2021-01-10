@@ -82,7 +82,7 @@ export class JapaneseText {
 }
 
 /**
- * @returns  { kanjis, furiganas, nonKanjis, startsWHiragana } object containing parse info
+ * @returns  {{ kanjis:String[], furiganas:String[], nonKanjis:String[], startsWHiragana:boolean }} object containing parse info
  * @throws if the two phrases do not match.
  * @param {String} pronunciation (hiragana)
  * @param {String} orthography (kanji)
@@ -200,4 +200,55 @@ export function buildHTMLElement(
   }
 
   return <div>{sentence}</div>;
+}
+
+/**
+ * when the japaneseText is less than minChars undefined is returned
+ * otherwise the first kanji with furigana or first hiragan/katakana is returned
+ * @returns {HTML|undefined}
+ * @param {String} japaneseText
+ */
+export function htmlElementHint(japaneseText) {
+  const minChars = 3;
+  let pronunciation, orthography, hint;
+
+  if (japaneseText.indexOf("\n") > -1) {
+    [pronunciation, orthography] = japaneseText.split("\n");
+
+    const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+      pronunciation,
+      orthography
+    );
+
+    if (pronunciation.length < minChars) {
+      hint = undefined;
+    } else {
+      const firstKanji = kanjis[0][0];
+      const firstFurigana = furiganas[0][0];
+      const firstnonKanji = nonKanjis.length > 0 ? nonKanjis[0][0] : undefined;
+
+      if (startsWHiragana) {
+        //starts with hiragana
+        hint = <span>{firstnonKanji}</span>;
+      } else {
+        //starts with kanji
+        const kanjiWFurigana = (
+          <ruby>
+            {firstKanji}
+            <rt>{firstFurigana}</rt>
+          </ruby>
+        );
+        hint = <span>{kanjiWFurigana}</span>;
+      }
+    }
+  } else {
+    // no kanji
+    if (japaneseText.length < minChars) {
+      hint = undefined;
+    } else {
+      hint = <span>{japaneseText[0]}</span>;
+    }
+  }
+
+  return hint;
 }

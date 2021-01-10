@@ -9,6 +9,7 @@ import {
   TOGGLE_PHRASES_ROMAJI,
   SET_VOCABULARY_ORDERING,
   TOGGLE_VOCABULARY_ROMAJI,
+  TOGGLE_VOCABULARY_HINT,
   FLIP_VOCABULARY_PRACTICE_SIDE,
   SET_VERB_ORDERING,
   SET_PARTICLES_A_ROMAJI,
@@ -18,7 +19,12 @@ const DEFAULT_STATE = {
   hiragana: { choiceN: 16, wideMode: false },
   verbs: { ordered: true },
   phrases: { ordered: true, practiceSide: false, romaji: false },
-  vocabulary: { ordered: true, practiceSide: false, romaji: false },
+  vocabulary: {
+    ordered: true,
+    practiceSide: false,
+    romaji: false,
+    hint: false,
+  },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
 };
@@ -61,6 +67,12 @@ const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
       return {
         ...state,
         vocabulary: { ...state.vocabulary, romaji: vocabRomaji },
+      };
+    case TOGGLE_VOCABULARY_HINT:
+      const vocabHint = action.value || !state.vocabulary.hint;
+      return {
+        ...state,
+        vocabulary: { ...state.vocabulary, hint: vocabHint },
       };
     case FLIP_VOCABULARY_PRACTICE_SIDE:
       const practiceVSide = action.value || !state.vocabulary.practiceSide;
