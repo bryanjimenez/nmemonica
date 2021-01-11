@@ -1,7 +1,8 @@
+import React from "react";
 import { expect } from "chai";
 import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
-import { JapaneseText } from "../../src/helper/JapaneseText";
+import { htmlElementHint, JapaneseText } from "../../src/helper/JapaneseText";
 import { buildHTMLElement, furiganaParse } from "../../src/helper/JapaneseText";
 
 configure({ adapter: new Adapter() });
@@ -158,5 +159,45 @@ describe("JapanseText", function () {
       expect(nonKanjis).to.deep.eq(expectedNonKanjis);
       expect(startsWHiragana).to.deep.eq(expectedStartsWHiragana);
     });
+  });
+});
+
+describe("htmlElementHint", function () {
+  it("under minChars kanji", function () {
+    const actual = htmlElementHint("なつ\n夏");
+    expect(actual).to.be.undefined;
+  });
+  it("under minChars hiragana", function () {
+    const actual = htmlElementHint("これ");
+    expect(actual).to.be.undefined;
+  });
+  it("hiragana only", function () {
+    const input = "かかる";
+    const expected = "か";
+    const actual = htmlElementHint(input);
+    const wrapper = shallow(actual);
+    expect(wrapper.text()).to.equal(expected);
+  });
+  it("katakana only", function () {
+    const input = "アパート";
+    const expected = "ア";
+    const actual = htmlElementHint(input);
+    const wrapper = shallow(actual);
+    expect(wrapper.text()).to.equal(expected);
+  });
+  it("starting kanji with furigana", function () {
+    const input = "あさごはん\n朝ご飯";
+    const firstKanji = "朝";
+    const firstFurigana = "あ";
+    const actual = htmlElementHint(input);
+    const wrapper = shallow(actual);
+    expect(
+      wrapper.contains(
+        <ruby>
+          {firstKanji}
+          <rt>{firstFurigana}</rt>
+        </ruby>
+      )
+    ).to.be.true;
   });
 });

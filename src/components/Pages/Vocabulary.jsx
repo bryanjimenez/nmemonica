@@ -3,16 +3,14 @@ import { connect } from "react-redux";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  UnmuteIcon,
-  MuteIcon,
+  GiftIcon,
 } from "@primer/octicons-react";
 import { getVocabulary } from "../../actions/vocabularyAct";
-import { gStorageAudioPath } from "../../constants/paths";
 import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { flipVocabularyPracticeSide } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { JapaneseText } from "../../helper/JapaneseText";
+import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 
 import "./CustomBtn.css";
 
@@ -29,6 +27,7 @@ class Vocabulary extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
+      showHint: false,
     };
 
     this.props.getVocabulary();
@@ -73,6 +72,7 @@ class Vocabulary extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
+      showHint: false,
     });
   }
 
@@ -84,6 +84,7 @@ class Vocabulary extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
+      showHint: false,
     });
   }
 
@@ -102,15 +103,21 @@ class Vocabulary extends Component {
     let inEnglish = vocabulary.english;
     let romaji = vocabulary.romaji;
 
-    let shownSide, hiddenSide, hiddenCaption;
+    let shownSide, hiddenSide, hiddenCaption, hintActive, hint;
     if (this.props.practiceSide) {
       shownSide = inEnglish;
       hiddenSide = inJapanese;
       hiddenCaption = "[Japanese]";
+
+      hint = htmlElementHint(vocabulary.japanese);
+      hintActive = hint && this.props.hintActive;
     } else {
       shownSide = inJapanese;
       hiddenSide = inEnglish;
       hiddenCaption = "[English]";
+      hintActive =
+        this.props.hintActive && vocabulary.grp && vocabulary.grp !== "";
+      hint = vocabulary.grp;
     }
 
     return (
@@ -143,26 +150,6 @@ class Vocabulary extends Component {
             >
               {this.state.showMeaning ? hiddenSide : hiddenCaption}
             </h2>
-            {vocabulary.uid ? (
-              <div
-                className="d-flex justify-content-center clickable"
-                onClick={() => {
-                  // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
-                  this.player.src = gStorageAudioPath + vocabulary.uid + ".mp3";
-                  this.player.play();
-                }}
-              >
-                <audio ref={(ref) => (this.player = ref)} />
-                <UnmuteIcon size="medium" aria-label="pronunciation" />
-              </div>
-            ) : (
-              <div
-                className="d-flex justify-content-center"
-                style={{ color: "lightgray" }}
-              >
-                <MuteIcon size="medium"></MuteIcon>
-              </div>
-            )}
           </div>
           <button
             type="button"
@@ -172,13 +159,45 @@ class Vocabulary extends Component {
             <ChevronRightIcon size={16} />
           </button>
         </div>
-        <div
-          className="clickable mt-2 ml-3"
-          onClick={this.props.flipVocabularyPracticeSide}
-        >
-          <FontAwesomeIcon
-            icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-          />
+
+        <div className="option-bar ml-3 mr-3 d-flex justify-content-between">
+          <div>
+            <FontAwesomeIcon
+              onClick={this.props.flipVocabularyPracticeSide}
+              className="clickable"
+              icon={this.props.practiceSide ? faGlasses : faPencilAlt}
+            />
+          </div>
+          <div style={{ marginLeft: "-16px" }}>
+            {hintActive && (
+              <h5
+                onClick={() => {
+                  this.setState((state) => ({ showHint: !state.showHint }));
+                }}
+                className="clickable"
+              >
+                {this.state.showHint ? hint : ""}
+              </h5>
+            )}
+          </div>
+          <div>
+            {hintActive && !this.state.showHint && (
+              <div
+                onClick={() => {
+                  this.setState({ showHint: true });
+                  setTimeout(() => {
+                    this.setState({ showHint: false });
+                  }, 1500);
+                }}
+              >
+                <GiftIcon
+                  className="clickable"
+                  size="small"
+                  aria-label="hint"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -191,6 +210,7 @@ const mapStateToProps = (state) => {
     practiceSide: state.settings.vocabulary.practiceSide,
     isOrdered: state.settings.vocabulary.ordered,
     romajiActive: state.settings.vocabulary.romaji,
+    hintActive: state.settings.vocabulary.hint,
   };
 };
 

@@ -11,6 +11,7 @@ import {
   setPhrasesOrdering,
   togglePhrasesRomaji,
   toggleVocabularyRomaji,
+  toggleVocabularyHint,
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,
@@ -104,6 +105,15 @@ class Settings extends Component {
                   inactiveText="Hidden"
                 />
               </div>
+              <div className="mb-2">
+                <Toggle
+                  active={this.props.vocabHint}
+                  action={this.props.toggleVocabularyHint}
+                  statusText="Hint"
+                  activeText="Shown"
+                  inactiveText="Hidden"
+                />
+              </div>
               <div>
                 <Toggle
                   active={this.props.vocabSide}
@@ -185,6 +195,7 @@ const mapStateToProps = (state) => {
     vocabOrder: state.settings.vocabulary.ordered,
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
+    vocabHint: state.settings.vocabulary.hint,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -201,6 +212,7 @@ export default connect(mapStateToProps, {
   setVocabularyOrdering,
   togglePhrasesRomaji,
   toggleVocabularyRomaji,
+  toggleVocabularyHint,
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,
