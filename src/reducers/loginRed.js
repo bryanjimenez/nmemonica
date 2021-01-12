@@ -1,8 +1,4 @@
-import {
-  FIREBASE_LOGIN,
-  FIREBASE_LOGOUT,
-  GET_USER_SETTINGS,
-} from "../actions/firebase";
+import { FIREBASE_LOGIN, FIREBASE_LOGOUT } from "../actions/firebase";
 
 const DEFAULT_STATE = { user: undefined };
 const DEFAULT_ACTION = {};

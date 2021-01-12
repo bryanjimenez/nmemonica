@@ -1,5 +1,6 @@
 import firebase from "firebase/app";
 import "firebase/database";
+import { localStoreAttrUpdate } from "../helper/localStorage";
 
 export const SET_HIRAGANA_BTN_N = "set_hiragana_btn_n";
 export const TOGGLE_HIRAGANA_WIDEMODE = "set_hiragana_widemode";
@@ -19,12 +20,18 @@ export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/hiragana/";
+    const attr = "choiceN";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr, number);
+
     if (user) {
-      firebaseAttrSet(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/hiragana/",
-        "choiceN",
+        path,
+        attr,
         SET_HIRAGANA_BTN_N,
         number
       );
@@ -41,12 +48,18 @@ export function toggleHiraganaWideMode() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/hiragana/";
+    const attr = "wideMode";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/hiragana/",
-        "wideMode",
+        path,
+        attr,
         TOGGLE_HIRAGANA_WIDEMODE
       );
     } else {
@@ -61,12 +74,18 @@ export function setVerbsOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/verbs/";
+    const attr = "ordered";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/verbs/",
-        "ordered",
+        path,
+        attr,
         SET_VERB_ORDERING
       );
     } else {
@@ -81,12 +100,18 @@ export function setPhrasesOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/phrases/";
+    const attr = "ordered";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/phrases/",
-        "ordered",
+        path,
+        attr,
         SET_PHRASES_ORDERING
       );
     } else {
@@ -101,12 +126,18 @@ export function flipPhrasesPracticeSide() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/phrases/";
+    const attr = "practiceSide";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/phrases/",
-        "practiceSide",
+        path,
+        attr,
         FLIP_PHRASES_PRACTICE_SIDE
       );
     } else {
@@ -121,12 +152,18 @@ export function togglePhrasesRomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/phrases/";
+    const attr = "romaji";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/phrases/",
-        "romaji",
+        path,
+        attr,
         TOGGLE_PHRASES_ROMAJI
       );
     } else {
@@ -141,12 +178,18 @@ export function setVocabularyOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/vocabulary/";
+    const attr = "ordered";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/vocabulary/",
-        "ordered",
+        path,
+        attr,
         SET_VOCABULARY_ORDERING
       );
     } else {
@@ -161,12 +204,18 @@ export function flipVocabularyPracticeSide() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/vocabulary/";
+    const attr = "practiceSide";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/vocabulary/",
-        "practiceSide",
+        path,
+        attr,
         FLIP_VOCABULARY_PRACTICE_SIDE
       );
     } else {
@@ -181,12 +230,18 @@ export function toggleVocabularyRomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/vocabulary/";
+    const attr = "romaji";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/vocabulary/",
-        "romaji",
+        path,
+        attr,
         TOGGLE_VOCABULARY_ROMAJI
       );
     } else {
@@ -201,12 +256,18 @@ export function toggleVocabularyHint() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/vocabulary/";
+    const attr = "hint";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/vocabulary/",
-        "hint",
+        path,
+        attr,
         TOGGLE_VOCABULARY_HINT
       );
     } else {
@@ -221,12 +282,18 @@ export function setOppositesQRomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/opposites/";
+    const attr = "qRomaji";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/opposites/",
-        "qRomaji",
+        path,
+        attr,
         SET_OPPOSITES_Q_ROMAJI
       );
     } else {
@@ -241,12 +308,18 @@ export function setOppositesARomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/opposites/";
+    const attr = "aRomaji";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/opposites/",
-        "aRomaji",
+        path,
+        attr,
         SET_OPPOSITES_A_ROMAJI
       );
     } else {
@@ -261,12 +334,18 @@ export function setParticlesARomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const path = "/particles/";
+    const attr = "aRomaji";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
     if (user) {
-      firebaseAttrToggle(
+      firebaseAttrUpdate(
+        time,
         dispatch,
         user.uid,
-        "/particles/",
-        "aRomaji",
+        path,
+        attr,
         SET_PARTICLES_A_ROMAJI
       );
     } else {
@@ -277,50 +356,55 @@ export function setParticlesARomaji() {
   };
 }
 
-function firebaseAttrToggle(dispatch, uid, path, attr, aType) {
+function firebaseAttrUpdate(time, dispatch, uid, path, attr, aType, value) {
   firebase
     .database()
-    .ref("user/" + uid + path + attr)
-    .once("value")
-    .then(function (snapshot) {
-      const data = snapshot.val();
-      const setting = { [attr]: !data };
+    .ref("user/" + uid)
+    .update({ lastModified: time });
 
-      firebase
-        .database()
-        .ref("user/" + uid + path)
-        .update(setting)
-        .then(() => {
-          dispatch({
-            type: aType,
-            value: !data,
-          });
-        })
-        .catch(function (e) {
-          console.error("update failed");
-          console.error(e);
+  if (value) {
+    const setting = { [attr]: value };
+
+    firebase
+      .database()
+      .ref("user/" + uid + path)
+      .update(setting)
+      .then(() => {
+        dispatch({
+          type: aType,
+          value: value,
         });
-    })
-    .catch((e) => {
-      console.error(e);
-    });
-}
-
-function firebaseAttrSet(dispatch, uid, path, attr, aType, value) {
-  const setting = { [attr]: value };
-
-  firebase
-    .database()
-    .ref("user/" + uid + path)
-    .update(setting)
-    .then(() => {
-      dispatch({
-        type: aType,
-        value: value,
+      })
+      .catch(function (e) {
+        console.error("set failed");
+        console.error(e);
       });
-    })
-    .catch(function (e) {
-      console.error("set failed");
-      console.error(e);
-    });
+  } else {
+    firebase
+      .database()
+      .ref("user/" + uid + path + attr)
+      .once("value")
+      .then(function (snapshot) {
+        const data = snapshot.val();
+        const setting = { [attr]: !data };
+
+        firebase
+          .database()
+          .ref("user/" + uid + path)
+          .update(setting)
+          .then(() => {
+            dispatch({
+              type: aType,
+              value: !data,
+            });
+          })
+          .catch(function (e) {
+            console.error("update failed");
+            console.error(e);
+          });
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  }
 }
