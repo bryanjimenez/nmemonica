@@ -54,7 +54,7 @@ export function getUserSettings() {
       const fbSettings = resolved[0].val();
       const lsSettings = resolved[1];
 
-      // TODO: local and remote settings our of sync should ask?
+      // TODO: local and remote settings our off sync should ask?
       if (
         lsSettings &&
         fbSettings &&

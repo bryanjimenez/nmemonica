@@ -29,6 +29,7 @@ export function setHiraganaBtnN(number) {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -57,6 +58,7 @@ export function toggleHiraganaWideMode() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -83,6 +85,7 @@ export function setVerbsOrdering() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -109,6 +112,7 @@ export function setPhrasesOrdering() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -135,6 +139,7 @@ export function flipPhrasesPracticeSide() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -161,6 +166,7 @@ export function togglePhrasesRomaji() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -187,6 +193,7 @@ export function setVocabularyOrdering() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -213,6 +220,7 @@ export function flipVocabularyPracticeSide() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -239,6 +247,7 @@ export function toggleVocabularyRomaji() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -265,6 +274,7 @@ export function toggleVocabularyHint() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -291,6 +301,7 @@ export function setOppositesQRomaji() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -317,6 +328,7 @@ export function setOppositesARomaji() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -343,6 +355,7 @@ export function setParticlesARomaji() {
       firebaseAttrUpdate(
         time,
         dispatch,
+        getState,
         user.uid,
         path,
         attr,
@@ -356,55 +369,55 @@ export function setParticlesARomaji() {
   };
 }
 
-function firebaseAttrUpdate(time, dispatch, uid, path, attr, aType, value) {
+function getLastStateValue(getState, path, attr) {
+  const stateSettings = getState().settings;
+
+  let statePtr = stateSettings;
+
+  path.split("/").forEach((p) => {
+    if (p) {
+      statePtr = statePtr[p];
+    }
+  });
+
+  return statePtr[attr];
+}
+
+function firebaseAttrUpdate(
+  time,
+  dispatch,
+  getState,
+  uid,
+  path,
+  attr,
+  aType,
+  value
+) {
+  let setting;
+  if (value) {
+    setting = { [attr]: value };
+  } else {
+    const currVal = getLastStateValue(getState, path, attr);
+    setting = { [attr]: !currVal };
+  }
+
   firebase
     .database()
     .ref("user/" + uid)
     .update({ lastModified: time });
 
-  if (value) {
-    const setting = { [attr]: value };
-
-    firebase
-      .database()
-      .ref("user/" + uid + path)
-      .update(setting)
-      .then(() => {
-        dispatch({
-          type: aType,
-          value: value,
-        });
-      })
-      .catch(function (e) {
-        console.error("set failed");
-        console.error(e);
+  firebase
+    .database()
+    .ref("user/" + uid + path)
+    .update(setting)
+    .then(() => {
+      dispatch({
+        type: aType,
+        value: setting[attr],
       });
-  } else {
-    firebase
-      .database()
-      .ref("user/" + uid + path + attr)
-      .once("value")
-      .then(function (snapshot) {
-        const data = snapshot.val();
-        const setting = { [attr]: !data };
-
-        firebase
-          .database()
-          .ref("user/" + uid + path)
-          .update(setting)
-          .then(() => {
-            dispatch({
-              type: aType,
-              value: !data,
-            });
-          })
-          .catch(function (e) {
-            console.error("update failed");
-            console.error(e);
-          });
-      })
-      .catch((e) => {
-        console.error(e);
-      });
-  }
+    })
+    .catch(function (e) {
+      console.error("update failed");
+      console.error(e);
+    });
 }

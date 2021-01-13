@@ -1,4 +1,5 @@
 import { localStorageKey } from "../constants/paths";
+import { getWindowLocalStorage } from "./browserGlobal";
 
 /**
  * modifies an attribute or toggles the existing value
@@ -10,38 +11,34 @@ import { localStorageKey } from "../constants/paths";
  * @param {*} value optional if absent [attr] will be toggled
  */
 export function localStoreAttrUpdate(time, getState, path, attr, value) {
-  return new Promise((resolutionFunc, rejectionFunc) => {
-    const stateSettings = getState().settings;
-    let locStoSettings = getLocalStorageSettings(localStorageKey) || {};
+  const stateSettings = getState().settings;
 
-    try {
-      const localStorage = window.localStorage;
+  return getLocalStorageSettings(localStorageKey).then((locStoSettings) => {
+    locStoSettings = locStoSettings || {};
 
-      let statePtr = stateSettings;
-      let localPtr = locStoSettings;
+    let statePtr = stateSettings;
+    let localPtr = locStoSettings;
 
-      path.split("/").forEach((p) => {
-        if (p) {
-          statePtr = statePtr[p];
+    path.split("/").forEach((p) => {
+      if (p) {
+        statePtr = statePtr[p];
 
-          if (localPtr[p]) {
-            localPtr = localPtr[p];
-          } else {
-            localPtr[p] = {};
-            localPtr = localPtr[p];
-          }
+        if (localPtr[p]) {
+          localPtr = localPtr[p];
+        } else {
+          localPtr[p] = {};
+          localPtr = localPtr[p];
         }
-      });
+      }
+    });
 
-      // use value passed else toggle previous value
-      localPtr[attr] = value ? value : !statePtr[attr];
+    // use value passed else toggle previous value
+    localPtr[attr] = value ? value : !statePtr[attr];
 
-      const resultObj = { ...locStoSettings, lastModified: time };
-      localStorage.setItem(localStorageKey, JSON.stringify(resultObj));
-      resolutionFunc(resultObj);
-    } catch (e) {
-      rejectionFunc(e);
-    }
+    return setLocalStorage(localStorageKey, {
+      ...locStoSettings,
+      lastModified: time,
+    });
   });
 }
 
@@ -54,7 +51,7 @@ export function localStoreAttrUpdate(time, getState, path, attr, value) {
 export function setLocalStorage(localStorageKey, value) {
   return new Promise((resolutionFunc, rejectionFunc) => {
     try {
-      const localStorage = window.localStorage;
+      const localStorage = getWindowLocalStorage();
 
       localStorage.setItem(localStorageKey, JSON.stringify(value));
       resolutionFunc(value);
@@ -74,7 +71,7 @@ export function getLocalStorageSettings(localStorageKey) {
     let localStorageValue;
 
     try {
-      const localStorage = window.localStorage;
+      const localStorage = getWindowLocalStorage();
 
       const textSettings = localStorage.getItem(localStorageKey);
       let resultObj;
