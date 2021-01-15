@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import PropTypes from "prop-types";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -45,7 +46,7 @@ class Vocabulary extends Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps /*, prevState*/) {
     if (
       this.props.vocab.length != prevProps.vocab.length ||
       this.props.isOrdered != prevProps.isOrdered
@@ -212,6 +213,16 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     hintActive: state.settings.vocabulary.hint,
   };
+};
+
+Vocabulary.propTypes = {
+  getVocabulary: PropTypes.func.isRequired,
+  vocab: PropTypes.array.isRequired,
+  hintActive: PropTypes.bool,
+  romajiActive: PropTypes.bool,
+  flipVocabularyPracticeSide: PropTypes.func.isRequired,
+  practiceSide: PropTypes.bool,
+  isOrdered: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {

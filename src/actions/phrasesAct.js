@@ -1,4 +1,3 @@
-import phrases from "../../data/phrases.json";
 import firebase from "firebase/app";
 import "firebase/database";
 
@@ -17,12 +16,7 @@ export function getPhrases() {
         });
       })
       .catch(() => {
-        // pull static data here
-        console.warn("Remote pull failed. Using local data.");
-        dispatch({
-          type: GET_PHRASES,
-          value: phrases,
-        });
+        console.warn("getPhrases failed");
       });
   };
 }

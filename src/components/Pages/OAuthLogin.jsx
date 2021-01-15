@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { Redirect, withRouter } from "react-router";
+import { Redirect } from "react-router";
 
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
 import firebase from "firebase/app";
@@ -51,7 +51,7 @@ class OAuthLogin extends Component {
         firebase.auth.GithubAuthProvider.PROVIDER_ID,
       ],
       callbacks: {
-        signInSuccessWithAuthResult: (authResult, redirectUrl) => {
+        signInSuccessWithAuthResult: (authResult /*, redirectUrl*/) => {
           // console.log("success");
           // authResult = {
           //   user: {uid, email, isAnonymous, phoneNumber},

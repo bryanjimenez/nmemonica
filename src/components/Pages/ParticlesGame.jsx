@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import PropTypes from "prop-types";
 import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getParticles, getSuffixes } from "../../actions/particlesAct";
@@ -217,7 +218,6 @@ class ParticlesGame extends Component {
   }
 
   render() {
-    // TODO: cleanup
     if (this.state.question === false) return <div />;
 
     const question = this.state.question;
@@ -295,6 +295,14 @@ const mapStateToProps = (state) => {
     suffixes: state.particles.suffixes,
     aRomaji: state.settings.particles.aRomaji,
   };
+};
+
+ParticlesGame.propTypes = {
+  getParticles: PropTypes.func.isRequired,
+  getSuffixes: PropTypes.func.isRequired,
+  particles: PropTypes.array.isRequired,
+  suffixes: PropTypes.array.isRequired,
+  aRomaji: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, { getParticles, getSuffixes })(

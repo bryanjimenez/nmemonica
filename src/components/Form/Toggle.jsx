@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import PropTypes from "prop-types";
 
 class Toggle extends Component {
   constructor(props) {
@@ -37,5 +38,13 @@ class Toggle extends Component {
     );
   }
 }
+
+Toggle.propTypes = {
+  active: PropTypes.bool,
+  activeText: PropTypes.string.isRequired,
+  action: PropTypes.func.isRequired,
+  inactiveText: PropTypes.string.isRequired,
+  statusText: PropTypes.string.isRequired,
+};
 
 export default Toggle;

@@ -1,8 +1,6 @@
-import data from "../../data/verbs.json";
 import firebase from "firebase/app";
 import "firebase/database";
-import { firebaseConfig } from "../../environment.development";
-// TODO: clean
+
 export const GET_VERBS = "get_verbs";
 
 export function getVerbs() {
@@ -18,12 +16,7 @@ export function getVerbs() {
         });
       })
       .catch(() => {
-        // pull static data here
-        console.warn("Remote pull failed. Using local data.");
-        dispatch({
-          type: GET_VERBS,
-          value: data,
-        });
+        console.warn("getVerbs failed");
       });
   };
 }
