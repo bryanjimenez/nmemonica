@@ -13,9 +13,11 @@ import {
   FLIP_VOCABULARY_PRACTICE_SIDE,
   SET_VERB_ORDERING,
   SET_PARTICLES_A_ROMAJI,
+  ADD_FREQUENCY_WORD,
+  REMOVE_FREQUENCY_WORD,
 } from "../actions/settingsAct";
 
-const DEFAULT_STATE = {
+export const DEFAULT_SETTINGS = {
   hiragana: { choiceN: 16, wideMode: false },
   verbs: { ordered: true },
   phrases: { ordered: true, practiceSide: false, romaji: false },
@@ -24,13 +26,14 @@ const DEFAULT_STATE = {
     practiceSide: false,
     romaji: false,
     hint: false,
+    frequency: [],
   },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
 };
 const DEFAULT_ACTION = {};
 
-const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
+const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
   switch (action.type) {
     case SET_HIRAGANA_BTN_N:
       return {
@@ -96,6 +99,23 @@ const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
           practiceSide: action.value || !state.vocabulary.practiceSide,
         },
       };
+    case ADD_FREQUENCY_WORD:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          frequency: action.value,
+        },
+      };
+    case REMOVE_FREQUENCY_WORD:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          frequency: action.value,
+        },
+      };
+
     case SET_OPPOSITES_Q_ROMAJI:
       return {
         ...state,
@@ -142,7 +162,7 @@ const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
         ...action.value,
       };
     case FIREBASE_LOGOUT:
-      return DEFAULT_STATE;
+      return DEFAULT_SETTINGS;
     default:
       return state;
   }

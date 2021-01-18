@@ -18,7 +18,10 @@ import ParticlesGame, {
 import Settings, { SettingsMeta } from "./components/Pages/Settings";
 import Logout, { LogoutMeta } from "./components/Pages/Logout";
 import OAuthLogin, { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
-import { getLocalStorageUserSettings, initialize } from "./actions/firebase";
+import {
+  initializeSettingsFromLocalStorage,
+  initialize,
+} from "./actions/firebase";
 import "./styles.css";
 
 class App extends Component {
@@ -28,7 +31,7 @@ class App extends Component {
     this.props.initialize();
     this.state = {};
 
-    this.props.getLocalStorageUserSettings();
+    this.props.initializeSettingsFromLocalStorage();
   }
 
   render() {
@@ -60,7 +63,10 @@ class App extends Component {
 
 App.propTypes = {
   initialize: PropTypes.func,
-  getLocalStorageUserSettings: PropTypes.func,
+  initializeSettingsFromLocalStorage: PropTypes.func,
 };
 
-export default connect(null, { initialize, getLocalStorageUserSettings })(App);
+export default connect(null, {
+  initialize,
+  initializeSettingsFromLocalStorage,
+})(App);

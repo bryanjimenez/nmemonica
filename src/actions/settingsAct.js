@@ -15,6 +15,8 @@ export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
+export const ADD_FREQUENCY_WORD = "add_frequency_word";
+export const REMOVE_FREQUENCY_WORD = "remove_frequency_word";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -364,6 +366,69 @@ export function setParticlesARomaji() {
     } else {
       dispatch({
         type: SET_PARTICLES_A_ROMAJI,
+      });
+    }
+  };
+}
+
+export function addFrequencyWord(uid) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/vocabulary/";
+    const attr = "frequency";
+    const time = new Date();
+
+    const uidList = getLastStateValue(getState, path, attr);
+    const newValue = [...uidList, uid];
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        ADD_FREQUENCY_WORD,
+        newValue
+      );
+    } else {
+      dispatch({
+        type: ADD_FREQUENCY_WORD,
+        value: newValue,
+      });
+    }
+  };
+}
+
+export function removeFrequencyWord(uid) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/vocabulary/";
+    const attr = "frequency";
+    const time = new Date();
+    const currVal = getLastStateValue(getState, path, attr);
+    const newValue = currVal.filter((i) => i !== uid);
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        ADD_FREQUENCY_WORD,
+        newValue
+      );
+    } else {
+      dispatch({
+        type: REMOVE_FREQUENCY_WORD,
+        value: newValue,
       });
     }
   };

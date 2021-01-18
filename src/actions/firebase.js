@@ -4,6 +4,8 @@ import "firebase/database";
 import { firebaseConfig } from "../../environment.development";
 import { localStorageKey } from "../constants/paths";
 import { getLocalStorageSettings } from "../helper/localStorage";
+import merge from "lodash/fp/merge";
+import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRed";
 
 export const FIREBASE_LOGIN = "firebase_login";
 export const FIREBASE_LOGOUT = "firebase_logout";
@@ -42,6 +44,9 @@ export function authenticated(value) {
   };
 }
 
+/**
+ * on login user settings are retrieved from Firebase
+ */
 export function getUserSettings() {
   return (dispatch) => {
     const user = firebase.auth().currentUser;
@@ -54,7 +59,7 @@ export function getUserSettings() {
       const fbSettings = resolved[0].val();
       const lsSettings = resolved[1];
 
-      // TODO: local and remote settings our off sync should ask?
+      // TODO: local and remote settings are off sync should ask?
       if (
         lsSettings &&
         fbSettings &&
@@ -82,24 +87,37 @@ export function getUserSettings() {
         //   });
         // });
       }
+
+      // use merge to prevent losing defaults not found in localStorage
+      const mergedSettings = merge(stateSettingDefaults, fbSettings);
+      delete mergedSettings.lastModified;
+
       return dispatch({
         type: GET_USER_SETTINGS,
-        value: fbSettings,
+        value: mergedSettings,
       });
     });
   };
 }
 
-export function getLocalStorageUserSettings() {
+/**
+ * initializes redux state.settings from the
+ * settings on localStorage
+ */
+export function initializeSettingsFromLocalStorage() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
     if (!user) {
       // not logged in
-      return getLocalStorageSettings(localStorageKey).then((settings) => {
+      return getLocalStorageSettings(localStorageKey).then((lsSettings) => {
+        // use merge to prevent losing defaults not found in localStorage
+        const mergedSettings = merge(stateSettingDefaults, lsSettings);
+        delete mergedSettings.lastModified;
+
         dispatch({
           type: GET_USER_SETTINGS,
-          value: settings,
+          value: mergedSettings,
         });
       });
     }
