@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import PropTypes from "prop-types";
 import classNames from "classnames";
 import {
   flipPhrasesPracticeSide,
@@ -30,10 +31,6 @@ class Settings extends Component {
   constructor(props) {
     super(props);
   }
-
-  componentDidMount() {}
-
-  componentDidUpdate(prevProps, prevState) {}
 
   render() {
     const pageClassName = classNames({ "mb-5": true });
@@ -200,6 +197,40 @@ const mapStateToProps = (state) => {
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
   };
+};
+
+Settings.propTypes = {
+  verbOrder: PropTypes.bool,
+  setVerbsOrdering: PropTypes.func,
+
+  setPhrasesOrdering: PropTypes.func,
+  phraseOrder: PropTypes.bool,
+  phraseRomaji: PropTypes.bool,
+  togglePhrasesRomaji: PropTypes.func,
+  phraseSide: PropTypes.bool,
+
+  setHiraganaBtnN: PropTypes.func,
+  wideMode: PropTypes.bool,
+  toggleHiraganaWideMode: PropTypes.func,
+  choiceN: PropTypes.number,
+
+  particlesARomaji: PropTypes.bool,
+  setParticlesARomaji: PropTypes.func,
+  flipPhrasesPracticeSide: PropTypes.func,
+
+  vocabOrder: PropTypes.bool,
+  toggleVocabularyHint: PropTypes.func,
+  setVocabularyOrdering: PropTypes.func,
+  vocabRomaji: PropTypes.bool,
+  toggleVocabularyRomaji: PropTypes.func,
+  vocabSide: PropTypes.bool,
+  flipVocabularyPracticeSide: PropTypes.func,
+  vocabHint: PropTypes.bool,
+
+  oppositesQRomaji: PropTypes.bool,
+  setOppositesQRomaji: PropTypes.func,
+  oppositesARomaji: PropTypes.bool,
+  setOppositesARomaji: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {

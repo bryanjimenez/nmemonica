@@ -132,7 +132,9 @@ class Navigation extends Component {
   }
 }
 
-Navigation.propTypes = {};
+Navigation.propTypes = {
+  user: PropTypes.object,
+};
 
 const mapStateToProps = (state) => {
   return { user: state.login.user };

@@ -1,10 +1,8 @@
-import opposites from "../../data/opposites.json";
 import firebase from "firebase/app";
 import "firebase/database";
 
 export const GET_OPPOSITES = "get_opposites";
 
-// TODO: use firebase for opposites
 export function getOpposites() {
   return (dispatch) => {
     firebase
@@ -18,12 +16,7 @@ export function getOpposites() {
         });
       })
       .catch(() => {
-        // pull static data here
-        console.warn("Remote pull failed. Using local data.");
-        dispatch({
-          type: GET_OPPOSITES,
-          value: opposites,
-        });
+        console.warn("getOpposites failed");
       });
   };
 }

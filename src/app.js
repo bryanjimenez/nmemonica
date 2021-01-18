@@ -60,6 +60,7 @@ class App extends Component {
 
 App.propTypes = {
   initialize: PropTypes.func,
+  getLocalStorageUserSettings: PropTypes.func,
 };
 
 export default connect(null, { initialize, getLocalStorageUserSettings })(App);

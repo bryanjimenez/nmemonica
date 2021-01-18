@@ -28,7 +28,7 @@ export class JapaneseVerb extends JapaneseText {
     const lastChar = verbArr.pop();
     const beforeLastChar = verbArr.pop();
 
-    const { iConsonant, iVowel: beforeLastVowel } = getConsonantVowel(
+    const { /*iConsonant,*/ iVowel: beforeLastVowel } = getConsonantVowel(
       beforeLastChar
     );
 

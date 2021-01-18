@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { DashIcon, PlusIcon } from "@primer/octicons-react";
-import classNames from "classnames";
 
 class HiraganaSettings extends Component {
   constructor(props) {
@@ -90,10 +89,13 @@ class HiraganaSettings extends Component {
 }
 
 HiraganaSettings.propTypes = {
-  active: true,
   active: PropTypes.bool,
+  activeText: PropTypes.string.isRequired,
   action: PropTypes.func.isRequired,
+  action2: PropTypes.func,
+  inactiveText: PropTypes.string.isRequired,
   initial: PropTypes.number.isRequired,
+  initial2: PropTypes.bool,
   min: PropTypes.number.isRequired,
   max: PropTypes.number.isRequired,
 };

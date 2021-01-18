@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import PropTypes from "prop-types";
 import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getOpposites } from "../../actions/oppositesAct";
@@ -144,7 +145,6 @@ class Opposites extends Component {
 
   render() {
     // console.log("render");
-    // TODO: cleanup
     if (this.state.question === false) return <div />;
 
     const question = this.state.question;
@@ -224,6 +224,13 @@ const mapStateToProps = (state) => {
     qRomaji: state.settings.opposites.qRomaji,
     aRomaji: state.settings.opposites.aRomaji,
   };
+};
+
+Opposites.propTypes = {
+  getOpposites: PropTypes.func,
+  opposites: PropTypes.array,
+  qRomaji: PropTypes.bool,
+  aRomaji: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, { getOpposites })(Opposites);

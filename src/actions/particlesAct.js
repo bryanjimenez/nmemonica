@@ -1,4 +1,3 @@
-import particles from "../../data/particles.json";
 import firebase from "firebase/app";
 import "firebase/database";
 
@@ -18,12 +17,7 @@ export function getParticles() {
         });
       })
       .catch(() => {
-        // pull static data here
-        console.warn("Remote pull failed. Using local data.");
-        dispatch({
-          type: GET_PARTICLES,
-          value: particles,
-        });
+        console.warn("getParticles failed");
       });
   };
 }
@@ -41,12 +35,7 @@ export function getSuffixes() {
         });
       })
       .catch(() => {
-        // pull static data here
-        // console.warn("Remote pull failed. Using local data.");
-        // dispatch({
-        //   type: GET_SUFFIXES,
-        //   value: particles,
-        // });
+        console.warn("getSuffixes failed");
       });
   };
 }

@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
+import PropTypes from "prop-types";
 import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getHiragana } from "../../actions/hiraganaAct";
@@ -71,7 +72,11 @@ class HiraganaGame extends Component {
       this.prepareGame();
     }
 
-    if (this.state.practiceSide != prevState.practiceSide) {
+    if (
+      this.state.practiceSide != prevState.practiceSide ||
+      this.props.choiceN != prevProps.choiceN
+    ) {
+      // console.log('settings update');
       this.prepareGame();
     }
   }
@@ -305,13 +310,7 @@ class HiraganaGame extends Component {
   }
 
   render() {
-    // TODO: cleanup
-    if (
-      !this.props.hiragana ||
-      this.props.hiragana.length < 1 ||
-      this.state.question === false
-    )
-      return <div className="text-center">loading</div>;
+    if (this.state.question === false) return <div />;
 
     const question = this.state.question;
     const choices = this.state.choices;
@@ -386,6 +385,16 @@ const mapStateToProps = (state) => {
       : state.settings.hiragana.choiceN,
     wideMode: state.settings.hiragana.wideMode,
   };
+};
+
+HiraganaGame.propTypes = {
+  hiragana: PropTypes.array.isRequired,
+  getHiragana: PropTypes.func,
+  vowels: PropTypes.array.isRequired,
+  consonants: PropTypes.array.isRequired,
+  choiceN: PropTypes.number.isRequired,
+  sounds: PropTypes.object.isRequired,
+  wideMode: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, { getHiragana })(HiraganaGame);

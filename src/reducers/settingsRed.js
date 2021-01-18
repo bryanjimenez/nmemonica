@@ -33,84 +33,108 @@ const DEFAULT_ACTION = {};
 const settingsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
   switch (action.type) {
     case SET_HIRAGANA_BTN_N:
-      const choiceN = action.value ? action.value : !state.hiragana.choiceN;
       return {
         ...state,
-        hiragana: { ...state.hiragana, choiceN },
+        hiragana: {
+          ...state.hiragana,
+          choiceN: action.value || !state.hiragana.choiceN,
+        },
       };
     case TOGGLE_HIRAGANA_WIDEMODE:
-      const wideMode = action.value ? action.value : !state.hiragana.wideMode;
       return {
         ...state,
-        hiragana: { ...state.hiragana, wideMode },
+        hiragana: {
+          ...state.hiragana,
+          wideMode: action.value || !state.hiragana.wideMode,
+        },
       };
     case SET_VERB_ORDERING:
-      const ordered = action.value ? action.value : !state.verbs.ordered;
       return {
         ...state,
-        verbs: { ...state.verbs, ordered },
+        verbs: {
+          ...state.verbs,
+          ordered: action.value || !state.verbs.ordered,
+        },
       };
     case SET_PHRASES_ORDERING:
-      const newOrder = action.value ? action.value : !state.phrases.ordered;
       return {
         ...state,
-        phrases: { ...state.phrases, ordered: newOrder },
+        phrases: {
+          ...state.phrases,
+          ordered: action.value || !state.phrases.ordered,
+        },
       };
     case SET_VOCABULARY_ORDERING:
-      const newVOrder = action.value || !state.vocabulary.ordered;
       return {
         ...state,
-        vocabulary: { ...state.vocabulary, ordered: newVOrder },
+        vocabulary: {
+          ...state.vocabulary,
+          ordered: action.value || !state.vocabulary.ordered,
+        },
       };
     case TOGGLE_VOCABULARY_ROMAJI:
-      const vocabRomaji = action.value || !state.vocabulary.romaji;
       return {
         ...state,
-        vocabulary: { ...state.vocabulary, romaji: vocabRomaji },
+        vocabulary: {
+          ...state.vocabulary,
+          romaji: action.value || !state.vocabulary.romaji,
+        },
       };
     case TOGGLE_VOCABULARY_HINT:
-      const vocabHint = action.value || !state.vocabulary.hint;
       return {
         ...state,
-        vocabulary: { ...state.vocabulary, hint: vocabHint },
+        vocabulary: {
+          ...state.vocabulary,
+          hint: action.value || !state.vocabulary.hint,
+        },
       };
     case FLIP_VOCABULARY_PRACTICE_SIDE:
-      const practiceVSide = action.value || !state.vocabulary.practiceSide;
       return {
         ...state,
-        vocabulary: { ...state.vocabulary, practiceSide: practiceVSide },
+        vocabulary: {
+          ...state.vocabulary,
+          practiceSide: action.value || !state.vocabulary.practiceSide,
+        },
       };
     case SET_OPPOSITES_Q_ROMAJI:
-      const qRomaji = action.value ? action.value : !state.opposites.qRomaji;
       return {
         ...state,
-        opposites: { ...state.opposites, qRomaji },
+        opposites: {
+          ...state.opposites,
+          qRomaji: action.value || !state.opposites.qRomaji,
+        },
       };
     case SET_OPPOSITES_A_ROMAJI:
-      const aRomaji = action.value ? action.value : !state.opposites.aRomaji;
       return {
         ...state,
-        opposites: { ...state.opposites, aRomaji },
+        opposites: {
+          ...state.opposites,
+          aRomaji: action.value || !state.opposites.aRomaji,
+        },
       };
     case SET_PARTICLES_A_ROMAJI:
-      const paRomaji = action.value ? action.value : !state.particles.aRomaji;
       return {
         ...state,
-        particles: { ...state.particles, aRomaji: paRomaji },
+        particles: {
+          ...state.particles,
+          aRomaji: action.value || !state.particles.aRomaji,
+        },
       };
     case FLIP_PHRASES_PRACTICE_SIDE:
-      const practiceSide = action.value
-        ? action.value
-        : !state.phrases.practiceSide;
       return {
         ...state,
-        phrases: { ...state.phrases, practiceSide },
+        phrases: {
+          ...state.phrases,
+          practiceSide: action.value || !state.phrases.practiceSide,
+        },
       };
     case TOGGLE_PHRASES_ROMAJI:
-      const phraRomaji = action.value ? action.value : !state.phrases.romaji;
       return {
         ...state,
-        phrases: { ...state.phrases, romaji: phraRomaji },
+        phrases: {
+          ...state.phrases,
+          romaji: action.value || !state.phrases.romaji,
+        },
       };
     case GET_USER_SETTINGS:
       return {

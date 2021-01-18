@@ -76,7 +76,6 @@ class NumberField extends Component {
 }
 
 NumberField.propTypes = {
-  active: true,
   active: PropTypes.bool,
   action: PropTypes.func.isRequired,
   initial: PropTypes.number.isRequired,

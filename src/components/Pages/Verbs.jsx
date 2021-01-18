@@ -1,11 +1,8 @@
 import React, { Component } from "react";
 import classNames from "classnames";
 import { connect } from "react-redux";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  UnmuteIcon,
-} from "@primer/octicons-react";
+import PropTypes from "prop-types";
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getVerbs } from "../../actions/verbsAct";
 // import PropTypes from "prop-types";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -44,7 +41,7 @@ class Verbs extends Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps /*, prevState*/) {
     if (
       this.props.verbs.length != prevProps.verbs.length ||
       this.props.isOrdered != prevProps.isOrdered
@@ -210,6 +207,12 @@ class Verbs extends Component {
 
 const mapStateToProps = (state) => {
   return { verbs: state.verbs.value, isOrdered: state.settings.verbs.ordered };
+};
+
+Verbs.propTypes = {
+  getVerbs: PropTypes.func.isRequired,
+  verbs: PropTypes.array.isRequired,
+  isOrdered: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, { getVerbs })(Verbs);

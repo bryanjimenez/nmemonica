@@ -22,7 +22,7 @@ export function getVocabulary() {
         });
       })
       .catch(() => {
-        console.warn("Remote pull failed.");
+        console.warn("getVocabulary failed.");
       });
   };
 }

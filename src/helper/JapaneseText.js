@@ -166,7 +166,7 @@ export function buildHTMLElement(
 ) {
   let sentence = [];
   const kanjiWFurigana = kanjis.map((kanji, i) => (
-    <ruby>
+    <ruby key={i}>
       {kanji}
       <rt>{furiganas[i]}</rt>
     </ruby>
