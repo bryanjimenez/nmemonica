@@ -150,6 +150,7 @@ class Verbs extends Component {
           <button
             type="button"
             className="btn btn-primary"
+            aria-label="previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -195,6 +196,7 @@ class Verbs extends Component {
           <button
             type="button"
             className="btn btn-primary"
+            aria-label="next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />

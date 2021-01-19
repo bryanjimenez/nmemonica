@@ -182,6 +182,7 @@ class Vocabulary extends Component {
           <button
             type="button"
             className="btn btn-indigo"
+            aria-label="previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -207,7 +208,13 @@ class Vocabulary extends Component {
               {this.state.showMeaning ? hiddenSide : hiddenCaption}
             </h2>
           </div>
-          <button type="button" className="btn btn-indigo" onClick={this.play}>
+
+          <button
+            type="button"
+            className="btn btn-indigo"
+            aria-label="next"
+            onClick={this.play}
+          >
             <ChevronRightIcon size={16} />
           </button>
         </div>
