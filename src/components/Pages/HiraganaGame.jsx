@@ -330,7 +330,7 @@ class HiraganaGame extends Component {
           <button
             type="button"
             className="btn btn-danger"
-            aria-label="previous"
+            aria-label="Previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -353,7 +353,7 @@ class HiraganaGame extends Component {
           <button
             type="button"
             className="btn btn-danger"
-            aria-label="next"
+            aria-label="Next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />

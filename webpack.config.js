@@ -2,6 +2,8 @@ const webpack = require("webpack");
 const HtmlWebPackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const PurgecssPlugin = require("purgecss-webpack-plugin");
+const glob = require("glob-all");
 
 module.exports = function (webpackEnv, argv) {
   const envFile = /^(.*\.)(development|production)(\.js|\.json|)$/;
@@ -58,6 +60,13 @@ module.exports = function (webpackEnv, argv) {
             : "[name].[contenthash].css",
         chunkFilename:
           argv.mode === "development" ? "[id].css" : "[id].[contenthash].css",
+      }),
+      new PurgecssPlugin({
+        paths: glob.sync(
+          [path.join("index.html"), `${path.join(__dirname, "src")}/**/*`],
+          { nodir: true }
+        ),
+        whitelist: ["html", "body"],
       }),
     ],
 

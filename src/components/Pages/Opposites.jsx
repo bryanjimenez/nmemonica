@@ -161,7 +161,7 @@ class Opposites extends Component {
           <button
             type="button"
             className="btn btn-orange"
-            aria-label="previous"
+            aria-label="Previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -209,7 +209,7 @@ class Opposites extends Component {
           <button
             type="button"
             className="btn btn-orange"
-            aria-label="next"
+            aria-label="Next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />

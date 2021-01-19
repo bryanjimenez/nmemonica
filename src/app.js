@@ -1,27 +1,30 @@
-import React, { Component } from "react";
+import React, { Component, Suspense, lazy } from "react";
 import { connect } from "react-redux";
 import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import PropTypes from "prop-types";
 
 import Navigation from "./components/Navigation/Navigation";
-import NotFound from "./components/Navigation/NotFound";
-import Verbs, { VerbsMeta } from "./components/Pages/Verbs";
-import Phrases, { PhrasesMeta } from "./components/Pages/Phrases";
-import Vocabulary, { VocabularyMeta } from "./components/Pages/Vocabulary";
-import Opposites, { OppositesMeta } from "./components/Pages/Opposites";
-import HiraganaGame, {
-  HiraganaGameMeta,
-} from "./components/Pages/HiraganaGame";
-import ParticlesGame, {
-  ParticlesGameMeta,
-} from "./components/Pages/ParticlesGame";
-import Settings, { SettingsMeta } from "./components/Pages/Settings";
-import Logout, { LogoutMeta } from "./components/Pages/Logout";
-import OAuthLogin, { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
-import {
-  initializeSettingsFromLocalStorage,
-  initialize,
-} from "./actions/firebase";
+
+const NotFound = lazy(() => import("./components/Navigation/NotFound"));
+const Verbs = lazy(() => import("./components/Pages/Verbs"));
+const Phrases = lazy(() => import("./components/Pages/Phrases"));
+const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
+const Opposites = lazy(() => import("./components/Pages/Opposites"));
+const HiraganaGame = lazy(() => import("./components/Pages/HiraganaGame"));
+const ParticlesGame = lazy(() => import("./components/Pages/ParticlesGame"));
+const Settings = lazy(() => import("./components/Pages/Settings"));
+const Logout = lazy(() => import("./components/Pages/Logout"));
+const OAuthLogin = lazy(() => import("./components/Pages/OAuthLogin"));
+import { VerbsMeta } from "./components/Pages/Verbs";
+import { PhrasesMeta } from "./components/Pages/Phrases";
+import { VocabularyMeta } from "./components/Pages/Vocabulary";
+import { OppositesMeta } from "./components/Pages/Opposites";
+import { SettingsMeta } from "./components/Pages/Settings";
+import { LogoutMeta } from "./components/Pages/Logout";
+import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
+import { HiraganaGameMeta } from "./components/Pages/HiraganaGame";
+import { ParticlesGameMeta } from "./components/Pages/ParticlesGame";
+import { initializeSettingsFromLocalStorage, initialize } from "./actions/firebase";
 import "./styles.css";
 
 class App extends Component {
@@ -39,22 +42,27 @@ class App extends Component {
       <Router basename="/">
         <div id="page-content">
           <Navigation />
-          <Switch>
-            <Route path="/" exact component={Verbs} />
-            <Route path={VerbsMeta.location} component={Verbs} />
-            <Route path={PhrasesMeta.location} component={Phrases} />
-            <Route path={VocabularyMeta.location} component={Vocabulary} />
-            <Route path={OppositesMeta.location} component={Opposites} />
-            <Route path={HiraganaGameMeta.location} component={HiraganaGame} />
-            <Route
-              path={ParticlesGameMeta.location}
-              component={ParticlesGame}
-            />
-            <Route path={SettingsMeta.location} component={Settings} />
-            <Route path={OAuthLoginMeta.location} component={OAuthLogin} />
-            <Route path={LogoutMeta.location} component={Logout} />
-            <Route component={NotFound} />
-          </Switch>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Switch>
+              <Route path="/" exact component={Verbs} />
+              <Route path={VerbsMeta.location} component={Verbs} />
+              <Route path={PhrasesMeta.location} component={Phrases} />
+              <Route path={VocabularyMeta.location} component={Vocabulary} />
+              <Route path={OppositesMeta.location} component={Opposites} />
+              <Route
+                path={HiraganaGameMeta.location}
+                component={HiraganaGame}
+              />
+              <Route
+                path={ParticlesGameMeta.location}
+                component={ParticlesGame}
+              />
+              <Route path={SettingsMeta.location} component={Settings} />
+              <Route path={OAuthLoginMeta.location} component={OAuthLogin} />
+              <Route path={LogoutMeta.location} component={Logout} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
         </div>
       </Router>
     );

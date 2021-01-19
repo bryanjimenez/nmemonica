@@ -67,7 +67,7 @@ class Navigation extends Component {
     return (
       <div className="navigation">
         <nav className="navbar navbar-expand-lg">
-          <Link className="navbar-brand" to="/">
+          <Link className="navbar-brand" aria-label="Home" to="/">
             {/* <span>Nmemonica</span> */}
             {/* <span>Language Flash Cards</span> */}
           </Link>

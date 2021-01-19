@@ -235,7 +235,7 @@ class ParticlesGame extends Component {
           <button
             type="button"
             className="btn btn-warning"
-            aria-label="previous"
+            aria-label="Previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -280,7 +280,7 @@ class ParticlesGame extends Component {
           <button
             type="button"
             className="btn btn-warning"
-            aria-label="next"
+            aria-label="Next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />

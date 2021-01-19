@@ -69,7 +69,7 @@ class HiraganaSettings extends Component {
           <button
             type="button"
             className="btn btn-outline-secondary octicon-wrap"
-            aria-label="less choices"
+            aria-label="Decrement choices"
             disabled={!this.props.active}
             onClick={this.handleMinus}
           >
@@ -78,7 +78,7 @@ class HiraganaSettings extends Component {
           <button
             type="button"
             className="btn btn-outline-secondary octicon-wrap"
-            aria-label="more choices"
+            aria-label="Increment choices"
             disabled={!this.props.active}
             onClick={this.handlePlus}
           >

@@ -118,7 +118,7 @@ class Phrases extends Component {
           <button
             type="button"
             className="btn btn-success"
-            aria-label="previous"
+            aria-label="Previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -167,7 +167,7 @@ class Phrases extends Component {
           <button
             type="button"
             className="btn btn-success"
-            aria-label="next"
+            aria-label="Next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
