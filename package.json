@@ -8,7 +8,7 @@
     "coverage": "nyc -e .jsx npm run test",
     "clean": "rm -rf ./dist",
     "webpack": "node ./node_modules/webpack/bin/webpack.js --mode=production",
-    "manifest": "cp ./public/* ./dist/",
+    "manifest": "cp ./site/* ./dist/",
     "build": "npm run clean && npm run webpack && npm run manifest",
     "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica-demo -b main",
     "start": "webpack serve --mode=development --config=./webpack.config.js",
