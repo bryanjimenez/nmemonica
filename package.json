@@ -21,7 +21,6 @@
   "homepage": "https://bryanjimenez.github.io/nmemonica-demo",
   "dependencies": {
     "@primer/octicons-react": "^11.1.0",
-    "axios": "^0.21.0",
     "babel-loader": "^8.2.1",
     "bootstrap": "^4.5.3",
     "classnames": "^2.2.6",

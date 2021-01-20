@@ -7,7 +7,7 @@ const swPartialCode = projectRoot + "/pwa/sw.js";
 const swOutput = projectRoot + "/dist/sw.js";
 
 const arrFilesToCache = glob.sync(
-  [`${path.dirname(__dirname)}/dist/*.{html,js,css,jpeg,png,ico}`],
+  [`${path.dirname(__dirname)}/dist/*.{html,js,css,jpeg,png,ico,webmanifest}`],
   { nodir: true }
 );
 
