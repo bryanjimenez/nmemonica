@@ -5,7 +5,6 @@ flash cards
 ### TODO or not TODO
 - [ ] add tenses in verbs page
 - [ ] hiragana give up/skip and reinforce
-- [ ] serviceworker cacheFiles improve
 
 
 ## Thanks

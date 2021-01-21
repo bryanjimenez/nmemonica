@@ -6,15 +6,15 @@
   "scripts": {
     "test": "mocha --require @babel/register ./test/**/*.js",
     "coverage": "nyc -e .jsx npm run test",
-    "clean": "rm -rf ./dist",
-    "webpack": "node ./node_modules/webpack/bin/webpack.js --mode=production",
-    "manifest": "cp ./site/* ./dist/",
-    "sw": "ls -1 dist/ | grep -P -e '(html|js|css|jpeg|png|ico)$' | sed 's/^/\"/' | sed 's/$/\",/' >> dist/sw.js && echo '];' >> dist/sw.js",
-    "build": "npm run clean && npm run webpack && npm run manifest && npm run sw",
+    "b:clean": "rm -rf ./dist",
+    "b:webpack": "node ./node_modules/webpack/bin/webpack.js --mode=production",
+    "b:manifest": "cp ./site/* ./dist/",
+    "b:sw": "node ./pwa/swHelper.js",
+    "build": "npm run b:clean && npm run b:webpack && npm run b:manifest && npm run b:sw",
     "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica-demo -b main",
     "start": "webpack serve --mode=development --config=./webpack.config.js",
     "pretty": "./node_modules/.bin/prettier --write ./src/**/**/*.{js,jsx,css} ./test/**/*.js ./data ./webpack.config.js",
-    "lint": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx}"
+    "lint": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx} ./pwa/*"
   },
   "author": "Bryan",
   "license": "",
