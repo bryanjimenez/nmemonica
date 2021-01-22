@@ -20,6 +20,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 
 import "./CustomBtn.css";
+import { NotReady } from "../Form/NotReady";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -137,7 +138,7 @@ class Vocabulary extends Component {
   }
 
   render() {
-    if (this.props.vocab.length < 1) return <div />;
+    if (this.props.vocab.length < 1) return <NotReady addlStyle="main-panel" />;
 
     let vocabulary;
     if (this.state.reinforcedUID) {

@@ -34,7 +34,6 @@ class App extends Component {
     this.props.initialize();
     this.state = {};
 
-
     this.props.initializeSettingsFromLocalStorage();
 
     // Register service worker

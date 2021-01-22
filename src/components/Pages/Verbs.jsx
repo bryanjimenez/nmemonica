@@ -4,9 +4,9 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getVerbs } from "../../actions/verbsAct";
-// import PropTypes from "prop-types";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
+import { NotReady } from "../Form/NotReady";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -108,7 +108,8 @@ class Verbs extends Component {
   }
 
   render() {
-    if (this.props.verbs.length < 1) return <div />;
+    if (this.props.verbs.length < 1)
+      return <NotReady addlStyle="main-panel" />;
 
     let v;
     if (this.state.order) {
