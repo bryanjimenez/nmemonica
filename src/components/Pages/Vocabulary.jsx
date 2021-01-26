@@ -5,11 +5,17 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   GiftIcon,
+  PlusCircleIcon,
+  XCircleIcon,
 } from "@primer/octicons-react";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { flipVocabularyPracticeSide } from "../../actions/settingsAct";
+import {
+  flipVocabularyPracticeSide,
+  addFrequencyWord,
+  removeFrequencyWord,
+} from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 
@@ -36,6 +42,7 @@ class Vocabulary extends Component {
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
     this.setOrder = this.setOrder.bind(this);
+    this.play = this.play.bind(this);
   }
 
   componentDidMount() {
@@ -47,11 +54,16 @@ class Vocabulary extends Component {
   }
 
   componentDidUpdate(prevProps /*, prevState*/) {
+    if (this.props.vocab.length != prevProps.vocab.length) {
+      // console.log("got game data");
+      this.setOrder();
+    }
+
     if (
-      this.props.vocab.length != prevProps.vocab.length ||
+      this.props.vocab.length > 0 &&
       this.props.isOrdered != prevProps.isOrdered
     ) {
-      // console.log("got game data");
+      // console.log("order changed");
       this.setOrder();
     }
   }
@@ -66,10 +78,44 @@ class Vocabulary extends Component {
     this.setState({ order: newOrder });
   }
 
+  play() {
+    // some games will come from the reinforced list
+    const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
+    if (reinforced && this.props.frequency.length > 0) {
+      const min = 0;
+      const max = Math.floor(this.props.frequency.length);
+      const idx = Math.floor(Math.random() * (max - min) + min);
+      const vocabulary = this.props.vocab.filter(
+        (v) => this.props.frequency[idx] === v.uid
+      )[0];
+
+      if (vocabulary) {
+        if (this.state.reinforcedUID !== vocabulary.uid) {
+          this.setState({
+            reinforcedUID: vocabulary.uid,
+            showMeaning: false,
+            showRomaji: false,
+            showHint: false,
+          });
+        } else {
+          // avoid repeating the same reinforced word
+          this.gotoNext();
+        }
+      } else {
+        console.warn("uid no longer exists");
+        removeFrequencyWord(this.props.frequency[idx]);
+        this.gotoNext();
+      }
+    } else {
+      this.gotoNext();
+    }
+  }
+
   gotoNext() {
     const l = this.props.vocab.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
+      reinforcedUID: undefined,
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
@@ -82,6 +128,7 @@ class Vocabulary extends Component {
     const i = this.state.selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
+      reinforcedUID: undefined,
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
@@ -93,12 +140,20 @@ class Vocabulary extends Component {
     if (this.props.vocab.length < 1) return <div />;
 
     let vocabulary;
-    if (this.state.order) {
-      const index = this.state.order[this.state.selectedIndex];
-      vocabulary = this.props.vocab[index];
+    if (this.state.reinforcedUID) {
+      vocabulary = this.props.vocab.filter(
+        (v) => this.state.reinforcedUID === v.uid
+      )[0];
     } else {
-      vocabulary = this.props.vocab[this.state.selectedIndex];
+      if (this.state.order) {
+        const index = this.state.order[this.state.selectedIndex];
+        vocabulary = this.props.vocab[index];
+      } else {
+        vocabulary = this.props.vocab[this.state.selectedIndex];
+      }
     }
+
+    vocabulary.reinforce = this.props.frequency.indexOf(vocabulary.uid) > -1;
 
     let inJapanese = JapaneseText.parse(vocabulary.japanese).toHTML();
     let inEnglish = vocabulary.english;
@@ -152,52 +207,89 @@ class Vocabulary extends Component {
               {this.state.showMeaning ? hiddenSide : hiddenCaption}
             </h2>
           </div>
-          <button
-            type="button"
-            className="btn btn-indigo"
-            onClick={this.gotoNext}
-          >
+          <button type="button" className="btn btn-indigo" onClick={this.play}>
             <ChevronRightIcon size={16} />
           </button>
         </div>
 
-        <div className="option-bar ml-3 mr-3 d-flex justify-content-between">
-          <div>
-            <FontAwesomeIcon
-              onClick={this.props.flipVocabularyPracticeSide}
-              className="clickable"
-              icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-            />
-          </div>
-          <div style={{ marginLeft: "-16px" }}>
-            {hintActive && (
-              <h5
-                onClick={() => {
-                  this.setState((state) => ({ showHint: !state.showHint }));
-                }}
+        <div className="option-bar my-container">
+          <div className="row">
+            <div className="col">
+              <FontAwesomeIcon
+                onClick={this.props.flipVocabularyPracticeSide}
                 className="clickable"
-              >
-                {this.state.showHint ? hint : ""}
-              </h5>
-            )}
-          </div>
-          <div>
-            {hintActive && !this.state.showHint && (
-              <div
-                onClick={() => {
-                  this.setState({ showHint: true });
-                  setTimeout(() => {
-                    this.setState({ showHint: false });
-                  }, 1500);
-                }}
-              >
-                <GiftIcon
+                icon={this.props.practiceSide ? faGlasses : faPencilAlt}
+              />
+            </div>
+            <div className="col text-center">
+              {hintActive && (
+                <h5
+                  onClick={() => {
+                    this.setState((state) => ({ showHint: !state.showHint }));
+                  }}
                   className="clickable"
-                  size="small"
-                  aria-label="hint"
-                />
+                >
+                  {this.state.showHint ? hint : ""}
+                </h5>
+              )}
+            </div>
+            <div className="col">
+              <div className="d-flex justify-content-end">
+                {hintActive && !this.state.showHint ? (
+                  <div
+                    className="sm-icon-grp"
+                    onClick={() => {
+                      this.setState({ showHint: true });
+                      setTimeout(() => {
+                        this.setState({ showHint: false });
+                      }, 1500);
+                    }}
+                  >
+                    <GiftIcon
+                      className="clickable"
+                      size="small"
+                      aria-label="hint"
+                    />
+                  </div>
+                ) : (
+                  <div className="sm-icon-grp">
+                    <GiftIcon
+                      className="disabled disabled-color"
+                      size="small"
+                      aria-label="hint unavailable"
+                    />
+                  </div>
+                )}
+
+                <div className="sm-icon-grp">
+                  {vocabulary.reinforce ? (
+                    <div
+                      onClick={() => {
+                        this.props.removeFrequencyWord(vocabulary.uid);
+                      }}
+                    >
+                      <XCircleIcon
+                        className="clickable"
+                        size="small"
+                        aria-label="remove"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => {
+                        this.props.addFrequencyWord(vocabulary.uid);
+                      }}
+                    >
+                      <PlusCircleIcon
+                        className="clickable"
+                        size="small"
+                        aria-label="add"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -212,10 +304,14 @@ const mapStateToProps = (state) => {
     isOrdered: state.settings.vocabulary.ordered,
     romajiActive: state.settings.vocabulary.romaji,
     hintActive: state.settings.vocabulary.hint,
+    frequency: state.settings.vocabulary.frequency,
   };
 };
 
 Vocabulary.propTypes = {
+  addFrequencyWord: PropTypes.func.isRequired,
+  removeFrequencyWord: PropTypes.func.isRequired,
+  frequency: PropTypes.array,
   getVocabulary: PropTypes.func.isRequired,
   vocab: PropTypes.array.isRequired,
   hintActive: PropTypes.bool,
@@ -228,6 +324,8 @@ Vocabulary.propTypes = {
 export default connect(mapStateToProps, {
   getVocabulary,
   flipVocabularyPracticeSide,
+  addFrequencyWord,
+  removeFrequencyWord,
 })(Vocabulary);
 
 export { VocabularyMeta };
