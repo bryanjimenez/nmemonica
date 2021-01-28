@@ -10,6 +10,7 @@ import { JapaneseText } from "../../helper/JapaneseText";
 // import PropTypes from "prop-types";
 
 import "./CustomBtn.css";
+import { NotReady } from "../Form/NotReady";
 
 const OppositesMeta = {
   location: "/opposites/",
@@ -145,7 +146,8 @@ class Opposites extends Component {
 
   render() {
     // console.log("render");
-    if (this.state.question === false) return <div />;
+    if (this.state.question === false)
+      return <NotReady addlStyle="main-panel" />;
 
     const question = this.state.question;
     const answer = this.state.answer;
@@ -161,6 +163,7 @@ class Opposites extends Component {
           <button
             type="button"
             className="btn btn-orange"
+            aria-label="Previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -208,6 +211,7 @@ class Opposites extends Component {
           <button
             type="button"
             className="btn btn-orange"
+            aria-label="Next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />

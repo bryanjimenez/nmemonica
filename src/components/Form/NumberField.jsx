@@ -56,6 +56,7 @@ class NumberField extends Component {
           <button
             type="button"
             className="btn btn-outline-secondary octicon-wrap"
+            aria-label="Decrement"
             disabled={!this.props.active}
             onClick={this.handleMinus}
           >
@@ -64,6 +65,7 @@ class NumberField extends Component {
           <button
             type="button"
             className="btn btn-outline-secondary octicon-wrap"
+            aria-label="Increment"
             disabled={!this.props.active}
             onClick={this.handlePlus}
           >

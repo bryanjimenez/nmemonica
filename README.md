@@ -4,10 +4,8 @@ flash cards
 
 ### TODO or not TODO
 - [ ] add tenses in verbs page
-- [ ] remove static/sample data
 - [ ] hiragana give up/skip and reinforce
-- [ ] configure lint
-- [ ] portait view
+- [ ] cache firebase data for offline use
 
 
 ## Thanks

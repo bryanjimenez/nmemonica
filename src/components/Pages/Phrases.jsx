@@ -14,6 +14,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { flipPhrasesPracticeSide } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { NotReady } from "../Form/NotReady";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -87,7 +88,8 @@ class Phrases extends Component {
   }
 
   render() {
-    if (this.props.phrases.length < 1) return <div />;
+    if (this.props.phrases.length < 1)
+      return <NotReady addlStyle="main-panel" />;
 
     let phrase;
     if (this.state.order) {
@@ -118,6 +120,7 @@ class Phrases extends Component {
           <button
             type="button"
             className="btn btn-success"
+            aria-label="Previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -166,6 +169,7 @@ class Phrases extends Component {
           <button
             type="button"
             className="btn btn-success"
+            aria-label="Next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />

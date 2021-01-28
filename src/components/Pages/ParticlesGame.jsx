@@ -5,6 +5,7 @@ import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getParticles, getSuffixes } from "../../actions/particlesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { NotReady } from "../Form/NotReady";
 
 const ParticlesGameMeta = {
   location: "/particles",
@@ -218,7 +219,8 @@ class ParticlesGame extends Component {
   }
 
   render() {
-    if (this.state.question === false) return <div />;
+    if (this.state.question === false)
+      return <NotReady addlStyle="main-panel" />;
 
     const question = this.state.question;
     const answer = this.state.answer;
@@ -235,6 +237,7 @@ class ParticlesGame extends Component {
           <button
             type="button"
             className="btn btn-warning"
+            aria-label="Previous"
             onClick={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
@@ -279,6 +282,7 @@ class ParticlesGame extends Component {
           <button
             type="button"
             className="btn btn-warning"
+            aria-label="Next"
             onClick={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
