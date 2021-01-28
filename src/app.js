@@ -24,7 +24,10 @@ import { LogoutMeta } from "./components/Pages/Logout";
 import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
 import { HiraganaGameMeta } from "./components/Pages/HiraganaGame";
 import { ParticlesGameMeta } from "./components/Pages/ParticlesGame";
-import { initializeSettingsFromLocalStorage, initialize } from "./actions/firebase";
+import {
+  initializeSettingsFromLocalStorage,
+  initialize,
+} from "./actions/firebase";
 import "./styles.css";
 
 class App extends Component {

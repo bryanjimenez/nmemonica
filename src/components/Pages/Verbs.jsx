@@ -108,8 +108,7 @@ class Verbs extends Component {
   }
 
   render() {
-    if (this.props.verbs.length < 1)
-      return <NotReady addlStyle="main-panel" />;
+    if (this.props.verbs.length < 1) return <NotReady addlStyle="main-panel" />;
 
     let v;
     if (this.state.order) {
