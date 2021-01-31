@@ -28,7 +28,7 @@ import {
   initialize,
 } from "./actions/firebase";
 import "./styles.css";
-import { getVersions } from "./actions/verbsAct";
+import { getVersions } from "./actions/firebase";
 
 class App extends Component {
   constructor(props) {

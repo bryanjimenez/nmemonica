@@ -1,4 +1,4 @@
-import { GET_VERSIONS } from "../actions/verbsAct";
+import { GET_VERSIONS } from "../actions/firebase";
 
 const DEFAULT_STATE = {};
 const DEFAULT_ACTION = {};

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const glob = require("glob-all");
 const path = require("path");
+const md5 = require("../lambda/sheets/node_modules/md5");
 
 const projectRoot = path.dirname(__dirname);
 const swPartialCode = projectRoot + "/pwa/sw.js";
@@ -12,10 +13,11 @@ const arrFilesToCache = glob.sync(
 );
 
 const strFilesToCache = JSON.stringify(
-  arrFilesToCache.map((p) => p.split("/").pop())
+  arrFilesToCache.reduce((acc, p) => {
+    const fileName = p.split("/").pop();
+    return fileName !== "sw.js" ? [...acc, fileName] : acc;
+  }, [])
 );
-
-const str = "const cacheFiles = " + strFilesToCache;
 
 fs.open(swPartialCode, "r", (err, fd_sw) => {
   if (err) {
@@ -29,10 +31,11 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     }
 
     var stream = fs.createWriteStream(swOutput, {
-      flags: "a",
+      flags: "w",
     });
 
-    stream.write(str + "\n\n");
+    stream.write("const cacheFiles = " + strFilesToCache + "\n\n");
+    stream.write("// " + md5(buff) + "\n\n");
     stream.write(buff);
 
     stream.end();

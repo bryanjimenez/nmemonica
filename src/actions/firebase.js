@@ -10,6 +10,7 @@ import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRe
 export const FIREBASE_LOGIN = "firebase_login";
 export const FIREBASE_LOGOUT = "firebase_logout";
 export const GET_USER_SETTINGS = "get_user_settings";
+export const GET_VERSIONS = "get_versions";
 
 export function initialize() {
   return () => {
@@ -121,5 +122,18 @@ export function initializeSettingsFromLocalStorage() {
         });
       });
     }
+  };
+}
+
+export function getVersions() {
+  return (dispatch) => {
+    return fetch(firebaseConfig.databaseURL + "/lambda/cache.json")
+      .then((res) => res.json())
+      .then((data) =>
+        dispatch({
+          type: GET_VERSIONS,
+          value: data,
+        })
+      );
   };
 }
