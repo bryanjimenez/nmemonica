@@ -29,6 +29,7 @@ import {
 } from "./actions/firebase";
 import "./styles.css";
 import { getVersions } from "./actions/firebase";
+import { registerServiceWorker } from "./actions/serviceWorkerAct";
 
 class App extends Component {
   constructor(props) {
@@ -38,13 +39,7 @@ class App extends Component {
     this.props.initialize();
     this.props.getVersions();
     this.props.initializeSettingsFromLocalStorage();
-
-    // Register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").then(() => {
-        console.log("Service Worker Registered");
-      });
-    }
+    this.props.registerServiceWorker();
   }
 
   render() {
@@ -83,10 +78,12 @@ App.propTypes = {
   initialize: PropTypes.func,
   initializeSettingsFromLocalStorage: PropTypes.func,
   getVersions: PropTypes.func,
+  registerServiceWorker: PropTypes.func,
 };
 
 export default connect(null, {
   initialize,
   getVersions,
   initializeSettingsFromLocalStorage,
+  registerServiceWorker,
 })(App);

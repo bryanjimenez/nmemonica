@@ -6,7 +6,6 @@ const fbURL = "https://nmemonica-9d977.firebaseio.com/";
 
 const dataVerURL = fbURL + "lambda/cache.json";
 const dataURL = [
-  fbURL + "lambda/verbs.json",
   fbURL + "lambda/phrases.json",
   fbURL + "lambda/jlptn5.json",
   fbURL + "lambda/opposites.json",
@@ -46,43 +45,11 @@ self.addEventListener("activate", (e) => {
     });
 
   e.waitUntil(
-    // delete static assets not in cacheFiles
-    caches
-      .open(appStaticCache)
-      .then((cache) =>
-        cache.keys().then((requests) =>
-          Promise.all(
-            requests.reduce((acc, req) => {
-              const name = req.url.split("/").pop();
-              if (name.indexOf(".") > -1 && !cacheFiles.includes(name)) {
-                console.log("[ServiceWorker] removed static cache: " + name);
-                return [...acc, cache.delete(req.url)];
-              }
-
-              return acc;
-            }, [])
-          )
-        )
-      )
-      // TODO: need proper cache deletion strategy  
-      // delete old redundant data cache
-
-      // caches
-      //   .keys()
-      //   .then(function (cacheNames) {
-      //     return Promise.all(
-      //       cacheNames.map(function (cacheName) {
-      //         if (!cacheVersions.includes(cacheName)) {
-      //           console.log("[ServiceWorker] Deleting old cache:", cacheName);
-      //           return caches.delete(cacheName);
-      //         }
-      //       })
-      //     );
-      //   })
+    Promise.all([removeUnknowCaches(), removeOldStaticCaches()])
 
       // claim the client
       .then(function () {
-        console.log("[ServiceWorker] Claiming clients for version");
+        console.log("[ServiceWorker] Claiming clients");
         return self.clients.claim();
       })
   );
@@ -108,13 +75,13 @@ self.addEventListener("fetch", (e) => {
  */
 function appVersionReq() {
   // TODO: after fetch update app?
-  const cacheRes = caches.match(dataVerURL);
+  const cacheRes = caches
+    .open(appDataCache)
+    .then((cache) => cache.match(dataVerURL));
 
   const fetchRes = caches
     .open(appDataCache)
-    .then((cache) =>
-      cache.add(dataVerURL).then(() => caches.match(dataVerURL))
-    );
+    .then((cache) => cache.add(dataVerURL).then(() => cache.match(dataVerURL)));
 
   return cacheRes || fetchRes;
 }
@@ -122,16 +89,18 @@ function appVersionReq() {
 /**
  * get from cache on fail fetch and re-cache
  * first match may be stale
- * @returns a Promise with cache version
+ * @returns a Promise with a cached dataVersion response
  */
 function appVersionCacheOnFailFetch() {
-  return caches.match(dataVerURL).then((cacheRes) => {
-    if (cacheRes) {
-      return Promise.resolve(cacheRes);
-    } else {
-      return recache(appDataCache, dataVerURL);
-    }
-  });
+  return caches.open(appDataCache).then((cache) =>
+    cache.match(dataVerURL).then((cacheRes) => {
+      if (cacheRes) {
+        return Promise.resolve(cacheRes);
+      } else {
+        return recache(appDataCache, dataVerURL);
+      }
+    })
+  );
 }
 
 /**
@@ -176,19 +145,19 @@ function getVersionForData(url) {
 function cacheVerData(url, v) {
   const urlVersion = url + ".v" + v;
 
-  return caches.match(urlVersion).then((cacheRes) => {
-    return (
-      cacheRes ||
-      fetch(url).then((fetchRes) =>
-        caches.open(appDataCache).then((cache) => {
+  return caches.open(appDataCache).then((cache) =>
+    cache.match(urlVersion).then((cacheRes) => {
+      return (
+        cacheRes ||
+        fetch(url).then((fetchRes) => {
           if (fetchRes.status < 400) {
             cache.put(urlVersion, fetchRes.clone());
           }
           return fetchRes;
         })
-      )
-    );
-  });
+      );
+    })
+  );
 }
 
 /**
@@ -197,9 +166,12 @@ function cacheVerData(url, v) {
  * @param {*} url
  */
 function appAssetReq(url) {
-  return caches.match(url).then((cachedRes) => {
-    return cachedRes || recache(appStaticCache, url);
-  });
+  return caches
+    .open(appStaticCache)
+    .then((cache) => cache.match(url))
+    .then((cachedRes) => {
+      return cachedRes || recache(appStaticCache, url);
+    });
 }
 
 /**
@@ -211,10 +183,50 @@ function recache(cacheName, url) {
   return caches.open(cacheName).then((cache) =>
     cache
       .add(url)
-      .then(() => caches.match(url))
+      .then(() => cache.match(url))
       .catch(() => {
-        console.log("[ServiceWorker] network unavailable");
+        console.log("[ServiceWorker] Network unavailable");
         return Promise.reject();
       })
+  );
+}
+
+/**
+ * delete unknown caches
+ */
+function removeUnknowCaches() {
+  return caches.keys().then((cacheNames) =>
+    Promise.all(
+      cacheNames.reduce((acc, cacheName) => {
+        if (![appDataCache, appStaticCache].includes(cacheName)) {
+          console.log("[ServiceWorker] Deleting cache:", cacheName);
+          return [...acc, caches.delete(cacheName)];
+        }
+        return acc;
+      }, [])
+    )
+  );
+}
+
+/**
+ * deletes non indexed cache files in current caches
+ */
+function removeOldStaticCaches() {
+  return caches.open(appStaticCache).then((cache) =>
+    cache.keys().then((requests) =>
+      Promise.all(
+        requests.reduce((acc, req) => {
+          const name = req.url.split("/").pop();
+          // files not having . should not have hashes so will be overwritten
+          // by caches.add upon install
+          if (name.indexOf(".") > -1 && !cacheFiles.includes(name)) {
+            console.log("[ServiceWorker] Removed static asset: " + name);
+            return [...acc, cache.delete(req.url)];
+          }
+
+          return acc;
+        }, [])
+      )
+    )
   );
 }
