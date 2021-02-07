@@ -6,7 +6,6 @@ flash cards
 - [ ] add tenses in verbs page
 - [ ] hiragana give up/skip and reinforce
 - [ ] serviceworker delete old version of cached data
-- [ ] favicon round edges
 
 
 ## Thanks

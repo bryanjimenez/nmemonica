@@ -63,8 +63,12 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(appVersionReq());
   } else if (req.headers.get("Data-Version")) {
     e.respondWith(appDataReq(e.request));
-  } else {
+  } else if (url.indexOf(ghURL) === 0) {
+    // site asset
     e.respondWith(appAssetReq(url));
+  } else {
+    // everything else
+    e.respondWith(fetch(e.request));
   }
 });
 
