@@ -38,7 +38,9 @@ class Vocabulary extends Component {
       showHint: false,
     };
 
-    this.props.getVocabulary();
+    if (this.props.vocab.length === 0) {
+      this.props.getVocabulary();
+    }
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);

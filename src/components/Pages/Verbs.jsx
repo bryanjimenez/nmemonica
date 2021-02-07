@@ -3,7 +3,7 @@ import classNames from "classnames";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import { getVerbs } from "../../actions/verbsAct";
+import { getVocabulary } from "../../actions/vocabularyAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { NotReady } from "../Form/NotReady";
@@ -25,7 +25,10 @@ class Verbs extends Component {
       shownForm: "dictionary",
     };
 
-    this.props.getVerbs();
+    if (this.props.verbs.length === 0) {
+      // verbs are filtered from vocabulary
+      this.props.getVocabulary();
+    }
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -118,7 +121,7 @@ class Verbs extends Component {
       v = this.props.verbs[this.state.selectedIndex];
     }
 
-    const dictionaryForm = JapaneseVerb.parse(v.japanese.dictionary);
+    const dictionaryForm = JapaneseVerb.parse(v.japanese);
 
     const tenses = [
       { t: "masu", j: dictionaryForm.masuForm() },
@@ -134,7 +137,7 @@ class Verbs extends Component {
     const t1 = tenses.slice(0, splitIdx);
     const t2 = tenses.slice(splitIdx, tenses.length);
 
-    const romaji = ".";
+    const romaji = v.romaji || ".";
     const english = v.english;
 
     let japanesePhrase;
@@ -212,11 +215,11 @@ const mapStateToProps = (state) => {
 };
 
 Verbs.propTypes = {
-  getVerbs: PropTypes.func.isRequired,
+  getVocabulary: PropTypes.func.isRequired,
   verbs: PropTypes.array.isRequired,
   isOrdered: PropTypes.bool,
 };
 
-export default connect(mapStateToProps, { getVerbs })(Verbs);
+export default connect(mapStateToProps, { getVocabulary })(Verbs);
 
 export { VerbsMeta };
