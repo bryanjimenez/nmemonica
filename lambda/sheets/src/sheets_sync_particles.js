@@ -1,19 +1,9 @@
 "use strict";
 import "regenerator-runtime/runtime";
-
-// The Firebase Admin SDK to access the Firebase Realtime Database.
 import { default as admin } from "firebase-admin";
-
 import { google } from "googleapis";
-
 import { googleSheetId } from "../../../environment.development.js";
-
-/**
- * particles
- * syncs google sheet data with firebase
- * https://developers.google.com/sheets/api/quickstart/js
- * https://stackoverflow.com/questions/44448029/how-to-use-google-sheets-api-while-inside-a-google-cloud-function
- */
+import md5 from "md5";
 
 function parser(s, particleList) {
   let lastChunk = "";
@@ -116,6 +106,13 @@ export async function sheets_sync_particles(req, res) {
 
     admin.database().ref("lambda/particles").set(particles);
     admin.database().ref("lambda/suffixes").set(suffixes);
+    admin
+      .database()
+      .ref("lambda/cache")
+      .update({
+        particles: md5(particles).substr(0, 4),
+        suffixes: md5(suffixes).substr(0, 4),
+      });
 
     return res.status(200).json({ particles });
   } catch (e) {

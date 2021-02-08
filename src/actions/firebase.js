@@ -9,7 +9,6 @@ import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRe
 
 export const FIREBASE_LOGIN = "firebase_login";
 export const FIREBASE_LOGOUT = "firebase_logout";
-export const FIREBASE_CONNECTION = "firebase_connection";
 export const GET_USER_SETTINGS = "get_user_settings";
 
 export function initialize() {

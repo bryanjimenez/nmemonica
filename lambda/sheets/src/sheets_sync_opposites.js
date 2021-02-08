@@ -1,15 +1,9 @@
 "use strict";
-// The Firebase Admin SDK to access the Firebase Realtime Database.
 import { default as admin } from "firebase-admin";
-
 import { google } from "googleapis";
 import { googleSheetId } from "../../../environment.development.js";
+import md5 from "md5";
 
-/**
- * syncs google sheet data with firebase
- * https://developers.google.com/sheets/api/quickstart/js
- * https://stackoverflow.com/questions/44448029/how-to-use-google-sheets-api-while-inside-a-google-cloud-function
- */
 export async function sheets_sync_opposites(req, res) {
   try {
     const spreadsheetId = googleSheetId;
@@ -54,6 +48,10 @@ export async function sheets_sync_opposites(req, res) {
     }, []);
 
     admin.database().ref("lambda/opposites").set(opposites);
+    admin
+      .database()
+      .ref("lambda/cache")
+      .update({ opposites: md5(opposites).substr(0, 4) });
 
     return res.status(200).json({ opposites });
   } catch (e) {

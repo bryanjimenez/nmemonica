@@ -1,9 +1,8 @@
 "use strict";
-// The Firebase Admin SDK to access the Firebase Realtime Database.
 import { default as admin } from "firebase-admin";
-
 import axios from "axios";
 import qs from "qs";
+import md5 from "md5";
 
 // axios.interceptors.request.use(e=>{
 //   console.log('req intercept');
@@ -45,6 +44,7 @@ async function updatePhrases() {
 
   let romajiReqPromises = [];
   let phraseOrig = [];
+  let oldPhrase = {};
   phrase.forEach((childSnapshot) => {
     let p = childSnapshot.val();
     let key = childSnapshot.key;
@@ -60,6 +60,8 @@ async function updatePhrases() {
       romajiReqPromises.push(getRomaji(japanese));
       phraseOrig.push({ key, phrase: p });
     }
+
+    oldPhrase[key] = { ...p };
   });
 
   const responses = await Promise.all(romajiReqPromises);
@@ -72,10 +74,22 @@ async function updatePhrases() {
     const romaji = a[0];
     acc[phraseOrig[idx].key] = { ...phraseOrig[idx].phrase, romaji };
 
+    oldPhrase[phraseOrig[idx].key] = {
+      ...oldPhrase[phraseOrig[idx].key],
+      romaji,
+    };
+
     return acc;
   }, {});
 
-  return admin.database().ref("lambda/phrases").update(romajis);
+  return Promise.all([
+    admin.database().ref("lambda/phrases").update(romajis),
+
+    admin
+      .database()
+      .ref("lambda/cache")
+      .update({ phrases: md5(oldPhrase).substr(0, 4) }),
+  ]);
 }
 
 /**
