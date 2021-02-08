@@ -4,7 +4,6 @@ import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import PropTypes from "prop-types";
 
 import Navigation from "./components/Navigation/Navigation";
-
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Verbs = lazy(() => import("./components/Pages/Verbs"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
@@ -29,22 +28,18 @@ import {
   initialize,
 } from "./actions/firebase";
 import "./styles.css";
+import { getVersions } from "./actions/firebase";
+import { registerServiceWorker } from "./actions/serviceWorkerAct";
 
 class App extends Component {
   constructor(props) {
     super(props);
 
-    this.props.initialize();
     this.state = {};
-
+    this.props.initialize();
+    this.props.getVersions();
     this.props.initializeSettingsFromLocalStorage();
-
-    // Register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").then(() => {
-        console.log("Service Worker Registered");
-      });
-    }
+    this.props.registerServiceWorker();
   }
 
   render() {
@@ -52,7 +47,7 @@ class App extends Component {
       <Router basename="/">
         <div id="page-content">
           <Navigation />
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<div />}>
             <Switch>
               <Route path="/" exact component={Verbs} />
               <Route path={VerbsMeta.location} component={Verbs} />
@@ -82,9 +77,13 @@ class App extends Component {
 App.propTypes = {
   initialize: PropTypes.func,
   initializeSettingsFromLocalStorage: PropTypes.func,
+  getVersions: PropTypes.func,
+  registerServiceWorker: PropTypes.func,
 };
 
 export default connect(null, {
   initialize,
+  getVersions,
   initializeSettingsFromLocalStorage,
+  registerServiceWorker,
 })(App);

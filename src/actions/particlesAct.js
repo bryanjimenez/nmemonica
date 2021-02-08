@@ -1,41 +1,38 @@
-import firebase from "firebase/app";
-import "firebase/database";
+import { firebaseConfig } from "../../environment.development";
 
 export const GET_PARTICLES = "get_particles";
 export const GET_SUFFIXES = "get_suffixes";
 
 export function getParticles() {
-  return (dispatch) => {
-    firebase
-      .database()
-      .ref("lambda/particles")
-      .once("value")
-      .then((snapshot) => {
+  return (dispatch, getState) => {
+    const version = getState().version.particles || 0;
+
+    return fetch(firebaseConfig.databaseURL + "/lambda/particles.json", {
+      headers: { "Data-Version": version },
+    })
+      .then((res) => res.json())
+      .then((data) =>
         dispatch({
           type: GET_PARTICLES,
-          value: snapshot.val(),
-        });
-      })
-      .catch(() => {
-        console.warn("getParticles failed");
-      });
+          value: data,
+        })
+      );
   };
 }
 
 export function getSuffixes() {
-  return (dispatch) => {
-    firebase
-      .database()
-      .ref("lambda/suffixes")
-      .once("value")
-      .then((snapshot) => {
+  return (dispatch, getState) => {
+    const version = getState().version.suffixes || 0;
+
+    return fetch(firebaseConfig.databaseURL + "/lambda/suffixes.json", {
+      headers: { "Data-Version": version },
+    })
+      .then((res) => res.json())
+      .then((data) =>
         dispatch({
           type: GET_SUFFIXES,
-          value: snapshot.val(),
-        });
-      })
-      .catch(() => {
-        console.warn("getSuffixes failed");
-      });
+          value: data,
+        })
+      );
   };
 }

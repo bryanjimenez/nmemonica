@@ -1,22 +1,20 @@
-import firebase from "firebase/app";
-import "firebase/database";
+import { firebaseConfig } from "../../environment.development";
 
 export const GET_PHRASES = "get_phrases";
 
 export function getPhrases() {
-  return (dispatch) => {
-    firebase
-      .database()
-      .ref("lambda/phrases")
-      .once("value")
-      .then((snapshot) => {
+  return (dispatch, getState) => {
+    const version = getState().version.phrases || 0;
+
+    return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
+      headers: { "Data-Version": version },
+    })
+      .then((res) => res.json())
+      .then((data) =>
         dispatch({
           type: GET_PHRASES,
-          value: snapshot.val(),
-        });
-      })
-      .catch(() => {
-        console.warn("getPhrases failed");
-      });
+          value: data,
+        })
+      );
   };
 }

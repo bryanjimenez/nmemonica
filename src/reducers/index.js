@@ -7,6 +7,7 @@ import hiraganaReducer from "./hiraganaRed";
 import particlesReducer from "./particlesRed";
 import settingsReducer from "./settingsRed";
 import loginReducer from "./loginRed";
+import versionsReducer from "./versionsRed";
 
 const rootReducer = combineReducers({
   verbs: verbsReducer,
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   particles: particlesReducer,
   settings: settingsReducer,
   login: loginReducer,
+  version: versionsReducer,
 });
 
 export default rootReducer;
