@@ -10,7 +10,7 @@ const fbURL = "https://nmemonica-9d977.firebaseio.com/";
 const dataVerURL = fbURL + "lambda/cache.json";
 const dataURL = [
   fbURL + "lambda/phrases.json",
-  fbURL + "lambda/jlptn5.json",
+  fbURL + "lambda/vocabulary.json",
   fbURL + "lambda/opposites.json",
   fbURL + "lambda/suffixes.json",
   fbURL + "lambda/particles.json",

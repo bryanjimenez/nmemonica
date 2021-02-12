@@ -16,9 +16,13 @@ import {
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,
+  toggleVocabularyActiveGrp,
 } from "../../actions/settingsAct";
 import HiraganaSettings from "../Form/HiraganaSettings";
 import Toggle from "../Form/Toggle";
+import { getVocabulary } from "../../actions/vocabularyAct";
+
+import { PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
 
 import "./Settings.css";
 
@@ -30,6 +34,10 @@ const SettingsMeta = {
 class Settings extends Component {
   constructor(props) {
     super(props);
+
+    if (this.props.vocabGroups.length === 0) {
+      this.props.getVocabulary();
+    }
   }
 
   render() {
@@ -83,42 +91,82 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <h2>Vocabulary</h2>
-            <div className="setting-block">
-              <div className="mb-2">
-                <Toggle
-                  active={this.props.vocabOrder}
-                  action={this.props.setVocabularyOrdering}
-                  statusText="List"
-                  activeText="Ordered"
-                  inactiveText="Random"
-                />
-              </div>
-              <div className="mb-2">
-                <Toggle
-                  active={this.props.vocabRomaji}
-                  action={this.props.toggleVocabularyRomaji}
-                  statusText="Romaji"
-                  activeText="Shown"
-                  inactiveText="Hidden"
-                />
-              </div>
-              <div className="mb-2">
-                <Toggle
-                  active={this.props.vocabHint}
-                  action={this.props.toggleVocabularyHint}
-                  statusText="Hint"
-                  activeText="Shown"
-                  inactiveText="Hidden"
-                />
-              </div>
+            <div className="outter d-flex flex-row justify-content-between">
               <div>
-                <Toggle
-                  active={this.props.vocabSide}
-                  action={this.props.flipVocabularyPracticeSide}
-                  statusText="Side"
-                  activeText="English"
-                  inactiveText="Japanese"
-                />
+                <h5>Groups</h5>
+                <div>
+                  {this.props.vocabGroups.map((g, i) => {
+                    const active = this.props.vocabActive.includes(g);
+                    return (
+                      <div
+                        key={i}
+                        className={classNames({
+                          "p-0 pl-2 pr-2": true,
+                          "font-weight-bold": active,
+                        })}
+                        onClick={() => {
+                          this.props.toggleVocabularyActiveGrp(g);
+                        }}
+                      >
+                        <span className="p-1">
+                          {active ? (
+                            <XCircleIcon
+                              className="clickable"
+                              size="small"
+                              aria-label="remove"
+                            />
+                          ) : (
+                            <PlusCircleIcon
+                              className="clickable"
+                              size="small"
+                              aria-label="add"
+                            />
+                          )}
+                        </span>
+                        <span className="p-1">{g}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="setting-block">
+                <div className="mb-2">
+                  <Toggle
+                    active={this.props.vocabOrder}
+                    action={this.props.setVocabularyOrdering}
+                    statusText="List"
+                    activeText="Ordered"
+                    inactiveText="Random"
+                  />
+                </div>
+                <div className="mb-2">
+                  <Toggle
+                    active={this.props.vocabRomaji}
+                    action={this.props.toggleVocabularyRomaji}
+                    statusText="Romaji"
+                    activeText="Shown"
+                    inactiveText="Hidden"
+                  />
+                </div>
+                <div className="mb-2">
+                  <Toggle
+                    active={this.props.vocabHint}
+                    action={this.props.toggleVocabularyHint}
+                    statusText="Hint"
+                    activeText="Shown"
+                    inactiveText="Hidden"
+                  />
+                </div>
+                <div>
+                  <Toggle
+                    active={this.props.vocabSide}
+                    action={this.props.flipVocabularyPracticeSide}
+                    statusText="Side"
+                    activeText="English"
+                    inactiveText="Japanese"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -193,6 +241,8 @@ const mapStateToProps = (state) => {
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
     vocabHint: state.settings.vocabulary.hint,
+    vocabGroups: state.vocabulary.groups,
+    vocabActive: state.settings.vocabulary.activeGroup,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -226,11 +276,16 @@ Settings.propTypes = {
   vocabSide: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
   vocabHint: PropTypes.bool,
+  vocabGroups: PropTypes.array,
+  vocabActive: PropTypes.array,
+  toggleVocabularyActiveGrp: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
   setOppositesQRomaji: PropTypes.func,
   oppositesARomaji: PropTypes.bool,
   setOppositesARomaji: PropTypes.func,
+
+  getVocabulary: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -247,6 +302,8 @@ export default connect(mapStateToProps, {
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,
+  getVocabulary,
+  toggleVocabularyActiveGrp,
 })(Settings);
 
 export { SettingsMeta };

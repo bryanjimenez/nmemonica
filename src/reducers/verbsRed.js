@@ -8,7 +8,7 @@ const verbsReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
     case GET_VOCABULARY:
       return {
         ...state,
-        value: Object.values(action.value).filter((o) => o.grp === "verb"),
+        value: Object.values(action.value).filter((o) => o.grp === "Verb"),
       };
     default:
       return state;
