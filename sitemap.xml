@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://bryanjimenez.github.io/nmemonica-demo/#/</loc>
+    <lastmod>2021-01-19</lastmod>
+  </url>
+
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/verbs/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/phrases/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/vocabulary/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/opposites/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/hiragana/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/particles</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/settings/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/logout/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+  <url
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/login/</loc
+    ><lastmod>2021-01-19</lastmod></url
+  >
+</urlset>

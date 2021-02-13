@@ -1,0 +1,1 @@
+(self.webpackChunknmemonica=self.webpackChunknmemonica||[]).push([[996],{2177:(n,e,a)=>{"use strict";a.d(e,{Z:()=>c});const c=function(n,e){if(!n)throw new Error("Invariant failed")}}}]);
