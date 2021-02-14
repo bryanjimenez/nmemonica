@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
-import { isHiragana } from "../../src/helper/hiraganaHelper";
+import { isHiragana } from "../../../src/helper/hiraganaHelper";
 
 configure({ adapter: new Adapter() });
 

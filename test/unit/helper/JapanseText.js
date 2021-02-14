@@ -2,8 +2,8 @@ import React from "react";
 import { expect } from "chai";
 import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
-import { htmlElementHint, JapaneseText } from "../../src/helper/JapaneseText";
-import { buildHTMLElement, furiganaParse } from "../../src/helper/JapaneseText";
+import { htmlElementHint, JapaneseText } from "../../../src/helper/JapaneseText";
+import { buildHTMLElement, furiganaParse } from "../../../src/helper/JapaneseText";
 
 configure({ adapter: new Adapter() });
 
