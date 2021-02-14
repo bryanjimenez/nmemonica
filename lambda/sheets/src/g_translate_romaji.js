@@ -88,7 +88,7 @@ async function updatePhrases() {
     admin
       .database()
       .ref("lambda/cache")
-      .update({ phrases: md5(oldPhrase).substr(0, 4) }),
+      .update({ phrases: md5(JSON.stringify(oldPhrase)).substr(0, 4) }),
   ]);
 }
 
