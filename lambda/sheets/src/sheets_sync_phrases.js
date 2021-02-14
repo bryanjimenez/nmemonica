@@ -67,7 +67,7 @@ export async function sheets_sync_phrases(req, res) {
     admin
       .database()
       .ref("lambda/cache")
-      .update({ phrases: md5(phrasesAfter).substr(0, 4) });
+      .update({ phrases: md5(JSON.stringify(phrasesAfter)).substr(0, 4) });
 
     return res.sendStatus(200);
   } catch (e) {

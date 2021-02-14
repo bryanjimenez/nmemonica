@@ -51,7 +51,7 @@ export async function sheets_sync_opposites(req, res) {
     admin
       .database()
       .ref("lambda/cache")
-      .update({ opposites: md5(opposites).substr(0, 4) });
+      .update({ opposites: md5(JSON.stringify(opposites)).substr(0, 4) });
 
     return res.status(200).json({ opposites });
   } catch (e) {

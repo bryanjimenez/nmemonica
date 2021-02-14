@@ -82,7 +82,7 @@ export async function sheets_sync_jlpt_n5(req, res) {
     admin
       .database()
       .ref("lambda/cache")
-      .update({ jlptn5: md5(vocabularyAfter).substr(0, 4) });
+      .update({ jlptn5: md5(JSON.stringify(vocabularyAfter)).substr(0, 4) });
 
     return res.sendStatus(200);
   } catch (e) {

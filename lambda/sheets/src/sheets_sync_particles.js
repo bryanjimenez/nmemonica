@@ -110,8 +110,8 @@ export async function sheets_sync_particles(req, res) {
       .database()
       .ref("lambda/cache")
       .update({
-        particles: md5(particles).substr(0, 4),
-        suffixes: md5(suffixes).substr(0, 4),
+        particles: md5(JSON.stringify(particles)).substr(0, 4),
+        suffixes: md5(JSON.stringify(suffixes)).substr(0, 4),
       });
 
     return res.status(200).json({ particles });
