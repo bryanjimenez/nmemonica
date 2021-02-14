@@ -4,9 +4,9 @@ import {
   getLocalStorageSettings,
   setLocalStorage,
   localStoreAttrUpdate,
-} from "../../src/helper/localStorage";
+} from "../../../src/helper/localStorage";
 
-import * as theModule from "../../src/helper/browserGlobal";
+import * as theModule from "../../../src/helper/browserGlobal";
 
 describe("localStorage", function () {
   let myStub;

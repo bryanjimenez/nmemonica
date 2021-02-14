@@ -4,8 +4,9 @@
   "description": "Japanese/English Flash Cards",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require @babel/register ./test/**/*.js",
+    "test": "mocha --require @babel/register ./test/unit/**/*.js",
     "coverage": "nyc -e .jsx npm run test",
+    "wdiochrome": "wdio wdio-chrome.conf.js",
     "b:clean": "rm -rf ./dist",
     "b:webpack": "node ./node_modules/webpack/bin/webpack.js --mode=production",
     "b:manifest": "cp ./site/* ./dist/",
@@ -14,8 +15,7 @@
     "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica-demo -b main",
     "start": "webpack serve --mode=development --config=./webpack.config.js",
     "pretty": "./node_modules/.bin/prettier --write ./src/**/**/*.{js,jsx,css} ./test/**/*.js ./data ./webpack.config.js",
-    "lint": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx} ./pwa/*",
-    "wdiochrome": "wdio wdio-chrome.conf.js"
+    "lint": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx} ./pwa/*"
   },
   "author": "Bryan",
   "license": "",

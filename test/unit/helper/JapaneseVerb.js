@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { JapaneseVerb } from "../../src/helper/JapaneseVerb";
+import { JapaneseVerb } from "../../../src/helper/JapaneseVerb";
 
 describe("JapaneseVerb", function () {
   describe("getVerbClass", function () {
