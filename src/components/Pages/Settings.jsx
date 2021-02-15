@@ -21,8 +21,7 @@ import {
 import HiraganaSettings from "../Form/HiraganaSettings";
 import Toggle from "../Form/Toggle";
 import { getVocabulary } from "../../actions/vocabularyAct";
-
-import { PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
+import { GroupItem } from "../Form/GroupItem";
 
 import "./Settings.css";
 
@@ -96,87 +95,37 @@ class Settings extends Component {
                 <h5>Groups</h5>
                 <div>
                   {Object.keys(this.props.vocabGroups).map((g, i) => {
-                    const active = this.props.vocabActive.includes(g);
+                    const grpActive = this.props.vocabActive.includes(g);
+
                     return (
-                      <div
-                        key={i}
-                        className={classNames({
-                          "p-0 pl-2 pr-2": true,
-                          "font-weight-bold": active,
-                        })}
-                        onClick={() => {
-                          this.props.toggleVocabularyActiveGrp(g);
-                        }}
-                      >
-                        <span className="p-1">
-                          {active ? (
-                            <XCircleIcon
-                              className="clickable incorrect-color"
-                              size="small"
-                              aria-label="remove"
-                            />
-                          ) : (
-                            <PlusCircleIcon
-                              className="clickable"
-                              size="small"
-                              aria-label="add"
-                            />
-                          )}
-                        </span>
-                        <span className="p-1">{g}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <h5>Sub Groups</h5>
-                <div>
-                  {Object.keys(this.props.vocabGroups).map((k, i) => {
-                    const grpActive = this.props.vocabActive.includes(k);
-                    const grpHasSubGrp = this.props.vocabGroups[k].length > 0;
-
-                    return grpActive || !grpHasSubGrp ? null : (
                       <div key={i}>
-                        <h6>{k}</h6>
-                        {this.props.vocabGroups[k].map((o, i) => {
-                          const active = this.props.vocabActive.includes(
-                            k + "." + o
-                          );
+                        <GroupItem
+                          key={i}
+                          active={this.props.vocabActive.includes(g)}
+                          onClick={() => {
+                            this.props.toggleVocabularyActiveGrp(g);
+                          }}
+                        >
+                          {g}
+                        </GroupItem>
 
-                          return (
-                            <div
+                        {!grpActive &&
+                          this.props.vocabGroups[g].map((s, i) => (
+                            <GroupItem
                               key={i}
-                              className={classNames({
-                                "p-0 pl-2 pr-2": true,
-                                "font-weight-bold": active,
-                              })}
+                              addlStyle="ml-3"
+                              active={this.props.vocabActive.includes(
+                                g + "." + s
+                              )}
                               onClick={() => {
                                 this.props.toggleVocabularyActiveGrp(
-                                  k + "." + o
+                                  g + "." + s
                                 );
                               }}
                             >
-                              <span className="p-1">
-                                {active ? (
-                                  <XCircleIcon
-                                    className="clickable incorrect-color"
-                                    size="small"
-                                    aria-label="remove"
-                                  />
-                                ) : (
-                                  <PlusCircleIcon
-                                    className="clickable"
-                                    size="small"
-                                    aria-label="add"
-                                  />
-                                )}
-                              </span>
-                              <span className="p-1">{o}</span>
-                            </div>
-                          );
-                        })}
+                              {s}
+                            </GroupItem>
+                          ))}
                       </div>
                     );
                   })}
@@ -294,10 +243,8 @@ const mapStateToProps = (state) => {
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
     vocabHint: state.settings.vocabulary.hint,
-
     vocabGroups: state.vocabulary.grpObj,
     vocabActive: state.settings.vocabulary.activeGroup,
-
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
