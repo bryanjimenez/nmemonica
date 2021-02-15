@@ -35,7 +35,7 @@ class Settings extends Component {
   constructor(props) {
     super(props);
 
-    if (this.props.vocabGroups.length === 0) {
+    if (Object.keys(this.props.vocabGroups).length === 0) {
       this.props.getVocabulary();
     }
   }
@@ -95,7 +95,7 @@ class Settings extends Component {
               <div>
                 <h5>Groups</h5>
                 <div>
-                  {this.props.vocabGroups.map((g, i) => {
+                  {Object.keys(this.props.vocabGroups).map((g, i) => {
                     const active = this.props.vocabActive.includes(g);
                     return (
                       <div
@@ -111,7 +111,7 @@ class Settings extends Component {
                         <span className="p-1">
                           {active ? (
                             <XCircleIcon
-                              className="clickable"
+                              className="clickable incorrect-color"
                               size="small"
                               aria-label="remove"
                             />
@@ -124,6 +124,59 @@ class Settings extends Component {
                           )}
                         </span>
                         <span className="p-1">{g}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <h5>Sub Groups</h5>
+                <div>
+                  {Object.keys(this.props.vocabGroups).map((k, i) => {
+                    const grpActive = this.props.vocabActive.includes(k);
+                    const grpHasSubGrp = this.props.vocabGroups[k].length > 0;
+
+                    return grpActive || !grpHasSubGrp ? null : (
+                      <div key={i}>
+                        <h6>{k}</h6>
+                        {this.props.vocabGroups[k].map((o, i) => {
+                          const active = this.props.vocabActive.includes(
+                            k + "." + o
+                          );
+
+                          return (
+                            <div
+                              key={i}
+                              className={classNames({
+                                "p-0 pl-2 pr-2": true,
+                                "font-weight-bold": active,
+                              })}
+                              onClick={() => {
+                                this.props.toggleVocabularyActiveGrp(
+                                  k + "." + o
+                                );
+                              }}
+                            >
+                              <span className="p-1">
+                                {active ? (
+                                  <XCircleIcon
+                                    className="clickable incorrect-color"
+                                    size="small"
+                                    aria-label="remove"
+                                  />
+                                ) : (
+                                  <PlusCircleIcon
+                                    className="clickable"
+                                    size="small"
+                                    aria-label="add"
+                                  />
+                                )}
+                              </span>
+                              <span className="p-1">{o}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -241,8 +294,10 @@ const mapStateToProps = (state) => {
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
     vocabHint: state.settings.vocabulary.hint,
-    vocabGroups: state.vocabulary.groups,
+
+    vocabGroups: state.vocabulary.grpObj,
     vocabActive: state.settings.vocabulary.activeGroup,
+
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -276,7 +331,7 @@ Settings.propTypes = {
   vocabSide: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
   vocabHint: PropTypes.bool,
-  vocabGroups: PropTypes.array,
+  vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
   toggleVocabularyActiveGrp: PropTypes.func,
 

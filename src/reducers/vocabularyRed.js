@@ -1,6 +1,6 @@
 import { GET_VOCABULARY } from "../actions/vocabularyAct";
 
-const DEFAULT_STATE = { value: [], groups: [] };
+const DEFAULT_STATE = { value: [], grpObj: {} };
 const DEFAULT_ACTION = {};
 
 const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
@@ -8,12 +8,20 @@ const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
     case GET_VOCABULARY:
       return {
         ...state,
-        groups: Object.values(action.value).reduce((a, o) => {
-          if (!a.includes(o.grp)) {
-            return [...a, o.grp];
+        grpObj: Object.values(action.value).reduce((a, o) => {
+          if (a[o.grp]) {
+            if (!a[o.grp].includes(o.subGrp) && o.subGrp) {
+              return { ...a, [o.grp]: [...a[o.grp], o.subGrp] };
+            }
+            return a;
           }
-          return a;
-        }, []),
+
+          if (o.subGrp) {
+            return { ...a, [o.grp]: [o.subGrp] };
+          }
+
+          return { ...a, [o.grp]: [] };
+        }, {}),
         value: Object.keys(action.value).map((k) => ({
           ...action.value[k],
           uid: k,

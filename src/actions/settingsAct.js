@@ -291,14 +291,30 @@ export function toggleVocabularyHint() {
   };
 }
 
-export function toggleVocabularyActiveGrp(value) {
+export function toggleVocabularyActiveGrp(grpName) {
   return (dispatch, getState) => {
     const { user } = getState().login;
     const { activeGroup } = getState().settings.vocabulary;
 
-    const newValue = activeGroup.includes(value)
-      ? activeGroup.filter((v) => v !== value)
-      : [...activeGroup, value];
+    const isGrp = grpName.indexOf(".") === -1;
+
+    let newValue;
+    if (isGrp) {
+      if (activeGroup.some((e) => e.indexOf(grpName + ".") !== -1)) {
+        newValue = [
+          ...activeGroup.filter((v) => v.indexOf(grpName + ".") === -1),
+          grpName,
+        ];
+      } else if (activeGroup.includes(grpName)) {
+        newValue = [...activeGroup.filter((v) => v !== grpName)];
+      } else {
+        newValue = [...activeGroup, grpName];
+      }
+    } else {
+      newValue = activeGroup.includes(grpName)
+        ? activeGroup.filter((v) => v !== grpName)
+        : [...activeGroup, grpName];
+    }
 
     const path = "/vocabulary/";
     const attr = "activeGroup";

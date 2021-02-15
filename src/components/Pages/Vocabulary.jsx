@@ -84,8 +84,10 @@ class Vocabulary extends Component {
   setOrder() {
     let filteredVocab = this.props.vocab;
     if (this.props.activeGroup.length > 0) {
-      filteredVocab = this.props.vocab.filter((w) =>
-        this.props.activeGroup.includes(w.grp)
+      filteredVocab = this.props.vocab.filter(
+        (w) =>
+          this.props.activeGroup.includes(w.grp) ||
+          this.props.activeGroup.includes(w.grp + "." + w.subGrp)
       );
     }
 
