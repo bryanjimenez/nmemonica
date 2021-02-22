@@ -1,6 +1,6 @@
-const cacheFiles = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.d8fd4434.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.8f6e29b727da79f8576f.css","main.fbb3a94e.js","manifest.webmanifest","maskable512.png","npm.babel.201b9bb6.js","npm.bootstrap.3d43cc85.js","npm.bootstrap.a5ee59b7390fbbbef63a.css","npm.classnames.a50ba1ed.js","npm.firebase.70502f6a.js","npm.firebaseui.ac5cd217.js","npm.fortawesome.d8586145.js","npm.history.bab7b86d.js","npm.hoist-non-react-statics.76306cf0.js","npm.jquery.4cb12cb7.js","npm.lodash.4c0413b2.js","npm.object-assign.2d18969b.js","npm.popper.js.c2c3798a.js","npm.primer.4c95e5f6.js","npm.prop-types.91d4de7a.js","npm.react-dom.d8a0e604.js","npm.react-firebaseui.986a2a33.js","npm.react-redux.6acca0ff.js","npm.react-router-dom.8391d2b5.js","npm.react-router.813d548b.js","npm.react.0140da10.js","npm.redux-thunk.6cd733fb.js","npm.redux.d9156eac.js","npm.scheduler.d2720cf2.js","npm.symbol-observable.3b438986.js","npm.tiny-invariant.a2743773.js","runtime.9f1756c5.js"]
+const cacheFiles = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.d8fd4434.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.32870d7a.js","main.8f6e29b727da79f8576f.css","manifest.webmanifest","maskable512.png","npm.babel.201b9bb6.js","npm.bootstrap.3d43cc85.js","npm.bootstrap.a5ee59b7390fbbbef63a.css","npm.classnames.a50ba1ed.js","npm.firebase.70502f6a.js","npm.firebaseui.ac5cd217.js","npm.fortawesome.d8586145.js","npm.history.bab7b86d.js","npm.hoist-non-react-statics.76306cf0.js","npm.jquery.4cb12cb7.js","npm.lodash.4c0413b2.js","npm.object-assign.2d18969b.js","npm.popper.js.c2c3798a.js","npm.primer.4c95e5f6.js","npm.prop-types.91d4de7a.js","npm.react-dom.d8a0e604.js","npm.react-firebaseui.986a2a33.js","npm.react-redux.6acca0ff.js","npm.react-router-dom.8391d2b5.js","npm.react-router.813d548b.js","npm.react.0140da10.js","npm.redux-thunk.6cd733fb.js","npm.redux.d9156eac.js","npm.scheduler.d2720cf2.js","npm.symbol-observable.3b438986.js","npm.tiny-invariant.a2743773.js","runtime.9f1756c5.js"]
 
-// 5424429753a74a5537cec5754f7aeb17
+// e15c1e5ccd0e7721c968bbfe51df5b97
 
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
@@ -18,7 +18,7 @@ const dataURL = [
 ];
 
 self.addEventListener("install", (e) => {
-  // self.skipWaiting();
+  self.skipWaiting();
 
   caches.open(appDataCache).then((cache) =>
     cache.add(dataVerURL).then(() =>
