@@ -1,7 +1,7 @@
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 
-const ghURL = "https://bryanjimenez.github.io/nmemonica-demo";
+const ghURL = "https://bryanjimenez.github.io/nmemonica";
 const fbURL = "https://nmemonica-9d977.firebaseio.com/";
 
 const dataVerURL = fbURL + "lambda/cache.json";

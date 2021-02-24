@@ -1,7 +1,7 @@
 import { expect } from "chai";
 
 function deleteAllCaches(){
-    browser.url("https://bryanjimenez.github.io/nmemonica-demo");
+    browser.url("https://bryanjimenez.github.io/nmemonica");
 
     const keysBefore = browser.execute(() => {
         return caches.keys().then(k=>Promise.all(k.map(k=>caches.delete(k)))).then(()=>caches.keys())
@@ -17,7 +17,7 @@ describe("cache", function () {
 
     deleteAllCaches();
 
-    browser.url("https://bryanjimenez.github.io/nmemonica-demo");
+    browser.url("https://bryanjimenez.github.io/nmemonica");
 
     browser.$("#page-content").waitForExist();
 

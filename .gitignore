@@ -76,3 +76,6 @@ conf.js
 
 # notes
 *.txt
+
+# gimp files
+*.xcf
