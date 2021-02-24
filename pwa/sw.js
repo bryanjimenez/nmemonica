@@ -1,3 +1,6 @@
+const swVersion = swVersionConst; // eslint-disable-line no-undef
+const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
+
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 
@@ -14,6 +17,9 @@ const dataURL = [
 ];
 
 self.addEventListener("install", (e) => {
+  self.skipWaiting();
+  console.log("[ServiceWorker] Version: " + swVersion);
+
   caches.open(appDataCache).then((cache) =>
     cache.add(dataVerURL).then(() =>
       Promise.all(

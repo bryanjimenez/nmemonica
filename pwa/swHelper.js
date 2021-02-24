@@ -34,8 +34,8 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
       flags: "w",
     });
 
-    stream.write("const cacheFiles = " + strFilesToCache + "\n\n");
-    stream.write("// " + md5(buff) + "\n\n");
+    stream.write("const cacheFilesConst = " + strFilesToCache + ";\n\n");
+    stream.write("const swVersionConst =  '" + md5(buff) + "';\n\n");
     stream.write(buff);
 
     stream.end();
