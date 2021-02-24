@@ -37,6 +37,7 @@ class Vocabulary extends Component {
       showRomaji: false,
       showHint: false,
       filteredVocab: [],
+      frequency: [],
     };
 
     if (this.props.vocab.length === 0) {
@@ -96,18 +97,23 @@ class Vocabulary extends Component {
       shuffleArray(newOrder);
     }
 
-    this.setState({ filteredVocab, order: newOrder });
+    const filteredKeys = Object.keys(filteredVocab);
+    const frequency = this.props.frequency.filter((f) =>
+      filteredKeys.includes(f)
+    );
+
+    this.setState({ filteredVocab, frequency, order: newOrder });
   }
 
   play() {
     // some games will come from the reinforced list
     const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
-    if (reinforced && this.props.frequency.length > 0) {
+    if (reinforced && this.state.frequency.length > 0) {
       const min = 0;
-      const max = Math.floor(this.props.frequency.length);
+      const max = Math.floor(this.state.frequency.length);
       const idx = Math.floor(Math.random() * (max - min) + min);
       const vocabulary = this.state.filteredVocab.filter(
-        (v) => this.props.frequency[idx] === v.uid
+        (v) => this.state.frequency[idx] === v.uid
       )[0];
 
       if (vocabulary) {
@@ -124,7 +130,7 @@ class Vocabulary extends Component {
         }
       } else {
         console.warn("uid no longer exists");
-        removeFrequencyWord(this.props.frequency[idx]);
+        removeFrequencyWord(this.state.frequency[idx]);
         this.gotoNext();
       }
     } else {
@@ -166,6 +172,8 @@ class Vocabulary extends Component {
       vocabulary = this.state.filteredVocab.filter(
         (v) => this.state.reinforcedUID === v.uid
       )[0];
+
+      vocabulary.reinforce = true;
     } else {
       if (this.state.order) {
         const index = this.state.order[this.state.selectedIndex];
@@ -173,9 +181,9 @@ class Vocabulary extends Component {
       } else {
         vocabulary = this.state.filteredVocab[this.state.selectedIndex];
       }
-    }
 
-    vocabulary.reinforce = this.props.frequency.indexOf(vocabulary.uid) > -1;
+      vocabulary.reinforce = false;
+    }
 
     let inJapanese = JapaneseText.parse(vocabulary.japanese).toHTML();
     let inEnglish = vocabulary.english;

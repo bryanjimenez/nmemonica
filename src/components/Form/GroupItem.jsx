@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 import { PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
 
 export function GroupItem(props) {
-
   const css = classNames({
     [props.addlStyle]: props.addlStyle && true,
     "p-0 pl-2 pr-2": true,
@@ -33,5 +32,5 @@ GroupItem.propTypes = {
   addlStyle: PropTypes.string,
   active: PropTypes.bool,
   onClick: PropTypes.func,
-  children: PropTypes.object,
+  children: PropTypes.string,
 };
