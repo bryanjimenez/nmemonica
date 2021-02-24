@@ -12,14 +12,14 @@
     "b:manifest": "cp ./site/* ./dist/",
     "b:sw": "node ./pwa/swHelper.js",
     "build": "npm run b:clean && npm run b:webpack && npm run b:manifest && npm run b:sw",
-    "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica-demo -b main",
+    "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica -b gh-pages",
     "start": "webpack serve --mode=development --config=./webpack.config.js",
     "pretty": "./node_modules/.bin/prettier --write ./src/**/**/*.{js,jsx,css} ./test/**/*.js ./data ./webpack.config.js",
     "lint": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx} ./pwa/*"
   },
   "author": "Bryan",
   "license": "",
-  "homepage": "https://bryanjimenez.github.io/nmemonica-demo",
+  "homepage": "https://bryanjimenez.github.io/nmemonica",
   "dependencies": {
     "@primer/octicons-react": "^11.1.0",
     "babel-loader": "^8.2.1",
