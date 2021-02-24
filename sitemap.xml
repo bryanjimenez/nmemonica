@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://bryanjimenez.github.io/nmemonica/#/</loc>
+    <loc>https://bryanjimenez.github.io/nmemonica-demo/#/</loc>
     <lastmod>2021-01-19</lastmod>
   </url>
 
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/verbs/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/verbs/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/phrases/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/phrases/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/vocabulary/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/vocabulary/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/opposites/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/opposites/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/hiragana/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/hiragana/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/particles</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/particles</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/settings/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/settings/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/logout/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/logout/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
   <url
-    ><loc>https://bryanjimenez.github.io/nmemonica/#/login/</loc
+    ><loc>https://bryanjimenez.github.io/nmemonica-demo/#/login/</loc
     ><lastmod>2021-01-19</lastmod></url
   >
 </urlset>
