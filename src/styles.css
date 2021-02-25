@@ -1,3 +1,8 @@
+:root {
+  --dark-mode-dark: #121212;
+  --dark-mode-light: rgba(255, 255, 255, 0.87);
+}
+
 html,
 body {
   height: 100%;
@@ -69,4 +74,17 @@ a {
   padding-left: 15px;
   margin-right: auto;
   margin-left: auto;
+}
+
+.dark-mode {
+  background-color: var(--dark-mode-dark);
+  color:  var(--dark-mode-light);
+}
+
+.dark-mode .nav-toggle-btn__line {
+  background-color: var(--dark-mode-light);
+}
+
+.dark-mode .shortcuts {
+  color:  var(--dark-mode-light);
 }

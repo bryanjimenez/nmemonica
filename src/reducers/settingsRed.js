@@ -16,9 +16,11 @@ import {
   ADD_FREQUENCY_WORD,
   REMOVE_FREQUENCY_WORD,
   TOGGLE_VOCABULARY_ACTIVE_GROUP,
+  TOGGLE_DARK_MODE,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
+  global: { darkMode: false },
   hiragana: { choiceN: 16, wideMode: false },
   verbs: { ordered: true },
   phrases: { ordered: true, practiceSide: false, romaji: false },
@@ -37,6 +39,14 @@ const DEFAULT_ACTION = {};
 
 const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
   switch (action.type) {
+    case TOGGLE_DARK_MODE:
+      return {
+        ...state,
+        global: {
+          ...state.global,
+          darkMode: action.value || !state.global.darkMode,
+        },
+      };
     case SET_HIRAGANA_BTN_N:
       return {
         ...state,

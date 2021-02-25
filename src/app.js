@@ -30,6 +30,7 @@ import {
 import "./styles.css";
 import { getVersions } from "./actions/firebase";
 import { registerServiceWorker } from "./actions/serviceWorkerAct";
+import classNames from "classnames";
 
 class App extends Component {
   constructor(props) {
@@ -43,9 +44,11 @@ class App extends Component {
   }
 
   render() {
+    const pClass = classNames({ "dark-mode": this.props.darkMode });
+
     return (
       <Router basename="/">
-        <div id="page-content">
+        <div id="page-content" className={pClass}>
           <Navigation />
           <Suspense fallback={<div />}>
             <Switch>
@@ -74,14 +77,21 @@ class App extends Component {
   }
 }
 
+const mapStateToProps = (state) => {
+  return {
+    darkMode: state.settings.global.darkMode,
+  };
+};
+
 App.propTypes = {
   initialize: PropTypes.func,
   initializeSettingsFromLocalStorage: PropTypes.func,
   getVersions: PropTypes.func,
   registerServiceWorker: PropTypes.func,
+  darkMode: PropTypes.bool,
 };
 
-export default connect(null, {
+export default connect(mapStateToProps, {
   initialize,
   getVersions,
   initializeSettingsFromLocalStorage,
