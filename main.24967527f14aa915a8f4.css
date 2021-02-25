@@ -247,8 +247,8 @@ a {
 }
 
 .dark-mode {
-  background-color: black;
-  color: white;
+  background-color: #121212;
+  color:  rgba(255, 255, 255, 0.87);
 }
 
 .dark-mode .nav-toggle-btn__line {
