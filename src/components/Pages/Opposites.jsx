@@ -8,6 +8,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
+import { LinearProgress } from "@material-ui/core";
 
 const OppositesMeta = {
   location: "/opposites/",
@@ -154,8 +155,11 @@ class Opposites extends Component {
     // console.log(answer);
     // console.log(choices);
 
-    return (
-      <div className="opposites main-panel">
+    const progress =
+      ((this.state.selectedIndex + 1) / this.props.opposites.length) * 100;
+
+    return [
+      <div key={0} className="opposites main-panel h-100">
         <div className="d-flex justify-content-between h-100">
           <StackNavButton
             ariaLabel="Previous"
@@ -212,8 +216,11 @@ class Opposites extends Component {
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
-      </div>
-    );
+      </div>,
+      <div key={1} className="progress-bar flex-shrink-1">
+        <LinearProgress variant="determinate" value={progress} />
+      </div>,
+    ];
   }
 }
 

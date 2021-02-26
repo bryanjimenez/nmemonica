@@ -8,6 +8,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
+import { LinearProgress } from "@material-ui/core";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -148,8 +149,11 @@ class Verbs extends Component {
       japanesePhrase = dictionaryForm.toHTML();
     }
 
-    return (
-      <div className="verbs main-panel">
+    const progress =
+      ((this.state.selectedIndex + 1) / this.props.verbs.length) * 100;
+
+    return [
+      <div key={0} className="verbs main-panel h-100">
         <div className="d-flex justify-content-between h-100">
           <StackNavButton
             ariaLabel="Previous"
@@ -204,8 +208,11 @@ class Verbs extends Component {
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
-      </div>
-    );
+      </div>,
+      <div key={1} className="progress-bar flex-shrink-1">
+        <LinearProgress variant="determinate" value={progress} />
+      </div>,
+    ];
   }
 }
 

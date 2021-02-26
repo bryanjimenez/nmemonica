@@ -20,6 +20,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
+import { LinearProgress } from "@material-ui/core";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -206,8 +207,11 @@ class Vocabulary extends Component {
         vocabulary.grp + (vocabulary.subGrp ? ": " + vocabulary.subGrp : "");
     }
 
+    const progress =
+      ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
+
     return [
-      <div key={0} className="vocabulary main-panel">
+      <div key={0} className="vocabulary main-panel h-100">
         <div className="d-flex justify-content-between h-100">
           <StackNavButton
             ariaLabel="Previous"
@@ -248,7 +252,7 @@ class Vocabulary extends Component {
         </div>
       </div>,
 
-      <div key={1} className="options-bar">
+      <div key={1} className="options-bar mb-2 flex-shrink-1">
         <div className="row">
           <div className="col">
             <FontAwesomeIcon
@@ -327,6 +331,9 @@ class Vocabulary extends Component {
             </div>
           </div>
         </div>
+      </div>,
+      <div key={2} className="progress-bar flex-shrink-1">
+        <LinearProgress variant="determinate" value={progress} />
       </div>,
     ];
   }

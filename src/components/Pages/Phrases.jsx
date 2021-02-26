@@ -16,6 +16,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
+import { LinearProgress } from "@material-ui/core";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -115,8 +116,11 @@ class Phrases extends Component {
       hiddenCaption = "[English]";
     }
 
+    const progress =
+      ((this.state.selectedIndex + 1) / this.props.phrases.length) * 100;
+
     return [
-      <div key={0} className="phrases main-panel">
+      <div key={0} className="phrases main-panel h-100">
         <div className="d-flex justify-content-between h-100">
           <StackNavButton
             ariaLabel="Previous"
@@ -177,7 +181,7 @@ class Phrases extends Component {
       </div>,
       <div
         key={1}
-        className="options-bar"
+        className="options-bar mb-2 flex-shrink-1"
         onClick={this.props.flipPhrasesPracticeSide}
       >
         <div className="row">
@@ -190,6 +194,9 @@ class Phrases extends Component {
           <div className="col"></div>
           <div className="col"></div>
         </div>
+      </div>,
+      <div key={2} className="progress-bar flex-shrink-1">
+        <LinearProgress variant="determinate" value={progress} />
       </div>,
     ];
   }
