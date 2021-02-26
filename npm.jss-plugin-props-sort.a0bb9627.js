@@ -1,1 +1,0 @@
-(self.webpackChunknmemonica=self.webpackChunknmemonica||[]).push([[583],{6895:(n,e,t)=>{"use strict";t.d(e,{Z:()=>r});const r=function(){var n=function(n,e){return n.length===e.length?n>e?1:-1:n.length-e.length};return{onProcessStyle:function(e,t){if("style"!==t.type)return e;for(var r={},c=Object.keys(e).sort(n),s=0;s<c.length;s++)r[c[s]]=e[c[s]];return r}}}}}]);

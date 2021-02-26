@@ -246,3 +246,11 @@ a {
   margin-left: auto;
 }
 
+.dark-mode {
+  background-color: #121212;
+  color:  rgba(255, 255, 255, 0.87);
+}
+
+.dark-mode .nav-toggle-btn__line {
+  background-color: white;
+}
