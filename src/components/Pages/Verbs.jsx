@@ -7,7 +7,7 @@ import { getVocabulary } from "../../actions/vocabularyAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { NotReady } from "../Form/NotReady";
-import Button from "@material-ui/core/Button";
+import StackButton from "../Form/StackButton";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -151,13 +151,13 @@ class Verbs extends Component {
     return (
       <div className="verbs main-panel">
         <div className="d-flex justify-content-between h-100">
-          <Button
-            variant="contained"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackButton
+            ariaLabel="Previous"
+            color={"--red"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </Button>
+          </StackButton>
 
           <div className="pt-3 d-flex flex-column justify-content-around">
             {this.buildTenseElement(t1)}
@@ -196,13 +196,9 @@ class Verbs extends Component {
             {this.buildTenseElement(t2)}
           </div>
 
-          <Button
-            variant="contained"
-            aria-label="Next"
-            onClick={this.gotoNext}
-          >
+          <StackButton color={"--red"} ariaLabel="Next" action={this.gotoNext}>
             <ChevronRightIcon size={16} />
-          </Button>
+          </StackButton>
         </div>
       </div>
     );

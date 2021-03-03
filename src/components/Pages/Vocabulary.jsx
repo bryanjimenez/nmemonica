@@ -18,9 +18,8 @@ import {
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
-
-import "./CustomBtn.css";
 import { NotReady } from "../Form/NotReady";
+import StackButton from "../Form/StackButton";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -210,14 +209,13 @@ class Vocabulary extends Component {
     return (
       <div className="vocabulary main-panel">
         <div className="d-flex justify-content-between h-100">
-          <button
-            type="button"
-            className="btn btn-indigo"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackButton
+            ariaLabel="Previous"
+            color={"--yellow"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </button>
+          </StackButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownSide}</h1>
             {this.props.romajiActive && (
@@ -240,14 +238,9 @@ class Vocabulary extends Component {
             </h2>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-indigo"
-            aria-label="Next"
-            onClick={this.play}
-          >
+          <StackButton color={"--yellow"} ariaLabel="Next" action={this.play}>
             <ChevronRightIcon size={16} />
-          </button>
+          </StackButton>
         </div>
 
         <div className="option-bar my-container">

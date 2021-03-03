@@ -48,10 +48,10 @@ class Settings extends Component {
           <div className={pageClassName}>
             <h2>Global</h2>
             <div className="setting-block">
-            <SettingsSwitch
+              <SettingsSwitch
                 active={this.props.darkMode}
                 action={this.props.toggleDarkMode}
-                statusText={(this.props.darkMode?"Dark":"Light")+" Mode"}
+                statusText={(this.props.darkMode ? "Dark" : "Light") + " Mode"}
               />
             </div>
           </div>
@@ -94,10 +94,10 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <h2>Vocabulary</h2>
-            <div className="outter d-flex flex-row justify-content-between">
-              <div>
+            <div className="outter">
+              <div className="d-flex flex-row justify-content-between">
+                <div className="column-1">
                 <h5>Groups</h5>
-                <div>
                   {Object.keys(this.props.vocabGroups).map((g, i) => {
                     const grpActive = this.props.vocabActive.includes(g);
 
@@ -134,41 +134,41 @@ class Settings extends Component {
                     );
                   })}
                 </div>
-              </div>
-              </div>
 
-            <div className="setting-block">
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={!this.props.vocabOrder}
-                  action={this.props.setVocabularyOrdering}
-                  statusText="Random Order"
-                />
-              </div>
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={this.props.vocabRomaji}
-                  action={this.props.toggleVocabularyRomaji}
-                  statusText="Romaji"
-                />
-              </div>
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={this.props.vocabHint}
-                  action={this.props.toggleVocabularyHint}
-                  statusText="Hint"
-                />
-              </div>
-              <div>
-                <SettingsSwitch
-                  active={this.props.vocabSide}
-                  action={this.props.flipVocabularyPracticeSide}
-                  color="default"
-                  statusText={this.props.vocabSide ? "English" : "Japanese"}
-                />
+                <div className="column-2 setting-block">
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={!this.props.vocabOrder}
+                      action={this.props.setVocabularyOrdering}
+                      statusText="Random Order"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.vocabRomaji}
+                      action={this.props.toggleVocabularyRomaji}
+                      statusText="Romaji"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.vocabHint}
+                      action={this.props.toggleVocabularyHint}
+                      statusText="Hint"
+                    />
+                  </div>
+                  <div>
+                    <SettingsSwitch
+                      active={this.props.vocabSide}
+                      action={this.props.flipVocabularyPracticeSide}
+                      color="default"
+                      statusText={this.props.vocabSide ? "English" : "Japanese"}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-            </div>
+          </div>
           <div className={pageClassName}>
             <h2>Opposites</h2>
             <div className="setting-block">

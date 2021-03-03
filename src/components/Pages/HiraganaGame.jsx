@@ -8,6 +8,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
+import StackButton from "../Form/StackButton";
 
 const HiraganaGameMeta = {
   location: "/hiragana/",
@@ -327,14 +328,13 @@ class HiraganaGame extends Component {
     return (
       <div className="hiragana main-panel">
         <div className="d-flex justify-content-between h-100">
-          <button
-            type="button"
-            className="btn btn-danger"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackButton
+            ariaLabel="Previous"
+            color={"--blue"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </button>
+          </StackButton>
           {!this.props.wideMode && (
             <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
               <h1
@@ -350,14 +350,9 @@ class HiraganaGame extends Component {
               {choices.map((c, i) => this.choiceButton(i))}
             </div>
           </div>
-          <button
-            type="button"
-            className="btn btn-danger"
-            aria-label="Next"
-            onClick={this.gotoNext}
-          >
+          <StackButton color={"--blue"} ariaLabel="Next" action={this.gotoNext}>
             <ChevronRightIcon size={16} />
-          </button>
+          </StackButton>
         </div>
         <div
           className="clickable mt-2 ml-3"

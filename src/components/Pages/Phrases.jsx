@@ -15,6 +15,7 @@ import { flipPhrasesPracticeSide } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
+import StackButton from "../Form/StackButton";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -117,14 +118,13 @@ class Phrases extends Component {
     return (
       <div className="phrases main-panel">
         <div className="d-flex justify-content-between h-100">
-          <button
-            type="button"
-            className="btn btn-success"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackButton
+            ariaLabel="Previous"
+            color={"--orange"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </button>
+          </StackButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownSide}</h1>
             {this.props.romajiActive && (
@@ -166,14 +166,13 @@ class Phrases extends Component {
               </div>
             )}
           </div>
-          <button
-            type="button"
-            className="btn btn-success"
-            aria-label="Next"
-            onClick={this.gotoNext}
+          <StackButton
+            color={"--orange"}
+            ariaLabel="Next"
+            action={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
-          </button>
+          </StackButton>
         </div>
         <div
           className="clickable mt-2 ml-3"
