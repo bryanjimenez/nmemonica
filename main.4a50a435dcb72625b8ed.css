@@ -173,6 +173,11 @@ https://blog.koalite.com/bbg/
   top: -10px;
 }
 
+:root {
+  --dark-mode-dark: #121212;
+  --dark-mode-light: rgba(255, 255, 255, 0.87);
+}
+
 html,
 body {
   height: 100%;
@@ -247,10 +252,14 @@ a {
 }
 
 .dark-mode {
-  background-color: #121212;
-  color:  rgba(255, 255, 255, 0.87);
+  background-color: var(--dark-mode-dark);
+  color:  var(--dark-mode-light);
 }
 
 .dark-mode .nav-toggle-btn__line {
-  background-color: white;
+  background-color: var(--dark-mode-light);
+}
+
+.dark-mode .shortcuts {
+  color:  var(--dark-mode-light);
 }
