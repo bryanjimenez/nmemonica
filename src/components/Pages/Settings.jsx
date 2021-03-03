@@ -17,6 +17,7 @@ import {
   setOppositesARomaji,
   setParticlesARomaji,
   toggleVocabularyActiveGrp,
+  toggleDarkMode,
 } from "../../actions/settingsAct";
 import HiraganaSettings from "../Form/HiraganaSettings";
 import Toggle from "../Form/Toggle";
@@ -44,6 +45,18 @@ class Settings extends Component {
     return (
       <div className="settings">
         <div className="d-flex flex-column justify-content-between pl-3 pr-3 h-100">
+          <div className={pageClassName}>
+            <h2>Global</h2>
+            <div className="setting-block">
+              <Toggle
+                active={this.props.darkMode}
+                action={this.props.toggleDarkMode}
+                statusText="Mode"
+                activeText="Dark"
+                inactiveText="Light"
+              />
+            </div>
+          </div>
           <div className={pageClassName}>
             <h2>Verbs</h2>
             <div className="setting-block">
@@ -233,6 +246,7 @@ class Settings extends Component {
 
 const mapStateToProps = (state) => {
   return {
+    darkMode: state.settings.global.darkMode,
     choiceN: state.settings.hiragana.choiceN,
     wideMode: state.settings.hiragana.wideMode,
     verbOrder: state.settings.verbs.ordered,
@@ -252,6 +266,8 @@ const mapStateToProps = (state) => {
 };
 
 Settings.propTypes = {
+  darkMode: PropTypes.bool,
+  toggleDarkMode: PropTypes.func,
   verbOrder: PropTypes.bool,
   setVerbsOrdering: PropTypes.func,
 
@@ -306,6 +322,7 @@ export default connect(mapStateToProps, {
   setParticlesARomaji,
   getVocabulary,
   toggleVocabularyActiveGrp,
+  toggleDarkMode,
 })(Settings);
 
 export { SettingsMeta };

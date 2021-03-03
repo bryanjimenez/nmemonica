@@ -18,6 +18,7 @@ export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
 export const ADD_FREQUENCY_WORD = "add_frequency_word";
 export const REMOVE_FREQUENCY_WORD = "remove_frequency_word";
+export const TOGGLE_DARK_MODE = "toggle_dark_mode";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -480,6 +481,33 @@ export function removeFrequencyWord(uid) {
       dispatch({
         type: REMOVE_FREQUENCY_WORD,
         value: newValue,
+      });
+    }
+  };
+}
+
+export function toggleDarkMode() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/global/";
+    const attr = "darkMode";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_DARK_MODE
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_DARK_MODE,
       });
     }
   };
