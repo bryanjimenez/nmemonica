@@ -5,10 +5,10 @@ import { google } from "googleapis";
 import { googleSheetId } from "../../../environment.development.js";
 import md5 from "md5";
 
-export async function sheets_sync_jlpt_n5(req, res) {
+export async function sheets_sync_vocabulary(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "JLPT_N5!A1:D";
+    const range = "Vocabulary!A1:F";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -27,7 +27,7 @@ export async function sheets_sync_jlpt_n5(req, res) {
     });
     const vocabularyPromise = admin
       .database()
-      .ref("lambda/jlptn5")
+      .ref("lambda/vocabulary")
       .once("value");
 
     const [sheetData, vocabularySnapshot] = await Promise.all([
@@ -36,11 +36,13 @@ export async function sheets_sync_jlpt_n5(req, res) {
     ]);
     const vocabularyBefore = vocabularySnapshot.val();
 
-    const JP = 0,
-      RM = 1,
-      EN = 2,
-      GRP = 3,
-      UID = 4;
+    const ORDER = 0,
+      JP = 1,
+      RM = 2,
+      EN = 3,
+      GRP = 4,
+      SUBG = 5,
+      UID = 6;
 
     let sheetHeaders = [];
     const vocabularyAfter = sheetData.reduce((acc, el, i) => {
@@ -57,12 +59,12 @@ export async function sheets_sync_jlpt_n5(req, res) {
           vocabulary.grp = el[GRP];
         }
 
-        // if (el[UID] && el[UID] !== "") {
-        //   vocabulary.uid = el[UID];
-        // }
+        if (el[SUBG] && el[SUBG] !== "") {
+          vocabulary.subGrp = el[SUBG];
+        }
 
-        if (el[1] && el[1] !== "") {
-          vocabulary.romaji = el[1];
+        if (el[RM] && el[RM] !== "") {
+          vocabulary.romaji = el[RM];
         } else if (
           vocabularyBefore &&
           vocabularyBefore[key] &&
@@ -78,11 +80,13 @@ export async function sheets_sync_jlpt_n5(req, res) {
       return acc;
     }, {});
 
-    admin.database().ref("lambda/jlptn5").set(vocabularyAfter);
+    admin.database().ref("lambda/vocabulary").set(vocabularyAfter);
     admin
       .database()
       .ref("lambda/cache")
-      .update({ jlptn5: md5(JSON.stringify(vocabularyAfter)).substr(0, 4) });
+      .update({
+        vocabulary: md5(JSON.stringify(vocabularyAfter)).substr(0, 4),
+      });
 
     return res.sendStatus(200);
   } catch (e) {

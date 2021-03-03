@@ -12,6 +12,7 @@ export const SET_VOCABULARY_ORDERING = "set_vocabulary_ordering";
 export const FLIP_VOCABULARY_PRACTICE_SIDE = "flip_vocabulary_practice_side";
 export const TOGGLE_VOCABULARY_ROMAJI = "toggle_vocabulary_romaji";
 export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
+export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -285,6 +286,56 @@ export function toggleVocabularyHint() {
     } else {
       dispatch({
         type: TOGGLE_VOCABULARY_HINT,
+      });
+    }
+  };
+}
+
+export function toggleVocabularyActiveGrp(grpName) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+    const { activeGroup } = getState().settings.vocabulary;
+
+    const isGrp = grpName.indexOf(".") === -1;
+
+    let newValue;
+    if (isGrp) {
+      if (activeGroup.some((e) => e.indexOf(grpName + ".") !== -1)) {
+        newValue = [
+          ...activeGroup.filter((v) => v.indexOf(grpName + ".") === -1),
+          grpName,
+        ];
+      } else if (activeGroup.includes(grpName)) {
+        newValue = [...activeGroup.filter((v) => v !== grpName)];
+      } else {
+        newValue = [...activeGroup, grpName];
+      }
+    } else {
+      newValue = activeGroup.includes(grpName)
+        ? activeGroup.filter((v) => v !== grpName)
+        : [...activeGroup, grpName];
+    }
+
+    const path = "/vocabulary/";
+    const attr = "activeGroup";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_VOCABULARY_ACTIVE_GROUP,
+        newValue
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_VOCABULARY_ACTIVE_GROUP,
+        value: newValue,
       });
     }
   };

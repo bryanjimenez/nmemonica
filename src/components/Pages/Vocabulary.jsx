@@ -36,6 +36,8 @@ class Vocabulary extends Component {
       showMeaning: false,
       showRomaji: false,
       showHint: false,
+      filteredVocab: [],
+      frequency: [],
     };
 
     if (this.props.vocab.length === 0) {
@@ -69,27 +71,49 @@ class Vocabulary extends Component {
       // console.log("order changed");
       this.setOrder();
     }
+
+    if (
+      this.props.activeGroup.length != prevProps.activeGroup.length ||
+      this.props.activeGroup.some((e) => !prevProps.activeGroup.includes(e)) ||
+      prevProps.activeGroup.some((e) => !this.props.activeGroup.includes(e))
+    ) {
+      // console.log("activeGroup changed");
+      this.setOrder();
+    }
   }
 
   setOrder() {
-    let newOrder = [];
-    this.props.vocab.forEach((v, i) => newOrder.push(i));
+    let filteredVocab = this.props.vocab;
+    if (this.props.activeGroup.length > 0) {
+      filteredVocab = this.props.vocab.filter(
+        (w) =>
+          this.props.activeGroup.includes(w.grp) ||
+          this.props.activeGroup.includes(w.grp + "." + w.subGrp)
+      );
+    }
+
+    const newOrder = filteredVocab.map((v, i) => i);
     if (!this.props.isOrdered) {
       shuffleArray(newOrder);
     }
 
-    this.setState({ order: newOrder });
+    const filteredKeys = Object.keys(filteredVocab);
+    const frequency = this.props.frequency.filter((f) =>
+      filteredKeys.includes(f)
+    );
+
+    this.setState({ filteredVocab, frequency, order: newOrder });
   }
 
   play() {
     // some games will come from the reinforced list
     const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
-    if (reinforced && this.props.frequency.length > 0) {
+    if (reinforced && this.state.frequency.length > 0) {
       const min = 0;
-      const max = Math.floor(this.props.frequency.length);
+      const max = Math.floor(this.state.frequency.length);
       const idx = Math.floor(Math.random() * (max - min) + min);
-      const vocabulary = this.props.vocab.filter(
-        (v) => this.props.frequency[idx] === v.uid
+      const vocabulary = this.state.filteredVocab.filter(
+        (v) => this.state.frequency[idx] === v.uid
       )[0];
 
       if (vocabulary) {
@@ -106,7 +130,7 @@ class Vocabulary extends Component {
         }
       } else {
         console.warn("uid no longer exists");
-        removeFrequencyWord(this.props.frequency[idx]);
+        removeFrequencyWord(this.state.frequency[idx]);
         this.gotoNext();
       }
     } else {
@@ -115,7 +139,7 @@ class Vocabulary extends Component {
   }
 
   gotoNext() {
-    const l = this.props.vocab.length;
+    const l = this.state.filteredVocab.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       reinforcedUID: undefined,
@@ -127,7 +151,7 @@ class Vocabulary extends Component {
   }
 
   gotoPrev() {
-    const l = this.props.vocab.length;
+    const l = this.state.filteredVocab.length;
     const i = this.state.selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
@@ -140,23 +164,26 @@ class Vocabulary extends Component {
   }
 
   render() {
-    if (this.props.vocab.length < 1) return <NotReady addlStyle="main-panel" />;
+    if (this.state.filteredVocab.length < 1)
+      return <NotReady addlStyle="main-panel" />;
 
     let vocabulary;
     if (this.state.reinforcedUID) {
-      vocabulary = this.props.vocab.filter(
+      vocabulary = this.state.filteredVocab.filter(
         (v) => this.state.reinforcedUID === v.uid
       )[0];
+
+      vocabulary.reinforce = true;
     } else {
       if (this.state.order) {
         const index = this.state.order[this.state.selectedIndex];
-        vocabulary = this.props.vocab[index];
+        vocabulary = this.state.filteredVocab[index];
       } else {
-        vocabulary = this.props.vocab[this.state.selectedIndex];
+        vocabulary = this.state.filteredVocab[this.state.selectedIndex];
       }
-    }
 
-    vocabulary.reinforce = this.props.frequency.indexOf(vocabulary.uid) > -1;
+      vocabulary.reinforce = false;
+    }
 
     let inJapanese = JapaneseText.parse(vocabulary.japanese).toHTML();
     let inEnglish = vocabulary.english;
@@ -176,7 +203,8 @@ class Vocabulary extends Component {
       hiddenCaption = "[English]";
       hintActive =
         this.props.hintActive && vocabulary.grp && vocabulary.grp !== "";
-      hint = vocabulary.grp;
+      hint =
+        vocabulary.grp + (vocabulary.subGrp ? ": " + vocabulary.subGrp : "");
     }
 
     return (
@@ -245,7 +273,7 @@ class Vocabulary extends Component {
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">
-                {hintActive && !this.state.showHint ? (
+                {!hintActive ? null : !this.state.showHint ? (
                   <div
                     className="sm-icon-grp"
                     onClick={() => {
@@ -315,10 +343,12 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     hintActive: state.settings.vocabulary.hint,
     frequency: state.settings.vocabulary.frequency,
+    activeGroup: state.settings.vocabulary.activeGroup,
   };
 };
 
 Vocabulary.propTypes = {
+  activeGroup: PropTypes.array,
   addFrequencyWord: PropTypes.func.isRequired,
   removeFrequencyWord: PropTypes.func.isRequired,
   frequency: PropTypes.array,

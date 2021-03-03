@@ -15,6 +15,7 @@ import {
   SET_PARTICLES_A_ROMAJI,
   ADD_FREQUENCY_WORD,
   REMOVE_FREQUENCY_WORD,
+  TOGGLE_VOCABULARY_ACTIVE_GROUP,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS = {
     romaji: false,
     hint: false,
     frequency: [],
+    activeGroup: [],
   },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
@@ -113,6 +115,15 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         vocabulary: {
           ...state.vocabulary,
           frequency: action.value,
+        },
+      };
+
+    case TOGGLE_VOCABULARY_ACTIVE_GROUP:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          activeGroup: action.value,
         },
       };
 
