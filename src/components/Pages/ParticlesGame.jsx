@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getParticles, getSuffixes } from "../../actions/particlesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { NotReady } from "../Form/NotReady";
-import StackButton from "../Form/StackButton";
+import StackNavButton from "../Form/StackNavButton";
 
 const ParticlesGameMeta = {
   location: "/particles",
@@ -235,13 +235,13 @@ class ParticlesGame extends Component {
     return (
       <div className="particles main-panel">
         <div className="d-flex justify-content-between h-100">
-          <StackButton
+          <StackNavButton
             ariaLabel="Previous"
             color={"--indigo"}
             action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </StackButton>
+          </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
             <h1 className="clickable">{question}</h1>
             <div
@@ -279,13 +279,13 @@ class ParticlesGame extends Component {
               );
             })}
           </div>
-          <StackButton
+          <StackNavButton
             color={"--indigo"}
             ariaLabel="Next"
             action={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
-          </StackButton>
+          </StackNavButton>
         </div>
       </div>
     );

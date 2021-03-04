@@ -44,7 +44,7 @@ class Settings extends Component {
     const pageClassName = classNames({ "mb-5": true });
     return (
       <div className="settings">
-        <div className="d-flex flex-column justify-content-between pl-3 pr-3 h-100">
+        <div className="d-flex flex-column justify-content-between pl-3 pr-3">
           <div className={pageClassName}>
             <h2>Global</h2>
             <div className="setting-block">
@@ -97,7 +97,7 @@ class Settings extends Component {
             <div className="outter">
               <div className="d-flex flex-row justify-content-between">
                 <div className="column-1">
-                <h5>Groups</h5>
+                  <h5>Groups</h5>
                   {Object.keys(this.props.vocabGroups).map((g, i) => {
                     const grpActive = this.props.vocabActive.includes(g);
 
@@ -170,7 +170,7 @@ class Settings extends Component {
             </div>
           </div>
           <div className={pageClassName}>
-            <h2>Opposites</h2>
+            <h2>Opposites Game</h2>
             <div className="setting-block">
               <div className="mb-2">
                 <SettingsSwitch
@@ -189,7 +189,7 @@ class Settings extends Component {
             </div>
           </div>
           <div className={pageClassName}>
-            <h2>HiraganaGame</h2>
+            <h2>Hiragana Game</h2>
 
             <div className="setting-block">
               <div className="mb-2 mr-2 w-50" style={{ marginLeft: "auto" }}>
@@ -203,7 +203,7 @@ class Settings extends Component {
             </div>
           </div>
           <div className={pageClassName}>
-            <h2>ParticlesGame</h2>
+            <h2>Particles Game</h2>
             <div className="setting-block">
               <SettingsSwitch
                 active={this.props.particlesARomaji}

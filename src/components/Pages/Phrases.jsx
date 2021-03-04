@@ -15,7 +15,7 @@ import { flipPhrasesPracticeSide } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
-import StackButton from "../Form/StackButton";
+import StackNavButton from "../Form/StackNavButton";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -115,16 +115,16 @@ class Phrases extends Component {
       hiddenCaption = "[English]";
     }
 
-    return (
-      <div className="phrases main-panel">
+    return [
+      <div key={0} className="phrases main-panel">
         <div className="d-flex justify-content-between h-100">
-          <StackButton
+          <StackNavButton
             ariaLabel="Previous"
             color={"--orange"}
             action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </StackButton>
+          </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownSide}</h1>
             {this.props.romajiActive && (
@@ -166,24 +166,32 @@ class Phrases extends Component {
               </div>
             )}
           </div>
-          <StackButton
+          <StackNavButton
             color={"--orange"}
             ariaLabel="Next"
             action={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
-          </StackButton>
+          </StackNavButton>
         </div>
-        <div
-          className="clickable mt-2 ml-3"
-          onClick={this.props.flipPhrasesPracticeSide}
-        >
-          <FontAwesomeIcon
-            icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-          />
+      </div>,
+      <div
+        key={1}
+        className="options-bar"
+        onClick={this.props.flipPhrasesPracticeSide}
+      >
+        <div className="row">
+          <div className="col">
+            <FontAwesomeIcon
+              className="clickable"
+              icon={this.props.practiceSide ? faGlasses : faPencilAlt}
+            />
+          </div>
+          <div className="col"></div>
+          <div className="col"></div>
         </div>
-      </div>
-    );
+      </div>,
+    ];
   }
 }
 

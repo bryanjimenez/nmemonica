@@ -6,12 +6,12 @@ import { makeStyles } from "@material-ui/core/styles";
 const useStyles = makeStyles({
   root: {
     minWidth: "unset",
-    border: (props) => "0px solid var(" + props.color + ")",
+    border: "0",
     color: (props) => "var(" + props.color + ")",
   },
 });
 
-export function StackButton(props) {
+export function StackNavButton(props) {
   const classes = useStyles(props);
 
   return (
@@ -27,11 +27,11 @@ export function StackButton(props) {
   );
 }
 
-StackButton.propTypes = {
+StackNavButton.propTypes = {
   action: PropTypes.func.isRequired,
   color: PropTypes.string,
   ariaLabel: PropTypes.string.isRequired,
   children: PropTypes.object.isRequired,
 };
 
-export default StackButton;
+export default StackNavButton;

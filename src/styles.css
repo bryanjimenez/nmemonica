@@ -1,8 +1,3 @@
-:root {
-  --dark-mode-dark: #121212;
-  --dark-mode-light: rgba(255, 255, 255, 0.87);
-}
-
 html,
 body {
   height: 100%;
@@ -68,23 +63,23 @@ a {
 }
 
 /* bare container css no media queries */
-.my-container {
+.options-bar {
   width: 100%;
   padding-right: 15px;
   padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto;
+  /* margin-right: auto;
+  margin-left: auto; */
 }
 
 .dark-mode {
-  background-color: var(--dark-mode-dark);
-  color:  var(--dark-mode-light);
+  background-color: var(--dark);
+  color:  var(--light);
 }
 
 .dark-mode .nav-toggle-btn__line {
-  background-color: var(--dark-mode-light);
+  background-color: var(--light);
 }
 
 .dark-mode .shortcuts {
-  color:  var(--dark-mode-light);
+  color:  var(--light);
 }
