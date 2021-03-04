@@ -169,12 +169,12 @@ a {
 }
 
 /* bare container css no media queries */
-.my-container {
+.options-bar {
   width: 100%;
   padding-right: 15px;
   padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto;
+  /* margin-right: auto;
+  margin-left: auto; */
 }
 
 .dark-mode {
