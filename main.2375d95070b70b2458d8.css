@@ -102,11 +102,6 @@
   top: -10px;
 }
 
-:root {
-  --dark-mode-dark: #121212;
-  --dark-mode-light: rgba(255, 255, 255, 0.87);
-}
-
 html,
 body {
   height: 100%;
@@ -178,15 +173,15 @@ a {
 }
 
 .dark-mode {
-  background-color: var(--dark-mode-dark);
-  color:  var(--dark-mode-light);
+  background-color: var(--dark);
+  color:  var(--light);
 }
 
 .dark-mode .nav-toggle-btn__line {
-  background-color: var(--dark-mode-light);
+  background-color: var(--light);
 }
 
 .dark-mode .shortcuts {
-  color:  var(--dark-mode-light);
+  color:  var(--light);
 }
 
