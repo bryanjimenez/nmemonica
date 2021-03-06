@@ -8,6 +8,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
+import StackNavButton from "../Form/StackNavButton";
 
 const HiraganaGameMeta = {
   location: "/hiragana/",
@@ -324,17 +325,16 @@ class HiraganaGame extends Component {
       "w-100": this.props.wideMode,
     });
 
-    return (
-      <div className="hiragana main-panel">
+    return [
+      <div key={0} className="hiragana main-panel">
         <div className="d-flex justify-content-between h-100">
-          <button
-            type="button"
-            className="btn btn-danger"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackNavButton
+            ariaLabel="Previous"
+            color={"--blue"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </button>
+          </StackNavButton>
           {!this.props.wideMode && (
             <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
               <h1
@@ -350,29 +350,36 @@ class HiraganaGame extends Component {
               {choices.map((c, i) => this.choiceButton(i))}
             </div>
           </div>
-          <button
-            type="button"
-            className="btn btn-danger"
-            aria-label="Next"
-            onClick={this.gotoNext}
+          <StackNavButton
+            color={"--blue"}
+            ariaLabel="Next"
+            action={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
-          </button>
+          </StackNavButton>
         </div>
-        <div
-          className="clickable mt-2 ml-3"
-          onClick={() => {
-            this.setState((state) => ({ practiceSide: !state.practiceSide }));
-          }}
-        >
-          {this.state.practiceSide ? (
-            <FontAwesomeIcon icon={faGlasses} />
-          ) : (
-            <FontAwesomeIcon icon={faPencilAlt} />
-          )}
+      </div>,
+      <div key={1} className="options-bar">
+        <div className="row">
+          <div className="col">
+            <div
+              onClick={() => {
+                this.setState((state) => ({
+                  practiceSide: !state.practiceSide,
+                }));
+              }}
+            >
+              <FontAwesomeIcon
+                className="clickable"
+                icon={this.state.practiceSide ? faGlasses : faPencilAlt}
+              />
+            </div>
+          </div>
+          <div className="col"></div>
+          <div className="col"></div>
         </div>
-      </div>
-    );
+      </div>,
+    ];
   }
 }
 

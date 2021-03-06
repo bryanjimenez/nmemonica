@@ -6,11 +6,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getOpposites } from "../../actions/oppositesAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
-
-// import PropTypes from "prop-types";
-
-import "./CustomBtn.css";
 import { NotReady } from "../Form/NotReady";
+import StackNavButton from "../Form/StackNavButton";
 
 const OppositesMeta = {
   location: "/opposites/",
@@ -160,14 +157,13 @@ class Opposites extends Component {
     return (
       <div className="opposites main-panel">
         <div className="d-flex justify-content-between h-100">
-          <button
-            type="button"
-            className="btn btn-orange"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackNavButton
+            ariaLabel="Previous"
+            color={"--green"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </button>
+          </StackNavButton>
           <div className="question pt-3 pb-3 d-flex flex-column justify-content-around text-center w-50">
             <h1 className="clickable">{question.toHTML()}</h1>
             <h2>{this.props.qRomaji ? question.romaji : ""}</h2>
@@ -208,14 +204,13 @@ class Opposites extends Component {
               );
             })}
           </div>
-          <button
-            type="button"
-            className="btn btn-orange"
-            aria-label="Next"
-            onClick={this.gotoNext}
+          <StackNavButton
+            color={"--green"}
+            ariaLabel="Next"
+            action={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
-          </button>
+          </StackNavButton>
         </div>
       </div>
     );

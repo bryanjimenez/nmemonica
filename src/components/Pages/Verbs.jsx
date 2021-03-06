@@ -7,6 +7,7 @@ import { getVocabulary } from "../../actions/vocabularyAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { NotReady } from "../Form/NotReady";
+import StackNavButton from "../Form/StackNavButton";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -150,19 +151,18 @@ class Verbs extends Component {
     return (
       <div className="verbs main-panel">
         <div className="d-flex justify-content-between h-100">
-          <button
-            type="button"
-            className="btn btn-primary"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackNavButton
+            ariaLabel="Previous"
+            color={"--red"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </button>
+          </StackNavButton>
 
-          <div className="pt-3 d-flex flex-column justify-content-around">
+          <div className="pt-3 pl-3 flex-shrink-1 d-flex flex-column justify-content-around">
             {this.buildTenseElement(t1)}
           </div>
-          <div className="pt-3 d-flex flex-column justify-content-around text-center">
+          <div className="pt-3 w-100 d-flex flex-column justify-content-around text-center">
             <h1>{japanesePhrase}</h1>
             <h2
               className="clickable"
@@ -192,18 +192,17 @@ class Verbs extends Component {
             </div> */}
           </div>
 
-          <div className="pt-3 d-flex flex-column justify-content-around">
+          <div className="pt-3 pr-3 text-end flex-shrink-1 d-flex flex-column justify-content-around">
             {this.buildTenseElement(t2)}
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary"
-            aria-label="Next"
-            onClick={this.gotoNext}
+          <StackNavButton
+            color={"--red"}
+            ariaLabel="Next"
+            action={this.gotoNext}
           >
             <ChevronRightIcon size={16} />
-          </button>
+          </StackNavButton>
         </div>
       </div>
     );

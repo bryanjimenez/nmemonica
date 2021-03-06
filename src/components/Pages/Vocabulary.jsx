@@ -18,9 +18,8 @@ import {
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
-
-import "./CustomBtn.css";
 import { NotReady } from "../Form/NotReady";
+import StackNavButton from "../Form/StackNavButton";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -207,17 +206,16 @@ class Vocabulary extends Component {
         vocabulary.grp + (vocabulary.subGrp ? ": " + vocabulary.subGrp : "");
     }
 
-    return (
-      <div className="vocabulary main-panel">
+    return [
+      <div key={0} className="vocabulary main-panel">
         <div className="d-flex justify-content-between h-100">
-          <button
-            type="button"
-            className="btn btn-indigo"
-            aria-label="Previous"
-            onClick={this.gotoPrev}
+          <StackNavButton
+            ariaLabel="Previous"
+            color={"--yellow"}
+            action={this.gotoPrev}
           >
             <ChevronLeftIcon size={16} />
-          </button>
+          </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownSide}</h1>
             {this.props.romajiActive && (
@@ -240,98 +238,97 @@ class Vocabulary extends Component {
             </h2>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-indigo"
-            aria-label="Next"
-            onClick={this.play}
+          <StackNavButton
+            color={"--yellow"}
+            ariaLabel="Next"
+            action={this.play}
           >
             <ChevronRightIcon size={16} />
-          </button>
+          </StackNavButton>
         </div>
+      </div>,
 
-        <div className="option-bar my-container">
-          <div className="row">
-            <div className="col">
-              <FontAwesomeIcon
-                onClick={this.props.flipVocabularyPracticeSide}
+      <div key={1} className="options-bar">
+        <div className="row">
+          <div className="col">
+            <FontAwesomeIcon
+              onClick={this.props.flipVocabularyPracticeSide}
+              className="clickable"
+              icon={this.props.practiceSide ? faGlasses : faPencilAlt}
+            />
+          </div>
+          <div className="col text-center">
+            {hintActive && (
+              <h5
+                onClick={() => {
+                  this.setState((state) => ({ showHint: !state.showHint }));
+                }}
                 className="clickable"
-                icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-              />
-            </div>
-            <div className="col text-center">
-              {hintActive && (
-                <h5
+              >
+                {this.state.showHint ? hint : ""}
+              </h5>
+            )}
+          </div>
+          <div className="col">
+            <div className="d-flex justify-content-end">
+              {!hintActive ? null : !this.state.showHint ? (
+                <div
+                  className="sm-icon-grp"
                   onClick={() => {
-                    this.setState((state) => ({ showHint: !state.showHint }));
+                    this.setState({ showHint: true });
+                    setTimeout(() => {
+                      this.setState({ showHint: false });
+                    }, 1500);
                   }}
-                  className="clickable"
                 >
-                  {this.state.showHint ? hint : ""}
-                </h5>
+                  <GiftIcon
+                    className="clickable"
+                    size="small"
+                    aria-label="hint"
+                  />
+                </div>
+              ) : (
+                <div className="sm-icon-grp">
+                  <GiftIcon
+                    className="disabled disabled-color"
+                    size="small"
+                    aria-label="hint unavailable"
+                  />
+                </div>
               )}
-            </div>
-            <div className="col">
-              <div className="d-flex justify-content-end">
-                {!hintActive ? null : !this.state.showHint ? (
+
+              <div className="sm-icon-grp">
+                {vocabulary.reinforce ? (
                   <div
-                    className="sm-icon-grp"
                     onClick={() => {
-                      this.setState({ showHint: true });
-                      setTimeout(() => {
-                        this.setState({ showHint: false });
-                      }, 1500);
+                      this.props.removeFrequencyWord(vocabulary.uid);
                     }}
                   >
-                    <GiftIcon
+                    <XCircleIcon
                       className="clickable"
                       size="small"
-                      aria-label="hint"
+                      aria-label="remove"
                     />
                   </div>
                 ) : (
-                  <div className="sm-icon-grp">
-                    <GiftIcon
-                      className="disabled disabled-color"
+                  <div
+                    onClick={() => {
+                      this.props.addFrequencyWord(vocabulary.uid);
+                    }}
+                  >
+                    <PlusCircleIcon
+                      className="clickable"
                       size="small"
-                      aria-label="hint unavailable"
+                      aria-label="add"
                     />
                   </div>
                 )}
-
-                <div className="sm-icon-grp">
-                  {vocabulary.reinforce ? (
-                    <div
-                      onClick={() => {
-                        this.props.removeFrequencyWord(vocabulary.uid);
-                      }}
-                    >
-                      <XCircleIcon
-                        className="clickable"
-                        size="small"
-                        aria-label="remove"
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      onClick={() => {
-                        this.props.addFrequencyWord(vocabulary.uid);
-                      }}
-                    >
-                      <PlusCircleIcon
-                        className="clickable"
-                        size="small"
-                        aria-label="add"
-                      />
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    );
+      </div>,
+    ];
   }
 }
 

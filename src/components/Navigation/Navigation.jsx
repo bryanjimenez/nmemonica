@@ -22,10 +22,17 @@ import { ParticlesGameMeta } from "../Pages/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
 import { OAuthLoginMeta } from "../Pages/OAuthLogin";
 import { LogoutMeta } from "../Pages/Logout";
+import classNames from "classnames";
 
 import "./Navigation.css";
 
 class Navigation extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      collapsed: true,
+    };
+  }
   render() {
     let shortcuts = [
       { meta: VerbsMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
@@ -71,9 +78,18 @@ class Navigation extends Component {
             {/* <span>Nmemonica</span> */}
             {/* <span>Language Flash Cards</span> */}
           </Link>
-          <div>
+          <div
+            onClick={() => {
+              this.setState((state) => ({
+                collapsed: !state.collapsed,
+              }));
+            }}
+          >
             <button
-              className="navbar-toggler collapsed"
+              className={classNames({
+                "navbar-toggler": true,
+                collapsed: this.state.collapsed,
+              })}
               type="button"
               data-toggle="collapse"
               data-target="#navbarSupportedContent"
@@ -89,8 +105,16 @@ class Navigation extends Component {
           </div>
 
           <div
-            className="navItems collapse navbar-collapse"
+            className={classNames({
+              "navItems navbar-collapse": true,
+              collapse: this.state.collapsed,
+            })}
             id="navbarSupportedContent"
+            onClick={() => {
+              this.setState((state) => ({
+                collapsed: !state.collapsed,
+              }));
+            }}
           >
             <ul
               className="navbar-nav"

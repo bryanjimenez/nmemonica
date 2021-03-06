@@ -44,7 +44,10 @@ class App extends Component {
   }
 
   render() {
-    const pClass = classNames({ "dark-mode": this.props.darkMode });
+    const pClass = classNames({
+      "d-flex flex-column": true,
+      "dark-mode": this.props.darkMode,
+    });
 
     return (
       <Router basename="/">

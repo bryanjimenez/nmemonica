@@ -19,10 +19,10 @@ import {
   toggleVocabularyActiveGrp,
   toggleDarkMode,
 } from "../../actions/settingsAct";
-import HiraganaSettings from "../Form/HiraganaSettings";
-import Toggle from "../Form/Toggle";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
+import SettingsSwitch from "../Form/SettingsSwitch";
+import HiraganaOptionsSlider from "../Form/HiraganaOptionsSlider";
 
 import "./Settings.css";
 
@@ -44,28 +44,24 @@ class Settings extends Component {
     const pageClassName = classNames({ "mb-5": true });
     return (
       <div className="settings">
-        <div className="d-flex flex-column justify-content-between pl-3 pr-3 h-100">
+        <div className="d-flex flex-column justify-content-between pl-3 pr-3">
           <div className={pageClassName}>
             <h2>Global</h2>
             <div className="setting-block">
-              <Toggle
+              <SettingsSwitch
                 active={this.props.darkMode}
                 action={this.props.toggleDarkMode}
-                statusText="Mode"
-                activeText="Dark"
-                inactiveText="Light"
+                statusText={(this.props.darkMode ? "Dark" : "Light") + " Mode"}
               />
             </div>
           </div>
           <div className={pageClassName}>
             <h2>Verbs</h2>
             <div className="setting-block">
-              <Toggle
-                active={this.props.verbOrder}
+              <SettingsSwitch
+                active={!this.props.verbOrder}
                 action={this.props.setVerbsOrdering}
-                statusText="List"
-                activeText="Ordered"
-                inactiveText="Random"
+                statusText="Random Order"
               />
             </div>
           </div>
@@ -73,40 +69,35 @@ class Settings extends Component {
             <h2>Phrases</h2>
             <div className="setting-block">
               <div className="mb-2">
-                <Toggle
-                  active={this.props.phraseOrder}
+                <SettingsSwitch
+                  active={!this.props.phraseOrder}
                   action={this.props.setPhrasesOrdering}
-                  statusText="List"
-                  activeText="Ordered"
-                  inactiveText="Random"
+                  statusText="Random Order"
                 />
               </div>
               <div className="mb-2">
-                <Toggle
+                <SettingsSwitch
                   active={this.props.phraseRomaji}
                   action={this.props.togglePhrasesRomaji}
                   statusText="Romaji"
-                  activeText="Shown"
-                  inactiveText="Hidden"
                 />
               </div>
               <div>
-                <Toggle
+                <SettingsSwitch
                   active={this.props.phraseSide}
                   action={this.props.flipPhrasesPracticeSide}
-                  statusText="Side"
-                  activeText="English"
-                  inactiveText="Japanese"
+                  color="default"
+                  statusText={this.props.phraseSide ? "English" : "Japanese"}
                 />
               </div>
             </div>
           </div>
           <div className={pageClassName}>
             <h2>Vocabulary</h2>
-            <div className="outter d-flex flex-row justify-content-between">
-              <div>
-                <h5>Groups</h5>
-                <div>
+            <div className="outter">
+              <div className="d-flex flex-row justify-content-between">
+                <div className="column-1">
+                  <h5>Groups</h5>
                   {Object.keys(this.props.vocabGroups).map((g, i) => {
                     const grpActive = this.props.vocabActive.includes(g);
 
@@ -143,98 +134,81 @@ class Settings extends Component {
                     );
                   })}
                 </div>
-              </div>
 
-              <div className="setting-block">
-                <div className="mb-2">
-                  <Toggle
-                    active={this.props.vocabOrder}
-                    action={this.props.setVocabularyOrdering}
-                    statusText="List"
-                    activeText="Ordered"
-                    inactiveText="Random"
-                  />
-                </div>
-                <div className="mb-2">
-                  <Toggle
-                    active={this.props.vocabRomaji}
-                    action={this.props.toggleVocabularyRomaji}
-                    statusText="Romaji"
-                    activeText="Shown"
-                    inactiveText="Hidden"
-                  />
-                </div>
-                <div className="mb-2">
-                  <Toggle
-                    active={this.props.vocabHint}
-                    action={this.props.toggleVocabularyHint}
-                    statusText="Hint"
-                    activeText="Shown"
-                    inactiveText="Hidden"
-                  />
-                </div>
-                <div>
-                  <Toggle
-                    active={this.props.vocabSide}
-                    action={this.props.flipVocabularyPracticeSide}
-                    statusText="Side"
-                    activeText="English"
-                    inactiveText="Japanese"
-                  />
+                <div className="column-2 setting-block">
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={!this.props.vocabOrder}
+                      action={this.props.setVocabularyOrdering}
+                      statusText="Random Order"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.vocabRomaji}
+                      action={this.props.toggleVocabularyRomaji}
+                      statusText="Romaji"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.vocabHint}
+                      action={this.props.toggleVocabularyHint}
+                      statusText="Hint"
+                    />
+                  </div>
+                  <div>
+                    <SettingsSwitch
+                      active={this.props.vocabSide}
+                      action={this.props.flipVocabularyPracticeSide}
+                      color="default"
+                      statusText={this.props.vocabSide ? "English" : "Japanese"}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           <div className={pageClassName}>
-            <h2>Opposites</h2>
+            <h2>Opposites Game</h2>
             <div className="setting-block">
               <div className="mb-2">
-                <Toggle
+                <SettingsSwitch
                   active={this.props.oppositesQRomaji}
                   action={this.props.setOppositesQRomaji}
-                  statusText="Q romaji"
-                  activeText="Shown"
-                  inactiveText="Hidden"
+                  statusText="Question Romaji"
                 />
               </div>
               <div>
-                <Toggle
+                <SettingsSwitch
                   active={this.props.oppositesARomaji}
                   action={this.props.setOppositesARomaji}
-                  statusText="A romaji"
-                  activeText="Shown"
-                  inactiveText="Hidden"
+                  statusText="Answer Romaji"
                 />
               </div>
             </div>
           </div>
           <div className={pageClassName}>
-            <h2>HiraganaGame</h2>
+            <h2>Hiragana Game</h2>
+
             <div className="setting-block">
-              <div className="mb-2 w-50" style={{ marginLeft: "auto" }}>
-                <HiraganaSettings
-                  active={!this.props.wideMode}
-                  action={this.props.setHiraganaBtnN}
+              <div className="mb-2 mr-2 w-50" style={{ marginLeft: "auto" }}>
+                <HiraganaOptionsSlider
                   initial={this.props.choiceN}
-                  activeText="WideMode ON_"
-                  inactiveText="WideMode OFF"
-                  initial2={this.props.wideMode}
-                  action2={this.props.toggleHiraganaWideMode}
-                  min={4}
-                  max={16}
+                  wideMode={this.props.wideMode}
+                  setChoiceN={this.props.setHiraganaBtnN}
+                  toggleWide={this.props.toggleHiraganaWideMode}
                 />
               </div>
             </div>
           </div>
           <div className={pageClassName}>
-            <h2>ParticlesGame</h2>
+            <h2>Particles Game</h2>
             <div className="setting-block">
-              <Toggle
+              <SettingsSwitch
                 active={this.props.particlesARomaji}
                 action={this.props.setParticlesARomaji}
-                statusText="A romaji"
-                activeText="Shown"
-                inactiveText="Hidden"
+                statusText="Answer Romaji"
               />
             </div>
           </div>
