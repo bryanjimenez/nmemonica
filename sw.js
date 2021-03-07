@@ -1,20 +1,21 @@
-const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.9a450374.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.2375d95070b70b2458d8.css","main.495088b6.js","manifest.webmanifest","maskable512.png","npm.babel.0ef5a426.js","npm.bootstrap.e55690c675bad908c840.css","npm.classnames.db245282.js","npm.clsx.7ce1359d.js","npm.css-vendor.9d25868c.js","npm.dialog-polyfill.71b4353a.js","npm.firebase.c09875f6.js","npm.firebaseui.ef995043.js","npm.fortawesome.fab8dfbe.js","npm.history.91433c8b.js","npm.hoist-non-react-statics.c295c232.js","npm.hyphenate-style-name.6006ebd8.js","npm.is-in-browser.802eea86.js","npm.isarray.806a53bf.js","npm.jss-plugin-camel-case.e24f2993.js","npm.jss-plugin-default-unit.e3468a73.js","npm.jss-plugin-global.4a477ce4.js","npm.jss-plugin-nested.fcdbd55a.js","npm.jss-plugin-props-sort.a0bb9627.js","npm.jss-plugin-rule-value-function.99d8363b.js","npm.jss-plugin-vendor-prefixer.4f9fd1be.js","npm.jss.017ed6c9.js","npm.lodash.f84f20b2.js","npm.material-design-lite.6dc694db.js","npm.material-ui.51932df0.js","npm.mini-create-react-context.b19b94a4.js","npm.object-assign.d03933ed.js","npm.path-to-regexp.3a1e431e.js","npm.primer.6627f43b.js","npm.prop-types.1d2653f0.js","npm.react-dom.70daa1a9.js","npm.react-firebaseui.3a42d339.js","npm.react-redux.34e19207.js","npm.react-router-dom.09a632fc.js","npm.react-router.551ceb09.js","npm.react-transition-group.c24f27df.js","npm.react.d03b26e8.js","npm.redux-thunk.ed614dd2.js","npm.redux.f88071c6.js","npm.resolve-pathname.21e12931.js","npm.scheduler.bf36ac53.js","npm.symbol-observable.a96b4a20.js","npm.tiny-invariant.a664e280.js","npm.tslib.bfd20c21.js","npm.value-equal.2bf5a62a.js","runtime.823f43ab.js"];
+const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.9a450374.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.2375d95070b70b2458d8.css","main.5246cb25.js","manifest.webmanifest","maskable512.png","npm.babel.0ef5a426.js","npm.bootstrap.e55690c675bad908c840.css","npm.classnames.db245282.js","npm.clsx.7ce1359d.js","npm.css-vendor.9d25868c.js","npm.dialog-polyfill.71b4353a.js","npm.firebase.c09875f6.js","npm.firebaseui.ef995043.js","npm.fortawesome.1ecd43f2.js","npm.history.91433c8b.js","npm.hoist-non-react-statics.c295c232.js","npm.hyphenate-style-name.6006ebd8.js","npm.is-in-browser.802eea86.js","npm.isarray.806a53bf.js","npm.jss-plugin-camel-case.e24f2993.js","npm.jss-plugin-default-unit.e3468a73.js","npm.jss-plugin-global.4a477ce4.js","npm.jss-plugin-nested.fcdbd55a.js","npm.jss-plugin-props-sort.a0bb9627.js","npm.jss-plugin-rule-value-function.99d8363b.js","npm.jss-plugin-vendor-prefixer.4f9fd1be.js","npm.jss.017ed6c9.js","npm.lodash.f84f20b2.js","npm.material-design-lite.6dc694db.js","npm.material-ui.51932df0.js","npm.mini-create-react-context.b19b94a4.js","npm.object-assign.d03933ed.js","npm.path-to-regexp.3a1e431e.js","npm.primer.ef9c8841.js","npm.prop-types.1d2653f0.js","npm.react-dom.70daa1a9.js","npm.react-firebaseui.3a42d339.js","npm.react-redux.34e19207.js","npm.react-router-dom.09a632fc.js","npm.react-router.551ceb09.js","npm.react-transition-group.c24f27df.js","npm.react.d03b26e8.js","npm.redux-thunk.ed614dd2.js","npm.redux.f88071c6.js","npm.resolve-pathname.21e12931.js","npm.scheduler.bf36ac53.js","npm.symbol-observable.a96b4a20.js","npm.tiny-invariant.a664e280.js","npm.tslib.bfd20c21.js","npm.value-equal.2bf5a62a.js","runtime.823f43ab.js"];
 
-const swVersionConst =  'af9798eda2d12b78db8811427ba14f9f';
+const swVersionConst =  '943afb276c433a869f91319d1b3a8513';
+
+const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
+const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
+const gCloudFnPronounceConst =  'https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce';
 
 const swVersion = swVersionConst; // eslint-disable-line no-undef
 const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
 
+const ghURL = ghURLConst; // eslint-disable-line no-undef
+const fbURL = fbURLConst; // eslint-disable-line no-undef
+const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-undef
+
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
-const appMediaCache = "nmemonica-media"
-
-const ghURL = "https://bryanjimenez.github.io/nmemonica";
-const fbURL = "https://nmemonica-9d977.firebaseio.com/";
-// TODO: build this ..
-const gCloudFnPronounce =
-  "https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce";
-
+const appMediaCache = "nmemonica-media";
 
 const dataVerURL = fbURL + "lambda/cache.json";
 const dataURL = [
@@ -197,7 +198,7 @@ function appAssetReq(url) {
 }
 
 /**
- * should check media-override if match recache
+ * cache match first otherwise fetch then cache
  * @returns a Promise that yieds a cached response
  * @param {*} url
  */
@@ -234,7 +235,9 @@ function removeUnknowCaches() {
   return caches.keys().then((cacheNames) =>
     Promise.all(
       cacheNames.reduce((acc, cacheName) => {
-        if (![appDataCache, appStaticCache, appMediaCache].includes(cacheName)) {
+        if (
+          ![appDataCache, appStaticCache, appMediaCache].includes(cacheName)
+        ) {
           console.log("[ServiceWorker] Deleting cache:", cacheName);
           return [...acc, caches.delete(cacheName)];
         }
