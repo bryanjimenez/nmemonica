@@ -6,7 +6,6 @@ import {
   ChevronRightIcon,
   GiftIcon,
   PlusCircleIcon,
-  UnmuteIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
 import { getVocabulary } from "../../actions/vocabularyAct";
@@ -26,7 +25,7 @@ import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
-import { pronounceEndoint } from "../../../environment.development";
+import AudioItem from "../Form/AudioItem";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -64,7 +63,7 @@ class Vocabulary extends Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.vocab.length != prevProps.vocab.length) {
       // console.log("got game data");
       this.setOrder();
@@ -85,19 +84,6 @@ class Vocabulary extends Component {
     ) {
       // console.log("activeGroup changed");
       this.setOrder();
-    }
-
-    if (this.state.selectedIndex !== prevState.selectedIndex) {
-      if (this.props.autoPlay && !this.props.practiceSide) {
-        const vocabulary = this.getVocabularyWord(
-          this.state.selectedIndex,
-          this.state.order,
-          this.state.filteredVocab,
-          this.state.reinforcedUID
-        );
-        this.player.src = this.pronunciationEndPoint(vocabulary.japanese);
-        this.player.play();
-      }
     }
   }
 
@@ -149,7 +135,7 @@ class Vocabulary extends Component {
         }
       } else {
         console.warn("uid no longer exists");
-        removeFrequencyWord(this.state.frequency[idx]);
+        this.props.removeFrequencyWord(this.state.frequency[idx]);
         this.gotoNext();
       }
     } else {
@@ -202,7 +188,8 @@ class Vocabulary extends Component {
     return vocabulary;
   }
 
-  pronunciationEndPoint(japanese) {
+  // TODO: check for override pronunciations here
+  pronunciation(japanese) {
     const w = JapaneseText.parse(japanese);
     let q;
     if (w.hasFurigana()) {
@@ -210,8 +197,7 @@ class Vocabulary extends Component {
     } else {
       q = w.furigana;
     }
-
-    return pronounceEndoint + "?q=" + q;
+    return q;
   }
 
   render() {
@@ -281,21 +267,10 @@ class Vocabulary extends Component {
               {this.state.showMeaning ? hiddenSide : hiddenCaption}
             </h2>
 
-            <div
-              className="d-flex justify-content-center clickable"
-              onClick={() => {
-                // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
-                // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
-
-                this.player.src = this.pronunciationEndPoint(
-                  vocabulary.japanese
-                );
-                this.player.play();
-              }}
-            >
-              <audio ref={(ref) => (this.player = ref)} />
-              <UnmuteIcon size="medium" aria-label="pronunciation" />
-            </div>
+            <AudioItem
+              word={this.pronunciation(vocabulary.japanese)}
+              autoplay={this.props.autoPlay}
+            />
           </div>
 
           <StackNavButton
