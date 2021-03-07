@@ -326,7 +326,7 @@ class HiraganaGame extends Component {
     });
 
     return [
-      <div key={0} className="hiragana main-panel">
+      <div key={0} className="hiragana main-panel h-100">
         <div className="d-flex justify-content-between h-100">
           <StackNavButton
             ariaLabel="Previous"
@@ -359,7 +359,7 @@ class HiraganaGame extends Component {
           </StackNavButton>
         </div>
       </div>,
-      <div key={1} className="options-bar">
+      <div key={1} className="options-bar mb-2 flex-shrink-1">
         <div className="row">
           <div className="col">
             <div
