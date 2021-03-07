@@ -1,14 +1,19 @@
-const fs = require("fs");
-const glob = require("glob-all");
-const path = require("path");
-const md5 = require("../lambda/sheets/node_modules/md5");
+import fs from "fs";
+import glob from "glob-all";
+import path from "path";
+import {
+  pronounceEndoint,
+  appUIEndpoint,
+  firebaseConfig,
+} from "../environment.development";
+import md5 from "../lambda/sheets/node_modules/md5/md5.js";
 
-const projectRoot = path.dirname(__dirname);
+const projectRoot = path.resolve();
 const swPartialCode = projectRoot + "/pwa/sw.js";
 const swOutput = projectRoot + "/dist/sw.js";
 
 const arrFilesToCache = glob.sync(
-  [`${path.dirname(__dirname)}/dist/*.{html,js,css,jpeg,png,ico,webmanifest}`],
+  [`${projectRoot}/dist/*.{html,js,css,jpeg,png,ico,webmanifest}`],
   { nodir: true }
 );
 
@@ -36,6 +41,13 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
 
     stream.write("const cacheFilesConst = " + strFilesToCache + ";\n\n");
     stream.write("const swVersionConst =  '" + md5(buff) + "';\n\n");
+
+    stream.write("const ghURLConst =  '" + appUIEndpoint + "';\n");
+    stream.write("const fbURLConst =  '" + firebaseConfig.databaseURL + "';\n");
+    stream.write(
+      "const gCloudFnPronounceConst =  '" + pronounceEndoint + "';\n\n"
+    );
+
     stream.write(buff);
 
     stream.end();
