@@ -6,10 +6,15 @@ import {
   ChevronRightIcon,
   GiftIcon,
   PlusCircleIcon,
+  UnmuteIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
 import { getVocabulary } from "../../actions/vocabularyAct";
-import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faGlasses,
+  faHeadphones,
+  faPencilAlt,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   flipVocabularyPracticeSide,
@@ -21,6 +26,7 @@ import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
+import { pronounceEndoint } from "../../../environment.development";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -58,7 +64,7 @@ class Vocabulary extends Component {
     }
   }
 
-  componentDidUpdate(prevProps /*, prevState*/) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.props.vocab.length != prevProps.vocab.length) {
       // console.log("got game data");
       this.setOrder();
@@ -79,6 +85,19 @@ class Vocabulary extends Component {
     ) {
       // console.log("activeGroup changed");
       this.setOrder();
+    }
+
+    if (this.state.selectedIndex !== prevState.selectedIndex) {
+      if (this.props.autoPlay && !this.props.practiceSide) {
+        const vocabulary = this.getVocabularyWord(
+          this.state.selectedIndex,
+          this.state.order,
+          this.state.filteredVocab,
+          this.state.reinforcedUID
+        );
+        this.player.src = this.pronunciationEndPoint(vocabulary.japanese);
+        this.player.play();
+      }
     }
   }
 
@@ -163,27 +182,48 @@ class Vocabulary extends Component {
     });
   }
 
-  render() {
-    if (this.state.filteredVocab.length < 1)
-      return <NotReady addlStyle="main-panel" />;
-
+  getVocabularyWord(selectedIndex, randomOrder, filteredVocab, reinforcedUID) {
     let vocabulary;
     if (this.state.reinforcedUID) {
-      vocabulary = this.state.filteredVocab.filter(
-        (v) => this.state.reinforcedUID === v.uid
-      )[0];
+      vocabulary = filteredVocab.filter((v) => reinforcedUID === v.uid)[0];
 
       vocabulary.reinforce = true;
     } else {
-      if (this.state.order) {
-        const index = this.state.order[this.state.selectedIndex];
-        vocabulary = this.state.filteredVocab[index];
+      if (randomOrder) {
+        const index = randomOrder[selectedIndex];
+        vocabulary = filteredVocab[index];
       } else {
-        vocabulary = this.state.filteredVocab[this.state.selectedIndex];
+        vocabulary = filteredVocab[selectedIndex];
       }
 
       vocabulary.reinforce = false;
     }
+
+    return vocabulary;
+  }
+
+  pronunciationEndPoint(japanese) {
+    const w = JapaneseText.parse(japanese);
+    let q;
+    if (w.hasFurigana()) {
+      q = w.kanji;
+    } else {
+      q = w.furigana;
+    }
+
+    return pronounceEndoint + "?q=" + q;
+  }
+
+  render() {
+    if (this.state.filteredVocab.length < 1)
+      return <NotReady addlStyle="main-panel" />;
+
+    const vocabulary = this.getVocabularyWord(
+      this.state.selectedIndex,
+      this.state.order,
+      this.state.filteredVocab,
+      this.state.reinforcedUID
+    );
 
     let inJapanese = JapaneseText.parse(vocabulary.japanese).toHTML();
     let inEnglish = vocabulary.english;
@@ -240,6 +280,22 @@ class Vocabulary extends Component {
             >
               {this.state.showMeaning ? hiddenSide : hiddenCaption}
             </h2>
+
+            <div
+              className="d-flex justify-content-center clickable"
+              onClick={() => {
+                // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
+                // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
+
+                this.player.src = this.pronunciationEndPoint(
+                  vocabulary.japanese
+                );
+                this.player.play();
+              }}
+            >
+              <audio ref={(ref) => (this.player = ref)} />
+              <UnmuteIcon size="medium" aria-label="pronunciation" />
+            </div>
           </div>
 
           <StackNavButton
@@ -255,11 +311,24 @@ class Vocabulary extends Component {
       <div key={1} className="options-bar mb-2 flex-shrink-1">
         <div className="row">
           <div className="col">
-            <FontAwesomeIcon
-              onClick={this.props.flipVocabularyPracticeSide}
-              className="clickable"
-              icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-            />
+            <div className="d-flex justify-content-start">
+              <div>
+                <FontAwesomeIcon
+                  onClick={this.props.flipVocabularyPracticeSide}
+                  className="clickable"
+                  icon={this.props.practiceSide ? faGlasses : faPencilAlt}
+                />
+              </div>
+              {!this.props.practiceSide && this.props.autoPlay && (
+                <div className="sm-icon-grp">
+                  <FontAwesomeIcon
+                    onClick={this.props.flipVocabularyPracticeSide}
+                    icon={faHeadphones}
+                    aria-label="Auto play enabled"
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <div className="col text-center">
             {hintActive && (
@@ -348,6 +417,7 @@ const mapStateToProps = (state) => {
     hintActive: state.settings.vocabulary.hint,
     frequency: state.settings.vocabulary.frequency,
     activeGroup: state.settings.vocabulary.activeGroup,
+    autoPlay: state.settings.vocabulary.autoPlay,
   };
 };
 
@@ -363,6 +433,7 @@ Vocabulary.propTypes = {
   flipVocabularyPracticeSide: PropTypes.func.isRequired,
   practiceSide: PropTypes.bool,
   isOrdered: PropTypes.bool,
+  autoPlay: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {

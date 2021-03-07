@@ -17,6 +17,7 @@ import {
   setOppositesARomaji,
   setParticlesARomaji,
   toggleVocabularyActiveGrp,
+  toggleVocabularyAutoPlay,
   toggleDarkMode,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
@@ -163,12 +164,19 @@ class Settings extends Component {
                       statusText="Hint"
                     />
                   </div>
-                  <div>
+                  <div className="mb-2">
                     <SettingsSwitch
                       active={this.props.vocabSide}
                       action={this.props.flipVocabularyPracticeSide}
                       color="default"
                       statusText={this.props.vocabSide ? "English" : "Japanese"}
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.vocabAutoPlay}
+                      action={this.props.toggleVocabularyAutoPlay}
+                      statusText="Auto Play"
                     />
                   </div>
                 </div>
@@ -272,6 +280,7 @@ const mapStateToProps = (state) => {
     vocabHint: state.settings.vocabulary.hint,
     vocabGroups: state.vocabulary.grpObj,
     vocabActive: state.settings.vocabulary.activeGroup,
+    vocabAutoPlay: state.settings.vocabulary.autoPlay,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -310,6 +319,8 @@ Settings.propTypes = {
   vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
   toggleVocabularyActiveGrp: PropTypes.func,
+  vocabAutoPlay: PropTypes.bool,
+  toggleVocabularyAutoPlay: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
   setOppositesQRomaji: PropTypes.func,
@@ -335,6 +346,7 @@ export default connect(mapStateToProps, {
   setParticlesARomaji,
   getVocabulary,
   toggleVocabularyActiveGrp,
+  toggleVocabularyAutoPlay,
   toggleDarkMode,
 })(Settings);
 

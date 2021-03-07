@@ -16,6 +16,7 @@ import {
   ADD_FREQUENCY_WORD,
   REMOVE_FREQUENCY_WORD,
   TOGGLE_VOCABULARY_ACTIVE_GROUP,
+  TOGGLE_VOCABULARY_AUTO_PLAY,
   TOGGLE_DARK_MODE,
 } from "../actions/settingsAct";
 
@@ -31,6 +32,7 @@ export const DEFAULT_SETTINGS = {
     hint: false,
     frequency: [],
     activeGroup: [],
+    autoPlay: false,
   },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
@@ -109,6 +111,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         vocabulary: {
           ...state.vocabulary,
           practiceSide: action.value || !state.vocabulary.practiceSide,
+        },
+      };
+    case TOGGLE_VOCABULARY_AUTO_PLAY:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          autoPlay: action.value || !state.vocabulary.autoPlay,
         },
       };
     case ADD_FREQUENCY_WORD:
