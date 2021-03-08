@@ -26,6 +26,7 @@ import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
 import AudioItem from "../Form/AudioItem";
+import { isHiragana } from "../../helper/hiraganaHelper";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -188,14 +189,24 @@ class Vocabulary extends Component {
     return vocabulary;
   }
 
-  // TODO: check for override pronunciations here
-  pronunciation(japanese) {
-    const w = JapaneseText.parse(japanese);
+  pronunciation(vocabulary) {
     let q;
-    if (w.hasFurigana()) {
-      q = w.kanji;
+    if (vocabulary.pronounce) {
+      const isHiraganaWord = !vocabulary.pronounce
+        .split("")
+        .some((c) => !isHiragana(c));
+      if (isHiraganaWord) {
+        q = vocabulary.pronounce;
+      } else {
+        console.warn("pronunciation is not hiragana");
+      }
     } else {
-      q = w.furigana;
+      const w = JapaneseText.parse(vocabulary.japanese);
+      if (w.hasFurigana()) {
+        q = w.kanji;
+      } else {
+        q = w.furigana;
+      }
     }
     return q;
   }
@@ -268,7 +279,7 @@ class Vocabulary extends Component {
             </h2>
 
             <AudioItem
-              word={this.pronunciation(vocabulary.japanese)}
+              word={this.pronunciation(vocabulary)}
               autoplay={this.props.autoPlay}
             />
           </div>

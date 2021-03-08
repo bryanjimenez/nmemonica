@@ -1,6 +1,9 @@
 "use strict";
 import axios from "axios";
-import { gTranslateEndPoint, pronounceAllowedOrigins } from "../../../environment.development";
+import {
+  gTranslateEndPoint,
+  pronounceAllowedOrigins,
+} from "../../../environment.development";
 
 export async function g_translate_pronounce(req, res) {
   const originIdx = pronounceAllowedOrigins.indexOf(req.headers.origin);

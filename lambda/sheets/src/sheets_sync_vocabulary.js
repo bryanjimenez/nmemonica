@@ -8,7 +8,7 @@ import md5 from "md5";
 export async function sheets_sync_vocabulary(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Vocabulary!A1:F";
+    const range = "Vocabulary!A1:G";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -42,7 +42,8 @@ export async function sheets_sync_vocabulary(req, res) {
       EN = 3,
       GRP = 4,
       SUBG = 5,
-      UID = 6;
+      PRN = 6,
+      UID = 7;
 
     let sheetHeaders = [];
     const vocabularyAfter = sheetData.reduce((acc, el, i) => {
@@ -61,6 +62,10 @@ export async function sheets_sync_vocabulary(req, res) {
 
         if (el[SUBG] && el[SUBG] !== "") {
           vocabulary.subGrp = el[SUBG];
+        }
+
+        if (el[PRN] && el[PRN] !== "") {
+          vocabulary.pronounce = el[PRN];
         }
 
         if (el[RM] && el[RM] !== "") {
