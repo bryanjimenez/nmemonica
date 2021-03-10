@@ -7,7 +7,7 @@ import md5 from "md5";
 export async function sheets_sync_opposites(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Opposites!A1:F";
+    const range = "Vocabulary!A1:H";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -15,7 +15,7 @@ export async function sheets_sync_opposites(req, res) {
 
     const api = google.sheets({ version: "v4", auth });
 
-    let sheetData = await new Promise((res, rej) => {
+    const sheetData = await new Promise((res, rej) => {
       api.spreadsheets.values.get({ spreadsheetId, range }, (err, response) => {
         if (err) {
           rej(new Error("The API returned an error: " + err));
@@ -27,40 +27,69 @@ export async function sheets_sync_opposites(req, res) {
 
     let sheetHeaders = [];
 
-    const opposites = sheetData.reduce((acc, el, i) => {
+    const ORDER = 0,
+      JP = 1,
+      RM = 2,
+      EN = 3,
+      GRP = 4,
+      SUBG = 5,
+      OPP = 7,
+      UID = 8;
+
+    let pairs = [];
+    const vocabulary = sheetData.reduce((acc, el, i) => {
       if (i > 0) {
-        const pair = [
-          {
-            japanese: el[0],
-            romaji: el[1],
-            english: el[2],
-          },
+        if (el[OPP] && el[OPP] !== "") {
+          const key = md5(el[JP]);
 
-          { japanese: el[3], romaji: el[4], english: el[5] },
-        ];
+          const relationship = el[OPP].split("\n");
 
-        acc.push(pair);
+          relationship.forEach((opposite) => {
+            pairs.push({
+              japanese: el[JP],
+              romaji: el[RM],
+              english: el[EN],
+              opposite,
+            });
+          });
+
+          return {
+            ...acc,
+            [key]: {
+              japanese: el[JP],
+              romaji: el[RM],
+              english: el[EN],
+            },
+          };
+        }
       } else {
         sheetHeaders = el;
       }
-
       return acc;
-    }, []);
+    }, {});
+
+    const opposites = pairs.map((p) => [
+      {
+        japanese: p.japanese,
+        romaji: p.romaji,
+        english: p.english,
+      },
+
+      vocabulary[p.opposite],
+    ]);
 
     admin.database().ref("lambda/opposites").set(opposites);
     admin
       .database()
       .ref("lambda/cache")
-      .update({ opposites: md5(JSON.stringify(opposites)).substr(0, 4) });
+      .update({
+        opposites: md5(JSON.stringify(opposites)).substr(0, 4),
+      });
 
-    return res.status(200).json({ opposites });
+    // return res.status(200).json({ opposites });
+    return res.sendStatus(200);
   } catch (e) {
-    if (e.details) {
-      console.error(e.details);
-      return res.status(500).json(e.details);
-    } else {
-      console.error(e);
-      return res.sendStatus(500);
-    }
+    console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
+    return res.sendStatus(500);
   }
 }
