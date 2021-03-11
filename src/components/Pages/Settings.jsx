@@ -23,8 +23,10 @@ import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import HiraganaOptionsSlider from "../Form/HiraganaOptionsSlider";
+import { SyncIcon } from "@primer/octicons-react";
 
 import "./Settings.css";
+import "./spin.css";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -34,6 +36,10 @@ const SettingsMeta = {
 class Settings extends Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      spin: false,
+    };
 
     if (Object.keys(this.props.vocabGroups).length === 0) {
       this.props.getVocabulary();
@@ -210,6 +216,39 @@ class Settings extends Component {
                 action={this.props.setParticlesARomaji}
                 statusText="Answer Romaji"
               />
+            </div>
+          </div>
+          <div className={pageClassName}>
+            <h2>Application</h2>
+            <div className="d-flex justify-content-end">
+              <p id="hard-refresh" className="mr-2">
+                Hard Refresh
+              </p>
+              <div
+                className={classNames({ "spin-a-bit": this.state.spin })}
+                style={{ height: "24px" }}
+                aria-labelledby="hard-refresh"
+                onClick={() => {
+                  fetch("refresh").then((res) => {
+                    if (res.status < 400) {
+                      this.setState({
+                        spin: true,
+                      });
+                      setTimeout(() => {
+                        this.setState({
+                          spin: false,
+                        });
+                      }, 2000);
+                    }
+                  });
+                }}
+              >
+                <SyncIcon
+                  className="clickable"
+                  size={24}
+                  aria-label="Hard Refresh"
+                />
+              </div>
             </div>
           </div>
         </div>

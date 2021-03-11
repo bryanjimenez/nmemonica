@@ -69,6 +69,11 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(appVersionReq());
   } else if (req.headers.get("Data-Version")) {
     e.respondWith(appDataReq(e.request));
+  } else if (url === ghURL + "/refresh") {
+    console.log("[ServiceWorker] Hard Refresh");
+    caches.delete(appStaticCache);
+    self.registration.unregister();
+    e.respondWith(fetch(ghURL));
   } else if (url.indexOf(ghURL) === 0) {
     // site asset
     e.respondWith(appAssetReq(url));

@@ -40,7 +40,7 @@ class Navigation extends Component {
     this.setState((state) => {
       if (state.collapsed) {
         document.body.style.overflow = "hidden";
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
       } else {
         document.body.style.overflow = "";
       }
