@@ -192,7 +192,7 @@ class Settings extends Component {
             <h2>Hiragana Game</h2>
 
             <div className="setting-block">
-              <div className="mb-2 mr-2 w-50" style={{ marginLeft: "auto" }}>
+              <div className="d-flex justify-content-end">
                 <HiraganaOptionsSlider
                   initial={this.props.choiceN}
                   wideMode={this.props.wideMode}
