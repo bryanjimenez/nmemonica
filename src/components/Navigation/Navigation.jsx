@@ -32,7 +32,25 @@ class Navigation extends Component {
     this.state = {
       collapsed: true,
     };
+
+    this.menuToggle = this.menuToggle.bind(this);
   }
+
+  menuToggle() {
+    this.setState((state) => {
+      if (state.collapsed) {
+        document.body.style.overflow = "hidden";
+        window.scrollTo(0,0);
+      } else {
+        document.body.style.overflow = "";
+      }
+
+      return {
+        collapsed: !state.collapsed,
+      };
+    });
+  }
+
   render() {
     let shortcuts = [
       { meta: VerbsMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
@@ -78,13 +96,7 @@ class Navigation extends Component {
             {/* <span>Nmemonica</span> */}
             {/* <span>Language Flash Cards</span> */}
           </Link>
-          <div
-            onClick={() => {
-              this.setState((state) => ({
-                collapsed: !state.collapsed,
-              }));
-            }}
-          >
+          <div onClick={this.menuToggle}>
             <button
               className={classNames({
                 "navbar-toggler": true,
@@ -110,11 +122,7 @@ class Navigation extends Component {
               collapse: this.state.collapsed,
             })}
             id="navbarSupportedContent"
-            onClick={() => {
-              this.setState((state) => ({
-                collapsed: !state.collapsed,
-              }));
-            }}
+            onClick={this.menuToggle}
           >
             <ul
               className="navbar-nav"
