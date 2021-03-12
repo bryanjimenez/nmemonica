@@ -39,6 +39,7 @@ class Vocabulary extends Component {
 
     this.state = {
       selectedIndex: 0,
+      showEng: false,
       showMeaning: false,
       showRomaji: false,
       showHint: false,
@@ -150,6 +151,7 @@ class Vocabulary extends Component {
     this.setState({
       reinforcedUID: undefined,
       selectedIndex: newSel,
+      showEng: false,
       showMeaning: false,
       showRomaji: false,
       showHint: false,
@@ -163,6 +165,7 @@ class Vocabulary extends Component {
     this.setState({
       reinforcedUID: undefined,
       selectedIndex: newSel,
+      showEng: false,
       showMeaning: false,
       showRomaji: false,
       showHint: false,
@@ -226,10 +229,11 @@ class Vocabulary extends Component {
     let inEnglish = vocabulary.english;
     let romaji = vocabulary.romaji;
 
-    let shownSide, hiddenSide, hiddenCaption, hintActive, hint;
+    let shownSide, hiddenSide, shownCaption, hiddenCaption, hintActive, hint;
     if (this.props.practiceSide) {
       shownSide = inEnglish;
       hiddenSide = inJapanese;
+      shownCaption = "[English]";
       hiddenCaption = "[Japanese]";
 
       hint = htmlElementHint(vocabulary.japanese);
@@ -237,6 +241,7 @@ class Vocabulary extends Component {
     } else {
       shownSide = inJapanese;
       hiddenSide = inEnglish;
+      shownCaption = "[Japanese]";
       hiddenCaption = "[English]";
       hintActive =
         this.props.hintActive && vocabulary.grp && vocabulary.grp !== "";
@@ -258,7 +263,17 @@ class Vocabulary extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            <h1>{shownSide}</h1>
+            {this.props.autoPlay && this.props.practiceSide ? (
+              <h1
+                onClick={() => {
+                  this.setState((state) => ({ showEng: !state.showEng }));
+                }}
+              >
+                {this.state.showEng ? shownSide : shownCaption}
+              </h1>
+            ) : (
+              <h1>{shownSide}</h1>
+            )}
             {this.props.romajiActive && (
               <h5
                 onClick={() => {
@@ -305,10 +320,9 @@ class Vocabulary extends Component {
                   icon={this.props.practiceSide ? faGlasses : faPencilAlt}
                 />
               </div>
-              {!this.props.practiceSide && this.props.autoPlay && (
+              {this.props.autoPlay && (
                 <div className="sm-icon-grp">
                   <FontAwesomeIcon
-                    onClick={this.props.flipVocabularyPracticeSide}
                     icon={faHeadphones}
                     aria-label="Auto play enabled"
                   />
