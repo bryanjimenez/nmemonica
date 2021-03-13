@@ -2,7 +2,7 @@ import React from "react";
 import { expect } from "chai";
 import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
-import { htmlElementHint, JapaneseText } from "../../../src/helper/JapaneseText";
+import { buildRaw, htmlElementHint, JapaneseText } from "../../../src/helper/JapaneseText";
 import { buildHTMLElement, furiganaParse } from "../../../src/helper/JapaneseText";
 
 configure({ adapter: new Adapter() });
@@ -53,7 +53,7 @@ describe("JapanseText", function () {
       const furigana = "きたな"; //い
       const kanji = "汚い";
 
-      const actual = () => furiganaParse(furigana, kanji);
+      const actual = () => furiganaParse(furigana, kanji, true);
 
       expect(actual).to.throw(Error, "The two phrases do not match");
     });
@@ -65,6 +65,48 @@ describe("JapanseText", function () {
 
       const furigana = "きたない";
       const kanji = "汚い";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        furigana,
+        kanji
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
+
+    it("starting kanji ending hiragana 2", function () {
+      const expectedKanjis = ["五","五"];
+      const expectedFuriganas = ["いつ","いつ"];
+      const expectedNonKanjis = ["つ","つ"];
+      const expectedStartsWHiragana = false;
+
+      const furigana = "いつついつつ";
+      const kanji = "五つ五つ";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        furigana,
+        kanji
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
+
+    it("starting kanji ending hiragana 3", function () {
+      const expectedKanjis = ["五"];
+      const expectedFuriganas = ["いつ"];
+      const expectedNonKanjis = ["つ"];
+      const expectedStartsWHiragana = false;
+
+      const furigana = "いつつ";
+      const kanji = "五つ";
       const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
         furigana,
         kanji
@@ -159,6 +201,70 @@ describe("JapanseText", function () {
       expect(nonKanjis).to.deep.eq(expectedNonKanjis);
       expect(startsWHiragana).to.deep.eq(expectedStartsWHiragana);
     });
+
+    it("tongue twisters 1", function () {
+      const expectedKanjis = ["李","桃","桃"];
+      const expectedFuriganas = ["すもも","もも","もも"];
+      const expectedNonKanjis = ["も","も","のうち"];
+      const expectedStartsWHiragana = false;
+
+      // NOTE spaces delimiting repeating furigana
+      const furigana = "すももも ももも もものうち";
+      const kanji = "李も桃も桃のうち";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        furigana,
+        kanji,
+        // true
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
+    // it("tongue twisters 2", function () {
+    //   const expectedKanjis = [];
+    //   const expectedFuriganas = [];
+    //   const expectedNonKanjis = ["かえるぴょこぴょこみぴょこぴょこ"];
+    //   const expectedStartsWHiragana = false;
+
+    //   const furigana = "";
+    //   const kanji = "かえるぴょこぴょこみぴょこぴょこ";
+    //   const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+    //     furigana,
+    //     kanji,
+    //     true
+    //   );
+
+    //   expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+    //   expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+    //   expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+    //   expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+    //     expectedStartsWHiragana
+    //   );
+    // });
+    it("tongue twisters 3", function () {
+      const expectedKanjis = ["隣","客","柿食","客"];
+      const expectedFuriganas = ["となり","きゃく","かきく","きゃく"];
+      const expectedNonKanjis = ["の","はよく","う","だ"];
+      const expectedStartsWHiragana = false;
+
+      const furigana = "となりのきゃくはよくかきくうきゃくだ";
+      const kanji = "隣の客はよく柿食う客だ";
+      const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+        furigana,
+        kanji
+      );
+
+      expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
+      expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
+      expect(nonKanjis, "nonkanjis").to.deep.eq(expectedNonKanjis);
+      expect(startsWHiragana, "startsWHiragana").to.deep.eq(
+        expectedStartsWHiragana
+      );
+    });
   });
 });
 
@@ -201,3 +307,42 @@ describe("htmlElementHint", function () {
     ).to.be.true;
   });
 });
+
+
+describe("buildRaw", function () {
+  it("starts with kanji", function () {
+    const kanjis = ["隣","客","柿食","客"];
+    const furiganas = ["となり","きゃく","かきく","きゃく"];
+    const nonKanjis = ["の","はよく","う","だ"];
+    const startsWHiragana = false;
+
+    const expectedFurigana = "となりのきゃくはよくかきくうきゃくだ";
+    const expectedKanji = "隣の客はよく柿食う客だ";
+
+    const [ pronunciation,
+      orthography ] = buildRaw(
+      kanjis, furiganas, nonKanjis, startsWHiragana
+    );
+
+    expect(pronunciation).to.equal(expectedFurigana);
+    expect(orthography).to.equal(expectedKanji);
+  });
+
+  it("starts with kanji", function () {
+    const kanjis = ["李","桃","桃"];
+    const furiganas = ["すもも","もも","もも"];
+    const nonKanjis = ["も","も","のうち"];
+    const startsWHiragana = false;
+
+    const expectedFurigana = "すもももももももものうち";
+    const expectedKanji = "李も桃も桃のうち";
+
+    const [ pronunciation,
+      orthography ] = buildRaw(
+      kanjis, furiganas, nonKanjis, startsWHiragana
+    );
+
+    expect(pronunciation).to.equal(expectedFurigana);
+    expect(orthography).to.equal(expectedKanji);
+  });
+})
