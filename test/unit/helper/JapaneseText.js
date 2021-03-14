@@ -26,6 +26,43 @@ describe("JapanseText", function () {
     });
   });
 
+  describe("toHTML", function () {
+    it("no furigana", function () {
+      const hiragana = "する";
+
+      const expected = hiragana;
+
+      const text = new JapaneseText(hiragana);
+      const wrapper = shallow(text.toHTML());
+
+      expect(wrapper.text()).to.equal(expected);
+    })
+
+    it("no furigana", function () {
+      const furigana = "きたない"
+      const kanji = "汚い";
+
+      const expected = "汚" + "きたな" + "い";
+
+      const text = new JapaneseText(furigana, kanji);
+      const wrapper = shallow(text.toHTML());
+
+      expect(wrapper.text()).to.equal(expected);
+    })
+
+    it("failed parse word", function () {
+      const furigana = "いつつ"
+      const kanji = "五つ";
+
+      const expected = furigana+kanji;
+
+      const text = new JapaneseText(furigana, kanji);
+      const wrapper = shallow(text.toHTML());
+
+      expect(wrapper.text()).to.equal(expected);
+    })
+  })
+
   describe("buildHTMLElement", function () {
     it("starting and ending with hiragana", function () {
       const kanjis = ["会計", "願"];
@@ -57,6 +94,16 @@ describe("JapanseText", function () {
 
       expect(actual).to.throw(Error, "The two phrases do not match");
     });
+    it("failed parse validation shold throw", function () {
+      const furigana = "いつつ"
+      const kanji = "五つ";
+
+      const actual = () => furiganaParse(furigana, kanji);
+
+      expect(actual).to.throw(Error, "Failed to parse text to build furigana");
+    });
+
+
     it("starting kanji ending hiragana", function () {
       const expectedKanjis = ["汚"];
       const expectedFuriganas = ["きたな"];

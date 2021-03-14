@@ -69,8 +69,8 @@ export class JapaneseText {
       } catch (e) {
         console.error(e);
         htmlElement = (
-          <div style={{ color: "red" }}>
-            <div>{this._furigana}</div>
+          <div>
+            <div style={{ color: "red" }}>{this._furigana}</div>
             <div>{this._kanji}</div>
           </div>
         );
@@ -148,7 +148,61 @@ export function furiganaParse(pronunciation, orthography) {
     nonKanjis.push(nword);
   }
 
+  const [pronunciationOutput, orthographyOutput] = validateParseFurigana(
+    kanjis,
+    furiganas,
+    nonKanjis,
+    startsWHiragana
+  );
+
+  if (
+    pronunciationOutput !== pronunciation ||
+    orthographyOutput !== orthography
+  ) {
+    const err = new Error("Failed to parse text to build furigana");
+    err.data = {
+      input: { pronunciation, orthography },
+      output: {
+        pronunciation: pronunciationOutput,
+        orthography: orthographyOutput,
+      },
+    };
+    throw err;
+  }
+
   return { kanjis, furiganas, nonKanjis, startsWHiragana };
+}
+
+/**
+ * @returns {[String,String]} pronunciation, orthography
+ * @param {String[]} kanjis
+ * @param {String[]} furiganas
+ * @param {String[]} nonKanjis
+ * @param {boolean} startsWHiragana
+ */
+export function validateParseFurigana(
+  kanjis,
+  furiganas,
+  nonKanjis,
+  startsWHiragana
+) {
+  let pronunciation, orthography;
+
+  if (startsWHiragana) {
+    orthography = nonKanjis.reduce((a, n, i) => a + n + (kanjis[i] || ""), "");
+    pronunciation = nonKanjis.reduce(
+      (a, n, i) => a + n + (furiganas[i] || ""),
+      ""
+    );
+  } else {
+    orthography = kanjis.reduce((a, k, i) => a + k + (nonKanjis[i] || ""), "");
+    pronunciation = furiganas.reduce(
+      (a, f, i) => a + f + (nonKanjis[i] || ""),
+      ""
+    );
+  }
+
+  return [pronunciation, orthography];
 }
 
 /**
