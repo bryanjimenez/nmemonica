@@ -1,19 +1,21 @@
 const swVersion = swVersionConst; // eslint-disable-line no-undef
 const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
 
+const ghURL = ghURLConst; // eslint-disable-line no-undef
+const fbURL = fbURLConst; // eslint-disable-line no-undef
+const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-undef
+
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
+const appMediaCache = "nmemonica-media";
 
-const ghURL = "https://bryanjimenez.github.io/nmemonica";
-const fbURL = "https://nmemonica-9d977.firebaseio.com/";
-
-const dataVerURL = fbURL + "lambda/cache.json";
+const dataVerURL = fbURL + "/lambda/cache.json";
 const dataURL = [
-  fbURL + "lambda/phrases.json",
-  fbURL + "lambda/vocabulary.json",
-  fbURL + "lambda/opposites.json",
-  fbURL + "lambda/suffixes.json",
-  fbURL + "lambda/particles.json",
+  fbURL + "/lambda/phrases.json",
+  fbURL + "/lambda/vocabulary.json",
+  fbURL + "/lambda/opposites.json",
+  fbURL + "/lambda/suffixes.json",
+  fbURL + "/lambda/particles.json",
 ];
 
 self.addEventListener("install", (e) => {
@@ -77,6 +79,9 @@ self.addEventListener("fetch", (e) => {
   } else if (url.indexOf(ghURL) === 0) {
     // site asset
     e.respondWith(appAssetReq(url));
+  } else if (url.indexOf(gCloudFnPronounce) === 0) {
+    // site media asset
+    e.respondWith(appMediaReq(url));
   } else {
     // everything else
     e.respondWith(fetch(e.request));
@@ -190,6 +195,20 @@ function appAssetReq(url) {
 }
 
 /**
+ * cache match first otherwise fetch then cache
+ * @returns a Promise that yieds a cached response
+ * @param {*} url
+ */
+function appMediaReq(url) {
+  return caches
+    .open(appMediaCache)
+    .then((cache) => cache.match(url))
+    .then((cachedRes) => {
+      return cachedRes || recache(appMediaCache, url);
+    });
+}
+
+/**
  * @returns a Promise that yields a response from the cache or a rejected Promise
  * @param {*} cacheName
  * @param {*} url
@@ -213,7 +232,9 @@ function removeUnknowCaches() {
   return caches.keys().then((cacheNames) =>
     Promise.all(
       cacheNames.reduce((acc, cacheName) => {
-        if (![appDataCache, appStaticCache].includes(cacheName)) {
+        if (
+          ![appDataCache, appStaticCache, appMediaCache].includes(cacheName)
+        ) {
           console.log("[ServiceWorker] Deleting cache:", cacheName);
           return [...acc, caches.delete(cacheName)];
         }
