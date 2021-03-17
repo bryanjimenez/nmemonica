@@ -8,6 +8,7 @@ import {
   setHiraganaBtnN,
   toggleHiraganaWideMode,
   setVerbsOrdering,
+  setVerbsMasu,
   setVocabularyOrdering,
   setPhrasesOrdering,
   togglePhrasesRomaji,
@@ -65,11 +66,21 @@ class Settings extends Component {
           <div className={pageClassName}>
             <h2>Verbs</h2>
             <div className="setting-block">
-              <SettingsSwitch
-                active={!this.props.verbOrder}
-                action={this.props.setVerbsOrdering}
-                statusText="Random Order"
-              />
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={!this.props.verbOrder}
+                  action={this.props.setVerbsOrdering}
+                  statusText="Random Order"
+                />
+              </div>
+              <div>
+                <SettingsSwitch
+                  active={this.props.verbMasu}
+                  action={this.props.setVerbsMasu}
+                  color="default"
+                  statusText={this.props.verbMasu ? "Masu" : "Dictionary"}
+                />
+              </div>
             </div>
           </div>
           <div className={pageClassName}>
@@ -271,6 +282,7 @@ const mapStateToProps = (state) => {
     choiceN: state.settings.hiragana.choiceN,
     wideMode: state.settings.hiragana.wideMode,
     verbOrder: state.settings.verbs.ordered,
+    verbMasu: state.settings.verbs.masu,
     phraseOrder: state.settings.phrases.ordered,
     phraseSide: state.settings.phrases.practiceSide,
     phraseRomaji: state.settings.phrases.romaji,
@@ -292,6 +304,8 @@ Settings.propTypes = {
   toggleDarkMode: PropTypes.func,
   verbOrder: PropTypes.bool,
   setVerbsOrdering: PropTypes.func,
+  verbMasu: PropTypes.bool,
+  setVerbsMasu: PropTypes.func,
 
   setPhrasesOrdering: PropTypes.func,
   phraseOrder: PropTypes.bool,
@@ -334,6 +348,7 @@ export default connect(mapStateToProps, {
   setHiraganaBtnN,
   toggleHiraganaWideMode,
   setVerbsOrdering,
+  setVerbsMasu,
   flipPhrasesPracticeSide,
   flipVocabularyPracticeSide,
   setPhrasesOrdering,

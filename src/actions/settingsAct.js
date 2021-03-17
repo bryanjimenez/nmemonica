@@ -5,6 +5,7 @@ import { localStoreAttrUpdate } from "../helper/localStorage";
 export const SET_HIRAGANA_BTN_N = "set_hiragana_btn_n";
 export const TOGGLE_HIRAGANA_WIDEMODE = "set_hiragana_widemode";
 export const SET_VERB_ORDERING = "set_verb_ordering";
+export const SET_VERB_MASU = "set_verb_masu";
 export const SET_PHRASES_ORDERING = "set_phrases_ordering";
 export const FLIP_PHRASES_PRACTICE_SIDE = "flip_phrases_practice_side";
 export const TOGGLE_PHRASES_ROMAJI = "toggle_phrases_romaji";
@@ -99,6 +100,33 @@ export function setVerbsOrdering() {
     } else {
       dispatch({
         type: SET_VERB_ORDERING,
+      });
+    }
+  };
+}
+
+export function setVerbsMasu() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/verbs/";
+    const attr = "masu";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        SET_VERB_MASU
+      );
+    } else {
+      dispatch({
+        type: SET_VERB_MASU,
       });
     }
   };
