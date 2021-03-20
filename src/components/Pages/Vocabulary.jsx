@@ -27,6 +27,8 @@ import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
 import AudioItem from "../Form/AudioItem";
 import { isHiragana } from "../../helper/hiraganaHelper";
+import { orderBy } from "lodash/collection";
+import StackOrderSlider from "../Form/StackOrderSlider";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -102,6 +104,8 @@ class Vocabulary extends Component {
     const newOrder = filteredVocab.map((v, i) => i);
     if (!this.props.isOrdered) {
       shuffleArray(newOrder);
+    } else {
+      filteredVocab = orderBy(filteredVocab, ["japanese"], ["asc"]);
     }
 
     const filteredKeys = Object.keys(filteredVocab);
@@ -248,7 +252,7 @@ class Vocabulary extends Component {
     const progress =
       ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
 
-    return [
+    let page = [
       <div key={0} className="vocabulary main-panel h-100">
         <div className="d-flex justify-content-between h-100">
           <StackNavButton
@@ -304,103 +308,156 @@ class Vocabulary extends Component {
           </StackNavButton>
         </div>
       </div>,
+    ];
 
-      <div key={1} className="options-bar mb-2 flex-shrink-1">
-        <div className="row">
-          <div className="col">
-            <div className="d-flex justify-content-start">
-              <div>
-                <FontAwesomeIcon
-                  onClick={this.props.flipVocabularyPracticeSide}
-                  className="clickable"
-                  icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-                />
-              </div>
-              {this.props.autoPlay && (
-                <div className="sm-icon-grp">
+    if (!this.state.showPageBar) {
+      page = [
+        ...page,
+        <div key={1} className="options-bar mb-3 flex-shrink-1">
+          <div className="row">
+            <div className="col">
+              <div className="d-flex justify-content-start">
+                <div>
                   <FontAwesomeIcon
-                    icon={faHeadphones}
-                    aria-label="Auto play enabled"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="col text-center">
-            {hintActive && (
-              <h5
-                onClick={() => {
-                  this.setState((state) => ({ showHint: !state.showHint }));
-                }}
-                className="clickable"
-              >
-                {this.state.showHint ? hint : ""}
-              </h5>
-            )}
-          </div>
-          <div className="col">
-            <div className="d-flex justify-content-end">
-              {!hintActive ? null : !this.state.showHint ? (
-                <div
-                  className="sm-icon-grp"
-                  onClick={() => {
-                    this.setState({ showHint: true });
-                    setTimeout(() => {
-                      this.setState({ showHint: false });
-                    }, 1500);
-                  }}
-                >
-                  <GiftIcon
+                    onClick={this.props.flipVocabularyPracticeSide}
                     className="clickable"
-                    size="small"
-                    aria-label="hint"
+                    icon={this.props.practiceSide ? faGlasses : faPencilAlt}
                   />
                 </div>
-              ) : (
-                <div className="sm-icon-grp">
-                  <GiftIcon
-                    className="disabled disabled-color"
-                    size="small"
-                    aria-label="hint unavailable"
-                  />
-                </div>
-              )}
-
-              <div className="sm-icon-grp">
-                {vocabulary.reinforce ? (
-                  <div
-                    onClick={() => {
-                      this.props.removeFrequencyWord(vocabulary.uid);
-                    }}
-                  >
-                    <XCircleIcon
-                      className="clickable"
-                      size="small"
-                      aria-label="remove"
-                    />
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => {
-                      this.props.addFrequencyWord(vocabulary.uid);
-                    }}
-                  >
-                    <PlusCircleIcon
-                      className="clickable"
-                      size="small"
-                      aria-label="add"
+                {this.props.autoPlay && (
+                  <div className="sm-icon-grp">
+                    <FontAwesomeIcon
+                      icon={faHeadphones}
+                      aria-label="Auto play enabled"
                     />
                   </div>
                 )}
               </div>
             </div>
+            <div className="col text-center">
+              {hintActive && (
+                <h5
+                  onClick={() => {
+                    this.setState((state) => ({ showHint: !state.showHint }));
+                  }}
+                  className="clickable"
+                >
+                  {this.state.showHint ? hint : ""}
+                </h5>
+              )}
+            </div>
+            <div className="col">
+              <div className="d-flex justify-content-end">
+                {!hintActive ? null : !this.state.showHint ? (
+                  <div
+                    className="sm-icon-grp"
+                    onClick={() => {
+                      this.setState({ showHint: true });
+                      setTimeout(() => {
+                        this.setState({ showHint: false });
+                      }, 1500);
+                    }}
+                  >
+                    <GiftIcon
+                      className="clickable"
+                      size="small"
+                      aria-label="hint"
+                    />
+                  </div>
+                ) : (
+                  <div className="sm-icon-grp">
+                    <GiftIcon
+                      className="disabled disabled-color"
+                      size="small"
+                      aria-label="hint unavailable"
+                    />
+                  </div>
+                )}
+
+                <div className="sm-icon-grp">
+                  {vocabulary.reinforce ? (
+                    <div
+                      onClick={() => {
+                        this.props.removeFrequencyWord(vocabulary.uid);
+                      }}
+                    >
+                      <XCircleIcon
+                        className="clickable"
+                        size="small"
+                        aria-label="remove"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => {
+                        this.props.addFrequencyWord(vocabulary.uid);
+                      }}
+                    >
+                      <PlusCircleIcon
+                        className="clickable"
+                        size="small"
+                        aria-label="add"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>,
-      <div key={2} className="progress-bar flex-shrink-1">
-        <LinearProgress variant="determinate" value={progress} />
-      </div>,
-    ];
+        </div>,
+        <div
+          key={2}
+          className="progress-bar flex-shrink-1"
+          onClick={() => {
+            if (this.props.isOrdered) {
+              this.setState({ showPageBar: true, pageBarDone: true });
+
+              const delay = () => {
+                if (this.state.pageBarDone) {
+                  this.setState({ showPageBar: false });
+                } else {
+                  setTimeout(delay, 4000);
+                }
+              };
+
+              setTimeout(delay, 4000);
+            }
+          }}
+        >
+          <LinearProgress variant="determinate" value={progress} />
+        </div>,
+      ];
+    } else {
+      page = [
+        ...page,
+        <div
+          key={3}
+          className="page-bar flex-shrink-1"
+          onMouseDown={() => {
+            this.setState({ pageBarDone: false });
+          }}
+          onMouseUp={() => {
+            this.setState({ pageBarDone: true });
+          }}
+          onTouchStart={() => {
+            this.setState({ pageBarDone: false });
+          }}
+          onTouchEnd={() => {
+            this.setState({ pageBarDone: true });
+          }}
+        >
+          <StackOrderSlider
+            initial={this.state.selectedIndex}
+            list={this.state.filteredVocab}
+            setIndex={(index) => {
+              this.setState({ selectedIndex: index });
+            }}
+          />
+        </div>,
+      ];
+    }
+
+    return page;
   }
 }
 
