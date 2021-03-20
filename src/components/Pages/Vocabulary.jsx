@@ -205,11 +205,7 @@ class Vocabulary extends Component {
       }
     } else {
       const w = JapaneseText.parse(vocabulary.japanese);
-      if (w.hasFurigana()) {
-        q = w.kanji;
-      } else {
-        q = w.furigana;
-      }
+      q = w.getSpelling();
     }
     return q;
   }

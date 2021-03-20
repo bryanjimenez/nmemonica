@@ -27,6 +27,24 @@ export class JapaneseText {
     return this._kanji ? true : false;
   }
 
+  /**
+   * @returns {String} spelling may contain kanji
+   */
+  getSpelling() {
+    if (this.hasFurigana()) {
+      return this._kanji;
+    } else {
+      return this._furigana;
+    }
+  }
+
+  /**
+   * @returns {String} pronunciation only in hiragana
+   */
+  getPronunciation() {
+    return this._furigana;
+  }
+
   getObject() {
     return { furigana: this._furigana, kanji: this._kanji };
   }
@@ -83,7 +101,7 @@ export class JapaneseText {
 
 /**
  * @returns  {{ kanjis:String[], furiganas:String[], nonKanjis:String[], startsWHiragana:boolean }} object containing parse info
- * @throws if the two phrases do not match.
+ * @throws if the two phrases do not match or if the parsed output is invalid.
  * @param {String} pronunciation (hiragana)
  * @param {String} orthography (kanji)
  */
