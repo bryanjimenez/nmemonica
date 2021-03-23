@@ -23,7 +23,6 @@ class Verbs extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
-      shownVerb: null,
       shownForm: "dictionary",
     };
 
@@ -54,6 +53,10 @@ class Verbs extends Component {
       // console.log("got game data");
       this.setVerbsOrder();
     }
+
+    if (this.props.masu != prevProps.masu) {
+      this.setState({ shownForm: this.props.masu ? "masu" : "dictionary" });
+    }
   }
 
   setVerbsOrder() {
@@ -63,7 +66,10 @@ class Verbs extends Component {
       shuffleArray(newOrder);
     }
 
-    this.setState({ order: newOrder });
+    this.setState({
+      order: newOrder,
+      shownForm: this.props.masu ? "masu" : "dictionary",
+    });
   }
 
   gotoNext() {
@@ -73,8 +79,7 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      shownVerb: null,
-      shownForm: "dictionary",
+      shownForm: this.props.masu ? "masu" : "dictionary",
     });
   }
 
@@ -86,8 +91,7 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      shownVerb: null,
-      shownForm: "dictionary",
+      shownForm: this.props.masu ? "masu" : "dictionary",
     });
   }
 
@@ -103,7 +107,7 @@ class Verbs extends Component {
           className={tenseClass}
           key={i}
           onClick={() => {
-            this.setState({ shownVerb: t.j, shownForm: t.t });
+            this.setState({ shownForm: t.t });
           }}
         >
           {this.state.shownForm === t.t ? t.t : "[" + t.t + "]"}
@@ -143,10 +147,22 @@ class Verbs extends Component {
     const english = v.english;
 
     let japanesePhrase;
-    if (this.state.shownVerb) {
-      japanesePhrase = this.state.shownVerb.toHTML();
-    } else {
-      japanesePhrase = dictionaryForm.toHTML();
+
+    switch (this.state.shownForm) {
+      case "masu":
+        japanesePhrase = dictionaryForm.masuForm().toHTML();
+        break;
+      case "mashou":
+        japanesePhrase = dictionaryForm.mashouForm().toHTML();
+        break;
+      case "te_form":
+        japanesePhrase = dictionaryForm.teForm().toHTML();
+        break;
+      case "ta_form":
+        japanesePhrase = dictionaryForm.taForm().toHTML();
+        break;
+      default:
+        japanesePhrase = dictionaryForm.toHTML();
     }
 
     const progress =
@@ -217,13 +233,18 @@ class Verbs extends Component {
 }
 
 const mapStateToProps = (state) => {
-  return { verbs: state.verbs.value, isOrdered: state.settings.verbs.ordered };
+  return {
+    verbs: state.verbs.value,
+    isOrdered: state.settings.verbs.ordered,
+    masu: state.settings.verbs.masu,
+  };
 };
 
 Verbs.propTypes = {
   getVocabulary: PropTypes.func.isRequired,
   verbs: PropTypes.array.isRequired,
   isOrdered: PropTypes.bool,
+  masu: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, { getVocabulary })(Verbs);

@@ -18,12 +18,13 @@ import {
   TOGGLE_VOCABULARY_ACTIVE_GROUP,
   TOGGLE_VOCABULARY_AUTO_PLAY,
   TOGGLE_DARK_MODE,
+  SET_VERB_MASU,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
   global: { darkMode: false },
   hiragana: { choiceN: 16, wideMode: false },
-  verbs: { ordered: true },
+  verbs: { ordered: true, masu: false },
   phrases: { ordered: true, practiceSide: false, romaji: false },
   vocabulary: {
     ordered: true,
@@ -71,6 +72,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         verbs: {
           ...state.verbs,
           ordered: action.value || !state.verbs.ordered,
+        },
+      };
+    case SET_VERB_MASU:
+      return {
+        ...state,
+        verbs: {
+          ...state.verbs,
+          masu: action.value || !state.verbs.masu,
         },
       };
     case SET_PHRASES_ORDERING:
