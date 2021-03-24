@@ -89,6 +89,19 @@ class Vocabulary extends Component {
       // console.log("activeGroup changed");
       this.setOrder();
     }
+
+    if (
+      this.props.frequency.length != prevProps.frequency.length ||
+      this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
+      prevProps.frequency.some((e) => !this.props.frequency.includes(e))
+    ) {
+      const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
+      const frequency = this.props.frequency.filter((f) =>
+        filteredKeys.includes(f)
+      );
+      // console.log('frequency word changed');
+      this.setState({ frequency });
+    }
   }
 
   setOrder() {
@@ -108,7 +121,7 @@ class Vocabulary extends Component {
       filteredVocab = orderBy(filteredVocab, ["japanese"], ["asc"]);
     }
 
-    const filteredKeys = Object.keys(filteredVocab);
+    const filteredKeys = filteredVocab.map((f) => f.uid);
     const frequency = this.props.frequency.filter((f) =>
       filteredKeys.includes(f)
     );
@@ -180,8 +193,6 @@ class Vocabulary extends Component {
     let vocabulary;
     if (this.state.reinforcedUID) {
       vocabulary = filteredVocab.filter((v) => reinforcedUID === v.uid)[0];
-
-      vocabulary.reinforce = true;
     } else {
       if (randomOrder) {
         const index = randomOrder[selectedIndex];
@@ -189,10 +200,9 @@ class Vocabulary extends Component {
       } else {
         vocabulary = filteredVocab[selectedIndex];
       }
-
-      vocabulary.reinforce = false;
     }
 
+    vocabulary.reinforce = this.state.frequency.includes(vocabulary.uid);
     return vocabulary;
   }
 
