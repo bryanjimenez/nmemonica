@@ -329,3 +329,26 @@ export function htmlElementHint(japaneseText) {
 
   return hint;
 }
+
+/**
+ * when word has override pronounce attr it is used otherwise the spelling is used
+ * @returns {String} hiragana pronunciation
+ * @param {*} vocabulary data object
+ */
+export function audioPronunciation(vocabulary) {
+  let q;
+  if (vocabulary.pronounce) {
+    const isHiraganaWord = !vocabulary.pronounce
+      .split("")
+      .some((c) => !isHiragana(c));
+    if (isHiraganaWord) {
+      q = vocabulary.pronounce;
+    } else {
+      console.warn("pronunciation is not hiragana");
+    }
+  } else {
+    const w = JapaneseText.parse(vocabulary.japanese);
+    q = w.getSpelling();
+  }
+  return q;
+}

@@ -1,14 +1,13 @@
 import React, { Component } from "react";
-import classNames from "classnames";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
+import VerbMain from "./VerbMain";
 
 const VerbsMeta = {
   location: "/verbs/",
@@ -23,7 +22,6 @@ class Verbs extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
-      shownForm: "dictionary",
     };
 
     if (this.props.verbs.length === 0) {
@@ -33,7 +31,6 @@ class Verbs extends Component {
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
-    this.buildTenseElement = this.buildTenseElement.bind(this);
     this.setVerbsOrder = this.setVerbsOrder.bind(this);
   }
 
@@ -53,10 +50,6 @@ class Verbs extends Component {
       // console.log("got game data");
       this.setVerbsOrder();
     }
-
-    if (this.props.masu != prevProps.masu) {
-      this.setState({ shownForm: this.props.masu ? "masu" : "dictionary" });
-    }
   }
 
   setVerbsOrder() {
@@ -68,7 +61,6 @@ class Verbs extends Component {
 
     this.setState({
       order: newOrder,
-      shownForm: this.props.masu ? "masu" : "dictionary",
     });
   }
 
@@ -79,7 +71,6 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      shownForm: this.props.masu ? "masu" : "dictionary",
     });
   }
 
@@ -91,28 +82,6 @@ class Verbs extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
-      shownForm: this.props.masu ? "masu" : "dictionary",
-    });
-  }
-
-  buildTenseElement(tense) {
-    return tense.map((t, i) => {
-      const tenseClass = classNames({
-        clickable: true,
-        "font-weight-bold": this.state.shownForm === t.t,
-      });
-
-      return (
-        <div
-          className={tenseClass}
-          key={i}
-          onClick={() => {
-            this.setState({ shownForm: t.t });
-          }}
-        >
-          {this.state.shownForm === t.t ? t.t : "[" + t.t + "]"}
-        </div>
-      );
     });
   }
 
@@ -125,44 +94,6 @@ class Verbs extends Component {
       v = this.props.verbs[index];
     } else {
       v = this.props.verbs[this.state.selectedIndex];
-    }
-
-    const dictionaryForm = JapaneseVerb.parse(v.japanese);
-
-    const tenses = [
-      { t: "masu", j: dictionaryForm.masuForm() },
-      { t: "mashou", j: dictionaryForm.mashouForm() },
-      { t: "dictionary", j: dictionaryForm },
-      { t: "te_form", j: dictionaryForm.teForm() },
-      { t: "ta_form", j: dictionaryForm.taForm() },
-    ];
-
-    const rightShift = tenses.length % 2 === 0 ? 1 : 0;
-    const splitIdx = Math.trunc(tenses.length / 2) + rightShift;
-
-    const t1 = tenses.slice(0, splitIdx);
-    const t2 = tenses.slice(splitIdx, tenses.length);
-
-    const romaji = v.romaji || ".";
-    const english = v.english;
-
-    let japanesePhrase;
-
-    switch (this.state.shownForm) {
-      case "masu":
-        japanesePhrase = dictionaryForm.masuForm().toHTML();
-        break;
-      case "mashou":
-        japanesePhrase = dictionaryForm.mashouForm().toHTML();
-        break;
-      case "te_form":
-        japanesePhrase = dictionaryForm.teForm().toHTML();
-        break;
-      case "ta_form":
-        japanesePhrase = dictionaryForm.taForm().toHTML();
-        break;
-      default:
-        japanesePhrase = dictionaryForm.toHTML();
     }
 
     const progress =
@@ -178,43 +109,7 @@ class Verbs extends Component {
           >
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-
-          <div className="pt-3 pl-3 flex-shrink-1 d-flex flex-column justify-content-around">
-            {this.buildTenseElement(t1)}
-          </div>
-          <div className="pt-3 w-100 d-flex flex-column justify-content-around text-center">
-            <h1>{japanesePhrase}</h1>
-            <h2
-              className="clickable"
-              onClick={() => {
-                this.setState((state) => ({
-                  showRomaji: !state.showRomaji,
-                }));
-              }}
-            >
-              {this.state.showRomaji ? romaji : "[romaji]"}
-            </h2>
-            <div
-              className="clickable"
-              onClick={() => {
-                this.setState((state) => ({
-                  showMeaning: !state.showMeaning,
-                }));
-              }}
-            >
-              {this.state.showMeaning ? english : "[english]"}
-            </div>
-            {
-              // TODO: implement sound
-            }
-            {/* <div className="d-flex">
-              <UnmuteIcon size="medium" aria-label="pronunciation" />
-            </div> */}
-          </div>
-
-          <div className="pt-3 pr-3 text-end flex-shrink-1 d-flex flex-column justify-content-around">
-            {this.buildTenseElement(t2)}
-          </div>
+          <VerbMain verb={v} verbForm={this.props.masu} />
 
           <StackNavButton
             color={"--red"}

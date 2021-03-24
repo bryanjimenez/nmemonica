@@ -26,10 +26,11 @@ import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
-import AudioItem from "../Form/AudioItem";
 import { isHiragana } from "../../helper/hiraganaHelper";
 import { orderBy } from "lodash/collection";
 import StackOrderSlider from "../Form/StackOrderSlider";
+import VocabularyMain from "./VocabularyMain";
+import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
 
 const VocabularyMeta = {
@@ -238,24 +239,6 @@ class Vocabulary extends Component {
     return vocabulary;
   }
 
-  pronunciation(vocabulary) {
-    let q;
-    if (vocabulary.pronounce) {
-      const isHiraganaWord = !vocabulary.pronounce
-        .split("")
-        .some((c) => !isHiragana(c));
-      if (isHiraganaWord) {
-        q = vocabulary.pronounce;
-      } else {
-        console.warn("pronunciation is not hiragana");
-      }
-    } else {
-      const w = JapaneseText.parse(vocabulary.japanese);
-      q = w.getSpelling();
-    }
-    return q;
-  }
-
   render() {
     if (this.state.filteredVocab.length < 1)
       return <NotReady addlStyle="main-panel" />;
@@ -267,24 +250,11 @@ class Vocabulary extends Component {
       this.state.reinforcedUID
     );
 
-    let inJapanese = JapaneseText.parse(vocabulary.japanese).toHTML();
-    let inEnglish = vocabulary.english;
-    let romaji = vocabulary.romaji;
-
-    let shownSide, hiddenSide, shownCaption, hiddenCaption, hintActive, hint;
+    let hintActive, hint;
     if (this.props.practiceSide) {
-      shownSide = inEnglish;
-      hiddenSide = inJapanese;
-      shownCaption = "[English]";
-      hiddenCaption = "[Japanese]";
-
       hint = htmlElementHint(vocabulary.japanese);
       hintActive = hint && this.props.hintActive;
     } else {
-      shownSide = inJapanese;
-      hiddenSide = inEnglish;
-      shownCaption = "[Japanese]";
-      hiddenCaption = "[English]";
       hintActive =
         this.props.hintActive && vocabulary.grp && vocabulary.grp !== "";
       hint =
@@ -314,42 +284,12 @@ class Vocabulary extends Component {
           >
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            {this.props.autoPlay && this.props.practiceSide ? (
-              <h1
-                onClick={() => {
-                  this.setState((state) => ({ showEng: !state.showEng }));
-                }}
-              >
-                {this.state.showEng ? shownSide : shownCaption}
-              </h1>
-            ) : (
-              <h1>{shownSide}</h1>
-            )}
-            {this.props.romajiActive && (
-              <h5
-                onClick={() => {
-                  this.setState((state) => ({ showRomaji: !state.showRomaji }));
-                }}
-                className="clickable"
-              >
-                {this.state.showRomaji ? romaji : "[Romaji]"}
-              </h5>
-            )}
-            <h2
-              onClick={() => {
-                this.setState((state) => ({ showMeaning: !state.showMeaning }));
-              }}
-              className="clickable"
-            >
-              {this.state.showMeaning ? hiddenSide : hiddenCaption}
-            </h2>
 
-            <AudioItem
-              word={this.pronunciation(vocabulary)}
-              autoPlay={this.props.scrollingDone && this.props.autoPlay}
-            />
-          </div>
+          {vocabulary.grp === "Verb" ? (
+            <VerbMain verb={vocabulary} verbForm={false} />
+          ) : (
+            <VocabularyMain vocabulary={vocabulary} />
+          )}
 
           <StackNavButton
             color={"--yellow"}
@@ -488,7 +428,7 @@ class Vocabulary extends Component {
             style={{
               position: "absolute",
               bottom: "25vh",
-              left: "75vw",
+              left: "65vw",
               backgroundColor: deepOrange[500],
             }}
           >
