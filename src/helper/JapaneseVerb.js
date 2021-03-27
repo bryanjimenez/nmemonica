@@ -33,14 +33,15 @@ export class JapaneseVerb extends JapaneseText {
     );
 
     if (
-      pronunciation === "する" ||
+      this.getSpelling().split("").slice(-2).join("") === "する" ||
       pronunciation === "くる" ||
-      pronunciation === "だ"
+      pronunciation === "だ" ||
+      pronunciation === "ある"
     ) {
       return 3;
     } else if (
       (lastChar === "る" && beforeLastVowel === 1) ||
-      beforeLastVowel === 3
+      (lastChar === "る" && beforeLastVowel === 3)
     ) {
       return 2; //ichidan
     } else {
@@ -108,9 +109,6 @@ export class JapaneseVerb extends JapaneseText {
     // irregulars
     let masu;
     switch (this.toString()) {
-      case "する":
-        masu = new JapaneseText("します");
-        break;
       case "くる\n来る":
         masu = new JapaneseText("きます", "来ます");
         break;
@@ -120,6 +118,18 @@ export class JapaneseVerb extends JapaneseText {
       case "だ":
         masu = new JapaneseText("です");
         break;
+    }
+
+    if ("する" === this.getSpelling().split("").slice(-2).join("")) {
+      const ending = "します";
+      const fstem = this.getPronunciation().split("").slice(0, -2).join("");
+      const kstem = this.getSpelling().split("").slice(0, -2).join("");
+
+      if (this.hasFurigana()) {
+        masu = new JapaneseText(fstem + ending, kstem + ending);
+      } else {
+        masu = new JapaneseText(fstem + ending);
+      }
     }
 
     if (!masu) {
@@ -144,18 +154,27 @@ export class JapaneseVerb extends JapaneseText {
     // irregulars
     let mashou;
     switch (this.toString()) {
-      case "する":
-        mashou = new JapaneseText("しましょう");
-        break;
       case "くる\n来る":
         mashou = new JapaneseText("きましょう", "来ましょう");
         break;
       case "ある":
-        mashou = new JapaneseText("あいましょう");
+        mashou = new JapaneseText("ありましょう");
         break;
       case "だ":
         mashou = new JapaneseText("でしょう");
         break;
+    }
+
+    if ("する" === this.getSpelling().split("").slice(-2).join("")) {
+      const ending = "しましょう";
+      const fstem = this.getPronunciation().split("").slice(0, -2).join("");
+      const kstem = this.getSpelling().split("").slice(0, -2).join("");
+
+      if (this.hasFurigana()) {
+        mashou = new JapaneseText(fstem + ending, kstem + ending);
+      } else {
+        mashou = new JapaneseText(fstem + ending);
+      }
     }
 
     if (!mashou) {
@@ -207,37 +226,37 @@ export class JapaneseVerb extends JapaneseText {
     if (type === 1) {
       if (verb === "行く" || verb === "いく") {
         t_Con = JapaneseText.parse(rule.g1.iku);
-      }
-
-      switch (lastCharacter) {
-        case "う":
-        case "つ":
-        case "る":
-          ending = rule.g1.u_tsu_ru;
-          break;
-        case "く":
-          ending = rule.g1.ku;
-          break;
-        case "ぐ":
-          ending = rule.g1.gu;
-          break;
-        case "ぬ":
-        case "ぶ":
-        case "む":
-          ending = rule.g1.mu_nu_bu;
-          break;
-        case "す":
-          ending = rule.g1.su;
-          break;
-      }
-
-      if (furigana) {
-        t_Con = new JapaneseText(
-          hiragana.substr(0, hiragana.length - 1) + ending,
-          verb.substr(0, verb.length - 1) + ending
-        );
       } else {
-        t_Con = new JapaneseText(verb.substr(0, verb.length - 1) + ending);
+        switch (lastCharacter) {
+          case "う":
+          case "つ":
+          case "る":
+            ending = rule.g1.u_tsu_ru;
+            break;
+          case "く":
+            ending = rule.g1.ku;
+            break;
+          case "ぐ":
+            ending = rule.g1.gu;
+            break;
+          case "ぬ":
+          case "ぶ":
+          case "む":
+            ending = rule.g1.mu_nu_bu;
+            break;
+          case "す":
+            ending = rule.g1.su;
+            break;
+        }
+
+        if (furigana) {
+          t_Con = new JapaneseText(
+            hiragana.substr(0, hiragana.length - 1) + ending,
+            verb.substr(0, verb.length - 1) + ending
+          );
+        } else {
+          t_Con = new JapaneseText(verb.substr(0, verb.length - 1) + ending);
+        }
       }
     } else if (type === 2) {
       ending = rule.g2.ru;
@@ -256,9 +275,21 @@ export class JapaneseVerb extends JapaneseText {
         t_Con = JapaneseText.parse(rule.g3.suru);
       } else if (verb === "だ") {
         t_Con = JapaneseText.parse(rule.g3.da);
+      } else if (verb === "ある") {
+        t_Con = JapaneseText.parse(rule.g3.aru);
       }
-    } else {
-      throw "missing class/type";
+
+      if ("する" === verb.split("").slice(-2).join("")) {
+        const ending = rule.g3.suru;
+        const kstem = verb.split("").slice(0, -2).join("");
+
+        if (furigana) {
+          const fstem = hiragana.split("").slice(0, -2).join("");
+          t_Con = new JapaneseText(fstem + ending, kstem + ending);
+        } else {
+          t_Con = new JapaneseText(kstem + ending);
+        }
+      }
     }
 
     return t_Con;
@@ -275,7 +306,13 @@ const taRule = {
     iku: "いった\n行った",
   },
   g2: { ru: "た" },
-  g3: { suru: "した", kuru: "きた\n来た", da: "だった" },
+  g3: {
+    suru: "した",
+    kuru: "きた\n来た",
+    da: "だった",
+    aru: "あった",
+    iru: "いた",
+  },
 };
 const teRule = {
   g1: {
@@ -287,5 +324,11 @@ const teRule = {
     iku: "いって\n行って",
   },
   g2: { ru: "て" },
-  g3: { suru: "して", kuru: "きて\n来て", da: "で" },
+  g3: {
+    suru: "して",
+    kuru: "きて\n来て",
+    da: "で",
+    aru: "あって",
+    iru: "いて",
+  },
 };
