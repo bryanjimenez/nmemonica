@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/core/Slider";
-import { JapaneseText } from "../../helper/JapaneseText";
 
 const useStyles = makeStyles({
   root: { maxHeight: "43px" },
@@ -36,8 +35,8 @@ export default function StackOrderSlider(props) {
 
   const slideToLabel = (slide) => {
     const idx = marks.findIndex((mark) => mark.value === slide);
-    const text = JapaneseText.parse(props.list[marks[idx].raw].japanese);
-    return text.getPronunciation()[0];
+
+    return props.list[marks[idx].raw].label[0];
   };
 
   const rawToSlide = (raw) => {

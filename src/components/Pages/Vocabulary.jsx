@@ -24,11 +24,12 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
-import { LinearProgress } from "@material-ui/core";
+import { Avatar, Grow, LinearProgress } from "@material-ui/core";
 import AudioItem from "../Form/AudioItem";
 import { isHiragana } from "../../helper/hiraganaHelper";
 import { orderBy } from "lodash/collection";
 import StackOrderSlider from "../Form/StackOrderSlider";
+import { deepOrange } from "@material-ui/core/colors";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -115,10 +116,33 @@ class Vocabulary extends Component {
     }
 
     const newOrder = filteredVocab.map((v, i) => i);
+    let jbare = [];
+    let ebare = [];
+
     if (!this.props.isOrdered) {
       shuffleArray(newOrder);
     } else {
       filteredVocab = orderBy(filteredVocab, ["japanese"], ["asc"]);
+
+      filteredVocab.forEach((v, i) => {
+        jbare = [
+          ...jbare,
+          {
+            uid: v.uid,
+            label: JapaneseText.parse(v.japanese).getPronunciation(),
+          },
+        ];
+        ebare = [
+          ...ebare,
+          { uid: v.uid, label: v.english.toLowerCase(), idx: i },
+        ];
+      });
+
+      ebare = orderBy(ebare, ["label"], ["asc"]);
+
+      ebare.forEach((e, i) => {
+        jbare[e.idx] = { ...jbare[e.idx], idx: i };
+      });
     }
 
     const filteredKeys = filteredVocab.map((f) => f.uid);
@@ -126,7 +150,14 @@ class Vocabulary extends Component {
       filteredKeys.includes(f)
     );
 
-    this.setState({ filteredVocab, frequency, order: newOrder });
+    this.setState({
+      filteredVocab,
+      frequency,
+      order: newOrder,
+      jbare,
+      ebare,
+      ord: true,
+    });
   }
 
   play() {
@@ -259,8 +290,18 @@ class Vocabulary extends Component {
         vocabulary.grp + (vocabulary.subGrp ? ": " + vocabulary.subGrp : "");
     }
 
-    const progress =
+    let progress, pIdx, pList;
+
+    progress =
       ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
+
+    if (this.state.ord) {
+      pIdx = this.state.selectedIndex;
+      pList = this.state.jbare;
+    } else {
+      pIdx = this.state.jbare[this.state.selectedIndex].idx;
+      pList = this.state.ebare;
+    }
 
     let page = [
       <div key={0} className="vocabulary main-panel h-100">
@@ -440,8 +481,26 @@ class Vocabulary extends Component {
     } else {
       page = [
         ...page,
+        <Grow in={this.state.showPageBar} key={3}>
+          <Avatar
+            style={{
+              position: "absolute",
+              bottom: "25vh",
+              left: "75vw",
+              backgroundColor: deepOrange[500],
+            }}
+          >
+            <div
+              onClick={() => {
+                this.setState((state) => ({ ord: !state.ord }));
+              }}
+            >
+              {this.state.ord ? "JP" : "EN"}
+            </div>
+          </Avatar>
+        </Grow>,
         <div
-          key={3}
+          key={4}
           className="page-bar flex-shrink-1"
           onMouseDown={() => {
             this.setState({ pageBarDone: false });
@@ -457,10 +516,15 @@ class Vocabulary extends Component {
           }}
         >
           <StackOrderSlider
-            initial={this.state.selectedIndex}
-            list={this.state.filteredVocab}
+            initial={pIdx}
+            list={pList}
             setIndex={(index) => {
-              this.setState({ selectedIndex: index });
+              if (this.state.ord) {
+                this.setState({ selectedIndex: index });
+              } else {
+                const idx = this.state.ebare[index].idx;
+                this.setState({ selectedIndex: idx });
+              }
             }}
           />
         </div>,
