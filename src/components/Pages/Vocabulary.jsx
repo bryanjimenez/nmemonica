@@ -19,6 +19,7 @@ import {
   flipVocabularyPracticeSide,
   addFrequencyWord,
   removeFrequencyWord,
+  scrollingState,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
@@ -154,9 +155,9 @@ class Vocabulary extends Component {
       filteredVocab,
       frequency,
       order: newOrder,
-      jbare,
-      ebare,
-      ord: true,
+      jbare, // bare min Japanese ordered word list
+      ebare, // bare min English ordered word list
+      scrollJOrder: true,
     });
   }
 
@@ -295,7 +296,7 @@ class Vocabulary extends Component {
     progress =
       ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
 
-    if (this.state.ord) {
+    if (this.state.scrollJOrder) {
       pIdx = this.state.selectedIndex;
       pList = this.state.jbare;
     } else {
@@ -346,7 +347,7 @@ class Vocabulary extends Component {
 
             <AudioItem
               word={this.pronunciation(vocabulary)}
-              autoplay={this.props.autoPlay}
+              autoPlay={this.props.scrollingDone && this.props.autoPlay}
             />
           </div>
 
@@ -461,17 +462,18 @@ class Vocabulary extends Component {
           className="progress-bar flex-shrink-1"
           onClick={() => {
             if (this.props.isOrdered) {
-              this.setState({ showPageBar: true, pageBarDone: true });
+              const delayTime = 4000;
+              this.setState({ showPageBar: true });
 
               const delay = () => {
-                if (this.state.pageBarDone) {
+                if (this.props.scrollingDone) {
                   this.setState({ showPageBar: false });
                 } else {
-                  setTimeout(delay, 4000);
+                  setTimeout(delay, delayTime);
                 }
               };
 
-              setTimeout(delay, 4000);
+              setTimeout(delay, delayTime);
             }
           }}
         >
@@ -481,7 +483,7 @@ class Vocabulary extends Component {
     } else {
       page = [
         ...page,
-        <Grow in={this.state.showPageBar} key={3}>
+        <Grow in={this.state.showPageBar} timeout={500} key={3}>
           <Avatar
             style={{
               position: "absolute",
@@ -492,34 +494,36 @@ class Vocabulary extends Component {
           >
             <div
               onClick={() => {
-                this.setState((state) => ({ ord: !state.ord }));
+                this.setState((state) => ({
+                  scrollJOrder: !state.scrollJOrder,
+                }));
               }}
             >
-              {this.state.ord ? "JP" : "EN"}
+              {this.state.scrollJOrder ? "JP" : "EN"}
             </div>
           </Avatar>
         </Grow>,
         <div
           key={4}
           className="page-bar flex-shrink-1"
-          onMouseDown={() => {
-            this.setState({ pageBarDone: false });
-          }}
-          onMouseUp={() => {
-            this.setState({ pageBarDone: true });
-          }}
+          // onMouseDown={() => {
+          //   this.props.scrollingState(true)
+          // }}
+          // onMouseUp={() => {
+          //   this.props.scrollingState(false)
+          // }}
           onTouchStart={() => {
-            this.setState({ pageBarDone: false });
+            this.props.scrollingState(true);
           }}
           onTouchEnd={() => {
-            this.setState({ pageBarDone: true });
+            this.props.scrollingState(false);
           }}
         >
           <StackOrderSlider
             initial={pIdx}
             list={pList}
             setIndex={(index) => {
-              if (this.state.ord) {
+              if (this.state.scrollJOrder) {
                 this.setState({ selectedIndex: index });
               } else {
                 const idx = this.state.ebare[index].idx;
@@ -545,6 +549,7 @@ const mapStateToProps = (state) => {
     frequency: state.settings.vocabulary.frequency,
     activeGroup: state.settings.vocabulary.activeGroup,
     autoPlay: state.settings.vocabulary.autoPlay,
+    scrollingDone: !state.settings.global.scrolling,
   };
 };
 
@@ -561,6 +566,8 @@ Vocabulary.propTypes = {
   practiceSide: PropTypes.bool,
   isOrdered: PropTypes.bool,
   autoPlay: PropTypes.bool,
+  scrollingDone: PropTypes.bool,
+  scrollingState: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -568,6 +575,7 @@ export default connect(mapStateToProps, {
   flipVocabularyPracticeSide,
   addFrequencyWord,
   removeFrequencyWord,
+  scrollingState,
 })(Vocabulary);
 
 export { VocabularyMeta };

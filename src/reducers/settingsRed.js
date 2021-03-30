@@ -19,10 +19,11 @@ import {
   TOGGLE_VOCABULARY_AUTO_PLAY,
   TOGGLE_DARK_MODE,
   SET_VERB_MASU,
+  SCROLLING_STATE,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
-  global: { darkMode: false },
+  global: { darkMode: false, scrolling: false },
   hiragana: { choiceN: 16, wideMode: false },
   verbs: { ordered: true, masu: false },
   phrases: { ordered: true, practiceSide: false, romaji: false },
@@ -48,6 +49,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         global: {
           ...state.global,
           darkMode: action.value || !state.global.darkMode,
+        },
+      };
+    case SCROLLING_STATE:
+      return {
+        ...state,
+        global: {
+          ...state.global,
+          scrolling: action.value,
         },
       };
     case SET_HIRAGANA_BTN_N:

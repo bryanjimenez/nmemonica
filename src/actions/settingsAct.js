@@ -21,6 +21,7 @@ export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
 export const ADD_FREQUENCY_WORD = "add_frequency_word";
 export const REMOVE_FREQUENCY_WORD = "remove_frequency_word";
 export const TOGGLE_DARK_MODE = "toggle_dark_mode";
+export const SCROLLING_STATE = "scrolling_state";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -566,6 +567,15 @@ export function toggleDarkMode() {
         type: TOGGLE_DARK_MODE,
       });
     }
+  };
+}
+
+export function scrollingState(value) {
+  return (dispatch) => {
+    dispatch({
+      type: SCROLLING_STATE,
+      value,
+    });
   };
 }
 
