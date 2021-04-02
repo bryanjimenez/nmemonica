@@ -10,9 +10,11 @@ import {
 } from "@primer/octicons-react";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import {
+  faBan,
   faGlasses,
   faHeadphones,
   faPencilAlt,
+  faRunning,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -20,13 +22,13 @@ import {
   addFrequencyWord,
   removeFrequencyWord,
   scrollingState,
+  toggleAutoVerbView,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
-import { isHiragana } from "../../helper/hiraganaHelper";
 import { orderBy } from "lodash/collection";
 import StackOrderSlider from "../Form/StackOrderSlider";
 import VocabularyMain from "./VocabularyMain";
@@ -250,6 +252,8 @@ class Vocabulary extends Component {
       this.state.reinforcedUID
     );
 
+    const isVerb = vocabulary.grp === "Verb";
+
     let hintActive, hint;
     if (this.props.practiceSide) {
       hint = htmlElementHint(vocabulary.japanese);
@@ -285,7 +289,7 @@ class Vocabulary extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
 
-          {vocabulary.grp === "Verb" ? (
+          {isVerb && this.props.autoVerbView ? (
             <VerbMain verb={vocabulary} verbForm={false} />
           ) : (
             <VocabularyMain vocabulary={vocabulary} />
@@ -321,6 +325,15 @@ class Vocabulary extends Component {
                     <FontAwesomeIcon
                       icon={faHeadphones}
                       aria-label="Auto play enabled"
+                    />
+                  </div>
+                )}
+                {isVerb && (
+                  <div className="sm-icon-grp">
+                    <FontAwesomeIcon
+                      onClick={this.props.toggleAutoVerbView}
+                      className="clickable"
+                      icon={!this.props.autoVerbView ? faRunning : faBan}
                     />
                   </div>
                 )}
@@ -490,6 +503,7 @@ const mapStateToProps = (state) => {
     activeGroup: state.settings.vocabulary.activeGroup,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
+    autoVerbView: state.settings.vocabulary.autoVerbView,
   };
 };
 
@@ -508,6 +522,8 @@ Vocabulary.propTypes = {
   autoPlay: PropTypes.bool,
   scrollingDone: PropTypes.bool,
   scrollingState: PropTypes.func,
+  autoVerbView: PropTypes.bool,
+  toggleAutoVerbView: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -516,6 +532,7 @@ export default connect(mapStateToProps, {
   addFrequencyWord,
   removeFrequencyWord,
   scrollingState,
+  toggleAutoVerbView,
 })(Vocabulary);
 
 export { VocabularyMeta };

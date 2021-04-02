@@ -20,6 +20,7 @@ import {
   TOGGLE_DARK_MODE,
   SET_VERB_MASU,
   SCROLLING_STATE,
+  AUTO_VERB_VIEW,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
@@ -35,6 +36,7 @@ export const DEFAULT_SETTINGS = {
     frequency: [],
     activeGroup: [],
     autoPlay: false,
+    autoVerbView: false,
   },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
@@ -162,6 +164,15 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         vocabulary: {
           ...state.vocabulary,
           activeGroup: action.value,
+        },
+      };
+
+    case AUTO_VERB_VIEW:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          autoVerbView: !state.vocabulary.autoVerbView,
         },
       };
 
