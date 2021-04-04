@@ -370,6 +370,13 @@ class Settings extends Component {
                   }
                 />
               </div>
+              <div>
+                <SettingsSwitch
+                  active={this.props.kana}
+                  action={this.props.toggleKana}
+                  statusText={this.props.kana ? "Hiragana" : "Katakana"}
+                />
+              </div>
             </div>
           </div>
           <div className={pageClassName}>
