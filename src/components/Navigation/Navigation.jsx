@@ -17,7 +17,7 @@ import { VerbsMeta } from "../Pages/Verbs";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { VocabularyMeta } from "../Pages/Vocabulary";
 import { OppositesMeta } from "../Pages/Opposites";
-import { HiraganaGameMeta } from "../Pages/HiraganaGame";
+import { KatakanaGameMeta } from "../Pages/KatakanaGame";
 import { ParticlesGameMeta } from "../Pages/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
 import { OAuthLoginMeta } from "../Pages/OAuthLogin";
@@ -64,8 +64,10 @@ class Navigation extends Component {
         icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
       },
       {
-        meta: HiraganaGameMeta,
-        icon: <div className="not-a-real-icon">あ</div>,
+        meta: KatakanaGameMeta,
+        icon: (
+          <div className="not-a-real-icon">{this.props.kana ? "あ" : "ア"}</div>
+        ),
       },
       {
         meta: ParticlesGameMeta,
@@ -166,10 +168,11 @@ class Navigation extends Component {
 
 Navigation.propTypes = {
   user: PropTypes.object,
+  kana: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => {
-  return { user: state.login.user };
+  return { user: state.login.user, kana: state.settings.kana.kana };
 };
 
 export default connect(mapStateToProps, {})(Navigation);

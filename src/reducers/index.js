@@ -3,7 +3,7 @@ import verbsReducer from "./verbsRed";
 import phrasesReducer from "./phrasesRed";
 import vocabularyReducer from "./vocabularyRed";
 import oppositesReducer from "./oppositesRed";
-import hiraganaReducer from "./hiraganaRed";
+import kanaReducer from "./kanaRed";
 import particlesReducer from "./particlesRed";
 import settingsReducer from "./settingsRed";
 import loginReducer from "./loginRed";
@@ -14,7 +14,7 @@ const rootReducer = combineReducers({
   phrases: phrasesReducer,
   vocabulary: vocabularyReducer,
   opposites: oppositesReducer,
-  hiragana: hiraganaReducer,
+  kana: kanaReducer,
   particles: particlesReducer,
   settings: settingsReducer,
   login: loginReducer,

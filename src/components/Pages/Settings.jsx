@@ -25,6 +25,7 @@ import {
   toggleVocabularyFilter,
   togglePhrasesFilter,
   removeFrequencyPhrase,
+  toggleKana,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
@@ -345,7 +346,7 @@ class Settings extends Component {
             </div>
           </div>
           <div className={pageClassName}>
-            <h2>Hiragana Game</h2>
+            <h2>Kana Game</h2>
 
             <div className="setting-block">
               <div className="d-flex justify-content-end">
@@ -354,6 +355,13 @@ class Settings extends Component {
                   wideMode={this.props.wideMode}
                   setChoiceN={this.props.setHiraganaBtnN}
                   toggleWide={this.props.toggleHiraganaWideMode}
+                />
+              </div>
+              <div>
+                <SettingsSwitch
+                  active={this.props.kana}
+                  action={this.props.toggleKana}
+                  statusText={this.props.kana ? "Hiragana" : "Katakana"}
                 />
               </div>
             </div>
@@ -410,8 +418,9 @@ class Settings extends Component {
 const mapStateToProps = (state) => {
   return {
     darkMode: state.settings.global.darkMode,
-    choiceN: state.settings.hiragana.choiceN,
-    wideMode: state.settings.hiragana.wideMode,
+    choiceN: state.settings.kana.choiceN,
+    wideMode: state.settings.kana.wideMode,
+    kana: state.settings.kana.kana,
     verbOrder: state.settings.verbs.ordered,
     verbMasu: state.settings.verbs.masu,
     phraseOrder: state.settings.phrases.ordered,
@@ -458,6 +467,8 @@ Settings.propTypes = {
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
   toggleHiraganaWideMode: PropTypes.func,
+  kana: PropTypes.bool,
+  toggleKana: PropTypes.func,
   choiceN: PropTypes.number,
 
   particlesARomaji: PropTypes.bool,
@@ -497,6 +508,7 @@ Settings.propTypes = {
 export default connect(mapStateToProps, {
   setHiraganaBtnN,
   toggleHiraganaWideMode,
+  toggleKana,
   setVerbsOrdering,
   setVerbsMasu,
   flipPhrasesPracticeSide,
