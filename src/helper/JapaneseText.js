@@ -287,30 +287,35 @@ export function htmlElementHint(japaneseText) {
   if (japaneseText.indexOf("\n") > -1) {
     [pronunciation, orthography] = japaneseText.split("\n");
 
-    const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
-      pronunciation,
-      orthography
-    );
-
     if (pronunciation.length < minChars) {
       hint = undefined;
     } else {
-      const firstKanji = kanjis[0][0];
-      const firstFurigana = furiganas[0][0];
-      const firstnonKanji = nonKanjis.length > 0 ? nonKanjis[0][0] : undefined;
-
-      if (startsWHiragana) {
-        //starts with hiragana
-        hint = <span>{firstnonKanji}</span>;
-      } else {
-        //starts with kanji
-        const kanjiWFurigana = (
-          <ruby>
-            {firstKanji}
-            <rt>{firstFurigana}</rt>
-          </ruby>
+      try {
+        const { kanjis, furiganas, nonKanjis, startsWHiragana } = furiganaParse(
+          pronunciation,
+          orthography
         );
-        hint = <span>{kanjiWFurigana}</span>;
+
+        const firstKanji = kanjis[0][0];
+        const firstFurigana = furiganas[0][0];
+        const firstnonKanji =
+          nonKanjis.length > 0 ? nonKanjis[0][0] : undefined;
+
+        if (startsWHiragana) {
+          //starts with hiragana
+          hint = <span>{firstnonKanji}</span>;
+        } else {
+          //starts with kanji
+          const kanjiWFurigana = (
+            <ruby>
+              {firstKanji}
+              <rt>{firstFurigana}</rt>
+            </ruby>
+          );
+          hint = <span>{kanjiWFurigana}</span>;
+        }
+      } catch (e) {
+        hint = undefined;
       }
     }
   } else {
