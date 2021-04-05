@@ -158,7 +158,10 @@ class Settings extends Component {
                     <SettingsSwitch
                       active={!this.props.vocabOrder}
                       action={this.props.setVocabularyOrdering}
-                      statusText="Random Order"
+                      color="default"
+                      statusText={
+                        !this.props.vocabOrder ? "Randomized" : "Alphabetic"
+                      }
                     />
                   </div>
                   <div className="mb-2">
