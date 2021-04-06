@@ -372,9 +372,15 @@ class Settings extends Component {
               </div>
               <div>
                 <SettingsSwitch
-                  active={this.props.kana}
+                  active={this.props.charSet === 0}
                   action={this.props.toggleKana}
-                  statusText={this.props.kana ? "Hiragana" : "Katakana"}
+                  statusText={
+                    this.props.charSet === 0
+                      ? "Hiragana"
+                      : this.props.charSet === 1
+                      ? "Katakana"
+                      : "Mixed"
+                  }
                 />
               </div>
             </div>

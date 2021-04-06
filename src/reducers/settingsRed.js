@@ -30,7 +30,7 @@ import {
 
 export const DEFAULT_SETTINGS = {
   global: { darkMode: false, scrolling: false },
-  kana: { choiceN: 16, wideMode: false, charSet: 0, },
+  kana: { choiceN: 16, wideMode: false, charSet: 0 },
   verbs: { ordered: true, masu: false },
   phrases: {
     ordered: true,
