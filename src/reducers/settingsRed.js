@@ -30,7 +30,7 @@ import {
 
 export const DEFAULT_SETTINGS = {
   global: { darkMode: false, scrolling: false },
-  kana: { choiceN: 16, wideMode: false, kana: true },
+  kana: { choiceN: 16, wideMode: false, charSet: 0 },
   verbs: { ordered: true, masu: false },
   phrases: {
     ordered: true,
@@ -94,7 +94,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         kana: {
           ...state.kana,
-          kana: !state.kana.kana,
+          charSet: action.value,
         },
       };
     case SET_VERB_ORDERING:

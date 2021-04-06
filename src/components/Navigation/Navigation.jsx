@@ -66,7 +66,13 @@ class Navigation extends Component {
       {
         meta: KatakanaGameMeta,
         icon: (
-          <div className="not-a-real-icon">{this.props.kana ? "あ" : "ア"}</div>
+          <div className="not-a-real-icon">
+            {this.props.charSet === 0
+              ? "あ"
+              : this.props.charSet === 1
+              ? "ア"
+              : "*"}
+          </div>
         ),
       },
       {
@@ -168,11 +174,11 @@ class Navigation extends Component {
 
 Navigation.propTypes = {
   user: PropTypes.object,
-  kana: PropTypes.bool,
+  charSet: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {
-  return { user: state.login.user, kana: state.settings.kana.kana };
+  return { user: state.login.user, charSet: state.settings.kana.charSet };
 };
 
 export default connect(mapStateToProps, {})(Navigation);

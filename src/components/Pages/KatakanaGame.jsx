@@ -126,7 +126,12 @@ class KatakanaGame extends Component {
   getKanaCharacter(consonant, vowel, set) {
     let kana;
 
-    if (set) {
+    let useChar = set;
+    if(set === 2){
+      useChar = Math.floor(Math.random() * 2);
+    }
+
+    if (useChar === 0) {
       kana = this.props.hiragana[consonant][vowel];
     } else {
       kana = this.props.katakana[consonant][vowel];
@@ -157,7 +162,7 @@ class KatakanaGame extends Component {
       const cCharacter = this.getKanaCharacter(
         gameOrder[idx].consonant,
         gameOrder[idx].vowel,
-        this.props.kana
+        this.props.charSet
       );
       let choice;
       if (difficult) {
@@ -215,7 +220,7 @@ class KatakanaGame extends Component {
         const character = this.getKanaCharacter(
           consonant,
           vowel,
-          this.props.kana
+          this.props.charSet
         );
 
         if (practiceSide) {
@@ -414,7 +419,7 @@ const mapStateToProps = (state) => {
     sounds: state.kana.sounds,
     choiceN: state.settings.kana.wideMode ? 31 : state.settings.kana.choiceN,
     wideMode: state.settings.kana.wideMode,
-    kana: state.settings.kana.kana,
+    charSet: state.settings.kana.charSet,
   };
 };
 
@@ -427,7 +432,7 @@ KatakanaGame.propTypes = {
   choiceN: PropTypes.number.isRequired,
   sounds: PropTypes.object.isRequired,
   wideMode: PropTypes.bool,
-  kana: PropTypes.bool,
+  charSet: PropTypes.number,
 };
 
 export default connect(mapStateToProps, { getKana })(KatakanaGame);

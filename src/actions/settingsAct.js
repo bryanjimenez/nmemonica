@@ -89,10 +89,16 @@ export function toggleKana() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
+    const {charSet} = getState().settings.kana;
+
+    console.log(charSet)
+
+    const newCharSet = charSet + 1 < 3 ? charSet + 1 : 0;
+
     const path = "/kana/";
-    const attr = "kana";
+    const attr = "charSet";
     const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+    localStoreAttrUpdate(time, getState, path, attr, newCharSet);
 
     if (user) {
       firebaseAttrUpdate(
@@ -102,11 +108,13 @@ export function toggleKana() {
         user.uid,
         path,
         attr,
-        TOGGLE_KANA_CHAR_SET
+        TOGGLE_KANA_CHAR_SET,
+        newCharSet
       );
     } else {
       dispatch({
         type: TOGGLE_KANA_CHAR_SET,
+        value: newCharSet
       });
     }
   };

@@ -359,9 +359,15 @@ class Settings extends Component {
               </div>
               <div>
                 <SettingsSwitch
-                  active={this.props.kana}
+                  active={this.props.charSet === 0}
                   action={this.props.toggleKana}
-                  statusText={this.props.kana ? "Hiragana" : "Katakana"}
+                  statusText={
+                    this.props.charSet === 0
+                      ? "Hiragana"
+                      : this.props.charSet === 1
+                      ? "Katakana"
+                      : "Mixed"
+                  }
                 />
               </div>
             </div>
@@ -420,7 +426,7 @@ const mapStateToProps = (state) => {
     darkMode: state.settings.global.darkMode,
     choiceN: state.settings.kana.choiceN,
     wideMode: state.settings.kana.wideMode,
-    kana: state.settings.kana.kana,
+    charSet: state.settings.kana.charSet,
     verbOrder: state.settings.verbs.ordered,
     verbMasu: state.settings.verbs.masu,
     phraseOrder: state.settings.phrases.ordered,
@@ -467,7 +473,7 @@ Settings.propTypes = {
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
   toggleHiraganaWideMode: PropTypes.func,
-  kana: PropTypes.bool,
+  charSet: PropTypes.number,
   toggleKana: PropTypes.func,
   choiceN: PropTypes.number,
 
