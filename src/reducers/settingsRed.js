@@ -22,13 +22,22 @@ import {
   SCROLLING_STATE,
   AUTO_VERB_VIEW,
   TOGGLE_VOCABULARY_FILTER,
+  ADD_FREQUENCY_PHRASE,
+  REMOVE_FREQUENCY_PHRASE,
+  TOGGLE_PHRASES_FILTER,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
   global: { darkMode: false, scrolling: false },
   hiragana: { choiceN: 16, wideMode: false },
   verbs: { ordered: true, masu: false },
-  phrases: { ordered: true, practiceSide: false, romaji: false },
+  phrases: {
+    ordered: true,
+    practiceSide: false,
+    romaji: false,
+    frequency: [],
+    filter: false,
+  },
   vocabulary: {
     ordered: true,
     practiceSide: false,
@@ -159,7 +168,6 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           frequency: action.value,
         },
       };
-
     case TOGGLE_VOCABULARY_FILTER:
       return {
         ...state,
@@ -168,7 +176,30 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           filter: !state.vocabulary.filter,
         },
       };
-
+    case ADD_FREQUENCY_PHRASE:
+      return {
+        ...state,
+        phrases: {
+          ...state.phrases,
+          frequency: action.value,
+        },
+      };
+    case REMOVE_FREQUENCY_PHRASE:
+      return {
+        ...state,
+        phrases: {
+          ...state.phrases,
+          frequency: action.value,
+        },
+      };
+    case TOGGLE_PHRASES_FILTER:
+      return {
+        ...state,
+        phrases: {
+          ...state.phrases,
+          filter: !state.phrases.filter,
+        },
+      };
     case TOGGLE_VOCABULARY_ACTIVE_GROUP:
       return {
         ...state,
@@ -177,7 +208,6 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           activeGroup: action.value,
         },
       };
-
     case AUTO_VERB_VIEW:
       return {
         ...state,
@@ -186,7 +216,6 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           autoVerbView: !state.vocabulary.autoVerbView,
         },
       };
-
     case SET_OPPOSITES_Q_ROMAJI:
       return {
         ...state,

@@ -23,6 +23,8 @@ import {
   toggleAutoVerbView,
   removeFrequencyWord,
   toggleVocabularyFilter,
+  togglePhrasesFilter,
+  removeFrequencyPhrase,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
@@ -32,6 +34,7 @@ import { SyncIcon, XCircleIcon } from "@primer/octicons-react";
 
 import "./Settings.css";
 import "./spin.css";
+import { getPhrases } from "../../actions/phrasesAct";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -48,6 +51,10 @@ class Settings extends Component {
 
     if (Object.keys(this.props.vocabGroups).length === 0) {
       this.props.getVocabulary();
+    }
+
+    if (this.props.phrases.length === 0) {
+      this.props.getPhrases();
     }
   }
 
@@ -88,28 +95,78 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <h2>Phrases</h2>
-            <div className="setting-block">
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={!this.props.phraseOrder}
-                  action={this.props.setPhrasesOrdering}
-                  statusText="Random Order"
-                />
-              </div>
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={this.props.phraseRomaji}
-                  action={this.props.togglePhrasesRomaji}
-                  statusText="Romaji"
-                />
-              </div>
-              <div>
-                <SettingsSwitch
-                  active={this.props.phraseSide}
-                  action={this.props.flipPhrasesPracticeSide}
-                  color="default"
-                  statusText={this.props.phraseSide ? "English" : "Japanese"}
-                />
+            <div className="outter">
+              <div className="d-flex flex-row justify-content-between">
+                <div className="column-1">
+                  <h4>Filtering</h4>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.phraseFilter}
+                      action={this.props.togglePhrasesFilter}
+                      // color="default"
+                      statusText="Frequency filter"
+                    />
+                  </div>
+
+                  {this.props.phraseFilter && (
+                    <div>
+                      {this.props.phraseFreq.map((pUid, i) => (
+                        <div
+                          key={i}
+                          className="p-0 pl-2 pr-2 clickable"
+                          onClick={() => {
+                            this.props.removeFrequencyPhrase(pUid);
+                          }}
+                        >
+                          <span className="p-1">
+                            <XCircleIcon
+                              className="incorrect-color"
+                              size="small"
+                              aria-label="remove"
+                            />
+                          </span>
+                          <span className="p-1">
+                            {
+                              (
+                                this.props.phrases.find(
+                                  (p) => p.uid === pUid
+                                ) || { english: pUid }
+                              ).english
+                            }
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="column-2">
+                  <div className="setting-block">
+                    <div className="mb-2">
+                      <SettingsSwitch
+                        active={!this.props.phraseOrder}
+                        action={this.props.setPhrasesOrdering}
+                        statusText="Random Order"
+                      />
+                    </div>
+                    <div className="mb-2">
+                      <SettingsSwitch
+                        active={this.props.phraseRomaji}
+                        action={this.props.togglePhrasesRomaji}
+                        statusText="Romaji"
+                      />
+                    </div>
+                    <div>
+                      <SettingsSwitch
+                        active={this.props.phraseSide}
+                        action={this.props.flipPhrasesPracticeSide}
+                        color="default"
+                        statusText={
+                          this.props.phraseSide ? "English" : "Japanese"
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -356,6 +413,8 @@ const mapStateToProps = (state) => {
     phraseSide: state.settings.phrases.practiceSide,
     phraseRomaji: state.settings.phrases.romaji,
     vocabulary: state.vocabulary.value,
+    phrases: state.phrases.value,
+    phraseFreq: state.settings.phrases.frequency,
     vocabOrder: state.settings.vocabulary.ordered,
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
@@ -366,6 +425,7 @@ const mapStateToProps = (state) => {
     autoVerbView: state.settings.vocabulary.autoVerbView,
     vocabFilter: state.settings.vocabulary.filter,
     vocabFreq: state.settings.vocabulary.frequency,
+    phraseFilter: state.settings.phrases.filter,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -385,6 +445,10 @@ Settings.propTypes = {
   phraseRomaji: PropTypes.bool,
   togglePhrasesRomaji: PropTypes.func,
   phraseSide: PropTypes.bool,
+  phrases: PropTypes.array,
+  getPhrases: PropTypes.func,
+  phraseFilter: PropTypes.bool,
+  phraseFreq: PropTypes.array,
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
@@ -394,6 +458,8 @@ Settings.propTypes = {
   particlesARomaji: PropTypes.bool,
   setParticlesARomaji: PropTypes.func,
   flipPhrasesPracticeSide: PropTypes.func,
+  togglePhrasesFilter: PropTypes.func,
+  removeFrequencyPhrase: PropTypes.func,
 
   vocabOrder: PropTypes.bool,
   toggleVocabularyHint: PropTypes.func,
@@ -445,6 +511,9 @@ export default connect(mapStateToProps, {
   toggleVocabularyAutoPlay,
   toggleDarkMode,
   toggleAutoVerbView,
+  togglePhrasesFilter,
+  removeFrequencyPhrase,
+  getPhrases,
 })(Settings);
 
 export { SettingsMeta };
