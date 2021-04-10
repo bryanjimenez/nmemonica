@@ -21,6 +21,7 @@ import {
   SET_VERB_MASU,
   SCROLLING_STATE,
   AUTO_VERB_VIEW,
+  TOGGLE_VOCABULARY_FILTER,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
@@ -33,6 +34,7 @@ export const DEFAULT_SETTINGS = {
     practiceSide: false,
     romaji: false,
     hint: false,
+    filter: false,
     frequency: [],
     activeGroup: [],
     autoPlay: false,
@@ -155,6 +157,15 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         vocabulary: {
           ...state.vocabulary,
           frequency: action.value,
+        },
+      };
+
+    case TOGGLE_VOCABULARY_FILTER:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          filter: !state.vocabulary.filter,
         },
       };
 

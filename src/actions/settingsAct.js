@@ -13,6 +13,7 @@ export const SET_VOCABULARY_ORDERING = "set_vocabulary_ordering";
 export const FLIP_VOCABULARY_PRACTICE_SIDE = "flip_vocabulary_practice_side";
 export const TOGGLE_VOCABULARY_ROMAJI = "toggle_vocabulary_romaji";
 export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
+export const TOGGLE_VOCABULARY_FILTER = "toggle_vocabulary_filter";
 export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
 export const TOGGLE_VOCABULARY_AUTO_PLAY = "toggle_vocabulary_auto_play";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
@@ -318,6 +319,36 @@ export function toggleVocabularyHint() {
     } else {
       dispatch({
         type: TOGGLE_VOCABULARY_HINT,
+      });
+    }
+  };
+}
+
+/**
+ * toggle between frequency words and word groups filtering
+ */
+export function toggleVocabularyFilter() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/vocabulary/";
+    const attr = "filter";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_VOCABULARY_FILTER
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_VOCABULARY_FILTER,
       });
     }
   };

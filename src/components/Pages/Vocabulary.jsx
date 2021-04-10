@@ -11,11 +11,13 @@ import {
 import { getVocabulary } from "../../actions/vocabularyAct";
 import {
   faBan,
+  faDice,
   faGlasses,
   faHeadphones,
   faPencilAlt,
   faRunning,
 } from "@fortawesome/free-solid-svg-icons";
+import { faDotCircle } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   flipVocabularyPracticeSide,
@@ -111,12 +113,23 @@ class Vocabulary extends Component {
 
   setOrder() {
     let filteredVocab = this.props.vocab;
-    if (this.props.activeGroup.length > 0) {
-      filteredVocab = this.props.vocab.filter(
-        (w) =>
-          this.props.activeGroup.includes(w.grp) ||
-          this.props.activeGroup.includes(w.grp + "." + w.subGrp)
-      );
+
+    if (this.props.freqFilter) {
+      // frequency filtering
+      if (this.props.frequency.length > 0) {
+        filteredVocab = this.props.vocab.filter((v) =>
+          this.props.frequency.includes(v.uid)
+        );
+      }
+    } else {
+      // group filtering
+      if (this.props.activeGroup.length > 0) {
+        filteredVocab = this.props.vocab.filter(
+          (w) =>
+            this.props.activeGroup.includes(w.grp) ||
+            this.props.activeGroup.includes(w.grp + "." + w.subGrp)
+        );
+      }
     }
 
     const newOrder = filteredVocab.map((v, i) => i);
@@ -340,16 +353,24 @@ class Vocabulary extends Component {
               </div>
             </div>
             <div className="col text-center">
-              {hintActive && (
+              {this.state.showHint && (
                 <h5
                   onClick={() => {
                     this.setState((state) => ({ showHint: !state.showHint }));
                   }}
                   className="clickable"
                 >
-                  {this.state.showHint ? hint : ""}
+                  {hint}
                 </h5>
               )}
+              {!this.state.showHint && this.props.freqFilter && (
+                <FontAwesomeIcon className="clickable" icon={faDice} />
+              )}
+              {!this.state.showHint &&
+                !this.props.freqFilter &&
+                this.props.activeGroup.length > 0 && (
+                  <FontAwesomeIcon className="clickable" icon={faDotCircle} />
+                )}
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">
@@ -378,7 +399,6 @@ class Vocabulary extends Component {
                     />
                   </div>
                 )}
-
                 <div className="sm-icon-grp">
                   {vocabulary.reinforce ? (
                     <div
@@ -499,6 +519,7 @@ const mapStateToProps = (state) => {
     isOrdered: state.settings.vocabulary.ordered,
     romajiActive: state.settings.vocabulary.romaji,
     hintActive: state.settings.vocabulary.hint,
+    freqFilter: state.settings.vocabulary.filter,
     frequency: state.settings.vocabulary.frequency,
     activeGroup: state.settings.vocabulary.activeGroup,
     autoPlay: state.settings.vocabulary.autoPlay,
@@ -524,6 +545,7 @@ Vocabulary.propTypes = {
   scrollingState: PropTypes.func,
   autoVerbView: PropTypes.bool,
   toggleAutoVerbView: PropTypes.func,
+  freqFilter: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {
