@@ -35,8 +35,7 @@ class Phrases extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
-      filteredPhrases: [],
-      frequency: [],
+      filteredPhrases: []
     };
 
     this.props.getPhrases();
@@ -73,12 +72,8 @@ class Phrases extends Component {
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
       // console.log('frequency word changed');
-      if(this.props.frequency.length === 0 && this.props.freqFilter){
+      if (this.props.freqFilter && this.props.frequency.length === 0) {
         this.setOrder();
-      }
-      else{
-        const frequency = this.props.frequency;
-        this.setState({ frequency });
       }
     }
   }
@@ -86,18 +81,15 @@ class Phrases extends Component {
   setOrder() {
     let newOrder = [];
 
-    let filteredPhrases;
+    let filteredPhrases = this.props.phrases;
     if (this.props.freqFilter) {
       if (this.props.frequency.length === 0) {
-        filteredPhrases = [];
         this.props.togglePhrasesFilter();
       } else {
         filteredPhrases = this.props.phrases.filter((p) =>
           this.props.frequency.includes(p.uid)
         );
       }
-    } else {
-      filteredPhrases = this.props.phrases;
     }
 
     filteredPhrases.forEach((v, i) => newOrder.push(i));

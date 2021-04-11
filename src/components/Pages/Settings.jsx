@@ -107,8 +107,13 @@ class Settings extends Component {
                       statusText="Frequency filter"
                     />
                   </div>
-
-                  {this.props.phraseFilter && (
+                  {this.props.phraseFilter &&
+                    this.props.phraseFreq.length === 0 && (
+                      <div className="fst-italic">
+                        No phrases have been chosen
+                      </div>
+                    )}
+                  {this.props.phraseFilter && this.props.phraseFreq.length > 0 && (
                     <div>
                       {this.props.phraseFreq.map((pUid, i) => (
                         <div
