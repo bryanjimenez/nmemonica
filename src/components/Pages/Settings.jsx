@@ -129,7 +129,13 @@ class Settings extends Component {
                       }
                     />
                   </div>
-                  {this.props.vocabFilter && (
+                  {this.props.vocabFilter &&
+                    this.props.vocabFreq.length === 0 && (
+                      <div className="fst-italic">
+                        No words have been chosen
+                      </div>
+                    )}
+                  {this.props.vocabFilter && this.props.vocabFreq.length > 0 && (
                     <div>
                       <h5 key={0}>Frequency</h5>
                       <div key={1}>

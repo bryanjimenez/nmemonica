@@ -25,6 +25,7 @@ import {
   removeFrequencyWord,
   scrollingState,
   toggleAutoVerbView,
+  toggleVocabularyFilter,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
@@ -53,7 +54,7 @@ class Vocabulary extends Component {
       showRomaji: false,
       showHint: false,
       filteredVocab: [],
-      frequency: [],
+      frequency: [],  // subset of frequency words within current active group
     };
 
     if (this.props.vocab.length === 0) {
@@ -102,12 +103,20 @@ class Vocabulary extends Component {
       this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
+      if (this.props.freqFilter && this.props.frequency.length === 0) {
+        this.setOrder();
+      }
+      else{
+
       const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
       const frequency = this.props.frequency.filter((f) =>
         filteredKeys.includes(f)
       );
       // console.log('frequency word changed');
+      // props.frequency is all frequency words
+      // state.frequency is a subset of frequency words within current active group
       this.setState({ frequency });
+      }
     }
   }
 
@@ -120,6 +129,9 @@ class Vocabulary extends Component {
         filteredVocab = this.props.vocab.filter((v) =>
           this.props.frequency.includes(v.uid)
         );
+      } else {
+        // last frequency word was just removed
+        this.props.toggleVocabularyFilter();
       }
     } else {
       // group filtering
@@ -179,8 +191,9 @@ class Vocabulary extends Component {
 
   play() {
     // some games will come from the reinforced list
+    // unless filtering from frequency list
     const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
-    if (reinforced && this.state.frequency.length > 0) {
+    if (!this.props.freqFilter && reinforced && this.state.frequency.length > 0) {
       const min = 0;
       const max = Math.floor(this.state.frequency.length);
       const idx = Math.floor(Math.random() * (max - min) + min);
@@ -363,9 +376,11 @@ class Vocabulary extends Component {
                   {hint}
                 </h5>
               )}
-              {!this.state.showHint && this.props.freqFilter && (
-                <FontAwesomeIcon className="clickable" icon={faDice} />
-              )}
+              {!this.state.showHint &&
+                this.props.freqFilter &&
+                this.props.frequency.length > 0 && (
+                  <FontAwesomeIcon className="clickable" icon={faDice} />
+                )}
               {!this.state.showHint &&
                 !this.props.freqFilter &&
                 this.props.activeGroup.length > 0 && (
@@ -546,6 +561,7 @@ Vocabulary.propTypes = {
   autoVerbView: PropTypes.bool,
   toggleAutoVerbView: PropTypes.func,
   freqFilter: PropTypes.bool,
+  toggleVocabularyFilter: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -555,6 +571,7 @@ export default connect(mapStateToProps, {
   removeFrequencyWord,
   scrollingState,
   toggleAutoVerbView,
+  toggleVocabularyFilter,
 })(Vocabulary);
 
 export { VocabularyMeta };
