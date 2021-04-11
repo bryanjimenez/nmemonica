@@ -26,7 +26,7 @@ export default function AudioItem(props) {
           return (player = ref);
         }}
         autoPlay={props.autoPlay}
-        src={props.autoPlay && pronounceEndoint + "?q=" + props.word}
+        src={props.autoPlay ? pronounceEndoint + "?q=" + props.word : undefined}
       />
       <UnmuteIcon size="medium" aria-label="pronunciation" />
     </div>

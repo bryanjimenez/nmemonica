@@ -14,13 +14,13 @@ export default function StackOrderSlider(props) {
   const max = props.list.length;
 
   let marks = [];
-  let table = {};
+  let marksMap = {};
 
   for (let x = min; x <= max; x++) {
     const slide = (x / max) * 100;
     marks = [...marks, { value: slide, raw: x - 1 }];
-    table["s" + slide] = { raw: x - 1 };
-    table["r" + (x - 1)] = { slide };
+    marksMap["s" + slide] = { raw: x - 1 };
+    marksMap["r" + (x - 1)] = { slide };
   }
 
   const handleChange = (event, newValue, props) => {
@@ -35,19 +35,19 @@ export default function StackOrderSlider(props) {
   const slideToRaw = (slide) => {
     // const idx = marks.findIndex((mark) => mark.value === slide);
     // return marks[idx].raw;
-    return table["s" + slide].raw;
+    return marksMap["s" + slide].raw;
   };
 
   const slideToLabel = (slide) => {
     // const idx = marks.findIndex((mark) => mark.value === slide);
     // return props.list[marks[idx].raw].label[0];
-    const raw = table["s" + slide].raw;
+    const raw = marksMap["s" + slide].raw;
     return props.list[raw].label[0];
   };
 
   const rawToSlide = (raw) => {
     // return marks[marks.findIndex((m) => m.raw === raw)].value;
-    return table["r" + raw].slide;
+    return marksMap["r" + raw].slide;
   };
 
   return (

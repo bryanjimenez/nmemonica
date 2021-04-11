@@ -20,6 +20,7 @@ import {
   toggleVocabularyActiveGrp,
   toggleVocabularyAutoPlay,
   toggleDarkMode,
+  toggleAutoVerbView,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
@@ -193,6 +194,13 @@ class Settings extends Component {
                       statusText="Auto Play"
                     />
                   </div>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.autoVerbView}
+                      action={this.props.toggleAutoVerbView}
+                      statusText="Auto Verb View"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -296,6 +304,7 @@ const mapStateToProps = (state) => {
     vocabGroups: state.vocabulary.grpObj,
     vocabActive: state.settings.vocabulary.activeGroup,
     vocabAutoPlay: state.settings.vocabulary.autoPlay,
+    autoVerbView: state.settings.vocabulary.autoVerbView,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -338,13 +347,14 @@ Settings.propTypes = {
   toggleVocabularyActiveGrp: PropTypes.func,
   vocabAutoPlay: PropTypes.bool,
   toggleVocabularyAutoPlay: PropTypes.func,
+  getVocabulary: PropTypes.func,
+  autoVerbView: PropTypes.bool,
+  toggleAutoVerbView: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
   setOppositesQRomaji: PropTypes.func,
   oppositesARomaji: PropTypes.bool,
   setOppositesARomaji: PropTypes.func,
-
-  getVocabulary: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -366,6 +376,7 @@ export default connect(mapStateToProps, {
   toggleVocabularyActiveGrp,
   toggleVocabularyAutoPlay,
   toggleDarkMode,
+  toggleAutoVerbView,
 })(Settings);
 
 export { SettingsMeta };

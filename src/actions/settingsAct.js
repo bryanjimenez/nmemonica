@@ -22,6 +22,7 @@ export const ADD_FREQUENCY_WORD = "add_frequency_word";
 export const REMOVE_FREQUENCY_WORD = "remove_frequency_word";
 export const TOGGLE_DARK_MODE = "toggle_dark_mode";
 export const SCROLLING_STATE = "scrolling_state";
+export const AUTO_VERB_VIEW = "auto_verb_view";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -576,6 +577,33 @@ export function scrollingState(value) {
       type: SCROLLING_STATE,
       value,
     });
+  };
+}
+
+export function toggleAutoVerbView() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/vocabulary/";
+    const attr = "autoVerbView";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        AUTO_VERB_VIEW
+      );
+    } else {
+      dispatch({
+        type: AUTO_VERB_VIEW,
+      });
+    }
   };
 }
 

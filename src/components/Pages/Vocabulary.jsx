@@ -10,9 +10,11 @@ import {
 } from "@primer/octicons-react";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import {
+  faBan,
   faGlasses,
   faHeadphones,
   faPencilAlt,
+  faRunning,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -20,16 +22,17 @@ import {
   addFrequencyWord,
   removeFrequencyWord,
   scrollingState,
+  toggleAutoVerbView,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
-import AudioItem from "../Form/AudioItem";
-import { isHiragana } from "../../helper/hiraganaHelper";
 import { orderBy } from "lodash/collection";
 import StackOrderSlider from "../Form/StackOrderSlider";
+import VocabularyMain from "./VocabularyMain";
+import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
 
 const VocabularyMeta = {
@@ -238,24 +241,6 @@ class Vocabulary extends Component {
     return vocabulary;
   }
 
-  pronunciation(vocabulary) {
-    let q;
-    if (vocabulary.pronounce) {
-      const isHiraganaWord = !vocabulary.pronounce
-        .split("")
-        .some((c) => !isHiragana(c));
-      if (isHiraganaWord) {
-        q = vocabulary.pronounce;
-      } else {
-        console.warn("pronunciation is not hiragana");
-      }
-    } else {
-      const w = JapaneseText.parse(vocabulary.japanese);
-      q = w.getSpelling();
-    }
-    return q;
-  }
-
   render() {
     if (this.state.filteredVocab.length < 1)
       return <NotReady addlStyle="main-panel" />;
@@ -267,24 +252,13 @@ class Vocabulary extends Component {
       this.state.reinforcedUID
     );
 
-    let inJapanese = JapaneseText.parse(vocabulary.japanese).toHTML();
-    let inEnglish = vocabulary.english;
-    let romaji = vocabulary.romaji;
+    const isVerb = vocabulary.grp === "Verb";
 
-    let shownSide, hiddenSide, shownCaption, hiddenCaption, hintActive, hint;
+    let hintActive, hint;
     if (this.props.practiceSide) {
-      shownSide = inEnglish;
-      hiddenSide = inJapanese;
-      shownCaption = "[English]";
-      hiddenCaption = "[Japanese]";
-
       hint = htmlElementHint(vocabulary.japanese);
       hintActive = hint && this.props.hintActive;
     } else {
-      shownSide = inJapanese;
-      hiddenSide = inEnglish;
-      shownCaption = "[Japanese]";
-      hiddenCaption = "[English]";
       hintActive =
         this.props.hintActive && vocabulary.grp && vocabulary.grp !== "";
       hint =
@@ -314,42 +288,12 @@ class Vocabulary extends Component {
           >
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            {this.props.autoPlay && this.props.practiceSide ? (
-              <h1
-                onClick={() => {
-                  this.setState((state) => ({ showEng: !state.showEng }));
-                }}
-              >
-                {this.state.showEng ? shownSide : shownCaption}
-              </h1>
-            ) : (
-              <h1>{shownSide}</h1>
-            )}
-            {this.props.romajiActive && (
-              <h5
-                onClick={() => {
-                  this.setState((state) => ({ showRomaji: !state.showRomaji }));
-                }}
-                className="clickable"
-              >
-                {this.state.showRomaji ? romaji : "[Romaji]"}
-              </h5>
-            )}
-            <h2
-              onClick={() => {
-                this.setState((state) => ({ showMeaning: !state.showMeaning }));
-              }}
-              className="clickable"
-            >
-              {this.state.showMeaning ? hiddenSide : hiddenCaption}
-            </h2>
 
-            <AudioItem
-              word={this.pronunciation(vocabulary)}
-              autoPlay={this.props.scrollingDone && this.props.autoPlay}
-            />
-          </div>
+          {isVerb && this.props.autoVerbView ? (
+            <VerbMain verb={vocabulary} verbForm={false} />
+          ) : (
+            <VocabularyMain vocabulary={vocabulary} />
+          )}
 
           <StackNavButton
             color={"--yellow"}
@@ -381,6 +325,15 @@ class Vocabulary extends Component {
                     <FontAwesomeIcon
                       icon={faHeadphones}
                       aria-label="Auto play enabled"
+                    />
+                  </div>
+                )}
+                {isVerb && (
+                  <div className="sm-icon-grp">
+                    <FontAwesomeIcon
+                      onClick={this.props.toggleAutoVerbView}
+                      className="clickable"
+                      icon={!this.props.autoVerbView ? faRunning : faBan}
                     />
                   </div>
                 )}
@@ -488,7 +441,7 @@ class Vocabulary extends Component {
             style={{
               position: "absolute",
               bottom: "25vh",
-              left: "75vw",
+              left: "65vw",
               backgroundColor: deepOrange[500],
             }}
           >
@@ -550,6 +503,7 @@ const mapStateToProps = (state) => {
     activeGroup: state.settings.vocabulary.activeGroup,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
+    autoVerbView: state.settings.vocabulary.autoVerbView,
   };
 };
 
@@ -568,6 +522,8 @@ Vocabulary.propTypes = {
   autoPlay: PropTypes.bool,
   scrollingDone: PropTypes.bool,
   scrollingState: PropTypes.func,
+  autoVerbView: PropTypes.bool,
+  toggleAutoVerbView: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -576,6 +532,7 @@ export default connect(mapStateToProps, {
   addFrequencyWord,
   removeFrequencyWord,
   scrollingState,
+  toggleAutoVerbView,
 })(Vocabulary);
 
 export { VocabularyMeta };
