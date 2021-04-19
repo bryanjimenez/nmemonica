@@ -9,6 +9,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
 import StackNavButton from "../Form/StackNavButton";
+import { swapKana } from "../../helper/hiraganaHelper";
 
 const KatakanaGameMeta = {
   location: "/kana/",
@@ -127,7 +128,7 @@ class KatakanaGame extends Component {
     let kana;
 
     let useChar = set;
-    if(set === 2){
+    if (set === 2) {
       useChar = Math.floor(Math.random() * 2);
     }
 
@@ -330,9 +331,21 @@ class KatakanaGame extends Component {
         style={{ color: isRight, width }}
       >
         <h2 className={choiceH2CSS}>{choices[index].val}</h2>
-        <h6 className="mb-0" style={{ visibility }}>
-          {choices[index].hint}
-        </h6>
+        <div className="d-flex justify-content-around">
+          <h6 className="mb-0" style={{ visibility }}>
+            {choices[index].hint}
+          </h6>
+          {this.props.easyMode && (
+            <h6 className="mb-0" style={{ visibility }}>
+              {swapKana(choices[index].hint)}
+            </h6>
+          )}
+          {this.props.easyMode && choices[index].q && (
+            <h6 className="mb-0" >
+              {swapKana(choices[index].val)}
+            </h6>
+          )}
+        </div>
       </div>
     );
   }
@@ -363,13 +376,18 @@ class KatakanaGame extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           {!this.props.wideMode && (
-            <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
+            <div className="pt-3 d-flex flex-column justify-content-center text-center w-50">
               <h1
                 style={{ color: this.state.correct ? "green" : undefined }}
                 className="clickable"
               >
                 {question}
               </h1>
+              {this.props.easyMode && (
+                <div className="d-flex justify-content-around">
+                  <h6>{swapKana(question)}</h6>
+                </div>
+              )}
             </div>
           )}
           <div className={choiceAreaCSS}>
@@ -419,6 +437,7 @@ const mapStateToProps = (state) => {
     sounds: state.kana.sounds,
     choiceN: state.settings.kana.wideMode ? 31 : state.settings.kana.choiceN,
     wideMode: state.settings.kana.wideMode,
+    easyMode: state.settings.kana.easyMode,
     charSet: state.settings.kana.charSet,
   };
 };
@@ -432,6 +451,7 @@ KatakanaGame.propTypes = {
   choiceN: PropTypes.number.isRequired,
   sounds: PropTypes.object.isRequired,
   wideMode: PropTypes.bool,
+  easyMode: PropTypes.bool,
   charSet: PropTypes.number,
 };
 

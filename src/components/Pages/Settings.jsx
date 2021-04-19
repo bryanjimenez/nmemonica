@@ -26,6 +26,7 @@ import {
   togglePhrasesFilter,
   removeFrequencyPhrase,
   toggleKana,
+  toggleKanaEasyMode,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
@@ -372,15 +373,9 @@ class Settings extends Component {
               </div>
               <div>
                 <SettingsSwitch
-                  active={this.props.charSet === 0}
-                  action={this.props.toggleKana}
-                  statusText={
-                    this.props.charSet === 0
-                      ? "Hiragana"
-                      : this.props.charSet === 1
-                      ? "Katakana"
-                      : "Mixed"
-                  }
+                  active={this.props.easyMode}
+                  action={this.props.toggleKanaEasyMode}
+                  statusText={this.props.easyMode ? "Easy" : "Hard"}
                 />
               </div>
             </div>
@@ -439,6 +434,7 @@ const mapStateToProps = (state) => {
     darkMode: state.settings.global.darkMode,
     choiceN: state.settings.kana.choiceN,
     wideMode: state.settings.kana.wideMode,
+    easyMode: state.settings.kana.easyMode,
     charSet: state.settings.kana.charSet,
     verbOrder: state.settings.verbs.ordered,
     verbMasu: state.settings.verbs.masu,
@@ -485,7 +481,9 @@ Settings.propTypes = {
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
+  easyMode: PropTypes.bool,
   toggleKanaGameWideMode: PropTypes.func,
+  toggleKanaEasyMode: PropTypes.func,
   charSet: PropTypes.number,
   toggleKana: PropTypes.func,
   choiceN: PropTypes.number,
@@ -527,6 +525,7 @@ Settings.propTypes = {
 export default connect(mapStateToProps, {
   setHiraganaBtnN,
   toggleKanaGameWideMode,
+  toggleKanaEasyMode,
   toggleKana,
   setVerbsOrdering,
   setVerbsMasu,

@@ -3,6 +3,7 @@ import {
   FLIP_PHRASES_PRACTICE_SIDE,
   SET_KANA_BTN_N,
   TOGGLE_KANA_WIDEMODE,
+  TOGGLE_KANA_EASYMODE,
   SET_OPPOSITES_A_ROMAJI,
   SET_OPPOSITES_Q_ROMAJI,
   SET_PHRASES_ORDERING,
@@ -30,7 +31,7 @@ import {
 
 export const DEFAULT_SETTINGS = {
   global: { darkMode: false, scrolling: false },
-  kana: { choiceN: 16, wideMode: false, charSet: 0 },
+  kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   verbs: { ordered: true, masu: false },
   phrases: {
     ordered: true,
@@ -87,6 +88,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         kana: {
           ...state.kana,
           wideMode: action.value || !state.kana.wideMode,
+        },
+      };
+    case TOGGLE_KANA_EASYMODE:
+      return {
+        ...state,
+        kana: {
+          ...state.kana,
+          easyMode: !state.kana.easyMode,
         },
       };
     case TOGGLE_KANA_CHAR_SET:

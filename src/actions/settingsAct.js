@@ -4,6 +4,7 @@ import { localStoreAttrUpdate } from "../helper/localStorage";
 
 export const SET_KANA_BTN_N = "set_kana_btn_number";
 export const TOGGLE_KANA_WIDEMODE = "set_kana_widemode";
+export const TOGGLE_KANA_EASYMODE = "set_kana_easymode";
 export const TOGGLE_KANA_CHAR_SET = "toggle_kana_char_set";
 export const SET_VERB_ORDERING = "set_verb_ordering";
 export const SET_VERB_MASU = "set_verb_masu";
@@ -85,11 +86,37 @@ export function toggleKanaGameWideMode() {
   };
 }
 
-export function toggleKana() {
+export function toggleKanaEasyMode() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
-    const {charSet} = getState().settings.kana;
+    const path = "/kana/";
+    const attr = "easyMode";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_KANA_EASYMODE
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_KANA_EASYMODE,
+      });
+    }
+  };
+}
+
+export function toggleKana() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+    const { charSet } = getState().settings.kana;
 
     const newCharSet = charSet + 1 < 3 ? charSet + 1 : 0;
 
@@ -112,7 +139,7 @@ export function toggleKana() {
     } else {
       dispatch({
         type: TOGGLE_KANA_CHAR_SET,
-        value: newCharSet
+        value: newCharSet,
       });
     }
   };
