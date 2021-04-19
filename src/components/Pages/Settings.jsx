@@ -6,7 +6,7 @@ import {
   flipPhrasesPracticeSide,
   flipVocabularyPracticeSide,
   setHiraganaBtnN,
-  toggleHiraganaWideMode,
+  toggleKanaGameWideMode,
   setVerbsOrdering,
   setVerbsMasu,
   setVocabularyOrdering,
@@ -354,7 +354,7 @@ class Settings extends Component {
                   initial={this.props.choiceN}
                   wideMode={this.props.wideMode}
                   setChoiceN={this.props.setHiraganaBtnN}
-                  toggleWide={this.props.toggleHiraganaWideMode}
+                  toggleWide={this.props.toggleKanaGameWideMode}
                 />
               </div>
               <div>
@@ -472,7 +472,7 @@ Settings.propTypes = {
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
-  toggleHiraganaWideMode: PropTypes.func,
+  toggleKanaGameWideMode: PropTypes.func,
   charSet: PropTypes.number,
   toggleKana: PropTypes.func,
   choiceN: PropTypes.number,
@@ -513,7 +513,7 @@ Settings.propTypes = {
 
 export default connect(mapStateToProps, {
   setHiraganaBtnN,
-  toggleHiraganaWideMode,
+  toggleKanaGameWideMode,
   toggleKana,
   setVerbsOrdering,
   setVerbsMasu,

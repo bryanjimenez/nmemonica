@@ -58,7 +58,7 @@ export function setHiraganaBtnN(number) {
   };
 }
 
-export function toggleHiraganaWideMode() {
+export function toggleKanaGameWideMode() {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
@@ -90,8 +90,6 @@ export function toggleKana() {
     const { user } = getState().login;
 
     const {charSet} = getState().settings.kana;
-
-    console.log(charSet)
 
     const newCharSet = charSet + 1 < 3 ? charSet + 1 : 0;
 
