@@ -21,12 +21,14 @@ import {
   toggleVocabularyAutoPlay,
   toggleDarkMode,
   toggleAutoVerbView,
+  removeFrequencyWord,
+  toggleVocabularyFilter,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import HiraganaOptionsSlider from "../Form/HiraganaOptionsSlider";
-import { SyncIcon } from "@primer/octicons-react";
+import { SyncIcon, XCircleIcon } from "@primer/octicons-react";
 
 import "./Settings.css";
 import "./spin.css";
@@ -116,42 +118,98 @@ class Settings extends Component {
             <div className="outter">
               <div className="d-flex flex-row justify-content-between">
                 <div className="column-1">
-                  <h5>Groups</h5>
-                  {Object.keys(this.props.vocabGroups).map((g, i) => {
-                    const grpActive = this.props.vocabActive.includes(g);
+                  <h4>Filtering</h4>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.vocabFilter}
+                      action={this.props.toggleVocabularyFilter}
+                      color="default"
+                      statusText={
+                        this.props.vocabFilter ? "Frequency" : "Groups"
+                      }
+                    />
+                  </div>
+                  {this.props.vocabFilter &&
+                    this.props.vocabFreq.length === 0 && (
+                      <div className="fst-italic">
+                        No words have been chosen
+                      </div>
+                    )}
+                  {this.props.vocabFilter && this.props.vocabFreq.length > 0 && (
+                    <div>
+                      <h5 key={0}>Frequency</h5>
+                      <div key={1}>
+                        {this.props.vocabFreq.map((w, i) => (
+                          <div
+                            key={i}
+                            className="p-0 pl-2 pr-2 clickable"
+                            onClick={() => {
+                              this.props.removeFrequencyWord(w);
+                            }}
+                          >
+                            <span className="p-1">
+                              <XCircleIcon
+                                className="incorrect-color"
+                                size="small"
+                                aria-label="remove"
+                              />
+                            </span>
+                            <span className="p-1">
+                              {
+                                (
+                                  this.props.vocabulary.find(
+                                    (v) => v.uid === w
+                                  ) || { english: w }
+                                ).english
+                              }
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                    return (
-                      <div key={i}>
-                        <GroupItem
-                          key={i}
-                          active={this.props.vocabActive.includes(g)}
-                          onClick={() => {
-                            this.props.toggleVocabularyActiveGrp(g);
-                          }}
-                        >
-                          {g}
-                        </GroupItem>
+                  {!this.props.vocabFilter && (
+                    <div>
+                      <h5 key={0}>Groups</h5>
 
-                        {!grpActive &&
-                          this.props.vocabGroups[g].map((s, i) => (
+                      {Object.keys(this.props.vocabGroups).map((g, i) => {
+                        const grpActive = this.props.vocabActive.includes(g);
+
+                        return (
+                          <div key={i + 1}>
                             <GroupItem
                               key={i}
-                              addlStyle="ml-3"
-                              active={this.props.vocabActive.includes(
-                                g + "." + s
-                              )}
+                              active={this.props.vocabActive.includes(g)}
                               onClick={() => {
-                                this.props.toggleVocabularyActiveGrp(
-                                  g + "." + s
-                                );
+                                this.props.toggleVocabularyActiveGrp(g);
                               }}
                             >
-                              {s}
+                              {g}
                             </GroupItem>
-                          ))}
-                      </div>
-                    );
-                  })}
+
+                            {!grpActive &&
+                              this.props.vocabGroups[g].map((s, i) => (
+                                <GroupItem
+                                  key={i}
+                                  addlStyle="ml-3"
+                                  active={this.props.vocabActive.includes(
+                                    g + "." + s
+                                  )}
+                                  onClick={() => {
+                                    this.props.toggleVocabularyActiveGrp(
+                                      g + "." + s
+                                    );
+                                  }}
+                                >
+                                  {s}
+                                </GroupItem>
+                              ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="column-2 setting-block">
@@ -297,6 +355,7 @@ const mapStateToProps = (state) => {
     phraseOrder: state.settings.phrases.ordered,
     phraseSide: state.settings.phrases.practiceSide,
     phraseRomaji: state.settings.phrases.romaji,
+    vocabulary: state.vocabulary.value,
     vocabOrder: state.settings.vocabulary.ordered,
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
@@ -305,6 +364,8 @@ const mapStateToProps = (state) => {
     vocabActive: state.settings.vocabulary.activeGroup,
     vocabAutoPlay: state.settings.vocabulary.autoPlay,
     autoVerbView: state.settings.vocabulary.autoVerbView,
+    vocabFilter: state.settings.vocabulary.filter,
+    vocabFreq: state.settings.vocabulary.frequency,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
@@ -345,6 +406,11 @@ Settings.propTypes = {
   vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
   toggleVocabularyActiveGrp: PropTypes.func,
+  toggleVocabularyFilter: PropTypes.func,
+  vocabulary: PropTypes.array,
+  vocabFreq: PropTypes.array,
+  vocabFilter: PropTypes.bool,
+  removeFrequencyWord: PropTypes.func,
   vocabAutoPlay: PropTypes.bool,
   toggleVocabularyAutoPlay: PropTypes.func,
   getVocabulary: PropTypes.func,
@@ -369,6 +435,8 @@ export default connect(mapStateToProps, {
   togglePhrasesRomaji,
   toggleVocabularyRomaji,
   toggleVocabularyHint,
+  removeFrequencyWord,
+  toggleVocabularyFilter,
   setOppositesQRomaji,
   setOppositesARomaji,
   setParticlesARomaji,
