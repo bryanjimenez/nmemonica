@@ -8,7 +8,10 @@ const phrasesReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
     case GET_PHRASES:
       return {
         ...state,
-        value: Object.values(action.value),
+        value: Object.keys(action.value).map((k) => ({
+          ...action.value[k],
+          uid: k,
+        })),
       };
     default:
       return state;

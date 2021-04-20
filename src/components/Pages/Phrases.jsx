@@ -4,14 +4,18 @@ import PropTypes from "prop-types";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  UnmuteIcon,
-  MuteIcon,
+  PlusCircleIcon,
+  XCircleIcon,
 } from "@primer/octicons-react";
 import { getPhrases } from "../../actions/phrasesAct";
-import { gStorageAudioPath } from "../../constants/paths";
 import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { flipPhrasesPracticeSide } from "../../actions/settingsAct";
+import {
+  addFrequencyPhrase,
+  flipPhrasesPracticeSide,
+  removeFrequencyPhrase,
+  togglePhrasesFilter,
+} from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -31,6 +35,7 @@ class Phrases extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
+      filteredPhrases: []
     };
 
     this.props.getPhrases();
@@ -56,20 +61,47 @@ class Phrases extends Component {
       // console.log("got game data");
       this.setOrder();
     }
+
+    if (this.props.freqFilter != prevProps.freqFilter) {
+      this.setOrder();
+    }
+
+    if (
+      this.props.frequency.length != prevProps.frequency.length ||
+      this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
+      prevProps.frequency.some((e) => !this.props.frequency.includes(e))
+    ) {
+      // console.log('frequency word changed');
+      if (this.props.freqFilter && this.props.frequency.length === 0) {
+        this.setOrder();
+      }
+    }
   }
 
   setOrder() {
     let newOrder = [];
-    this.props.phrases.forEach((v, i) => newOrder.push(i));
+
+    let filteredPhrases = this.props.phrases;
+    if (this.props.freqFilter) {
+      if (this.props.frequency.length === 0) {
+        this.props.togglePhrasesFilter();
+      } else {
+        filteredPhrases = this.props.phrases.filter((p) =>
+          this.props.frequency.includes(p.uid)
+        );
+      }
+    }
+
+    filteredPhrases.forEach((v, i) => newOrder.push(i));
     if (!this.props.isOrdered) {
       shuffleArray(newOrder);
     }
 
-    this.setState({ order: newOrder });
+    this.setState({ filteredPhrases, order: newOrder });
   }
 
   gotoNext() {
-    const l = this.props.phrases.length;
+    const l = this.state.filteredPhrases.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
       selectedIndex: newSel,
@@ -79,7 +111,7 @@ class Phrases extends Component {
   }
 
   gotoPrev() {
-    const l = this.props.phrases.length;
+    const l = this.state.filteredPhrases.length;
     const i = this.state.selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
@@ -90,15 +122,15 @@ class Phrases extends Component {
   }
 
   render() {
-    if (this.props.phrases.length < 1)
+    if (this.state.filteredPhrases.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
     let phrase;
     if (this.state.order) {
       const index = this.state.order[this.state.selectedIndex];
-      phrase = this.props.phrases[index];
+      phrase = this.state.filteredPhrases[index];
     } else {
-      phrase = this.props.phrases[this.state.selectedIndex];
+      phrase = this.state.filteredPhrases[this.state.selectedIndex];
     }
 
     let japanesePhrase = JapaneseText.parse(phrase.japanese).toHTML();
@@ -117,7 +149,8 @@ class Phrases extends Component {
     }
 
     const progress =
-      ((this.state.selectedIndex + 1) / this.props.phrases.length) * 100;
+      ((this.state.selectedIndex + 1) / this.state.filteredPhrases.length) *
+      100;
 
     return [
       <div key={0} className="phrases main-panel h-100">
@@ -149,26 +182,6 @@ class Phrases extends Component {
             >
               {this.state.showMeaning ? hiddenSide : hiddenCaption}
             </h2>
-            {phrase.uid ? (
-              <div
-                className="d-flex justify-content-center clickable"
-                onClick={() => {
-                  // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
-                  this.player.src = gStorageAudioPath + phrase.uid + ".mp3";
-                  this.player.play();
-                }}
-              >
-                <audio ref={(ref) => (this.player = ref)} />
-                <UnmuteIcon size="medium" aria-label="pronunciation" />
-              </div>
-            ) : (
-              <div
-                className="d-flex justify-content-center"
-                style={{ color: "lightgray" }}
-              >
-                <MuteIcon size="medium"></MuteIcon>
-              </div>
-            )}
           </div>
           <StackNavButton
             color={"--orange"}
@@ -179,20 +192,47 @@ class Phrases extends Component {
           </StackNavButton>
         </div>
       </div>,
-      <div
-        key={1}
-        className="options-bar mb-2 flex-shrink-1"
-        onClick={this.props.flipPhrasesPracticeSide}
-      >
+      <div key={1} className="options-bar mb-2 flex-shrink-1">
         <div className="row">
           <div className="col">
             <FontAwesomeIcon
               className="clickable"
+              onClick={this.props.flipPhrasesPracticeSide}
               icon={this.props.practiceSide ? faGlasses : faPencilAlt}
             />
           </div>
           <div className="col"></div>
-          <div className="col"></div>
+          <div className="col">
+            <div className="d-flex justify-content-end">
+              <div className="sm-icon-grp">
+                {this.props.frequency.includes(phrase.uid) ? (
+                  <div
+                    onClick={() => {
+                      this.props.removeFrequencyPhrase(phrase.uid);
+                    }}
+                  >
+                    <XCircleIcon
+                      className="clickable"
+                      size="small"
+                      aria-label="remove"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => {
+                      this.props.addFrequencyPhrase(phrase.uid);
+                    }}
+                  >
+                    <PlusCircleIcon
+                      className="clickable"
+                      size="small"
+                      aria-label="add"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>,
       <div key={2} className="progress-bar flex-shrink-1">
@@ -208,6 +248,8 @@ const mapStateToProps = (state) => {
     practiceSide: state.settings.phrases.practiceSide,
     isOrdered: state.settings.phrases.ordered,
     romajiActive: state.settings.phrases.romaji,
+    frequency: state.settings.phrases.frequency,
+    freqFilter: state.settings.phrases.filter,
   };
 };
 
@@ -218,11 +260,19 @@ Phrases.propTypes = {
   flipPhrasesPracticeSide: PropTypes.func,
   practiceSide: PropTypes.bool,
   romajiActive: PropTypes.bool,
+  removeFrequencyPhrase: PropTypes.func,
+  addFrequencyPhrase: PropTypes.func,
+  frequency: PropTypes.array,
+  freqFilter: PropTypes.bool,
+  togglePhrasesFilter: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
   getPhrases,
   flipPhrasesPracticeSide,
+  removeFrequencyPhrase,
+  addFrequencyPhrase,
+  togglePhrasesFilter,
 })(Phrases);
 
 export { PhrasesMeta };

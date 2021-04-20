@@ -21,6 +21,9 @@ export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
 export const ADD_FREQUENCY_WORD = "add_frequency_word";
 export const REMOVE_FREQUENCY_WORD = "remove_frequency_word";
+export const ADD_FREQUENCY_PHRASE = "add_frequency_phrase";
+export const REMOVE_FREQUENCY_PHRASE = "remove_frequency_phrase";
+export const TOGGLE_PHRASES_FILTER = "toggle_phrases_filter";
 export const TOGGLE_DARK_MODE = "toggle_dark_mode";
 export const SCROLLING_STATE = "scrolling_state";
 export const AUTO_VERB_VIEW = "auto_verb_view";
@@ -570,6 +573,96 @@ export function removeFrequencyWord(uid) {
       dispatch({
         type: REMOVE_FREQUENCY_WORD,
         value: newValue,
+      });
+    }
+  };
+}
+
+export function addFrequencyPhrase(uid) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/phrases/";
+    const attr = "frequency";
+    const time = new Date();
+
+    const uidList = getLastStateValue(getState, path, attr);
+    const newValue = [...uidList, uid];
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        ADD_FREQUENCY_PHRASE,
+        newValue
+      );
+    } else {
+      dispatch({
+        type: ADD_FREQUENCY_PHRASE,
+        value: newValue,
+      });
+    }
+  };
+}
+
+export function removeFrequencyPhrase(uid) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/phrases/";
+    const attr = "frequency";
+    const time = new Date();
+    const currVal = getLastStateValue(getState, path, attr);
+    const newValue = currVal.filter((i) => i !== uid);
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        REMOVE_FREQUENCY_PHRASE,
+        newValue
+      );
+    } else {
+      dispatch({
+        type: REMOVE_FREQUENCY_PHRASE,
+        value: newValue,
+      });
+    }
+  };
+}
+
+export function togglePhrasesFilter() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/phrases/";
+    const attr = "filter";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_PHRASES_FILTER
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_PHRASES_FILTER,
       });
     }
   };
