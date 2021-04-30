@@ -98,11 +98,12 @@ class KatakanaGame extends Component {
 
       for (let vowel = 0; vowel < xMax; vowel++) {
         for (let consonant = 0; consonant < yMax; consonant++) {
-          // should not include yi, ye or wu
+          // should not include yi, ye, wu, or empty row (except -n)
           if (
             (vowel != 1 || consonant != 12) &&
             (vowel != 3 || consonant != 12) &&
-            (vowel != 2 || consonant != 14)
+            (vowel != 2 || consonant != 14) &&
+            (vowel === 0 || consonant != 15)
           )
             gameOrder.push({ vowel, consonant });
         }
@@ -127,12 +128,7 @@ class KatakanaGame extends Component {
   getKanaCharacter(consonant, vowel, set) {
     let kana;
 
-    let useChar = set;
-    if (set === 2) {
-      useChar = Math.floor(Math.random() * 2);
-    }
-
-    if (useChar === 0) {
+    if (set === 0) {
       kana = this.props.hiragana[consonant][vowel];
     } else {
       kana = this.props.katakana[consonant][vowel];
@@ -156,6 +152,11 @@ class KatakanaGame extends Component {
       const max = Math.floor(gameOrder.length);
       const idx = Math.floor(Math.random() * (max - min) + min);
 
+      let useChar = this.props.charSet;
+      if (this.props.charSet === 2) {
+        useChar = Math.floor(Math.random() * 2);
+      }
+
       const cPronunciation = this.getPronunciation(
         gameOrder[idx].consonant,
         gameOrder[idx].vowel
@@ -163,18 +164,20 @@ class KatakanaGame extends Component {
       const cCharacter = this.getKanaCharacter(
         gameOrder[idx].consonant,
         gameOrder[idx].vowel,
-        this.props.charSet
+        useChar
       );
       let choice;
       if (difficult) {
         choice = {
           val: cCharacter,
           hint: cPronunciation,
+          cSet: useChar,
         };
       } else {
         choice = {
           val: cPronunciation,
           hint: cCharacter,
+          cSet: useChar,
         };
       }
 
@@ -211,28 +214,32 @@ class KatakanaGame extends Component {
         if (practiceSide === missedQuestion.practiceSide) {
           answer = missedQuestion;
         } else {
-          const { val, hint } = missedQuestion;
-          answer = { val: hint, hint: val };
+          const { val, hint, cSet } = missedQuestion;
+          answer = { val: hint, hint: val, cSet };
         }
       } else {
         // console.log('regular')
         const { consonant, vowel } = gameOrder[this.state.selectedIndex];
+
+        let useChar = this.props.charSet;
+        if (this.props.charSet === 2) {
+          useChar = Math.floor(Math.random() * 2);
+        }
+
         const pronunciation = this.getPronunciation(consonant, vowel);
-        const character = this.getKanaCharacter(
-          consonant,
-          vowel,
-          this.props.charSet
-        );
+        const character = this.getKanaCharacter(consonant, vowel, useChar);
 
         if (practiceSide) {
           answer = {
             val: character,
             hint: pronunciation,
+            cSet: useChar,
           };
         } else {
           answer = {
             val: pronunciation,
             hint: character,
+            cSet: useChar,
           };
         }
       }
@@ -305,7 +312,7 @@ class KatakanaGame extends Component {
     const isRight = choices[index].val === answer.val && correct;
     const visibility = isWrong ? undefined : "hidden";
     const choiceCSS = classNames({
-      clickable: true,
+      clickable: !choices[index].q,
       "text-center": true,
       "correct-color": isRight,
       "incorrect-color": isWrong,
@@ -325,25 +332,38 @@ class KatakanaGame extends Component {
       <div
         key={index}
         onClick={() => {
-          this.checkAnswer(choices[index]);
+          if (!choices[index].q) {
+            this.checkAnswer(choices[index]);
+          }
         }}
         className={choiceCSS}
         style={{ color: isRight, width }}
       >
         <h2 className={choiceH2CSS}>{choices[index].val}</h2>
         <div className="d-flex justify-content-around">
-          <h6 className="mb-0" style={{ visibility }}>
-            {choices[index].hint}
-          </h6>
-          {this.props.easyMode && (
+          {!this.props.easyMode && (
             <h6 className="mb-0" style={{ visibility }}>
-              {swapKana(choices[index].hint)}
+              {choices[index].cSet === answer.cSet
+                ? choices[index].hint
+                : swapKana(choices[index].hint)}
             </h6>
           )}
+
+          {this.props.easyMode && [
+            <h6 className="mb-0" key={0} style={{ visibility }}>
+              {choices[index].cSet === 0
+                ? choices[index].hint
+                : swapKana(choices[index].hint)}
+            </h6>,
+            <h6 className="mb-0" key={1} style={{ visibility }}>
+              {choices[index].cSet === 0
+                ? swapKana(choices[index].hint)
+                : choices[index].hint}
+            </h6>,
+          ]}
+
           {this.props.easyMode && choices[index].q && (
-            <h6 className="mb-0" >
-              {swapKana(choices[index].val)}
-            </h6>
+            <h6 className="mb-0">{swapKana(choices[index].val)}</h6>
           )}
         </div>
       </div>

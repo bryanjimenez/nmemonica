@@ -116,7 +116,7 @@ export function toggleKanaEasyMode() {
 export function toggleKana() {
   return (dispatch, getState) => {
     const { user } = getState().login;
-    const { charSet } = getState().settings.kana;
+    const { charSet, easyMode } = getState().settings.kana;
 
     const newCharSet = charSet + 1 < 3 ? charSet + 1 : 0;
 
@@ -124,6 +124,10 @@ export function toggleKana() {
     const attr = "charSet";
     const time = new Date();
     localStoreAttrUpdate(time, getState, path, attr, newCharSet);
+
+    if (newCharSet < 2 && easyMode) {
+      toggleKanaEasyMode()(dispatch, getState);
+    }
 
     if (user) {
       firebaseAttrUpdate(

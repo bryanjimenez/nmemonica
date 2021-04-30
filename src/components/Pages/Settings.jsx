@@ -371,13 +371,15 @@ class Settings extends Component {
                   }
                 />
               </div>
-              <div>
-                <SettingsSwitch
-                  active={this.props.easyMode}
-                  action={this.props.toggleKanaEasyMode}
-                  statusText={this.props.easyMode ? "Easy" : "Hard"}
-                />
-              </div>
+              {this.props.charSet === 2 && (
+                <div>
+                  <SettingsSwitch
+                    active={this.props.easyMode}
+                    action={this.props.toggleKanaEasyMode}
+                    statusText="Kana Hints"
+                  />
+                </div>
+              )}
             </div>
           </div>
           <div className={pageClassName}>
