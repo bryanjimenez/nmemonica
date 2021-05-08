@@ -1,12 +1,13 @@
-import data from "../../data/hiragana.json";
+import data from "../../data/kana.json";
 
-export const GET_HIRAGANA = "get_hiragana";
+export const GET_KANA = "get_kana";
 
-export function getHiragana() {
+export function getKana() {
   return (dispatch) => {
     dispatch({
-      type: GET_HIRAGANA,
+      type: GET_KANA,
       hiragana: data.hiragana,
+      katakana: data.katakana,
       vowels: data.vowels,
       consonants: data.consonants,
       sounds: data.sounds,

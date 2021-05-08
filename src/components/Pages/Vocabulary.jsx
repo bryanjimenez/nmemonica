@@ -54,7 +54,7 @@ class Vocabulary extends Component {
       showRomaji: false,
       showHint: false,
       filteredVocab: [],
-      frequency: [],  // subset of frequency words within current active group
+      frequency: [], // subset of frequency words within current active group
     };
 
     if (this.props.vocab.length === 0) {
@@ -105,17 +105,15 @@ class Vocabulary extends Component {
     ) {
       if (this.props.freqFilter && this.props.frequency.length === 0) {
         this.setOrder();
-      }
-      else{
-
-      const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
-      const frequency = this.props.frequency.filter((f) =>
-        filteredKeys.includes(f)
-      );
-      // console.log('frequency word changed');
-      // props.frequency is all frequency words
-      // state.frequency is a subset of frequency words within current active group
-      this.setState({ frequency });
+      } else {
+        const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
+        const frequency = this.props.frequency.filter((f) =>
+          filteredKeys.includes(f)
+        );
+        // console.log('frequency word changed');
+        // props.frequency is all frequency words
+        // state.frequency is a subset of frequency words within current active group
+        this.setState({ frequency });
       }
     }
   }
@@ -193,7 +191,11 @@ class Vocabulary extends Component {
     // some games will come from the reinforced list
     // unless filtering from frequency list
     const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
-    if (!this.props.freqFilter && reinforced && this.state.frequency.length > 0) {
+    if (
+      !this.props.freqFilter &&
+      reinforced &&
+      this.state.frequency.length > 0
+    ) {
       const min = 0;
       const max = Math.floor(this.state.frequency.length);
       const idx = Math.floor(Math.random() * (max - min) + min);

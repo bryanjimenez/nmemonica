@@ -35,7 +35,7 @@ class Phrases extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
-      filteredPhrases: []
+      filteredPhrases: [],
     };
 
     this.props.getPhrases();

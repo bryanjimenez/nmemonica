@@ -1,8 +1,9 @@
 import { FIREBASE_LOGOUT, GET_USER_SETTINGS } from "../actions/firebase";
 import {
   FLIP_PHRASES_PRACTICE_SIDE,
-  SET_HIRAGANA_BTN_N,
-  TOGGLE_HIRAGANA_WIDEMODE,
+  SET_KANA_BTN_N,
+  TOGGLE_KANA_WIDEMODE,
+  TOGGLE_KANA_EASYMODE,
   SET_OPPOSITES_A_ROMAJI,
   SET_OPPOSITES_Q_ROMAJI,
   SET_PHRASES_ORDERING,
@@ -25,11 +26,12 @@ import {
   ADD_FREQUENCY_PHRASE,
   REMOVE_FREQUENCY_PHRASE,
   TOGGLE_PHRASES_FILTER,
+  TOGGLE_KANA_CHAR_SET,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
   global: { darkMode: false, scrolling: false },
-  hiragana: { choiceN: 16, wideMode: false },
+  kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   verbs: { ordered: true, masu: false },
   phrases: {
     ordered: true,
@@ -72,20 +74,36 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           scrolling: action.value,
         },
       };
-    case SET_HIRAGANA_BTN_N:
+    case SET_KANA_BTN_N:
       return {
         ...state,
-        hiragana: {
-          ...state.hiragana,
-          choiceN: action.value || !state.hiragana.choiceN,
+        kana: {
+          ...state.kana,
+          choiceN: action.value || !state.kana.choiceN,
         },
       };
-    case TOGGLE_HIRAGANA_WIDEMODE:
+    case TOGGLE_KANA_WIDEMODE:
       return {
         ...state,
-        hiragana: {
-          ...state.hiragana,
-          wideMode: action.value || !state.hiragana.wideMode,
+        kana: {
+          ...state.kana,
+          wideMode: action.value || !state.kana.wideMode,
+        },
+      };
+    case TOGGLE_KANA_EASYMODE:
+      return {
+        ...state,
+        kana: {
+          ...state.kana,
+          easyMode: !state.kana.easyMode,
+        },
+      };
+    case TOGGLE_KANA_CHAR_SET:
+      return {
+        ...state,
+        kana: {
+          ...state.kana,
+          charSet: action.value,
         },
       };
     case SET_VERB_ORDERING:

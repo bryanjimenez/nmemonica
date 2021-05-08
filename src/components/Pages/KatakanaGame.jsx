@@ -3,19 +3,20 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import { getHiragana } from "../../actions/hiraganaAct";
+import { getKana } from "../../actions/kanaAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
 import StackNavButton from "../Form/StackNavButton";
+import { swapKana } from "../../helper/hiraganaHelper";
 
-const HiraganaGameMeta = {
-  location: "/hiragana/",
-  label: "ひらがな Game",
+const KatakanaGameMeta = {
+  location: "/kana/",
+  label: "仮名 Game",
 };
 
-class HiraganaGame extends Component {
+class KatakanaGame extends Component {
   constructor(props) {
     super(props);
 
@@ -39,18 +40,20 @@ class HiraganaGame extends Component {
     this.choiceButton = this.choiceButton.bind(this);
     this.shuffleGameOrder = this.shuffleGameOrder.bind(this);
     this.populateChoices = this.populateChoices.bind(this);
+    this.getPronunciation = this.getPronunciation.bind(this);
+    this.getKanaCharacter = this.getKanaCharacter.bind(this);
 
     // only fetch data on very first initialization
-    if (!this.props.hiragana || this.props.hiragana.length === 0) {
+    if (this.props.hiragana.length === 0) {
       // console.log('fetching')
-      this.props.getHiragana();
+      this.props.getKana();
     }
   }
 
   componentDidMount() {
     // page navigation after initialcenter
     // data retrival done, set up game
-    if (this.props.hiragana && this.props.hiragana.length > 0) {
+    if (this.props.hiragana.length > 0) {
       this.prepareGame();
     }
   }
@@ -95,11 +98,12 @@ class HiraganaGame extends Component {
 
       for (let vowel = 0; vowel < xMax; vowel++) {
         for (let consonant = 0; consonant < yMax; consonant++) {
-          // should not include yi, ye or wu
+          // should not include yi, ye, wu, or empty row (except -n)
           if (
             (vowel != 1 || consonant != 12) &&
             (vowel != 3 || consonant != 12) &&
-            (vowel != 2 || consonant != 14)
+            (vowel != 2 || consonant != 14) &&
+            (vowel === 0 || consonant != 15)
           )
             gameOrder.push({ vowel, consonant });
         }
@@ -112,8 +116,29 @@ class HiraganaGame extends Component {
     return gameOrder;
   }
 
+  getPronunciation(consonant, vowel) {
+    const vowels = this.props.vowels;
+    const consonants = this.props.consonants;
+
+    const sound = consonants[consonant] + vowels[vowel];
+
+    return this.props.sounds[sound] || sound;
+  }
+
+  getKanaCharacter(consonant, vowel, set) {
+    let kana;
+
+    if (set === 0) {
+      kana = this.props.hiragana[consonant][vowel];
+    } else {
+      kana = this.props.katakana[consonant][vowel];
+    }
+
+    return kana;
+  }
+
   /**
-   * returns a shuffled list of choices containing the answer
+   * @returns {String[]} a shuffled list of choices containing the answer
    * @param {*} answer
    * @param {*} gameOrder
    */
@@ -121,30 +146,38 @@ class HiraganaGame extends Component {
     const choices = [answer];
 
     const difficult = this.state.practiceSide;
-    const vowels = this.props.vowels;
-    const consonants = this.props.consonants;
 
     while (choices.length < this.props.choiceN) {
       const min = 0;
       const max = Math.floor(gameOrder.length);
       const idx = Math.floor(Math.random() * (max - min) + min);
 
-      const sound =
-        consonants[gameOrder[idx].consonant] + vowels[gameOrder[idx].vowel];
-      const cPronunciation = this.props.sounds[sound] || sound;
-      const cCharacter = this.props.hiragana[gameOrder[idx].consonant][
+      let useChar = this.props.charSet;
+      if (this.props.charSet === 2) {
+        useChar = Math.floor(Math.random() * 2);
+      }
+
+      const cPronunciation = this.getPronunciation(
+        gameOrder[idx].consonant,
         gameOrder[idx].vowel
-      ];
+      );
+      const cCharacter = this.getKanaCharacter(
+        gameOrder[idx].consonant,
+        gameOrder[idx].vowel,
+        useChar
+      );
       let choice;
       if (difficult) {
         choice = {
           val: cCharacter,
           hint: cPronunciation,
+          cSet: useChar,
         };
       } else {
         choice = {
           val: cPronunciation,
           hint: cCharacter,
+          cSet: useChar,
         };
       }
 
@@ -167,10 +200,6 @@ class HiraganaGame extends Component {
       // console.log("preparing");
 
       const practiceSide = this.state.practiceSide;
-      const vowels = this.props.vowels;
-      const consonants = this.props.consonants;
-      const sounds = this.props.sounds;
-
       const gameOrder = this.shuffleGameOrder();
 
       let question;
@@ -185,26 +214,32 @@ class HiraganaGame extends Component {
         if (practiceSide === missedQuestion.practiceSide) {
           answer = missedQuestion;
         } else {
-          const { val, hint } = missedQuestion;
-          answer = { val: hint, hint: val };
+          const { val, hint, cSet } = missedQuestion;
+          answer = { val: hint, hint: val, cSet };
         }
       } else {
         // console.log('regular')
         const { consonant, vowel } = gameOrder[this.state.selectedIndex];
-        const sound = consonants[consonant] + vowels[vowel];
 
-        const pronunciation = sounds[sound] || sound;
-        const character = this.props.hiragana[consonant][vowel];
+        let useChar = this.props.charSet;
+        if (this.props.charSet === 2) {
+          useChar = Math.floor(Math.random() * 2);
+        }
+
+        const pronunciation = this.getPronunciation(consonant, vowel);
+        const character = this.getKanaCharacter(consonant, vowel, useChar);
 
         if (practiceSide) {
           answer = {
             val: character,
             hint: pronunciation,
+            cSet: useChar,
           };
         } else {
           answer = {
             val: pronunciation,
             hint: character,
+            cSet: useChar,
           };
         }
       }
@@ -277,7 +312,7 @@ class HiraganaGame extends Component {
     const isRight = choices[index].val === answer.val && correct;
     const visibility = isWrong ? undefined : "hidden";
     const choiceCSS = classNames({
-      clickable: true,
+      clickable: !choices[index].q,
       "text-center": true,
       "correct-color": isRight,
       "incorrect-color": isWrong,
@@ -297,15 +332,40 @@ class HiraganaGame extends Component {
       <div
         key={index}
         onClick={() => {
-          this.checkAnswer(choices[index]);
+          if (!choices[index].q) {
+            this.checkAnswer(choices[index]);
+          }
         }}
         className={choiceCSS}
         style={{ color: isRight, width }}
       >
         <h2 className={choiceH2CSS}>{choices[index].val}</h2>
-        <h6 className="mb-0" style={{ visibility }}>
-          {choices[index].hint}
-        </h6>
+        <div className="d-flex justify-content-around">
+          {!this.props.easyMode && (
+            <h6 className="mb-0" style={{ visibility }}>
+              {choices[index].cSet === answer.cSet
+                ? choices[index].hint
+                : swapKana(choices[index].hint)}
+            </h6>
+          )}
+
+          {this.props.easyMode && [
+            <h6 className="mb-0" key={0} style={{ visibility }}>
+              {choices[index].cSet === 0
+                ? choices[index].hint
+                : swapKana(choices[index].hint)}
+            </h6>,
+            <h6 className="mb-0" key={1} style={{ visibility }}>
+              {choices[index].cSet === 0
+                ? swapKana(choices[index].hint)
+                : choices[index].hint}
+            </h6>,
+          ]}
+
+          {this.props.easyMode && choices[index].q && (
+            <h6 className="mb-0">{swapKana(choices[index].val)}</h6>
+          )}
+        </div>
       </div>
     );
   }
@@ -336,13 +396,18 @@ class HiraganaGame extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           {!this.props.wideMode && (
-            <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
+            <div className="pt-3 d-flex flex-column justify-content-center text-center w-50">
               <h1
                 style={{ color: this.state.correct ? "green" : undefined }}
                 className="clickable"
               >
                 {question}
               </h1>
+              {this.props.easyMode && (
+                <div className="d-flex justify-content-around">
+                  <h6>{swapKana(question)}</h6>
+                </div>
+              )}
             </div>
           )}
           <div className={choiceAreaCSS}>
@@ -385,27 +450,31 @@ class HiraganaGame extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    hiragana: state.hiragana.characters,
-    vowels: state.hiragana.vowels,
-    consonants: state.hiragana.consonants,
-    sounds: state.hiragana.sounds,
-    choiceN: state.settings.hiragana.wideMode
-      ? 31
-      : state.settings.hiragana.choiceN,
-    wideMode: state.settings.hiragana.wideMode,
+    hiragana: state.kana.hiragana,
+    katakana: state.kana.katakana,
+    vowels: state.kana.vowels,
+    consonants: state.kana.consonants,
+    sounds: state.kana.sounds,
+    choiceN: state.settings.kana.wideMode ? 31 : state.settings.kana.choiceN,
+    wideMode: state.settings.kana.wideMode,
+    easyMode: state.settings.kana.easyMode,
+    charSet: state.settings.kana.charSet,
   };
 };
 
-HiraganaGame.propTypes = {
+KatakanaGame.propTypes = {
   hiragana: PropTypes.array.isRequired,
-  getHiragana: PropTypes.func,
+  katakana: PropTypes.array.isRequired,
+  getKana: PropTypes.func,
   vowels: PropTypes.array.isRequired,
   consonants: PropTypes.array.isRequired,
   choiceN: PropTypes.number.isRequired,
   sounds: PropTypes.object.isRequired,
   wideMode: PropTypes.bool,
+  easyMode: PropTypes.bool,
+  charSet: PropTypes.number,
 };
 
-export default connect(mapStateToProps, { getHiragana })(HiraganaGame);
+export default connect(mapStateToProps, { getKana })(KatakanaGame);
 
-export { HiraganaGameMeta };
+export { KatakanaGameMeta };

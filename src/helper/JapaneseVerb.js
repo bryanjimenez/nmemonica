@@ -1,4 +1,4 @@
-import data from "../../data/hiragana.json";
+import data from "../../data/kana.json";
 import { getConsonantVowel } from "./hiraganaHelper";
 import { JapaneseText } from "./JapaneseText";
 
