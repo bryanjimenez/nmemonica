@@ -185,6 +185,7 @@ export function isKatakana(char) {
 /**
  * swaps hiragana for katakana and vicecersa
  * TODO: handle missing characters? ー
+ * TODO: use ascii table offsets?
  * @param {*} character
  */
 export function swapKana(character) {

@@ -350,14 +350,6 @@ class Settings extends Component {
             <h2>Kana Game</h2>
 
             <div className="setting-block">
-              <div className="d-flex justify-content-end">
-                <HiraganaOptionsSlider
-                  initial={this.props.choiceN}
-                  wideMode={this.props.wideMode}
-                  setChoiceN={this.props.setHiraganaBtnN}
-                  toggleWide={this.props.toggleKanaGameWideMode}
-                />
-              </div>
               <div>
                 <SettingsSwitch
                   active={this.props.charSet === 0}
@@ -369,6 +361,14 @@ class Settings extends Component {
                       ? "Katakana"
                       : "Mixed"
                   }
+                />
+              </div>
+              <div className="d-flex justify-content-end">
+                <HiraganaOptionsSlider
+                  initial={this.props.choiceN}
+                  wideMode={this.props.wideMode}
+                  setChoiceN={this.props.setHiraganaBtnN}
+                  toggleWide={this.props.toggleKanaGameWideMode}
                 />
               </div>
               {this.props.charSet === 2 && (

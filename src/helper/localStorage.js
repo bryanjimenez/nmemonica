@@ -33,13 +33,12 @@ export function localStoreAttrUpdate(time, getState, path, attr, value) {
     });
 
     // use value passed else toggle previous value
-    if(value !== undefined ){
+    if (value !== undefined) {
       localPtr[attr] = value;
-    } else if(statePtr[attr] === true || statePtr[attr] === false){
+    } else if (statePtr[attr] === true || statePtr[attr] === false) {
       localPtr[attr] = !statePtr[attr];
-    }
-    else{
-      console.error('failed localStoreAttrUpdate')
+    } else {
+      console.error("failed localStoreAttrUpdate");
     }
 
     return setLocalStorage(localStorageKey, {
