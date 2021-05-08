@@ -21,6 +21,7 @@ import { JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
+import { getTerm, play } from "../../helper/gameHelper";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -36,6 +37,7 @@ class Phrases extends Component {
       showMeaning: false,
       showRomaji: false,
       filteredPhrases: [],
+      frequency: [], // subset of frequency words within current active group
     };
 
     this.props.getPhrases();
@@ -43,6 +45,7 @@ class Phrases extends Component {
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
     this.setOrder = this.setOrder.bind(this);
+    this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
   }
 
   componentDidMount() {
@@ -92,18 +95,26 @@ class Phrases extends Component {
       }
     }
 
-    filteredPhrases.forEach((v, i) => newOrder.push(i));
+    filteredPhrases.forEach((v, i) => {
+      newOrder = [...newOrder, i];
+    });
     if (!this.props.isOrdered) {
       shuffleArray(newOrder);
     }
 
-    this.setState({ filteredPhrases, order: newOrder });
+    const filteredKeys = filteredPhrases.map((f) => f.uid);
+    const frequency = this.props.frequency.filter((f) =>
+      filteredKeys.includes(f)
+    );
+
+    this.setState({ filteredPhrases, order: newOrder, frequency });
   }
 
   gotoNext() {
     const l = this.state.filteredPhrases.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
+      reinforcedUID: undefined,
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
@@ -115,7 +126,16 @@ class Phrases extends Component {
     const i = this.state.selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     this.setState({
+      reinforcedUID: undefined,
       selectedIndex: newSel,
+      showMeaning: false,
+      showRomaji: false,
+    });
+  }
+
+  updateReinforcedUID(uid) {
+    this.setState({
+      reinforcedUID: uid,
       showMeaning: false,
       showRomaji: false,
     });
@@ -125,13 +145,13 @@ class Phrases extends Component {
     if (this.state.filteredPhrases.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
-    let phrase;
-    if (this.state.order) {
-      const index = this.state.order[this.state.selectedIndex];
-      phrase = this.state.filteredPhrases[index];
-    } else {
-      phrase = this.state.filteredPhrases[this.state.selectedIndex];
-    }
+    let phrase = getTerm(
+      this.state.reinforcedUID,
+      this.state.frequency,
+      this.state.selectedIndex,
+      this.state.order,
+      this.state.filteredPhrases
+    );
 
     let japanesePhrase = JapaneseText.parse(phrase.japanese).toHTML();
     let englishPhrase = phrase.english;
@@ -186,7 +206,17 @@ class Phrases extends Component {
           <StackNavButton
             color={"--orange"}
             ariaLabel="Next"
-            action={this.gotoNext}
+            action={() => {
+              play(
+                this.props.freqFilter,
+                this.state.frequency,
+                this.state.filteredPhrases,
+                this.state.reinforcedUID,
+                this.updateReinforcedUID,
+                this.gotoNext,
+                this.props.removeFrequencyPhrase
+              );
+            }}
           >
             <ChevronRightIcon size={16} />
           </StackNavButton>
@@ -236,7 +266,11 @@ class Phrases extends Component {
         </div>
       </div>,
       <div key={2} className="progress-bar flex-shrink-1">
-        <LinearProgress variant="determinate" value={progress} />
+        <LinearProgress
+          variant="determinate"
+          value={progress}
+          color={phrase.reinforce ? "secondary" : "primary"}
+        />
       </div>,
     ];
   }

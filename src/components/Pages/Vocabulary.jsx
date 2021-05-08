@@ -37,6 +37,7 @@ import StackOrderSlider from "../Form/StackOrderSlider";
 import VocabularyMain from "./VocabularyMain";
 import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
+import { getTerm, play } from "../../helper/gameHelper";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -64,7 +65,7 @@ class Vocabulary extends Component {
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
     this.setOrder = this.setOrder.bind(this);
-    this.play = this.play.bind(this);
+    this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
   }
 
   componentDidMount() {
@@ -187,44 +188,6 @@ class Vocabulary extends Component {
     });
   }
 
-  play() {
-    // some games will come from the reinforced list
-    // unless filtering from frequency list
-    const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
-    if (
-      !this.props.freqFilter &&
-      reinforced &&
-      this.state.frequency.length > 0
-    ) {
-      const min = 0;
-      const max = Math.floor(this.state.frequency.length);
-      const idx = Math.floor(Math.random() * (max - min) + min);
-      const vocabulary = this.state.filteredVocab.filter(
-        (v) => this.state.frequency[idx] === v.uid
-      )[0];
-
-      if (vocabulary) {
-        if (this.state.reinforcedUID !== vocabulary.uid) {
-          this.setState({
-            reinforcedUID: vocabulary.uid,
-            showMeaning: false,
-            showRomaji: false,
-            showHint: false,
-          });
-        } else {
-          // avoid repeating the same reinforced word
-          this.gotoNext();
-        }
-      } else {
-        console.warn("uid no longer exists");
-        this.props.removeFrequencyWord(this.state.frequency[idx]);
-        this.gotoNext();
-      }
-    } else {
-      this.gotoNext();
-    }
-  }
-
   gotoNext() {
     const l = this.state.filteredVocab.length;
     const newSel = (this.state.selectedIndex + 1) % l;
@@ -252,32 +215,25 @@ class Vocabulary extends Component {
     });
   }
 
-  getVocabularyWord(selectedIndex, randomOrder, filteredVocab, reinforcedUID) {
-    let vocabulary;
-    if (this.state.reinforcedUID) {
-      vocabulary = filteredVocab.filter((v) => reinforcedUID === v.uid)[0];
-    } else {
-      if (randomOrder) {
-        const index = randomOrder[selectedIndex];
-        vocabulary = filteredVocab[index];
-      } else {
-        vocabulary = filteredVocab[selectedIndex];
-      }
-    }
-
-    vocabulary.reinforce = this.state.frequency.includes(vocabulary.uid);
-    return vocabulary;
+  updateReinforcedUID(uid) {
+    this.setState({
+      reinforcedUID: uid,
+      showMeaning: false,
+      showRomaji: false,
+      showHint: false,
+    });
   }
 
   render() {
     if (this.state.filteredVocab.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
-    const vocabulary = this.getVocabularyWord(
+    const vocabulary = getTerm(
+      this.state.reinforcedUID,
+      this.state.frequency,
       this.state.selectedIndex,
       this.state.order,
-      this.state.filteredVocab,
-      this.state.reinforcedUID
+      this.state.filteredVocab
     );
 
     const isVerb = vocabulary.grp === "Verb";
@@ -326,7 +282,17 @@ class Vocabulary extends Component {
           <StackNavButton
             color={"--yellow"}
             ariaLabel="Next"
-            action={this.play}
+            action={() => {
+              play(
+                this.props.freqFilter,
+                this.state.frequency,
+                this.state.filteredVocab,
+                this.state.reinforcedUID,
+                this.updateReinforcedUID,
+                this.gotoNext,
+                this.props.removeFrequencyWord
+              );
+            }}
           >
             <ChevronRightIcon size={16} />
           </StackNavButton>
@@ -467,7 +433,11 @@ class Vocabulary extends Component {
             }
           }}
         >
-          <LinearProgress variant="determinate" value={progress} />
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            color={vocabulary.reinforce ? "secondary" : "primary"}
+          />
         </div>,
       ];
     } else {
