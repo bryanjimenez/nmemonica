@@ -124,7 +124,14 @@ class Phrases extends Component {
   gotoPrev() {
     const l = this.state.filteredPhrases.length;
     const i = this.state.selectedIndex - 1;
-    const newSel = i < 0 ? (l + i) % l : i % l;
+
+    let newSel;
+    if (this.state.reinforcedUID) {
+      newSel = this.state.selectedIndex;
+    } else {
+      newSel = i < 0 ? (l + i) % l : i % l;
+    }
+
     this.setState({
       reinforcedUID: undefined,
       selectedIndex: newSel,
