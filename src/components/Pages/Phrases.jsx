@@ -215,6 +215,7 @@ class Phrases extends Component {
             ariaLabel="Next"
             action={() => {
               play(
+                this.props.reinforce,
                 this.props.freqFilter,
                 this.state.frequency,
                 this.state.filteredPhrases,
@@ -291,6 +292,7 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.phrases.romaji,
     frequency: state.settings.phrases.frequency,
     freqFilter: state.settings.phrases.filter,
+    reinforce: state.settings.phrases.reinforce,
   };
 };
 
@@ -306,6 +308,7 @@ Phrases.propTypes = {
   frequency: PropTypes.array,
   freqFilter: PropTypes.bool,
   togglePhrasesFilter: PropTypes.func,
+  reinforce: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {

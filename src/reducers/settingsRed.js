@@ -27,6 +27,8 @@ import {
   REMOVE_FREQUENCY_PHRASE,
   TOGGLE_PHRASES_FILTER,
   TOGGLE_KANA_CHAR_SET,
+  TOGGLE_VOCABULARY_REINFORCE,
+  TOGGLE_PHRASES_REINFORCE,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
@@ -37,6 +39,7 @@ export const DEFAULT_SETTINGS = {
     ordered: true,
     practiceSide: false,
     romaji: false,
+    reinforce: false,
     frequency: [],
     filter: false,
   },
@@ -46,6 +49,7 @@ export const DEFAULT_SETTINGS = {
     romaji: false,
     hint: false,
     filter: false,
+    reinforce: false,
     frequency: [],
     activeGroup: [],
     autoPlay: false,
@@ -170,6 +174,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           autoPlay: action.value || !state.vocabulary.autoPlay,
         },
       };
+    case TOGGLE_VOCABULARY_REINFORCE:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          reinforce: !state.vocabulary.reinforce,
+        },
+      };
     case ADD_FREQUENCY_WORD:
       return {
         ...state,
@@ -272,6 +284,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         phrases: {
           ...state.phrases,
           romaji: action.value || !state.phrases.romaji,
+        },
+      };
+    case TOGGLE_PHRASES_REINFORCE:
+      return {
+        ...state,
+        phrases: {
+          ...state.phrases,
+          reinforce: !state.phrases.reinforce,
         },
       };
     case GET_USER_SETTINGS:

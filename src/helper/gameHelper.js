@@ -1,5 +1,6 @@
 /**
  * Goes to the next term or selects one from the frequency list
+ * @param {*} reinforce
  * @param {*} freqFilter
  * @param {*} frequency
  * @param {*} filteredVocab
@@ -9,6 +10,7 @@
  * @param {*} removeFrequencyTerm
  */
 export function play(
+  reinforce,
   freqFilter,
   frequency,
   filteredVocab,
@@ -19,7 +21,8 @@ export function play(
 ) {
   // some games will come from the reinforced list
   // unless filtering from frequency list
-  const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
+  const reinforced =
+    reinforce && [false, false, true][Math.floor(Math.random() * 3)];
   if (!freqFilter && reinforced && frequency.length > 0) {
     const min = 0;
     const max = Math.floor(frequency.length);

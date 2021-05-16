@@ -291,6 +291,7 @@ class Vocabulary extends Component {
             ariaLabel="Next"
             action={() => {
               play(
+                this.props.reinforce,
                 this.props.freqFilter,
                 this.state.frequency,
                 this.state.filteredVocab,
@@ -519,6 +520,7 @@ const mapStateToProps = (state) => {
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     autoVerbView: state.settings.vocabulary.autoVerbView,
+    reinforce: state.settings.vocabulary.reinforce,
   };
 };
 
@@ -541,6 +543,7 @@ Vocabulary.propTypes = {
   toggleAutoVerbView: PropTypes.func,
   freqFilter: PropTypes.bool,
   toggleVocabularyFilter: PropTypes.func,
+  reinforce: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {
