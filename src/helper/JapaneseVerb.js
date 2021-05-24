@@ -24,24 +24,39 @@ export class JapaneseVerb extends JapaneseText {
   getVerbClass() {
     const pronunciation = this.furigana;
 
+    // verb class 1 exceptions
+    const spelling = this.getSpelling();
+    if (
+      spelling === "走る" ||
+      spelling === "切る" ||
+      spelling === "要る" ||
+      spelling === "入る" ||
+      spelling === "帰る"
+    ) {
+      return 1;
+    }
+
     const verbArr = pronunciation.split("");
     const lastChar = verbArr.pop();
     const beforeLastChar = verbArr.pop();
+
+    const iSound = 1;
+    const eSound = 3;
 
     const { /*iConsonant,*/ iVowel: beforeLastVowel } = getConsonantVowel(
       beforeLastChar
     );
 
     if (
-      this.getSpelling().split("").slice(-2).join("") === "する" ||
+      spelling.split("").slice(-2).join("") === "する" ||
       pronunciation === "くる" ||
       pronunciation === "だ" ||
       pronunciation === "ある"
     ) {
       return 3;
     } else if (
-      (lastChar === "る" && beforeLastVowel === 1) ||
-      (lastChar === "る" && beforeLastVowel === 3)
+      (beforeLastVowel === iSound && lastChar === "る") ||
+      (beforeLastVowel === eSound && lastChar === "る")
     ) {
       return 2; //ichidan
     } else {
