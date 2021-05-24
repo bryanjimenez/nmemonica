@@ -18,6 +18,7 @@ export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
 export const TOGGLE_VOCABULARY_FILTER = "toggle_vocabulary_filter";
 export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
 export const TOGGLE_VOCABULARY_AUTO_PLAY = "toggle_vocabulary_auto_play";
+export const TOGGLE_VOCABULARY_REINFORCE = "toggle_vocabulary_reinforce";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -26,6 +27,7 @@ export const REMOVE_FREQUENCY_WORD = "remove_frequency_word";
 export const ADD_FREQUENCY_PHRASE = "add_frequency_phrase";
 export const REMOVE_FREQUENCY_PHRASE = "remove_frequency_phrase";
 export const TOGGLE_PHRASES_FILTER = "toggle_phrases_filter";
+export const TOGGLE_PHRASES_REINFORCE = "toggle_phrases_reinforce";
 export const TOGGLE_DARK_MODE = "toggle_dark_mode";
 export const SCROLLING_STATE = "scrolling_state";
 export const AUTO_VERB_VIEW = "auto_verb_view";
@@ -284,6 +286,33 @@ export function togglePhrasesRomaji() {
   };
 }
 
+export function toggleVocabularyReinforcement() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/vocabulary/";
+    const attr = "reinforce";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_VOCABULARY_REINFORCE
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_VOCABULARY_REINFORCE,
+      });
+    }
+  };
+}
+
 export function setVocabularyOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -398,11 +427,16 @@ export function toggleVocabularyHint() {
 export function toggleVocabularyFilter() {
   return (dispatch, getState) => {
     const { user } = getState().login;
+    const { filter, reinforce } = getState().settings.vocabulary;
 
     const path = "/vocabulary/";
     const attr = "filter";
     const time = new Date();
     localStoreAttrUpdate(time, getState, path, attr);
+
+    if (!filter && reinforce) {
+      toggleVocabularyReinforcement()(dispatch, getState);
+    }
 
     if (user) {
       firebaseAttrUpdate(
@@ -709,11 +743,16 @@ export function removeFrequencyPhrase(uid) {
 export function togglePhrasesFilter() {
   return (dispatch, getState) => {
     const { user } = getState().login;
+    const { filter, reinforce } = getState().settings.phrases;
 
     const path = "/phrases/";
     const attr = "filter";
     const time = new Date();
     localStoreAttrUpdate(time, getState, path, attr);
+
+    if (!filter && reinforce) {
+      togglePhrasesReinforcement()(dispatch, getState);
+    }
 
     if (user) {
       firebaseAttrUpdate(
@@ -728,6 +767,33 @@ export function togglePhrasesFilter() {
     } else {
       dispatch({
         type: TOGGLE_PHRASES_FILTER,
+      });
+    }
+  };
+}
+
+export function togglePhrasesReinforcement() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/phrases/";
+    const attr = "reinforce";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_PHRASES_REINFORCE
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_PHRASES_REINFORCE,
       });
     }
   };

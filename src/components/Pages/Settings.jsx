@@ -27,6 +27,8 @@ import {
   removeFrequencyPhrase,
   toggleKana,
   toggleKanaEasyMode,
+  toggleVocabularyReinforcement,
+  togglePhrasesReinforcement,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { GroupItem } from "../Form/GroupItem";
@@ -153,6 +155,14 @@ class Settings extends Component {
                         active={!this.props.phraseOrder}
                         action={this.props.setPhrasesOrdering}
                         statusText="Random Order"
+                      />
+                    </div>
+                    <div className="mb-2">
+                      <SettingsSwitch
+                        active={this.props.phraseReinforce}
+                        action={this.props.togglePhrasesReinforcement}
+                        disabled={this.props.phraseFilter}
+                        statusText="Reinforcement"
                       />
                     </div>
                     <div className="mb-2">
@@ -289,6 +299,14 @@ class Settings extends Component {
                   </div>
                   <div className="mb-2">
                     <SettingsSwitch
+                      active={this.props.vocabReinforce}
+                      action={this.props.toggleVocabularyReinforcement}
+                      disabled={this.props.vocabFilter}
+                      statusText="Reinforcement"
+                    />
+                  </div>
+                  <div className="mb-2">
+                    <SettingsSwitch
                       active={this.props.vocabRomaji}
                       action={this.props.toggleVocabularyRomaji}
                       statusText="Romaji"
@@ -371,15 +389,14 @@ class Settings extends Component {
                   toggleWide={this.props.toggleKanaGameWideMode}
                 />
               </div>
-              {this.props.charSet === 2 && (
-                <div>
-                  <SettingsSwitch
-                    active={this.props.easyMode}
-                    action={this.props.toggleKanaEasyMode}
-                    statusText="Kana Hints"
-                  />
-                </div>
-              )}
+              <div>
+                <SettingsSwitch
+                  active={this.props.easyMode}
+                  action={this.props.toggleKanaEasyMode}
+                  disabled={this.props.charSet === 2}
+                  statusText="Kana Hints"
+                />
+              </div>
             </div>
           </div>
           <div className={pageClassName}>
@@ -446,6 +463,7 @@ const mapStateToProps = (state) => {
     vocabulary: state.vocabulary.value,
     phrases: state.phrases.value,
     phraseFreq: state.settings.phrases.frequency,
+    phraseReinforce: state.settings.phrases.reinforce,
     vocabOrder: state.settings.vocabulary.ordered,
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
@@ -456,6 +474,7 @@ const mapStateToProps = (state) => {
     autoVerbView: state.settings.vocabulary.autoVerbView,
     vocabFilter: state.settings.vocabulary.filter,
     vocabFreq: state.settings.vocabulary.frequency,
+    vocabReinforce: state.settings.vocabulary.reinforce,
     phraseFilter: state.settings.phrases.filter,
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
@@ -480,6 +499,8 @@ Settings.propTypes = {
   getPhrases: PropTypes.func,
   phraseFilter: PropTypes.bool,
   phraseFreq: PropTypes.array,
+  phraseReinforce: PropTypes.bool,
+  togglePhrasesReinforcement: PropTypes.func,
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
@@ -517,6 +538,8 @@ Settings.propTypes = {
   getVocabulary: PropTypes.func,
   autoVerbView: PropTypes.bool,
   toggleAutoVerbView: PropTypes.func,
+  vocabReinforce: PropTypes.bool,
+  toggleVocabularyReinforcement: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
   setOppositesQRomaji: PropTypes.func,
@@ -546,9 +569,11 @@ export default connect(mapStateToProps, {
   getVocabulary,
   toggleVocabularyActiveGrp,
   toggleVocabularyAutoPlay,
+  toggleVocabularyReinforcement,
   toggleDarkMode,
   toggleAutoVerbView,
   togglePhrasesFilter,
+  togglePhrasesReinforcement,
   removeFrequencyPhrase,
   getPhrases,
 })(Settings);

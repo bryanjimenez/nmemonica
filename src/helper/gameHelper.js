@@ -1,14 +1,16 @@
 /**
  * Goes to the next term or selects one from the frequency list
- * @param {*} freqFilter
- * @param {*} frequency
- * @param {*} filteredVocab
- * @param {*} reinforcedUID
- * @param {*} updateReinforcedUID
- * @param {*} gotoNext
- * @param {*} removeFrequencyTerm
+ * @param {Boolean} reinforce
+ * @param {Boolean} freqFilter
+ * @param {Array} frequency
+ * @param {Array} filteredVocab
+ * @param {String} reinforcedUID
+ * @param {Function} updateReinforcedUID
+ * @param {Function} gotoNext
+ * @param {Function} removeFrequencyTerm
  */
 export function play(
+  reinforce,
   freqFilter,
   frequency,
   filteredVocab,
@@ -19,7 +21,8 @@ export function play(
 ) {
   // some games will come from the reinforced list
   // unless filtering from frequency list
-  const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
+  const reinforced =
+    reinforce && [false, false, true][Math.floor(Math.random() * 3)];
   if (!freqFilter && reinforced && frequency.length > 0) {
     const min = 0;
     const max = Math.floor(frequency.length);
@@ -45,11 +48,11 @@ export function play(
 
 /**
  * Retrieves term (word or phrase) based on the selectedIndex or reinforcedUID. Takes into account random ordering.
- * @param {*} reinforcedUID
- * @param {*} frequency
- * @param {*} selectedIndex
- * @param {*} randomOrder
- * @param {*} filteredVocab
+ * @param {String} reinforcedUID
+ * @param {Array} frequency
+ * @param {Number} selectedIndex
+ * @param {Array} randomOrder
+ * @param {Array} filteredVocab
  * @returns the term (word or phrase)
  */
 export function getTerm(
