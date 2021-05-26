@@ -381,7 +381,7 @@ class Settings extends Component {
                   }
                 />
               </div>
-              <div className="d-flex justify-content-end">
+              <div className="d-flex justify-content-end p-2">
                 <HiraganaOptionsSlider
                   initial={this.props.choiceN}
                   wideMode={this.props.wideMode}
