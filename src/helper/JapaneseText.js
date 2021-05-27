@@ -122,7 +122,9 @@ export function furiganaParse(pronunciation, orthography) {
       //hiragana
       if (prevWasKanji) {
         while (pronunciation.charAt(start) != thisChar) {
-          fword += pronunciation.charAt(start);
+          if (pronunciation.charAt(start) !== " ") {
+            fword += pronunciation.charAt(start);
+          }
           start++;
 
           if (start > pronunciation.length) {
@@ -131,8 +133,8 @@ export function furiganaParse(pronunciation, orthography) {
         }
         furiganas.push(fword);
         fword = "";
-        nword += thisChar;
-      } else {
+      }
+      if (thisChar !== " ") {
         nword += thisChar;
       }
 
@@ -145,8 +147,12 @@ export function furiganaParse(pronunciation, orthography) {
       prevWasKanji = false;
     } else {
       // kanji
-      fword += pronunciation.charAt(start);
-      kword += thisChar;
+      if (pronunciation.charAt(start) !== " ") {
+        fword += pronunciation.charAt(start);
+      }
+      if (thisChar !== " ") {
+        kword += thisChar;
+      }
       prevWasKanji = true;
       start++;
       if (nword !== "") {
@@ -156,7 +162,9 @@ export function furiganaParse(pronunciation, orthography) {
 
       if (orthography.length - i === 1) {
         // (this) last character is a kanji
-        fword += pronunciation.substr(start);
+        if (pronunciation.substr(start) !== " ") {
+          fword += pronunciation.substr(start);
+        }
         furiganas.push(fword);
         kanjis.push(kword);
       }
@@ -173,9 +181,13 @@ export function furiganaParse(pronunciation, orthography) {
     startsWHiragana
   );
 
+  // remove spaces which are used as a workaround for parsing failure due to repeated chars
+  const pronunciationNoSpace = pronunciation.split(" ").join("");
+  const ortographyNoSpace = orthography.split(" ").join("");
+
   if (
-    pronunciationOutput !== pronunciation ||
-    orthographyOutput !== orthography
+    pronunciationOutput !== pronunciationNoSpace ||
+    orthographyOutput !== ortographyNoSpace
   ) {
     const err = new Error("Failed to parse text to build furigana");
     err.data = {
