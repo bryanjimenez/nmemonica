@@ -31,7 +31,6 @@ import {
   togglePhrasesReinforcement,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
-import { GroupItem } from "../Form/GroupItem";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import HiraganaOptionsSlider from "../Form/HiraganaOptionsSlider";
 import { SyncIcon, XCircleIcon } from "@primer/octicons-react";
@@ -39,6 +38,9 @@ import { SyncIcon, XCircleIcon } from "@primer/octicons-react";
 import "./Settings.css";
 import "./spin.css";
 import { getPhrases } from "../../actions/phrasesAct";
+import { NotReady } from "../Form/NotReady";
+import { SetVocabGList } from "./SetVocabGList";
+import { SetVocabGFList } from "./SetVocabGFList";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -64,6 +66,10 @@ class Settings extends Component {
 
   render() {
     const pageClassName = classNames({ "mb-5": true });
+
+    if (this.props.vocabulary.length < 1)
+      return <NotReady addlStyle="main-panel" />;
+
     return (
       <div className="settings">
         <div className="d-flex flex-column justify-content-between pl-3 pr-3">
@@ -209,81 +215,28 @@ class Settings extends Component {
                         No words have been chosen
                       </div>
                     )}
-                  {this.props.vocabFilter && this.props.vocabFreq.length > 0 && (
-                    <div>
-                      <h5 key={0}>Frequency</h5>
-                      <div key={1}>
-                        {this.props.vocabFreq.map((w, i) => (
-                          <div
-                            key={i}
-                            className="p-0 pl-2 pr-2 clickable"
-                            onClick={() => {
-                              this.props.removeFrequencyWord(w);
-                            }}
-                          >
-                            <span className="p-1">
-                              <XCircleIcon
-                                className="incorrect-color"
-                                size="small"
-                                aria-label="remove"
-                              />
-                            </span>
-                            <span className="p-1">
-                              {
-                                (
-                                  this.props.vocabulary.find(
-                                    (v) => v.uid === w
-                                  ) || { english: w }
-                                ).english
-                              }
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {!this.props.vocabFilter && (
-                    <div>
-                      <h5 key={0}>Groups</h5>
-
-                      {Object.keys(this.props.vocabGroups).map((g, i) => {
-                        const grpActive = this.props.vocabActive.includes(g);
-
-                        return (
-                          <div key={i + 1}>
-                            <GroupItem
-                              key={i}
-                              active={this.props.vocabActive.includes(g)}
-                              onClick={() => {
-                                this.props.toggleVocabularyActiveGrp(g);
-                              }}
-                            >
-                              {g}
-                            </GroupItem>
-
-                            {!grpActive &&
-                              this.props.vocabGroups[g].map((s, i) => (
-                                <GroupItem
-                                  key={i}
-                                  addlStyle="ml-3"
-                                  active={this.props.vocabActive.includes(
-                                    g + "." + s
-                                  )}
-                                  onClick={() => {
-                                    this.props.toggleVocabularyActiveGrp(
-                                      g + "." + s
-                                    );
-                                  }}
-                                >
-                                  {s}
-                                </GroupItem>
-                              ))}
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <SetVocabGList
+                      vocabGroups={this.props.vocabGroups}
+                      vocabActive={this.props.vocabActive}
+                      toggleVocabularyActiveGrp={
+                        this.props.toggleVocabularyActiveGrp
+                      }
+                    />
                   )}
+                  {this.props.vocabFilter &&
+                    this.props.vocabFreq.length > 0 && (
+                      <SetVocabGFList
+                        vocabGroups={this.props.vocabGroups}
+                        vocabActive={this.props.vocabActive}
+                        vocabFreq={this.props.vocabFreq}
+                        vocabulary={this.props.vocabulary}
+                        removeFrequencyWord={this.props.removeFrequencyWord}
+                        toggleVocabularyActiveGrp={
+                          this.props.toggleVocabularyActiveGrp
+                        }
+                      />
+                    )}
                 </div>
 
                 <div className="column-2 setting-block">

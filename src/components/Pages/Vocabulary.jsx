@@ -125,9 +125,17 @@ class Vocabulary extends Component {
     if (this.props.freqFilter) {
       // frequency filtering
       if (this.props.frequency.length > 0) {
-        filteredVocab = this.props.vocab.filter((v) =>
-          this.props.frequency.includes(v.uid)
-        );
+        if (this.props.activeGroup.length > 0) {
+          filteredVocab = this.props.vocab.filter(
+            (v) =>
+              this.props.frequency.includes(v.uid) &&
+              this.props.activeGroup.includes(v.grp)
+          );
+        } else {
+          filteredVocab = this.props.vocab.filter((v) =>
+            this.props.frequency.includes(v.uid)
+          );
+        }
       } else {
         // last frequency word was just removed
         this.props.toggleVocabularyFilter();
