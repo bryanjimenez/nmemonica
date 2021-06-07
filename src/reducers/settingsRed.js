@@ -67,7 +67,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         global: {
           ...state.global,
-          darkMode: action.value || !state.global.darkMode,
+          darkMode: !state.global.darkMode,
         },
       };
     case SCROLLING_STATE:
@@ -83,7 +83,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         kana: {
           ...state.kana,
-          choiceN: action.value || !state.kana.choiceN,
+          choiceN: action.value,
         },
       };
     case TOGGLE_KANA_WIDEMODE:
@@ -91,7 +91,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         kana: {
           ...state.kana,
-          wideMode: action.value || !state.kana.wideMode,
+          wideMode: !state.kana.wideMode,
         },
       };
     case TOGGLE_KANA_EASYMODE:
@@ -115,7 +115,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         verbs: {
           ...state.verbs,
-          ordered: action.value || !state.verbs.ordered,
+          ordered: !state.verbs.ordered,
         },
       };
     case SET_VERB_MASU:
@@ -123,7 +123,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         verbs: {
           ...state.verbs,
-          masu: action.value || !state.verbs.masu,
+          masu: !state.verbs.masu,
         },
       };
     case SET_PHRASES_ORDERING:
@@ -131,7 +131,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         phrases: {
           ...state.phrases,
-          ordered: action.value || !state.phrases.ordered,
+          ordered: !state.phrases.ordered,
         },
       };
     case SET_VOCABULARY_ORDERING:
@@ -139,7 +139,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          ordered: action.value || !state.vocabulary.ordered,
+          ordered: !state.vocabulary.ordered,
         },
       };
     case TOGGLE_VOCABULARY_ROMAJI:
@@ -147,7 +147,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          romaji: action.value || !state.vocabulary.romaji,
+          romaji: !state.vocabulary.romaji,
         },
       };
     case TOGGLE_VOCABULARY_HINT:
@@ -155,7 +155,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          hint: action.value || !state.vocabulary.hint,
+          hint: !state.vocabulary.hint,
         },
       };
     case FLIP_VOCABULARY_PRACTICE_SIDE:
@@ -163,7 +163,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          practiceSide: action.value || !state.vocabulary.practiceSide,
+          practiceSide: !state.vocabulary.practiceSide,
         },
       };
     case TOGGLE_VOCABULARY_AUTO_PLAY:
@@ -171,7 +171,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          autoPlay: action.value || !state.vocabulary.autoPlay,
+          autoPlay: !state.vocabulary.autoPlay,
         },
       };
     case TOGGLE_VOCABULARY_REINFORCE:
@@ -251,7 +251,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         opposites: {
           ...state.opposites,
-          qRomaji: action.value || !state.opposites.qRomaji,
+          qRomaji: !state.opposites.qRomaji,
         },
       };
     case SET_OPPOSITES_A_ROMAJI:
@@ -259,7 +259,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         opposites: {
           ...state.opposites,
-          aRomaji: action.value || !state.opposites.aRomaji,
+          aRomaji: !state.opposites.aRomaji,
         },
       };
     case SET_PARTICLES_A_ROMAJI:
@@ -267,7 +267,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         particles: {
           ...state.particles,
-          aRomaji: action.value || !state.particles.aRomaji,
+          aRomaji: !state.particles.aRomaji,
         },
       };
     case FLIP_PHRASES_PRACTICE_SIDE:
@@ -275,7 +275,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         phrases: {
           ...state.phrases,
-          practiceSide: action.value || !state.phrases.practiceSide,
+          practiceSide: !state.phrases.practiceSide,
         },
       };
     case TOGGLE_PHRASES_ROMAJI:
@@ -283,7 +283,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         phrases: {
           ...state.phrases,
-          romaji: action.value || !state.phrases.romaji,
+          romaji: !state.phrases.romaji,
         },
       };
     case TOGGLE_PHRASES_REINFORCE:
