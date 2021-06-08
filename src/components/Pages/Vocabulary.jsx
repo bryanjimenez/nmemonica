@@ -349,7 +349,7 @@ class Vocabulary extends Component {
                 )}
               </div>
             </div>
-            <div className="col text-center">
+            <div className="col text-center" style={{maxHeight:'24px'}}>
               {this.state.showHint && (
                 <h5
                   onClick={() => {
