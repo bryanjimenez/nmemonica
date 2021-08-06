@@ -24,7 +24,6 @@ class VerbMain extends Component {
       this.setState({
         showMeaning: false,
         showRomaji: false,
-        shownForm: this.props.verbForm ? "masu" : "dictionary",
       });
     }
   }
@@ -163,7 +162,6 @@ class VerbMain extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    practiceSide: state.settings.verbs.practiceSide,
     romajiActive: state.settings.verbs.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
