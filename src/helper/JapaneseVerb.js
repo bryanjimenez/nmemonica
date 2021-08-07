@@ -31,7 +31,8 @@ export class JapaneseVerb extends JapaneseText {
       spelling === "切る" ||
       spelling === "要る" ||
       spelling === "入る" ||
-      spelling === "帰る"
+      spelling === "帰る" ||
+      spelling === "減る"
     ) {
       return 1;
     }
