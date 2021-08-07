@@ -50,9 +50,19 @@ function listItem(grpActive, i, uid, english, removeFrequencyWord) {
  * Groups + Frequency words list
  */
 export function SetVocabGFList(props) {
-  const thisgrp = props.vocabFreq.map((f) =>
-    props.vocabulary.find((v) => v.uid === f)
-  );
+  let cleanup = [];
+
+  const thisgrp = props.vocabFreq.reduce((acc, f) => {
+    const found = props.vocabulary.find((v) => v.uid === f);
+
+    if (found) {
+      acc = [...acc, found];
+    } else {
+      cleanup = [...cleanup, f];
+    }
+
+    return acc;
+  }, []);
 
   const grplist = thisgrp.reduce((acc, cur) => {
     if (acc[cur.grp]) {
@@ -96,6 +106,14 @@ export function SetVocabGFList(props) {
           );
         })}
       </div>
+      {cleanup.length > 0 && (
+        <div className="mt-5">
+          <span className="font-weight-bold">Manual cleanup</span>
+          {cleanup.map((orphanUid, i) =>
+            listItem(true, i, orphanUid, orphanUid, props.removeFrequencyWord)
+          )}
+        </div>
+      )}
     </div>
   );
 }
