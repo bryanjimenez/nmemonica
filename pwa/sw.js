@@ -79,6 +79,11 @@ self.addEventListener("fetch", (e) => {
   } else if (url.indexOf(ghURL) === 0) {
     // site asset
     e.respondWith(appAssetReq(url));
+  } else if (url.indexOf(gCloudFnPronounce + "/override_cache") === 0) {
+    // override cache site media asset
+    console.log("[ServiceWorker] Overriding Asset in Cache");
+    const newUrl = url.split("/override_cache").join("");
+    e.respondWith(recache(appMediaCache, newUrl));
   } else if (url.indexOf(gCloudFnPronounce) === 0) {
     // site media asset
     e.respondWith(appMediaReq(url));
