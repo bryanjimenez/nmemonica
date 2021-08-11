@@ -349,10 +349,15 @@ export function audioPronunciation(vocabulary) {
     const isHiraganaWord = !vocabulary.pronounce
       .split("")
       .some((c) => !isHiragana(c));
-    if (isHiraganaWord) {
+
+    const isKatakanaWord = !vocabulary.pronounce
+      .split("")
+      .some((c) => !isKatakana(c));
+
+    if (isHiraganaWord || isKatakanaWord) {
       q = vocabulary.pronounce;
     } else {
-      console.warn("pronunciation is not hiragana");
+      console.warn("pronunciation is not hiragana or katakana");
     }
   } else {
     const w = JapaneseText.parse(vocabulary.japanese);
