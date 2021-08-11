@@ -4,16 +4,27 @@ import { UnmuteIcon } from "@primer/octicons-react";
 import { pronounceEndoint } from "../../../environment.development";
 
 export default function AudioItem(props) {
+  // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
+  // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
+
   let player;
+  let tStart;
 
   return (
     <div
       className="d-flex justify-content-center clickable"
-      onClick={() => {
-        // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
-        // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
+      onTouchStart={() => {
+        tStart = Date.now();
+      }}
+      onTouchEnd={() => {
+        const time = Date.now() - tStart;
 
-        player.src = pronounceEndoint + "?q=" + props.word;
+        if (time < 500) {
+          player.src = pronounceEndoint + "?q=" + props.word;
+        } else {
+          player.src =
+            pronounceEndoint + "/override_cache" + "?q=" + props.word;
+        }
         player.play();
       }}
     >
