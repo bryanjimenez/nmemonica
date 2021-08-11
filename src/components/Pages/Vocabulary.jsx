@@ -289,7 +289,11 @@ class Vocabulary extends Component {
           </StackNavButton>
 
           {isVerb && this.props.autoVerbView ? (
-            <VerbMain verb={vocabulary} verbForm={false} />
+            <VerbMain
+              verb={vocabulary}
+              verbForm={false}
+              practiceSide={this.props.practiceSide}
+            />
           ) : (
             <VocabularyMain vocabulary={vocabulary} />
           )}
@@ -349,7 +353,7 @@ class Vocabulary extends Component {
                 )}
               </div>
             </div>
-            <div className="col text-center" style={{maxHeight:'24px'}}>
+            <div className="col text-center" style={{ maxHeight: "24px" }}>
               {this.state.showHint && (
                 <h5
                   onClick={() => {
