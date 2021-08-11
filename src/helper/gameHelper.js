@@ -77,3 +77,49 @@ export function getTerm(
   term.reinforce = frequency.includes(term.uid);
   return term;
 }
+
+/**
+ * Filters terms (words or phrases) list down by groups or frequency list
+ * @param {Boolean} isFreqFiltered
+ * @param {Array} termList word or phrase list
+ * @param {Array} frequencyList
+ * @param {Array} activeGrpList
+ * @param {Function} toggleFilterType toggle between frequency or group filtering
+ * @returns {Array} filteredPhrases
+ */
+export function termFrequencyGroupFilter(
+  isFreqFiltered,
+  termList,
+  frequencyList,
+  activeGrpList,
+  toggleFilterType
+) {
+  let filteredTerms = termList;
+
+  if (isFreqFiltered) {
+    // frequency filtering
+    if (frequencyList.length > 0) {
+      if (activeGrpList.length > 0) {
+        filteredTerms = termList.filter(
+          (p) => frequencyList.includes(p.uid) && activeGrpList.includes(p.grp)
+        );
+      } else {
+        filteredTerms = termList.filter((p) => frequencyList.includes(p.uid));
+      }
+    } else {
+      // last frequency word was just removed
+      toggleFilterType();
+    }
+  } else {
+    // group filtering
+    if (activeGrpList.length > 0) {
+      filteredTerms = termList.filter(
+        (w) =>
+          activeGrpList.includes(w.grp) ||
+          activeGrpList.includes(w.grp + "." + w.subGrp)
+      );
+    }
+  }
+
+  return filteredTerms;
+}

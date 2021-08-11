@@ -29,6 +29,7 @@ import {
   TOGGLE_KANA_CHAR_SET,
   TOGGLE_VOCABULARY_REINFORCE,
   TOGGLE_PHRASES_REINFORCE,
+  TOGGLE_PHRASES_ACTIVE_GROUP,
 } from "../actions/settingsAct";
 
 export const DEFAULT_SETTINGS = {
@@ -41,6 +42,7 @@ export const DEFAULT_SETTINGS = {
     romaji: false,
     reinforce: false,
     frequency: [],
+    activeGroup: [],
     filter: false,
   },
   vocabulary: {
@@ -228,6 +230,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         phrases: {
           ...state.phrases,
           filter: !state.phrases.filter,
+        },
+      };
+    case TOGGLE_PHRASES_ACTIVE_GROUP:
+      return {
+        ...state,
+        phrases: {
+          ...state.phrases,
+          activeGroup: action.value,
         },
       };
     case TOGGLE_VOCABULARY_ACTIVE_GROUP:

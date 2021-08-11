@@ -12,6 +12,7 @@ import {
   setVocabularyOrdering,
   setPhrasesOrdering,
   togglePhrasesRomaji,
+  togglePhrasesActiveGrp,
   toggleVocabularyRomaji,
   toggleVocabularyHint,
   setOppositesQRomaji,
@@ -33,7 +34,7 @@ import {
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import HiraganaOptionsSlider from "../Form/HiraganaOptionsSlider";
-import { SyncIcon, XCircleIcon } from "@primer/octicons-react";
+import { SyncIcon } from "@primer/octicons-react";
 
 import "./Settings.css";
 import "./spin.css";
@@ -113,8 +114,10 @@ class Settings extends Component {
                     <SettingsSwitch
                       active={this.props.phraseFilter}
                       action={this.props.togglePhrasesFilter}
-                      // color="default"
-                      statusText="Frequency filter"
+                      color="default"
+                      statusText={
+                        this.props.phraseFilter ? "Frequency" : "Groups"
+                      }
                     />
                   </div>
                   {this.props.phraseFilter &&
@@ -123,36 +126,29 @@ class Settings extends Component {
                         No phrases have been chosen
                       </div>
                     )}
-                  {this.props.phraseFilter && this.props.phraseFreq.length > 0 && (
-                    <div>
-                      {this.props.phraseFreq.map((pUid, i) => (
-                        <div
-                          key={i}
-                          className="p-0 pl-2 pr-2 clickable"
-                          onClick={() => {
-                            this.props.removeFrequencyPhrase(pUid);
-                          }}
-                        >
-                          <span className="p-1">
-                            <XCircleIcon
-                              className="incorrect-color"
-                              size="small"
-                              aria-label="remove"
-                            />
-                          </span>
-                          <span className="p-1">
-                            {
-                              (
-                                this.props.phrases.find(
-                                  (p) => p.uid === pUid
-                                ) || { english: pUid }
-                              ).english
-                            }
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+
+                  {!this.props.phraseFilter && (
+                    <SetVocabGList
+                      vocabGroups={this.props.phraseGroups}
+                      vocabActive={this.props.phraseActive}
+                      toggleVocabularyActiveGrp={
+                        this.props.togglePhrasesActiveGrp
+                      }
+                    />
                   )}
+                  {this.props.phraseFilter &&
+                    this.props.phraseFreq.length > 0 && (
+                      <SetVocabGFList
+                        vocabGroups={this.props.phraseGroups}
+                        vocabActive={this.props.phraseActive}
+                        vocabFreq={this.props.phraseFreq}
+                        vocabulary={this.props.phrases}
+                        removeFrequencyWord={this.props.removeFrequencyPhrase}
+                        toggleVocabularyActiveGrp={
+                          this.props.togglePhrasesActiveGrp
+                        }
+                      />
+                    )}
                 </div>
                 <div className="column-2">
                   <div className="setting-block">
@@ -417,6 +413,8 @@ const mapStateToProps = (state) => {
     phrases: state.phrases.value,
     phraseFreq: state.settings.phrases.frequency,
     phraseReinforce: state.settings.phrases.reinforce,
+    phraseGroups: state.phrases.grpObj,
+    phraseActive: state.settings.phrases.activeGroup,
     vocabOrder: state.settings.vocabulary.ordered,
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
@@ -454,6 +452,9 @@ Settings.propTypes = {
   phraseFreq: PropTypes.array,
   phraseReinforce: PropTypes.bool,
   togglePhrasesReinforcement: PropTypes.func,
+  phraseGroups: PropTypes.object,
+  phraseActive: PropTypes.array,
+  togglePhrasesActiveGrp: PropTypes.func,
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
@@ -512,6 +513,7 @@ export default connect(mapStateToProps, {
   setPhrasesOrdering,
   setVocabularyOrdering,
   togglePhrasesRomaji,
+  togglePhrasesActiveGrp,
   toggleVocabularyRomaji,
   toggleVocabularyHint,
   removeFrequencyWord,

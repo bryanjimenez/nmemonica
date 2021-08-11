@@ -21,7 +21,11 @@ import { JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
-import { getTerm, play } from "../../helper/gameHelper";
+import {
+  getTerm,
+  play,
+  termFrequencyGroupFilter,
+} from "../../helper/gameHelper";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -65,6 +69,15 @@ class Phrases extends Component {
       this.setOrder();
     }
 
+    if (
+      this.props.activeGroup.length != prevProps.activeGroup.length ||
+      this.props.activeGroup.some((e) => !prevProps.activeGroup.includes(e)) ||
+      prevProps.activeGroup.some((e) => !this.props.activeGroup.includes(e))
+    ) {
+      // console.log("activeGroup changed");
+      this.setOrder();
+    }
+
     if (this.props.freqFilter != prevProps.freqFilter) {
       this.setOrder();
     }
@@ -93,16 +106,13 @@ class Phrases extends Component {
   setOrder() {
     let newOrder = [];
 
-    let filteredPhrases = this.props.phrases;
-    if (this.props.freqFilter) {
-      if (this.props.frequency.length === 0) {
-        this.props.togglePhrasesFilter();
-      } else {
-        filteredPhrases = this.props.phrases.filter((p) =>
-          this.props.frequency.includes(p.uid)
-        );
-      }
-    }
+    let filteredPhrases = termFrequencyGroupFilter(
+      this.props.freqFilter,
+      this.props.phrases,
+      this.props.frequency,
+      this.props.activeGroup,
+      this.props.togglePhrasesFilter
+    );
 
     filteredPhrases.forEach((v, i) => {
       newOrder = [...newOrder, i];
@@ -300,6 +310,7 @@ const mapStateToProps = (state) => {
     isOrdered: state.settings.phrases.ordered,
     romajiActive: state.settings.phrases.romaji,
     frequency: state.settings.phrases.frequency,
+    activeGroup: state.settings.phrases.activeGroup,
     freqFilter: state.settings.phrases.filter,
     reinforce: state.settings.phrases.reinforce,
   };
@@ -318,6 +329,7 @@ Phrases.propTypes = {
   freqFilter: PropTypes.bool,
   togglePhrasesFilter: PropTypes.func,
   reinforce: PropTypes.bool,
+  activeGroup: PropTypes.array,
 };
 
 export default connect(mapStateToProps, {
