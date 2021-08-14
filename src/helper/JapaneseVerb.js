@@ -1,6 +1,7 @@
 import data from "../../data/kana.json";
 import { getConsonantVowel } from "./hiraganaHelper";
 import { JapaneseText } from "./JapaneseText";
+import verbExceptions from "../../data/verbExceptions.json";
 
 export class JapaneseVerb extends JapaneseText {
   constructor(furigana, kanji) {
@@ -26,15 +27,7 @@ export class JapaneseVerb extends JapaneseText {
 
     // verb class 1 exceptions
     const spelling = this.getSpelling();
-    if (
-      spelling === "走る" ||
-      spelling === "切る" ||
-      spelling === "要る" ||
-      spelling === "入る" ||
-      spelling === "帰る" ||
-      spelling === "減る" ||
-      spelling === "滑る"
-    ) {
+    if (verbExceptions.class[spelling] === 1) {
       return 1;
     }
 
