@@ -77,6 +77,15 @@ class Phrases extends Component {
       // console.log('frequency word changed');
       if (this.props.freqFilter && this.props.frequency.length === 0) {
         this.setOrder();
+      } else {
+        const filteredKeys = this.state.filteredPhrases.map((f) => f.uid);
+        const frequency = this.props.frequency.filter((f) =>
+          filteredKeys.includes(f)
+        );
+        // console.log('frequency word changed');
+        // props.frequency is all frequency words
+        // state.frequency is a subset of frequency words within current active group
+        this.setState({ frequency });
       }
     }
   }
