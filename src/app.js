@@ -29,6 +29,11 @@ import "./styles.css";
 import { getVersions } from "./actions/firebase";
 import { registerServiceWorker } from "./actions/serviceWorkerAct";
 import classNames from "classnames";
+import {
+  getLocalStorageSettings,
+  setLocalStorage,
+} from "./helper/localStorage";
+import { localStorageKey } from "./constants/paths";
 
 class App extends Component {
   constructor(props) {
@@ -36,8 +41,39 @@ class App extends Component {
 
     this.state = {};
     this.props.initialize();
-    this.props.getVersions();
-    this.props.initializeSettingsFromLocalStorage();
+    this.props
+      .getVersions()
+      .then(() => {
+        console.log("got versions");
+
+        return fetch("newest")
+          .then((res) => res.json())
+          .then((newestWords) => {
+            console.log("newest words");
+            if (newestWords) {
+              console.log(newestWords);
+
+              return getLocalStorageSettings(localStorageKey).then((ls) => {
+                console.log(ls);
+                for (let w in newestWords) {
+                  ls[w].frequency = [...ls[w].frequency, ...newestWords[w]];
+                }
+
+                return setLocalStorage(localStorageKey, ls);
+              });
+            }
+            return Promise.resolve();
+          });
+      })
+      .catch(() => {
+        console.log("newest failed");
+      })
+
+      .finally(() => {
+        console.log("done w/ newest");
+        this.props.initializeSettingsFromLocalStorage();
+      });
+
     this.props.registerServiceWorker();
   }
 

@@ -76,6 +76,21 @@ self.addEventListener("fetch", (e) => {
     caches.delete(appStaticCache);
     self.registration.unregister();
     e.respondWith(fetch(ghURL));
+  } else if (url === ghURL + "/newest") {
+    console.log("[ServiceWorker] newest word");
+
+    const newestCachePath = fbURL + "/newest/words.json";
+    e.respondWith(
+      caches
+        .open(appDataCache)
+        .then((cache) => cache.match(newestCachePath))
+        .then((res) => {
+          caches
+            .open(appDataCache)
+            .then((cache) => cache.delete(newestCachePath));
+          return res;
+        })
+    );
   } else if (url.indexOf(ghURL) === 0) {
     // site asset
     e.respondWith(appAssetReq(url));
@@ -103,6 +118,83 @@ function appVersionReq() {
   const cacheRes = caches
     .open(appDataCache)
     .then((cache) => cache.match(dataVerURL));
+
+  ////===========================================
+  fetch(dataVerURL)
+    .then((r) => r.json())
+    .then((resNew) => {
+      caches
+        .open(appDataCache)
+        .then((cache) => cache.match(dataVerURL))
+        .then((r) => r.json())
+        .then((resOld) => {
+          let versionChange = {};
+          let update = false;
+          for (let n in resNew) {
+            if (resOld[n] !== resNew[n]) {
+              versionChange[n] = { old: resOld[n], new: resNew[n] };
+              if (!update) {
+                update = true;
+              }
+            }
+          }
+
+          if (update) {
+            update = false;
+            console.log(versionChange);
+
+            let newlyAdded = {};
+            let ps = [];
+            for (let setName in versionChange) {
+              const theUrl = fbURL + "/lambda/" + setName + ".json";
+
+              ps.push(
+                cacheVerData(theUrl, versionChange[setName].new)
+                  .then((d) => d.json())
+                  .then((newData) =>
+                    cacheVerData(theUrl, versionChange[setName].old)
+                      .then((d2) => d2.json())
+                      .then((oldData) => {
+                        for (let j in newData) {
+                          if (oldData[j] === undefined) {
+                            newlyAdded[setName] = [
+                              ...(newlyAdded[setName] || []),
+                              j,
+                            ];
+
+                            if (!update) {
+                              update = true;
+                            }
+                          }
+                        }
+
+                        return Promise.resolve();
+                      })
+                  )
+              );
+            }
+
+            Promise.all(ps).then(() => {
+              if (update) {
+                console.log(newlyAdded);
+                console.log(JSON.stringify(newlyAdded));
+
+                const blob = new Blob([JSON.stringify(newlyAdded)], {
+                  type: "application/json",
+                });
+                const init = { status: 200, statusText: "OK" };
+
+                const myResponse = new Response(blob, init);
+
+                caches.open(appDataCache).then((cache) => {
+                  cache.put(fbURL + "/newest/words.json", myResponse);
+                });
+              }
+            });
+          }
+        });
+    });
+  ////===========================================
 
   const fetchRes = caches
     .open(appDataCache)
