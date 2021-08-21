@@ -1,6 +1,6 @@
-const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.9a450374.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.a1c6f310.js","main.bd7446e3c47dc53a564d.css","manifest.webmanifest","maskable512.png","npm.babel.0ef5a426.js","npm.bootstrap.247d0b24cee0327bc44e.css","npm.classnames.db245282.js","npm.clsx.7ce1359d.js","npm.css-vendor.9d25868c.js","npm.dialog-polyfill.71b4353a.js","npm.firebase.c09875f6.js","npm.firebaseui.ef995043.js","npm.fortawesome.669dee67.js","npm.history.91433c8b.js","npm.hoist-non-react-statics.c295c232.js","npm.hyphenate-style-name.6006ebd8.js","npm.is-in-browser.802eea86.js","npm.isarray.806a53bf.js","npm.jss-plugin-camel-case.e24f2993.js","npm.jss-plugin-default-unit.e3468a73.js","npm.jss-plugin-global.4a477ce4.js","npm.jss-plugin-nested.fcdbd55a.js","npm.jss-plugin-props-sort.a0bb9627.js","npm.jss-plugin-rule-value-function.99d8363b.js","npm.jss-plugin-vendor-prefixer.4f9fd1be.js","npm.jss.017ed6c9.js","npm.lodash.5b7a2ffe.js","npm.material-design-lite.6dc694db.js","npm.material-ui.bc3c612c.js","npm.mini-create-react-context.b19b94a4.js","npm.object-assign.d03933ed.js","npm.path-to-regexp.3a1e431e.js","npm.primer.3f8c68a5.js","npm.prop-types.1d2653f0.js","npm.react-dom.70daa1a9.js","npm.react-firebaseui.3a42d339.js","npm.react-redux.34e19207.js","npm.react-router-dom.09a632fc.js","npm.react-router.551ceb09.js","npm.react-transition-group.ed3f2575.js","npm.react.d03b26e8.js","npm.redux-thunk.ed614dd2.js","npm.redux.f88071c6.js","npm.resolve-pathname.21e12931.js","npm.scheduler.bf36ac53.js","npm.symbol-observable.a96b4a20.js","npm.tiny-invariant.a664e280.js","npm.tslib.bfd20c21.js","npm.value-equal.2bf5a62a.js","runtime.5cff2a41.js"];
+const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.9a450374.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.b4b9704f.js","main.bd7446e3c47dc53a564d.css","manifest.webmanifest","maskable512.png","npm.babel.0ef5a426.js","npm.bootstrap.247d0b24cee0327bc44e.css","npm.classnames.db245282.js","npm.clsx.7ce1359d.js","npm.css-vendor.9d25868c.js","npm.dialog-polyfill.71b4353a.js","npm.firebase.c09875f6.js","npm.firebaseui.ef995043.js","npm.fortawesome.669dee67.js","npm.history.91433c8b.js","npm.hoist-non-react-statics.c295c232.js","npm.hyphenate-style-name.6006ebd8.js","npm.is-in-browser.802eea86.js","npm.isarray.806a53bf.js","npm.jss-plugin-camel-case.e24f2993.js","npm.jss-plugin-default-unit.e3468a73.js","npm.jss-plugin-global.4a477ce4.js","npm.jss-plugin-nested.fcdbd55a.js","npm.jss-plugin-props-sort.a0bb9627.js","npm.jss-plugin-rule-value-function.99d8363b.js","npm.jss-plugin-vendor-prefixer.4f9fd1be.js","npm.jss.017ed6c9.js","npm.lodash.5b7a2ffe.js","npm.material-design-lite.6dc694db.js","npm.material-ui.bc3c612c.js","npm.mini-create-react-context.b19b94a4.js","npm.object-assign.d03933ed.js","npm.path-to-regexp.3a1e431e.js","npm.primer.3f8c68a5.js","npm.prop-types.1d2653f0.js","npm.react-dom.70daa1a9.js","npm.react-firebaseui.3a42d339.js","npm.react-redux.34e19207.js","npm.react-router-dom.09a632fc.js","npm.react-router.551ceb09.js","npm.react-transition-group.ed3f2575.js","npm.react.d03b26e8.js","npm.redux-thunk.ed614dd2.js","npm.redux.f88071c6.js","npm.resolve-pathname.21e12931.js","npm.scheduler.bf36ac53.js","npm.symbol-observable.a96b4a20.js","npm.tiny-invariant.a664e280.js","npm.tslib.bfd20c21.js","npm.value-equal.2bf5a62a.js","runtime.5cff2a41.js"];
 
-const swVersionConst =  '02bb1785b40a8ce9e8c4a76664faa263';
+const swVersionConst =  '6d9eab7fa9384fc42f92ebf43bcdf47d';
 
 const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
 const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
@@ -136,62 +136,68 @@ function appVersionReq() {
         .then((cache) => cache.match(dataVerURL))
         .then((r) => r.json())
         .then((resOld) => {
+          // create obj with new and old hashes
           let versionChange = {};
           let update = false;
           for (let n in resNew) {
             if (resOld[n] !== resNew[n]) {
               versionChange[n] = { old: resOld[n], new: resNew[n] };
-              update = !update ? true : false;
+              update = !update ? true : true;
             }
           }
 
+          // update cache with fetched version results
+          const blob = new Blob([JSON.stringify(resNew)], {
+            type: "application/json",
+          });
+          const init = { status: 200, statusText: "OK" };
+          const fetchVersion = new Response(blob, init);
+
+          caches.open(appDataCache).then((cache) => {
+            cache.put(dataVerURL, fetchVersion);
+          });
+
+          // look for changes in terms with new & old hashes values
           if (update) {
             update = false;
             console.log(versionChange);
 
             let newlyAdded = {};
             let ps = [];
+            const allowedSets = ["vocabulary", "phrases"];
             for (let setName in versionChange) {
-              const theUrl = fbURL + "/lambda/" + setName + ".json";
+              if (allowedSets.includes(setName)) {
+                const theUrl = fbURL + "/lambda/" + setName + ".json";
 
-              ps.push(
-                cacheVerData(theUrl, versionChange[setName].new)
-                  .then((d) => d.json())
-                  .then((newData) =>
-                    cacheVerData(theUrl, versionChange[setName].old)
-                      .then((d2) => d2.json())
-                      .then((oldData) => {
-                        for (let j in newData) {
-                          if (oldData[j] === undefined) {
-                            newlyAdded[setName] = [
-                              ...(newlyAdded[setName] || []),
-                              j,
-                            ];
+                ps.push(
+                  cacheVerData(theUrl, versionChange[setName].new)
+                    .then((d) => d.json())
+                    .then((newData) =>
+                      cacheVerData(theUrl, versionChange[setName].old)
+                        .then((d2) => d2.json())
+                        .then((oldData) => {
+                          for (let j in newData) {
+                            if (oldData[j] === undefined) {
+                              newlyAdded[setName] = [
+                                ...(newlyAdded[setName] || []),
+                                j,
+                              ];
 
-                            update = !update ? true : false;
+                              update = !update ? true : true;
+                            }
                           }
-                        }
 
-                        return Promise.resolve();
-                      })
-                  )
-              );
+                          return Promise.resolve();
+                        })
+                    )
+                );
+              }
             }
 
-            Promise.all(ps).then(() => {
-              if (update) {
+            // message results to client
+            if (update) {
+              Promise.all(ps).then(() => {
                 console.log(JSON.stringify(newlyAdded));
-
-                // const blob = new Blob([JSON.stringify(newlyAdded)], {
-                //   type: "application/json",
-                // });
-                // const init = { status: 200, statusText: "OK" };
-
-                // const myResponse = new Response(blob, init);
-
-                // caches.open(appDataCache).then((cache) => {
-                //   cache.put(fbURL + "/newest/words.json", myResponse);
-                // });
 
                 // for (const client of await clients.matchAll({includeUncontrolled: true, type: 'window'})) {
                 //   client.postMessage(newlyAdded);
@@ -201,19 +207,22 @@ function appVersionReq() {
                   .matchAll({ includeUncontrolled: true, type: "window" })
                   .then((client) => {
                     if (client && client.length) {
-                      client[0].postMessage(newlyAdded);
+                      client[0].postMessage({
+                        type: "NEW_TERMS_ADDED",
+                        msg: newlyAdded,
+                      });
                     }
                   });
-              }
-            });
+              });
+            }
           }
         });
     });
   ////===========================================
 
-  const fetchRes = caches
-    .open(appDataCache)
-    .then((cache) => cache.add(dataVerURL).then(() => cache.match(dataVerURL)));
+  // const fetchRes = caches
+  //   .open(appDataCache)
+  //   .then((cache) => cache.add(dataVerURL).then(() => cache.match(dataVerURL)));
 
   return cacheRes || fetchRes;
 }
