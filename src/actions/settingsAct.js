@@ -540,35 +540,7 @@ export function setParticlesARomaji() {
 }
 
 export function addFrequencyWord(uid) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-
-    const path = "/vocabulary/";
-    const attr = "frequency";
-    const time = new Date();
-
-    const uidList = getLastStateValue(getState, path, attr);
-    const newValue = [...uidList, uid];
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
-
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        ADD_FREQUENCY_WORD,
-        newValue
-      );
-    } else {
-      dispatch({
-        type: ADD_FREQUENCY_WORD,
-        value: newValue,
-      });
-    }
-  };
+  return addFrequencyTerm(ADD_FREQUENCY_WORD, [uid]);
 }
 
 export function removeFrequencyWord(uid) {
@@ -603,35 +575,7 @@ export function removeFrequencyWord(uid) {
 }
 
 export function addFrequencyPhrase(uid) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-
-    const path = "/phrases/";
-    const attr = "frequency";
-    const time = new Date();
-
-    const uidList = getLastStateValue(getState, path, attr);
-    const newValue = [...uidList, uid];
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
-
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        ADD_FREQUENCY_PHRASE,
-        newValue
-      );
-    } else {
-      dispatch({
-        type: ADD_FREQUENCY_PHRASE,
-        value: newValue,
-      });
-    }
-  };
+  return addFrequencyTerm(ADD_FREQUENCY_PHRASE, [uid]);
 }
 
 export function removeFrequencyPhrase(uid) {
@@ -663,6 +607,55 @@ export function removeFrequencyPhrase(uid) {
       });
     }
   };
+}
+
+/**
+ *
+ * @param {String} aType
+ * @param {Array} uidArr
+ * @returns
+ */
+export function addFrequencyTerm(aType, uidArr) {
+  return (dispatch, getState) =>
+    new Promise((resolve, reject) => {
+      const { user } = getState().login;
+
+      let pathType;
+      if (aType === ADD_FREQUENCY_WORD) {
+        pathType = "vocabulary";
+      } else if (aType === ADD_FREQUENCY_PHRASE) {
+        pathType = "phrases";
+      }
+
+      const path = "/" + pathType + "/";
+      const attr = "frequency";
+      const time = new Date();
+
+      const uidList = getLastStateValue(getState, path, attr);
+      const newValue = [...new Set([...uidList, ...uidArr])];
+      localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+      if (user) {
+        firebaseAttrUpdate(
+          time,
+          dispatch,
+          getState,
+          user.uid,
+          path,
+          attr,
+          aType,
+          newValue
+        ).then(() => {
+          resolve();
+        });
+      } else {
+        dispatch({
+          type: aType,
+          value: newValue,
+        });
+        resolve();
+      }
+    });
 }
 
 export function togglePhrasesFilter() {

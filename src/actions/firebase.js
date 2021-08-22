@@ -184,7 +184,7 @@ export function firebaseAttrUpdate(
         value: setting[attr],
       });
     })
-    .catch(function (e) {
+    .catch((e) => {
       console.error("update failed");
       console.error(e);
     });

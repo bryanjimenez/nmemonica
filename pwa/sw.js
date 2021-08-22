@@ -1,3 +1,4 @@
+/* globals clients*/
 const swVersion = swVersionConst; // eslint-disable-line no-undef
 const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
 
@@ -76,21 +77,6 @@ self.addEventListener("fetch", (e) => {
     caches.delete(appStaticCache);
     self.registration.unregister();
     e.respondWith(fetch(ghURL));
-  } else if (url === ghURL + "/newest") {
-    console.log("[ServiceWorker] newest word");
-
-    const newestCachePath = fbURL + "/newest/words.json";
-    e.respondWith(
-      caches
-        .open(appDataCache)
-        .then((cache) => cache.match(newestCachePath))
-        .then((res) => {
-          caches
-            .open(appDataCache)
-            .then((cache) => cache.delete(newestCachePath));
-          return res;
-        })
-    );
   } else if (url.indexOf(ghURL) === 0) {
     // site asset
     e.respondWith(appAssetReq(url));
@@ -114,93 +100,16 @@ self.addEventListener("fetch", (e) => {
  * @returns a Promise with a cache response
  */
 function appVersionReq() {
-  // TODO: after fetch update app?
+
+  // return what's on cache
   const cacheRes = caches
     .open(appDataCache)
     .then((cache) => cache.match(dataVerURL));
 
-  ////===========================================
-  fetch(dataVerURL)
-    .then((r) => r.json())
-    .then((resNew) => {
-      caches
-        .open(appDataCache)
-        .then((cache) => cache.match(dataVerURL))
-        .then((r) => r.json())
-        .then((resOld) => {
-          let versionChange = {};
-          let update = false;
-          for (let n in resNew) {
-            if (resOld[n] !== resNew[n]) {
-              versionChange[n] = { old: resOld[n], new: resNew[n] };
-              if (!update) {
-                update = true;
-              }
-            }
-          }
+  // fetch, compare, update
+  const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
 
-          if (update) {
-            update = false;
-            console.log(versionChange);
-
-            let newlyAdded = {};
-            let ps = [];
-            for (let setName in versionChange) {
-              const theUrl = fbURL + "/lambda/" + setName + ".json";
-
-              ps.push(
-                cacheVerData(theUrl, versionChange[setName].new)
-                  .then((d) => d.json())
-                  .then((newData) =>
-                    cacheVerData(theUrl, versionChange[setName].old)
-                      .then((d2) => d2.json())
-                      .then((oldData) => {
-                        for (let j in newData) {
-                          if (oldData[j] === undefined) {
-                            newlyAdded[setName] = [
-                              ...(newlyAdded[setName] || []),
-                              j,
-                            ];
-
-                            if (!update) {
-                              update = true;
-                            }
-                          }
-                        }
-
-                        return Promise.resolve();
-                      })
-                  )
-              );
-            }
-
-            Promise.all(ps).then(() => {
-              if (update) {
-                console.log(newlyAdded);
-                console.log(JSON.stringify(newlyAdded));
-
-                const blob = new Blob([JSON.stringify(newlyAdded)], {
-                  type: "application/json",
-                });
-                const init = { status: 200, statusText: "OK" };
-
-                const myResponse = new Response(blob, init);
-
-                caches.open(appDataCache).then((cache) => {
-                  cache.put(fbURL + "/newest/words.json", myResponse);
-                });
-              }
-            });
-          }
-        });
-    });
-  ////===========================================
-
-  const fetchRes = caches
-    .open(appDataCache)
-    .then((cache) => cache.add(dataVerURL).then(() => cache.match(dataVerURL)));
-
-  return cacheRes || fetchRes;
+  return cacheRes || fetchAndUpdateRes;
 }
 
 /**
@@ -362,4 +271,137 @@ function removeOldStaticCaches() {
       )
     )
   );
+}
+
+/**
+ * @returns {Promise} a promise with the catched jsonObj
+ * @param {String} cacheName
+ * @param {String} url
+ * @param {Object} jsonObj
+ * @param {String} type
+ * @param {Number} status
+ * @param {String} statusText
+ */
+function updateCacheWithJSON(
+  cacheName,
+  url,
+  jsonObj,
+  type = "application/json",
+  status = 200,
+  statusText = "OK"
+) {
+  // update cache with fetched version results
+  const blob = new Blob([JSON.stringify(jsonObj)], {
+    type,
+  });
+  const init = { status, statusText };
+  const createdRes = new Response(blob, init);
+
+  return caches
+    .open(cacheName)
+    .then((cache) =>
+      cache.put(url, createdRes).then(() => cache.match(url))
+    );
+}
+
+// TODO: refactor this
+/**
+ * Finds changed term lists based on version.
+ * Creates object with newly added terms.
+ * Messages client with updates data.
+ * @returns {Promise} a promise containing the fetched res
+ */
+function fetchVerSendNewDiffsMsg() {
+  return fetch(dataVerURL)
+    .then((r) => r.json())
+    .then((resNew) =>
+      caches
+        .open(appDataCache)
+        .then((cache) => cache.match(dataVerURL))
+        .then((r) => r.json())
+        .then((resOld) => {
+          // create obj with new and old hashes
+          let newTermsMsgPromise = Promise.resolve();
+          let versionChange = {};
+          let update = false;
+          const allowedSets = ["vocabulary", "phrases"];
+          for (let n in resNew) {
+            if (allowedSets.includes(n)) {
+              if (resOld[n] !== resNew[n]) {
+                versionChange[n] = { old: resOld[n], new: resNew[n] };
+                update = !update ? true : true;
+              }
+            }
+          }
+
+          // update cache with fetched version results
+          const fetchRes = updateCacheWithJSON(
+            appDataCache,
+            dataVerURL,
+            resNew
+          );
+
+          // look for changes in terms with new & old hashes values
+          if (update) {
+            update = false;
+            // console.log("v: " + JSON.stringify(versionChange));
+
+            let newlyAdded = {};
+            let ps = [];
+            for (let setName in versionChange) {
+              const theUrl = fbURL + "/lambda/" + setName + ".json";
+
+              ps.push(
+                cacheVerData(theUrl, versionChange[setName].new)
+                  .then((d) => d.json())
+                  .then((newData) =>
+                    cacheVerData(theUrl, versionChange[setName].old)
+                      .then((d2) => d2.json())
+                      .then((oldData) => {
+                        let arr = [];
+                        for (let j in newData) {
+                          if (oldData[j] === undefined) {
+                            arr = [...arr, j];
+                            update = !update ? true : true;
+                          }
+                        }
+
+                        if (arr.length > 0) {
+                          newlyAdded[setName] = {
+                            freq: arr,
+                            dic: newData,
+                          };
+                        }
+
+                        return Promise.resolve();
+                      })
+                  )
+              );
+            }
+
+            // message results to client
+            newTermsMsgPromise = Promise.all(ps).then(() => {
+              if (update) {
+                return clients
+                  .matchAll({ includeUncontrolled: true, type: "window" })
+                  .then((client) => {
+                    if (client && client.length) {
+                      // console.log("[SW] posting message");
+                      return client[0].postMessage({
+                        type: "NEW_TERMS_ADDED",
+                        msg: newlyAdded,
+                      });
+                    }
+
+                    return Promise.resolve();
+                  });
+              }
+            });
+          }
+
+          return Promise.all([fetchRes, newTermsMsgPromise]).then(
+            (allPromises) => allPromises[0]
+          );
+        })
+    );
 }
