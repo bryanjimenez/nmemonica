@@ -1,6 +1,6 @@
 const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.9a450374.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.bd7446e3c47dc53a564d.css","main.f6f2a198.js","manifest.webmanifest","maskable512.png","npm.babel.0ef5a426.js","npm.bootstrap.247d0b24cee0327bc44e.css","npm.classnames.db245282.js","npm.clsx.7ce1359d.js","npm.css-vendor.9d25868c.js","npm.dialog-polyfill.71b4353a.js","npm.firebase.c09875f6.js","npm.firebaseui.ef995043.js","npm.fortawesome.669dee67.js","npm.history.91433c8b.js","npm.hoist-non-react-statics.c295c232.js","npm.hyphenate-style-name.6006ebd8.js","npm.is-in-browser.802eea86.js","npm.isarray.806a53bf.js","npm.jss-plugin-camel-case.e24f2993.js","npm.jss-plugin-default-unit.e3468a73.js","npm.jss-plugin-global.4a477ce4.js","npm.jss-plugin-nested.fcdbd55a.js","npm.jss-plugin-props-sort.a0bb9627.js","npm.jss-plugin-rule-value-function.99d8363b.js","npm.jss-plugin-vendor-prefixer.4f9fd1be.js","npm.jss.017ed6c9.js","npm.lodash.5b7a2ffe.js","npm.material-design-lite.6dc694db.js","npm.material-ui.bc3c612c.js","npm.mini-create-react-context.b19b94a4.js","npm.object-assign.d03933ed.js","npm.path-to-regexp.3a1e431e.js","npm.primer.3f8c68a5.js","npm.prop-types.1d2653f0.js","npm.react-dom.70daa1a9.js","npm.react-firebaseui.3a42d339.js","npm.react-redux.34e19207.js","npm.react-router-dom.09a632fc.js","npm.react-router.551ceb09.js","npm.react-transition-group.ed3f2575.js","npm.react.d03b26e8.js","npm.redux-thunk.ed614dd2.js","npm.redux.f88071c6.js","npm.resolve-pathname.21e12931.js","npm.scheduler.bf36ac53.js","npm.symbol-observable.a96b4a20.js","npm.tiny-invariant.a664e280.js","npm.tslib.bfd20c21.js","npm.value-equal.2bf5a62a.js","runtime.5cff2a41.js"];
 
-const swVersionConst =  '463c9c983940876c3172c66d8c820ab4';
+const swVersionConst =  '695094149a9be5dfa54a6179e649c1eb';
 
 const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
 const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
@@ -133,19 +133,26 @@ function appVersionReq() {
           }
 
           // update cache with fetched version results
-          const blob = new Blob([JSON.stringify(resNew)], {
-            type: "application/json",
-          });
-          const init = { status: 200, statusText: "OK" };
-          const fetchVersion = new Response(blob, init);
+          // const blob = new Blob([JSON.stringify(resNew)], {
+          //   type: "application/json",
+          // });
+          // const init = { status: 200, statusText: "OK" };
+          // const fetchVersion = new Response(blob, init);
 
-          const fetchRes = caches
-            .open(appDataCache)
-            .then((cache) =>
-              cache
-                .put(dataVerURL, fetchVersion)
-                .then(() => cache.match(dataVerURL))
-            );
+          // const fetchRes = caches
+          //   .open(appDataCache)
+          //   .then((cache) =>
+          //     cache
+          //       .put(dataVerURL, fetchVersion)
+          //       .then(() => cache.match(dataVerURL))
+
+          //     );
+
+          const fetchRes = updateCacheWithJSON(
+            appDataCache,
+            dataVerURL,
+            resNew
+          );
 
           // look for changes in terms with new & old hashes values
           if (update) {
@@ -385,4 +392,35 @@ function removeOldStaticCaches() {
       )
     )
   );
+}
+
+/**
+ * @returns {Promise} a promise with the catched jsonObj
+ * @param {*} cacheName
+ * @param {*} url
+ * @param {*} jsonObj
+ * @param {*} type
+ * @param {*} status
+ * @param {*} statusText
+ */
+function updateCacheWithJSON(
+  cacheName,
+  url,
+  jsonObj,
+  type = "application/json",
+  status = 200,
+  statusText = "OK"
+) {
+  // update cache with fetched version results
+  const blob = new Blob([JSON.stringify(jsonObj)], {
+    type,
+  });
+  const init = { status, statusText };
+  const fetchVersion = new Response(blob, init);
+
+  return caches
+    .open(appDataCache)
+    .then((cache) =>
+      cache.put(dataVerURL, fetchVersion).then(() => cache.match(dataVerURL))
+    );
 }
