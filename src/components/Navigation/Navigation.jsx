@@ -80,22 +80,19 @@ class Navigation extends Component {
         icon: <FontAwesomeIcon icon={faAtom} size="2x" />,
       },
       {
+        meta: this.props.user ? LogoutMeta : OAuthLoginMeta,
+        icon: (
+          <FontAwesomeIcon
+            icon={this.props.user ? faSignOutAlt : faSignInAlt}
+            size="2x"
+          />
+        ),
+      },
+      {
         meta: SettingsMeta,
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
       },
     ];
-
-    if (this.props.user) {
-      shortcuts.push({
-        meta: LogoutMeta,
-        icon: <FontAwesomeIcon icon={faSignOutAlt} size="2x" />,
-      });
-    } else {
-      shortcuts.push({
-        meta: OAuthLoginMeta,
-        icon: <FontAwesomeIcon icon={faSignInAlt} size="2x" />,
-      });
-    }
 
     return (
       <div className="navigation">
