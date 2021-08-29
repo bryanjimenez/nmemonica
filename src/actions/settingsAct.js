@@ -462,25 +462,7 @@ export function toggleVocabularyActiveGrp(grpName) {
     const { user } = getState().login;
     const { activeGroup } = getState().settings.vocabulary;
 
-    const isGrp = grpName.indexOf(".") === -1;
-
-    let newValue;
-    if (isGrp) {
-      if (activeGroup.some((e) => e.indexOf(grpName + ".") !== -1)) {
-        newValue = [
-          ...activeGroup.filter((v) => v.indexOf(grpName + ".") === -1),
-          grpName,
-        ];
-      } else if (activeGroup.includes(grpName)) {
-        newValue = [...activeGroup.filter((v) => v !== grpName)];
-      } else {
-        newValue = [...activeGroup, grpName];
-      }
-    } else {
-      newValue = activeGroup.includes(grpName)
-        ? activeGroup.filter((v) => v !== grpName)
-        : [...activeGroup, grpName];
-    }
+    const newValue = grpParse(grpName, activeGroup);
 
     const path = "/vocabulary/";
     const attr = "activeGroup";
@@ -800,30 +782,41 @@ export function togglePhrasesReinforcement() {
   };
 }
 
+/**
+ * Adds or removes grpName to the activeGroup list
+ * @param {*} grpName a group name to be toggled
+ * @param {*} activeGroup a list of groups that are selected
+ * @returns {Array} newValue an updated list of selected groups
+ */
+export function grpParse(grpName, activeGroup) {
+  const isGrp = grpName.indexOf(".") === -1;
+
+  let newValue;
+  if (isGrp) {
+    if (activeGroup.some((e) => e.indexOf(grpName + ".") !== -1)) {
+      newValue = [
+        ...activeGroup.filter((v) => v.indexOf(grpName + ".") === -1),
+        grpName,
+      ];
+    } else if (activeGroup.includes(grpName)) {
+      newValue = [...activeGroup.filter((v) => v !== grpName)];
+    } else {
+      newValue = [...activeGroup, grpName];
+    }
+  } else {
+    newValue = activeGroup.includes(grpName)
+      ? activeGroup.filter((v) => v !== grpName)
+      : [...activeGroup, grpName];
+  }
+  return newValue;
+}
+
 export function togglePhrasesActiveGrp(grpName) {
   return (dispatch, getState) => {
     const { user } = getState().login;
     const { activeGroup } = getState().settings.phrases;
 
-    const isGrp = grpName.indexOf(".") === -1;
-
-    let newValue;
-    if (isGrp) {
-      if (activeGroup.some((e) => e.indexOf(grpName + ".") !== -1)) {
-        newValue = [
-          ...activeGroup.filter((v) => v.indexOf(grpName + ".") === -1),
-          grpName,
-        ];
-      } else if (activeGroup.includes(grpName)) {
-        newValue = [...activeGroup.filter((v) => v !== grpName)];
-      } else {
-        newValue = [...activeGroup, grpName];
-      }
-    } else {
-      newValue = activeGroup.includes(grpName)
-        ? activeGroup.filter((v) => v !== grpName)
-        : [...activeGroup, grpName];
-    }
+    const newValue = grpParse(grpName, activeGroup);
 
     const path = "/phrases/";
     const attr = "activeGroup";
