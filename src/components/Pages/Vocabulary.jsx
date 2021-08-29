@@ -37,7 +37,11 @@ import StackOrderSlider from "../Form/StackOrderSlider";
 import VocabularyMain from "./VocabularyMain";
 import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
-import { getTerm, play } from "../../helper/gameHelper";
+import {
+  getTerm,
+  play,
+  termFrequencyGroupFilter,
+} from "../../helper/gameHelper";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -120,36 +124,13 @@ class Vocabulary extends Component {
   }
 
   setOrder() {
-    let filteredVocab = this.props.vocab;
-
-    if (this.props.freqFilter) {
-      // frequency filtering
-      if (this.props.frequency.length > 0) {
-        if (this.props.activeGroup.length > 0) {
-          filteredVocab = this.props.vocab.filter(
-            (v) =>
-              this.props.frequency.includes(v.uid) &&
-              this.props.activeGroup.includes(v.grp)
-          );
-        } else {
-          filteredVocab = this.props.vocab.filter((v) =>
-            this.props.frequency.includes(v.uid)
-          );
-        }
-      } else {
-        // last frequency word was just removed
-        this.props.toggleVocabularyFilter();
-      }
-    } else {
-      // group filtering
-      if (this.props.activeGroup.length > 0) {
-        filteredVocab = this.props.vocab.filter(
-          (w) =>
-            this.props.activeGroup.includes(w.grp) ||
-            this.props.activeGroup.includes(w.grp + "." + w.subGrp)
-        );
-      }
-    }
+    let filteredVocab = termFrequencyGroupFilter(
+      this.props.freqFilter,
+      this.props.vocab,
+      this.props.frequency,
+      this.props.activeGroup,
+      this.props.toggleVocabularyFilter
+    );
 
     const newOrder = filteredVocab.map((v, i) => i);
     let jbare = [];

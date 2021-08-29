@@ -7,7 +7,7 @@ import md5 from "md5";
 export async function sheets_sync_phrases(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Phrases!A1:D";
+    const range = "Phrases!A1:E";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -32,21 +32,32 @@ export async function sheets_sync_phrases(req, res) {
     ]);
     const phrasesBefore = phrasesSnapshot.val();
 
+    const ORDER = -1,
+      JP = 0,
+      RM = 1,
+      EN = 2,
+      GRP = 3,
+      SUBG = 4;
+
     let sheetHeaders = [];
     const phrasesAfter = sheetData.reduce((acc, el, i) => {
       if (i > 0) {
         const phrase = {
-          japanese: el[0],
-          english: el[2],
+          japanese: el[JP],
+          english: el[EN],
         };
 
         const key = md5(phrase.japanese);
 
-        if (el[3] && el[3] !== "") {
-          phrase.uid = el[3];
+        if (el[GRP] && el[GRP] !== "") {
+          phrase.grp = el[GRP];
         }
 
-        if (el[1] && el[1] !== "") {
+        if (el[SUBG] && el[SUBG] !== "") {
+          phrase.subGrp = el[SUBG];
+        }
+
+        if (el[RM] && el[RM] !== "") {
           phrase.romaji = el[1];
         } else if (
           phrasesBefore &&
