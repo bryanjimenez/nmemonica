@@ -1,5 +1,6 @@
 import { localStoreAttrUpdate } from "../helper/localStorage";
 import { firebaseAttrUpdate } from "./firebase";
+import { FILTER_GRP } from "../reducers/settingsRed";
 export const SET_KANA_BTN_N = "set_kana_btn_number";
 export const TOGGLE_KANA_WIDEMODE = "set_kana_widemode";
 export const TOGGLE_KANA_EASYMODE = "set_kana_easymode";
@@ -29,6 +30,7 @@ export const TOGGLE_DARK_MODE = "toggle_dark_mode";
 export const SCROLLING_STATE = "scrolling_state";
 export const AUTO_VERB_VIEW = "auto_verb_view";
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";
+export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -676,11 +678,26 @@ export function removeFrequencyPhrase(uid) {
   };
 }
 
-export function addSpaceRepWord(uid) {
+export function updateSpaceRepWord(uid) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid);
+}
+
+export function updateSpaceRepPhrase(uid) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid);
+}
+
+export function updateSpaceRepTerm(aType, uid) {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
-    const path = "/vocabulary/";
+    let pathPart;
+    if (aType === ADD_SPACE_REP_WORD) {
+      pathPart = "vocabulary";
+    } else if (aType === ADD_SPACE_REP_PHRASE) {
+      pathPart = "phrases";
+    }
+
+    const path = "/" + pathPart + "/";
     const attr = "repetition";
     const time = new Date();
 
@@ -707,19 +724,19 @@ export function addSpaceRepWord(uid) {
         user.uid,
         path,
         attr,
-        ADD_SPACE_REP_WORD,
+        aType,
         newValue
       );
     } else {
       dispatch({
-        type: ADD_SPACE_REP_WORD,
+        type: aType,
         value: newValue,
       });
     }
   };
 }
 
-export function togglePhrasesFilter() {
+export function togglePhrasesFilter(override) {
   return (dispatch, getState) => {
     const { user } = getState().login;
     const { filter, reinforce } = getState().settings.phrases;
@@ -727,9 +744,17 @@ export function togglePhrasesFilter() {
     const path = "/phrases/";
     const attr = "filter";
     const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
 
-    if (!filter && reinforce) {
+    let newFilter;
+    if (override !== undefined) {
+      newFilter = override;
+    } else {
+      newFilter = filter + 1 < 3 ? filter + 1 : 0;
+    }
+
+    localStoreAttrUpdate(time, getState, path, attr, newFilter);
+
+    if (newFilter !== FILTER_GRP && reinforce) {
       togglePhrasesReinforcement()(dispatch, getState);
     }
 
@@ -741,11 +766,13 @@ export function togglePhrasesFilter() {
         user.uid,
         path,
         attr,
-        TOGGLE_PHRASES_FILTER
+        TOGGLE_PHRASES_FILTER,
+        newFilter
       );
     } else {
       dispatch({
         type: TOGGLE_PHRASES_FILTER,
+        value: newFilter,
       });
     }
   };

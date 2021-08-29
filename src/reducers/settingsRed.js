@@ -29,6 +29,7 @@ import {
   TOGGLE_PHRASES_REINFORCE,
   TOGGLE_PHRASES_ACTIVE_GROUP,
   ADD_SPACE_REP_WORD,
+  ADD_SPACE_REP_PHRASE,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 
@@ -44,16 +45,17 @@ export const DEFAULT_SETTINGS = {
     practiceSide: false,
     romaji: false,
     reinforce: false,
+    repetition: {},
     frequency: [],
     activeGroup: [],
-    filter: false,
+    filter: 0,
   },
   vocabulary: {
     ordered: true,
     practiceSide: false,
     romaji: false,
     hint: false,
-    filter: 0, //0->group,1->frequency,2->rep
+    filter: 0,
     reinforce: false,
     repetition: {},
     frequency: [],
@@ -224,6 +226,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           frequency: action.value,
         },
       };
+    case ADD_SPACE_REP_PHRASE:
+      return {
+        ...state,
+        phrases: {
+          ...state.phrases,
+          repetition: action.value,
+        },
+      };
     case REMOVE_FREQUENCY_PHRASE:
       return {
         ...state,
@@ -237,7 +247,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         phrases: {
           ...state.phrases,
-          filter: !state.phrases.filter,
+          filter: action.value,
         },
       };
     case TOGGLE_PHRASES_ACTIVE_GROUP:

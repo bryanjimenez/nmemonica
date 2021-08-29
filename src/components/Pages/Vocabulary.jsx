@@ -26,24 +26,25 @@ import {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
-  addSpaceRepWord,
+  updateSpaceRepWord,
 } from "../../actions/settingsAct";
-import { shuffleArray } from "../../helper/arrayHelper";
-import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
+import { htmlElementHint } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
-import { orderBy } from "lodash/collection";
 import StackOrderSlider from "../Form/StackOrderSlider";
 import VocabularyMain from "./VocabularyMain";
 import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
-import { getTerm, play, termFilterByType } from "../../helper/gameHelper";
 import {
-  FILTER_FREQ,
-  FILTER_GRP,
-  FILTER_REP,
-} from "../../reducers/settingsRed";
+  alphaOrder,
+  getTerm,
+  play,
+  randomOrder,
+  spaceRepOrder,
+  termFilterByType,
+} from "../../helper/gameHelper";
+import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -129,11 +130,10 @@ class Vocabulary extends Component {
   }
 
   setOrder() {
-    let { terms: filteredVocab, spaceRepOrder } = termFilterByType(
-      this.props.freqFilter,
+    const filteredVocab = termFilterByType(
+      this.props.filterType,
       this.props.vocab,
       this.props.frequency,
-      this.props.repetition,
       this.props.activeGroup,
       this.props.toggleVocabularyFilter
     );
@@ -143,34 +143,16 @@ class Vocabulary extends Component {
     let ebare = [];
 
     if (!this.props.isOrdered) {
-      shuffleArray(newOrder);
+      // randomized
+      newOrder = randomOrder(filteredVocab);
     } else if (this.props.filterType === FILTER_REP) {
       // repetition order
-      newOrder = spaceRepOrder;
+      newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
     } else {
-      newOrder = filteredVocab.map((v, i) => i);
-
-      filteredVocab = orderBy(filteredVocab, ["japanese"], ["asc"]);
-
-      filteredVocab.forEach((v, i) => {
-        jbare = [
-          ...jbare,
-          {
-            uid: v.uid,
-            label: JapaneseText.parse(v.japanese).getPronunciation(),
-          },
-        ];
-        ebare = [
-          ...ebare,
-          { uid: v.uid, label: v.english.toLowerCase(), idx: i },
-        ];
-      });
-
-      ebare = orderBy(ebare, ["label"], ["asc"]);
-
-      ebare.forEach((e, i) => {
-        jbare[e.idx] = { ...jbare[e.idx], idx: i };
-      });
+      // alphabetized
+      ({ order: newOrder, jOrder: jbare, eOrder: ebare } = alphaOrder(
+        filteredVocab
+      ));
     }
 
     const filteredKeys = filteredVocab.map((f) => f.uid);
@@ -294,7 +276,7 @@ class Vocabulary extends Component {
             color={"--yellow"}
             ariaLabel="Next"
             action={() => {
-              this.props.addSpaceRepWord(vocabulary.uid);
+              this.props.updateSpaceRepWord(vocabulary.uid);
 
               play(
                 this.props.reinforce,
@@ -552,7 +534,7 @@ Vocabulary.propTypes = {
   toggleVocabularyFilter: PropTypes.func,
   reinforce: PropTypes.bool,
   repetition: PropTypes.object,
-  addSpaceRepWord: PropTypes.func,
+  updateSpaceRepWord: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -563,7 +545,7 @@ export default connect(mapStateToProps, {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
-  addSpaceRepWord,
+  updateSpaceRepWord,
 })(Vocabulary);
 
 export { VocabularyMeta };
