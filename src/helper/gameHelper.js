@@ -1,9 +1,12 @@
+import { orderBy } from "lodash";
+import { FILTER_FREQ, FILTER_GRP, FILTER_REP } from "../reducers/settingsRed";
+
 /**
  * Goes to the next term or selects one from the frequency list
  * @param {Boolean} reinforce
  * @param {Boolean} freqFilter
  * @param {Array} frequency
- * @param {Array} filteredVocab
+ * @param {Array} filteredTerms
  * @param {String} reinforcedUID
  * @param {Function} updateReinforcedUID
  * @param {Function} gotoNext
@@ -13,7 +16,7 @@ export function play(
   reinforce,
   freqFilter,
   frequency,
-  filteredVocab,
+  filteredTerms,
   reinforcedUID,
   updateReinforcedUID,
   gotoNext,
@@ -27,7 +30,7 @@ export function play(
     const min = 0;
     const max = Math.floor(frequency.length);
     const idx = Math.floor(Math.random() * (max - min) + min);
-    const vocabulary = filteredVocab.filter((v) => frequency[idx] === v.uid)[0];
+    const vocabulary = filteredTerms.filter((v) => frequency[idx] === v.uid)[0];
 
     if (vocabulary) {
       if (reinforcedUID !== vocabulary.uid) {
@@ -52,7 +55,7 @@ export function play(
  * @param {Array} frequency
  * @param {Number} selectedIndex
  * @param {Array} randomOrder
- * @param {Array} filteredVocab
+ * @param {Array} filteredTerms
  * @returns the term (word or phrase)
  */
 export function getTerm(
@@ -60,17 +63,17 @@ export function getTerm(
   frequency,
   selectedIndex,
   randomOrder,
-  filteredVocab
+  filteredTerms
 ) {
   let term;
   if (reinforcedUID) {
-    term = filteredVocab.filter((v) => reinforcedUID === v.uid)[0];
+    term = filteredTerms.filter((v) => reinforcedUID === v.uid)[0];
   } else {
     if (randomOrder) {
       const index = randomOrder[selectedIndex];
-      term = filteredVocab[index];
+      term = filteredTerms[index];
     } else {
-      term = filteredVocab[selectedIndex];
+      term = filteredTerms[selectedIndex];
     }
   }
 
@@ -87,30 +90,32 @@ export function getTerm(
  * @param {Function} toggleFilterType toggle between frequency or group filtering
  * @returns {Array} filteredPhrases
  */
-export function termFrequencyGroupFilter(
+export function termFilterByType(
   isFreqFiltered,
   termList,
   frequencyList,
+  spaceRepObj,
   activeGrpList,
   toggleFilterType
 ) {
   let filteredTerms = termList;
+  let spaceRepOrder;
 
-  if (isFreqFiltered) {
+  if (isFreqFiltered === FILTER_FREQ) {
     // frequency filtering
     if (frequencyList.length > 0) {
       if (activeGrpList.length > 0) {
         filteredTerms = termList.filter(
-          (p) => frequencyList.includes(p.uid) && activeGrpList.includes(p.grp)
+          (v) => frequencyList.includes(v.uid) && activeGrpList.includes(v.grp)
         );
       } else {
-        filteredTerms = termList.filter((p) => frequencyList.includes(p.uid));
+        filteredTerms = termList.filter((v) => frequencyList.includes(v.uid));
       }
     } else {
       // last frequency word was just removed
-      toggleFilterType();
+      toggleFilterType(FILTER_GRP);
     }
-  } else {
+  } else if (isFreqFiltered === FILTER_GRP) {
     // group filtering
     if (activeGrpList.length > 0) {
       filteredTerms = termList.filter(
@@ -119,7 +124,40 @@ export function termFrequencyGroupFilter(
           activeGrpList.includes(w.grp + "." + w.subGrp)
       );
     }
+  } else if (isFreqFiltered === FILTER_REP) {
+    // spaced repetition
+
+    const spaceRepList = Object.keys(spaceRepObj).map((k) => ({
+      ...spaceRepObj[k],
+      uid: k,
+    }));
+    orderBy(spaceRepList, ["d", "c"], ["acs", "acs"]);
+
+    if (activeGrpList.length > 0) {
+      filteredTerms = termList.filter(
+        (w) =>
+          activeGrpList.includes(w.grp) ||
+          activeGrpList.includes(w.grp + "." + w.subGrp)
+      );
+    }
+
+    let played = [];
+    let unPlayed = [];
+    for (const vIdx in filteredTerms) {
+      const orderIdx = spaceRepList.findIndex(
+        (el) => el.uid === filteredTerms[vIdx].uid
+      );
+      if (orderIdx > -1) {
+        played = [...played, { o: orderIdx, u: vIdx }];
+      } else {
+        unPlayed = [...unPlayed, vIdx];
+      }
+    }
+
+    played = orderBy(played, ["o"], ["acs"]).map((el) => el.u);
+
+    spaceRepOrder = [...unPlayed, ...played];
   }
 
-  return filteredTerms;
+  return { terms: filteredTerms, spaceRepOrder };
 }

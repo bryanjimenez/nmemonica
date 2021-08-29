@@ -24,7 +24,7 @@ import { LinearProgress } from "@material-ui/core";
 import {
   getTerm,
   play,
-  termFrequencyGroupFilter,
+  termFilterByType,
 } from "../../helper/gameHelper";
 
 const PhrasesMeta = {
@@ -106,10 +106,11 @@ class Phrases extends Component {
   setOrder() {
     let newOrder = [];
 
-    let filteredPhrases = termFrequencyGroupFilter(
+    let {terms: filteredPhrases,} = termFilterByType(
       this.props.freqFilter,
       this.props.phrases,
       this.props.frequency,
+      undefined,
       this.props.activeGroup,
       this.props.togglePhrasesFilter
     );

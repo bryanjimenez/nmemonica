@@ -28,6 +28,7 @@ import {
   TOGGLE_VOCABULARY_REINFORCE,
   TOGGLE_PHRASES_REINFORCE,
   TOGGLE_PHRASES_ACTIVE_GROUP,
+  ADD_SPACE_REP_WORD,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 
@@ -52,8 +53,9 @@ export const DEFAULT_SETTINGS = {
     practiceSide: false,
     romaji: false,
     hint: false,
-    filter: false,
+    filter: 0, //0->group,1->frequency,2->rep
     reinforce: false,
+    repetition: {},
     frequency: [],
     activeGroup: [],
     autoPlay: false,
@@ -63,6 +65,10 @@ export const DEFAULT_SETTINGS = {
   particles: { aRomaji: false },
 };
 const DEFAULT_ACTION = {};
+
+export const FILTER_GRP = 0,
+  FILTER_FREQ = 1,
+  FILTER_REP = 2;
 
 const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
   switch (action.type) {
@@ -186,6 +192,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           frequency: action.value,
         },
       };
+    case ADD_SPACE_REP_WORD:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          repetition: action.value,
+        },
+      };
     case REMOVE_FREQUENCY_WORD:
       return {
         ...state,
@@ -199,7 +213,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          filter: !state.vocabulary.filter,
+          filter: action.value,
         },
       };
     case ADD_FREQUENCY_PHRASE:

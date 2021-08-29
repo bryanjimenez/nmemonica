@@ -26,6 +26,7 @@ import {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  addSpaceRepWord,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
@@ -37,11 +38,12 @@ import StackOrderSlider from "../Form/StackOrderSlider";
 import VocabularyMain from "./VocabularyMain";
 import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
+import { getTerm, play, termFilterByType } from "../../helper/gameHelper";
 import {
-  getTerm,
-  play,
-  termFrequencyGroupFilter,
-} from "../../helper/gameHelper";
+  FILTER_FREQ,
+  FILTER_GRP,
+  FILTER_REP,
+} from "../../reducers/settingsRed";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -108,7 +110,10 @@ class Vocabulary extends Component {
       this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
-      if (this.props.freqFilter && this.props.frequency.length === 0) {
+      if (
+        this.props.filterType === FILTER_FREQ &&
+        this.props.frequency.length === 0
+      ) {
         this.setOrder();
       } else {
         const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
@@ -124,21 +129,27 @@ class Vocabulary extends Component {
   }
 
   setOrder() {
-    let filteredVocab = termFrequencyGroupFilter(
+    let { terms: filteredVocab, spaceRepOrder } = termFilterByType(
       this.props.freqFilter,
       this.props.vocab,
       this.props.frequency,
+      this.props.repetition,
       this.props.activeGroup,
       this.props.toggleVocabularyFilter
     );
 
-    const newOrder = filteredVocab.map((v, i) => i);
+    let newOrder;
     let jbare = [];
     let ebare = [];
 
     if (!this.props.isOrdered) {
       shuffleArray(newOrder);
+    } else if (this.props.filterType === FILTER_REP) {
+      // repetition order
+      newOrder = spaceRepOrder;
     } else {
+      newOrder = filteredVocab.map((v, i) => i);
+
       filteredVocab = orderBy(filteredVocab, ["japanese"], ["asc"]);
 
       filteredVocab.forEach((v, i) => {
@@ -283,9 +294,11 @@ class Vocabulary extends Component {
             color={"--yellow"}
             ariaLabel="Next"
             action={() => {
+              this.props.addSpaceRepWord(vocabulary.uid);
+
               play(
                 this.props.reinforce,
-                this.props.freqFilter,
+                this.props.filterType,
                 this.state.frequency,
                 this.state.filteredVocab,
                 this.state.reinforcedUID,
@@ -346,12 +359,12 @@ class Vocabulary extends Component {
                 </h5>
               )}
               {!this.state.showHint &&
-                this.props.freqFilter &&
+                this.props.filterType === FILTER_FREQ &&
                 this.props.frequency.length > 0 && (
                   <FontAwesomeIcon className="clickable" icon={faDice} />
                 )}
               {!this.state.showHint &&
-                !this.props.freqFilter &&
+                this.props.filterType !== FILTER_FREQ &&
                 this.props.activeGroup.length > 0 && (
                   <FontAwesomeIcon className="clickable" icon={faDotCircle} />
                 )}
@@ -418,7 +431,7 @@ class Vocabulary extends Component {
           key={2}
           className="progress-bar flex-shrink-1"
           onClick={() => {
-            if (this.props.isOrdered) {
+            if (this.props.isOrdered && this.props.filterType !== FILTER_REP) {
               const delayTime = 4000;
               this.setState({ showPageBar: true });
 
@@ -507,13 +520,14 @@ const mapStateToProps = (state) => {
     isOrdered: state.settings.vocabulary.ordered,
     romajiActive: state.settings.vocabulary.romaji,
     hintActive: state.settings.vocabulary.hint,
-    freqFilter: state.settings.vocabulary.filter,
+    filterType: state.settings.vocabulary.filter,
     frequency: state.settings.vocabulary.frequency,
     activeGroup: state.settings.vocabulary.activeGroup,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
+    repetition: state.settings.vocabulary.repetition,
   };
 };
 
@@ -534,9 +548,11 @@ Vocabulary.propTypes = {
   scrollingState: PropTypes.func,
   autoVerbView: PropTypes.bool,
   toggleAutoVerbView: PropTypes.func,
-  freqFilter: PropTypes.bool,
+  filterType: PropTypes.number,
   toggleVocabularyFilter: PropTypes.func,
   reinforce: PropTypes.bool,
+  repetition: PropTypes.object,
+  addSpaceRepWord: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -547,6 +563,7 @@ export default connect(mapStateToProps, {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  addSpaceRepWord,
 })(Vocabulary);
 
 export { VocabularyMeta };
