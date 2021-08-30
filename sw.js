@@ -1,12 +1,11 @@
-const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.9a450374.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.023891b5.js","main.bd7446e3c47dc53a564d.css","manifest.webmanifest","maskable512.png","npm.babel.0ef5a426.js","npm.bootstrap.247d0b24cee0327bc44e.css","npm.classnames.db245282.js","npm.clsx.7ce1359d.js","npm.css-vendor.9d25868c.js","npm.dialog-polyfill.71b4353a.js","npm.firebase.c09875f6.js","npm.firebaseui.ef995043.js","npm.fortawesome.669dee67.js","npm.history.91433c8b.js","npm.hoist-non-react-statics.c295c232.js","npm.hyphenate-style-name.6006ebd8.js","npm.is-in-browser.802eea86.js","npm.isarray.806a53bf.js","npm.jss-plugin-camel-case.e24f2993.js","npm.jss-plugin-default-unit.e3468a73.js","npm.jss-plugin-global.4a477ce4.js","npm.jss-plugin-nested.fcdbd55a.js","npm.jss-plugin-props-sort.a0bb9627.js","npm.jss-plugin-rule-value-function.99d8363b.js","npm.jss-plugin-vendor-prefixer.4f9fd1be.js","npm.jss.017ed6c9.js","npm.lodash.5b7a2ffe.js","npm.material-design-lite.6dc694db.js","npm.material-ui.bc3c612c.js","npm.mini-create-react-context.b19b94a4.js","npm.object-assign.d03933ed.js","npm.path-to-regexp.3a1e431e.js","npm.primer.3f8c68a5.js","npm.prop-types.1d2653f0.js","npm.react-dom.70daa1a9.js","npm.react-firebaseui.3a42d339.js","npm.react-redux.34e19207.js","npm.react-router-dom.09a632fc.js","npm.react-router.551ceb09.js","npm.react-transition-group.ed3f2575.js","npm.react.d03b26e8.js","npm.redux-thunk.ed614dd2.js","npm.redux.f88071c6.js","npm.resolve-pathname.21e12931.js","npm.scheduler.bf36ac53.js","npm.symbol-observable.a96b4a20.js","npm.tiny-invariant.a664e280.js","npm.tslib.bfd20c21.js","npm.value-equal.2bf5a62a.js","runtime.5cff2a41.js"];
+const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.9a450374.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.19b9fc80.js","main.bd7446e3c47dc53a564d.css","manifest.webmanifest","maskable512.png","npm.babel.0ef5a426.js","npm.bootstrap.1176cc60d9b0614f08a8.css","npm.classnames.db245282.js","npm.clsx.7ce1359d.js","npm.css-vendor.9d25868c.js","npm.dialog-polyfill.71b4353a.js","npm.firebase.c09875f6.js","npm.firebaseui.ef995043.js","npm.fortawesome.669dee67.js","npm.history.91433c8b.js","npm.hoist-non-react-statics.c295c232.js","npm.hyphenate-style-name.6006ebd8.js","npm.is-in-browser.802eea86.js","npm.isarray.806a53bf.js","npm.jss-plugin-camel-case.e24f2993.js","npm.jss-plugin-default-unit.e3468a73.js","npm.jss-plugin-global.4a477ce4.js","npm.jss-plugin-nested.fcdbd55a.js","npm.jss-plugin-props-sort.a0bb9627.js","npm.jss-plugin-rule-value-function.99d8363b.js","npm.jss-plugin-vendor-prefixer.4f9fd1be.js","npm.jss.017ed6c9.js","npm.lodash.af514d24.js","npm.material-design-lite.6dc694db.js","npm.material-ui.bc3c612c.js","npm.mini-create-react-context.b19b94a4.js","npm.object-assign.d03933ed.js","npm.path-to-regexp.3a1e431e.js","npm.primer.3f8c68a5.js","npm.prop-types.1d2653f0.js","npm.react-dom.70daa1a9.js","npm.react-firebaseui.3a42d339.js","npm.react-redux.34e19207.js","npm.react-router-dom.09a632fc.js","npm.react-router.551ceb09.js","npm.react-transition-group.ed3f2575.js","npm.react.d03b26e8.js","npm.redux-thunk.ed614dd2.js","npm.redux.f88071c6.js","npm.resolve-pathname.21e12931.js","npm.scheduler.bf36ac53.js","npm.symbol-observable.a96b4a20.js","npm.tiny-invariant.a664e280.js","npm.tslib.bfd20c21.js","npm.value-equal.2bf5a62a.js","runtime.5e66c4dd.js"];
 
-const swVersionConst =  'acbe71a9672abfc65a33808b80bdb341';
+const swVersionConst =  'c8a11b4d85728e8f8f120bfde4582749';
 
 const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
 const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
 const gCloudFnPronounceConst =  'https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce';
 
-/* globals clients*/
 const swVersion = swVersionConst; // eslint-disable-line no-undef
 const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
 
@@ -108,16 +107,16 @@ self.addEventListener("fetch", (e) => {
  * @returns a Promise with a cache response
  */
 function appVersionReq() {
-
-  // return what's on cache
+  // TODO: after fetch update app?
   const cacheRes = caches
     .open(appDataCache)
     .then((cache) => cache.match(dataVerURL));
 
-  // fetch, compare, update
-  const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
+  const fetchRes = caches
+    .open(appDataCache)
+    .then((cache) => cache.add(dataVerURL).then(() => cache.match(dataVerURL)));
 
-  return cacheRes || fetchAndUpdateRes;
+  return cacheRes || fetchRes;
 }
 
 /**
@@ -279,137 +278,4 @@ function removeOldStaticCaches() {
       )
     )
   );
-}
-
-/**
- * @returns {Promise} a promise with the catched jsonObj
- * @param {String} cacheName
- * @param {String} url
- * @param {Object} jsonObj
- * @param {String} type
- * @param {Number} status
- * @param {String} statusText
- */
-function updateCacheWithJSON(
-  cacheName,
-  url,
-  jsonObj,
-  type = "application/json",
-  status = 200,
-  statusText = "OK"
-) {
-  // update cache with fetched version results
-  const blob = new Blob([JSON.stringify(jsonObj)], {
-    type,
-  });
-  const init = { status, statusText };
-  const fetchVersion = new Response(blob, init);
-
-  return caches
-    .open(appDataCache)
-    .then((cache) =>
-      cache.put(dataVerURL, fetchVersion).then(() => cache.match(dataVerURL))
-    );
-}
-
-// TODO: refactor this
-/**
- * Finds changed term lists based on version.
- * Creates object with newly added terms.
- * Sends message to client with updates.f
- * @returns {Promise} a promise containing the fetched res
- */
-function fetchVerSendNewDiffsMsg() {
-  return fetch(dataVerURL)
-    .then((r) => r.json())
-    .then((resNew) =>
-      caches
-        .open(appDataCache)
-        .then((cache) => cache.match(dataVerURL))
-        .then((r) => r.json())
-        .then((resOld) => {
-          // create obj with new and old hashes
-          let newTermsMsgPromise = Promise.resolve();
-          let versionChange = {};
-          let update = false;
-          const allowedSets = ["vocabulary", "phrases"];
-          for (let n in resNew) {
-            if (allowedSets.includes(n)) {
-              if (resOld[n] !== resNew[n]) {
-                versionChange[n] = { old: resOld[n], new: resNew[n] };
-                update = !update ? true : true;
-              }
-            }
-          }
-
-          // update cache with fetched version results
-          const fetchRes = updateCacheWithJSON(
-            appDataCache,
-            dataVerURL,
-            resNew
-          );
-
-          // look for changes in terms with new & old hashes values
-          if (update) {
-            update = false;
-            // console.log("v: " + JSON.stringify(versionChange));
-
-            let newlyAdded = {};
-            let ps = [];
-            for (let setName in versionChange) {
-              const theUrl = fbURL + "/lambda/" + setName + ".json";
-
-              ps.push(
-                cacheVerData(theUrl, versionChange[setName].new)
-                  .then((d) => d.json())
-                  .then((newData) =>
-                    cacheVerData(theUrl, versionChange[setName].old)
-                      .then((d2) => d2.json())
-                      .then((oldData) => {
-                        let arr = [];
-                        for (let j in newData) {
-                          if (oldData[j] === undefined) {
-                            arr = [...arr, j];
-                            update = !update ? true : true;
-                          }
-                        }
-
-                        if (arr.length > 0) {
-                          newlyAdded[setName] = {
-                            freq: arr,
-                            dic: newData,
-                          };
-                        }
-
-                        return Promise.resolve();
-                      })
-                  )
-              );
-            }
-
-            // message results to client
-            newTermsMsgPromise = Promise.all(ps).then(() => {
-              if (update) {
-                return clients
-                  .matchAll({ includeUncontrolled: true, type: "window" })
-                  .then((client) => {
-                    if (client && client.length) {
-                      // console.log("[SW] posting message");
-                      return client[0].postMessage({
-                        type: "NEW_TERMS_ADDED",
-                        msg: newlyAdded,
-                      });
-                    }
-
-                    return Promise.resolve();
-                  });
-              }
-            });
-          }
-
-          return Promise.all([fetchRes, newTermsMsgPromise]).then(
-            (allPromises) => allPromises[0]
-          );
-        })
-    );
 }
