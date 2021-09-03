@@ -12,15 +12,15 @@ const Opposites = lazy(() => import("./components/Pages/Opposites"));
 const KatakanaGame = lazy(() => import("./components/Pages/KatakanaGame"));
 const ParticlesGame = lazy(() => import("./components/Pages/ParticlesGame"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
-const Logout = lazy(() => import("./components/Pages/Logout"));
-const OAuthLogin = lazy(() => import("./components/Pages/OAuthLogin"));
+// const Logout = lazy(() => import("./components/Pages/Logout"));
+// const OAuthLogin = lazy(() => import("./components/Pages/OAuthLogin"));
 import { VerbsMeta } from "./components/Pages/Verbs";
 import { PhrasesMeta } from "./components/Pages/Phrases";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import { OppositesMeta } from "./components/Pages/Opposites";
 import { SettingsMeta } from "./components/Pages/Settings";
-import { LogoutMeta } from "./components/Pages/Logout";
-import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
+// import { LogoutMeta } from "./components/Pages/Logout";
+// import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
 import { KatakanaGameMeta } from "./components/Pages/KatakanaGame";
 import { ParticlesGameMeta } from "./components/Pages/ParticlesGame";
 import {
@@ -69,8 +69,8 @@ class App extends Component {
                 component={ParticlesGame}
               />
               <Route path={SettingsMeta.location} component={Settings} />
-              <Route path={OAuthLoginMeta.location} component={OAuthLogin} />
-              <Route path={LogoutMeta.location} component={Logout} />
+              {/* <Route path={OAuthLoginMeta.location} component={OAuthLogin} /> */}
+              {/* <Route path={LogoutMeta.location} component={Logout} /> */}
               <Route component={NotFound} />
             </Switch>
           </Suspense>

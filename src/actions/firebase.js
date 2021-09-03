@@ -1,6 +1,6 @@
-import firebase from "firebase/app";
-import "firebase/auth";
-import "firebase/database";
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
 import { firebaseConfig } from "../../environment.development";
 import { localStorageKey } from "../constants/paths";
 import { getLocalStorageSettings } from "../helper/localStorage";
@@ -12,11 +12,13 @@ export const FIREBASE_LOGOUT = "firebase_logout";
 export const GET_USER_SETTINGS = "get_user_settings";
 export const GET_VERSIONS = "get_versions";
 
+let firebaseInst;
+
 export function initialize() {
   return () => {
     try {
       // TODO: IE11 Object.values graceful failure
-      firebase.initializeApp(firebaseConfig);
+      firebaseInst = initializeApp(firebaseConfig);
     } catch (e) {
       console.error(e);
     }
@@ -25,14 +27,12 @@ export function initialize() {
 
 export function logout() {
   return (dispatch) => {
-    firebase
-      .auth()
-      .signOut()
-      .then(() => {
-        dispatch({
-          type: FIREBASE_LOGOUT,
-        });
+    const auth = getAuth(firebaseInst);
+    auth.signOut().then(() => {
+      dispatch({
+        type: FIREBASE_LOGOUT,
       });
+    });
   };
 }
 
@@ -50,10 +50,12 @@ export function authenticated(value) {
  */
 export function getUserSettings() {
   return (dispatch) => {
-    const user = firebase.auth().currentUser;
+    const auth = getAuth(firebaseInst);
+    const user = auth.currentUser;
     const ref = "user/" + user.uid;
 
-    const fbP = firebase.database().ref(ref).once("value");
+    const database = getDatabase();
+    const fbP = database.ref(ref).once("value");
     const lsP = getLocalStorageSettings(localStorageKey);
 
     Promise.all([fbP, lsP]).then((resolved) => {

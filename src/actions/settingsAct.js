@@ -1,5 +1,4 @@
-import firebase from "firebase/app";
-import "firebase/database";
+import { getDatabase } from "firebase/database";
 import { localStoreAttrUpdate } from "../helper/localStorage";
 
 export const SET_KANA_BTN_N = "set_kana_btn_number";
@@ -938,13 +937,11 @@ function firebaseAttrUpdate(
     setting = { [attr]: !currVal };
   }
 
-  firebase
-    .database()
-    .ref("user/" + uid)
-    .update({ lastModified: time });
+  const database = getDatabase();
 
-  firebase
-    .database()
+  database.ref("user/" + uid).update({ lastModified: time });
+
+  database
     .ref("user/" + uid + path)
     .update(setting)
     .then(() => {

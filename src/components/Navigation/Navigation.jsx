@@ -20,8 +20,8 @@ import { OppositesMeta } from "../Pages/Opposites";
 import { KatakanaGameMeta } from "../Pages/KatakanaGame";
 import { ParticlesGameMeta } from "../Pages/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
-import { OAuthLoginMeta } from "../Pages/OAuthLogin";
-import { LogoutMeta } from "../Pages/Logout";
+// import { OAuthLoginMeta } from "../Pages/OAuthLogin";
+// import { LogoutMeta } from "../Pages/Logout";
 import classNames from "classnames";
 
 import "./Navigation.css";
@@ -79,15 +79,15 @@ class Navigation extends Component {
         meta: ParticlesGameMeta,
         icon: <FontAwesomeIcon icon={faAtom} size="2x" />,
       },
-      {
-        meta: this.props.user ? LogoutMeta : OAuthLoginMeta,
-        icon: (
-          <FontAwesomeIcon
-            icon={this.props.user ? faSignOutAlt : faSignInAlt}
-            size="2x"
-          />
-        ),
-      },
+      // {
+      //   meta: this.props.user ? LogoutMeta : OAuthLoginMeta,
+      //   icon: (
+      //     <FontAwesomeIcon
+      //       icon={this.props.user ? faSignOutAlt : faSignInAlt}
+      //       size="2x"
+      //     />
+      //   ),
+      // },
       {
         meta: SettingsMeta,
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
