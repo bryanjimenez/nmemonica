@@ -20,22 +20,22 @@
   },
   "dependencies": {
     "axios": "latest",
-    "firebase-admin": "latest",
-    "firebase-functions": "latest",
-    "googleapis": "latest",
+    "firebase-admin": "^9.11.1",
+    "firebase-functions": "^3.15.5",
+    "googleapis": "^85.0.0",
     "md5": "^2.3.0",
-    "regenerator-runtime": "^0.13.3"
+    "regenerator-runtime": "^0.13.9"
   },
   "devDependencies": {
-    "@babel/cli": "^7.12.10",
-    "@babel/core": "^7.12.10",
-    "@babel/preset-env": "^7.12.11",
-    "@rollup/plugin-replace": "^2.3.1",
+    "@babel/cli": "^7.15.4",
+    "@babel/core": "^7.15.4",
+    "@babel/preset-env": "^7.15.4",
+    "@rollup/plugin-replace": "^3.0.0",
     "babel-preset-minify": "^0.5.1",
-    "eslint": "^7.16.0",
-    "eslint-plugin-promise": "^4.0.1",
-    "firebase-functions-test": "^0.2.0",
-    "firebase-tools": "latest",
+    "eslint": "^7.32.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "firebase-functions-test": "^0.3.2",
+    "firebase-tools": "^9.17.0",
     "rollup-plugin-babel": "^4.4.0"
   },
   "private": true
