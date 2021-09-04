@@ -1,1 +1,0 @@
-(self.webpackChunknmemonica=self.webpackChunknmemonica||[]).push([[408],{7121:(e,o,n)=>{"use strict";n.d(o,{Z:()=>b}),e=n.hmd(e);const b=(s="undefined"!=typeof self?self:"undefined"!=typeof window?window:void 0!==n.g?n.g:e,"function"==typeof(f=s.Symbol)?f.observable?a=f.observable:(a=f("observable"),f.observable=a):a="@@observable",a);var s,a,f}}]);
