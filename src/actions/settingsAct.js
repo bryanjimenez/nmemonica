@@ -1,6 +1,5 @@
-import { getDatabase } from "firebase/database";
 import { localStoreAttrUpdate } from "../helper/localStorage";
-
+import { firebaseAttrUpdate } from "./firebase";
 export const SET_KANA_BTN_N = "set_kana_btn_number";
 export const TOGGLE_KANA_WIDEMODE = "set_kana_widemode";
 export const TOGGLE_KANA_EASYMODE = "set_kana_easymode";
@@ -917,41 +916,4 @@ function getLastStateValue(getState, path, attr) {
   });
 
   return statePtr[attr];
-}
-
-function firebaseAttrUpdate(
-  time,
-  dispatch,
-  getState,
-  uid,
-  path,
-  attr,
-  aType,
-  value
-) {
-  let setting;
-  if (value) {
-    setting = { [attr]: value };
-  } else {
-    const currVal = getLastStateValue(getState, path, attr);
-    setting = { [attr]: !currVal };
-  }
-
-  const database = getDatabase();
-
-  database.ref("user/" + uid).update({ lastModified: time });
-
-  database
-    .ref("user/" + uid + path)
-    .update(setting)
-    .then(() => {
-      dispatch({
-        type: aType,
-        value: setting[attr],
-      });
-    })
-    .catch(function (e) {
-      console.error("update failed");
-      console.error(e);
-    });
 }

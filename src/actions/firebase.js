@@ -12,13 +12,13 @@ export const FIREBASE_LOGOUT = "firebase_logout";
 export const GET_USER_SETTINGS = "get_user_settings";
 export const GET_VERSIONS = "get_versions";
 
-let firebaseInst;
+let firebaseInstance;
 
 export function initialize() {
   return () => {
     try {
       // TODO: IE11 Object.values graceful failure
-      firebaseInst = initializeApp(firebaseConfig);
+      firebaseInstance = initializeApp(firebaseConfig);
     } catch (e) {
       console.error(e);
     }
@@ -27,7 +27,7 @@ export function initialize() {
 
 export function logout() {
   return (dispatch) => {
-    const auth = getAuth(firebaseInst);
+    const auth = getAuth(firebaseInstance);
     auth.signOut().then(() => {
       dispatch({
         type: FIREBASE_LOGOUT,
@@ -50,7 +50,7 @@ export function authenticated(value) {
  */
 export function getUserSettings() {
   return (dispatch) => {
-    const auth = getAuth(firebaseInst);
+    const auth = getAuth(firebaseInstance);
     const user = auth.currentUser;
     const ref = "user/" + user.uid;
 
@@ -138,4 +138,42 @@ export function getVersions() {
         })
       );
   };
+}
+
+
+export function firebaseAttrUpdate(
+  time,
+  dispatch,
+  getState,
+  uid,
+  path,
+  attr,
+  aType,
+  value
+) {
+  let setting;
+  if (value) {
+    setting = { [attr]: value };
+  } else {
+    const currVal = getLastStateValue(getState, path, attr);
+    setting = { [attr]: !currVal };
+  }
+
+  const database = getDatabase(firebaseInstance);
+
+  database.ref("user/" + uid).update({ lastModified: time });
+
+  database
+    .ref("user/" + uid + path)
+    .update(setting)
+    .then(() => {
+      dispatch({
+        type: aType,
+        value: setting[attr],
+      });
+    })
+    .catch(function (e) {
+      console.error("update failed");
+      console.error(e);
+    });
 }

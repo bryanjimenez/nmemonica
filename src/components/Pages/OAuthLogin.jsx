@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { Redirect } from "react-router";
 
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
-import firebase from "firebase/app";
-import "firebase/auth";
+import { EmailAuthProvider, GithubAuthProvider, getAuth } from "firebase/auth";
 
 import { connect } from "react-redux";
 import { authenticated, getUserSettings } from "../../actions/firebase";
@@ -31,24 +30,24 @@ class OAuthLogin extends Component {
       // signInFlow: "popup",
 
       signInOptions: [
-        // firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-        // firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-        // firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+        // GoogleAuthProvider.PROVIDER_ID,
+        // FacebookAuthProvider.PROVIDER_ID,
+        // TwitterAuthProvider.PROVIDER_ID,
 
         // https://firebase.google.com/docs/auth/web/email-link-auth?authuser=0
         // https://firebase.google.com/docs/auth/web/firebaseui#email_link_authentication
         // https://firebaseopensource.com/projects/firebase/firebaseui-web/
         // {
-        //   provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+        //   provider: EmailAuthProvider.PROVIDER_ID,
         //   signInMethod:
-        //     firebase.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
+        //     EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
         // },
         {
-          provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+          provider: EmailAuthProvider.PROVIDER_ID,
           signInMethod:
-            firebase.auth.EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD,
+            EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD,
         },
-        firebase.auth.GithubAuthProvider.PROVIDER_ID,
+        GithubAuthProvider.PROVIDER_ID,
       ],
       callbacks: {
         signInSuccessWithAuthResult: (authResult /*, redirectUrl*/) => {
@@ -79,7 +78,7 @@ class OAuthLogin extends Component {
         <div className="userPage mt-5 pt-3">
           <StyledFirebaseAuth
             uiConfig={this.uiConfig()}
-            firebaseAuth={firebase.auth()}
+            firebaseAuth={getAuth(firebaseInstance)}
           />
         </div>
       );
