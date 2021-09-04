@@ -3,8 +3,7 @@ flash cards
 
 
 ### TODO or not TODO
-- [ ] add tenses in verbs page
-- [ ] hiragana give up/skip and reinforce
+- [ ] fix login
 - [ ] serviceworker delete old version of cached data
 
 

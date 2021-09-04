@@ -1,6 +1,6 @@
-import firebase from "firebase/app";
-import "firebase/auth";
-import "firebase/database";
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getDatabase } from "firebase/database";
 import { firebaseConfig } from "../../environment.development";
 import { localStorageKey } from "../constants/paths";
 import { getLocalStorageSettings } from "../helper/localStorage";
@@ -12,11 +12,13 @@ export const FIREBASE_LOGOUT = "firebase_logout";
 export const GET_USER_SETTINGS = "get_user_settings";
 export const GET_VERSIONS = "get_versions";
 
+let firebaseInstance;
+
 export function initialize() {
   return () => {
     try {
       // TODO: IE11 Object.values graceful failure
-      firebase.initializeApp(firebaseConfig);
+      firebaseInstance = initializeApp(firebaseConfig);
     } catch (e) {
       console.error(e);
     }
@@ -25,14 +27,12 @@ export function initialize() {
 
 export function logout() {
   return (dispatch) => {
-    firebase
-      .auth()
-      .signOut()
-      .then(() => {
-        dispatch({
-          type: FIREBASE_LOGOUT,
-        });
+    const auth = getAuth(firebaseInstance);
+    auth.signOut().then(() => {
+      dispatch({
+        type: FIREBASE_LOGOUT,
       });
+    });
   };
 }
 
@@ -50,10 +50,12 @@ export function authenticated(value) {
  */
 export function getUserSettings() {
   return (dispatch) => {
-    const user = firebase.auth().currentUser;
+    const auth = getAuth(firebaseInstance);
+    const user = auth.currentUser;
     const ref = "user/" + user.uid;
 
-    const fbP = firebase.database().ref(ref).once("value");
+    const database = getDatabase();
+    const fbP = database.ref(ref).once("value");
     const lsP = getLocalStorageSettings(localStorageKey);
 
     Promise.all([fbP, lsP]).then((resolved) => {
@@ -136,4 +138,42 @@ export function getVersions() {
         })
       );
   };
+}
+
+
+export function firebaseAttrUpdate(
+  time,
+  dispatch,
+  getState,
+  uid,
+  path,
+  attr,
+  aType,
+  value
+) {
+  let setting;
+  if (value) {
+    setting = { [attr]: value };
+  } else {
+    const currVal = getLastStateValue(getState, path, attr);
+    setting = { [attr]: !currVal };
+  }
+
+  const database = getDatabase(firebaseInstance);
+
+  database.ref("user/" + uid).update({ lastModified: time });
+
+  database
+    .ref("user/" + uid + path)
+    .update(setting)
+    .then(() => {
+      dispatch({
+        type: aType,
+        value: setting[attr],
+      });
+    })
+    .catch(function (e) {
+      console.error("update failed");
+      console.error(e);
+    });
 }
