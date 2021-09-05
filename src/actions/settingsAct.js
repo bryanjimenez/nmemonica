@@ -904,7 +904,7 @@ export function toggleAutoVerbView() {
   };
 }
 
-function getLastStateValue(getState, path, attr) {
+export function getLastStateValue(getState, path, attr) {
   const stateSettings = getState().settings;
 
   let statePtr = stateSettings;
