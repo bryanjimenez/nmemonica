@@ -1,11 +1,12 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase } from "firebase/database";
+import { get, getDatabase, ref, update } from "firebase/database";
 import { firebaseConfig } from "../../environment.development";
 import { localStorageKey } from "../constants/paths";
 import { getLocalStorageSettings } from "../helper/localStorage";
 import merge from "lodash/fp/merge";
 import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRed";
+import { getLastStateValue } from "./settingsAct";
 
 export const FIREBASE_LOGIN = "firebase_login";
 export const FIREBASE_LOGOUT = "firebase_logout";
@@ -52,10 +53,11 @@ export function getUserSettings() {
   return (dispatch) => {
     const auth = getAuth(firebaseInstance);
     const user = auth.currentUser;
-    const ref = "user/" + user.uid;
+    const refPath = "user/" + user.uid;
 
     const database = getDatabase();
-    const fbP = database.ref(ref).once("value");
+
+    const fbP = get(ref(database, refPath));
     const lsP = getLocalStorageSettings(localStorageKey);
 
     Promise.all([fbP, lsP]).then((resolved) => {
@@ -140,7 +142,18 @@ export function getVersions() {
   };
 }
 
-
+/**
+ *
+ * @param {*} time
+ * @param {*} dispatch
+ * @param {*} getState
+ * @param {*} uid
+ * @param {*} path
+ * @param {*} attr
+ * @param {*} aType
+ * @param {*} value
+ * @returns {Promise}
+ */
 export function firebaseAttrUpdate(
   time,
   dispatch,
@@ -159,13 +172,12 @@ export function firebaseAttrUpdate(
     setting = { [attr]: !currVal };
   }
 
-  const database = getDatabase(firebaseInstance);
+  const database = getDatabase();
 
-  database.ref("user/" + uid).update({ lastModified: time });
-
-  database
-    .ref("user/" + uid + path)
-    .update(setting)
+  return Promise.all([
+    update(ref(database, "user/" + uid), { lastModified: time }),
+    update(ref(database, "user/" + uid + path), setting),
+  ])
     .then(() => {
       dispatch({
         type: aType,
