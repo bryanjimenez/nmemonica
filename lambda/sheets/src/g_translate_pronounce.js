@@ -21,12 +21,12 @@ export async function g_translate_pronounce(req, res) {
 
     res.sendStatus(204);
   } else if (req.method === "GET") {
-    const { q } = req.query;
+    const { q, tl } = req.query;
 
     const googleTranslate = await axios.get(gTranslateEndPoint, {
       responseType: "arraybuffer",
       headers: { "content-type": "audio/mpeg" },
-      params: { ie: "UTF-8", tl: "ja", client: "tw-ob", q },
+      params: { ie: "UTF-8", tl, client: "tw-ob", q },
     });
 
     if (googleTranslate.status === 200) {

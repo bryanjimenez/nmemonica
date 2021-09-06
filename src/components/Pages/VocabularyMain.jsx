@@ -12,15 +12,37 @@ class VocabularyMain extends Component {
       showEng: false,
       showMeaning: false,
       showRomaji: false,
+      prevVocab: undefined,
     };
   }
 
+  componentDidMount() {
+    this.setState({ prevVocab: this.props.vocabulary, audioPlay: false });
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    if (
+      this.state.audioPlay !== nextState.audioPlay &&
+      nextState.audioPlay === false
+    ) {
+      return false;
+    }
+    return true;
+  }
   componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.vocabulary !== prevProps.vocabulary) {
       this.setState({
         showEng: false,
         showMeaning: false,
         showRomaji: false,
+        prevVocab: prevProps.vocabulary,
+        audioPlay: true,
+      });
+    }
+
+    if (this.state.audioPlay !== false) {
+      this.setState({
+        audioPlay: false,
       });
     }
   }
@@ -45,9 +67,15 @@ class VocabularyMain extends Component {
       hiddenCaption = "[English]";
     }
 
+    let audioWords = [audioPronunciation(vocabulary), vocabulary.english];
+
+    if (this.state.prevVocab !== undefined) {
+      audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
+    }
+
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
-        {this.props.autoPlay && this.props.practiceSide ? (
+        {this.props.autoPlay !== 0 && this.props.practiceSide ? (
           <h1
             onClick={() => {
               this.setState((state) => ({ showEng: !state.showEng }));
@@ -78,8 +106,13 @@ class VocabularyMain extends Component {
         </h2>
 
         <AudioItem
-          word={audioPronunciation(vocabulary)}
-          autoPlay={this.props.scrollingDone && this.props.autoPlay}
+          word={audioWords}
+          autoPlay={
+            // TODO: simplify this
+            !this.props.scrollingDone || this.state.audioPlay === false
+              ? 0
+              : this.props.autoPlay
+          }
         />
       </div>
     );
@@ -99,7 +132,7 @@ VocabularyMain.propTypes = {
   vocabulary: PropTypes.object.isRequired,
   romajiActive: PropTypes.bool,
   practiceSide: PropTypes.bool,
-  autoPlay: PropTypes.bool,
+  autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
 };
 

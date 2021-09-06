@@ -315,7 +315,7 @@ class Vocabulary extends Component {
                     icon={this.props.practiceSide ? faGlasses : faPencilAlt}
                   />
                 </div>
-                {this.props.autoPlay && (
+                {this.props.autoPlay !== 0 && (
                   <div className="sm-icon-grp">
                     <FontAwesomeIcon
                       icon={faHeadphones}
@@ -529,7 +529,7 @@ Vocabulary.propTypes = {
   flipVocabularyPracticeSide: PropTypes.func.isRequired,
   practiceSide: PropTypes.bool,
   isOrdered: PropTypes.bool,
-  autoPlay: PropTypes.bool,
+  autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
   scrollingState: PropTypes.func,
   autoVerbView: PropTypes.bool,

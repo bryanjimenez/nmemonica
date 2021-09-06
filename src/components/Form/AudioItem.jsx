@@ -10,6 +10,24 @@ export default function AudioItem(props) {
   let player;
   let tStart;
 
+  console.log(props.autoPlay + " " + JSON.stringify(props.word));
+  let word = props.word[0];
+  let tl = "ja";
+
+  if (props.autoPlay === 1) {
+    word = props.word[0];
+  } else if (props.autoPlay === 2 && props.word.length === 2) {
+    word = props.word[1];
+    tl = "en";
+  } else if (props.autoPlay === 2 && props.word.length === 3) {
+    word = props.word[2];
+    setTimeout(() => {
+      const a = new Audio(pronounceEndoint + "?tl=en&q=" + props.word[1]);
+
+      a.play();
+    }, 1300);
+  }
+
   return (
     <div
       className="d-flex justify-content-center clickable"
@@ -19,11 +37,16 @@ export default function AudioItem(props) {
       onTouchEnd={() => {
         const time = Date.now() - tStart;
 
+        if (props.autoPlay === 2) {
+          word = props.word[0];
+          tl = "ja";
+        }
+
         if (time < 500) {
-          player.src = pronounceEndoint + "?q=" + props.word;
+          player.src = pronounceEndoint + "?tl=" + tl + "&q=" + word;
         } else {
           player.src =
-            pronounceEndoint + "/override_cache" + "?q=" + props.word;
+            pronounceEndoint + "/override_cache" + "?tl=" + tl + "&q=" + word;
         }
         player.play();
       }}
@@ -31,13 +54,17 @@ export default function AudioItem(props) {
       <audio
         ref={(ref) => {
           // src attr remains from last onClick
-          if (ref && ref.src && !props.autoPlay) {
+          if (ref && ref.src && props.autoPlay === 0) {
             ref.removeAttribute("src");
           }
           return (player = ref);
         }}
-        autoPlay={props.autoPlay}
-        src={props.autoPlay ? pronounceEndoint + "?q=" + props.word : undefined}
+        autoPlay={props.autoPlay !== 0}
+        src={
+          props.autoPlay !== 0
+            ? pronounceEndoint + "?tl=" + tl + "&q=" + word
+            : undefined
+        }
       />
       <UnmuteIcon size="medium" aria-label="pronunciation" />
     </div>
@@ -45,6 +72,6 @@ export default function AudioItem(props) {
 }
 
 AudioItem.propTypes = {
-  word: PropTypes.string.isRequired,
-  autoPlay: PropTypes.bool.isRequired,
+  word: PropTypes.array.isRequired,
+  autoPlay: PropTypes.number.isRequired,
 };
