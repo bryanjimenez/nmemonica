@@ -5,7 +5,7 @@ import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import { connect } from "react-redux";
-import { setPreviousWord } from "../../actions/vocabularyAct";
+import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
 
 class VerbMain extends Component {
   constructor(props) {
@@ -16,6 +16,7 @@ class VerbMain extends Component {
       showRomaji: false,
       shownForm: this.props.verbForm ? "masu" : "dictionary",
       prevVocab: this.props.prevTerm,
+      audioPlay: true,
     };
 
     this.buildTenseElement = this.buildTenseElement.bind(this);
@@ -43,30 +44,17 @@ class VerbMain extends Component {
   componentDidUpdate(prevProps, prevState) {
     if (this.props.verb != prevProps.verb) {
       // verb change
-      const japanesePhrase = this.getVerbForm(
-        prevProps.verb,
-        this.state.shownForm
-      );
-      const nextVerbPhrase = this.getVerbForm(
-        this.props.verb,
-        this.state.shownForm
-      );
+      const prevVerb = this.getVerbForm(prevProps.verb, this.state.shownForm);
+      const thisVerb = this.getVerbForm(this.props.verb, this.state.shownForm);
 
       const prevVocab = {
-        japanese: japanesePhrase.getSpelling(),
-        pronounce: undefined,
+        japanese: prevVerb.getSpelling(),
         uid: prevProps.verb.uid,
       };
 
-      // disregard if already updated due to verb form change
-      if (
-        this.props.prevTerm === undefined ||
-        (this.props.prevTerm &&
-          this.props.prevTerm.uid &&
-          this.props.prevTerm.uid !== prevProps.verb.uid)
-      ) {
-        // nextVerb to prevent verb-form loss between transition v->nv
-        const lastVerb = { japanese: nextVerbPhrase.getSpelling() };
+      if (this.state.shownForm !== "dictionary") {
+        // lastVerb to prevent verb-form loss between transition v->nv
+        const lastVerb = { japanese: thisVerb.getSpelling() };
         this.props.setPreviousWord({ ...prevVocab, lastVerb });
       }
 
@@ -77,16 +65,13 @@ class VerbMain extends Component {
         audioPlay: true,
       });
     }
+
     if (this.state.shownForm !== prevState.shownForm) {
       // verb form change
-      const japanesePhrase = this.getVerbForm(
-        this.props.verb,
-        this.state.shownForm
-      );
+      const thisVerb = this.getVerbForm(this.props.verb, this.state.shownForm);
 
       const prevVocab = {
-        japanese: japanesePhrase.getSpelling(),
-        pronounce: undefined,
+        japanese: thisVerb.getSpelling(),
         uid: this.props.verb.uid,
       };
 
@@ -94,7 +79,7 @@ class VerbMain extends Component {
       this.setState({ prevVocab });
     }
 
-    if (this.state.audioPlay !== false) {
+    if (this.state.audioPlay) {
       this.setState({
         audioPlay: false,
       });
@@ -214,12 +199,11 @@ class VerbMain extends Component {
     let audioWords = [
       audioPronunciation({
         japanese: japanesePhrase.getSpelling(),
-        pronounce: undefined,
       }),
       verb.english.toString(),
     ];
 
-    if (this.state.prevVocab !== undefined) {
+    if (this.state.prevVocab !== undefined && this.props.played === false) {
       audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
     }
 
@@ -273,11 +257,16 @@ class VerbMain extends Component {
         <AudioItem
           word={audioWords}
           autoPlay={
-            // TODO: simplify this
-            !this.props.scrollingDone || this.state.audioPlay === false
+            !this.props.scrollingDone || !this.state.audioPlay
               ? 0
               : this.props.autoPlay
           }
+          onPushedPlay={() => {
+            this.props.pushedPlay(true);
+          }}
+          onAutoPlayDone={() => {
+            this.props.pushedPlay(false);
+          }}
         />
       </div>,
       <div
@@ -296,6 +285,7 @@ const mapStateToProps = (state) => {
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
+    played: state.vocabulary.pushedPlay,
   };
 };
 
@@ -308,6 +298,10 @@ VerbMain.propTypes = {
   scrollingDone: PropTypes.bool,
   prevTerm: PropTypes.object,
   setPreviousWord: PropTypes.func,
+  played: PropTypes.bool,
+  pushedPlay: PropTypes.func,
 };
 
-export default connect(mapStateToProps, { setPreviousWord })(VerbMain);
+export default connect(mapStateToProps, { setPreviousWord, pushedPlay })(
+  VerbMain
+);

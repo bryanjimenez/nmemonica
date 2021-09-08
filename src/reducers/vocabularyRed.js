@@ -1,10 +1,16 @@
 import {
   GET_VOCABULARY,
   SET_PREVIOUS_SEEN_WORD,
+  SET_PUSHED_PLAY,
 } from "../actions/vocabularyAct";
 import { buildGroupObject } from "../helper/reducerHelper";
 
-const DEFAULT_STATE = { value: [], grpObj: {}, previous: undefined };
+const DEFAULT_STATE = {
+  value: [],
+  grpObj: {},
+  previous: undefined,
+  pushedPlay: false,
+};
 const DEFAULT_ACTION = {};
 
 const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
@@ -20,6 +26,8 @@ const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
       };
     case SET_PREVIOUS_SEEN_WORD:
       return { ...state, previous: action.value };
+    case SET_PUSHED_PLAY:
+      return { ...state, pushedPlay: action.value };
     default:
       return state;
   }

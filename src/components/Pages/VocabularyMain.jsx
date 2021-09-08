@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
+import { pushedPlay } from "../../actions/vocabularyAct";
 
 class VocabularyMain extends Component {
   constructor(props) {
@@ -13,6 +14,7 @@ class VocabularyMain extends Component {
       showMeaning: false,
       showRomaji: false,
       prevVocab: this.props.prevTerm,
+      audioPlay: true,
     };
   }
 
@@ -41,7 +43,7 @@ class VocabularyMain extends Component {
       });
     }
 
-    if (this.state.audioPlay !== false) {
+    if (this.state.audioPlay) {
       this.setState({
         audioPlay: false,
       });
@@ -70,7 +72,7 @@ class VocabularyMain extends Component {
 
     let audioWords = [audioPronunciation(vocabulary), vocabulary.english];
 
-    if (this.state.prevVocab !== undefined) {
+    if (this.state.prevVocab !== undefined && this.props.played === false) {
       audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
     }
 
@@ -109,11 +111,16 @@ class VocabularyMain extends Component {
         <AudioItem
           word={audioWords}
           autoPlay={
-            // TODO: simplify this
-            !this.props.scrollingDone || this.state.audioPlay === false
+            !this.props.scrollingDone || !this.state.audioPlay
               ? 0
               : this.props.autoPlay
           }
+          onPushedPlay={() => {
+            this.props.pushedPlay(true);
+          }}
+          onAutoPlayDone={() => {
+            this.props.pushedPlay(false);
+          }}
         />
       </div>
     );
@@ -127,6 +134,7 @@ const mapStateToProps = (state) => {
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
+    played: state.vocabulary.pushedPlay,
   };
 };
 
@@ -137,6 +145,8 @@ VocabularyMain.propTypes = {
   autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
   prevTerm: PropTypes.object,
+  played: PropTypes.bool,
+  pushedPlay: PropTypes.func,
 };
 
-export default connect(mapStateToProps, {})(VocabularyMain);
+export default connect(mapStateToProps, { pushedPlay })(VocabularyMain);

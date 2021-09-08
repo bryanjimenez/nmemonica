@@ -9,7 +9,8 @@ export default function AudioItem(props) {
 
   let player;
   let tStart;
-  let pTimes;
+  let pTimes = 0;
+  let playPushed = false;
 
   // console.log(props.autoPlay + " " + JSON.stringify(props.word));
   let word = props.word[0];
@@ -32,6 +33,11 @@ export default function AudioItem(props) {
       className="d-flex justify-content-center clickable"
       onTouchStart={() => {
         tStart = Date.now();
+
+        playPushed = true;
+        if (props.onPushedPlay && typeof props.onPushedPlay === "function") {
+          props.onPushedPlay();
+        }
       }}
       onTouchEnd={() => {
         const time = Date.now() - tStart;
@@ -64,6 +70,16 @@ export default function AudioItem(props) {
             : undefined
         }
         onEnded={() => {
+          // trigger on last autoPlay if play never pushed
+          if (props.autoPlay > 0 && pTimes === 0 && playPushed === false) {
+            if (
+              props.onAutoPlayDone &&
+              typeof props.onAutoPlayDone === "function"
+            ) {
+              props.onAutoPlayDone();
+            }
+          }
+
           if (props.autoPlay === 2 && pTimes > 0) {
             word = props.word[1];
             tl = "en";
@@ -82,4 +98,6 @@ export default function AudioItem(props) {
 AudioItem.propTypes = {
   word: PropTypes.array.isRequired,
   autoPlay: PropTypes.number.isRequired, //0->off,1->JP,2->EN,JP
+  onPushedPlay: PropTypes.func,
+  onAutoPlayDone: PropTypes.func,
 };

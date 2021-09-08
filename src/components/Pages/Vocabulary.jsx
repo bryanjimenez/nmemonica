@@ -204,11 +204,22 @@ class Vocabulary extends Component {
 
     // verb to non verb
     if (prevVocab.grp === "Verb" && nextVocab.grp !== "Verb") {
-      if (this.props.previous.lastVerb) {
+      if (this.props.previous && this.props.previous.lastVerb) {
+        // multiple verbs
         // non dictionary form on last verb
         this.props.setPreviousWord(this.props.previous.lastVerb);
-      } else if (this.props.previous.uid !== prevVocab.uid) {
+      } else if (
+        this.props.previous &&
+        this.props.previous.uid === prevVocab.uid
+      ) {
+        // single/multiple verb DID form change (on last)
         // prevent overriding same verb diff form
+        // setPreviousWord done on VerbMain form change
+      } else if (
+        this.props.previous &&
+        this.props.previous.uid !== prevVocab.uid
+      ) {
+        // single/multiple no form change
         this.props.setPreviousWord(prevVocab);
       }
     }
