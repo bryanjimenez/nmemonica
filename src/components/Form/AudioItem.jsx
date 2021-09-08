@@ -9,10 +9,13 @@ export default function AudioItem(props) {
 
   let player;
   let tStart;
+  let pTimes;
 
-  console.log(props.autoPlay + " " + JSON.stringify(props.word));
+  // console.log(props.autoPlay + " " + JSON.stringify(props.word));
   let word = props.word[0];
   let tl = "ja";
+
+  const touchPlay = { word: props.word[0], tl: "ja" };
 
   if (props.autoPlay === 1) {
     word = props.word[0];
@@ -21,11 +24,7 @@ export default function AudioItem(props) {
     tl = "en";
   } else if (props.autoPlay === 2 && props.word.length === 3) {
     word = props.word[2];
-    setTimeout(() => {
-      const a = new Audio(pronounceEndoint + "?tl=en&q=" + props.word[1]);
-
-      a.play();
-    }, 1300);
+    pTimes = 1;
   }
 
   return (
@@ -37,17 +36,16 @@ export default function AudioItem(props) {
       onTouchEnd={() => {
         const time = Date.now() - tStart;
 
-        if (props.autoPlay === 2) {
-          word = props.word[0];
-          tl = "ja";
-        }
+        const override = time < 500 ? "" : "/override_cache";
+        const endpoint =
+          pronounceEndoint +
+          override +
+          "?tl=" +
+          touchPlay.tl +
+          "&q=" +
+          touchPlay.word;
 
-        if (time < 500) {
-          player.src = pronounceEndoint + "?tl=" + tl + "&q=" + word;
-        } else {
-          player.src =
-            pronounceEndoint + "/override_cache" + "?tl=" + tl + "&q=" + word;
-        }
+        player.src = endpoint;
         player.play();
       }}
     >
@@ -65,6 +63,16 @@ export default function AudioItem(props) {
             ? pronounceEndoint + "?tl=" + tl + "&q=" + word
             : undefined
         }
+        onEnded={() => {
+          if (props.autoPlay === 2 && pTimes > 0) {
+            word = props.word[1];
+            tl = "en";
+
+            player.src = pronounceEndoint + "?tl=" + tl + "&q=" + word;
+            pTimes--;
+            player.play();
+          }
+        }}
       />
       <UnmuteIcon size="medium" aria-label="pronunciation" />
     </div>
@@ -73,5 +81,5 @@ export default function AudioItem(props) {
 
 AudioItem.propTypes = {
   word: PropTypes.array.isRequired,
-  autoPlay: PropTypes.number.isRequired,
+  autoPlay: PropTypes.number.isRequired, //0->off,1->JP,2->EN,JP
 };

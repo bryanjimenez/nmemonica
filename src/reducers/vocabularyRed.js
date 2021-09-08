@@ -1,7 +1,10 @@
-import { GET_VOCABULARY } from "../actions/vocabularyAct";
+import {
+  GET_VOCABULARY,
+  SET_PREVIOUS_SEEN_WORD,
+} from "../actions/vocabularyAct";
 import { buildGroupObject } from "../helper/reducerHelper";
 
-const DEFAULT_STATE = { value: [], grpObj: {} };
+const DEFAULT_STATE = { value: [], grpObj: {}, previous: undefined };
 const DEFAULT_ACTION = {};
 
 const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
@@ -15,6 +18,8 @@ const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
           uid: k,
         })),
       };
+    case SET_PREVIOUS_SEEN_WORD:
+      return { ...state, previous: action.value };
     default:
       return state;
   }

@@ -12,12 +12,12 @@ class VocabularyMain extends Component {
       showEng: false,
       showMeaning: false,
       showRomaji: false,
-      prevVocab: undefined,
+      prevVocab: this.props.prevTerm,
     };
   }
 
   componentDidMount() {
-    this.setState({ prevVocab: this.props.vocabulary, audioPlay: false });
+    this.setState({ audioPlay: false });
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -29,6 +29,7 @@ class VocabularyMain extends Component {
     }
     return true;
   }
+
   componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.vocabulary !== prevProps.vocabulary) {
       this.setState({
@@ -125,6 +126,7 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
+    prevTerm: state.vocabulary.previous,
   };
 };
 
@@ -134,6 +136,7 @@ VocabularyMain.propTypes = {
   practiceSide: PropTypes.bool,
   autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
+  prevTerm: PropTypes.object,
 };
 
 export default connect(mapStateToProps, {})(VocabularyMain);

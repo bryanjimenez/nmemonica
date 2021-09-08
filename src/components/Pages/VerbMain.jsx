@@ -5,6 +5,7 @@ import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import { connect } from "react-redux";
+import { setPreviousWord } from "../../actions/vocabularyAct";
 
 class VerbMain extends Component {
   constructor(props) {
@@ -14,13 +15,14 @@ class VerbMain extends Component {
       showMeaning: false,
       showRomaji: false,
       shownForm: this.props.verbForm ? "masu" : "dictionary",
-      prevVocab: undefined,
+      prevVocab: this.props.prevTerm,
     };
 
     this.buildTenseElement = this.buildTenseElement.bind(this);
-    this.getNeededStuff = this.getNeededStuff.bind(this);
-    this.buildVerbFormColumns = this.buildVerbFormColumns.bind(this);
-    this.verbFormsBuild = this.verbFormsBuild.bind(this);
+    this.getVerbLabelItems = this.getVerbLabelItems.bind(this);
+    this.splitVerbFormsToColumns = this.splitVerbFormsToColumns.bind(this);
+    this.getVerbFormsArray = this.getVerbFormsArray.bind(this);
+    this.getVerbForm = this.getVerbForm.bind(this);
   }
 
   componentDidMount() {
@@ -41,29 +43,55 @@ class VerbMain extends Component {
   componentDidUpdate(prevProps, prevState) {
     if (this.props.verb != prevProps.verb) {
       // verb change
-      const verbForms = this.verbFormsBuild(prevProps.verb);
-      const { japanesePhrase } = this.getNeededStuff(
-        verbForms,
+      const japanesePhrase = this.getVerbForm(
+        prevProps.verb,
         this.state.shownForm
       );
+      const nextVerbPhrase = this.getVerbForm(
+        this.props.verb,
+        this.state.shownForm
+      );
+
+      const prevVocab = {
+        japanese: japanesePhrase.getSpelling(),
+        pronounce: undefined,
+        uid: prevProps.verb.uid,
+      };
+
+      // disregard if already updated due to verb form change
+      if (
+        this.props.prevTerm === undefined ||
+        (this.props.prevTerm &&
+          this.props.prevTerm.uid &&
+          this.props.prevTerm.uid !== prevProps.verb.uid)
+      ) {
+        // nextVerb to prevent verb-form loss between transition v->nv
+        const lastVerb = { japanese: nextVerbPhrase.getSpelling() };
+        this.props.setPreviousWord({ ...prevVocab, lastVerb });
+      }
 
       this.setState({
         showMeaning: false,
         showRomaji: false,
-        prevVocab: japanesePhrase,
+        prevVocab,
         audioPlay: true,
       });
     }
     if (this.state.shownForm !== prevState.shownForm) {
       // verb form change
-      const verbForms = this.verbFormsBuild(this.props.verb);
-      const { japanesePhrase } = this.getNeededStuff(
-        verbForms,
+      const japanesePhrase = this.getVerbForm(
+        this.props.verb,
         this.state.shownForm
       );
-      this.setState({
-        prevVocab: japanesePhrase,
-      });
+
+      const prevVocab = {
+        japanese: japanesePhrase.getSpelling(),
+        pronounce: undefined,
+        uid: this.props.verb.uid,
+      };
+
+      this.props.setPreviousWord(prevVocab);
+      this.setState({ prevVocab });
     }
 
     if (this.state.audioPlay !== false) {
@@ -95,11 +123,11 @@ class VerbMain extends Component {
   }
 
   /**
-   * 
-   * @param {*} verb 
+   *
+   * @param {*} verb
    * @returns {Array} of verb forms objects
    */
-  verbFormsBuild(verb) {
+  getVerbFormsArray(verb) {
     const dictionaryForm = JapaneseVerb.parse(verb.japanese);
 
     return [
@@ -111,12 +139,29 @@ class VerbMain extends Component {
     ];
   }
 
+  getVerbForm(verb, form) {
+    const dictionaryForm = JapaneseVerb.parse(verb.japanese);
+
+    switch (form) {
+      case "masu":
+        return dictionaryForm.masuForm();
+      case "mashou":
+        return dictionaryForm.mashouForm();
+      case "dictionary":
+        return dictionaryForm;
+      case "te_form":
+        return dictionaryForm.teForm();
+      case "ta_form":
+        return dictionaryForm.taForm();
+    }
+  }
+
   /**
    * splits the verb forms into two columns
-   * @param {*} verbForms 
+   * @param {*} verbForms
    * @returns {Object} an object containing two columns
    */
-  buildVerbFormColumns(verbForms) {
+  splitVerbFormsToColumns(verbForms) {
     const rightShift = verbForms.length % 2 === 0 ? 1 : 0;
     const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
 
@@ -126,17 +171,16 @@ class VerbMain extends Component {
   }
 
   /**
-   * 
-   * @param {Array} verbForms 
+   *
+   * @param {Array} verbForms
    * @param {String} theForm the form to filter by
-   * @returns {{ inJapanese, inEnglish:String, romaji:String, japanesePhrase }}
+   * @returns {{ inJapanese:HTMLElement, inEnglish:String, romaji:String, japanesePhrase }}
    */
-  getNeededStuff(verbForms, theForm) {
+  getVerbLabelItems(verbForms, theForm) {
     const romaji = this.props.verb.romaji || ".";
 
-    const formResult = verbForms.filter((form) => form.t === theForm);
-    const japanesePhrase =
-      formResult.length === 1 ? formResult[0].j : verbForms.dictionary;
+    const formResult = verbForms.find((form) => form.t === theForm);
+    const japanesePhrase = formResult ? formResult.j : verbForms.dictionary;
 
     let inJapanese = japanesePhrase.toHTML();
     let inEnglish = this.props.verb.english;
@@ -146,10 +190,10 @@ class VerbMain extends Component {
 
   render() {
     const verb = this.props.verb;
-    const verbForms = this.verbFormsBuild(verb);
-    const { t1, t2 } = this.buildVerbFormColumns(verbForms);
+    const verbForms = this.getVerbFormsArray(verb);
+    const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
     const { inJapanese, inEnglish, romaji, japanesePhrase } =
-      this.getNeededStuff(verbForms, this.state.shownForm);
+      this.getVerbLabelItems(verbForms, this.state.shownForm);
 
     let shownSide, hiddenSide, shownCaption, hiddenCaption;
     if (this.props.practiceSide) {
@@ -169,20 +213,14 @@ class VerbMain extends Component {
 
     let audioWords = [
       audioPronunciation({
-        japanese: japanesePhrase._kanji,
+        japanese: japanesePhrase.getSpelling(),
         pronounce: undefined,
       }),
       verb.english.toString(),
     ];
 
     if (this.state.prevVocab !== undefined) {
-      audioWords = [
-        ...audioWords,
-        audioPronunciation({
-          japanese: this.state.prevVocab._kanji,
-          pronounce: undefined,
-        }),
-      ];
+      audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
     }
 
     return [
@@ -257,6 +295,7 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
+    prevTerm: state.vocabulary.previous,
   };
 };
 
@@ -267,6 +306,8 @@ VerbMain.propTypes = {
   practiceSide: PropTypes.bool,
   romajiActive: PropTypes.bool,
   scrollingDone: PropTypes.bool,
+  prevTerm: PropTypes.object,
+  setPreviousWord: PropTypes.func,
 };
 
-export default connect(mapStateToProps, {})(VerbMain);
+export default connect(mapStateToProps, { setPreviousWord })(VerbMain);
