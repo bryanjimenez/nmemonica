@@ -1,6 +1,6 @@
 const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.7ef92152.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.bd7446e3c47dc53a564d.css","main.fe0ec2c8.js","manifest.webmanifest","maskable512.png","npm.babel.c5e8247e.js","npm.bootstrap.1176cc60d9b0614f08a8.css","npm.classnames.8f12f1d7.js","npm.clsx.6e5cca71.js","npm.css-vendor.4df2fdfe.js","npm.firebase.c44ecf6b.js","npm.fortawesome.6919438d.js","npm.history.e2ef1c87.js","npm.hoist-non-react-statics.00a88bd9.js","npm.hyphenate-style-name.0055c82f.js","npm.is-in-browser.3a68dd2c.js","npm.isarray.b99faedf.js","npm.jss-plugin-camel-case.271794fc.js","npm.jss-plugin-default-unit.d2fb9396.js","npm.jss-plugin-global.36a61ec9.js","npm.jss-plugin-nested.27ee2039.js","npm.jss-plugin-props-sort.f9c7060e.js","npm.jss-plugin-rule-value-function.c8aeda87.js","npm.jss-plugin-vendor-prefixer.6f58513f.js","npm.jss.eab36002.js","npm.lodash.16180d03.js","npm.material-ui.29fcee2f.js","npm.mini-create-react-context.cd39d446.js","npm.object-assign.43cf34ba.js","npm.path-to-regexp.3c245515.js","npm.primer.d3adb01c.js","npm.prop-types.5a8543b5.js","npm.react-dom.bf3dcfe3.js","npm.react-redux.c8f4b3d9.js","npm.react-router-dom.43e290bb.js","npm.react-router.7a8be827.js","npm.react-transition-group.9c9f1895.js","npm.react.0ff3225b.js","npm.redux-thunk.571a5839.js","npm.redux.57848e49.js","npm.resolve-pathname.05213e20.js","npm.scheduler.d7588745.js","npm.tiny-invariant.fe2a2a3b.js","npm.tslib.4e3f6e7b.js","runtime.c965b000.js"];
 
-const swVersionConst =  'fd4eef679808c09f83642d611a763e90';
+const swVersionConst =  '7c6b42c60cfeb56f814bb98f0113a7a4';
 
 const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
 const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
@@ -96,8 +96,7 @@ self.addEventListener("fetch", (e) => {
   } else if (url.indexOf(gCloudFnPronounce) === 0) {
     // site media asset
 
-    console.log('site media asset')
-
+    console.log("site media asset");
 
     if (!self.indexedDB) {
       console.log(
@@ -133,26 +132,36 @@ self.addEventListener("fetch", (e) => {
         };
       });
 
-      const dbResults = dbOpenPromise.then((db) =>{
+      const dbResults = dbOpenPromise.then((db) => {
         return readIndexedDB(db, url)
           .then((obj) => {
             //found
-            console.log('found!')
-            return obj.response;
+            console.log("found!");
+
+            const status = 200,
+              statusText = "OK";
+            const init = { status, statusText };
+            const r = new Response(obj.blob, init);
+
+            return r;
           })
           .catch(() => {
             //not found
-            console.log('not found?')
-            return fetch(url).then((res) =>{
-              console.log('fetch')
-              console.log(JSON.stringify(res))
+            console.log("not found?");
+            return fetch(url)
+              .then((res) => res.blob())
+              .then((blob) => {
+                return writeIndexedDB(db, { url, blob }).then((obj) => {
+                  const status = 200,
+                    statusText = "OK";
+                  const init = { status, statusText };
+                  const r = new Response(obj.blob, init);
 
-              return writeIndexedDB(db, { url, response: res.clone() }).then((obj) => {
-                return obj.response;
-              })
+                  return r;
+                });
+              });
           });
-          })
-        });
+      });
 
       e.respondWith(dbResults);
     }
@@ -163,7 +172,6 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(fetch(e.request));
   }
 });
-
 
 function readIndexedDB(db, key) {
   var transaction = db.transaction(["media"]);
@@ -177,17 +185,13 @@ function readIndexedDB(db, key) {
       reject();
     };
     request.onsuccess = function (event) {
-      // Do something with the request.result!
-      // console.log("Name for SSN 444-44-4444 is " + request.result.name);
-
-      console.log(JSON.stringify(request.result))
-      if(request.result){
+      // console.log(JSON.stringify(request.result));
+      if (request.result) {
         console.log("get success");
         resolve(request.result);
-      }
-      else{
-        console.log('no data?')
-        reject()
+      } else {
+        console.log("no data?");
+        reject();
       }
     };
   });
@@ -218,15 +222,6 @@ function writeIndexedDB(db, value) {
 
   let objectStore = transaction.objectStore("media");
   let addRequest = objectStore.add(value);
-  // try {
-  //   req = store.add(obj);
-  // } catch (e) {
-  //   if (e.name == 'DataCloneError')
-  //     displayActionFailure("This engine doesn't know how to clone a Blob, " +
-  //                          "use Firefox");
-  //   throw e;
-  // }
-
 
   const writePromise = new Promise((resolve, reject) => {
     addRequest.onsuccess = function (event) {
