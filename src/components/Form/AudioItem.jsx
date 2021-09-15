@@ -40,7 +40,7 @@ export default function AudioItem(props) {
         }
       }}
       onTouchEnd={() => {
-        const time = Date.now() - tStart;
+        const time = ~~(Date.now() - tStart);
 
         const override = time < 500 ? "" : "/override_cache";
         const endpoint =
