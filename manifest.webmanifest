@@ -1,13 +1,18 @@
 {
-  "short_name": "Nmemonica 2",
-  "name": "Nmemonica 2",
+  "short_name": "Nmemonica",
+  "name": "Nmemonica",
   "description": "Japanese/English Flash Cards",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#BBBBBB",
-  
+  "background_color": "#ffffff",
+  "orientation": "landscape",
   "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
     {
       "src": "icon192.png",
       "type": "image/png",
