@@ -1,6 +1,6 @@
 {
-  "short_name": "Nmemonica 1",
-  "name": "Nmemonica 1",
+  "short_name": "Nmemonica 2",
+  "name": "Nmemonica 2",
   "description": "Japanese/English Flash Cards",
   "start_url": ".",
   "display": "standalone",
@@ -9,9 +9,14 @@
   
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "icon192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     },
     {
       "src": "maskable512.png",
