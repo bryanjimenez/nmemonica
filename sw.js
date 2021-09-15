@@ -1,6 +1,6 @@
 const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.7ef92152.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.bd7446e3c47dc53a564d.css","main.c542f385.js","manifest.webmanifest","maskable512.png","npm.babel.c5e8247e.js","npm.bootstrap.1176cc60d9b0614f08a8.css","npm.classnames.8f12f1d7.js","npm.clsx.6e5cca71.js","npm.css-vendor.4df2fdfe.js","npm.firebase.c44ecf6b.js","npm.fortawesome.6919438d.js","npm.history.e2ef1c87.js","npm.hoist-non-react-statics.00a88bd9.js","npm.hyphenate-style-name.0055c82f.js","npm.is-in-browser.3a68dd2c.js","npm.isarray.b99faedf.js","npm.jss-plugin-camel-case.271794fc.js","npm.jss-plugin-default-unit.d2fb9396.js","npm.jss-plugin-global.36a61ec9.js","npm.jss-plugin-nested.27ee2039.js","npm.jss-plugin-props-sort.f9c7060e.js","npm.jss-plugin-rule-value-function.c8aeda87.js","npm.jss-plugin-vendor-prefixer.6f58513f.js","npm.jss.eab36002.js","npm.lodash.16180d03.js","npm.material-ui.29fcee2f.js","npm.mini-create-react-context.cd39d446.js","npm.object-assign.43cf34ba.js","npm.path-to-regexp.3c245515.js","npm.primer.d3adb01c.js","npm.prop-types.5a8543b5.js","npm.react-dom.bf3dcfe3.js","npm.react-redux.c8f4b3d9.js","npm.react-router-dom.43e290bb.js","npm.react-router.7a8be827.js","npm.react-transition-group.9c9f1895.js","npm.react.0ff3225b.js","npm.redux-thunk.571a5839.js","npm.redux.57848e49.js","npm.resolve-pathname.05213e20.js","npm.scheduler.d7588745.js","npm.tiny-invariant.fe2a2a3b.js","npm.tslib.4e3f6e7b.js","runtime.c965b000.js"];
 
-const swVersionConst =  '460f6f588634827b149052569372aae4';
+const swVersionConst =  '099865309d659b9421a78eeb724bdee1';
 
 const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
 const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
@@ -108,14 +108,9 @@ self.addEventListener("fetch", (e) => {
 
         return fetch(newUrl)
           .then((res) => res.blob())
-          .then((blob) => {
-            console.log(blob);
-            return deleteIDBItem(db, query).then(() => {
-              return writeIDBItem(db, { query, blob }).then((dataO) =>
-                toResponse(dataO)
-              );
-            });
-          });
+          .then((blob) =>
+            putIDBItem(db, { query, blob }).then((dataO) => toResponse(dataO))
+          );
       });
 
       e.respondWith(dbResults);
@@ -135,7 +130,7 @@ self.addEventListener("fetch", (e) => {
       const dbResults = dbOpenPromise.then((db) => {
         const query = url.split(gCloudFnPronounce)[1];
 
-        return readIDBItem(db, query)
+        return getIDBItem(db, query)
           .then((dataO) =>
             //found
             toResponse(dataO)
@@ -145,7 +140,7 @@ self.addEventListener("fetch", (e) => {
             fetch(url)
               .then((res) => res.blob())
               .then((blob) =>
-                writeIDBItem(db, { query, blob }).then((dataO) =>
+                addIDBItem(db, { query, blob }).then((dataO) =>
                   toResponse(dataO)
                 )
               )
@@ -168,11 +163,6 @@ function toResponse(obj) {
 
 function openIDB() {
   let openRequest = indexedDB.open(appMediaCache);
-  // db.onerror = function (event) {
-  //   // Generic error handler for all errors targeted at this database's
-  //   // requests!
-  //   console.error("Database error: " + event.target.errorCode);
-  // };
 
   const upgradeP = new Promise((resolve, reject) => {
     openRequest.onupgradeneeded = function (event) {
@@ -200,6 +190,13 @@ function openIDB() {
     };
     openRequest.onsuccess = function (event) {
       let db = event.target.result;
+
+      db.onerror = function (event) {
+        // Generic error handler for all errors targeted at this database's
+        // requests!
+        console.error("Database error: " + event.target.errorCode);
+      };
+
       // console.log("open success");
       resolve(db);
     };
@@ -209,7 +206,7 @@ function openIDB() {
   return dbOpenPromise;
 }
 
-function readIDBItem(db, key) {
+function getIDBItem(db, key) {
   var transaction = db.transaction(["media"]);
   var objectStore = transaction.objectStore("media");
   var request = objectStore.get(key);
@@ -252,7 +249,7 @@ function readIDBItem(db, key) {
  * @param {*} value
  * @returns
  */
-function writeIDBItem(db, value) {
+function addIDBItem(db, value) {
   let transaction = db.transaction(["media"], "readwrite");
 
   let objectStore = transaction.objectStore("media");
@@ -277,6 +274,44 @@ function writeIDBItem(db, value) {
     };
     transaction.onerror = function (event) {
       // console.log("write Transaction failed!");
+      reject();
+    };
+  });
+
+  return Promise.all([requestP, transactionP]).then(() => value);
+}
+
+/**
+ *
+ * @param {*} db
+ * @param {*} value
+ * @returns
+ */
+function putIDBItem(db, value) {
+  let transaction = db.transaction(["media"], "readwrite");
+
+  let objectStore = transaction.objectStore("media");
+  let request = objectStore.put(value);
+
+  const requestP = new Promise((resolve, reject) => {
+    request.onsuccess = function (event) {
+      // event.target.result === customer.ssn;
+      // console.log("put done!");
+      resolve();
+    };
+    request.onerror = function (event) {
+      // console.log("put failed!");
+      reject();
+    };
+  });
+
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function (event) {
+      // console.log("put Transaction done!");
+      resolve(value);
+    };
+    transaction.onerror = function (event) {
+      // console.log("put Transaction failed!");
       reject();
     };
   });
