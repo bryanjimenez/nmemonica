@@ -78,7 +78,7 @@ class VocabularyMain extends Component {
 
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
-        {this.props.autoPlay !== 0 && this.props.practiceSide ? (
+        {this.props.autoPlay === 1 && this.props.practiceSide ? (
           <h1
             onClick={() => {
               this.setState((state) => ({ showEng: !state.showEng }));
@@ -99,15 +99,18 @@ class VocabularyMain extends Component {
             {this.state.showRomaji ? romaji : "[Romaji]"}
           </h5>
         )}
-        <h2
-          onClick={() => {
-            this.setState((state) => ({ showMeaning: !state.showMeaning }));
-          }}
-          className="clickable"
-        >
-          {this.state.showMeaning ? hiddenSide : hiddenCaption}
-        </h2>
-
+        {this.props.autoPlay !== 2 || this.props.practiceSide ? (
+          <h2
+            onClick={() => {
+              this.setState((state) => ({ showMeaning: !state.showMeaning }));
+            }}
+            className="clickable"
+          >
+            {this.state.showMeaning ? hiddenSide : hiddenCaption}
+          </h2>
+        ) : (
+          <h2>{hiddenSide}</h2>
+        )}
         <AudioItem
           word={audioWords}
           autoPlay={

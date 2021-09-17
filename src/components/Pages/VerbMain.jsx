@@ -218,7 +218,7 @@ class VerbMain extends Component {
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
-        {this.props.autoPlay !== 0 && this.props.practiceSide ? (
+        {this.props.autoPlay === 1 && this.props.practiceSide ? (
           <div
             style={topStyle}
             onClick={() => {
@@ -243,17 +243,21 @@ class VerbMain extends Component {
             {this.state.showRomaji ? romaji : "[romaji]"}
           </div>
         )}
-        <div
-          className="clickable"
-          style={btmStyle}
-          onClick={() => {
-            this.setState((state) => ({
-              showMeaning: !state.showMeaning,
-            }));
-          }}
-        >
-          {this.state.showMeaning ? hiddenSide : hiddenCaption}
-        </div>
+        {this.props.autoPlay !== 2 || this.props.practiceSide ? (
+          <div
+            className="clickable"
+            style={btmStyle}
+            onClick={() => {
+              this.setState((state) => ({
+                showMeaning: !state.showMeaning,
+              }));
+            }}
+          >
+            {this.state.showMeaning ? hiddenSide : hiddenCaption}
+          </div>
+        ) : (
+          <div className="clickable">{hiddenSide}</div>
+        )}
         <AudioItem
           word={audioWords}
           autoPlay={
