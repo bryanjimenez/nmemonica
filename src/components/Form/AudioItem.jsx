@@ -9,24 +9,48 @@ export default function AudioItem(props) {
 
   let player;
   let tStart;
-  let pTimes = 0;
   let playPushed = false;
 
   // console.log(props.autoPlay + " " + JSON.stringify(props.word));
-  let word = props.word[0];
-  let tl = "ja";
-
-  const touchPlay = { word: props.word[0], tl: "ja" };
+  // props.word = [currJWord, currEword, lastJWord]
+  const touchPlayParam = { word: props.word[0], tl: "ja" };
+  let autoPlayEndPoint = [];
 
   if (props.autoPlay === 1) {
-    word = props.word[0];
+    autoPlayEndPoint = [
+      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[0],
+    ];
   } else if (props.autoPlay === 2 && props.word.length === 2) {
-    word = props.word[1];
-    tl = "en";
+    autoPlayEndPoint = [
+      pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
+    ];
   } else if (props.autoPlay === 2 && props.word.length === 3) {
-    word = props.word[2];
-    pTimes = 1;
+    autoPlayEndPoint = [
+      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[2],
+      pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
+    ];
   }
+
+  const playNextAudio = function () {
+    // trigger on last autoPlay if play was never pushed
+    const [, ...nextEndPoints] = autoPlayEndPoint;
+    autoPlayEndPoint = nextEndPoints;
+
+    if (
+      props.autoPlay > 0 &&
+      autoPlayEndPoint.length === 0 &&
+      playPushed === false
+    ) {
+      if (props.onAutoPlayDone && typeof props.onAutoPlayDone === "function") {
+        props.onAutoPlayDone();
+      }
+    }
+
+    if (props.autoPlay === 2 && autoPlayEndPoint.length > 0) {
+      player.src = autoPlayEndPoint[0];
+      player.play();
+    }
+  };
 
   return (
     <div
@@ -47,9 +71,9 @@ export default function AudioItem(props) {
           pronounceEndoint +
           override +
           "?tl=" +
-          touchPlay.tl +
+          touchPlayParam.tl +
           "&q=" +
-          touchPlay.word;
+          touchPlayParam.word;
 
         player.src = endpoint;
         player.play();
@@ -64,30 +88,13 @@ export default function AudioItem(props) {
           return (player = ref);
         }}
         autoPlay={props.autoPlay !== 0}
-        src={
-          props.autoPlay !== 0
-            ? pronounceEndoint + "?tl=" + tl + "&q=" + word
-            : undefined
-        }
+        src={props.autoPlay !== 0 ? autoPlayEndPoint[0] : undefined}
+        onError={() => {
+          // likely failed to fetch resource
+          playNextAudio();
+        }}
         onEnded={() => {
-          // trigger on last autoPlay if play never pushed
-          if (props.autoPlay > 0 && pTimes === 0 && playPushed === false) {
-            if (
-              props.onAutoPlayDone &&
-              typeof props.onAutoPlayDone === "function"
-            ) {
-              props.onAutoPlayDone();
-            }
-          }
-
-          if (props.autoPlay === 2 && pTimes > 0) {
-            word = props.word[1];
-            tl = "en";
-
-            player.src = pronounceEndoint + "?tl=" + tl + "&q=" + word;
-            pTimes--;
-            player.play();
-          }
+          playNextAudio();
         }}
       />
       <UnmuteIcon size="medium" aria-label="pronunciation" />
