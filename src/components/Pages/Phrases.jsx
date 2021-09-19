@@ -26,6 +26,7 @@ import {
   alphaOrder,
   getTerm,
   play,
+  minimumTimeForSpaceRepUpdate,
   randomOrder,
   spaceRepOrder,
   termFilterByType,
@@ -42,6 +43,7 @@ class Phrases extends Component {
     super(props);
 
     this.state = {
+      lastNext: Date.now(),
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
@@ -146,6 +148,7 @@ class Phrases extends Component {
     const l = this.state.filteredPhrases.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
+      lastNext: Date.now(),
       reinforcedUID: undefined,
       selectedIndex: newSel,
       showMeaning: false,
@@ -246,7 +249,10 @@ class Phrases extends Component {
             color={"--orange"}
             ariaLabel="Next"
             action={() => {
-              this.props.updateSpaceRepPhrase(phrase.uid);
+              // prevent updates when quick scrolling
+              if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
+                this.props.updateSpaceRepPhrase(phrase.uid);
+              }
 
               play(
                 this.props.reinforce,
@@ -347,6 +353,7 @@ Phrases.propTypes = {
   reinforce: PropTypes.bool,
   activeGroup: PropTypes.array,
   repetition: PropTypes.object,
+  lastNext: PropTypes.number,
   updateSpaceRepPhrase: PropTypes.func,
 };
 

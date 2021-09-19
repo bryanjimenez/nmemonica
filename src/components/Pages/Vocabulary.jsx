@@ -40,6 +40,7 @@ import {
   alphaOrder,
   getTerm,
   play,
+  minimumTimeForSpaceRepUpdate,
   randomOrder,
   spaceRepOrder,
   termFilterByType,
@@ -56,6 +57,7 @@ class Vocabulary extends Component {
     super(props);
 
     this.state = {
+      lastNext: Date.now(),
       selectedIndex: 0,
       showEng: false,
       showMeaning: false,
@@ -150,9 +152,11 @@ class Vocabulary extends Component {
       newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
     } else {
       // alphabetized
-      ({ order: newOrder, jOrder: jbare, eOrder: ebare } = alphaOrder(
-        filteredVocab
-      ));
+      ({
+        order: newOrder,
+        jOrder: jbare,
+        eOrder: ebare,
+      } = alphaOrder(filteredVocab));
     }
 
     const filteredKeys = filteredVocab.map((f) => f.uid);
@@ -174,6 +178,7 @@ class Vocabulary extends Component {
     const l = this.state.filteredVocab.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
+      lastNext: Date.now(),
       reinforcedUID: undefined,
       selectedIndex: newSel,
       showEng: false,
@@ -276,7 +281,10 @@ class Vocabulary extends Component {
             color={"--yellow"}
             ariaLabel="Next"
             action={() => {
-              this.props.updateSpaceRepWord(vocabulary.uid);
+              // prevent updates when quick scrolling
+              if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
+                this.props.updateSpaceRepWord(vocabulary.uid);
+              }
 
               play(
                 this.props.reinforce,
@@ -534,6 +542,7 @@ Vocabulary.propTypes = {
   toggleVocabularyFilter: PropTypes.func,
   reinforce: PropTypes.bool,
   repetition: PropTypes.object,
+  lastNext: PropTypes.number,
   updateSpaceRepWord: PropTypes.func,
 };
 

@@ -132,6 +132,15 @@ export function termFilterByType(
 }
 
 /**
+ * Minimum time between actions to trigger a space repetition update
+ * @param {Number} prevTime
+ * @returns {Boolean}
+ */
+export function minimumTimeForSpaceRepUpdate(prevTime) {
+  return ~~(Date.now() - prevTime) > 1500;
+}
+
+/**
  * space repetition order
  * terms not yet viewed
  * date last viewed
