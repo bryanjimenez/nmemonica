@@ -1,6 +1,6 @@
-const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.7ef92152.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.43582602c63e4b9cd170.css","main.b8286681.js","manifest.webmanifest","maskable512.png","npm.babel.c5e8247e.js","npm.bootstrap.aace22590e96765bab41.css","npm.classnames.8f12f1d7.js","npm.clsx.6e5cca71.js","npm.css-vendor.4df2fdfe.js","npm.firebase.c44ecf6b.js","npm.fortawesome.6919438d.js","npm.history.e2ef1c87.js","npm.hoist-non-react-statics.00a88bd9.js","npm.hyphenate-style-name.0055c82f.js","npm.is-in-browser.3a68dd2c.js","npm.isarray.b99faedf.js","npm.jss-plugin-camel-case.271794fc.js","npm.jss-plugin-default-unit.d2fb9396.js","npm.jss-plugin-global.36a61ec9.js","npm.jss-plugin-nested.27ee2039.js","npm.jss-plugin-props-sort.f9c7060e.js","npm.jss-plugin-rule-value-function.c8aeda87.js","npm.jss-plugin-vendor-prefixer.6f58513f.js","npm.jss.eab36002.js","npm.lodash.16180d03.js","npm.material-ui.29fcee2f.js","npm.mini-create-react-context.cd39d446.js","npm.object-assign.43cf34ba.js","npm.path-to-regexp.3c245515.js","npm.primer.d3adb01c.js","npm.prop-types.5a8543b5.js","npm.react-dom.bf3dcfe3.js","npm.react-redux.c8f4b3d9.js","npm.react-router-dom.43e290bb.js","npm.react-router.7a8be827.js","npm.react-transition-group.9c9f1895.js","npm.react.0ff3225b.js","npm.redux-thunk.571a5839.js","npm.redux.57848e49.js","npm.resolve-pathname.05213e20.js","npm.scheduler.d7588745.js","npm.tiny-invariant.fe2a2a3b.js","npm.tslib.4e3f6e7b.js","runtime.66d83eae.js"];
+const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.7ef92152.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.8fae76a8.js","main.9971e6584057a97fa160.css","manifest.webmanifest","maskable512.png","npm.babel.c5e8247e.js","npm.bootstrap.1176cc60d9b0614f08a8.css","npm.classnames.8f12f1d7.js","npm.clsx.6e5cca71.js","npm.css-vendor.4df2fdfe.js","npm.firebase.c44ecf6b.js","npm.fortawesome.6919438d.js","npm.history.e2ef1c87.js","npm.hoist-non-react-statics.00a88bd9.js","npm.hyphenate-style-name.0055c82f.js","npm.is-in-browser.3a68dd2c.js","npm.isarray.b99faedf.js","npm.jss-plugin-camel-case.271794fc.js","npm.jss-plugin-default-unit.d2fb9396.js","npm.jss-plugin-global.36a61ec9.js","npm.jss-plugin-nested.27ee2039.js","npm.jss-plugin-props-sort.f9c7060e.js","npm.jss-plugin-rule-value-function.c8aeda87.js","npm.jss-plugin-vendor-prefixer.6f58513f.js","npm.jss.eab36002.js","npm.lodash.16180d03.js","npm.material-ui.29fcee2f.js","npm.mini-create-react-context.cd39d446.js","npm.object-assign.43cf34ba.js","npm.path-to-regexp.3c245515.js","npm.primer.d3adb01c.js","npm.prop-types.5a8543b5.js","npm.react-dom.bf3dcfe3.js","npm.react-redux.c8f4b3d9.js","npm.react-router-dom.43e290bb.js","npm.react-router.7a8be827.js","npm.react-transition-group.9c9f1895.js","npm.react.0ff3225b.js","npm.redux-thunk.571a5839.js","npm.redux.57848e49.js","npm.resolve-pathname.05213e20.js","npm.scheduler.d7588745.js","npm.tiny-invariant.fe2a2a3b.js","npm.tslib.4e3f6e7b.js","runtime.81618bf7.js"];
 
-const swVersionConst =  'c72eb01b097f640dcfc4fb77cfb05574';
+const swVersionConst =  '79b006d10f68a36c771abaf7771bb5c1';
 
 const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
 const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
@@ -27,7 +27,6 @@ const dataURL = [
   fbURL + "/lambda/particles.json",
 ];
 
-let CONSOLE_LEVEL = 0;
 let ERROR = 1,
   WARN = 2,
   DEBUG = 3;
@@ -102,11 +101,11 @@ self.addEventListener("fetch", (e) => {
       console.log(
         "Your browser doesn't support a stable version of IndexedDB."
       );
-      messageClient('CACHE.override', WARN)
+      clientLogger("CACHE.override", WARN);
       e.respondWith(recache(appMediaCache, newUrl));
     } else {
       // use indexedDB
-      messageClient('IDB.override', WARN)
+      clientLogger("IDB.override", WARN);
 
       // TODO: parallel?
       const dbOpenPromise = openIDB();
@@ -154,7 +153,6 @@ self.addEventListener("fetch", (e) => {
                 )
               )
           );
-        
       });
       e.respondWith(dbResults);
     }
@@ -188,7 +186,7 @@ function openIDB() {
       objectStore.transaction.oncomplete = function (event) {
         // Store values in the newly created objectStore.
         // console.log("upgrade success");
-        messageClient('IDB.upgrade',DEBUG);
+        clientLogger("IDB.upgrade", DEBUG);
         resolve(db);
       };
     };
@@ -196,7 +194,7 @@ function openIDB() {
 
   const dbOpenPromise = new Promise((resolve, reject) => {
     openRequest.onerror = function (event) {
-      messageClient('IDB.open X(',ERROR);
+      clientLogger("IDB.open X(", ERROR);
       reject();
     };
     openRequest.onsuccess = function (event) {
@@ -205,7 +203,7 @@ function openIDB() {
       db.onerror = function (event) {
         // Generic error handler for all errors targeted at this database's
         // requests!
-        messageClient('IDB '+event.target.errorCode+' X(',ERROR);
+        clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
         console.error("Database error: " + event.target.errorCode);
       };
 
@@ -218,7 +216,7 @@ function openIDB() {
   return dbOpenPromise;
 }
 
-function messageClient(msg, lvl) {
+function clientLogger(msg, lvl) {
   return clients
     .matchAll({ includeUncontrolled: true, type: "window" })
     .then((client) => {
@@ -239,15 +237,15 @@ function countIDBItem(db) {
 
   const requestP = new Promise((resolve, reject) => {
     request.onerror = function (event) {
-      messageClient("IDB.count X(",ERROR);
+      clientLogger("IDB.count X(", ERROR);
       reject();
     };
     request.onsuccess = function (event) {
       if (request.result) {
-        messageClient("IDB [" + request.result + "]",DEBUG);
+        clientLogger("IDB [" + request.result + "]", DEBUG);
         resolve(request.result);
       } else {
-        messageClient("IDB []",WARN);
+        clientLogger("IDB []", WARN);
         resolve();
       }
     };
@@ -272,14 +270,15 @@ function getIDBItem(db, key) {
 
   const requestP = new Promise((resolve, reject) => {
     request.onerror = function (event) {
-      messageClient('IDB.get X(' ,ERROR);
+      clientLogger("IDB.get X(", ERROR);
       reject();
     };
     request.onsuccess = function (event) {
       if (request.result) {
         resolve(request.result);
       } else {
-        messageClient("IDB.get [] "+ decodeURI(key.split('&q=')[1]),WARN);
+        const word = decodeURI(key.split("&q=")[1]);
+        clientLogger("IDB.get [] " + word, WARN);
         reject();
       }
     };
@@ -314,7 +313,7 @@ function addIDBItem(db, value) {
       resolve();
     };
     request.onerror = function (event) {
-      messageClient('IDB.add X(' ,ERROR);
+      clientLogger("IDB.add X(", ERROR);
       reject();
     };
   });
@@ -348,7 +347,7 @@ function putIDBItem(db, value) {
       resolve();
     };
     request.onerror = function (event) {
-      messageClient('IDB.put X(' ,ERROR);
+      clientLogger("IDB.put X(", ERROR);
       reject();
     };
   });
@@ -371,9 +370,9 @@ function deleteIDBItem(db, key) {
   let request = transaction.objectStore("media").delete(key);
 
   request.onsuccess = function (event) {};
-  request.onerror = function(){
-    messageClient('IDB.delete X(' ,ERROR);
-  }
+  request.onerror = function () {
+    clientLogger("IDB.delete X(", ERROR);
+  };
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function (event) {
@@ -591,7 +590,9 @@ function updateCacheWithJSON(
 
   return caches
     .open(cacheName)
-    .then((cache) => cache.put(url, createdRes).then(() => cache.match(url)));
+    .then((cache) =>
+      cache.put(url, createdRes).then(() => cache.match(url))
+    );
 }
 
 // TODO: refactor this
