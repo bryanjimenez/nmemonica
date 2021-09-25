@@ -31,9 +31,14 @@ import {
   TOGGLE_PHRASES_REINFORCE,
   TOGGLE_PHRASES_ACTIVE_GROUP,
 } from "../actions/settingsAct";
+import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 
 export const DEFAULT_SETTINGS = {
-  global: { darkMode: false, scrolling: false },
+  global: {
+    darkMode: false,
+    scrolling: false,
+    memory: { quota: 0, usage: 0, persistent: false },
+  },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   verbs: { ordered: true, masu: false },
   phrases: {
@@ -78,6 +83,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         global: {
           ...state.global,
           scrolling: action.value,
+        },
+      };
+    case MEMORY_STORAGE_STATUS:
+      return {
+        ...state,
+        global: {
+          ...state.global,
+          memory: action.value,
         },
       };
     case SET_KANA_BTN_N:

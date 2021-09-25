@@ -42,6 +42,10 @@ import { getPhrases } from "../../actions/phrasesAct";
 import { NotReady } from "../Form/NotReady";
 import { SetVocabGList } from "./SetVocabGList";
 import { SetVocabGFList } from "./SetVocabGFList";
+import {
+  getMemoryStorageStatus,
+  setPersistentStorage,
+} from "../../actions/storageAct";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -63,6 +67,10 @@ class Settings extends Component {
     if (this.props.phrases.length === 0) {
       this.props.getPhrases();
     }
+  }
+
+  componentDidMount() {
+    this.props.getMemoryStorageStatus();
   }
 
   render() {
@@ -360,7 +368,7 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <h2>Application</h2>
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-end mb-2">
               <p id="hard-refresh" className="mr-2">
                 Hard Refresh
               </p>
@@ -389,6 +397,24 @@ class Settings extends Component {
                   aria-label="Hard Refresh"
                 />
               </div>
+            </div>
+
+            <div className="setting-block">
+              <SettingsSwitch
+                active={this.props.memory.persistent}
+                action={this.props.setPersistentStorage}
+                disabled={this.props.memory.persistent}
+                color="default"
+                statusText={
+                  this.props.memory.persistent
+                    ? "Persistent " +
+                      ~~(this.props.memory.usage / 1024 / 1024) +
+                      "/" +
+                      ~~(this.props.memory.quota / 1024 / 1024) +
+                      "MB"
+                    : "Persistent off"
+                }
+              />
             </div>
           </div>
         </div>
@@ -430,12 +456,17 @@ const mapStateToProps = (state) => {
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
+    memory: state.settings.global.memory,
   };
 };
 
 Settings.propTypes = {
   darkMode: PropTypes.bool,
   toggleDarkMode: PropTypes.func,
+  memory: PropTypes.object,
+  setPersistentStorage: PropTypes.func,
+  getMemoryStorageStatus: PropTypes.func,
+
   verbOrder: PropTypes.bool,
   setVerbsOrdering: PropTypes.func,
   verbMasu: PropTypes.bool,
@@ -531,6 +562,8 @@ export default connect(mapStateToProps, {
   togglePhrasesReinforcement,
   removeFrequencyPhrase,
   getPhrases,
+  setPersistentStorage,
+  getMemoryStorageStatus,
 })(Settings);
 
 export { SettingsMeta };
