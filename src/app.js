@@ -5,7 +5,6 @@ import PropTypes from "prop-types";
 
 import Navigation from "./components/Navigation/Navigation";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
-const Verbs = lazy(() => import("./components/Pages/Verbs"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
 const Opposites = lazy(() => import("./components/Pages/Opposites"));
@@ -14,7 +13,6 @@ const ParticlesGame = lazy(() => import("./components/Pages/ParticlesGame"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
 // const Logout = lazy(() => import("./components/Pages/Logout"));
 // const OAuthLogin = lazy(() => import("./components/Pages/OAuthLogin"));
-import { VerbsMeta } from "./components/Pages/Verbs";
 import { PhrasesMeta } from "./components/Pages/Phrases";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import { OppositesMeta } from "./components/Pages/Opposites";
@@ -55,8 +53,7 @@ class App extends Component {
           <Navigation />
           <Suspense fallback={<div />}>
             <Switch>
-              <Route path="/" exact component={Verbs} />
-              <Route path={VerbsMeta.location} component={Verbs} />
+              <Route path="/" exact component={Vocabulary} />
               <Route path={PhrasesMeta.location} component={Phrases} />
               <Route path={VocabularyMeta.location} component={Vocabulary} />
               <Route path={OppositesMeta.location} component={Opposites} />

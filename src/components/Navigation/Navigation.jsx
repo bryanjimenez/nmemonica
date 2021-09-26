@@ -13,7 +13,6 @@ import {
   faWrench,
   faYinYang,
 } from "@fortawesome/free-solid-svg-icons";
-import { VerbsMeta } from "../Pages/Verbs";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { VocabularyMeta } from "../Pages/Vocabulary";
 import { OppositesMeta } from "../Pages/Opposites";
@@ -53,16 +52,6 @@ class Navigation extends Component {
 
   render() {
     let shortcuts = [
-      { meta: VerbsMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
-      { meta: PhrasesMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
-      {
-        meta: VocabularyMeta,
-        icon: <FontAwesomeIcon icon={faFont} size="2x" />,
-      },
-      {
-        meta: OppositesMeta,
-        icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
-      },
       {
         meta: KatakanaGameMeta,
         icon: (
@@ -74,6 +63,15 @@ class Navigation extends Component {
               : "*"}
           </div>
         ),
+      },
+      { meta: PhrasesMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
+      {
+        meta: VocabularyMeta,
+        icon: <FontAwesomeIcon icon={faFont} size="2x" />,
+      },
+      {
+        meta: OppositesMeta,
+        icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
       },
       {
         meta: ParticlesGameMeta,
