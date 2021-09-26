@@ -26,6 +26,7 @@ import {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  AUTOPLAY_OFF,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
@@ -367,7 +368,7 @@ class Vocabulary extends Component {
                     icon={this.props.practiceSide ? faGlasses : faPencilAlt}
                   />
                 </div>
-                {this.props.autoPlay !== 0 && (
+                {this.props.autoPlay !== AUTOPLAY_OFF && (
                   <div className="sm-icon-grp">
                     <FontAwesomeIcon
                       icon={faHeadphones}

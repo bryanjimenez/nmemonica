@@ -2,6 +2,11 @@ import React from "react";
 import PropTypes from "prop-types";
 import { UnmuteIcon } from "@primer/octicons-react";
 import { pronounceEndoint } from "../../../environment.development";
+import {
+  AUTOPLAY_EN_JP,
+  AUTOPLAY_JP,
+  AUTOPLAY_OFF,
+} from "../../actions/settingsAct";
 
 export default function AudioItem(props) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
@@ -16,15 +21,15 @@ export default function AudioItem(props) {
   const touchPlayParam = { word: props.word[0], tl: "ja" };
   let autoPlayEndPoint = [];
 
-  if (props.autoPlay === 1) {
+  if (props.autoPlay === AUTOPLAY_JP) {
     autoPlayEndPoint = [
       pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[0],
     ];
-  } else if (props.autoPlay === 2 && props.word.length === 2) {
+  } else if (props.autoPlay === AUTOPLAY_EN_JP && props.word.length === 2) {
     autoPlayEndPoint = [
       pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
     ];
-  } else if (props.autoPlay === 2 && props.word.length === 3) {
+  } else if (props.autoPlay === AUTOPLAY_EN_JP && props.word.length === 3) {
     autoPlayEndPoint = [
       pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[2],
       pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
@@ -37,7 +42,7 @@ export default function AudioItem(props) {
     autoPlayEndPoint = nextEndPoints;
 
     if (
-      props.autoPlay > 0 &&
+      props.autoPlay > AUTOPLAY_OFF &&
       autoPlayEndPoint.length === 0 &&
       playPushed === false
     ) {
@@ -46,7 +51,7 @@ export default function AudioItem(props) {
       }
     }
 
-    if (props.autoPlay === 2 && autoPlayEndPoint.length > 0) {
+    if (props.autoPlay === AUTOPLAY_EN_JP && autoPlayEndPoint.length > 0) {
       player.src = autoPlayEndPoint[0];
       player.play();
     }
@@ -82,13 +87,13 @@ export default function AudioItem(props) {
       <audio
         ref={(ref) => {
           // src attr remains from last onClick
-          if (ref && ref.src && props.autoPlay === 0) {
+          if (ref && ref.src && props.autoPlay === AUTOPLAY_OFF) {
             ref.removeAttribute("src");
           }
           return (player = ref);
         }}
-        autoPlay={props.autoPlay !== 0}
-        src={props.autoPlay !== 0 ? autoPlayEndPoint[0] : undefined}
+        autoPlay={props.autoPlay !== AUTOPLAY_OFF}
+        src={props.autoPlay !== AUTOPLAY_OFF ? autoPlayEndPoint[0] : undefined}
         onError={() => {
           // likely failed to fetch resource
           playNextAudio();

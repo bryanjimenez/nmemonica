@@ -4,6 +4,11 @@ import PropTypes from "prop-types";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import { pushedPlay } from "../../actions/vocabularyAct";
+import {
+  AUTOPLAY_EN_JP,
+  AUTOPLAY_JP,
+  AUTOPLAY_OFF,
+} from "../../actions/settingsAct";
 
 class VocabularyMain extends Component {
   constructor(props) {
@@ -78,7 +83,7 @@ class VocabularyMain extends Component {
 
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
-        {this.props.autoPlay === 1 && this.props.practiceSide ? (
+        {this.props.autoPlay === AUTOPLAY_JP && this.props.practiceSide ? (
           <h1
             onClick={() => {
               this.setState((state) => ({ showEng: !state.showEng }));
@@ -99,7 +104,7 @@ class VocabularyMain extends Component {
             {this.state.showRomaji ? romaji : "[Romaji]"}
           </h5>
         )}
-        {this.props.autoPlay !== 2 || this.props.practiceSide ? (
+        {this.props.autoPlay !== AUTOPLAY_EN_JP || this.props.practiceSide ? (
           <h2
             onClick={() => {
               this.setState((state) => ({ showMeaning: !state.showMeaning }));
@@ -115,7 +120,7 @@ class VocabularyMain extends Component {
           word={audioWords}
           autoPlay={
             !this.props.scrollingDone || !this.state.audioPlay
-              ? 0
+              ? AUTOPLAY_OFF
               : this.props.autoPlay
           }
           onPushedPlay={() => {

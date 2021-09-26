@@ -28,6 +28,8 @@ import {
   toggleKanaEasyMode,
   toggleVocabularyReinforcement,
   togglePhrasesReinforcement,
+  AUTOPLAY_OFF,
+  AUTOPLAY_JP,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
@@ -264,12 +266,12 @@ class Settings extends Component {
                   </div>
                   <div className="mb-2">
                     <SettingsSwitch
-                      active={this.props.vocabAutoPlay !== 0}
+                      active={this.props.vocabAutoPlay !== AUTOPLAY_OFF}
                       action={this.props.toggleVocabularyAutoPlay}
                       statusText={
-                        this.props.vocabAutoPlay === 0
+                        this.props.vocabAutoPlay === AUTOPLAY_OFF
                           ? "Auto Play [ ]"
-                          : this.props.vocabAutoPlay === 1
+                          : this.props.vocabAutoPlay === AUTOPLAY_JP
                           ? "Auto Play [JP]"
                           : "Auto Play [EN,JP]"
                       }

@@ -7,6 +7,11 @@ import AudioItem from "../Form/AudioItem";
 import { connect } from "react-redux";
 import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
 import { setShownForm } from "../../actions/verbsAct";
+import {
+  AUTOPLAY_EN_JP,
+  AUTOPLAY_JP,
+  AUTOPLAY_OFF,
+} from "../../actions/settingsAct";
 
 class VerbMain extends Component {
   constructor(props) {
@@ -49,7 +54,7 @@ class VerbMain extends Component {
     return true;
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps/*, prevState*/) {
     if (this.props.verb != prevProps.verb) {
       // verb change
       const prevVerb = this.getVerbForm(prevProps.verb, this.props.shownForm);
@@ -226,7 +231,7 @@ class VerbMain extends Component {
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
-        {this.props.autoPlay === 1 && this.props.practiceSide ? (
+        {this.props.autoPlay === AUTOPLAY_JP && this.props.practiceSide ? (
           <div
             style={topStyle}
             onClick={() => {
@@ -251,7 +256,7 @@ class VerbMain extends Component {
             {this.state.showRomaji ? romaji : "[romaji]"}
           </div>
         )}
-        {this.props.autoPlay !== 2 || this.props.practiceSide ? (
+        {this.props.autoPlay !== AUTOPLAY_EN_JP || this.props.practiceSide ? (
           <div
             className="clickable"
             style={btmStyle}
@@ -270,7 +275,7 @@ class VerbMain extends Component {
           word={audioWords}
           autoPlay={
             !this.props.scrollingDone || !this.state.audioPlay
-              ? 0
+              ? AUTOPLAY_OFF
               : this.props.autoPlay
           }
           onPushedPlay={() => {
@@ -313,8 +318,11 @@ VerbMain.propTypes = {
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,
   setShownForm: PropTypes.func,
+  shownForm: PropTypes.string,
 };
 
-export default connect(mapStateToProps, { setPreviousWord, pushedPlay, setShownForm })(
-  VerbMain
-);
+export default connect(mapStateToProps, {
+  setPreviousWord,
+  pushedPlay,
+  setShownForm,
+})(VerbMain);
