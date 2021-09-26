@@ -6,6 +6,7 @@ import { audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import { connect } from "react-redux";
 import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
+import { setShownForm } from "../../actions/verbsAct";
 
 class VerbMain extends Component {
   constructor(props) {
@@ -14,7 +15,6 @@ class VerbMain extends Component {
     this.state = {
       showMeaning: false,
       showRomaji: false,
-      shownForm: this.props.verbForm ? "masu" : "dictionary",
       prevVocab: this.props.prevTerm,
       audioPlay: true,
     };
@@ -28,6 +28,14 @@ class VerbMain extends Component {
 
   componentDidMount() {
     this.setState({ audioPlay: false });
+
+    if (this.props.shownForm !== "dictionary") {
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.shownForm);
+
+      // lastVerb to prevent verb-form loss between transition v->nv
+      const lastVerb = { japanese: thisVerb.getSpelling() };
+      this.props.setPreviousWord({ lastVerb });
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -44,15 +52,15 @@ class VerbMain extends Component {
   componentDidUpdate(prevProps, prevState) {
     if (this.props.verb != prevProps.verb) {
       // verb change
-      const prevVerb = this.getVerbForm(prevProps.verb, this.state.shownForm);
-      const thisVerb = this.getVerbForm(this.props.verb, this.state.shownForm);
+      const prevVerb = this.getVerbForm(prevProps.verb, this.props.shownForm);
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.shownForm);
 
       const prevVocab = {
         japanese: prevVerb.getSpelling(),
         uid: prevProps.verb.uid,
       };
 
-      if (this.state.shownForm !== "dictionary") {
+      if (this.props.shownForm !== "dictionary") {
         // lastVerb to prevent verb-form loss between transition v->nv
         const lastVerb = { japanese: thisVerb.getSpelling() };
         this.props.setPreviousWord({ ...prevVocab, lastVerb });
@@ -66,9 +74,9 @@ class VerbMain extends Component {
       });
     }
 
-    if (this.state.shownForm !== prevState.shownForm) {
+    if (this.props.shownForm !== prevProps.shownForm) {
       // verb form change
-      const thisVerb = this.getVerbForm(this.props.verb, this.state.shownForm);
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.shownForm);
 
       const prevVocab = {
         japanese: thisVerb.getSpelling(),
@@ -90,7 +98,7 @@ class VerbMain extends Component {
     return tense.map((t, i) => {
       const tenseClass = classNames({
         clickable: true,
-        "font-weight-bold": this.state.shownForm === t.t,
+        "font-weight-bold": this.props.shownForm === t.t,
       });
 
       return (
@@ -98,10 +106,10 @@ class VerbMain extends Component {
           className={tenseClass}
           key={i}
           onClick={() => {
-            this.setState({ shownForm: t.t });
+            this.props.setShownForm(t.t);
           }}
         >
-          {this.state.shownForm === t.t ? t.t : "[" + t.t + "]"}
+          {this.props.shownForm === t.t ? " " + t.t + " " : "[" + t.t + "]"}
         </div>
       );
     });
@@ -178,7 +186,7 @@ class VerbMain extends Component {
     const verbForms = this.getVerbFormsArray(verb);
     const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
     const { inJapanese, inEnglish, romaji, japanesePhrase } =
-      this.getVerbLabelItems(verbForms, this.state.shownForm);
+      this.getVerbLabelItems(verbForms, this.props.shownForm);
 
     let shownSide, hiddenSide, shownCaption, hiddenCaption;
     if (this.props.practiceSide) {
@@ -290,12 +298,12 @@ const mapStateToProps = (state) => {
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
     played: state.vocabulary.pushedPlay,
+    shownForm: state.vocabulary.shownForm,
   };
 };
 
 VerbMain.propTypes = {
   verb: PropTypes.object.isRequired,
-  verbForm: PropTypes.bool,
   autoPlay: PropTypes.number,
   practiceSide: PropTypes.bool,
   romajiActive: PropTypes.bool,
@@ -304,8 +312,9 @@ VerbMain.propTypes = {
   setPreviousWord: PropTypes.func,
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,
+  setShownForm: PropTypes.func,
 };
 
-export default connect(mapStateToProps, { setPreviousWord, pushedPlay })(
+export default connect(mapStateToProps, { setPreviousWord, pushedPlay, setShownForm })(
   VerbMain
 );

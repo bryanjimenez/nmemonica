@@ -325,7 +325,6 @@ class Vocabulary extends Component {
           {isVerb && this.props.autoVerbView ? (
             <VerbMain
               verb={vocabulary}
-              verbForm={false}
               practiceSide={this.props.practiceSide}
             />
           ) : (
