@@ -34,8 +34,8 @@ class VerbMain extends Component {
   componentDidMount() {
     this.setState({ audioPlay: false });
 
-    if (this.props.shownForm !== "dictionary") {
-      const thisVerb = this.getVerbForm(this.props.verb, this.props.shownForm);
+    if (this.props.verbForm !== "dictionary") {
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
 
       // lastVerb to prevent verb-form loss between transition v->nv
       const lastVerb = { japanese: thisVerb.getSpelling() };
@@ -57,15 +57,15 @@ class VerbMain extends Component {
   componentDidUpdate(prevProps/*, prevState*/) {
     if (this.props.verb != prevProps.verb) {
       // verb change
-      const prevVerb = this.getVerbForm(prevProps.verb, this.props.shownForm);
-      const thisVerb = this.getVerbForm(this.props.verb, this.props.shownForm);
+      const prevVerb = this.getVerbForm(prevProps.verb, this.props.verbForm);
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
         japanese: prevVerb.getSpelling(),
         uid: prevProps.verb.uid,
       };
 
-      if (this.props.shownForm !== "dictionary") {
+      if (this.props.verbForm !== "dictionary") {
         // lastVerb to prevent verb-form loss between transition v->nv
         const lastVerb = { japanese: thisVerb.getSpelling() };
         this.props.setPreviousWord({ ...prevVocab, lastVerb });
@@ -79,9 +79,9 @@ class VerbMain extends Component {
       });
     }
 
-    if (this.props.shownForm !== prevProps.shownForm) {
+    if (this.props.verbForm !== prevProps.verbForm) {
       // verb form change
-      const thisVerb = this.getVerbForm(this.props.verb, this.props.shownForm);
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
         japanese: thisVerb.getSpelling(),
@@ -103,7 +103,7 @@ class VerbMain extends Component {
     return tense.map((t, i) => {
       const tenseClass = classNames({
         clickable: true,
-        "font-weight-bold": this.props.shownForm === t.t,
+        "font-weight-bold": this.props.verbForm === t.t,
       });
 
       return (
@@ -114,7 +114,7 @@ class VerbMain extends Component {
             this.props.setShownForm(t.t);
           }}
         >
-          {this.props.shownForm === t.t ? " " + t.t + " " : "[" + t.t + "]"}
+          {this.props.verbForm === t.t ? " " + t.t + " " : "[" + t.t + "]"}
         </div>
       );
     });
@@ -191,7 +191,7 @@ class VerbMain extends Component {
     const verbForms = this.getVerbFormsArray(verb);
     const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
     const { inJapanese, inEnglish, romaji, japanesePhrase } =
-      this.getVerbLabelItems(verbForms, this.props.shownForm);
+      this.getVerbLabelItems(verbForms, this.props.verbForm);
 
     let shownSide, hiddenSide, shownCaption, hiddenCaption;
     if (this.props.practiceSide) {
@@ -303,7 +303,7 @@ const mapStateToProps = (state) => {
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
     played: state.vocabulary.pushedPlay,
-    shownForm: state.vocabulary.shownForm,
+    verbForm: state.vocabulary.verbForm,
   };
 };
 
@@ -318,7 +318,7 @@ VerbMain.propTypes = {
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,
   setShownForm: PropTypes.func,
-  shownForm: PropTypes.string,
+  verbForm: PropTypes.string,
 };
 
 export default connect(mapStateToProps, {

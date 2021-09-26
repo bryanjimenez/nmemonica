@@ -11,7 +11,7 @@ const DEFAULT_STATE = {
   grpObj: {},
   previous: undefined,
   pushedPlay: false,
-  shownForm: 'dictionary',
+  verbForm: "dictionary",
 };
 const DEFAULT_ACTION = {};
 
@@ -29,7 +29,7 @@ const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
     case SET_SHOWN_FORM:
       return {
         ...state,
-        shownForm: action.value,
+        verbForm: action.value,
       };
     case SET_PREVIOUS_SEEN_WORD:
       return { ...state, previous: action.value };

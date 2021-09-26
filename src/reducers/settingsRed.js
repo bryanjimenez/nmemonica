@@ -28,7 +28,6 @@ import {
   TOGGLE_VOCABULARY_REINFORCE,
   TOGGLE_PHRASES_REINFORCE,
   TOGGLE_PHRASES_ACTIVE_GROUP,
-  AUTOPLAY_OFF,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 
@@ -57,7 +56,7 @@ export const DEFAULT_SETTINGS = {
     reinforce: false,
     frequency: [],
     activeGroup: [],
-    autoPlay: AUTOPLAY_OFF,
+    autoPlay: 0,
     autoVerbView: false,
   },
   opposites: { qRomaji: false, aRomaji: false },
