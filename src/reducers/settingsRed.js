@@ -12,14 +12,12 @@ import {
   TOGGLE_VOCABULARY_ROMAJI,
   TOGGLE_VOCABULARY_HINT,
   FLIP_VOCABULARY_PRACTICE_SIDE,
-  SET_VERB_ORDERING,
   SET_PARTICLES_A_ROMAJI,
   ADD_FREQUENCY_WORD,
   REMOVE_FREQUENCY_WORD,
   TOGGLE_VOCABULARY_ACTIVE_GROUP,
   TOGGLE_VOCABULARY_AUTO_PLAY,
   TOGGLE_DARK_MODE,
-  SET_VERB_MASU,
   SCROLLING_STATE,
   AUTO_VERB_VIEW,
   TOGGLE_VOCABULARY_FILTER,
@@ -40,7 +38,6 @@ export const DEFAULT_SETTINGS = {
     memory: { quota: 0, usage: 0, persistent: false },
   },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
-  verbs: { ordered: true, masu: false },
   phrases: {
     ordered: true,
     practiceSide: false,
@@ -123,22 +120,6 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         kana: {
           ...state.kana,
           charSet: action.value,
-        },
-      };
-    case SET_VERB_ORDERING:
-      return {
-        ...state,
-        verbs: {
-          ...state.verbs,
-          ordered: !state.verbs.ordered,
-        },
-      };
-    case SET_VERB_MASU:
-      return {
-        ...state,
-        verbs: {
-          ...state.verbs,
-          masu: !state.verbs.masu,
         },
       };
     case SET_PHRASES_ORDERING:

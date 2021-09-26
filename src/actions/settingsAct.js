@@ -4,8 +4,6 @@ export const SET_KANA_BTN_N = "set_kana_btn_number";
 export const TOGGLE_KANA_WIDEMODE = "set_kana_widemode";
 export const TOGGLE_KANA_EASYMODE = "set_kana_easymode";
 export const TOGGLE_KANA_CHAR_SET = "toggle_kana_char_set";
-export const SET_VERB_ORDERING = "set_verb_ordering";
-export const SET_VERB_MASU = "set_verb_masu";
 export const SET_PHRASES_ORDERING = "set_phrases_ordering";
 export const FLIP_PHRASES_PRACTICE_SIDE = "flip_phrases_practice_side";
 export const TOGGLE_PHRASES_ROMAJI = "toggle_phrases_romaji";
@@ -145,60 +143,6 @@ export function toggleKana() {
       dispatch({
         type: TOGGLE_KANA_CHAR_SET,
         value: newCharSet,
-      });
-    }
-  };
-}
-
-export function setVerbsOrdering() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-
-    const path = "/verbs/";
-    const attr = "ordered";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
-
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_VERB_ORDERING
-      );
-    } else {
-      dispatch({
-        type: SET_VERB_ORDERING,
-      });
-    }
-  };
-}
-
-export function setVerbsMasu() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-
-    const path = "/verbs/";
-    const attr = "masu";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
-
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_VERB_MASU
-      );
-    } else {
-      dispatch({
-        type: SET_VERB_MASU,
       });
     }
   };

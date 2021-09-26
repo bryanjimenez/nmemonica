@@ -162,7 +162,7 @@ class VerbMain extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    romajiActive: state.settings.verbs.romaji,
+    romajiActive: state.settings.vocabulary.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
   };
