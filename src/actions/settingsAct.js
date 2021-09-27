@@ -431,30 +431,19 @@ export function toggleVocabularyActiveGrp(grpName) {
   };
 }
 
+export const AUTOPLAY_OFF = 0,
+  AUTOPLAY_JP = 1,
+  AUTOPLAY_EN_JP = 2;
 export function toggleVocabularyAutoPlay() {
-  return (dispatch) => {
-    // const { user } = getState().login;
+  return (dispatch, getState) => {
+    const { autoPlay } = getState().settings.vocabulary;
 
-    // const path = "/vocabulary/";
-    // const attr = "autoPlay";
-    // const time = new Date();
-    // localStoreAttrUpdate(time, getState, path, attr);
+    const newValue = autoPlay + 1 < 3 ? autoPlay + 1 : 0;
 
-    // if (user) {
-    //   firebaseAttrUpdate(
-    //     time,
-    //     dispatch,
-    //     getState,
-    //     user.uid,
-    //     path,
-    //     attr,
-    //     TOGGLE_VOCABULARY_AUTO_PLAY
-    //   );
-    // } else {
     dispatch({
       type: TOGGLE_VOCABULARY_AUTO_PLAY,
+      value: newValue,
     });
-    // }
   };
 }
 

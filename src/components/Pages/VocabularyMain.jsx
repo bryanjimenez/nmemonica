@@ -3,6 +3,12 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
+import { pushedPlay } from "../../actions/vocabularyAct";
+import {
+  AUTOPLAY_EN_JP,
+  AUTOPLAY_JP,
+  AUTOPLAY_OFF,
+} from "../../actions/settingsAct";
 
 class VocabularyMain extends Component {
   constructor(props) {
@@ -12,7 +18,23 @@ class VocabularyMain extends Component {
       showEng: false,
       showMeaning: false,
       showRomaji: false,
+      prevVocab: this.props.prevTerm,
+      audioPlay: true,
     };
+  }
+
+  componentDidMount() {
+    this.setState({ audioPlay: false });
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    if (
+      this.state.audioPlay !== nextState.audioPlay &&
+      nextState.audioPlay === false
+    ) {
+      return false;
+    }
+    return true;
   }
 
   componentDidUpdate(prevProps /*, prevState*/) {
@@ -21,6 +43,14 @@ class VocabularyMain extends Component {
         showEng: false,
         showMeaning: false,
         showRomaji: false,
+        prevVocab: prevProps.vocabulary,
+        audioPlay: true,
+      });
+    }
+
+    if (this.state.audioPlay) {
+      this.setState({
+        audioPlay: false,
       });
     }
   }
@@ -45,9 +75,15 @@ class VocabularyMain extends Component {
       hiddenCaption = "[English]";
     }
 
+    let audioWords = [audioPronunciation(vocabulary), vocabulary.english];
+
+    if (this.state.prevVocab !== undefined && this.props.played === false) {
+      audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
+    }
+
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
-        {this.props.autoPlay && this.props.practiceSide ? (
+        {this.props.autoPlay === AUTOPLAY_JP && this.props.practiceSide ? (
           <h1
             onClick={() => {
               this.setState((state) => ({ showEng: !state.showEng }));
@@ -68,18 +104,31 @@ class VocabularyMain extends Component {
             {this.state.showRomaji ? romaji : "[Romaji]"}
           </h5>
         )}
-        <h2
-          onClick={() => {
-            this.setState((state) => ({ showMeaning: !state.showMeaning }));
-          }}
-          className="clickable"
-        >
-          {this.state.showMeaning ? hiddenSide : hiddenCaption}
-        </h2>
-
+        {this.props.autoPlay !== AUTOPLAY_EN_JP || this.props.practiceSide ? (
+          <h2
+            onClick={() => {
+              this.setState((state) => ({ showMeaning: !state.showMeaning }));
+            }}
+            className="clickable"
+          >
+            {this.state.showMeaning ? hiddenSide : hiddenCaption}
+          </h2>
+        ) : (
+          <h2>{hiddenSide}</h2>
+        )}
         <AudioItem
-          word={audioPronunciation(vocabulary)}
-          autoPlay={this.props.scrollingDone && this.props.autoPlay}
+          word={audioWords}
+          autoPlay={
+            !this.props.scrollingDone || !this.state.audioPlay
+              ? AUTOPLAY_OFF
+              : this.props.autoPlay
+          }
+          onPushedPlay={() => {
+            this.props.pushedPlay(true);
+          }}
+          onAutoPlayDone={() => {
+            this.props.pushedPlay(false);
+          }}
         />
       </div>
     );
@@ -92,6 +141,8 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
+    prevTerm: state.vocabulary.previous,
+    played: state.vocabulary.pushedPlay,
   };
 };
 
@@ -99,8 +150,11 @@ VocabularyMain.propTypes = {
   vocabulary: PropTypes.object.isRequired,
   romajiActive: PropTypes.bool,
   practiceSide: PropTypes.bool,
-  autoPlay: PropTypes.bool,
+  autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
+  prevTerm: PropTypes.object,
+  played: PropTypes.bool,
+  pushedPlay: PropTypes.func,
 };
 
-export default connect(mapStateToProps, {})(VocabularyMain);
+export default connect(mapStateToProps, { pushedPlay })(VocabularyMain);

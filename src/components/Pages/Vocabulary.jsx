@@ -8,7 +8,7 @@ import {
   PlusCircleIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
-import { getVocabulary } from "../../actions/vocabularyAct";
+import { getVocabulary, setPreviousWord } from "../../actions/vocabularyAct";
 import {
   faBan,
   faDice,
@@ -26,6 +26,7 @@ import {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  AUTOPLAY_OFF,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { htmlElementHint, JapaneseText } from "../../helper/JapaneseText";
@@ -70,9 +71,13 @@ class Vocabulary extends Component {
     this.gotoPrev = this.gotoPrev.bind(this);
     this.setOrder = this.setOrder.bind(this);
     this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
+    this.verbNonVerbTransition = this.verbNonVerbTransition.bind(this);
   }
 
   componentDidMount() {
+    // clear existing previous word on mount
+    this.props.setPreviousWord(undefined);
+
     if (this.props.vocab && this.props.vocab.length > 0) {
       // page navigation after initial mount
       // data retrival done, set up game
@@ -177,9 +182,56 @@ class Vocabulary extends Component {
     });
   }
 
+  verbNonVerbTransition(index) {
+    const prevVocab = getTerm(
+      this.state.reinforcedUID,
+      this.state.frequency,
+      this.state.selectedIndex,
+      this.state.order,
+      this.state.filteredVocab
+    );
+    const nextVocab = getTerm(
+      this.state.reinforcedUID,
+      this.state.frequency,
+      index,
+      this.state.order,
+      this.state.filteredVocab
+    );
+
+    // non verb to verb
+    if (prevVocab.grp !== "Verb" && nextVocab.grp === "Verb") {
+      this.props.setPreviousWord(prevVocab);
+    }
+
+    // verb to non verb
+    if (prevVocab.grp === "Verb" && nextVocab.grp !== "Verb") {
+      if (this.props.previous && this.props.previous.lastVerb) {
+        // multiple verbs
+        // non dictionary form on last verb
+        this.props.setPreviousWord(this.props.previous.lastVerb);
+      } else if (
+        this.props.previous &&
+        this.props.previous.uid === prevVocab.uid
+      ) {
+        // single/multiple verb DID form change (on last)
+        // prevent overriding same verb diff form
+        // setPreviousWord done on VerbMain form change
+      } else if (
+        this.props.previous &&
+        this.props.previous.uid !== prevVocab.uid
+      ) {
+        // single/multiple no form change
+        this.props.setPreviousWord(prevVocab);
+      }
+    }
+  }
+
   gotoNext() {
     const l = this.state.filteredVocab.length;
     const newSel = (this.state.selectedIndex + 1) % l;
+
+    this.verbNonVerbTransition(newSel);
+
     this.setState({
       reinforcedUID: undefined,
       selectedIndex: newSel,
@@ -200,6 +252,8 @@ class Vocabulary extends Component {
     } else {
       newSel = i < 0 ? (l + i) % l : i % l;
     }
+
+    this.verbNonVerbTransition(newSel);
 
     this.setState({
       reinforcedUID: undefined,
@@ -272,7 +326,6 @@ class Vocabulary extends Component {
           {isVerb && this.props.autoVerbView ? (
             <VerbMain
               verb={vocabulary}
-              verbForm={false}
               practiceSide={this.props.practiceSide}
             />
           ) : (
@@ -315,7 +368,7 @@ class Vocabulary extends Component {
                     icon={this.props.practiceSide ? faGlasses : faPencilAlt}
                   />
                 </div>
-                {this.props.autoPlay && (
+                {this.props.autoPlay !== AUTOPLAY_OFF && (
                   <div className="sm-icon-grp">
                     <FontAwesomeIcon
                       icon={faHeadphones}
@@ -514,6 +567,7 @@ const mapStateToProps = (state) => {
     scrollingDone: !state.settings.global.scrolling,
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
+    previous: state.vocabulary.previous,
   };
 };
 
@@ -529,7 +583,7 @@ Vocabulary.propTypes = {
   flipVocabularyPracticeSide: PropTypes.func.isRequired,
   practiceSide: PropTypes.bool,
   isOrdered: PropTypes.bool,
-  autoPlay: PropTypes.bool,
+  autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
   scrollingState: PropTypes.func,
   autoVerbView: PropTypes.bool,
@@ -537,6 +591,8 @@ Vocabulary.propTypes = {
   freqFilter: PropTypes.bool,
   toggleVocabularyFilter: PropTypes.func,
   reinforce: PropTypes.bool,
+  previous: PropTypes.object,
+  setPreviousWord: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -547,6 +603,7 @@ export default connect(mapStateToProps, {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  setPreviousWord,
 })(Vocabulary);
 
 export { VocabularyMeta };

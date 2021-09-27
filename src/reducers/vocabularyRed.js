@@ -1,7 +1,18 @@
-import { GET_VOCABULARY } from "../actions/vocabularyAct";
+import {
+  GET_VOCABULARY,
+  SET_PREVIOUS_SEEN_WORD,
+  SET_PUSHED_PLAY,
+} from "../actions/vocabularyAct";
+import { SET_SHOWN_FORM } from "../actions/verbsAct";
 import { buildGroupObject } from "../helper/reducerHelper";
 
-const DEFAULT_STATE = { value: [], grpObj: {} };
+const DEFAULT_STATE = {
+  value: [],
+  grpObj: {},
+  previous: undefined,
+  pushedPlay: false,
+  verbForm: "dictionary",
+};
 const DEFAULT_ACTION = {};
 
 const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
@@ -15,6 +26,15 @@ const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
           uid: k,
         })),
       };
+    case SET_SHOWN_FORM:
+      return {
+        ...state,
+        verbForm: action.value,
+      };
+    case SET_PREVIOUS_SEEN_WORD:
+      return { ...state, previous: action.value };
+    case SET_PUSHED_PLAY:
+      return { ...state, pushedPlay: action.value };
     default:
       return state;
   }

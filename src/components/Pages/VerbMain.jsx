@@ -5,6 +5,13 @@ import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import { connect } from "react-redux";
+import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
+import { setShownForm } from "../../actions/verbsAct";
+import {
+  AUTOPLAY_EN_JP,
+  AUTOPLAY_JP,
+  AUTOPLAY_OFF,
+} from "../../actions/settingsAct";
 
 class VerbMain extends Component {
   constructor(props) {
@@ -13,17 +20,79 @@ class VerbMain extends Component {
     this.state = {
       showMeaning: false,
       showRomaji: false,
-      shownForm: this.props.verbForm ? "masu" : "dictionary",
+      prevVocab: this.props.prevTerm,
+      audioPlay: true,
     };
 
     this.buildTenseElement = this.buildTenseElement.bind(this);
+    this.getVerbLabelItems = this.getVerbLabelItems.bind(this);
+    this.splitVerbFormsToColumns = this.splitVerbFormsToColumns.bind(this);
+    this.getVerbFormsArray = this.getVerbFormsArray.bind(this);
+    this.getVerbForm = this.getVerbForm.bind(this);
   }
 
-  componentDidUpdate(prevProps /*, prevState*/) {
+  componentDidMount() {
+    if (this.props.verbForm !== "dictionary") {
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
+
+      // lastVerb to prevent verb-form loss between transition v->nv
+      const lastVerb = { japanese: thisVerb.getSpelling() };
+      this.props.setPreviousWord({ lastVerb });
+    }
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    if (
+      this.state.prevVocab !== undefined &&
+      this.state.audioPlay !== nextState.audioPlay &&
+      nextState.audioPlay === false
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  componentDidUpdate(prevProps/*, prevState*/) {
     if (this.props.verb != prevProps.verb) {
+      // verb change
+      const prevVerb = this.getVerbForm(prevProps.verb, this.props.verbForm);
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
+
+      const prevVocab = {
+        japanese: prevVerb.getSpelling(),
+        uid: prevProps.verb.uid,
+      };
+
+      if (this.props.verbForm !== "dictionary") {
+        // lastVerb to prevent verb-form loss between transition v->nv
+        const lastVerb = { japanese: thisVerb.getSpelling() };
+        this.props.setPreviousWord({ ...prevVocab, lastVerb });
+      }
+
       this.setState({
         showMeaning: false,
         showRomaji: false,
+        prevVocab,
+        audioPlay: true,
+      });
+    }
+
+    if (this.props.verbForm !== prevProps.verbForm) {
+      // verb form change
+      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
+
+      const prevVocab = {
+        japanese: thisVerb.getSpelling(),
+        uid: this.props.verb.uid,
+      };
+
+      this.props.setPreviousWord(prevVocab);
+      this.setState({ prevVocab });
+    }
+
+    if (this.state.audioPlay) {
+      this.setState({
+        audioPlay: false,
       });
     }
   }
@@ -32,7 +101,7 @@ class VerbMain extends Component {
     return tense.map((t, i) => {
       const tenseClass = classNames({
         clickable: true,
-        "font-weight-bold": this.state.shownForm === t.t,
+        "font-weight-bold": this.props.verbForm === t.t,
       });
 
       return (
@@ -40,44 +109,87 @@ class VerbMain extends Component {
           className={tenseClass}
           key={i}
           onClick={() => {
-            this.setState({ shownForm: t.t });
+            this.props.setShownForm(t.t);
           }}
         >
-          {this.state.shownForm === t.t ? t.t : "[" + t.t + "]"}
+          {this.props.verbForm === t.t ? " " + t.t + " " : "[" + t.t + "]"}
         </div>
       );
     });
   }
 
-  render() {
-    const verb = this.props.verb;
-
+  /**
+   *
+   * @param {*} verb
+   * @returns {Array} of verb forms objects
+   */
+  getVerbFormsArray(verb) {
     const dictionaryForm = JapaneseVerb.parse(verb.japanese);
 
-    const verbForms = [
+    return [
       { t: "masu", j: dictionaryForm.masuForm() },
       { t: "mashou", j: dictionaryForm.mashouForm() },
       { t: "dictionary", j: dictionaryForm },
       { t: "te_form", j: dictionaryForm.teForm() },
       { t: "ta_form", j: dictionaryForm.taForm() },
     ];
+  }
 
+  getVerbForm(verb, form) {
+    const dictionaryForm = JapaneseVerb.parse(verb.japanese);
+
+    switch (form) {
+      case "masu":
+        return dictionaryForm.masuForm();
+      case "mashou":
+        return dictionaryForm.mashouForm();
+      case "dictionary":
+        return dictionaryForm;
+      case "te_form":
+        return dictionaryForm.teForm();
+      case "ta_form":
+        return dictionaryForm.taForm();
+    }
+  }
+
+  /**
+   * splits the verb forms into two columns
+   * @param {*} verbForms
+   * @returns {Object} an object containing two columns
+   */
+  splitVerbFormsToColumns(verbForms) {
     const rightShift = verbForms.length % 2 === 0 ? 1 : 0;
     const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
 
     const t1 = verbForms.slice(0, splitIdx);
     const t2 = verbForms.slice(splitIdx, verbForms.length);
+    return { t1, t2 };
+  }
 
-    const romaji = verb.romaji || ".";
+  /**
+   *
+   * @param {Array} verbForms
+   * @param {String} theForm the form to filter by
+   * @returns {{ inJapanese:HTMLElement, inEnglish:String, romaji:String, japanesePhrase }}
+   */
+  getVerbLabelItems(verbForms, theForm) {
+    const romaji = this.props.verb.romaji || ".";
 
-    const formResult = verbForms.filter(
-      (form) => form.t === this.state.shownForm
-    );
-    const japanesePhrase =
-      formResult.length === 1 ? formResult[0].j : dictionaryForm;
+    const formResult = verbForms.find((form) => form.t === theForm);
+    const japanesePhrase = formResult ? formResult.j : verbForms.dictionary;
 
     let inJapanese = japanesePhrase.toHTML();
-    let inEnglish = verb.english;
+    let inEnglish = this.props.verb.english;
+
+    return { inJapanese, inEnglish, romaji, japanesePhrase };
+  }
+
+  render() {
+    const verb = this.props.verb;
+    const verbForms = this.getVerbFormsArray(verb);
+    const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
+    const { inJapanese, inEnglish, romaji, japanesePhrase } =
+      this.getVerbLabelItems(verbForms, this.props.verbForm);
 
     let shownSide, hiddenSide, shownCaption, hiddenCaption;
     if (this.props.practiceSide) {
@@ -95,6 +207,17 @@ class VerbMain extends Component {
     const topStyle = { fontSize: !this.props.practiceSide ? "2.5rem" : "1rem" };
     const btmStyle = { fontSize: this.props.practiceSide ? "2.5rem" : "1rem" };
 
+    let audioWords = [
+      audioPronunciation({
+        japanese: japanesePhrase.getSpelling(),
+      }),
+      verb.english.toString(),
+    ];
+
+    if (this.state.prevVocab !== undefined && this.props.played === false) {
+      audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
+    }
+
     return [
       <div
         key={0}
@@ -106,7 +229,7 @@ class VerbMain extends Component {
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
-        {this.props.autoPlay && this.props.practiceSide ? (
+        {this.props.autoPlay === AUTOPLAY_JP && this.props.practiceSide ? (
           <div
             style={topStyle}
             onClick={() => {
@@ -131,23 +254,34 @@ class VerbMain extends Component {
             {this.state.showRomaji ? romaji : "[romaji]"}
           </div>
         )}
-        <div
-          className="clickable"
-          style={btmStyle}
-          onClick={() => {
-            this.setState((state) => ({
-              showMeaning: !state.showMeaning,
-            }));
-          }}
-        >
-          {this.state.showMeaning ? hiddenSide : hiddenCaption}
-        </div>
+        {this.props.autoPlay !== AUTOPLAY_EN_JP || this.props.practiceSide ? (
+          <div
+            className="clickable"
+            style={btmStyle}
+            onClick={() => {
+              this.setState((state) => ({
+                showMeaning: !state.showMeaning,
+              }));
+            }}
+          >
+            {this.state.showMeaning ? hiddenSide : hiddenCaption}
+          </div>
+        ) : (
+          <div className="clickable">{hiddenSide}</div>
+        )}
         <AudioItem
-          word={audioPronunciation({
-            japanese: japanesePhrase.toString(),
-            pronounce: undefined,
-          })}
-          autoPlay={this.props.scrollingDone && this.props.autoPlay}
+          word={audioWords}
+          autoPlay={
+            !this.props.scrollingDone || !this.state.audioPlay
+              ? AUTOPLAY_OFF
+              : this.props.autoPlay
+          }
+          onPushedPlay={() => {
+            this.props.pushedPlay(true);
+          }}
+          onAutoPlayDone={() => {
+            this.props.pushedPlay(false);
+          }}
         />
       </div>,
       <div
@@ -165,16 +299,28 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
+    prevTerm: state.vocabulary.previous,
+    played: state.vocabulary.pushedPlay,
+    verbForm: state.vocabulary.verbForm,
   };
 };
 
 VerbMain.propTypes = {
   verb: PropTypes.object.isRequired,
-  verbForm: PropTypes.bool,
-  autoPlay: PropTypes.bool,
+  autoPlay: PropTypes.number,
   practiceSide: PropTypes.bool,
   romajiActive: PropTypes.bool,
   scrollingDone: PropTypes.bool,
+  prevTerm: PropTypes.object,
+  setPreviousWord: PropTypes.func,
+  played: PropTypes.bool,
+  pushedPlay: PropTypes.func,
+  setShownForm: PropTypes.func,
+  verbForm: PropTypes.string,
 };
 
-export default connect(mapStateToProps, {})(VerbMain);
+export default connect(mapStateToProps, {
+  setPreviousWord,
+  pushedPlay,
+  setShownForm,
+})(VerbMain);

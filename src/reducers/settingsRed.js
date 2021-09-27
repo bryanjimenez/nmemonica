@@ -56,7 +56,7 @@ export const DEFAULT_SETTINGS = {
     reinforce: false,
     frequency: [],
     activeGroup: [],
-    autoPlay: false,
+    autoPlay: 0,
     autoVerbView: false,
   },
   opposites: { qRomaji: false, aRomaji: false },
@@ -167,7 +167,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          autoPlay: !state.vocabulary.autoPlay,
+          autoPlay: action.value,
         },
       };
     case TOGGLE_VOCABULARY_REINFORCE:
