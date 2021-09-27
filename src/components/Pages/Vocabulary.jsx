@@ -47,6 +47,8 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
+import { logger } from "../../actions/consoleAct";
+import { spaceRepLog } from "../../helper/consoleHelper";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -90,8 +92,25 @@ class Vocabulary extends Component {
     }
   }
 
-  componentDidUpdate(prevProps /*, prevState*/) {
-    if (this.props.vocab.length != prevProps.vocab.length) {
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      this.state.order !== prevState.order ||
+      this.state.selectedIndex !== prevState.selectedIndex ||
+      this.state.reinforcedUID !== prevState.reinforcedUID
+    ) {
+      if(this.state.filteredVocab.length > 0){
+        const term = getTerm(
+          this.state.reinforcedUID,
+          this.state.frequency,
+          this.state.selectedIndex,
+          this.state.order,
+          this.state.filteredVocab
+        );
+        spaceRepLog(this.props.logger, term, this.props.repetition);
+      }
+    }
+
+    if (this.props.vocab.length !== prevProps.vocab.length) {
       // console.log("got game data");
       this.setOrder();
     }
@@ -275,6 +294,19 @@ class Vocabulary extends Component {
       showRomaji: false,
       showHint: false,
     });
+
+    const vocabulary = getTerm(
+      uid,
+      undefined,
+      undefined,
+      undefined,
+      this.state.filteredVocab
+    );
+
+    this.props.logger(
+      "reinforce (" + vocabulary.english + ")",
+      3
+    );
   }
 
   render() {
@@ -344,7 +376,10 @@ class Vocabulary extends Component {
                 const shouldIncrement = !this.state.frequency.includes(
                   vocabulary.uid
                 );
-                this.props.updateSpaceRepWord(vocabulary.uid, shouldIncrement);
+                const repO = this.props.updateSpaceRepWord(vocabulary.uid, shouldIncrement);
+                spaceRepLog(this.props.logger, vocabulary, {
+                  [vocabulary.uid]: repO,
+                });
               }
 
               play(
@@ -608,6 +643,7 @@ Vocabulary.propTypes = {
   repetition: PropTypes.object,
   lastNext: PropTypes.number,
   updateSpaceRepWord: PropTypes.func,
+  logger: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -620,6 +656,7 @@ export default connect(mapStateToProps, {
   toggleVocabularyFilter,
   setPreviousWord,
   updateSpaceRepWord,
+  logger,
 })(Vocabulary);
 
 export { VocabularyMeta };

@@ -29,6 +29,10 @@ import {
   toggleVocabularyReinforcement,
   togglePhrasesReinforcement,
   AUTOPLAY_OFF,
+  toggleDebug,
+  DEBUG_OFF,
+  DEBUG_ERROR,
+  DEBUG_WARN,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
@@ -368,6 +372,23 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <h2>Application</h2>
+            <div className="setting-block mb-2">
+              <SettingsSwitch
+                active={this.props.debug > DEBUG_OFF}
+                action={this.props.toggleDebug}
+                color="default"
+                statusText={
+                  this.props.debug === DEBUG_OFF
+                    ? "Debug"
+                    : this.props.debug === DEBUG_ERROR
+                    ? "Debug Error"
+                    : this.props.debug === DEBUG_WARN
+                    ? "Debug Warn"
+                    : "Debug"
+                }
+              />
+            </div>
+
             <div className="d-flex justify-content-end mb-2">
               <p id="hard-refresh" className="mr-2">
                 Hard Refresh
@@ -455,6 +476,7 @@ const mapStateToProps = (state) => {
     oppositesARomaji: state.settings.opposites.aRomaji,
     particlesARomaji: state.settings.particles.aRomaji,
     memory: state.settings.global.memory,
+    debug: state.settings.global.debug,
   };
 };
 
@@ -464,6 +486,8 @@ Settings.propTypes = {
   memory: PropTypes.object,
   setPersistentStorage: PropTypes.func,
   getMemoryStorageStatus: PropTypes.func,
+  debug: PropTypes.number,
+  toggleDebug: PropTypes.func,
 
   setPhrasesOrdering: PropTypes.func,
   phraseOrder: PropTypes.bool,
@@ -555,6 +579,7 @@ export default connect(mapStateToProps, {
   getPhrases,
   setPersistentStorage,
   getMemoryStorageStatus,
+  toggleDebug,
 })(Settings);
 
 export { SettingsMeta };

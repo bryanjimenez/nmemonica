@@ -79,3 +79,7 @@ a {
 .dark-mode .shortcuts {
   color:  var(--light);
 }
+
+.fs-xx-small {
+  font-size: xx-small;
+}

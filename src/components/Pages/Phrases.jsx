@@ -32,6 +32,8 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
+import { logger } from "../../actions/consoleAct";
+import { spaceRepLog } from "../../helper/consoleHelper";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -67,7 +69,24 @@ class Phrases extends Component {
     }
   }
 
-  componentDidUpdate(prevProps /*, prevState*/) {
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      this.state.order !== prevState.order ||
+      this.state.selectedIndex !== prevState.selectedIndex ||
+      this.state.reinforcedUID !== prevState.reinforcedUID
+    ) {
+      if(this.state.filteredPhrases.length > 0){
+        const term = getTerm(
+          this.state.reinforcedUID,
+          this.state.frequency,
+          this.state.selectedIndex,
+          this.state.order,
+          this.state.filteredPhrases
+        );
+        spaceRepLog(this.props.logger, term, this.props.repetition);
+      }
+    }
+
     if (
       this.props.phrases.length != prevProps.phrases.length ||
       this.props.isOrdered != prevProps.isOrdered
@@ -180,6 +199,21 @@ class Phrases extends Component {
       showMeaning: false,
       showRomaji: false,
     });
+
+    const phrase = getTerm(
+      uid,
+      undefined,
+      undefined,
+      undefined,
+      this.state.filteredPhrases
+    );
+
+    const text = phrase.english.length<15?phrase.english:phrase.english.substr(0,15) + "...";
+
+    this.props.logger(
+      "reinforce (" + text + ")",
+      3
+    );
   }
 
   render() {
@@ -253,7 +287,8 @@ class Phrases extends Component {
                 const shouldIncrement = !this.state.frequency.includes(
                   phrase.uid
                 );
-                this.props.updateSpaceRepPhrase(phrase.uid, shouldIncrement);
+                const repO = this.props.updateSpaceRepPhrase(phrase.uid, shouldIncrement);
+                spaceRepLog(this.props.logger, phrase, { [phrase.uid]: repO });
               }
 
               play(
@@ -357,6 +392,7 @@ Phrases.propTypes = {
   repetition: PropTypes.object,
   lastNext: PropTypes.number,
   updateSpaceRepPhrase: PropTypes.func,
+  logger: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -366,6 +402,7 @@ export default connect(mapStateToProps, {
   addFrequencyPhrase,
   togglePhrasesFilter,
   updateSpaceRepPhrase,
+  logger,
 })(Phrases);
 
 export { PhrasesMeta };

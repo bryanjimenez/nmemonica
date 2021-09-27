@@ -79,7 +79,9 @@ export function getTerm(
     }
   }
 
-  term.reinforce = frequency.includes(term.uid);
+  if(frequency){
+    term.reinforce = frequency.includes(term.uid);
+  }
   return term;
 }
 

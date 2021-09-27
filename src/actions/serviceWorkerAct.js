@@ -7,6 +7,8 @@ import {
 import { GET_VOCABULARY } from "./vocabularyAct";
 
 export const SERVICE_WORKER_REGISTERED = "service_worker_registered";
+export const SERVICE_WORKER_LOGGER_MSG = "service_worker_logger_msg";
+export const SERVICE_WORKER_NEW_TERMS_ADDED = "service_worker_new_terms";
 
 export function registerServiceWorker() {
   return (dispatch) => {
@@ -21,37 +23,27 @@ export function registerServiceWorker() {
   };
 }
 
-export function serviceWorkerEventListeners() {
+export function serviceWorkerNewTermsAdded(newestWords) {
   return (dispatch, getState) => {
-    if ("serviceWorker" in navigator) {
-      // set event listener
+    for (let termType in newestWords) {
+      const uidArr = newestWords[termType].freq;
+      const termObj = newestWords[termType].dic;
 
-      navigator.serviceWorker.addEventListener("message", (event) => {
-        if (event.data.type === "NEW_TERMS_ADDED") {
-          const newestWords = event.data.msg;
+      let type;
+      let actType;
+      if (termType === "vocabulary") {
+        actType = ADD_FREQUENCY_WORD;
+        type = GET_VOCABULARY;
+      } else if (termType === "phrases") {
+        actType = ADD_FREQUENCY_PHRASE;
+        type = GET_PHRASES;
+      }
 
-          for (let termType in newestWords) {
-            const uidArr = newestWords[termType].freq;
-            const termObj = newestWords[termType].dic;
-
-            let type;
-            let actType;
-            if (termType === "vocabulary") {
-              actType = ADD_FREQUENCY_WORD;
-              type = GET_VOCABULARY;
-            } else if (termType === "phrases") {
-              actType = ADD_FREQUENCY_PHRASE;
-              type = GET_PHRASES;
-            }
-
-            addFrequencyTerm(actType, uidArr)(dispatch, getState).then(() => {
-              dispatch({
-                type,
-                value: termObj,
-              });
-            });
-          }
-        }
+      addFrequencyTerm(actType, uidArr)(dispatch, getState).then(() => {
+        dispatch({
+          type,
+          value: termObj,
+        });
       });
     }
   };

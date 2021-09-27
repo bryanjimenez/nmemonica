@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import PropTypes from "prop-types";
 
+import Console from "./components/Form/Console";
 import Navigation from "./components/Navigation/Navigation";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
@@ -26,10 +27,13 @@ import {
   initialize,
 } from "./actions/firebase";
 import "./styles.css";
+import { logger } from "./actions/consoleAct";
 import { getVersions } from "./actions/firebase";
 import {
   registerServiceWorker,
-  serviceWorkerEventListeners,
+  serviceWorkerNewTermsAdded,
+  SERVICE_WORKER_LOGGER_MSG,
+  SERVICE_WORKER_NEW_TERMS_ADDED,
 } from "./actions/serviceWorkerAct";
 import classNames from "classnames";
 
@@ -43,7 +47,20 @@ class App extends Component {
     this.props.initializeSettingsFromLocalStorage();
 
     this.props.registerServiceWorker().then(() => {
-      this.props.serviceWorkerEventListeners();
+      if ("serviceWorker" in navigator) {
+        // set event listener
+        navigator.serviceWorker.addEventListener("message", (event) => {
+          if (event.data.type === SERVICE_WORKER_LOGGER_MSG) {
+            this.props.logger(
+              event.data.msg,
+              event.data.lvl,
+              SERVICE_WORKER_LOGGER_MSG
+            );
+          } else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
+            this.props.serviceWorkerNewTermsAdded(event.data.msg);
+          }
+        });
+      }
     });
   }
 
@@ -56,6 +73,7 @@ class App extends Component {
     return (
       <Router basename="/">
         <div id="page-content" className={pClass}>
+          <Console />
           <Navigation />
           <Suspense fallback={<div />}>
             <Switch>
@@ -103,5 +121,6 @@ export default connect(mapStateToProps, {
   getVersions,
   initializeSettingsFromLocalStorage,
   registerServiceWorker,
-  serviceWorkerEventListeners,
+  serviceWorkerNewTermsAdded,
+  logger,
 })(App);

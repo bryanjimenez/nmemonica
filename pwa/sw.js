@@ -6,10 +6,14 @@ const ghURL = ghURLConst; // eslint-disable-line no-undef
 const fbURL = fbURLConst; // eslint-disable-line no-undef
 const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-undef
 
+const SW_MSG_TYPE_LOGGER = swMsgTypeLoggerConst; // eslint-disable-line no-undef
+const SW_MSG_TYPE_NEW_TERMS_ADDED = swMsgTypeNewTermsAddedConst; // eslint-disable-line no-undef
+
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 const appMediaCache = "nmemonica-media";
-const NO_INDEXEDDB_SUPPORT = "Your browser doesn't support a stable version of IndexedDB.";
+const NO_INDEXEDDB_SUPPORT =
+  "Your browser doesn't support a stable version of IndexedDB.";
 
 const dataVerURL = fbURL + "/lambda/cache.json";
 const dataURL = [
@@ -20,9 +24,14 @@ const dataURL = [
   fbURL + "/lambda/particles.json",
 ];
 
+let ERROR = 1,
+  WARN = 2,
+  DEBUG = 3;
+
 self.addEventListener("install", (e) => {
   self.skipWaiting();
   console.log("[ServiceWorker] Version: " + swVersion);
+  clientLogger("Version: " + swVersion, WARN);
 
   caches.open(appDataCache).then((cache) =>
     cache.add(dataVerURL).then(() =>
@@ -52,6 +61,7 @@ self.addEventListener("activate", (e) => {
         return client.url;
       });
       console.log("[ServiceWorker] Matching clients:", urls.join(", "));
+      clientLogger("Matching clients:", urls.join(", "), DEBUG);
     });
 
   e.waitUntil(
@@ -60,6 +70,7 @@ self.addEventListener("activate", (e) => {
       // claim the client
       .then(function () {
         console.log("[ServiceWorker] Claiming clients");
+        clientLogger("Claiming clients", DEBUG);
         return self.clients.claim();
       })
   );
@@ -75,6 +86,7 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(appDataReq(e.request));
   } else if (url === ghURL + "/refresh") {
     console.log("[ServiceWorker] Hard Refresh");
+    clientLogger("Hard Refresh", DEBUG);
     caches.delete(appStaticCache);
     self.registration.unregister();
     e.respondWith(fetch(ghURL));
@@ -88,9 +100,11 @@ self.addEventListener("fetch", (e) => {
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
       e.respondWith(recache(appMediaCache, newUrl));
     } else {
       // use indexedDB
+      clientLogger("IDB.override", WARN);
 
       const fetchP = fetch(newUrl);
       const dbOpenPromise = openIDB();
@@ -112,6 +126,7 @@ self.addEventListener("fetch", (e) => {
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
       e.respondWith(appMediaReq(url));
     } else {
       // use indexedDB
@@ -119,6 +134,8 @@ self.addEventListener("fetch", (e) => {
 
       const dbResults = dbOpenPromise.then((db) => {
         const query = url.split(gCloudFnPronounce)[1];
+
+        countIDBItem(db);
 
         return getIDBItem(db, query)
           .then((dataO) =>
@@ -168,6 +185,7 @@ function openIDB() {
       objectStore.transaction.oncomplete = function (event) {
         // Store values in the newly created objectStore.
         // console.log("upgrade success");
+        clientLogger("IDB.upgrade", DEBUG);
         resolve(db);
       };
     };
@@ -175,7 +193,7 @@ function openIDB() {
 
   const dbOpenPromise = new Promise((resolve, reject) => {
     openRequest.onerror = function (event) {
-      // console.log("open failed");
+      clientLogger("IDB.open X(", ERROR);
       reject();
     };
     openRequest.onsuccess = function (event) {
@@ -184,6 +202,7 @@ function openIDB() {
       db.onerror = function (event) {
         // Generic error handler for all errors targeted at this database's
         // requests!
+        clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
         console.error("Database error: " + event.target.errorCode);
       };
 
@@ -196,6 +215,53 @@ function openIDB() {
   return dbOpenPromise;
 }
 
+function clientLogger(msg, lvl) {
+  return clients
+    .matchAll({ includeUncontrolled: true, type: "window" })
+    .then((client) => {
+      if (client && client.length) {
+        return client[0].postMessage({
+          type: SW_MSG_TYPE_LOGGER,
+          msg,
+          lvl,
+        });
+      }
+    });
+}
+
+function countIDBItem(db) {
+  var transaction = db.transaction(["media"]);
+  var objectStore = transaction.objectStore("media");
+  var request = objectStore.count();
+
+  const requestP = new Promise((resolve, reject) => {
+    request.onerror = function (event) {
+      clientLogger("IDB.count X(", ERROR);
+      reject();
+    };
+    request.onsuccess = function (event) {
+      if (request.result) {
+        clientLogger("IDB [" + request.result + "]", DEBUG);
+        resolve(request.result);
+      } else {
+        clientLogger("IDB []", WARN);
+        resolve();
+      }
+    };
+  });
+
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function (event) {
+      resolve();
+    };
+    transaction.onerror = function (event) {
+      reject();
+    };
+  });
+
+  return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
+}
+
 function getIDBItem(db, key) {
   var transaction = db.transaction(["media"]);
   var objectStore = transaction.objectStore("media");
@@ -203,17 +269,15 @@ function getIDBItem(db, key) {
 
   const requestP = new Promise((resolve, reject) => {
     request.onerror = function (event) {
-      // Handle errors!
-      // console.log("read fail");
+      clientLogger("IDB.get X(", ERROR);
       reject();
     };
     request.onsuccess = function (event) {
-      // console.log(JSON.stringify(request.result));
       if (request.result) {
-        // console.log("read success");
         resolve(request.result);
       } else {
-        // console.log("no data?");
+        const word = decodeURI(key.split("&q=")[1]);
+        clientLogger("IDB.get [] " + word, WARN);
         reject();
       }
     };
@@ -221,11 +285,9 @@ function getIDBItem(db, key) {
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function (event) {
-      // console.log("read Transaction done!");
       resolve();
     };
     transaction.onerror = function (event) {
-      // console.log("read Transaction failed!");
       reject();
     };
   });
@@ -247,23 +309,19 @@ function addIDBItem(db, value) {
 
   const requestP = new Promise((resolve, reject) => {
     request.onsuccess = function (event) {
-      // event.target.result === customer.ssn;
-      // console.log("write done!");
       resolve();
     };
     request.onerror = function (event) {
-      // console.log("write failed!");
+      clientLogger("IDB.add X(", ERROR);
       reject();
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function (event) {
-      // console.log("write Transaction done!");
       resolve(value);
     };
     transaction.onerror = function (event) {
-      // console.log("write Transaction failed!");
       reject();
     };
   });
@@ -285,23 +343,19 @@ function putIDBItem(db, value) {
 
   const requestP = new Promise((resolve, reject) => {
     request.onsuccess = function (event) {
-      // event.target.result === customer.ssn;
-      // console.log("put done!");
       resolve();
     };
     request.onerror = function (event) {
-      // console.log("put failed!");
+      clientLogger("IDB.put X(", ERROR);
       reject();
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function (event) {
-      // console.log("put Transaction done!");
       resolve(value);
     };
     transaction.onerror = function (event) {
-      // console.log("put Transaction failed!");
       reject();
     };
   });
@@ -314,17 +368,16 @@ function deleteIDBItem(db, key) {
 
   let request = transaction.objectStore("media").delete(key);
 
-  request.onsuccess = function (event) {
-    // console.log("deleted success");
+  request.onsuccess = function (event) {};
+  request.onerror = function () {
+    clientLogger("IDB.delete X(", ERROR);
   };
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function (event) {
-      // console.log("delete Transaction done!");
       resolve();
     };
     transaction.onerror = function (event) {
-      // console.log("delete Transaction failed!");
       reject();
     };
   });
@@ -338,7 +391,6 @@ function deleteIDBItem(db, key) {
  * @returns a Promise with a cache response
  */
 function appVersionReq() {
-
   // return what's on cache
   const cacheRes = caches
     .open(appDataCache)
@@ -537,9 +589,7 @@ function updateCacheWithJSON(
 
   return caches
     .open(cacheName)
-    .then((cache) =>
-      cache.put(url, createdRes).then(() => cache.match(url))
-    );
+    .then((cache) => cache.put(url, createdRes).then(() => cache.match(url)));
 }
 
 // TODO: refactor this
@@ -626,7 +676,7 @@ function fetchVerSendNewDiffsMsg() {
                     if (client && client.length) {
                       // console.log("[SW] posting message");
                       return client[0].postMessage({
-                        type: "NEW_TERMS_ADDED",
+                        type: SW_MSG_TYPE_NEW_TERMS_ADDED,
                         msg: newlyAdded,
                       });
                     }

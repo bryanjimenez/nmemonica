@@ -17,7 +17,8 @@
     "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica -b gh-pages",
     "start": "webpack serve --mode=development --config=./webpack.config.js",
     "pretty": "./node_modules/.bin/prettier --write ./src/**/**/*.{js,jsx,css} ./test/**/*.js ./data ./webpack.config.js",
-    "lint": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx} ./pwa/*"
+    "lint": "git diff --staged --name-only | xargs ./node_modules/.bin/eslint --fix",
+    "lint:all": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx} ./pwa/*"
   },
   "author": "Bryan",
   "license": "",

@@ -6,6 +6,10 @@ import {
   appUIEndpoint,
   firebaseConfig,
 } from "../environment.development";
+import {
+  SERVICE_WORKER_LOGGER_MSG,
+  SERVICE_WORKER_NEW_TERMS_ADDED,
+} from "../src/actions/serviceWorkerAct";
 import md5 from "../lambda/sheets/node_modules/md5/md5.js";
 
 const projectRoot = path.resolve();
@@ -46,6 +50,15 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     stream.write("const fbURLConst =  '" + firebaseConfig.databaseURL + "';\n");
     stream.write(
       "const gCloudFnPronounceConst =  '" + pronounceEndoint + "';\n\n"
+    );
+
+    stream.write(
+      "const swMsgTypeLoggerConst =  '" + SERVICE_WORKER_LOGGER_MSG + "';\n\n"
+    );
+    stream.write(
+      "const swMsgTypeNewTermsAddedConst =  '" +
+        SERVICE_WORKER_NEW_TERMS_ADDED +
+        "';\n\n"
     );
 
     stream.write(buff);

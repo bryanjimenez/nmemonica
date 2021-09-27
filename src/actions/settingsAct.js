@@ -31,6 +31,7 @@ export const SCROLLING_STATE = "scrolling_state";
 export const AUTO_VERB_VIEW = "auto_verb_view";
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
+export const DEBUG = "toggle_debug";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -608,6 +609,8 @@ export function removeFrequencyPhrase(uid) {
         value: newValue,
       });
     }
+
+    return o;
   };
 }
 
@@ -874,6 +877,52 @@ export function toggleDarkMode() {
     } else {
       dispatch({
         type: TOGGLE_DARK_MODE,
+      });
+    }
+  };
+}
+
+export const DEBUG_OFF = 0,
+  DEBUG_ERROR = 1,
+  DEBUG_WARN = 2,
+  DEBUG_ON = 3;
+export function toggleDebug(override) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+    const { debug } = getState().settings.global;
+
+    const path = "/global/";
+    const attr = "debug";
+    const time = new Date();
+
+    let newDebug;
+    if (override !== undefined) {
+      if (override >= DEBUG_OFF && override <= DEBUG_ON) {
+        newDebug = override;
+      } else {
+        throw new Error("Debug override not valid");
+      }
+    } else {
+      newDebug = debug + 1 < 4 ? debug + 1 : 0;
+    }
+
+    localStoreAttrUpdate(time, getState, path, attr, newDebug);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        DEBUG,
+        newDebug
+      );
+    } else {
+      dispatch({
+        type: DEBUG,
+        value: newDebug,
       });
     }
   };
