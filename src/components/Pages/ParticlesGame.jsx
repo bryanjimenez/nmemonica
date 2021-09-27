@@ -149,9 +149,8 @@ class ParticlesGame extends Component {
   prepareGame() {
     // console.log('prepare game')
     if (this.props.particles.length > 0 || this.props.suffixes.length > 0) {
-      const { sentence, particles } = this.props.particles[
-        this.state.selectedIndex
-      ].romaji;
+      const { sentence, particles } =
+        this.props.particles[this.state.selectedIndex].romaji;
       const english =
         this.props.particles[this.state.selectedIndex].english || "";
       const max = Math.floor(particles.length);

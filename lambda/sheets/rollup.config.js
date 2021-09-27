@@ -1,5 +1,5 @@
 // https://www.learnwithjason.dev/blog/learn-rollup-js/
-import babel from "rollup-plugin-babel";
+import babel from "@rollup/plugin-babel";
 import replace from '@rollup/plugin-replace';
 
 // https://github.com/rollup/plugins/tree/master/packages/replace

@@ -38,9 +38,8 @@ export class JapaneseVerb extends JapaneseText {
     const iSound = 1;
     const eSound = 3;
 
-    const { /*iConsonant,*/ iVowel: beforeLastVowel } = getConsonantVowel(
-      beforeLastChar
-    );
+    const { /*iConsonant,*/ iVowel: beforeLastVowel } =
+      getConsonantVowel(beforeLastChar);
 
     if (
       spelling.split("").slice(-2).join("") === "する" ||
