@@ -113,6 +113,7 @@ class Vocabulary extends Component {
       this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
+      // console.log("frequency word changed");
       if (this.props.freqFilter && this.props.frequency.length === 0) {
         this.setOrder();
       } else {
@@ -120,7 +121,6 @@ class Vocabulary extends Component {
         const frequency = this.props.frequency.filter((f) =>
           filteredKeys.includes(f)
         );
-        // console.log('frequency word changed');
         // props.frequency is all frequency words
         // state.frequency is a subset of frequency words within current active group
         this.setState({ frequency });

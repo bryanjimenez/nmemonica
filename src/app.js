@@ -27,7 +27,10 @@ import {
 } from "./actions/firebase";
 import "./styles.css";
 import { getVersions } from "./actions/firebase";
-import { registerServiceWorker } from "./actions/serviceWorkerAct";
+import {
+  registerServiceWorker,
+  serviceWorkerEventListeners,
+} from "./actions/serviceWorkerAct";
 import classNames from "classnames";
 
 class App extends Component {
@@ -38,7 +41,10 @@ class App extends Component {
     this.props.initialize();
     this.props.getVersions();
     this.props.initializeSettingsFromLocalStorage();
-    this.props.registerServiceWorker();
+
+    this.props.registerServiceWorker().then(() => {
+      this.props.serviceWorkerEventListeners();
+    });
   }
 
   render() {
@@ -88,6 +94,7 @@ App.propTypes = {
   initializeSettingsFromLocalStorage: PropTypes.func,
   getVersions: PropTypes.func,
   registerServiceWorker: PropTypes.func,
+  serviceWorkerEventListeners: PropTypes.func,
   darkMode: PropTypes.bool,
 };
 
@@ -96,4 +103,5 @@ export default connect(mapStateToProps, {
   getVersions,
   initializeSettingsFromLocalStorage,
   registerServiceWorker,
+  serviceWorkerEventListeners,
 })(App);

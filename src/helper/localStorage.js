@@ -70,7 +70,7 @@ export function setLocalStorage(localStorageKey, value) {
 /**
  * used to retrieve the settings object stored in localStorage
  * @returns {Promise} a promise which resolves to the object stored
- * @param {*} localStorageKey
+ * @param {String} localStorageKey
  */
 export function getLocalStorageSettings(localStorageKey) {
   return new Promise((resolutionFunc, rejectionFunc) => {
