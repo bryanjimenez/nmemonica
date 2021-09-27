@@ -9,6 +9,7 @@ const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-unde
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 const appMediaCache = "nmemonica-media";
+const NO_INDEXEDDB_SUPPORT = "Your browser doesn't support a stable version of IndexedDB.";
 
 const dataVerURL = fbURL + "/lambda/cache.json";
 const dataURL = [
@@ -84,15 +85,252 @@ self.addEventListener("fetch", (e) => {
     // override cache site media asset
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const newUrl = url.split("/override_cache").join("");
-    e.respondWith(recache(appMediaCache, newUrl));
+    if (!self.indexedDB) {
+      // use cache
+      console.log(NO_INDEXEDDB_SUPPORT);
+      e.respondWith(recache(appMediaCache, newUrl));
+    } else {
+      // use indexedDB
+
+      const fetchP = fetch(newUrl);
+      const dbOpenPromise = openIDB();
+
+      const dbResults = dbOpenPromise.then((db) => {
+        const query = newUrl.split(gCloudFnPronounce)[1];
+
+        return fetchP
+          .then((res) => res.blob())
+          .then((blob) =>
+            putIDBItem(db, { query, blob }).then((dataO) => toResponse(dataO))
+          );
+      });
+
+      e.respondWith(dbResults);
+    }
   } else if (url.indexOf(gCloudFnPronounce) === 0) {
     // site media asset
-    e.respondWith(appMediaReq(url));
+    if (!self.indexedDB) {
+      // use cache
+      console.log(NO_INDEXEDDB_SUPPORT);
+      e.respondWith(appMediaReq(url));
+    } else {
+      // use indexedDB
+      const dbOpenPromise = openIDB();
+
+      const dbResults = dbOpenPromise.then((db) => {
+        const query = url.split(gCloudFnPronounce)[1];
+
+        return getIDBItem(db, query)
+          .then((dataO) =>
+            //found
+            toResponse(dataO)
+          )
+          .catch(() =>
+            //not found
+            fetch(url)
+              .then((res) => res.blob())
+              .then((blob) =>
+                addIDBItem(db, { query, blob }).then((dataO) =>
+                  toResponse(dataO)
+                )
+              )
+          );
+      });
+      e.respondWith(dbResults);
+    }
   } else {
     // everything else
     e.respondWith(fetch(e.request));
   }
 });
+
+function toResponse(obj) {
+  const status = 200,
+    statusText = "OK";
+  const init = { status, statusText };
+  return new Response(obj.blob, init);
+}
+
+function openIDB() {
+  let openRequest = indexedDB.open(appMediaCache);
+
+  const upgradeP = new Promise((resolve, reject) => {
+    openRequest.onupgradeneeded = function (event) {
+      // Save the IDBDatabase interface
+      let db = event.target.result;
+
+      // Create an objectStore for this database
+      let objectStore = db.createObjectStore("media", { keyPath: "query" });
+      objectStore.createIndex("query", "query", { unique: true });
+
+      // Use transaction oncomplete to make sure the objectStore creation is
+      // finished before adding data into it.
+      objectStore.transaction.oncomplete = function (event) {
+        // Store values in the newly created objectStore.
+        // console.log("upgrade success");
+        resolve(db);
+      };
+    };
+  });
+
+  const dbOpenPromise = new Promise((resolve, reject) => {
+    openRequest.onerror = function (event) {
+      // console.log("open failed");
+      reject();
+    };
+    openRequest.onsuccess = function (event) {
+      let db = event.target.result;
+
+      db.onerror = function (event) {
+        // Generic error handler for all errors targeted at this database's
+        // requests!
+        console.error("Database error: " + event.target.errorCode);
+      };
+
+      // console.log("open success");
+      resolve(db);
+    };
+  });
+
+  // TODO: upgrade and open
+  return dbOpenPromise;
+}
+
+function getIDBItem(db, key) {
+  var transaction = db.transaction(["media"]);
+  var objectStore = transaction.objectStore("media");
+  var request = objectStore.get(key);
+
+  const requestP = new Promise((resolve, reject) => {
+    request.onerror = function (event) {
+      // Handle errors!
+      // console.log("read fail");
+      reject();
+    };
+    request.onsuccess = function (event) {
+      // console.log(JSON.stringify(request.result));
+      if (request.result) {
+        // console.log("read success");
+        resolve(request.result);
+      } else {
+        // console.log("no data?");
+        reject();
+      }
+    };
+  });
+
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function (event) {
+      // console.log("read Transaction done!");
+      resolve();
+    };
+    transaction.onerror = function (event) {
+      // console.log("read Transaction failed!");
+      reject();
+    };
+  });
+
+  return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
+}
+
+/**
+ *
+ * @param {*} db
+ * @param {*} value
+ * @returns
+ */
+function addIDBItem(db, value) {
+  let transaction = db.transaction(["media"], "readwrite");
+
+  let objectStore = transaction.objectStore("media");
+  let request = objectStore.add(value);
+
+  const requestP = new Promise((resolve, reject) => {
+    request.onsuccess = function (event) {
+      // event.target.result === customer.ssn;
+      // console.log("write done!");
+      resolve();
+    };
+    request.onerror = function (event) {
+      // console.log("write failed!");
+      reject();
+    };
+  });
+
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function (event) {
+      // console.log("write Transaction done!");
+      resolve(value);
+    };
+    transaction.onerror = function (event) {
+      // console.log("write Transaction failed!");
+      reject();
+    };
+  });
+
+  return Promise.all([requestP, transactionP]).then(() => value);
+}
+
+/**
+ *
+ * @param {*} db
+ * @param {*} value
+ * @returns
+ */
+function putIDBItem(db, value) {
+  let transaction = db.transaction(["media"], "readwrite");
+
+  let objectStore = transaction.objectStore("media");
+  let request = objectStore.put(value);
+
+  const requestP = new Promise((resolve, reject) => {
+    request.onsuccess = function (event) {
+      // event.target.result === customer.ssn;
+      // console.log("put done!");
+      resolve();
+    };
+    request.onerror = function (event) {
+      // console.log("put failed!");
+      reject();
+    };
+  });
+
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function (event) {
+      // console.log("put Transaction done!");
+      resolve(value);
+    };
+    transaction.onerror = function (event) {
+      // console.log("put Transaction failed!");
+      reject();
+    };
+  });
+
+  return Promise.all([requestP, transactionP]).then(() => value);
+}
+
+function deleteIDBItem(db, key) {
+  var transaction = db.transaction(["media"], "readwrite");
+
+  let request = transaction.objectStore("media").delete(key);
+
+  request.onsuccess = function (event) {
+    // console.log("deleted success");
+  };
+
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function (event) {
+      // console.log("delete Transaction done!");
+      resolve();
+    };
+    transaction.onerror = function (event) {
+      // console.log("delete Transaction failed!");
+      reject();
+    };
+  });
+
+  return transactionP;
+}
 
 /**
  * respond with cache match always fetch and re-cache
