@@ -8,8 +8,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAtom,
   faFont,
-  faSignInAlt,
-  faSignOutAlt,
+  // faSignInAlt,
+  // faSignOutAlt,
   faWrench,
   faYinYang,
 } from "@fortawesome/free-solid-svg-icons";
