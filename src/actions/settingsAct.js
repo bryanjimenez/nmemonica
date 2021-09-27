@@ -1,5 +1,6 @@
 import { localStoreAttrUpdate } from "../helper/localStorage";
 import { firebaseAttrUpdate } from "./firebase";
+import { FILTER_GRP } from "../reducers/settingsRed";
 export const SET_KANA_BTN_N = "set_kana_btn_number";
 export const TOGGLE_KANA_WIDEMODE = "set_kana_widemode";
 export const TOGGLE_KANA_EASYMODE = "set_kana_easymode";
@@ -28,6 +29,8 @@ export const TOGGLE_PHRASES_REINFORCE = "toggle_phrases_reinforce";
 export const TOGGLE_DARK_MODE = "toggle_dark_mode";
 export const SCROLLING_STATE = "scrolling_state";
 export const AUTO_VERB_VIEW = "auto_verb_view";
+export const ADD_SPACE_REP_WORD = "add_space_rep_word";
+export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -365,9 +368,9 @@ export function toggleVocabularyHint() {
 }
 
 /**
- * toggle between frequency words and word groups filtering
+ * toggle between groups, frequency, and spaced repetition
  */
-export function toggleVocabularyFilter() {
+export function toggleVocabularyFilter(override) {
   return (dispatch, getState) => {
     const { user } = getState().login;
     const { filter, reinforce } = getState().settings.vocabulary;
@@ -375,9 +378,17 @@ export function toggleVocabularyFilter() {
     const path = "/vocabulary/";
     const attr = "filter";
     const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
 
-    if (!filter && reinforce) {
+    let newFilter;
+    if (override !== undefined) {
+      newFilter = override;
+    } else {
+      newFilter = filter + 1 < 3 ? filter + 1 : 0;
+    }
+
+    localStoreAttrUpdate(time, getState, path, attr, newFilter);
+
+    if (newFilter !== 0 && reinforce) {
       toggleVocabularyReinforcement()(dispatch, getState);
     }
 
@@ -389,11 +400,13 @@ export function toggleVocabularyFilter() {
         user.uid,
         path,
         attr,
-        TOGGLE_VOCABULARY_FILTER
+        TOGGLE_VOCABULARY_FILTER,
+        newFilter
       );
     } else {
       dispatch({
         type: TOGGLE_VOCABULARY_FILTER,
+        value: newFilter,
       });
     }
   };
@@ -647,7 +660,67 @@ export function addFrequencyTerm(aType, uidArr) {
     });
 }
 
-export function togglePhrasesFilter() {
+export function updateSpaceRepWord(uid) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid);
+}
+
+export function updateSpaceRepPhrase(uid) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid);
+}
+
+export function updateSpaceRepTerm(aType, uid) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    let pathPart;
+    if (aType === ADD_SPACE_REP_WORD) {
+      pathPart = "vocabulary";
+    } else if (aType === ADD_SPACE_REP_PHRASE) {
+      pathPart = "phrases";
+    }
+
+    const path = "/" + pathPart + "/";
+    const attr = "repetition";
+    const time = new Date();
+
+    const spaceRep = getLastStateValue(getState, path, attr);
+
+    let count;
+    if (spaceRep[uid] && spaceRep[uid].c > 0) {
+      count = spaceRep[uid].c + 1;
+    } else {
+      count = 1;
+    }
+
+    const now = new Date().toJSON();
+    const o = { c: count, d: now };
+
+    const newValue = { ...spaceRep, [uid]: o };
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        aType,
+        newValue
+      );
+    } else {
+      dispatch({
+        type: aType,
+        value: newValue,
+      });
+    }
+
+    return o;
+  };
+}
+
+export function togglePhrasesFilter(override) {
   return (dispatch, getState) => {
     const { user } = getState().login;
     const { filter, reinforce } = getState().settings.phrases;
@@ -655,9 +728,17 @@ export function togglePhrasesFilter() {
     const path = "/phrases/";
     const attr = "filter";
     const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
 
-    if (!filter && reinforce) {
+    let newFilter;
+    if (override !== undefined) {
+      newFilter = override;
+    } else {
+      newFilter = filter + 1 < 3 ? filter + 1 : 0;
+    }
+
+    localStoreAttrUpdate(time, getState, path, attr, newFilter);
+
+    if (newFilter !== FILTER_GRP && reinforce) {
       togglePhrasesReinforcement()(dispatch, getState);
     }
 
@@ -669,11 +750,13 @@ export function togglePhrasesFilter() {
         user.uid,
         path,
         attr,
-        TOGGLE_PHRASES_FILTER
+        TOGGLE_PHRASES_FILTER,
+        newFilter
       );
     } else {
       dispatch({
         type: TOGGLE_PHRASES_FILTER,
+        value: newFilter,
       });
     }
   };

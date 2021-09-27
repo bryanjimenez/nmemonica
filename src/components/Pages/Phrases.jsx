@@ -12,6 +12,7 @@ import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   addFrequencyPhrase,
+  updateSpaceRepPhrase,
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
   togglePhrasesFilter,
@@ -22,10 +23,15 @@ import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
 import {
+  alphaOrder,
   getTerm,
   play,
-  termFrequencyGroupFilter,
+  minimumTimeForSpaceRepUpdate,
+  randomOrder,
+  spaceRepOrder,
+  termFilterByType,
 } from "../../helper/gameHelper";
+import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -37,6 +43,7 @@ class Phrases extends Component {
     super(props);
 
     this.state = {
+      lastNext: Date.now(),
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
@@ -78,7 +85,7 @@ class Phrases extends Component {
       this.setOrder();
     }
 
-    if (this.props.freqFilter != prevProps.freqFilter) {
+    if (this.props.filterType != prevProps.filterType) {
       this.setOrder();
     }
 
@@ -88,7 +95,10 @@ class Phrases extends Component {
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
       // console.log('frequency word changed');
-      if (this.props.freqFilter && this.props.frequency.length === 0) {
+      if (
+        this.props.filterType === FILTER_FREQ &&
+        this.props.frequency.length === 0
+      ) {
         this.setOrder();
       } else {
         const filteredKeys = this.state.filteredPhrases.map((f) => f.uid);
@@ -104,21 +114,26 @@ class Phrases extends Component {
   }
 
   setOrder() {
-    let newOrder = [];
-
-    let filteredPhrases = termFrequencyGroupFilter(
-      this.props.freqFilter,
+    const filteredPhrases = termFilterByType(
+      this.props.filterType,
       this.props.phrases,
       this.props.frequency,
       this.props.activeGroup,
       this.props.togglePhrasesFilter
     );
 
-    filteredPhrases.forEach((v, i) => {
-      newOrder = [...newOrder, i];
-    });
+    let newOrder;
+
     if (!this.props.isOrdered) {
+      // randomized
+      newOrder = randomOrder(filteredPhrases);
       shuffleArray(newOrder);
+    } else if (this.props.filterType === FILTER_REP) {
+      // space repetition order
+      newOrder = spaceRepOrder(filteredPhrases, this.props.repetition);
+    } else {
+      // alphabetized
+      ({ order: newOrder } = alphaOrder(filteredPhrases));
     }
 
     const filteredKeys = filteredPhrases.map((f) => f.uid);
@@ -133,6 +148,7 @@ class Phrases extends Component {
     const l = this.state.filteredPhrases.length;
     const newSel = (this.state.selectedIndex + 1) % l;
     this.setState({
+      lastNext: Date.now(),
       reinforcedUID: undefined,
       selectedIndex: newSel,
       showMeaning: false,
@@ -233,9 +249,14 @@ class Phrases extends Component {
             color={"--orange"}
             ariaLabel="Next"
             action={() => {
+              // prevent updates when quick scrolling
+              if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
+                this.props.updateSpaceRepPhrase(phrase.uid);
+              }
+
               play(
                 this.props.reinforce,
-                this.props.freqFilter,
+                this.props.filterType,
                 this.state.frequency,
                 this.state.filteredPhrases,
                 this.state.reinforcedUID,
@@ -311,8 +332,9 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.phrases.romaji,
     frequency: state.settings.phrases.frequency,
     activeGroup: state.settings.phrases.activeGroup,
-    freqFilter: state.settings.phrases.filter,
+    filterType: state.settings.phrases.filter,
     reinforce: state.settings.phrases.reinforce,
+    repetition: state.settings.phrases.repetition,
   };
 };
 
@@ -326,10 +348,13 @@ Phrases.propTypes = {
   removeFrequencyPhrase: PropTypes.func,
   addFrequencyPhrase: PropTypes.func,
   frequency: PropTypes.array,
-  freqFilter: PropTypes.bool,
+  filterType: PropTypes.number,
   togglePhrasesFilter: PropTypes.func,
   reinforce: PropTypes.bool,
   activeGroup: PropTypes.array,
+  repetition: PropTypes.object,
+  lastNext: PropTypes.number,
+  updateSpaceRepPhrase: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -338,6 +363,7 @@ export default connect(mapStateToProps, {
   removeFrequencyPhrase,
   addFrequencyPhrase,
   togglePhrasesFilter,
+  updateSpaceRepPhrase,
 })(Phrases);
 
 export { PhrasesMeta };

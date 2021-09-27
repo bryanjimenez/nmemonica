@@ -46,6 +46,11 @@ import {
   getMemoryStorageStatus,
   setPersistentStorage,
 } from "../../actions/storageAct";
+import {
+  FILTER_FREQ,
+  FILTER_GRP,
+  FILTER_REP,
+} from "../../reducers/settingsRed";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -97,25 +102,29 @@ class Settings extends Component {
             <div className="outter">
               <div className="d-flex flex-row justify-content-between">
                 <div className="column-1">
-                  <h4>Filtering</h4>
+                  <h4>
+                    {this.props.phraseFilter === FILTER_GRP
+                      ? "Word Group"
+                      : this.props.phraseFilter === FILTER_FREQ
+                      ? "Frequency List"
+                      : "Space Repetition"}
+                  </h4>
                   <div className="mb-2">
                     <SettingsSwitch
-                      active={this.props.phraseFilter}
+                      active={this.props.phraseFilter % 2 === 0}
                       action={this.props.togglePhrasesFilter}
                       color="default"
-                      statusText={
-                        this.props.phraseFilter ? "Frequency" : "Groups"
-                      }
+                      statusText={"Filter by"}
                     />
                   </div>
-                  {this.props.phraseFilter &&
+                  {this.props.phraseFilter === FILTER_FREQ &&
                     this.props.phraseFreq.length === 0 && (
                       <div className="fst-italic">
                         No phrases have been chosen
                       </div>
                     )}
 
-                  {!this.props.phraseFilter && (
+                  {this.props.phraseFilter !== FILTER_FREQ && (
                     <SetVocabGList
                       vocabGroups={this.props.phraseGroups}
                       vocabActive={this.props.phraseActive}
@@ -124,7 +133,7 @@ class Settings extends Component {
                       }
                     />
                   )}
-                  {this.props.phraseFilter &&
+                  {this.props.phraseFilter === FILTER_FREQ &&
                     this.props.phraseFreq.length > 0 && (
                       <SetVocabGFList
                         vocabGroups={this.props.phraseGroups}
@@ -144,6 +153,7 @@ class Settings extends Component {
                       <SettingsSwitch
                         active={!this.props.phraseOrder}
                         action={this.props.setPhrasesOrdering}
+                        disabled={this.props.phraseFilter === FILTER_REP}
                         statusText="Random Order"
                       />
                     </div>
@@ -151,7 +161,7 @@ class Settings extends Component {
                       <SettingsSwitch
                         active={this.props.phraseReinforce}
                         action={this.props.togglePhrasesReinforcement}
-                        disabled={this.props.phraseFilter}
+                        disabled={this.props.phraseFilter === FILTER_FREQ}
                         statusText="Reinforcement"
                       />
                     </div>
@@ -182,24 +192,28 @@ class Settings extends Component {
             <div className="outter">
               <div className="d-flex flex-row justify-content-between">
                 <div className="column-1">
-                  <h4>Filtering</h4>
+                  <h4>
+                    {this.props.vocabFilter === FILTER_GRP
+                      ? "Word Group"
+                      : this.props.vocabFilter === FILTER_FREQ
+                      ? "Frequency List"
+                      : "Space Repetition"}
+                  </h4>
                   <div className="mb-2">
                     <SettingsSwitch
-                      active={this.props.vocabFilter}
+                      active={this.props.vocabFilter % 2 === 0}
                       action={this.props.toggleVocabularyFilter}
                       color="default"
-                      statusText={
-                        this.props.vocabFilter ? "Frequency" : "Groups"
-                      }
+                      statusText={"Filter by"}
                     />
                   </div>
-                  {this.props.vocabFilter &&
+                  {this.props.vocabFilter === FILTER_FREQ &&
                     this.props.vocabFreq.length === 0 && (
                       <div className="fst-italic">
                         No words have been chosen
                       </div>
                     )}
-                  {!this.props.vocabFilter && (
+                  {this.props.vocabFilter !== FILTER_FREQ && (
                     <SetVocabGList
                       vocabGroups={this.props.vocabGroups}
                       vocabActive={this.props.vocabActive}
@@ -208,7 +222,7 @@ class Settings extends Component {
                       }
                     />
                   )}
-                  {this.props.vocabFilter &&
+                  {this.props.vocabFilter === FILTER_FREQ &&
                     this.props.vocabFreq.length > 0 && (
                       <SetVocabGFList
                         vocabGroups={this.props.vocabGroups}
@@ -229,6 +243,7 @@ class Settings extends Component {
                       active={!this.props.vocabOrder}
                       action={this.props.setVocabularyOrdering}
                       color="default"
+                      disabled={this.props.vocabFilter === FILTER_REP}
                       statusText={
                         !this.props.vocabOrder ? "Randomized" : "Alphabetic"
                       }
@@ -238,7 +253,7 @@ class Settings extends Component {
                     <SettingsSwitch
                       active={this.props.vocabReinforce}
                       action={this.props.toggleVocabularyReinforcement}
-                      disabled={this.props.vocabFilter}
+                      disabled={this.props.vocabFilter != FILTER_GRP}
                       statusText="Reinforcement"
                     />
                   </div>
@@ -459,7 +474,7 @@ Settings.propTypes = {
   phraseSide: PropTypes.bool,
   phrases: PropTypes.array,
   getPhrases: PropTypes.func,
-  phraseFilter: PropTypes.bool,
+  phraseFilter: PropTypes.number,
   phraseFreq: PropTypes.array,
   phraseReinforce: PropTypes.bool,
   togglePhrasesReinforcement: PropTypes.func,
@@ -496,7 +511,7 @@ Settings.propTypes = {
   toggleVocabularyFilter: PropTypes.func,
   vocabulary: PropTypes.array,
   vocabFreq: PropTypes.array,
-  vocabFilter: PropTypes.bool,
+  vocabFilter: PropTypes.number,
   removeFrequencyWord: PropTypes.func,
   vocabAutoPlay: PropTypes.number,
   toggleVocabularyAutoPlay: PropTypes.func,
