@@ -161,13 +161,20 @@ export function spaceRepOrder(terms, spaceRepObj) {
   for (const vIdx in terms) {
     const orderIdx = spaceRepList.findIndex((el) => el.uid === terms[vIdx].uid);
     if (orderIdx > -1) {
-      played = [...played, { o: orderIdx, u: vIdx }];
+      played = [...played, { o: Number(orderIdx), u: Number(vIdx) }];
     } else {
-      unPlayed = [...unPlayed, vIdx];
+      unPlayed = [...unPlayed, Number(vIdx)];
     }
   }
 
   played = orderBy(played, ["o"], ["acs"]).map((el) => el.u);
+
+  // console.log(JSON.stringify(spaceRepList))
+  // console.log('played');
+  // console.log(JSON.stringify(spaceRepList.map(s=>terms.find(t=>t.uid===s.uid).english)))
+  // console.log(JSON.stringify(played.map(p=>terms[p].english)))
+  // console.log('unPlayed');
+  // console.log(JSON.stringify(unPlayed.map(p=>terms[p].english)))
 
   return [...unPlayed, ...played];
 }
@@ -219,6 +226,10 @@ export function alphaOrder(terms) {
   eOrder.forEach((e, i) => {
     jOrder[e.idx] = { ...jOrder[e.idx], idx: i };
   });
+
+  // console.log(JSON.stringify(order))
+  // console.log(JSON.stringify(jOrder.map(j=>j.uid)))
+  // console.log(JSON.stringify(eOrder.map(e=>e.uid)))
 
   return { order, jOrder, eOrder };
 }

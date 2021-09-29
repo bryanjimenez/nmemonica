@@ -710,8 +710,8 @@ export function updateSpaceRepTerm(aType, uid) {
       count = 1;
     }
 
-    const datePart = new Date().toJSON().split("T")[0];
-    const o = { c: count, d: datePart };
+    const now = new Date().toJSON();
+    const o = { c: count, d: now };
 
     const newValue = { ...spaceRep, [uid]: o };
     localStoreAttrUpdate(time, getState, path, attr, newValue);
