@@ -32,8 +32,6 @@ class VerbMain extends Component {
   }
 
   componentDidMount() {
-    this.setState({ audioPlay: false });
-
     if (this.props.verbForm !== "dictionary") {
       const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
 
