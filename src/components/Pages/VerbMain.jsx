@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
+import Sizable from "../Form/Sizable";
 import { connect } from "react-redux";
 import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
 import { setShownForm } from "../../actions/verbsAct";
@@ -11,6 +12,7 @@ import {
   AUTOPLAY_EN_JP,
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
+  flipVocabularyPracticeSide,
 } from "../../actions/settingsAct";
 
 class VerbMain extends Component {
@@ -201,17 +203,20 @@ class VerbMain extends Component {
     const { inJapanese, inEnglish, romaji, japanesePhrase } =
       this.getVerbLabelItems(verbForms, this.props.verbForm);
 
-    let shownSide, hiddenSide, shownCaption, hiddenCaption;
+    const eLabel = "[English]";
+    const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
+
+    let shownValue, hiddenValue, shownLabel, hiddenLabel;
     if (this.props.practiceSide) {
-      shownSide = inEnglish;
-      hiddenSide = inJapanese;
-      shownCaption = "[English]";
-      hiddenCaption = "[Japanese]";
+      shownValue = inEnglish;
+      hiddenValue = inJapanese;
+      shownLabel = eLabel;
+      hiddenLabel = jLabel;
     } else {
-      shownSide = inJapanese;
-      hiddenSide = inEnglish;
-      shownCaption = "[Japanese]";
-      hiddenCaption = "[English]";
+      shownValue = inJapanese;
+      hiddenValue = inEnglish;
+      shownLabel = jLabel;
+      hiddenLabel = eLabel;
     }
 
     const topStyle = { fontSize: !this.props.practiceSide ? "2.5rem" : "1rem" };
@@ -238,7 +243,7 @@ class VerbMain extends Component {
     return [
       <div
         key={0}
-        className="pt-3 pl-3 flex-shrink-1 d-flex flex-column justify-content-around"
+        className="pt-3 pl-sm-3 flex-shrink-1 d-flex flex-column justify-content-around"
       >
         {this.buildTenseElement(t1)}
       </div>,
@@ -246,18 +251,20 @@ class VerbMain extends Component {
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
-        {this.props.autoPlay === AUTOPLAY_JP_EN && this.props.practiceSide ? (
-          <div
-            style={topStyle}
-            onClick={() => {
-              this.setState((state) => ({ showEng: !state.showEng }));
-            }}
-          >
-            {this.state.showEng ? shownSide : shownCaption}
-          </div>
-        ) : (
-          <div style={topStyle}>{shownSide}</div>
-        )}
+        <div
+          className="clickable"
+          style={topStyle}
+          onClick={() => {
+            if (this.props.autoPlay) {
+              this.props.flipVocabularyPracticeSide();
+            }
+          }}
+        >
+          {(this.props.autoPlay && this.props.practiceSide) ||
+          (!this.props.autoPlay && this.state.showEng)
+            ? shownLabel
+            : shownValue}
+        </div>
 
         {this.props.romajiActive && (
           <div
@@ -271,21 +278,24 @@ class VerbMain extends Component {
             {this.state.showRomaji ? romaji : "[romaji]"}
           </div>
         )}
-        {this.props.autoPlay !== AUTOPLAY_EN_JP || this.props.practiceSide ? (
-          <div
-            className="clickable"
-            style={btmStyle}
-            onClick={() => {
+        <div
+          className="clickable"
+          style={btmStyle}
+          onClick={() => {
+            if (this.props.autoPlay) {
+              this.props.flipVocabularyPracticeSide();
+            } else {
               this.setState((state) => ({
                 showMeaning: !state.showMeaning,
               }));
-            }}
-          >
-            {this.state.showMeaning ? hiddenSide : hiddenCaption}
-          </div>
-        ) : (
-          <div className="clickable">{hiddenSide}</div>
-        )}
+            }
+          }}
+        >
+          {(this.props.autoPlay && !this.props.practiceSide) ||
+          (!this.props.autoPlay && this.state.showMeaning)
+            ? hiddenValue
+            : hiddenLabel}
+        </div>
         <AudioItem
           word={audioWords}
           autoPlay={
@@ -320,7 +330,7 @@ class VerbMain extends Component {
       </div>,
       <div
         key={2}
-        className="pt-3 pr-3 text-end flex-shrink-1 d-flex flex-column justify-content-around"
+        className="pt-3 pr-sm-3 text-end flex-shrink-1 d-flex flex-column justify-content-around"
       >
         {this.buildTenseElement(t2)}
       </div>,
@@ -355,10 +365,12 @@ VerbMain.propTypes = {
   setShownForm: PropTypes.func,
   verbForm: PropTypes.string,
   prevPushPlay: PropTypes.bool,
+  flipVocabularyPracticeSide: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
   setPreviousWord,
   pushedPlay,
   setShownForm,
+  flipVocabularyPracticeSide,
 })(VerbMain);

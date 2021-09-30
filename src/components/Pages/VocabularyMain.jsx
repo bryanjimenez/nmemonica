@@ -8,7 +8,9 @@ import {
   AUTOPLAY_EN_JP,
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
+  flipVocabularyPracticeSide,
 } from "../../actions/settingsAct";
+import Sizable from "../Form/Sizable";
 
 class VocabularyMain extends Component {
   constructor(props) {
@@ -65,17 +67,17 @@ class VocabularyMain extends Component {
     let inEnglish = vocabulary.english;
     let romaji = vocabulary.romaji;
 
-    let shownSide, hiddenSide, shownCaption, hiddenCaption;
+    let shownValue, hiddenValue, shownLabel, hiddenLabel;
     if (this.props.practiceSide) {
-      shownSide = inEnglish;
-      hiddenSide = inJapanese;
-      shownCaption = "[English]";
-      hiddenCaption = "[Japanese]";
+      shownValue = inEnglish;
+      hiddenValue = inJapanese;
+      shownLabel = "[English]";
+      hiddenLabel = "[Japanese]";
     } else {
-      shownSide = inJapanese;
-      hiddenSide = inEnglish;
-      shownCaption = "[Japanese]";
-      hiddenCaption = "[English]";
+      shownValue = inJapanese;
+      hiddenValue = inEnglish;
+      shownLabel = "[Japanese]";
+      hiddenLabel = "[English]";
     }
 
     const vocabJapanese = audioPronunciation(vocabulary);
@@ -99,17 +101,23 @@ class VocabularyMain extends Component {
 
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
-        {this.props.autoPlay === AUTOPLAY_JP_EN && this.props.practiceSide ? (
-          <h1
-            onClick={() => {
-              this.setState((state) => ({ showEng: !state.showEng }));
-            }}
-          >
-            {this.state.showEng ? shownSide : shownCaption}
-          </h1>
-        ) : (
-          <h1>{shownSide}</h1>
-        )}
+        <Sizable
+          smallStyle={{
+            fontSize: !this.props.practiceSide ? "2.5rem" : "2rem",
+          }}
+          largeStyle={{ fontSize: "2.5rem" }}
+          onClick={() => {
+            if (this.props.autoPlay) {
+              this.props.flipVocabularyPracticeSide();
+            }
+          }}
+        >
+          {(this.props.autoPlay && this.props.practiceSide) ||
+          (!this.props.autoPlay && this.state.showEng)
+            ? shownLabel
+            : shownValue}
+        </Sizable>
+
         {this.props.romajiActive && (
           <h5
             onClick={() => {
@@ -120,18 +128,24 @@ class VocabularyMain extends Component {
             {this.state.showRomaji ? romaji : "[Romaji]"}
           </h5>
         )}
-        {this.props.autoPlay !== AUTOPLAY_EN_JP || this.props.practiceSide ? (
-          <h2
-            onClick={() => {
-              this.setState((state) => ({ showMeaning: !state.showMeaning }));
-            }}
-            className="clickable"
-          >
-            {this.state.showMeaning ? hiddenSide : hiddenCaption}
-          </h2>
-        ) : (
-          <h2>{hiddenSide}</h2>
-        )}
+        <h2
+          onClick={() => {
+            if (this.props.autoPlay) {
+              this.props.flipVocabularyPracticeSide();
+            } else {
+              this.setState((state) => ({
+                showMeaning: !state.showMeaning,
+              }));
+            }
+          }}
+          className="clickable"
+        >
+          {(this.props.autoPlay && !this.props.practiceSide) ||
+          (!this.props.autoPlay && this.state.showMeaning)
+            ? hiddenValue
+            : hiddenLabel}
+        </h2>
+
         <AudioItem
           word={audioWords}
           autoPlay={
@@ -177,6 +191,10 @@ VocabularyMain.propTypes = {
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,
   prevPushPlay: PropTypes.bool,
+  flipVocabularyPracticeSide: PropTypes.func,
 };
 
-export default connect(mapStateToProps, { pushedPlay })(VocabularyMain);
+export default connect(mapStateToProps, {
+  pushedPlay,
+  flipVocabularyPracticeSide,
+})(VocabularyMain);
