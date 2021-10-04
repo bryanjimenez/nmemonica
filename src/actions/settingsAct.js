@@ -733,6 +733,8 @@ export function updateSpaceRepTerm(aType, uid) {
         value: newValue,
       });
     }
+
+    return o;
   };
 }
 

@@ -150,29 +150,34 @@ export function minimumTimeForSpaceRepUpdate(prevTime) {
  * @returns {number[]} an array containing the indexes of terms in space repetition order
  */
 export function spaceRepOrder(terms, spaceRepObj) {
-  const spaceRepList = Object.keys(spaceRepObj).map((k) => ({
-    ...spaceRepObj[k],
-    uid: k,
-  }));
-  orderBy(spaceRepList, ["d", "c"], ["acs", "acs"]);
-
   let played = [];
   let unPlayed = [];
-  for (const vIdx in terms) {
-    const orderIdx = spaceRepList.findIndex((el) => el.uid === terms[vIdx].uid);
-    if (orderIdx > -1) {
-      played = [...played, { o: Number(orderIdx), u: Number(vIdx) }];
+  for (const tIdx in terms) {
+    const tUid = terms[tIdx].uid;
+
+    if (spaceRepObj[tUid]) {
+      const date = spaceRepObj[terms[tIdx].uid].d;
+      const count = spaceRepObj[terms[tIdx].uid].c;
+      played = [
+        ...played,
+        {
+          date,
+          count,
+          uid: tUid,
+          index: Number(tIdx),
+        },
+      ];
     } else {
-      unPlayed = [...unPlayed, Number(vIdx)];
+      unPlayed = [...unPlayed, Number(tIdx)];
     }
   }
 
-  played = orderBy(played, ["o"], ["acs"]).map((el) => el.u);
+  played = orderBy(played, ["date", "count", "uid"], ["asc", "asc", "asc"]).map(
+    (el) => el.index
+  );
 
-  // console.log(JSON.stringify(spaceRepList))
-  // console.log('played');
-  // console.log(JSON.stringify(spaceRepList.map(s=>terms.find(t=>t.uid===s.uid).english)))
-  // console.log(JSON.stringify(played.map(p=>terms[p].english)))
+  // console.log("played");
+  // console.log(JSON.stringify(played.map((p) => terms[p].english)));
   // console.log('unPlayed');
   // console.log(JSON.stringify(unPlayed.map(p=>terms[p].english)))
 
