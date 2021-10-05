@@ -148,7 +148,7 @@ class Vocabulary extends Component {
     let jbare = [];
     let ebare = [];
 
-    if (!this.props.isOrdered) {
+    if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
       // randomized
       newOrder = randomOrder(filteredVocab);
     } else if (this.props.filterType === FILTER_REP) {
@@ -335,7 +335,10 @@ class Vocabulary extends Component {
             action={() => {
               // prevent updates when quick scrolling
               if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
-                this.props.updateSpaceRepWord(vocabulary.uid);
+                const shouldIncrement = !this.state.frequency.includes(
+                  vocabulary.uid
+                );
+                this.props.updateSpaceRepWord(vocabulary.uid, shouldIncrement);
               }
 
               play(

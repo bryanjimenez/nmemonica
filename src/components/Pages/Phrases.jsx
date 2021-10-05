@@ -251,7 +251,10 @@ class Phrases extends Component {
             action={() => {
               // prevent updates when quick scrolling
               if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
-                this.props.updateSpaceRepPhrase(phrase.uid);
+                const shouldIncrement = !this.state.frequency.includes(
+                  phrase.uid
+                );
+                this.props.updateSpaceRepPhrase(phrase.uid, shouldIncrement);
               }
 
               play(
