@@ -150,7 +150,7 @@ export function minimumTimeForSpaceRepUpdate(prevTime) {
  * @returns {number[]} an array containing the indexes of terms in space repetition order
  */
 export function spaceRepOrder(terms, spaceRepObj) {
-  let played = [];
+  let playedTemp = [];
   let unPlayed = [];
   for (const tIdx in terms) {
     const tUid = terms[tIdx].uid;
@@ -158,8 +158,8 @@ export function spaceRepOrder(terms, spaceRepObj) {
     if (spaceRepObj[tUid]) {
       const date = spaceRepObj[terms[tIdx].uid].d;
       const count = spaceRepObj[terms[tIdx].uid].c;
-      played = [
-        ...played,
+      playedTemp = [
+        ...playedTemp,
         {
           date,
           count,
@@ -172,14 +172,14 @@ export function spaceRepOrder(terms, spaceRepObj) {
     }
   }
 
-  played = orderBy(played, ["date", "count", "uid"], ["asc", "asc", "asc"]).map(
-    (el) => el.index
-  );
+  const playedOrdered = orderBy(playedTemp, ["date", "count", "uid"], ["asc", "asc", "asc"]);
 
   // console.log("played");
-  // console.log(JSON.stringify(played.map((p) => terms[p].english)));
+  // console.log(JSON.stringify(playedOrdered.map((p) => ({[terms[p.index].english]:p.date,c:p.count}))));
   // console.log('unPlayed');
-  // console.log(JSON.stringify(unPlayed.map(p=>terms[p].english)))
+  // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
+
+  const played = playedOrdered.map((el) => el.index);
 
   return [...unPlayed, ...played];
 }

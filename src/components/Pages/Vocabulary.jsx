@@ -144,7 +144,7 @@ class Vocabulary extends Component {
     let jbare = [];
     let ebare = [];
 
-    if (!this.props.isOrdered) {
+    if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
       // randomized
       newOrder = randomOrder(filteredVocab);
     } else if (this.props.filterType === FILTER_REP) {
