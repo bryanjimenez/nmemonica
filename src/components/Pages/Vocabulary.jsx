@@ -283,7 +283,10 @@ class Vocabulary extends Component {
             action={() => {
               // prevent updates when quick scrolling
               if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
-                this.props.updateSpaceRepWord(vocabulary.uid);
+                const shouldIncrement = !this.state.frequency.includes(
+                  vocabulary.uid
+                );
+                this.props.updateSpaceRepWord(vocabulary.uid, shouldIncrement);
               }
 
               play(

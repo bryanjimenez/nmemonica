@@ -678,15 +678,15 @@ export function removeFrequencyPhrase(uid) {
   };
 }
 
-export function updateSpaceRepWord(uid) {
-  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid);
+export function updateSpaceRepWord(uid, shouldIncrement = true) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, shouldIncrement);
 }
 
-export function updateSpaceRepPhrase(uid) {
-  return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid);
+export function updateSpaceRepPhrase(uid, shouldIncrement = true) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, shouldIncrement);
 }
 
-export function updateSpaceRepTerm(aType, uid) {
+export function updateSpaceRepTerm(aType, uid, shouldIncrement = true) {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
@@ -704,8 +704,10 @@ export function updateSpaceRepTerm(aType, uid) {
     const spaceRep = getLastStateValue(getState, path, attr);
 
     let count;
-    if (spaceRep[uid] && spaceRep[uid].c > 0) {
+    if (spaceRep[uid] && spaceRep[uid].c > 0 && shouldIncrement) {
       count = spaceRep[uid].c + 1;
+    } else if (spaceRep[uid] && spaceRep[uid].c > 0 && !shouldIncrement) {
+      count = spaceRep[uid].c;
     } else {
       count = 1;
     }
