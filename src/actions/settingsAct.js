@@ -445,8 +445,8 @@ export function toggleVocabularyActiveGrp(grpName) {
 }
 
 export const AUTOPLAY_OFF = 0,
-  AUTOPLAY_JP = 1,
-  AUTOPLAY_EN_JP = 2;
+  AUTOPLAY_EN_JP = 1,
+  AUTOPLAY_JP_EN = 2;
 export function toggleVocabularyAutoPlay() {
   return (dispatch, getState) => {
     const { autoPlay } = getState().settings.vocabulary;

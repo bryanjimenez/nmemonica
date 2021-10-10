@@ -6,7 +6,7 @@ import AudioItem from "../Form/AudioItem";
 import { pushedPlay } from "../../actions/vocabularyAct";
 import {
   AUTOPLAY_EN_JP,
-  AUTOPLAY_JP,
+  AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
 } from "../../actions/settingsAct";
 
@@ -20,6 +20,7 @@ class VocabularyMain extends Component {
       showRomaji: false,
       prevVocab: this.props.prevTerm,
       audioPlay: true,
+      prevPlayed: this.props.prevPushPlay,
     };
   }
 
@@ -34,6 +35,7 @@ class VocabularyMain extends Component {
     ) {
       return false;
     }
+
     return true;
   }
 
@@ -45,6 +47,7 @@ class VocabularyMain extends Component {
         showRomaji: false,
         prevVocab: prevProps.vocabulary,
         audioPlay: true,
+        prevPlayed: this.props.prevPushPlay,
       });
     }
 
@@ -75,15 +78,28 @@ class VocabularyMain extends Component {
       hiddenCaption = "[English]";
     }
 
-    let audioWords = [audioPronunciation(vocabulary), vocabulary.english];
+    const vocabJapanese = audioPronunciation(vocabulary);
+    let audioWords = [vocabJapanese, vocabulary.english];
 
-    if (this.state.prevVocab !== undefined && this.props.played === false) {
-      audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
+    if (this.state.prevVocab !== undefined && this.state.prevPlayed === false) {
+      if (this.props.autoPlay === AUTOPLAY_EN_JP) {
+        audioWords = [
+          vocabJapanese,
+          vocabulary.english,
+          audioPronunciation(this.state.prevVocab),
+        ];
+      } else if (this.props.autoPlay === AUTOPLAY_JP_EN) {
+        audioWords = [
+          vocabJapanese,
+          vocabJapanese,
+          this.state.prevVocab.english,
+        ];
+      }
     }
 
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
-        {this.props.autoPlay === AUTOPLAY_JP && this.props.practiceSide ? (
+        {this.props.autoPlay === AUTOPLAY_JP_EN && this.props.practiceSide ? (
           <h1
             onClick={() => {
               this.setState((state) => ({ showEng: !state.showEng }));
@@ -124,7 +140,9 @@ class VocabularyMain extends Component {
               : this.props.autoPlay
           }
           onPushedPlay={() => {
-            this.props.pushedPlay(true);
+            if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+              this.props.pushedPlay(true);
+            }
           }}
           onAutoPlayDone={() => {
             this.props.pushedPlay(false);
@@ -142,7 +160,7 @@ const mapStateToProps = (state) => {
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
-    played: state.vocabulary.pushedPlay,
+    prevPushPlay: state.vocabulary.pushedPlay,
   };
 };
 
@@ -152,9 +170,13 @@ VocabularyMain.propTypes = {
   practiceSide: PropTypes.bool,
   autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
-  prevTerm: PropTypes.object,
+  prevTerm: PropTypes.shape({
+    japanese: PropTypes.string.isRequired,
+    english: PropTypes.string.isRequired,
+  }),
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,
+  prevPushPlay: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, { pushedPlay })(VocabularyMain);

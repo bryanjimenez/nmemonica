@@ -6,7 +6,7 @@ import { JapaneseText } from "./JapaneseText";
 /**
  * Goes to the next term or selects one from the frequency list
  * @param {Boolean} reinforce
- * @param {Boolean} freqFilter
+ * @param {Number} freqFilter
  * @param {Array} frequency
  * @param {Array} filteredTerms
  * @param {String} reinforcedUID
@@ -28,7 +28,7 @@ export function play(
   // unless filtering from frequency list
   const reinforced =
     reinforce && [false, false, true][Math.floor(Math.random() * 3)];
-  if (!freqFilter && reinforced && frequency.length > 0) {
+  if (freqFilter !== FILTER_FREQ && reinforced && frequency.length > 0) {
     const min = 0;
     const max = Math.floor(frequency.length);
     const idx = Math.floor(Math.random() * (max - min) + min);
@@ -250,4 +250,14 @@ export function randomOrder(terms) {
   shuffleArray(order);
 
   return order;
+}
+
+/**
+ *
+ * @param {number} index
+ * @param {string[]} options
+ * @returns
+ */
+export function labelOptions(index, options) {
+  return options[index];
 }

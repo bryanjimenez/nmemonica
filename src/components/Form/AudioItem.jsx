@@ -4,7 +4,7 @@ import { UnmuteIcon } from "@primer/octicons-react";
 import { pronounceEndoint } from "../../../environment.development";
 import {
   AUTOPLAY_EN_JP,
-  AUTOPLAY_JP,
+  AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
 } from "../../actions/settingsAct";
 
@@ -18,21 +18,27 @@ export default function AudioItem(props) {
 
   // console.log(props.autoPlay + " " + JSON.stringify(props.word));
   // props.word = [currJWord, currEword, lastJWord]
+  // props.word = [playOnClick, playOnShow, playOnSwipe]
   const touchPlayParam = { word: props.word[0], tl: "ja" };
   let autoPlayEndPoint = [];
 
-  if (props.autoPlay === AUTOPLAY_JP) {
-    autoPlayEndPoint = [
-      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[0],
-    ];
-  } else if (props.autoPlay === AUTOPLAY_EN_JP && props.word.length === 2) {
+  if (props.autoPlay === AUTOPLAY_EN_JP && props.word.length === 2) {
     autoPlayEndPoint = [
       pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
+    ];
+  } else if (props.autoPlay === AUTOPLAY_JP_EN && props.word.length === 2) {
+    autoPlayEndPoint = [
+      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[0],
     ];
   } else if (props.autoPlay === AUTOPLAY_EN_JP && props.word.length === 3) {
     autoPlayEndPoint = [
       pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[2],
       pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
+    ];
+  } else if (props.autoPlay === AUTOPLAY_JP_EN && props.word.length === 3) {
+    autoPlayEndPoint = [
+      pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[2],
+      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[1],
     ];
   }
 
@@ -51,38 +57,47 @@ export default function AudioItem(props) {
       }
     }
 
-    if (props.autoPlay === AUTOPLAY_EN_JP && autoPlayEndPoint.length > 0) {
+    if (
+      [AUTOPLAY_EN_JP, AUTOPLAY_JP_EN].includes(props.autoPlay) &&
+      autoPlayEndPoint.length > 0
+    ) {
       player.src = autoPlayEndPoint[0];
       player.play();
     }
   };
 
+  const clickEvHan0 = () => {
+    tStart = Date.now();
+
+    playPushed = true;
+    if (props.onPushedPlay && typeof props.onPushedPlay === "function") {
+      props.onPushedPlay();
+    }
+  };
+
+  const clickEvHan1 = () => {
+    const time = ~~(Date.now() - tStart);
+
+    const override = time < 500 ? "" : "/override_cache";
+    const endpoint =
+      pronounceEndoint +
+      override +
+      "?tl=" +
+      touchPlayParam.tl +
+      "&q=" +
+      touchPlayParam.word;
+
+    player.src = endpoint;
+    player.play();
+  };
+
   return (
     <div
       className="d-flex justify-content-center clickable"
-      onTouchStart={() => {
-        tStart = Date.now();
-
-        playPushed = true;
-        if (props.onPushedPlay && typeof props.onPushedPlay === "function") {
-          props.onPushedPlay();
-        }
-      }}
-      onTouchEnd={() => {
-        const time = ~~(Date.now() - tStart);
-
-        const override = time < 500 ? "" : "/override_cache";
-        const endpoint =
-          pronounceEndoint +
-          override +
-          "?tl=" +
-          touchPlayParam.tl +
-          "&q=" +
-          touchPlayParam.word;
-
-        player.src = endpoint;
-        player.play();
-      }}
+      onMouseDown={clickEvHan0}
+      onTouchStart={clickEvHan0}
+      onMouseUp={clickEvHan1}
+      onTouchEnd={clickEvHan1}
     >
       <audio
         ref={(ref) => {
@@ -109,7 +124,7 @@ export default function AudioItem(props) {
 
 AudioItem.propTypes = {
   word: PropTypes.array.isRequired,
-  autoPlay: PropTypes.number.isRequired, //0->off,1->JP,2->EN,JP
+  autoPlay: PropTypes.number.isRequired, //0->off,1->JP,2->EN,JP,3->JP,EN
   onPushedPlay: PropTypes.func,
   onAutoPlayDone: PropTypes.func,
 };

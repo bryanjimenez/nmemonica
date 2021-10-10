@@ -9,7 +9,7 @@ import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
 import { setShownForm } from "../../actions/verbsAct";
 import {
   AUTOPLAY_EN_JP,
-  AUTOPLAY_JP,
+  AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
 } from "../../actions/settingsAct";
 
@@ -22,6 +22,7 @@ class VerbMain extends Component {
       showRomaji: false,
       prevVocab: this.props.prevTerm,
       audioPlay: true,
+      prevPlayed: this.props.prevPushPlay,
     };
 
     this.buildTenseElement = this.buildTenseElement.bind(this);
@@ -36,7 +37,10 @@ class VerbMain extends Component {
       const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
 
       // lastVerb to prevent verb-form loss between transition v->nv
-      const lastVerb = { japanese: thisVerb.getSpelling() };
+      const lastVerb = {
+        japanese: thisVerb.getSpelling(),
+        english: this.props.verb.english,
+      };
       this.props.setPreviousWord({ lastVerb });
     }
   }
@@ -49,10 +53,11 @@ class VerbMain extends Component {
     ) {
       return false;
     }
+
     return true;
   }
 
-  componentDidUpdate(prevProps/*, prevState*/) {
+  componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.verb != prevProps.verb) {
       // verb change
       const prevVerb = this.getVerbForm(prevProps.verb, this.props.verbForm);
@@ -60,12 +65,16 @@ class VerbMain extends Component {
 
       const prevVocab = {
         japanese: prevVerb.getSpelling(),
+        english: prevProps.verb.english,
         uid: prevProps.verb.uid,
       };
 
       if (this.props.verbForm !== "dictionary") {
         // lastVerb to prevent verb-form loss between transition v->nv
-        const lastVerb = { japanese: thisVerb.getSpelling() };
+        const lastVerb = {
+          japanese: thisVerb.getSpelling(),
+          english: this.props.verb.english,
+        };
         this.props.setPreviousWord({ ...prevVocab, lastVerb });
       }
 
@@ -74,6 +83,7 @@ class VerbMain extends Component {
         showRomaji: false,
         prevVocab,
         audioPlay: true,
+        prevPlayed: this.props.prevPushPlay,
       });
     }
 
@@ -83,6 +93,7 @@ class VerbMain extends Component {
 
       const prevVocab = {
         japanese: thisVerb.getSpelling(),
+        english: this.props.verb.english,
         uid: this.props.verb.uid,
       };
 
@@ -207,15 +218,22 @@ class VerbMain extends Component {
     const topStyle = { fontSize: !this.props.practiceSide ? "2.5rem" : "1rem" };
     const btmStyle = { fontSize: this.props.practiceSide ? "2.5rem" : "1rem" };
 
-    let audioWords = [
-      audioPronunciation({
-        japanese: japanesePhrase.getSpelling(),
-      }),
-      verb.english.toString(),
-    ];
+    const verbJapanese = audioPronunciation({
+      japanese: japanesePhrase.getSpelling(),
+    });
 
-    if (this.state.prevVocab !== undefined && this.props.played === false) {
-      audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
+    let audioWords = [verbJapanese, verb.english];
+
+    if (this.state.prevVocab !== undefined && this.state.prevPlayed === false) {
+      if (this.props.autoPlay === AUTOPLAY_EN_JP) {
+        audioWords = [
+          verbJapanese,
+          verb.english,
+          audioPronunciation(this.state.prevVocab),
+        ];
+      } else if (this.props.autoPlay === AUTOPLAY_JP_EN) {
+        audioWords = [verbJapanese, verbJapanese, this.state.prevVocab.english];
+      }
     }
 
     return [
@@ -229,7 +247,7 @@ class VerbMain extends Component {
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
-        {this.props.autoPlay === AUTOPLAY_JP && this.props.practiceSide ? (
+        {this.props.autoPlay === AUTOPLAY_JP_EN && this.props.practiceSide ? (
           <div
             style={topStyle}
             onClick={() => {
@@ -277,9 +295,26 @@ class VerbMain extends Component {
               : this.props.autoPlay
           }
           onPushedPlay={() => {
-            this.props.pushedPlay(true);
+            if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+              this.setState({
+                audioPlay: false,
+              });
+              this.props.pushedPlay(true);
+            }
           }}
           onAutoPlayDone={() => {
+            if (!this.state.prevVocab) {
+              // this is the first verb let's set it for next term
+              const thisVerb = this.getVerbForm(
+                this.props.verb,
+                this.props.verbForm
+              );
+              const firstVerb = {
+                japanese: thisVerb.getSpelling(),
+                english: this.props.verb.english,
+              };
+              this.props.setPreviousWord({ ...firstVerb });
+            }
             this.props.pushedPlay(false);
           }}
         />
@@ -300,7 +335,7 @@ const mapStateToProps = (state) => {
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
-    played: state.vocabulary.pushedPlay,
+    prevPushPlay: state.vocabulary.pushedPlay,
     verbForm: state.vocabulary.verbForm,
   };
 };
@@ -311,12 +346,16 @@ VerbMain.propTypes = {
   practiceSide: PropTypes.bool,
   romajiActive: PropTypes.bool,
   scrollingDone: PropTypes.bool,
-  prevTerm: PropTypes.object,
+  prevTerm: PropTypes.shape({
+    japanese: PropTypes.string.isRequired,
+    english: PropTypes.string.isRequired,
+  }),
   setPreviousWord: PropTypes.func,
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,
   setShownForm: PropTypes.func,
   verbForm: PropTypes.string,
+  prevPushPlay: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {

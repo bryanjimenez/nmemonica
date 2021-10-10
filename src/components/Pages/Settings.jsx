@@ -29,7 +29,6 @@ import {
   toggleVocabularyReinforcement,
   togglePhrasesReinforcement,
   AUTOPLAY_OFF,
-  AUTOPLAY_JP,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
@@ -51,6 +50,7 @@ import {
   FILTER_GRP,
   FILTER_REP,
 } from "../../reducers/settingsRed";
+import { labelOptions } from "../../helper/gameHelper";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -253,7 +253,7 @@ class Settings extends Component {
                     <SettingsSwitch
                       active={this.props.vocabReinforce}
                       action={this.props.toggleVocabularyReinforcement}
-                      disabled={this.props.vocabFilter != FILTER_GRP}
+                      disabled={this.props.vocabFilter === FILTER_FREQ}
                       statusText="Reinforcement"
                     />
                   </div>
@@ -283,13 +283,11 @@ class Settings extends Component {
                     <SettingsSwitch
                       active={this.props.vocabAutoPlay !== AUTOPLAY_OFF}
                       action={this.props.toggleVocabularyAutoPlay}
-                      statusText={
-                        this.props.vocabAutoPlay === AUTOPLAY_OFF
-                          ? "Auto Play [ ]"
-                          : this.props.vocabAutoPlay === AUTOPLAY_JP
-                          ? "Auto Play [JP]"
-                          : "Auto Play [EN,JP]"
-                      }
+                      statusText={labelOptions(this.props.vocabAutoPlay, [
+                        "Auto Play [ ]",
+                        "Auto Play [EN,JP]",
+                        "Auto Play [JP,EN]",
+                      ])}
                     />
                   </div>
 

@@ -178,7 +178,7 @@ class Vocabulary extends Component {
     });
   }
 
-  verbNonVerbTransition(index) {
+  verbNonVerbTransition(nextIndex, nextUID) {
     const prevVocab = getTerm(
       this.state.reinforcedUID,
       this.state.frequency,
@@ -187,9 +187,9 @@ class Vocabulary extends Component {
       this.state.filteredVocab
     );
     const nextVocab = getTerm(
-      this.state.reinforcedUID,
+      nextUID,
       this.state.frequency,
-      index,
+      nextIndex,
       this.state.order,
       this.state.filteredVocab
     );
@@ -263,6 +263,8 @@ class Vocabulary extends Component {
   }
 
   updateReinforcedUID(uid) {
+    this.verbNonVerbTransition(undefined, uid);
+
     this.setState({
       reinforcedUID: uid,
       showMeaning: false,
