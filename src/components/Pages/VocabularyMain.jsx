@@ -20,6 +20,7 @@ class VocabularyMain extends Component {
       showRomaji: false,
       prevVocab: this.props.prevTerm,
       audioPlay: true,
+      prevPlayed: this.props.prevPushPlay,
     };
   }
 
@@ -34,6 +35,7 @@ class VocabularyMain extends Component {
     ) {
       return false;
     }
+
     return true;
   }
 
@@ -45,6 +47,7 @@ class VocabularyMain extends Component {
         showRomaji: false,
         prevVocab: prevProps.vocabulary,
         audioPlay: true,
+        prevPlayed: this.props.prevPushPlay,
       });
     }
 
@@ -77,7 +80,7 @@ class VocabularyMain extends Component {
 
     let audioWords = [audioPronunciation(vocabulary), vocabulary.english];
 
-    if (this.state.prevVocab !== undefined && this.props.played === false) {
+    if (this.state.prevVocab !== undefined && this.state.prevPlayed === false) {
       audioWords = [...audioWords, audioPronunciation(this.state.prevVocab)];
     }
 
@@ -142,7 +145,7 @@ const mapStateToProps = (state) => {
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
-    played: state.vocabulary.pushedPlay,
+    prevPushPlay: state.vocabulary.pushedPlay,
   };
 };
 
