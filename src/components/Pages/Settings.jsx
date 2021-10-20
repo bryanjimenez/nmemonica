@@ -251,7 +251,7 @@ class Settings extends Component {
                     <SettingsSwitch
                       active={this.props.vocabReinforce}
                       action={this.props.toggleVocabularyReinforcement}
-                      disabled={this.props.vocabFilter != FILTER_GRP}
+                      disabled={this.props.vocabFilter === FILTER_FREQ}
                       statusText="Reinforcement"
                     />
                   </div>
