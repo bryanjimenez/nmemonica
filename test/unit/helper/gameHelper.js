@@ -3,7 +3,9 @@ import {
   alphaOrder,
   randomOrder,
   spaceRepOrder,
+  termFilterByType,
 } from "../../../src/helper/gameHelper";
+import { FILTER_FREQ } from "../../../src/reducers/settingsRed";
 
 /* global describe it */
 
@@ -410,6 +412,108 @@ describe("gameHelper", function () {
       const actual = randomOrder(terms);
       expect(actual).to.not.deep.eq(expected); //should not be ordered
       expect(actual).to.include.members(expected); //should contain all originals
+    });
+  });
+  describe("termFilterByType", function () {
+    const timeGrpTerms = [
+      {
+        english: "next year",
+        grp: "Noun",
+        japanese: "らいねん\n来年",
+        romaji: "rainen",
+        subGrp: "Time",
+        uid: "0bc88148bb66adb1e530a045f8deb3b2",
+      },
+      {
+        english: "time",
+        grp: "Noun",
+        japanese: "じかん\n時間",
+        romaji: "jikan",
+        subGrp: "Time",
+        uid: "7c5086f337bdf69ef4cf924652fc7576",
+      },
+    ];
+    const verbGrpTerms = [
+      {
+        english: "to recall",
+        grp: "Verb",
+        japanese: "おもいだす\n思い出す",
+        romaji: "omoidasu",
+        subGrp: "Memory",
+        uid: "7b18c22af4c8f109f279fcdc66565f55",
+      },
+    ];
+    describe("FILTER_FREQ", function () {
+      const filterType = FILTER_FREQ;
+      const termList = [...terms, ...timeGrpTerms];
+      const toggleFilterType = () => {};
+
+      it("group not found", function () {
+        const frequencyList = ["0bc88148bb66adb1e530a045f8deb3b2"];
+        const activeGrpList = ["Verb"];
+
+        const expected = [];
+        const actual = termFilterByType(
+          filterType,
+          termList,
+          frequencyList,
+          activeGrpList,
+          toggleFilterType
+        );
+
+        expect(actual).to.deep.eq(expected);
+      });
+      it("group found", function () {
+        const expectedItem = timeGrpTerms[0];
+        const frequencyList = [expectedItem.uid];
+        const activeGrpList = ["Noun"];
+
+        const expected = [expectedItem];
+        const actual = termFilterByType(
+          filterType,
+          termList,
+          frequencyList,
+          activeGrpList,
+          toggleFilterType
+        );
+
+        expect(actual).to.deep.eq(expected);
+      });
+      it("sub group found", function () {
+        const expectedItem = timeGrpTerms[1];
+        const frequencyList = [expectedItem.uid];
+        const activeGrpList = ["Noun.Time"];
+
+        const expected = [expectedItem];
+        const actual = termFilterByType(
+          filterType,
+          termList,
+          frequencyList,
+          activeGrpList,
+          toggleFilterType
+        );
+
+        expect(actual).to.deep.eq(expected);
+      });
+      it("group and sub group found", function () {
+        const expectedItem1 = timeGrpTerms[1];
+        const expectedItem2 = verbGrpTerms[0];
+
+        const mixedGrpTermList = [...termList, ...verbGrpTerms];
+        const frequencyList = [expectedItem1.uid, expectedItem2.uid];
+        const activeGrpList = ["Noun.Time", "Verb"];
+
+        const expected = [expectedItem1, expectedItem2];
+        const actual = termFilterByType(
+          filterType,
+          mixedGrpTermList,
+          frequencyList,
+          activeGrpList,
+          toggleFilterType
+        );
+
+        expect(actual).to.deep.eq(expected);
+      });
     });
   });
 });

@@ -79,7 +79,7 @@ export function getTerm(
     }
   }
 
-  if(frequency){
+  if (frequency) {
     term.reinforce = frequency.includes(term.uid);
   }
   return term;
@@ -88,7 +88,7 @@ export function getTerm(
 /**
  * Filters terms (words or phrases) list
  * by groups, frequency, or space repetition
- * @param {Boolean} filterType
+ * @param {Number} filterType
  * @param {Array} termList word or phrase list
  * @param {Array} frequencyList
  * @param {Array} activeGrpList
@@ -109,7 +109,10 @@ export function termFilterByType(
     if (frequencyList.length > 0) {
       if (activeGrpList.length > 0) {
         filteredTerms = termList.filter(
-          (t) => frequencyList.includes(t.uid) && activeGrpList.includes(t.grp)
+          (t) =>
+            frequencyList.includes(t.uid) &&
+            (activeGrpList.includes(t.grp) ||
+              activeGrpList.includes(t.grp + "." + t.subGrp))
         );
       } else {
         filteredTerms = termList.filter((t) => frequencyList.includes(t.uid));
