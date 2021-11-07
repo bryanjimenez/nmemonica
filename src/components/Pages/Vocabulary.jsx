@@ -179,6 +179,8 @@ class Vocabulary extends Component {
   }
 
   verbNonVerbTransition(nextIndex, nextUID) {
+    let aPromise = Promise.resolve();
+
     const prevVocab = getTerm(
       this.state.reinforcedUID,
       this.state.frequency,
@@ -196,7 +198,7 @@ class Vocabulary extends Component {
 
     // non verb to verb
     if (prevVocab.grp !== "Verb" && nextVocab.grp === "Verb") {
-      this.props.setPreviousWord(prevVocab);
+      aPromise = this.props.setPreviousWord(prevVocab);
     }
 
     // verb to non verb
@@ -204,7 +206,7 @@ class Vocabulary extends Component {
       if (this.props.previous && this.props.previous.lastVerb) {
         // multiple verbs
         // non dictionary form on last verb
-        this.props.setPreviousWord(this.props.previous.lastVerb);
+        aPromise = this.props.setPreviousWord(this.props.previous.lastVerb);
       } else if (
         this.props.previous &&
         this.props.previous.uid === prevVocab.uid
@@ -217,25 +219,27 @@ class Vocabulary extends Component {
         this.props.previous.uid !== prevVocab.uid
       ) {
         // single/multiple no form change
-        this.props.setPreviousWord(prevVocab);
+        aPromise = this.props.setPreviousWord(prevVocab);
       }
     }
+
+    return aPromise;
   }
 
   gotoNext() {
     const l = this.state.filteredVocab.length;
     const newSel = (this.state.selectedIndex + 1) % l;
 
-    this.verbNonVerbTransition(newSel);
-
-    this.setState({
-      lastNext: Date.now(),
-      reinforcedUID: undefined,
-      selectedIndex: newSel,
-      showEng: false,
-      showMeaning: false,
-      showRomaji: false,
-      showHint: false,
+    this.verbNonVerbTransition(newSel).then(() => {
+      this.setState({
+        lastNext: Date.now(),
+        reinforcedUID: undefined,
+        selectedIndex: newSel,
+        showEng: false,
+        showMeaning: false,
+        showRomaji: false,
+        showHint: false,
+      });
     });
   }
 

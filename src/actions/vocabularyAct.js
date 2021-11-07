@@ -23,9 +23,13 @@ export function getVocabulary() {
 
 export function setPreviousWord(word) {
   return (dispatch) => {
-    dispatch({
-      type: SET_PREVIOUS_SEEN_WORD,
-      value: word,
+    return new Promise((resolve, reject) => {
+      dispatch({
+        type: SET_PREVIOUS_SEEN_WORD,
+        value: word,
+      });
+
+      resolve(word);
     });
   };
 }

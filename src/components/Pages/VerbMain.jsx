@@ -69,21 +69,19 @@ class VerbMain extends Component {
         uid: prevProps.verb.uid,
       };
 
-      if (this.props.verbForm !== "dictionary") {
-        // lastVerb to prevent verb-form loss between transition v->nv
-        const lastVerb = {
-          japanese: thisVerb.getSpelling(),
-          english: this.props.verb.english,
-        };
-        this.props.setPreviousWord({ ...prevVocab, lastVerb });
-      }
-
-      this.setState({
-        showMeaning: false,
-        showRomaji: false,
-        prevVocab,
-        audioPlay: true,
-        prevPlayed: this.props.prevPushPlay,
+      // lastVerb to prevent verb-form loss between transition v->nv
+      const lastVerb = {
+        japanese: thisVerb.getSpelling(),
+        english: this.props.verb.english,
+      };
+      this.props.setPreviousWord({ ...prevVocab, lastVerb }).then(() => {
+        this.setState({
+          showMeaning: false,
+          showRomaji: false,
+          prevVocab,
+          audioPlay: true,
+          prevPlayed: this.props.prevPushPlay,
+        });
       });
     }
 
@@ -97,8 +95,9 @@ class VerbMain extends Component {
         uid: this.props.verb.uid,
       };
 
-      this.props.setPreviousWord(prevVocab);
-      this.setState({ prevVocab });
+      this.props.setPreviousWord(prevVocab).then(() => {
+        this.setState({ prevVocab });
+      });
     }
 
     if (this.state.audioPlay) {
