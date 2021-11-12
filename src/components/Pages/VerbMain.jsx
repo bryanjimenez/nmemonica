@@ -14,6 +14,7 @@ import {
   AUTOPLAY_OFF,
   flipVocabularyPracticeSide,
 } from "../../actions/settingsAct";
+import { verbToTargetForm } from "../../helper/gameHelper";
 
 class VerbMain extends Component {
   constructor(props) {
@@ -149,19 +150,7 @@ class VerbMain extends Component {
 
   getVerbForm(verb, form) {
     const dictionaryForm = JapaneseVerb.parse(verb.japanese);
-
-    switch (form) {
-      case "masu":
-        return dictionaryForm.masuForm();
-      case "mashou":
-        return dictionaryForm.mashouForm();
-      case "dictionary":
-        return dictionaryForm;
-      case "te_form":
-        return dictionaryForm.teForm();
-      case "ta_form":
-        return dictionaryForm.taForm();
-    }
+    return verbToTargetForm(dictionaryForm, form);
   }
 
   /**
@@ -238,6 +227,10 @@ class VerbMain extends Component {
       } else if (this.props.autoPlay === AUTOPLAY_JP_EN) {
         audioWords = [verbJapanese, verbJapanese, this.state.prevVocab.english];
       }
+    } else if (this.state.prevPlayed === true) {
+      if (this.props.autoPlay === AUTOPLAY_JP_EN) {
+        audioWords = [verbJapanese];
+      }
     }
 
     return [
@@ -297,6 +290,7 @@ class VerbMain extends Component {
             : hiddenLabel}
         </div>
         <AudioItem
+          visible={!this.props.touchSwipe}
           word={audioWords}
           autoPlay={
             !this.props.scrollingDone || !this.state.audioPlay
@@ -346,6 +340,7 @@ const mapStateToProps = (state) => {
     prevTerm: state.vocabulary.previous,
     prevPushPlay: state.vocabulary.pushedPlay,
     verbForm: state.vocabulary.verbForm,
+    touchSwipe: state.settings.global.touchSwipe,
   };
 };
 
@@ -366,6 +361,7 @@ VerbMain.propTypes = {
   verbForm: PropTypes.string,
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
+  touchSwipe: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {

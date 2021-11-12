@@ -40,6 +40,10 @@ export default function AudioItem(props) {
       pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[2],
       pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[1],
     ];
+  } else {
+    autoPlayEndPoint = [
+      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[0],
+    ];
   }
 
   const playNextAudio = function () {
@@ -94,10 +98,10 @@ export default function AudioItem(props) {
   return (
     <div
       className="d-flex justify-content-center clickable"
-      onMouseDown={clickEvHan0}
-      onTouchStart={clickEvHan0}
-      onMouseUp={clickEvHan1}
-      onTouchEnd={clickEvHan1}
+      onMouseDown={props.visible ? clickEvHan0 : undefined}
+      onTouchStart={props.visible ? clickEvHan0 : undefined}
+      onMouseUp={props.visible ? clickEvHan1 : undefined}
+      onTouchEnd={props.visible ? clickEvHan1 : undefined}
     >
       <audio
         ref={(ref) => {
@@ -117,14 +121,20 @@ export default function AudioItem(props) {
           playNextAudio();
         }}
       />
-      <UnmuteIcon size="medium" aria-label="pronunciation" />
+      {props.visible && <UnmuteIcon size="medium" aria-label="pronunciation" />}
     </div>
   );
 }
 
+AudioItem.defaultProps = {
+  autoPlay: 0,
+  visible: false,
+};
+
 AudioItem.propTypes = {
   word: PropTypes.array.isRequired,
-  autoPlay: PropTypes.number.isRequired, //0->off,1->JP,2->EN,JP,3->JP,EN
+  autoPlay: PropTypes.number, //0->off,1->JP,2->EN,JP,3->JP,EN
   onPushedPlay: PropTypes.func,
   onAutoPlayDone: PropTypes.func,
+  visible: PropTypes.bool,
 };

@@ -31,6 +31,7 @@ import {
   ADD_SPACE_REP_WORD,
   ADD_SPACE_REP_PHRASE,
   DEBUG,
+  TOGGLE_SWIPE,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -43,6 +44,7 @@ export const DEFAULT_SETTINGS = {
     memory: { quota: 0, usage: 0, persistent: false },
     debug: 0,
     console: [],
+    touchSwipe: false,
   },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   phrases: {
@@ -118,6 +120,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         global: {
           ...state.global,
           console: [...state.global.console, action.value],
+        },
+      };
+    case TOGGLE_SWIPE:
+      return {
+        ...state,
+        global: {
+          ...state.global,
+          touchSwipe: !state.global.touchSwipe,
         },
       };
     case SET_KANA_BTN_N:

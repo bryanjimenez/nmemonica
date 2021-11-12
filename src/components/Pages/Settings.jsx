@@ -33,6 +33,7 @@ import {
   DEBUG_OFF,
   DEBUG_ERROR,
   DEBUG_WARN,
+  toggleSwipe,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
@@ -98,6 +99,13 @@ class Settings extends Component {
                 active={this.props.darkMode}
                 action={this.props.toggleDarkMode}
                 statusText={(this.props.darkMode ? "Dark" : "Light") + " Mode"}
+              />
+            </div>
+            <div className="setting-block">
+              <SettingsSwitch
+                active={this.props.touchSwipe}
+                action={this.props.toggleSwipe}
+                statusText={"Touch Swipes"}
               />
             </div>
           </div>
@@ -477,6 +485,7 @@ const mapStateToProps = (state) => {
     particlesARomaji: state.settings.particles.aRomaji,
     memory: state.settings.global.memory,
     debug: state.settings.global.debug,
+    touchSwipe: state.settings.global.touchSwipe,
   };
 };
 
@@ -488,6 +497,8 @@ Settings.propTypes = {
   getMemoryStorageStatus: PropTypes.func,
   debug: PropTypes.number,
   toggleDebug: PropTypes.func,
+  touchSwipe: PropTypes.bool,
+  toggleSwipe: PropTypes.func,
 
   setPhrasesOrdering: PropTypes.func,
   phraseOrder: PropTypes.bool,
@@ -580,6 +591,7 @@ export default connect(mapStateToProps, {
   setPersistentStorage,
   getMemoryStorageStatus,
   toggleDebug,
+  toggleSwipe,
 })(Settings);
 
 export { SettingsMeta };

@@ -32,6 +32,7 @@ export const AUTO_VERB_VIEW = "auto_verb_view";
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
 export const DEBUG = "toggle_debug";
+export const TOGGLE_SWIPE = "toggle_swipe";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -976,4 +977,31 @@ export function getLastStateValue(getState, path, attr) {
   });
 
   return statePtr[attr];
+}
+
+export function toggleSwipe() {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/global/";
+    const attr = "touchSwipe";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        TOGGLE_SWIPE
+      );
+    } else {
+      dispatch({
+        type: TOGGLE_SWIPE,
+      });
+    }
+  };
 }

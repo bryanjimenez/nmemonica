@@ -8,7 +8,11 @@ import {
   PlusCircleIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
-import { getVocabulary, setPreviousWord } from "../../actions/vocabularyAct";
+import {
+  getVocabulary,
+  pushedPlay,
+  setPreviousWord,
+} from "../../actions/vocabularyAct";
 import {
   faBan,
   faDice,
@@ -28,8 +32,10 @@ import {
   toggleVocabularyFilter,
   AUTOPLAY_OFF,
   updateSpaceRepWord,
+  AUTOPLAY_JP_EN,
+  AUTOPLAY_EN_JP,
 } from "../../actions/settingsAct";
-import { htmlElementHint } from "../../helper/JapaneseText";
+import { audioPronunciation, htmlElementHint } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
@@ -45,10 +51,18 @@ import {
   randomOrder,
   spaceRepOrder,
   termFilterByType,
+  verbToTargetForm,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 import { logger } from "../../actions/consoleAct";
 import { spaceRepLog } from "../../helper/consoleHelper";
+import {
+  swipeEnd,
+  swipeMove,
+  swipeStart,
+} from "react-slick/lib/utils/innerSliderUtils";
+import { pronounceEndoint } from "../../../environment.development";
+import { JapaneseVerb } from "../../helper/JapaneseVerb";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -75,10 +89,15 @@ class Vocabulary extends Component {
     }
 
     this.gotoNext = this.gotoNext.bind(this);
+    this.gotoNextSlide = this.gotoNextSlide.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
     this.setOrder = this.setOrder.bind(this);
     this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
     this.verbNonVerbTransition = this.verbNonVerbTransition.bind(this);
+    this.startMove = this.startMove.bind(this);
+    this.inMove = this.inMove.bind(this);
+    this.endMove = this.endMove.bind(this);
+    this.swipeActionHandler = this.swipeActionHandler.bind(this);
   }
 
   componentDidMount() {
@@ -98,7 +117,7 @@ class Vocabulary extends Component {
       this.state.selectedIndex !== prevState.selectedIndex ||
       this.state.reinforcedUID !== prevState.reinforcedUID
     ) {
-      if(this.state.filteredVocab.length > 0){
+      if (this.state.filteredVocab.length > 0) {
         const term = getTerm(
           this.state.reinforcedUID,
           this.state.frequency,
@@ -262,6 +281,39 @@ class Vocabulary extends Component {
     });
   }
 
+  gotoNextSlide() {
+    const vocabulary = getTerm(
+      this.state.reinforcedUID,
+      this.state.frequency,
+      this.state.selectedIndex,
+      this.state.order,
+      this.state.filteredVocab
+    );
+
+    // prevent updates when quick scrolling
+    if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
+      const shouldIncrement = !this.state.frequency.includes(vocabulary.uid);
+      const repO = this.props.updateSpaceRepWord(
+        vocabulary.uid,
+        shouldIncrement
+      );
+      spaceRepLog(this.props.logger, vocabulary, {
+        [vocabulary.uid]: repO,
+      });
+    }
+
+    play(
+      this.props.reinforce,
+      this.props.filterType,
+      this.state.frequency,
+      this.state.filteredVocab,
+      this.state.reinforcedUID,
+      this.updateReinforcedUID,
+      this.gotoNext,
+      this.props.removeFrequencyWord
+    );
+  }
+
   gotoPrev() {
     const l = this.state.filteredVocab.length;
     const i = this.state.selectedIndex - 1;
@@ -303,10 +355,92 @@ class Vocabulary extends Component {
       this.state.filteredVocab
     );
 
-    this.props.logger(
-      "reinforce (" + vocabulary.english + ")",
-      3
-    );
+    this.props.logger("reinforce (" + vocabulary.english + ")", 3);
+  }
+
+  startMove(e) {
+    const swiping = swipeStart(e, true, true);
+    this.setState({ swiping });
+  }
+
+  inMove(e) {
+    if (this.state.swiping) {
+      const swiping = swipeMove(e, {
+        ...this.state.swiping,
+        verticalSwiping: true,
+      });
+      this.setState({ swiping });
+    }
+  }
+
+  endMove(e) {
+    // const direction = getSwipeDirection(this.state.swiping.touchObject,true);
+    swipeEnd(e, {
+      ...this.state.swiping,
+      dragging: true,
+      verticalSwiping: true,
+      listHeight: 1,
+      touchThreshold: 5,
+      onSwipe: this.swipeActionHandler,
+    });
+  }
+
+  swipeActionHandler(direction) {
+    // this.props.logger("swiped " + direction, 3);
+
+    if (direction === "left") {
+      this.gotoNextSlide();
+    } else if (direction === "right") {
+      this.gotoPrev();
+    } else {
+      const vocabulary = getTerm(
+        this.state.reinforcedUID,
+        this.state.frequency,
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredVocab
+      );
+
+      if (direction === "up") {
+        let inJapanese;
+        if (vocabulary.grp === "Verb" && this.props.verbForm !== "dictionary") {
+          const dictionaryForm = JapaneseVerb.parse(vocabulary.japanese);
+          const verb = verbToTargetForm(dictionaryForm, this.props.verbForm);
+          inJapanese = audioPronunciation({
+            japanese: verb.getSpelling(),
+          });
+        } else {
+          inJapanese = audioPronunciation(vocabulary);
+        }
+
+        const japaneseAudio = new Audio(
+          pronounceEndoint + "?tl=" + "ja" + "&q=" + inJapanese
+        );
+        try {
+          japaneseAudio.play();
+        } catch (e) {
+          this.props.logger("Swipe Play Error " + e, 1);
+        }
+
+        if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+          this.props.pushedPlay(true);
+        }
+      } else if (direction === "down") {
+        const inEnglish = vocabulary.english;
+        const englishAudio = new Audio(
+          pronounceEndoint + "?tl=" + "en" + "&q=" + inEnglish
+        );
+        try {
+          englishAudio.play();
+        } catch (e) {
+          this.props.logger("Swipe Play Error " + e, 1);
+        }
+
+        if (this.props.autoPlay !== AUTOPLAY_EN_JP) {
+          this.props.pushedPlay(true);
+        }
+      }
+    }
   }
 
   render() {
@@ -349,7 +483,12 @@ class Vocabulary extends Component {
 
     let page = [
       <div key={0} className="vocabulary main-panel h-100">
-        <div className="d-flex justify-content-between h-100">
+        <div
+          className="d-flex justify-content-between h-100"
+          onTouchStart={this.props.touchSwipe ? this.startMove : undefined}
+          onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
+          onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
+        >
           <StackNavButton
             ariaLabel="Previous"
             color={"--yellow"}
@@ -370,29 +509,7 @@ class Vocabulary extends Component {
           <StackNavButton
             color={"--yellow"}
             ariaLabel="Next"
-            action={() => {
-              // prevent updates when quick scrolling
-              if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
-                const shouldIncrement = !this.state.frequency.includes(
-                  vocabulary.uid
-                );
-                const repO = this.props.updateSpaceRepWord(vocabulary.uid, shouldIncrement);
-                spaceRepLog(this.props.logger, vocabulary, {
-                  [vocabulary.uid]: repO,
-                });
-              }
-
-              play(
-                this.props.reinforce,
-                this.props.filterType,
-                this.state.frequency,
-                this.state.filteredVocab,
-                this.state.reinforcedUID,
-                this.updateReinforcedUID,
-                this.gotoNext,
-                this.props.removeFrequencyWord
-              );
-            }}
+            action={this.gotoNextSlide}
           >
             <ChevronRightIcon size={16} />
           </StackNavButton>
@@ -615,6 +732,8 @@ const mapStateToProps = (state) => {
     reinforce: state.settings.vocabulary.reinforce,
     previous: state.vocabulary.previous,
     repetition: state.settings.vocabulary.repetition,
+    verbForm: state.vocabulary.verbForm,
+    touchSwipe: state.settings.global.touchSwipe,
   };
 };
 
@@ -644,6 +763,9 @@ Vocabulary.propTypes = {
   lastNext: PropTypes.number,
   updateSpaceRepWord: PropTypes.func,
   logger: PropTypes.func,
+  verbForm: PropTypes.string,
+  pushedPlay: PropTypes.func,
+  touchSwipe: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {
@@ -657,6 +779,7 @@ export default connect(mapStateToProps, {
   setPreviousWord,
   updateSpaceRepWord,
   logger,
+  pushedPlay,
 })(Vocabulary);
 
 export { VocabularyMeta };

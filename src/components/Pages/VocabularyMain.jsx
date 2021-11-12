@@ -97,6 +97,10 @@ class VocabularyMain extends Component {
           this.state.prevVocab.english,
         ];
       }
+    } else if (this.state.prevPlayed === true) {
+      if (this.props.autoPlay === AUTOPLAY_JP_EN) {
+        audioWords = [vocabJapanese];
+      }
     }
 
     return (
@@ -145,8 +149,8 @@ class VocabularyMain extends Component {
             ? hiddenValue
             : hiddenLabel}
         </h2>
-
         <AudioItem
+          visible={!this.props.touchSwipe}
           word={audioWords}
           autoPlay={
             !this.props.scrollingDone || !this.state.audioPlay
@@ -175,6 +179,7 @@ const mapStateToProps = (state) => {
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.previous,
     prevPushPlay: state.vocabulary.pushedPlay,
+    touchSwipe: state.settings.global.touchSwipe,
   };
 };
 
@@ -192,6 +197,7 @@ VocabularyMain.propTypes = {
   pushedPlay: PropTypes.func,
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
+  touchSwipe: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {

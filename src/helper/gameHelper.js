@@ -266,3 +266,23 @@ export function randomOrder(terms) {
 export function labelOptions(index, options) {
   return options[index];
 }
+
+/**
+ * @returns {JapaneseText}
+ * @param {JapaneseText} dictionaryForm
+ * @param {String} targetForm
+ */
+export function verbToTargetForm(dictionaryForm, targetForm) {
+  switch (targetForm) {
+    case "masu":
+      return dictionaryForm.masuForm();
+    case "mashou":
+      return dictionaryForm.mashouForm();
+    case "dictionary":
+      return dictionaryForm;
+    case "te_form":
+      return dictionaryForm.teForm();
+    case "ta_form":
+      return dictionaryForm.taForm();
+  }
+}
