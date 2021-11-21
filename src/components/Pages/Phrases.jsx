@@ -16,9 +16,12 @@ import {
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
   togglePhrasesFilter,
+  AUTOPLAY_JP_EN,
+  AUTOPLAY_OFF,
+  AUTOPLAY_EN_JP,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { JapaneseText } from "../../helper/JapaneseText";
+import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
@@ -30,10 +33,20 @@ import {
   randomOrder,
   spaceRepOrder,
   termFilterByType,
+  valueLabelHelper,
+  audioWordsHelper,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 import { logger } from "../../actions/consoleAct";
 import { spaceRepLog } from "../../helper/consoleHelper";
+import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
+import AudioItem from "../Form/AudioItem";
+import {
+  swipeEnd,
+  swipeMove,
+  swipeStart,
+} from "react-slick/lib/utils/innerSliderUtils";
+import { pronounceEndoint } from "../../../environment.development";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -51,22 +64,45 @@ class Phrases extends Component {
       showRomaji: false,
       filteredPhrases: [],
       frequency: [], // subset of frequency words within current active group
+      prevPhrase: this.props.prevTerm,
+      audioPlay: true,
+      prevPlayed: this.props.prevPushPlay,
     };
 
     this.props.getPhrases();
 
     this.gotoNext = this.gotoNext.bind(this);
+    this.gotoNextSlide = this.gotoNextSlide.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
     this.setOrder = this.setOrder.bind(this);
     this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
+    this.startMove = this.startMove.bind(this);
+    this.inMove = this.inMove.bind(this);
+    this.endMove = this.endMove.bind(this);
+    this.swipeActionHandler = this.swipeActionHandler.bind(this);
   }
 
   componentDidMount() {
+    // clear existing previous word on mount
+    this.props.setPreviousWord(undefined);
+
     if (this.props.phrases && this.props.phrases.length > 0) {
       // page navigation after initial mount
       // data retrival done, set up game
       this.setOrder();
     }
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    if (
+      this.state.prevPhrase !== undefined &&
+      this.state.audioPlay !== nextState.audioPlay &&
+      nextState.audioPlay === false
+    ) {
+      return false;
+    }
+
+    return true;
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -75,7 +111,7 @@ class Phrases extends Component {
       this.state.selectedIndex !== prevState.selectedIndex ||
       this.state.reinforcedUID !== prevState.reinforcedUID
     ) {
-      if(this.state.filteredPhrases.length > 0){
+      if (this.state.filteredPhrases.length > 0) {
         const term = getTerm(
           this.state.reinforcedUID,
           this.state.frequency,
@@ -84,6 +120,32 @@ class Phrases extends Component {
           this.state.filteredPhrases
         );
         spaceRepLog(this.props.logger, term, this.props.repetition);
+
+        if (
+          this.state.selectedIndex !== prevState.selectedIndex ||
+          this.state.reinforcedUID !== prevState.reinforcedUID
+        ) {
+          const prevTerm = getTerm(
+            prevState.reinforcedUID,
+            this.state.frequency,
+            prevState.selectedIndex,
+            this.state.order,
+            this.state.filteredPhrases
+          );
+
+          const prevPhrase = {
+            japanese: prevTerm.japanese,
+            english: prevTerm.english,
+          };
+
+          this.props.setPreviousWord({ ...prevPhrase }).then(() => {
+            this.setState({
+              prevPhrase,
+              audioPlay: true,
+              prevPlayed: this.props.prevPushPlay,
+            });
+          });
+        }
       }
     }
 
@@ -130,6 +192,12 @@ class Phrases extends Component {
         this.setState({ frequency });
       }
     }
+
+    if (this.state.audioPlay) {
+      this.setState({
+        audioPlay: false,
+      });
+    }
   }
 
   setOrder() {
@@ -160,6 +228,33 @@ class Phrases extends Component {
     );
 
     this.setState({ filteredPhrases, order: newOrder, frequency });
+  }
+
+  gotoNextSlide() {
+    let phrase = getTerm(
+      this.state.reinforcedUID,
+      this.state.frequency,
+      this.state.selectedIndex,
+      this.state.order,
+      this.state.filteredPhrases
+    );
+    // prevent updates when quick scrolling
+    if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
+      const shouldIncrement = !this.state.frequency.includes(phrase.uid);
+      const repO = this.props.updateSpaceRepPhrase(phrase.uid, shouldIncrement);
+      spaceRepLog(this.props.logger, phrase, { [phrase.uid]: repO });
+    }
+
+    play(
+      this.props.reinforce,
+      this.props.filterType,
+      this.state.frequency,
+      this.state.filteredPhrases,
+      this.state.reinforcedUID,
+      this.updateReinforcedUID,
+      this.gotoNext,
+      this.props.removeFrequencyPhrase
+    );
   }
 
   gotoNext() {
@@ -208,12 +303,88 @@ class Phrases extends Component {
       this.state.filteredPhrases
     );
 
-    const text = phrase.english.length<15?phrase.english:phrase.english.substr(0,15) + "...";
+    const text =
+      phrase.english.length < 15
+        ? phrase.english
+        : phrase.english.substr(0, 15) + "...";
 
-    this.props.logger(
-      "reinforce (" + text + ")",
-      3
-    );
+    this.props.logger("reinforce (" + text + ")", 3);
+  }
+
+  startMove(e) {
+    const swiping = swipeStart(e, true, true);
+    this.setState({ swiping });
+  }
+
+  inMove(e) {
+    if (this.state.swiping) {
+      const swiping = swipeMove(e, {
+        ...this.state.swiping,
+        verticalSwiping: true,
+      });
+      this.setState({ swiping });
+    }
+  }
+
+  endMove(e) {
+    // const direction = getSwipeDirection(this.state.swiping.touchObject,true);
+    swipeEnd(e, {
+      ...this.state.swiping,
+      dragging: true,
+      verticalSwiping: true,
+      listHeight: 1,
+      touchThreshold: 5,
+      onSwipe: this.swipeActionHandler,
+    });
+  }
+
+  swipeActionHandler(direction) {
+    // this.props.logger("swiped " + direction, 3);
+
+    if (direction === "left") {
+      this.gotoNextSlide();
+    } else if (direction === "right") {
+      this.gotoPrev();
+    } else {
+      const phrase = getTerm(
+        this.state.reinforcedUID,
+        this.state.frequency,
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredPhrases
+      );
+
+      if (direction === "up") {
+        const inJapanese = audioPronunciation(phrase);
+
+        const japaneseAudio = new Audio(
+          pronounceEndoint + "?tl=" + "ja" + "&q=" + inJapanese
+        );
+        try {
+          japaneseAudio.play();
+        } catch (e) {
+          this.props.logger("Swipe Play Error " + e, 1);
+        }
+
+        if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+          this.props.pushedPlay(true);
+        }
+      } else if (direction === "down") {
+        const inEnglish = phrase.english;
+        const englishAudio = new Audio(
+          pronounceEndoint + "?tl=" + "en" + "&q=" + inEnglish
+        );
+        try {
+          englishAudio.play();
+        } catch (e) {
+          this.props.logger("Swipe Play Error " + e, 1);
+        }
+
+        if (this.props.autoPlay !== AUTOPLAY_EN_JP) {
+          this.props.pushedPlay(true);
+        }
+      }
+    }
   }
 
   render() {
@@ -232,16 +403,25 @@ class Phrases extends Component {
     let englishPhrase = phrase.english;
     let romaji = phrase.romaji;
 
-    let shownSide, hiddenSide, hiddenCaption;
-    if (this.props.practiceSide) {
-      shownSide = englishPhrase;
-      hiddenSide = japanesePhrase;
-      hiddenCaption = "[Japanese]";
-    } else {
-      shownSide = japanesePhrase;
-      hiddenSide = englishPhrase;
-      hiddenCaption = "[English]";
-    }
+    const eLabel = "[English]";
+    const jLabel = "[Japanese]";
+
+    const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
+      valueLabelHelper(
+        this.props.practiceSide,
+        englishPhrase,
+        japanesePhrase,
+        eLabel,
+        jLabel
+      );
+
+    const audioWords = audioWordsHelper(
+      this.state.prevPlayed,
+      this.props.autoPlay,
+      phrase,
+      englishPhrase,
+      this.state.prevPhrase
+    );
 
     const progress =
       ((this.state.selectedIndex + 1) / this.state.filteredPhrases.length) *
@@ -249,7 +429,12 @@ class Phrases extends Component {
 
     return [
       <div key={0} className="phrases main-panel h-100">
-        <div className="d-flex justify-content-between h-100">
+        <div
+          className="d-flex justify-content-between h-100"
+          onTouchStart={this.props.touchSwipe ? this.startMove : undefined}
+          onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
+          onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
+        >
           <StackNavButton
             ariaLabel="Previous"
             color={"--orange"}
@@ -258,7 +443,7 @@ class Phrases extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            <h1>{shownSide}</h1>
+            <h1>{shownValue}</h1>
             {this.props.romajiActive && (
               <h5
                 onClick={() => {
@@ -275,33 +460,28 @@ class Phrases extends Component {
               }}
               className="clickable"
             >
-              {this.state.showMeaning ? hiddenSide : hiddenCaption}
+              {this.state.showMeaning ? hiddenValue : hiddenLabel}
             </h2>
+            <AudioItem
+              visible={!this.props.touchSwipe}
+              word={audioWords}
+              autoPlay={
+                !this.state.audioPlay ? AUTOPLAY_OFF : this.props.autoPlay
+              }
+              onPushedPlay={() => {
+                if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+                  this.props.pushedPlay(true);
+                }
+              }}
+              onAutoPlayDone={() => {
+                this.props.pushedPlay(false);
+              }}
+            />
           </div>
           <StackNavButton
             color={"--orange"}
             ariaLabel="Next"
-            action={() => {
-              // prevent updates when quick scrolling
-              if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
-                const shouldIncrement = !this.state.frequency.includes(
-                  phrase.uid
-                );
-                const repO = this.props.updateSpaceRepPhrase(phrase.uid, shouldIncrement);
-                spaceRepLog(this.props.logger, phrase, { [phrase.uid]: repO });
-              }
-
-              play(
-                this.props.reinforce,
-                this.props.filterType,
-                this.state.frequency,
-                this.state.filteredPhrases,
-                this.state.reinforcedUID,
-                this.updateReinforcedUID,
-                this.gotoNext,
-                this.props.removeFrequencyPhrase
-              );
-            }}
+            action={this.gotoNextSlide}
           >
             <ChevronRightIcon size={16} />
           </StackNavButton>
@@ -372,6 +552,12 @@ const mapStateToProps = (state) => {
     filterType: state.settings.phrases.filter,
     reinforce: state.settings.phrases.reinforce,
     repetition: state.settings.phrases.repetition,
+
+    touchSwipe: state.settings.global.touchSwipe,
+    // TODO: vocabulary?
+    prevTerm: state.vocabulary.previous,
+    prevPushPlay: state.vocabulary.pushedPlay,
+    autoPlay: state.settings.vocabulary.autoPlay,
   };
 };
 
@@ -393,6 +579,15 @@ Phrases.propTypes = {
   lastNext: PropTypes.number,
   updateSpaceRepPhrase: PropTypes.func,
   logger: PropTypes.func,
+  prevTerm: PropTypes.shape({
+    japanese: PropTypes.string.isRequired,
+    english: PropTypes.string.isRequired,
+  }),
+  prevPushPlay: PropTypes.bool,
+  pushedPlay: PropTypes.func,
+  setPreviousWord: PropTypes.func,
+  autoPlay: PropTypes.number,
+  touchSwipe: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {
@@ -403,6 +598,8 @@ export default connect(mapStateToProps, {
   togglePhrasesFilter,
   updateSpaceRepPhrase,
   logger,
+  setPreviousWord,
+  pushedPlay,
 })(Phrases);
 
 export { PhrasesMeta };

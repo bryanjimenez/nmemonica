@@ -1,16 +1,16 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+import { JapaneseText } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import { pushedPlay } from "../../actions/vocabularyAct";
 import {
-  AUTOPLAY_EN_JP,
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
   flipVocabularyPracticeSide,
 } from "../../actions/settingsAct";
 import Sizable from "../Form/Sizable";
+import { audioWordsHelper, valueLabelHelper } from "../../helper/gameHelper";
 
 class VocabularyMain extends Component {
   constructor(props) {
@@ -67,41 +67,22 @@ class VocabularyMain extends Component {
     let inEnglish = vocabulary.english;
     let romaji = vocabulary.romaji;
 
-    let shownValue, hiddenValue, shownLabel, hiddenLabel;
-    if (this.props.practiceSide) {
-      shownValue = inEnglish;
-      hiddenValue = inJapanese;
-      shownLabel = "[English]";
-      hiddenLabel = "[Japanese]";
-    } else {
-      shownValue = inJapanese;
-      hiddenValue = inEnglish;
-      shownLabel = "[Japanese]";
-      hiddenLabel = "[English]";
-    }
+    const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
+      valueLabelHelper(
+        this.props.practiceSide,
+        inEnglish,
+        inJapanese,
+        "[English]",
+        "[Japanese]"
+      );
 
-    const vocabJapanese = audioPronunciation(vocabulary);
-    let audioWords = [vocabJapanese, vocabulary.english];
-
-    if (this.state.prevVocab !== undefined && this.state.prevPlayed === false) {
-      if (this.props.autoPlay === AUTOPLAY_EN_JP) {
-        audioWords = [
-          vocabJapanese,
-          vocabulary.english,
-          audioPronunciation(this.state.prevVocab),
-        ];
-      } else if (this.props.autoPlay === AUTOPLAY_JP_EN) {
-        audioWords = [
-          vocabJapanese,
-          vocabJapanese,
-          this.state.prevVocab.english,
-        ];
-      }
-    } else if (this.state.prevPlayed === true) {
-      if (this.props.autoPlay === AUTOPLAY_JP_EN) {
-        audioWords = [vocabJapanese];
-      }
-    }
+    const audioWords = audioWordsHelper(
+      this.state.prevPlayed,
+      this.props.autoPlay,
+      vocabulary,
+      vocabulary.english,
+      this.state.prevVocab
+    );
 
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">

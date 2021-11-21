@@ -2,19 +2,21 @@ import React, { Component } from "react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
-import { audioPronunciation } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 import { connect } from "react-redux";
 import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
 import { setShownForm } from "../../actions/verbsAct";
 import {
-  AUTOPLAY_EN_JP,
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
   flipVocabularyPracticeSide,
 } from "../../actions/settingsAct";
-import { verbToTargetForm } from "../../helper/gameHelper";
+import {
+  audioWordsHelper,
+  valueLabelHelper,
+  verbToTargetForm,
+} from "../../helper/gameHelper";
 
 class VerbMain extends Component {
   constructor(props) {
@@ -195,43 +197,29 @@ class VerbMain extends Component {
     const eLabel = "[English]";
     const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
-    let shownValue, hiddenValue, shownLabel, hiddenLabel;
-    if (this.props.practiceSide) {
-      shownValue = inEnglish;
-      hiddenValue = inJapanese;
-      shownLabel = eLabel;
-      hiddenLabel = jLabel;
-    } else {
-      shownValue = inJapanese;
-      hiddenValue = inEnglish;
-      shownLabel = jLabel;
-      hiddenLabel = eLabel;
-    }
+    const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
+      valueLabelHelper(
+        this.props.practiceSide,
+        inEnglish,
+        inJapanese,
+        eLabel,
+        jLabel
+      );
 
     const topStyle = { fontSize: !this.props.practiceSide ? "2.5rem" : "1rem" };
     const btmStyle = { fontSize: this.props.practiceSide ? "2.5rem" : "1rem" };
 
-    const verbJapanese = audioPronunciation({
+    const verbJapanese = {
       japanese: japanesePhrase.getSpelling(),
-    });
+    };
 
-    let audioWords = [verbJapanese, verb.english];
-
-    if (this.state.prevVocab !== undefined && this.state.prevPlayed === false) {
-      if (this.props.autoPlay === AUTOPLAY_EN_JP) {
-        audioWords = [
-          verbJapanese,
-          verb.english,
-          audioPronunciation(this.state.prevVocab),
-        ];
-      } else if (this.props.autoPlay === AUTOPLAY_JP_EN) {
-        audioWords = [verbJapanese, verbJapanese, this.state.prevVocab.english];
-      }
-    } else if (this.state.prevPlayed === true) {
-      if (this.props.autoPlay === AUTOPLAY_JP_EN) {
-        audioWords = [verbJapanese];
-      }
-    }
+    const audioWords = audioWordsHelper(
+      this.state.prevPlayed,
+      this.props.autoPlay,
+      verbJapanese,
+      verb.english,
+      this.state.prevVocab
+    );
 
     return [
       <div

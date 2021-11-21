@@ -1,7 +1,8 @@
 import orderBy from "lodash/orderBy";
+import { AUTOPLAY_EN_JP, AUTOPLAY_JP_EN } from "../actions/settingsAct";
 import { FILTER_FREQ, FILTER_GRP } from "../reducers/settingsRed";
 import { shuffleArray } from "./arrayHelper";
-import { JapaneseText } from "./JapaneseText";
+import { audioPronunciation, JapaneseText } from "./JapaneseText";
 
 /**
  * Goes to the next term or selects one from the frequency list
@@ -177,7 +178,11 @@ export function spaceRepOrder(terms, spaceRepObj) {
     }
   }
 
-  const playedOrdered = orderBy(playedTemp, ["date", "count", "uid"], ["asc", "asc", "asc"]);
+  const playedOrdered = orderBy(
+    playedTemp,
+    ["date", "count", "uid"],
+    ["asc", "asc", "asc"]
+  );
 
   // console.log("played");
   // console.log(JSON.stringify(playedOrdered.map((p) => ({[terms[p.index].english]:p.date,c:p.count}))));
@@ -285,4 +290,70 @@ export function verbToTargetForm(dictionaryForm, targetForm) {
     case "ta_form":
       return dictionaryForm.taForm();
   }
+}
+
+/**
+ *
+ * @param {Boolean} practiceSide
+ * @param {HTML|String} inEnglish
+ * @param {HTML|String} inJapanese
+ * @param {HTML|String} eLabel
+ * @param {HTML|String} jLabel
+ * @returns {{{HTML|String}shownValue, {HTML|String}hiddenValue, {HTML|String}shownLabel, {HTML|String}hiddenLabel}}
+ */
+export function valueLabelHelper(
+  practiceSide,
+  inEnglish,
+  inJapanese,
+  eLabel,
+  jLabel
+) {
+  let shownValue, hiddenValue, shownLabel, hiddenLabel;
+  if (practiceSide) {
+    shownValue = inEnglish;
+    hiddenValue = inJapanese;
+    shownLabel = eLabel;
+    hiddenLabel = jLabel;
+  } else {
+    shownValue = inJapanese;
+    hiddenValue = inEnglish;
+    shownLabel = jLabel;
+    hiddenLabel = eLabel;
+  }
+
+  return { shownValue, hiddenValue, shownLabel, hiddenLabel };
+}
+
+/**
+ *
+ * @param {Boolean} prevPlayed has it been manually played
+ * @param {*} autoPlay autoPlay setting
+ * @param {*} currentJ current Japanese Term
+ * @param {*} currentE current English Term
+ * @param {*} previous previous Term
+ * @returns {[]} array in order to be played by AudioItem
+ */
+export function audioWordsHelper(
+  prevPlayed,
+  autoPlay,
+  currentJ,
+  currentE,
+  previous
+) {
+  const currJ = audioPronunciation(currentJ);
+
+  let audioWords = [currJ, currentE];
+  if (previous !== undefined && prevPlayed === false) {
+    if (autoPlay === AUTOPLAY_EN_JP) {
+      audioWords = [currJ, currentE, audioPronunciation(previous)];
+    } else if (autoPlay === AUTOPLAY_JP_EN) {
+      audioWords = [currJ, currJ, previous.english];
+    }
+  } else if (prevPlayed === true) {
+    if (autoPlay === AUTOPLAY_JP_EN) {
+      audioWords = [currJ];
+    }
+  }
+
+  return audioWords;
 }

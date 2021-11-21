@@ -194,6 +194,17 @@ class Settings extends Component {
                         }
                       />
                     </div>
+                    <div className="mb-2">
+                      <SettingsSwitch
+                        active={this.props.vocabAutoPlay !== AUTOPLAY_OFF}
+                        action={this.props.toggleVocabularyAutoPlay}
+                        statusText={labelOptions(this.props.vocabAutoPlay, [
+                          "Auto Play [ ]",
+                          "Auto Play [EN,JP]",
+                          "Auto Play [JP,EN]",
+                        ])}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
