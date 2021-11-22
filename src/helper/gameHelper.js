@@ -1,4 +1,4 @@
-import { orderBy } from "lodash";
+import orderBy from "lodash/orderBy";
 import { FILTER_FREQ, FILTER_GRP } from "../reducers/settingsRed";
 import { shuffleArray } from "./arrayHelper";
 import { JapaneseText } from "./JapaneseText";
