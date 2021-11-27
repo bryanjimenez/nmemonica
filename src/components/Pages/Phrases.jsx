@@ -124,10 +124,9 @@ class Phrases extends Component {
 
     let newOrder;
 
-    if (!this.props.isOrdered) {
+    if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
       // randomized
       newOrder = randomOrder(filteredPhrases);
-      shuffleArray(newOrder);
     } else if (this.props.filterType === FILTER_REP) {
       // space repetition order
       newOrder = spaceRepOrder(filteredPhrases, this.props.repetition);
