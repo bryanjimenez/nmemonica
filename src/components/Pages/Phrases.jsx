@@ -213,12 +213,15 @@ class Phrases extends Component {
 
     if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
       // randomized
+      this.props.logger("Randomized", 3);
       newOrder = randomOrder(filteredPhrases);
     } else if (this.props.filterType === FILTER_REP) {
       // space repetition order
+      this.props.logger("Space Rep", 3);
       newOrder = spaceRepOrder(filteredPhrases, this.props.repetition);
     } else {
       // alphabetized
+      this.props.logger("Alphabetic", 3);
       ({ order: newOrder } = alphaOrder(filteredPhrases));
     }
 
