@@ -1,4 +1,5 @@
 import React from "react";
+import { isPunctuation } from "./kanaHelper";
 import { isHiragana, isKatakana } from "./kanaHelper";
 
 export class JapaneseText {
@@ -119,7 +120,11 @@ export function furiganaParse(pronunciation, orthography) {
   let prevWasKanji = false;
 
   orthography.split("").forEach((thisChar, i) => {
-    if (isHiragana(thisChar) || isKatakana(thisChar)) {
+    if (
+      isHiragana(thisChar) ||
+      isKatakana(thisChar) ||
+      isPunctuation(thisChar)
+    ) {
       //kana
       if (prevWasKanji) {
         while (pronunciation.charAt(start) != thisChar) {

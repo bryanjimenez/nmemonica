@@ -191,6 +191,23 @@ export function isKatakana(char) {
 }
 
 /**
+ * @returns a boolean
+ * @param {*} char the character to check against the punctuation alphabet
+ */
+export function isPunctuation(char) {
+  const punctuation = {
+    "。": true,
+    "、": true,
+    "？": true,
+    "！": true,
+    "「": true,
+    "」": true,
+  };
+
+  return punctuation[char] ? true : false;
+}
+
+/**
  * swaps hiragana for katakana and vicecersa
  * TODO: handle missing characters? ー
  * TODO: use ascii table offsets?
