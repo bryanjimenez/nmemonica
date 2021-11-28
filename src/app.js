@@ -9,7 +9,7 @@ const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
 const Opposites = lazy(() => import("./components/Pages/Opposites"));
-const KatakanaGame = lazy(() => import("./components/Pages/KatakanaGame"));
+const KanaGame = lazy(() => import("./components/Pages/KanaGame"));
 const ParticlesGame = lazy(() => import("./components/Pages/ParticlesGame"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
 // const Logout = lazy(() => import("./components/Pages/Logout"));
@@ -20,7 +20,7 @@ import { OppositesMeta } from "./components/Pages/Opposites";
 import { SettingsMeta } from "./components/Pages/Settings";
 // import { LogoutMeta } from "./components/Pages/Logout";
 // import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
-import { KatakanaGameMeta } from "./components/Pages/KatakanaGame";
+import { KanaGameMeta } from "./components/Pages/KanaGame";
 import { ParticlesGameMeta } from "./components/Pages/ParticlesGame";
 import {
   initializeSettingsFromLocalStorage,
@@ -81,10 +81,7 @@ class App extends Component {
               <Route path={PhrasesMeta.location} component={Phrases} />
               <Route path={VocabularyMeta.location} component={Vocabulary} />
               <Route path={OppositesMeta.location} component={Opposites} />
-              <Route
-                path={KatakanaGameMeta.location}
-                component={KatakanaGame}
-              />
+              <Route path={KanaGameMeta.location} component={KanaGame} />
               <Route
                 path={ParticlesGameMeta.location}
                 component={ParticlesGame}

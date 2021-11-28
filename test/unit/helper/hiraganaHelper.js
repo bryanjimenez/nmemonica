@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
-import { isHiragana } from "../../../src/helper/hiraganaHelper";
+import { isHiragana } from "../../../src/helper/kanaHelper";
 
 configure({ adapter: new Adapter() });
 
-describe("hiraganaHelper", function () {
+describe("kanaHelper", function () {
   describe("isHiragana", function () {
     it("a Hiragana character", function () {
       const actual = isHiragana("っ");

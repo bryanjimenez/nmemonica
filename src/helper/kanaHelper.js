@@ -171,10 +171,18 @@ export function isKatakana(char) {
     ヲ: true,
     ン: true,
     ー: true,
+
     ャ: true,
     ュ: true,
     ョ: true,
     ッ: true,
+
+    ァ: true,
+    ィ: true,
+    ゥ: true,
+    ェ: true,
+    ォ: true,
+
     ヽ: true,
     ヾ: true,
   };

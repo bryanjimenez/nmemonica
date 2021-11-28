@@ -16,7 +16,7 @@ import {
 import { PhrasesMeta } from "../Pages/Phrases";
 import { VocabularyMeta } from "../Pages/Vocabulary";
 import { OppositesMeta } from "../Pages/Opposites";
-import { KatakanaGameMeta } from "../Pages/KatakanaGame";
+import { KanaGameMeta } from "../Pages/KanaGame";
 import { ParticlesGameMeta } from "../Pages/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
 // import { OAuthLoginMeta } from "../Pages/OAuthLogin";
@@ -53,7 +53,7 @@ class Navigation extends Component {
   render() {
     let shortcuts = [
       {
-        meta: KatakanaGameMeta,
+        meta: KanaGameMeta,
         icon: (
           <div className="not-a-real-icon">
             {this.props.charSet === 0

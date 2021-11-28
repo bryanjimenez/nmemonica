@@ -1,5 +1,5 @@
 import data from "../../data/kana.json";
-import { getConsonantVowel } from "./hiraganaHelper";
+import { getConsonantVowel } from "./kanaHelper";
 import { JapaneseText } from "./JapaneseText";
 import verbExceptions from "../../data/verbExceptions.json";
 

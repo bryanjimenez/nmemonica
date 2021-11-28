@@ -1,5 +1,5 @@
 import React from "react";
-import { isHiragana, isKatakana } from "./hiraganaHelper";
+import { isHiragana, isKatakana } from "./kanaHelper";
 
 export class JapaneseText {
   constructor(furigana, kanji) {

@@ -9,14 +9,14 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
 import StackNavButton from "../Form/StackNavButton";
-import { swapKana } from "../../helper/hiraganaHelper";
+import { swapKana } from "../../helper/kanaHelper";
 
-const KatakanaGameMeta = {
+const KanaGameMeta = {
   location: "/kana/",
   label: "仮名 Game",
 };
 
-class KatakanaGame extends Component {
+class KanaGame extends Component {
   constructor(props) {
     super(props);
 
@@ -462,7 +462,7 @@ const mapStateToProps = (state) => {
   };
 };
 
-KatakanaGame.propTypes = {
+KanaGame.propTypes = {
   hiragana: PropTypes.array.isRequired,
   katakana: PropTypes.array.isRequired,
   getKana: PropTypes.func,
@@ -475,6 +475,6 @@ KatakanaGame.propTypes = {
   charSet: PropTypes.number,
 };
 
-export default connect(mapStateToProps, { getKana })(KatakanaGame);
+export default connect(mapStateToProps, { getKana })(KanaGame);
 
-export { KatakanaGameMeta };
+export { KanaGameMeta };
