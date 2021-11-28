@@ -103,7 +103,7 @@ class VocabularyMain extends Component {
             : shownValue}
         </Sizable>
 
-        {this.props.romajiActive && (
+        {this.props.romajiActive && romaji && (
           <h5
             onClick={() => {
               this.setState((state) => ({ showRomaji: !state.showRomaji }));

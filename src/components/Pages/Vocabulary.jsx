@@ -21,7 +21,6 @@ import {
   faPencilAlt,
   faRunning,
 } from "@fortawesome/free-solid-svg-icons";
-import { faDotCircle } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   flipVocabularyPracticeSide,
@@ -188,12 +187,15 @@ class Vocabulary extends Component {
 
     if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
       // randomized
+      this.props.logger("Randomized", 3);
       newOrder = randomOrder(filteredVocab);
     } else if (this.props.filterType === FILTER_REP) {
       // repetition order
+      this.props.logger("Space Rep", 3);
       newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
     } else {
       // alphabetized
+      this.props.logger("Alphabetic", 3);
       ({
         order: newOrder,
         jOrder: jbare,
@@ -562,14 +564,8 @@ class Vocabulary extends Component {
                 </h5>
               )}
               {!this.state.showHint &&
-                this.props.filterType === FILTER_FREQ &&
-                this.props.frequency.length > 0 && (
+                this.state.reinforcedUID && (
                   <FontAwesomeIcon className="clickable" icon={faDice} />
-                )}
-              {!this.state.showHint &&
-                this.props.filterType !== FILTER_FREQ &&
-                this.props.activeGroup.length > 0 && (
-                  <FontAwesomeIcon className="clickable" icon={faDotCircle} />
                 )}
             </div>
             <div className="col">

@@ -247,7 +247,7 @@ class VerbMain extends Component {
             : shownValue}
         </div>
 
-        {this.props.romajiActive && (
+        {this.props.romajiActive && romaji && (
           <div
             className="clickable"
             onClick={() => {

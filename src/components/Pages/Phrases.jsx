@@ -8,7 +8,11 @@ import {
   XCircleIcon,
 } from "@primer/octicons-react";
 import { getPhrases } from "../../actions/phrasesAct";
-import { faGlasses, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faDice,
+  faGlasses,
+  faPencilAlt,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   addFrequencyPhrase,
@@ -20,7 +24,6 @@ import {
   AUTOPLAY_OFF,
   AUTOPLAY_EN_JP,
 } from "../../actions/settingsAct";
-import { shuffleArray } from "../../helper/arrayHelper";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
@@ -409,14 +412,13 @@ class Phrases extends Component {
     const eLabel = "[English]";
     const jLabel = "[Japanese]";
 
-    const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
-      valueLabelHelper(
-        this.props.practiceSide,
-        englishPhrase,
-        japanesePhrase,
-        eLabel,
-        jLabel
-      );
+    const { shownValue, hiddenValue, hiddenLabel } = valueLabelHelper(
+      this.props.practiceSide,
+      englishPhrase,
+      japanesePhrase,
+      eLabel,
+      jLabel
+    );
 
     const audioWords = audioWordsHelper(
       this.state.prevPlayed,
@@ -447,7 +449,7 @@ class Phrases extends Component {
           </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownValue}</h1>
-            {this.props.romajiActive && (
+            {this.props.romajiActive && romaji && (
               <h5
                 onClick={() => {
                   this.setState((state) => ({ showRomaji: !state.showRomaji }));
@@ -499,7 +501,11 @@ class Phrases extends Component {
               icon={this.props.practiceSide ? faGlasses : faPencilAlt}
             />
           </div>
-          <div className="col"></div>
+          <div className="col text-center" style={{ maxHeight: "24px" }}>
+            {this.state.reinforcedUID && (
+              <FontAwesomeIcon className="clickable" icon={faDice} />
+            )}
+          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <div className="sm-icon-grp">
