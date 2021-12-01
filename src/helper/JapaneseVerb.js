@@ -8,17 +8,33 @@ export class JapaneseVerb extends JapaneseText {
     super(furigana, kanji);
   }
 
-  static parse(text) {
-    let obj;
+  /**
+   *
+   * @param {{japanese:String}| String} obj
+   * @returns {JapaneseVerb}
+   */
+  static parse(obj) {
+    let verb;
+    let text;
+    if (obj.japanese) {
+      text = obj.japanese;
+    } else {
+      text = obj;
+    }
+
     if (text.indexOf("\n") > -1) {
       const [furigana, kanji] = text.split("\n");
-      obj = new JapaneseVerb(furigana, kanji);
+      verb = new JapaneseVerb(furigana, kanji);
     } else {
-      obj = new JapaneseVerb(text);
+      verb = new JapaneseVerb(text);
     }
-    return obj;
+    return verb;
   }
 
+  isExceptionVerb() {
+    const spelling = this.getSpelling();
+    return verbExceptions.class[spelling] !== undefined ? true : false;
+  }
   /**
    * @returns the class of verb 1,2,3 (godan,ichidan,irregular)
    */

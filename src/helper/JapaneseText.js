@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import React from "react";
 import { isPunctuation } from "./kanaHelper";
 import { isHiragana, isKatakana } from "./kanaHelper";
@@ -72,7 +73,7 @@ export class JapaneseText {
   toHTML() {
     let htmlElement;
     if (!this.hasFurigana()) {
-      htmlElement = <div>{this._furigana}</div>;
+      htmlElement = <span>{this._furigana}</span>;
     } else {
       try {
         const { kanjis, furiganas, nonKanjis, startsWKana } = furiganaParse(
@@ -87,11 +88,18 @@ export class JapaneseText {
         );
       } catch (e) {
         console.error(e);
+
+        const eClass = classNames({
+          "fs-large": true,
+          "incorrect-color": true,
+          "d-block": true,
+        });
+
         htmlElement = (
-          <div>
-            <div style={{ color: "red" }}>{this._furigana}</div>
-            <div>{this._kanji}</div>
-          </div>
+          <span>
+            <span className={eClass}>{this._furigana}</span>
+            <span>{this._kanji}</span>
+          </span>
         );
       }
     }
@@ -284,7 +292,7 @@ export function buildHTMLElement(kanjis, furiganas, nonKanjis, startsWKana) {
     i++;
   }
 
-  return <div>{sentence}</div>;
+  return <span>{sentence}</span>;
 }
 
 /**

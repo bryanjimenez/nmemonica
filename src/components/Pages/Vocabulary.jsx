@@ -406,7 +406,7 @@ class Vocabulary extends Component {
       if (direction === "up") {
         let inJapanese;
         if (vocabulary.grp === "Verb" && this.props.verbForm !== "dictionary") {
-          const dictionaryForm = JapaneseVerb.parse(vocabulary.japanese);
+          const dictionaryForm = JapaneseVerb.parse(vocabulary);
           const verb = verbToTargetForm(dictionaryForm, this.props.verbForm);
           inJapanese = audioPronunciation({
             japanese: verb.getSpelling(),
@@ -563,10 +563,9 @@ class Vocabulary extends Component {
                   {hint}
                 </h5>
               )}
-              {!this.state.showHint &&
-                this.state.reinforcedUID && (
-                  <FontAwesomeIcon className="clickable" icon={faDice} />
-                )}
+              {!this.state.showHint && this.state.reinforcedUID && (
+                <FontAwesomeIcon className="clickable" icon={faDice} />
+              )}
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">

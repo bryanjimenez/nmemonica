@@ -139,7 +139,7 @@ class VerbMain extends Component {
    * @returns {Array} of verb forms objects
    */
   getVerbFormsArray(verb) {
-    const dictionaryForm = JapaneseVerb.parse(verb.japanese);
+    const dictionaryForm = JapaneseVerb.parse(verb);
 
     return [
       { t: "masu", j: dictionaryForm.masuForm() },
@@ -151,7 +151,7 @@ class VerbMain extends Component {
   }
 
   getVerbForm(verb, form) {
-    const dictionaryForm = JapaneseVerb.parse(verb.japanese);
+    const dictionaryForm = JapaneseVerb.parse(verb);
     return verbToTargetForm(dictionaryForm, form);
   }
 
@@ -197,11 +197,22 @@ class VerbMain extends Component {
     const eLabel = "[English]";
     const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
+    const v = JapaneseVerb.parse(verb);
+    const showAsterix = v.isExceptionVerb() || v.getVerbClass() === 3;
+    const inJapanese2 = showAsterix ? (
+      <span>
+        {inJapanese}
+        <span> *</span>
+      </span>
+    ) : (
+      inJapanese
+    );
+
     const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
       valueLabelHelper(
         this.props.practiceSide,
         inEnglish,
-        inJapanese,
+        inJapanese2,
         eLabel,
         jLabel
       );

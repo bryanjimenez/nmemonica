@@ -80,6 +80,10 @@ a {
   color:  var(--light);
 }
 
+.fs-large {
+  font-size: large;
+}
+
 .fs-xx-small {
   font-size: xx-small;
 }
