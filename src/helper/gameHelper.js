@@ -112,8 +112,7 @@ export function termFilterByType(
         filteredTerms = termList.filter(
           (t) =>
             frequencyList.includes(t.uid) &&
-            (activeGrpList.includes(t.grp) ||
-              activeGrpList.includes(t.grp + "." + t.subGrp))
+            activeGroupIncludes(activeGrpList, t)
         );
       } else {
         filteredTerms = termList.filter((t) => frequencyList.includes(t.uid));
@@ -126,15 +125,29 @@ export function termFilterByType(
     // group filtering
     // spaced repetition
     if (activeGrpList.length > 0) {
-      filteredTerms = termList.filter(
-        (t) =>
-          activeGrpList.includes(t.grp) ||
-          activeGrpList.includes(t.grp + "." + t.subGrp)
+      filteredTerms = termList.filter((t) =>
+        activeGroupIncludes(activeGrpList, t)
       );
     }
   }
 
   return filteredTerms;
+}
+
+/**
+ * Active group filtering logic
+ * @returns {Boolean} whether the term is part of the activeGroup
+ * @param {String[]} activeGrpList
+ * @param {{grp:String,subGrp:String}} term
+ */
+export function activeGroupIncludes(activeGrpList, term) {
+  return (
+    activeGrpList.includes(term.grp) ||
+    activeGrpList.includes(term.grp + "." + term.subGrp) ||
+    (term.grp === undefined &&
+      (activeGrpList.includes("undefined") ||
+        activeGrpList.includes("undefined" + "." + term.subGrp)))
+  );
 }
 
 /**

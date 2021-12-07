@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import {
+  activeGroupIncludes,
   alphaOrder,
   randomOrder,
   spaceRepOrder,
@@ -514,6 +515,237 @@ describe("gameHelper", function () {
 
         expect(actual).to.deep.eq(expected);
       });
+    });
+  });
+  describe("activeGroupIncludes", function () {
+    it("empty");
+    it("no group, no subgroup", function () {
+      const activeGroup = ["undefined"];
+
+      const pExamples = [
+        {
+          english: "indigo",
+          // grp: "Noun",
+          japanese: "インジゴ",
+          romaji: "injigo",
+          // subGrp: "Colors",
+          uid: "6aaca6ff846cd1b55bd6e05831c7de43",
+        },
+        {
+          english: "redundancy",
+          // grp: "Noun",
+          japanese: "じょうちょうせい\n冗長性",
+          romaji: "jōchō-sei",
+          subGrp: "Noun",
+          uid: "96569ab8964699062f696fe0bd7a63d1",
+        },
+      ];
+
+      const nExamples = [
+        {
+          english: "blue",
+          grp: "Noun",
+          japanese: "あお\n青",
+          romaji: "ao",
+          subGrp: "Colors",
+          uid: "00c102a7e10b45b19afbab71c030bf63",
+        },
+        {
+          english: "stationary, steady",
+          grp: "Adjective",
+          japanese: "ていじょう\n定常",
+          romaji: "teijō",
+          // subGrp: "",
+          uid: "2110847595c7d2d2e5482748f75a5973",
+        },
+      ];
+
+      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+
+      expect(positive).to.deep.equal(pExamples.map(() => true));
+      expect(negative).to.deep.equal(nExamples.map(() => false));
+    });
+    it("no group, subgroup", function () {
+      const activeGroup = ["undefined.Noun"];
+
+      const pExamples = [
+        {
+          english: "redundancy",
+          // grp: "Noun",
+          japanese: "じょうちょうせい\n冗長性",
+          romaji: "jōchō-sei",
+          subGrp: "Noun",
+          uid: "96569ab8964699062f696fe0bd7a63d1",
+        },
+      ];
+
+      const nExamples = [
+        {
+          english: "indigo",
+          // grp: "Noun",
+          japanese: "インジゴ",
+          romaji: "injigo",
+          // subGrp: "Colors",
+          uid: "6aaca6ff846cd1b55bd6e05831c7de43",
+        },
+        {
+          english: "stationary, steady",
+          grp: "Adjective",
+          japanese: "ていじょう\n定常",
+          romaji: "teijō",
+          // subGrp: "",
+          uid: "2110847595c7d2d2e5482748f75a5973",
+        },
+        {
+          english: "time",
+          grp: "Noun",
+          japanese: "じかん\n時間",
+          romaji: "jikan",
+          subGrp: "Noun",
+          uid: "7c5086f337bdf69ef4cf924652fc7576",
+        },
+        {
+          english: "blue",
+          grp: "Noun",
+          japanese: "あお\n青",
+          romaji: "ao",
+          subGrp: "Colors",
+          uid: "00c102a7e10b45b19afbab71c030bf63",
+        },
+      ];
+
+      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+
+      expect(positive).to.deep.equal(pExamples.map(() => true));
+      expect(negative).to.deep.equal(nExamples.map(() => false));
+    });
+    it("group, no subgroup", function () {
+      const activeGroup = ["Adjective"];
+
+      const pExamples = [
+        {
+          english: "stationary, steady",
+          grp: "Adjective",
+          japanese: "ていじょう\n定常",
+          romaji: "teijō",
+          // subGrp: "",
+          uid: "2110847595c7d2d2e5482748f75a5973",
+        },
+        {
+          english: "round",
+          grp: "Adjective",
+          japanese: "まるい\n丸い",
+          romaji: "marui",
+          subGrp: "Shape",
+          uid: "bd2515a563263b6cf3e171f821155bd0",
+        },
+      ];
+
+      const nExamples = [
+        {
+          english: "blue",
+          grp: "Noun",
+          japanese: "あお\n青",
+          romaji: "ao",
+          subGrp: "Colors",
+          uid: "00c102a7e10b45b19afbab71c030bf63",
+        },
+        {
+          english: "indigo",
+          // grp: "Noun",
+          japanese: "インジゴ",
+          romaji: "injigo",
+          // subGrp: "Colors",
+          uid: "6aaca6ff846cd1b55bd6e05831c7de43",
+        },
+        {
+          english: "stationary, steady",
+          // grp: "Adjective",
+          japanese: "ていじょう\n定常",
+          romaji: "teijō",
+          subGrp: "Adjective",
+          uid: "2110847595c7d2d2e5482748f75a5973",
+        },
+        {
+          english: "time",
+          grp: "Noun",
+          japanese: "じかん\n時間",
+          romaji: "jikan",
+          // subGrp: "",
+          uid: "7c5086f337bdf69ef4cf924652fc7576",
+        },
+      ];
+
+      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+
+      expect(positive).to.deep.equal(pExamples.map(() => true));
+      expect(negative).to.deep.equal(nExamples.map(() => false));
+    });
+    it("group, subgroup", function () {
+      const activeGroup = ["Noun.Time"];
+
+      const pExamples = [
+        {
+          english: "time",
+          grp: "Noun",
+          japanese: "じかん\n時間",
+          romaji: "jikan",
+          subGrp: "Time",
+          uid: "7c5086f337bdf69ef4cf924652fc7576",
+        },
+      ];
+
+      const nExamples = [
+        {
+          english: "blue",
+          grp: "Noun",
+          japanese: "あお\n青",
+          romaji: "ao",
+          subGrp: "Colors",
+          uid: "00c102a7e10b45b19afbab71c030bf63",
+        },
+        {
+          english: "indigo",
+          // grp: "Noun",
+          japanese: "インジゴ",
+          romaji: "injigo",
+          // subGrp: "Colors",
+          uid: "6aaca6ff846cd1b55bd6e05831c7de43",
+        },
+        {
+          english: "stationary, steady",
+          // grp: "Adjective",
+          japanese: "ていじょう\n定常",
+          romaji: "teijō",
+          subGrp: "Adjective",
+          uid: "2110847595c7d2d2e5482748f75a5973",
+        },
+        {
+          english: "time",
+          grp: "Noun",
+          japanese: "じかん\n時間",
+          romaji: "jikan",
+          // subGrp: "",
+          uid: "7c5086f337bdf69ef4cf924652fc7576",
+        },
+        {
+          english: "to recall",
+          grp: "Verb",
+          japanese: "おもいだす\n思い出す",
+          romaji: "omoidasu",
+          subGrp: "Memory",
+          uid: "7b18c22af4c8f109f279fcdc66565f55",
+        },
+      ];
+
+      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+
+      expect(positive).to.deep.equal(pExamples.map(() => true));
+      expect(negative).to.deep.equal(nExamples.map(() => false));
     });
   });
 });
