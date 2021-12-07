@@ -1,389 +1,72 @@
 import data from "../../data/kana.json";
 
 /**
- * @returns a boolean
- * @param {*} char the character to check against the Hiragana alphabet
+ * @returns {Boolean}
+ * @param {String} char the character to check against the Kanji table
+ */
+export function isKanji(char) {
+  const common = "\u4E00-\u9FAF";
+  const rare = "\u3400-\u4DBF";
+  return new RegExp("[" + common + rare + "]").test(char);
+}
+
+/**
+ * @returns {Boolean}
+ * @param {String} char the character to check against the Hiragana table
  */
 export function isHiragana(char) {
-  const hiragana = {
-    あ: true,
-    い: true,
-    う: true,
-    え: true,
-    お: true,
-    か: true,
-    き: true,
-    く: true,
-    け: true,
-    こ: true,
-    が: true,
-    ぎ: true,
-    ぐ: true,
-    げ: true,
-    ご: true,
-    さ: true,
-    し: true,
-    す: true,
-    せ: true,
-    そ: true,
-    ざ: true,
-    じ: true,
-    ず: true,
-    ぜ: true,
-    ぞ: true,
-    た: true,
-    ち: true,
-    つ: true,
-    て: true,
-    と: true,
-    だ: true,
-    ぢ: true,
-    づ: true,
-    で: true,
-    ど: true,
-    な: true,
-    に: true,
-    ぬ: true,
-    ね: true,
-    の: true,
-    は: true,
-    ひ: true,
-    ふ: true,
-    へ: true,
-    ほ: true,
-    ば: true,
-    び: true,
-    ぶ: true,
-    べ: true,
-    ぼ: true,
-    ぱ: true,
-    ぴ: true,
-    ぷ: true,
-    ぺ: true,
-    ぽ: true,
-    ま: true,
-    み: true,
-    む: true,
-    め: true,
-    も: true,
-    や: true,
-    ゆ: true,
-    よ: true,
-    ら: true,
-    り: true,
-    る: true,
-    れ: true,
-    ろ: true,
-    わ: true,
-    ゐ: true,
-    ゑ: true,
-    を: true,
-    ん: true,
-    "。": true,
-    ゃ: true,
-    ゅ: true,
-    ょ: true,
-    っ: true,
-    ゝ: true,
-    ゞ: true,
-  };
-
-  return hiragana[char] ? true : false;
+  return new RegExp("[\u3041-\u309F]").test(char);
 }
 
 /**
- * @returns a boolean
- * @param {*} char the character to check against the Katakana alphabet
+ * @returns {Boolean}
+ * @param {String} char the character to check against the Katakana table
  */
 export function isKatakana(char) {
-  const katakana = {
-    ア: true,
-    イ: true,
-    ウ: true,
-    エ: true,
-    オ: true,
-    カ: true,
-    キ: true,
-    ク: true,
-    ケ: true,
-    コ: true,
-    ガ: true,
-    ギ: true,
-    グ: true,
-    ゲ: true,
-    ゴ: true,
-    サ: true,
-    シ: true,
-    ス: true,
-    セ: true,
-    ソ: true,
-    ザ: true,
-    ジ: true,
-    ズ: true,
-    ゼ: true,
-    ゾ: true,
-    タ: true,
-    チ: true,
-    ツ: true,
-    テ: true,
-    ト: true,
-    ダ: true,
-    ヂ: true,
-    ヅ: true,
-    デ: true,
-    ド: true,
-    ナ: true,
-    ニ: true,
-    ヌ: true,
-    ネ: true,
-    ノ: true,
-    ハ: true,
-    ヒ: true,
-    フ: true,
-    ヘ: true,
-    ホ: true,
-    バ: true,
-    ビ: true,
-    ブ: true,
-    ベ: true,
-    ボ: true,
-    パ: true,
-    ピ: true,
-    プ: true,
-    ペ: true,
-    ポ: true,
-    マ: true,
-    ミ: true,
-    ム: true,
-    メ: true,
-    モ: true,
-    ヤ: true,
-    ユ: true,
-    ヨ: true,
-    ラ: true,
-    リ: true,
-    ル: true,
-    レ: true,
-    ロ: true,
-    ワ: true,
-    ヰ: true,
-    ヱ: true,
-    ヲ: true,
-    ン: true,
-    ー: true,
-
-    ャ: true,
-    ュ: true,
-    ョ: true,
-    ッ: true,
-
-    ァ: true,
-    ィ: true,
-    ゥ: true,
-    ェ: true,
-    ォ: true,
-
-    ヽ: true,
-    ヾ: true,
-  };
-
-  return katakana[char] ? true : false;
+  const fullWidth = "\u30A0-\u30FF";
+  const halfWidth = "\uFF66-\uFF9F"; // FIXME: is this needed?
+  return new RegExp("[" + fullWidth + "]").test(char);
 }
 
 /**
- * @returns a boolean
- * @param {*} char the character to check against the punctuation alphabet
+ * @returns {Boolean}
+ * @param {String} char the character to check against the punctuation table
  */
 export function isPunctuation(char) {
-  const punctuation = {
-    "。": true,
-    "、": true,
-    "？": true,
-    "！": true,
-    "「": true,
-    "」": true,
-  };
+  // English
+  const eSymbol = "\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF5E";
+  const eLetter = "\uFF21-\uFF3A\uFF41-\uFF5A";
+  const eNumber = "\uFF10-\uFF19";
 
-  return punctuation[char] ? true : false;
+  // Japanese
+  const jFP = "\u3000-\u303F"; // full width punctuation
+  const jHP = "\uFF61-\uFF65"; // half width
+  return new RegExp("[" + jFP + jHP + eSymbol + "]").test(char);
 }
 
 /**
  * swaps hiragana for katakana and vicecersa
- * TODO: handle missing characters? ー
- * TODO: use ascii table offsets?
- * @param {*} character
+ * @returns {String}
+ * @param {String} char
  */
-export function swapKana(character) {
-  const chars = {
-    ア: "あ",
-    イ: "い",
-    ウ: "う",
-    エ: "え",
-    オ: "お",
-    カ: "か",
-    キ: "き",
-    ク: "く",
-    ケ: "け",
-    コ: "こ",
-    ガ: "が",
-    ギ: "ぎ",
-    グ: "ぐ",
-    ゲ: "げ",
-    ゴ: "ご",
-    サ: "さ",
-    シ: "し",
-    ス: "す",
-    セ: "せ",
-    ソ: "そ",
-    ザ: "ざ",
-    ジ: "じ",
-    ズ: "ず",
-    ゼ: "ぜ",
-    ゾ: "ぞ",
-    タ: "た",
-    チ: "ち",
-    ツ: "つ",
-    テ: "て",
-    ト: "と",
-    ダ: "だ",
-    ヂ: "ぢ",
-    ヅ: "づ",
-    デ: "で",
-    ド: "ど",
-    ナ: "な",
-    ニ: "に",
-    ヌ: "ぬ",
-    ネ: "ね",
-    ノ: "の",
-    ハ: "は",
-    ヒ: "ひ",
-    フ: "ふ",
-    ヘ: "へ",
-    ホ: "ほ",
-    バ: "ば",
-    ビ: "び",
-    ブ: "ぶ",
-    ベ: "べ",
-    ボ: "ぼ",
-    パ: "ぱ",
-    ピ: "ぴ",
-    プ: "ぷ",
-    ペ: "ぺ",
-    ポ: "ぽ",
-    マ: "ま",
-    ミ: "み",
-    ム: "む",
-    メ: "め",
-    モ: "も",
-    ヤ: "や",
-    ユ: "ゆ",
-    ヨ: "よ",
-    ラ: "ら",
-    リ: "り",
-    ル: "る",
-    レ: "れ",
-    ロ: "ろ",
-    ワ: "わ",
-    ヰ: "ゐ",
-    ヱ: "ゑ",
-    ヲ: "を",
-    ン: "ん",
-    ャ: "ゃ",
-    ュ: "ゅ",
-    ョ: "ょ",
-    ッ: "っ",
-    ヽ: "ゝ",
-    ヾ: "ゞ",
+export function swapKana(char) {
+  let swap;
+  if (isHiragana(char)) {
+    const katakana = char.codePointAt(0) + 96;
+    swap = String.fromCharCode(katakana);
+  } else if (isKatakana(char)) {
+    const hiragana = char.codePointAt(0) - 96;
+    swap = String.fromCharCode(hiragana);
+  } else {
+    swap = char;
+  }
 
-    あ: "ア",
-    い: "イ",
-    う: "ウ",
-    え: "エ",
-    お: "オ",
-    か: "カ",
-    き: "キ",
-    く: "ク",
-    け: "ケ",
-    こ: "コ",
-    が: "ガ",
-    ぎ: "ギ",
-    ぐ: "グ",
-    げ: "ゲ",
-    ご: "ゴ",
-    さ: "サ",
-    し: "シ",
-    す: "ス",
-    せ: "セ",
-    そ: "ソ",
-    ざ: "ザ",
-    じ: "ジ",
-    ず: "ズ",
-    ぜ: "ゼ",
-    ぞ: "ゾ",
-    た: "タ",
-    ち: "チ",
-    つ: "ツ",
-    て: "テ",
-    と: "ト",
-    だ: "ダ",
-    ぢ: "ヂ",
-    づ: "ヅ",
-    で: "デ",
-    ど: "ド",
-    な: "ナ",
-    に: "ニ",
-    ぬ: "ヌ",
-    ね: "ネ",
-    の: "ノ",
-    は: "ハ",
-    ひ: "ヒ",
-    ふ: "フ",
-    へ: "ヘ",
-    ほ: "ホ",
-    ば: "バ",
-    び: "ビ",
-    ぶ: "ブ",
-    べ: "ベ",
-    ぼ: "ボ",
-    ぱ: "パ",
-    ぴ: "ピ",
-    ぷ: "プ",
-    ぺ: "ペ",
-    ぽ: "ポ",
-    ま: "マ",
-    み: "ミ",
-    む: "ム",
-    め: "メ",
-    も: "モ",
-    や: "ヤ",
-    ゆ: "ユ",
-    よ: "ヨ",
-    ら: "ラ",
-    り: "リ",
-    る: "ル",
-    れ: "レ",
-    ろ: "ロ",
-    わ: "ワ",
-    ゐ: "ヰ",
-    ゑ: "ヱ",
-    を: "ヲ",
-    ん: "ン",
-    ゃ: "ャ",
-    ゅ: "ュ",
-    ょ: "ョ",
-    っ: "ッ",
-    ゝ: "ヽ",
-    ゞ: "ヾ",
-
-    "。": "。",
-  };
-
-  return chars[character] ? chars[character] : "";
+  return swap;
 }
 
 /**
  * gets the indexes of the character in the hiragana chart
- * @param {*} character
+ * @param {String} character
  * @returns {{iConsonant:Number, iVowel:Number}}
  */
 export function getConsonantVowel(character) {
