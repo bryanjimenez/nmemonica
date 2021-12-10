@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import React from "react";
-import { isHiragana, isKanji, isKatakana } from "./kanaHelper";
+import { isHiragana, isKanji, isKatakana, isPunctuation } from "./kanaHelper";
 
 export class JapaneseText {
   constructor(furigana, kanji) {
@@ -114,6 +114,15 @@ export class JapaneseText {
  * @param {String} orthography (kanji)
  */
 export function furiganaParse(pronunciation, orthography) {
+  if (orthography.split("").every((c) => isKanji(c) || isPunctuation(c))) {
+    return {
+      kanjis: [orthography],
+      furiganas: [pronunciation],
+      nonKanjis: [],
+      startsWKana: false,
+    };
+  }
+
   const startsWKana = !isKanji(orthography.charAt(0));
 
   let start = 0;
@@ -136,7 +145,9 @@ export function furiganaParse(pronunciation, orthography) {
           start++;
 
           if (start > pronunciation.length) {
-            throw new Error("The two phrases do not match");
+            const e = new Error("The two phrases do not match");
+            e.data = { kanjis, furiganas, nonKanjis };
+            throw e;
           }
         }
         furiganas.push(fword);

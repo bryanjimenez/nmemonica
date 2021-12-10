@@ -56,6 +56,7 @@ import {
   FILTER_REP,
 } from "../../reducers/settingsRed";
 import { labelOptions } from "../../helper/gameHelper";
+import { furiganaParse, JapaneseText } from "../../helper/JapaneseText";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -83,11 +84,46 @@ class Settings extends Component {
     this.props.getMemoryStorageStatus();
   }
 
+  failedFuriganaList(terms) {
+    const separator = <hr />;
+
+    return terms.reduce((a, text, i) => {
+      const t = JapaneseText.parse(text.japanese);
+      if (t.hasFurigana()) {
+        try {
+          furiganaParse(t.getPronunciation(), t.getSpelling());
+        } catch (e) {
+          console.log(e.data);
+
+          const row = (
+            <div key={i} className="row">
+              <span className="col p-0">{t.toHTML()}</span>
+              <span className="col p-0">{text.english}</span>
+              <span className="col p-0 fs-xx-small">
+                {e.data ? JSON.stringify(e.data) : ""}
+              </span>
+            </div>
+          );
+
+          return a.length > 0 && i < terms.length - 1
+            ? [...a, separator, row]
+            : [...a, row];
+        }
+      }
+      return a;
+    }, []);
+  }
+
   render() {
     const pageClassName = classNames({ "mb-5": true });
 
     if (this.props.vocabulary.length < 1)
       return <NotReady addlStyle="main-panel" />;
+
+    const failedFurigana = this.failedFuriganaList([
+      ...this.props.phrases,
+      ...this.props.vocabulary,
+    ]);
 
     return (
       <div className="settings">
@@ -456,6 +492,15 @@ class Settings extends Component {
                 }
               />
             </div>
+            {failedFurigana.length > 0 && (
+              <div className="">
+                <h5>Failed Furigana Parse</h5>
+
+                <div className="failed-furigana-view container mt-2 p-0">
+                  {failedFurigana}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
