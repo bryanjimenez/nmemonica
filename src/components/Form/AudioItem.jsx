@@ -96,32 +96,38 @@ export default function AudioItem(props) {
   };
 
   return (
-    <div
-      className="d-flex justify-content-center clickable"
-      onMouseDown={props.visible ? clickEvHan0 : undefined}
-      onTouchStart={props.visible ? clickEvHan0 : undefined}
-      onMouseUp={props.visible ? clickEvHan1 : undefined}
-      onTouchEnd={props.visible ? clickEvHan1 : undefined}
-    >
-      <audio
-        ref={(ref) => {
-          // src attr remains from last onClick
-          if (ref && ref.src && props.autoPlay === AUTOPLAY_OFF) {
-            ref.removeAttribute("src");
+    <div className="d-flex justify-content-center">
+      <div
+        className="clickable"
+        onMouseDown={props.visible ? clickEvHan0 : undefined}
+        onTouchStart={props.visible ? clickEvHan0 : undefined}
+        onMouseUp={props.visible ? clickEvHan1 : undefined}
+        onTouchEnd={props.visible ? clickEvHan1 : undefined}
+      >
+        <audio
+          ref={(ref) => {
+            // src attr remains from last onClick
+            if (ref && ref.src && props.autoPlay === AUTOPLAY_OFF) {
+              ref.removeAttribute("src");
+            }
+            return (player = ref);
+          }}
+          autoPlay={props.autoPlay !== AUTOPLAY_OFF}
+          src={
+            props.autoPlay !== AUTOPLAY_OFF ? autoPlayEndPoint[0] : undefined
           }
-          return (player = ref);
-        }}
-        autoPlay={props.autoPlay !== AUTOPLAY_OFF}
-        src={props.autoPlay !== AUTOPLAY_OFF ? autoPlayEndPoint[0] : undefined}
-        onError={() => {
-          // likely failed to fetch resource
-          playNextAudio();
-        }}
-        onEnded={() => {
-          playNextAudio();
-        }}
-      />
-      {props.visible && <UnmuteIcon size="medium" aria-label="pronunciation" />}
+          onError={() => {
+            // likely failed to fetch resource
+            playNextAudio();
+          }}
+          onEnded={() => {
+            playNextAudio();
+          }}
+        />
+        {props.visible && (
+          <UnmuteIcon size="medium" aria-label="pronunciation" />
+        )}
+      </div>
     </div>
   );
 }

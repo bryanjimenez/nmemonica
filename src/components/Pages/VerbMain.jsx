@@ -243,50 +243,57 @@ class VerbMain extends Component {
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
-        <div
-          className="clickable"
-          style={topStyle}
-          onClick={() => {
-            if (this.props.autoPlay) {
-              this.props.flipVocabularyPracticeSide();
-            }
-          }}
-        >
-          {(this.props.autoPlay && this.props.practiceSide) ||
-          (!this.props.autoPlay && this.state.showEng)
-            ? shownLabel
-            : shownValue}
+        <div>
+          <span
+            className="clickable"
+            style={topStyle}
+            onClick={() => {
+              if (this.props.autoPlay) {
+                this.props.flipVocabularyPracticeSide();
+              }
+            }}
+          >
+            {(this.props.autoPlay && this.props.practiceSide) ||
+            (!this.props.autoPlay && this.state.showEng)
+              ? shownLabel
+              : shownValue}
+          </span>
         </div>
 
         {this.props.romajiActive && romaji && (
-          <div
-            className="clickable"
-            onClick={() => {
-              this.setState((state) => ({
-                showRomaji: !state.showRomaji,
-              }));
-            }}
-          >
-            {this.state.showRomaji ? romaji : "[romaji]"}
+          <div>
+            <span
+              className="clickable"
+              onClick={() => {
+                this.setState((state) => ({
+                  showRomaji: !state.showRomaji,
+                }));
+              }}
+            >
+              {this.state.showRomaji ? romaji : "[romaji]"}
+            </span>
           </div>
         )}
-        <div
-          className="clickable"
-          style={btmStyle}
-          onClick={() => {
-            if (this.props.autoPlay) {
-              this.props.flipVocabularyPracticeSide();
-            } else {
-              this.setState((state) => ({
-                showMeaning: !state.showMeaning,
-              }));
-            }
-          }}
-        >
-          {(this.props.autoPlay && !this.props.practiceSide) ||
-          (!this.props.autoPlay && this.state.showMeaning)
-            ? hiddenValue
-            : hiddenLabel}
+
+        <div>
+          <span
+            className="clickable"
+            style={btmStyle}
+            onClick={() => {
+              if (this.props.autoPlay) {
+                this.props.flipVocabularyPracticeSide();
+              } else {
+                this.setState((state) => ({
+                  showMeaning: !state.showMeaning,
+                }));
+              }
+            }}
+          >
+            {(this.props.autoPlay && !this.props.practiceSide) ||
+            (!this.props.autoPlay && this.state.showMeaning)
+              ? hiddenValue
+              : hiddenLabel}
+          </span>
         </div>
         <AudioItem
           visible={!this.props.touchSwipe}

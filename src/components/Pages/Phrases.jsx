@@ -450,22 +450,30 @@ class Phrases extends Component {
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <h1>{shownValue}</h1>
             {this.props.romajiActive && romaji && (
-              <h5
+              <h5>
+                <span
+                  onClick={() => {
+                    this.setState((state) => ({
+                      showRomaji: !state.showRomaji,
+                    }));
+                  }}
+                  className="clickable"
+                >
+                  {this.state.showRomaji ? romaji : "[Romaji]"}
+                </span>
+              </h5>
+            )}
+            <h2>
+              <span
                 onClick={() => {
-                  this.setState((state) => ({ showRomaji: !state.showRomaji }));
+                  this.setState((state) => ({
+                    showMeaning: !state.showMeaning,
+                  }));
                 }}
                 className="clickable"
               >
-                {this.state.showRomaji ? romaji : "[Romaji]"}
-              </h5>
-            )}
-            <h2
-              onClick={() => {
-                this.setState((state) => ({ showMeaning: !state.showMeaning }));
-              }}
-              className="clickable"
-            >
-              {this.state.showMeaning ? hiddenValue : hiddenLabel}
+                {this.state.showMeaning ? hiddenValue : hiddenLabel}
+              </span>
             </h2>
             <AudioItem
               visible={!this.props.touchSwipe}

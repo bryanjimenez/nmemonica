@@ -17,19 +17,21 @@ export default function Sizable(props) {
   }
 
   return (
-    <div
-      className="clickable"
-      onClick={() => {
-        if (typeof props.onClick === "function") {
-          props.onClick();
-        }
-      }}
-    >
-      <span style={props.largeStyle} className="d-none d-sm-block">
-        {largeValue}
-      </span>
-      <span style={props.smallStyle} className="d-block d-sm-none">
-        {smallValue}
+    <div>
+      <span
+        className="clickable"
+        onClick={() => {
+          if (typeof props.onClick === "function") {
+            props.onClick();
+          }
+        }}
+      >
+        <span style={props.largeStyle} className="d-none d-sm-inline">
+          {largeValue}
+        </span>
+        <span style={props.smallStyle} className="d-inline d-sm-none">
+          {smallValue}
+        </span>
       </span>
     </div>
   );

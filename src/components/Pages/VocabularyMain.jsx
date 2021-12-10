@@ -102,33 +102,36 @@ class VocabularyMain extends Component {
             ? shownLabel
             : shownValue}
         </Sizable>
-
         {this.props.romajiActive && romaji && (
-          <h5
+          <h5>
+            <span
+              onClick={() => {
+                this.setState((state) => ({ showRomaji: !state.showRomaji }));
+              }}
+              className="clickable"
+            >
+              {this.state.showRomaji ? romaji : "[Romaji]"}
+            </span>
+          </h5>
+        )}
+        <h2>
+          <span
             onClick={() => {
-              this.setState((state) => ({ showRomaji: !state.showRomaji }));
+              if (this.props.autoPlay) {
+                this.props.flipVocabularyPracticeSide();
+              } else {
+                this.setState((state) => ({
+                  showMeaning: !state.showMeaning,
+                }));
+              }
             }}
             className="clickable"
           >
-            {this.state.showRomaji ? romaji : "[Romaji]"}
-          </h5>
-        )}
-        <h2
-          onClick={() => {
-            if (this.props.autoPlay) {
-              this.props.flipVocabularyPracticeSide();
-            } else {
-              this.setState((state) => ({
-                showMeaning: !state.showMeaning,
-              }));
-            }
-          }}
-          className="clickable"
-        >
-          {(this.props.autoPlay && !this.props.practiceSide) ||
-          (!this.props.autoPlay && this.state.showMeaning)
-            ? hiddenValue
-            : hiddenLabel}
+            {(this.props.autoPlay && !this.props.practiceSide) ||
+            (!this.props.autoPlay && this.state.showMeaning)
+              ? hiddenValue
+              : hiddenLabel}
+          </span>
         </h2>
         <AudioItem
           visible={!this.props.touchSwipe}
