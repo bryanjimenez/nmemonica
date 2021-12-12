@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
 import StackNavButton from "../Form/StackNavButton";
 import { swapKana } from "../../helper/kanaHelper";
+import { DEBUG_OFF } from "../../actions/settingsAct";
 
 const KanaGameMeta = {
   location: "/kana/",
@@ -379,6 +380,11 @@ class KanaGame extends Component {
     // console.log(question);
     // console.log(answer);
     // console.log(choices);
+    const mainPanel = classNames({
+      "hiragana main-panel h-100": true,
+      "z-index-1": this.props.debug !== DEBUG_OFF,
+    });
+
     const choiceAreaCSS = classNames({
       "choices-row d-flex justify-content-around": true,
       "w-50": !this.props.wideMode,
@@ -386,7 +392,7 @@ class KanaGame extends Component {
     });
 
     return [
-      <div key={0} className="hiragana main-panel h-100">
+      <div key={0} className={mainPanel}>
         <div className="d-flex justify-content-between h-100">
           <StackNavButton
             ariaLabel="Previous"
@@ -459,6 +465,7 @@ const mapStateToProps = (state) => {
     wideMode: state.settings.kana.wideMode,
     easyMode: state.settings.kana.easyMode,
     charSet: state.settings.kana.charSet,
+    debug: state.settings.global.debug,
   };
 };
 
@@ -473,6 +480,7 @@ KanaGame.propTypes = {
   wideMode: PropTypes.bool,
   easyMode: PropTypes.bool,
   charSet: PropTypes.number,
+  debug: PropTypes.number,
 };
 
 export default connect(mapStateToProps, { getKana })(KanaGame);

@@ -87,3 +87,7 @@ a {
 .fs-xx-small {
   font-size: xx-small;
 }
+
+.z-index-1 {
+  z-index: 1;
+}
