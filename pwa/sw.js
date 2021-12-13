@@ -9,6 +9,10 @@ const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-unde
 const SW_MSG_TYPE_LOGGER = swMsgTypeLoggerConst; // eslint-disable-line no-undef
 const SW_MSG_TYPE_NEW_TERMS_ADDED = swMsgTypeNewTermsAddedConst; // eslint-disable-line no-undef
 
+const gPronounceCacheIndexParam = gPronounceCacheIndexParamConst;
+const renameParam = renameParamConst; // eslint-disable-line no-undef
+const removeParam = removeParamConst; // eslint-disable-line no-undef
+
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 const appMediaCache = "nmemonica-media";
@@ -80,6 +84,10 @@ self.addEventListener("fetch", (e) => {
   const req = e.request.clone();
   const url = e.request.url;
 
+  const hasCacheIdxOverride = new RegExp(
+    "[\\?&]" + gPronounceCacheIndexParam + "="
+  );
+
   if (url === dataVerURL) {
     e.respondWith(appVersionReq());
   } else if (req.headers.get("Data-Version")) {
@@ -96,7 +104,14 @@ self.addEventListener("fetch", (e) => {
   } else if (url.indexOf(gCloudFnPronounce + "/override_cache") === 0) {
     // override cache site media asset
     console.log("[ServiceWorker] Overriding Asset in Cache");
-    const newUrl = url.split("/override_cache").join("");
+    let newUrl = url.split("/override_cache").join("");
+
+    let overrideUrl;
+    if (hasCacheIdxOverride.test(url)) {
+      overrideUrl = renameParam(newUrl, gPronounceCacheIndexParam, "q");
+      newUrl = removeParam(newUrl, gPronounceCacheIndexParam);
+    }
+
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
@@ -110,7 +125,9 @@ self.addEventListener("fetch", (e) => {
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
-        const query = newUrl.split(gCloudFnPronounce)[1];
+        const query = (overrideUrl ? overrideUrl : newUrl).split(
+          gCloudFnPronounce
+        )[1];
 
         return fetchP
           .then((res) => res.blob())
@@ -123,17 +140,27 @@ self.addEventListener("fetch", (e) => {
     }
   } else if (url.indexOf(gCloudFnPronounce) === 0) {
     // site media asset
+
+    let overrideUrl;
+    let newUrl = url;
+    if (hasCacheIdxOverride.test(url)) {
+      overrideUrl = renameParam(newUrl, gPronounceCacheIndexParam, "q");
+      newUrl = removeParam(newUrl, gPronounceCacheIndexParam);
+    }
+
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-      e.respondWith(appMediaReq(url));
+      e.respondWith(appMediaReq(newUrl));
     } else {
       // use indexedDB
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
-        const query = url.split(gCloudFnPronounce)[1];
+        const query = (overrideUrl ? overrideUrl : newUrl).split(
+          gCloudFnPronounce
+        )[1];
 
         countIDBItem(db);
 

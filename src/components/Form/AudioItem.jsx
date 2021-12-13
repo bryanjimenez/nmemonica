@@ -7,43 +7,42 @@ import {
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
 } from "../../actions/settingsAct";
+import { addParam } from "../../helper/urlHelper";
+import { gPronounceCacheIndexParam } from "../../constants/paths";
 
 export default function AudioItem(props) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
   // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
 
+  // console.log(props.autoPlay + " " + JSON.stringify(props.word));
+  // props.word = [currJWord, currEword, lastJWord]
+  // props.word = [playOnClick, playOnShow, playOnSwipe]
+  const words = props.word;
+
   let player;
   let tStart;
   let playPushed = false;
 
-  // console.log(props.autoPlay + " " + JSON.stringify(props.word));
-  // props.word = [currJWord, currEword, lastJWord]
-  // props.word = [playOnClick, playOnShow, playOnSwipe]
-  const touchPlayParam = { word: props.word[0], tl: "ja" };
+  const touchPlayParam = words[0];
+
   let autoPlayEndPoint = [];
 
-  if (props.autoPlay === AUTOPLAY_EN_JP && props.word.length === 2) {
+  if (props.autoPlay === AUTOPLAY_EN_JP && words.length === 2) {
+    autoPlayEndPoint = [addParam(pronounceEndoint, words[1])];
+  } else if (props.autoPlay === AUTOPLAY_JP_EN && words.length === 2) {
+    autoPlayEndPoint = [addParam(pronounceEndoint, words[0])];
+  } else if (props.autoPlay === AUTOPLAY_EN_JP && words.length === 3) {
     autoPlayEndPoint = [
-      pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
+      addParam(pronounceEndoint, words[2]),
+      addParam(pronounceEndoint, words[1]),
     ];
-  } else if (props.autoPlay === AUTOPLAY_JP_EN && props.word.length === 2) {
+  } else if (props.autoPlay === AUTOPLAY_JP_EN && words.length === 3) {
     autoPlayEndPoint = [
-      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[0],
-    ];
-  } else if (props.autoPlay === AUTOPLAY_EN_JP && props.word.length === 3) {
-    autoPlayEndPoint = [
-      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[2],
-      pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[1],
-    ];
-  } else if (props.autoPlay === AUTOPLAY_JP_EN && props.word.length === 3) {
-    autoPlayEndPoint = [
-      pronounceEndoint + "?tl=" + "en" + "&q=" + props.word[2],
-      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[1],
+      addParam(pronounceEndoint, words[2]),
+      addParam(pronounceEndoint, words[1]),
     ];
   } else {
-    autoPlayEndPoint = [
-      pronounceEndoint + "?tl=" + "ja" + "&q=" + props.word[0],
-    ];
+    autoPlayEndPoint = [addParam(pronounceEndoint, words[0])];
   }
 
   const playNextAudio = function () {
@@ -83,15 +82,8 @@ export default function AudioItem(props) {
     const time = ~~(Date.now() - tStart);
 
     const override = time < 500 ? "" : "/override_cache";
-    const endpoint =
-      pronounceEndoint +
-      override +
-      "?tl=" +
-      touchPlayParam.tl +
-      "&q=" +
-      touchPlayParam.word;
 
-    player.src = endpoint;
+    player.src = addParam(pronounceEndoint + override, touchPlayParam);
     player.play();
   };
 
@@ -138,7 +130,13 @@ AudioItem.defaultProps = {
 };
 
 AudioItem.propTypes = {
-  word: PropTypes.array.isRequired,
+  word: PropTypes.arrayOf(
+    PropTypes.shape({
+      tl: PropTypes.string.isRequired, // target language used in req
+      q: PropTypes.string.isRequired, // query used in req
+      [gPronounceCacheIndexParam]: PropTypes.string, // index used in cache
+    })
+  ).isRequired,
   autoPlay: PropTypes.number, //0->off,1->JP,2->EN,JP,3->JP,EN
   onPushedPlay: PropTypes.func,
   onAutoPlayDone: PropTypes.func,

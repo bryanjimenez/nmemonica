@@ -1,5 +1,6 @@
 import orderBy from "lodash/orderBy";
 import { AUTOPLAY_EN_JP, AUTOPLAY_JP_EN } from "../actions/settingsAct";
+import { gPronounceCacheIndexParam } from "../constants/paths";
 import { FILTER_FREQ, FILTER_GRP } from "../reducers/settingsRed";
 import { shuffleArray } from "./arrayHelper";
 import { audioPronunciation, JapaneseText } from "./JapaneseText";
@@ -338,6 +339,15 @@ export function valueLabelHelper(
 }
 
 /**
+ * if the word has a pronunciation override return the spelling otherwise undefined
+ * @param {*} word
+ * @returns {undefined | String}
+ */
+function idxOf(word) {
+  return word.pronounce ? JapaneseText.parse(word).getSpelling() : undefined;
+}
+
+/**
  *
  * @param {Boolean} prevPlayed has it been manually played
  * @param {*} autoPlay autoPlay setting
@@ -353,14 +363,26 @@ export function audioWordsHelper(
   currentE,
   previous
 ) {
-  const currJ = audioPronunciation(currentJ);
+  const currJ = {
+    tl: "ja",
+    q: audioPronunciation(currentJ),
+    [gPronounceCacheIndexParam]: idxOf(currentJ),
+  };
 
-  let audioWords = [currJ, currentE];
+  let audioWords = [currJ, { tl: "en", q: currentE }];
   if (previous !== undefined && prevPlayed === false) {
     if (autoPlay === AUTOPLAY_EN_JP) {
-      audioWords = [currJ, currentE, audioPronunciation(previous)];
+      audioWords = [
+        currJ,
+        { tl: "en", q: currentE },
+        {
+          tl: "ja",
+          q: audioPronunciation(previous),
+          [gPronounceCacheIndexParam]: idxOf(previous),
+        },
+      ];
     } else if (autoPlay === AUTOPLAY_JP_EN) {
-      audioWords = [currJ, currJ, previous.english];
+      audioWords = [currJ, currJ, { tl: "en", q: previous.english }];
     }
   } else if (prevPlayed === true) {
     if (autoPlay === AUTOPLAY_JP_EN) {

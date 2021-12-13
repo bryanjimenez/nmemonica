@@ -50,15 +50,26 @@ export class JapaneseText {
     return { furigana: this._furigana, kanji: this._kanji };
   }
 
-  static parse(text) {
-    let obj;
+  /**
+   * @returns {JapaneseText}
+   * @param {{japanese:String}| String} obj
+   */
+  static parse(obj) {
+    let text;
+    if (obj.japanese) {
+      text = obj.japanese;
+    } else {
+      text = obj;
+    }
+
+    let result;
     if (text.indexOf("\n") > -1) {
       const [furigana, kanji] = text.split("\n");
-      obj = new JapaneseText(furigana, kanji);
+      result = new JapaneseText(furigana, kanji);
     } else {
-      obj = new JapaneseText(text);
+      result = new JapaneseText(text);
     }
-    return obj;
+    return result;
   }
 
   debug() {

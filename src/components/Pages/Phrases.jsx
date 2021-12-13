@@ -50,6 +50,7 @@ import {
   swipeStart,
 } from "react-slick/lib/utils/innerSliderUtils";
 import { pronounceEndoint } from "../../../environment.development";
+import { addParam } from "../../helper/urlHelper";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -362,10 +363,11 @@ class Phrases extends Component {
 
       if (direction === "up") {
         const inJapanese = audioPronunciation(phrase);
-
-        const japaneseAudio = new Audio(
-          pronounceEndoint + "?tl=" + "ja" + "&q=" + inJapanese
-        );
+        const audioUrl = addParam(pronounceEndoint, {
+          tl: "ja",
+          q: inJapanese,
+        });
+        const japaneseAudio = new Audio(audioUrl);
         try {
           japaneseAudio.play();
         } catch (e) {
@@ -377,9 +379,8 @@ class Phrases extends Component {
         }
       } else if (direction === "down") {
         const inEnglish = phrase.english;
-        const englishAudio = new Audio(
-          pronounceEndoint + "?tl=" + "en" + "&q=" + inEnglish
-        );
+        const audioUrl = addParam(pronounceEndoint, { tl: "en", q: inEnglish });
+        const englishAudio = new Audio(audioUrl);
         try {
           englishAudio.play();
         } catch (e) {

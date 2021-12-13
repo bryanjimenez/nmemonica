@@ -11,6 +11,8 @@ import {
   SERVICE_WORKER_NEW_TERMS_ADDED,
 } from "../src/actions/serviceWorkerAct";
 import md5 from "../lambda/sheets/node_modules/md5/md5.js";
+import { removeParam, renameParam } from "../src/helper/urlHelper";
+import { gPronounceCacheIndexParam } from "../src/constants/paths";
 
 const projectRoot = path.resolve();
 const swPartialCode = projectRoot + "/pwa/sw.js";
@@ -44,22 +46,30 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     });
 
     stream.write("const cacheFilesConst = " + strFilesToCache + ";\n\n");
-    stream.write("const swVersionConst =  '" + md5(buff) + "';\n\n");
+    stream.write("const swVersionConst = '" + md5(buff) + "';\n\n");
 
-    stream.write("const ghURLConst =  '" + appUIEndpoint + "';\n");
-    stream.write("const fbURLConst =  '" + firebaseConfig.databaseURL + "';\n");
+    stream.write("const ghURLConst = '" + appUIEndpoint + "';\n");
+    stream.write("const fbURLConst = '" + firebaseConfig.databaseURL + "';\n");
     stream.write(
-      "const gCloudFnPronounceConst =  '" + pronounceEndoint + "';\n\n"
+      "const gCloudFnPronounceConst = '" + pronounceEndoint + "';\n\n"
     );
 
     stream.write(
-      "const swMsgTypeLoggerConst =  '" + SERVICE_WORKER_LOGGER_MSG + "';\n\n"
+      "const swMsgTypeLoggerConst = '" + SERVICE_WORKER_LOGGER_MSG + "';\n\n"
     );
     stream.write(
-      "const swMsgTypeNewTermsAddedConst =  '" +
+      "const swMsgTypeNewTermsAddedConst = '" +
         SERVICE_WORKER_NEW_TERMS_ADDED +
         "';\n\n"
     );
+
+    stream.write(
+      "const gPronounceCacheIndexParamConst = '" +
+        gPronounceCacheIndexParam +
+        "';\n\n"
+    );
+    stream.write("const removeParamConst = " + removeParam + ";\n\n");
+    stream.write("const renameParamConst = " + renameParam + ";\n\n");
 
     stream.write(buff);
 

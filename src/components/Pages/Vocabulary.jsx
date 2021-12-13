@@ -62,6 +62,7 @@ import {
 } from "react-slick/lib/utils/innerSliderUtils";
 import { pronounceEndoint } from "../../../environment.development";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
+import { addParam } from "../../helper/urlHelper";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -405,19 +406,28 @@ class Vocabulary extends Component {
 
       if (direction === "up") {
         let inJapanese;
+        let audioUrl;
         if (vocabulary.grp === "Verb" && this.props.verbForm !== "dictionary") {
           const dictionaryForm = JapaneseVerb.parse(vocabulary);
           const verb = verbToTargetForm(dictionaryForm, this.props.verbForm);
           inJapanese = audioPronunciation({
             japanese: verb.getSpelling(),
           });
+          audioUrl = addParam(pronounceEndoint, {
+            tl: "ja",
+            q: inJapanese,
+            [gPronounceCacheIndexParam]: verb.getSpelling(),
+          });
         } else {
           inJapanese = audioPronunciation(vocabulary);
+          audioUrl = addParam(pronounceEndoint, {
+            tl: "ja",
+            q: inJapanese,
+            [gPronounceCacheIndexParam]: vocabulary.getSpelling(),
+          });
         }
 
-        const japaneseAudio = new Audio(
-          pronounceEndoint + "?tl=" + "ja" + "&q=" + inJapanese
-        );
+        const japaneseAudio = new Audio(audioUrl);
         try {
           japaneseAudio.play();
         } catch (e) {
@@ -429,9 +439,8 @@ class Vocabulary extends Component {
         }
       } else if (direction === "down") {
         const inEnglish = vocabulary.english;
-        const englishAudio = new Audio(
-          pronounceEndoint + "?tl=" + "en" + "&q=" + inEnglish
-        );
+        const audioUrl = addParam(pronounceEndoint, { tl: "en", q: inEnglish });
+        const englishAudio = new Audio(audioUrl);
         try {
           englishAudio.play();
         } catch (e) {
