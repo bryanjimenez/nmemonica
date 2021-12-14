@@ -23,16 +23,22 @@ export async function g_translate_pronounce(req, res) {
   } else if (req.method === "GET") {
     const { q, tl } = req.query;
 
-    const googleTranslate = await axios.get(gTranslateEndPoint, {
-      responseType: "arraybuffer",
-      headers: { "content-type": "audio/mpeg" },
-      params: { ie: "UTF-8", tl, client: "tw-ob", q },
-    });
+    try {
+      const googleTranslate = await axios.get(gTranslateEndPoint, {
+        responseType: "arraybuffer",
+        headers: { "content-type": "audio/mpeg" },
+        params: { ie: "UTF-8", tl, client: "tw-ob", q },
+      });
 
-    if (googleTranslate.status === 200) {
-      res.set("content-type", "audio/mpeg");
+      if (googleTranslate.status === 200) {
+        res.set("content-type", "audio/mpeg");
+      }
+
+      return res.status(googleTranslate.status).send(googleTranslate.data);
+    } catch (e) {
+      console.log(JSON.stringify({ severity: "ERROR", message: e.message }));
+      return res.status(500).json({ error: e.message });
     }
-
-    return res.status(googleTranslate.status).send(googleTranslate.data);
   }
+  return res.sendStatus(400);
 }

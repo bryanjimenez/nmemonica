@@ -50,26 +50,14 @@ export class JapaneseText {
     return { furigana: this._furigana, kanji: this._kanji };
   }
 
-  /**
-   * @returns {JapaneseText}
-   * @param {{japanese:String}| String} obj
-   */
-  static parse(obj) {
-    let text;
-    if (obj.japanese) {
-      text = obj.japanese;
-    } else {
-      text = obj;
-    }
+  static parse = japaneseTextParse;
 
-    let result;
-    if (text.indexOf("\n") > -1) {
-      const [furigana, kanji] = text.split("\n");
-      result = new JapaneseText(furigana, kanji);
-    } else {
-      result = new JapaneseText(text);
-    }
-    return result;
+  isSlang() {
+    return this.slang === true;
+  }
+
+  isKeigo() {
+    return this.keigo === true;
   }
 
   debug() {
@@ -116,6 +104,36 @@ export class JapaneseText {
 
     return htmlElement;
   }
+}
+
+/**
+ * @returns {JapaneseText}
+ * @param {*} rawObj
+ */
+function japaneseTextParse(rawObj, childType) {
+  let constructorParams;
+  if (rawObj.japanese) {
+    // [furigana, kanji]
+    constructorParams = rawObj.japanese.split("\n");
+  } else {
+    constructorParams = rawObj.split("\n");
+  }
+
+  let jText;
+  if (typeof childType === "function") {
+    jText = childType(...constructorParams);
+  } else {
+    jText = new JapaneseText(...constructorParams);
+  }
+
+  if (rawObj.slang && rawObj.slang === true) {
+    jText.slang = true;
+  }
+  if (rawObj.keigo && rawObj.keigo === true) {
+    jText.keigo = true;
+  }
+
+  return jText;
 }
 
 /**

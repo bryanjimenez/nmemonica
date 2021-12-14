@@ -1,7 +1,6 @@
 import data from "../../data/kana.json";
 import { getConsonantVowel } from "./kanaHelper";
 import { JapaneseText } from "./JapaneseText";
-import verbExceptions from "../../data/verbExceptions.json";
 
 export class JapaneseVerb extends JapaneseText {
   constructor(furigana, kanji) {
@@ -9,32 +8,30 @@ export class JapaneseVerb extends JapaneseText {
   }
 
   /**
-   *
-   * @param {{japanese:String}| String} obj
+   * @param {{japanese:String}| String} dataObj
    * @returns {JapaneseVerb}
    */
-  static parse(obj) {
-    let verb;
-    let text;
-    if (obj.japanese) {
-      text = obj.japanese;
-    } else {
-      text = obj;
+  static parse = (dataObj) => {
+    const jVerb = JapaneseText.parse(dataObj, (...o) => new JapaneseVerb(...o));
+
+    if (dataObj.intr && dataObj.intr === true) {
+      jVerb.intr = true;
+    }
+    if (dataObj.exv && dataObj.exv > 0 && dataObj.exv < 4) {
+      jVerb.exv = dataObj.exv;
     }
 
-    if (text.indexOf("\n") > -1) {
-      const [furigana, kanji] = text.split("\n");
-      verb = new JapaneseVerb(furigana, kanji);
-    } else {
-      verb = new JapaneseVerb(text);
-    }
-    return verb;
-  }
+    return jVerb;
+  };
 
   isExceptionVerb() {
-    const spelling = this.getSpelling();
-    return verbExceptions.class[spelling] !== undefined ? true : false;
+    return this.exv !== undefined ? true : false;
   }
+
+  isIntransitive() {
+    return this.intr === true;
+  }
+
   /**
    * @returns the class of verb 1,2,3 (godan,ichidan,irregular)
    */
@@ -43,8 +40,8 @@ export class JapaneseVerb extends JapaneseText {
 
     // verb class 1 exceptions
     const spelling = this.getSpelling();
-    if (verbExceptions.class[spelling] === 1) {
-      return 1;
+    if (this.isExceptionVerb()) {
+      return this.exv;
     }
 
     const verbArr = pronunciation.split("");

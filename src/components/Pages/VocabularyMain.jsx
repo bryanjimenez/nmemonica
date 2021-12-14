@@ -10,7 +10,11 @@ import {
   flipVocabularyPracticeSide,
 } from "../../actions/settingsAct";
 import Sizable from "../Form/Sizable";
-import { audioWordsHelper, valueLabelHelper } from "../../helper/gameHelper";
+import {
+  audioWordsHelper,
+  indicatorHelper,
+  valueLabelHelper,
+} from "../../helper/gameHelper";
 
 class VocabularyMain extends Component {
   constructor(props) {
@@ -63,15 +67,18 @@ class VocabularyMain extends Component {
   render() {
     const vocabulary = this.props.vocabulary;
 
-    let inJapanese = JapaneseText.parse(vocabulary.japanese).toHTML();
+    let inJapanese = JapaneseText.parse(vocabulary).toHTML();
     let inEnglish = vocabulary.english;
     let romaji = vocabulary.romaji;
+
+    const v = new JapaneseText.parse(vocabulary);
+    const inJapaneseLbl = indicatorHelper(v, inJapanese);
 
     const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
       valueLabelHelper(
         this.props.practiceSide,
         inEnglish,
-        inJapanese,
+        inJapaneseLbl,
         "[English]",
         "[Japanese]"
       );

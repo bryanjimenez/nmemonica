@@ -14,6 +14,7 @@ import {
 } from "../../actions/settingsAct";
 import {
   audioWordsHelper,
+  indicatorHelper,
   valueLabelHelper,
   verbToTargetForm,
 } from "../../helper/gameHelper";
@@ -198,21 +199,13 @@ class VerbMain extends Component {
     const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
     const v = JapaneseVerb.parse(verb);
-    const showAsterix = v.isExceptionVerb() || v.getVerbClass() === 3;
-    const inJapanese2 = showAsterix ? (
-      <span>
-        {inJapanese}
-        <span> *</span>
-      </span>
-    ) : (
-      inJapanese
-    );
+    const inJapaneseLbl = indicatorHelper(v, inJapanese);
 
     const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
       valueLabelHelper(
         this.props.practiceSide,
         inEnglish,
-        inJapanese2,
+        inJapaneseLbl,
         eLabel,
         jLabel
       );

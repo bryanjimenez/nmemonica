@@ -7,7 +7,7 @@ import md5 from "md5";
 export async function sheets_sync_opposites(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Vocabulary!A1:H";
+    const range = "Vocabulary!A1:I";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -33,8 +33,8 @@ export async function sheets_sync_opposites(req, res) {
       EN = 3,
       GRP = 4,
       SUBG = 5,
-      OPP = 7,
-      UID = 8;
+      OPP = 8;
+    // UID = 8;
 
     let pairs = [];
     const vocabulary = sheetData.reduce((acc, el, i) => {

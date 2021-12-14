@@ -1,9 +1,11 @@
+import React from "react";
 import orderBy from "lodash/orderBy";
 import { AUTOPLAY_EN_JP, AUTOPLAY_JP_EN } from "../actions/settingsAct";
 import { gPronounceCacheIndexParam } from "../constants/paths";
 import { FILTER_FREQ, FILTER_GRP } from "../reducers/settingsRed";
 import { shuffleArray } from "./arrayHelper";
 import { audioPronunciation, JapaneseText } from "./JapaneseText";
+import { JapaneseVerb } from "./JapaneseVerb";
 
 /**
  * Goes to the next term or selects one from the frequency list
@@ -304,6 +306,60 @@ export function verbToTargetForm(dictionaryForm, targetForm) {
     case "ta_form":
       return dictionaryForm.taForm();
   }
+}
+
+/**
+ * decorates label with metadata info (intransitive, keigo, etc.)
+ * @param {*} jObj
+ * @param {*} inJapanese
+ * @returns
+ */
+export function indicatorHelper(jObj, inJapanese) {
+  let indicators = [];
+
+  let showAsterix = false;
+  let showIntr = false;
+  if (jObj.constructor.name === JapaneseVerb.name) {
+    showAsterix = jObj.isExceptionVerb() || jObj.getVerbClass() === 3;
+    showIntr = jObj.isIntransitive();
+  }
+
+  const showSlang = jObj.isSlang();
+  const showKeigo = jObj.isKeigo();
+
+  if (showIntr) {
+    indicators = [...indicators, "intr"];
+  }
+  if (showSlang) {
+    indicators = [...indicators, "slang"];
+  }
+  if (showKeigo) {
+    indicators = [...indicators, "keigo"];
+  }
+  if (showAsterix && indicators.length > 0) {
+    indicators = ["*", ...indicators];
+  }
+
+  let inJapaneseLbl;
+  if (indicators.length > 0) {
+    inJapaneseLbl = (
+      <span>
+        {inJapanese}
+        <span className="fs-medium"> ({indicators.join(", ")})</span>
+      </span>
+    );
+  } else if (showAsterix) {
+    inJapaneseLbl = (
+      <span>
+        {inJapanese}
+        <span> {"*"}</span>
+      </span>
+    );
+  } else {
+    inJapaneseLbl = inJapanese;
+  }
+
+  return inJapaneseLbl;
 }
 
 /**

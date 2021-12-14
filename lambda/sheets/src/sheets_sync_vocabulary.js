@@ -5,10 +5,39 @@ import { google } from "googleapis";
 import { googleSheetId } from "../../../environment.development.js";
 import md5 from "md5";
 
+function setPropsFromTags(vocabulary, tag) {
+  const tags = tag.split(/[\n\s, ]+/);
+
+  tags.forEach((t) => {
+    switch (t) {
+      case "intr":
+        vocabulary.intr = true;
+        break;
+      case "slang":
+        vocabulary.slang = true;
+        break;
+      case "keigo":
+        vocabulary.keigo = true;
+        break;
+      case "EV1":
+        vocabulary.exv = 1;
+        break;
+      default:
+        if (!vocabulary.tag || vocabulary.tag.length === 0) {
+          vocabulary.tag = [t];
+        } else {
+          vocabulary.tag = [...vocabulary.tag, t];
+        }
+    }
+  });
+
+  return vocabulary;
+}
+
 export async function sheets_sync_vocabulary(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Vocabulary!A1:G";
+    const range = "Vocabulary!A1:H";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -43,12 +72,13 @@ export async function sheets_sync_vocabulary(req, res) {
       GRP = 4,
       SUBG = 5,
       PRN = 6,
-      UID = 7;
+      TAG = 7;
+    // UID = 7;
 
     let sheetHeaders = [];
     const vocabularyAfter = sheetData.reduce((acc, el, i) => {
       if (i > 0) {
-        const vocabulary = {
+        let vocabulary = {
           japanese: el[JP],
           romaji: el[RM],
           english: el[EN],
@@ -66,6 +96,10 @@ export async function sheets_sync_vocabulary(req, res) {
 
         if (el[PRN] && el[PRN] !== "") {
           vocabulary.pronounce = el[PRN];
+        }
+
+        if (el[TAG] && el[TAG] !== "") {
+          vocabulary = setPropsFromTags(vocabulary, el[TAG]);
         }
 
         if (el[RM] && el[RM] !== "") {
