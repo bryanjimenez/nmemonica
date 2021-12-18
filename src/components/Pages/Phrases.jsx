@@ -30,7 +30,6 @@ import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
 import {
   alphaOrder,
-  getTerm,
   play,
   minimumTimeForSpaceRepUpdate,
   randomOrder,
@@ -38,6 +37,8 @@ import {
   termFilterByType,
   valueLabelHelper,
   audioWordsHelper,
+  getTermUID,
+  getTerm,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 import { logger } from "../../actions/consoleAct";
@@ -116,26 +117,29 @@ class Phrases extends Component {
       this.state.reinforcedUID !== prevState.reinforcedUID
     ) {
       if (this.state.filteredPhrases.length > 0) {
-        const term = getTerm(
-          this.state.reinforcedUID,
-          this.state.frequency,
-          this.state.selectedIndex,
-          this.state.order,
-          this.state.filteredPhrases
-        );
+        const uid =
+          this.state.reinforcedUID ||
+          getTermUID(
+            this.state.selectedIndex,
+            this.state.order,
+            this.state.filteredPhrases
+          );
+        const term = getTerm(uid, this.props.phrases);
+
         spaceRepLog(this.props.logger, term, this.props.repetition);
 
         if (
           this.state.selectedIndex !== prevState.selectedIndex ||
           this.state.reinforcedUID !== prevState.reinforcedUID
         ) {
-          const prevTerm = getTerm(
-            prevState.reinforcedUID,
-            this.state.frequency,
-            prevState.selectedIndex,
-            this.state.order,
-            this.state.filteredPhrases
-          );
+          const prevUID =
+            prevState.reinforcedUID ||
+            getTermUID(
+              prevState.selectedIndex,
+              this.state.order,
+              this.state.filteredPhrases
+            );
+          const prevTerm = getTerm(prevUID, this.props.phrases);
 
           const prevPhrase = {
             japanese: prevTerm.japanese,
@@ -238,13 +242,15 @@ class Phrases extends Component {
   }
 
   gotoNextSlide() {
-    let phrase = getTerm(
-      this.state.reinforcedUID,
-      this.state.frequency,
-      this.state.selectedIndex,
-      this.state.order,
-      this.state.filteredPhrases
-    );
+    const uid =
+      this.state.reinforcedUID ||
+      getTermUID(
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredPhrases
+      );
+    let phrase = getTerm(uid, this.props.phrases);
+
     // prevent updates when quick scrolling
     if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
       const shouldIncrement = !this.state.frequency.includes(phrase.uid);
@@ -302,13 +308,7 @@ class Phrases extends Component {
       showRomaji: false,
     });
 
-    const phrase = getTerm(
-      uid,
-      undefined,
-      undefined,
-      undefined,
-      this.state.filteredPhrases
-    );
+    const phrase = getTerm(uid, this.props.phrases);
 
     const text =
       phrase.english.length < 15
@@ -353,13 +353,14 @@ class Phrases extends Component {
     } else if (direction === "right") {
       this.gotoPrev();
     } else {
-      const phrase = getTerm(
-        this.state.reinforcedUID,
-        this.state.frequency,
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredPhrases
-      );
+      const uid =
+        this.state.reinforcedUID ||
+        getTermUID(
+          this.state.selectedIndex,
+          this.state.order,
+          this.state.filteredPhrases
+        );
+      const phrase = getTerm(uid, this.props.phrases);
 
       if (direction === "up") {
         const inJapanese = audioPronunciation(phrase);
@@ -398,13 +399,15 @@ class Phrases extends Component {
     if (this.state.filteredPhrases.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
-    let phrase = getTerm(
-      this.state.reinforcedUID,
-      this.state.frequency,
-      this.state.selectedIndex,
-      this.state.order,
-      this.state.filteredPhrases
-    );
+    const uid =
+      this.state.reinforcedUID ||
+      getTermUID(
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredPhrases
+      );
+    let phrase = getTerm(uid, this.props.phrases);
+    phrase.reinforce = this.state.frequency.includes(phrase.uid);
 
     let japanesePhrase = JapaneseText.parse(phrase.japanese).toHTML();
     let englishPhrase = phrase.english;

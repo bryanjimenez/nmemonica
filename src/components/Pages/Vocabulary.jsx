@@ -44,13 +44,15 @@ import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
 import {
   alphaOrder,
-  getTerm,
   play,
   minimumTimeForSpaceRepUpdate,
   randomOrder,
   spaceRepOrder,
   termFilterByType,
   verbToTargetForm,
+  getTermUID,
+  getTerm,
+  cacheIdx,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 import { logger } from "../../actions/consoleAct";
@@ -63,6 +65,7 @@ import {
 import { pronounceEndoint } from "../../../environment.development";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { addParam } from "../../helper/urlHelper";
+import { gPronounceCacheIndexParam } from "../../constants/paths";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -118,13 +121,16 @@ class Vocabulary extends Component {
       this.state.reinforcedUID !== prevState.reinforcedUID
     ) {
       if (this.state.filteredVocab.length > 0) {
-        const term = getTerm(
-          this.state.reinforcedUID,
-          this.state.frequency,
-          this.state.selectedIndex,
-          this.state.order,
-          this.state.filteredVocab
-        );
+        const uid =
+          this.state.reinforcedUID ||
+          getTermUID(
+            this.state.selectedIndex,
+            this.state.order,
+            this.state.filteredVocab
+          );
+
+        const term = getTerm(uid, this.props.vocab);
+
         spaceRepLog(this.props.logger, term, this.props.repetition);
       }
     }
@@ -222,20 +228,19 @@ class Vocabulary extends Component {
   verbNonVerbTransition(nextIndex, nextUID) {
     let aPromise = Promise.resolve();
 
-    const prevVocab = getTerm(
-      this.state.reinforcedUID,
-      this.state.frequency,
-      this.state.selectedIndex,
-      this.state.order,
-      this.state.filteredVocab
-    );
-    const nextVocab = getTerm(
-      nextUID,
-      this.state.frequency,
-      nextIndex,
-      this.state.order,
-      this.state.filteredVocab
-    );
+    const uidPrev =
+      this.state.reinforcedUID ||
+      getTermUID(
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredVocab
+      );
+    const prevVocab = getTerm(uidPrev, this.props.vocab);
+
+    const uidNext =
+      nextUID ||
+      getTermUID(nextIndex, this.state.order, this.state.filteredVocab);
+    const nextVocab = getTerm(uidNext, this.props.vocab);
 
     // non verb to verb
     if (prevVocab.grp !== "Verb" && nextVocab.grp === "Verb") {
@@ -285,13 +290,14 @@ class Vocabulary extends Component {
   }
 
   gotoNextSlide() {
-    const vocabulary = getTerm(
-      this.state.reinforcedUID,
-      this.state.frequency,
-      this.state.selectedIndex,
-      this.state.order,
-      this.state.filteredVocab
-    );
+    const uid =
+      this.state.reinforcedUID ||
+      getTermUID(
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredVocab
+      );
+    const vocabulary = getTerm(uid, this.props.vocab);
 
     // prevent updates when quick scrolling
     if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
@@ -350,13 +356,7 @@ class Vocabulary extends Component {
       showHint: false,
     });
 
-    const vocabulary = getTerm(
-      uid,
-      undefined,
-      undefined,
-      undefined,
-      this.state.filteredVocab
-    );
+    const vocabulary = getTerm(uid, this.props.vocab);
 
     this.props.logger("reinforce (" + vocabulary.english + ")", 3);
   }
@@ -396,34 +396,33 @@ class Vocabulary extends Component {
     } else if (direction === "right") {
       this.gotoPrev();
     } else {
-      const vocabulary = getTerm(
-        this.state.reinforcedUID,
-        this.state.frequency,
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredVocab
-      );
+      const uid =
+        this.state.reinforcedUID ||
+        getTermUID(
+          this.state.selectedIndex,
+          this.state.order,
+          this.state.filteredVocab
+        );
+      const vocabulary = getTerm(uid, this.props.vocab);
 
       if (direction === "up") {
-        let inJapanese;
         let audioUrl;
         if (vocabulary.grp === "Verb" && this.props.verbForm !== "dictionary") {
           const dictionaryForm = JapaneseVerb.parse(vocabulary);
           const verb = verbToTargetForm(dictionaryForm, this.props.verbForm);
-          inJapanese = audioPronunciation({
+          const inJapanese = audioPronunciation({
             japanese: verb.getSpelling(),
           });
           audioUrl = addParam(pronounceEndoint, {
             tl: "ja",
             q: inJapanese,
-            [gPronounceCacheIndexParam]: verb.getSpelling(),
+            // [gPronounceCacheIndexParam]: conjugated verbs aren't overriden
           });
         } else {
-          inJapanese = audioPronunciation(vocabulary);
           audioUrl = addParam(pronounceEndoint, {
             tl: "ja",
-            q: inJapanese,
-            [gPronounceCacheIndexParam]: vocabulary.getSpelling(),
+            q: audioPronunciation(vocabulary),
+            [gPronounceCacheIndexParam]: cacheIdx(vocabulary),
           });
         }
 
@@ -458,13 +457,15 @@ class Vocabulary extends Component {
     if (this.state.filteredVocab.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
-    const vocabulary = getTerm(
-      this.state.reinforcedUID,
-      this.state.frequency,
-      this.state.selectedIndex,
-      this.state.order,
-      this.state.filteredVocab
-    );
+    const uid =
+      this.state.reinforcedUID ||
+      getTermUID(
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredVocab
+      );
+    const vocabulary = getTerm(uid, this.props.vocab);
+    vocabulary.reinforce = this.state.frequency.includes(vocabulary.uid);
 
     const isVerb = vocabulary.grp === "Verb";
 
@@ -512,6 +513,7 @@ class Vocabulary extends Component {
             <VerbMain
               verb={vocabulary}
               practiceSide={this.props.practiceSide}
+              linkToOtherTerm={(uid) => this.setState({ reinforcedUID: uid })}
             />
           ) : (
             <VocabularyMain vocabulary={vocabulary} />

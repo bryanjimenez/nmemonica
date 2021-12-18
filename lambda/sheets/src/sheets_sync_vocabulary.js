@@ -10,9 +10,6 @@ function setPropsFromTags(vocabulary, tag) {
 
   tags.forEach((t) => {
     switch (t) {
-      case "intr":
-        vocabulary.intr = true;
-        break;
       case "slang":
         vocabulary.slang = true;
         break;
@@ -21,6 +18,12 @@ function setPropsFromTags(vocabulary, tag) {
         break;
       case "EV1":
         vocabulary.exv = 1;
+        break;
+      case "intr":
+        vocabulary.intr = true;
+        break;
+      case new RegExp("intr:[a-z0-9]{32}").test(t) && t:
+        vocabulary.trans = t.split(":")[1];
         break;
       default:
         if (!vocabulary.tag || vocabulary.tag.length === 0) {

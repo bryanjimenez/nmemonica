@@ -14,9 +14,14 @@ export class JapaneseVerb extends JapaneseText {
   static parse = (dataObj) => {
     const jVerb = JapaneseText.parse(dataObj, (...o) => new JapaneseVerb(...o));
 
-    if (dataObj.intr && dataObj.intr === true) {
-      jVerb.intr = true;
+    if (dataObj.intr) {
+      jVerb.intr = dataObj.intr;
     }
+
+    if (dataObj.trans) {
+      jVerb.trans = dataObj.trans;
+    }
+
     if (dataObj.exv && dataObj.exv > 0 && dataObj.exv < 4) {
       jVerb.exv = dataObj.exv;
     }
@@ -28,8 +33,20 @@ export class JapaneseVerb extends JapaneseText {
     return this.exv !== undefined ? true : false;
   }
 
+  isTransitive() {
+    return !this.isIntransitive();
+  }
+
   isIntransitive() {
-    return this.intr === true;
+    return this.trans !== undefined || this.intr === true;
+  }
+
+  getTransitivePair() {
+    return this.isIntransitive() && this.trans ? this.trans : undefined;
+  }
+
+  getIntransitivePair() {
+    return this.isTransitive() && this.intr ? this.intr : undefined;
   }
 
   /**

@@ -1,4 +1,5 @@
 import React from "react";
+import classNames from "classnames";
 import orderBy from "lodash/orderBy";
 import { AUTOPLAY_EN_JP, AUTOPLAY_JP_EN } from "../actions/settingsAct";
 import { gPronounceCacheIndexParam } from "../constants/paths";
@@ -56,36 +57,40 @@ export function play(
 }
 
 /**
- * Retrieves term (word or phrase) based on the selectedIndex or reinforcedUID. Takes into account ordering.
- * @param {String} reinforcedUID
- * @param {Array} frequency
- * @param {Number} selectedIndex
+ * @returns {String} uid
+ * @param {number} selectedIndex
  * @param {number[] | undefined} alternateOrder
- * @param {Array} filteredTerms
- * @returns the term (word or phrase)
+ * @param {Object[]} filteredTerms
  */
-export function getTerm(
-  reinforcedUID,
-  frequency,
-  selectedIndex,
-  alternateOrder,
-  filteredTerms
-) {
+export function getTermUID(selectedIndex, alternateOrder, filteredTerms) {
   let term;
-  if (reinforcedUID) {
-    term = filteredTerms.find((v) => reinforcedUID === v.uid);
+
+  if (alternateOrder) {
+    const index = alternateOrder[selectedIndex];
+    term = filteredTerms[index];
   } else {
-    if (alternateOrder) {
-      const index = alternateOrder[selectedIndex];
-      term = filteredTerms[index];
-    } else {
-      term = filteredTerms[selectedIndex];
-    }
+    term = filteredTerms[selectedIndex];
   }
 
-  if (frequency) {
-    term.reinforce = frequency.includes(term.uid);
+  if (!term) {
+    throw new Error("No term found");
   }
+
+  return term.uid;
+}
+
+/**
+ * @returns {Object} the term in the list matching the uid
+ * @param {String} uid
+ * @param {Object[]} list of terms
+ */
+export function getTerm(uid, list) {
+  const term = list.find((v) => uid === v.uid);
+
+  if (!term) {
+    throw new Error("No term found");
+  }
+
   return term;
 }
 
@@ -310,34 +315,59 @@ export function verbToTargetForm(dictionaryForm, targetForm) {
 
 /**
  * decorates label with metadata info (intransitive, keigo, etc.)
- * @param {*} jObj
+ * @param {JapaneseText | JapaneseVerb} jObj
  * @param {*} inJapanese
  * @returns
  */
-export function indicatorHelper(jObj, inJapanese) {
+export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
   let indicators = [];
 
   let showAsterix = false;
   let showIntr = false;
+  let showTrans = false;
+  let pairUID;
   if (jObj.constructor.name === JapaneseVerb.name) {
     showAsterix = jObj.isExceptionVerb() || jObj.getVerbClass() === 3;
     showIntr = jObj.isIntransitive();
+    showTrans = jObj.isTransitive();
+    pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
   }
 
   const showSlang = jObj.isSlang();
   const showKeigo = jObj.isKeigo();
 
-  if (showIntr) {
-    indicators = [...indicators, "intr"];
+  if (showIntr || showTrans) {
+    indicators = [
+      ...indicators,
+      <span
+        key={indicators.length + 1}
+        className={classNames({ "question-color": pairUID })}
+        onClick={
+          pairUID
+            ? () => {
+                jumpToTerm(pairUID);
+              }
+            : undefined
+        }
+      >
+        {showIntr ? "intr" : "trans"}
+      </span>,
+    ];
   }
   if (showSlang) {
-    indicators = [...indicators, "slang"];
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>slang</span>,
+    ];
   }
   if (showKeigo) {
-    indicators = [...indicators, "keigo"];
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>keigo</span>,
+    ];
   }
   if (showAsterix && indicators.length > 0) {
-    indicators = ["*", ...indicators];
+    indicators = [<span key={indicators.length + 1}>*</span>, ...indicators];
   }
 
   let inJapaneseLbl;
@@ -345,7 +375,17 @@ export function indicatorHelper(jObj, inJapanese) {
     inJapaneseLbl = (
       <span>
         {inJapanese}
-        <span className="fs-medium"> ({indicators.join(", ")})</span>
+        <span className="fs-medium">
+          <span> (</span>
+          {indicators.reduce((a, c, i) => {
+            if (i > 0 && i < indicators.length) {
+              return [...a, <span key={indicators.length + i}> , </span>, c];
+            } else {
+              return [...a, c];
+            }
+          }, [])}
+          <span>)</span>
+        </span>
       </span>
     );
   } else if (showAsterix) {
@@ -395,11 +435,12 @@ export function valueLabelHelper(
 }
 
 /**
- * if the word has a pronunciation override return the spelling otherwise undefined
+ * For cache or indexedDB indexing. Allows to add expression term that can override specific forms of verbs
+ * If the word has a pronunciation override return the spelling otherwise undefined
  * @param {*} word
  * @returns {undefined | String}
  */
-function idxOf(word) {
+export function cacheIdx(word) {
   return word.pronounce ? JapaneseText.parse(word).getSpelling() : undefined;
 }
 
@@ -422,7 +463,7 @@ export function audioWordsHelper(
   const currJ = {
     tl: "ja",
     q: audioPronunciation(currentJ),
-    [gPronounceCacheIndexParam]: idxOf(currentJ),
+    [gPronounceCacheIndexParam]: cacheIdx(currentJ),
   };
 
   let audioWords = [currJ, { tl: "en", q: currentE }];
@@ -434,7 +475,7 @@ export function audioWordsHelper(
         {
           tl: "ja",
           q: audioPronunciation(previous),
-          [gPronounceCacheIndexParam]: idxOf(previous),
+          [gPronounceCacheIndexParam]: cacheIdx(previous),
         },
       ];
     } else if (autoPlay === AUTOPLAY_JP_EN) {

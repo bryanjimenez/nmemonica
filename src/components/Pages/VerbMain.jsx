@@ -199,7 +199,7 @@ class VerbMain extends Component {
     const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
     const v = JapaneseVerb.parse(verb);
-    const inJapaneseLbl = indicatorHelper(v, inJapanese);
+    const inJapaneseLbl = indicatorHelper(v, inJapanese, this.props.linkToOtherTerm);
 
     const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
       valueLabelHelper(
