@@ -25,6 +25,9 @@ function setPropsFromTags(vocabulary, tag) {
       case new RegExp("intr:[a-z0-9]{32}").test(t) && t:
         vocabulary.trans = t.split(":")[1];
         break;
+      case new RegExp("(i|na)-adj").test(t) && t:
+        vocabulary.adj = t.split("-")[0];
+        break;
       default:
         if (!vocabulary.tag || vocabulary.tag.length === 0) {
           vocabulary.tag = [t];

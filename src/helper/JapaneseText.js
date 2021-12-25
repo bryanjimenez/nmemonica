@@ -60,6 +60,14 @@ export class JapaneseText {
     return this.keigo === true;
   }
 
+  isNaAdj() {
+    return this.adj === "na";
+  }
+
+  isIAdj() {
+    return this.adj === "i";
+  }
+
   debug() {
     return JSON.stringify(this);
   }
@@ -131,6 +139,9 @@ function japaneseTextParse(rawObj, childType) {
   }
   if (rawObj.keigo && rawObj.keigo === true) {
     jText.keigo = true;
+  }
+  if (rawObj.adj && (rawObj.adj === "na" || rawObj.adj === "i")) {
+    jText.adj = rawObj.adj;
   }
 
   return jText;

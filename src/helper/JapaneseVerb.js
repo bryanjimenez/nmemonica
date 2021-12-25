@@ -33,10 +33,6 @@ export class JapaneseVerb extends JapaneseText {
     return this.exv !== undefined ? true : false;
   }
 
-  isTransitive() {
-    return !this.isIntransitive();
-  }
-
   isIntransitive() {
     return this.trans !== undefined || this.intr === true;
   }
@@ -46,7 +42,7 @@ export class JapaneseVerb extends JapaneseText {
   }
 
   getIntransitivePair() {
-    return this.isTransitive() && this.intr ? this.intr : undefined;
+    return !this.isIntransitive() && this.intr ? this.intr : undefined;
   }
 
   /**

@@ -324,24 +324,26 @@ export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
 
   let showAsterix = false;
   let showIntr = false;
-  let showTrans = false;
   let pairUID;
   if (jObj.constructor.name === JapaneseVerb.name) {
     showAsterix = jObj.isExceptionVerb() || jObj.getVerbClass() === 3;
     showIntr = jObj.isIntransitive();
-    showTrans = jObj.isTransitive();
     pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
   }
 
+  const showNaAdj = jObj.isNaAdj();
   const showSlang = jObj.isSlang();
   const showKeigo = jObj.isKeigo();
 
-  if (showIntr || showTrans) {
+  if (showIntr || pairUID) {
     indicators = [
       ...indicators,
       <span
         key={indicators.length + 1}
-        className={classNames({ "question-color": pairUID })}
+        className={classNames({
+          clickable: pairUID,
+          "question-color": pairUID,
+        })}
         onClick={
           pairUID
             ? () => {
@@ -375,6 +377,7 @@ export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
     inJapaneseLbl = (
       <span>
         {inJapanese}
+        {showNaAdj && <span className="opacity-25"> {"な"}</span>}
         <span className="fs-medium">
           <span> (</span>
           {indicators.reduce((a, c, i) => {
@@ -393,6 +396,13 @@ export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
       <span>
         {inJapanese}
         <span> {"*"}</span>
+      </span>
+    );
+  } else if (showNaAdj) {
+    inJapaneseLbl = (
+      <span>
+        {inJapanese}
+        <span className="opacity-25"> {"な"}</span>
       </span>
     );
   } else {
