@@ -610,8 +610,6 @@ export function removeFrequencyPhrase(uid) {
         value: newValue,
       });
     }
-
-    return o;
   };
 }
 
@@ -672,7 +670,16 @@ export function updateSpaceRepPhrase(uid, shouldIncrement = true) {
   return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, shouldIncrement);
 }
 
-export function updateSpaceRepTerm(aType, uid, shouldIncrement = true) {
+export function toggleFurigana(uid) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { toggle: ["f"] });
+}
+
+export function updateSpaceRepTerm(
+  aType,
+  uid,
+  shouldIncrement = true,
+  options
+) {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
@@ -698,8 +705,17 @@ export function updateSpaceRepTerm(aType, uid, shouldIncrement = true) {
       count = 1;
     }
 
+    let toggled = {};
+    if (options && options.toggle) {
+      toggled = options.toggle.reduce((acc, attr) => {
+        // this default is only for furigana so far
+        const val = !(spaceRep[uid] && spaceRep[uid][attr] === false) || false;
+        return { ...acc, [attr]: !val };
+      }, {});
+    }
+
     const now = new Date().toJSON();
-    const o = { c: count, d: now };
+    const o = { ...(spaceRep[uid] || {}), c: count, d: now, ...toggled };
 
     const newValue = { ...spaceRep, [uid]: o };
     localStoreAttrUpdate(time, getState, path, attr, newValue);

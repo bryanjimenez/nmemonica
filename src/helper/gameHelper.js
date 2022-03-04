@@ -499,3 +499,35 @@ export function audioWordsHelper(
 
   return audioWords;
 }
+
+/**
+ * Creates the settings object for furigana toggling
+ * @param {Boolean} englishSideUp
+ * @param {String} uid
+ * @param {Object} settings
+ * @param {Function} toggleFn
+ * @returns
+ */
+export function toggleFuriganaSettingHelper(
+  englishSideUp,
+  uid,
+  settings,
+  toggleFn
+) {
+  let furiganaToggable;
+
+  if (!englishSideUp) {
+    // show by default unless explicitly set to false
+    const show = !(settings[uid] && settings[uid].f === false);
+    furiganaToggable = {
+      furigana: {
+        show,
+        toggle: () => {
+          toggleFn(uid);
+        },
+      },
+    };
+  }
+
+  return furiganaToggable;
+}

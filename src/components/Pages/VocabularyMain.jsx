@@ -8,11 +8,13 @@ import {
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
   flipVocabularyPracticeSide,
+  toggleFurigana,
 } from "../../actions/settingsAct";
 import Sizable from "../Form/Sizable";
 import {
   audioWordsHelper,
   indicatorHelper,
+  toggleFuriganaSettingHelper,
   valueLabelHelper,
 } from "../../helper/gameHelper";
 
@@ -67,7 +69,14 @@ class VocabularyMain extends Component {
   render() {
     const vocabulary = this.props.vocabulary;
 
-    let inJapanese = JapaneseText.parse(vocabulary).toHTML();
+    const furiganaToggable = toggleFuriganaSettingHelper(
+      this.props.practiceSide,
+      vocabulary.uid,
+      this.props.furigana,
+      this.props.toggleFurigana
+    );
+
+    let inJapanese = JapaneseText.parse(vocabulary).toHTML(furiganaToggable);
     let inEnglish = vocabulary.english;
     let romaji = vocabulary.romaji;
 
@@ -171,6 +180,7 @@ const mapStateToProps = (state) => {
     prevTerm: state.vocabulary.previous,
     prevPushPlay: state.vocabulary.pushedPlay,
     touchSwipe: state.settings.global.touchSwipe,
+    furigana: state.settings.vocabulary.repetition,
   };
 };
 
@@ -189,9 +199,13 @@ VocabularyMain.propTypes = {
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
   touchSwipe: PropTypes.bool,
+  furigana: PropTypes.object,
+  toggleFurigana: PropTypes.func,
+  toggleFuriganaSettingHelper: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
   pushedPlay,
   flipVocabularyPracticeSide,
+  toggleFurigana,
 })(VocabularyMain);

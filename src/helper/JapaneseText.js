@@ -76,10 +76,29 @@ export class JapaneseText {
     return this._furigana + (this._kanji ? "\n" + this._kanji : "");
   }
 
-  toHTML() {
+  toHTML(options) {
     let htmlElement;
+
+    let noFurigana;
+    let furiganaToggle;
+    if (options && options.furigana) {
+      noFurigana = !options.furigana.show;
+      if (typeof options.furigana.toggle === "function") {
+        furiganaToggle = options.furigana.toggle;
+      }
+    }
+
     if (!this.hasFurigana()) {
       htmlElement = <span>{this._furigana}</span>;
+    } else if (noFurigana === true) {
+      htmlElement = (
+        <span
+          className={classNames({ clickable: furiganaToggle })}
+          onClick={furiganaToggle}
+        >
+          {this.getSpelling()}
+        </span>
+      );
     } else {
       try {
         const { kanjis, furiganas, nonKanjis, startsWKana } = furiganaParse(
@@ -90,7 +109,8 @@ export class JapaneseText {
           kanjis,
           furiganas,
           nonKanjis,
-          startsWKana
+          startsWKana,
+          furiganaToggle
         );
       } catch (e) {
         console.error(e);
@@ -301,7 +321,13 @@ export function validateParseFurigana(
  * @param {String[]} nonKanjis
  * @param {boolean} startsWKana
  */
-export function buildHTMLElement(kanjis, furiganas, nonKanjis, startsWKana) {
+export function buildHTMLElement(
+  kanjis,
+  furiganas,
+  nonKanjis,
+  startsWKana,
+  furiganaToggle
+) {
   let sentence = [];
   const kanjiWFurigana = kanjis.map((kanji, i) => (
     <ruby key={i}>
@@ -337,7 +363,14 @@ export function buildHTMLElement(kanjis, furiganas, nonKanjis, startsWKana) {
     i++;
   }
 
-  return <span>{sentence}</span>;
+  return (
+    <span
+      className={classNames({ clickable: furiganaToggle })}
+      onClick={furiganaToggle}
+    >
+      {sentence}
+    </span>
+  );
 }
 
 /**

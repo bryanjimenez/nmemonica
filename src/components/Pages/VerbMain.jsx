@@ -11,10 +11,12 @@ import {
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
   flipVocabularyPracticeSide,
+  toggleFurigana,
 } from "../../actions/settingsAct";
 import {
   audioWordsHelper,
   indicatorHelper,
+  toggleFuriganaSettingHelper,
   valueLabelHelper,
   verbToTargetForm,
 } from "../../helper/gameHelper";
@@ -180,9 +182,18 @@ class VerbMain extends Component {
     const romaji = this.props.verb.romaji || ".";
 
     const formResult = verbForms.find((form) => form.t === theForm);
-    const japanesePhrase = formResult ? formResult.j : verbForms.dictionary;
+    const japanesePhrase = formResult
+      ? formResult.j
+      : verbForms.find((form) => form.t === "dictionary").j;
 
-    let inJapanese = japanesePhrase.toHTML();
+    const furiganaToggable = toggleFuriganaSettingHelper(
+      this.props.practiceSide,
+      this.props.verb.uid,
+      this.props.furigana,
+      this.props.toggleFurigana
+    );
+
+    let inJapanese = japanesePhrase.toHTML(furiganaToggable);
     let inEnglish = this.props.verb.english;
 
     return { inJapanese, inEnglish, romaji, japanesePhrase };
@@ -199,7 +210,11 @@ class VerbMain extends Component {
     const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
     const v = JapaneseVerb.parse(verb);
-    const inJapaneseLbl = indicatorHelper(v, inJapanese, this.props.linkToOtherTerm);
+    const inJapaneseLbl = indicatorHelper(
+      v,
+      inJapanese,
+      this.props.linkToOtherTerm
+    );
 
     const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
       valueLabelHelper(
@@ -340,6 +355,7 @@ const mapStateToProps = (state) => {
     prevPushPlay: state.vocabulary.pushedPlay,
     verbForm: state.vocabulary.verbForm,
     touchSwipe: state.settings.global.touchSwipe,
+    furigana: state.settings.vocabulary.repetition,
   };
 };
 
@@ -361,6 +377,10 @@ VerbMain.propTypes = {
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
   touchSwipe: PropTypes.bool,
+  linkToOtherTerm: PropTypes.func,
+  furigana: PropTypes.object,
+  toggleFurigana: PropTypes.func,
+  toggleFuriganaSettingHelper: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -368,4 +388,5 @@ export default connect(mapStateToProps, {
   pushedPlay,
   setShownForm,
   flipVocabularyPracticeSide,
+  toggleFurigana,
 })(VerbMain);
