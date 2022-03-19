@@ -63,7 +63,6 @@ import {
   swipeStart,
 } from "react-slick/lib/utils/innerSliderUtils";
 import { pronounceEndoint } from "../../../environment.development";
-import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import { addParam } from "../../helper/urlHelper";
 import { gPronounceCacheIndexParam } from "../../constants/paths";
 
@@ -408,8 +407,7 @@ class Vocabulary extends Component {
       if (direction === "up") {
         let audioUrl;
         if (vocabulary.grp === "Verb" && this.props.verbForm !== "dictionary") {
-          const dictionaryForm = JapaneseVerb.parse(vocabulary);
-          const verb = verbToTargetForm(dictionaryForm, this.props.verbForm);
+          const verb = verbToTargetForm(vocabulary, this.props.verbForm);
           const inJapanese = audioPronunciation({
             japanese: verb.getSpelling(),
           });

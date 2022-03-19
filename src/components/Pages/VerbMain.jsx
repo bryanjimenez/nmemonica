@@ -37,12 +37,11 @@ class VerbMain extends Component {
     this.buildTenseElement = this.buildTenseElement.bind(this);
     this.getVerbLabelItems = this.getVerbLabelItems.bind(this);
     this.splitVerbFormsToColumns = this.splitVerbFormsToColumns.bind(this);
-    this.getVerbForm = this.getVerbForm.bind(this);
   }
 
   componentDidMount() {
     if (this.props.verbForm !== "dictionary") {
-      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
+      const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
 
       // lastVerb to prevent verb-form loss between transition v->nv
       const lastVerb = {
@@ -68,8 +67,8 @@ class VerbMain extends Component {
   componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.verb != prevProps.verb) {
       // verb change
-      const prevVerb = this.getVerbForm(prevProps.verb, this.props.verbForm);
-      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
+      const prevVerb = verbToTargetForm(prevProps.verb, this.props.verbForm);
+      const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
         japanese: prevVerb.getSpelling(),
@@ -95,7 +94,7 @@ class VerbMain extends Component {
 
     if (this.props.verbForm !== prevProps.verbForm) {
       // verb form change
-      const thisVerb = this.getVerbForm(this.props.verb, this.props.verbForm);
+      const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
         japanese: thisVerb.getSpelling(),
@@ -134,11 +133,6 @@ class VerbMain extends Component {
         </div>
       );
     });
-  }
-
-  getVerbForm(verb, form) {
-    const dictionaryForm = JapaneseVerb.parse(verb);
-    return verbToTargetForm(dictionaryForm, form);
   }
 
   /**
@@ -308,7 +302,7 @@ class VerbMain extends Component {
           onAutoPlayDone={() => {
             if (!this.state.prevVocab) {
               // this is the first verb let's set it for next term
-              const thisVerb = this.getVerbForm(
+              const thisVerb = verbToTargetForm(
                 this.props.verb,
                 this.props.verbForm
               );
@@ -368,7 +362,7 @@ VerbMain.propTypes = {
   furigana: PropTypes.object,
   toggleFurigana: PropTypes.func,
   toggleFuriganaSettingHelper: PropTypes.func,
-  verbColSplit: PropTypes.func,
+  verbColSplit: PropTypes.number,
 };
 
 export default connect(mapStateToProps, {

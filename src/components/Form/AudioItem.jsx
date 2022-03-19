@@ -79,6 +79,8 @@ export default function AudioItem(props) {
   };
 
   const clickEvHan1 = () => {
+    // ~~ double bitwise not
+    // remove decimal and coerce to number
     const time = ~~(Date.now() - tStart);
 
     const override = time < 500 ? "" : "/override_cache";

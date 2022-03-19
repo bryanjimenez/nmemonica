@@ -296,10 +296,10 @@ export function labelOptions(index, options) {
 /**
  * Array containing the avaiable verb forms
  * @returns {Array}
- * @param {String} verb
+ * @param {String} rawVerb
  */
-export function getVerbFormsArray(verb) {
-  const dictionaryForm = JapaneseVerb.parse(verb);
+export function getVerbFormsArray(rawVerb) {
+  const dictionaryForm = JapaneseVerb.parse(rawVerb);
 
   return [
     { t: "-masu", j: dictionaryForm.masuForm() },
@@ -313,11 +313,12 @@ export function getVerbFormsArray(verb) {
 
 /**
  * @returns {JapaneseText}
- * @param {JapaneseText} dictionaryForm
+ * @param {String} rawVerb
  * @param {String} targetForm
  */
-export function verbToTargetForm(dictionaryForm, targetForm) {
-  const { j: theForm } = getVerbFormsArray(dictionaryForm.toString()).find(
+export function verbToTargetForm(rawVerb, targetForm) {
+
+  const { j: theForm } = getVerbFormsArray(rawVerb).find(
     (form) => form.t === targetForm
   );
 
