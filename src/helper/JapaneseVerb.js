@@ -49,7 +49,7 @@ export class JapaneseVerb extends JapaneseText {
    * @returns the class of verb 1,2,3 (godan,ichidan,irregular)
    */
   getVerbClass() {
-    const pronunciation = this.furigana;
+    const pronunciation = this.getPronunciation();
 
     // verb class 1 exceptions
     const spelling = this.getSpelling();
@@ -57,9 +57,8 @@ export class JapaneseVerb extends JapaneseText {
       return this.exv;
     }
 
-    const verbArr = pronunciation.split("");
-    const lastChar = verbArr.pop();
-    const beforeLastChar = verbArr.pop();
+    const lastChar = pronunciation.split("").slice(-1).join();
+    const beforeLastChar = pronunciation.split("").slice(-2, -1).join();
 
     const iSound = 1;
     const eSound = 3;
@@ -93,47 +92,112 @@ export class JapaneseVerb extends JapaneseText {
 
     const hiragana = data.hiragana;
 
-    let pronunciation = this.furigana;
-    const kanji = this.hasFurigana();
+    const hasKanji = this.hasFurigana();
 
-    let orthography, orVerbArr, orLastChar, ortoStem;
+    let kStem;
 
-    if (kanji) {
-      orthography = this.kanji;
-      orVerbArr = orthography.split("");
-      orLastChar = orVerbArr.pop();
-      ortoStem = orVerbArr.join("");
+    if (hasKanji) {
+      kStem = this.getSpelling().split("").slice(0, -1).join("");
     }
 
-    const verbArr = pronunciation.split("");
-    const lastChar = verbArr.pop();
-    const furiganaStem = verbArr.join("");
+    const lastChar = this.getPronunciation().split("").slice(-1).join("");
+    const fStem = this.getPronunciation().split("").slice(0, -1).join("");
 
     // u-verbs
     if (this.getVerbClass() === 1 || lastChar !== "る") {
-      const iVowel = 1;
+      const iVowel = 1; // i
       const { iConsonant } = getConsonantVowel(lastChar);
 
-      if (kanji) {
+      if (hasKanji) {
         stem = [
-          furiganaStem + hiragana[iConsonant][iVowel],
-          ortoStem + hiragana[iConsonant][iVowel],
+          fStem + hiragana[iConsonant][iVowel],
+          kStem + hiragana[iConsonant][iVowel],
         ];
       } else {
-        stem = [furiganaStem + hiragana[iConsonant][iVowel]];
+        stem = [fStem + hiragana[iConsonant][iVowel]];
       }
     } else if (lastChar === "る") {
       // ru-verbs
 
       // つくる\n作る
-      if (kanji) {
-        stem = [furiganaStem, ortoStem];
+      if (hasKanji) {
+        stem = [fStem, kStem];
       } else {
-        stem = [furiganaStem];
+        stem = [fStem];
       }
     }
 
     return stem;
+  }
+
+  naiForm() {
+    let nai;
+    let ending = "ない";
+    const type = this.getVerbClass();
+    let verb = this.getSpelling();
+    let hasKanji = this.hasFurigana();
+
+    if (type === 1) {
+      // u
+      const lastChar = verb[verb.length - 1];
+
+      const hiragana = data.hiragana;
+      const aVowel = 0; // a
+      const { iConsonant } = getConsonantVowel(lastChar);
+
+      // u -> wa
+      const consonant = iConsonant === 0 ? 14 : iConsonant;
+
+      const consonantEnding = hiragana[consonant][aVowel] + ending;
+
+      const kStem = this.getSpelling().split("").slice(0, -1).join("");
+      if (hasKanji) {
+        const fStem = this.getPronunciation().split("").slice(0, -1).join("");
+
+        nai = new JapaneseText(
+          fStem + consonantEnding,
+          kStem + consonantEnding
+        );
+      } else {
+        nai = new JapaneseText(kStem + consonantEnding);
+      }
+    } else if (type === 2) {
+      // ru
+      const [fStem, kStem] = this.getStem();
+
+      if (hasKanji) {
+        nai = new JapaneseText(fStem + ending, kStem + ending);
+      } else {
+        nai = new JapaneseText(fStem + ending);
+      }
+    } else if (type === 3) {
+      if (verb === "来る" || verb === "くる") {
+        nai = "こない\n来ない";
+      } else if (verb === "する") {
+        nai = "しない";
+      } else if (verb === "だ") {
+        nai = "de wa arimasen"; // FIXME: complete
+      } else if (verb === "ある") {
+        nai = "ない";
+      }
+      // type 2
+      //  else if (verb === "居る" || verb === "いる") {
+      //   nai = "いない\n居ない";
+      // }
+
+      if ("する" === verb.split("").slice(-2).join("")) {
+        const kStem = this.getSpelling().split("").slice(0, -2).join("");
+
+        if (hasKanji) {
+          const fStem = this.getPronunciation().split("").slice(0, -2).join("");
+          nai = new JapaneseText(fStem + "しない", kStem + "しない");
+        } else {
+          nai = new JapaneseText(kStem + "しない");
+        }
+      }
+    }
+
+    return nai;
   }
 
   /**

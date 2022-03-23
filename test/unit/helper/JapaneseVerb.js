@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import { JapaneseVerb } from "../../../src/helper/JapaneseVerb";
 
+/* global describe it */
+
 const verbs = {
 
   irr: [
@@ -93,22 +95,28 @@ describe("JapaneseVerb", function () {
   describe("mashouForm", function () {
     it("irr", function () {
       verbs.irr.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).mashouForm();
-        expect(actual.toString(), v.dic).to.eq(v.mashou);
+        if(v.mashou){
+          const actual = JapaneseVerb.parse(v.dic).mashouForm();
+          expect(actual.toString(), v.dic).to.eq(v.mashou);
+        }
       });
     });
 
     it("ru-verb", function () {
       verbs.ru.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).mashouForm();
-        expect(actual.toString(), v.dic).to.eq(v.mashou);
+        if(v.mashou){
+          const actual = JapaneseVerb.parse(v.dic).mashouForm();
+          expect(actual.toString(), v.dic).to.eq(v.mashou);
+        }
       });
     });
 
     it("u-verb", function () {
       verbs.u.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).mashouForm();
-        expect(actual.toString(), v.dic).to.eq(v.mashou);
+        if(v.mashou){
+          const actual = JapaneseVerb.parse(v.dic).mashouForm();
+          expect(actual.toString(), v.dic).to.eq(v.mashou);
+        }
       });
     });
   });
@@ -116,44 +124,56 @@ describe("JapaneseVerb", function () {
   describe("teForm", function () {
     it("irr", function () {
       verbs.irr.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).teForm();
-        expect(actual.toString(), v.dic).to.eq(v.te);
+        if(v.te){
+          const actual = JapaneseVerb.parse(v.dic).teForm();
+          expect(actual.toString(), v.dic).to.eq(v.te);
+        }
       });
     });
 
     it("ichidan", function () {
       verbs.ru.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).teForm();
-        expect(actual.toString(), v.dic).to.eq(v.te);
+        if(v.te){
+          const actual = JapaneseVerb.parse(v.dic).teForm();
+          expect(actual.toString(), v.dic).to.eq(v.te);
+        }
       });
     });
 
     it("godan", function () {
       verbs.u.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).teForm();
-        expect(actual.toString(), v.dic).to.eq(v.te);
+        if(v.te){
+          const actual = JapaneseVerb.parse(v.dic).teForm();
+          expect(actual.toString(), v.dic).to.eq(v.te);
+        }
       });
     });
   });
   describe("taForm", function () {
     it("irr", function () {
       verbs.irr.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).taForm();
-        expect(actual.toString(), v.dic).to.eq(v.ta);
+        if(v.ta){
+          const actual = JapaneseVerb.parse(v.dic).taForm();
+          expect(actual.toString(), v.dic).to.eq(v.ta);
+        }
       });
     });
 
     it("ichidan", function () {
       verbs.ru.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).taForm();
-        expect(actual.toString(), v.dic).to.eq(v.ta);
+        if(v.ta){
+          const actual = JapaneseVerb.parse(v.dic).taForm();
+          expect(actual.toString(), v.dic).to.eq(v.ta);
+        }
       });
     });
 
     it("godan", function () {
       verbs.u.forEach((v) => {
-        const actual = JapaneseVerb.parse(v.dic).taForm();
-        expect(actual.toString(), v.dic).to.eq(v.ta);
+        if(v.ta){
+          const actual = JapaneseVerb.parse(v.dic).taForm();
+          expect(actual.toString(), v.dic).to.eq(v.ta);
+        }
       });
     });
   });
