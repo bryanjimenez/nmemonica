@@ -7,12 +7,14 @@ import particlesReducer from "./particlesRed";
 import settingsReducer from "./settingsRed";
 import loginReducer from "./loginRed";
 import versionsReducer from "./versionsRed";
+import kanjiReducer from "./KanjiRed";
 
 const rootReducer = combineReducers({
   phrases: phrasesReducer,
   vocabulary: vocabularyReducer,
   opposites: oppositesReducer,
   kana: kanaReducer,
+  kanji: kanjiReducer,
   particles: particlesReducer,
   settings: settingsReducer,
   login: loginReducer,

@@ -10,6 +10,7 @@ const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
 const Opposites = lazy(() => import("./components/Pages/Opposites"));
 const KanaGame = lazy(() => import("./components/Pages/KanaGame"));
+const Kanji = lazy(() => import("./components/Pages/Kanji"));
 const ParticlesGame = lazy(() => import("./components/Pages/ParticlesGame"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
 // const Logout = lazy(() => import("./components/Pages/Logout"));
@@ -21,6 +22,7 @@ import { SettingsMeta } from "./components/Pages/Settings";
 // import { LogoutMeta } from "./components/Pages/Logout";
 // import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
 import { KanaGameMeta } from "./components/Pages/KanaGame";
+import { KanjiMeta } from "./components/Pages/Kanji";
 import { ParticlesGameMeta } from "./components/Pages/ParticlesGame";
 import {
   initializeSettingsFromLocalStorage,
@@ -82,6 +84,7 @@ class App extends Component {
               <Route path={VocabularyMeta.location} component={Vocabulary} />
               <Route path={OppositesMeta.location} component={Opposites} />
               <Route path={KanaGameMeta.location} component={KanaGame} />
+              <Route path={KanjiMeta.location} component={Kanji} />
               <Route
                 path={ParticlesGameMeta.location}
                 component={ParticlesGame}
@@ -111,6 +114,8 @@ App.propTypes = {
   registerServiceWorker: PropTypes.func,
   serviceWorkerEventListeners: PropTypes.func,
   darkMode: PropTypes.bool,
+  logger: PropTypes.func,
+  serviceWorkerNewTermsAdded: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {

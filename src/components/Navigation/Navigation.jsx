@@ -24,6 +24,7 @@ import { SettingsMeta } from "../Pages/Settings";
 import classNames from "classnames";
 
 import "./Navigation.css";
+import { KanjiMeta } from "../Pages/Kanji";
 
 class Navigation extends Component {
   constructor(props) {
@@ -86,6 +87,7 @@ class Navigation extends Component {
       //     />
       //   ),
       // },
+      { meta: KanjiMeta, icon: <div className="not-a-real-icon">{"漢"}</div> },
       {
         meta: SettingsMeta,
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,

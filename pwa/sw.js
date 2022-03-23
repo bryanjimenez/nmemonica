@@ -26,6 +26,7 @@ const dataURL = [
   fbURL + "/lambda/opposites.json",
   fbURL + "/lambda/suffixes.json",
   fbURL + "/lambda/particles.json",
+  fbURL + "/lambda/kanji.json",
 ];
 
 let ERROR = 1,

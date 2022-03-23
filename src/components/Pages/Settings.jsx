@@ -87,8 +87,6 @@ class Settings extends Component {
   }
 
   failedFuriganaList(terms) {
-    const separator = <hr />;
-
     return terms.reduce((a, text, i) => {
       const t = JapaneseText.parse(text.japanese);
       if (t.hasFurigana()) {
@@ -96,6 +94,8 @@ class Settings extends Component {
           furiganaParse(t.getPronunciation(), t.getSpelling());
         } catch (e) {
           console.log(e.data);
+
+          const separator = <hr key={terms.length + i} />;
 
           const row = (
             <div key={i} className="row">
