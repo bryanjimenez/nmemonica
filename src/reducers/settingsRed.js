@@ -32,6 +32,7 @@ import {
   ADD_SPACE_REP_PHRASE,
   DEBUG,
   TOGGLE_SWIPE,
+  VERB_FORM_VIEW,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -69,6 +70,7 @@ export const DEFAULT_SETTINGS = {
     activeGroup: [],
     autoPlay: 0,
     autoVerbView: false,
+    verbColSplit: 0,
   },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
@@ -304,6 +306,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         vocabulary: {
           ...state.vocabulary,
           autoVerbView: !state.vocabulary.autoVerbView,
+        },
+      };
+    case VERB_FORM_VIEW:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          verbColSplit: action.value,
         },
       };
     case SET_OPPOSITES_Q_ROMAJI:

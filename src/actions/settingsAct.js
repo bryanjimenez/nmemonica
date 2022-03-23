@@ -29,6 +29,7 @@ export const TOGGLE_PHRASES_REINFORCE = "toggle_phrases_reinforce";
 export const TOGGLE_DARK_MODE = "toggle_dark_mode";
 export const SCROLLING_STATE = "scrolling_state";
 export const AUTO_VERB_VIEW = "auto_verb_view";
+export const VERB_FORM_VIEW = "verb_form_view";
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
 export const DEBUG = "toggle_debug";
@@ -978,6 +979,20 @@ export function toggleAutoVerbView() {
         type: AUTO_VERB_VIEW,
       });
     }
+  };
+}
+
+export function updateVerbColSplit(number) {
+  return (dispatch, getState) => {
+    const path = "/vocabulary/";
+    const attr = "verbColSplit";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr, number);
+
+    dispatch({
+      type: VERB_FORM_VIEW,
+      value: number,
+    });
   };
 }
 

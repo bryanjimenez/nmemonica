@@ -34,6 +34,7 @@ import {
   DEBUG_ERROR,
   DEBUG_WARN,
   toggleSwipe,
+  updateVerbColSplit,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
@@ -57,6 +58,7 @@ import {
 } from "../../reducers/settingsRed";
 import { labelOptions } from "../../helper/gameHelper";
 import { furiganaParse, JapaneseText } from "../../helper/JapaneseText";
+import VerbFormSlider from "../Form/VerbFormSlider";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -357,6 +359,15 @@ class Settings extends Component {
                       statusText="Auto Verb View"
                     />
                   </div>
+                  {this.props.autoVerbView && (
+                    <div className="d-flex justify-content-end p-2">
+                      <VerbFormSlider
+                        initial={this.props.verbColSplit}
+                        setChoiceN={this.props.updateVerbColSplit}
+                        statusText="Column layout"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -532,6 +543,7 @@ const mapStateToProps = (state) => {
     vocabActive: state.settings.vocabulary.activeGroup,
     vocabAutoPlay: state.settings.vocabulary.autoPlay,
     autoVerbView: state.settings.vocabulary.autoVerbView,
+    verbColSplit: state.settings.vocabulary.verbColSplit,
     vocabFilter: state.settings.vocabulary.filter,
     vocabFreq: state.settings.vocabulary.frequency,
     vocabReinforce: state.settings.vocabulary.reinforce,
@@ -609,6 +621,8 @@ Settings.propTypes = {
   toggleAutoVerbView: PropTypes.func,
   vocabReinforce: PropTypes.bool,
   toggleVocabularyReinforcement: PropTypes.func,
+  verbColSplit: PropTypes.number,
+  updateVerbColSplit: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
   setOppositesQRomaji: PropTypes.func,
@@ -648,6 +662,7 @@ export default connect(mapStateToProps, {
   getMemoryStorageStatus,
   toggleDebug,
   toggleSwipe,
+  updateVerbColSplit,
 })(Settings);
 
 export { SettingsMeta };

@@ -294,23 +294,34 @@ export function labelOptions(index, options) {
 }
 
 /**
+ * Array containing the avaiable verb forms
+ * @returns {Array}
+ * @param {String} verb
+ */
+export function getVerbFormsArray(verb) {
+  const dictionaryForm = JapaneseVerb.parse(verb);
+
+  return [
+    { t: "-masu", j: dictionaryForm.masuForm() },
+    { t: "-mashou", j: dictionaryForm.mashouForm() },
+    { t: "dictionary", j: dictionaryForm },
+    { t: "-nai", j: dictionaryForm.naiForm() },
+    { t: "-te", j: dictionaryForm.teForm() },
+    { t: "-ta", j: dictionaryForm.taForm() },
+  ];
+}
+
+/**
  * @returns {JapaneseText}
  * @param {JapaneseText} dictionaryForm
  * @param {String} targetForm
  */
 export function verbToTargetForm(dictionaryForm, targetForm) {
-  switch (targetForm) {
-    case "masu":
-      return dictionaryForm.masuForm();
-    case "mashou":
-      return dictionaryForm.mashouForm();
-    case "dictionary":
-      return dictionaryForm;
-    case "te_form":
-      return dictionaryForm.teForm();
-    case "ta_form":
-      return dictionaryForm.taForm();
-  }
+  const { j: theForm } = getVerbFormsArray(dictionaryForm.toString()).find(
+    (form) => form.t === targetForm
+  );
+
+  return theForm;
 }
 
 /**

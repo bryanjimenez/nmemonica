@@ -15,6 +15,7 @@ import {
 } from "../../actions/settingsAct";
 import {
   audioWordsHelper,
+  getVerbFormsArray,
   indicatorHelper,
   toggleFuriganaSettingHelper,
   valueLabelHelper,
@@ -36,7 +37,6 @@ class VerbMain extends Component {
     this.buildTenseElement = this.buildTenseElement.bind(this);
     this.getVerbLabelItems = this.getVerbLabelItems.bind(this);
     this.splitVerbFormsToColumns = this.splitVerbFormsToColumns.bind(this);
-    this.getVerbFormsArray = this.getVerbFormsArray.bind(this);
     this.getVerbForm = this.getVerbForm.bind(this);
   }
 
@@ -136,23 +136,6 @@ class VerbMain extends Component {
     });
   }
 
-  /**
-   *
-   * @param {*} verb
-   * @returns {Array} of verb forms objects
-   */
-  getVerbFormsArray(verb) {
-    const dictionaryForm = JapaneseVerb.parse(verb);
-
-    return [
-      { t: "masu", j: dictionaryForm.masuForm() },
-      { t: "mashou", j: dictionaryForm.mashouForm() },
-      { t: "dictionary", j: dictionaryForm },
-      { t: "te_form", j: dictionaryForm.teForm() },
-      { t: "ta_form", j: dictionaryForm.taForm() },
-    ];
-  }
-
   getVerbForm(verb, form) {
     const dictionaryForm = JapaneseVerb.parse(verb);
     return verbToTargetForm(dictionaryForm, form);
@@ -164,7 +147,10 @@ class VerbMain extends Component {
    * @returns {Object} an object containing two columns
    */
   splitVerbFormsToColumns(verbForms) {
-    const rightShift = verbForms.length % 2 === 0 ? 1 : 0;
+    const middle =
+      Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
+
+    const rightShift = middle - this.props.verbColSplit;
     const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
 
     const t1 = verbForms.slice(0, splitIdx);
@@ -201,7 +187,7 @@ class VerbMain extends Component {
 
   render() {
     const verb = this.props.verb;
-    const verbForms = this.getVerbFormsArray(verb);
+    const verbForms = getVerbFormsArray(verb);
     const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
     const { inJapanese, inEnglish, romaji, japanesePhrase } =
       this.getVerbLabelItems(verbForms, this.props.verbForm);
@@ -356,6 +342,7 @@ const mapStateToProps = (state) => {
     verbForm: state.vocabulary.verbForm,
     touchSwipe: state.settings.global.touchSwipe,
     furigana: state.settings.vocabulary.repetition,
+    verbColSplit: state.settings.vocabulary.verbColSplit,
   };
 };
 
@@ -381,6 +368,7 @@ VerbMain.propTypes = {
   furigana: PropTypes.object,
   toggleFurigana: PropTypes.func,
   toggleFuriganaSettingHelper: PropTypes.func,
+  verbColSplit: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
