@@ -21,6 +21,7 @@ import { sheets_sync_opposites } from "./sheets_sync_opposites";
 import { sheets_sync_vocabulary } from "./sheets_sync_vocabulary";
 import { g_translate_romaji } from "./g_translate_romaji";
 import { g_translate_pronounce } from "./g_translate_pronounce";
+import { sheets_sync_kanji } from "./sheets_sync_kanji";
 const PROJECT_REGION = "us-east1";
 
 exports.sheets_sync_phrases = functions
@@ -46,3 +47,7 @@ exports.g_translate_romaji = functions
 exports.g_translate_pronounce = functions
   .region(PROJECT_REGION)
   .https.onRequest(g_translate_pronounce);
+
+exports.sheets_sync_kanji = functions
+  .region(PROJECT_REGION)
+  .https.onRequest(sheets_sync_kanji);
