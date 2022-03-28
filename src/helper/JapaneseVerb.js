@@ -200,6 +200,75 @@ export class JapaneseVerb extends JapaneseText {
     return nai;
   }
 
+  saseruForm() {
+    let saseru;
+    let ending = /*さ*/ "せる";
+    const type = this.getVerbClass();
+    let verb = this.getSpelling();
+    let hasKanji = this.hasFurigana();
+
+    if (type === 1) {
+      // u
+      const lastChar = verb[verb.length - 1];
+
+      const hiragana = data.hiragana;
+      const aVowel = 0; // a
+      const { iConsonant } = getConsonantVowel(lastChar);
+
+      // u -> wa
+      const consonant = iConsonant === 0 ? 14 : iConsonant;
+
+      const consonantEnding = hiragana[consonant][aVowel] + ending;
+
+      const kStem = this.getSpelling().split("").slice(0, -1).join("");
+      if (hasKanji) {
+        const fStem = this.getPronunciation().split("").slice(0, -1).join("");
+
+        saseru = new JapaneseText(
+          fStem + consonantEnding,
+          kStem + consonantEnding
+        );
+      } else {
+        saseru = new JapaneseText(kStem + consonantEnding);
+      }
+    } else if (type === 2) {
+      // ru
+      // type 2
+      if (verb === "居る" || verb === "いる") {
+        saseru = "いる\n居る";
+      }
+
+      const [fStem, kStem] = this.getStem();
+
+      if (hasKanji) {
+        saseru = new JapaneseText(fStem + "さ" + ending, kStem + "さ" + ending);
+      } else {
+        saseru = new JapaneseText(fStem + "さ" + ending);
+      }
+    } else if (type === 3) {
+      if (verb === "来る" || verb === "くる") {
+        saseru = "こさせる\n来させる";
+      } else if (verb === "する") {
+        saseru = "させる";
+      } else if (verb === "ある") {
+        saseru = "ある";
+      }
+
+      if ("する" === verb.split("").slice(-2).join("")) {
+        const kStem = this.getSpelling().split("").slice(0, -2).join("");
+
+        if (hasKanji) {
+          const fStem = this.getPronunciation().split("").slice(0, -2).join("");
+          saseru = new JapaneseText(fStem + "させる", kStem + "させる");
+        } else {
+          saseru = new JapaneseText(kStem + "させる");
+        }
+      }
+    }
+
+    return saseru;
+  }
+
   /**
    * @returns {JapaneseText} the masu form of the verb
    */

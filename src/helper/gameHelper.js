@@ -306,6 +306,7 @@ export function getVerbFormsArray(rawVerb) {
     { t: "-mashou", j: dictionaryForm.mashouForm() },
     { t: "dictionary", j: dictionaryForm },
     { t: "-nai", j: dictionaryForm.naiForm() },
+    { t: "-saseru", j: dictionaryForm.saseruForm() },
     { t: "-te", j: dictionaryForm.teForm() },
     { t: "-ta", j: dictionaryForm.taForm() },
   ];
@@ -317,7 +318,6 @@ export function getVerbFormsArray(rawVerb) {
  * @param {String} targetForm
  */
 export function verbToTargetForm(rawVerb, targetForm) {
-
   const { j: theForm } = getVerbFormsArray(rawVerb).find(
     (form) => form.t === targetForm
   );
