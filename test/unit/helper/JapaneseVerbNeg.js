@@ -42,6 +42,7 @@ describe("JapaneseVerbNeg", function () {
     it("irr", function () {
       verbs.irr.forEach((v) => {
         const actual = JapaneseVerb.parse(v.dic).naiForm();
+        expect(actual, actual.toString()).to.be.a('JapaneseText');
         expect(actual.toString(), v.dic).to.eq(v.nai);
       });
     });
@@ -49,6 +50,7 @@ describe("JapaneseVerbNeg", function () {
     it("ichidan", function () {
       verbs.ru.forEach((v) => {
         const actual = JapaneseVerb.parse(v.dic).naiForm();
+        expect(actual, actual.toString()).to.be.a('JapaneseText');
         expect(actual.toString(), v.dic).to.eq(v.nai);
       });
     });
@@ -56,6 +58,7 @@ describe("JapaneseVerbNeg", function () {
     it("godan", function () {
       verbs.u.forEach((v) => {
         const actual = JapaneseVerb.parse(v.dic).naiForm();
+        expect(actual, actual.toString()).to.be.a('JapaneseText');
         expect(actual.toString(), v.dic).to.eq(v.nai);
       });
     });

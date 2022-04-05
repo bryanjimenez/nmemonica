@@ -8,6 +8,10 @@ export class JapaneseText {
     this._kanji = kanji;
   }
 
+  get [Symbol.toStringTag]() {
+    return "JapaneseText";
+  }
+
   get furigana() {
     return this._furigana;
   }

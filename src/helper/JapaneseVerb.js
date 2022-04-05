@@ -7,6 +7,10 @@ export class JapaneseVerb extends JapaneseText {
     super(furigana, kanji);
   }
 
+  get [Symbol.toStringTag]() {
+    return "JapaneseVerb";
+  }
+
   /**
    * @param {{japanese:String}| String} dataObj
    * @returns {JapaneseVerb}
@@ -130,6 +134,9 @@ export class JapaneseVerb extends JapaneseText {
     return stem;
   }
 
+  /**
+   * @returns {JapaneseText} the nai form of the verb
+   */
   naiForm() {
     let nai;
     let ending = "ない";
@@ -172,13 +179,13 @@ export class JapaneseVerb extends JapaneseText {
       }
     } else if (type === 3) {
       if (verb === "来る" || verb === "くる") {
-        nai = "こない\n来ない";
+        nai = new JapaneseText("こない", "来ない");
       } else if (verb === "する") {
-        nai = "しない";
+        nai = new JapaneseText("しない");
       } else if (verb === "だ") {
         nai = "de wa arimasen"; // FIXME: complete
       } else if (verb === "ある") {
-        nai = "ない";
+        nai = new JapaneseText("ない");
       }
       // type 2
       //  else if (verb === "居る" || verb === "いる") {
@@ -200,6 +207,9 @@ export class JapaneseVerb extends JapaneseText {
     return nai;
   }
 
+  /**
+   * @returns {JapaneseText} the saseru form of the verb
+   */
   saseruForm() {
     let saseru;
     let ending = /*さ*/ "せる";
@@ -235,7 +245,7 @@ export class JapaneseVerb extends JapaneseText {
       // ru
       // type 2
       if (verb === "居る" || verb === "いる") {
-        saseru = "いる\n居る";
+        saseru = new JapaneseText("いる", "居る");
       }
 
       const [fStem, kStem] = this.getStem();
@@ -247,11 +257,11 @@ export class JapaneseVerb extends JapaneseText {
       }
     } else if (type === 3) {
       if (verb === "来る" || verb === "くる") {
-        saseru = "こさせる\n来させる";
+        saseru = new JapaneseText("こさせる", "来させる");
       } else if (verb === "する") {
-        saseru = "させる";
+        saseru = new JapaneseText("させる");
       } else if (verb === "ある") {
-        saseru = "ある";
+        saseru = new JapaneseText("ある");
       }
 
       if ("する" === verb.split("").slice(-2).join("")) {

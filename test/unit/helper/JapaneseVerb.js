@@ -73,6 +73,7 @@ describe("JapaneseVerb", function () {
     it("irr", function () {
       verbs.irr.forEach((v) => {
         const actual = JapaneseVerb.parse(v.dic).masuForm();
+        expect(actual, actual.toString()).to.be.a('JapaneseText');
         expect(actual.toString(), v.dic).to.eq(v.masu);
       });
     });
@@ -80,6 +81,7 @@ describe("JapaneseVerb", function () {
     it("ru-verb", function () {
       verbs.ru.forEach((v) => {
         const actual = JapaneseVerb.parse(v.dic).masuForm();
+        expect(actual, actual.toString()).to.be.a('JapaneseText');
         expect(actual.toString(), v.dic).to.eq(v.masu);
       });
     });
@@ -87,6 +89,7 @@ describe("JapaneseVerb", function () {
     it("u-verb", function () {
       verbs.u.forEach((v) => {
         const actual = JapaneseVerb.parse(v.dic).masuForm();
+        expect(actual, actual.toString()).to.be.a('JapaneseText');
         expect(actual.toString(), v.dic).to.eq(v.masu);
       });
     });
@@ -97,6 +100,7 @@ describe("JapaneseVerb", function () {
       verbs.irr.forEach((v) => {
         if(v.mashou){
           const actual = JapaneseVerb.parse(v.dic).mashouForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.mashou);
         }
       });
@@ -106,6 +110,7 @@ describe("JapaneseVerb", function () {
       verbs.ru.forEach((v) => {
         if(v.mashou){
           const actual = JapaneseVerb.parse(v.dic).mashouForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.mashou);
         }
       });
@@ -115,6 +120,7 @@ describe("JapaneseVerb", function () {
       verbs.u.forEach((v) => {
         if(v.mashou){
           const actual = JapaneseVerb.parse(v.dic).mashouForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.mashou);
         }
       });
@@ -126,6 +132,7 @@ describe("JapaneseVerb", function () {
       verbs.irr.forEach((v) => {
         if(v.te){
           const actual = JapaneseVerb.parse(v.dic).teForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.te);
         }
       });
@@ -135,6 +142,7 @@ describe("JapaneseVerb", function () {
       verbs.ru.forEach((v) => {
         if(v.te){
           const actual = JapaneseVerb.parse(v.dic).teForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.te);
         }
       });
@@ -144,6 +152,7 @@ describe("JapaneseVerb", function () {
       verbs.u.forEach((v) => {
         if(v.te){
           const actual = JapaneseVerb.parse(v.dic).teForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.te);
         }
       });
@@ -154,6 +163,7 @@ describe("JapaneseVerb", function () {
       verbs.irr.forEach((v) => {
         if(v.ta){
           const actual = JapaneseVerb.parse(v.dic).taForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.ta);
         }
       });
@@ -163,6 +173,7 @@ describe("JapaneseVerb", function () {
       verbs.ru.forEach((v) => {
         if(v.ta){
           const actual = JapaneseVerb.parse(v.dic).taForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.ta);
         }
       });
@@ -172,6 +183,7 @@ describe("JapaneseVerb", function () {
       verbs.u.forEach((v) => {
         if(v.ta){
           const actual = JapaneseVerb.parse(v.dic).taForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.ta);
         }
       });
@@ -182,6 +194,7 @@ describe("JapaneseVerb", function () {
       verbs.irr.forEach((v) => {
         if(v.saseru){
           const actual = JapaneseVerb.parse(v.dic).saseruForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.saseru);
         }
       });
@@ -191,6 +204,7 @@ describe("JapaneseVerb", function () {
       verbs.ru.forEach((v) => {
         if(v.saseru){
           const actual = JapaneseVerb.parse(v.dic).saseruForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.saseru);
         }
       });
@@ -200,6 +214,7 @@ describe("JapaneseVerb", function () {
       verbs.u.forEach((v) => {
         if(v.saseru){
           const actual = JapaneseVerb.parse(v.dic).saseruForm();
+          expect(actual, actual.toString()).to.be.a('JapaneseText');
           expect(actual.toString(), v.dic).to.eq(v.saseru);
         }
       });
