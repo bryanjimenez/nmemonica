@@ -82,8 +82,14 @@ export async function sheets_sync_kanji(req, res) {
           kanji.grp = el[GRP];
         }
 
+        // use first tag as subGrp
         if (el[TAG] && el[TAG] !== "") {
           kanji = setPropsFromTags(kanji, el[TAG]);
+          kanji.subGrp = kanji.tag[0];
+
+          if (kanji.tag.length <= 1) {
+            delete kanji.tag;
+          }
         }
 
         acc[key] = kanji;
