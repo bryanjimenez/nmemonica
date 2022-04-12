@@ -7,7 +7,7 @@ import particlesReducer from "./particlesRed";
 import settingsReducer from "./settingsRed";
 import loginReducer from "./loginRed";
 import versionsReducer from "./versionsRed";
-import kanjiReducer from "./KanjiRed";
+import kanjiReducer from "./kanjiRed";
 
 const rootReducer = combineReducers({
   phrases: phrasesReducer,

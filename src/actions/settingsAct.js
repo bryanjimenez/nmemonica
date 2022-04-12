@@ -17,6 +17,8 @@ export const TOGGLE_VOCABULARY_FILTER = "toggle_vocabulary_filter";
 export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
 export const TOGGLE_VOCABULARY_AUTO_PLAY = "toggle_vocabulary_auto_play";
 export const TOGGLE_VOCABULARY_REINFORCE = "toggle_vocabulary_reinforce";
+export const TOGGLE_KANJI_FILTER = "toggle_kanji_filter";
+export const TOGGLE_KANJI_ACTIVE_GROUP = "toggle_kanji_active_group";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -415,14 +417,23 @@ export function toggleVocabularyFilter(override) {
   };
 }
 
-export function toggleVocabularyActiveGrp(grpName) {
+export function toggleActiveGrp(parent, grpName) {
   return (dispatch, getState) => {
     const { user } = getState().login;
-    const { activeGroup } = getState().settings.vocabulary;
+    const { activeGroup } = getState().settings[parent];
+
+    let action;
+    if (parent === "kanji") {
+      action = TOGGLE_KANJI_ACTIVE_GROUP;
+    } else if (parent === "vocabulary") {
+      action = TOGGLE_VOCABULARY_ACTIVE_GROUP;
+    } else if (parent === "phrases") {
+      action = TOGGLE_PHRASES_ACTIVE_GROUP;
+    }
 
     const newValue = grpParse(grpName, activeGroup);
 
-    const path = "/vocabulary/";
+    const path = "/" + parent + "/";
     const attr = "activeGroup";
     const time = new Date();
     localStoreAttrUpdate(time, getState, path, attr, newValue);
@@ -435,12 +446,12 @@ export function toggleVocabularyActiveGrp(grpName) {
         user.uid,
         path,
         attr,
-        TOGGLE_VOCABULARY_ACTIVE_GROUP,
+        action,
         newValue
       );
     } else {
       dispatch({
-        type: TOGGLE_VOCABULARY_ACTIVE_GROUP,
+        type: action,
         value: newValue,
       });
     }
@@ -814,8 +825,8 @@ export function togglePhrasesReinforcement() {
 
 /**
  * Adds or removes grpName to the activeGroup list
- * @param {*} grpName a group name to be toggled
- * @param {*} activeGroup a list of groups that are selected
+ * @param {String} grpName a group name to be toggled
+ * @param {Array} activeGroup a list of groups that are selected
  * @returns {Array} newValue an updated list of selected groups
  */
 export function grpParse(grpName, activeGroup) {
@@ -839,38 +850,6 @@ export function grpParse(grpName, activeGroup) {
       : [...activeGroup, grpName];
   }
   return newValue;
-}
-
-export function togglePhrasesActiveGrp(grpName) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-    const { activeGroup } = getState().settings.phrases;
-
-    const newValue = grpParse(grpName, activeGroup);
-
-    const path = "/phrases/";
-    const attr = "activeGroup";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
-
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_PHRASES_ACTIVE_GROUP,
-        newValue
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_PHRASES_ACTIVE_GROUP,
-        value: newValue,
-      });
-    }
-  };
 }
 
 export function toggleDarkMode() {

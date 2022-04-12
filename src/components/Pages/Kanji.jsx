@@ -11,8 +11,14 @@ import {
   swipeStart,
 } from "react-slick/lib/utils/innerSliderUtils";
 import { getKanji } from "../../actions/kanjiAct";
-import { getTerm, getTermUID, randomOrder } from "../../helper/gameHelper";
+import {
+  getTerm,
+  getTermUID,
+  randomOrder,
+  termFilterByType,
+} from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
+import { FILTER_GRP } from "../../reducers/settingsRed";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -54,7 +60,7 @@ class Kanji extends Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.kanji.length !== prevProps.kanji.length) {
       // console.log("got game data");
       this.setOrder();
@@ -62,7 +68,13 @@ class Kanji extends Component {
   }
 
   setOrder() {
-    const filteredVocab = this.props.kanji;
+    const filteredVocab = termFilterByType(
+      FILTER_GRP,
+      this.props.kanji,
+      null,
+      this.props.activeGroup,
+      null
+    );
 
     const order = randomOrder(filteredVocab);
 
@@ -180,26 +192,38 @@ class Kanji extends Component {
               <h1 className="pt-3">
                 <span>{term.kanji}</span>
               </h1>
-              <h3
-                className="pt-3"
-                onClick={() => {
-                  this.setState((state) => ({
-                    showOn: !state.showOn,
-                  }));
-                }}
-              >
-                <span>{this.state.showOn ? term.on : "[On]"}</span>
-              </h3>
-              <h3
-                className="pt-3"
-                onClick={() => {
-                  this.setState((state) => ({
-                    showKun: !state.showKun,
-                  }));
-                }}
-              >
-                <span>{this.state.showKun ? term.kun : "[Kun]"}</span>
-              </h3>
+              {/* temp spacer */}
+              {!term.on && !term.kun && (
+                <div>
+                  <h3 className="pt-3">.</h3>
+                  <h3 className="pt-3">.</h3>
+                </div>
+              )}
+
+              {term.on && (
+                <h3
+                  className="pt-3"
+                  onClick={() => {
+                    this.setState((state) => ({
+                      showOn: !state.showOn,
+                    }));
+                  }}
+                >
+                  <span>{this.state.showOn ? term.on : "[On]"}</span>
+                </h3>
+              )}
+              {term.kun && (
+                <h3
+                  className="pt-3"
+                  onClick={() => {
+                    this.setState((state) => ({
+                      showKun: !state.showKun,
+                    }));
+                  }}
+                >
+                  <span>{this.state.showKun ? term.kun : "[Kun]"}</span>
+                </h3>
+              )}
               <h3
                 className="pt-3"
                 onClick={() => {
@@ -235,12 +259,14 @@ class Kanji extends Component {
 const mapStateToProps = (state) => {
   return {
     kanji: state.kanji.value,
+    activeGroup: state.settings.kanji.activeGroup,
     touchSwipe: state.settings.global.touchSwipe,
   };
 };
 
 Kanji.propTypes = {
   kanji: PropTypes.array,
+  activeGroup: PropTypes.array,
   touchSwipe: PropTypes.bool,
   getKanji: PropTypes.func,
   logger: PropTypes.func,

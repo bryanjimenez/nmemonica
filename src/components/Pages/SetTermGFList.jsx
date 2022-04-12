@@ -49,7 +49,7 @@ function listItem(grpActive, i, uid, english, removeFrequencyWord) {
 /**
  * Groups + Frequency words list
  */
-export function SetVocabGFList(props) {
+export function SetTermGFList(props) {
   let cleanup = [];
 
   const thisgrp = props.vocabFreq.reduce((acc, f) => {
@@ -86,7 +86,7 @@ export function SetVocabGFList(props) {
               <span
                 className={classNames({ "font-weight-bold": grpActive })}
                 onClick={() => {
-                  props.toggleVocabularyActiveGrp(g);
+                  props.toggleTermActiveGrp(g);
                 }}
               >
                 {g}
@@ -118,11 +118,11 @@ export function SetVocabGFList(props) {
   );
 }
 
-SetVocabGFList.propTypes = {
+SetTermGFList.propTypes = {
   vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
   vocabFreq: PropTypes.array,
   vocabulary: PropTypes.array,
   removeFrequencyWord: PropTypes.func,
-  toggleVocabularyActiveGrp: PropTypes.func,
+  toggleTermActiveGrp: PropTypes.func,
 };

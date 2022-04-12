@@ -1,13 +1,15 @@
 import { GET_KANJI } from "../actions/kanjiAct";
+import { buildGroupObject } from "../helper/reducerHelper";
 
 const DEFAULT_STATE = {
   value: [],
+  grpObj: {},
 };
 const DEFAULT_ACTION = {};
 
 const kanjiReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
   switch (action.type) {
-    case GET_KANJI:
+    case GET_KANJI: {
       const value = Object.keys(action.value).map((k) => ({
         ...action.value[k],
         uid: k,
@@ -15,8 +17,10 @@ const kanjiReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
 
       return {
         ...state,
+        grpObj: buildGroupObject(action.value),
         value,
       };
+    }
     default:
       return state;
   }

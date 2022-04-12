@@ -33,6 +33,7 @@ import {
   DEBUG,
   TOGGLE_SWIPE,
   VERB_FORM_VIEW,
+  TOGGLE_KANJI_ACTIVE_GROUP,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -71,6 +72,10 @@ export const DEFAULT_SETTINGS = {
     autoPlay: 0,
     autoVerbView: false,
     verbColSplit: 0,
+  },
+  kanji: {
+    filter: 0,
+    activeGroup: [],
   },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
@@ -297,6 +302,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
+          activeGroup: action.value,
+        },
+      };
+    case TOGGLE_KANJI_ACTIVE_GROUP:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
           activeGroup: action.value,
         },
       };

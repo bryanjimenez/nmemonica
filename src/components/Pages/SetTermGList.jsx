@@ -1,11 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { GroupItem } from "../Form/GroupItem";
+import orderBy from "lodash/orderBy";
 
 /**
  * Group and subgroup list
  */
-export function SetVocabGList(props) {
+export function SetTermGList(props) {
   return (
     <div>
       <h5 key={0}>Groups</h5>
@@ -19,20 +20,27 @@ export function SetVocabGList(props) {
               key={i}
               active={props.vocabActive.includes(g)}
               onClick={() => {
-                props.toggleVocabularyActiveGrp(g);
+                props.toggleTermActiveGrp(g);
               }}
             >
               {g}
             </GroupItem>
 
             {!grpActive &&
-              props.vocabGroups[g].map((s, i) => (
+              orderBy(props.vocabGroups[g], (o) => {
+                // order numerically if group has _number
+                const [lbl, num] = o.split("_");
+                if (Number.isInteger(parseInt(num, 10))) {
+                  return parseInt(num, 10);
+                }
+                return o;
+              }).map((s, i) => (
                 <GroupItem
                   key={i}
                   addlStyle="ml-3"
                   active={props.vocabActive.includes(g + "." + s)}
                   onClick={() => {
-                    props.toggleVocabularyActiveGrp(g + "." + s);
+                    props.toggleTermActiveGrp(g + "." + s);
                   }}
                 >
                   {s}
@@ -45,8 +53,8 @@ export function SetVocabGList(props) {
   );
 }
 
-SetVocabGList.propTypes = {
+SetTermGList.propTypes = {
   vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
-  toggleVocabularyActiveGrp: PropTypes.func,
+  toggleTermActiveGrp: PropTypes.func,
 };
