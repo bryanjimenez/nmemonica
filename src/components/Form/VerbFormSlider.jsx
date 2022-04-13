@@ -53,6 +53,12 @@ function slideToLabels(slide) {
 }
 
 function rawToSlide(raw) {
+
+  if(raw>(max + 1) || raw<0){
+    console.log('VerbFormSlider bad input');
+    return marks[0].value;
+  }
+
   return marks[marks.findIndex((m) => m.raw === raw)].value;
 }
 
