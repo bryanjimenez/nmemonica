@@ -34,7 +34,11 @@ import {
   AUTOPLAY_JP_EN,
   AUTOPLAY_EN_JP,
 } from "../../actions/settingsAct";
-import { audioPronunciation, htmlElementHint } from "../../helper/JapaneseText";
+import {
+  audioPronunciation,
+  htmlElementHint,
+  JapaneseText,
+} from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
@@ -424,12 +428,39 @@ class Vocabulary extends Component {
           });
         }
 
+        let na = addParam(pronounceEndoint, {
+          tl: "ja",
+          q: "っな",
+        });
+        const naAudio = new Audio(na);
         const japaneseAudio = new Audio(audioUrl);
-        try {
-          japaneseAudio.play();
-        } catch (e) {
-          this.props.logger("Swipe Play Error " + e, 1);
-        }
+
+        // too slow  .addEventListener("ended", () => {
+        japaneseAudio.addEventListener("canplaythrough", () => {
+          try {
+            japaneseAudio.play().then(() => {
+              if (JapaneseText.parse(vocabulary).isNaAdj()) {
+                const volume = 0.4;
+                const offset = 0.5;
+                const naDelay = 1000 * (japaneseAudio.duration - offset);
+                // this.props.logger("volume: "+volume, 1);
+                // this.props.logger("offset: "+offset, 1);
+                // this.props.logger("duration: "+japaneseAudio.duration, 1);
+                // this.props.logger("delay: "+naDelay, 1);
+                setTimeout(() => {
+                  try {
+                    naAudio.volume = volume;
+                    naAudio.play();
+                  } catch (e) {
+                    this.props.logger("na-adj play failed " + e, 1);
+                  }
+                }, naDelay);
+              }
+            });
+          } catch (e) {
+            this.props.logger("Swipe Play Error " + e, 1);
+          }
+        });
 
         if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
           this.props.pushedPlay(true);
