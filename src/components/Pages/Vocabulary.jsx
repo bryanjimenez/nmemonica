@@ -20,6 +20,7 @@ import {
   faHeadphones,
   faPencilAlt,
   faRunning,
+  faSuperscript,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -33,6 +34,7 @@ import {
   updateSpaceRepWord,
   AUTOPLAY_JP_EN,
   AUTOPLAY_EN_JP,
+  toggleFurigana,
 } from "../../actions/settingsAct";
 import {
   audioPronunciation,
@@ -634,6 +636,17 @@ class Vocabulary extends Component {
                     />
                   </div>
                 )}
+
+                <div
+                  className="sm-icon-grp"
+                  onClick={() => this.props.toggleFurigana(vocabulary.uid)}
+                >
+                  <FontAwesomeIcon
+                    icon={faSuperscript}
+                    aria-label="Toggle furigana"
+                  />
+                </div>
+
                 <div className="sm-icon-grp">
                   {vocabulary.reinforce ? (
                     <div
@@ -801,6 +814,7 @@ Vocabulary.propTypes = {
   verbForm: PropTypes.string,
   pushedPlay: PropTypes.func,
   touchSwipe: PropTypes.bool,
+  toggleFurigana: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -811,6 +825,7 @@ export default connect(mapStateToProps, {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  toggleFurigana,
   setPreviousWord,
   updateSpaceRepWord,
   logger,

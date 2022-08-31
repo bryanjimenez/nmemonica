@@ -528,18 +528,18 @@ export function toggleFuriganaSettingHelper(
 ) {
   let furiganaToggable;
 
-  if (!englishSideUp) {
-    // show by default unless explicitly set to false
-    const show = !(settings[uid] && settings[uid].f === false);
-    furiganaToggable = {
-      furigana: {
-        show,
-        toggle: () => {
+  // show by default unless explicitly set to false
+  const show = !(settings[uid] && settings[uid].f === false);
+  furiganaToggable = {
+    furigana: {
+      show,
+      toggle:
+        !englishSideUp &&
+        (() => {
           toggleFn(uid);
-        },
-      },
-    };
-  }
+        }),
+    },
+  };
 
   return furiganaToggable;
 }
