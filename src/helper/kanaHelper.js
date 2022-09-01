@@ -7,7 +7,8 @@ import data from "../../data/kana.json";
 export function isKanji(char) {
   const common = "\u4E00-\u9FAF";
   const rare = "\u3400-\u4DBF";
-  return new RegExp("[" + common + rare + "]").test(char);
+  const exception = "\u3005";   // noma repeater from isPunctuation
+  return new RegExp("[" + common + rare + exception + "]").test(char);
 }
 
 /**
@@ -39,7 +40,7 @@ export function isPunctuation(char) {
   const eNumber = "\uFF10-\uFF19";
 
   // Japanese
-  const jFP = "\u3000-\u303F"; // full width punctuation
+  const jFP = "\u3000-\u3004\u3006-\u303F"; // full width punctuation
   const jHP = "\uFF61-\uFF65"; // half width
   return new RegExp("[" + jFP + jHP + eSymbol + "]").test(char);
 }

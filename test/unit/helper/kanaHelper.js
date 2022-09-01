@@ -2,6 +2,7 @@ import { expect } from "chai";
 import {
   getConsonantVowel,
   isHiragana,
+  isKanji,
   isKatakana,
   isPunctuation,
   swapKana,
@@ -206,6 +207,15 @@ describe("kanaHelper", function () {
     it("punctuation", function () {
       const expected = punctuation.map(() => true);
       const actual = punctuation.map((p) => isPunctuation(p));
+      expect(actual).to.deep.equal(expected);
+    });
+  });
+
+  describe("isKanji", function () {
+    const kanji = ["々"];
+    it("noma exception", function () {
+      const expected = kanji.map(() => true);
+      const actual =  kanji.map((k)=>isKanji(k));
       expect(actual).to.deep.equal(expected);
     });
   });
