@@ -105,9 +105,9 @@ export class JapaneseText {
       );
     } else {
       try {
-        const { kanjis, furiganas, nonKanjis, startsWKana } = furiganaParse(
-          this.getPronunciation(),
-          this.getSpelling()
+        const { kanjis, furiganas, nonKanjis, startsWKana } = furiganaParseRetry(
+          this._furigana,
+          this._kanji
         );
         htmlElement = buildHTMLElement(
           kanjis,
@@ -177,6 +177,47 @@ function japaneseTextParse(rawObj, childType) {
  * @param {String} pronunciation (hiragana)
  * @param {String} orthography (kanji)
  */
+export function furiganaParseRetry(pronunciation, ortography) {
+  let kanjis, furiganas, nonKanjis, startsWKana;
+  try {
+    ({ kanjis, furiganas, nonKanjis, startsWKana } = furiganaParse(
+      pronunciation,
+      ortography
+    ));
+  } catch (e) {
+    // don't retry unless parse error
+    if (e.name === "ParseError") {
+      // reverse try
+      try {
+        const rp = pronunciation.split("").reverse().join("");
+        const ro = ortography.split("").reverse().join("");
+
+        const {
+          kanjis: rk,
+          furiganas: rf,
+          nonKanjis: rnk,
+        } = furiganaParse(rp, ro);
+
+        kanjis = rk.map((v) => v.split("").reverse().join("")).reverse();
+        furiganas = rf.map((v) => v.split("").reverse().join("")).reverse();
+        nonKanjis = rnk.map((v) => v.split("").reverse().join("")).reverse();
+        startsWKana = !isKanji(ortography.charAt(0));
+
+        return { kanjis, furiganas, nonKanjis, startsWKana };
+      } catch {}
+    }
+    throw e;
+  }
+
+  return { kanjis, furiganas, nonKanjis, startsWKana };
+}
+
+/**
+ * @returns  {{ kanjis:String[], furiganas:String[], nonKanjis:String[], startsWKana:boolean }} object containing parse info
+ * @throws if the two phrases do not match or if the parsed output is invalid.
+ * @param {String} pronunciation (hiragana)
+ * @param {String} orthography (kanji)
+ */
 export function furiganaParse(pronunciation, orthography) {
   if (orthography.split("").every((c) => isKanji(c) || isPunctuation(c))) {
     return {
@@ -210,7 +251,13 @@ export function furiganaParse(pronunciation, orthography) {
 
           if (start > pronunciation.length) {
             const e = new Error("The two phrases do not match");
-            e.data = { kanjis, furiganas, nonKanjis };
+            e.name = "InputError";
+            e.data = {
+              input: { pronunciation, orthography },
+              kanjis,
+              furiganas,
+              nonKanjis,
+            };
             throw e;
           }
         }
@@ -273,6 +320,7 @@ export function furiganaParse(pronunciation, orthography) {
     orthographyOutput !== ortographyNoSpace
   ) {
     const err = new Error("Failed to parse text to build furigana");
+    err.name = "ParseError";
     err.data = {
       input: { pronunciation, orthography },
       output: {
@@ -394,7 +442,7 @@ export function htmlElementHint(japaneseText) {
       hint = undefined;
     } else {
       try {
-        const { kanjis, furiganas, nonKanjis, startsWKana } = furiganaParse(
+        const { kanjis, furiganas, nonKanjis, startsWKana } = furiganaParseRetry(
           pronunciation,
           orthography
         );

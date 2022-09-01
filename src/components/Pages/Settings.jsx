@@ -50,7 +50,7 @@ import {
 } from "../../actions/storageAct";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 import { labelOptions } from "../../helper/gameHelper";
-import { furiganaParse, JapaneseText } from "../../helper/JapaneseText";
+import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import VerbFormSlider from "../Form/VerbFormSlider";
 import { getKanji } from "../../actions/kanjiAct";
 
@@ -94,10 +94,8 @@ class Settings extends Component {
       const t = JapaneseText.parse(text.japanese);
       if (t.hasFurigana()) {
         try {
-          furiganaParse(t.getPronunciation(), t.getSpelling());
+          furiganaParseRetry(t.getPronunciation(), t.getSpelling());
         } catch (e) {
-          console.log(e.data);
-
           const separator = <hr key={terms.length + i} />;
 
           const row = (
@@ -105,7 +103,8 @@ class Settings extends Component {
               <span className="col p-0">{t.toHTML()}</span>
               <span className="col p-0">{text.english}</span>
               <span className="col p-0 fs-xx-small">
-                {e.data ? JSON.stringify(e.data) : ""}
+                <div>{e.message}</div>
+                <div>{e.data ? JSON.stringify(e.data) : ""}</div>
               </span>
             </div>
           );
