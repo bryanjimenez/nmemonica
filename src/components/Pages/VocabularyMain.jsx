@@ -13,7 +13,8 @@ import {
 import Sizable from "../Form/Sizable";
 import {
   audioWordsHelper,
-  indicatorHelper,
+  englishLabel,
+  japaneseLabel,
   toggleFuriganaSettingHelper,
   valueLabelHelper,
 } from "../../helper/gameHelper";
@@ -81,12 +82,13 @@ class VocabularyMain extends Component {
     let romaji = vocabulary.romaji;
 
     const v = new JapaneseText.parse(vocabulary);
-    const inJapaneseLbl = indicatorHelper(v, inJapanese);
+    const inJapaneseLbl = japaneseLabel(this.props.practiceSide, v, inJapanese);
+    const inEnglishLbl = englishLabel(this.props.practiceSide, v, inEnglish);
 
     const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
       valueLabelHelper(
         this.props.practiceSide,
-        inEnglish,
+        inEnglishLbl,
         inJapaneseLbl,
         "[English]",
         "[Japanese]"

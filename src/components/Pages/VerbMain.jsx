@@ -15,8 +15,9 @@ import {
 } from "../../actions/settingsAct";
 import {
   audioWordsHelper,
+  englishLabel,
   getVerbFormsArray,
-  indicatorHelper,
+  japaneseLabel,
   toggleFuriganaSettingHelper,
   valueLabelHelper,
   verbToTargetForm,
@@ -190,16 +191,24 @@ class VerbMain extends Component {
     const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
     const v = JapaneseVerb.parse(verb);
-    const inJapaneseLbl = indicatorHelper(
+    const inJapaneseLbl = japaneseLabel(
+      this.props.practiceSide,
       v,
       inJapanese,
+      this.props.linkToOtherTerm
+    );
+
+    const inEnglishLbl = englishLabel(
+      this.props.practiceSide,
+      v,
+      inEnglish,
       this.props.linkToOtherTerm
     );
 
     const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
       valueLabelHelper(
         this.props.practiceSide,
-        inEnglish,
+        inEnglishLbl,
         inJapaneseLbl,
         eLabel,
         jLabel

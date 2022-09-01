@@ -327,11 +327,14 @@ export function verbToTargetForm(rawVerb, targetForm) {
 
 /**
  * decorates label with metadata info (intransitive, keigo, etc.)
+ * @param {boolean} isOnTop
  * @param {JapaneseText | JapaneseVerb} jObj
  * @param {*} inJapanese
- * @returns
+ * @param {function} jumpToTerm
+ * @returns {HTML}
  */
-export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
+export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
+  const isOnTop = !isOnBottom;
   let indicators = [];
 
   let showAsterix = false;
@@ -347,7 +350,7 @@ export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
   const showSlang = jObj.isSlang();
   const showKeigo = jObj.isKeigo();
 
-  if (showIntr || pairUID) {
+  if (isOnTop && (showIntr || pairUID)) {
     indicators = [
       ...indicators,
       <span
@@ -368,13 +371,13 @@ export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
       </span>,
     ];
   }
-  if (showSlang) {
+  if (isOnTop && showSlang) {
     indicators = [
       ...indicators,
       <span key={indicators.length + 1}>slang</span>,
     ];
   }
-  if (showKeigo) {
+  if (isOnTop && showKeigo) {
     indicators = [
       ...indicators,
       <span key={indicators.length + 1}>keigo</span>,
@@ -422,6 +425,86 @@ export function indicatorHelper(jObj, inJapanese, jumpToTerm) {
   }
 
   return inJapaneseLbl;
+}
+
+/**
+ * decorates label with metadata info (intransitive, keigo, etc.)
+ * @param {boolean} isOnTop
+ * @param {JapaneseText | JapaneseVerb} jObj
+ * @param {*} inEnglish
+ * @param {function} jumpToTerm
+ * @returns {HTML}
+ */
+export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
+  let indicators = [];
+
+  let showIntr = false;
+  let pairUID;
+  if (jObj.constructor.name === JapaneseVerb.name) {
+    showIntr = jObj.isIntransitive();
+    pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
+  }
+
+  const showSlang = jObj.isSlang();
+  const showKeigo = jObj.isKeigo();
+
+  if (isOnTop && (showIntr || pairUID)) {
+    indicators = [
+      ...indicators,
+      <span
+        key={indicators.length + 1}
+        className={classNames({
+          clickable: pairUID,
+          "question-color": pairUID,
+        })}
+        onClick={
+          pairUID
+            ? () => {
+                jumpToTerm(pairUID);
+              }
+            : undefined
+        }
+      >
+        {showIntr ? "intr" : "trans"}
+      </span>,
+    ];
+  }
+  if (isOnTop && showSlang) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>slang</span>,
+    ];
+  }
+  if (isOnTop && showKeigo) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>keigo</span>,
+    ];
+  }
+
+  let inEnglishLbl;
+  if (indicators.length > 0) {
+    inEnglishLbl = (
+      <span>
+        {inEnglish}
+        <span className="fs-medium">
+          <span> (</span>
+          {indicators.reduce((a, c, i) => {
+            if (i > 0 && i < indicators.length) {
+              return [...a, <span key={indicators.length + i}> , </span>, c];
+            } else {
+              return [...a, c];
+            }
+          }, [])}
+          <span>)</span>
+        </span>
+      </span>
+    );
+  } else {
+    inEnglishLbl = inEnglish;
+  }
+
+  return inEnglishLbl;
 }
 
 /**
