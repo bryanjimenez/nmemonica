@@ -113,6 +113,7 @@ export class JapaneseText {
       try {
         const { kanjis, furiganas, okuriganas, startsWKana } =
           furiganaParseRetry(this.getPronunciation(), this.getSpelling());
+
         htmlElement = buildHTMLElement(
           kanjis,
           furiganas,
@@ -133,6 +134,7 @@ export class JapaneseText {
           <span>
             <span className={eClass}>{this.getPronunciation()}</span>
             <span>{this.getSpelling()}</span>
+
           </span>
         );
       }
