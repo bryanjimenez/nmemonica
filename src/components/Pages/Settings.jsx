@@ -26,7 +26,6 @@ import {
   toggleKanaEasyMode,
   toggleVocabularyReinforcement,
   togglePhrasesReinforcement,
-  AUTOPLAY_OFF,
   toggleDebug,
   DEBUG_OFF,
   toggleSwipe,
@@ -43,16 +42,15 @@ import "./spin.css";
 import { getPhrases } from "../../actions/phrasesAct";
 import { NotReady } from "../Form/NotReady";
 import { SetTermGList } from "./SetTermGList";
-import { SetTermGFList } from "./SetTermGFList";
 import {
   getMemoryStorageStatus,
   setPersistentStorage,
 } from "../../actions/storageAct";
-import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 import { labelOptions } from "../../helper/gameHelper";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
-import VerbFormSlider from "../Form/VerbFormSlider";
 import { getKanji } from "../../actions/kanjiAct";
+import { SettingsVocab } from "../Form/SettingsVocab";
+import { SettingsPhrase } from "../Form/SettingsPhrase";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -183,227 +181,60 @@ class Settings extends Component {
               <h2>Phrases</h2>
               {this.collapseExpandToggler("sectionPhrase")}
             </div>
-
-            {this.state.sectionPhrase && (
-              <div className="outer">
-                <div className="d-flex flex-row justify-content-between">
-                  <div className="column-1">
-                    <h4>
-                      {labelOptions(this.props.phraseFilter, [
-                        "Phrases Group",
-                        "Frequency List",
-                        "Space Repetition",
-                      ])}
-                    </h4>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.phraseFilter % 2 === 0}
-                        action={this.props.togglePhrasesFilter}
-                        color="default"
-                        statusText={"Filter by"}
-                      />
-                    </div>
-                    {this.props.phraseFilter === FILTER_FREQ &&
-                      this.props.phraseFreq.length === 0 && (
-                        <div className="fst-italic">
-                          No phrases have been chosen
-                        </div>
-                      )}
-
-                    {this.props.phraseFilter !== FILTER_FREQ && (
-                      <SetTermGList
-                        vocabGroups={this.props.phraseGroups}
-                        vocabActive={this.props.phraseActive}
-                        toggleTermActiveGrp={(grp) =>
-                          this.props.toggleActiveGrp("phrases", grp)
-                        }
-                      />
-                    )}
-                    {this.props.phraseFilter === FILTER_FREQ &&
-                      this.props.phraseFreq.length > 0 && (
-                        <SetTermGFList
-                          vocabGroups={this.props.phraseGroups}
-                          vocabActive={this.props.phraseActive}
-                          vocabFreq={this.props.phraseFreq}
-                          vocabulary={this.props.phrases}
-                          removeFrequencyWord={this.props.removeFrequencyPhrase}
-                          toggleTermActiveGrp={(grp) =>
-                            this.props.toggleActiveGrp("phrases", grp)
-                          }
-                        />
-                      )}
-                  </div>
-                  <div className="column-2">
-                    <div className="setting-block">
-                      <div className="mb-2">
-                        <SettingsSwitch
-                          active={!this.props.phraseOrder}
-                          action={this.props.setPhrasesOrdering}
-                          disabled={this.props.phraseFilter === FILTER_REP}
-                          statusText="Random Order"
-                        />
-                      </div>
-                      <div className="mb-2">
-                        <SettingsSwitch
-                          active={this.props.phraseReinforce}
-                          action={this.props.togglePhrasesReinforcement}
-                          disabled={this.props.phraseFilter === FILTER_FREQ}
-                          statusText="Reinforcement"
-                        />
-                      </div>
-                      <div className="mb-2">
-                        <SettingsSwitch
-                          active={this.props.phraseRomaji}
-                          action={this.props.togglePhrasesRomaji}
-                          statusText="Romaji"
-                        />
-                      </div>
-                      <div>
-                        <SettingsSwitch
-                          active={this.props.phraseSide}
-                          action={this.props.flipPhrasesPracticeSide}
-                          color="default"
-                          statusText={
-                            this.props.phraseSide ? "English" : "Japanese"
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            <SettingsPhrase
+              show={this.state.sectionPhrase}
+              phrases={this.props.phrases}
+              phraseOrder={this.props.phraseOrder}
+              phraseSide={this.props.phraseSide}
+              phraseRomaji={this.props.phraseRomaji}
+              phraseFreq={this.props.phraseFreq}
+              phraseReinforce={this.props.phraseReinforce}
+              phraseGroups={this.props.phraseGroups}
+              phraseActive={this.props.phraseActive}
+              phraseFilter={this.props.phraseFilter}
+              setPhrasesOrdering={this.props.setPhrasesOrdering}
+              togglePhrasesFilter={this.props.togglePhrasesFilter}
+              toggleActiveGrp={this.props.toggleActiveGrp}
+              togglePhrasesRomaji={this.props.togglePhrasesRomaji}
+              togglePhrasesReinforcement={this.props.togglePhrasesReinforcement}
+              removeFrequencyPhrase={this.props.removeFrequencyPhrase}
+              flipPhrasesPracticeSide={this.props.flipPhrasesPracticeSide}
+            />
           </div>
           <div className={pageClassName}>
             <div className="d-flex justify-content-between">
               <h2>Vocabulary</h2>
               {this.collapseExpandToggler("sectionVocabulary")}
             </div>
-            {this.state.sectionVocabulary && (
-              <div className="outer">
-                <div className="d-flex flex-row justify-content-between">
-                  <div className="column-1">
-                    <h4>
-                      {labelOptions(this.props.vocabFilter, [
-                        "Word Group",
-                        "Frequency List",
-                        "Space Repetition",
-                      ])}
-                    </h4>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.vocabFilter % 2 === 0}
-                        action={this.props.toggleVocabularyFilter}
-                        color="default"
-                        statusText={"Filter by"}
-                      />
-                    </div>
-                    {this.props.vocabFilter === FILTER_FREQ &&
-                      this.props.vocabFreq.length === 0 && (
-                        <div className="fst-italic">
-                          No words have been chosen
-                        </div>
-                      )}
-                    {this.props.vocabFilter !== FILTER_FREQ && (
-                      <SetTermGList
-                        vocabGroups={this.props.vocabGroups}
-                        vocabActive={this.props.vocabActive}
-                        toggleTermActiveGrp={(grp) =>
-                          this.props.toggleActiveGrp("vocabulary", grp)
-                        }
-                      />
-                    )}
-                    {this.props.vocabFilter === FILTER_FREQ &&
-                      this.props.vocabFreq.length > 0 && (
-                        <SetTermGFList
-                          vocabGroups={this.props.vocabGroups}
-                          vocabActive={this.props.vocabActive}
-                          vocabFreq={this.props.vocabFreq}
-                          vocabulary={this.props.vocabulary}
-                          removeFrequencyWord={this.props.removeFrequencyWord}
-                          toggleTermActiveGrp={(grp) =>
-                            this.props.toggleActiveGrp("vocabulary", grp)
-                          }
-                        />
-                      )}
-                  </div>
-
-                  <div className="column-2 setting-block">
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={!this.props.vocabOrder}
-                        action={this.props.setVocabularyOrdering}
-                        color="default"
-                        disabled={this.props.vocabFilter === FILTER_REP}
-                        statusText={
-                          !this.props.vocabOrder ? "Randomized" : "Alphabetic"
-                        }
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.vocabReinforce}
-                        action={this.props.toggleVocabularyReinforcement}
-                        disabled={this.props.vocabFilter === FILTER_FREQ}
-                        statusText="Reinforcement"
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.vocabRomaji}
-                        action={this.props.toggleVocabularyRomaji}
-                        statusText="Romaji"
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.vocabHint}
-                        action={this.props.toggleVocabularyHint}
-                        statusText="Hint"
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.vocabSide}
-                        action={this.props.flipVocabularyPracticeSide}
-                        color="default"
-                        statusText={
-                          this.props.vocabSide ? "English" : "Japanese"
-                        }
-                      />
-                    </div>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.vocabAutoPlay !== AUTOPLAY_OFF}
-                        action={this.props.toggleVocabularyAutoPlay}
-                        statusText={labelOptions(this.props.vocabAutoPlay, [
-                          "Auto Play [ ]",
-                          "Auto Play [EN,JP]",
-                          "Auto Play [JP,EN]",
-                        ])}
-                      />
-                    </div>
-
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={this.props.autoVerbView}
-                        action={this.props.toggleAutoVerbView}
-                        statusText="Auto Verb View"
-                      />
-                    </div>
-                    {this.props.autoVerbView && (
-                      <div className="d-flex justify-content-end p-2">
-                        <VerbFormSlider
-                          initial={this.props.verbColSplit}
-                          setChoiceN={this.props.updateVerbColSplit}
-                          statusText="Column layout"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            <SettingsVocab
+              show={this.state.sectionVocabulary}
+              vocabulary={this.props.vocabulary}
+              vocabOrder={this.props.vocabOrder}
+              setVocabularyOrdering={this.props.setVocabularyOrdering}
+              vocabFilter={this.props.vocabFilter}
+              toggleVocabularyFilter={this.props.toggleVocabularyFilter}
+              vocabFreq={this.props.vocabFreq}
+              vocabGroups={this.props.vocabGroups}
+              vocabActive={this.props.vocabActive}
+              toggleActiveGrp={this.props.toggleActiveGrp}
+              removeFrequencyWord={this.props.removeFrequencyWord}
+              vocabReinforce={this.props.vocabReinforce}
+              toggleVocabularyReinforcement={
+                this.props.toggleVocabularyReinforcement
+              }
+              vocabRomaji={this.props.vocabRomaji}
+              toggleVocabularyRomaji={this.props.toggleVocabularyRomaji}
+              vocabHint={this.props.vocabHint}
+              toggleVocabularyHint={this.props.toggleVocabularyHint}
+              vocabSide={this.props.vocabSide}
+              flipVocabularyPracticeSide={this.props.flipVocabularyPracticeSide}
+              vocabAutoPlay={this.props.vocabAutoPlay}
+              toggleVocabularyAutoPlay={this.props.toggleVocabularyAutoPlay}
+              autoVerbView={this.props.autoVerbView}
+              toggleAutoVerbView={this.props.toggleAutoVerbView}
+              verbColSplit={this.props.verbColSplit}
+              updateVerbColSplit={this.props.updateVerbColSplit}
+            />
           </div>
           <div className={pageClassName}>
             <div className="d-flex justify-content-between">
@@ -599,15 +430,18 @@ const mapStateToProps = (state) => {
     wideMode: state.settings.kana.wideMode,
     easyMode: state.settings.kana.easyMode,
     charSet: state.settings.kana.charSet,
+
+    phrases: state.phrases.value,
     phraseOrder: state.settings.phrases.ordered,
     phraseSide: state.settings.phrases.practiceSide,
     phraseRomaji: state.settings.phrases.romaji,
-    vocabulary: state.vocabulary.value,
-    phrases: state.phrases.value,
     phraseFreq: state.settings.phrases.frequency,
     phraseReinforce: state.settings.phrases.reinforce,
     phraseGroups: state.phrases.grpObj,
     phraseActive: state.settings.phrases.activeGroup,
+    phraseFilter: state.settings.phrases.filter,
+
+    vocabulary: state.vocabulary.value,
     vocabOrder: state.settings.vocabulary.ordered,
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
@@ -620,7 +454,6 @@ const mapStateToProps = (state) => {
     vocabFilter: state.settings.vocabulary.filter,
     vocabFreq: state.settings.vocabulary.frequency,
     vocabReinforce: state.settings.vocabulary.reinforce,
-    phraseFilter: state.settings.phrases.filter,
     kanjiGroups: state.kanji.grpObj,
     kanjiFilter: state.settings.kanji.filter,
     kanjiActive: state.settings.kanji.activeGroup,
@@ -634,6 +467,7 @@ const mapStateToProps = (state) => {
 };
 
 Settings.propTypes = {
+  // global
   darkMode: PropTypes.bool,
   toggleDarkMode: PropTypes.func,
   memory: PropTypes.object,
@@ -644,19 +478,52 @@ Settings.propTypes = {
   touchSwipe: PropTypes.bool,
   toggleSwipe: PropTypes.func,
 
-  setPhrasesOrdering: PropTypes.func,
+  // phrases
+  getPhrases: PropTypes.func,
+  phrases: PropTypes.array,
   phraseOrder: PropTypes.bool,
   phraseRomaji: PropTypes.bool,
-  togglePhrasesRomaji: PropTypes.func,
   phraseSide: PropTypes.bool,
-  phrases: PropTypes.array,
-  getPhrases: PropTypes.func,
   phraseFilter: PropTypes.number,
   phraseFreq: PropTypes.array,
   phraseReinforce: PropTypes.bool,
-  togglePhrasesReinforcement: PropTypes.func,
   phraseGroups: PropTypes.object,
   phraseActive: PropTypes.array,
+
+  togglePhrasesFilter: PropTypes.func,
+  toggleActiveGrp: PropTypes.func,
+  togglePhrasesRomaji: PropTypes.func,
+  togglePhrasesReinforcement: PropTypes.func,
+
+  setPhrasesOrdering: PropTypes.func,
+  removeFrequencyPhrase: PropTypes.func,
+  flipPhrasesPracticeSide: PropTypes.func,
+
+  // vocabulary
+  getVocabulary: PropTypes.func,
+  vocabulary: PropTypes.array,
+  vocabOrder: PropTypes.bool,
+  setVocabularyOrdering: PropTypes.func,
+  vocabFilter: PropTypes.number,
+  toggleVocabularyFilter: PropTypes.func,
+  vocabFreq: PropTypes.array,
+  vocabGroups: PropTypes.object,
+  vocabActive: PropTypes.array,
+  removeFrequencyWord: PropTypes.func,
+  vocabReinforce: PropTypes.bool,
+  toggleVocabularyReinforcement: PropTypes.func,
+  vocabRomaji: PropTypes.bool,
+  toggleVocabularyRomaji: PropTypes.func,
+  vocabHint: PropTypes.bool,
+  toggleVocabularyHint: PropTypes.func,
+  vocabSide: PropTypes.bool,
+  flipVocabularyPracticeSide: PropTypes.func,
+  vocabAutoPlay: PropTypes.number,
+  toggleVocabularyAutoPlay: PropTypes.func,
+  autoVerbView: PropTypes.bool,
+  toggleAutoVerbView: PropTypes.func,
+  verbColSplit: PropTypes.number,
+  updateVerbColSplit: PropTypes.func,
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
@@ -669,35 +536,6 @@ Settings.propTypes = {
 
   particlesARomaji: PropTypes.bool,
   setParticlesARomaji: PropTypes.func,
-  flipPhrasesPracticeSide: PropTypes.func,
-  togglePhrasesFilter: PropTypes.func,
-  removeFrequencyPhrase: PropTypes.func,
-
-  vocabOrder: PropTypes.bool,
-  toggleVocabularyHint: PropTypes.func,
-  setVocabularyOrdering: PropTypes.func,
-  vocabRomaji: PropTypes.bool,
-  toggleVocabularyRomaji: PropTypes.func,
-  vocabSide: PropTypes.bool,
-  flipVocabularyPracticeSide: PropTypes.func,
-  vocabHint: PropTypes.bool,
-  vocabGroups: PropTypes.object,
-  vocabActive: PropTypes.array,
-  toggleVocabularyFilter: PropTypes.func,
-  vocabulary: PropTypes.array,
-  vocabFreq: PropTypes.array,
-  vocabFilter: PropTypes.number,
-  removeFrequencyWord: PropTypes.func,
-  vocabAutoPlay: PropTypes.number,
-  toggleVocabularyAutoPlay: PropTypes.func,
-  getVocabulary: PropTypes.func,
-  autoVerbView: PropTypes.bool,
-  toggleAutoVerbView: PropTypes.func,
-  vocabReinforce: PropTypes.bool,
-  toggleVocabularyReinforcement: PropTypes.func,
-  verbColSplit: PropTypes.number,
-  updateVerbColSplit: PropTypes.func,
-  toggleActiveGrp: PropTypes.func,
 
   getKanji: PropTypes.func,
   kanjiFilter: PropTypes.number,
