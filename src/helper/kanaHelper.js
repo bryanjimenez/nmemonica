@@ -7,7 +7,7 @@ import data from "../../data/kana.json";
 export function isKanji(char) {
   const common = "\u4E00-\u9FAF";
   const rare = "\u3400-\u4DBF";
-  const exception = "\u3005";   // noma repeater from isPunctuation
+  const exception = "\u3005"; // noma repeater from isPunctuation
   return new RegExp("[" + common + rare + exception + "]").test(char);
 }
 
@@ -25,8 +25,19 @@ export function isHiragana(char) {
  */
 export function isKatakana(char) {
   const fullWidth = "\u30A0-\u30FF";
-  const halfWidth = "\uFF66-\uFF9F"; // FIXME: is this needed?
+  const halfWidth = "\uFF66-\uFF9F"; /*eslint-disable-line*/ // FIXME: is this needed?
   return new RegExp("[" + fullWidth + "]").test(char);
+}
+
+/**
+ * @returns {Boolean}
+ * @param {String} char the character to check against the punctuation table
+ */
+export function isFullWNumber(char) {
+  // English
+  const eNumber = "\uFF10-\uFF19";
+
+  return new RegExp("[" + eNumber + "]").test(char);
 }
 
 /**
@@ -36,8 +47,7 @@ export function isKatakana(char) {
 export function isPunctuation(char) {
   // English
   const eSymbol = "\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF5E";
-  const eLetter = "\uFF21-\uFF3A\uFF41-\uFF5A";
-  const eNumber = "\uFF10-\uFF19";
+  const eLetter = "\uFF21-\uFF3A\uFF41-\uFF5A"; /* eslint-disable-line */
 
   // Japanese
   const jFP = "\u3000-\u3004\u3006-\u303F"; // full width punctuation
@@ -60,6 +70,23 @@ export function swapKana(char) {
     swap = String.fromCharCode(hiragana);
   } else {
     swap = char;
+  }
+
+  return swap;
+}
+
+/**
+ * swaps Full-width roman characters number to number
+ * @returns {number}
+ * @param {String} char
+ */
+export function toEnglishNumber(char) {
+  let swap;
+  if (isFullWNumber(char)) {
+    const katakana = char.codePointAt(0) - 65249;
+    swap = Number.parseInt(String.fromCharCode(katakana));
+  } else {
+    swap = Number.NaN;
   }
 
   return swap;

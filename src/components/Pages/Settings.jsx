@@ -185,7 +185,7 @@ class Settings extends Component {
             </div>
 
             {this.state.sectionPhrase && (
-              <div className="outter">
+              <div className="outer">
                 <div className="d-flex flex-row justify-content-between">
                   <div className="column-1">
                     <h4>
@@ -280,7 +280,7 @@ class Settings extends Component {
               {this.collapseExpandToggler("sectionVocabulary")}
             </div>
             {this.state.sectionVocabulary && (
-              <div className="outter">
+              <div className="outer">
                 <div className="d-flex flex-row justify-content-between">
                   <div className="column-1">
                     <h4>
@@ -411,7 +411,7 @@ class Settings extends Component {
               {this.collapseExpandToggler("sectionKanji")}
             </div>
             {this.state.sectionKanji && (
-              <div className="outter">
+              <div className="outer">
                 <div className="d-flex flex-row justify-content-between">
                   <div className="column-1">
                     <h4>
