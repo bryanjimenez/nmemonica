@@ -71,6 +71,7 @@ import {
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import { gPronounceCacheIndexParam } from "../../constants/paths";
+import classNames from "classnames";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -499,6 +500,7 @@ class Vocabulary extends Component {
     vocabulary.reinforce = this.state.frequency.includes(vocabulary.uid);
 
     const isVerb = vocabulary.grp === "Verb";
+    const hasFurigana = JapaneseText.parse(vocabulary).hasFurigana();
 
     let hintActive, hint;
     if (this.props.practiceSide) {
@@ -638,8 +640,15 @@ class Vocabulary extends Component {
                 )}
 
                 <div
-                  className="sm-icon-grp"
-                  onClick={() => this.props.toggleFurigana(vocabulary.uid)}
+                  className={classNames({
+                    "sm-icon-grp": true,
+                    "disabled disabled-color": !hasFurigana,
+                  })}
+                  onClick={
+                    hasFurigana
+                      ? () => this.props.toggleFurigana(vocabulary.uid)
+                      : undefined
+                  }
                 >
                   <FontAwesomeIcon
                     icon={faSuperscript}

@@ -83,18 +83,18 @@ export class JapaneseText {
   toHTML(options) {
     let htmlElement;
 
-    let noFurigana;
+    let furiganaShown;
     let furiganaToggle;
     if (options && options.furigana) {
-      noFurigana = !options.furigana.show;
+      furiganaShown = options.furigana.show;
       if (typeof options.furigana.toggle === "function") {
         furiganaToggle = options.furigana.toggle;
       }
     }
 
     if (!this.hasFurigana()) {
-      htmlElement = <span>{this._furigana}</span>;
-    } else if (noFurigana === true) {
+      htmlElement = <span>{this.getSpelling()}</span>;
+    } else if (furiganaShown === false) {
       htmlElement = (
         <span
           className={classNames({ clickable: furiganaToggle })}
@@ -106,8 +106,8 @@ export class JapaneseText {
     } else {
       try {
         const { kanjis, furiganas, nonKanjis, startsWKana } = furiganaParse(
-          this._furigana,
-          this._kanji
+          this.getPronunciation(),
+          this.getSpelling()
         );
         htmlElement = buildHTMLElement(
           kanjis,
@@ -127,8 +127,8 @@ export class JapaneseText {
 
         htmlElement = (
           <span>
-            <span className={eClass}>{this._furigana}</span>
-            <span>{this._kanji}</span>
+            <span className={eClass}>{this.getPronunciation()}</span>
+            <span>{this.getSpelling()}</span>
           </span>
         );
       }
