@@ -19,6 +19,7 @@ import {
   faGlasses,
   faHeadphones,
   faPencilAlt,
+  faRecycle,
   faRunning,
   faSuperscript,
 } from "@fortawesome/free-solid-svg-icons";
@@ -91,6 +92,7 @@ class Vocabulary extends Component {
       showHint: false,
       filteredVocab: [],
       frequency: [], // subset of frequency words within current active group
+      recacheAudio: false,
     };
 
     if (this.props.vocab.length === 0) {
@@ -411,25 +413,26 @@ class Vocabulary extends Component {
         );
       const vocabulary = getTerm(uid, this.props.vocab);
 
+      const override = this.state.recacheAudio ? "/override_cache" : "";
+
       if (direction === "up") {
-        let audioUrl;
+        let sayObj;
         if (vocabulary.grp === "Verb" && this.props.verbForm !== "dictionary") {
           const verb = verbToTargetForm(vocabulary, this.props.verbForm);
-          const inJapanese = audioPronunciation({
-            japanese: verb.getSpelling(),
-          });
-          audioUrl = addParam(pronounceEndoint, {
-            tl: "ja",
-            q: inJapanese,
-            // [gPronounceCacheIndexParam]: conjugated verbs aren't overriden
-          });
+
+          sayObj = {
+            japanese: verb.toString(),
+            pronounce: vocabulary.pronounce && verb.getPronunciation(),
+          };
         } else {
-          audioUrl = addParam(pronounceEndoint, {
-            tl: "ja",
-            q: audioPronunciation(vocabulary),
-            [gPronounceCacheIndexParam]: cacheIdx(vocabulary),
-          });
+          sayObj = vocabulary;
         }
+
+        const audioUrl = addParam(pronounceEndoint + override, {
+          tl: "ja",
+          q: audioPronunciation(sayObj),
+          [gPronounceCacheIndexParam]: cacheIdx(sayObj),
+        });
 
         let na = addParam(pronounceEndoint, {
           tl: "ja",
@@ -470,7 +473,9 @@ class Vocabulary extends Component {
         }
       } else if (direction === "down") {
         const inEnglish = vocabulary.english;
-        const audioUrl = addParam(pronounceEndoint, { tl: "en", q: inEnglish });
+
+        const audioUrl = addParam(pronounceEndoint + override, { tl: "en", q: inEnglish });
+
         const englishAudio = new Audio(audioUrl);
         try {
           englishAudio.play();
@@ -577,6 +582,32 @@ class Vocabulary extends Component {
                     icon={this.props.practiceSide ? faGlasses : faPencilAlt}
                   />
                 </div>
+
+                <div
+                  className={classNames({
+                    "sm-icon-grp": true,
+                    "disabled-color": this.state.recacheAudio,
+                  })}
+                >
+                  <FontAwesomeIcon
+                    onClick={() => {
+                      if (this.state.recacheAudio === false) {
+                        const delayTime = 2000;
+                        this.setState({ recacheAudio: true });
+
+                        const delayToggle = () => {
+                          this.setState({ recacheAudio: false });
+                        };
+
+                        setTimeout(delayToggle, delayTime);
+                      }
+                    }}
+                    className="clickable"
+                    icon={faRecycle}
+                    aria-label="Override audio"
+                  />
+                </div>
+
                 {this.props.autoPlay !== AUTOPLAY_OFF && (
                   <div className="sm-icon-grp">
                     <FontAwesomeIcon

@@ -134,7 +134,6 @@ export class JapaneseText {
           <span>
             <span className={eClass}>{this.getPronunciation()}</span>
             <span>{this.getSpelling()}</span>
-
           </span>
         );
       }
@@ -518,24 +517,21 @@ export function htmlElementHint(japaneseText) {
 
 /**
  * when word has override pronounce attr it is used otherwise the spelling is used
- * @returns {String} hiragana pronunciation
+ * @returns {String} kana pronunciation or it's spelling
  * @param {{japanese: String, pronounce: String|undefined}} vocabulary data object
  */
 export function audioPronunciation(vocabulary) {
   let q;
   if (vocabulary.pronounce) {
-    const isHiraganaWord = !vocabulary.pronounce
+    const isAllKana = vocabulary.pronounce
       .split("")
-      .some((c) => !isHiragana(c));
+      .every((c) => isHiragana(c) || isKatakana(c));
 
-    const isKatakanaWord = !vocabulary.pronounce
-      .split("")
-      .some((c) => !isKatakana(c));
-
-    if (isHiraganaWord || isKatakanaWord) {
+    if (isAllKana) {
       q = vocabulary.pronounce;
     } else {
       console.warn("pronunciation is not hiragana or katakana");
+      console.warn(JSON.stringify(vocabulary));
     }
   } else {
     const w = JapaneseText.parse(vocabulary.japanese);

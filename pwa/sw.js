@@ -172,7 +172,7 @@ self.addEventListener("fetch", (e) => {
           )
           .catch(() =>
             //not found
-            fetch(url)
+            fetch(newUrl)
               .then((res) => res.blob())
               .then((blob) =>
                 addIDBItem(db, { query, blob }).then((dataO) =>

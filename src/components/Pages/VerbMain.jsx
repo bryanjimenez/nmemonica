@@ -46,8 +46,9 @@ class VerbMain extends Component {
 
       // lastVerb to prevent verb-form loss between transition v->nv
       const lastVerb = {
-        japanese: thisVerb.getSpelling(),
+        japanese: thisVerb.toString(),
         english: this.props.verb.english,
+        pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
       };
       this.props.setPreviousWord({ lastVerb });
     }
@@ -72,15 +73,17 @@ class VerbMain extends Component {
       const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
-        japanese: prevVerb.getSpelling(),
+        japanese: prevVerb.toString(),
         english: prevProps.verb.english,
+        pronounce: prevProps.verb.pronounce && prevVerb.getPronunciation(),
         uid: prevProps.verb.uid,
       };
 
       // lastVerb to prevent verb-form loss between transition v->nv
       const lastVerb = {
-        japanese: thisVerb.getSpelling(),
+        japanese: thisVerb.toString(),
         english: this.props.verb.english,
+        pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
       };
       this.props.setPreviousWord({ ...prevVocab, lastVerb }).then(() => {
         this.setState({
@@ -98,8 +101,9 @@ class VerbMain extends Component {
       const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
-        japanese: thisVerb.getSpelling(),
+        japanese: thisVerb.toString(),
         english: this.props.verb.english,
+        pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
         uid: this.props.verb.uid,
       };
 
@@ -218,7 +222,8 @@ class VerbMain extends Component {
     const btmStyle = { fontSize: this.props.practiceSide ? "2.5rem" : "1rem" };
 
     const verbJapanese = {
-      japanese: japanesePhrase.getSpelling(),
+      japanese: japanesePhrase.toString(),
+      pronounce: verb.pronounce && japanesePhrase.getPronunciation(),
     };
 
     const audioWords = audioWordsHelper(
@@ -316,8 +321,10 @@ class VerbMain extends Component {
                 this.props.verbForm
               );
               const firstVerb = {
-                japanese: thisVerb.getSpelling(),
+                japanese: thisVerb.toString(),
                 english: this.props.verb.english,
+                pronounce:
+                  this.props.verb.pronounce && thisVerb.getPronunciation(),
               };
               this.props.setPreviousWord({ ...firstVerb });
             }
