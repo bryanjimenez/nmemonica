@@ -1,0 +1,17 @@
+.grp-info > div {
+  position: absolute;
+  left: 45px;
+}
+
+.example-blk {
+  height: 65px;
+}        
+
+/* https://getbootstrap.com/docs/5.0/layout/breakpoints/ */
+/* X-Small devices (portrait phones, less than 576px) */
+@media (max-width:  575.98px) {
+  
+  .grp-info > div {
+    max-width: 70px;
+  }
+}

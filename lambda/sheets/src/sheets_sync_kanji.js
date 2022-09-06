@@ -28,7 +28,7 @@ function setPropsFromTags(el, tag) {
 export async function sheets_sync_kanji(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Kanji!A1:G";
+    const range = "Kanji!A1:F";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -52,9 +52,8 @@ export async function sheets_sync_kanji(req, res) {
       EN = 1,
       ON = 2,
       KUN = 3,
-      EX = 4,
-      GRP = 5,
-      TAG = 6;
+      GRP = 4,
+      TAG = 5;
 
     let sheetHeaders = [];
     const kanjiList = sheetData.reduce((acc, el, i) => {
@@ -72,10 +71,6 @@ export async function sheets_sync_kanji(req, res) {
 
         if (el[KUN] && el[KUN] !== "") {
           kanji.kun = el[KUN];
-        }
-
-        if (el[EX] && el[EX] !== "") {
-          kanji.ex = el[EX];
         }
 
         if (el[GRP] && el[GRP] !== "") {

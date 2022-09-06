@@ -19,6 +19,11 @@ import {
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import { FILTER_GRP } from "../../reducers/settingsRed";
+import { getVocabulary } from "../../actions/vocabularyAct";
+import { JapaneseText } from "../../helper/JapaneseText";
+import classNames from "classnames";
+
+import "./Kanji.css";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -35,11 +40,16 @@ class Kanji extends Component {
       frequency: [], // subset of frequency words within current active group
       showOn: false,
       showKun: false,
-      showEng: false,
+      showEx: false,
+      showMeaning: false,
     };
 
     if (this.props.kanji.length === 0) {
       this.props.getKanji();
+    }
+
+    if (this.props.vocabulary.length === 0) {
+      this.props.getVocabulary();
     }
 
     this.gotoNext = this.gotoNext.bind(this);
@@ -92,7 +102,8 @@ class Kanji extends Component {
       selectedIndex: newSel,
       showOn: false,
       showKun: false,
-      showEng: false,
+      showEx: false,
+      showMeaning: false,
     });
   }
 
@@ -110,7 +121,8 @@ class Kanji extends Component {
       selectedIndex: newSel,
       showOn: false,
       showKun: false,
-      showEng: false,
+      showEx: false,
+      showMeaning: false,
     });
   }
 
@@ -171,6 +183,20 @@ class Kanji extends Component {
 
     const term = getTerm(uid, this.props.kanji);
 
+    const found = this.props.vocabulary.filter((v) =>
+      JapaneseText.parse(v.japanese).getSpelling().includes(term.kanji)
+    );
+
+    const maxShowEx = 3;
+    const examples = found.slice(0, maxShowEx).map((el, k, arr) => (
+      <React.Fragment key={k}>
+        {el.english + " "}
+        {JapaneseText.parse(el.japanese).toHTML()}
+        {k < arr.length - 1 ? "; " : ""}
+        <wbr />
+      </React.Fragment>
+    ));
+
     let page = [
       <div key={0} className="kanji main-panel h-100">
         <div
@@ -187,22 +213,29 @@ class Kanji extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
 
+          <div className="grp-info">
+            <div>
+              <div>{term.grp}</div>
+              <div>{term.subGrp.replace("_", " ")}</div>
+            </div>
+          </div>
+
           <div className="text-center">
             <div className="">
-              <h1 className="pt-3">
+              <h1 className="pt-0">
                 <span>{term.kanji}</span>
               </h1>
               {/* temp spacer */}
               {!term.on && !term.kun && (
                 <div>
-                  <h3 className="pt-3">.</h3>
-                  <h3 className="pt-3">.</h3>
+                  <h3 className="pt-0">.</h3>
+                  <h3 className="pt-2">.</h3>
                 </div>
               )}
 
               {term.on && (
                 <h3
-                  className="pt-3"
+                  className="pt-0"
                   onClick={() => {
                     this.setState((state) => ({
                       showOn: !state.showOn,
@@ -214,7 +247,7 @@ class Kanji extends Component {
               )}
               {term.kun && (
                 <h3
-                  className="pt-3"
+                  className="pt-2"
                   onClick={() => {
                     this.setState((state) => ({
                       showKun: !state.showKun,
@@ -224,22 +257,38 @@ class Kanji extends Component {
                   <span>{this.state.showKun ? term.kun : "[Kun]"}</span>
                 </h3>
               )}
+              {[examples].length > 0 && (
+                <div
+                  className={classNames({
+                    "example-blk a h6 pt-2": true,
+                    "disabled-color": examples.length === 0,
+                  })}
+                  onClick={() => {
+                    this.setState((state) => ({
+                      showEx: !state.showEx,
+                    }));
+                  }}
+                >
+                  <span className="text-nowrap">
+                    {this.state.showEx && examples.length > 0
+                      ? examples
+                      : "[Examples]"}
+                  </span>
+                </div>
+              )}
               <h3
-                className="pt-3"
+                className="pt-2"
                 onClick={() => {
                   this.setState((state) => ({
-                    showEng: !state.showEng,
+                    showMeaning: !state.showMeaning,
                   }));
                 }}
               >
-                <span>{this.state.showEng ? term.eng : "[Meaning]"}</span>
+                <span>{this.state.showMeaning ? term.eng : "[Meaning]"}</span>
               </h3>
-
-              {/* debug
-              <br />
-              {JSON.stringify(kanji)} */}
             </div>
           </div>
+          <div className="right-info"></div>
 
           <StackNavButton
             color={"--yellow"}
@@ -259,6 +308,8 @@ class Kanji extends Component {
 const mapStateToProps = (state) => {
   return {
     kanji: state.kanji.value,
+    vocabulary: state.vocabulary.value,
+
     activeGroup: state.settings.kanji.activeGroup,
     touchSwipe: state.settings.global.touchSwipe,
   };
@@ -266,14 +317,17 @@ const mapStateToProps = (state) => {
 
 Kanji.propTypes = {
   kanji: PropTypes.array,
+  vocabulary: PropTypes.array,
   activeGroup: PropTypes.array,
   touchSwipe: PropTypes.bool,
   getKanji: PropTypes.func,
+  getVocabulary: PropTypes.func,
   logger: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
   getKanji,
+  getVocabulary,
   logger,
 })(Kanji);
 
