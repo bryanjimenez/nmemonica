@@ -219,11 +219,11 @@ export function furiganaParseRetry(pronunciation, ortography) {
 }
 
 /**
- * A number that has furigana
- * @param {*} pos the characters position in ortography
- * @param {*} pronunciation
- * @param {*} orthography
- * @returns
+ * is orthography[pos] a number that has furigana
+ * @param {number} pos the characters position in ortography
+ * @param {string} pronunciation
+ * @param {string} orthography
+ * @returns {boolean} whether is numeric with furigana
  */
 export function numericCounter(pos, pronunciation, orthography) {
   const char = orthography.charAt(pos);
@@ -231,7 +231,7 @@ export function numericCounter(pos, pronunciation, orthography) {
   return (
     Number.isInteger(toEnglishNumber(char)) || // is Japanese arabic number char
     (Number.isInteger(Number.parseInt(char)) && // is a number
-      pronunciation.indexOf(char) < 0 && // the number has furigana
+      !pronunciation.includes(char) && // the number has furigana
       !isKanji(char) &&
       !isHiragana(char) &&
       !isKatakana(char) &&
@@ -470,7 +470,7 @@ export function htmlElementHint(japaneseText) {
   const minChars = 3;
   let pronunciation, orthography, hint;
 
-  if (japaneseText.indexOf("\n") > -1) {
+  if (japaneseText.includes("\n")) {
     [pronunciation, orthography] = japaneseText.split("\n");
 
     if (pronunciation.length < minChars) {
