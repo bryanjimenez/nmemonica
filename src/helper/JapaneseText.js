@@ -318,8 +318,8 @@ export function furiganaParse(pronunciation, orthography) {
 
       if (orthography.length - i === 1) {
         // (this) last character is a kanji
-        if (pronunciation.substr(start) !== " ") {
-          fword += pronunciation.substr(start);
+        if (pronunciation.slice(start) !== " ") {
+          fword += pronunciation.slice(start);
         }
         furiganas.push(fword);
         kanjis.push(kword);
@@ -338,8 +338,8 @@ export function furiganaParse(pronunciation, orthography) {
   );
 
   // remove spaces which are used as a workaround for parsing failure due to repeated chars
-  const pronunciationNoSpace = pronunciation.split(" ").join("");
-  const ortographyNoSpace = orthography.split(" ").join("");
+  const pronunciationNoSpace = pronunciation.replaceAll(" ","");
+  const ortographyNoSpace = orthography.replaceAll(" ","");
 
   if (
     pronunciationOutput !== pronunciationNoSpace ||
@@ -530,7 +530,7 @@ export function audioPronunciation(vocabulary) {
     const w = JapaneseText.parse(vocabulary.japanese);
     const spelling = w.getSpelling();
     // remove workaround-spaces
-    q = spelling.split(" ").join("");
+    q = spelling.replaceAll(" ","");
   }
   return q;
 }

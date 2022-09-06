@@ -61,8 +61,8 @@ export class JapaneseVerb extends JapaneseText {
       return this.exv;
     }
 
-    const lastChar = pronunciation.split("").slice(-1).join();
-    const beforeLastChar = pronunciation.split("").slice(-2, -1).join();
+    const lastChar = pronunciation.slice(-1);
+    const beforeLastChar = pronunciation.slice(-2, -1);
 
     const iSound = 1;
     const eSound = 3;
@@ -71,7 +71,7 @@ export class JapaneseVerb extends JapaneseText {
       getConsonantVowel(beforeLastChar);
 
     if (
-      spelling.split("").slice(-2).join("") === "する" ||
+      spelling.slice(-2) === "する" ||
       pronunciation === "くる" ||
       pronunciation === "だ" ||
       pronunciation === "ある"
@@ -101,11 +101,11 @@ export class JapaneseVerb extends JapaneseText {
     let kStem;
 
     if (hasKanji) {
-      kStem = this.getSpelling().split("").slice(0, -1).join("");
+      kStem = this.getSpelling().slice(0, -1);
     }
 
-    const lastChar = this.getPronunciation().split("").slice(-1).join("");
-    const fStem = this.getPronunciation().split("").slice(0, -1).join("");
+    const lastChar = this.getPronunciation().slice(-1);
+    const fStem = this.getPronunciation().slice(0, -1);
 
     // u-verbs
     if (this.getVerbClass() === 1 || lastChar !== "る") {
@@ -157,9 +157,9 @@ export class JapaneseVerb extends JapaneseText {
 
       const consonantEnding = hiragana[consonant][aVowel] + ending;
 
-      const kStem = this.getSpelling().split("").slice(0, -1).join("");
+      const kStem = this.getSpelling().slice(0, -1);
       if (hasKanji) {
-        const fStem = this.getPronunciation().split("").slice(0, -1).join("");
+        const fStem = this.getPronunciation().slice(0, -1);
 
         nai = new JapaneseText(
           fStem + consonantEnding,
@@ -192,11 +192,11 @@ export class JapaneseVerb extends JapaneseText {
       //   nai = "いない\n居ない";
       // }
 
-      if ("する" === verb.split("").slice(-2).join("")) {
-        const kStem = this.getSpelling().split("").slice(0, -2).join("");
+      if ("する" === verb.slice(-2)) {
+        const kStem = this.getSpelling().slice(0, -2);
 
         if (hasKanji) {
-          const fStem = this.getPronunciation().split("").slice(0, -2).join("");
+          const fStem = this.getPronunciation().slice(0, -2);
           nai = new JapaneseText(fStem + "しない", kStem + "しない");
         } else {
           nai = new JapaneseText(kStem + "しない");
@@ -230,9 +230,9 @@ export class JapaneseVerb extends JapaneseText {
 
       const consonantEnding = hiragana[consonant][aVowel] + ending;
 
-      const kStem = this.getSpelling().split("").slice(0, -1).join("");
+      const kStem = this.getSpelling().slice(0, -1);
       if (hasKanji) {
-        const fStem = this.getPronunciation().split("").slice(0, -1).join("");
+        const fStem = this.getPronunciation().slice(0, -1);
 
         saseru = new JapaneseText(
           fStem + consonantEnding,
@@ -264,11 +264,11 @@ export class JapaneseVerb extends JapaneseText {
         saseru = new JapaneseText("ある");
       }
 
-      if ("する" === verb.split("").slice(-2).join("")) {
-        const kStem = this.getSpelling().split("").slice(0, -2).join("");
+      if ("する" === verb.slice(-2)) {
+        const kStem = this.getSpelling().slice(0, -2);
 
         if (hasKanji) {
-          const fStem = this.getPronunciation().split("").slice(0, -2).join("");
+          const fStem = this.getPronunciation().slice(0, -2);
           saseru = new JapaneseText(fStem + "させる", kStem + "させる");
         } else {
           saseru = new JapaneseText(kStem + "させる");
@@ -298,10 +298,10 @@ export class JapaneseVerb extends JapaneseText {
         break;
     }
 
-    if ("する" === this.getSpelling().split("").slice(-2).join("")) {
+    if ("する" === this.getSpelling().slice(-2)) {
       const ending = "します";
-      const fstem = this.getPronunciation().split("").slice(0, -2).join("");
-      const kstem = this.getSpelling().split("").slice(0, -2).join("");
+      const fstem = this.getPronunciation().slice(0, -2);
+      const kstem = this.getSpelling().slice(0, -2);
 
       if (this.hasFurigana()) {
         masu = new JapaneseText(fstem + ending, kstem + ending);
@@ -343,10 +343,10 @@ export class JapaneseVerb extends JapaneseText {
         break;
     }
 
-    if ("する" === this.getSpelling().split("").slice(-2).join("")) {
+    if ("する" === this.getSpelling().slice(-2)) {
       const ending = "しましょう";
-      const fstem = this.getPronunciation().split("").slice(0, -2).join("");
-      const kstem = this.getSpelling().split("").slice(0, -2).join("");
+      const fstem = this.getPronunciation().slice(0, -2);
+      const kstem = this.getSpelling().slice(0, -2);
 
       if (this.hasFurigana()) {
         mashou = new JapaneseText(fstem + ending, kstem + ending);
@@ -429,22 +429,22 @@ export class JapaneseVerb extends JapaneseText {
 
         if (furigana) {
           t_Con = new JapaneseText(
-            hiragana.substr(0, hiragana.length - 1) + ending,
-            verb.substr(0, verb.length - 1) + ending
+            hiragana.slice(0, -1) + ending,
+            verb.slice(0, -1) + ending
           );
         } else {
-          t_Con = new JapaneseText(verb.substr(0, verb.length - 1) + ending);
+          t_Con = new JapaneseText(verb.slice(0, -1) + ending);
         }
       }
     } else if (type === 2) {
       ending = rule.g2.ru;
       if (furigana) {
         t_Con = new JapaneseText(
-          hiragana.substr(0, hiragana.length - 1) + ending,
-          verb.substr(0, verb.length - 1) + ending
+          hiragana.slice(0, -1) + ending,
+          verb.slice(0, -1) + ending
         );
       } else {
-        t_Con = new JapaneseText(verb.substr(0, verb.length - 1) + ending);
+        t_Con = new JapaneseText(verb.slice(0, -1) + ending);
       }
     } else if (type === 3) {
       if (verb === "来る" || verb === "くる") {
@@ -457,12 +457,12 @@ export class JapaneseVerb extends JapaneseText {
         t_Con = JapaneseText.parse(rule.g3.aru);
       }
 
-      if ("する" === verb.split("").slice(-2).join("")) {
+      if ("する" === verb.slice(-2)) {
         const ending = rule.g3.suru;
-        const kstem = verb.split("").slice(0, -2).join("");
+        const kstem = verb.slice(0, -2);
 
         if (furigana) {
-          const fstem = hiragana.split("").slice(0, -2).join("");
+          const fstem = hiragana.slice(0, -2);
           t_Con = new JapaneseText(fstem + ending, kstem + ending);
         } else {
           t_Con = new JapaneseText(kstem + ending);

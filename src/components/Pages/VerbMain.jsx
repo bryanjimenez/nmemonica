@@ -148,7 +148,7 @@ class VerbMain extends Component {
     const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
 
     const t1 = verbForms.slice(0, splitIdx);
-    const t2 = verbForms.slice(splitIdx, verbForms.length);
+    const t2 = verbForms.slice(splitIdx);
     return { t1, t2 };
   }
 

@@ -313,7 +313,7 @@ class Phrases extends Component {
     const text =
       phrase.english.length < 15
         ? phrase.english
-        : phrase.english.substr(0, 15) + "...";
+        : phrase.english.slice(0, 15) + "...";
 
     this.props.logger("reinforce (" + text + ")", 3);
   }
