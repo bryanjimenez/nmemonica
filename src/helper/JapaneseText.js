@@ -254,6 +254,9 @@ export function furiganaParse(pronunciation, orthography) {
     };
   }
 
+  const space = new RegExp(/\s/g);
+  const hasWhiteSpace = space.test(pronunciation) || space.test(orthography);
+
   const startsWKana = !isKanji(orthography.charAt(0));
 
   let start = 0;
@@ -276,7 +279,10 @@ export function furiganaParse(pronunciation, orthography) {
           start++;
 
           if (start > pronunciation.length) {
-            const e = new Error("The two phrases do not match");
+            const e = new Error(
+              "The two phrases do not match" +
+                (hasWhiteSpace ? " (contains white space)" : "")
+            );
             e.name = "InputError";
             e.data = {
               input: { pronunciation, orthography },
@@ -338,14 +344,17 @@ export function furiganaParse(pronunciation, orthography) {
   );
 
   // remove spaces which are used as a workaround for parsing failure due to repeated chars
-  const pronunciationNoSpace = pronunciation.replaceAll(" ","");
-  const ortographyNoSpace = orthography.replaceAll(" ","");
+  const pronunciationNoSpace = pronunciation.replaceAll(" ", "");
+  const ortographyNoSpace = orthography.replaceAll(" ", "");
 
   if (
     pronunciationOutput !== pronunciationNoSpace ||
     orthographyOutput !== ortographyNoSpace
   ) {
-    const err = new Error("Failed to parse text to build furigana");
+    const err = new Error(
+      "Failed to parse text to build furigana" +
+        (hasWhiteSpace ? " (contains white space)" : "")
+    );
     err.name = "ParseError";
     err.data = {
       input: { pronunciation, orthography },
@@ -530,7 +539,7 @@ export function audioPronunciation(vocabulary) {
     const w = JapaneseText.parse(vocabulary.japanese);
     const spelling = w.getSpelling();
     // remove workaround-spaces
-    q = spelling.replaceAll(" ","");
+    q = spelling.replaceAll(" ", "");
   }
   return q;
 }
