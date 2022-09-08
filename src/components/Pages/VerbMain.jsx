@@ -224,13 +224,13 @@ class VerbMain extends Component {
     const verbJapanese = {
       japanese: japanesePhrase.toString(),
       pronounce: verb.pronounce && japanesePhrase.getPronunciation(),
+      english: verb.english,
     };
 
     const audioWords = audioWordsHelper(
       this.state.prevPlayed,
       this.props.autoPlay,
       verbJapanese,
-      verb.english,
       this.state.prevVocab
     );
 

@@ -5,6 +5,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusCircleIcon,
+  ProjectIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
 import { getPhrases } from "../../actions/phrasesAct";
@@ -52,6 +53,7 @@ import {
 } from "react-slick/lib/utils/innerSliderUtils";
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
+import classNames from "classnames";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -67,6 +69,7 @@ class Phrases extends Component {
       selectedIndex: 0,
       showMeaning: false,
       showRomaji: false,
+      showLit: false,
       filteredPhrases: [],
       frequency: [], // subset of frequency words within current active group
       prevPhrase: this.props.prevTerm,
@@ -279,6 +282,7 @@ class Phrases extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
+      showLit: false,
     });
   }
 
@@ -298,6 +302,7 @@ class Phrases extends Component {
       selectedIndex: newSel,
       showMeaning: false,
       showRomaji: false,
+      showLit: false,
     });
   }
 
@@ -306,6 +311,7 @@ class Phrases extends Component {
       reinforcedUID: uid,
       showMeaning: false,
       showRomaji: false,
+      showLit: false,
     });
 
     const phrase = getTerm(uid, this.props.phrases);
@@ -406,12 +412,27 @@ class Phrases extends Component {
         this.state.order,
         this.state.filteredPhrases
       );
-    let phrase = getTerm(uid, this.props.phrases);
+    const phrase = getTerm(uid, this.props.phrases);
     phrase.reinforce = this.state.frequency.includes(phrase.uid);
 
-    let japanesePhrase = JapaneseText.parse(phrase.japanese).toHTML();
-    let englishPhrase = phrase.english;
-    let romaji = phrase.romaji;
+    const japanesePhrase = JapaneseText.parse(phrase.japanese).toHTML();
+
+    const englishPhrase = (
+      <span
+        // className={classNames({"info-color":this.state.showLit})}
+        onClick={
+          phrase.lit
+            ? () => {
+                this.setState((state) => ({ showLit: !state.showLit }));
+              }
+            : undefined
+        }
+      >
+        {!this.state.showLit ? phrase.english : phrase.lit}
+      </span>
+    );
+
+    const romaji = phrase.romaji;
 
     const eLabel = "[English]";
     const jLabel = "[Japanese]";
@@ -428,7 +449,6 @@ class Phrases extends Component {
       this.state.prevPlayed,
       this.props.autoPlay,
       phrase,
-      englishPhrase,
       this.state.prevPhrase
     );
 
@@ -520,33 +540,51 @@ class Phrases extends Component {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
-              <div className="sm-icon-grp">
-                {this.props.frequency.includes(phrase.uid) ? (
-                  <div
-                    onClick={() => {
-                      this.props.removeFrequencyPhrase(phrase.uid);
-                    }}
-                  >
-                    <XCircleIcon
-                      className="clickable"
-                      size="small"
-                      aria-label="remove"
-                    />
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => {
-                      this.props.addFrequencyPhrase(phrase.uid);
-                    }}
-                  >
-                    <PlusCircleIcon
-                      className="clickable"
-                      size="small"
-                      aria-label="add"
-                    />
-                  </div>
-                )}
-              </div>
+              {phrase.lit && (
+                <div
+                  className={classNames({
+                    "sm-icon-grp": true,
+                    "info-color": this.state.showLit,
+                  })}
+                  onClick={() =>
+                    this.setState((state) => ({ showLit: !state.showLit }))
+                  }
+                >
+                  <ProjectIcon
+                    className="clickable"
+                    size="small"
+                    aria-label="Literal english translation available"
+                  />
+                </div>
+              )}
+
+              {this.props.frequency.includes(phrase.uid) ? (
+                <div
+                  className="sm-icon-grp"
+                  onClick={() => {
+                    this.props.removeFrequencyPhrase(phrase.uid);
+                  }}
+                >
+                  <XCircleIcon
+                    className="clickable"
+                    size="small"
+                    aria-label="Remove frequency phrase"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="sm-icon-grp"
+                  onClick={() => {
+                    this.props.addFrequencyPhrase(phrase.uid);
+                  }}
+                >
+                  <PlusCircleIcon
+                    className="clickable"
+                    size="small"
+                    aria-label="Add frequency phrase"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

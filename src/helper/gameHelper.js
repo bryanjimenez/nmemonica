@@ -550,33 +550,31 @@ export function cacheIdx(word) {
 }
 
 /**
- *
+ * Logic for building ordered array of terms for AudioItem
  * @param {Boolean} prevPlayed has it been manually played
- * @param {*} autoPlay autoPlay setting
- * @param {*} currentJ current Japanese Term
- * @param {*} currentE current English Term
+ * @param {number} autoPlay autoPlay setting
+ * @param {*} current current Term
  * @param {*} previous previous Term
  * @returns {[]} array in order to be played by AudioItem
  */
 export function audioWordsHelper(
   prevPlayed,
   autoPlay,
-  currentJ,
-  currentE,
+  current,
   previous
 ) {
   const currJ = {
     tl: "ja",
-    q: audioPronunciation(currentJ),
-    [gPronounceCacheIndexParam]: cacheIdx(currentJ),
+    q: audioPronunciation(current),
+    [gPronounceCacheIndexParam]: cacheIdx(current),
   };
 
-  let audioWords = [currJ, { tl: "en", q: currentE }];
+  let audioWords = [currJ, { tl: "en", q: current.english }];
   if (previous !== undefined && prevPlayed === false) {
     if (autoPlay === AUTOPLAY_EN_JP) {
       audioWords = [
         currJ,
-        { tl: "en", q: currentE },
+        { tl: "en", q: current.english },
         {
           tl: "ja",
           q: audioPronunciation(previous),

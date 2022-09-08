@@ -98,7 +98,6 @@ class VocabularyMain extends Component {
       this.state.prevPlayed,
       this.props.autoPlay,
       vocabulary,
-      vocabulary.english,
       this.state.prevVocab
     );
 

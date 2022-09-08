@@ -50,6 +50,10 @@ a {
   color: orange;
 }
 
+.info-color {
+  color: #737CA1;
+}
+
 .disabled-color {
   color: lightgray;
 }
