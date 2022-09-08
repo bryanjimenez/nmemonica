@@ -86,9 +86,6 @@ class Vocabulary extends Component {
     this.state = {
       lastNext: Date.now(),
       selectedIndex: 0,
-      showEng: false,
-      showMeaning: false,
-      showRomaji: false,
       showHint: false,
       filteredVocab: [],
       frequency: [], // subset of frequency words within current active group
@@ -109,6 +106,7 @@ class Vocabulary extends Component {
     this.inMove = this.inMove.bind(this);
     this.endMove = this.endMove.bind(this);
     this.swipeActionHandler = this.swipeActionHandler.bind(this);
+    this.arrowKeyPress = this.arrowKeyPress.bind(this);
   }
 
   componentDidMount() {
@@ -120,6 +118,8 @@ class Vocabulary extends Component {
       // data retrival done, set up game
       this.setOrder();
     }
+
+    document.addEventListener("keydown", this.arrowKeyPress, true);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -184,6 +184,27 @@ class Vocabulary extends Component {
         // state.frequency is a subset of frequency words within current active group
         this.setState({ frequency });
       }
+    }
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.arrowKeyPress, true);
+  }
+
+  arrowKeyPress(event) {
+    if (
+      event.key === "ArrowLeft" ||
+      event.key === "ArrowUp" ||
+      event.key === "ArrowRight" ||
+      event.key === "ArrowDown"
+    ) {
+      console.log("Pressed " + event.key);
+    }
+
+    if (event.key === "ArrowRight") {
+      this.gotoNextSlide();
+    } else if (event.key === "ArrowLeft") {
+      this.gotoPrev();
     }
   }
 
@@ -289,9 +310,6 @@ class Vocabulary extends Component {
         lastNext: Date.now(),
         reinforcedUID: undefined,
         selectedIndex: newSel,
-        showEng: false,
-        showMeaning: false,
-        showRomaji: false,
         showHint: false,
       });
     });
@@ -347,9 +365,6 @@ class Vocabulary extends Component {
     this.setState({
       reinforcedUID: undefined,
       selectedIndex: newSel,
-      showEng: false,
-      showMeaning: false,
-      showRomaji: false,
       showHint: false,
     });
   }
