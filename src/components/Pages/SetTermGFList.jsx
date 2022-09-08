@@ -107,7 +107,7 @@ export function SetTermGFList(props) {
         })}
       </div>
       {cleanup.length > 0 && (
-        <div className="mt-5">
+        <div className="mt-5 text-break">
           <span className="font-weight-bold">Manual cleanup</span>
           {cleanup.map((orphanUid, i) =>
             listItem(true, i, orphanUid, orphanUid, props.removeFrequencyWord)
