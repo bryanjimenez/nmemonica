@@ -24,7 +24,6 @@ class VocabularyMain extends Component {
     super(props);
 
     this.state = {
-      showEng: false,
       showMeaning: false,
       showRomaji: false,
       prevVocab: this.props.prevTerm,
@@ -51,7 +50,6 @@ class VocabularyMain extends Component {
   componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.vocabulary !== prevProps.vocabulary) {
       this.setState({
-        showEng: false,
         showMeaning: false,
         showRomaji: false,
         prevVocab: prevProps.vocabulary,
@@ -85,14 +83,13 @@ class VocabularyMain extends Component {
     const inJapaneseLbl = japaneseLabel(this.props.practiceSide, v, inJapanese);
     const inEnglishLbl = englishLabel(this.props.practiceSide, v, inEnglish);
 
-    const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
-      valueLabelHelper(
-        this.props.practiceSide,
-        inEnglishLbl,
-        inJapaneseLbl,
-        "[English]",
-        "[Japanese]"
-      );
+    const { topValue, topLabel, bottomValue, bottomLabel } = valueLabelHelper(
+      this.props.practiceSide,
+      inEnglishLbl,
+      inJapaneseLbl,
+      "[English]",
+      "[Japanese]"
+    );
 
     const audioWords = audioWordsHelper(
       this.state.prevPlayed,
@@ -114,10 +111,7 @@ class VocabularyMain extends Component {
             }
           }}
         >
-          {(this.props.autoPlay && this.props.practiceSide) ||
-          (!this.props.autoPlay && this.state.showEng)
-            ? shownLabel
-            : shownValue}
+          {this.props.autoPlay && this.props.practiceSide ? topLabel : topValue}
         </Sizable>
         {this.props.romajiActive && romaji && (
           <h5>
@@ -146,8 +140,8 @@ class VocabularyMain extends Component {
           >
             {(this.props.autoPlay && !this.props.practiceSide) ||
             (!this.props.autoPlay && this.state.showMeaning)
-              ? hiddenValue
-              : hiddenLabel}
+              ? bottomValue
+              : bottomLabel}
           </span>
         </h2>
         <AudioItem

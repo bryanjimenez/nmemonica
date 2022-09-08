@@ -514,7 +514,7 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
  * @param {HTML|String} inJapanese
  * @param {HTML|String} eLabel
  * @param {HTML|String} jLabel
- * @returns {{{HTML|String}shownValue, {HTML|String}hiddenValue, {HTML|String}shownLabel, {HTML|String}hiddenLabel}}
+ * @returns {{{HTML|String}topValue, {HTML|String}topLabel, {HTML|String}bottomValue, {HTML|String}bottomLabel}}
  */
 export function valueLabelHelper(
   practiceSide,
@@ -523,20 +523,20 @@ export function valueLabelHelper(
   eLabel,
   jLabel
 ) {
-  let shownValue, hiddenValue, shownLabel, hiddenLabel;
+  let topValue, bottomValue, topLabel, bottomLabel;
   if (practiceSide) {
-    shownValue = inEnglish;
-    hiddenValue = inJapanese;
-    shownLabel = eLabel;
-    hiddenLabel = jLabel;
+    topValue = inEnglish;
+    bottomValue = inJapanese;
+    topLabel = eLabel;
+    bottomLabel = jLabel;
   } else {
-    shownValue = inJapanese;
-    hiddenValue = inEnglish;
-    shownLabel = jLabel;
-    hiddenLabel = eLabel;
+    topValue = inJapanese;
+    bottomValue = inEnglish;
+    topLabel = jLabel;
+    bottomLabel = eLabel;
   }
 
-  return { shownValue, hiddenValue, shownLabel, hiddenLabel };
+  return { topValue, topLabel, bottomValue, bottomLabel };
 }
 
 /**

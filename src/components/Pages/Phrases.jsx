@@ -437,7 +437,7 @@ class Phrases extends Component {
     const eLabel = "[English]";
     const jLabel = "[Japanese]";
 
-    const { shownValue, hiddenValue, hiddenLabel } = valueLabelHelper(
+    const { topValue, bottomValue, bottomLabel } = valueLabelHelper(
       this.props.practiceSide,
       englishPhrase,
       japanesePhrase,
@@ -472,7 +472,7 @@ class Phrases extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            <h1>{shownValue}</h1>
+            <h1>{topValue}</h1>
             {this.props.romajiActive && romaji && (
               <h5>
                 <span
@@ -496,7 +496,7 @@ class Phrases extends Component {
                 }}
                 className="clickable"
               >
-                {this.state.showMeaning ? hiddenValue : hiddenLabel}
+                {this.state.showMeaning ? bottomValue : bottomLabel}
               </span>
             </h2>
             <AudioItem

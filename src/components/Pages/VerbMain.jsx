@@ -209,14 +209,13 @@ class VerbMain extends Component {
       this.props.linkToOtherTerm
     );
 
-    const { shownValue, hiddenValue, shownLabel, hiddenLabel } =
-      valueLabelHelper(
-        this.props.practiceSide,
-        inEnglishLbl,
-        inJapaneseLbl,
-        eLabel,
-        jLabel
-      );
+    const { topValue, topLabel, bottomValue, bottomLabel } = valueLabelHelper(
+      this.props.practiceSide,
+      inEnglishLbl,
+      inJapaneseLbl,
+      eLabel,
+      jLabel
+    );
 
     const topStyle = { fontSize: !this.props.practiceSide ? "2.5rem" : "1rem" };
     const btmStyle = { fontSize: this.props.practiceSide ? "2.5rem" : "1rem" };
@@ -249,16 +248,15 @@ class VerbMain extends Component {
           <span
             className="clickable"
             style={topStyle}
-            onClick={() => {
-              if (this.props.autoPlay) {
-                this.props.flipVocabularyPracticeSide();
-              }
-            }}
+            onClick={
+              this.props.autoPlay
+                ? () => this.props.flipVocabularyPracticeSide()
+                : undefined
+            }
           >
-            {(this.props.autoPlay && this.props.practiceSide) ||
-            (!this.props.autoPlay && this.state.showEng)
-              ? shownLabel
-              : shownValue}
+            {this.props.autoPlay && this.props.practiceSide
+              ? topLabel
+              : topValue}
           </span>
         </div>
 
@@ -293,8 +291,8 @@ class VerbMain extends Component {
           >
             {(this.props.autoPlay && !this.props.practiceSide) ||
             (!this.props.autoPlay && this.state.showMeaning)
-              ? hiddenValue
-              : hiddenLabel}
+              ? bottomValue
+              : bottomLabel}
           </span>
         </div>
         <AudioItem
