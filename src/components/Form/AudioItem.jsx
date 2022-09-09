@@ -83,7 +83,7 @@ export default function AudioItem(props) {
     // remove decimal and coerce to number
     const time = ~~(Date.now() - tStart);
 
-    const override = time < 500 ? "" : "/override_cache";
+    const override = time < 500 && !props.reCache ? "" : "/override_cache";
 
     player.src = addParam(pronounceEndoint + override, touchPlayParam);
     player.play();
@@ -140,6 +140,7 @@ AudioItem.propTypes = {
     })
   ).isRequired,
   autoPlay: PropTypes.number, //0->off,1->JP,2->EN,JP,3->JP,EN
+  reCache: PropTypes.bool,
   onPushedPlay: PropTypes.func,
   onAutoPlayDone: PropTypes.func,
   visible: PropTypes.bool,

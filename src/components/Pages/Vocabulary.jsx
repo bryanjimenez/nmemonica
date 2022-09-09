@@ -550,11 +550,15 @@ class Vocabulary extends Component {
           {isVerb && this.props.autoVerbView ? (
             <VerbMain
               verb={vocabulary}
+              reCache={this.state.recacheAudio}
               practiceSide={this.props.practiceSide}
               linkToOtherTerm={(uid) => this.setState({ reinforcedUID: uid })}
             />
           ) : (
-            <VocabularyMain vocabulary={vocabulary} />
+            <VocabularyMain
+              vocabulary={vocabulary}
+              reCache={this.state.recacheAudio}
+            />
           )}
 
           <StackNavButton

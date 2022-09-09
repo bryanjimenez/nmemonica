@@ -154,6 +154,7 @@ class VocabularyMain extends Component {
         <AudioItem
           visible={!this.props.touchSwipe}
           word={audioWords}
+          reCache={this.props.reCache}
           autoPlay={
             !this.props.scrollingDone || !this.state.audioPlay
               ? AUTOPLAY_OFF
@@ -190,6 +191,7 @@ VocabularyMain.propTypes = {
   vocabulary: PropTypes.object.isRequired,
   romajiActive: PropTypes.bool,
   practiceSide: PropTypes.bool,
+  reCache: PropTypes.bool,
   autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
   prevTerm: PropTypes.shape({

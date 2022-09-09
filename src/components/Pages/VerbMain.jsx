@@ -300,6 +300,7 @@ class VerbMain extends Component {
         <AudioItem
           visible={!this.props.touchSwipe}
           word={audioWords}
+          reCache={this.props.reCache}
           autoPlay={
             !this.props.scrollingDone || !this.state.audioPlay
               ? AUTOPLAY_OFF
@@ -358,6 +359,7 @@ const mapStateToProps = (state) => {
 
 VerbMain.propTypes = {
   verb: PropTypes.object.isRequired,
+  reCache: PropTypes.bool,
   autoPlay: PropTypes.number,
   practiceSide: PropTypes.bool,
   romajiActive: PropTypes.bool,
