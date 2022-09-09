@@ -1,7 +1,36 @@
 /**
  * @returns {String} a constructed url using the baseUrl and the params
- * @param {String} baseUrl 
- * @param {*} params 
+ * @param {String} baseUrl
+ * @param {*} params
+ */
+export function getParam(baseUrl, param) {
+  const end = new RegExp("&" + param + "=.*$");
+  const mid = new RegExp("&" + param + "=.*&");
+  const start = new RegExp("\\?" + param + "=.*?&");
+
+  let v;
+  const s = start.exec(baseUrl);
+  const m = mid.exec(baseUrl);
+  const e = end.exec(baseUrl);
+  if (s) {
+    v = s[0];
+  } else if (m) {
+    v = m[0];
+  } else if (e) {
+    v = e[0];
+  }
+
+  if (v) {
+    v = v.split("=")[1].replace("&", "");
+  }
+
+  return v;
+}
+
+/**
+ * @returns {String} a constructed url using the baseUrl and the params
+ * @param {String} baseUrl
+ * @param {*} params
  */
 export function addParam(baseUrl, params) {
   const addit = baseUrl.indexOf("?") === -1;

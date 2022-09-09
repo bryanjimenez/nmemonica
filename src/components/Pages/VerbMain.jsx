@@ -46,9 +46,10 @@ class VerbMain extends Component {
 
       // lastVerb to prevent verb-form loss between transition v->nv
       const lastVerb = {
+        ...this.props.verb,
         japanese: thisVerb.toString(),
-        english: this.props.verb.english,
         pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
+        form: this.props.verbForm,
       };
       this.props.setPreviousWord({ lastVerb });
     }
@@ -73,17 +74,18 @@ class VerbMain extends Component {
       const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
+        ...prevProps.verb,
         japanese: prevVerb.toString(),
-        english: prevProps.verb.english,
         pronounce: prevProps.verb.pronounce && prevVerb.getPronunciation(),
-        uid: prevProps.verb.uid,
+        form: this.props.verbForm,
       };
 
       // lastVerb to prevent verb-form loss between transition v->nv
       const lastVerb = {
+        ...this.props.verb,
         japanese: thisVerb.toString(),
-        english: this.props.verb.english,
         pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
+        form: this.props.verbForm,
       };
       this.props.setPreviousWord({ ...prevVocab, lastVerb }).then(() => {
         this.setState({
@@ -101,10 +103,10 @@ class VerbMain extends Component {
       const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
 
       const prevVocab = {
+        ...this.props.verb,
         japanese: thisVerb.toString(),
-        english: this.props.verb.english,
         pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
-        uid: this.props.verb.uid,
+        form: this.props.verbForm,
       };
 
       this.props.setPreviousWord(prevVocab).then(() => {
@@ -221,9 +223,10 @@ class VerbMain extends Component {
     const btmStyle = { fontSize: this.props.practiceSide ? "2.5rem" : "1rem" };
 
     const verbJapanese = {
+      ...verb,
       japanese: japanesePhrase.toString(),
       pronounce: verb.pronounce && japanesePhrase.getPronunciation(),
-      english: verb.english,
+      form: this.props.verbForm,
     };
 
     const audioWords = audioWordsHelper(
@@ -320,10 +323,11 @@ class VerbMain extends Component {
                 this.props.verbForm
               );
               const firstVerb = {
+                ...this.props.verb,
                 japanese: thisVerb.toString(),
-                english: this.props.verb.english,
                 pronounce:
                   this.props.verb.pronounce && thisVerb.getPronunciation(),
+                form: this.props.verbForm,
               };
               this.props.setPreviousWord({ ...firstVerb });
             }
@@ -365,6 +369,7 @@ VerbMain.propTypes = {
   prevTerm: PropTypes.shape({
     japanese: PropTypes.string.isRequired,
     english: PropTypes.string.isRequired,
+    uid: PropTypes.string.isRequired,
   }),
   setPreviousWord: PropTypes.func,
   played: PropTypes.bool,

@@ -190,6 +190,7 @@ VocabularyMain.propTypes = {
   prevTerm: PropTypes.shape({
     japanese: PropTypes.string.isRequired,
     english: PropTypes.string.isRequired,
+    uid: PropTypes.string.isRequired,
   }),
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,

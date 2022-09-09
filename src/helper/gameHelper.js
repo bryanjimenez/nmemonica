@@ -539,6 +539,20 @@ export function valueLabelHelper(
   return { topValue, topLabel, bottomValue, bottomLabel };
 }
 
+export function getCacheUID(word) {
+  if (!word.uid) {
+    console.warn(JSON.stringify(word));
+    throw new Error("Missing uid");
+  }
+
+  let uid = word.uid;
+  if (word.grp === "Verb" && word.form) {
+    uid += word.form !== "dictionary" ? word.form.replace("-", ".") : "";
+  }
+
+  return uid;
+}
+
 /**
  * For cache or indexedDB indexing. Allows to add expression term that can override specific forms of verbs
  * If the word has a pronunciation override return the spelling otherwise undefined
@@ -557,16 +571,12 @@ export function cacheIdx(word) {
  * @param {*} previous previous Term
  * @returns {[]} array in order to be played by AudioItem
  */
-export function audioWordsHelper(
-  prevPlayed,
-  autoPlay,
-  current,
-  previous
-) {
+export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
   const currJ = {
     tl: "ja",
     q: audioPronunciation(current),
     [gPronounceCacheIndexParam]: cacheIdx(current),
+    uid: getCacheUID(current),
   };
 
   let audioWords = [currJ, { tl: "en", q: current.english }];
@@ -574,15 +584,20 @@ export function audioWordsHelper(
     if (autoPlay === AUTOPLAY_EN_JP) {
       audioWords = [
         currJ,
-        { tl: "en", q: current.english },
+        { tl: "en", q: current.english, uid: current.uid + ".en" },
         {
           tl: "ja",
           q: audioPronunciation(previous),
           [gPronounceCacheIndexParam]: cacheIdx(previous),
+          uid: getCacheUID(previous),
         },
       ];
     } else if (autoPlay === AUTOPLAY_JP_EN) {
-      audioWords = [currJ, currJ, { tl: "en", q: previous.english }];
+      audioWords = [
+        currJ,
+        currJ,
+        { tl: "en", q: previous.english, uid: previous.uid + ".en" },
+      ];
     }
   } else if (prevPlayed === true) {
     if (autoPlay === AUTOPLAY_JP_EN) {

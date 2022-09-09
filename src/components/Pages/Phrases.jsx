@@ -149,6 +149,7 @@ class Phrases extends Component {
           const prevPhrase = {
             japanese: prevTerm.japanese,
             english: prevTerm.english,
+            uid: prevTerm.uid,
           };
 
           this.props.setPreviousWord({ ...prevPhrase }).then(() => {
@@ -403,6 +404,7 @@ class Phrases extends Component {
         const audioUrl = addParam(pronounceEndoint, {
           tl: "ja",
           q: inJapanese,
+          uid,
         });
         const japaneseAudio = new Audio(audioUrl);
         try {
@@ -416,7 +418,11 @@ class Phrases extends Component {
         }
       } else if (direction === "down") {
         const inEnglish = phrase.english;
-        const audioUrl = addParam(pronounceEndoint, { tl: "en", q: inEnglish });
+        const audioUrl = addParam(pronounceEndoint, {
+          tl: "en",
+          q: inEnglish,
+          uid: phrase.uid + ".en",
+        });
         const englishAudio = new Audio(audioUrl);
         try {
           englishAudio.play();
@@ -671,6 +677,7 @@ Phrases.propTypes = {
   prevTerm: PropTypes.shape({
     japanese: PropTypes.string.isRequired,
     english: PropTypes.string.isRequired,
+    uid: PropTypes.string.isRequired,
   }),
   prevPushPlay: PropTypes.bool,
   pushedPlay: PropTypes.func,

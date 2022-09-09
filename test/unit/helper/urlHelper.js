@@ -3,11 +3,50 @@ import {
   removeParam,
   renameParam,
   addParam,
+  getParam,
 } from "../../../src/helper/urlHelper";
 
 /* global describe it */
 
 describe("urlHelper", function () {
+  describe("getParam", function () {
+    it("start url", function () {
+      const url =
+        "https://www.example.com/path?q=theIndex&tl=ja&other=otherThing";
+      const expected = "theIndex";
+
+      const actual = getParam(url, "q");
+
+      expect(actual).to.equal(expected);
+    });
+    it("mid url", function () {
+      const url =
+        "https://www.example.com/path?q=theIndex&tl=ja&other=otherThing";
+      const expected = "ja";
+
+      const actual = getParam(url, "tl");
+
+      expect(actual).to.equal(expected);
+    });
+    it("end url", function () {
+      const url =
+        "https://www.example.com/path?q=theIndex&tl=ja&other=otherThing";
+      const expected = "otherThing";
+
+      const actual = getParam(url, "other");
+
+      expect(actual).to.equal(expected);
+    });
+    it("undefined param", function () {
+      const url =
+        "https://www.example.com/path?q=theIndex&tl=ja&other=otherThing";
+      const expected = undefined;
+
+      const actual = getParam(url, "missing");
+
+      expect(actual).to.equal(expected);
+    });
+  });
   describe("addParam", function () {
     it("start url", function () {
       const expected =

@@ -11,7 +11,7 @@ import {
   SERVICE_WORKER_NEW_TERMS_ADDED,
 } from "../src/actions/serviceWorkerAct";
 import md5 from "../lambda/sheets/node_modules/md5/md5.js";
-import { removeParam, renameParam } from "../src/helper/urlHelper";
+import { getParam, removeParam, renameParam } from "../src/helper/urlHelper";
 import { gPronounceCacheIndexParam } from "../src/constants/paths";
 
 const projectRoot = path.resolve();
@@ -68,6 +68,7 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
         gPronounceCacheIndexParam +
         "';\n\n"
     );
+    stream.write("const getParamConst = " + getParam + ";\n\n");
     stream.write("const removeParamConst = " + removeParam + ";\n\n");
     stream.write("const renameParamConst = " + renameParam + ";\n\n");
 

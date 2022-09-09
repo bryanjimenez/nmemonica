@@ -60,6 +60,7 @@ import {
   getTermUID,
   getTerm,
   cacheIdx,
+  getCacheUID,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
 import { logger } from "../../actions/consoleAct";
@@ -443,8 +444,10 @@ class Vocabulary extends Component {
           const verb = verbToTargetForm(vocabulary, this.props.verbForm);
 
           sayObj = {
+            ...vocabulary,
             japanese: verb.toString(),
             pronounce: vocabulary.pronounce && verb.getPronunciation(),
+            form: this.props.verbForm,
           };
         } else {
           sayObj = vocabulary;
@@ -454,13 +457,9 @@ class Vocabulary extends Component {
           tl: "ja",
           q: audioPronunciation(sayObj),
           [gPronounceCacheIndexParam]: cacheIdx(sayObj),
+          uid: getCacheUID(sayObj),
         });
 
-        let na = addParam(pronounceEndoint, {
-          tl: "ja",
-          q: "っな",
-        });
-        const naAudio = new Audio(na);
         const japaneseAudio = new Audio(audioUrl);
 
         // too slow  .addEventListener("ended", () => {
@@ -468,6 +467,13 @@ class Vocabulary extends Component {
           try {
             japaneseAudio.play().then(() => {
               if (JapaneseText.parse(vocabulary).isNaAdj()) {
+                let na = addParam(pronounceEndoint, {
+                  tl: "ja",
+                  q: "っな",
+                  uid: "0.na",
+                });
+                const naAudio = new Audio(na);
+
                 const volume = 0.4;
                 const offset = 0.5;
                 const naDelay = 1000 * (japaneseAudio.duration - offset);
@@ -496,7 +502,11 @@ class Vocabulary extends Component {
       } else if (direction === "down") {
         const inEnglish = vocabulary.english;
 
-        const audioUrl = addParam(pronounceEndoint + override, { tl: "en", q: inEnglish });
+        const audioUrl = addParam(pronounceEndoint + override, {
+          tl: "en",
+          q: inEnglish,
+          uid: vocabulary.uid + ".en",
+        });
 
         const englishAudio = new Audio(audioUrl);
         try {

@@ -92,7 +92,7 @@ module.exports = function (webpackEnv, argv) {
             name(module) {
               // get the name. E.g. node_modules/packageName/not/this/part.js
               // or node_modules/packageName
-              if(module.context.indexOf('node_modules') > -1){
+              if (module.context.indexOf("node_modules") > -1) {
                 const packageName = module.context.match(
                   /[\\/]node_modules[\\/](.*?)([\\/]|$)/
                 )[1];
@@ -113,6 +113,7 @@ module.exports = function (webpackEnv, argv) {
       port: process.env.PORT || 8080, // Port Number
       host: "localhost", // Change to '0.0.0.0' for external facing server
       // historyApiFallback: true,
+      static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };
 };

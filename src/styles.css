@@ -92,6 +92,10 @@ a {
   font-size: medium;
 }
 
+.fs-x-small {
+  font-size: x-small;
+}
+
 .fs-xx-small {
   font-size: xx-small;
 }

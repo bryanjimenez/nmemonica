@@ -47,12 +47,17 @@ import {
   getMemoryStorageStatus,
   setPersistentStorage,
 } from "../../actions/storageAct";
-import { labelOptions } from "../../helper/gameHelper";
+import {
+  getCacheUID,
+  getVerbFormsArray,
+  labelOptions,
+} from "../../helper/gameHelper";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import { getKanji } from "../../actions/kanjiAct";
 import { SettingsVocab } from "../Form/SettingsVocab";
 import { SettingsPhrase } from "../Form/SettingsPhrase";
 import { logger } from "../../actions/consoleAct";
+import { getParam } from "../../helper/urlHelper";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -68,6 +73,7 @@ class Settings extends Component {
       sectionKanji: false,
       sectionVocabulary: false,
       sectionPhrase: false,
+      dbUpgradeInfo: [],
     };
 
     this.collapseExpandToggler = this.collapseExpandToggler.bind(this);
@@ -170,6 +176,17 @@ class Settings extends Component {
     );
   }
 
+  queryToUid(query, uidMap) {
+    const naConst = { "?tl=ja&q=%E3%81%A3%E3%81%AA": "0.na" };
+
+    // const key = removeParam(query, "uid");
+    const q = getParam(query, "q");
+    const s = JSON.stringify(decodeURI(q));
+    const uid = uidMap[s] || naConst[query];
+
+    return uid;
+  }
+
   render() {
     const pageClassName = classNames({ "mb-5": true });
 
@@ -186,6 +203,38 @@ class Settings extends Component {
       ...this.props.phrases,
       ...this.props.vocabulary,
     ]);
+
+    let errorElement = this.state.dbUpgradeInfo.reduce((acc, cur, k) => {
+      if (cur.status === "rejected") {
+        const q = getParam(cur.reason, "q");
+        const word = decodeURI(q);
+
+        let uid = this.queryToUid(cur.reason, this.state.uidMap);
+        if (!uid) {
+          uid = "NOT FOUND";
+        }
+
+        const row = (
+          <p className="fs-x-small mb-0" key={k}>
+            {uid + " - "}
+            <b>{word}</b>
+            {" - " + cur.reason}
+          </p>
+        );
+        acc = [...acc, row];
+      }
+
+      return acc;
+    }, []);
+
+    // dbUpgradeInfo may contain a message
+    if (errorElement.length === 0 && this.state.dbUpgradeInfo.length === 1) {
+      errorElement = [
+        <p key={1} className="fs-medium">
+          {this.state.dbUpgradeInfo[0]}
+        </p>,
+      ];
+    }
 
     return (
       <div className="settings">
@@ -436,7 +485,7 @@ class Settings extends Component {
               </div>
             </div>
 
-            <div className="setting-block">
+            <div className="setting-block mb-2">
               <SettingsSwitch
                 active={this.props.memory.persistent}
                 action={this.props.setPersistentStorage}
@@ -453,8 +502,119 @@ class Settings extends Component {
                 }
               />
             </div>
+
+            <div className="d-flex justify-content-end incorrect-color mb-2">
+              <p id="database-upgrade" className="mr-2">
+                Database Upgrade
+              </p>
+              <div
+                className={classNames({
+                  "spin-a-bit": this.state.dbUpGradeSpin,
+                })}
+                style={{ height: "24px" }}
+                aria-labelledby="database-upgrade"
+                onClick={() => {
+                  this.setState({
+                    dbUpGradeSpin: true,
+                  });
+
+                  navigator.serviceWorker.addEventListener(
+                    "message",
+                    (event) => {
+                      if (event.data.type === "MIGRATION_ITEM_UID") {
+                        const { errors } = event.data;
+                        if (Array.isArray(errors) && errors.length > 0) {
+                          this.setState({ dbUpgradeInfo: errors });
+                        } else if (Array.isArray(errors)) {
+                          this.setState({
+                            dbUpgradeInfo: ["Migration complete 0 errors"],
+                          });
+                        } else {
+                          this.setState({
+                            dbUpgradeInfo: [
+                              "Received data in unexpected format",
+                            ],
+                          });
+                        }
+
+                        this.setState({
+                          dbUpGradeSpin: false,
+                        });
+                      }
+                    }
+                  );
+
+                  const buildUIDMap = new Promise((resolve /*, reject*/) => {
+                    setTimeout(() => {
+                      let uidMap = this.props.vocabulary
+                        // .filter((v) => v.grp === "Verb")
+                        .reduce((acc, curr) => {
+                          if (curr.grp === "Verb") {
+                            getVerbFormsArray(curr).forEach((form) => {
+                              const spelling = JSON.stringify(
+                                form.j.getSpelling()
+                              );
+                              acc = {
+                                ...acc,
+                                [spelling]: getCacheUID({
+                                  ...curr,
+                                  form: form.t,
+                                }),
+                              };
+                            });
+                          } else {
+                            const spelling = JSON.stringify(
+                              JapaneseText.parse(curr).getSpelling()
+                            );
+                            acc = {
+                              ...acc,
+                              [spelling]: getCacheUID(curr),
+                            };
+                          }
+
+                          // english
+                          acc = {
+                            ...acc,
+                            [JSON.stringify(curr.english)]: curr.uid + ".en",
+                          };
+
+                          return acc;
+                        }, {});
+
+                      resolve(uidMap);
+                    }, 0);
+                  });
+
+                  buildUIDMap.then((uidMap) => {
+                    // Send uidMap to SW for mapping
+                    navigator.serviceWorker.controller.postMessage({
+                      type: "MIGRATION_ITEM_UID",
+                      uidMap,
+                    });
+
+                    this.setState({ uidMap });
+                  });
+                }}
+              >
+                <SyncIcon
+                  className="clickable"
+                  size={24}
+                  aria-label="Hard Refresh"
+                />
+              </div>
+            </div>
+
+            {errorElement.length > 0 && (
+              <div className="mb-2">
+                <h5>Failed indexedDB Update</h5>
+                <div className="failed-indexeddb-view container mt-2 p-0">
+                  {errorElement}
+                </div>
+              </div>
+            )}
+
             {failedFurigana.length > 0 && (
-              <div className="">
+              <div className="mb-2">
                 <h5>Failed Furigana Parse</h5>
 
                 <div className="failed-furigana-view container mt-2 p-0">
