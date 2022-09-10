@@ -88,6 +88,7 @@ class Phrases extends Component {
     this.inMove = this.inMove.bind(this);
     this.endMove = this.endMove.bind(this);
     this.swipeActionHandler = this.swipeActionHandler.bind(this);
+    this.arrowKeyPress = this.arrowKeyPress.bind(this);
   }
 
   componentDidMount() {
@@ -99,6 +100,7 @@ class Phrases extends Component {
       // data retrival done, set up game
       this.setOrder();
     }
+    document.addEventListener("keydown", this.arrowKeyPress, true);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -208,6 +210,34 @@ class Phrases extends Component {
       this.setState({
         audioPlay: false,
       });
+    }
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.arrowKeyPress, true);
+  }
+
+  arrowKeyPress(event) {
+    if (
+      event.key === "ArrowLeft" ||
+      event.key === "ArrowUp" ||
+      event.key === "ArrowRight" ||
+      event.key === "ArrowDown" ||
+      event.key === " "
+    ) {
+      // console.log("Pressed " + event.key);
+    }
+
+    if (event.key === "ArrowRight") {
+      this.swipeActionHandler("left");
+    } else if (event.key === "ArrowLeft") {
+      this.swipeActionHandler("right");
+    } else if (event.key === "ArrowUp") {
+      this.swipeActionHandler("up");
+    } else if (event.key === "ArrowDown") {
+      this.swipeActionHandler("down");
+    } else if (event.key === " ") {
+      this.props.flipPhrasesPracticeSide();
     }
   }
 

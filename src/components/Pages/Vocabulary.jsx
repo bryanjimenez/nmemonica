@@ -196,15 +196,22 @@ class Vocabulary extends Component {
       event.key === "ArrowLeft" ||
       event.key === "ArrowUp" ||
       event.key === "ArrowRight" ||
-      event.key === "ArrowDown"
+      event.key === "ArrowDown" ||
+      event.key === " "
     ) {
-      console.log("Pressed " + event.key);
+      // console.log("Pressed " + event.key);
     }
 
     if (event.key === "ArrowRight") {
-      this.gotoNextSlide();
+      this.swipeActionHandler("left");
     } else if (event.key === "ArrowLeft") {
-      this.gotoPrev();
+      this.swipeActionHandler("right");
+    } else if (event.key === "ArrowUp") {
+      this.swipeActionHandler("up");
+    } else if (event.key === "ArrowDown") {
+      this.swipeActionHandler("down");
+    } else if (event.key === " ") {
+      this.props.flipVocabularyPracticeSide();
     }
   }
 
