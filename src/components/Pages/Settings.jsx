@@ -359,7 +359,12 @@ class Settings extends Component {
               />
             </div>
 
-            <div className="d-flex justify-content-end mb-2">
+            <div
+              className={classNames({
+                "d-flex justify-content-end mb-2": true,
+                "disabled-color": this.state.hardRefreshUnavailable,
+              })}
+            >
               <p id="hard-refresh" className="mr-2">
                 Hard Refresh
               </p>
@@ -368,18 +373,27 @@ class Settings extends Component {
                 style={{ height: "24px" }}
                 aria-labelledby="hard-refresh"
                 onClick={() => {
-                  fetch("refresh").then((res) => {
-                    if (res.status < 400) {
-                      this.setState({
-                        spin: true,
-                      });
-                      setTimeout(() => {
+                  fetch("hardRefresh")
+                    .then((res) => {
+                      if (res.status < 400) {
                         this.setState({
-                          spin: false,
+                          spin: true,
+                          hardRefreshUnavailable: false,
                         });
-                      }, 2000);
-                    }
-                  });
+                        setTimeout(() => {
+                          this.setState({
+                            spin: false,
+                          });
+                        }, 2000);
+                      } else {
+                        throw new Error("Service Unavailable");
+                      }
+                    })
+                    .catch(() => {
+                      this.setState({
+                        hardRefreshUnavailable: true,
+                      });
+                    });
                 }}
               >
                 <SyncIcon

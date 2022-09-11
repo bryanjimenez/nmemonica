@@ -85,6 +85,10 @@ self.addEventListener("fetch", (e) => {
   const req = e.request.clone();
   const url = e.request.url;
 
+  if (e.request.method !== 'GET') {
+    return;
+  }
+
   const hasCacheIdxOverride = new RegExp(
     "[\\?&]" + gPronounceCacheIndexParam + "="
   );
@@ -93,12 +97,36 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(appVersionReq());
   } else if (req.headers.get("Data-Version")) {
     e.respondWith(appDataReq(e.request));
-  } else if (url === ghURL + "/refresh") {
-    console.log("[ServiceWorker] Hard Refresh");
-    clientLogger("Hard Refresh", DEBUG);
-    caches.delete(appStaticCache);
-    self.registration.unregister();
-    e.respondWith(fetch(ghURL));
+  } else if (url.endsWith("/hardRefresh")) {
+    const hardRefresh = fetch(dataVerURL)
+      .then((res) => {
+
+        if (res.status < 400) {
+         return caches.delete(appStaticCache).then(() => {
+            self.registration.unregister();
+            clientLogger("[ServiceWorker] Hard Refresh", DEBUG);
+            return new Response("<h1>Hard Refresh</h1>", {
+              status: 200,
+              statusText: "OK",
+              headers: new Headers({ "Content-Type": "text/html" }),
+            });
+          });
+        }
+        else{
+          throw new Error('Service Unavailable')
+        }
+      })
+      .catch(() => {
+        clientLogger("[ServiceWorker] Network unavailable", DEBUG);
+
+        return new Response("<h1>Service Unavailable</h1>", {
+          status: 503,
+          statusText: "Service Unavailable",
+          headers: new Headers({ "Content-Type": "text/html" }),
+        });
+      });
+
+    e.respondWith(hardRefresh);
   } else if (url.indexOf(ghURL) === 0) {
     // site asset
     e.respondWith(appAssetReq(url));
