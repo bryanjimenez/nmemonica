@@ -2,7 +2,6 @@ import React from "react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
 import { AUTOPLAY_EN_JP, AUTOPLAY_JP_EN } from "../actions/settingsAct";
-import { gPronounceCacheIndexParam } from "../constants/paths";
 import { FILTER_FREQ, FILTER_GRP } from "../reducers/settingsRed";
 import { shuffleArray } from "./arrayHelper";
 import { audioPronunciation, JapaneseText } from "./JapaneseText";
@@ -539,28 +538,24 @@ export function valueLabelHelper(
   return { topValue, topLabel, bottomValue, bottomLabel };
 }
 
+/**
+ * indexedDB key
+ * @param {*} word
+ * @returns
+ */
 export function getCacheUID(word) {
-  if (!word.uid) {
+  let { uid } = word;
+
+  if (!uid) {
     console.warn(JSON.stringify(word));
     throw new Error("Missing uid");
   }
 
-  let uid = word.uid;
   if (word.grp === "Verb" && word.form) {
     uid += word.form !== "dictionary" ? word.form.replace("-", ".") : "";
   }
 
   return uid;
-}
-
-/**
- * For cache or indexedDB indexing. Allows to add expression term that can override specific forms of verbs
- * If the word has a pronunciation override return the spelling otherwise undefined
- * @param {*} word
- * @returns {undefined | String}
- */
-export function cacheIdx(word) {
-  return word.pronounce ? JapaneseText.parse(word).getSpelling() : undefined;
 }
 
 /**
@@ -575,11 +570,10 @@ export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
   const currJ = {
     tl: "ja",
     q: audioPronunciation(current),
-    [gPronounceCacheIndexParam]: cacheIdx(current),
     uid: getCacheUID(current),
   };
 
-  let audioWords = [currJ, { tl: "en", q: current.english }];
+  let audioWords = [currJ, { tl: "en", q: current.english, uid: current.uid+".en" }];
   if (previous !== undefined && prevPlayed === false) {
     if (autoPlay === AUTOPLAY_EN_JP) {
       audioWords = [
@@ -588,7 +582,6 @@ export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
         {
           tl: "ja",
           q: audioPronunciation(previous),
-          [gPronounceCacheIndexParam]: cacheIdx(previous),
           uid: getCacheUID(previous),
         },
       ];

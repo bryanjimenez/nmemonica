@@ -228,12 +228,12 @@ class Settings extends Component {
     }, []);
 
     // dbUpgradeInfo may contain a message
-    if (errorElement.length === 0 && this.state.dbUpgradeInfo.length === 1) {
-      errorElement = [
-        <p key={1} className="fs-medium">
-          {this.state.dbUpgradeInfo[0]}
-        </p>,
-      ];
+    if (errorElement.length === 0 && this.state.dbUpgradeInfo.length > 0) {
+      errorElement = this.state.dbUpgradeInfo.map((msg, i) => (
+        <p key={i} className="fs-medium">
+          {msg}
+        </p>
+      ));
     }
 
     return (
@@ -521,13 +521,16 @@ class Settings extends Component {
                   navigator.serviceWorker.addEventListener(
                     "message",
                     (event) => {
-                      if (event.data.type === "MIGRATION_ITEM_UID") {
+                      if (event.data.type === "MIGRATION_MSG") {
                         const { errors } = event.data;
                         if (Array.isArray(errors) && errors.length > 0) {
                           this.setState({ dbUpgradeInfo: errors });
-                        } else if (Array.isArray(errors)) {
+                        } else if (
+                          Array.isArray(errors) &&
+                          errors.length === 0
+                        ) {
                           this.setState({
-                            dbUpgradeInfo: ["Migration complete 0 errors"],
+                            dbUpgradeInfo: ["0 errors!", "Migration complete!"],
                           });
                         } else {
                           this.setState({
@@ -546,40 +549,41 @@ class Settings extends Component {
 
                   const buildUIDMap = new Promise((resolve /*, reject*/) => {
                     setTimeout(() => {
-                      let uidMap = this.props.vocabulary
-                        // .filter((v) => v.grp === "Verb")
-                        .reduce((acc, curr) => {
-                          if (curr.grp === "Verb") {
-                            getVerbFormsArray(curr).forEach((form) => {
-                              const spelling = JSON.stringify(
-                                form.j.getSpelling()
-                              );
-                              acc = {
-                                ...acc,
-                                [spelling]: getCacheUID({
-                                  ...curr,
-                                  form: form.t,
-                                }),
-                              };
-                            });
-                          } else {
+                      let uidMap = [
+                        ...this.props.vocabulary,
+                        ...this.props.phrases,
+                      ].reduce((acc, curr) => {
+                        if (curr.grp === "Verb") {
+                          getVerbFormsArray(curr).forEach((form) => {
                             const spelling = JSON.stringify(
-                              JapaneseText.parse(curr).getSpelling()
+                              form.j.getSpelling()
                             );
                             acc = {
                               ...acc,
-                              [spelling]: getCacheUID(curr),
+                              [spelling]: getCacheUID({
+                                ...curr,
+                                form: form.t,
+                              }),
                             };
-                          }
-
-                          // english
+                          });
+                        } else {
+                          const spelling = JSON.stringify(
+                            JapaneseText.parse(curr).getSpelling()
+                          );
                           acc = {
                             ...acc,
-                            [JSON.stringify(curr.english)]: curr.uid + ".en",
+                            [spelling]: getCacheUID(curr),
                           };
+                        }
 
-                          return acc;
-                        }, {});
+                        // english
+                        acc = {
+                          ...acc,
+                          [JSON.stringify(curr.english)]: curr.uid + ".en",
+                        };
+
+                        return acc;
+                      }, {});
 
                       resolve(uidMap);
                     }, 0);
@@ -588,7 +592,7 @@ class Settings extends Component {
                   buildUIDMap.then((uidMap) => {
                     // Send uidMap to SW for mapping
                     navigator.serviceWorker.controller.postMessage({
-                      type: "MIGRATION_ITEM_UID",
+                      type: "MIGRATION_MSG",
                       uidMap,
                     });
 

@@ -59,7 +59,6 @@ import {
   verbToTargetForm,
   getTermUID,
   getTerm,
-  cacheIdx,
   getCacheUID,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
@@ -72,7 +71,6 @@ import {
 } from "react-slick/lib/utils/innerSliderUtils";
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
-import { gPronounceCacheIndexParam } from "../../constants/paths";
 import classNames from "classnames";
 
 const VocabularyMeta = {
@@ -456,7 +454,6 @@ class Vocabulary extends Component {
         const audioUrl = addParam(pronounceEndoint + override, {
           tl: "ja",
           q: audioPronunciation(sayObj),
-          [gPronounceCacheIndexParam]: cacheIdx(sayObj),
           uid: getCacheUID(sayObj),
         });
 

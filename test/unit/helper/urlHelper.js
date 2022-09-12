@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import {
   removeParam,
-  renameParam,
   addParam,
   getParam,
 } from "../../../src/helper/urlHelper";
@@ -13,6 +12,14 @@ describe("urlHelper", function () {
     it("start url", function () {
       const url =
         "https://www.example.com/path?q=theIndex&tl=ja&other=otherThing";
+      const expected = "theIndex";
+
+      const actual = getParam(url, "q");
+
+      expect(actual).to.equal(expected);
+    });
+    it("start url one param", function () {
+      const url = "https://www.example.com/path?q=theIndex";
       const expected = "theIndex";
 
       const actual = getParam(url, "q");
@@ -40,7 +47,7 @@ describe("urlHelper", function () {
     it("undefined param", function () {
       const url =
         "https://www.example.com/path?q=theIndex&tl=ja&other=otherThing";
-      const expected = undefined;
+      const expected = null;
 
       const actual = getParam(url, "missing");
 
@@ -80,38 +87,6 @@ describe("urlHelper", function () {
         other: "otherThing",
         notShown: undefined,
       });
-
-      expect(actual).to.equal(expected);
-    });
-  });
-  describe("renameParam", function () {
-    it("start url", function () {
-      const expected =
-        "https://www.example.com/path?q=theIndex&tl=ja&other=otherThing";
-      const url =
-        "https://www.example.com/path?q=japaneseword&index=theIndex&tl=ja&other=otherThing";
-
-      const actual = renameParam(url, "index", "q");
-
-      expect(actual).to.equal(expected);
-    });
-    it("mid url", function () {
-      const expected =
-        "https://www.example.com/path?tl=ja&q=theIndex&other=otherThing";
-      const url =
-        "https://www.example.com/path?tl=ja&q=japaneseword&index=theIndex&other=otherThing";
-
-      const actual = renameParam(url, "index", "q");
-
-      expect(actual).to.equal(expected);
-    });
-    it("end url", function () {
-      const expected =
-        "https://www.example.com/path?tl=ja&q=theIndex&other=otherThing";
-      const url =
-        "https://www.example.com/path?tl=ja&index=theIndex&other=otherThing&q=japaneseword";
-
-      const actual = renameParam(url, "index", "q");
 
       expect(actual).to.equal(expected);
     });

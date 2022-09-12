@@ -8,7 +8,6 @@ import {
   AUTOPLAY_OFF,
 } from "../../actions/settingsAct";
 import { addParam } from "../../helper/urlHelper";
-import { gPronounceCacheIndexParam } from "../../constants/paths";
 
 export default function AudioItem(props) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
@@ -136,7 +135,7 @@ AudioItem.propTypes = {
     PropTypes.shape({
       tl: PropTypes.string.isRequired, // target language used in req
       q: PropTypes.string.isRequired, // query used in req
-      [gPronounceCacheIndexParam]: PropTypes.string, // index used in cache
+      uid: PropTypes.string.isRequired, // index used in cache
     })
   ).isRequired,
   autoPlay: PropTypes.number, //0->off,1->JP,2->EN,JP,3->JP,EN
