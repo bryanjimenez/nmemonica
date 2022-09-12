@@ -31,104 +31,6 @@ const dataURL = [
   fbURL + "/lambda/kanji.json",
 ];
 
-function queryToUid(query, uidMap) {
-  const naConst = { "?tl=ja&q=%E3%81%A3%E3%81%AA": "0.na" };
-
-  const key = removeParam(query, "uid");
-  const q = getParam(key, "q");
-  const s = JSON.stringify(decodeURI(q));
-  const uid = uidMap[s] || naConst[query];
-
-  return uid;
-}
-
-function indexDBUpdateLogic(uidMap) {
-  const oldDBStoreName = "media";
-  const oldVersion = 1;
-  const newVersion = 2;
-
-  const process = dumpIDB(oldVersion, oldDBStoreName).then((dataArr) => {
-    return openIDB(newVersion, oldDBStoreName, oldDBStoreName)
-      .then((db) => {
-        const last = new Date();
-        return Promise.allSettled(
-          dataArr.map((el) => {
-            const { blob, query } = el;
-            const uid = queryToUid(query, uidMap);
-
-            let mapP;
-            if (!uid) {
-              clientLogger("uid not found", ERROR);
-              mapP = Promise.reject(query);
-            } else {
-              const newItem = { last, uid, blob };
-              mapP = putIDBItem({ db }, newItem)
-                .then(() => query)
-                .catch(() => query);
-            }
-
-            return mapP;
-          })
-        ).then((res) => ({ res, db }));
-      })
-      .then(({ res, db }) => {
-        const errors = res.filter((r) => r.status === "rejected");
-        if (errors.length > 0) {
-          throw errors;
-        }
-        countIDBItem(db);
-        clientLogger("IDB.upgrade complete !", DEBUG);
-
-        return res.filter((r) => r.status === "fulfilled");
-      });
-  });
-
-  return process;
-}
-
-function getQueryMatchFails(uidMap) {
-  clientLogger("IDB.upgrade check started !", DEBUG);
-
-  const oldDBStoreName = "media";
-  const oldVersion = 1;
-
-  const process = dumpIDB(oldVersion, oldDBStoreName).then((dataArr) => {
-    return Promise.allSettled(
-      dataArr.map((el) => {
-        const { query } = el;
-
-        const uid = queryToUid(query, uidMap);
-
-        let mapP;
-        if (!uid) {
-          clientLogger("uid not found", ERROR);
-
-          mapP = Promise.reject(query);
-        } else {
-          mapP = Promise.resolve(query);
-        }
-
-        return mapP;
-      })
-    )
-      .then((res) => res) // Get obj out of Promise
-
-      .then((res) => {
-        const errors = res.filter((r) => r.status === "rejected");
-        const done = res.length - errors.length;
-        clientLogger("IDB.check err:" + errors.length + " done:" + done, DEBUG);
-
-        if (errors.length > 0) {
-          throw errors; // only send back errors
-        }
-
-        return res.filter((r) => r.status === "fulfilled");
-      });
-  });
-
-  return process;
-}
-
 let ERROR = 1,
   WARN = 2,
   DEBUG = 3;
@@ -208,23 +110,6 @@ self.addEventListener("message", (event) => {
       .join(",")
       .match(new RegExp(/main.[a-z0-9]+.js/g))[0];
     clientMsg("SW_VERSION", { i, swVersion, jsVersion });
-  } else if (event.data && event.data.type === "MIGRATION_MSG") {
-    const { uidMap } = event.data;
-    getQueryMatchFails(uidMap)
-      .then(() => {
-        // no errors
-        indexDBUpdateLogic(uidMap).then(() => {
-          clientMsg("MIGRATION_MSG", { errors: [] });
-        });
-      })
-      .catch((errors) => {
-        // has errors
-        clientMsg("MIGRATION_MSG", { errors });
-        // force the update ?
-        // indexDBUpdateLogic(uidMap).finally((errors) => {
-        //   clientMsg("MIGRATION_MSG", { errors });
-        // });
-      });
   }
 });
 
@@ -302,16 +187,18 @@ self.addEventListener("fetch", (e) => {
             //found
             toResponse(dataO)
           )
-          .catch(() =>
+          .catch(() => {
             //not found
-            fetch(cleanUrl)
+            clientLogger("IDB.get [] " + word, WARN);
+
+            return fetch(cleanUrl)
               .then((res) => res.blob())
               .then((blob) =>
                 addIDBItem({ db }, { uid, blob }).then((dataO) =>
                   toResponse(dataO)
                 )
-              )
-          );
+              );
+          });
       });
       e.respondWith(dbResults);
     }
@@ -516,10 +403,9 @@ function countIDBItem(db, store = indexedDBStore) {
  * objectStore.get(key)
  * @param {{db:*, store:string}} param0
  * @param {*} key
- * @param {*} word
  * @returns
  */
-function getIDBItem({ db, store = indexedDBStore }, key, word) {
+function getIDBItem({ db, store = indexedDBStore }, key) {
   var transaction = db.transaction([store]);
   var request = transaction.objectStore(store).get(key);
 
@@ -532,7 +418,6 @@ function getIDBItem({ db, store = indexedDBStore }, key, word) {
       if (request.result) {
         resolve(request.result);
       } else {
-        clientLogger("IDB.get [] " + word, WARN);
         reject();
       }
     };
