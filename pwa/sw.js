@@ -1,5 +1,6 @@
 /* globals clients*/
 const swVersion = swVersionConst; // eslint-disable-line no-undef
+const initCacheVer = initCacheVerConst; //eslint-disable-line no-undef
 const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
 
 const ghURL = ghURLConst; // eslint-disable-line no-undef
@@ -9,13 +10,14 @@ const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-unde
 const SW_MSG_TYPE_LOGGER = swMsgTypeLoggerConst; // eslint-disable-line no-undef
 const SW_MSG_TYPE_NEW_TERMS_ADDED = swMsgTypeNewTermsAddedConst; // eslint-disable-line no-undef
 
-const gPronounceCacheIndexParam = gPronounceCacheIndexParamConst;
-const renameParam = renameParamConst; // eslint-disable-line no-undef
+const getParam = getParamConst; // eslint-disable-line no-undef
 const removeParam = removeParamConst; // eslint-disable-line no-undef
 
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 const appMediaCache = "nmemonica-media";
+const indexedDBVersion = 2;
+const indexedDBStore = "media";
 const NO_INDEXEDDB_SUPPORT =
   "Your browser doesn't support a stable version of IndexedDB.";
 
@@ -29,6 +31,104 @@ const dataURL = [
   fbURL + "/lambda/kanji.json",
 ];
 
+function queryToUid(query, uidMap) {
+  const naConst = { "?tl=ja&q=%E3%81%A3%E3%81%AA": "0.na" };
+
+  const key = removeParam(query, "uid");
+  const q = getParam(key, "q");
+  const s = JSON.stringify(decodeURI(q));
+  const uid = uidMap[s] || naConst[query];
+
+  return uid;
+}
+
+function indexDBUpdateLogic(uidMap) {
+  const oldDBStoreName = "media";
+  const oldVersion = 1;
+  const newVersion = 2;
+
+  const process = dumpIDB(oldVersion, oldDBStoreName).then((dataArr) => {
+    return openIDB(newVersion, oldDBStoreName, oldDBStoreName)
+      .then((db) => {
+        const last = new Date();
+        return Promise.allSettled(
+          dataArr.map((el) => {
+            const { blob, query } = el;
+            const uid = queryToUid(query, uidMap);
+
+            let mapP;
+            if (!uid) {
+              clientLogger("uid not found", ERROR);
+              mapP = Promise.reject(query);
+            } else {
+              const newItem = { last, uid, blob };
+              mapP = putIDBItem({ db }, newItem)
+                .then(() => query)
+                .catch(() => query);
+            }
+
+            return mapP;
+          })
+        ).then((res) => ({ res, db }));
+      })
+      .then(({ res, db }) => {
+        const errors = res.filter((r) => r.status === "rejected");
+        if (errors.length > 0) {
+          throw errors;
+        }
+        countIDBItem(db);
+        clientLogger("IDB.upgrade complete !", DEBUG);
+
+        return res.filter((r) => r.status === "fulfilled");
+      });
+  });
+
+  return process;
+}
+
+function getQueryMatchFails(uidMap) {
+  clientLogger("IDB.upgrade check started !", DEBUG);
+
+  const oldDBStoreName = "media";
+  const oldVersion = 1;
+
+  const process = dumpIDB(oldVersion, oldDBStoreName).then((dataArr) => {
+    return Promise.allSettled(
+      dataArr.map((el) => {
+        const { query } = el;
+
+        const uid = queryToUid(query, uidMap);
+
+        let mapP;
+        if (!uid) {
+          clientLogger("uid not found", ERROR);
+
+          mapP = Promise.reject(query);
+        } else {
+          mapP = Promise.resolve(query);
+        }
+
+        return mapP;
+      })
+    )
+      .then((res) => res) // Get obj out of Promise
+
+      .then((res) => {
+        const errors = res.filter((r) => r.status === "rejected");
+        const done = res.length - errors.length;
+        clientLogger("IDB.check err:" + errors.length + " done:" + done, DEBUG);
+
+        if (errors.length > 0) {
+          throw errors; // only send back errors
+        }
+
+        return res.filter((r) => r.status === "fulfilled");
+      });
+  });
+
+  return process;
+}
+
 let ERROR = 1,
   WARN = 2,
   DEBUG = 3;
@@ -36,7 +136,8 @@ let ERROR = 1,
 self.addEventListener("install", (e) => {
   self.skipWaiting();
   console.log("[ServiceWorker] Version: " + swVersion);
-  clientLogger("Version: " + swVersion, WARN);
+  clientLogger("SWVersion: " + swVersion, WARN);
+  clientLogger("InitCache: " + initCacheVer, WARN);
 
   caches.open(appDataCache).then((cache) =>
     cache.add(dataVerURL).then(() =>
@@ -107,6 +208,23 @@ self.addEventListener("message", (event) => {
       .join(",")
       .match(new RegExp(/main.[a-z0-9]+.js/g))[0];
     clientMsg("SW_VERSION", { i, swVersion, jsVersion });
+  } else if (event.data && event.data.type === "MIGRATION_MSG") {
+    const { uidMap } = event.data;
+    getQueryMatchFails(uidMap)
+      .then(() => {
+        // no errors
+        indexDBUpdateLogic(uidMap).then(() => {
+          clientMsg("MIGRATION_MSG", { errors: [] });
+        });
+      })
+      .catch((errors) => {
+        // has errors
+        clientMsg("MIGRATION_MSG", { errors });
+        // force the update ?
+        // indexDBUpdateLogic(uidMap).finally((errors) => {
+        //   clientMsg("MIGRATION_MSG", { errors });
+        // });
+      });
   }
 });
 
@@ -118,91 +236,78 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  const hasCacheIdxOverride = new RegExp(
-    "[\\?&]" + gPronounceCacheIndexParam + "="
-  );
-
   if (url === dataVerURL) {
     e.respondWith(appVersionReq());
   } else if (req.headers.get("Data-Version")) {
     e.respondWith(appDataReq(e.request));
-  } else if (url.indexOf(ghURL) === 0) {
+  } else if (url.startsWith(ghURL)) {
     // site asset
     e.respondWith(appAssetReq(url));
-  } else if (url.indexOf(gCloudFnPronounce + "/override_cache") === 0) {
+  } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
     // override cache site media asset
     console.log("[ServiceWorker] Overriding Asset in Cache");
-    let newUrl = url.split("/override_cache").join("");
-
-    let overrideUrl;
-    if (hasCacheIdxOverride.test(url)) {
-      overrideUrl = renameParam(newUrl, gPronounceCacheIndexParam, "q");
-      newUrl = removeParam(newUrl, gPronounceCacheIndexParam);
-    }
+    const uid = getParam(url, "uid");
+    const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
 
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-      e.respondWith(recache(appMediaCache, newUrl));
+      e.respondWith(recache(appMediaCache, cleanUrl));
     } else {
       // use indexedDB
       clientLogger("IDB.override", WARN);
 
-      const fetchP = fetch(newUrl);
+      const fetchP = fetch(cleanUrl);
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
-        const query = (overrideUrl ? overrideUrl : newUrl).split(
-          gCloudFnPronounce
-        )[1];
-
         return fetchP
           .then((res) => res.blob())
           .then((blob) =>
-            putIDBItem(db, { query, blob }).then((dataO) => toResponse(dataO))
+            putIDBItem(
+              { db },
+              {
+                uid,
+                blob,
+              }
+            ).then((dataO) => toResponse(dataO))
           );
       });
 
       e.respondWith(dbResults);
     }
-  } else if (url.indexOf(gCloudFnPronounce) === 0) {
+  } else if (url.startsWith(gCloudFnPronounce)) {
     // site media asset
 
-    let overrideUrl;
-    let newUrl = url;
-    if (hasCacheIdxOverride.test(url)) {
-      overrideUrl = renameParam(newUrl, gPronounceCacheIndexParam, "q");
-      newUrl = removeParam(newUrl, gPronounceCacheIndexParam);
-    }
+    const uid = getParam(url, "uid");
+    const word = decodeURI(getParam(url, "q"));
+
+    const cleanUrl = removeParam(url, "uid");
 
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-      e.respondWith(appMediaReq(newUrl));
+      e.respondWith(appMediaReq(cleanUrl));
     } else {
       // use indexedDB
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
-        const query = (overrideUrl ? overrideUrl : newUrl).split(
-          gCloudFnPronounce
-        )[1];
-
         countIDBItem(db);
 
-        return getIDBItem(db, query)
+        return getIDBItem({ db }, uid)
           .then((dataO) =>
             //found
             toResponse(dataO)
           )
           .catch(() =>
             //not found
-            fetch(newUrl)
+            fetch(cleanUrl)
               .then((res) => res.blob())
               .then((blob) =>
-                addIDBItem(db, { query, blob }).then((dataO) =>
+                addIDBItem({ db }, { uid, blob }).then((dataO) =>
                   toResponse(dataO)
                 )
               )
@@ -223,31 +328,87 @@ function toResponse(obj) {
   return new Response(obj.blob, init);
 }
 
-function openIDB() {
-  let openRequest = indexedDB.open(appMediaCache);
+/**
+ * indexedDB.open()
+ * @param {*} version
+ * @param {*} objStoreToCreate name of store to open or create
+ * @param {{onUpgrDelStore:string}} {onUpgrDelStore} name of store to delete
+ * @returns
+ */
+function openIDB(
+  version = indexedDBVersion,
+  objStoreToCreate = indexedDBStore,
+  objStoreToDelete
+) {
+  let openRequest = indexedDB.open(appMediaCache, version);
 
-  const upgradeP = new Promise((resolve, reject) => {
+  const dbUpgradeP = new Promise((resolve /*reject*/) => {
     openRequest.onupgradeneeded = function (event) {
       // Save the IDBDatabase interface
       let db = event.target.result;
 
+      if (objStoreToDelete) {
+        db.deleteObjectStore(objStoreToDelete);
+      }
+
       // Create an objectStore for this database
-      let objectStore = db.createObjectStore("media", { keyPath: "query" });
-      objectStore.createIndex("query", "query", { unique: true });
+      let objectStore = db.createObjectStore(objStoreToCreate, {
+        keyPath: "uid",
+      });
+      // objectStore.createIndex("last", "last", { unique: false });
 
       // Use transaction oncomplete to make sure the objectStore creation is
       // finished before adding data into it.
-      objectStore.transaction.oncomplete = function (event) {
+      objectStore.transaction.oncomplete = function () {
         // Store values in the newly created objectStore.
         // console.log("upgrade success");
-        clientLogger("IDB.upgrade", DEBUG);
-        resolve(db);
+        // clientLogger("IDB.upgrade", DEBUG);
+        resolve({ type: "upgrade", val: db });
       };
     };
   });
 
+  const dbOpenP = new Promise((resolve, reject) => {
+    openRequest.onerror = function (/*event*/) {
+      clientLogger("IDB.open X(", ERROR);
+      reject();
+    };
+    openRequest.onsuccess = function (event) {
+      let db = event.target.result;
+
+      db.onerror = function (event) {
+        // Generic error handler for all errors targeted at this database's
+        // requests!
+        clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
+        console.error("Database error: " + event.target.errorCode);
+      };
+
+      // console.log("open success");
+      resolve({ type: "open", val: db });
+    };
+  });
+
+  return Promise.any([dbUpgradeP, dbOpenP]).then((pArr) => {
+    // if upgradeP happens wait for dbOpenP
+    if (pArr.type === "upgrade") {
+      return dbOpenP.then((db) => db.val);
+    }
+
+    return pArr.val;
+  });
+}
+
+/**
+ * objectStore.getAll()
+ * @param {number} version
+ * @param {string} store
+ * @returns {Promise} a promise containing array of results
+ */
+function dumpIDB(version, store) {
+  let openRequest = indexedDB.open(appMediaCache, version);
+
   const dbOpenPromise = new Promise((resolve, reject) => {
-    openRequest.onerror = function (event) {
+    openRequest.onerror = function (/*event*/) {
       clientLogger("IDB.open X(", ERROR);
       reject();
     };
@@ -266,8 +427,24 @@ function openIDB() {
     };
   });
 
-  // TODO: upgrade and open
-  return dbOpenPromise;
+  return dbOpenPromise.then((db) => {
+    let transaction = db.transaction([store], "readonly");
+    let objectStore = transaction.objectStore(store);
+
+    const getAllP = new Promise((resolve, reject) => {
+      const request = objectStore.getAll();
+      request.onerror = () => {
+        clientLogger("IDB.getAll X(", ERROR);
+        reject();
+      };
+      request.onsuccess = (event) => {
+        db.close();
+        resolve(event.target.result);
+      };
+    });
+
+    return getAllP;
+  });
 }
 
 function clientMsg(type, msg) {
@@ -297,17 +474,22 @@ function clientLogger(msg, lvl) {
     });
 }
 
-function countIDBItem(db) {
-  var transaction = db.transaction(["media"]);
-  var objectStore = transaction.objectStore("media");
-  var request = objectStore.count();
+/**
+ * objectStore.count()
+ * @param {*} db
+ * @param {string} store
+ * @returns
+ */
+function countIDBItem(db, store = indexedDBStore) {
+  var transaction = db.transaction([store]);
+  var request = transaction.objectStore(store).count();
 
   const requestP = new Promise((resolve, reject) => {
-    request.onerror = function (event) {
+    request.onerror = function (/*event*/) {
       clientLogger("IDB.count X(", ERROR);
       reject();
     };
-    request.onsuccess = function (event) {
+    request.onsuccess = function () {
       if (request.result) {
         clientLogger("IDB [" + request.result + "]", DEBUG);
         resolve(request.result);
@@ -319,10 +501,10 @@ function countIDBItem(db) {
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve();
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
@@ -330,21 +512,26 @@ function countIDBItem(db) {
   return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
 }
 
-function getIDBItem(db, key) {
-  var transaction = db.transaction(["media"]);
-  var objectStore = transaction.objectStore("media");
-  var request = objectStore.get(key);
+/**
+ * objectStore.get(key)
+ * @param {{db:*, store:string}} param0
+ * @param {*} key
+ * @param {*} word
+ * @returns
+ */
+function getIDBItem({ db, store = indexedDBStore }, key, word) {
+  var transaction = db.transaction([store]);
+  var request = transaction.objectStore(store).get(key);
 
   const requestP = new Promise((resolve, reject) => {
-    request.onerror = function (event) {
+    request.onerror = function (/*event*/) {
       clientLogger("IDB.get X(", ERROR);
       reject();
     };
-    request.onsuccess = function (event) {
+    request.onsuccess = function () {
       if (request.result) {
         resolve(request.result);
       } else {
-        const word = decodeURI(key.split("&q=")[1]);
         clientLogger("IDB.get [] " + word, WARN);
         reject();
       }
@@ -352,10 +539,10 @@ function getIDBItem(db, key) {
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve();
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
@@ -364,88 +551,93 @@ function getIDBItem(db, key) {
 }
 
 /**
- *
- * @param {*} db
+ * objectStore.add(value)
+ * @param {{db:*, store:string}} {db, store}
  * @param {*} value
  * @returns
  */
-function addIDBItem(db, value) {
-  let transaction = db.transaction(["media"], "readwrite");
+function addIDBItem({ db, store = indexedDBStore }, value) {
+  let transaction = db.transaction([store], "readwrite");
 
-  let objectStore = transaction.objectStore("media");
-  let request = objectStore.add(value);
+  let request = transaction.objectStore(store).add(value);
 
   const requestP = new Promise((resolve, reject) => {
-    request.onsuccess = function (event) {
+    request.onsuccess = function (/*event*/) {
       resolve();
     };
-    request.onerror = function (event) {
+    request.onerror = function () {
       clientLogger("IDB.add X(", ERROR);
       reject();
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve(value);
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
 
-  return Promise.all([requestP, transactionP]).then(() => value);
+  return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
 }
 
 /**
- *
- * @param {*} db
+ * objectStore.put(value)
+ * @param {{db:*, store:string}} {db, store}
  * @param {*} value
  * @returns
  */
-function putIDBItem(db, value) {
-  let transaction = db.transaction(["media"], "readwrite");
+function putIDBItem({ db, store = indexedDBStore }, value) {
+  let transaction = db.transaction([store], "readwrite");
 
-  let objectStore = transaction.objectStore("media");
-  let request = objectStore.put(value);
+  let request = transaction.objectStore(store).put(value);
 
   const requestP = new Promise((resolve, reject) => {
-    request.onsuccess = function (event) {
+    request.onsuccess = function (/*event*/) {
       resolve();
     };
-    request.onerror = function (event) {
+    request.onerror = function () {
       clientLogger("IDB.put X(", ERROR);
       reject();
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve(value);
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
 
-  return Promise.all([requestP, transactionP]).then(() => value);
+  return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
 }
 
-function deleteIDBItem(db, key) {
-  var transaction = db.transaction(["media"], "readwrite");
+/**
+ * objectStore.delete(key)
+ * @param {*} db
+ * @param {*} store
+ * @param {*} key
+ * @returns
+ */
+function deleteIDBItem(db, store, key) {
+  var transaction = db.transaction([store], "readwrite");
 
-  let request = transaction.objectStore("media").delete(key);
+  let request = transaction.objectStore(store).delete(key);
 
-  request.onsuccess = function (event) {};
+  request.onsuccess = function (/*event*/) {};
   request.onerror = function () {
     clientLogger("IDB.delete X(", ERROR);
   };
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve();
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
@@ -632,7 +824,7 @@ function removeOldStaticCaches() {
 }
 
 /**
- * @returns {Promise} a promise with the catched jsonObj
+ * @returns {Promise} a promise with the cached jsonObj
  * @param {String} cacheName
  * @param {String} url
  * @param {Object} jsonObj
