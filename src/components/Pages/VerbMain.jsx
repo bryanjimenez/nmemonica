@@ -121,8 +121,13 @@ class VerbMain extends Component {
     }
   }
 
-  buildTenseElement(tense) {
-    return tense.map((t, i) => {
+  buildTenseElement(key, tense) {
+    const columnClass = classNames({
+      "pt-3 pr-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap": true,
+      "text-end": key !== 0,
+    });
+
+    const tenseRows = tense.map((t, i) => {
       const tenseClass = classNames({
         clickable: true,
         "font-weight-bold": this.props.verbForm === t.t,
@@ -133,13 +138,23 @@ class VerbMain extends Component {
           className={tenseClass}
           key={i}
           onClick={() => {
-            this.props.setShownForm(t.t);
+            if (this.props.verbForm === t.t) {
+              this.props.setShownForm("dictionary");
+            } else {
+              this.props.setShownForm(t.t);
+            }
           }}
         >
           {this.props.verbForm === t.t ? " " + t.t + " " : "[" + t.t + "]"}
         </div>
       );
     });
+
+    return (
+      <div key={key} className={columnClass}>
+        {tenseRows}
+      </div>
+    );
   }
 
   /**
@@ -237,12 +252,7 @@ class VerbMain extends Component {
     );
 
     return [
-      <div
-        key={0}
-        className="pt-3 pl-sm-3 flex-shrink-1 d-flex flex-column justify-content-around"
-      >
-        {this.buildTenseElement(t1)}
-      </div>,
+      this.buildTenseElement(0, t1),
       <div
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
@@ -335,12 +345,8 @@ class VerbMain extends Component {
           }}
         />
       </div>,
-      <div
-        key={2}
-        className="pt-3 pr-sm-3 text-end flex-shrink-1 d-flex flex-column justify-content-around"
-      >
-        {this.buildTenseElement(t2)}
-      </div>,
+
+      this.buildTenseElement(2, t2),
     ];
   }
 }
