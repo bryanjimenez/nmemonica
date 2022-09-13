@@ -31,6 +31,7 @@ import {
   toggleSwipe,
   updateVerbColSplit,
   toggleActiveGrp,
+  DEBUG_ERROR,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
@@ -51,6 +52,7 @@ import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import { getKanji } from "../../actions/kanjiAct";
 import { SettingsVocab } from "../Form/SettingsVocab";
 import { SettingsPhrase } from "../Form/SettingsPhrase";
+import { logger } from "../../actions/consoleAct";
 
 const SettingsMeta = {
   location: "/settings/",
@@ -81,10 +83,42 @@ class Settings extends Component {
     if (this.props.phrases.length === 0) {
       this.props.getPhrases();
     }
+
+    this.swMessageEventListener = this.swMessageEventListener.bind(this);
   }
 
   componentDidMount() {
     this.props.getMemoryStorageStatus();
+    navigator.serviceWorker.addEventListener(
+      "message",
+      this.swMessageEventListener
+    );
+  }
+
+  componentWillUnmount() {
+    navigator.serviceWorker.removeEventListener(
+      "message",
+      this.swMessageEventListener
+    );
+  }
+
+  swMessageEventListener(event) {
+    if (event.data.type === "DO_HARD_REFRESH") {
+      const { error } = event.data;
+
+      if (error) {
+        this.props.logger(error, DEBUG_ERROR);
+      }
+
+      setTimeout(() => {
+        this.setState({
+          spin: false,
+          hardRefreshUnavailable: error,
+        });
+      }, 2000);
+    } else if (event.data.type === "SW_VERSION") {
+      this.props.logger(JSON.stringify(event.data), DEBUG_ERROR);
+    }
   }
 
   failedFuriganaList(terms) {
@@ -369,31 +403,29 @@ class Settings extends Component {
                 Hard Refresh
               </p>
               <div
-                className={classNames({ "spin-a-bit": this.state.spin })}
+                className={classNames({
+                  "spin-a-bit": this.state.spin,
+                })}
                 style={{ height: "24px" }}
                 aria-labelledby="hard-refresh"
                 onClick={() => {
-                  fetch("hardRefresh")
-                    .then((res) => {
-                      if (res.status < 400) {
-                        this.setState({
-                          spin: true,
-                          hardRefreshUnavailable: false,
-                        });
-                        setTimeout(() => {
-                          this.setState({
-                            spin: false,
-                          });
-                        }, 2000);
-                      } else {
-                        throw new Error("Service Unavailable");
-                      }
-                    })
-                    .catch(() => {
+                  this.setState({
+                    spin: true,
+                    hardRefreshUnavailable: false,
+                  });
+
+                  setTimeout(() => {
+                    if (this.state.spin) {
                       this.setState({
+                        spin: false,
                         hardRefreshUnavailable: true,
                       });
-                    });
+                    }
+                  }, 3000);
+
+                  navigator.serviceWorker.controller.postMessage({
+                    type: "DO_HARD_REFRESH",
+                  });
                 }}
               >
                 <SyncIcon
@@ -560,6 +592,8 @@ Settings.propTypes = {
   setOppositesQRomaji: PropTypes.func,
   oppositesARomaji: PropTypes.bool,
   setOppositesARomaji: PropTypes.func,
+
+  logger: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -595,6 +629,7 @@ export default connect(mapStateToProps, {
   toggleDebug,
   toggleSwipe,
   updateVerbColSplit,
+  logger,
 })(Settings);
 
 export { SettingsMeta };

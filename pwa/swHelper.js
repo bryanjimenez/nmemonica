@@ -46,7 +46,7 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     });
 
     stream.write("const cacheFilesConst = " + strFilesToCache + ";\n\n");
-    stream.write("const swVersionConst = '" + md5(buff) + "';\n\n");
+    stream.write("const swVersionConst = '" + md5(buff).slice(0, 8) + "';\n\n");
 
     stream.write("const ghURLConst = '" + appUIEndpoint + "';\n");
     stream.write("const fbURLConst = '" + firebaseConfig.databaseURL + "';\n");

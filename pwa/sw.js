@@ -81,11 +81,40 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "DO_HARD_REFRESH") {
+    fetch(dataVerURL)
+      .then((res) => {
+        if (res.status < 400) {
+          return caches.delete(appStaticCache).then(() => {
+            self.registration.unregister();
+            clientMsg("DO_HARD_REFRESH", {
+              msg: "Hard Refresh",
+              status: res.status,
+            });
+          });
+        } else {
+          throw new Error("Service Unavailable");
+        }
+      })
+      .catch((error) => {
+        clientMsg("DO_HARD_REFRESH", { msg: "Hard Refresh", error });
+      });
+  } else if (event.data && event.data.type === "SW_VERSION") {
+    const { i } = event.data;
+
+    const jsVersion = cacheFiles
+      .join(",")
+      .match(new RegExp(/main.[a-z0-9]+.js/g))[0];
+    clientMsg("SW_VERSION", { i, swVersion, jsVersion });
+  }
+});
+
 self.addEventListener("fetch", (e) => {
   const req = e.request.clone();
   const url = e.request.url;
 
-  if (e.request.method !== 'GET') {
+  if (e.request.method !== "GET") {
     return;
   }
 
@@ -97,36 +126,6 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(appVersionReq());
   } else if (req.headers.get("Data-Version")) {
     e.respondWith(appDataReq(e.request));
-  } else if (url.endsWith("/hardRefresh")) {
-    const hardRefresh = fetch(dataVerURL)
-      .then((res) => {
-
-        if (res.status < 400) {
-         return caches.delete(appStaticCache).then(() => {
-            self.registration.unregister();
-            clientLogger("[ServiceWorker] Hard Refresh", DEBUG);
-            return new Response("<h1>Hard Refresh</h1>", {
-              status: 200,
-              statusText: "OK",
-              headers: new Headers({ "Content-Type": "text/html" }),
-            });
-          });
-        }
-        else{
-          throw new Error('Service Unavailable')
-        }
-      })
-      .catch(() => {
-        clientLogger("[ServiceWorker] Network unavailable", DEBUG);
-
-        return new Response("<h1>Service Unavailable</h1>", {
-          status: 503,
-          statusText: "Service Unavailable",
-          headers: new Headers({ "Content-Type": "text/html" }),
-        });
-      });
-
-    e.respondWith(hardRefresh);
   } else if (url.indexOf(ghURL) === 0) {
     // site asset
     e.respondWith(appAssetReq(url));
@@ -269,6 +268,19 @@ function openIDB() {
 
   // TODO: upgrade and open
   return dbOpenPromise;
+}
+
+function clientMsg(type, msg) {
+  return clients
+    .matchAll({ includeUncontrolled: true, type: "window" })
+    .then((client) => {
+      if (client && client.length) {
+        return client[0].postMessage({
+          type,
+          ...msg,
+        });
+      }
+    });
 }
 
 function clientLogger(msg, lvl) {
