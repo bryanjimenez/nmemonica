@@ -14,7 +14,7 @@ import { DEBUG_OFF } from "../../actions/settingsAct";
 
 const KanaGameMeta = {
   location: "/kana/",
-  label: "仮名 Game",
+  label: ["平仮名 Game", "片仮名 Game", "仮名 Game"],
 };
 
 class KanaGame extends Component {

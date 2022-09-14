@@ -25,12 +25,15 @@ import classNames from "classnames";
 
 import "./Navigation.css";
 import { KanjiMeta } from "../Pages/Kanji";
+import { toggleKana } from "../../actions/settingsAct";
+import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 
 class Navigation extends Component {
   constructor(props) {
     super(props);
     this.state = {
       collapsed: true,
+      vocabType: 0,
     };
 
     this.menuToggle = this.menuToggle.bind(this);
@@ -54,7 +57,10 @@ class Navigation extends Component {
   render() {
     let shortcuts = [
       {
-        meta: KanaGameMeta,
+        meta: {
+          ...KanaGameMeta,
+          label: labelOptions(this.props.charSet, KanaGameMeta.label),
+        },
         icon: (
           <div className="not-a-real-icon">
             {this.props.charSet === 0
@@ -64,15 +70,36 @@ class Navigation extends Component {
               : "*"}
           </div>
         ),
-      },
-      { meta: PhrasesMeta, icon: <FontAwesomeIcon icon={faFont} size="2x" /> },
-      {
-        meta: VocabularyMeta,
-        icon: <FontAwesomeIcon icon={faFont} size="2x" />,
+        wrap: (child) => (
+          <div
+            className="clickable prevent-collapse"
+            onClick={() => {
+              this.props.toggleKana();
+            }}
+          >
+            {child}
+          </div>
+        ),
       },
       {
         meta: OppositesMeta,
         icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
+      },
+      {
+        meta: [VocabularyMeta, PhrasesMeta][this.state.vocabType],
+        icon: <FontAwesomeIcon icon={faFont} size="2x" />,
+        wrap: (child) => (
+          <div
+            className="clickable prevent-collapse"
+            onClick={() => {
+              this.setState((s) => ({
+                vocabType: toggleOptions(s.vocabType, ["Vocab", "Phrases"]),
+              }));
+            }}
+          >
+            {child}
+          </div>
+        ),
       },
       {
         meta: ParticlesGameMeta,
@@ -127,7 +154,25 @@ class Navigation extends Component {
               collapse: this.state.collapsed,
             })}
             id="navbarSupportedContent"
-            onClick={this.menuToggle}
+            onClick={(e) => {
+              if (
+                Array.from(
+                  document.getElementsByClassName("force-collapse")
+                ).includes(e.target)
+              ) {
+                // force a collapse, Link el is preventing?
+                this.menuToggle();
+              } else if (
+                !Array.from(
+                  document.getElementsByClassName("prevent-collapse")
+                ).includes(e.target)
+              ) {
+                // any child elem without classname^ toggles
+                this.menuToggle();
+                // this.setState({collapse:true})
+                return false;
+              }
+            }}
           >
             <ul
               className="navbar-nav"
@@ -143,11 +188,11 @@ class Navigation extends Component {
                       style={{ width: "25%" }}
                     >
                       <Link to={l.meta.location}>
-                        <div>
-                          {l.icon}
-                          <div className="nav-caption">{l.meta.label}</div>
-                        </div>
+                        <div className="mb-2 force-collapse">{l.icon}</div>
                       </Link>
+                      <div className="nav-caption">
+                        {l.wrap ? l.wrap(l.meta.label) : l.meta.label}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -157,7 +202,7 @@ class Navigation extends Component {
               {shortcuts.map((s, i) => (
                 <li key={i} className="nav-item d-none d-lg-block">
                   <Link className="nav-link" to={s.meta.location}>
-                    {s.meta.label}
+                    {s.wrap ? s.wrap(s.meta.label) : s.meta.label}
                   </Link>
                 </li>
               ))}
@@ -172,10 +217,11 @@ class Navigation extends Component {
 Navigation.propTypes = {
   user: PropTypes.object,
   charSet: PropTypes.number,
+  toggleKana: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
   return { user: state.login.user, charSet: state.settings.kana.charSet };
 };
 
-export default connect(mapStateToProps, {})(Navigation);
+export default connect(mapStateToProps, { toggleKana })(Navigation);

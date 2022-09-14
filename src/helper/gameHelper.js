@@ -292,6 +292,12 @@ export function labelOptions(index, options) {
   return options[index];
 }
 
+export function toggleOptions(index, options) {
+  const len = options.length;
+
+  return index + 1 < len ? index + 1 : 0;
+}
+
 /**
  * Array containing the avaiable verb forms
  * @returns {Array}
