@@ -447,6 +447,18 @@ class Vocabulary extends Component {
             pronounce: vocabulary.pronounce && verb.getPronunciation(),
             form: this.props.verbForm,
           };
+        } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
+          const naFlip = this.state.naFlip;
+          const naAdj = JapaneseText.parse(vocabulary).append(naFlip && "な");
+
+          sayObj = {
+            ...vocabulary,
+            japanese: naAdj.toString(),
+            pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
+            form: naFlip,
+          };
+
+          this.setState((s) => ({ naFlip: s.naFlip ? undefined : "-na" }));
         } else {
           sayObj = vocabulary;
         }
@@ -458,40 +470,11 @@ class Vocabulary extends Component {
         });
 
         const japaneseAudio = new Audio(audioUrl);
-
-        // too slow  .addEventListener("ended", () => {
-        japaneseAudio.addEventListener("canplaythrough", () => {
-          try {
-            japaneseAudio.play().then(() => {
-              if (JapaneseText.parse(vocabulary).isNaAdj()) {
-                let na = addParam(pronounceEndoint, {
-                  tl: "ja",
-                  q: "っな",
-                  uid: "0.na",
-                });
-                const naAudio = new Audio(na);
-
-                const volume = 0.4;
-                const offset = 0.5;
-                const naDelay = 1000 * (japaneseAudio.duration - offset);
-                // this.props.logger("volume: "+volume, 1);
-                // this.props.logger("offset: "+offset, 1);
-                // this.props.logger("duration: "+japaneseAudio.duration, 1);
-                // this.props.logger("delay: "+naDelay, 1);
-                setTimeout(() => {
-                  try {
-                    naAudio.volume = volume;
-                    naAudio.play();
-                  } catch (e) {
-                    this.props.logger("na-adj play failed " + e, 1);
-                  }
-                }, naDelay);
-              }
-            });
-          } catch (e) {
-            this.props.logger("Swipe Play Error " + e, 1);
-          }
-        });
+        try {
+          japaneseAudio.play();
+        } catch (e) {
+          this.props.logger("Swipe Play Error " + e, 1);
+        }
 
         if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
           this.props.pushedPlay(true);

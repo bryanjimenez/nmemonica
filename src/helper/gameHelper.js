@@ -557,7 +557,7 @@ export function getCacheUID(word) {
     throw new Error("Missing uid");
   }
 
-  if (word.grp === "Verb" && word.form) {
+  if (word.form) {
     uid += word.form !== "dictionary" ? word.form.replace("-", ".") : "";
   }
 

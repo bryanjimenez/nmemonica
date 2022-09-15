@@ -82,6 +82,17 @@ export class JapaneseText {
     return JSON.stringify(this);
   }
 
+  append(value = "") {
+    if (this.hasFurigana()) {
+      return new JapaneseText(
+        this.getPronunciation() + value,
+        this.getSpelling() + value
+      );
+    } else {
+      return new JapaneseText(this.getSpelling() + value);
+    }
+  }
+
   toString() {
     return this._furigana + (this._kanji ? "\n" + this._kanji : "");
   }
