@@ -1,13 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { AUTOPLAY_OFF } from "../../actions/settingsAct";
-import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
+import {
+  DEFAULT_SETTINGS,
+  FILTER_FREQ,
+  FILTER_REP,
+} from "../../reducers/settingsRed";
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
 import VerbFormSlider from "./VerbFormSlider";
+import {
+  ChevronUpIcon,
+  PlusCircleIcon,
+  XCircleIcon,
+} from "@primer/octicons-react";
+import classNames from "classnames";
 
 export function SettingsVocab(props) {
   // const css = classNames({
@@ -46,6 +56,19 @@ export function SettingsVocab(props) {
 
   if (vocabulary.length < 1 || Object.keys(vocabGroups).length < 1)
     return <NotReady addlStyle="main-panel" />;
+
+  const allForms = DEFAULT_SETTINGS.vocabulary.verbFormsOrder;
+
+  const shownForms = props.verbFormsOrder.map((form) =>
+    allForms.find((el) => el === form)
+  );
+  const hiddenForms = allForms.reduce((acc, cur) => {
+    if (!shownForms.includes(cur)) {
+      acc = [...acc, cur];
+    }
+
+    return acc;
+  }, []);
 
   let el;
   try {
@@ -154,12 +177,94 @@ export function SettingsVocab(props) {
               />
             </div>
             {autoVerbView && (
-              <div className="d-flex justify-content-end p-2">
-                <VerbFormSlider
-                  initial={verbColSplit}
-                  setChoiceN={updateVerbColSplit}
-                  statusText="Column layout"
-                />
+              <div className="mb-2">
+                <div className="d-flex flex-row justify-content-end">
+                  <div>
+                    {[
+                      shownForms.map((form, k) => (
+                        <div key={k} className="d-flex justify-content-between">
+                          <div
+                            className={classNames({
+                              "mr-3": true,
+                              "d-none": k === 0,
+                            })}
+                            onClick={() => {
+                              if (k > 0) {
+                                const a = shownForms.slice(0, k - 1);
+                                const b = shownForms[k - 1];
+                                const x = shownForms[k];
+                                const c = shownForms.slice(k + 1);
+
+                                props.setVerbFormsOrder([...a, x, b, ...c]);
+                              }
+                            }}
+                          >
+                            <ChevronUpIcon
+                              classname="mt-1"
+                              size="small"
+                              aria-label="move up"
+                            />
+                          </div>
+                          <span className="w-100 text-start">{form}</span>
+
+                          <div
+                            onClick={() => {
+                              const minusK = [
+                                ...shownForms.slice(0, k),
+                                ...shownForms.slice(k + 1),
+                              ];
+
+                              props.setVerbFormsOrder(minusK);
+                            }}
+                          >
+                            <XCircleIcon
+                              className="incorrect-color mt-1 ml-3"
+                              size="small"
+                              aria-label="remove"
+                            />
+                          </div>
+                        </div>
+                      )),
+                      hiddenForms.map((form, k) => (
+                        <div
+                          key={shownForms.length + k}
+                          className="d-flex justify-content-between"
+                        >
+                          <div className="mr-3"></div>
+                          <span className="w-100 text-start disabled-color">
+                            {form}
+                          </span>
+                          <div
+                            onClick={() => {
+                              props.setVerbFormsOrder([
+                                ...shownForms,
+                                hiddenForms[k],
+                              ]);
+                            }}
+                          >
+                            <PlusCircleIcon
+                              className="mt-1 ml-3"
+                              size="small"
+                              aria-label="add"
+                            />
+                          </div>
+                        </div>
+                      )),
+                    ]}
+                  </div>
+                </div>
+              </div>
+            )}
+            {autoVerbView && (
+              <div>
+                <div className="d-flex justify-content-end p-2">
+                  <VerbFormSlider
+                    initial={verbColSplit}
+                    setChoiceN={updateVerbColSplit}
+                    max={props.verbFormsOrder.length}
+                    statusText="Column layout"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -206,4 +311,6 @@ SettingsVocab.propTypes = {
   toggleAutoVerbView: PropTypes.func,
   verbColSplit: PropTypes.number,
   updateVerbColSplit: PropTypes.func,
+  verbFormsOrder: PropTypes.array,
+  setVerbFormsOrder: PropTypes.func,
 };

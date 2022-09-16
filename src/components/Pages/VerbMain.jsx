@@ -157,17 +157,22 @@ class VerbMain extends Component {
     );
   }
 
+  getSplitIdx(verbForms){
+    const middle =
+    Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
+
+    const rightShift = middle - this.props.verbColSplit;
+    const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
+
+    return splitIdx;
+  }
   /**
    * splits the verb forms into two columns
    * @param {*} verbForms
    * @returns {Object} an object containing two columns
    */
   splitVerbFormsToColumns(verbForms) {
-    const middle =
-      Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
-
-    const rightShift = middle - this.props.verbColSplit;
-    const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
+    const splitIdx = this.getSplitIdx(verbForms);
 
     const t1 = verbForms.slice(0, splitIdx);
     const t2 = verbForms.slice(splitIdx);
@@ -182,11 +187,12 @@ class VerbMain extends Component {
    */
   getVerbLabelItems(verbForms, theForm) {
     const romaji = this.props.verb.romaji || ".";
+    const splitIdx = this.getSplitIdx(verbForms);
 
     const formResult = verbForms.find((form) => form.t === theForm);
     const japanesePhrase = formResult
       ? formResult.j
-      : verbForms.find((form) => form.t === "dictionary").j;
+      : verbForms[splitIdx].j;
 
     const furiganaToggable = toggleFuriganaSettingHelper(
       this.props.practiceSide,
@@ -203,7 +209,7 @@ class VerbMain extends Component {
 
   render() {
     const verb = this.props.verb;
-    const verbForms = getVerbFormsArray(verb);
+    const verbForms = getVerbFormsArray(verb, this.props.verbFormsOrder);
     const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
     const { inJapanese, inEnglish, romaji, japanesePhrase } =
       this.getVerbLabelItems(verbForms, this.props.verbForm);
@@ -362,6 +368,7 @@ const mapStateToProps = (state) => {
     touchSwipe: state.settings.global.touchSwipe,
     furigana: state.settings.vocabulary.repetition,
     verbColSplit: state.settings.vocabulary.verbColSplit,
+    verbFormsOrder: state.settings.vocabulary.verbFormsOrder,
   };
 };
 

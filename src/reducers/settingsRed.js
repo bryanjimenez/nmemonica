@@ -34,10 +34,13 @@ import {
   TOGGLE_SWIPE,
   VERB_FORM_VIEW,
   TOGGLE_KANJI_ACTIVE_GROUP,
+  SET_VERB_FORM_ORDER,
+  
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
 import { SERVICE_WORKER_LOGGER_MSG } from "../actions/serviceWorkerAct";
+import { getVerbFormsArray } from "../helper/gameHelper";
 
 export const DEFAULT_SETTINGS = {
   global: {
@@ -72,6 +75,7 @@ export const DEFAULT_SETTINGS = {
     autoPlay: 0,
     autoVerbView: false,
     verbColSplit: 0,
+    verbFormsOrder: getVerbFormsArray("いる").map(f=>f.t),
   },
   kanji: {
     filter: 0,
@@ -321,13 +325,21 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           autoVerbView: !state.vocabulary.autoVerbView,
         },
       };
-    case VERB_FORM_VIEW:
-      return {
-        ...state,
-        vocabulary: {
-          ...state.vocabulary,
-          verbColSplit: action.value,
-        },
+      case VERB_FORM_VIEW:
+        return {
+          ...state,
+          vocabulary: {
+            ...state.vocabulary,
+            verbColSplit: action.value,
+          },
+      };
+      case SET_VERB_FORM_ORDER:
+        return {
+          ...state,
+          vocabulary: {
+            ...state.vocabulary,
+            verbFormsOrder: action.value,
+          },
       };
     case SET_OPPOSITES_Q_ROMAJI:
       return {

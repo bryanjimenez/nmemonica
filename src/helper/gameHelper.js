@@ -303,10 +303,10 @@ export function toggleOptions(index, options) {
  * @returns {Array}
  * @param {String} rawVerb
  */
-export function getVerbFormsArray(rawVerb) {
+export function getVerbFormsArray(rawVerb, order) {
   const dictionaryForm = JapaneseVerb.parse(rawVerb);
 
-  return [
+  const allAvailable = [
     { t: "-masu", j: dictionaryForm.masuForm() },
     { t: "-mashou", j: dictionaryForm.mashouForm() },
     { t: "dictionary", j: dictionaryForm },
@@ -314,7 +314,14 @@ export function getVerbFormsArray(rawVerb) {
     { t: "-saseru", j: dictionaryForm.saseruForm() },
     { t: "-te", j: dictionaryForm.teForm() },
     { t: "-ta", j: dictionaryForm.taForm() },
-  ];
+  ]
+
+  let filtered;
+  if(order){
+    filtered = order.map((form)=>allAvailable.find(el=>el.t===form));
+  }
+
+  return order ? filtered : allAvailable;
 }
 
 /**

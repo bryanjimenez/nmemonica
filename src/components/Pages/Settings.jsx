@@ -32,6 +32,7 @@ import {
   updateVerbColSplit,
   toggleActiveGrp,
   DEBUG_ERROR,
+  setVerbFormsOrder,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
@@ -270,6 +271,8 @@ class Settings extends Component {
               toggleAutoVerbView={this.props.toggleAutoVerbView}
               verbColSplit={this.props.verbColSplit}
               updateVerbColSplit={this.props.updateVerbColSplit}
+              verbFormsOrder={this.props.verbFormsOrder}
+              setVerbFormsOrder={this.props.setVerbFormsOrder}
             />
           </div>
           <div className={pageClassName}>
@@ -503,6 +506,8 @@ const mapStateToProps = (state) => {
     vocabFilter: state.settings.vocabulary.filter,
     vocabFreq: state.settings.vocabulary.frequency,
     vocabReinforce: state.settings.vocabulary.reinforce,
+    verbFormsOrder: state.settings.vocabulary.verbFormsOrder,
+
     kanjiGroups: state.kanji.grpObj,
     kanjiFilter: state.settings.kanji.filter,
     kanjiActive: state.settings.kanji.activeGroup,
@@ -573,6 +578,7 @@ Settings.propTypes = {
   toggleAutoVerbView: PropTypes.func,
   verbColSplit: PropTypes.number,
   updateVerbColSplit: PropTypes.func,
+  verbFormsOrder: PropTypes.array,
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
@@ -633,6 +639,7 @@ export default connect(mapStateToProps, {
   toggleSwipe,
   updateVerbColSplit,
   logger,
+  setVerbFormsOrder,
 })(Settings);
 
 export { SettingsMeta };

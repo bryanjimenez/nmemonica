@@ -36,6 +36,7 @@ export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
 export const DEBUG = "toggle_debug";
 export const TOGGLE_SWIPE = "toggle_swipe";
+export const SET_VERB_FORM_ORDER = "set_verb_form_order";
 
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
@@ -1013,5 +1014,14 @@ export function toggleSwipe() {
         type: TOGGLE_SWIPE,
       });
     }
+  };
+}
+
+export function setVerbFormsOrder(value) {
+  return (dispatch) => {
+    dispatch({
+      type: SET_VERB_FORM_ORDER,
+      value,
+    });
   };
 }

@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
-import { getVerbFormsArray } from "../../helper/gameHelper";
 
 const useStyles = makeStyles({
   root: {
@@ -11,18 +10,20 @@ const useStyles = makeStyles({
   },
 });
 
-const min = 0;
-const max = getVerbFormsArray("いる").length - 1;
+function populateMarks(max) {
+  const marks = [];
+  const min = 0;
+  for (let x = min; x < max + 1; x++) {
+    const slide = ((x - min) / (max + 1 - min)) * 100;
 
-let marks = [];
-for (let x = min; x < max + 1; x++) {
-  const slide = ((x - min) / (max + 1 - min)) * 100;
+    marks.push({ value: slide, raw: x });
+  }
+  marks.push({ value: 100, raw: max + 1 });
 
-  marks.push({ value: slide, raw: x });
+  return marks;
 }
-marks.push({ value: 100, raw: max + 1 });
 
-function slideToRaw(slide) {
+function slideToRaw(slide, marks) {
   const idx = marks.findIndex((mark) => mark.value === slide);
   return marks[idx].raw;
 }
@@ -32,7 +33,7 @@ function slideToRaw(slide) {
  * @param {Number} slide
  * @returns {Number}
  */
-function slideToLabels(slide) {
+function slideToLabels(slide, marks, max) {
   const idx = marks.findIndex((mark) => mark.value === slide);
   const half = Math.trunc((max + 1) / 2);
 
@@ -52,19 +53,18 @@ function slideToLabels(slide) {
   return lbl;
 }
 
-function rawToSlide(raw) {
-
-  if(raw>(max + 1) || raw<0){
-    console.log('VerbFormSlider bad input');
+function rawToSlide(raw, marks, max) {
+  if (raw > max + 1 || raw < 0) {
+    console.log("VerbFormSlider bad input");
     return marks[0].value;
   }
 
   return marks[marks.findIndex((m) => m.raw === raw)].value;
 }
 
-const handleChange = (event, newValue, props) => {
+const handleChange = (event, newValue, props, marks) => {
   const prevVal = props.initial;
-  const curVal = slideToRaw(newValue);
+  const curVal = slideToRaw(newValue, marks);
 
   if (curVal !== prevVal) {
     props.setChoiceN(curVal);
@@ -74,21 +74,27 @@ const handleChange = (event, newValue, props) => {
 export default function VerbFormSlider(props) {
   const classes = useStyles();
 
+  const max = props.max - 1;
+  const marks = populateMarks(max);
+
+  const rts = (raw) => rawToSlide(raw, marks, max);
+  const stl = (slide) => slideToLabels(slide, marks, max);
+
   return (
     <div className={classes.root}>
       <Typography id="discrete-slider-restrict" gutterBottom>
         {props.statusText}
       </Typography>
       <Slider
-        value={rawToSlide(props.initial)}
-        valueLabelFormat={slideToLabels}
-        getAriaValueText={slideToLabels}
+        value={rts(props.initial)}
+        valueLabelFormat={stl}
+        getAriaValueText={stl}
         aria-labelledby="discrete-slider-restrict"
         step={null}
         valueLabelDisplay="auto"
         marks={marks}
         onChange={(event, newValue) => {
-          handleChange(event, newValue, props);
+          handleChange(event, newValue, props, marks);
         }}
       />
     </div>
