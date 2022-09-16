@@ -48,6 +48,7 @@ node_modules/
 
 # Build directory
 dist/
+pwa/built/
 
 # Optional npm cache directory
 .npm

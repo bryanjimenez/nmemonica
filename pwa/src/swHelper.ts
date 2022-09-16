@@ -1,17 +1,18 @@
-import fs from "fs";
-import glob from "glob-all";
-import path from "path";
+import * as fs from "fs";
+import * as glob from "glob-all";
+import * as path from "path";
 import {
   pronounceEndoint,
   appUIEndpoint,
   firebaseConfig,
-} from "../environment.development";
+} from "../../environment.development";
 import {
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
-} from "../src/actions/serviceWorkerAct";
-import md5 from "../lambda/sheets/node_modules/md5/md5.js";
-import { getParam, removeParam } from "../src/helper/urlHelper";
+// } from "../src/actions/serviceWorkerAct"; // FIXME: this pulls other unused code
+} from "../shared/serviceWorkerAct";
+import * as md5 from "md5";
+import { getParam, removeParam } from "../../src/helper/urlHelper";
 
 const projectRoot = path.resolve();
 const swPartialCode = projectRoot + "/pwa/sw.js";
@@ -23,7 +24,7 @@ const arrFilesToCache = glob.sync(
 );
 
 const strFilesToCache = JSON.stringify(
-  arrFilesToCache.reduce((acc, p) => {
+  arrFilesToCache?.reduce((acc, p) => {
     const fileName = p.split("/").pop();
     return fileName !== "sw.js" ? [...acc, fileName] : acc;
   }, [])
@@ -46,9 +47,9 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
 
     stream.write("const cacheFilesConst = " + strFilesToCache + ";\n\n");
 
-    stream.write("const swVersionConst = '" + md5(buff).slice(0, 8) + "';\n\n");
+    stream.write("const swVersionConst = '" + md5(buff).slice(0, 8) + "';\n");
     stream.write(
-      "const initCacheVerConst = '" + md5(strFilesToCache).slice(0, 8) + "';\n"
+      "const initCacheVerConst = '" + md5(strFilesToCache).slice(0, 8) + "';\n\n"
     );
 
     stream.write("const ghURLConst = '" + appUIEndpoint + "';\n");

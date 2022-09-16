@@ -1,9 +1,9 @@
-import fs from "fs";
-import path from "path";
+import * as fs from "fs";
+import * as path from "path";
 import {
   firebaseConfig,
   gCloudFn,
-} from "./environment.development";
+} from "../../environment.development";
 
 const projectRoot = path.resolve();
 const swPartialCode = projectRoot + "/index.html";
