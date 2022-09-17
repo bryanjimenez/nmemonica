@@ -1,7 +1,7 @@
 /**
- * @returns {String} the param
- * @param {String} baseUrl
- * @param {*} params
+ * @returns {string|null} the param
+ * @param {string} baseUrl
+ * @param {string} param
  */
 export function getParam(baseUrl, param) {
   const queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
@@ -12,8 +12,8 @@ export function getParam(baseUrl, param) {
 }
 
 /**
- * @returns {String} a constructed url using the baseUrl and the params
- * @param {String} baseUrl
+ * @returns {string} a constructed url using the baseUrl and the params
+ * @param {string} baseUrl
  * @param {*} params
  */
 export function addParam(baseUrl, params) {
@@ -32,9 +32,9 @@ export function addParam(baseUrl, params) {
 }
 
 /**
- * @returns {String} url without the given param or value
- * @param {String} url
- * @param {String} param to be removed
+ * @returns {string} url without the given param or value
+ * @param {string} baseUrl
+ * @param {string} param to be removed
  */
 export function removeParam(baseUrl, param) {
   const [basePart, queryPart] = baseUrl.includes("?")

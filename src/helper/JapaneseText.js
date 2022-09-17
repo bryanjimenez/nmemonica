@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import React from "react";
+import { ErrorInfo } from "./ErrorInfo";
 import {
   isHiragana,
   isKanji,
@@ -9,9 +10,17 @@ import {
 } from "./kanaHelper";
 
 export class JapaneseText {
+  /**
+   * @param {string} furigana
+   * @param {string} [kanji]
+   */
   constructor(furigana, kanji) {
     this._furigana = furigana;
     this._kanji = kanji;
+
+    this.slang = false;
+    this.keigo = false;
+    this.adj = "";
   }
 
   get [Symbol.toStringTag]() {
@@ -39,10 +48,10 @@ export class JapaneseText {
   }
 
   /**
-   * @returns {String} spelling may contain kanji
+   * @returns {string} spelling may contain kanji
    */
   getSpelling() {
-    if (this.hasFurigana()) {
+    if (this._kanji) {
       return this._kanji;
     } else {
       return this._furigana;
@@ -50,7 +59,7 @@ export class JapaneseText {
   }
 
   /**
-   * @returns {String} pronunciation only in hiragana
+   * @returns {string} pronunciation only in hiragana
    */
   getPronunciation() {
     return this._furigana;
@@ -97,6 +106,11 @@ export class JapaneseText {
     return this._furigana + (this._kanji ? "\n" + this._kanji : "");
   }
 
+  /**
+   *
+   * @param {*} options
+   * @returns {JSX.Element}
+   */
   toHTML(options) {
     let htmlElement;
 
@@ -155,8 +169,10 @@ export class JapaneseText {
 }
 
 /**
+ *
+ * @param {RawVocabulary} rawObj
+ * @param {function} [childType]
  * @returns {JapaneseText}
- * @param {*} rawObj
  */
 function japaneseTextParse(rawObj, childType) {
   let constructorParams;
@@ -167,11 +183,15 @@ function japaneseTextParse(rawObj, childType) {
     constructorParams = rawObj.split("\n");
   }
 
+  /**
+   * @type {JapaneseText|JapaneseVerb}
+   */
   let jText;
   if (typeof childType === "function") {
     jText = childType(...constructorParams);
   } else {
-    jText = new JapaneseText(...constructorParams);
+    const [furigana, kanji] = constructorParams;
+    jText = new JapaneseText(furigana, kanji);
   }
 
   if (rawObj.slang && rawObj.slang === true) {
@@ -188,10 +208,10 @@ function japaneseTextParse(rawObj, childType) {
 }
 
 /**
- * @returns  {{ kanjis:String[], furiganas:String[], okuriganas:String[], startsWKana:boolean }} object containing parse info
+ * @returns  {{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean }} object containing parse info
  * @throws if the two phrases do not match or if the parsed output is invalid.
- * @param {String} pronunciation (hiragana)
- * @param {String} orthography (kanji)
+ * @param {string} pronunciation (hiragana)
+ * @param {string} ortography (kanji)
  */
 export function furiganaParseRetry(pronunciation, ortography) {
   let kanjis, furiganas, okuriganas, startsWKana;
@@ -202,7 +222,7 @@ export function furiganaParseRetry(pronunciation, ortography) {
     ));
   } catch (e) {
     // don't retry unless parse error
-    if (e.name === "ParseError") {
+    if (e instanceof Error && e.name === "ParseError") {
       // reverse try
       try {
         const rP = pronunciation.split("").reverse().join("");
@@ -237,7 +257,7 @@ export function furiganaParseRetry(pronunciation, ortography) {
  * @param {string} orthography
  * @returns {boolean} whether is numeric with furigana
  */
-export function numericCounter(pos, pronunciation, orthography) {
+export function isNumericCounter(pos, pronunciation, orthography) {
   const char = orthography.charAt(pos);
 
   return (
@@ -251,10 +271,10 @@ export function numericCounter(pos, pronunciation, orthography) {
   );
 }
 /**
- * @returns  {{ kanjis:String[], furiganas:String[], okuriganas:String[], startsWKana:boolean }} object containing parse info
+ * @returns  {{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean }} object containing parse info
  * @throws if the two phrases do not match or if the parsed output is invalid.
- * @param {String} pronunciation (hiragana)
- * @param {String} orthography (kanji)
+ * @param {string} pronunciation (furigana)
+ * @param {string} orthography (kanji)
  */
 export function furiganaParse(pronunciation, orthography) {
   if (orthography.split("").every((c) => isKanji(c) || isPunctuation(c))) {
@@ -272,8 +292,17 @@ export function furiganaParse(pronunciation, orthography) {
   const startsWKana = !isKanji(orthography.charAt(0));
 
   let start = 0;
+  /**
+   * @type {string[]}
+   */
   let furiganas = [];
+  /**
+   * @type {string[]}
+   */
   let kanjis = [];
+  /**
+   * @type {string[]}
+   */
   let okuriganas = [];
   let fword = "";
   let kword = "";
@@ -281,7 +310,7 @@ export function furiganaParse(pronunciation, orthography) {
   let prevWasKanji = false;
 
   orthography.split("").forEach((thisChar, i) => {
-    if (!isKanji(thisChar) && !numericCounter(i, pronunciation, orthography)) {
+    if (!isKanji(thisChar) && !isNumericCounter(i, pronunciation, orthography)) {
       //kana
       if (prevWasKanji) {
         while (pronunciation.charAt(start) != thisChar) {
@@ -291,12 +320,10 @@ export function furiganaParse(pronunciation, orthography) {
           start++;
 
           if (start > pronunciation.length) {
-            const e = new Error(
-              "The two phrases do not match" +
-                (hasWhiteSpace ? " (contains white space)" : "")
-            );
+            const e = new ErrorInfo("The two phrases do not match" +
+            (hasWhiteSpace ? " (contains white space)" : ""));
             e.name = "InputError";
-            e.data = {
+            e.info = {
               input: { pronunciation, orthography },
               kanjis,
               furiganas,
@@ -363,29 +390,29 @@ export function furiganaParse(pronunciation, orthography) {
     pronunciationOutput !== pronunciationNoSpace ||
     orthographyOutput !== ortographyNoSpace
   ) {
-    const err = new Error(
+    const e = new ErrorInfo(
       "Failed to parse text to build furigana" +
         (hasWhiteSpace ? " (contains white space)" : "")
     );
-    err.name = "ParseError";
-    err.data = {
+    e.name = "ParseError";
+    e.info = {
       input: { pronunciation, orthography },
       output: {
         pronunciation: pronunciationOutput,
         orthography: orthographyOutput,
       },
     };
-    throw err;
+    throw e;
   }
 
   return { kanjis, furiganas, okuriganas, startsWKana };
 }
 
 /**
- * @returns {[String,String]} pronunciation, orthography
- * @param {String[]} kanjis
- * @param {String[]} furiganas
- * @param {String[]} okuriganas
+ * @returns {[string,string]} pronunciation, orthography
+ * @param {string[]} kanjis
+ * @param {string[]} furiganas
+ * @param {string[]} okuriganas
  * @param {boolean} startsWKana
  */
 export function validateParseFurigana(
@@ -414,11 +441,12 @@ export function validateParseFurigana(
 }
 
 /**
- * @returns {*} HTML element
- * @param {String[]} kanjis
- * @param {String[]} furiganas
- * @param {String[]} okuriganas
+ * @returns {JSX.Element} HTML element
+ * @param {string[]} kanjis
+ * @param {string[]} furiganas
+ * @param {string[]} okuriganas
  * @param {boolean} startsWKana
+ * @param {function} furiganaToggle
  */
 export function buildHTMLElement(
   kanjis,
@@ -465,6 +493,7 @@ export function buildHTMLElement(
   return (
     <span
       className={classNames({ clickable: furiganaToggle })}
+      // @ts-ignore
       onClick={furiganaToggle}
     >
       {sentence}
@@ -475,8 +504,8 @@ export function buildHTMLElement(
 /**
  * when the japaneseText is less than minChars undefined is returned
  * otherwise the first kanji with furigana or first hiragan/katakana is returned
- * @returns {HTML|undefined}
- * @param {String} japaneseText
+ * @returns {JSX.Element|undefined}
+ * @param {string} japaneseText
  */
 export function htmlElementHint(japaneseText) {
   const minChars = 3;
@@ -528,8 +557,8 @@ export function htmlElementHint(japaneseText) {
 
 /**
  * when word has override pronounce attr it is used otherwise the spelling is used
- * @returns {String} kana pronunciation or it's spelling
- * @param {{japanese: String, pronounce: String|undefined}} vocabulary data object
+ * @returns {string} kana pronunciation or it's spelling
+ * @param {RawVocabulary} vocabulary data object
  */
 export function audioPronunciation(vocabulary) {
   let q;
@@ -543,9 +572,10 @@ export function audioPronunciation(vocabulary) {
     } else {
       console.warn("pronunciation is not hiragana or katakana");
       console.warn(JSON.stringify(vocabulary));
+      throw new Error("No valid pronunciation");
     }
   } else {
-    const w = JapaneseText.parse(vocabulary.japanese);
+    const w = JapaneseText.parse(vocabulary);
     const spelling = w.getSpelling();
     // remove workaround-spaces
     q = spelling.replaceAll(" ", "");

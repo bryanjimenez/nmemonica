@@ -1,8 +1,8 @@
 import data from "../../data/kana.json";
 
 /**
- * @returns {Boolean}
- * @param {String} char the character to check against the Kanji table
+ * @returns {boolean}
+ * @param {string} char the character to check against the Kanji table
  */
 export function isKanji(char) {
   const common = "\u4E00-\u9FAF";
@@ -12,16 +12,16 @@ export function isKanji(char) {
 }
 
 /**
- * @returns {Boolean}
- * @param {String} char the character to check against the Hiragana table
+ * @returns {boolean}
+ * @param {string} char the character to check against the Hiragana table
  */
 export function isHiragana(char) {
   return new RegExp("[\u3041-\u309F]").test(char);
 }
 
 /**
- * @returns {Boolean}
- * @param {String} char the character to check against the Katakana table
+ * @returns {boolean}
+ * @param {string} char the character to check against the Katakana table
  */
 export function isKatakana(char) {
   const fullWidth = "\u30A0-\u30FF";
@@ -30,8 +30,8 @@ export function isKatakana(char) {
 }
 
 /**
- * @returns {Boolean}
- * @param {String} char the character to check against the punctuation table
+ * @returns {boolean}
+ * @param {string} char the character to check against the punctuation table
  */
 export function isFullWNumber(char) {
   // English
@@ -41,8 +41,8 @@ export function isFullWNumber(char) {
 }
 
 /**
- * @returns {Boolean}
- * @param {String} char the character to check against the punctuation table
+ * @returns {boolean}
+ * @param {string} char the character to check against the punctuation table
  */
 export function isPunctuation(char) {
   // English
@@ -57,19 +57,23 @@ export function isPunctuation(char) {
 
 /**
  * swaps hiragana for katakana and vicecersa
- * @returns {String}
- * @param {String} char
+ * @returns {string}
+ * @param {string} char
  */
 export function swapKana(char) {
-  let swap;
+  let swap = char;
   if (isHiragana(char)) {
-    const katakana = char.codePointAt(0) + 96;
-    swap = String.fromCharCode(katakana);
+    const cpv = char.codePointAt(0);
+    if(cpv){
+      const katakana = cpv + 96;
+      swap = String.fromCharCode(katakana);
+    }
   } else if (isKatakana(char)) {
-    const hiragana = char.codePointAt(0) - 96;
-    swap = String.fromCharCode(hiragana);
-  } else {
-    swap = char;
+    const cpv = char.codePointAt(0);
+    if(cpv){
+      const hiragana = cpv - 96;
+      swap = String.fromCharCode(hiragana);
+    }
   }
 
   return swap;
@@ -78,15 +82,16 @@ export function swapKana(char) {
 /**
  * swaps Full-width roman characters number to number
  * @returns {number}
- * @param {String} char
+ * @param {string} char
  */
 export function toEnglishNumber(char) {
-  let swap;
+  let swap = Number.NaN;
   if (isFullWNumber(char)) {
-    const katakana = char.codePointAt(0) - 65249;
-    swap = Number.parseInt(String.fromCharCode(katakana));
-  } else {
-    swap = Number.NaN;
+    const cpv = char.codePointAt(0);
+    if(cpv){
+      const katakana = cpv - 65249;
+      swap = Number.parseInt(String.fromCharCode(katakana));
+    }
   }
 
   return swap;
@@ -94,18 +99,24 @@ export function toEnglishNumber(char) {
 
 /**
  * gets the indexes of the character in the hiragana chart
- * @param {String} character
- * @returns {{iConsonant:Number, iVowel:Number}}
+ * @param {string} character
+ * @returns {{iConsonant:number, iVowel:number}}
  */
 export function getConsonantVowel(character) {
   const hiragana = data.hiragana;
   const xMax = Math.floor(hiragana[0].length);
   const yMax = Math.floor(hiragana.length);
-  let iConsonant;
-  let iVowel;
+  let iConsonant = -1;
+  let iVowel = -1;
+
+  if (character === " " || character === "") {
+    return { iConsonant, iVowel };
+  } else if (character === "ん") {
+    return { iConsonant: 15, iVowel };
+  }
 
   for (let vowel = 0; vowel < xMax; vowel++) {
-    if (!iConsonant) {
+    if (iConsonant < 0) {
       for (let consonant = 0; consonant < yMax; consonant++) {
         if (hiragana[consonant][vowel] === character) {
           iConsonant = consonant;

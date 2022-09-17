@@ -9,14 +9,14 @@ import { JapaneseVerb } from "./JapaneseVerb";
 
 /**
  * Goes to the next term or selects one from the frequency list
- * @param {Boolean} reinforce
- * @param {Number} freqFilter
- * @param {Array} frequency
- * @param {Array} filteredTerms
- * @param {String} reinforcedUID
- * @param {Function} updateReinforcedUID
- * @param {Function} gotoNext
- * @param {Function} removeFrequencyTerm
+ * @param {boolean} reinforce
+ * @param {number} freqFilter
+ * @param {[]} frequency
+ * @param {RawVocabulary[]} filteredTerms
+ * @param {string} reinforcedUID
+ * @param {function} updateReinforcedUID
+ * @param {function} gotoNext
+ * @param {function} removeFrequencyTerm
  */
 export function play(
   reinforce,
@@ -56,10 +56,10 @@ export function play(
 }
 
 /**
- * @returns {String} uid
+ * @returns {string} uid
  * @param {number} selectedIndex
  * @param {number[] | undefined} alternateOrder
- * @param {Object[]} filteredTerms
+ * @param {RawVocabulary[]} filteredTerms
  */
 export function getTermUID(selectedIndex, alternateOrder, filteredTerms) {
   let term;
@@ -79,9 +79,9 @@ export function getTermUID(selectedIndex, alternateOrder, filteredTerms) {
 }
 
 /**
- * @returns {Object} the term in the list matching the uid
- * @param {String} uid
- * @param {Object[]} list of terms
+ * @returns {RawVocabulary} the term in the list matching the uid
+ * @param {string} uid
+ * @param {RawVocabulary[]} list of terms
  */
 export function getTerm(uid, list) {
   const term = list.find((v) => uid === v.uid);
@@ -96,12 +96,12 @@ export function getTerm(uid, list) {
 /**
  * Filters terms (words or phrases) list
  * by groups, frequency, or space repetition
- * @param {Number} filterType
- * @param {Array} termList word or phrase list
- * @param {Array} frequencyList
- * @param {Array} activeGrpList
- * @param {Function} toggleFilterType
- * @returns {Array} filteredPhrases
+ * @param {number} filterType
+ * @param {RawVocabulary[]} termList word or phrase list
+ * @param {string[]} frequencyList
+ * @param {string[]} activeGrpList
+ * @param {function} toggleFilterType
+ * @returns {RawVocabulary[]} filteredPhrases
  */
 export function termFilterByType(
   filterType,
@@ -143,12 +143,13 @@ export function termFilterByType(
 
 /**
  * Active group filtering logic
- * @returns {Boolean} whether the term is part of the activeGroup
- * @param {String[]} activeGrpList
- * @param {{grp:String,subGrp:String}} term
+ * @returns {boolean} whether the term is part of the activeGroup
+ * @param {string[]} activeGrpList
+ * @param {RawVocabulary} term
  */
 export function activeGroupIncludes(activeGrpList, term) {
   return (
+    term.grp &&
     activeGrpList.includes(term.grp) ||
     activeGrpList.includes(term.grp + "." + term.subGrp) ||
     (term.grp === undefined &&
@@ -159,8 +160,8 @@ export function activeGroupIncludes(activeGrpList, term) {
 
 /**
  * Minimum time between actions to trigger a space repetition update
- * @param {Number} prevTime
- * @returns {Boolean}
+ * @param {number} prevTime
+ * @returns {boolean}
  */
 export function minimumTimeForSpaceRepUpdate(prevTime) {
   return ~~(Date.now() - prevTime) > 1500;
@@ -171,12 +172,23 @@ export function minimumTimeForSpaceRepUpdate(prevTime) {
  * terms not yet viewed
  * date last viewed
  * count of views
- * @param {Array} terms
- * @param {Object} spaceRepObj
+ * @param {RawVocabulary[]} terms
+ * @param {SpaceRepetitionMap} spaceRepObj
  * @returns {number[]} an array containing the indexes of terms in space repetition order
  */
 export function spaceRepOrder(terms, spaceRepObj) {
+  /**
+   * @type {{
+   * date: Date,
+   * count: number,
+   * uid: string,
+   * index: number
+   * }[]}
+   */
   let playedTemp = [];
+  /**
+   * @type {number[]}
+   */
   let unPlayed = [];
   for (const tIdx in terms) {
     const tUid = terms[tIdx].uid;
@@ -216,12 +228,18 @@ export function spaceRepOrder(terms, spaceRepObj) {
 
 /**
  *
- * @param {Array} terms
- * @returns {number[]} an array containing the indexes of terms in alphabetic order
+ * @param {RawVocabulary[]} terms
+ * @returns {*} an array containing the indexes of terms in alphabetic order
  */
 export function alphaOrder(terms) {
   // preserve terms unmodified
+  /**
+   * @type {{[uid:string]:number}}
+   */
   let originalIndex = {};
+  /**
+   * @type {RawVocabulary[]}
+   */
   let modifiableTerms = [];
   terms.forEach((t, i) => {
     originalIndex[t.uid] = i;
@@ -236,9 +254,19 @@ export function alphaOrder(terms) {
     ];
   });
 
+  /**
+   * @type {number[]}
+   */
   let order = [],
+    /**
+     * @type {{uid:string,label:string,idx:number}[]}
+     */
     eOrder = [],
+    /**
+     * @type {{uid:string,label:string,idx:number}[]}
+     */
     jOrder = [];
+
   // order in japanese
   modifiableTerms = orderBy(modifiableTerms, ["japanese"], ["asc"]);
   modifiableTerms.forEach((t, i) => {
@@ -247,7 +275,8 @@ export function alphaOrder(terms) {
       ...jOrder,
       {
         uid: t.uid,
-        label: JapaneseText.parse(t.japanese).getPronunciation(),
+        label: JapaneseText.parse(t).getPronunciation(),
+        idx: -1,
       },
     ];
     eOrder = [
@@ -271,7 +300,7 @@ export function alphaOrder(terms) {
 
 /**
  *
- * @param {Array} terms
+ * @param {RawVocabulary[]} terms
  * @returns {number[]} an array containing the indexes of terms in random order
  */
 export function randomOrder(terms) {
@@ -292,6 +321,12 @@ export function labelOptions(index, options) {
   return options[index];
 }
 
+/**
+ *
+ * @param {number} index
+ * @param {*[]} options
+ * @returns
+ */
 export function toggleOptions(index, options) {
   const len = options.length;
 
@@ -300,8 +335,9 @@ export function toggleOptions(index, options) {
 
 /**
  * Array containing the avaiable verb forms
- * @returns {Array}
- * @param {String} rawVerb
+ * @returns {{t:string, j:JapaneseText}[]}
+ * @param {RawVocabulary} rawVerb
+ * @param {string[]} [order]
  */
 export function getVerbFormsArray(rawVerb, order) {
   const dictionaryForm = JapaneseVerb.parse(rawVerb);
@@ -314,20 +350,32 @@ export function getVerbFormsArray(rawVerb, order) {
     { t: "-saseru", j: dictionaryForm.saseruForm() },
     { t: "-te", j: dictionaryForm.teForm() },
     { t: "-ta", j: dictionaryForm.taForm() },
-  ]
+  ];
 
   let filtered;
-  if(order){
-    filtered = order.map((form)=>allAvailable.find(el=>el.t===form));
+  if (order && order.length > 0) {
+    /**
+     * @type {{t:string, j:JapaneseText}[]}
+     */
+    let fil = [];
+
+    filtered = order.reduce((acc, form) => {
+      const f = allAvailable.find((el) => el.t === form);
+      if (f !== undefined) {
+        acc = [...acc, f];
+      }
+
+      return acc;
+    }, fil);
   }
 
-  return order ? filtered : allAvailable;
+  return filtered ?? allAvailable;
 }
 
 /**
  * @returns {JapaneseText}
- * @param {String} rawVerb
- * @param {String} targetForm
+ * @param {RawVocabulary} rawVerb
+ * @param {string} targetForm
  */
 export function verbToTargetForm(rawVerb, targetForm) {
   const { j: theForm } = getVerbFormsArray(rawVerb).find(
@@ -339,20 +387,26 @@ export function verbToTargetForm(rawVerb, targetForm) {
 
 /**
  * decorates label with metadata info (intransitive, keigo, etc.)
- * @param {boolean} isOnTop
+ * @param {boolean} isOnBottom
  * @param {JapaneseText | JapaneseVerb} jObj
  * @param {*} inJapanese
  * @param {function} jumpToTerm
- * @returns {HTML}
+ * @returns {JSX.Element}
  */
 export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
   const isOnTop = !isOnBottom;
+  /**
+   * @type {JSX.Element[]}
+   */
   let indicators = [];
 
   let showAsterix = false;
   let showIntr = false;
+  /**
+   * @type {string|undefined}
+   */
   let pairUID;
-  if (jObj.constructor.name === JapaneseVerb.name) {
+  if (jObj.constructor.name === JapaneseVerb.name && "isExceptionVerb" in jObj) {
     showAsterix = jObj.isExceptionVerb() || jObj.getVerbClass() === 3;
     showIntr = jObj.isIntransitive();
     pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
@@ -445,14 +499,20 @@ export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
  * @param {JapaneseText | JapaneseVerb} jObj
  * @param {*} inEnglish
  * @param {function} jumpToTerm
- * @returns {HTML}
+ * @returns {JSX.Element}
  */
 export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
+  /**
+   * @type {JSX.Element[]}
+   */
   let indicators = [];
 
   let showIntr = false;
+  /**
+   * @type {string|undefined}
+   */
   let pairUID;
-  if (jObj.constructor.name === JapaneseVerb.name) {
+  if (jObj.constructor.name === JapaneseVerb.name && "isExceptionVerb" in jObj) {
     showIntr = jObj.isIntransitive();
     pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
   }
@@ -520,13 +580,11 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
 }
 
 /**
- *
- * @param {Boolean} practiceSide
- * @param {HTML|String} inEnglish
- * @param {HTML|String} inJapanese
- * @param {HTML|String} eLabel
- * @param {HTML|String} jLabel
- * @returns {{{HTML|String}topValue, {HTML|String}topLabel, {HTML|String}bottomValue, {HTML|String}bottomLabel}}
+ * @param {boolean} practiceSide
+ * @param {JSX.Element} inEnglish
+ * @param {JSX.Element} inJapanese
+ * @param {JSX.Element} eLabel
+ * @param {JSX.Element} jLabel
  */
 export function valueLabelHelper(
   practiceSide,
@@ -553,8 +611,8 @@ export function valueLabelHelper(
 
 /**
  * indexedDB key
- * @param {*} word
- * @returns
+ * @param {RawVocabulary} word
+ * @returns {string}
  */
 export function getCacheUID(word) {
   let { uid } = word;
@@ -573,11 +631,11 @@ export function getCacheUID(word) {
 
 /**
  * Logic for building ordered array of terms for AudioItem
- * @param {Boolean} prevPlayed has it been manually played
+ * @param {boolean} prevPlayed has it been manually played
  * @param {number} autoPlay autoPlay setting
- * @param {*} current current Term
- * @param {*} previous previous Term
- * @returns {[]} array in order to be played by AudioItem
+ * @param {RawVocabulary} current current Term
+ * @param {RawVocabulary} previous previous Term
+ * @returns {AudioQueryParams[]} array in order to be played by AudioItem
  */
 export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
   const currJ = {
@@ -586,7 +644,10 @@ export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
     uid: getCacheUID(current),
   };
 
-  let audioWords = [currJ, { tl: "en", q: current.english, uid: current.uid+".en" }];
+  let audioWords = [
+    currJ,
+    { tl: "en", q: current.english, uid: current.uid + ".en" },
+  ];
   if (previous !== undefined && prevPlayed === false) {
     if (autoPlay === AUTOPLAY_EN_JP) {
       audioWords = [
@@ -616,10 +677,10 @@ export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
 
 /**
  * Creates the settings object for furigana toggling
- * @param {Boolean} englishSideUp
- * @param {String} uid
- * @param {Object} settings
- * @param {Function} toggleFn
+ * @param {boolean} englishSideUp
+ * @param {string} uid
+ * @param {{[uid:string]:{f:boolean}}} settings
+ * @param {function} toggleFn
  * @returns
  */
 export function toggleFuriganaSettingHelper(

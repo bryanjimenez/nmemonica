@@ -3,12 +3,12 @@ import { getWindowLocalStorage } from "./browserGlobal";
 
 /**
  * modifies an attribute or toggles the existing value
- * @returns {Promise} a promise which returns the modified localStorage object
+ * @returns {Promise<*>} a promise which returns the modified localStorage object
  * @param {Date} time
- * @param {*} getState
- * @param {String} path
- * @param {String} attr
- * @param {*} value optional if absent [attr] will be toggled
+ * @param {function} getState
+ * @param {string} path
+ * @param {string} attr
+ * @param {*} [value] optional if absent [attr] will be toggled
  */
 export function localStoreAttrUpdate(time, getState, path, attr, value) {
   const stateSettings = getState().settings;
@@ -50,30 +50,30 @@ export function localStoreAttrUpdate(time, getState, path, attr, value) {
 
 /**
  * used to store a whole settings object to the localStorage
- * @returns {Promise} a promise which resolves to the object stored
- * @param {String} localStorageKey
+ * @returns {Promise<*>} a promise which resolves to the object stored
+ * @param {string} localStorageKey
  * @param {Object} value
  */
 export function setLocalStorage(localStorageKey, value) {
-  return new Promise((resolutionFunc, rejectionFunc) => {
+  return new Promise((resolve, reject) => {
     try {
       const localStorage = getWindowLocalStorage();
 
       localStorage.setItem(localStorageKey, JSON.stringify(value));
-      resolutionFunc(value);
+      resolve(value);
     } catch (e) {
-      rejectionFunc(e);
+      reject(e);
     }
   });
 }
 
 /**
  * used to retrieve the settings object stored in localStorage
- * @returns {Promise} a promise which resolves to the object stored
- * @param {String} localStorageKey
+ * @returns {Promise<*>} a promise which resolves to the object stored
+ * @param {string} localStorageKey
  */
 export function getLocalStorageSettings(localStorageKey) {
-  return new Promise((resolutionFunc, rejectionFunc) => {
+  return new Promise((resolve, reject) => {
     let localStorageValue;
 
     try {
@@ -82,11 +82,13 @@ export function getLocalStorageSettings(localStorageKey) {
       const textSettings = localStorage.getItem(localStorageKey);
       let resultObj;
       try {
-        resultObj = JSON.parse(textSettings);
+        if (textSettings) {
+          resultObj = JSON.parse(textSettings);
+        }
       } catch (e) {
         // console.log("localStore parse failed");
         // console.error(e);
-        rejectionFunc(e);
+        reject(e);
       }
 
       if (
@@ -99,9 +101,9 @@ export function getLocalStorageSettings(localStorageKey) {
     } catch (e) {
       // console.log("localStore getItem failed");
       // console.error(e);
-      rejectionFunc(e);
+      reject(e);
     }
 
-    resolutionFunc(localStorageValue);
+    resolve(localStorageValue);
   });
 }

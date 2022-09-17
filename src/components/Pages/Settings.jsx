@@ -139,7 +139,7 @@ class Settings extends Component {
               <span className="col p-0">{text.english}</span>
               <span className="col p-0 fs-xx-small">
                 <div>{e.message}</div>
-                <div>{e.data ? JSON.stringify(e.data) : ""}</div>
+                <div>{e.info ? JSON.stringify(e.info) : ""}</div>
               </span>
             </div>
           );

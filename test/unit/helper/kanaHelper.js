@@ -215,7 +215,7 @@ describe("kanaHelper", function () {
     const kanji = ["々"];
     it("noma exception", function () {
       const expected = kanji.map(() => true);
-      const actual =  kanji.map((k)=>isKanji(k));
+      const actual = kanji.map((k) => isKanji(k));
       expect(actual).to.deep.equal(expected);
     });
   });
@@ -317,6 +317,16 @@ describe("kanaHelper", function () {
       const { iConsonant, iVowel } = getConsonantVowel("や");
       expect(iConsonant).to.equal(12);
       expect(iVowel).to.equal(0);
+    });
+    it("getConsonantVowel no vowel", function () {
+      const { iConsonant, iVowel } = getConsonantVowel("ん");
+      expect(iConsonant).to.equal(15);
+      expect(iVowel).to.equal(-1);
+    });
+    it("getConsonantVowel bad input", function () {
+      const { iConsonant, iVowel } = getConsonantVowel(" ");
+      expect(iConsonant).to.equal(-1);
+      expect(iVowel).to.equal(-1);
     });
   });
 });

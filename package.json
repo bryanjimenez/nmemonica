@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --require @babel/register ./test/unit/**/*.js",
+    "type": "tsc --noEmit -p src/tsconfig.json",
     "coverage": "nyc -e .jsx npm run test",
     "wdiochrome": "wdio wdio-chrome.conf.js",
     "b:clean": "rm -rf ./dist/* ./pwa/built/*",
@@ -53,6 +54,8 @@
     "@fortawesome/free-regular-svg-icons": "^5.15.4",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
     "@fortawesome/react-fontawesome": "^0.1.15",
+    "@tsconfig/node16": "^1.0.3",
+    "@types/react": "^17.0.50",
     "@wdio/cli": "^7.11.1",
     "@wdio/local-runner": "^7.11.1",
     "@wdio/mocha-framework": "^7.11.1",
