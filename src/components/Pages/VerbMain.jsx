@@ -130,8 +130,10 @@ class VerbMain extends Component {
     const tenseRows = tense.map((t, i) => {
       const tenseClass = classNames({
         clickable: true,
-        "font-weight-bold": this.props.verbForm === t.t,
+        // "font-weight-bold": this.props.verbForm === t.t,
       });
+
+      const braketClass = classNames({"transparent-color":this.props.verbForm === t.t})
 
       return (
         <div
@@ -145,7 +147,9 @@ class VerbMain extends Component {
             }
           }}
         >
-          {this.props.verbForm === t.t ? " " + t.t + " " : "[" + t.t + "]"}
+          <span className={braketClass}>[</span>
+          <span>{t.t}</span>
+          <span className={braketClass}>]</span>
         </div>
       );
     });
