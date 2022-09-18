@@ -1017,11 +1017,16 @@ export function toggleSwipe() {
   };
 }
 
-export function setVerbFormsOrder(value) {
-  return (dispatch) => {
+export function setVerbFormsOrder(order) {
+  return (dispatch, getState) => {
+    const path = "/vocabulary/";
+    const attr = "verbFormsOrder";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr, order);
+
     dispatch({
       type: SET_VERB_FORM_ORDER,
-      value,
+      value: order,
     });
   };
 }
