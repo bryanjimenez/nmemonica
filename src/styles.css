@@ -55,7 +55,11 @@ a {
 }
 
 .disabled-color {
-  color: lightgray;
+  opacity: 25%;
+}
+
+.transparent-color {
+  opacity: 0%;
 }
 
 .sm-icon-grp {

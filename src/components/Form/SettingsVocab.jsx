@@ -209,16 +209,22 @@ export function SettingsVocab(props) {
 
                           <div
                             onClick={() => {
-                              const minusK = [
-                                ...shownForms.slice(0, k),
-                                ...shownForms.slice(k + 1),
-                              ];
+                              if(shownForms.length > 1){
+                                const minusK = [
+                                  ...shownForms.slice(0, k),
+                                  ...shownForms.slice(k + 1),
+                                ];
 
-                              props.setVerbFormsOrder(minusK);
+                                props.setVerbFormsOrder(minusK);
+                              }
                             }}
                           >
                             <XCircleIcon
-                              className="incorrect-color mt-1 ml-3"
+                              className={classNames({
+                                "mt-1 ml-3": true,
+                                "incorrect-color": shownForms.length > 1,
+                                "disabled-color": shownForms.length === 1,
+                              })}
                               size="small"
                               aria-label="remove"
                             />
@@ -230,7 +236,13 @@ export function SettingsVocab(props) {
                           key={shownForms.length + k}
                           className="d-flex justify-content-between"
                         >
-                          <div className="mr-3"></div>
+                          <div className="mr-3 transparent-color">
+                            <ChevronUpIcon
+                                classname="mt-1"
+                                size="small"
+                                aria-label="move up"
+                              />
+                          </div>
                           <span className="w-100 text-start disabled-color">
                             {form}
                           </span>
