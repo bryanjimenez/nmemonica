@@ -1,0 +1,8 @@
+.settings-switch-root > p {
+  display: inline;
+  margin-bottom: 0;
+}
+
+.settings-switch-root > span {
+  margin-right: -11px;
+}
