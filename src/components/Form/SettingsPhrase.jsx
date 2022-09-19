@@ -34,7 +34,7 @@ export function SettingsPhrase(props) {
   let el;
   try {
     el = show && (
-      <div className="outter">
+      <div className="outer">
         <div className="d-flex flex-row justify-content-between">
           <div className="column-1">
             <h4>

@@ -55,7 +55,6 @@ import { SettingsVocab } from "../Form/SettingsVocab";
 import { SettingsPhrase } from "../Form/SettingsPhrase";
 import { logger } from "../../actions/consoleAct";
 
-
 const SettingsMeta = {
   location: "/settings/",
   label: "Settings",
@@ -71,6 +70,9 @@ class Settings extends Component {
       sectionVocabulary: false,
       sectionPhrase: false,
       dbUpgradeInfo: [],
+      swVersion: "",
+      jsVersion: "",
+      bundleVersion: "",
     };
 
     this.collapseExpandToggler = this.collapseExpandToggler.bind(this);
@@ -92,10 +94,15 @@ class Settings extends Component {
 
   componentDidMount() {
     this.props.getMemoryStorageStatus();
+
     navigator.serviceWorker.addEventListener(
       "message",
       this.swMessageEventListener
     );
+
+    navigator.serviceWorker.controller.postMessage({
+      type: "SW_VERSION",
+    });
   }
 
   componentWillUnmount() {
@@ -120,7 +127,13 @@ class Settings extends Component {
         });
       }, 2000);
     } else if (event.data.type === "SW_VERSION") {
-      this.props.logger(JSON.stringify(event.data), DEBUG_ERROR);
+      const { swVersion, jsVersion, bundleVersion } = event.data;
+
+      this.setState({
+        swVersion,
+        jsVersion,
+        bundleVersion,
+      });
     }
   }
 
@@ -384,79 +397,114 @@ class Settings extends Component {
             <div className="d-flex justify-content-between">
               <h2>Application</h2>
             </div>
-            <div className="setting-block mb-2">
-              <SettingsSwitch
-                active={this.props.debug > DEBUG_OFF}
-                action={this.props.toggleDebug}
-                color="default"
-                statusText={labelOptions(this.props.debug, [
-                  "Debug",
-                  "Debug Error",
-                  "Debug Warn",
-                  "Debug",
-                ])}
-              />
-            </div>
+            <div className="outer">
+              <div className="d-flex flex-row justify-content-between">
+                <div className="column-1">
+                  <div className="setting-block mb-2 mt-2">
+                    <div
+                      className="d-flex flex-row justify-content-between clickable"
+                      onClick={() => {
+                        this.setState({
+                          swVersion: "",
+                          jsVersion: "",
+                          bundleVersion: "",
+                        });
+                        setTimeout(() => {
+                          navigator.serviceWorker.controller.postMessage({
+                            type: "SW_VERSION",
+                          });
+                        }, 1000);
+                      }}
+                    >
+                      <div className="pr-2">
+                        <div>{"swVersion:"}</div>
+                        <div>{"jsVersion:"}</div>
+                        <div>{"bundleVersion:"}</div>
+                      </div>
+                      <div>
+                        <div>{this.state.swVersion}</div>
+                        <div>{this.state.jsVersion}</div>
+                        <div>{this.state.bundleVersion}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="column-2">
+                  <div className="setting-block mb-2">
+                    <SettingsSwitch
+                      active={this.props.debug > DEBUG_OFF}
+                      action={this.props.toggleDebug}
+                      color="default"
+                      statusText={labelOptions(this.props.debug, [
+                        "Debug",
+                        "Debug Error",
+                        "Debug Warn",
+                        "Debug",
+                      ])}
+                    />
+                  </div>
+                  <div
+                    className={classNames({
+                      "d-flex justify-content-end mb-2": true,
+                      "disabled-color": this.state.hardRefreshUnavailable,
+                    })}
+                  >
+                    <p id="hard-refresh" className="text-right">
+                      Hard Refresh
+                    </p>
+                    <div
+                      className={classNames({
+                        "spin-a-bit": this.state.spin,
+                      })}
+                      style={{ height: "24px" }}
+                      aria-labelledby="hard-refresh"
+                      onClick={() => {
+                        this.setState({
+                          spin: true,
+                          hardRefreshUnavailable: false,
+                        });
 
-            <div
-              className={classNames({
-                "d-flex justify-content-end mb-2": true,
-                "disabled-color": this.state.hardRefreshUnavailable,
-              })}
-            >
-              <p id="hard-refresh" className="mr-2">
-                Hard Refresh
-              </p>
-              <div
-                className={classNames({
-                  "spin-a-bit": this.state.spin,
-                })}
-                style={{ height: "24px" }}
-                aria-labelledby="hard-refresh"
-                onClick={() => {
-                  this.setState({
-                    spin: true,
-                    hardRefreshUnavailable: false,
-                  });
+                        setTimeout(() => {
+                          if (this.state.spin) {
+                            this.setState({
+                              spin: false,
+                              hardRefreshUnavailable: true,
+                            });
+                          }
+                        }, 3000);
 
-                  setTimeout(() => {
-                    if (this.state.spin) {
-                      this.setState({
-                        spin: false,
-                        hardRefreshUnavailable: true,
-                      });
-                    }
-                  }, 3000);
+                        navigator.serviceWorker.controller.postMessage({
+                          type: "DO_HARD_REFRESH",
+                        });
+                      }}
+                    >
+                      <SyncIcon
+                        className="clickable"
+                        size={24}
+                        aria-label="Hard Refresh"
+                      />
+                    </div>
+                  </div>
 
-                  navigator.serviceWorker.controller.postMessage({
-                    type: "DO_HARD_REFRESH",
-                  });
-                }}
-              >
-                <SyncIcon
-                  className="clickable"
-                  size={24}
-                  aria-label="Hard Refresh"
-                />
+                  <div className="setting-block mb-2">
+                    <SettingsSwitch
+                      active={this.props.memory.persistent}
+                      action={this.props.setPersistentStorage}
+                      disabled={this.props.memory.persistent}
+                      color="default"
+                      statusText={
+                        this.props.memory.persistent
+                          ? "Persistent " +
+                            ~~(this.props.memory.usage / 1024 / 1024) +
+                            "/" +
+                            ~~(this.props.memory.quota / 1024 / 1024) +
+                            "MB"
+                          : "Persistent off"
+                      }
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <div className="setting-block mb-2">
-              <SettingsSwitch
-                active={this.props.memory.persistent}
-                action={this.props.setPersistentStorage}
-                disabled={this.props.memory.persistent}
-                color="default"
-                statusText={
-                  this.props.memory.persistent
-                    ? "Persistent " +
-                      ~~(this.props.memory.usage / 1024 / 1024) +
-                      "/" +
-                      ~~(this.props.memory.quota / 1024 / 1024) +
-                      "MB"
-                    : "Persistent off"
-                }
-              />
             </div>
 
             {failedFurigana.length > 0 && (
@@ -579,6 +627,7 @@ Settings.propTypes = {
   verbColSplit: PropTypes.number,
   updateVerbColSplit: PropTypes.func,
   verbFormsOrder: PropTypes.array,
+  setVerbFormsOrder: PropTypes.func,
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,

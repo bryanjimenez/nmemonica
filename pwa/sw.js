@@ -35,11 +35,18 @@ let ERROR = 1,
   WARN = 2,
   DEBUG = 3;
 
+function getVersions(){
+  const jsVersion = cacheFiles
+    .join(",")
+    .match(new RegExp(/main.([a-z0-9]+).js/))[1];
+  return { swVersion, jsVersion, bundleVersion: initCacheVer};
+}
+
 self.addEventListener("install", (e) => {
   self.skipWaiting();
-  console.log("[ServiceWorker] Version: " + swVersion);
-  clientLogger("SWVersion: " + swVersion, WARN);
-  clientLogger("InitCache: " + initCacheVer, WARN);
+
+  const versions = getVersions();
+  clientMsg("SW_VERSION", versions);
 
   caches.open(appDataCache).then((cache) =>
     cache.add(dataVerURL).then(() =>
@@ -51,13 +58,19 @@ self.addEventListener("install", (e) => {
     )
   );
 
-  const a = ghURL;
-  const b = ghURL + "/";
+  try {
+    const a = ghURL;
+    const b = ghURL + "/";
+    caches
+      .open(appStaticCache)
+      .then((cache) => cache.addAll([a, b]))
+  }
+  catch { }
 
   e.waitUntil(
     caches
       .open(appStaticCache)
-      .then((cache) => cache.addAll([...cacheFiles, a, b]))
+      .then((cache) => cache.addAll([...cacheFiles]))
   );
 });
 
@@ -104,12 +117,8 @@ self.addEventListener("message", (event) => {
         clientMsg("DO_HARD_REFRESH", { msg: "Hard Refresh", error });
       });
   } else if (event.data && event.data.type === "SW_VERSION") {
-    const { i } = event.data;
-
-    const jsVersion = cacheFiles
-      .join(",")
-      .match(new RegExp(/main.[a-z0-9]+.js/g))[0];
-    clientMsg("SW_VERSION", { i, swVersion, jsVersion });
+    const versions = getVersions();
+    clientMsg("SW_VERSION", versions);
   }
 });
 

@@ -73,7 +73,7 @@ export function SettingsVocab(props) {
   let el;
   try {
     el = show && (
-      <div className="outter">
+      <div className="outer">
         <div className="d-flex flex-row justify-content-between">
           <div className="column-1">
             <h4>
@@ -209,7 +209,7 @@ export function SettingsVocab(props) {
 
                           <div
                             onClick={() => {
-                              if(shownForms.length > 1){
+                              if (shownForms.length > 1) {
                                 const minusK = [
                                   ...shownForms.slice(0, k),
                                   ...shownForms.slice(k + 1),
@@ -238,10 +238,10 @@ export function SettingsVocab(props) {
                         >
                           <div className="mr-3 transparent-color">
                             <ChevronUpIcon
-                                classname="mt-1"
-                                size="small"
-                                aria-label="move up"
-                              />
+                              classname="mt-1"
+                              size="small"
+                              aria-label="move up"
+                            />
                           </div>
                           <span className="w-100 text-start disabled-color">
                             {form}
