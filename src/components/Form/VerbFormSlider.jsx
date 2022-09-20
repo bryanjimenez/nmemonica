@@ -1,14 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
-
-const useStyles = makeStyles({
-  root: {
-    width: 300,
-  },
-});
+import "./VerbFormSlider.css";
 
 function populateMarks(max) {
   const marks = [];
@@ -72,8 +66,6 @@ const handleChange = (event, newValue, props, marks) => {
 };
 
 export default function VerbFormSlider(props) {
-  const classes = useStyles();
-
   const max = props.max - 1;
   const marks = populateMarks(max);
 
@@ -81,7 +73,7 @@ export default function VerbFormSlider(props) {
   const stl = (slide) => slideToLabels(slide, marks, max);
 
   return (
-    <div className={classes.root}>
+    <div className="verb-form-slider-root">
       <Typography id="discrete-slider-restrict" gutterBottom>
         {props.statusText}
       </Typography>

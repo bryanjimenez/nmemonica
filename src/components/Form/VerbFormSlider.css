@@ -1,0 +1,14 @@
+.verb-form-slider-root > span/*.MuiSlider-root*/ {
+  width: 300px;
+  max-width: 300px;
+}
+
+/* https://getbootstrap.com/docs/5.0/layout/breakpoints/ */
+/* X-Small devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+  .verb-form-slider-root > span/*.MuiSlider-root*/ {
+    position: absolute;
+    right: 16px;
+    width: 75vw;
+  }
+}
