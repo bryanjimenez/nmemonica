@@ -3,6 +3,17 @@ body {
   height: 100%;
 }
 
+.no-scroll {
+  overflow: hidden;
+}
+
+/* Large devices (desktops, 992px and up)*/
+@media (min-width: 992px) {
+  .no-scroll {
+    overflow: unset;
+  }
+}
+
 p {
   margin-top: 0;
   margin-bottom: 0.5rem;
@@ -16,26 +27,18 @@ a {
   cursor: pointer;
 }
 
-#page-content {
-  flex: 1 0 auto;
-}
-
-.appContainer {
-  /* width: 95%; */
-  /* max-width: 600px; */
-  /* margin: auto; */
+#app-container {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.main-panel > div button {
-  margin: 2em 0;
+#page-content {
+  flex: 1 0 auto;
 }
 
-/* override */
-.btn-warning {
-  color: white !important;
+.main-panel > div button {
+  margin: 2em 0;
 }
 
 .correct-color {
@@ -51,10 +54,14 @@ a {
 }
 
 .info-color {
-  color: #737CA1;
+  color: #737ca1;
 }
 
 .disabled-color {
+  opacity: 25%;
+}
+
+.opacity-25 {
   opacity: 25%;
 }
 
@@ -71,43 +78,32 @@ a {
   width: 100%;
   padding-right: 15px;
   padding-left: 15px;
-  /* margin-right: auto;
-  margin-left: auto; */
 }
 
 .dark-mode {
-  background-color: var(--dark);
-  color:  var(--light);
+  background-color: var(--bs-dark);
+  color: var(--bs-light);
 }
 
-.dark-mode .nav-toggle-btn__line {
-  background-color: var(--light);
-}
-
-.dark-mode .shortcuts {
-  color:  var(--light);
-}
-
-.fs-large {
-  font-size: large;
-}
-
-.fs-medium {
-  font-size: medium;
-}
-
-.fs-x-small {
-  font-size: x-small;
+.dark-mode .nav-btn-line {
+  background-color: var(--bs-light);
 }
 
 .fs-xx-small {
   font-size: xx-small;
 }
 
-.z-index-1 {
-  z-index: 1;
+.app-sm-fs-xx-small {
+  font-size: xx-small;
 }
 
-.opacity-25 {
-  opacity: 25%;
+/* Large devices (desktops, 992px and up)*/
+@media (min-width: 992px) {
+  .app-sm-fs-xx-small {
+    font-size: unset;
+  }
+}
+
+.z-index-1 {
+  z-index: 1;
 }

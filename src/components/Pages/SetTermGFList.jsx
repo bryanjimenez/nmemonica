@@ -16,7 +16,7 @@ function listItem(grpActive, i, uid, english, removeFrequencyWord) {
     <div
       key={i}
       className={classNames({
-        "p-0 pl-2 pr-2": true,
+        "p-0 px-2": true,
         clickable: grpActive,
       })}
       onClick={() => {

@@ -150,7 +150,6 @@ export class JapaneseText {
         console.error(e);
 
         const eClass = classNames({
-          "fs-large": true,
           "incorrect-color": true,
           "d-block": true,
         });

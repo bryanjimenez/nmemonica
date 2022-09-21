@@ -459,7 +459,7 @@ export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
       <span>
         {inJapanese}
         {showNaAdj && <span className="opacity-25"> {"な"}</span>}
-        <span className="fs-medium">
+        <span className="fs-5">
           <span> (</span>
           {indicators.reduce((a, c, i) => {
             if (i > 0 && i < indicators.length) {
@@ -559,7 +559,7 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
     inEnglishLbl = (
       <span>
         {inEnglish}
-        <span className="fs-medium">
+        <span>
           <span> (</span>
           {indicators.reduce((a, c, i) => {
             if (i > 0 && i < indicators.length) {

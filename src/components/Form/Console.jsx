@@ -92,7 +92,7 @@ class Console extends Component {
       <div className="console position-absolute p-1">
         {messages.map((e, i) => {
           const mClass = classNames({
-            "fs-xx-small": true,
+            "app-sm-fs-xx-small": true,
             "correct-color": e.lvl === DEBUG_ON,
             "question-color": e.lvl === DEBUG_WARN,
             "incorrect-color": e.lvl === DEBUG_ERROR,

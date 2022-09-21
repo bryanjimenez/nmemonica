@@ -150,7 +150,7 @@ class Settings extends Component {
             <div key={i} className="row">
               <span className="col p-0">{t.toHTML()}</span>
               <span className="col p-0">{text.english}</span>
-              <span className="col p-0 fs-xx-small">
+              <span className="col p-0 app-sm-fs-xx-small">
                 <div>{e.message}</div>
                 <div>{e.info ? JSON.stringify(e.info) : ""}</div>
               </span>
@@ -205,7 +205,7 @@ class Settings extends Component {
 
     return (
       <div className="settings">
-        <div className="d-flex flex-column justify-content-between pl-3 pr-3">
+        <div className="d-flex flex-column justify-content-between px-3">
           <div className={pageClassName}>
             <div className="d-flex justify-content-between">
               <h2>Global</h2>

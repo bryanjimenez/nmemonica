@@ -6,7 +6,7 @@ import { PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
 export function GroupItem(props) {
   const css = classNames({
     [props.addlStyle]: props.addlStyle && true,
-    "p-0 pl-2 pr-2": true,
+    "p-0 px-2": true,
     "font-weight-bold": props.active,
   });
 
