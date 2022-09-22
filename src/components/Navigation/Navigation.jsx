@@ -37,21 +37,48 @@ class Navigation extends Component {
     };
 
     this.menuToggle = this.menuToggle.bind(this);
+    this.clickBehavior = this.clickBehavior.bind(this);
   }
 
   menuToggle() {
     this.setState((state) => {
       if (state.collapsed) {
-        document.body.style.overflow = "hidden";
+        document.body.classList.add("no-scroll");
         window.scrollTo(0, 0);
       } else {
-        document.body.style.overflow = "";
+        document.body.classList.remove("no-scroll");
       }
 
       return {
         collapsed: !state.collapsed,
       };
     });
+  }
+
+  /**
+   * Clicking on icons should collapse menu (force-collapse).
+   * Clicking on captions should not (prevent-collapse).
+   * Anywhere else should.
+   * @param {Event} e 
+   * @returns 
+   */
+  clickBehavior(e) {
+    if (
+      Array.from(document.getElementsByClassName("force-collapse")).includes(
+        e.target
+      )
+    ) {
+      // force a collapse, Link el is preventing?
+      this.menuToggle();
+    } else if (
+      !Array.from(document.getElementsByClassName("prevent-collapse")).includes(
+        e.target
+      )
+    ) {
+      // any child elem without classname^ toggles
+      this.menuToggle();
+      return false;
+    }
   }
 
   render() {
@@ -123,85 +150,59 @@ class Navigation extends Component {
 
     return (
       <div className="navigation">
-        <nav className="navbar navbar-expand-lg">
-          <Link className="navbar-brand" aria-label="Home" to="/">
+        <nav className="my-navbar">
+          <Link /*className="navbar-brand"*/ aria-label="Home" to="/">
             {/* <span>Nmemonica</span> */}
             {/* <span>Language Flash Cards</span> */}
           </Link>
-          <div onClick={this.menuToggle}>
+          <div className="button d-lg-none mt-2 me-2" onClick={this.menuToggle}>
             <button
               className={classNames({
-                "navbar-toggler": true,
+                "nav-menu-btn": true,
                 collapsed: this.state.collapsed,
               })}
               type="button"
-              data-toggle="collapse"
-              data-target="#navbarSupportedContent"
-              aria-controls="navbarSupportedContent"
+              aria-controls="nav-menu-mobile"
               aria-expanded="false"
-              aria-label="Toggle navigation"
+              aria-label="Toggle mobile navigation"
             >
-              {/* <span className="navbar-toggler-icon"></span> */}
-              <span className="nav-toggle-btn__line" />
-              <span className="nav-toggle-btn__line" />
-              <span className="nav-toggle-btn__line" />
+              <span className="nav-btn-line" />
+              <span className="nav-btn-line" />
+              <span className="nav-btn-line" />
             </button>
           </div>
-
+          {/* Mobile navigation icons */}
           <div
             className={classNames({
-              "navItems navbar-collapse": true,
+              "mobile d-lg-none": true,
               collapse: this.state.collapsed,
             })}
-            id="navbarSupportedContent"
-            onClick={(e) => {
-              if (
-                Array.from(
-                  document.getElementsByClassName("force-collapse")
-                ).includes(e.target)
-              ) {
-                // force a collapse, Link el is preventing?
-                this.menuToggle();
-              } else if (
-                !Array.from(
-                  document.getElementsByClassName("prevent-collapse")
-                ).includes(e.target)
-              ) {
-                // any child elem without classname^ toggles
-                this.menuToggle();
-                // this.setState({collapse:true})
-                return false;
-              }
-            }}
+            id="nav-menu-mobile"
+            onClick={this.clickBehavior}
           >
-            <ul
-              className="navbar-nav"
-              data-toggle="collapse"
-              data-target=".navbar-collapse.show"
-            >
-              <li className="nav-item d-lg-none">
-                <div className="shortcuts w-100 d-flex flex-wrap p-4">
-                  {shortcuts.map((l, i) => (
-                    <div
-                      key={i}
-                      className="shortcut-item text-center m-3"
-                      style={{ width: "25%" }}
-                    >
-                      <Link to={l.meta.location}>
-                        <div className="mb-2 force-collapse">{l.icon}</div>
-                      </Link>
-                      <div className="nav-caption">
-                        {l.wrap ? l.wrap(l.meta.label) : l.meta.label}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* <div className="dropdown-divider" /> */}
-              </li>
+            <ul className="w-100 d-flex justify-content-evenly flex-wrap p-4">
+              {shortcuts.map((l, i) => (
+                <li
+                  key={i}
+                  className="w-25 text-center m-3"
+                >
+                  <Link to={l.meta.location}>
+                    <div className="icon force-collapse mb-2">{l.icon}</div>
+                  </Link>
+                  <div className="caption">
+                    {l.wrap ? l.wrap(l.meta.label) : l.meta.label}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
 
+          {/* Desktop navigation links */}
+          <div className="desktop d-none d-lg-block pt-2 pe-2">
+            <ul className="d-flex">
               {shortcuts.map((s, i) => (
-                <li key={i} className="nav-item d-none d-lg-block">
-                  <Link className="nav-link" to={s.meta.location}>
+                <li key={i}>
+                  <Link className="desktop-link" to={s.meta.location}>
                     {s.wrap ? s.wrap(s.meta.label) : s.meta.label}
                   </Link>
                 </li>
