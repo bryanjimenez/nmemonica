@@ -18,9 +18,9 @@
     "build": "npm run b:clean && npm run b:helper && npm run b:tag && npm run b:webpack && npm run b:manifest && npm run b:sw ; npm run b:unTag",
     "deploy": "./node_modules/.bin/gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica -b gh-pages",
     "start": "webpack serve --mode=development --config=./webpack.config.js",
-    "pretty": "./node_modules/.bin/prettier --write ./src/**/**/*.{js,jsx,css} ./test/**/*.js ./data ./webpack.config.js",
-    "lint": "git diff --staged --name-only | xargs ./node_modules/.bin/eslint --fix",
-    "lint:all": "./node_modules/.bin/eslint --fix ./src/**/**/*.{js,jsx} ./pwa/*"
+    "staged": "git diff --staged --name-only",
+    "lint": "npm run staged | egrep '^.*(.js|.jsx)$' | xargs ./node_modules/.bin/eslint --fix",
+    "pretty": "npm run staged | egrep '^.*(.css)$' | xargs ./node_modules/.bin/prettier --write"
   },
   "author": "Bryan",
   "license": "",
