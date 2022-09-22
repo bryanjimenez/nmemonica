@@ -4,6 +4,15 @@ export const GET_VOCABULARY = "get_vocabulary";
 export const SET_PREVIOUS_SEEN_WORD = "set_previous_seen_word";
 export const SET_PUSHED_PLAY = "set_pushed_play";
 
+/**
+ * @typedef {import("../typings/act").ActCreator} ActCreator
+ * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
+ * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
+ */
+
+/**
+ * @return {ActCreator}
+ */
 export function getVocabulary() {
   return (dispatch, getState) => {
     const version = getState().version.vocabulary || 0;
@@ -21,6 +30,10 @@ export function getVocabulary() {
   };
 }
 
+/**
+ * @param {RawVocabulary} word
+ * @returns {ThenableActCreator}
+ */
 export function setPreviousWord(word) {
   return (dispatch) => {
     return new Promise((resolve, reject) => {
@@ -34,6 +47,10 @@ export function setPreviousWord(word) {
   };
 }
 
+/**
+ * @param {boolean} value
+ * @returns {ActCreator}
+ */
 export function pushedPlay(value) {
   return (dispatch) => {
     dispatch({

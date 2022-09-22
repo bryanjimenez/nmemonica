@@ -3,11 +3,15 @@ import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerAct";
 export const UI_LOGGER_MSG = "ui_logger_msg";
 
 /**
- *
- * @param {String} msg
- * @param {Number} lvl
- * @param {String} type
- * @returns
+ * @typedef {import("../typings/act").ActCreator} ActCreator
+ */
+
+/**
+ * UI logger
+ * @param {string} msg
+ * @param {number} lvl
+ * @param {string} [type]
+ * @returns {ActCreator}
  */
 export function logger(msg, lvl, type = UI_LOGGER_MSG) {
   return (dispatch, getState) => {

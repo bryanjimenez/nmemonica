@@ -1,8 +1,12 @@
 export const MEMORY_STORAGE_STATUS = "memory_storage_status";
 
 /**
+ * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
+ */
+
+/**
  * gets persistent status and quota info
- * @returns {Promise}
+ * @returns {ThenableActCreator}
  */
 export function getMemoryStorageStatus() {
   return (dispatch) => {
@@ -29,7 +33,7 @@ export function getMemoryStorageStatus() {
 
 /**
  * sets persistent storage bit (if browser supports it)
- * @returns {Promise}
+ * @returns {ThenableActCreator}
  */
 export function setPersistentStorage() {
   return (dispatch) => {
@@ -77,7 +81,7 @@ export function setPersistentStorage() {
 
 /**
  * get temporary storage quota info
- * @returns {Promise}
+ * @returns {Promise<*>}
  */
 export function getStorageUsage() {
   return new Promise((resolve, reject) => {

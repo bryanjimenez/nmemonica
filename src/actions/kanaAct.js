@@ -2,6 +2,13 @@ import data from "../../data/kana.json";
 
 export const GET_KANA = "get_kana";
 
+/**
+ * @typedef {import("../typings/act").ActCreator} ActCreator
+ */
+
+/**
+ * @returns {ActCreator}
+ */
 export function getKana() {
   return (dispatch) => {
     dispatch({

@@ -13,6 +13,15 @@ export const FIREBASE_LOGOUT = "firebase_logout";
 export const GET_USER_SETTINGS = "get_user_settings";
 export const GET_VERSIONS = "get_versions";
 
+/**
+ * @typedef {import("../typings/act").ActCreator} ActCreator
+ * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
+ * @typedef {import("firebase/app").FirebaseApp} FirebaseApp
+ */
+
+/**
+ * @type {FirebaseApp}
+ */
 let firebaseInstance;
 
 export function initialize() {
@@ -26,6 +35,9 @@ export function initialize() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function logout() {
   return (dispatch) => {
     const auth = getAuth(firebaseInstance);
@@ -37,6 +49,10 @@ export function logout() {
   };
 }
 
+/**
+ * @param {boolean} value
+ * @returns {ActCreator}
+ */
 export function authenticated(value) {
   return (dispatch) => {
     dispatch({
@@ -47,7 +63,8 @@ export function authenticated(value) {
 }
 
 /**
- * on login user settings are retrieved from Firebase
+ * On login user settings are retrieved from Firebase
+ * @returns {ActCreator}
  */
 export function getUserSettings() {
   return (dispatch) => {
@@ -106,8 +123,9 @@ export function getUserSettings() {
 }
 
 /**
- * initializes redux state.settings from the
+ * Initializes redux state.settings from the
  * settings on localStorage
+ * @returns {ActCreator}
  */
 export function initializeSettingsFromLocalStorage() {
   return (dispatch, getState) => {
@@ -129,6 +147,10 @@ export function initializeSettingsFromLocalStorage() {
   };
 }
 
+/**
+ * Get app data versions file
+ * @returns {ThenableActCreator}
+ */
 export function getVersions() {
   return (dispatch) => {
     return fetch(firebaseConfig.databaseURL + "/lambda/cache.json")
@@ -143,16 +165,16 @@ export function getVersions() {
 }
 
 /**
- *
- * @param {*} time
- * @param {*} dispatch
- * @param {*} getState
- * @param {*} uid
- * @param {*} path
- * @param {*} attr
- * @param {*} aType
- * @param {*} value
- * @returns {Promise}
+ * Toggles or sets a firebase setting
+ * @param {Date} time
+ * @param {function} dispatch
+ * @param {function} getState
+ * @param {string} uid
+ * @param {string} path
+ * @param {string} attr
+ * @param {string} aType
+ * @param {*} [value] if no value is specified the prev value will be toggled
+ * @returns {Promise<*>}
  */
 export function firebaseAttrUpdate(
   time,

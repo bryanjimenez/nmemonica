@@ -13,6 +13,6 @@
     "outDir": "../tsc-out/",
     "sourceMap": true,
   },
-  "include": ["./helper/*"],
+  "include": ["./helper/*", "./actions/*"],
   // "files": ["./helper/JapaneseText.js"]
 }

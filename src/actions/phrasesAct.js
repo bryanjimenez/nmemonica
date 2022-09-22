@@ -2,6 +2,13 @@ import { firebaseConfig } from "../../environment.development";
 
 export const GET_PHRASES = "get_phrases";
 
+/**
+ * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
+ */
+
+/**
+ * @returns {ThenableActCreator}
+ */
 export function getPhrases() {
   return (dispatch, getState) => {
     const version = getState().version.phrases || 0;

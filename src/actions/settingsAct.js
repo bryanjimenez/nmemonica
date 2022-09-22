@@ -485,11 +485,11 @@ export function toggleActiveGrp(parent, grpName) {
     const { user } = getState().login;
     const { activeGroup } = getState().settings[parent];
 
-    let action;
+    // if (parent === "vocabulary")
+    let action = TOGGLE_VOCABULARY_ACTIVE_GROUP;
+
     if (parent === "kanji") {
       action = TOGGLE_KANJI_ACTIVE_GROUP;
-    } else if (parent === "vocabulary") {
-      action = TOGGLE_VOCABULARY_ACTIVE_GROUP;
     } else if (parent === "phrases") {
       action = TOGGLE_PHRASES_ACTIVE_GROUP;
     }
