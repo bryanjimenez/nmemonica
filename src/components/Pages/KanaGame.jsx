@@ -139,7 +139,7 @@ class KanaGame extends Component {
   }
 
   /**
-   * @returns {String[]} a shuffled list of choices containing the answer
+   * @returns {string[]} a shuffled list of choices containing the answer
    * @param {*} answer
    * @param {*} gameOrder
    */

@@ -186,8 +186,8 @@ class VerbMain extends Component {
   /**
    *
    * @param {Array} verbForms
-   * @param {String} theForm the form to filter by
-   * @returns {{ inJapanese:HTMLElement, inEnglish:String, romaji:String, japanesePhrase }}
+   * @param {string} theForm the form to filter by
+   * @returns {{ inJapanese:JSX.Element, inEnglish:string, romaji:string, japanesePhrase }}
    */
   getVerbLabelItems(verbForms, theForm) {
     const romaji = this.props.verb.romaji || ".";

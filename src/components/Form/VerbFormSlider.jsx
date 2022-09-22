@@ -24,8 +24,8 @@ function slideToRaw(slide, marks) {
 
 /**
  * Shows the count of verb forms for the selected side
- * @param {Number} slide
- * @returns {Number}
+ * @param {number} slide
+ * @returns {number}
  */
 function slideToLabels(slide, marks, max) {
   const idx = marks.findIndex((mark) => mark.value === slide);
