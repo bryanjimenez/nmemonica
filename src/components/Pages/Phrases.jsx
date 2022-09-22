@@ -451,7 +451,7 @@ class Phrases extends Component {
     const phrase = getTerm(uid, this.props.phrases);
     phrase.reinforce = this.state.frequency.includes(phrase.uid);
 
-    const japanesePhrase = JapaneseText.parse(phrase.japanese).toHTML();
+    const japanesePhrase = JapaneseText.parse(phrase).toHTML();
 
     const englishPhrase = (
       <span

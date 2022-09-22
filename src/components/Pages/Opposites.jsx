@@ -68,8 +68,8 @@ class Opposites extends Component {
     if (this.props.opposites.length > 0) {
       // console.log("preparing");
       let [question, answer] = this.props.opposites[this.state.selectedIndex];
-      const q = JapaneseText.parse(question.japanese);
-      const a = JapaneseText.parse(answer.japanese);
+      const q = JapaneseText.parse(question);
+      const a = JapaneseText.parse(answer);
 
       question = { ...question, toHTML: () => q.toHTML() };
       answer = { ...answer, toHTML: () => a.toHTML() };
@@ -91,11 +91,11 @@ class Opposites extends Component {
           const headsOrTails = Math.floor(Math.random() * 2);
 
           if (headsOrTails === 0) {
-            const w1 = JapaneseText.parse(wrongAnswer1.japanese);
+            const w1 = JapaneseText.parse(wrongAnswer1);
             choices.push({ ...wrongAnswer1, toHTML: () => w1.toHTML() });
             antiHomophones.push(wrongAnswer1.romaji);
           } else {
-            const w2 = JapaneseText.parse(wrongAnswer2.japanese);
+            const w2 = JapaneseText.parse(wrongAnswer2);
             choices.push({ ...wrongAnswer2, toHTML: () => w2.toHTML() });
             antiHomophones.push(wrongAnswer2.romaji);
           }

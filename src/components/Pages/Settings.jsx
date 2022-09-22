@@ -139,7 +139,7 @@ class Settings extends Component {
 
   failedFuriganaList(terms) {
     return terms.reduce((a, text, i) => {
-      const t = JapaneseText.parse(text.japanese);
+      const t = JapaneseText.parse(text);
       if (t.hasFurigana()) {
         try {
           furiganaParseRetry(t.getPronunciation(), t.getSpelling());

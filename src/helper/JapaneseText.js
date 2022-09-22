@@ -9,6 +9,10 @@ import {
   toEnglishNumber,
 } from "./kanaHelper";
 
+/**
+ * @typedef {import("../typings/raw").RawJapanese} RawJapanese
+ */
+
 export class JapaneseText {
   /**
    * @param {string} furigana
@@ -69,7 +73,11 @@ export class JapaneseText {
     return { furigana: this._furigana, kanji: this._kanji };
   }
 
-  static parse = japaneseTextParse;
+  /**
+   * @param {RawJapanese} rawObj
+   */
+  static parse = (rawObj) => japaneseTextParse(rawObj);
+  static parser = japaneseTextParse;
 
   isSlang() {
     return this.slang === true;
@@ -168,26 +176,17 @@ export class JapaneseText {
 }
 
 /**
- *
- * @param {RawVocabulary} rawObj
- * @param {function} [childType]
+ * Static parsing fn for JapaneseText and sub types
+ * @param {RawJapanese} rawObj
+ * @param {(constructorParams:RawJapanese)=>JapaneseText} [constructorFn]
  * @returns {JapaneseText}
  */
-function japaneseTextParse(rawObj, childType) {
-  let constructorParams;
-  if (rawObj.japanese) {
-    // [furigana, kanji]
-    constructorParams = rawObj.japanese.split("\n");
-  } else {
-    constructorParams = rawObj.split("\n");
-  }
+function japaneseTextParse(rawObj, constructorFn) {
+  const constructorParams = rawObj.japanese.split("\n");
 
-  /**
-   * @type {JapaneseText|JapaneseVerb}
-   */
   let jText;
-  if (typeof childType === "function") {
-    jText = childType(...constructorParams);
+  if (typeof constructorFn === "function") {
+    jText = constructorFn(rawObj);
   } else {
     const [furigana, kanji] = constructorParams;
     jText = new JapaneseText(furigana, kanji);
@@ -309,7 +308,10 @@ export function furiganaParse(pronunciation, orthography) {
   let prevWasKanji = false;
 
   orthography.split("").forEach((thisChar, i) => {
-    if (!isKanji(thisChar) && !isNumericCounter(i, pronunciation, orthography)) {
+    if (
+      !isKanji(thisChar) &&
+      !isNumericCounter(i, pronunciation, orthography)
+    ) {
       //kana
       if (prevWasKanji) {
         while (pronunciation.charAt(start) != thisChar) {
@@ -319,8 +321,10 @@ export function furiganaParse(pronunciation, orthography) {
           start++;
 
           if (start > pronunciation.length) {
-            const e = new ErrorInfo("The two phrases do not match" +
-            (hasWhiteSpace ? " (contains white space)" : ""));
+            const e = new ErrorInfo(
+              "The two phrases do not match" +
+                (hasWhiteSpace ? " (contains white space)" : "")
+            );
             e.name = "InputError";
             e.info = {
               input: { pronunciation, orthography },
@@ -557,7 +561,7 @@ export function htmlElementHint(japaneseText) {
 /**
  * when word has override pronounce attr it is used otherwise the spelling is used
  * @returns {string} kana pronunciation or it's spelling
- * @param {RawVocabulary} vocabulary data object
+ * @param {RawJapanese} vocabulary data object
  */
 export function audioPronunciation(vocabulary) {
   let q;

@@ -2,6 +2,10 @@ import data from "../../data/kana.json";
 import { getConsonantVowel } from "./kanaHelper";
 import { JapaneseText } from "./JapaneseText";
 
+/**
+ * @typedef {import("../typings/raw").RawJapanese} RawJapanese
+ */
+
 export class JapaneseVerb extends JapaneseText {
   /**
    * @param {string} furigana
@@ -29,14 +33,21 @@ export class JapaneseVerb extends JapaneseText {
   }
 
   /**
-   * @param {RawVocabulary} dataObj
+   * @param {RawJapanese} dataObj
    * @returns {JapaneseVerb}
    */
   static parse = (dataObj) => {
     /**
-     * @type {JapaneseVerb}
+     * @param {RawJapanese} params
      */
-    const jVerb = JapaneseText.parse(dataObj, (...o) => new JapaneseVerb(...o));
+    const constructorFn = (params) => {
+      const [furigana, kanji] = params.japanese.split("\n");
+      return new JapaneseVerb(furigana, kanji);
+    };
+
+    const jVerb = /** @type {JapaneseVerb} */ (
+      JapaneseText.parser(dataObj, constructorFn)
+    );
 
     if (dataObj.intr) {
       jVerb.intr = dataObj.intr;
@@ -66,7 +77,9 @@ export class JapaneseVerb extends JapaneseText {
   }
 
   getIntransitivePair() {
-    return !this.isIntransitive() && typeof this.intr === "string" ? this.intr : undefined;
+    return !this.isIntransitive() && typeof this.intr === "string"
+      ? this.intr
+      : undefined;
   }
 
   /**
@@ -201,8 +214,8 @@ export class JapaneseVerb extends JapaneseText {
         nai = new JapaneseText("こない", "来ない");
       } else if (verb === "する") {
         nai = new JapaneseText("しない");
-      // } else if (verb === "だ") {
-      //   nai = "de wa arimasen"; // FIXME: complete
+        // } else if (verb === "だ") {
+        //   nai = "de wa arimasen"; // FIXME: complete
       } else if (verb === "ある") {
         nai = new JapaneseText("ない");
       }
@@ -422,7 +435,7 @@ export class JapaneseVerb extends JapaneseText {
 
     if (type === 1) {
       if (verb === "行く" || verb === "いく") {
-        t_Con = JapaneseText.parse(rule.g1.iku);
+        t_Con = JapaneseText.parse({ japanese: rule.g1.iku });
       } else {
         switch (lastCharacter) {
           case "う":
@@ -467,13 +480,13 @@ export class JapaneseVerb extends JapaneseText {
       }
     } /*if (type === 3)*/ else {
       if (verb === "来る" || verb === "くる") {
-        t_Con = JapaneseText.parse(rule.g3.kuru);
+        t_Con = JapaneseText.parse({ japanese: rule.g3.kuru });
       } else if (verb === "する") {
-        t_Con = JapaneseText.parse(rule.g3.suru);
+        t_Con = JapaneseText.parse({ japanese: rule.g3.suru });
       } else if (verb === "だ") {
-        t_Con = JapaneseText.parse(rule.g3.da);
+        t_Con = JapaneseText.parse({ japanese: rule.g3.da });
       } else if (verb === "ある") {
-        t_Con = JapaneseText.parse(rule.g3.aru);
+        t_Con = JapaneseText.parse({ japanese: rule.g3.aru });
       } else if ("する" === verb.slice(-2)) {
         const ending = rule.g3.suru;
         const kstem = verb.slice(0, -2);

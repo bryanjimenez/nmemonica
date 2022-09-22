@@ -184,14 +184,14 @@ class Kanji extends Component {
     const term = getTerm(uid, this.props.kanji);
 
     const found = this.props.vocabulary.filter((v) =>
-      JapaneseText.parse(v.japanese).getSpelling().includes(term.kanji)
+      JapaneseText.parse(v).getSpelling().includes(term.kanji)
     );
 
     const maxShowEx = 3;
     const examples = found.slice(0, maxShowEx).map((el, k, arr) => (
       <React.Fragment key={k}>
         {el.english + " "}
-        {JapaneseText.parse(el.japanese).toHTML()}
+        {JapaneseText.parse(el).toHTML()}
         {k < arr.length - 1 ? "; " : ""}
         <wbr />
       </React.Fragment>

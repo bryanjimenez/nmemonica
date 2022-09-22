@@ -8,6 +8,13 @@ import { audioPronunciation, JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
 
 /**
+ * @typedef {import("../typings/raw").RawJapanese} RawJapanese
+ * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {import("../typings/raw").AudioQueryParams} AudioQueryParams
+ * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
+ */
+
+/**
  * Goes to the next term or selects one from the frequency list
  * @param {boolean} reinforce
  * @param {number} freqFilter
@@ -336,7 +343,7 @@ export function toggleOptions(index, options) {
 /**
  * Array containing the avaiable verb forms
  * @returns {{t:string, j:JapaneseText}[]}
- * @param {RawVocabulary} rawVerb
+ * @param {RawJapanese} rawVerb
  * @param {string[]} [order]
  */
 export function getVerbFormsArray(rawVerb, order) {
