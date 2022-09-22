@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
+import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";

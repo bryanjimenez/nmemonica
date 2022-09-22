@@ -1,6 +1,5 @@
 import { localStoreAttrUpdate } from "../helper/localStorage";
 import { firebaseAttrUpdate } from "./firebase";
-import { FILTER_GRP } from "../reducers/settingsRed";
 export const SET_KANA_BTN_N = "set_kana_btn_number";
 export const TOGGLE_KANA_WIDEMODE = "set_kana_widemode";
 export const TOGGLE_KANA_EASYMODE = "set_kana_easymode";
@@ -38,6 +37,29 @@ export const DEBUG = "toggle_debug";
 export const TOGGLE_SWIPE = "toggle_swipe";
 export const SET_VERB_FORM_ORDER = "set_verb_form_order";
 
+/**
+ * @typedef {import("../typings/act").ActCreator} ActCreator
+ * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
+ */
+
+export const DEBUG_OFF = 0,
+  DEBUG_ERROR = 1,
+  DEBUG_WARN = 2,
+  DEBUG_ON = 3;
+
+export const FILTER_GRP = 0,
+  FILTER_FREQ = 1,
+  FILTER_REP = 2;
+
+/**
+ * @typedef {FILTER_GRP|FILTER_FREQ|FILTER_REP} TermFilterBy
+ * @typedef {DEBUG_OFF|DEBUG_ERROR|DEBUG_WARN|DEBUG_ON} DebugLevel
+ */
+
+/**
+ * @param {number} number
+ * @returns {ActCreator}
+ */
 export function setHiraganaBtnN(number) {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -67,6 +89,9 @@ export function setHiraganaBtnN(number) {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleKanaGameWideMode() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -94,6 +119,9 @@ export function toggleKanaGameWideMode() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleKanaEasyMode() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -121,6 +149,9 @@ export function toggleKanaEasyMode() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleKana() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -157,6 +188,9 @@ export function toggleKana() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function setPhrasesOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -184,6 +218,9 @@ export function setPhrasesOrdering() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function flipPhrasesPracticeSide() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -211,6 +248,9 @@ export function flipPhrasesPracticeSide() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function togglePhrasesRomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -238,6 +278,9 @@ export function togglePhrasesRomaji() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleVocabularyReinforcement() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -265,6 +308,9 @@ export function toggleVocabularyReinforcement() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function setVocabularyOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -292,6 +338,9 @@ export function setVocabularyOrdering() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function flipVocabularyPracticeSide() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -319,6 +368,9 @@ export function flipVocabularyPracticeSide() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleVocabularyRomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -346,6 +398,9 @@ export function toggleVocabularyRomaji() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleVocabularyHint() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -375,6 +430,8 @@ export function toggleVocabularyHint() {
 
 /**
  * toggle between groups, frequency, and spaced repetition
+ * @param {TermFilterBy} override
+ * @returns {ActCreator}
  */
 export function toggleVocabularyFilter(override) {
   return (dispatch, getState) => {
@@ -418,6 +475,11 @@ export function toggleVocabularyFilter(override) {
   };
 }
 
+/**
+ * @param {string} parent
+ * @param {string} grpName
+ * @returns {ActCreator}
+ */
 export function toggleActiveGrp(parent, grpName) {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -462,6 +524,9 @@ export function toggleActiveGrp(parent, grpName) {
 export const AUTOPLAY_OFF = 0,
   AUTOPLAY_EN_JP = 1,
   AUTOPLAY_JP_EN = 2;
+/**
+ * @returns {ActCreator}
+ */
 export function toggleVocabularyAutoPlay() {
   return (dispatch, getState) => {
     const { autoPlay } = getState().settings.vocabulary;
@@ -475,6 +540,9 @@ export function toggleVocabularyAutoPlay() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function setOppositesQRomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -502,6 +570,9 @@ export function setOppositesQRomaji() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function setOppositesARomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -529,6 +600,9 @@ export function setOppositesARomaji() {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function setParticlesARomaji() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -556,10 +630,17 @@ export function setParticlesARomaji() {
   };
 }
 
+/**
+ * @param {string} uid
+ */
 export function addFrequencyWord(uid) {
   return addFrequencyTerm(ADD_FREQUENCY_WORD, [uid]);
 }
 
+/**
+ * @param {string} uid
+ * @returns {ActCreator}
+ */
 export function removeFrequencyWord(uid) {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -567,7 +648,9 @@ export function removeFrequencyWord(uid) {
     const path = "/vocabulary/";
     const attr = "frequency";
     const time = new Date();
-    const currVal = getLastStateValue(getState, path, attr);
+    const currVal = /** @type {string[]} */ (
+      getLastStateValue(getState, path, attr)
+    );
     const newValue = currVal.filter((i) => i !== uid);
     localStoreAttrUpdate(time, getState, path, attr, newValue);
 
@@ -591,10 +674,17 @@ export function removeFrequencyWord(uid) {
   };
 }
 
+/**
+ * @param {string} uid
+ */
 export function addFrequencyPhrase(uid) {
   return addFrequencyTerm(ADD_FREQUENCY_PHRASE, [uid]);
 }
 
+/**
+ * @param {string} uid
+ * @returns {ActCreator}
+ */
 export function removeFrequencyPhrase(uid) {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -602,7 +692,9 @@ export function removeFrequencyPhrase(uid) {
     const path = "/phrases/";
     const attr = "frequency";
     const time = new Date();
-    const currVal = getLastStateValue(getState, path, attr);
+    const currVal = /** @type {string[]}*/ (
+      getLastStateValue(getState, path, attr)
+    );
     const newValue = currVal.filter((i) => i !== uid);
     localStoreAttrUpdate(time, getState, path, attr, newValue);
 
@@ -627,10 +719,9 @@ export function removeFrequencyPhrase(uid) {
 }
 
 /**
- *
- * @param {String} aType
- * @param {Array} uidArr
- * @returns
+ * @param {string} aType
+ * @param {string[]} uidArr
+ * @returns {ThenableActCreator}
  */
 export function addFrequencyTerm(aType, uidArr) {
   return (dispatch, getState) =>
@@ -675,18 +766,36 @@ export function addFrequencyTerm(aType, uidArr) {
     });
 }
 
+/**
+ * @param {string} uid
+ * @param {boolean} [shouldIncrement]
+ */
 export function updateSpaceRepWord(uid, shouldIncrement = true) {
   return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, shouldIncrement);
 }
 
+/**
+ * @param {string} uid
+ * @param {boolean} [shouldIncrement]
+ */
 export function updateSpaceRepPhrase(uid, shouldIncrement = true) {
   return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, shouldIncrement);
 }
 
+/**
+ * @param {string} uid
+ */
 export function toggleFurigana(uid) {
   return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { toggle: ["f"] });
 }
 
+/**
+ * @param {string} aType
+ * @param {string} uid
+ * @param {boolean} shouldIncrement
+ * @param {*} [options]
+ * @returns {ActCreator}
+ */
 export function updateSpaceRepTerm(
   aType,
   uid,
@@ -755,6 +864,10 @@ export function updateSpaceRepTerm(
   };
 }
 
+/**
+ * @param {TermFilterBy} override
+ * @returns {ActCreator}
+ */
 export function togglePhrasesFilter(override) {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -797,6 +910,9 @@ export function togglePhrasesFilter(override) {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function togglePhrasesReinforcement() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -826,9 +942,9 @@ export function togglePhrasesReinforcement() {
 
 /**
  * Adds or removes grpName to the activeGroup list
- * @param {String} grpName a group name to be toggled
- * @param {Array} activeGroup a list of groups that are selected
- * @returns {Array} newValue an updated list of selected groups
+ * @param {string} grpName a group name to be toggled
+ * @param {string[]} activeGroup a list of groups that are selected
+ * @returns {string[]} newValue an updated list of selected groups
  */
 export function grpParse(grpName, activeGroup) {
   const isGrp = grpName.indexOf(".") === -1;
@@ -853,6 +969,9 @@ export function grpParse(grpName, activeGroup) {
   return newValue;
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleDarkMode() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -880,10 +999,10 @@ export function toggleDarkMode() {
   };
 }
 
-export const DEBUG_OFF = 0,
-  DEBUG_ERROR = 1,
-  DEBUG_WARN = 2,
-  DEBUG_ON = 3;
+/**
+ * @param {DebugLevel} override
+ * @returns {ActCreator}
+ */
 export function toggleDebug(override) {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -926,6 +1045,10 @@ export function toggleDebug(override) {
   };
 }
 
+/**
+ * @param {string} value
+ * @returns {ActCreator}
+ */
 export function scrollingState(value) {
   return (dispatch) => {
     dispatch({
@@ -935,6 +1058,9 @@ export function scrollingState(value) {
   };
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleAutoVerbView() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -962,6 +1088,10 @@ export function toggleAutoVerbView() {
   };
 }
 
+/**
+ * @param {number} number
+ * @returns {ActCreator}
+ */
 export function updateVerbColSplit(number) {
   return (dispatch, getState) => {
     const path = "/vocabulary/";
@@ -976,6 +1106,12 @@ export function updateVerbColSplit(number) {
   };
 }
 
+/**
+ * @param {function} getState
+ * @param {string} path
+ * @param {string} attr
+ * @returns {*}
+ */
 export function getLastStateValue(getState, path, attr) {
   const stateSettings = getState().settings;
 
@@ -990,6 +1126,9 @@ export function getLastStateValue(getState, path, attr) {
   return statePtr[attr];
 }
 
+/**
+ * @returns {ActCreator}
+ */
 export function toggleSwipe() {
   return (dispatch, getState) => {
     const { user } = getState().login;
@@ -1017,6 +1156,10 @@ export function toggleSwipe() {
   };
 }
 
+/**
+ * @param {string[]} order
+ * @returns {ActCreator}
+ */
 export function setVerbFormsOrder(order) {
   return (dispatch, getState) => {
     const path = "/vocabulary/";

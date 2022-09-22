@@ -35,7 +35,6 @@ import {
   VERB_FORM_VIEW,
   TOGGLE_KANJI_ACTIVE_GROUP,
   SET_VERB_FORM_ORDER,
-  
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -75,7 +74,7 @@ export const DEFAULT_SETTINGS = {
     autoPlay: 0,
     autoVerbView: false,
     verbColSplit: 0,
-    verbFormsOrder: getVerbFormsArray("いる").map(f=>f.t),
+    verbFormsOrder: getVerbFormsArray({ japanese: "いる" }).map((f) => f.t),
   },
   kanji: {
     filter: 0,
@@ -85,10 +84,6 @@ export const DEFAULT_SETTINGS = {
   particles: { aRomaji: false },
 };
 const DEFAULT_ACTION = {};
-
-export const FILTER_GRP = 0,
-  FILTER_FREQ = 1,
-  FILTER_REP = 2;
 
 const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
   switch (action.type) {
@@ -325,21 +320,21 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           autoVerbView: !state.vocabulary.autoVerbView,
         },
       };
-      case VERB_FORM_VIEW:
-        return {
-          ...state,
-          vocabulary: {
-            ...state.vocabulary,
-            verbColSplit: action.value,
-          },
+    case VERB_FORM_VIEW:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          verbColSplit: action.value,
+        },
       };
-      case SET_VERB_FORM_ORDER:
-        return {
-          ...state,
-          vocabulary: {
-            ...state.vocabulary,
-            verbFormsOrder: action.value,
-          },
+    case SET_VERB_FORM_ORDER:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          verbFormsOrder: action.value,
+        },
       };
     case SET_OPPOSITES_Q_ROMAJI:
       return {

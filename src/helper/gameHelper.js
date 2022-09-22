@@ -2,7 +2,7 @@ import React from "react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
 import { AUTOPLAY_EN_JP, AUTOPLAY_JP_EN } from "../actions/settingsAct";
-import { FILTER_FREQ, FILTER_GRP } from "../reducers/settingsRed";
+import { FILTER_GRP, FILTER_FREQ } from "../actions/settingsAct";
 import { shuffleArray } from "./arrayHelper";
 import { audioPronunciation, JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
@@ -156,8 +156,7 @@ export function termFilterByType(
  */
 export function activeGroupIncludes(activeGrpList, term) {
   return (
-    term.grp &&
-    activeGrpList.includes(term.grp) ||
+    (term.grp && activeGrpList.includes(term.grp)) ||
     activeGrpList.includes(term.grp + "." + term.subGrp) ||
     (term.grp === undefined &&
       (activeGrpList.includes("undefined") ||
@@ -413,7 +412,10 @@ export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
    * @type {string|undefined}
    */
   let pairUID;
-  if (jObj.constructor.name === JapaneseVerb.name && "isExceptionVerb" in jObj) {
+  if (
+    jObj.constructor.name === JapaneseVerb.name &&
+    "isExceptionVerb" in jObj
+  ) {
     showAsterix = jObj.isExceptionVerb() || jObj.getVerbClass() === 3;
     showIntr = jObj.isIntransitive();
     pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
@@ -519,7 +521,10 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
    * @type {string|undefined}
    */
   let pairUID;
-  if (jObj.constructor.name === JapaneseVerb.name && "isExceptionVerb" in jObj) {
+  if (
+    jObj.constructor.name === JapaneseVerb.name &&
+    "isExceptionVerb" in jObj
+  ) {
     showIntr = jObj.isIntransitive();
     pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
   }

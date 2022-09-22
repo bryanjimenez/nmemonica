@@ -41,7 +41,7 @@ import {
   getTermUID,
   getTerm,
 } from "../../helper/gameHelper";
-import { FILTER_FREQ, FILTER_REP } from "../../reducers/settingsRed";
+import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
 import { spaceRepLog } from "../../helper/consoleHelper";
 import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";

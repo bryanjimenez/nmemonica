@@ -1,11 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { AUTOPLAY_OFF } from "../../actions/settingsAct";
 import {
-  DEFAULT_SETTINGS,
+  AUTOPLAY_OFF,
   FILTER_FREQ,
   FILTER_REP,
-} from "../../reducers/settingsRed";
+} from "../../actions/settingsAct";
+import { DEFAULT_SETTINGS } from "../../reducers/settingsRed";
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";

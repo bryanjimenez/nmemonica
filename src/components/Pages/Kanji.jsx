@@ -18,7 +18,8 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
-import { FILTER_GRP } from "../../reducers/settingsRed";
+import { FILTER_GRP } from "../../actions/settingsAct";
+
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { JapaneseText } from "../../helper/JapaneseText";
 import classNames from "classnames";

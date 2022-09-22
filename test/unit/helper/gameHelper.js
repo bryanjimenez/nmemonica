@@ -6,7 +6,7 @@ import {
   spaceRepOrder,
   termFilterByType,
 } from "../../../src/helper/gameHelper";
-import { FILTER_FREQ } from "../../../src/reducers/settingsRed";
+import { FILTER_FREQ } from "../../../src/actions/settingsAct";
 
 /* global describe it */
 
