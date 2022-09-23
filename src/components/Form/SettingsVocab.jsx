@@ -179,7 +179,7 @@ export function SettingsVocab(props) {
                         <div key={k} className="d-flex justify-content-between">
                           <div
                             className={classNames({
-                              "mr-3": true,
+                              "me-3": true,
                               "d-none": k === 0,
                             })}
                             onClick={() => {
@@ -215,7 +215,7 @@ export function SettingsVocab(props) {
                           >
                             <XCircleIcon
                               className={classNames({
-                                "mt-1 ml-3": true,
+                                "mt-1 ms-3": true,
                                 "incorrect-color": shownForms.length > 1,
                                 "disabled-color": shownForms.length === 1,
                               })}
@@ -230,7 +230,7 @@ export function SettingsVocab(props) {
                           key={shownForms.length + k}
                           className="d-flex justify-content-between"
                         >
-                          <div className="mr-3 transparent-color">
+                          <div className="me-3 transparent-color">
                             <ChevronUpIcon
                               classname="mt-1"
                               size="small"
@@ -249,7 +249,7 @@ export function SettingsVocab(props) {
                             }}
                           >
                             <PlusCircleIcon
-                              className="mt-1 ml-3"
+                              className="mt-1 ms-3"
                               size="small"
                               aria-label="add"
                             />

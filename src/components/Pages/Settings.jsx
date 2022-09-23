@@ -416,7 +416,7 @@ class Settings extends Component {
                         }, 1000);
                       }}
                     >
-                      <div className="pr-2">
+                      <div className="pe-2">
                         <div>{"swVersion:"}</div>
                         <div>{"jsVersion:"}</div>
                         <div>{"bundleVersion:"}</div>

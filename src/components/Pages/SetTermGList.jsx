@@ -37,7 +37,7 @@ export function SetTermGList(props) {
               }).map((s, i) => (
                 <GroupItem
                   key={i}
-                  addlStyle="ml-3"
+                  addlStyle="ms-3"
                   active={props.vocabActive.includes(g + "." + s)}
                   onClick={() => {
                     props.toggleTermActiveGrp(g + "." + s);

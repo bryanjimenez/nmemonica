@@ -123,7 +123,7 @@ class VerbMain extends Component {
 
   buildTenseElement(key, tense) {
     const columnClass = classNames({
-      "pt-3 pr-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap": true,
+      "pt-3 pe-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap": true,
       "text-end": key !== 0,
     });
 
