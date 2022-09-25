@@ -545,7 +545,7 @@ const mapStateToProps = (state) => {
     vocabOrder: state.settings.vocabulary.ordered,
     vocabSide: state.settings.vocabulary.practiceSide,
     vocabRomaji: state.settings.vocabulary.romaji,
-    vocabHint: state.settings.vocabulary.hint,
+    vocabHint: state.settings.vocabulary.hintEnabled,
     vocabGroups: state.vocabulary.grpObj,
     vocabActive: state.settings.vocabulary.activeGroup,
     vocabAutoPlay: state.settings.vocabulary.autoPlay,

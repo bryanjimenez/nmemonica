@@ -66,7 +66,7 @@ export const DEFAULT_SETTINGS = {
     ordered: true,
     practiceSide: false,
     romaji: false,
-    hint: false,
+    hintEnabled: false,
     filter: 0,
     reinforce: false,
     repetition: {},
@@ -198,7 +198,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          hint: !state.vocabulary.hint,
+          hintEnabled: !state.vocabulary.hintEnabled,
         },
       };
     case FLIP_VOCABULARY_PRACTICE_SIDE:

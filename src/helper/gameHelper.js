@@ -603,7 +603,7 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
  * @param {JSX.Element} eLabel
  * @param {JSX.Element} jLabel
  */
-export function valueLabelHelper(
+export function labelPlacementHelper(
   practiceSide,
   inEnglish,
   inJapanese,
@@ -624,6 +624,17 @@ export function valueLabelHelper(
   }
 
   return { topValue, topLabel, bottomValue, bottomLabel };
+}
+
+/**
+ * @param {RawVocabulary} vocabulary
+ */
+export function getEnglishHint(vocabulary) {
+  return !vocabulary.grp || vocabulary.grp === "" ? undefined : (
+    <span className="hint">
+      {vocabulary.grp + (vocabulary.subGrp ? ", " + vocabulary.subGrp : "")}
+    </span>
+  );
 }
 
 /**

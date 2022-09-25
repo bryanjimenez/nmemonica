@@ -406,7 +406,7 @@ export function toggleVocabularyHint() {
     const { user } = getState().login;
 
     const path = "/vocabulary/";
-    const attr = "hint";
+    const attr = "hintEnabled";
     const time = new Date();
     localStoreAttrUpdate(time, getState, path, attr);
 

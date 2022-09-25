@@ -4,13 +4,14 @@ import { configure, shallow } from "enzyme";
 import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
 import {
   furiganaParseRetry,
-  htmlElementHint,
   JapaneseText,
 } from "../../../src/helper/JapaneseText";
 import {
   buildHTMLElement,
   furiganaParse,
 } from "../../../src/helper/JapaneseText";
+import { kanaHintBuilder } from "../../../src/helper/kanaHelper";
+import { furiganaHintBuilder } from "../../../src/helper/kanjiHelper";
 
 /* global describe it */
 
@@ -340,41 +341,87 @@ describe("JapanseText", function () {
   });
 });
 
-describe("htmlElementHint", function () {
+describe("isHintable", function () {
   it("under minChars kanji", function () {
-    const actual = htmlElementHint("なつ\n夏");
-    expect(actual).to.be.undefined;
+    const j = { japanese: "なつ\n夏" };
+    const actual = JapaneseText.parse(j);
+
+    expect(actual.isHintable()).to.be.false;
+    expect(actual.isHintable(2)).to.be.true;
   });
   it("under minChars hiragana", function () {
-    const actual = htmlElementHint("これ");
-    expect(actual).to.be.undefined;
+    const j = { japanese: "これ" };
+    const actual = JapaneseText.parse(j);
+
+    expect(actual.isHintable()).to.be.false;
+    expect(actual.isHintable(2)).to.be.true;
   });
   it("hiragana only", function () {
-    const input = "かかる";
-    const expected = "か";
-    const actual = htmlElementHint(input);
-    const wrapper = shallow(actual);
-    expect(wrapper.text()).to.equal(expected);
-  });
-  it("katakana only", function () {
-    const input = "アパート";
-    const expected = "ア";
-    const actual = htmlElementHint(input);
-    const wrapper = shallow(actual);
-    expect(wrapper.text()).to.equal(expected);
-  });
-  it("starting kanji with furigana", function () {
-    const input = "あさごはん\n朝ご飯";
-    const firstKanji = "朝";
-    const firstFurigana = "あ";
-    const actual = htmlElementHint(input);
-    const wrapper = shallow(actual);
+    const j = { japanese: "かかる" };
+    const actual = JapaneseText.parse(j);
+
+    const wrapper = shallow(actual.getHint(kanaHintBuilder, undefined, 3, 1));
+
+    expect(actual.isHintable(), "isHintable").to.be.true;
     expect(
       wrapper.contains(
-        <ruby>
-          {firstKanji}
-          <rt>{firstFurigana}</rt>
-        </ruby>
+        <span className="hint">
+          <span className="hint-mora">か</span>
+          <span className="transparent-color">かる</span>
+        </span>
+      )
+    ).to.be.true;
+  });
+  it("katakana only", function () {
+    const j = { japanese: "アパート" };
+    const actual = JapaneseText.parse(j);
+
+    const wrapper = shallow(actual.getHint(kanaHintBuilder, undefined, 3, 1));
+
+    expect(actual.isHintable(), "isHintable").to.be.true;
+    expect(
+      wrapper.contains(
+        <span className="hint">
+          <span className="hint-mora">ア</span>
+          <span className="transparent-color">パート</span>
+        </span>
+      )
+    ).to.be.true;
+  });
+  it("starting kanji with furigana", function () {
+    const j = { japanese: "あさごはん\n朝ご飯" };
+    const actual = JapaneseText.parse(j);
+
+    const wrapper = shallow(
+      actual.getHint(undefined, furiganaHintBuilder, 3, 1)
+    );
+
+    expect(actual.isHintable(), "isHintable").to.be.true;
+    expect(
+      wrapper.contains(
+        <span className="hint">
+          <span>
+            <ruby>
+              <span className="hint-mora">朝</span>
+              <rt>
+                <span className="hint-mora">あ</span>
+                <span className="transparent-color">さ</span>
+              </rt>
+            </ruby>
+            <span>
+              <span className="transparent-color">ご</span>
+            </span>
+          </span>
+          <span>
+            <ruby>
+              <span className="transparent-color">飯</span>
+              <rt>
+                <span className="transparent-color">はん</span>
+              </rt>
+            </ruby>
+            <span />
+          </span>
+        </span>
       )
     ).to.be.true;
   });

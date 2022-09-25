@@ -1,3 +1,4 @@
+import React from "react";
 import data from "../../data/kana.json";
 
 /**
@@ -64,13 +65,13 @@ export function swapKana(char) {
   let swap = char;
   if (isHiragana(char)) {
     const cpv = char.codePointAt(0);
-    if(cpv){
+    if (cpv) {
       const katakana = cpv + 96;
       swap = String.fromCharCode(katakana);
     }
   } else if (isKatakana(char)) {
     const cpv = char.codePointAt(0);
-    if(cpv){
+    if (cpv) {
       const hiragana = cpv - 96;
       swap = String.fromCharCode(hiragana);
     }
@@ -88,7 +89,7 @@ export function toEnglishNumber(char) {
   let swap = Number.NaN;
   if (isFullWNumber(char)) {
     const cpv = char.codePointAt(0);
-    if(cpv){
+    if (cpv) {
       const katakana = cpv - 65249;
       swap = Number.parseInt(String.fromCharCode(katakana));
     }
@@ -130,4 +131,18 @@ export function getConsonantVowel(character) {
   }
 
   return { iConsonant, iVowel };
+}
+
+/**
+ * @param {{hidden:string, shown:string}} css
+ * @param {string} kana
+ * @param {number} hintMora
+ */
+export function kanaHintBuilder(css, kana, hintMora) {
+  return (
+    <span className="hint">
+      <span className={css.shown}>{kana.slice(0, hintMora)}</span>
+      <span className={css.hidden}>{kana.slice(hintMora)}</span>
+    </span>
+  );
 }

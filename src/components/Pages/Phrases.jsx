@@ -36,10 +36,10 @@ import {
   randomOrder,
   spaceRepOrder,
   termFilterByType,
-  valueLabelHelper,
   audioWordsHelper,
   getTermUID,
   getTerm,
+  labelPlacementHelper,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
@@ -473,7 +473,7 @@ class Phrases extends Component {
     const eLabel = "[English]";
     const jLabel = "[Japanese]";
 
-    const { topValue, bottomValue, bottomLabel } = valueLabelHelper(
+    const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
       this.props.practiceSide,
       englishPhrase,
       japanesePhrase,

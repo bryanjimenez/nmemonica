@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  GiftIcon,
   PlusCircleIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
@@ -37,11 +36,7 @@ import {
   AUTOPLAY_EN_JP,
   toggleFurigana,
 } from "../../actions/settingsAct";
-import {
-  audioPronunciation,
-  htmlElementHint,
-  JapaneseText,
-} from "../../helper/JapaneseText";
+import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
@@ -72,6 +67,7 @@ import {
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
+import { BtnShowHint } from "../Form/BtnShowHint";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -380,8 +376,6 @@ class Vocabulary extends Component {
 
     this.setState({
       reinforcedUID: uid,
-      showMeaning: false,
-      showRomaji: false,
       showHint: false,
     });
 
@@ -517,18 +511,15 @@ class Vocabulary extends Component {
     vocabulary.reinforce = this.state.frequency.includes(vocabulary.uid);
 
     const isVerb = vocabulary.grp === "Verb";
-    const hasFurigana = JapaneseText.parse(vocabulary).hasFurigana();
 
-    let hintActive, hint;
-    if (this.props.practiceSide) {
-      hint = htmlElementHint(vocabulary.japanese);
-      hintActive = hint && this.props.hintActive;
-    } else {
-      hintActive =
-        this.props.hintActive && vocabulary.grp && vocabulary.grp !== "";
-      hint =
-        vocabulary.grp + (vocabulary.subGrp ? ": " + vocabulary.subGrp : "");
-    }
+    const jText = JapaneseText.parse(vocabulary);
+    const hasFurigana = jText.hasFurigana();
+    const hasJHint = jText.isHintable(3);
+    const hasEHint = vocabulary.grp && vocabulary.grp !== "";
+
+    const showHint = this.state.showHint;
+    const isHintable =
+      !showHint && this.props.practiceSide ? hasJHint : hasEHint;
 
     let progress, pIdx, pList;
 
@@ -565,11 +556,13 @@ class Vocabulary extends Component {
               reCache={this.state.recacheAudio}
               practiceSide={this.props.practiceSide}
               linkToOtherTerm={(uid) => this.setState({ reinforcedUID: uid })}
+              showHint={showHint}
             />
           ) : (
             <VocabularyMain
               vocabulary={vocabulary}
               reCache={this.state.recacheAudio}
+              showHint={showHint}
             />
           )}
 
@@ -644,47 +637,17 @@ class Vocabulary extends Component {
               </div>
             </div>
             <div className="col text-center" style={{ maxHeight: "24px" }}>
-              {this.state.showHint && (
-                <h5
-                  onClick={() => {
-                    this.setState((state) => ({ showHint: !state.showHint }));
-                  }}
-                  className="clickable"
-                >
-                  {hint}
-                </h5>
-              )}
-              {!this.state.showHint && this.state.reinforcedUID && (
+              {this.state.reinforcedUID && (
                 <FontAwesomeIcon className="clickable" icon={faDice} />
               )}
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">
-                {!hintActive ? null : !this.state.showHint ? (
-                  <div
-                    className="sm-icon-grp"
-                    onClick={() => {
-                      this.setState({ showHint: true });
-                      setTimeout(() => {
-                        this.setState({ showHint: false });
-                      }, 1500);
-                    }}
-                  >
-                    <GiftIcon
-                      className="clickable"
-                      size="small"
-                      aria-label="hint"
-                    />
-                  </div>
-                ) : (
-                  <div className="sm-icon-grp">
-                    <GiftIcon
-                      className="disabled disabled-color"
-                      size="small"
-                      aria-label="hint unavailable"
-                    />
-                  </div>
-                )}
+                <BtnShowHint
+                  visible={this.props.hintEnabled}
+                  active={isHintable}
+                  setState={(state) => this.setState(state)}
+                />
 
                 <div
                   className={classNames({
@@ -826,7 +789,7 @@ const mapStateToProps = (state) => {
     practiceSide: state.settings.vocabulary.practiceSide,
     isOrdered: state.settings.vocabulary.ordered,
     romajiActive: state.settings.vocabulary.romaji,
-    hintActive: state.settings.vocabulary.hint,
+    hintEnabled: state.settings.vocabulary.hintEnabled,
     filterType: state.settings.vocabulary.filter,
     frequency: state.settings.vocabulary.frequency,
     activeGroup: state.settings.vocabulary.activeGroup,
@@ -848,7 +811,7 @@ Vocabulary.propTypes = {
   frequency: PropTypes.array,
   getVocabulary: PropTypes.func.isRequired,
   vocab: PropTypes.array.isRequired,
-  hintActive: PropTypes.bool,
+  hintEnabled: PropTypes.bool,
   romajiActive: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func.isRequired,
   practiceSide: PropTypes.bool,

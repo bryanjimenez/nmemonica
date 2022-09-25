@@ -115,6 +115,82 @@ export class JapaneseText {
   }
 
   /**
+   * @param {number} minimumMora
+   * @returns {boolean} meets minimumMora criteria and is parsable
+   */
+  isHintable(minimumMora=3) {
+    let hint = true;
+    const text = this;
+
+    if (text.hasFurigana()) {
+      const pronunciation = text.getPronunciation();
+      const orthography = text.getSpelling();
+
+      if (pronunciation.length < minimumMora) {
+        hint = false;
+      } else {
+        try {
+          furiganaParseRetry(pronunciation, orthography);
+        } catch (e) {
+          console.log(e);
+          // logger...
+          hint = false;
+        }
+      }
+    } else {
+      // no kanji
+      const kana = text.getSpelling();
+      if (kana.length < minimumMora) {
+        hint = false;
+      }
+    }
+
+    return hint;
+  }
+
+  /**
+   * @returns {JSX.Element|undefined}
+   * @param {function} kanaHintBuilder
+   * @param {function} furiganaHintBuilder
+   * @param {number} [minMora] minimum mora japaneseText must have for hint
+   * @param {number} [hintMora] number of mora to hint
+   */
+  getHint(kanaHintBuilder, furiganaHintBuilder, minMora = 3, hintMora = 1) {
+    const hiddenElCSS = "transparent-color";
+    const shownElCSS = "hint-mora";
+
+    const hintCSS = { shown: shownElCSS, hidden: hiddenElCSS };
+
+    let hint;
+
+    if (!this.isHintable(minMora)) {
+      hint = undefined;
+    } else {
+      if (this.hasFurigana()) {
+        const pronunciation = this.getPronunciation();
+        const orthography = this.getSpelling();
+
+        const { kanjis, furiganas, okuriganas, startsWKana } =
+          furiganaParseRetry(pronunciation, orthography);
+        hint = furiganaHintBuilder(
+          hintCSS,
+          kanjis,
+          furiganas,
+          okuriganas,
+          startsWKana,
+          hintMora
+        );
+      } else {
+        // no kanji
+        const kana = this.getSpelling();
+        hint = kanaHintBuilder(hintCSS, kana, hintMora);
+      }
+    }
+
+    return hint;
+  }
+
+  /**
    *
    * @param {*} options
    * @returns {JSX.Element}
@@ -502,60 +578,6 @@ export function buildHTMLElement(
       {sentence}
     </span>
   );
-}
-
-/**
- * when the japaneseText is less than minChars undefined is returned
- * otherwise the first kanji with furigana or first hiragan/katakana is returned
- * @returns {JSX.Element|undefined}
- * @param {string} japaneseText
- */
-export function htmlElementHint(japaneseText) {
-  const minChars = 3;
-  let pronunciation, orthography, hint;
-
-  if (japaneseText.includes("\n")) {
-    [pronunciation, orthography] = japaneseText.split("\n");
-
-    if (pronunciation.length < minChars) {
-      hint = undefined;
-    } else {
-      try {
-        const { kanjis, furiganas, okuriganas, startsWKana } =
-          furiganaParseRetry(pronunciation, orthography);
-
-        const firstKanji = kanjis[0][0];
-        const firstFurigana = furiganas[0][0];
-        const firstOkurigana =
-          okuriganas.length > 0 ? okuriganas[0][0] : undefined;
-
-        if (startsWKana) {
-          //starts with hiragana
-          hint = <span>{firstOkurigana}</span>;
-        } else {
-          //starts with kanji
-          const kanjiWFurigana = (
-            <ruby>
-              {firstKanji}
-              <rt>{firstFurigana}</rt>
-            </ruby>
-          );
-          hint = <span>{kanjiWFurigana}</span>;
-        }
-      } catch (e) {
-        hint = undefined;
-      }
-    }
-  } else {
-    // no kanji
-    if (japaneseText.length < minChars) {
-      hint = undefined;
-    } else {
-      hint = <span>{japaneseText[0]}</span>;
-    }
-  }
-
-  return hint;
 }
 
 /**

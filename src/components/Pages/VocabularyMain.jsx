@@ -14,10 +14,13 @@ import Sizable from "../Form/Sizable";
 import {
   audioWordsHelper,
   englishLabel,
+  getEnglishHint,
   japaneseLabel,
   toggleFuriganaSettingHelper,
-  valueLabelHelper,
+  labelPlacementHelper,
 } from "../../helper/gameHelper";
+import { furiganaHintBuilder } from "../../helper/kanjiHelper";
+import { kanaHintBuilder } from "../../helper/kanaHelper";
 
 class VocabularyMain extends Component {
   constructor(props) {
@@ -67,29 +70,39 @@ class VocabularyMain extends Component {
 
   render() {
     const vocabulary = this.props.vocabulary;
+    const practiceSide = this.props.practiceSide;
 
     const furiganaToggable = toggleFuriganaSettingHelper(
-      this.props.practiceSide,
+      practiceSide,
       vocabulary.uid,
       this.props.furigana,
       this.props.toggleFurigana
     );
 
-    let inJapanese = JapaneseText.parse(vocabulary).toHTML(furiganaToggable);
-    let inEnglish = vocabulary.english;
-    let romaji = vocabulary.romaji;
+    let jLabel = "[Japanese]";
+    let eLabel = "[English]";
 
-    const v = new JapaneseText.parse(vocabulary);
-    const inJapaneseLbl = japaneseLabel(this.props.practiceSide, v, inJapanese);
-    const inEnglishLbl = englishLabel(this.props.practiceSide, v, inEnglish);
+    const vObj = JapaneseText.parse(vocabulary);
+    const inJapanese = vObj.toHTML(furiganaToggable);
 
-    const { topValue, topLabel, bottomValue, bottomLabel } = valueLabelHelper(
-      this.props.practiceSide,
-      inEnglishLbl,
-      inJapaneseLbl,
-      "[English]",
-      "[Japanese]"
-    );
+    const inEnglish = vocabulary.english;
+    const romaji = vocabulary.romaji;
+
+    const jValue = japaneseLabel(practiceSide, vObj, inJapanese);
+    const eValue = englishLabel(practiceSide, vObj, inEnglish);
+
+    if (this.props.hintEnabled && this.props.showHint) {
+      if (practiceSide) {
+        const jHint = vObj.getHint(kanaHintBuilder, furiganaHintBuilder, 3, 1);
+        jLabel = jHint || jLabel;
+      } else {
+        const eHint = getEnglishHint(vocabulary);
+        eLabel = eHint || eLabel;
+      }
+    }
+
+    const { topValue, topLabel, bottomValue, bottomLabel } =
+      labelPlacementHelper(practiceSide, eValue, jValue, eLabel, jLabel);
 
     const audioWords = audioWordsHelper(
       this.state.prevPlayed,
@@ -102,7 +115,7 @@ class VocabularyMain extends Component {
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
         <Sizable
           smallStyle={{
-            fontSize: !this.props.practiceSide ? "2.5rem" : "2rem",
+            fontSize: !practiceSide ? "2.5rem" : "2rem",
           }}
           largeStyle={{ fontSize: "2.5rem" }}
           onClick={() => {
@@ -111,7 +124,7 @@ class VocabularyMain extends Component {
             }
           }}
         >
-          {this.props.autoPlay && this.props.practiceSide ? topLabel : topValue}
+          {this.props.autoPlay && practiceSide ? topLabel : topValue}
         </Sizable>
         {this.props.romajiActive && romaji && (
           <h5>
@@ -138,7 +151,7 @@ class VocabularyMain extends Component {
             }}
             className="clickable"
           >
-            {(this.props.autoPlay && !this.props.practiceSide) ||
+            {(this.props.autoPlay && !practiceSide) ||
             (!this.props.autoPlay && this.state.showMeaning)
               ? bottomValue
               : bottomLabel}
@@ -177,6 +190,7 @@ const mapStateToProps = (state) => {
     prevPushPlay: state.vocabulary.pushedPlay,
     touchSwipe: state.settings.global.touchSwipe,
     furigana: state.settings.vocabulary.repetition,
+    hintEnabled: state.settings.vocabulary.hintEnabled,
   };
 };
 
@@ -200,6 +214,8 @@ VocabularyMain.propTypes = {
   furigana: PropTypes.object,
   toggleFurigana: PropTypes.func,
   toggleFuriganaSettingHelper: PropTypes.func,
+  hintEnabled: PropTypes.bool,
+  showHint: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {

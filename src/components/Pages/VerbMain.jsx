@@ -19,9 +19,12 @@ import {
   getVerbFormsArray,
   japaneseLabel,
   toggleFuriganaSettingHelper,
-  valueLabelHelper,
+  labelPlacementHelper,
   verbToTargetForm,
+  getEnglishHint,
 } from "../../helper/gameHelper";
+import { furiganaHintBuilder } from "../../helper/kanjiHelper";
+import { kanaHintBuilder } from "../../helper/kanaHelper";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -232,34 +235,45 @@ class VerbMain extends Component {
     const { inJapanese, inEnglish, romaji, japaneseObj } =
       this.getVerbLabelItems(verbForms, this.props.verbForm);
 
+    const practiceSide = this.props.practiceSide;
     let eLabel = <span>{"[English]"}</span>;
     let jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
-    const v = JapaneseVerb.parse(verb);
-    const inJapaneseLbl = japaneseLabel(
-      this.props.practiceSide,
-      v,
+    const vObj = JapaneseVerb.parse(verb);
+    const jValue = japaneseLabel(
+      practiceSide,
+      vObj,
       inJapanese,
       this.props.linkToOtherTerm
     );
 
-    const inEnglishLbl = englishLabel(
-      this.props.practiceSide,
-      v,
+    const eValue = englishLabel(
+      practiceSide,
+      vObj,
       inEnglish,
       this.props.linkToOtherTerm
     );
 
-    const { topValue, topLabel, bottomValue, bottomLabel } = valueLabelHelper(
-      this.props.practiceSide,
-      inEnglishLbl,
-      inJapaneseLbl,
-      eLabel,
-      jLabel
-    );
+    if (this.props.hintEnabled && this.props.showHint) {
+      if (practiceSide) {
+        const jHint = japaneseObj.getHint(
+          kanaHintBuilder,
+          furiganaHintBuilder,
+          3,
+          1
+        );
+        jLabel = jHint || jLabel;
+      } else {
+        const eHint = getEnglishHint(verb);
+        eLabel = eHint || eLabel;
+      }
+    }
 
-    const topStyle = { fontSize: !this.props.practiceSide ? "2.5rem" : "1rem" };
-    const btmStyle = { fontSize: this.props.practiceSide ? "2.5rem" : "1rem" };
+    const { topValue, topLabel, bottomValue, bottomLabel } =
+      labelPlacementHelper(practiceSide, eValue, jValue, eLabel, jLabel);
+
+    const topStyle = { fontSize: !practiceSide ? "2.5rem" : "1rem" };
+    const btmStyle = { fontSize: practiceSide ? "2.5rem" : "1rem" };
 
     const verbJapanese = {
       ...verb,
@@ -291,9 +305,7 @@ class VerbMain extends Component {
                 : undefined
             }
           >
-            {this.props.autoPlay && this.props.practiceSide
-              ? topLabel
-              : topValue}
+            {this.props.autoPlay && practiceSide ? topLabel : topValue}
           </span>
         </div>
 
@@ -326,7 +338,7 @@ class VerbMain extends Component {
               }
             }}
           >
-            {(this.props.autoPlay && !this.props.practiceSide) ||
+            {(this.props.autoPlay && !practiceSide) ||
             (!this.props.autoPlay && this.state.showMeaning)
               ? bottomValue
               : bottomLabel}
@@ -387,6 +399,7 @@ const mapStateToProps = (state) => {
     furigana: state.settings.vocabulary.repetition,
     verbColSplit: state.settings.vocabulary.verbColSplit,
     verbFormsOrder: state.settings.vocabulary.verbFormsOrder,
+    hintEnabled: state.settings.vocabulary.hintEnabled,
   };
 };
 
@@ -415,6 +428,9 @@ VerbMain.propTypes = {
   toggleFurigana: PropTypes.func,
   toggleFuriganaSettingHelper: PropTypes.func,
   verbColSplit: PropTypes.number,
+  verbFormsOrder: PropTypes.array,
+  hintEnabled: PropTypes.bool,
+  showHint: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {
