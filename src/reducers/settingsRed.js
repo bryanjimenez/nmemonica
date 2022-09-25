@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { FIREBASE_LOGOUT, GET_USER_SETTINGS } from "../actions/firebase";
 import {
   FLIP_PHRASES_PRACTICE_SIDE,
