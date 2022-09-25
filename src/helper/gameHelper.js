@@ -12,6 +12,7 @@ import { JapaneseVerb } from "./JapaneseVerb";
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../typings/raw").AudioQueryParams} AudioQueryParams
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
+ * @typedef {import("../typings/raw").VerbFormArray} VerbFormArray
  */
 
 /**
@@ -341,7 +342,7 @@ export function toggleOptions(index, options) {
 
 /**
  * Array containing the avaiable verb forms
- * @returns {{t:string, j:JapaneseText}[]}
+ * @returns {VerbFormArray}
  * @param {RawJapanese} rawVerb
  * @param {string[]} [order]
  */
@@ -349,24 +350,24 @@ export function getVerbFormsArray(rawVerb, order) {
   const dictionaryForm = JapaneseVerb.parse(rawVerb);
 
   const allAvailable = [
-    { t: "-masu", j: dictionaryForm.masuForm() },
-    { t: "-mashou", j: dictionaryForm.mashouForm() },
-    { t: "dictionary", j: dictionaryForm },
-    { t: "-nai", j: dictionaryForm.naiForm() },
-    { t: "-saseru", j: dictionaryForm.saseruForm() },
-    { t: "-te", j: dictionaryForm.teForm() },
-    { t: "-ta", j: dictionaryForm.taForm() },
+    { name: "-masu", value: dictionaryForm.masuForm() },
+    { name: "-mashou", value: dictionaryForm.mashouForm() },
+    { name: "dictionary", value: dictionaryForm },
+    { name: "-nai", value: dictionaryForm.naiForm() },
+    { name: "-saseru", value: dictionaryForm.saseruForm() },
+    { name: "-te", value: dictionaryForm.teForm() },
+    { name: "-ta", value: dictionaryForm.taForm() },
   ];
 
   let filtered;
   if (order && order.length > 0) {
     /**
-     * @type {{t:string, j:JapaneseText}[]}
+     * @type {VerbFormArray}
      */
     let fil = [];
 
     filtered = order.reduce((acc, form) => {
-      const f = allAvailable.find((el) => el.t === form);
+      const f = allAvailable.find((el) => el.name === form);
       if (f !== undefined) {
         acc = [...acc, f];
       }
@@ -379,16 +380,20 @@ export function getVerbFormsArray(rawVerb, order) {
 }
 
 /**
- * @returns {JapaneseText}
- * @param {RawVocabulary} rawVerb
+ * @throws {Error} if the target form is not valid
+ * @param {RawJapanese} rawVerb
  * @param {string} targetForm
  */
 export function verbToTargetForm(rawVerb, targetForm) {
-  const { j: theForm } = getVerbFormsArray(rawVerb).find(
-    (form) => form.t === targetForm
+  const theForm = getVerbFormsArray(rawVerb).find(
+    (form) => form.name === targetForm
   );
 
-  return theForm;
+  if (!theForm) {
+    throw new Error("Invalid targetForm");
+  }
+
+  return theForm.value;
 }
 
 /**

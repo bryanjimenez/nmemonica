@@ -180,7 +180,7 @@ export function SettingsVocab(props) {
                           <div
                             className={classNames({
                               "me-3": true,
-                              "d-none": k === 0,
+                              "disabled-color": k===0,
                             })}
                             onClick={() => {
                               if (k > 0) {

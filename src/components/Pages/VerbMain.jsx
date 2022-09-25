@@ -23,6 +23,12 @@ import {
   verbToTargetForm,
 } from "../../helper/gameHelper";
 
+/**
+ * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {import("../../typings/raw").VerbFormArray} VerbFormArray
+ * @typedef {import("../../helper/JapaneseText").JapaneseText} JapaneseText
+ */
+
 class VerbMain extends Component {
   constructor(props) {
     super(props);
@@ -121,6 +127,10 @@ class VerbMain extends Component {
     }
   }
 
+  /**
+   * @param {number} key
+   * @param {VerbFormArray} tense
+   */
   buildTenseElement(key, tense) {
     const columnClass = classNames({
       "pt-3 pe-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap": true,
@@ -133,22 +143,24 @@ class VerbMain extends Component {
         // "font-weight-bold": this.props.verbForm === t.t,
       });
 
-      const braketClass = classNames({"transparent-color":this.props.verbForm === t.t})
+      const braketClass = classNames({
+        "transparent-color": this.props.verbForm === t.name,
+      });
 
       return (
         <div
           className={tenseClass}
           key={i}
           onClick={() => {
-            if (this.props.verbForm === t.t) {
+            if (this.props.verbForm === t.name) {
               this.props.setShownForm("dictionary");
             } else {
-              this.props.setShownForm(t.t);
+              this.props.setShownForm(t.name);
             }
           }}
         >
           <span className={braketClass}>[</span>
-          <span>{t.t}</span>
+          <span>{t.name}</span>
           <span className={braketClass}>]</span>
         </div>
       );
@@ -161,9 +173,12 @@ class VerbMain extends Component {
     );
   }
 
-  getSplitIdx(verbForms){
+  /**
+   * @param {VerbFormArray} verbForms
+   */
+  getSplitIdx(verbForms) {
     const middle =
-    Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
+      Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
 
     const rightShift = middle - this.props.verbColSplit;
     const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
@@ -172,8 +187,8 @@ class VerbMain extends Component {
   }
   /**
    * splits the verb forms into two columns
-   * @param {*} verbForms
-   * @returns {Object} an object containing two columns
+   * @param {VerbFormArray} verbForms
+   * @returns an object containing two columns
    */
   splitVerbFormsToColumns(verbForms) {
     const splitIdx = this.getSplitIdx(verbForms);
@@ -184,19 +199,18 @@ class VerbMain extends Component {
   }
 
   /**
-   *
-   * @param {Array} verbForms
+   * @param {VerbFormArray} verbForms
    * @param {string} theForm the form to filter by
-   * @returns {{ inJapanese:JSX.Element, inEnglish:string, romaji:string, japanesePhrase }}
    */
   getVerbLabelItems(verbForms, theForm) {
     const romaji = this.props.verb.romaji || ".";
     const splitIdx = this.getSplitIdx(verbForms);
 
-    const formResult = verbForms.find((form) => form.t === theForm);
-    const japanesePhrase = formResult
-      ? formResult.j
-      : verbForms[splitIdx].j;
+    const formResult = verbForms.find((form) => form.name === theForm);
+    /** @type {JapaneseText} */
+    const japaneseObj = formResult
+      ? formResult.value
+      : verbForms[splitIdx].value;
 
     const furiganaToggable = toggleFuriganaSettingHelper(
       this.props.practiceSide,
@@ -205,21 +219,21 @@ class VerbMain extends Component {
       this.props.toggleFurigana
     );
 
-    let inJapanese = japanesePhrase.toHTML(furiganaToggable);
+    let inJapanese = japaneseObj.toHTML(furiganaToggable);
     let inEnglish = this.props.verb.english;
 
-    return { inJapanese, inEnglish, romaji, japanesePhrase };
+    return { inJapanese, inEnglish, romaji, japaneseObj };
   }
 
   render() {
     const verb = this.props.verb;
     const verbForms = getVerbFormsArray(verb, this.props.verbFormsOrder);
     const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
-    const { inJapanese, inEnglish, romaji, japanesePhrase } =
+    const { inJapanese, inEnglish, romaji, japaneseObj } =
       this.getVerbLabelItems(verbForms, this.props.verbForm);
 
-    const eLabel = "[English]";
-    const jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
+    let eLabel = <span>{"[English]"}</span>;
+    let jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
 
     const v = JapaneseVerb.parse(verb);
     const inJapaneseLbl = japaneseLabel(
@@ -249,8 +263,8 @@ class VerbMain extends Component {
 
     const verbJapanese = {
       ...verb,
-      japanese: japanesePhrase.toString(),
-      pronounce: verb.pronounce && japanesePhrase.getPronunciation(),
+      japanese: japaneseObj.toString(),
+      pronounce: verb.pronounce && japaneseObj.getPronunciation(),
       form: this.props.verbForm,
     };
 

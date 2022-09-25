@@ -39,3 +39,8 @@ interface AudioQueryParams {
     q: string,
     uid: string,
 }
+
+export type VerbFormArray = {
+    name: string,
+    value: JapaneseText,
+}[]
