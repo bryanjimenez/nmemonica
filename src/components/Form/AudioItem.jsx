@@ -9,6 +9,22 @@ import {
 } from "../../actions/settingsAct";
 import { addParam } from "../../helper/urlHelper";
 
+/**
+ * @typedef {{word: {
+ * tl: string,
+ * q: string,
+ * uid: string
+ * }[],
+ * autoPlay: number,
+ * reCache?: boolean,
+ * onPushedPlay: function,
+ * onAutoPlayDone: function,
+ * visible: boolean,}} AudioItemProps
+ */
+
+/**
+ * @param {AudioItemProps} props
+ */
 export default function AudioItem(props) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
   // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
@@ -18,12 +34,15 @@ export default function AudioItem(props) {
   // props.word = [playOnClick, playOnShow, playOnSwipe]
   const words = props.word;
 
+  /** @type {HTMLAudioElement|null} */
   let player;
+  /** @type {number} */
   let tStart;
   let playPushed = false;
 
   const touchPlayParam = words[0];
 
+  /** @type {string[]} */
   let autoPlayEndPoint = [];
 
   if (props.autoPlay === AUTOPLAY_EN_JP && words.length === 2) {
@@ -63,8 +82,12 @@ export default function AudioItem(props) {
       [AUTOPLAY_EN_JP, AUTOPLAY_JP_EN].includes(props.autoPlay) &&
       autoPlayEndPoint.length > 0
     ) {
-      player.src = autoPlayEndPoint[0];
-      player.play();
+      if (player) {
+        player.src = autoPlayEndPoint[0];
+        player.play();
+      } else {
+        console.error("AudioItem not ready");
+      }
     }
   };
 
@@ -84,8 +107,12 @@ export default function AudioItem(props) {
 
     const override = time < 500 && !props.reCache ? "" : "/override_cache";
 
-    player.src = addParam(pronounceEndoint + override, touchPlayParam);
-    player.play();
+    if (player) {
+      player.src = addParam(pronounceEndoint + override, touchPlayParam);
+      player.play();
+    } else {
+      console.error("AudioItem not ready");
+    }
   };
 
   return (

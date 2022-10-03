@@ -3,9 +3,20 @@ import classNames from "classnames";
 import PropTypes from "prop-types";
 import { PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
 
+/**
+ * @typedef {{
+ * addlStyle?: string,
+ * active: boolean,
+ * onClick: import("react").MouseEventHandler,
+ * children: JSX.Element|string}} GroupItemProps
+ */
+
+/**
+ * @param {GroupItemProps} props
+ */
 export function GroupItem(props) {
   const css = classNames({
-    [props.addlStyle]: props.addlStyle && true,
+    ["" + props.addlStyle]: props.addlStyle ? true : false,
     "p-0 px-2": true,
     "font-weight-bold": props.active,
   });

@@ -4,6 +4,18 @@ import Switch from "@material-ui/core/Switch";
 import classNames from "classnames";
 import "./SettingsSwitch.css";
 
+/**
+ * @typedef {{
+ * active: boolean,
+ * action: function,
+ * statusText: string,
+ * color?: "primary"|"secondary"|"default"|undefined,
+ * disabled?: boolean}} SettingsSwitchProps
+ */
+
+/**
+ * @param {SettingsSwitchProps} props
+ */
 export function SettingsSwitch(props) {
   const other = { disabled: props.disabled ? true : undefined };
 

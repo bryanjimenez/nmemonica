@@ -7,6 +7,34 @@ import { SetTermGFList } from "../Pages/SetTermGFList";
 import { labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
 
+/**
+ * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ */
+
+/**
+ * @typedef {{
+ * show: boolean,
+ * phrases: RawVocabulary[],
+ * phraseOrder: boolean,
+ * phraseRomaji: boolean,
+ * phraseSide: boolean,
+ * phraseFilter: number,
+ * phraseFreq: string[],
+ * phraseReinforce: boolean,
+ * phraseGroups: any,
+ * phraseActive: string[],
+ * setPhrasesOrdering: function,
+ * togglePhrasesFilter: function,
+ * toggleActiveGrp: function,
+ * togglePhrasesRomaji: function,
+ * togglePhrasesReinforcement: function,
+ * removeFrequencyPhrase: function,
+ * flipPhrasesPracticeSide: function}} SettingsPhraseProps
+ */
+
+/**
+ * @param {SettingsPhraseProps} props
+ */
 export function SettingsPhrase(props) {
   const {
     show,
@@ -33,7 +61,7 @@ export function SettingsPhrase(props) {
 
   let el;
   try {
-    el = show && (
+    el = !show ? null : (
       <div className="outer">
         <div className="d-flex flex-row justify-content-between">
           <div className="column-1">

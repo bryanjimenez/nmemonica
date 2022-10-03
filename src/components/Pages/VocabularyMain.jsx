@@ -22,10 +22,50 @@ import {
 import { furiganaHintBuilder } from "../../helper/kanjiHelper";
 import { kanaHintBuilder } from "../../helper/kanaHelper";
 
+/**
+ * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ */
+
+/**
+ * @typedef {{
+ * showMeaning: boolean,
+ * showRomaji: boolean,
+ * prevVocab:RawVocabulary,
+ * showHint?: boolean,
+ * naFlip?: string,
+ * swiping?: any,
+ * prevPlayed: boolean,
+ * audioPlay: boolean,
+ * }} VocabularyMainState
+ */
+
+/**
+ * @typedef {{
+ * vocabulary: RawVocabulary[],
+ * showHint: boolean,
+ * hintEnabled: boolean,
+ * romajiActive: boolean,
+ * flipVocabularyPracticeSide: function,
+ * practiceSide: boolean,
+ * autoPlay: number,
+ * scrollingDone: boolean,
+ * pushedPlay: function,
+ * touchSwipe: boolean,
+ * furigana: any,
+ * toggleFurigana: function,
+ * toggleFuriganaSettingHelper: function,
+ * reCache: boolean,
+ * prevTerm: RawVocabulary,
+ * played: boolean,
+ * prevPushPlay: boolean,
+ * }} VocabularyMainProps
+ */
+
 class VocabularyMain extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {VocabularyMainState} */
     this.state = {
       showMeaning: false,
       showRomaji: false,
@@ -39,6 +79,10 @@ class VocabularyMain extends Component {
     this.setState({ audioPlay: false });
   }
 
+  /**
+   * @param {VocabularyMainProps} nextProps
+   * @param {VocabularyMainState} nextState
+   */
   shouldComponentUpdate(nextProps, nextState) {
     if (
       this.state.audioPlay !== nextState.audioPlay &&
@@ -50,6 +94,9 @@ class VocabularyMain extends Component {
     return true;
   }
 
+  /**
+   * @param {VocabularyMainProps} prevProps
+   */
   componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.vocabulary !== prevProps.vocabulary) {
       this.setState({
@@ -79,8 +126,8 @@ class VocabularyMain extends Component {
       this.props.toggleFurigana
     );
 
-    let jLabel = "[Japanese]";
-    let eLabel = "[English]";
+    let jLabel = <span>{"[Japanese]"}</span>;
+    let eLabel = <span>{"[English]"}</span>;
 
     const vObj = JapaneseText.parse(vocabulary);
     const inJapanese = vObj.toHTML(furiganaToggable);
@@ -130,7 +177,9 @@ class VocabularyMain extends Component {
           <h5>
             <span
               onClick={() => {
-                this.setState((state) => ({ showRomaji: !state.showRomaji }));
+                this.setState((/** @type {VocabularyMainState} */ state) => ({
+                  showRomaji: !state.showRomaji,
+                }));
               }}
               className="clickable"
             >
@@ -144,7 +193,7 @@ class VocabularyMain extends Component {
               if (this.props.autoPlay) {
                 this.props.flipVocabularyPracticeSide();
               } else {
-                this.setState((state) => ({
+                this.setState((/** @type {VocabularyMainState} */ state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }

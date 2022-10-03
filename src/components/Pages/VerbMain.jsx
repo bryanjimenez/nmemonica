@@ -32,10 +32,28 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * @typedef {import("../../helper/JapaneseText").JapaneseText} JapaneseText
  */
 
+/**
+ * @typedef {{
+ * showMeaning: boolean,
+ * showRomaji: boolean,
+ * prevVocab: RawVocabulary,
+ * audioPlay: boolean,
+ * prevPlayed: boolean,
+ * }} VerbMainState
+ */
+
+/**
+ * @typedef {{
+ * verb: RawVocabulary,
+ * verbForm: string,
+ * }} VerbMainProps
+ */
+
 class VerbMain extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {VerbMainState} */
     this.state = {
       showMeaning: false,
       showRomaji: false,
@@ -64,6 +82,10 @@ class VerbMain extends Component {
     }
   }
 
+  /**
+   * @param {VerbMainProps} nextProps
+   * @param {VerbMainState} nextState
+   */
   shouldComponentUpdate(nextProps, nextState) {
     if (
       this.state.prevVocab !== undefined &&
@@ -76,6 +98,9 @@ class VerbMain extends Component {
     return true;
   }
 
+  /**
+   * @param {VerbMainProps} prevProps
+   */
   componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.verb != prevProps.verb) {
       // verb change
@@ -314,7 +339,7 @@ class VerbMain extends Component {
             <span
               className="clickable"
               onClick={() => {
-                this.setState((state) => ({
+                this.setState((/** @type {VerbMainState} */ state) => ({
                   showRomaji: !state.showRomaji,
                 }));
               }}
@@ -332,7 +357,7 @@ class VerbMain extends Component {
               if (this.props.autoPlay) {
                 this.props.flipVocabularyPracticeSide();
               } else {
-                this.setState((state) => ({
+                this.setState((/** @type {VerbMainState} */ state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }

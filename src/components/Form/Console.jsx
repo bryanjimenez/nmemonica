@@ -3,11 +3,35 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 
 import classNames from "classnames";
-import { DEBUG_ERROR, DEBUG_OFF, DEBUG_ON, DEBUG_WARN } from "../../actions/settingsAct";
+import {
+  DEBUG_ERROR,
+  DEBUG_OFF,
+  DEBUG_ON,
+  DEBUG_WARN,
+} from "../../actions/settingsAct";
+
+/**
+ * @typedef {{msg:string, lvl:number}} ConsoleMessage
+ */
+
+/**
+ * @typedef {{
+ * window: number,
+ * scroll: number,
+ * messages: ConsoleMessage[]}} ConsoleState
+ */
+
+/**
+ * @typedef {{
+ * debug: number,
+ * messages: ConsoleMessage[]}} ConsoleProps
+ */
 
 class Console extends Component {
   constructor(props) {
     super(props);
+
+    /** @type {ConsoleState} */
     this.state = {
       window: 6,
       scroll: 0,
@@ -16,8 +40,12 @@ class Console extends Component {
     this.scrollUp = this.scrollUp.bind(this);
   }
 
+  /** @param {ConsoleProps} prevProps */
   componentDidUpdate(prevProps) {
-    if (this.props.debug ===  DEBUG_OFF && this.props.debug !== prevProps.debug) {
+    if (
+      this.props.debug === DEBUG_OFF &&
+      this.props.debug !== prevProps.debug
+    ) {
       this.setState({ scroll: 0, messages: [] });
     }
 
@@ -33,7 +61,7 @@ class Console extends Component {
     const max = messages.length - window > -1 ? messages.length - window : 0;
 
     if (this.state.scroll < max) {
-      this.setState((state) => ({
+      this.setState((/** @type {ConsoleState} */ state) => ({
         scroll: state.scroll + 1,
       }));
     }
@@ -42,27 +70,29 @@ class Console extends Component {
   /**
    * squashes sequential messages that are the same
    * incrementing a counter on the final message
-   * @param {Array} messages 
-   * @returns {Array} 
+   * @param {ConsoleMessage[]} messages
    */
-  squashSeqMsgs(messages){
+  squashSeqMsgs(messages) {
+    /** @type {ConsoleMessage[]} */
     let squashed = [];
     let count = 0;
 
-    messages.forEach((element,i) => {
-      if(i>0 && element.msg===messages[i-1].msg){
+    messages.forEach((element, i) => {
+      if (i > 0 && element.msg === messages[i - 1].msg) {
         count++;
-      }
-      else{
-        if(count>0){
-          const front = squashed.slice(0,-1);
+      } else {
+        if (count > 0) {
+          const front = squashed.slice(0, -1);
           const last = squashed.slice(-1)[0];
 
-          squashed = [...front,{...last, msg:last.msg+" "+(count+1)+"+"},element]
+          squashed = [
+            ...front,
+            { ...last, msg: last.msg + " " + (count + 1) + "+" },
+            element,
+          ];
           count = 0;
-        }
-        else{
-          squashed = [...squashed,element]
+        } else {
+          squashed = [...squashed, element];
         }
       }
     });
@@ -82,7 +112,6 @@ class Console extends Component {
     const start = -window - this.state.scroll;
     const end = this.state.scroll > 0 ? -1 * this.state.scroll : undefined;
     const messages = this.state.messages.slice(start, end);
-
 
     // const tester = [{msg:'a'},{msg:'a'},{msg:'a'},{msg:'c'},{msg:'d'},{msg:'d'},{msg:'a'},{msg:'a'}]
     // const ar = this.squashSeqMsgs(tester);
@@ -111,10 +140,14 @@ class Console extends Component {
 
 Console.propTypes = {
   messages: PropTypes.array,
+  debug: PropTypes.number,
 };
 
 const mapStateToProps = (state) => {
-  return { messages: state.settings.global.console, debug: state.settings.global.debug };
+  return {
+    messages: state.settings.global.console,
+    debug: state.settings.global.debug,
+  };
 };
 
 export default connect(mapStateToProps, {})(Console);

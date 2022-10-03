@@ -4,6 +4,19 @@ import { XCircleIcon, IssueDraftIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 
 /**
+ * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ */
+
+/**
+ * @typedef {{
+ * vocabulary:RawVocabulary[],
+ * vocabFreq: string[],
+ * vocabActive: string[],
+ * toggleTermActiveGrp: (grp:string)=>function,
+ * removeFrequencyWord: function}} SetTermGFListProps
+ */
+
+/**
  * @param {boolean} grpActive
  * @param {number} i
  * @param {string} uid
@@ -48,10 +61,14 @@ function listItem(grpActive, i, uid, english, removeFrequencyWord) {
 
 /**
  * Groups + Frequency words list
+ * @param {SetTermGFListProps} props
  */
 export function SetTermGFList(props) {
+  /** @type {string[]} */
   let cleanup = [];
 
+  /** @type {RawVocabulary[]} */
+  let thisgrpInit = [];
   const thisgrp = props.vocabFreq.reduce((acc, f) => {
     const found = props.vocabulary.find((v) => v.uid === f);
 
@@ -62,17 +79,21 @@ export function SetTermGFList(props) {
     }
 
     return acc;
-  }, []);
+  }, thisgrpInit);
 
+  /** @type {{[key:string]:RawVocabulary[]}} */
+  let grpListInit = {};
   const grplist = thisgrp.reduce((acc, cur) => {
-    if (acc[cur.grp]) {
-      acc[cur.grp] = [...acc[cur.grp], cur];
+    const key = cur.grp ? cur.grp : "undefined";
+
+    if (acc[key]) {
+      acc[key] = [...acc[key], cur];
     } else {
-      acc[cur.grp] = [cur];
+      acc[key] = [cur];
     }
 
     return acc;
-  }, {});
+  }, grpListInit);
 
   return (
     <div>

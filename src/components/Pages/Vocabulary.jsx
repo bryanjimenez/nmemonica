@@ -40,7 +40,7 @@ import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { Avatar, Grow, LinearProgress } from "@material-ui/core";
-import StackOrderSlider from "../Form/StackOrderSlider";
+import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import VocabularyMain from "./VocabularyMain";
 import VerbMain from "./VerbMain";
 import { deepOrange } from "@material-ui/core/colors";
@@ -69,15 +69,75 @@ import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
 import { BtnShowHint } from "../Form/BtnShowHint";
 
+/**
+ * @typedef {import("react").TouchEventHandler} TouchEventHandler
+ * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {{nextUID:string, nextIndex?:undefined}|{nextUID?:undefined, nextIndex:number}} MEid
+ */
+
+/**
+ * @typedef {{
+ * lastNext:number, selectedIndex: number
+ * reinforcedUID?: string,
+ * showHint: boolean,
+ * filteredVocab: RawVocabulary[],
+ * frequency: string[],
+ * order?: number[],
+ * naFlip?: string,
+ * swiping?: any,
+ * showPageBar?: boolean,
+ * recacheAudio: boolean,
+ * scrollJOrder?: boolean,
+ * ebare?: { uid: string, label: string,idx: number}[],
+ * jbare?: { uid: string, label: string,idx: number}[],
+ * }} VocabularyState
+ */
+
+/**
+ * @typedef {{
+ * activeGroup: string[],
+ * addFrequencyWord: function,
+ * removeFrequencyWord: function,
+ * frequency: string[],
+ * getVocabulary: function,
+ * vocab: RawVocabulary[],
+ * hintEnabled: boolean,
+ * romajiActive: boolean,
+ * flipVocabularyPracticeSide: function,
+ * practiceSide: boolean,
+ * isOrdered: boolean,
+ * autoPlay: number,
+ * scrollingDone: boolean,
+ * scrollingState: function,
+ * autoVerbView: boolean,
+ * toggleAutoVerbView: function,
+ * filterType: number,
+ * toggleVocabularyFilter: function,
+ * reinforce: boolean,
+ * previous: RawVocabulary,
+ * setPreviousWord: function,
+ * repetition: PropTypes.object,
+ * lastNext: number,
+ * updateSpaceRepWord: function,
+ * logger: function,
+ * verbForm: string,
+ * pushedPlay: function,
+ * touchSwipe: boolean,
+ * toggleFurigana: function,
+ * }} VocabularyProps
+ */
+
 const VocabularyMeta = {
   location: "/vocabulary/",
   label: "Vocabulary",
 };
 
 class Vocabulary extends Component {
+  /** @param {VocabularyProps} props */
   constructor(props) {
     super(props);
 
+    /** @type {VocabularyState} */
     this.state = {
       lastNext: Date.now(),
       selectedIndex: 0,
@@ -117,6 +177,10 @@ class Vocabulary extends Component {
     document.addEventListener("keydown", this.arrowKeyPress, true);
   }
 
+  /**
+   * @param {VocabularyProps} prevProps
+   * @param {VocabularyState} prevState
+   */
   componentDidUpdate(prevProps, prevState) {
     if (
       this.state.order !== prevState.order ||
@@ -153,7 +217,9 @@ class Vocabulary extends Component {
 
     if (
       this.props.activeGroup.length != prevProps.activeGroup.length ||
-      this.props.activeGroup.some((e) => !prevProps.activeGroup.includes(e)) ||
+      this.props.activeGroup.some(
+        (/** @type {string} */ e) => !prevProps.activeGroup.includes(e)
+      ) ||
       prevProps.activeGroup.some((e) => !this.props.activeGroup.includes(e))
     ) {
       // console.log("activeGroup changed");
@@ -162,7 +228,9 @@ class Vocabulary extends Component {
 
     if (
       this.props.frequency.length != prevProps.frequency.length ||
-      this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
+      this.props.frequency.some(
+        (/** @type {string} */ e) => !prevProps.frequency.includes(e)
+      ) ||
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
       if (
@@ -172,8 +240,8 @@ class Vocabulary extends Component {
         this.setOrder();
       } else {
         const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
-        const frequency = this.props.frequency.filter((f) =>
-          filteredKeys.includes(f)
+        const frequency = this.props.frequency.filter(
+          (/** @type {string} */ f) => filteredKeys.includes(f)
         );
         // props.frequency is all frequency words
         // state.frequency is a subset of frequency words within current active group
@@ -186,6 +254,9 @@ class Vocabulary extends Component {
     document.removeEventListener("keydown", this.arrowKeyPress, true);
   }
 
+  /**
+   * @param {KeyboardEvent} event
+   */
   arrowKeyPress(event) {
     if (
       event.key === "ArrowLeft" ||
@@ -220,7 +291,9 @@ class Vocabulary extends Component {
     );
 
     let newOrder;
+    /** @type {VocabularyState["jbare"]} */
     let jbare = [];
+    /** @type {VocabularyState["ebare"]} */
     let ebare = [];
 
     if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
@@ -242,7 +315,7 @@ class Vocabulary extends Component {
     }
 
     const filteredKeys = filteredVocab.map((f) => f.uid);
-    const frequency = this.props.frequency.filter((f) =>
+    const frequency = this.props.frequency.filter((/** @type {string} */ f) =>
       filteredKeys.includes(f)
     );
 
@@ -256,7 +329,10 @@ class Vocabulary extends Component {
     });
   }
 
-  verbNonVerbTransition(nextIndex, nextUID) {
+  /**
+   * @param {MEid} id either an uid or and index
+   */
+  verbNonVerbTransition({ nextIndex, nextUID }) {
     let aPromise = Promise.resolve();
 
     const uidPrev =
@@ -268,9 +344,20 @@ class Vocabulary extends Component {
       );
     const prevVocab = getTerm(uidPrev, this.props.vocab);
 
-    const uidNext =
-      nextUID ||
-      getTermUID(nextIndex, this.state.order, this.state.filteredVocab);
+    let uidNext;
+    if (nextIndex === undefined && nextUID !== undefined) {
+      uidNext = nextUID;
+    } else if (nextIndex !== undefined && nextUID === undefined) {
+      uidNext = getTermUID(
+        nextIndex,
+        this.state.order,
+        this.state.filteredVocab
+      );
+    } else {
+      // this will never happen nextIndex and nextUID are xor
+      uidNext = "0";
+    }
+
     const nextVocab = getTerm(uidNext, this.props.vocab);
 
     // non verb to verb
@@ -307,7 +394,7 @@ class Vocabulary extends Component {
     const l = this.state.filteredVocab.length;
     const newSel = (this.state.selectedIndex + 1) % l;
 
-    this.verbNonVerbTransition(newSel).then(() => {
+    this.verbNonVerbTransition({ nextIndex: newSel }).then(() => {
       this.setState({
         lastNext: Date.now(),
         reinforcedUID: undefined,
@@ -362,7 +449,7 @@ class Vocabulary extends Component {
       newSel = i < 0 ? (l + i) % l : i % l;
     }
 
-    this.verbNonVerbTransition(newSel);
+    this.verbNonVerbTransition({ nextIndex: newSel });
 
     this.setState({
       reinforcedUID: undefined,
@@ -371,8 +458,11 @@ class Vocabulary extends Component {
     });
   }
 
+  /**
+   * @param {string} uid
+   */
   updateReinforcedUID(uid) {
-    this.verbNonVerbTransition(undefined, uid);
+    this.verbNonVerbTransition({ nextUID: uid });
 
     this.setState({
       reinforcedUID: uid,
@@ -384,11 +474,17 @@ class Vocabulary extends Component {
     this.props.logger("reinforce (" + vocabulary.english + ")", 3);
   }
 
+  /**
+   * @type {TouchEventHandler}
+   */
   startMove(e) {
     const swiping = swipeStart(e, true, true);
     this.setState({ swiping });
   }
 
+  /**
+   * @type {TouchEventHandler}
+   */
   inMove(e) {
     if (this.state.swiping) {
       const swiping = swipeMove(e, {
@@ -399,6 +495,9 @@ class Vocabulary extends Component {
     }
   }
 
+  /**
+   * @type {TouchEventHandler}
+   */
   endMove(e) {
     // const direction = getSwipeDirection(this.state.swiping.touchObject,true);
     swipeEnd(e, {
@@ -411,6 +510,10 @@ class Vocabulary extends Component {
     });
   }
 
+  /**
+   *
+   * @param {string} direction
+   */
   swipeActionHandler(direction) {
     // this.props.logger("swiped " + direction, 3);
 
@@ -452,7 +555,9 @@ class Vocabulary extends Component {
             form: naFlip,
           };
 
-          this.setState((s) => ({ naFlip: s.naFlip ? undefined : "-na" }));
+          this.setState((/** @type {VocabularyState} */ s) => ({
+            naFlip: s.naFlip ? undefined : "-na",
+          }));
         } else {
           sayObj = vocabulary;
         }
@@ -508,14 +613,14 @@ class Vocabulary extends Component {
         this.state.filteredVocab
       );
     const vocabulary = getTerm(uid, this.props.vocab);
-    vocabulary.reinforce = this.state.frequency.includes(vocabulary.uid);
+    const vocabulary_reinforce = this.state.frequency.includes(vocabulary.uid);
 
     const isVerb = vocabulary.grp === "Verb";
 
     const jText = JapaneseText.parse(vocabulary);
     const hasFurigana = jText.hasFurigana();
     const hasJHint = jText.isHintable(3);
-    const hasEHint = vocabulary.grp && vocabulary.grp !== "";
+    const hasEHint = vocabulary.grp !== undefined && vocabulary.grp !== "";
 
     const showHint = this.state.showHint;
     const isHintable =
@@ -667,7 +772,7 @@ class Vocabulary extends Component {
                 </div>
 
                 <div className="sm-icon-grp">
-                  {vocabulary.reinforce ? (
+                  {vocabulary_reinforce ? (
                     <div
                       onClick={() => {
                         this.props.removeFrequencyWord(vocabulary.uid);
@@ -720,7 +825,7 @@ class Vocabulary extends Component {
           <LinearProgress
             variant="determinate"
             value={progress}
-            color={vocabulary.reinforce ? "secondary" : "primary"}
+            color={vocabulary_reinforce ? "secondary" : "primary"}
           />
         </div>,
       ];
@@ -738,7 +843,7 @@ class Vocabulary extends Component {
           >
             <div
               onClick={() => {
-                this.setState((state) => ({
+                this.setState((/** @type {VocabularyState}*/ state) => ({
                   scrollJOrder: !state.scrollJOrder,
                 }));
               }}
@@ -763,7 +868,7 @@ class Vocabulary extends Component {
             this.props.scrollingState(false);
           }}
         >
-          <StackOrderSlider
+          <VocabularyOrderSlider
             initial={pIdx}
             list={pList}
             setIndex={(index) => {

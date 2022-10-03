@@ -4,73 +4,83 @@ import Typography from "@material-ui/core/Typography";
 import Slider from "@material-ui/core/Slider";
 import "./VerbFormSlider.css";
 
-function populateMarks(max) {
-  const marks = [];
-  const min = 0;
-  for (let x = min; x < max + 1; x++) {
-    const slide = ((x - min) / (max + 1 - min)) * 100;
-
-    marks.push({ value: slide, raw: x });
-  }
-  marks.push({ value: 100, raw: max + 1 });
-
-  return marks;
-}
-
-function slideToRaw(slide, marks) {
-  const idx = marks.findIndex((mark) => mark.value === slide);
-  return marks[idx].raw;
-}
+/**
+ * @typedef {{ value: number, raw: number }} Marks
+ */
 
 /**
- * Shows the count of verb forms for the selected side
- * @param {number} slide
- * @returns {number}
+ * @typedef {{
+ * initial: number,
+ * max: number,
+ * statusText: string,
+ * setChoiceN: function,
+ * }} VerbFormSliderProps
  */
-function slideToLabels(slide, marks, max) {
-  const idx = marks.findIndex((mark) => mark.value === slide);
-  const half = Math.trunc((max + 1) / 2);
 
-  let lbl = half + Math.abs(half - marks[idx].raw);
-  if ((max + 1) % 2 !== 0 && idx <= half) {
-    lbl++;
-  }
-
-  if ((max + 1) % 2 === 0 && idx === half) {
-    // at the half way point
-  } else if (idx < half + 1) {
-    lbl = lbl + " " + (max + 1 - lbl);
-  } else {
-    lbl = max + 1 - lbl + " " + lbl;
-  }
-
-  return lbl;
-}
-
-function rawToSlide(raw, marks, max) {
-  if (raw > max + 1 || raw < 0) {
-    console.log("VerbFormSlider bad input");
-    return marks[0].value;
-  }
-
-  return marks[marks.findIndex((m) => m.raw === raw)].value;
-}
-
-const handleChange = (event, newValue, props, marks) => {
-  const prevVal = props.initial;
-  const curVal = slideToRaw(newValue, marks);
-
-  if (curVal !== prevVal) {
-    props.setChoiceN(curVal);
-  }
-};
-
+/** @param {VerbFormSliderProps} props */
 export default function VerbFormSlider(props) {
-  const max = props.max - 1;
-  const marks = populateMarks(max);
+  const safeInitial = Math.min(props.max, props.initial);
+  const max = props.max;
+  const min = 0;
 
-  const rts = (raw) => rawToSlide(raw, marks, max);
-  const stl = (slide) => slideToLabels(slide, marks, max);
+  /** @type {Marks[]} */
+  let marks = [];
+  /** @type {{[key:string]:number}} */
+  let marksMap = {};
+
+  for (let x = min; x < max + 1; x++) {
+    const slide = ((x - min) / (max - min)) * 100;
+    marks = [...marks, { value: slide, raw: x }];
+    marksMap["r" + slide] = x;
+    marksMap["s" + x] = slide;
+  }
+
+  /** @param {number} slide */
+  const slideToRaw = (slide) => {
+    return marksMap["r" + slide];
+  };
+
+  /** @param {number} raw */
+  const rawToSlide = (raw) => {
+    return marksMap["s" + raw];
+  };
+
+  /** @param {number} slide */
+  const slideToLabel = (slide) => {
+    const idx = slideToRaw(slide);
+    const half = Math.trunc(max / 2);
+
+    let label = "";
+    let splt = half + Math.abs(half - idx);
+    if (max % 2 !== 0 && idx <= half) {
+      splt++;
+      label = splt + "";
+    }
+
+    if (max % 2 === 0 && idx === half) {
+      // at the half way point
+    } else if (idx < half + 1) {
+      label = splt + " " + (max - splt);
+    } else {
+      label = max - splt + " " + splt;
+    }
+
+    return label;
+  };
+
+  /**
+   * @template T
+   * @param {import("react").ChangeEvent<T>} event
+   * @param {number} newValue
+   */
+  const handleChange = (event, newValue) => {
+    const prevVal = safeInitial;
+    const curVal = slideToRaw(newValue);
+
+    if (curVal !== prevVal) {
+      props.setChoiceN(curVal);
+    }
+  };
 
   return (
     <div className="verb-form-slider-root">
@@ -78,15 +88,17 @@ export default function VerbFormSlider(props) {
         {props.statusText}
       </Typography>
       <Slider
-        value={rts(props.initial)}
-        valueLabelFormat={stl}
-        getAriaValueText={stl}
+        value={rawToSlide(safeInitial)}
+        valueLabelFormat={slideToLabel}
+        getAriaValueText={slideToLabel}
         aria-labelledby="discrete-slider-restrict"
         step={null}
         valueLabelDisplay="auto"
         marks={marks}
         onChange={(event, newValue) => {
-          handleChange(event, newValue, props, marks);
+          if (typeof newValue === "number") {
+            handleChange(event, newValue);
+          }
         }}
       />
     </div>
@@ -95,6 +107,7 @@ export default function VerbFormSlider(props) {
 
 VerbFormSlider.propTypes = {
   statusText: PropTypes.string,
-  initial: PropTypes.number,
-  setChoiceN: PropTypes.func,
+  initial: PropTypes.number.isRequired,
+  max: PropTypes.number.isRequired,
+  setChoiceN: PropTypes.func.isRequired,
 };

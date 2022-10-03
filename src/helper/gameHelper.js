@@ -19,9 +19,9 @@ import { JapaneseVerb } from "./JapaneseVerb";
  * Goes to the next term or selects one from the frequency list
  * @param {boolean} reinforce
  * @param {number} freqFilter
- * @param {[]} frequency
+ * @param {string[]} frequency
  * @param {RawVocabulary[]} filteredTerms
- * @param {string} reinforcedUID
+ * @param {string|undefined} reinforcedUID
  * @param {function} updateReinforcedUID
  * @param {function} gotoNext
  * @param {function} removeFrequencyTerm
@@ -64,7 +64,6 @@ export function play(
 }
 
 /**
- * @returns {string} uid
  * @param {number} selectedIndex
  * @param {number[] | undefined} alternateOrder
  * @param {RawVocabulary[]} filteredTerms
@@ -181,7 +180,7 @@ export function minimumTimeForSpaceRepUpdate(prevTime) {
  * count of views
  * @param {RawVocabulary[]} terms
  * @param {SpaceRepetitionMap} spaceRepObj
- * @returns {number[]} an array containing the indexes of terms in space repetition order
+ * @returns an array containing the indexes of terms in space repetition order
  */
 export function spaceRepOrder(terms, spaceRepObj) {
   /**
@@ -236,7 +235,7 @@ export function spaceRepOrder(terms, spaceRepObj) {
 /**
  *
  * @param {RawVocabulary[]} terms
- * @returns {*} an array containing the indexes of terms in alphabetic order
+ * @returns an array containing the indexes of terms in alphabetic order
  */
 export function alphaOrder(terms) {
   // preserve terms unmodified
@@ -308,7 +307,7 @@ export function alphaOrder(terms) {
 /**
  *
  * @param {RawVocabulary[]} terms
- * @returns {number[]} an array containing the indexes of terms in random order
+ * @returns an array containing the indexes of terms in random order
  */
 export function randomOrder(terms) {
   const order = terms.map((v, i) => i);
@@ -401,7 +400,7 @@ export function verbToTargetForm(rawVerb, targetForm) {
  * @param {boolean} isOnBottom
  * @param {JapaneseText | JapaneseVerb} jObj
  * @param {*} inJapanese
- * @param {function} jumpToTerm
+ * @param {function} [jumpToTerm]
  * @returns {JSX.Element}
  */
 export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
@@ -440,7 +439,7 @@ export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
           "question-color": pairUID,
         })}
         onClick={
-          pairUID
+          pairUID && jumpToTerm
             ? () => {
                 jumpToTerm(pairUID);
               }
@@ -512,7 +511,7 @@ export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
  * @param {boolean} isOnTop
  * @param {JapaneseText | JapaneseVerb} jObj
  * @param {*} inEnglish
- * @param {function} jumpToTerm
+ * @param {function} [jumpToTerm]
  * @returns {JSX.Element}
  */
 export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
@@ -547,7 +546,7 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
           "question-color": pairUID,
         })}
         onClick={
-          pairUID
+          pairUID && jumpToTerm
             ? () => {
                 jumpToTerm(pairUID);
               }

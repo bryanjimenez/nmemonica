@@ -4,7 +4,15 @@ import { GroupItem } from "../Form/GroupItem";
 import orderBy from "lodash/orderBy";
 
 /**
+ * @typedef {{
+ * vocabGroups: any,
+ * vocabActive: string[],
+ * toggleTermActiveGrp: (grp:string)=>function}} SetTermGListProps
+ */
+
+/**
  * Group and subgroup list
+ * @param {SetTermGListProps} props
  */
 export function SetTermGList(props) {
   return (

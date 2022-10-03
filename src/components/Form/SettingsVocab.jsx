@@ -19,6 +19,44 @@ import {
 } from "@primer/octicons-react";
 import classNames from "classnames";
 
+/**
+ * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ */
+
+/**
+ * @typedef {{
+ * show: boolean,
+ * vocabulary: RawVocabulary[],
+ * vocabOrder: boolean,
+ * vocabRomaji: boolean,
+ * vocabSide: boolean,
+ * vocabFilter: number,
+ * vocabFreq: string[],
+ * vocabReinforce: boolean,
+ * vocabGroups: any,
+ * vocabActive: string[],
+ * setVocabularyOrdering: function,
+ * toggleVocabularyFilter: function,
+ * toggleActiveGrp: function,
+ * toggleVocabularyRomaji: function,
+ * toggleVocabularyReinforcement: function,
+ * removeFrequencyWord: function,
+ * flipVocabularyPracticeSide: function,
+ * vocabHint: boolean,
+ * toggleVocabularyHint: function,
+ * vocabAutoPlay: number,
+ * toggleVocabularyAutoPlay: function,
+ * autoVerbView: boolean,
+ * toggleAutoVerbView: function,
+ * verbColSplit: number,
+ * updateVerbColSplit: function,
+ * verbFormsOrder: string[],
+ * setVerbFormsOrder: function}} SettingsVocabProps
+ */
+
+/**
+ * @param {SettingsVocabProps} props
+ */
 export function SettingsVocab(props) {
   const {
     show,
@@ -56,17 +94,20 @@ export function SettingsVocab(props) {
   const shownForms = props.verbFormsOrder.map((form) =>
     allForms.find((el) => el === form)
   );
+
+  /** @type {string[]} */
+  let hiddenFormsInit = [];
   const hiddenForms = allForms.reduce((acc, cur) => {
     if (!shownForms.includes(cur)) {
       acc = [...acc, cur];
     }
 
     return acc;
-  }, []);
+  }, hiddenFormsInit);
 
   let el;
   try {
-    el = show && (
+    el = !show ? null : (
       <div className="outer">
         <div className="d-flex flex-row justify-content-between">
           <div className="column-1">
@@ -180,7 +221,7 @@ export function SettingsVocab(props) {
                           <div
                             className={classNames({
                               "me-3": true,
-                              "disabled-color": k===0,
+                              "disabled-color": k === 0,
                             })}
                             onClick={() => {
                               if (k > 0) {
@@ -194,7 +235,7 @@ export function SettingsVocab(props) {
                             }}
                           >
                             <ChevronUpIcon
-                              classname="mt-1"
+                              className="mt-1"
                               size="small"
                               aria-label="move up"
                             />
@@ -232,7 +273,7 @@ export function SettingsVocab(props) {
                         >
                           <div className="me-3 transparent-color">
                             <ChevronUpIcon
-                              classname="mt-1"
+                              className="mt-1"
                               size="small"
                               aria-label="move up"
                             />

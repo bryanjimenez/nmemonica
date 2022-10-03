@@ -1,6 +1,19 @@
 import React from "react";
 import PropTypes from "prop-types";
 
+/**
+ * @typedef {{
+ * onClick?: function,
+ * children?: string|JSX.Element,
+ * largeValue?: string|JSX.Element,
+ * smallValue?: string|JSX.Element,
+ * largeStyle?: any,
+ * smallStyle?: any}} SizableProps
+ */
+
+/**
+ * @param {SizableProps} props
+ */
 export default function Sizable(props) {
   let largeValue, smallValue;
   if (props.children) {
