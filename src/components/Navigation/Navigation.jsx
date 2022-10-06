@@ -220,7 +220,7 @@ Navigation.propTypes = {
   charSet: PropTypes.number,
   toggleKana: PropTypes.func,
 };
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return { user: state.login.user, charSet: state.settings.kana.charSet };
 };

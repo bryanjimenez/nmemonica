@@ -284,7 +284,7 @@ class Opposites extends Component {
     ];
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     opposites: state.opposites.value,

@@ -895,7 +895,7 @@ class Vocabulary extends Component {
     return page;
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     vocab: state.vocabulary.value,

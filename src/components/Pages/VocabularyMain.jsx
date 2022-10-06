@@ -231,7 +231,7 @@ class VocabularyMain extends Component {
     );
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     practiceSide: state.settings.vocabulary.practiceSide,

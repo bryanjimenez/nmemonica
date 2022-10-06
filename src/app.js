@@ -100,7 +100,7 @@ class App extends Component {
     );
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     darkMode: state.settings.global.darkMode,

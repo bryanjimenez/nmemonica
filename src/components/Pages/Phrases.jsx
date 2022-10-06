@@ -722,7 +722,7 @@ class Phrases extends Component {
     ];
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     phrases: state.phrases.value,

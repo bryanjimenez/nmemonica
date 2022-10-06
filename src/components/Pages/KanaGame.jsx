@@ -564,7 +564,7 @@ class KanaGame extends Component {
     ];
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     hiragana: state.kana.hiragana,

@@ -357,7 +357,7 @@ class Kanji extends Component {
     return page;
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     kanji: state.kanji.value,

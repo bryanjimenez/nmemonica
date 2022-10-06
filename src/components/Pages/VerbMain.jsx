@@ -436,7 +436,7 @@ class VerbMain extends Component {
     ];
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     romajiActive: state.settings.vocabulary.romaji,

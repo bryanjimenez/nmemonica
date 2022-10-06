@@ -142,7 +142,7 @@ Console.propTypes = {
   messages: PropTypes.array,
   debug: PropTypes.number,
 };
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     messages: state.settings.global.console,

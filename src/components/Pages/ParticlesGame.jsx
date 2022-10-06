@@ -352,7 +352,7 @@ class ParticlesGame extends Component {
     ];
   }
 }
-
+// @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
     particles: state.particles.value,
