@@ -428,8 +428,22 @@ class KanaGame extends Component {
 
     let hintElement;
     if (!this.props.easyMode || (this.props.easyMode && !englishShown)) {
+      if (
+        this.props.easyMode &&
+        !englishShown &&
+        choices[index].q !== true &&
+        this.props.charSet === 2
+      ) {
+        // kanaHints for mixed mode
+        hintElement = (
+          <div className={hintDivCSS}>
+            <h6 className={hintH6CSS}>{choices[index].hint}</h6>
+            <h6 className={hintH6CSS}>{swapKana(choices[index].val)}</h6>
+          </div>
+        );
+      }
       // no hinting
-      if (choices[index].q !== true) {
+      else if (choices[index].q !== true) {
         // the choices
         hintElement = (
           <div className={hintDivCSS}>

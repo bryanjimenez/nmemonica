@@ -397,7 +397,6 @@ class Settings extends Component {
                 <SettingsSwitch
                   active={this.props.easyMode}
                   action={this.props.toggleKanaEasyMode}
-                  disabled={this.props.charSet === 2}
                   statusText="Kana Hints"
                 />
               </div>
