@@ -28,6 +28,7 @@ import {
  */
 
 class Console extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

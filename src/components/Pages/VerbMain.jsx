@@ -72,6 +72,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  */
 
 class VerbMain extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

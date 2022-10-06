@@ -64,6 +64,7 @@ const KanjiMeta = {
 };
 
 class Kanji extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

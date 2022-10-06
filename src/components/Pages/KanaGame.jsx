@@ -59,6 +59,7 @@ const KanaGameMeta = {
 };
 
 class KanaGame extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

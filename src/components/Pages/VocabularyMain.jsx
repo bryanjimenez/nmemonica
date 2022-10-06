@@ -62,6 +62,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  */
 
 class VocabularyMain extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

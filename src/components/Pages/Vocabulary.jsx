@@ -135,6 +135,7 @@ const VocabularyMeta = {
 };
 
 class Vocabulary extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

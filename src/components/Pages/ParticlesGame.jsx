@@ -110,6 +110,7 @@ function createChoices(answer, romajiParticlesList, japanseParticlesList) {
 }
 
 class ParticlesGame extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

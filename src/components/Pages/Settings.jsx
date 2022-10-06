@@ -61,6 +61,7 @@ const SettingsMeta = {
 };
 
 class Settings extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
 

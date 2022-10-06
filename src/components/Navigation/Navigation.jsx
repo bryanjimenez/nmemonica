@@ -29,6 +29,7 @@ import { toggleKana } from "../../actions/settingsAct";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 
 class Navigation extends Component {
+  // @ts-ignore constructor
   constructor(props) {
     super(props);
     this.state = {
