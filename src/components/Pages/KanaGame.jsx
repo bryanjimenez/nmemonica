@@ -12,6 +12,47 @@ import StackNavButton from "../Form/StackNavButton";
 import { swapKana } from "../../helper/kanaHelper";
 import { DEBUG_OFF } from "../../actions/settingsAct";
 
+/**
+ * @typedef {{
+ * val: string,
+ * hint: string,
+ * cSet: number,
+ * q?: boolean,
+ * practiceSide?: boolean}} Choice
+ * @typedef {{
+ * consonant: number,
+ * vowel: number}} Mora
+ * @typedef {0|1|2} KanaType
+ */
+
+/**
+ * @typedef {{
+ * hiragana: string[],
+ * katakana: string[],
+ * getKana: function,
+ * vowels: string[],
+ * consonants: string[],
+ * choiceN: number,
+ * sounds: {[index:string]:string},
+ * wideMode: boolean,
+ * easyMode: boolean,
+ * charSet: KanaType,
+ * debug: number}} KanaGameProps
+ */
+
+/**
+ * @typedef {{
+ * selectedIndex: number,
+ * question: string,
+ * answer: Choice,
+ * choices: Choice[],
+ * gameOrder: Mora[],
+ * wrongs: number[], // list of index of current wrong answered choices used for visual hints
+ * reinforce: Choice[], // list of recently wrong chosen hiragana used to reinforce
+ * correct: boolean,
+ * practiceSide: boolean}} KanaGameState
+ */
+
 const KanaGameMeta = {
   location: "/kana/",
   label: ["平仮名 Game", "片仮名 Game", "仮名 Game"],
@@ -21,18 +62,22 @@ class KanaGame extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {KanaGameState} */
     this.state = {
       selectedIndex: 0,
-      question: false,
-      answer: false,
+      question: "undefined",
+      answer: { val: "", hint: "", cSet: 0 },
       choices: [],
-      gameOrder: false,
+      gameOrder: [],
       wrongs: [], // list of index of current wrong answered choices used for visual hints
       reinforce: [], // list of recently wrong chosen hiragana used to reinforce
       correct: false,
 
       practiceSide: false, //false=hiragana q shown (read), true=romaji q shown (write)
     };
+
+    /** @type {KanaGameProps} */
+    this.props;
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -59,6 +104,10 @@ class KanaGame extends Component {
     }
   }
 
+  /**
+   * @param {KanaGameProps} prevProps
+   * @param {KanaGameState} prevState
+   */
   componentDidUpdate(prevProps, prevState) {
     // console.log("componentDidUpdate");
     // console.log(prevProps)
@@ -92,31 +141,33 @@ class KanaGame extends Component {
    * consonant and vowel are indexes
    */
   shuffleGameOrder() {
+    /** @type {Mora[]} */
     let gameOrder = [];
-    if (this.state.gameOrder === false) {
-      const xMax = Math.floor(this.props.hiragana[0].length);
-      const yMax = Math.floor(this.props.hiragana.length);
+    const xMax = Math.floor(this.props.hiragana[0].length);
+    const yMax = Math.floor(this.props.hiragana.length);
 
-      for (let vowel = 0; vowel < xMax; vowel++) {
-        for (let consonant = 0; consonant < yMax; consonant++) {
-          // should not include yi, ye, wu, or empty row (except -n)
-          if (
-            (vowel != 1 || consonant != 12) &&
-            (vowel != 3 || consonant != 12) &&
-            (vowel != 2 || consonant != 14) &&
-            (vowel === 0 || consonant != 15)
-          )
-            gameOrder.push({ vowel, consonant });
-        }
+    for (let vowel = 0; vowel < xMax; vowel++) {
+      for (let consonant = 0; consonant < yMax; consonant++) {
+        // should not include yi, ye, wu, or empty row (except -n)
+        if (
+          (vowel != 1 || consonant != 12) &&
+          (vowel != 3 || consonant != 12) &&
+          (vowel != 2 || consonant != 14) &&
+          (vowel === 0 || consonant != 15)
+        )
+          gameOrder = [...gameOrder, { vowel, consonant }];
       }
-      shuffleArray(gameOrder);
-    } else {
-      gameOrder = this.state.gameOrder;
     }
+    shuffleArray(gameOrder);
 
     return gameOrder;
   }
 
+  /**
+   * @param {number} consonant
+   * @param {number} vowel
+   * @returns {string}
+   */
   getPronunciation(consonant, vowel) {
     const vowels = this.props.vowels;
     const consonants = this.props.consonants;
@@ -126,6 +177,12 @@ class KanaGame extends Component {
     return this.props.sounds[sound] || sound;
   }
 
+  /**
+   * @param {number} consonant
+   * @param {number} vowel
+   * @param {number} set
+   * @returns {string}
+   */
   getKanaCharacter(consonant, vowel, set) {
     let kana;
 
@@ -139,12 +196,28 @@ class KanaGame extends Component {
   }
 
   /**
-   * @returns {string[]} a shuffled list of choices containing the answer
-   * @param {*} answer
-   * @param {*} gameOrder
+   * 0 = hiragana
+   * 1 = katakana
+   * 2 = randomize 0 or 1
+   * @param {KanaType} charSet
+   */
+  kanaTypeLogic(charSet) {
+    let useCharSet;
+    if (charSet === 2) {
+      useCharSet = /** @type {0|1} */ (Math.floor(Math.random() * 2));
+    } else {
+      useCharSet = charSet;
+    }
+    return useCharSet;
+  }
+
+  /**
+   * @returns {Choice[]} a shuffled list of choices containing the answer
+   * @param {Choice} answer
+   * @param {Mora[]} gameOrder
    */
   populateChoices(answer, gameOrder) {
-    const choices = [answer];
+    let choices = [answer];
 
     const difficult = this.state.practiceSide;
 
@@ -153,10 +226,7 @@ class KanaGame extends Component {
       const max = Math.floor(gameOrder.length);
       const idx = Math.floor(Math.random() * (max - min) + min);
 
-      let useChar = this.props.charSet;
-      if (this.props.charSet === 2) {
-        useChar = Math.floor(Math.random() * 2);
-      }
+      let useChar = this.kanaTypeLogic(this.props.charSet);
 
       const cPronunciation = this.getPronunciation(
         gameOrder[idx].consonant,
@@ -167,6 +237,7 @@ class KanaGame extends Component {
         gameOrder[idx].vowel,
         useChar
       );
+      /** @type {Choice} */
       let choice;
       if (difficult) {
         choice = {
@@ -188,7 +259,7 @@ class KanaGame extends Component {
         (difficult && !choices.some((c) => c.hint === choice.hint)) ||
         (!difficult && !choices.some((c) => c.val === choice.val))
       ) {
-        choices.push(choice);
+        choices = [...choices, choice];
       }
     }
 
@@ -201,16 +272,24 @@ class KanaGame extends Component {
       // console.log("preparing");
 
       const practiceSide = this.state.practiceSide;
-      const gameOrder = this.shuffleGameOrder();
+      let gameOrder;
+      if (this.state.gameOrder.length > 0) {
+        gameOrder = this.state.gameOrder;
+      } else {
+        gameOrder = this.shuffleGameOrder();
+      }
 
+      /** @type {string} */
       let question;
+      /** @type {Choice} */
       let answer;
 
       // some games will come from the reinforced list
       const reinforced = [false, false, true][Math.floor(Math.random() * 3)];
       if (reinforced && this.state.reinforce.length > 0) {
         // console.log('reinforced')
-        const missedQuestion = this.state.reinforce.pop();
+        const missedQuestion =
+          this.state.reinforce[this.state.reinforce.length - 1];
 
         if (practiceSide === missedQuestion.practiceSide) {
           answer = missedQuestion;
@@ -222,10 +301,7 @@ class KanaGame extends Component {
         // console.log('regular')
         const { consonant, vowel } = gameOrder[this.state.selectedIndex];
 
-        let useChar = this.props.charSet;
-        if (this.props.charSet === 2) {
-          useChar = Math.floor(Math.random() * 2);
-        }
+        let useChar = this.kanaTypeLogic(this.props.charSet);
 
         const pronunciation = this.getPronunciation(consonant, vowel);
         const character = this.getKanaCharacter(consonant, vowel, useChar);
@@ -247,10 +323,10 @@ class KanaGame extends Component {
 
       question = answer.hint;
 
-      const choices = this.populateChoices(answer, gameOrder);
+      let choices = this.populateChoices(answer, gameOrder);
 
       if (this.props.wideMode) {
-        choices.push({ val: question, q: true });
+        choices = [...choices, { val: question, q: true }];
       }
 
       this.setState({
@@ -264,8 +340,11 @@ class KanaGame extends Component {
     }
   }
 
+  /**
+   * @param {Choice} answered
+   */
   checkAnswer(answered) {
-    if (answered.val === this.state.answer.val) {
+    if (answered.val === this.state.answer?.val) {
       // console.log("RIGHT!");
       this.setState({ correct: true });
       setTimeout(this.gotoNext, 500);
@@ -303,6 +382,9 @@ class KanaGame extends Component {
     });
   }
 
+  /**
+   * @param {number} index
+   */
   choiceButton(index) {
     const choices = this.state.choices;
     const answer = this.state.answer;
@@ -311,23 +393,77 @@ class KanaGame extends Component {
 
     const isWrong = this.state.wrongs.includes(index);
     const isRight = choices[index].val === answer.val && correct;
-    const visibility = isWrong ? undefined : "hidden";
+
     const choiceCSS = classNames({
       clickable: !choices[index].q,
       "text-center": true,
-      "correct-color": isRight,
+      "correct-color":
+        isRight || (this.props.wideMode && choices[index].q && correct),
       "incorrect-color": isWrong,
-      "question-color": this.props.wideMode && choices[index].q,
+      "question-color": this.props.wideMode && choices[index].q && !correct,
     });
 
     const choiceH2CSS = classNames({
       "mb-0": this.props.wideMode,
     });
 
+    const hintH6CSS = classNames({
+      "mb-0": true,
+      "transparent-color": !isWrong,
+    });
+
     const wide = this.props.wideMode ? 3 / 4 : 1;
 
     const width =
       Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * wide * 100) + "%";
+
+    const englishShown = !this.state.practiceSide;
+
+    let hintElement;
+    if (!this.props.easyMode || (this.props.easyMode && !englishShown)) {
+      console.log(JSON.stringify(this.props.easyMode) + "1");
+      if (choices[index].q !== true) {
+        // the choices
+        hintElement = (
+          <div className="d-flex justify-content-around">
+            <h6 className={hintH6CSS}>
+              {choices[index].cSet === answer.cSet
+                ? choices[index].hint
+                : swapKana(choices[index].hint)}
+            </h6>
+          </div>
+        );
+      } else {
+        // the question
+        hintElement = undefined;
+      }
+    } else {
+      // easymode
+      if (choices[index].q !== true) {
+        // the choices
+        hintElement = (
+          <div className="d-flex justify-content-around">
+            <h6 className={hintH6CSS}>
+              {choices[index].cSet === 0
+                ? choices[index].hint
+                : swapKana(choices[index].hint)}
+            </h6>
+            <h6 className={hintH6CSS}>
+              {choices[index].cSet === 0
+                ? swapKana(choices[index].hint)
+                : choices[index].hint}
+            </h6>
+          </div>
+        );
+      } else {
+        // the question
+        hintElement = (
+          <div className="d-flex justify-content-around">
+            <h6 className="mb-0">{swapKana(choices[index].val)}</h6>
+          </div>
+        );
+      }
+    }
 
     return (
       <div
@@ -338,41 +474,16 @@ class KanaGame extends Component {
           }
         }}
         className={choiceCSS}
-        style={{ color: isRight, width }}
+        style={{ width }}
       >
         <h2 className={choiceH2CSS}>{choices[index].val}</h2>
-        <div className="d-flex justify-content-around">
-          {!this.props.easyMode && (
-            <h6 className="mb-0" style={{ visibility }}>
-              {choices[index].cSet === answer.cSet
-                ? choices[index].hint
-                : swapKana(choices[index].hint)}
-            </h6>
-          )}
-
-          {this.props.easyMode && [
-            <h6 className="mb-0" key={0} style={{ visibility }}>
-              {choices[index].cSet === 0
-                ? choices[index].hint
-                : swapKana(choices[index].hint)}
-            </h6>,
-            <h6 className="mb-0" key={1} style={{ visibility }}>
-              {choices[index].cSet === 0
-                ? swapKana(choices[index].hint)
-                : choices[index].hint}
-            </h6>,
-          ]}
-
-          {this.props.easyMode && choices[index].q && (
-            <h6 className="mb-0">{swapKana(choices[index].val)}</h6>
-          )}
-        </div>
+        {hintElement}
       </div>
     );
   }
 
   render() {
-    if (this.state.question === false) return <div />;
+    if (!this.state.question) return <div />;
 
     const question = this.state.question;
     const choices = this.state.choices;
@@ -402,14 +513,14 @@ class KanaGame extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           {!this.props.wideMode && (
-            <div className="pt-3 d-flex flex-column justify-content-center text-center w-50">
-              <h1
-                style={{ color: this.state.correct ? "green" : undefined }}
-                className="clickable"
-              >
-                {question}
-              </h1>
-              {this.props.easyMode && (
+            <div
+              className={classNames({
+                "pt-3 d-flex flex-column justify-content-center text-center w-50": true,
+                "correct-color": this.state.correct,
+              })}
+            >
+              <h1 className="clickable">{question}</h1>
+              {this.props.easyMode && !this.state.practiceSide && (
                 <div className="d-flex justify-content-around">
                   <h6>{swapKana(question)}</h6>
                 </div>
@@ -435,7 +546,7 @@ class KanaGame extends Component {
           <div className="col">
             <div
               onClick={() => {
-                this.setState((state) => ({
+                this.setState((/** @type {KanaGameState} */ state) => ({
                   practiceSide: !state.practiceSide,
                 }));
               }}

@@ -29,6 +29,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").VerbFormArray} VerbFormArray
+ * @typedef {import("../../typings/raw").FuriganaToggleMap} FuriganaToggleMap
  * @typedef {import("../../helper/JapaneseText").JapaneseText} JapaneseText
  */
 
@@ -45,7 +46,28 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
 /**
  * @typedef {{
  * verb: RawVocabulary,
+ * reCache: boolean,
+ * autoPlay: number,
+ * practiceSide: boolean,
+ * romajiActive: boolean,
+ * scrollingDone: boolean,
+ * prevTerm: RawVocabulary,
+ * setPreviousWord: function,
+ * played: boolean,
+ * pushedPlay: function,
+ * setShownForm: function,
  * verbForm: string,
+ * prevPushPlay: boolean,
+ * flipVocabularyPracticeSide: function,
+ * touchSwipe: boolean,
+ * linkToOtherTerm: function,
+ * furigana: FuriganaToggleMap,
+ * toggleFurigana: function,
+ * toggleFuriganaSettingHelper: function,
+ * verbColSplit: number,
+ * verbFormsOrder: string[],
+ * hintEnabled: boolean,
+ * showHint: boolean,
  * }} VerbMainProps
  */
 
@@ -61,6 +83,9 @@ class VerbMain extends Component {
       audioPlay: true,
       prevPlayed: this.props.prevPushPlay,
     };
+
+    /** @type {VerbMainProps} */
+    this.props;
 
     this.buildTenseElement = this.buildTenseElement.bind(this);
     this.getVerbLabelItems = this.getVerbLabelItems.bind(this);

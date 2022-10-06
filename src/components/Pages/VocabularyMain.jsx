@@ -41,7 +41,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
 
 /**
  * @typedef {{
- * vocabulary: RawVocabulary[],
+ * vocabulary: RawVocabulary,
  * showHint: boolean,
  * hintEnabled: boolean,
  * romajiActive: boolean,
@@ -73,6 +73,9 @@ class VocabularyMain extends Component {
       audioPlay: true,
       prevPlayed: this.props.prevPushPlay,
     };
+
+    /** @type {VocabularyMainProps} */
+    this.props;
   }
 
   componentDidMount() {

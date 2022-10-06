@@ -72,6 +72,8 @@ import { BtnShowHint } from "../Form/BtnShowHint";
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
+ * @typedef {import("../Form/VocabularyOrderSlider").BareIdx} BareIdx
  * @typedef {{nextUID:string, nextIndex?:undefined}|{nextUID?:undefined, nextIndex:number}} MEid
  */
 
@@ -88,8 +90,8 @@ import { BtnShowHint } from "../Form/BtnShowHint";
  * showPageBar?: boolean,
  * recacheAudio: boolean,
  * scrollJOrder?: boolean,
- * ebare?: { uid: string, label: string,idx: number}[],
- * jbare?: { uid: string, label: string,idx: number}[],
+ * ebare: BareIdx[],
+ * jbare: BareIdx[],
  * }} VocabularyState
  */
 
@@ -116,7 +118,7 @@ import { BtnShowHint } from "../Form/BtnShowHint";
  * reinforce: boolean,
  * previous: RawVocabulary,
  * setPreviousWord: function,
- * repetition: PropTypes.object,
+ * repetition: SpaceRepetitionMap,
  * lastNext: number,
  * updateSpaceRepWord: function,
  * logger: function,
@@ -133,7 +135,6 @@ const VocabularyMeta = {
 };
 
 class Vocabulary extends Component {
-  /** @param {VocabularyProps} props */
   constructor(props) {
     super(props);
 
@@ -145,7 +146,12 @@ class Vocabulary extends Component {
       filteredVocab: [],
       frequency: [], // subset of frequency words within current active group
       recacheAudio: false,
+      jbare: [],
+      ebare: [],
     };
+
+    /** @type {VocabularyProps} */
+    this.props;
 
     if (this.props.vocab.length === 0) {
       this.props.getVocabulary();
@@ -291,9 +297,9 @@ class Vocabulary extends Component {
     );
 
     let newOrder;
-    /** @type {VocabularyState["jbare"]} */
+    /** @type {BareIdx[]} */
     let jbare = [];
-    /** @type {VocabularyState["ebare"]} */
+    /** @type {BareIdx[]} */
     let ebare = [];
 
     if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
@@ -626,9 +632,11 @@ class Vocabulary extends Component {
     const isHintable =
       !showHint && this.props.practiceSide ? hasJHint : hasEHint;
 
-    let progress, pIdx, pList;
+    let pIdx;
+    /** @type {BareIdx[]} */
+    let pList;
 
-    progress =
+    const progress =
       ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
 
     if (this.state.scrollJOrder) {

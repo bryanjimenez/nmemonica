@@ -10,6 +10,29 @@ import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
 
+/**
+ * @typedef {{english: string, japanese: string, romaji: string, toHTML: function}} RawOpposite
+ */
+
+/**
+ * @typedef {{
+ * getOpposites: function,
+ * opposites: [question:RawOpposite, answer:RawOpposite][],
+ * qRomaji: boolean,
+ * aRomaji: boolean}} OppositesProps
+ */
+
+/**
+ * @typedef {{
+ * selectedIndex: number,
+ * showMeaning: boolean,
+ * question?: RawOpposite,
+ * answer?: RawOpposite,
+ * choices: RawOpposite[],
+ * incorrect: number[]
+ * correct: boolean}} OppositesState
+ */
+
 const OppositesMeta = {
   location: "/opposites/",
   label: "Opposites",
@@ -19,14 +42,19 @@ class Opposites extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {OppositesState} */
     this.state = {
       selectedIndex: 0,
       showMeaning: false,
-      question: false,
-      answer: false,
+      question: undefined,
+      answer: undefined,
       choices: [],
       incorrect: [],
+      correct: false,
     };
+
+    /** @type {OppositesProps} */
+    this.props;
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -36,8 +64,10 @@ class Opposites extends Component {
     this.props.getOpposites();
   }
 
-  componentDidMount() {}
-
+  /**
+   * @param {OppositesProps} prevProps
+   * @param {OppositesState} prevState
+   */
   componentDidUpdate(prevProps, prevState) {
     // console.log("componentDidUpdate");
 
@@ -54,8 +84,8 @@ class Opposites extends Component {
       // console.log("getting opposites");
       this.prepareGame();
     } else if (
-      this.state.question === false &&
-      this.state.answer === false &&
+      this.state.question === undefined &&
+      this.state.answer === undefined &&
       this.state.choices.length === 0
     ) {
       // page navigation after initial
@@ -74,9 +104,8 @@ class Opposites extends Component {
       question = { ...question, toHTML: () => q.toHTML() };
       answer = { ...answer, toHTML: () => a.toHTML() };
 
-      const choices = [];
-      const antiHomophones = [answer.romaji, question.romaji];
-      choices.push(answer);
+      let choices = [answer];
+      let antiHomophones = [answer.romaji, question.romaji];
 
       while (choices.length < 4) {
         const max = Math.floor(this.props.opposites.length);
@@ -85,19 +114,25 @@ class Opposites extends Component {
         const [wrongAnswer1, wrongAnswer2] = this.props.opposites[idx];
 
         if (
-          antiHomophones.indexOf(wrongAnswer1.romaji) === -1 &&
-          antiHomophones.indexOf(wrongAnswer2.romaji) === -1
+          !antiHomophones.includes(wrongAnswer1.romaji) &&
+          !antiHomophones.includes(wrongAnswer2.romaji)
         ) {
           const headsOrTails = Math.floor(Math.random() * 2);
 
           if (headsOrTails === 0) {
             const w1 = JapaneseText.parse(wrongAnswer1);
-            choices.push({ ...wrongAnswer1, toHTML: () => w1.toHTML() });
-            antiHomophones.push(wrongAnswer1.romaji);
+            choices = [
+              ...choices,
+              { ...wrongAnswer1, toHTML: () => w1.toHTML() },
+            ];
+            antiHomophones = [...antiHomophones, wrongAnswer1.romaji];
           } else {
             const w2 = JapaneseText.parse(wrongAnswer2);
-            choices.push({ ...wrongAnswer2, toHTML: () => w2.toHTML() });
-            antiHomophones.push(wrongAnswer2.romaji);
+            choices = [
+              ...choices,
+              { ...wrongAnswer2, toHTML: () => w2.toHTML() },
+            ];
+            antiHomophones = [...antiHomophones, wrongAnswer2.romaji];
           }
         }
       }
@@ -108,14 +143,20 @@ class Opposites extends Component {
     }
   }
 
+  /**
+   * @param {RawOpposite} answered
+   * @param {number} i
+   */
   checkAnswer(answered, i) {
-    if (answered.japanese === this.state.answer.japanese) {
+    if (answered.japanese === this.state.answer?.japanese) {
       // console.log("RIGHT!");
-      this.setState({ correct: true });
+      this.setState({ correct: true, showMeaning: true });
       setTimeout(this.gotoNext, 500);
     } else {
       // console.log("WRONG");
-      this.setState((state) => ({ incorrect: [...state.incorrect, i] }));
+      this.setState((/** @type {OppositesState} */ state) => ({
+        incorrect: [...state.incorrect, i],
+      }));
     }
   }
 
@@ -144,7 +185,7 @@ class Opposites extends Component {
 
   render() {
     // console.log("render");
-    if (this.state.question === false)
+    if (this.state.question === undefined)
       return <NotReady addlStyle="main-panel" />;
 
     const question = this.state.question;
@@ -168,27 +209,39 @@ class Opposites extends Component {
           >
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          <div className="question pt-3 pb-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1 className="clickable">{question.toHTML()}</h1>
-            <h2>{this.props.qRomaji ? question.romaji : ""}</h2>
-            <div
+          <div
+            className={classNames({
+              "question pt-3 pb-3 d-flex flex-column justify-content-center text-center w-50": true,
+              "correct-color": this.state.correct,
+            })}
+          >
+            <h1>{question.toHTML()}</h1>
+            <span
+              className={classNames({
+                "transparent-color": !this.props.qRomaji,
+              })}
+            >
+              {question.romaji}
+            </span>
+            <span
+              className="clickable"
               onClick={() => {
-                this.setState((state) => ({
+                this.setState((/** @type {OppositesState} */ state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }}
             >
               {this.state.showMeaning ? question.english : "[English]"}
-            </div>
+            </span>
           </div>
           <div className="choices pt-3 d-flex justify-content-around flex-wrap w-50">
             {choices.map((c, i) => {
               const isRight =
-                choices[i].japanese === answer.japanese && this.state.correct;
-              const isWrong = this.state.incorrect.indexOf(i) > -1;
+                choices[i].japanese === answer?.japanese && this.state.correct;
+              const isWrong = this.state.incorrect.includes(i);
 
               const choiceCSS = classNames({
-                "w-50 pt-3 d-flex flex-column text-center clickable": true,
+                "w-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable": true,
                 "correct-color": isRight,
                 "incorrect-color": isWrong,
               });
@@ -201,8 +254,16 @@ class Opposites extends Component {
                     this.checkAnswer(c, i);
                   }}
                 >
-                  <h4>{c.toHTML()}</h4>
-                  <div>{this.props.aRomaji ? c.romaji : ""}</div>
+                  <div>
+                    <h4>{c.toHTML()}</h4>
+                    <span
+                      className={classNames({
+                        "transparent-color": !this.props.aRomaji,
+                      })}
+                    >
+                      {c.romaji}
+                    </span>
+                  </div>
                   {/* <div>{this.state.showMeaning ? c.english : ""}</div> */}
                 </div>
               );

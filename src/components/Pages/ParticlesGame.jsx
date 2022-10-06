@@ -9,6 +9,32 @@ import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import { LinearProgress } from "@material-ui/core";
 
+/**
+ * @typedef {{english: string, japanese: string, romaji: {sentence: string[], particles: string[]}}} RawParticle
+ * @typedef {{japanese: string, romaji: string}} RawSuffix
+ */
+
+/**
+ * @typedef {{
+ * getParticles: function,
+ * getSuffixes: function,
+ * particles: RawParticle[],
+ * suffixes: RawSuffix[],
+ * aRomaji: boolean}} ParticlesGameProps
+ */
+
+/**
+ * @typedef {{
+ * selectedIndex: number,
+ * showMeaning: boolean,
+ * question?: RawParticle,
+ * answer?: RawParticle,
+ * english?: string,
+ * choices: RawParticle[],
+ * incorrect: number[]
+ * correct: boolean}} ParticlesGameState
+ */
+
 const ParticlesGameMeta = {
   location: "/particles",
   label: "Particles Game",
@@ -16,9 +42,9 @@ const ParticlesGameMeta = {
 
 /**
  * maps the romaji particle to japanese
- * @param {*} particle a single or multiple (space separated particle)
- * @param {*} romajiParticlesList
- * @param {*} japanseParticlesList
+ * @param {string} particle a single or multiple (space separated particle)
+ * @param {string[]} romajiParticlesList
+ * @param {string[]} japanseParticlesList
  */
 function buildJapaneseParticle(
   particle,
@@ -35,9 +61,9 @@ function buildJapaneseParticle(
 
 /**
  * creates a sentence with a blank over the randomly selected particle to quiz
- * @param {*} sentence
- * @param {*} idx index of randomly selected particle to quiz in the sentence
- * @param {*} particles
+ * @param {string[]} sentence
+ * @param {number} idx index of randomly selected particle to quiz in the sentence
+ * @param {string[]} particles
  */
 function buildQuestionSentence(sentence, idx, particles) {
   return sentence.reduce((acc, curr, i) => {
@@ -54,12 +80,12 @@ function buildQuestionSentence(sentence, idx, particles) {
 // FIXME: if the answer is a multiple particle, then the choices should also be multiples
 /**
  * returns a list of choices which includes the right answer
- * @param {*} answer
- * @param {*} romajiParticlesList
- * @param {*} japanseParticlesList
+ * @param {{japanese:string, romaji:string}} answer
+ * @param {string[]} romajiParticlesList
+ * @param {string[]} japanseParticlesList
  */
 function createChoices(answer, romajiParticlesList, japanseParticlesList) {
-  const choices = [answer];
+  let choices = [answer];
   while (choices.length < 4) {
     const max = Math.floor(romajiParticlesList.length);
     const i = Math.floor(Math.random() * max);
@@ -74,7 +100,7 @@ function createChoices(answer, romajiParticlesList, japanseParticlesList) {
 
     // should not be same choices or the right answer
     if (choices.filter((c) => c.romaji === choice.romaji).length === 0) {
-      choices.push(choice);
+      choices = [...choices, choice];
     }
   }
 
@@ -87,15 +113,20 @@ class ParticlesGame extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {ParticlesGameState} */
     this.state = {
       selectedIndex: 0,
       showMeaning: false,
-      question: false,
-      answer: false,
+      question: undefined,
+      answer: undefined,
       choices: [],
-      english: false,
+      english: undefined,
       incorrect: [],
+      correct: false,
     };
+
+    /** @type {ParticlesGameProps} */
+    this.props;
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -106,8 +137,10 @@ class ParticlesGame extends Component {
     this.props.getSuffixes();
   }
 
-  componentDidMount() {}
-
+  /**
+   * @param {ParticlesGameProps} prevProps
+   * @param {ParticlesGameState} prevState
+   */
   componentDidUpdate(prevProps, prevState) {
     // console.log("componentDidUpdate");
 
@@ -133,7 +166,7 @@ class ParticlesGame extends Component {
       // console.log("getting game data 2");
       this.prepareGame();
     } else if (
-      this.state.question === false &&
+      this.state.question === undefined &&
       this.props.particles &&
       this.props.particles.length > 0 &&
       this.props.suffixes &&
@@ -156,13 +189,15 @@ class ParticlesGame extends Component {
       const max = Math.floor(particles.length);
       const idx = Math.floor(Math.random() * max);
 
+      /** @type {[string[],string[]]} */
+      let init = [[], []];
       const [japanseParticles, romajiParticles] = this.props.suffixes.reduce(
         (acc, curr) => {
           acc[0].push(curr.japanese);
           acc[1].push(curr.romaji);
           return acc;
         },
-        [[], []]
+        init
       );
 
       const question = buildQuestionSentence(sentence, idx, particles);
@@ -185,14 +220,20 @@ class ParticlesGame extends Component {
     }
   }
 
+  /**
+   * @param {RawParticle} answered
+   * @param {number} i
+   */
   checkAnswer(answered, i) {
-    if (answered.japanese === this.state.answer.japanese) {
+    if (answered.japanese === this.state.answer?.japanese) {
       // console.log("RIGHT!");
-      this.setState({ correct: true });
+      this.setState({ correct: true, showMeaning: true });
       setTimeout(this.gotoNext, 500);
     } else {
       // console.log("WRONG");
-      this.setState((state) => ({ incorrect: [...state.incorrect, i] }));
+      this.setState((/** @type {ParticlesGameState} */ state) => ({
+        incorrect: [...state.incorrect, i],
+      }));
     }
   }
 
@@ -220,7 +261,7 @@ class ParticlesGame extends Component {
   }
 
   render() {
-    if (this.state.question === false)
+    if (this.state.question === undefined)
       return <NotReady addlStyle="main-panel" />;
 
     const question = this.state.question;
@@ -245,11 +286,17 @@ class ParticlesGame extends Component {
           >
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          <div className="pt-3 d-flex flex-column justify-content-around text-center w-50">
-            <h1 className="clickable">{question}</h1>
+          <div
+            className={classNames({
+              "question pt-3 pb-3 d-flex flex-column justify-content-center text-center w-50": true,
+              "correct-color": this.state.correct,
+            })}
+          >
+            <h1>{question}</h1>
             <div
+              className="clickable"
               onClick={() => {
-                this.setState((state) => ({
+                this.setState((/** @type {ParticlesGameState} */ state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }}
@@ -260,10 +307,10 @@ class ParticlesGame extends Component {
           <div className="choices d-flex flex-wrap justify-content-around w-50">
             {choices.map((c, i) => {
               const isRight =
-                choices[i].japanese === answer.japanese && this.state.correct;
+                choices[i].japanese === answer?.japanese && this.state.correct;
               const isWrong = this.state.incorrect.indexOf(i) > -1;
               const choiceCSS = classNames({
-                "pt-3 w-50 d-flex flex-column text-center clickable": true,
+                "pt-3 w-50 d-flex flex-column justify-content-evenly text-center clickable": true,
                 "correct-color": isRight,
                 "incorrect-color": isWrong,
               });
@@ -276,8 +323,16 @@ class ParticlesGame extends Component {
                   }}
                   className={choiceCSS}
                 >
-                  <h2>{c.japanese}</h2>
-                  <div>{this.props.aRomaji ? c.romaji : ""}</div>
+                  <div>
+                    <h2>{c.japanese}</h2>
+                    <span
+                      className={classNames({
+                        "transparent-color": !this.props.aRomaji,
+                      })}
+                    >
+                      {c.romaji}
+                    </span>{" "}
+                  </div>
                 </div>
               );
             })}

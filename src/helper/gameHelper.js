@@ -13,6 +13,7 @@ import { JapaneseVerb } from "./JapaneseVerb";
  * @typedef {import("../typings/raw").AudioQueryParams} AudioQueryParams
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../typings/raw").VerbFormArray} VerbFormArray
+ * @typedef {import("../typings/raw").FuriganaToggleMap} FuriganaToggleMap
  */
 
 /**
@@ -64,9 +65,10 @@ export function play(
 }
 
 /**
+ * @template {{ uid: string }} T
  * @param {number} selectedIndex
  * @param {number[] | undefined} alternateOrder
- * @param {RawVocabulary[]} filteredTerms
+ * @param {T[]} filteredTerms
  */
 export function getTermUID(selectedIndex, alternateOrder, filteredTerms) {
   let term;
@@ -86,9 +88,10 @@ export function getTermUID(selectedIndex, alternateOrder, filteredTerms) {
 }
 
 /**
- * @returns {RawVocabulary} the term in the list matching the uid
+ * @template {{ uid: string }} T
+ * @returns {T} the term in the list matching the uid
  * @param {string} uid
- * @param {RawVocabulary[]} list of terms
+ * @param {T[]} list of terms
  */
 export function getTerm(uid, list) {
   const term = list.find((v) => uid === v.uid);
@@ -103,12 +106,13 @@ export function getTerm(uid, list) {
 /**
  * Filters terms (words or phrases) list
  * by groups, frequency, or space repetition
+ * @template {{ uid: string }} T
  * @param {number} filterType
- * @param {RawVocabulary[]} termList word or phrase list
+ * @param {T[]} termList word or phrase list
  * @param {string[]} frequencyList
  * @param {string[]} activeGrpList
  * @param {function} toggleFilterType
- * @returns {RawVocabulary[]} filteredPhrases
+ * @returns {T[]} filteredPhrases
  */
 export function termFilterByType(
   filterType,
@@ -305,8 +309,7 @@ export function alphaOrder(terms) {
 }
 
 /**
- *
- * @param {RawVocabulary[]} terms
+ * @param {any[]} terms
  * @returns an array containing the indexes of terms in random order
  */
 export function randomOrder(terms) {
@@ -706,7 +709,7 @@ export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
  * Creates the settings object for furigana toggling
  * @param {boolean} englishSideUp
  * @param {string} uid
- * @param {{[uid:string]:{f:boolean}}} settings
+ * @param {FuriganaToggleMap} settings
  * @param {function} toggleFn
  * @returns
  */

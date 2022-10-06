@@ -55,6 +55,59 @@ import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
 
+/**
+ * @typedef {import("react").TouchEventHandler} TouchEventHandler
+ * @typedef {import("../../typings/raw").RawPhrase} RawPhrase
+ * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
+ * @typedef {{nextUID:string, nextIndex?:undefined}|{nextUID?:undefined, nextIndex:number}} MEid
+ */
+
+/**
+ * @typedef {{
+ * lastNext: number,
+ * selectedIndex: number,
+ * showMeaning: boolean,
+ * showRomaji: boolean,
+ * showLit: boolean,
+ * filteredPhrases: RawPhrase[],
+ * frequency: string[], // subset of frequency words within current active group
+ * prevPhrase: RawPhrase,
+ * audioPlay: boolean,
+ * prevPlayed: boolean,
+ * order?: number[],
+ * reinforcedUID?: string,
+ * swiping?: any,
+ * }} PhrasesState
+ */
+
+/**
+ * @typedef {{
+ * getPhrases: function,
+ * phrases: RawPhrase[],
+ * isOrdered: boolean,
+ * flipPhrasesPracticeSide: function,
+ * practiceSide: boolean,
+ * romajiActive: boolean,
+ * removeFrequencyPhrase: function,
+ * addFrequencyPhrase: function,
+ * frequency: string[],
+ * filterType: number,
+ * togglePhrasesFilter: function,
+ * reinforce: boolean,
+ * activeGroup: string[],
+ * repetition: SpaceRepetitionMap,
+ * lastNext: number,
+ * updateSpaceRepPhrase: function,
+ * logger: function,
+ * prevTerm: RawPhrase,
+ * prevPushPlay: boolean,
+ * pushedPlay: function,
+ * setPreviousWord: function,
+ * autoPlay: number,
+ * touchSwipe: boolean,
+ * }} PhrasesProps
+ */
+
 const PhrasesMeta = {
   location: "/phrases/",
   label: "Phrases",
@@ -64,6 +117,7 @@ class Phrases extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {PhrasesState} */
     this.state = {
       lastNext: Date.now(),
       selectedIndex: 0,
@@ -76,6 +130,9 @@ class Phrases extends Component {
       audioPlay: true,
       prevPlayed: this.props.prevPushPlay,
     };
+
+    /** @type {PhrasesProps} */
+    this.props;
 
     this.props.getPhrases();
 
@@ -103,6 +160,10 @@ class Phrases extends Component {
     document.addEventListener("keydown", this.arrowKeyPress, true);
   }
 
+  /**
+   * @param {PhrasesProps} nextProps
+   * @param {PhrasesState} nextState
+   */
   shouldComponentUpdate(nextProps, nextState) {
     if (
       this.state.prevPhrase !== undefined &&
@@ -115,6 +176,10 @@ class Phrases extends Component {
     return true;
   }
 
+  /**
+   * @param {PhrasesProps} prevProps
+   * @param {PhrasesState} prevState
+   */
   componentDidUpdate(prevProps, prevState) {
     if (
       this.state.order !== prevState.order ||
@@ -218,6 +283,9 @@ class Phrases extends Component {
     document.removeEventListener("keydown", this.arrowKeyPress, true);
   }
 
+  /**
+   * @param {KeyboardEvent} event
+   */
   arrowKeyPress(event) {
     if (
       event.key === "ArrowLeft" ||
@@ -337,6 +405,9 @@ class Phrases extends Component {
     });
   }
 
+  /**
+   * @param {string} uid
+   */
   updateReinforcedUID(uid) {
     this.setState({
       reinforcedUID: uid,
@@ -355,11 +426,17 @@ class Phrases extends Component {
     this.props.logger("reinforce (" + text + ")", 3);
   }
 
+  /**
+   * @type {TouchEventHandler}
+   */
   startMove(e) {
     const swiping = swipeStart(e, true, true);
     this.setState({ swiping });
   }
 
+  /**
+   * @type {TouchEventHandler}
+   */
   inMove(e) {
     if (this.state.swiping) {
       const swiping = swipeMove(e, {
@@ -370,6 +447,9 @@ class Phrases extends Component {
     }
   }
 
+  /**
+   * @type {TouchEventHandler}
+   */
   endMove(e) {
     // const direction = getSwipeDirection(this.state.swiping.touchObject,true);
     swipeEnd(e, {
@@ -382,6 +462,9 @@ class Phrases extends Component {
     });
   }
 
+  /**
+   * @param {string} direction
+   */
   swipeActionHandler(direction) {
     // this.props.logger("swiped " + direction, 3);
 
@@ -449,7 +532,7 @@ class Phrases extends Component {
         this.state.filteredPhrases
       );
     const phrase = getTerm(uid, this.props.phrases);
-    phrase.reinforce = this.state.frequency.includes(phrase.uid);
+    const phrase_reinforce = this.state.frequency.includes(phrase.uid);
 
     const japanesePhrase = JapaneseText.parse(phrase).toHTML();
 
@@ -459,7 +542,9 @@ class Phrases extends Component {
         onClick={
           phrase.lit
             ? () => {
-                this.setState((state) => ({ showLit: !state.showLit }));
+                this.setState((/** @type {PhrasesState} */ state) => ({
+                  showLit: !state.showLit,
+                }));
               }
             : undefined
         }
@@ -470,8 +555,8 @@ class Phrases extends Component {
 
     const romaji = phrase.romaji;
 
-    const eLabel = "[English]";
-    const jLabel = "[Japanese]";
+    let eLabel = <span>{"[English]"}</span>;
+    let jLabel = <span>{"[Japanese]"}</span>;
 
     const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
       this.props.practiceSide,
@@ -513,7 +598,7 @@ class Phrases extends Component {
               <h5>
                 <span
                   onClick={() => {
-                    this.setState((state) => ({
+                    this.setState((/** @type {PhrasesState} */ state) => ({
                       showRomaji: !state.showRomaji,
                     }));
                   }}
@@ -526,7 +611,7 @@ class Phrases extends Component {
             <h2>
               <span
                 onClick={() => {
-                  this.setState((state) => ({
+                  this.setState((/** @type {PhrasesState} */ state) => ({
                     showMeaning: !state.showMeaning,
                   }));
                 }}
@@ -583,7 +668,9 @@ class Phrases extends Component {
                     "info-color": this.state.showLit,
                   })}
                   onClick={() =>
-                    this.setState((state) => ({ showLit: !state.showLit }))
+                    this.setState((/** @type {PhrasesState} */ state) => ({
+                      showLit: !state.showLit,
+                    }))
                   }
                 >
                   <ProjectIcon
@@ -629,7 +716,7 @@ class Phrases extends Component {
         <LinearProgress
           variant="determinate"
           value={progress}
-          color={phrase.reinforce ? "secondary" : "primary"}
+          color={phrase_reinforce ? "secondary" : "primary"}
         />
       </div>,
     ];
