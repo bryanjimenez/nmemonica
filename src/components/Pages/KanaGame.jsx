@@ -47,8 +47,8 @@ import { DEBUG_OFF } from "../../actions/settingsAct";
  * answer: Choice,
  * choices: Choice[],
  * gameOrder: Mora[],
- * wrongs: number[], // list of index of current wrong answered choices used for visual hints
- * reinforce: Choice[], // list of recently wrong chosen hiragana used to reinforce
+ * wrongs: number[],
+ * reinforce: Choice[],
  * correct: boolean,
  * practiceSide: boolean}} KanaGameState
  */
@@ -327,7 +327,10 @@ class KanaGame extends Component {
       let choices = this.populateChoices(answer, gameOrder);
 
       if (this.props.wideMode) {
-        choices = [...choices, { val: question, q: true }];
+        choices = [
+          ...choices,
+          { val: question, hint: question, cSet: answer.cSet, q: true },
+        ];
       }
 
       this.setState({
@@ -398,6 +401,7 @@ class KanaGame extends Component {
     const choiceCSS = classNames({
       clickable: !choices[index].q,
       "text-center": true,
+      "d-flex flex-column justify-content-center": true,
       "correct-color":
         isRight || (this.props.wideMode && choices[index].q && correct),
       "incorrect-color": isWrong,
@@ -407,6 +411,8 @@ class KanaGame extends Component {
     const choiceH2CSS = classNames({
       "mb-0": this.props.wideMode,
     });
+
+    const hintDivCSS = "d-flex justify-content-around";
 
     const hintH6CSS = classNames({
       "mb-0": true,
@@ -422,11 +428,11 @@ class KanaGame extends Component {
 
     let hintElement;
     if (!this.props.easyMode || (this.props.easyMode && !englishShown)) {
-      console.log(JSON.stringify(this.props.easyMode) + "1");
+      // no hinting
       if (choices[index].q !== true) {
         // the choices
         hintElement = (
-          <div className="d-flex justify-content-around">
+          <div className={hintDivCSS}>
             <h6 className={hintH6CSS}>
               {choices[index].cSet === answer.cSet
                 ? choices[index].hint
@@ -436,14 +442,21 @@ class KanaGame extends Component {
         );
       } else {
         // the question
-        hintElement = undefined;
+        // keep hint transparent to match spacing
+        hintElement = (
+          <div className={hintDivCSS}>
+            <h6 className="mb-0 transparent-color">
+              {swapKana(choices[index].val)}
+            </h6>
+          </div>
+        );
       }
     } else {
       // easymode
       if (choices[index].q !== true) {
         // the choices
         hintElement = (
-          <div className="d-flex justify-content-around">
+          <div className={hintDivCSS}>
             <h6 className={hintH6CSS}>
               {choices[index].cSet === 0
                 ? choices[index].hint
@@ -459,7 +472,7 @@ class KanaGame extends Component {
       } else {
         // the question
         hintElement = (
-          <div className="d-flex justify-content-around">
+          <div className={hintDivCSS}>
             <h6 className="mb-0">{swapKana(choices[index].val)}</h6>
           </div>
         );
@@ -493,7 +506,7 @@ class KanaGame extends Component {
     // console.log(answer);
     // console.log(choices);
     const mainPanel = classNames({
-      "hiragana main-panel h-100": true,
+      "kana main-panel h-100": true,
       "z-index-1": this.props.debug !== DEBUG_OFF,
     });
 
