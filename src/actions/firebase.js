@@ -186,6 +186,7 @@ export function firebaseAttrUpdate(
   aType,
   value
 ) {
+  /** @type {{[attr:string]: any}} */
   let setting;
   if (value) {
     setting = { [attr]: value };

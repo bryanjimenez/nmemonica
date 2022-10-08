@@ -14,7 +14,7 @@ export interface RawVocabulary extends RawJapanese {
     uid: string,
 
     english: string,
-    romaji: string,
+    romaji?: string,
 
     grp?: string,
     subGrp?: string,

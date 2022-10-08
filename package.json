@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --require @babel/register ./test/unit/**/*.js",
-    "type": "tsc --noEmit -p src/tsconfig.json",
+    "type": "tsc --noEmit -p ./tsconfig.json",
     "coverage": "nyc -e .jsx npm run test",
     "wdiochrome": "wdio wdio-chrome.conf.js",
     "b:clean": "rm -rf ./dist/* ./pwa/built/*",

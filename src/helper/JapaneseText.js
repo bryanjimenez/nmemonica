@@ -192,7 +192,7 @@ export class JapaneseText {
 
   /**
    *
-   * @param {*} options
+   * @param {*} [options]
    * @returns {JSX.Element}
    */
   toHTML(options) {
@@ -283,7 +283,7 @@ function japaneseTextParse(rawObj, constructorFn) {
 
 /**
  * @returns  {{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean }} object containing parse info
- * @throws if the two phrases do not match or if the parsed output is invalid.
+ * @throws {ErrorInfo} if the two phrases do not match or if the parsed output is invalid.
  * @param {string} pronunciation (hiragana)
  * @param {string} ortography (kanji)
  */
@@ -346,7 +346,7 @@ export function isNumericCounter(pos, pronunciation, orthography) {
 }
 /**
  * @returns  {{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean }} object containing parse info
- * @throws if the two phrases do not match or if the parsed output is invalid.
+ * @throws {ErrorInfo} if the two phrases do not match or if the parsed output is invalid.
  * @param {string} pronunciation (furigana)
  * @param {string} orthography (kanji)
  */

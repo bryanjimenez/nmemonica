@@ -28,10 +28,24 @@ import { KanjiMeta } from "../Pages/Kanji";
 import { toggleKana } from "../../actions/settingsAct";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 
+/**
+ * @template T
+ * @typedef {import("react").MouseEvent<T>} MouseEvent
+ */
+
+/**
+ * @typedef {{
+ * collapsed: boolean,
+ * vocabType: number,
+ * }} NavigationState
+ */
+
 class Navigation extends Component {
   // @ts-ignore constructor
   constructor(props) {
     super(props);
+
+    /** @type {NavigationState} */
     this.state = {
       collapsed: true,
       vocabType: 0,
@@ -42,7 +56,7 @@ class Navigation extends Component {
   }
 
   menuToggle() {
-    this.setState((state) => {
+    this.setState((/** @type {NavigationState} */ state) => {
       if (state.collapsed) {
         document.body.classList.add("no-scroll");
         window.scrollTo(0, 0);
@@ -60,25 +74,29 @@ class Navigation extends Component {
    * Clicking on icons should collapse menu (force-collapse).
    * Clicking on captions should not (prevent-collapse).
    * Anywhere else should.
-   * @param {Event} e 
-   * @returns 
+   * @template HTMLDivElement
+   * @param {MouseEvent<HTMLDivElement>} event
    */
-  clickBehavior(e) {
-    if (
-      Array.from(document.getElementsByClassName("force-collapse")).includes(
-        e.target
-      )
-    ) {
-      // force a collapse, Link el is preventing?
-      this.menuToggle();
-    } else if (
-      !Array.from(document.getElementsByClassName("prevent-collapse")).includes(
-        e.target
-      )
-    ) {
-      // any child elem without classname^ toggles
-      this.menuToggle();
-      return false;
+  clickBehavior(event) {
+
+    if(event.target){
+      const tEl =/** @type {Element} */ (event.target);
+      if (
+        Array.from(document.getElementsByClassName("force-collapse")).includes(
+          tEl
+        )
+      ) {
+        // force a collapse, Link el is preventing?
+        this.menuToggle();
+      } else if (
+        !Array.from(document.getElementsByClassName("prevent-collapse")).includes(
+          tEl
+        )
+      ) {
+        // any child elem without classname^ toggles
+        this.menuToggle();
+        return false;
+      }
     }
   }
 
@@ -98,7 +116,7 @@ class Navigation extends Component {
               : "*"}
           </div>
         ),
-        wrap: (child) => (
+        wrap: (/** @type {string} */ child) => (
           <div
             className="clickable prevent-collapse"
             onClick={() => {
@@ -116,11 +134,11 @@ class Navigation extends Component {
       {
         meta: [VocabularyMeta, PhrasesMeta][this.state.vocabType],
         icon: <FontAwesomeIcon icon={faFont} size="2x" />,
-        wrap: (child) => (
+        wrap: (/** @type {string} */ child) => (
           <div
             className="clickable prevent-collapse"
             onClick={() => {
-              this.setState((s) => ({
+              this.setState((/** @type {NavigationState} */ s) => ({
                 vocabType: toggleOptions(s.vocabType, ["Vocab", "Phrases"]),
               }));
             }}
