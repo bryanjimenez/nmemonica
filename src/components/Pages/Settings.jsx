@@ -54,6 +54,12 @@ import { getKanji } from "../../actions/kanjiAct";
 import { SettingsVocab } from "../Form/SettingsVocab";
 import { SettingsPhrase } from "../Form/SettingsPhrase";
 import { logger } from "../../actions/consoleAct";
+import { ErrorInfo } from "../../helper/ErrorInfo";
+
+/**
+ * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {"sectionPhrase"|"sectionVocabulary"|"sectionKanji"} Sections
+ */
 
 const SettingsMeta = {
   location: "/settings/",
@@ -74,6 +80,7 @@ class Settings extends Component {
       swVersion: "",
       jsVersion: "",
       bundleVersion: "",
+      hardRefreshUnavailable: false,
     };
 
     this.collapseExpandToggler = this.collapseExpandToggler.bind(this);
@@ -101,7 +108,7 @@ class Settings extends Component {
       this.swMessageEventListener
     );
 
-    navigator.serviceWorker.controller.postMessage({
+    navigator.serviceWorker.controller?.postMessage({
       type: "SW_VERSION",
     });
   }
@@ -113,6 +120,9 @@ class Settings extends Component {
     );
   }
 
+  /**
+   * @param {MessageEvent} event
+   */
   swMessageEventListener(event) {
     if (event.data.type === "DO_HARD_REFRESH") {
       const { error } = event.data;
@@ -138,35 +148,46 @@ class Settings extends Component {
     }
   }
 
+  /**
+   * @param {RawVocabulary[]} terms
+   */
   failedFuriganaList(terms) {
+    /** @type {JSX.Element[]} */
+    let init = [];
     return terms.reduce((a, text, i) => {
       const t = JapaneseText.parse(text);
       if (t.hasFurigana()) {
         try {
           furiganaParseRetry(t.getPronunciation(), t.getSpelling());
         } catch (e) {
-          const separator = <hr key={terms.length + i} />;
 
-          const row = (
-            <div key={i} className="row">
-              <span className="col p-0">{t.toHTML()}</span>
-              <span className="col p-0">{text.english}</span>
-              <span className="col p-0 app-sm-fs-xx-small">
-                <div>{e.message}</div>
-                <div>{e.info ? JSON.stringify(e.info) : ""}</div>
-              </span>
-            </div>
-          );
+          if (e instanceof ErrorInfo) {
+            const separator = <hr key={terms.length + i} />;
 
-          return a.length > 0 && i < terms.length - 1
-            ? [...a, separator, row]
-            : [...a, row];
+            const row = (
+              <div key={i} className="row">
+                <span className="col p-0">{t.toHTML()}</span>
+                <span className="col p-0">{text.english}</span>
+                <span className="col p-0 app-sm-fs-xx-small">
+                  <div>{e.message}</div>
+                  <div>{e.info ? JSON.stringify(e.info) : ""}</div>
+                </span>
+              </div>
+            );
+
+            return a.length > 0 && i < terms.length - 1
+              ? [...a, separator, row]
+              : [...a, row];
+          }
         }
       }
       return a;
-    }, []);
+    }, init);
   }
 
+  /**
+   * @param {Sections} section
+   */
   collapseExpandToggler(section) {
     const icon = this.state[section] ? (
       <XCircleIcon className="clickable" size="medium" aria-label="collapse" />
@@ -411,7 +432,7 @@ class Settings extends Component {
                           bundleVersion: "",
                         });
                         setTimeout(() => {
-                          navigator.serviceWorker.controller.postMessage({
+                          navigator.serviceWorker.controller?.postMessage({
                             type: "SW_VERSION",
                           });
                         }, 1000);
@@ -474,7 +495,7 @@ class Settings extends Component {
                           }
                         }, 3000);
 
-                        navigator.serviceWorker.controller.postMessage({
+                        navigator.serviceWorker.controller?.postMessage({
                           type: "DO_HARD_REFRESH",
                         });
                       }}
