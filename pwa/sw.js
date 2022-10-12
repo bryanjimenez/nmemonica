@@ -26,8 +26,6 @@ const dataURL = [
   fbURL + "/lambda/phrases.json",
   fbURL + "/lambda/vocabulary.json",
   fbURL + "/lambda/opposites.json",
-  fbURL + "/lambda/suffixes.json",
-  fbURL + "/lambda/particles.json",
   fbURL + "/lambda/kanji.json",
 ];
 
