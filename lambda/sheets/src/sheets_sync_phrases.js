@@ -4,10 +4,38 @@ import { google } from "googleapis";
 import { googleSheetId } from "../../../environment.development.js";
 import md5 from "md5";
 
+export function getParticles(tag) {
+  const tagList = tag.split(/[\n\s ]+/);
+  const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
+  const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
+  const nonWhiteSpace = new RegExp(/\S/);
+
+  let remainingTags = [];
+  let particles = [];
+  tagList.forEach((t) => {
+    switch (t) {
+      case hasParticle.test(t) && t:
+        particles = t.split(":")[1].split(",");
+        break;
+      default:
+        if (t && nonWhiteSpace.test(t)) {
+          // don't add empty whitespace
+          if (!remainingTags || remainingTags.length === 0) {
+            remainingTags = [t];
+          } else {
+            remainingTags = [...remainingTags, t];
+          }
+        }
+    }
+  });
+
+  return { tags: remainingTags, particles };
+}
+
 export async function sheets_sync_phrases(req, res) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Phrases!A1:G";
+    const range = "Phrases!A1:H";
 
     const auth = await google.auth.getClient({
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -39,12 +67,13 @@ export async function sheets_sync_phrases(req, res) {
       LIT = 3,
       GRP = 4,
       SUBG = 5,
-      LSN = 6;
+      LSN = 6,
+      TAG = 7;
 
     let sheetHeaders = [];
     const phrasesAfter = sheetData.reduce((acc, el, i) => {
       if (i > 0) {
-        const phrase = {
+        let phrase = {
           japanese: el[JP],
           english: el[EN],
         };
@@ -75,6 +104,18 @@ export async function sheets_sync_phrases(req, res) {
 
         if (el[LSN] && el[LSN] !== "") {
           phrase.lesson = el[LSN];
+        }
+
+        if (el[TAG] && el[TAG] !== "") {
+          const { tags, particles } = getParticles(el[TAG]);
+
+          if (tags && tags.length > 0) {
+            phrase.tag = tags;
+          }
+
+          if (particles && particles.length > 0) {
+            phrase.particles = particles;
+          }
         }
 
         acc[key] = phrase;

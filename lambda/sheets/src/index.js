@@ -16,7 +16,6 @@ import { default as admin } from "firebase-admin";
 admin.initializeApp();
 
 import { sheets_sync_phrases } from "./sheets_sync_phrases";
-import { sheets_sync_particles } from "./sheets_sync_particles";
 import { sheets_sync_opposites } from "./sheets_sync_opposites";
 import { sheets_sync_vocabulary } from "./sheets_sync_vocabulary";
 import { g_translate_romaji } from "./g_translate_romaji";
@@ -27,10 +26,6 @@ const PROJECT_REGION = "us-east1";
 exports.sheets_sync_phrases = functions
   .region(PROJECT_REGION)
   .https.onRequest(sheets_sync_phrases);
-
-exports.sheets_sync_particles = functions
-  .region(PROJECT_REGION)
-  .https.onRequest(sheets_sync_particles);
 
 exports.sheets_sync_opposites = functions
   .region(PROJECT_REGION)
