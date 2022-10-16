@@ -369,7 +369,8 @@ describe("isHintable", function () {
           <span className="hint-mora">か</span>
           <span className="transparent-color">かる</span>
         </span>
-      )
+      ),
+      "getHint"
     ).to.be.true;
   });
   it("katakana only", function () {
@@ -385,7 +386,8 @@ describe("isHintable", function () {
           <span className="hint-mora">ア</span>
           <span className="transparent-color">パート</span>
         </span>
-      )
+      ),
+      "getHint"
     ).to.be.true;
   });
   it("starting kanji with furigana", function () {
@@ -397,32 +399,17 @@ describe("isHintable", function () {
     );
 
     expect(actual.isHintable(), "isHintable").to.be.true;
+
     expect(
-      wrapper.contains(
-        <span className="hint">
-          <span>
-            <ruby>
-              <span className="hint-mora">朝</span>
-              <rt>
-                <span className="hint-mora">あ</span>
-                <span className="transparent-color">さ</span>
-              </rt>
-            </ruby>
-            <span>
-              <span className="transparent-color">ご</span>
-            </span>
-          </span>
-          <span>
-            <ruby>
-              <span className="transparent-color">飯</span>
-              <rt>
-                <span className="transparent-color">はん</span>
-              </rt>
-            </ruby>
-            <span />
-          </span>
-        </span>
-      )
+      wrapper.containsAllMatchingElements([
+        <span className="hint-mora">朝</span>,
+        <span className="hint-mora">あ</span>,
+        <span className="transparent-color">さ</span>,
+        <span className="transparent-color">ご</span>,
+        <span className="transparent-color">飯</span>,
+        <span className="transparent-color">はん</span>,
+      ]),
+      "getHint"
     ).to.be.true;
   });
 });
