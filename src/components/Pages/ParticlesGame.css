@@ -1,0 +1,15 @@
+.dark-mode .underline {
+  border-bottom: 2px solid var(--bs-light);
+}
+
+.underline {
+  border-bottom: 2px solid var(--bs-dark);
+}
+
+.transparent-font {
+  color: rgba(0,0,0, 0);
+}
+
+.lh-furigana {
+  line-height: 1.8;
+}

@@ -81,6 +81,55 @@ export function swapKana(char) {
 }
 
 /**
+ * @param {string} particle
+ */
+export function romajiParticle(particle) {
+  let romaji;
+  switch (particle) {
+    case "は":
+      romaji = "wa";
+      break;
+    case "には":
+      romaji = "niwa";
+      break;
+    case "を":
+      romaji = "o";
+      break;
+    case "って":
+      romaji = "tte";
+      break;
+    default:
+      romaji = particle
+        .split("")
+        .map((char) => swapToRomaji(char))
+        .join("");
+  }
+  return romaji;
+}
+
+/**
+ * Kana to romaji
+ * @param {string} kana
+ */
+export function swapToRomaji(kana) {
+  let swap = kana;
+  if (isHiragana(kana)) {
+    const { iConsonant, iVowel } = getConsonantVowel(kana);
+    swap = data.consonants[iConsonant] + data.vowels[iVowel];
+  } else if (isKatakana(kana)) {
+    const cpv = kana.codePointAt(0);
+    if (cpv) {
+      const hiragana = cpv - 96;
+      const h = String.fromCharCode(hiragana);
+      const { iConsonant, iVowel } = getConsonantVowel(h);
+      swap = data.consonants[iConsonant] + data.vowels[iVowel];
+    }
+  }
+
+  return swap;
+}
+
+/**
  * swaps Full-width roman characters number to number
  * @returns {number}
  * @param {string} char

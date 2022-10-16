@@ -33,6 +33,7 @@ export interface RawPhrase {
     grp?: string,
     subGrp?: string,
     tag?: string[],
+    particles?: string[],
 }
 
 export interface RawKanji {
@@ -71,3 +72,10 @@ export type VerbFormArray = {
     name: string,
     value: JapaneseText,
 }[]
+
+export interface FuriganaParseObject {
+    kanjis: string[],
+    furiganas: string[],
+    okuriganas: string[],
+    startsWKana:boolean
+}

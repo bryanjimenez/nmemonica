@@ -11,6 +11,7 @@ import {
 
 /**
  * @typedef {import("../typings/raw").RawJapanese} RawJapanese
+ * @typedef {import("../typings/raw").FuriganaParseObject} FuriganaParseObject
  */
 
 export class JapaneseText {
@@ -21,6 +22,14 @@ export class JapaneseText {
   constructor(furigana, kanji) {
     this._furigana = furigana;
     this._kanji = kanji;
+
+    /** @type {FuriganaParseObject} */
+    this._parseObj = {
+      furiganas: [],
+      kanjis: [],
+      okuriganas: [],
+      startsWKana: false,
+    };
 
     this.slang = false;
     this.keigo = false;
@@ -45,6 +54,31 @@ export class JapaneseText {
 
   set kanji(kanji) {
     this._kanji = kanji;
+  }
+
+  get parseObj() {
+    if (
+      this._parseObj.furiganas.length === 0 &&
+      this._parseObj.kanjis.length === 0 &&
+      this._parseObj.okuriganas.length === 0 &&
+      this._parseObj.startsWKana === false
+    ) {
+      if (this.hasFurigana()) {
+        this._parseObj = furiganaParseRetry(
+          this.getPronunciation(),
+          this.getSpelling()
+        );
+      } else {
+        this._parseObj = {
+          okuriganas: [this.getSpelling()],
+          startsWKana: true,
+          kanjis: [],
+          furiganas: [],
+        };
+      }
+    }
+
+    return this._parseObj;
   }
 
   hasFurigana() {
@@ -118,7 +152,7 @@ export class JapaneseText {
    * @param {number} minimumMora
    * @returns {boolean} meets minimumMora criteria and is parsable
    */
-  isHintable(minimumMora=3) {
+  isHintable(minimumMora = 3) {
     let hint = true;
     const text = this;
 
