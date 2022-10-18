@@ -61,12 +61,19 @@ import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
 import BtnLoop from "../Form/BtnLoop";
+import {
+  mediaSessionAttach,
+  mediaSessionDetachAll,
+  setMediaSessionMetadata,
+  setMediaSessionPlaybackState,
+} from "../../helper/mediaHelper";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
  * @typedef {import("../../typings/raw").RawPhrase} RawPhrase
  * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {{nextUID:string, nextIndex?:undefined}|{nextUID?:undefined, nextIndex:number}} MEid
+ * @typedef {import("../../typings/raw").ActionHandlerTuple} ActionHandlerTuple
  */
 
 /**
@@ -171,6 +178,64 @@ class Phrases extends Component {
       this.setOrder();
     }
     document.addEventListener("keydown", this.arrowKeyPress, true);
+
+    setMediaSessionMetadata("Phrases Loop");
+    setMediaSessionPlaybackState("paused");
+
+    /**
+     * @type {ActionHandlerTuple[]}
+     */
+    const actionHandlers = [
+      [
+        "play",
+        () => {
+          if (this.state.loop) {
+            this.beginLoop();
+            setMediaSessionPlaybackState("playing");
+          }
+        },
+      ],
+      [
+        "pause",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.forceUpdate();
+            setMediaSessionPlaybackState("paused");
+          }
+        },
+      ],
+      [
+        "stop",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.forceUpdate();
+            setMediaSessionPlaybackState("paused");
+          }
+        },
+      ],
+      [
+        "previoustrack",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.looperSwipe("right");
+          }
+        },
+      ],
+      [
+        "nexttrack",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.looperSwipe("left");
+          }
+        },
+      ],
+    ];
+
+    mediaSessionAttach(actionHandlers);
   }
 
   /**
@@ -307,8 +372,9 @@ class Phrases extends Component {
 
   componentWillUnmount() {
     document.removeEventListener("keydown", this.arrowKeyPress, true);
-
     this.abortLoop();
+
+    mediaSessionDetachAll();
   }
 
   abortLoop() {
@@ -317,10 +383,12 @@ class Phrases extends Component {
         ac.abort();
       });
       this.loopAbortControllers = undefined;
+      setMediaSessionPlaybackState("paused");
     }
   }
 
   beginLoop() {
+    setMediaSessionPlaybackState("playing");
     this.abortLoop();
     const ac1 = new AbortController();
     const ac2 = new AbortController();
@@ -386,6 +454,7 @@ class Phrases extends Component {
           if (this.state.loop && this.loopAbortControllers) {
             this.abortLoop();
             this.forceUpdate();
+            setMediaSessionPlaybackState("paused");
           }
         }
 
@@ -394,7 +463,6 @@ class Phrases extends Component {
       }
     }
   }
-
   setOrder() {
     const filteredPhrases = termFilterByType(
       this.props.filterType,
@@ -540,6 +608,7 @@ class Phrases extends Component {
     if (this.state.loop && this.loopAbortControllers) {
       this.abortLoop();
       this.forceUpdate();
+      setMediaSessionPlaybackState("paused");
     }
 
     swipeEnd(e, {
@@ -608,7 +677,6 @@ class Phrases extends Component {
           swipePromise = new Promise((resolve) => {
             englishAudio.addEventListener("ended", resolve);
           });
-
           englishAudio.play();
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, 1);

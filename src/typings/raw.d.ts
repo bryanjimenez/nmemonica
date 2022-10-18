@@ -91,3 +91,8 @@ export type FuriganaParseObjectMask = {
   f: number;
   o: number;
 }[];
+
+export type ActionHandlerTuple = [
+  MediaSessionAction,
+  MediaSessionActionHandler
+];

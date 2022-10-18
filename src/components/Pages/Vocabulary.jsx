@@ -75,6 +75,12 @@ import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
 import { BtnShowHint } from "../Form/BtnShowHint";
 import BtnLoop from "../Form/BtnLoop";
+import {
+  mediaSessionAttach,
+  mediaSessionDetachAll,
+  setMediaSessionMetadata,
+  setMediaSessionPlaybackState,
+} from "../../helper/mediaHelper";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -82,6 +88,7 @@ import BtnLoop from "../Form/BtnLoop";
  * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../Form/VocabularyOrderSlider").BareIdx} BareIdx
  * @typedef {{nextUID:string, nextIndex?:undefined}|{nextUID?:undefined, nextIndex:number}} MEid
+ * @typedef {import("../../typings/raw").ActionHandlerTuple} ActionHandlerTuple
  */
 
 /**
@@ -194,6 +201,64 @@ class Vocabulary extends Component {
     }
 
     document.addEventListener("keydown", this.arrowKeyPress, true);
+
+    setMediaSessionMetadata("Vocabulary Loop");
+    setMediaSessionPlaybackState("paused");
+
+    /**
+     * @type {ActionHandlerTuple[]}
+     */
+    const actionHandlers = [
+      [
+        "play",
+        () => {
+          if (this.state.loop) {
+            this.beginLoop();
+            setMediaSessionPlaybackState("playing");
+          }
+        },
+      ],
+      [
+        "pause",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.forceUpdate();
+            setMediaSessionPlaybackState("paused");
+          }
+        },
+      ],
+      [
+        "stop",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.forceUpdate();
+            setMediaSessionPlaybackState("paused");
+          }
+        },
+      ],
+      [
+        "previoustrack",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.looperSwipe("right");
+          }
+        },
+      ],
+      [
+        "nexttrack",
+        () => {
+          if (this.state.loop) {
+            this.abortLoop();
+            this.looperSwipe("left");
+          }
+        },
+      ],
+    ];
+
+    mediaSessionAttach(actionHandlers);
   }
 
   /**
@@ -285,6 +350,8 @@ class Vocabulary extends Component {
   componentWillUnmount() {
     document.removeEventListener("keydown", this.arrowKeyPress, true);
     this.abortLoop();
+
+    mediaSessionDetachAll();
   }
 
   abortLoop() {
@@ -293,10 +360,14 @@ class Vocabulary extends Component {
         ac.abort();
       });
       this.loopAbortControllers = undefined;
+
+      setMediaSessionPlaybackState("paused");
     }
   }
 
   beginLoop() {
+    setMediaSessionPlaybackState("playing");
+
     this.abortLoop();
     const ac1 = new AbortController();
     const ac2 = new AbortController();
@@ -362,6 +433,7 @@ class Vocabulary extends Component {
           if (this.state.loop && this.loopAbortControllers) {
             this.abortLoop();
             this.forceUpdate();
+            setMediaSessionPlaybackState("paused");
           }
         }
 
@@ -594,6 +666,7 @@ class Vocabulary extends Component {
     if (this.state.loop && this.loopAbortControllers) {
       this.abortLoop();
       this.forceUpdate();
+      setMediaSessionPlaybackState("paused");
     }
 
     swipeEnd(e, {
@@ -607,7 +680,6 @@ class Vocabulary extends Component {
   }
 
   /**
-   *
    * @param {string} direction
    */
   swipeActionHandler(direction) {
