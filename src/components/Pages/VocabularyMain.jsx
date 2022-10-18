@@ -58,6 +58,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * prevTerm: RawVocabulary,
  * played: boolean,
  * prevPushPlay: boolean,
+ * loopPlayBtn?: JSX.Element,
  * }} VocabularyMainProps
  */
 
@@ -162,6 +163,27 @@ class VocabularyMain extends Component {
       this.state.prevVocab
     );
 
+    const playButton = this.props.loopPlayBtn || (
+      <AudioItem
+        visible={!this.props.touchSwipe}
+        word={audioWords}
+        reCache={this.props.reCache}
+        autoPlay={
+          !this.props.scrollingDone || !this.state.audioPlay
+            ? AUTOPLAY_OFF
+            : this.props.autoPlay
+        }
+        onPushedPlay={() => {
+          if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+            this.props.pushedPlay(true);
+          }
+        }}
+        onAutoPlayDone={() => {
+          this.props.pushedPlay(false);
+        }}
+      />
+    );
+
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
         <Sizable
@@ -210,24 +232,7 @@ class VocabularyMain extends Component {
               : bottomLabel}
           </span>
         </h2>
-        <AudioItem
-          visible={!this.props.touchSwipe}
-          word={audioWords}
-          reCache={this.props.reCache}
-          autoPlay={
-            !this.props.scrollingDone || !this.state.audioPlay
-              ? AUTOPLAY_OFF
-              : this.props.autoPlay
-          }
-          onPushedPlay={() => {
-            if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
-              this.props.pushedPlay(true);
-            }
-          }}
-          onAutoPlayDone={() => {
-            this.props.pushedPlay(false);
-          }}
-        />
+        {playButton}
       </div>
     );
   }
@@ -269,6 +274,7 @@ VocabularyMain.propTypes = {
   toggleFuriganaSettingHelper: PropTypes.func,
   hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
+  loopPlayBtn: PropTypes.object,
 };
 
 export default connect(mapStateToProps, {

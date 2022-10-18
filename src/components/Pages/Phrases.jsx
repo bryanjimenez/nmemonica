@@ -14,6 +14,10 @@ import {
   faGlasses,
   faPencilAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  faPlayCircle,
+  faStopCircle,
+} from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   addFrequencyPhrase,
@@ -40,6 +44,8 @@ import {
   getTermUID,
   getTerm,
   labelPlacementHelper,
+  loopN,
+  pause,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
@@ -54,6 +60,7 @@ import {
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
+import BtnLoop from "../Form/BtnLoop";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -77,6 +84,7 @@ import classNames from "classnames";
  * order?: number[],
  * reinforcedUID?: string,
  * swiping?: any,
+ * loop: 0|1|2|3,
  * }} PhrasesState
  */
 
@@ -130,6 +138,7 @@ class Phrases extends Component {
       prevPhrase: this.props.prevTerm,
       audioPlay: true,
       prevPlayed: this.props.prevPushPlay,
+      loop: 0,
     };
 
     /** @type {PhrasesProps} */
@@ -146,6 +155,9 @@ class Phrases extends Component {
     this.inMove = this.inMove.bind(this);
     this.endMove = this.endMove.bind(this);
     this.swipeActionHandler = this.swipeActionHandler.bind(this);
+    this.beginLoop = this.beginLoop.bind(this);
+    this.looperSwipe = this.looperSwipe.bind(this);
+    this.abortLoop = this.abortLoop.bind(this);
     this.arrowKeyPress = this.arrowKeyPress.bind(this);
   }
 
@@ -273,6 +285,19 @@ class Phrases extends Component {
       }
     }
 
+    if (this.state.loop !== prevState.loop) {
+      this.abortLoop();
+    }
+
+    if (
+      this.state.loop > 0 &&
+      !this.loopAbortControllers &&
+      (this.state.reinforcedUID !== prevState.reinforcedUID ||
+        this.state.selectedIndex !== prevState.selectedIndex)
+    ) {
+      this.beginLoop();
+    }
+
     if (this.state.audioPlay) {
       this.setState({
         audioPlay: false,
@@ -282,32 +307,91 @@ class Phrases extends Component {
 
   componentWillUnmount() {
     document.removeEventListener("keydown", this.arrowKeyPress, true);
+
+    this.abortLoop();
+  }
+
+  abortLoop() {
+    if (this.loopAbortControllers && this.loopAbortControllers.length > 0) {
+      this.loopAbortControllers.forEach((ac) => {
+        ac.abort();
+      });
+      this.loopAbortControllers = undefined;
+    }
+  }
+
+  beginLoop() {
+    this.abortLoop();
+    const ac1 = new AbortController();
+    const ac2 = new AbortController();
+    const ac3 = new AbortController();
+
+    this.loopAbortControllers = [ac1, ac2, ac3];
+
+    pause(700, ac1)
+      .then(() =>
+        this.looperSwipe("down").then(() =>
+          pause(3000, ac2).then(() =>
+            loopN(
+              this.state.loop,
+              () => this.looperSwipe("up"),
+              1500,
+              ac3
+            ).then(() => {
+              this.loopAbortControllers = undefined;
+              return this.looperSwipe("left");
+            })
+          )
+        )
+      )
+      .catch(() => {
+        // catch any rejected/aborted promise
+      });
+
+    this.forceUpdate();
+  }
+
+  /**
+   * For the loop
+   * @param {string} direction
+   */
+  looperSwipe(direction) {
+    let promise;
+    if (this.state.loop > 0) {
+      promise = this.swipeActionHandler(direction);
+    }
+    return promise || Promise.reject("loop disabled");
   }
 
   /**
    * @param {KeyboardEvent} event
    */
   arrowKeyPress(event) {
-    if (
-      event.key === "ArrowLeft" ||
-      event.key === "ArrowUp" ||
-      event.key === "ArrowRight" ||
-      event.key === "ArrowDown" ||
-      event.key === " "
-    ) {
-      // console.log("Pressed " + event.key);
-    }
+    /**
+     * @typedef {[string, function][]} ActionHandlerTuple
+     * @type {ActionHandlerTuple}
+     */
+    const actionHandlers = [
+      ["ArrowRight", () => this.swipeActionHandler("left")],
+      ["ArrowLeft", () => this.swipeActionHandler("right")],
+      ["ArrowUp", () => this.swipeActionHandler("up")],
+      ["ArrowDown", () => this.swipeActionHandler("down")],
+      ["MediaPlayPause", () => {}],
+      [" ", this.props.flipPhrasesPracticeSide],
+    ];
 
-    if (event.key === "ArrowRight") {
-      this.swipeActionHandler("left");
-    } else if (event.key === "ArrowLeft") {
-      this.swipeActionHandler("right");
-    } else if (event.key === "ArrowUp") {
-      this.swipeActionHandler("up");
-    } else if (event.key === "ArrowDown") {
-      this.swipeActionHandler("down");
-    } else if (event.key === " ") {
-      this.props.flipPhrasesPracticeSide();
+    for (const [action, handler] of actionHandlers) {
+      if (action === event.key) {
+        if (action !== " ") {
+          if (this.state.loop && this.loopAbortControllers) {
+            this.abortLoop();
+            this.forceUpdate();
+          }
+        }
+
+        handler();
+        break;
+      }
     }
   }
 
@@ -452,7 +536,12 @@ class Phrases extends Component {
    * @type {TouchEventHandler}
    */
   endMove(e) {
-    // const direction = getSwipeDirection(this.state.swiping.touchObject,true);
+    // const direction = getSwipeDirection(this.state.swiping.touchObject, true);
+    if (this.state.loop && this.loopAbortControllers) {
+      this.abortLoop();
+      this.forceUpdate();
+    }
+
     swipeEnd(e, {
       ...this.state.swiping,
       dragging: true,
@@ -468,11 +557,14 @@ class Phrases extends Component {
    */
   swipeActionHandler(direction) {
     // this.props.logger("swiped " + direction, 3);
+    let swipePromise;
 
     if (direction === "left") {
       this.gotoNextSlide();
+      swipePromise = Promise.resolve();
     } else if (direction === "right") {
       this.gotoPrev();
+      swipePromise = Promise.resolve();
     } else {
       const uid =
         this.state.reinforcedUID ||
@@ -492,6 +584,10 @@ class Phrases extends Component {
         });
         const japaneseAudio = new Audio(audioUrl);
         try {
+          swipePromise = new Promise((resolve) => {
+            japaneseAudio.addEventListener("ended", resolve);
+          });
+
           japaneseAudio.play();
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, 1);
@@ -509,6 +605,10 @@ class Phrases extends Component {
         });
         const englishAudio = new Audio(audioUrl);
         try {
+          swipePromise = new Promise((resolve) => {
+            englishAudio.addEventListener("ended", resolve);
+          });
+
           englishAudio.play();
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, 1);
@@ -519,6 +619,7 @@ class Phrases extends Component {
         }
       }
     }
+    return swipePromise || Promise.reject();
   }
 
   render() {
@@ -574,6 +675,50 @@ class Phrases extends Component {
       this.state.prevPhrase
     );
 
+    let playButton;
+
+    if (this.state.loop > 0 && !this.loopAbortControllers) {
+      playButton = (
+        <div className="d-flex justify-content-center">
+          <FontAwesomeIcon
+            size="2x"
+            className="clickable"
+            onClick={this.beginLoop}
+            icon={faPlayCircle}
+          />
+        </div>
+      );
+    } else if (this.state.loop > 0 && this.loopAbortControllers) {
+      playButton = (
+        <div className="d-flex justify-content-center">
+          <FontAwesomeIcon
+            size="2x"
+            className="clickable"
+            onClick={() => {
+              this.setState({ loop: 0 });
+            }}
+            icon={faStopCircle}
+          />
+        </div>
+      );
+    } else if (this.state.loop === 0) {
+      playButton = (
+        <AudioItem
+          visible={!this.props.touchSwipe}
+          word={audioWords}
+          autoPlay={!this.state.audioPlay ? AUTOPLAY_OFF : this.props.autoPlay}
+          onPushedPlay={() => {
+            if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+              this.props.pushedPlay(true);
+            }
+          }}
+          onAutoPlayDone={() => {
+            this.props.pushedPlay(false);
+          }}
+        />
+      );
+    }
+
     const progress =
       ((this.state.selectedIndex + 1) / this.state.filteredPhrases.length) *
       100;
@@ -621,21 +766,8 @@ class Phrases extends Component {
                 {this.state.showMeaning ? bottomValue : bottomLabel}
               </span>
             </h2>
-            <AudioItem
-              visible={!this.props.touchSwipe}
-              word={audioWords}
-              autoPlay={
-                !this.state.audioPlay ? AUTOPLAY_OFF : this.props.autoPlay
-              }
-              onPushedPlay={() => {
-                if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
-                  this.props.pushedPlay(true);
-                }
-              }}
-              onAutoPlayDone={() => {
-                this.props.pushedPlay(false);
-              }}
-            />
+
+            {playButton}
           </div>
           <StackNavButton
             color={"--orange"}
@@ -646,14 +778,31 @@ class Phrases extends Component {
           </StackNavButton>
         </div>
       </div>,
-      <div key={1} className="options-bar mb-2 flex-shrink-1">
+      <div key={1} className="options-bar mb-3 flex-shrink-1">
         <div className="row">
           <div className="col">
-            <FontAwesomeIcon
-              className="clickable"
-              onClick={this.props.flipPhrasesPracticeSide}
-              icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-            />
+            <div className="d-flex justify-content-start">
+              <div>
+                <FontAwesomeIcon
+                  className="clickable"
+                  onClick={this.props.flipPhrasesPracticeSide}
+                  icon={this.props.practiceSide ? faGlasses : faPencilAlt}
+                />
+              </div>
+
+              <div className="sm-icon-grp">
+                <BtnLoop
+                  active={this.state.loop > 0}
+                  loop={this.state.loop}
+                  onClick={() => {
+                    this.abortLoop();
+                    this.setState((/** @type {PhrasesState}*/ state) => ({
+                      loop: state.loop < 3 ? state.loop + 1 : 0,
+                    }));
+                  }}
+                />
+              </div>
+            </div>
           </div>
           <div className="col text-center" style={{ maxHeight: "24px" }}>
             {this.state.reinforcedUID && (

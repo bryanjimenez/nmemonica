@@ -106,7 +106,7 @@ export function getTerm(uid, list) {
 /**
  * Filters terms (words or phrases) list
  * by groups, frequency, or space repetition
- * @template {{ uid: string }} T
+ * @template {{ uid: string, grp?: string, subGrp?: string }} T
  * @param {number} filterType
  * @param {T[]} termList word or phrase list
  * @param {string[]} frequencyList
@@ -154,9 +154,9 @@ export function termFilterByType(
 
 /**
  * Active group filtering logic
- * @returns {boolean} whether the term is part of the activeGroup
+ * @template {{ grp?: string, subGrp?: string }} T
  * @param {string[]} activeGrpList
- * @param {RawVocabulary} term
+ * @param {T} term
  */
 export function activeGroupIncludes(activeGrpList, term) {
   return (
@@ -735,4 +735,76 @@ export function toggleFuriganaSettingHelper(
   };
 
   return furiganaToggable;
+}
+
+/**
+ * A thenable pause
+ * @param {number} ms to pause
+ * @param {{signal: AbortSignal}} AbortController signal
+ * @returns {Promise<void>} empty promise
+ */
+export function pause(ms, { signal }) {
+  return new Promise((resolve, reject) => {
+    const listener = () => {
+      clearTimeout(timer);
+      reject(new Error("Aborted"));
+    };
+
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", listener);
+      resolve();
+    }, ms);
+
+    if (signal?.aborted) {
+      listener();
+    }
+
+    signal?.addEventListener("abort", listener);
+  });
+}
+
+/**
+ * @template T
+ * @param {number} n to repeat action
+ * @param {()=>Promise<T>} action
+ * @param {number} waitBeforeEach ms to wait before triggering actions
+ * @param {{signal: AbortSignal}} AbortController signal
+ */
+export function loopN(n, action, waitBeforeEach, { signal }) {
+  /**
+   * @type {Promise<void>}
+   */
+  const loopPromise = new Promise((resolve, reject) => {
+    const listener = () => {
+      clearTimeout(timer);
+      reject();
+    };
+
+    const timer = setTimeout(() => {
+      if (n > 0) {
+        action()
+          .then(() =>
+            loopN(n - 1, action, waitBeforeEach, { signal }).then(() => {
+              signal?.removeEventListener("abort", listener);
+
+              resolve();
+            })
+          )
+          .catch(() => {
+            reject();
+          });
+      } else {
+        signal?.removeEventListener("abort", listener);
+        resolve();
+      }
+    }, waitBeforeEach);
+
+    if (signal?.aborted) {
+      listener();
+    }
+
+    signal?.addEventListener("abort", listener);
+  });
+
+  return loopPromise;
 }

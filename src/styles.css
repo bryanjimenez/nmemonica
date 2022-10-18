@@ -115,3 +115,29 @@ a {
 .z-index-1 {
   z-index: 1;
 }
+
+.rotate-90 {
+  -webkit-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.rotate-45 {
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+
+.rotate-135 {
+  -webkit-transform: rotate(135deg);
+  -ms-transform: rotate(135deg);
+  transform: rotate(135deg);
+}
+
+.notification {
+  font-size: xx-small;
+  position: relative;
+  left: -3px;
+  top: -12px;
+}

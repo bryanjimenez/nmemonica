@@ -68,6 +68,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * verbFormsOrder: string[],
  * hintEnabled: boolean,
  * showHint: boolean,
+ * loopPlayBtn?: JSX.Element,
  * }} VerbMainProps
  */
 
@@ -340,6 +341,45 @@ class VerbMain extends Component {
       this.state.prevVocab
     );
 
+    const playButton = this.props.loopPlayBtn || (
+      <AudioItem
+        visible={!this.props.touchSwipe}
+        word={audioWords}
+        reCache={this.props.reCache}
+        autoPlay={
+          !this.props.scrollingDone || !this.state.audioPlay
+            ? AUTOPLAY_OFF
+            : this.props.autoPlay
+        }
+        onPushedPlay={() => {
+          if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+            this.setState({
+              audioPlay: false,
+            });
+            this.props.pushedPlay(true);
+          }
+        }}
+        onAutoPlayDone={() => {
+          if (!this.state.prevVocab) {
+            // this is the first verb let's set it for next term
+            const thisVerb = verbToTargetForm(
+              this.props.verb,
+              this.props.verbForm
+            );
+            const firstVerb = {
+              ...this.props.verb,
+              japanese: thisVerb.toString(),
+              pronounce:
+                this.props.verb.pronounce && thisVerb.getPronunciation(),
+              form: this.props.verbForm,
+            };
+            this.props.setPreviousWord({ ...firstVerb });
+          }
+          this.props.pushedPlay(false);
+        }}
+      />
+    );
+
     return [
       this.buildTenseElement(0, t1),
       <div
@@ -395,42 +435,7 @@ class VerbMain extends Component {
               : bottomLabel}
           </span>
         </div>
-        <AudioItem
-          visible={!this.props.touchSwipe}
-          word={audioWords}
-          reCache={this.props.reCache}
-          autoPlay={
-            !this.props.scrollingDone || !this.state.audioPlay
-              ? AUTOPLAY_OFF
-              : this.props.autoPlay
-          }
-          onPushedPlay={() => {
-            if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
-              this.setState({
-                audioPlay: false,
-              });
-              this.props.pushedPlay(true);
-            }
-          }}
-          onAutoPlayDone={() => {
-            if (!this.state.prevVocab) {
-              // this is the first verb let's set it for next term
-              const thisVerb = verbToTargetForm(
-                this.props.verb,
-                this.props.verbForm
-              );
-              const firstVerb = {
-                ...this.props.verb,
-                japanese: thisVerb.toString(),
-                pronounce:
-                  this.props.verb.pronounce && thisVerb.getPronunciation(),
-                form: this.props.verbForm,
-              };
-              this.props.setPreviousWord({ ...firstVerb });
-            }
-            this.props.pushedPlay(false);
-          }}
-        />
+        {playButton}
       </div>,
 
       this.buildTenseElement(2, t2),
@@ -482,6 +487,7 @@ VerbMain.propTypes = {
   verbFormsOrder: PropTypes.array,
   hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
+  loopPlayBtn: PropTypes.object,
 };
 
 export default connect(mapStateToProps, {
