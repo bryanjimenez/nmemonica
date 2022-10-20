@@ -14,10 +14,6 @@ import {
   faGlasses,
   faPencilAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faPlayCircle,
-  faStopCircle,
-} from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   addFrequencyPhrase,
@@ -60,7 +56,7 @@ import {
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
-import BtnLoop from "../Form/BtnLoop";
+import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
 import {
   mediaSessionAttach,
   mediaSessionDetachAll,
@@ -606,9 +602,22 @@ class Phrases extends Component {
   endMove(e) {
     // const direction = getSwipeDirection(this.state.swiping.touchObject, true);
     if (this.state.loop && this.loopAbortControllers) {
-      this.abortLoop();
-      this.forceUpdate();
-      setMediaSessionPlaybackState("paused");
+      const tEl = /** @type {Element} */ (e.target);
+
+      if (
+        Array.from(document.getElementsByClassName("loop-stop-btn")).some(
+          (el) => el.contains(tEl)
+        )
+      ) {
+
+        this.setState({ loop: 0 });
+        return;
+      } else {
+
+        this.abortLoop();
+        this.forceUpdate();
+        setMediaSessionPlaybackState("paused");
+      }
     }
 
     swipeEnd(e, {
@@ -746,28 +755,14 @@ class Phrases extends Component {
     let playButton;
 
     if (this.state.loop > 0 && !this.loopAbortControllers) {
-      playButton = (
-        <div className="d-flex justify-content-center">
-          <FontAwesomeIcon
-            size="2x"
-            className="clickable"
-            onClick={this.beginLoop}
-            icon={faPlayCircle}
-          />
-        </div>
-      );
+      playButton = <LoopStartBtn onClick={this.beginLoop} />;
     } else if (this.state.loop > 0 && this.loopAbortControllers) {
       playButton = (
-        <div className="d-flex justify-content-center">
-          <FontAwesomeIcon
-            size="2x"
-            className="clickable"
-            onClick={() => {
-              this.setState({ loop: 0 });
-            }}
-            icon={faStopCircle}
-          />
-        </div>
+        <LoopStopBtn
+          onClick={() => {
+            this.setState({ loop: 0 });
+          }}
+        />
       );
     } else if (this.state.loop === 0) {
       playButton = (
@@ -835,7 +830,7 @@ class Phrases extends Component {
               </span>
             </h2>
 
-            {playButton}
+            <div className="d-flex justify-content-center">{playButton}</div>
           </div>
           <StackNavButton
             color={"--orange"}
@@ -859,7 +854,7 @@ class Phrases extends Component {
               </div>
 
               <div className="sm-icon-grp">
-                <BtnLoop
+                <LoopSettingBtn
                   active={this.state.loop > 0}
                   loop={this.state.loop}
                   onClick={() => {

@@ -22,10 +22,6 @@ import {
   faRunning,
   faSuperscript,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faPlayCircle,
-  faStopCircle,
-} from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   flipVocabularyPracticeSide,
@@ -74,7 +70,7 @@ import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import classNames from "classnames";
 import { BtnShowHint } from "../Form/BtnShowHint";
-import BtnLoop from "../Form/BtnLoop";
+import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
 import {
   mediaSessionAttach,
   mediaSessionDetachAll,
@@ -664,9 +660,22 @@ class Vocabulary extends Component {
   endMove(e) {
     // const direction = getSwipeDirection(this.state.swiping.touchObject, true);
     if (this.state.loop && this.loopAbortControllers) {
-      this.abortLoop();
-      this.forceUpdate();
-      setMediaSessionPlaybackState("paused");
+      const tEl = /** @type {Element} */ (e.target);
+
+      if (
+        Array.from(document.getElementsByClassName("loop-stop-btn")).some(
+          (el) => el.contains(tEl)
+        )
+      ) {
+
+        this.setState({ loop: 0 });
+        return;
+      } else {
+
+        this.abortLoop();
+        this.forceUpdate();
+        setMediaSessionPlaybackState("paused");
+      }
     }
 
     swipeEnd(e, {
@@ -822,28 +831,14 @@ class Vocabulary extends Component {
 
     let loopActionBtn;
     if (this.state.loop > 0 && !this.loopAbortControllers) {
-      loopActionBtn = (
-        <div className="d-flex justify-content-center">
-          <FontAwesomeIcon
-            size="2x"
-            className="clickable"
-            onClick={this.beginLoop}
-            icon={faPlayCircle}
-          />
-        </div>
-      );
+      loopActionBtn = <LoopStartBtn onClick={this.beginLoop} />;
     } else if (this.state.loop > 0 && this.loopAbortControllers) {
       loopActionBtn = (
-        <div className="d-flex justify-content-center">
-          <FontAwesomeIcon
-            size="2x"
-            className="clickable"
-            onClick={() => {
-              this.setState({ loop: 0 });
-            }}
-            icon={faStopCircle}
-          />
-        </div>
+        <LoopStopBtn
+          onClick={() => {
+            this.setState({ loop: 0 });
+          }}
+        />
       );
     }
 
@@ -951,7 +946,7 @@ class Vocabulary extends Component {
                 )}
 
                 <div className="sm-icon-grp">
-                  <BtnLoop
+                  <LoopSettingBtn
                     active={this.state.loop > 0}
                     loop={this.state.loop}
                     onClick={() => {
