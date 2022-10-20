@@ -116,7 +116,6 @@ export default function AudioItem(props) {
   };
 
   return (
-    <div className="d-flex justify-content-center">
       <div
         className="clickable"
         onMouseDown={props.visible ? clickEvHan0 : undefined}
@@ -148,7 +147,6 @@ export default function AudioItem(props) {
           <UnmuteIcon size="medium" aria-label="pronunciation" />
         )}
       </div>
-    </div>
   );
 }
 

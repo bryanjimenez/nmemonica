@@ -232,7 +232,9 @@ class VocabularyMain extends Component {
               : bottomLabel}
           </span>
         </h2>
-        {playButton}
+        <div className="d-flex justify-content-center">
+          {playButton}
+        </div>
       </div>
     );
   }

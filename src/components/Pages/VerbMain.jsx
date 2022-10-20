@@ -435,7 +435,9 @@ class VerbMain extends Component {
               : bottomLabel}
           </span>
         </div>
+        <div className="d-flex justify-content-center">
         {playButton}
+        </div>
       </div>,
 
       this.buildTenseElement(2, t2),
