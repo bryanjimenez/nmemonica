@@ -207,7 +207,7 @@ class VocabularyMain extends Component {
                   showRomaji: !state.showRomaji,
                 }));
               }}
-              className="clickable"
+              className="clickable loop-no-interrupt"
             >
               {this.state.showRomaji ? romaji : "[Romaji]"}
             </span>
@@ -224,7 +224,7 @@ class VocabularyMain extends Component {
                 }));
               }
             }}
-            className="clickable"
+            className="clickable loop-no-interrupt"
           >
             {(this.props.autoPlay && !practiceSide) ||
             (!this.props.autoPlay && this.state.showMeaning)
@@ -232,9 +232,7 @@ class VocabularyMain extends Component {
               : bottomLabel}
           </span>
         </h2>
-        <div className="d-flex justify-content-center">
-          {playButton}
-        </div>
+        <div className="d-flex justify-content-center">{playButton}</div>
       </div>
     );
   }

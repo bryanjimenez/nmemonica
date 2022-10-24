@@ -808,3 +808,27 @@ export function loopN(n, action, waitBeforeEach, { signal }) {
 
   return loopPromise;
 }
+
+/**
+ * @param {HTMLAudioElement} audio
+ * @return {Promise<void>}
+ */
+export function fadeOut(audio) {
+  return new Promise((resolve) => {
+    const fade = () => {
+      if (audio.volume < 0.000001) {
+        clearInterval(i);
+        // audio.pause();
+        resolve();
+      } else {
+        if (audio.volume > 0.7) {
+          audio.volume *= 0.95;
+        } else {
+          audio.volume *= Math.pow(audio.volume, Math.pow(audio.volume, -1));
+        }
+      }
+    };
+
+    const i = setInterval(fade, 20);
+  });
+}

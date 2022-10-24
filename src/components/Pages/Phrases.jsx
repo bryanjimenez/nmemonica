@@ -42,6 +42,7 @@ import {
   labelPlacementHelper,
   loopN,
   pause,
+  fadeOut,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
@@ -109,7 +110,7 @@ import {
  * repetition: SpaceRepetitionMap,
  * lastNext: number,
  * updateSpaceRepPhrase: function,
- * logger: function,
+ * logger: typeof logger,
  * prevTerm: RawPhrase,
  * prevPushPlay: boolean,
  * pushedPlay: function,
@@ -261,17 +262,6 @@ class Phrases extends Component {
       this.state.reinforcedUID !== prevState.reinforcedUID
     ) {
       if (this.state.filteredPhrases.length > 0) {
-        const uid =
-          this.state.reinforcedUID ||
-          getTermUID(
-            this.state.selectedIndex,
-            this.state.order,
-            this.state.filteredPhrases
-          );
-        const term = getTerm(uid, this.props.phrases);
-
-        spaceRepLog(this.props.logger, term, this.props.repetition);
-
         if (
           this.state.selectedIndex !== prevState.selectedIndex ||
           this.state.reinforcedUID !== prevState.reinforcedUID
@@ -379,37 +369,51 @@ class Phrases extends Component {
         ac.abort();
       });
       this.loopAbortControllers = undefined;
+
       setMediaSessionPlaybackState("paused");
     }
   }
 
   beginLoop() {
     setMediaSessionPlaybackState("playing");
+
     this.abortLoop();
     const ac1 = new AbortController();
     const ac2 = new AbortController();
     const ac3 = new AbortController();
+    const ac4 = new AbortController();
+    const ac5 = new AbortController();
 
-    this.loopAbortControllers = [ac1, ac2, ac3];
+    this.loopAbortControllers = [ac1, ac2, ac3, ac4, ac5];
+
+    const japanese = (/** @type {AbortController} */ ac) =>
+      loopN(this.state.loop, () => this.looperSwipe("up", ac), 1500, ac);
+
+    const english = (/** @type {AbortController} */ ac) =>
+      this.looperSwipe("down", ac);
 
     pause(700, ac1)
-      .then(() =>
-        this.looperSwipe("down").then(() =>
-          pause(3000, ac2).then(() =>
-            loopN(
-              this.state.loop,
-              () => this.looperSwipe("up"),
-              1500,
-              ac3
-            ).then(() => {
-              this.loopAbortControllers = undefined;
-              return this.looperSwipe("left");
-            })
-          )
-        )
-      )
+      .then(() => {
+        return english(ac2).catch(() => {
+          // caught trying to fetch english
+          // continue
+        });
+      })
+      .then(() => pause(3000, ac3))
+      .then(() => {
+        return japanese(ac4)
+          .then(() => {
+            this.loopAbortControllers = undefined;
+            return this.looperSwipe("left");
+          })
+          .catch(() => {
+            // caught trying to fetch japanese
+            // continue
+          });
+      })
+      .then(() => pause(100, ac5))
       .catch(() => {
-        // catch any rejected/aborted promise
+        // aborted
       });
 
     this.forceUpdate();
@@ -418,11 +422,12 @@ class Phrases extends Component {
   /**
    * For the loop
    * @param {string} direction
+   * @param {AbortController} [AbortController]
    */
-  looperSwipe(direction) {
+  looperSwipe(direction, AbortController) {
     let promise;
     if (this.state.loop > 0) {
-      promise = this.swipeActionHandler(direction);
+      promise = this.swipeActionHandler(direction, AbortController);
     }
     return promise || Promise.reject("loop disabled");
   }
@@ -459,6 +464,7 @@ class Phrases extends Component {
       }
     }
   }
+
   setOrder() {
     const filteredPhrases = termFilterByType(
       this.props.filterType,
@@ -609,11 +615,16 @@ class Phrases extends Component {
           (el) => el.contains(tEl)
         )
       ) {
-
         this.setState({ loop: 0 });
         return;
+      } else if (
+        Array.from(document.getElementsByClassName("loop-no-interrupt")).some(
+          (el) => el.contains(tEl)
+        )
+      ) {
+        // elements with this tag do not interrupt loop
+        return;
       } else {
-
         this.abortLoop();
         this.forceUpdate();
         setMediaSessionPlaybackState("paused");
@@ -632,8 +643,9 @@ class Phrases extends Component {
 
   /**
    * @param {string} direction
+   * @param {AbortController} [AbortController]
    */
-  swipeActionHandler(direction) {
+  swipeActionHandler(direction, AbortController) {
     // this.props.logger("swiped " + direction, 3);
     let swipePromise;
 
@@ -662,11 +674,34 @@ class Phrases extends Component {
         });
         const japaneseAudio = new Audio(audioUrl);
         try {
-          swipePromise = new Promise((resolve) => {
-            japaneseAudio.addEventListener("ended", resolve);
-          });
+          swipePromise = Promise.all([
+            /** @type {Promise<void>} */
+            (
+              new Promise((resolve, reject) => {
+                const listener = () => {
+                  fadeOut(japaneseAudio).then(() => {
+                    reject();
+                  });
+                };
 
-          japaneseAudio.play();
+                japaneseAudio.addEventListener("ended", () => {
+                  AbortController?.signal.removeEventListener(
+                    "abort",
+                    listener
+                  );
+                  resolve();
+                });
+
+                if (AbortController?.signal.aborted) {
+                  listener();
+                }
+
+                AbortController?.signal.addEventListener("abort", listener);
+              })
+            ),
+
+            japaneseAudio.play(),
+          ]);
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, 1);
         }
@@ -683,10 +718,34 @@ class Phrases extends Component {
         });
         const englishAudio = new Audio(audioUrl);
         try {
-          swipePromise = new Promise((resolve) => {
-            englishAudio.addEventListener("ended", resolve);
-          });
-          englishAudio.play();
+          swipePromise = Promise.all([
+            /** @type {Promise<void>} */
+            (
+              new Promise((resolve, reject) => {
+                const listener = () => {
+                  fadeOut(englishAudio).then(() => {
+                    reject();
+                  });
+                };
+
+                englishAudio.addEventListener("ended", () => {
+                  AbortController?.signal.removeEventListener(
+                    "abort",
+                    listener
+                  );
+                  resolve();
+                });
+
+                if (AbortController?.signal.aborted) {
+                  listener();
+                }
+
+                AbortController?.signal.addEventListener("abort", listener);
+              })
+            ),
+
+            englishAudio.play(),
+          ]);
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, 1);
         }
@@ -811,7 +870,7 @@ class Phrases extends Component {
                       showRomaji: !state.showRomaji,
                     }));
                   }}
-                  className="clickable"
+                  className="clickable loop-no-interrupt"
                 >
                   {this.state.showRomaji ? romaji : "[Romaji]"}
                 </span>
@@ -824,7 +883,7 @@ class Phrases extends Component {
                     showMeaning: !state.showMeaning,
                   }));
                 }}
-                className="clickable"
+                className="clickable loop-no-interrupt"
               >
                 {this.state.showMeaning ? bottomValue : bottomLabel}
               </span>
@@ -942,34 +1001,32 @@ const mapStateToProps = (state) => {
     practiceSide: state.settings.phrases.practiceSide,
     isOrdered: state.settings.phrases.ordered,
     romajiActive: state.settings.phrases.romaji,
+    filterType: state.settings.phrases.filter,
     frequency: state.settings.phrases.frequency,
     activeGroup: state.settings.phrases.activeGroup,
-    filterType: state.settings.phrases.filter,
-    reinforce: state.settings.phrases.reinforce,
-    repetition: state.settings.phrases.repetition,
-
-    touchSwipe: state.settings.global.touchSwipe,
-    // TODO: vocabulary?
-    prevTerm: state.vocabulary.previous,
     prevPushPlay: state.vocabulary.pushedPlay,
     autoPlay: state.settings.vocabulary.autoPlay,
+    reinforce: state.settings.phrases.reinforce,
+    prevTerm: state.vocabulary.previous,
+    repetition: state.settings.phrases.repetition,
+    touchSwipe: state.settings.global.touchSwipe,
   };
 };
 
 Phrases.propTypes = {
   getPhrases: PropTypes.func.isRequired,
+  activeGroup: PropTypes.array,
+  addFrequencyPhrase: PropTypes.func,
+  removeFrequencyPhrase: PropTypes.func,
+  frequency: PropTypes.array,
   phrases: PropTypes.array.isRequired,
-  isOrdered: PropTypes.bool,
+  romajiActive: PropTypes.bool,
   flipPhrasesPracticeSide: PropTypes.func,
   practiceSide: PropTypes.bool,
-  romajiActive: PropTypes.bool,
-  removeFrequencyPhrase: PropTypes.func,
-  addFrequencyPhrase: PropTypes.func,
-  frequency: PropTypes.array,
+  isOrdered: PropTypes.bool,
   filterType: PropTypes.number,
   togglePhrasesFilter: PropTypes.func,
   reinforce: PropTypes.bool,
-  activeGroup: PropTypes.array,
   repetition: PropTypes.object,
   lastNext: PropTypes.number,
   updateSpaceRepPhrase: PropTypes.func,
@@ -979,8 +1036,8 @@ Phrases.propTypes = {
     english: PropTypes.string.isRequired,
     uid: PropTypes.string.isRequired,
   }),
-  prevPushPlay: PropTypes.bool,
   pushedPlay: PropTypes.func,
+  prevPushPlay: PropTypes.bool,
   setPreviousWord: PropTypes.func,
   autoPlay: PropTypes.number,
   touchSwipe: PropTypes.bool,
@@ -989,12 +1046,12 @@ Phrases.propTypes = {
 export default connect(mapStateToProps, {
   getPhrases,
   flipPhrasesPracticeSide,
-  removeFrequencyPhrase,
   addFrequencyPhrase,
+  removeFrequencyPhrase,
   togglePhrasesFilter,
+  setPreviousWord,
   updateSpaceRepPhrase,
   logger,
-  setPreviousWord,
   pushedPlay,
 })(Phrases);
 

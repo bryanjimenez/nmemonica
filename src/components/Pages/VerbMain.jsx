@@ -403,7 +403,7 @@ class VerbMain extends Component {
         {this.props.romajiActive && romaji && (
           <div>
             <span
-              className="clickable"
+              className="clickable loop-no-interrupt"
               onClick={() => {
                 this.setState((/** @type {VerbMainState} */ state) => ({
                   showRomaji: !state.showRomaji,
@@ -417,7 +417,7 @@ class VerbMain extends Component {
 
         <div>
           <span
-            className="clickable"
+            className="clickable loop-no-interrupt"
             style={btmStyle}
             onClick={() => {
               if (this.props.autoPlay) {
@@ -435,9 +435,7 @@ class VerbMain extends Component {
               : bottomLabel}
           </span>
         </div>
-        <div className="d-flex justify-content-center">
-        {playButton}
-        </div>
+        <div className="d-flex justify-content-center">{playButton}</div>
       </div>,
 
       this.buildTenseElement(2, t2),

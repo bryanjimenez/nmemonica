@@ -57,6 +57,7 @@ import {
   getCacheUID,
   loopN,
   pause,
+  fadeOut,
 } from "../../helper/gameHelper";
 import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
@@ -132,7 +133,7 @@ import {
  * repetition: SpaceRepetitionMap,
  * lastNext: number,
  * updateSpaceRepWord: function,
- * logger: function,
+ * logger: typeof logger,
  * verbForm: string,
  * pushedPlay: function,
  * touchSwipe: boolean,
@@ -195,7 +196,6 @@ class Vocabulary extends Component {
       // data retrival done, set up game
       this.setOrder();
     }
-
     document.addEventListener("keydown", this.arrowKeyPress, true);
 
     setMediaSessionMetadata("Vocabulary Loop");
@@ -262,26 +262,6 @@ class Vocabulary extends Component {
    * @param {VocabularyState} prevState
    */
   componentDidUpdate(prevProps, prevState) {
-    if (
-      this.state.order !== prevState.order ||
-      this.state.selectedIndex !== prevState.selectedIndex ||
-      this.state.reinforcedUID !== prevState.reinforcedUID
-    ) {
-      if (this.state.filteredVocab.length > 0) {
-        const uid =
-          this.state.reinforcedUID ||
-          getTermUID(
-            this.state.selectedIndex,
-            this.state.order,
-            this.state.filteredVocab
-          );
-
-        const term = getTerm(uid, this.props.vocab);
-
-        spaceRepLog(this.props.logger, term, this.props.repetition);
-      }
-    }
-
     if (this.props.vocab.length !== prevProps.vocab.length) {
       // console.log("got game data");
       this.setOrder();
@@ -297,9 +277,7 @@ class Vocabulary extends Component {
 
     if (
       this.props.activeGroup.length != prevProps.activeGroup.length ||
-      this.props.activeGroup.some(
-        (/** @type {string} */ e) => !prevProps.activeGroup.includes(e)
-      ) ||
+      this.props.activeGroup.some((e) => !prevProps.activeGroup.includes(e)) ||
       prevProps.activeGroup.some((e) => !this.props.activeGroup.includes(e))
     ) {
       // console.log("activeGroup changed");
@@ -308,9 +286,7 @@ class Vocabulary extends Component {
 
     if (
       this.props.frequency.length != prevProps.frequency.length ||
-      this.props.frequency.some(
-        (/** @type {string} */ e) => !prevProps.frequency.includes(e)
-      ) ||
+      this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
       if (
@@ -320,8 +296,8 @@ class Vocabulary extends Component {
         this.setOrder();
       } else {
         const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
-        const frequency = this.props.frequency.filter(
-          (/** @type {string} */ f) => filteredKeys.includes(f)
+        const frequency = this.props.frequency.filter((f) =>
+          filteredKeys.includes(f)
         );
         // props.frequency is all frequency words
         // state.frequency is a subset of frequency words within current active group
@@ -368,27 +344,39 @@ class Vocabulary extends Component {
     const ac1 = new AbortController();
     const ac2 = new AbortController();
     const ac3 = new AbortController();
+    const ac4 = new AbortController();
+    const ac5 = new AbortController();
 
-    this.loopAbortControllers = [ac1, ac2, ac3];
+    this.loopAbortControllers = [ac1, ac2, ac3, ac4, ac5];
+
+    const japanese = (/** @type {AbortController} */ ac) =>
+      loopN(this.state.loop, () => this.looperSwipe("up", ac), 1500, ac);
+
+    const english = (/** @type {AbortController} */ ac) =>
+      this.looperSwipe("down", ac);
 
     pause(700, ac1)
-      .then(() =>
-        this.looperSwipe("down").then(() =>
-          pause(3000, ac2).then(() =>
-            loopN(
-              this.state.loop,
-              () => this.looperSwipe("up"),
-              1500,
-              ac3
-            ).then(() => {
-              this.loopAbortControllers = undefined;
-              return this.looperSwipe("left");
-            })
-          )
-        )
-      )
+      .then(() => {
+        return english(ac2).catch(() => {
+          // caught trying to fetch english
+          // continue
+        });
+      })
+      .then(() => pause(3000, ac3))
+      .then(() => {
+        return japanese(ac4)
+          .then(() => {
+            this.loopAbortControllers = undefined;
+            return this.looperSwipe("left");
+          })
+          .catch(() => {
+            // caught trying to fetch japanese
+            // continue
+          });
+      })
+      .then(() => pause(100, ac5))
       .catch(() => {
-        // catch any rejected/aborted promise
+        // aborted
       });
 
     this.forceUpdate();
@@ -397,11 +385,12 @@ class Vocabulary extends Component {
   /**
    * For the loop
    * @param {string} direction
+   * @param {AbortController} [AbortController]
    */
-  looperSwipe(direction) {
+  looperSwipe(direction, AbortController) {
     let promise;
     if (this.state.loop > 0) {
-      promise = this.swipeActionHandler(direction);
+      promise = this.swipeActionHandler(direction, AbortController);
     }
     return promise || Promise.reject("loop disabled");
   }
@@ -667,11 +656,16 @@ class Vocabulary extends Component {
           (el) => el.contains(tEl)
         )
       ) {
-
         this.setState({ loop: 0 });
         return;
+      } else if (
+        Array.from(document.getElementsByClassName("loop-no-interrupt")).some(
+          (el) => el.contains(tEl)
+        )
+      ) {
+        // elements with this tag do not interrupt loop
+        return;
       } else {
-
         this.abortLoop();
         this.forceUpdate();
         setMediaSessionPlaybackState("paused");
@@ -690,8 +684,9 @@ class Vocabulary extends Component {
 
   /**
    * @param {string} direction
+   * @param {AbortController} [AbortController]
    */
-  swipeActionHandler(direction) {
+  swipeActionHandler(direction, AbortController) {
     // this.props.logger("swiped " + direction, 3);
     let swipePromise;
 
@@ -750,11 +745,34 @@ class Vocabulary extends Component {
 
         const japaneseAudio = new Audio(audioUrl);
         try {
-          swipePromise = new Promise((resolve) => {
-            japaneseAudio.addEventListener("ended", resolve);
-          });
+          swipePromise = Promise.all([
+            /** @type {Promise<void>} */
+            (
+              new Promise((resolve, reject) => {
+                const listener = () => {
+                  fadeOut(japaneseAudio).then(() => {
+                    reject();
+                  });
+                };
 
-          japaneseAudio.play();
+                japaneseAudio.addEventListener("ended", () => {
+                  AbortController?.signal.removeEventListener(
+                    "abort",
+                    listener
+                  );
+                  resolve();
+                });
+
+                if (AbortController?.signal.aborted) {
+                  listener();
+                }
+
+                AbortController?.signal.addEventListener("abort", listener);
+              })
+            ),
+
+            japaneseAudio.play(),
+          ]);
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, 1);
         }
@@ -773,10 +791,34 @@ class Vocabulary extends Component {
 
         const englishAudio = new Audio(audioUrl);
         try {
-          swipePromise = new Promise((resolve) => {
-            englishAudio.addEventListener("ended", resolve);
-          });
-          englishAudio.play();
+          swipePromise = Promise.all([
+            /** @type {Promise<void>} */
+            (
+              new Promise((resolve, reject) => {
+                const listener = () => {
+                  fadeOut(englishAudio).then(() => {
+                    reject();
+                  });
+                };
+
+                englishAudio.addEventListener("ended", () => {
+                  AbortController?.signal.removeEventListener(
+                    "abort",
+                    listener
+                  );
+                  resolve();
+                });
+
+                if (AbortController?.signal.aborted) {
+                  listener();
+                }
+
+                AbortController?.signal.addEventListener("abort", listener);
+              })
+            ),
+
+            englishAudio.play(),
+          ]);
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, 1);
         }
@@ -896,8 +938,8 @@ class Vocabulary extends Component {
               <div className="d-flex justify-content-start">
                 <div>
                   <FontAwesomeIcon
-                    onClick={this.props.flipVocabularyPracticeSide}
                     className="clickable"
+                    onClick={this.props.flipVocabularyPracticeSide}
                     icon={this.props.practiceSide ? faGlasses : faPencilAlt}
                   />
                 </div>
@@ -1011,7 +1053,7 @@ class Vocabulary extends Component {
                       <PlusCircleIcon
                         className="clickable"
                         size="small"
-                        aria-label="add"
+                        aria-label="Add vocabulary"
                       />
                     </div>
                   )}
@@ -1128,11 +1170,11 @@ const mapStateToProps = (state) => {
 };
 
 Vocabulary.propTypes = {
+  getVocabulary: PropTypes.func.isRequired,
   activeGroup: PropTypes.array,
   addFrequencyWord: PropTypes.func.isRequired,
   removeFrequencyWord: PropTypes.func.isRequired,
   frequency: PropTypes.array,
-  getVocabulary: PropTypes.func.isRequired,
   vocab: PropTypes.array.isRequired,
   hintEnabled: PropTypes.bool,
   romajiActive: PropTypes.bool,
