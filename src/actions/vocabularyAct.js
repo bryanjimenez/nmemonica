@@ -31,12 +31,12 @@ export function getVocabulary() {
 }
 
 /**
- * @param {RawVocabulary} word
+ * @param {RawVocabulary | undefined} word
  * @returns {ThenableActCreator}
  */
 export function setPreviousWord(word) {
   return (dispatch) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       dispatch({
         type: SET_PREVIOUS_SEEN_WORD,
         value: word,

@@ -38,9 +38,9 @@ import "./Kanji.css";
  * vocabulary: RawVocabulary[],
  * activeGroup: string[],
  * touchSwipe: boolean,
- * getKanji: function,
- * getVocabulary: function,
- * logger: function,
+ * getKanji: typeof getKanji,
+ * getVocabulary: typeof getVocabulary,
+ * logger: typeof logger,
  * }} KanjiProps
  */
 
@@ -77,6 +77,7 @@ class Kanji extends Component {
       showKun: false,
       showEx: false,
       showMeaning: false,
+      order: [],
     };
 
     /** @type {KanjiProps} */

@@ -16,7 +16,7 @@ import { LinearProgress } from "@material-ui/core";
 
 /**
  * @typedef {{
- * getOpposites: function,
+ * getOpposites: typeof getOpposites,
  * opposites: [question:RawOpposite, answer:RawOpposite][],
  * qRomaji: boolean,
  * aRomaji: boolean}} OppositesProps

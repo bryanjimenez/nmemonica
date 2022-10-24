@@ -52,7 +52,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * romajiActive: boolean,
  * scrollingDone: boolean,
  * prevTerm: RawVocabulary,
- * setPreviousWord: function,
+ * setPreviousWord: function(Parameters<setPreviousWord>[0]):ReturnType<ReturnType<setPreviousWord>>,
  * played: boolean,
  * pushedPlay: function,
  * setShownForm: function,

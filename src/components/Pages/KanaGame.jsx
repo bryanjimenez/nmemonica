@@ -29,7 +29,7 @@ import { DEBUG_OFF } from "../../actions/settingsAct";
  * @typedef {{
  * hiragana: string[],
  * katakana: string[],
- * getKana: function,
+ * getKana: typeof getKana,
  * vowels: string[],
  * consonants: string[],
  * choiceN: number,

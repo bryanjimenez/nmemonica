@@ -22,7 +22,7 @@ import "./ParticlesGame.css";
 
 /**
  * @typedef {{
- * getParticlePhrases: function,
+ * getParticlePhrases: typeof getParticlePhrases,
  * phrases: ParticleGamePhrase[],
  * particles: Particle[],
  * aRomaji: boolean}} ParticlesGameProps
@@ -33,7 +33,7 @@ import "./ParticlesGame.css";
  * order: number[],
  * selectedIndex: number,
  * showMeaning: boolean,
- * question: JapaneseText,
+ * question: JapaneseText | undefined,
  * answer?: Particle,
  * english?: string,
  * choices: Particle[],
@@ -199,28 +199,34 @@ class ParticlesGame extends Component {
     });
   }
 
-  buildQuestionElement() {
-    const question = this.state.question;
-    const answer = this.state.answer;
-    const hidden = this.state.correct
-      ? "correct-color"
-      : "transparent-font underline";
+  /**
+   * @param {JapaneseText} question
+   * @param {{start:number, end:number}} answer
+   * @param {boolean} correct
+   * @returns
+   */
+  buildQuestionElement(question, { start, end }, correct) {
+    const hidden = correct ? "correct-color" : "transparent-font underline";
 
     return kanjiOkuriganaSpliceApplyCss(
       question?.parseObj,
       { hidden },
-      answer.start,
-      answer.end
+      start,
+      end
     );
   }
 
   render() {
-    if (this.state.answer === undefined)
+    if (this.state.answer === undefined || this.state.question === undefined)
       return <NotReady addlStyle="main-panel" />;
 
     const answer = this.state.answer;
     const english = this.state.english;
-    const question = this.buildQuestionElement();
+    const question = this.buildQuestionElement(
+      this.state.question,
+      this.state.answer,
+      this.state.correct
+    );
     const choices = this.state.choices;
 
     const progress =
