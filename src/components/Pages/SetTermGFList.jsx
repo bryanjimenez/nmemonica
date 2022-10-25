@@ -67,33 +67,35 @@ export function SetTermGFList(props) {
   /** @type {string[]} */
   let cleanup = [];
 
-  /** @type {RawVocabulary[]} */
-  let thisgrpInit = [];
-  const thisgrp = props.vocabFreq.reduce((acc, f) => {
-    const found = props.vocabulary.find((v) => v.uid === f);
+  const thisgrp = props.vocabFreq.reduce(
+    (/** @type {RawVocabulary[]} */ acc, f) => {
+      const found = props.vocabulary.find((v) => v.uid === f);
 
-    if (found) {
-      acc = [...acc, found];
-    } else {
-      cleanup = [...cleanup, f];
-    }
+      if (found) {
+        acc = [...acc, found];
+      } else {
+        cleanup = [...cleanup, f];
+      }
 
-    return acc;
-  }, thisgrpInit);
+      return acc;
+    },
+    []
+  );
 
-  /** @type {{[key:string]:RawVocabulary[]}} */
-  let grpListInit = {};
-  const grplist = thisgrp.reduce((acc, cur) => {
-    const key = cur.grp ? cur.grp : "undefined";
+  const grplist = thisgrp.reduce(
+    (/** @type {{[key:string]:RawVocabulary[]}} */ acc, cur) => {
+      const key = cur.grp ? cur.grp : "undefined";
 
-    if (acc[key]) {
-      acc[key] = [...acc[key], cur];
-    } else {
-      acc[key] = [cur];
-    }
+      if (acc[key]) {
+        acc[key] = [...acc[key], cur];
+      } else {
+        acc[key] = [cur];
+      }
 
-    return acc;
-  }, grpListInit);
+      return acc;
+    },
+    {}
+  );
 
   return (
     <div>

@@ -18,11 +18,6 @@ export function getParseObjectHintMask(
   let hintRem = nMora;
   let startEl, trailEl;
 
-  /**
-   * @type {FuriganaParseObjectMask}
-   */
-  let init = [];
-
   if (furiganas.length > okuriganas.length) {
     okuriganas = [...okuriganas, ""];
   } else if (furiganas.length < okuriganas.length) {
@@ -30,61 +25,64 @@ export function getParseObjectHintMask(
     furiganas = [...furiganas, ""];
   }
 
-  return furiganas.reduce((acc, el, i) => {
-    const fpk = Math.trunc(furiganas[i].length / kanjis[i].length);
+  return furiganas.reduce(
+    (/** @type {FuriganaParseObjectMask} */ acc, el, i) => {
+      const fpk = Math.trunc(furiganas[i].length / kanjis[i].length);
 
-    if (hintRem > 0) {
-      if (!startsWKana) {
-        startEl = furiganas[i];
-        trailEl = okuriganas[i];
-        // starts with kanji
-        if (startEl.length <= hintRem) {
-          hintRem -= startEl.length;
-          let o;
-          if (trailEl.length < hintRem) {
-            hintRem -= trailEl.length;
-            o = trailEl.length;
+      if (hintRem > 0) {
+        if (!startsWKana) {
+          startEl = furiganas[i];
+          trailEl = okuriganas[i];
+          // starts with kanji
+          if (startEl.length <= hintRem) {
+            hintRem -= startEl.length;
+            let o;
+            if (trailEl.length < hintRem) {
+              hintRem -= trailEl.length;
+              o = trailEl.length;
+            } else {
+              o = hintRem;
+              hintRem = 0;
+            }
+
+            acc = [...acc, { k: kanjis[i].length, f: startEl.length, o }];
           } else {
-            o = hintRem;
+            const k = Math.ceil(hintRem / fpk);
+            acc = [...acc, { k, f: hintRem, o: 0 }];
             hintRem = 0;
           }
-
-          acc = [...acc, { k: kanjis[i].length, f: startEl.length, o }];
         } else {
-          const k = Math.ceil(hintRem / fpk);
-          acc = [...acc, { k, f: hintRem, o: 0 }];
-          hintRem = 0;
+          startEl = okuriganas[i];
+          trailEl = furiganas[i];
+          // starts with kana
+          if (startEl.length <= hintRem) {
+            hintRem -= startEl.length;
+            let k;
+            let f = hintRem;
+            if (trailEl.length <= hintRem) {
+              hintRem -= trailEl.length;
+              k = kanjis[i].length;
+              f = trailEl.length;
+            } else {
+              k = Math.ceil(hintRem / fpk);
+
+              hintRem = 0;
+            }
+
+            acc = [...acc, { k, f, o: startEl.length }];
+          } else {
+            acc = [...acc, { k: 0, f: 0, o: hintRem }];
+            hintRem = 0;
+          }
         }
       } else {
-        startEl = okuriganas[i];
-        trailEl = furiganas[i];
-        // starts with kana
-        if (startEl.length <= hintRem) {
-          hintRem -= startEl.length;
-          let k;
-          let f = hintRem;
-          if (trailEl.length <= hintRem) {
-            hintRem -= trailEl.length;
-            k = kanjis[i].length;
-            f = trailEl.length;
-          } else {
-            k = Math.ceil(hintRem / fpk);
-
-            hintRem = 0;
-          }
-
-          acc = [...acc, { k, f, o: startEl.length }];
-        } else {
-          acc = [...acc, { k: 0, f: 0, o: hintRem }];
-          hintRem = 0;
-        }
+        acc = [...acc, { k: 0, f: 0, o: 0 }];
       }
-    } else {
-      acc = [...acc, { k: 0, f: 0, o: 0 }];
-    }
 
-    return acc;
-  }, init);
+      return acc;
+    },
+    []
+  );
 }
 
 /**
@@ -257,7 +255,7 @@ export function getParseObjectSpliceMask(
         }
       }
     }
-    
+
     return { k: nk, f: 0, o: no };
   });
 }

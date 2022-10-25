@@ -5,6 +5,7 @@
     // "module": "commonjs",
     "allowJs": true,
     "checkJs": true,
+    "strictNullChecks": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,

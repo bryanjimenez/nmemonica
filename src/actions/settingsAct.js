@@ -721,45 +721,47 @@ export function removeFrequencyPhrase(uid) {
  */
 export function addFrequencyTerm(aType, uidArr) {
   return (dispatch, getState) =>
-    new Promise((resolve, reject) => {
-      const { user } = getState().login;
+    /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        const { user } = getState().login;
 
-      let pathType;
-      if (aType === ADD_FREQUENCY_WORD) {
-        pathType = "vocabulary";
-      } else if (aType === ADD_FREQUENCY_PHRASE) {
-        pathType = "phrases";
-      }
+        let pathType;
+        if (aType === ADD_FREQUENCY_WORD) {
+          pathType = "vocabulary";
+        } else if (aType === ADD_FREQUENCY_PHRASE) {
+          pathType = "phrases";
+        }
 
-      const path = "/" + pathType + "/";
-      const attr = "frequency";
-      const time = new Date();
+        const path = "/" + pathType + "/";
+        const attr = "frequency";
+        const time = new Date();
 
-      const uidList = getLastStateValue(getState, path, attr);
-      const newValue = [...new Set([...uidList, ...uidArr])];
-      localStoreAttrUpdate(time, getState, path, attr, newValue);
+        const uidList = getLastStateValue(getState, path, attr);
+        const newValue = [...new Set([...uidList, ...uidArr])];
+        localStoreAttrUpdate(time, getState, path, attr, newValue);
 
-      if (user) {
-        firebaseAttrUpdate(
-          time,
-          dispatch,
-          getState,
-          user.uid,
-          path,
-          attr,
-          aType,
-          newValue
-        ).then(() => {
+        if (user) {
+          firebaseAttrUpdate(
+            time,
+            dispatch,
+            getState,
+            user.uid,
+            path,
+            attr,
+            aType,
+            newValue
+          ).then(() => {
+            resolve();
+          });
+        } else {
+          dispatch({
+            type: aType,
+            value: newValue,
+          });
           resolve();
-        });
-      } else {
-        dispatch({
-          type: aType,
-          value: newValue,
-        });
-        resolve();
-      }
-    });
+        }
+      })
+    );
 }
 
 /**
@@ -786,10 +788,10 @@ export function toggleFurigana(uid) {
 }
 
 /**
- * @param {string} aType
+ * @param {ADD_SPACE_REP_WORD | ADD_SPACE_REP_PHRASE} aType
  * @param {string} uid
- * @param {boolean} shouldIncrement
- * @param {*} [options]
+ * @param {boolean} shouldIncrement should view count increment
+ * @param {{toggle: string[]}} [options] additional optional settable attributes ({@link toggleFurigana })
  * @returns {ActCreator}
  */
 export function updateSpaceRepTerm(

@@ -1,21 +1,37 @@
 /**
- * Builds a groub object from the list of terms (words or phrases) with grp info
- * @param {Object} termObj
- * @returns {Object} groupObject
+ * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
  */
-export function buildGroupObject(termObj, mainGrp = "grp", subGrp = "subGrp") {
-  return Object.values(termObj).reduce((a, o) => {
-    if (a[o[mainGrp]]) {
-      if (!a[o[mainGrp]].includes(o[subGrp]) && o[subGrp]) {
-        return { ...a, [o[mainGrp]]: [...a[o[mainGrp]], o[subGrp]] };
+
+/**
+ * Builds group info object. Keys are mainGrp.
+ * For each mainGrp aggregates all subGrp of a mainGrp
+ * @param {{[uid:string]:RawVocabulary}} termObj
+ */
+export function buildGroupObject(termObj) {
+  /** @type {keyof RawVocabulary} */
+  const mainGrp = "grp";
+
+  /** @type {keyof RawVocabulary} */
+  const subGrp = "subGrp";
+
+  return Object.values(termObj).reduce((/** @type {{[mainGrp:string]:string[]}}*/a, o) => {
+
+    if(o[mainGrp]){
+      if (a[o[mainGrp]]) {
+        if (o[subGrp] && !a[o[mainGrp]].includes(o[subGrp])) {
+          return { ...a, [o[mainGrp]]: [...a[o[mainGrp]], o[subGrp]] };
+        }
+        return a;
       }
-      return a;
-    }
 
-    if (o[subGrp]) {
-      return { ...a, [o[mainGrp]]: [o[subGrp]] };
-    }
+      if (o[subGrp]) {
+        return { ...a, [o[mainGrp]]: [o[subGrp]] };
+      }
 
-    return { ...a, [o[mainGrp]]: [] };
+      return { ...a, [o[mainGrp]]: [] };
+    } else {
+      // o[mainGrp] === undefined
+      return {...a}
+    }
   }, {});
 }

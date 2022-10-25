@@ -109,15 +109,15 @@ export function getTerm(uid, list) {
  * @template {{ uid: string, grp?: string, subGrp?: string }} T
  * @param {number} filterType
  * @param {T[]} termList word or phrase list
- * @param {string[]} frequencyList
+ * @param {string[]?} frequencyList
  * @param {string[]} activeGrpList
- * @param {function} toggleFilterType
+ * @param {function?} toggleFilterType
  * @returns {T[]} filteredPhrases
  */
 export function termFilterByType(
   filterType,
   termList,
-  frequencyList,
+  frequencyList = [],
   activeGrpList,
   toggleFilterType
 ) {
@@ -125,6 +125,13 @@ export function termFilterByType(
 
   if (filterType === FILTER_FREQ) {
     // frequency filtering
+    if (!frequencyList) {
+      throw new TypeError("Filter type requires frequencyList");
+    }
+    if (!toggleFilterType) {
+      throw new TypeError("Filter type requires toggleFilterType");
+    }
+
     if (frequencyList.length > 0) {
       if (activeGrpList.length > 0) {
         filteredTerms = termList.filter(
@@ -363,19 +370,14 @@ export function getVerbFormsArray(rawVerb, order) {
 
   let filtered;
   if (order && order.length > 0) {
-    /**
-     * @type {VerbFormArray}
-     */
-    let fil = [];
-
-    filtered = order.reduce((acc, form) => {
+    filtered = order.reduce((/** @type {VerbFormArray} */ acc, form) => {
       const f = allAvailable.find((el) => el.name === form);
       if (f !== undefined) {
         acc = [...acc, f];
       }
 
       return acc;
-    }, fil);
+    }, []);
   }
 
   return filtered ?? allAvailable;
@@ -477,7 +479,7 @@ export function japaneseLabel(isOnBottom, jObj, inJapanese, jumpToTerm) {
         {showNaAdj && <span className="opacity-25"> {"な"}</span>}
         <span className="fs-5">
           <span> (</span>
-          {indicators.reduce((a, c, i) => {
+          {indicators.reduce((/** @type {JSX.Element[]}*/ a, c, i) => {
             if (i > 0 && i < indicators.length) {
               return [...a, <span key={indicators.length + i}> , </span>, c];
             } else {
@@ -580,7 +582,7 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
         {inEnglish}
         <span>
           <span> (</span>
-          {indicators.reduce((a, c, i) => {
+          {indicators.reduce((/** @type {JSX.Element[]}*/ a, c, i) => {
             if (i > 0 && i < indicators.length) {
               return [...a, <span key={indicators.length + i}> , </span>, c];
             } else {
