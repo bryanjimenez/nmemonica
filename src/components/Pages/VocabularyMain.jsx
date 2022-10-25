@@ -244,7 +244,7 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
-    prevTerm: state.vocabulary.previous,
+    prevTerm: state.vocabulary.prevTerm,
     prevPushPlay: state.vocabulary.pushedPlay,
     touchSwipe: state.settings.global.touchSwipe,
     furigana: state.settings.vocabulary.repetition,

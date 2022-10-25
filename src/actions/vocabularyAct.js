@@ -1,13 +1,15 @@
 import { firebaseConfig } from "../../environment.development";
 
 export const GET_VOCABULARY = "get_vocabulary";
-export const SET_PREVIOUS_SEEN_WORD = "set_previous_seen_word";
+export const SET_PREVIOUS_SEEN_TERM = "set_previous_seen_term";
+export const CLEAR_PREVIOUS_SEEN_TERM = "clear_previous_seen_term";
 export const SET_PUSHED_PLAY = "set_pushed_play";
 
 /**
  * @typedef {import("../typings/act").ActCreator} ActCreator
  * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {import("../components/Pages/Phrases").RawPhrase} RawPhrase
  */
 
 /**
@@ -31,18 +33,30 @@ export function getVocabulary() {
 }
 
 /**
- * @param {RawVocabulary | undefined} word
- * @returns {ThenableActCreator}
+ * @param {{lastTerm?: RawVocabulary|RawPhrase, lastVerb?: RawVocabulary}} term
+ * @_return {ThenableActCreator}
+ * @_yield {Promise<void>}
+ * @return {Promise<void>} TODO: connect function call strips outer function
  */
-export function setPreviousWord(word) {
+export function setPreviousTerm({ lastTerm, lastVerb }) {
+  // @ts-expect-error
   return (dispatch) => {
     return new Promise((resolve) => {
       dispatch({
-        type: SET_PREVIOUS_SEEN_WORD,
-        value: word,
+        type: SET_PREVIOUS_SEEN_TERM,
+        term: lastTerm,
+        verb: lastVerb,
       });
+      // @ts-expect-error
+      resolve();
+    });
+  };
+}
 
-      resolve(word);
+export function clearPreviousTerm() {
+  return (/** @type {function} */ dispatch) => {
+    dispatch({
+      type: CLEAR_PREVIOUS_SEEN_TERM,
     });
   };
 }

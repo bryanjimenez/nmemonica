@@ -47,7 +47,11 @@ import {
 import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
 import { spaceRepLog } from "../../helper/consoleHelper";
-import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
+import {
+  clearPreviousTerm,
+  pushedPlay,
+  setPreviousTerm,
+} from "../../actions/vocabularyAct";
 import AudioItem from "../Form/AudioItem";
 import {
   swipeEnd,
@@ -114,7 +118,8 @@ import {
  * prevTerm: RawPhrase,
  * prevPushPlay: boolean,
  * pushedPlay: typeof pushedPlay,
- * setPreviousWord: function,
+ * clearPreviousTerm: typeof clearPreviousTerm,
+ * setPreviousTerm: typeof setPreviousTerm,
  * autoPlay: number,
  * touchSwipe: boolean,
  * }} PhrasesProps
@@ -167,7 +172,7 @@ class Phrases extends Component {
 
   componentDidMount() {
     // clear existing previous word on mount
-    this.props.setPreviousWord(undefined);
+    this.props.clearPreviousTerm();
 
     if (this.props.phrases && this.props.phrases.length > 0) {
       // page navigation after initial mount
@@ -281,7 +286,7 @@ class Phrases extends Component {
             uid: prevTerm.uid,
           };
 
-          this.props.setPreviousWord({ ...prevPhrase }).then(() => {
+          this.props.setPreviousTerm({ lastTerm: prevPhrase }).then(() => {
             this.setState({
               prevPhrase,
               audioPlay: true,
@@ -1019,7 +1024,7 @@ const mapStateToProps = (state) => {
     prevPushPlay: state.vocabulary.pushedPlay,
     autoPlay: state.settings.vocabulary.autoPlay,
     reinforce: state.settings.phrases.reinforce,
-    prevTerm: state.vocabulary.previous,
+    prevTerm: state.vocabulary.prevTerm,
     repetition: state.settings.phrases.repetition,
     touchSwipe: state.settings.global.touchSwipe,
   };
@@ -1050,7 +1055,8 @@ Phrases.propTypes = {
   }),
   pushedPlay: PropTypes.func,
   prevPushPlay: PropTypes.bool,
-  setPreviousWord: PropTypes.func,
+  clearPreviousTerm: PropTypes.func,
+  setPreviousTerm: PropTypes.func,
   autoPlay: PropTypes.number,
   touchSwipe: PropTypes.bool,
 };
@@ -1061,7 +1067,8 @@ export default connect(mapStateToProps, {
   addFrequencyPhrase,
   removeFrequencyPhrase,
   togglePhrasesFilter,
-  setPreviousWord,
+  clearPreviousTerm,
+  setPreviousTerm,
   updateSpaceRepPhrase,
   logger,
   pushedPlay,

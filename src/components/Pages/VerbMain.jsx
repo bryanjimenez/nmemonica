@@ -5,7 +5,7 @@ import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 import { connect } from "react-redux";
-import { pushedPlay, setPreviousWord } from "../../actions/vocabularyAct";
+import { pushedPlay, setPreviousTerm } from "../../actions/vocabularyAct";
 import { setShownForm } from "../../actions/verbsAct";
 import {
   AUTOPLAY_JP_EN,
@@ -52,7 +52,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * romajiActive: boolean,
  * scrollingDone: boolean,
  * prevTerm: RawVocabulary,
- * setPreviousWord: function(Parameters<setPreviousWord>[0]):ReturnType<ReturnType<setPreviousWord>>,
+ * setPreviousTerm: typeof setPreviousTerm,
  * played: boolean,
  * pushedPlay: function,
  * setShownForm: function,
@@ -105,7 +105,7 @@ class VerbMain extends Component {
         pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
         form: this.props.verbForm,
       };
-      this.props.setPreviousWord({ lastVerb });
+      this.props.setPreviousTerm({ lastVerb });
     }
   }
 
@@ -148,7 +148,7 @@ class VerbMain extends Component {
         pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
         form: this.props.verbForm,
       };
-      this.props.setPreviousWord({ ...prevVocab, lastVerb }).then(() => {
+      this.props.setPreviousTerm({ lastTerm: prevVocab, lastVerb }).then(() => {
         this.setState({
           showMeaning: false,
           showRomaji: false,
@@ -170,7 +170,7 @@ class VerbMain extends Component {
         form: this.props.verbForm,
       };
 
-      this.props.setPreviousWord(prevVocab).then(() => {
+      this.props.setPreviousTerm({ lastTerm: prevVocab }).then(() => {
         this.setState({ prevVocab });
       });
     }
@@ -373,7 +373,7 @@ class VerbMain extends Component {
                 this.props.verb.pronounce && thisVerb.getPronunciation(),
               form: this.props.verbForm,
             };
-            this.props.setPreviousWord({ ...firstVerb });
+            this.props.setPreviousTerm({ lastVerb: firstVerb });
           }
           this.props.pushedPlay(false);
         }}
@@ -448,7 +448,7 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
-    prevTerm: state.vocabulary.previous,
+    prevTerm: state.vocabulary.prevTerm,
     prevPushPlay: state.vocabulary.pushedPlay,
     verbForm: state.vocabulary.verbForm,
     touchSwipe: state.settings.global.touchSwipe,
@@ -471,7 +471,7 @@ VerbMain.propTypes = {
     english: PropTypes.string.isRequired,
     uid: PropTypes.string.isRequired,
   }),
-  setPreviousWord: PropTypes.func,
+  setPreviousTerm: PropTypes.func,
   played: PropTypes.bool,
   pushedPlay: PropTypes.func,
   setShownForm: PropTypes.func,
@@ -491,7 +491,7 @@ VerbMain.propTypes = {
 };
 
 export default connect(mapStateToProps, {
-  setPreviousWord,
+  setPreviousTerm,
   pushedPlay,
   setShownForm,
   flipVocabularyPracticeSide,

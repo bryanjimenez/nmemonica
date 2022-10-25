@@ -1,6 +1,7 @@
 import {
+  CLEAR_PREVIOUS_SEEN_TERM,
   GET_VOCABULARY,
-  SET_PREVIOUS_SEEN_WORD,
+  SET_PREVIOUS_SEEN_TERM,
   SET_PUSHED_PLAY,
 } from "../actions/vocabularyAct";
 import { SET_SHOWN_FORM } from "../actions/verbsAct";
@@ -9,7 +10,8 @@ import { buildGroupObject } from "../helper/reducerHelper";
 const DEFAULT_STATE = {
   value: [],
   grpObj: {},
-  previous: undefined,
+  prevTerm: undefined,
+  prevVerb: undefined,
   pushedPlay: false,
   verbForm: "dictionary",
 };
@@ -17,7 +19,7 @@ const DEFAULT_ACTION = {};
 
 const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
   switch (action.type) {
-    case GET_VOCABULARY:
+    case GET_VOCABULARY: {
       let transitivity = {};
       let value = Object.keys(action.value).map((k) => {
         if (action.value[k].trans) {
@@ -44,13 +46,20 @@ const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
         grpObj: buildGroupObject(action.value),
         value,
       };
+    }
     case SET_SHOWN_FORM:
       return {
         ...state,
         verbForm: action.value,
       };
-    case SET_PREVIOUS_SEEN_WORD:
-      return { ...state, previous: action.value };
+    case CLEAR_PREVIOUS_SEEN_TERM:
+      return { ...state, prevTerm: undefined, prevVerb: undefined };
+    case SET_PREVIOUS_SEEN_TERM:
+      return {
+        ...state,
+        ...(action.term !== undefined && { prevTerm: action.term }),
+        ...(action.verb !== undefined && { prevVerb: action.verb }),
+      };
     case SET_PUSHED_PLAY:
       return { ...state, pushedPlay: action.value };
     default:

@@ -8,9 +8,10 @@ import {
   XCircleIcon,
 } from "@primer/octicons-react";
 import {
+  clearPreviousTerm,
   getVocabulary,
   pushedPlay,
-  setPreviousWord,
+  setPreviousTerm,
 } from "../../actions/vocabularyAct";
 import {
   faBan,
@@ -129,8 +130,10 @@ import {
  * filterType: number,
  * toggleVocabularyFilter: typeof toggleVocabularyFilter,
  * reinforce: boolean,
- * previous: RawVocabulary,
- * setPreviousWord: function(Parameters<setPreviousWord>[0]):ReturnType<ReturnType<setPreviousWord>>,
+ * prevTerm: RawVocabulary,
+ * prevVerb: RawVocabulary,
+ * clearPreviousTerm: typeof clearPreviousTerm,
+ * setPreviousTerm: typeof setPreviousTerm,
  * repetition: SpaceRepetitionMap,
  * lastNext: number,
  * updateSpaceRepWord: typeof updateSpaceRepWord,
@@ -190,7 +193,7 @@ class Vocabulary extends Component {
 
   componentDidMount() {
     // clear existing previous word on mount
-    this.props.setPreviousWord(undefined);
+    this.props.clearPreviousTerm();
 
     if (this.props.vocab && this.props.vocab.length > 0) {
       // page navigation after initial mount
@@ -538,29 +541,30 @@ class Vocabulary extends Component {
 
     // non verb to verb
     if (prevVocab.grp !== "Verb" && nextVocab.grp === "Verb") {
-      aPromise = this.props.setPreviousWord(prevVocab);
+      aPromise = this.props.setPreviousTerm({ lastTerm: prevVocab });
     }
 
     // verb to non verb
     if (prevVocab.grp === "Verb" && nextVocab.grp !== "Verb") {
-      // FIXME: should not put lastVerb in previous
-      if (this.props.previous && this.props.previous.lastVerb) {
+      if (this.props.prevVerb) {
         // multiple verbs
         // non dictionary form on last verb
-        aPromise = this.props.setPreviousWord(this.props.previous.lastVerb);
+        aPromise = this.props.setPreviousTerm({
+          lastVerb: this.props.prevVerb,
+        });
       } else if (
-        this.props.previous &&
-        this.props.previous.uid === prevVocab.uid
+        this.props.prevTerm &&
+        this.props.prevTerm.uid === prevVocab.uid
       ) {
         // single/multiple verb DID form change (on last)
         // prevent overriding same verb diff form
-        // setPreviousWord done on VerbMain form change
+        // setPreviousTerm done on VerbMain form change
       } else if (
-        this.props.previous &&
-        this.props.previous.uid !== prevVocab.uid
+        this.props.prevTerm &&
+        this.props.prevTerm.uid !== prevVocab.uid
       ) {
         // single/multiple no form change
-        aPromise = this.props.setPreviousWord(prevVocab);
+        aPromise = this.props.setPreviousTerm({ lastTerm: prevVocab });
       }
     }
 
@@ -1198,7 +1202,8 @@ const mapStateToProps = (state) => {
     scrollingDone: !state.settings.global.scrolling,
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
-    previous: state.vocabulary.previous,
+    prevTerm: state.vocabulary.prevTerm,
+    prevVerb: state.vocabulary.prevVerb,
     repetition: state.settings.vocabulary.repetition,
     verbForm: state.vocabulary.verbForm,
     touchSwipe: state.settings.global.touchSwipe,
@@ -1225,8 +1230,10 @@ Vocabulary.propTypes = {
   filterType: PropTypes.number,
   toggleVocabularyFilter: PropTypes.func,
   reinforce: PropTypes.bool,
-  previous: PropTypes.object,
-  setPreviousWord: PropTypes.func,
+  prevTerm: PropTypes.object,
+  prevVerb: PropTypes.object,
+  clearPreviousTerm: PropTypes.func,
+  setPreviousTerm: PropTypes.func,
   repetition: PropTypes.object,
   lastNext: PropTypes.number,
   updateSpaceRepWord: PropTypes.func,
@@ -1246,7 +1253,8 @@ export default connect(mapStateToProps, {
   toggleAutoVerbView,
   toggleVocabularyFilter,
   toggleFurigana,
-  setPreviousWord,
+  clearPreviousTerm,
+  setPreviousTerm,
   updateSpaceRepWord,
   logger,
   pushedPlay,
