@@ -1,5 +1,6 @@
 /**
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {import("../typings/raw").GroupListMap} GroupListMap
  */
 
 /**
@@ -14,7 +15,7 @@ export function buildGroupObject(termObj) {
   /** @type {keyof RawVocabulary} */
   const subGrp = "subGrp";
 
-  return Object.values(termObj).reduce((/** @type {{[mainGrp:string]:string[]}}*/a, o) => {
+  return Object.values(termObj).reduce((/** @type {GroupListMap}*/ a, o) => {
 
     if(o[mainGrp]){
       if (a[o[mainGrp]]) {

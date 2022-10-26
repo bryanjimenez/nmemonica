@@ -49,6 +49,10 @@ export interface RawKanji {
   tag?: string[];
 }
 
+export interface GroupListMap {
+  [mainGrp:string]: string[]
+}
+
 export interface SpaceRepetitionMap {
   [uid: string]: {
     d: Date;
