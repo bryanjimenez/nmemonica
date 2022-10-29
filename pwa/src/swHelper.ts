@@ -9,9 +9,10 @@ import {
 import {
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
-// } from "../src/actions/serviceWorkerAct"; // FIXME: this pulls other unused code
+  // } from "../src/actions/serviceWorkerAct"; // FIXME: this pulls other unused code
 } from "../shared/serviceWorkerAct";
 import * as md5 from "md5";
+import { green } from "./consoleColor";
 import { getParam, removeParam } from "../../src/helper/urlHelper";
 
 const projectRoot = path.resolve();
@@ -35,7 +36,7 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     throw err;
   }
 
-  fs.readFile(fd_sw, {}, (err, buff) => {
+  fs.readFile(fd_sw, {}, (err, swPartialCodeBuff) => {
     if (err) {
       console.log("read failed");
       throw err;
@@ -45,11 +46,25 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
       flags: "w",
     });
 
+    const swVersionConst = md5(swPartialCodeBuff).slice(0, 8);
+    const jsVersion = JSON.parse(strFilesToCache)
+      .join(",")
+      .match(new RegExp(/main.([a-z0-9]+).js/))[1];
+    const initCacheVerConst = md5(strFilesToCache).slice(0, 8);
+
     stream.write("const cacheFilesConst = " + strFilesToCache + ";\n\n");
 
-    stream.write("const swVersionConst = '" + md5(buff).slice(0, 8) + "';\n");
-    stream.write(
-      "const initCacheVerConst = '" + md5(strFilesToCache).slice(0, 8) + "';\n\n"
+    stream.write("const swVersionConst = '" + swVersionConst + "';\n");
+    stream.write("const initCacheVerConst = '" + initCacheVerConst + "';\n\n");
+
+    console.log(
+      green(
+        JSON.stringify({
+          swVersion: swVersionConst,
+          jsVersion,
+          bundleVersion: initCacheVerConst,
+        })
+      )
     );
 
     stream.write("const ghURLConst = '" + appUIEndpoint + "';\n");
@@ -70,7 +85,7 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     stream.write("const getParamConst = " + getParam + ";\n\n");
     stream.write("const removeParamConst = " + removeParam + ";\n\n");
 
-    stream.write(buff);
+    stream.write(swPartialCodeBuff);
 
     stream.end();
   });
