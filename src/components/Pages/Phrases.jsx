@@ -21,9 +21,7 @@ import {
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
   togglePhrasesFilter,
-  AUTOPLAY_JP_EN,
-  AUTOPLAY_OFF,
-  AUTOPLAY_EN_JP,
+  AutoPlaySetting,
   TermFilterBy,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
@@ -120,7 +118,7 @@ import {
  * pushedPlay: typeof pushedPlay,
  * clearPreviousTerm: typeof clearPreviousTerm,
  * setPreviousTerm: typeof setPreviousTerm,
- * autoPlay: number,
+ * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
  * touchSwipe: boolean,
  * }} PhrasesProps
  */
@@ -726,7 +724,7 @@ class Phrases extends Component {
           this.props.logger("Swipe Play Error " + e, 1);
         }
 
-        if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+        if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
           this.props.pushedPlay(true);
         }
       } else if (direction === "down") {
@@ -770,7 +768,7 @@ class Phrases extends Component {
           this.props.logger("Swipe Play Error " + e, 1);
         }
 
-        if (this.props.autoPlay !== AUTOPLAY_EN_JP) {
+        if (this.props.autoPlay !== AutoPlaySetting.EN_JP) {
           this.props.pushedPlay(true);
         }
       }
@@ -848,9 +846,11 @@ class Phrases extends Component {
         <AudioItem
           visible={!this.props.touchSwipe}
           word={audioWords}
-          autoPlay={!this.state.audioPlay ? AUTOPLAY_OFF : this.props.autoPlay}
+          autoPlay={
+            !this.state.audioPlay ? AutoPlaySetting.OFF : this.props.autoPlay
+          }
           onPushedPlay={() => {
-            if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+            if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
               this.props.pushedPlay(true);
             }
           }}

@@ -2,11 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { UnmuteIcon } from "@primer/octicons-react";
 import { pronounceEndoint } from "../../../environment.development";
-import {
-  AUTOPLAY_EN_JP,
-  AUTOPLAY_JP_EN,
-  AUTOPLAY_OFF,
-} from "../../actions/settingsAct";
+import { AutoPlaySetting } from "../../actions/settingsAct";
 import { addParam } from "../../helper/urlHelper";
 
 /**
@@ -15,7 +11,7 @@ import { addParam } from "../../helper/urlHelper";
  * q: string,
  * uid: string
  * }[],
- * autoPlay: number,
+ * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
  * reCache?: boolean,
  * onPushedPlay: function,
  * onAutoPlayDone: function,
@@ -45,16 +41,16 @@ export default function AudioItem(props) {
   /** @type {string[]} */
   let autoPlayEndPoint = [];
 
-  if (props.autoPlay === AUTOPLAY_EN_JP && words.length === 2) {
+  if (props.autoPlay === AutoPlaySetting.EN_JP && words.length === 2) {
     autoPlayEndPoint = [addParam(pronounceEndoint, words[1])];
-  } else if (props.autoPlay === AUTOPLAY_JP_EN && words.length === 2) {
+  } else if (props.autoPlay === AutoPlaySetting.JP_EN && words.length === 2) {
     autoPlayEndPoint = [addParam(pronounceEndoint, words[0])];
-  } else if (props.autoPlay === AUTOPLAY_EN_JP && words.length === 3) {
+  } else if (props.autoPlay === AutoPlaySetting.EN_JP && words.length === 3) {
     autoPlayEndPoint = [
       addParam(pronounceEndoint, words[2]),
       addParam(pronounceEndoint, words[1]),
     ];
-  } else if (props.autoPlay === AUTOPLAY_JP_EN && words.length === 3) {
+  } else if (props.autoPlay === AutoPlaySetting.JP_EN && words.length === 3) {
     autoPlayEndPoint = [
       addParam(pronounceEndoint, words[2]),
       addParam(pronounceEndoint, words[1]),
@@ -69,7 +65,7 @@ export default function AudioItem(props) {
     autoPlayEndPoint = nextEndPoints;
 
     if (
-      props.autoPlay > AUTOPLAY_OFF &&
+      props.autoPlay > AutoPlaySetting.OFF &&
       autoPlayEndPoint.length === 0 &&
       playPushed === false
     ) {
@@ -79,7 +75,7 @@ export default function AudioItem(props) {
     }
 
     if (
-      [AUTOPLAY_EN_JP, AUTOPLAY_JP_EN].includes(props.autoPlay) &&
+      [AutoPlaySetting.EN_JP, AutoPlaySetting.JP_EN].includes(props.autoPlay) &&
       autoPlayEndPoint.length > 0
     ) {
       if (player) {
@@ -116,37 +112,37 @@ export default function AudioItem(props) {
   };
 
   return (
-      <div
-        className="clickable"
-        onMouseDown={props.visible ? clickEvHan0 : undefined}
-        onTouchStart={props.visible ? clickEvHan0 : undefined}
-        onMouseUp={props.visible ? clickEvHan1 : undefined}
-        onTouchEnd={props.visible ? clickEvHan1 : undefined}
-      >
-        <audio
-          ref={(ref) => {
-            // src attr remains from last onClick
-            if (ref && ref.src && props.autoPlay === AUTOPLAY_OFF) {
-              ref.removeAttribute("src");
-            }
-            return (player = ref);
-          }}
-          autoPlay={props.autoPlay !== AUTOPLAY_OFF}
-          src={
-            props.autoPlay !== AUTOPLAY_OFF ? autoPlayEndPoint[0] : undefined
+    <div
+      className="clickable"
+      onMouseDown={props.visible ? clickEvHan0 : undefined}
+      onTouchStart={props.visible ? clickEvHan0 : undefined}
+      onMouseUp={props.visible ? clickEvHan1 : undefined}
+      onTouchEnd={props.visible ? clickEvHan1 : undefined}
+    >
+      <audio
+        ref={(ref) => {
+          // src attr remains from last onClick
+          if (ref && ref.src && props.autoPlay === AutoPlaySetting.OFF) {
+            ref.removeAttribute("src");
           }
-          onError={() => {
-            // likely failed to fetch resource
-            playNextAudio();
-          }}
-          onEnded={() => {
-            playNextAudio();
-          }}
-        />
-        {props.visible && (
-          <UnmuteIcon size="medium" aria-label="pronunciation" />
-        )}
-      </div>
+          return (player = ref);
+        }}
+        autoPlay={props.autoPlay !== AutoPlaySetting.OFF}
+        src={
+          props.autoPlay !== AutoPlaySetting.OFF
+            ? autoPlayEndPoint[0]
+            : undefined
+        }
+        onError={() => {
+          // likely failed to fetch resource
+          playNextAudio();
+        }}
+        onEnded={() => {
+          playNextAudio();
+        }}
+      />
+      {props.visible && <UnmuteIcon size="medium" aria-label="pronunciation" />}
+    </div>
   );
 }
 

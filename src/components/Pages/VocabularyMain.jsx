@@ -5,8 +5,7 @@ import { JapaneseText } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
 import { pushedPlay } from "../../actions/vocabularyAct";
 import {
-  AUTOPLAY_JP_EN,
-  AUTOPLAY_OFF,
+  AutoPlaySetting,
   flipVocabularyPracticeSide,
   toggleFurigana,
 } from "../../actions/settingsAct";
@@ -47,7 +46,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * romajiActive: boolean,
  * flipVocabularyPracticeSide: typeof flipVocabularyPracticeSide,
  * practiceSide: boolean,
- * autoPlay: number,
+ * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
  * scrollingDone: boolean,
  * pushedPlay: typeof pushedPlay,
  * touchSwipe: boolean,
@@ -170,11 +169,11 @@ class VocabularyMain extends Component {
         reCache={this.props.reCache}
         autoPlay={
           !this.props.scrollingDone || !this.state.audioPlay
-            ? AUTOPLAY_OFF
+            ? AutoPlaySetting.OFF
             : this.props.autoPlay
         }
         onPushedPlay={() => {
-          if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+          if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
             this.props.pushedPlay(true);
           }
         }}

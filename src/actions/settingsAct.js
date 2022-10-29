@@ -57,6 +57,13 @@ export const TermFilterBy = Object.freeze({
   SPACE_REP: 2,
 });
 
+// enum
+export const AutoPlaySetting = Object.freeze({
+  OFF: 0,
+  EN_JP: 1,
+  JP_EN: 2,
+});
+
 /**
  * @param {number} number
  * @returns {ActCreator}
@@ -520,9 +527,6 @@ export function toggleActiveGrp(parent, grpName) {
   };
 }
 
-export const AUTOPLAY_OFF = 0,
-  AUTOPLAY_EN_JP = 1,
-  AUTOPLAY_JP_EN = 2;
 /**
  * @returns {ActCreator}
  */
@@ -530,7 +534,9 @@ export function toggleVocabularyAutoPlay() {
   return (dispatch, getState) => {
     const { autoPlay } = getState().settings.vocabulary;
 
-    const newValue = autoPlay + 1 < 3 ? autoPlay + 1 : 0;
+    const newValue = Object.values(AutoPlaySetting).includes(autoPlay + 1)
+      ? autoPlay + 1
+      : AutoPlaySetting.OFF;
 
     dispatch({
       type: TOGGLE_VOCABULARY_AUTO_PLAY,

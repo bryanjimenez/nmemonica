@@ -31,10 +31,8 @@ import {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
-  AUTOPLAY_OFF,
+  AutoPlaySetting,
   updateSpaceRepWord,
-  AUTOPLAY_JP_EN,
-  AUTOPLAY_EN_JP,
   toggleFurigana,
   TermFilterBy,
 } from "../../actions/settingsAct";
@@ -122,7 +120,7 @@ import {
  * flipVocabularyPracticeSide: typeof flipVocabularyPracticeSide,
  * practiceSide: boolean,
  * isOrdered: boolean,
- * autoPlay: number,
+ * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
  * scrollingDone: boolean,
  * scrollingState: function,
  * autoVerbView: boolean,
@@ -817,7 +815,7 @@ class Vocabulary extends Component {
           this.props.logger("Swipe Play Error " + e, 1);
         }
 
-        if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+        if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
           this.props.pushedPlay(true);
         }
       } else if (direction === "down") {
@@ -863,7 +861,7 @@ class Vocabulary extends Component {
           this.props.logger("Swipe Play Error " + e, 1);
         }
 
-        if (this.props.autoPlay !== AUTOPLAY_EN_JP) {
+        if (this.props.autoPlay !== AutoPlaySetting.EN_JP) {
           this.props.pushedPlay(true);
         }
       }
@@ -1009,7 +1007,7 @@ class Vocabulary extends Component {
                   />
                 </div>
 
-                {this.props.autoPlay !== AUTOPLAY_OFF && (
+                {this.props.autoPlay !== AutoPlaySetting.OFF && (
                   <div className="sm-icon-grp">
                     <FontAwesomeIcon
                       icon={faHeadphones}

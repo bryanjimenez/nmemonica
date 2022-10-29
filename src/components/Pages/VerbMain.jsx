@@ -8,8 +8,7 @@ import { connect } from "react-redux";
 import { pushedPlay, setPreviousTerm } from "../../actions/vocabularyAct";
 import { setShownForm } from "../../actions/verbsAct";
 import {
-  AUTOPLAY_JP_EN,
-  AUTOPLAY_OFF,
+  AutoPlaySetting,
   flipVocabularyPracticeSide,
   toggleFurigana,
 } from "../../actions/settingsAct";
@@ -47,7 +46,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * @typedef {{
  * verb: RawVocabulary,
  * reCache: boolean,
- * autoPlay: number,
+ * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
  * practiceSide: boolean,
  * romajiActive: boolean,
  * scrollingDone: boolean,
@@ -348,11 +347,11 @@ class VerbMain extends Component {
         reCache={this.props.reCache}
         autoPlay={
           !this.props.scrollingDone || !this.state.audioPlay
-            ? AUTOPLAY_OFF
+            ? AutoPlaySetting.OFF
             : this.props.autoPlay
         }
         onPushedPlay={() => {
-          if (this.props.autoPlay !== AUTOPLAY_JP_EN) {
+          if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
             this.setState({
               audioPlay: false,
             });

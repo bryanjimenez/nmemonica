@@ -9,7 +9,7 @@ import {
 } from "@primer/octicons-react";
 
 import {
-  AUTOPLAY_OFF,
+  AutoPlaySetting,
   removeFrequencyWord,
   setVerbFormsOrder,
   setVocabularyOrdering,
@@ -50,7 +50,7 @@ import VerbFormSlider from "./VerbFormSlider";
  * vocabFilter: typeof TermFilterBy[keyof TermFilterBy],
  * vocabFreq: string[],
  * vocabReinforce: boolean,
- * vocabAutoPlay: number,
+ * vocabAutoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
  * vocabGroups: GroupListMap,
  * autoVerbView: boolean,
  * vocabActive: string[],
@@ -217,7 +217,7 @@ class SettingsVocab extends Component {
               </div>
               <div className="mb-2">
                 <SettingsSwitch
-                  active={vocabAutoPlay !== AUTOPLAY_OFF}
+                  active={vocabAutoPlay !== AutoPlaySetting.OFF}
                   action={toggleVocabularyAutoPlay}
                   statusText={labelOptions(vocabAutoPlay, [
                     "Auto Play [ ]",
