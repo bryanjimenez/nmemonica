@@ -1,4 +1,5 @@
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerAct";
+import { DebugLevel } from "./settingsAct";
 
 export const UI_LOGGER_MSG = "ui_logger_msg";
 
@@ -9,11 +10,11 @@ export const UI_LOGGER_MSG = "ui_logger_msg";
 /**
  * UI logger
  * @param {string} msg
- * @param {number} lvl
+ * @param {typeof DebugLevel[keyof DebugLevel]} [lvl]
  * @param {string} [type]
  * @returns {ActCreator}
  */
-export function logger(msg, lvl, type = UI_LOGGER_MSG) {
+export function logger(msg, lvl=DebugLevel.DEBUG, type = UI_LOGGER_MSG) {
   return (dispatch, getState) => {
     const { debug } = getState().settings.global;
     if (debug !== 0 && lvl <= debug) {

@@ -3,12 +3,7 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 
 import classNames from "classnames";
-import {
-  DEBUG_ERROR,
-  DEBUG_OFF,
-  DEBUG_ON,
-  DEBUG_WARN,
-} from "../../actions/settingsAct";
+import { DebugLevel } from "../../actions/settingsAct";
 
 /**
  * @typedef {{msg:string, lvl:number}} ConsoleMessage
@@ -44,7 +39,7 @@ class Console extends Component {
   /** @param {ConsoleProps} prevProps */
   componentDidUpdate(prevProps) {
     if (
-      this.props.debug === DEBUG_OFF &&
+      this.props.debug === DebugLevel.OFF &&
       this.props.debug !== prevProps.debug
     ) {
       this.setState({ scroll: 0, messages: [] });
@@ -123,9 +118,9 @@ class Console extends Component {
         {messages.map((e, i) => {
           const mClass = classNames({
             "app-sm-fs-xx-small": true,
-            "correct-color": e.lvl === DEBUG_ON,
-            "question-color": e.lvl === DEBUG_WARN,
-            "incorrect-color": e.lvl === DEBUG_ERROR,
+            "correct-color": e.lvl === DebugLevel.DEBUG,
+            "question-color": e.lvl === DebugLevel.WARN,
+            "incorrect-color": e.lvl === DebugLevel.ERROR,
           });
 
           return (

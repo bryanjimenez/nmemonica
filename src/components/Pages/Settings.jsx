@@ -14,10 +14,9 @@ import {
   toggleKana,
   toggleKanaEasyMode,
   toggleDebug,
-  DEBUG_OFF,
   toggleSwipe,
   toggleActiveGrp,
-  DEBUG_ERROR,
+  DebugLevel,
 } from "../../actions/settingsAct";
 import { NotReady } from "../Form/NotReady";
 import { SetTermGList } from "./SetTermGList";
@@ -167,7 +166,7 @@ class Settings extends Component {
       const { error } = event.data;
 
       if (error) {
-        this.props.logger(error, DEBUG_ERROR);
+        this.props.logger(error, DebugLevel.ERROR);
       }
 
       setTimeout(() => {
@@ -439,7 +438,7 @@ class Settings extends Component {
                 <div className="column-2">
                   <div className="setting-block mb-2">
                     <SettingsSwitch
-                      active={this.props.debug > DEBUG_OFF}
+                      active={this.props.debug > DebugLevel.OFF}
                       action={this.props.toggleDebug}
                       color="default"
                       statusText={labelOptions(this.props.debug, [

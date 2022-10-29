@@ -42,10 +42,13 @@ export const SET_VERB_FORM_ORDER = "set_verb_form_order";
  * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
  */
 
-export const DEBUG_OFF = 0,
-  DEBUG_ERROR = 1,
-  DEBUG_WARN = 2,
-  DEBUG_ON = 3;
+// enum
+export const DebugLevel = Object.freeze({
+  OFF: 0,
+  ERROR: 1,
+  WARN: 2,
+  DEBUG: 3,
+});
 
 export const FILTER_GRP = 0,
   FILTER_FREQ = 1,
@@ -53,7 +56,6 @@ export const FILTER_GRP = 0,
 
 /**
  * @typedef {FILTER_GRP|FILTER_FREQ|FILTER_REP} TermFilterBy
- * @typedef {DEBUG_OFF|DEBUG_ERROR|DEBUG_WARN|DEBUG_ON} DebugLevel
  */
 
 /**
@@ -998,7 +1000,7 @@ export function toggleDarkMode() {
 }
 
 /**
- * @param {DebugLevel} override
+ * @param {typeof DebugLevel[keyof DebugLevel]} override
  * @returns {ActCreator}
  */
 export function toggleDebug(override) {
@@ -1012,13 +1014,15 @@ export function toggleDebug(override) {
 
     let newDebug;
     if (override !== undefined) {
-      if (override >= DEBUG_OFF && override <= DEBUG_ON) {
+      if (Object.values(DebugLevel).includes(override)) {
         newDebug = override;
       } else {
         throw new Error("Debug override not valid");
       }
     } else {
-      newDebug = debug + 1 < 4 ? debug + 1 : 0;
+      newDebug = Object.values(DebugLevel).includes(debug + 1)
+        ? debug + 1
+        : DebugLevel.OFF;
     }
 
     localStoreAttrUpdate(time, getState, path, attr, newDebug);
