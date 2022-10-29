@@ -1,8 +1,11 @@
 import React from "react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
-import { AUTOPLAY_EN_JP, AUTOPLAY_JP_EN } from "../actions/settingsAct";
-import { FILTER_GRP, FILTER_FREQ } from "../actions/settingsAct";
+import {
+  AUTOPLAY_EN_JP,
+  AUTOPLAY_JP_EN,
+  TermFilterBy,
+} from "../actions/settingsAct";
 import { shuffleArray } from "./arrayHelper";
 import { audioPronunciation, JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
@@ -19,7 +22,7 @@ import { JapaneseVerb } from "./JapaneseVerb";
 /**
  * Goes to the next term or selects one from the frequency list
  * @param {boolean} reinforce
- * @param {number} freqFilter
+ * @param {typeof TermFilterBy[keyof TermFilterBy]} freqFilter
  * @param {string[]} frequency
  * @param {RawVocabulary[]} filteredTerms
  * @param {string|undefined} reinforcedUID
@@ -41,7 +44,11 @@ export function play(
   // unless filtering from frequency list
   const reinforced =
     reinforce && [false, false, true][Math.floor(Math.random() * 3)];
-  if (freqFilter !== FILTER_FREQ && reinforced && frequency.length > 0) {
+  if (
+    freqFilter !== TermFilterBy.FREQUENCY &&
+    reinforced &&
+    frequency.length > 0
+  ) {
     const min = 0;
     const max = Math.floor(frequency.length);
     const idx = Math.floor(Math.random() * (max - min) + min);
@@ -107,7 +114,7 @@ export function getTerm(uid, list) {
  * Filters terms (words or phrases) list
  * by groups, frequency, or space repetition
  * @template {{ uid: string, grp?: string, subGrp?: string }} T
- * @param {number} filterType
+ * @param {typeof TermFilterBy[keyof TermFilterBy]} filterType
  * @param {T[]} termList word or phrase list
  * @param {string[]?} frequencyList
  * @param {string[]} activeGrpList
@@ -123,7 +130,7 @@ export function termFilterByType(
 ) {
   let filteredTerms = termList;
 
-  if (filterType === FILTER_FREQ) {
+  if (filterType === TermFilterBy.FREQUENCY) {
     // frequency filtering
     if (!frequencyList) {
       throw new TypeError("Filter type requires frequencyList");
@@ -144,7 +151,7 @@ export function termFilterByType(
       }
     } else {
       // last frequency word was just removed
-      toggleFilterType(FILTER_GRP);
+      toggleFilterType(TermFilterBy.GROUP);
     }
   } else {
     // group filtering

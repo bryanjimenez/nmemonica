@@ -24,6 +24,7 @@ import {
   AUTOPLAY_JP_EN,
   AUTOPLAY_OFF,
   AUTOPLAY_EN_JP,
+  TermFilterBy,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -44,7 +45,6 @@ import {
   pause,
   fadeOut,
 } from "../../helper/gameHelper";
-import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
 import { spaceRepLog } from "../../helper/consoleHelper";
 import {
@@ -107,7 +107,7 @@ import {
  * removeFrequencyPhrase: typeof removeFrequencyPhrase,
  * addFrequencyPhrase: typeof addFrequencyPhrase,
  * frequency: string[],
- * filterType: number,
+ * filterType: typeof TermFilterBy[keyof TermFilterBy],
  * togglePhrasesFilter: typeof togglePhrasesFilter,
  * reinforce: boolean,
  * activeGroup: string[],
@@ -325,7 +325,7 @@ class Phrases extends Component {
     ) {
       // console.log('frequency word changed');
       if (
-        this.props.filterType === FILTER_FREQ &&
+        this.props.filterType === TermFilterBy.FREQUENCY &&
         this.props.frequency.length === 0
       ) {
         this.setOrder();
@@ -489,11 +489,14 @@ class Phrases extends Component {
 
     let newOrder;
 
-    if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
+    if (
+      !this.props.isOrdered &&
+      this.props.filterType !== TermFilterBy.SPACE_REP
+    ) {
       // randomized
       this.props.logger("Randomized", 3);
       newOrder = randomOrder(filteredPhrases);
-    } else if (this.props.filterType === FILTER_REP) {
+    } else if (this.props.filterType === TermFilterBy.SPACE_REP) {
       // space repetition order
       this.props.logger("Space Rep", 3);
       newOrder = spaceRepOrder(filteredPhrases, this.props.repetition);

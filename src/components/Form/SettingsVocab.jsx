@@ -10,11 +10,10 @@ import {
 
 import {
   AUTOPLAY_OFF,
-  FILTER_FREQ,
-  FILTER_REP,
   removeFrequencyWord,
   setVerbFormsOrder,
   setVocabularyOrdering,
+  TermFilterBy,
   toggleActiveGrp,
   toggleAutoVerbView,
   toggleVocabularyAutoPlay,
@@ -48,7 +47,7 @@ import VerbFormSlider from "./VerbFormSlider";
  * vocabOrder: boolean,
  * vocabRomaji: boolean,
  * vocabHint: boolean,
- * vocabFilter: number,
+ * vocabFilter: typeof TermFilterBy[keyof TermFilterBy],
  * vocabFreq: string[],
  * vocabReinforce: boolean,
  * vocabAutoPlay: number,
@@ -156,10 +155,11 @@ class SettingsVocab extends Component {
                   statusText={"Filter by"}
                 />
               </div>
-              {vocabFilter === FILTER_FREQ && vocabFreq.length === 0 && (
-                <div className="fst-italic">No words have been chosen</div>
-              )}
-              {vocabFilter !== FILTER_FREQ && (
+              {vocabFilter === TermFilterBy.FREQUENCY &&
+                vocabFreq.length === 0 && (
+                  <div className="fst-italic">No words have been chosen</div>
+                )}
+              {vocabFilter !== TermFilterBy.FREQUENCY && (
                 <SetTermGList
                   vocabGroups={vocabGroups}
                   vocabActive={vocabActive}
@@ -168,18 +168,19 @@ class SettingsVocab extends Component {
                   }
                 />
               )}
-              {vocabFilter === FILTER_FREQ && vocabFreq.length > 0 && (
-                <SetTermGFList
-                  vocabGroups={vocabGroups}
-                  vocabActive={vocabActive}
-                  vocabFreq={vocabFreq}
-                  vocabulary={vocabulary}
-                  removeFrequencyWord={removeFrequencyWord}
-                  toggleTermActiveGrp={(grp) =>
-                    toggleActiveGrp("vocabulary", grp)
-                  }
-                />
-              )}
+              {vocabFilter === TermFilterBy.FREQUENCY &&
+                vocabFreq.length > 0 && (
+                  <SetTermGFList
+                    vocabGroups={vocabGroups}
+                    vocabActive={vocabActive}
+                    vocabFreq={vocabFreq}
+                    vocabulary={vocabulary}
+                    removeFrequencyWord={removeFrequencyWord}
+                    toggleTermActiveGrp={(grp) =>
+                      toggleActiveGrp("vocabulary", grp)
+                    }
+                  />
+                )}
             </div>
 
             <div className="column-2 setting-block">
@@ -188,7 +189,7 @@ class SettingsVocab extends Component {
                   active={!vocabOrder}
                   action={setVocabularyOrdering}
                   color="default"
-                  disabled={vocabFilter === FILTER_REP}
+                  disabled={vocabFilter === TermFilterBy.SPACE_REP}
                   statusText={!vocabOrder ? "Randomized" : "Alphabetic"}
                 />
               </div>
@@ -196,7 +197,7 @@ class SettingsVocab extends Component {
                 <SettingsSwitch
                   active={vocabReinforce}
                   action={toggleVocabularyReinforcement}
-                  disabled={vocabFilter === FILTER_FREQ}
+                  disabled={vocabFilter === TermFilterBy.FREQUENCY}
                   statusText="Reinforcement"
                 />
               </div>

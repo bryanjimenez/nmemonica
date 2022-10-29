@@ -4,10 +4,9 @@ import PropTypes from "prop-types";
 
 import { getPhrases } from "../../actions/phrasesAct";
 import {
-  FILTER_FREQ,
-  FILTER_REP,
   removeFrequencyPhrase,
   setPhrasesOrdering,
+  TermFilterBy,
   toggleActiveGrp,
   togglePhrasesFilter,
   togglePhrasesReinforcement,
@@ -31,7 +30,7 @@ import { NotReady } from "./NotReady";
  * phrases: RawVocabulary[],
  * phraseOrder: boolean,
  * phraseRomaji: boolean,
- * phraseFilter: number,
+ * phraseFilter: typeof TermFilterBy[keyof TermFilterBy],
  * phraseFreq: string[],
  * phraseReinforce: boolean,
  * phraseGroups: GroupListMap,
@@ -100,27 +99,31 @@ class SettingsPhrase extends Component {
                   statusText={"Filter by"}
                 />
               </div>
-              {phraseFilter === FILTER_FREQ && phraseFreq.length === 0 && (
-                <div className="fst-italic">No phrases have been chosen</div>
-              )}
+              {phraseFilter === TermFilterBy.FREQUENCY &&
+                phraseFreq.length === 0 && (
+                  <div className="fst-italic">No phrases have been chosen</div>
+                )}
 
-              {phraseFilter !== FILTER_FREQ && (
+              {phraseFilter !== TermFilterBy.FREQUENCY && (
                 <SetTermGList
                   vocabGroups={phraseGroups}
                   vocabActive={phraseActive}
                   toggleTermActiveGrp={(grp) => toggleActiveGrp("phrases", grp)}
                 />
               )}
-              {phraseFilter === FILTER_FREQ && phraseFreq.length > 0 && (
-                <SetTermGFList
-                  vocabGroups={phraseGroups}
-                  vocabActive={phraseActive}
-                  vocabFreq={phraseFreq}
-                  vocabulary={phrases}
-                  removeFrequencyWord={removeFrequencyPhrase}
-                  toggleTermActiveGrp={(grp) => toggleActiveGrp("phrases", grp)}
-                />
-              )}
+              {phraseFilter === TermFilterBy.FREQUENCY &&
+                phraseFreq.length > 0 && (
+                  <SetTermGFList
+                    vocabGroups={phraseGroups}
+                    vocabActive={phraseActive}
+                    vocabFreq={phraseFreq}
+                    vocabulary={phrases}
+                    removeFrequencyWord={removeFrequencyPhrase}
+                    toggleTermActiveGrp={(grp) =>
+                      toggleActiveGrp("phrases", grp)
+                    }
+                  />
+                )}
             </div>
             <div className="column-2">
               <div className="setting-block">
@@ -128,7 +131,7 @@ class SettingsPhrase extends Component {
                   <SettingsSwitch
                     active={!phraseOrder}
                     action={setPhrasesOrdering}
-                    disabled={phraseFilter === FILTER_REP}
+                    disabled={phraseFilter === TermFilterBy.SPACE_REP}
                     statusText="Random Order"
                   />
                 </div>
@@ -136,7 +139,7 @@ class SettingsPhrase extends Component {
                   <SettingsSwitch
                     active={phraseReinforce}
                     action={togglePhrasesReinforcement}
-                    disabled={phraseFilter === FILTER_FREQ}
+                    disabled={phraseFilter === TermFilterBy.FREQUENCY}
                     statusText="Reinforcement"
                   />
                 </div>

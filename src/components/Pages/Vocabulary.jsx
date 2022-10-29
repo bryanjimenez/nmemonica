@@ -36,6 +36,7 @@ import {
   AUTOPLAY_JP_EN,
   AUTOPLAY_EN_JP,
   toggleFurigana,
+  TermFilterBy,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -60,7 +61,6 @@ import {
   pause,
   fadeOut,
 } from "../../helper/gameHelper";
-import { FILTER_FREQ, FILTER_REP } from "../../actions/settingsAct";
 import { logger } from "../../actions/consoleAct";
 import { spaceRepLog } from "../../helper/consoleHelper";
 import {
@@ -127,7 +127,7 @@ import {
  * scrollingState: function,
  * autoVerbView: boolean,
  * toggleAutoVerbView: typeof toggleAutoVerbView,
- * filterType: number,
+ * filterType: typeof TermFilterBy[keyof TermFilterBy],
  * toggleVocabularyFilter: typeof toggleVocabularyFilter,
  * reinforce: boolean,
  * prevTerm: RawVocabulary,
@@ -294,7 +294,7 @@ class Vocabulary extends Component {
       prevProps.frequency.some((e) => !this.props.frequency.includes(e))
     ) {
       if (
-        this.props.filterType === FILTER_FREQ &&
+        this.props.filterType === TermFilterBy.FREQUENCY &&
         this.props.frequency.length === 0
       ) {
         this.setOrder();
@@ -475,11 +475,14 @@ class Vocabulary extends Component {
     /** @type {BareIdx[]} */
     let ebare = [];
 
-    if (!this.props.isOrdered && this.props.filterType !== FILTER_REP) {
+    if (
+      !this.props.isOrdered &&
+      this.props.filterType !== TermFilterBy.SPACE_REP
+    ) {
       // randomized
       this.props.logger("Randomized", 3);
       newOrder = randomOrder(filteredVocab);
-    } else if (this.props.filterType === FILTER_REP) {
+    } else if (this.props.filterType === TermFilterBy.SPACE_REP) {
       // repetition order
       this.props.logger("Space Rep", 3);
       newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
@@ -1103,7 +1106,10 @@ class Vocabulary extends Component {
           key={2}
           className="progress-bar flex-shrink-1"
           onClick={() => {
-            if (this.props.isOrdered && this.props.filterType !== FILTER_REP) {
+            if (
+              this.props.isOrdered &&
+              this.props.filterType !== TermFilterBy.SPACE_REP
+            ) {
               const delayTime = 4000;
               this.setState({ showPageBar: true });
 

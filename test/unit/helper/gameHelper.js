@@ -6,7 +6,7 @@ import {
   spaceRepOrder,
   termFilterByType,
 } from "../../../src/helper/gameHelper";
-import { FILTER_FREQ } from "../../../src/actions/settingsAct";
+import { TermFilterBy } from "../../../src/actions/settingsAct";
 
 /* global describe it */
 
@@ -444,8 +444,8 @@ describe("gameHelper", function () {
         uid: "7b18c22af4c8f109f279fcdc66565f55",
       },
     ];
-    describe("FILTER_FREQ", function () {
-      const filterType = FILTER_FREQ;
+    describe("TermFilterBy.FREQUENCY", function () {
+      const filterType = TermFilterBy.FREQUENCY;
       const termList = [...terms, ...timeGrpTerms];
       const toggleFilterType = () => {};
 

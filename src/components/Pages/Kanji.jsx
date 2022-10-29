@@ -18,7 +18,7 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
-import { FILTER_GRP } from "../../actions/settingsAct";
+import { TermFilterBy } from "../../actions/settingsAct";
 
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { JapaneseText } from "../../helper/JapaneseText";
@@ -121,7 +121,7 @@ class Kanji extends Component {
 
   setOrder() {
     const filteredVocab = termFilterByType(
-      FILTER_GRP,
+      TermFilterBy.GROUP,
       this.props.kanji,
       null,
       this.props.activeGroup,

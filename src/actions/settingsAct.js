@@ -50,13 +50,12 @@ export const DebugLevel = Object.freeze({
   DEBUG: 3,
 });
 
-export const FILTER_GRP = 0,
-  FILTER_FREQ = 1,
-  FILTER_REP = 2;
-
-/**
- * @typedef {FILTER_GRP|FILTER_FREQ|FILTER_REP} TermFilterBy
- */
+// enum
+export const TermFilterBy = Object.freeze({
+  GROUP: 0,
+  FREQUENCY: 1,
+  SPACE_REP: 2,
+});
 
 /**
  * @param {number} number
@@ -428,7 +427,7 @@ export function toggleVocabularyHint() {
 
 /**
  * toggle between groups, frequency, and spaced repetition
- * @param {TermFilterBy} override
+ * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
  * @returns {ActCreator}
  */
 export function toggleVocabularyFilter(override) {
@@ -444,7 +443,9 @@ export function toggleVocabularyFilter(override) {
     if (override !== undefined) {
       newFilter = override;
     } else {
-      newFilter = filter + 1 < 3 ? filter + 1 : 0;
+      newFilter = Object.values(TermFilterBy).includes(filter + 1)
+        ? filter + 1
+        : TermFilterBy.GROUP;
     }
 
     localStoreAttrUpdate(time, getState, path, attr, newFilter);
@@ -865,7 +866,7 @@ export function updateSpaceRepTerm(
 }
 
 /**
- * @param {TermFilterBy} override
+ * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
  * @returns {ActCreator}
  */
 export function togglePhrasesFilter(override) {
@@ -881,12 +882,14 @@ export function togglePhrasesFilter(override) {
     if (override !== undefined) {
       newFilter = override;
     } else {
-      newFilter = filter + 1 < 3 ? filter + 1 : 0;
+      newFilter = Object.values(TermFilterBy).includes(filter + 1)
+        ? filter + 1
+        : TermFilterBy.GROUP;
     }
 
     localStoreAttrUpdate(time, getState, path, attr, newFilter);
 
-    if (newFilter !== FILTER_GRP && reinforce) {
+    if (newFilter !== TermFilterBy.GROUP && reinforce) {
       togglePhrasesReinforcement()(dispatch, getState);
     }
 
