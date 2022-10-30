@@ -124,9 +124,9 @@ class VocabularyMain extends Component {
     const practiceSide = this.props.practiceSide;
 
     const furiganaToggable = toggleFuriganaSettingHelper(
-      practiceSide,
       vocabulary.uid,
       this.props.furigana,
+      practiceSide,
       this.props.toggleFurigana
     );
 

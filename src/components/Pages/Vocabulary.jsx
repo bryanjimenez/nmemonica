@@ -1027,10 +1027,8 @@ class Vocabulary extends Component {
                   active={hasFurigana}
                   toggle={
                     toggleFuriganaSettingHelper(
-                      this.props.practiceSide,
                       vocabulary.uid,
                       this.props.repetition,
-                      ()=>{},
                     ).furigana.show
                   }
                   toggleFurigana={this.props.toggleFurigana}

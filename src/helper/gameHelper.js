@@ -712,16 +712,16 @@ export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
 
 /**
  * Creates the settings object for furigana toggling
- * @param {boolean} englishSideUp
  * @param {string} uid
  * @param {FuriganaToggleMap} settings
- * @param {function} toggleFn
+ * @param {boolean} [englishSideUp]
+ * @param {function} [toggleFn]
  * @returns
  */
 export function toggleFuriganaSettingHelper(
-  englishSideUp,
   uid,
   settings,
+  englishSideUp,
   toggleFn
 ) {
   let furiganaToggable;
@@ -732,7 +732,7 @@ export function toggleFuriganaSettingHelper(
     furigana: {
       show,
       toggle:
-        !englishSideUp &&
+        englishSideUp === false && toggleFn &&
         (() => {
           toggleFn(uid);
         }),

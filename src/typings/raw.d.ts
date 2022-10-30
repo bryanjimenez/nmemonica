@@ -57,12 +57,13 @@ export interface SpaceRepetitionMap {
   [uid: string]: {
     d: Date;
     c: number;
+    f?: boolean;
   };
 }
 
 export interface FuriganaToggleMap {
   [uid: string]: {
-    f: boolean;
+    f?: boolean;
   };
 }
 

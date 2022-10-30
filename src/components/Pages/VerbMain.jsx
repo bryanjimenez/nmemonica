@@ -267,9 +267,9 @@ class VerbMain extends Component {
       : verbForms[splitIdx].value;
 
     const furiganaToggable = toggleFuriganaSettingHelper(
-      this.props.practiceSide,
       this.props.verb.uid,
       this.props.furigana,
+      this.props.practiceSide,
       this.props.toggleFurigana
     );
 
