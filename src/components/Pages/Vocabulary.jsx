@@ -1,29 +1,13 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PlusCircleIcon,
-  XCircleIcon,
-} from "@primer/octicons-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import {
   clearPreviousTerm,
   getVocabulary,
   pushedPlay,
   setPreviousTerm,
 } from "../../actions/vocabularyAct";
-import {
-  faBan,
-  faDice,
-  faGlasses,
-  faHeadphones,
-  faPencilAlt,
-  faRecycle,
-  faRunning,
-  faSuperscript,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   flipVocabularyPracticeSide,
   addFrequencyWord,
@@ -58,6 +42,7 @@ import {
   loopN,
   pause,
   fadeOut,
+  toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import { spaceRepLog } from "../../helper/consoleHelper";
@@ -68,8 +53,6 @@ import {
 } from "react-slick/lib/utils/innerSliderUtils";
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
-import classNames from "classnames";
-import { BtnShowHint } from "../Form/BtnShowHint";
 import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
 import {
   mediaSessionAttach,
@@ -77,6 +60,16 @@ import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
 } from "../../helper/mediaHelper";
+import {
+  AutoPlayEnabledIcon,
+  FrequencyTermIcon,
+  ReCacheAudioBtn,
+  ShowHintBtn,
+  ToggleAutoVerbViewBtn,
+  ToggleFrequencyTermBtn,
+  ToggleFuriganaBtn,
+  TogglePracticeSideBtn,
+} from "../Form/OptionsBar";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -971,60 +964,36 @@ class Vocabulary extends Component {
       page = [
         ...page,
         <div key={1} className="options-bar mb-3 flex-shrink-1">
-          <div className="row">
+          <div className="row opts-max-h">
             <div className="col">
               <div className="d-flex justify-content-start">
-                <div>
-                  <FontAwesomeIcon
-                    className="clickable"
-                    onClick={this.props.flipVocabularyPracticeSide}
-                    icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-                  />
-                </div>
+                <TogglePracticeSideBtn
+                  toggle={this.props.practiceSide}
+                  action={this.props.flipVocabularyPracticeSide}
+                />
+                <ReCacheAudioBtn
+                  active={this.state.recacheAudio}
+                  action={() => {
+                    if (this.state.recacheAudio === false) {
+                      const delayTime = 2000;
+                      this.setState({ recacheAudio: true });
 
-                <div
-                  className={classNames({
-                    "sm-icon-grp": true,
-                    "disabled-color": this.state.recacheAudio,
-                  })}
-                >
-                  <FontAwesomeIcon
-                    onClick={() => {
-                      if (this.state.recacheAudio === false) {
-                        const delayTime = 2000;
-                        this.setState({ recacheAudio: true });
+                      const delayToggle = () => {
+                        this.setState({ recacheAudio: false });
+                      };
 
-                        const delayToggle = () => {
-                          this.setState({ recacheAudio: false });
-                        };
-
-                        setTimeout(delayToggle, delayTime);
-                      }
-                    }}
-                    className="clickable"
-                    icon={faRecycle}
-                    aria-label="Override audio"
-                  />
-                </div>
-
-                {this.props.autoPlay !== AutoPlaySetting.OFF && (
-                  <div className="sm-icon-grp">
-                    <FontAwesomeIcon
-                      icon={faHeadphones}
-                      aria-label="Auto play enabled"
-                    />
-                  </div>
-                )}
-                {isVerb && (
-                  <div className="sm-icon-grp">
-                    <FontAwesomeIcon
-                      onClick={this.props.toggleAutoVerbView}
-                      className="clickable"
-                      icon={!this.props.autoVerbView ? faRunning : faBan}
-                    />
-                  </div>
-                )}
-
+                      setTimeout(delayToggle, delayTime);
+                    }
+                  }}
+                />
+                <AutoPlayEnabledIcon
+                  visible={this.props.autoPlay !== AutoPlaySetting.OFF}
+                />
+                <ToggleAutoVerbViewBtn
+                  visible={isVerb}
+                  toggleAutoVerbView={this.props.toggleAutoVerbView}
+                  autoVerbView={this.props.autoVerbView}
+                />
                 <div className="sm-icon-grp">
                   <LoopSettingBtn
                     active={this.state.loop > 0}
@@ -1039,63 +1008,40 @@ class Vocabulary extends Component {
                 </div>
               </div>
             </div>
-            <div className="col text-center" style={{ maxHeight: "24px" }}>
-              {this.state.reinforcedUID && (
-                <FontAwesomeIcon className="clickable" icon={faDice} />
-              )}
+            <div className="col text-center">
+              <FrequencyTermIcon
+                visible={
+                  this.state.reinforcedUID !== undefined &&
+                  this.state.reinforcedUID !== ""
+                }
+              />
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">
-                <BtnShowHint
+                <ShowHintBtn
                   visible={this.props.hintEnabled}
                   active={isHintable}
                   setState={(state) => this.setState(state)}
                 />
-
-                <div
-                  className={classNames({
-                    "sm-icon-grp": true,
-                    "disabled disabled-color": !hasFurigana,
-                  })}
-                  onClick={
-                    hasFurigana
-                      ? () => this.props.toggleFurigana(vocabulary.uid)
-                      : undefined
+                <ToggleFuriganaBtn
+                  active={hasFurigana}
+                  toggle={
+                    toggleFuriganaSettingHelper(
+                      this.props.practiceSide,
+                      vocabulary.uid,
+                      this.props.repetition,
+                      ()=>{},
+                    ).furigana.show
                   }
-                >
-                  <FontAwesomeIcon
-                    icon={faSuperscript}
-                    aria-label="Toggle furigana"
-                  />
-                </div>
-
-                <div className="sm-icon-grp">
-                  {vocabulary_reinforce ? (
-                    <div
-                      onClick={() => {
-                        this.props.removeFrequencyWord(vocabulary.uid);
-                      }}
-                    >
-                      <XCircleIcon
-                        className="clickable"
-                        size="small"
-                        aria-label="remove"
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      onClick={() => {
-                        this.props.addFrequencyWord(vocabulary.uid);
-                      }}
-                    >
-                      <PlusCircleIcon
-                        className="clickable"
-                        size="small"
-                        aria-label="Add vocabulary"
-                      />
-                    </div>
-                  )}
-                </div>
+                  toggleFurigana={this.props.toggleFurigana}
+                  vocabulary={vocabulary}
+                />
+                <ToggleFrequencyTermBtn
+                  addFrequencyTerm={this.props.addFrequencyWord}
+                  removeFrequencyTerm={this.props.removeFrequencyWord}
+                  toggle={vocabulary_reinforce}
+                  term={vocabulary}
+                />
               </div>
             </div>
           </div>

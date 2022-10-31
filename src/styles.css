@@ -15,11 +15,11 @@ body {
 }
 
 .w-40 {
-  width: 40%!important;
+  width: 40% !important;
 }
 
 .w-60 {
-  width: 60%!important;
+  width: 60% !important;
 }
 
 p {
@@ -77,8 +77,20 @@ a {
   opacity: 0%;
 }
 
+.opts-max-h {
+  max-height: 24px;
+}
+
 .sm-icon-grp {
   padding-left: 16px;
+}
+
+.sm-kanji {
+  max-height: 24px;
+}
+
+.sm-kanji rt {
+  font-size: 25%;
 }
 
 /* bare container css no media queries */
@@ -127,7 +139,6 @@ a {
   -ms-transform: rotate(45deg);
   transform: rotate(45deg);
 }
-
 
 .rotate-135 {
   -webkit-transform: rotate(135deg);

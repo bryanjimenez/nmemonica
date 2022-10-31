@@ -1,20 +1,8 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PlusCircleIcon,
-  ProjectIcon,
-  XCircleIcon,
-} from "@primer/octicons-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { getPhrases } from "../../actions/phrasesAct";
-import {
-  faDice,
-  faGlasses,
-  faPencilAlt,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   addFrequencyPhrase,
   updateSpaceRepPhrase,
@@ -58,7 +46,6 @@ import {
 } from "react-slick/lib/utils/innerSliderUtils";
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
-import classNames from "classnames";
 import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
 import {
   mediaSessionAttach,
@@ -66,6 +53,12 @@ import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
 } from "../../helper/mediaHelper";
+import {
+  FrequencyTermIcon,
+  ToggleFrequencyTermBtn,
+  ToggleLiteralPhraseBtn,
+  TogglePracticeSideBtn,
+} from "../Form/OptionsBar";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -921,16 +914,13 @@ class Phrases extends Component {
         </div>
       </div>,
       <div key={1} className="options-bar mb-3 flex-shrink-1">
-        <div className="row">
+        <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
-              <div>
-                <FontAwesomeIcon
-                  className="clickable"
-                  onClick={this.props.flipPhrasesPracticeSide}
-                  icon={this.props.practiceSide ? faGlasses : faPencilAlt}
-                />
-              </div>
+              <TogglePracticeSideBtn
+                toggle={this.props.practiceSide}
+                action={this.props.flipPhrasesPracticeSide}
+              />
 
               <div className="sm-icon-grp">
                 <LoopSettingBtn
@@ -946,60 +936,31 @@ class Phrases extends Component {
               </div>
             </div>
           </div>
-          <div className="col text-center" style={{ maxHeight: "24px" }}>
-            {this.state.reinforcedUID && (
-              <FontAwesomeIcon className="clickable" icon={faDice} />
-            )}
+          <div className="col text-center">
+            <FrequencyTermIcon
+              visible={
+                this.state.reinforcedUID !== undefined &&
+                this.state.reinforcedUID !== ""
+              }
+            />
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
-              {phrase.lit && (
-                <div
-                  className={classNames({
-                    "sm-icon-grp": true,
-                    "info-color": this.state.showLit,
-                  })}
-                  onClick={() =>
-                    this.setState((/** @type {PhrasesState} */ state) => ({
-                      showLit: !state.showLit,
-                    }))
-                  }
-                >
-                  <ProjectIcon
-                    className="clickable"
-                    size="small"
-                    aria-label="Literal english translation available"
-                  />
-                </div>
-              )}
-
-              {this.props.frequency.includes(phrase.uid) ? (
-                <div
-                  className="sm-icon-grp"
-                  onClick={() => {
-                    this.props.removeFrequencyPhrase(phrase.uid);
-                  }}
-                >
-                  <XCircleIcon
-                    className="clickable"
-                    size="small"
-                    aria-label="Remove frequency phrase"
-                  />
-                </div>
-              ) : (
-                <div
-                  className="sm-icon-grp"
-                  onClick={() => {
-                    this.props.addFrequencyPhrase(phrase.uid);
-                  }}
-                >
-                  <PlusCircleIcon
-                    className="clickable"
-                    size="small"
-                    aria-label="Add frequency phrase"
-                  />
-                </div>
-              )}
+              <ToggleLiteralPhraseBtn
+                visible={phrase.lit !== undefined && phrase.lit !== ""}
+                toggle={this.state.showLit}
+                action={() => {
+                  this.setState((/** @type {PhrasesState} */ state) => ({
+                    showLit: !state.showLit,
+                  }));
+                }}
+              />
+              <ToggleFrequencyTermBtn
+                addFrequencyTerm={this.props.addFrequencyPhrase}
+                removeFrequencyTerm={this.props.removeFrequencyPhrase}
+                toggle={phrase_reinforce}
+                term={phrase}
+              />
             </div>
           </div>
         </div>

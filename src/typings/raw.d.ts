@@ -25,7 +25,7 @@ export interface RawPhrase {
   uid: string;
 
   english: string;
-  lit: string; // literal translation
+  lit?: string; // literal translation
   romaji: string;
 
   japanese: string;
