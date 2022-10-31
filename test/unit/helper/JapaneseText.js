@@ -7,7 +7,6 @@ import {
   JapaneseText,
 } from "../../../src/helper/JapaneseText";
 import {
-  buildHTMLElement,
   furiganaParse,
 } from "../../../src/helper/JapaneseText";
 import { kanaHintBuilder } from "../../../src/helper/kanaHelper";
@@ -69,28 +68,6 @@ describe("JapanseText", function () {
 
       const text = new JapaneseText(said, written);
       const wrapper = shallow(text.toHTML());
-
-      expect(wrapper.text()).to.equal(expected);
-    });
-  });
-
-  describe("buildHTMLElement", function () {
-    it("starting and ending with hiragana", function () {
-      const kanjis = ["会計", "願"];
-      const furiganas = ["かいけい", "ねが"];
-      const okuriganas = ["お", "をお", "いします"];
-      const startsWKana = true;
-
-      const expected =
-        "お" + "会計かいけい" + "をお" + "願" + "ねが" + "いします";
-
-      const actual = buildHTMLElement(
-        kanjis,
-        furiganas,
-        okuriganas,
-        startsWKana
-      );
-      const wrapper = shallow(actual);
 
       expect(wrapper.text()).to.equal(expected);
     });

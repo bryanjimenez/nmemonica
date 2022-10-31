@@ -402,6 +402,21 @@ export function kanjiOkuriganaSpliceApplyCss(
 }
 
 /**
+ * @param {string} [content]
+ * @param {string} [css]
+ * @param {number} [key]
+ */
+export function wrap(content, css, key = 1) {
+  return !content
+    ? []
+    : [
+        <span key={key} className={css}>
+          {content}
+        </span>,
+      ];
+}
+
+/**
  * Builds a ruby html element
  * @param {number} key
  * @param {{sk:JSX.Element[],hk:JSX.Element[]}} kanji
@@ -409,7 +424,7 @@ export function kanjiOkuriganaSpliceApplyCss(
  * @param {{so:JSX.Element[],ho:JSX.Element[]}} okurigana
  * @param {boolean} startsWKana
  */
-function buildRubyElement(
+export function buildRubyElement(
   key,
   { sk, hk },
   { sf, hf },
@@ -420,34 +435,40 @@ function buildRubyElement(
   const hasFurigana = sf.length > 0 || hf.length > 0;
   const hasOkurigana = so.length > 0 || ho.length > 0;
 
-  const kanjiWFurigana = hasKanji && hasFurigana && (
-    <ruby>
-      {sk}
-      {hk}
-      <rt>
-        {sf}
-        {hf}
-      </rt>
-    </ruby>
-  );
+  const kanjiWFurigana =
+    (hasKanji && hasFurigana && (
+      <ruby>
+        {sk}
+        {hk}
+        <rt>
+          {sf}
+          {hf}
+        </rt>
+      </ruby>
+    )) ||
+    undefined;
 
-  const okurigana = hasOkurigana && (
-    <span>
-      {so}
-      {ho}
-    </span>
-  );
+  const okurigana =
+    (hasOkurigana && (
+      <span>
+        {so}
+        {ho}
+      </span>
+    )) ||
+    undefined;
 
   const goesFirst = startsWKana ? okurigana : kanjiWFurigana;
   const goesNext = startsWKana ? kanjiWFurigana : okurigana;
 
-  const lhFurigana = classNames({ "lh-furigana": sf });
+  const lhFurigana =
+    classNames({ "lh-furigana": hasKanji && hasFurigana }) || undefined;
   return (
-    (goesFirst || goesNext) && (
+    ((goesFirst || goesNext) && (
       <span key={key} className={lhFurigana}>
         {goesFirst}
         {goesNext}
       </span>
-    )
+    )) ||
+    undefined
   );
 }

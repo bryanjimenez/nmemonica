@@ -117,6 +117,10 @@ a {
   font-size: xx-small;
 }
 
+.lh-furigana {
+  line-height: 1.8;
+}
+
 /* Large devices (desktops, 992px and up)*/
 @media (min-width: 992px) {
   .app-sm-fs-xx-small {

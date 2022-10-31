@@ -732,10 +732,12 @@ export function toggleFuriganaSettingHelper(
     furigana: {
       show,
       toggle:
-        englishSideUp === false && toggleFn &&
-        (() => {
-          toggleFn(uid);
-        }),
+        (englishSideUp === false &&
+          toggleFn &&
+          (() => {
+            toggleFn(uid);
+          })) ||
+        undefined,
     },
   };
 

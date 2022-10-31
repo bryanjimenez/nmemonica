@@ -8,6 +8,7 @@ import {
   isPunctuation,
   toEnglishNumber,
 } from "./kanaHelper";
+import { buildRubyElement, getParseObjectMask, wrap } from "./kanjiHelper";
 
 /**
  * @typedef {import("../typings/raw").RawJapanese} RawJapanese
@@ -226,58 +227,67 @@ export class JapaneseText {
 
   /**
    *
-   * @param {*} [options]
+   * @param {{furigana:{show?:boolean, toggle?:function}}} [options]
    * @returns {JSX.Element}
    */
   toHTML(options) {
     let htmlElement;
 
-    let furiganaShown;
-    let furiganaToggle;
-    if (options && options.furigana) {
-      furiganaShown = options.furigana.show;
-      if (typeof options.furigana.toggle === "function") {
-        furiganaToggle = options.furigana.toggle;
-      }
-    }
+    const furiganaHide = options?.furigana?.show === false;
+    const furiganaToggle = options?.furigana?.toggle;
+
+    const eClass = classNames({
+      "incorrect-color": true,
+      "d-block": true,
+    });
+
+    const fallBackHtml = (
+      <span>
+        <span className={eClass}>{this.getPronunciation()}</span>
+        <span>{this.getSpelling()}</span>
+      </span>
+    );
 
     if (!this.hasFurigana()) {
       htmlElement = <span>{this.getSpelling()}</span>;
-    } else if (furiganaShown === false) {
-      htmlElement = (
-        <span
-          className={classNames({ clickable: furiganaToggle })}
-          onClick={furiganaToggle}
-        >
-          {this.getSpelling()}
-        </span>
-      );
     } else {
       try {
-        const { kanjis, furiganas, okuriganas, startsWKana } =
-          furiganaParseRetry(this.getPronunciation(), this.getSpelling());
+        const { kanjis, furiganas, okuriganas, startsWKana } = this.parseObj;
 
-        htmlElement = buildHTMLElement(
-          kanjis,
-          furiganas,
-          okuriganas,
-          startsWKana,
-          furiganaToggle
+        const mask = getParseObjectMask(this.parseObj);
+
+        const clickableCss =
+          classNames({ clickable: !!furiganaToggle }) || undefined;
+        const toggleHandler = furiganaToggle
+          ? /** @type {React.MouseEventHandler } */ (furiganaToggle)
+          : undefined;
+        const hideFuriganaCss = furiganaHide ? "transparent-font" : undefined;
+
+        htmlElement = (
+          <span className={clickableCss} onClick={toggleHandler}>
+            {mask.map((el, i) => {
+              const sk = wrap(kanjis[i]);
+              const hk = wrap();
+
+              const sf = wrap(furiganas[i], hideFuriganaCss);
+              const hf = wrap();
+
+              const so = wrap(okuriganas[i]);
+              const ho = wrap();
+
+              return buildRubyElement(
+                i,
+                { sk, hk },
+                { sf, hf },
+                { so, ho },
+                startsWKana
+              );
+            })}
+          </span>
         );
       } catch (e) {
         console.error(e);
-
-        const eClass = classNames({
-          "incorrect-color": true,
-          "d-block": true,
-        });
-
-        htmlElement = (
-          <span>
-            <span className={eClass}>{this.getPronunciation()}</span>
-            <span>{this.getSpelling()}</span>
-          </span>
-        );
+        htmlElement = fallBackHtml;
       }
     }
 
@@ -551,67 +561,6 @@ export function validateParseFurigana(
   }
 
   return [pronunciation, orthography];
-}
-
-/**
- * @returns {JSX.Element} HTML element
- * @param {string[]} kanjis
- * @param {string[]} furiganas
- * @param {string[]} okuriganas
- * @param {boolean} startsWKana
- * @param {function} furiganaToggle
- */
-export function buildHTMLElement(
-  kanjis,
-  furiganas,
-  okuriganas,
-  startsWKana,
-  furiganaToggle
-) {
-  let sentence = [];
-  const kanjiWFurigana = kanjis.map((kanji, i) => (
-    <ruby key={i}>
-      {kanji}
-      <rt>{furiganas[i]}</rt>
-    </ruby>
-  ));
-
-  let i = 0;
-  let items =
-    okuriganas.length > kanjiWFurigana.length
-      ? okuriganas.length
-      : kanjiWFurigana.length;
-
-  while (i < items) {
-    if (startsWKana) {
-      //starts with hiragana
-      sentence.push(
-        <span key={i}>
-          {okuriganas[i]}
-          {kanjiWFurigana[i]}
-        </span>
-      );
-    } else {
-      //starts with kanji
-      sentence.push(
-        <span key={i}>
-          {kanjiWFurigana[i]}
-          {okuriganas[i]}
-        </span>
-      );
-    }
-    i++;
-  }
-
-  return (
-    <span
-      className={classNames({ clickable: furiganaToggle })}
-      // @ts-ignore
-      onClick={furiganaToggle}
-    >
-      {sentence}
-    </span>
-  );
 }
 
 /**
