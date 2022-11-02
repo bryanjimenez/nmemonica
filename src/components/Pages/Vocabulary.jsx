@@ -369,9 +369,17 @@ class Vocabulary extends Component {
             this.loopAbortControllers = undefined;
             return this.looperSwipe("left");
           })
-          .catch(() => {
-            // caught trying to fetch japanese
-            // continue
+          .catch((/** @type {Error} */ error) => {
+            // @ts-expect-error Error.cause
+            if (error?.cause?.code === "UserAborted") {
+              // user aborted
+              // don't continue
+            } else {
+              // caught trying to fetch japanese
+              // continue
+              this.loopAbortControllers = undefined;
+              return this.looperSwipe("left");
+            }
           });
       })
       .then(() => pause(100, ac5))
@@ -689,13 +697,17 @@ class Vocabulary extends Component {
   swipeActionHandler(direction, AbortController) {
     // this.props.logger("swiped " + direction, 3);
     let swipePromise;
+    // @ts-expect-error Error.cause
+    const userAbortError = new Error("User interrupted audio playback.", {
+      cause: { code: "UserAborted" },
+    });
 
     if (direction === "left") {
       this.gotoNextSlide();
-      swipePromise = Promise.resolve();
+      swipePromise = Promise.all([Promise.resolve()]);
     } else if (direction === "right") {
       this.gotoPrev();
-      swipePromise = Promise.resolve();
+      swipePromise = Promise.all([Promise.resolve()]);
     } else {
       const uid =
         this.state.reinforcedUID ||
@@ -751,7 +763,7 @@ class Vocabulary extends Component {
               new Promise((resolve, reject) => {
                 const listener = () => {
                   fadeOut(japaneseAudio).then(() => {
-                    reject();
+                    reject(userAbortError);
                   });
                 };
 
@@ -797,7 +809,7 @@ class Vocabulary extends Component {
               new Promise((resolve, reject) => {
                 const listener = () => {
                   fadeOut(englishAudio).then(() => {
-                    reject();
+                    reject(userAbortError);
                   });
                 };
 

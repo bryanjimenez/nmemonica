@@ -777,7 +777,11 @@ export function loopN(n, action, waitBeforeEach, { signal }) {
   const loopPromise = new Promise((resolve, reject) => {
     const listener = () => {
       clearTimeout(timer);
-      reject();
+      // @ts-expect-error Error.cause
+      const error = new Error("User interrupted loop.", {
+        cause: { code: "UserAborted" },
+      });
+      reject(error);
     };
 
     const timer = setTimeout(() => {
@@ -786,12 +790,11 @@ export function loopN(n, action, waitBeforeEach, { signal }) {
           .then(() =>
             loopN(n - 1, action, waitBeforeEach, { signal }).then(() => {
               signal?.removeEventListener("abort", listener);
-
               resolve();
             })
           )
-          .catch(() => {
-            reject();
+          .catch((error) => {
+            reject(error);
           });
       } else {
         signal?.removeEventListener("abort", listener);
