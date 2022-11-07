@@ -6,7 +6,7 @@ import classNames from "classnames";
 import { DebugLevel } from "../../actions/settingsAct";
 
 /**
- * @typedef {{msg:string, lvl:number}} ConsoleMessage
+ * @typedef {{msg:string, lvl:number, css?: string}} ConsoleMessage
  */
 
 /**
@@ -18,6 +18,7 @@ import { DebugLevel } from "../../actions/settingsAct";
 
 /**
  * @typedef {{
+ * connected: boolean,
  * debug: number,
  * messages: ConsoleMessage[]}} ConsoleProps
  */
@@ -114,10 +115,17 @@ class Console extends Component {
     // console.log(ar)
 
     return (
-      <div className="console position-absolute p-1">
+      <div
+        className={classNames({
+          "console p-1": true,
+          "position-absolute": this.props.connected === true,
+          "mw-50": this.props.connected === true,
+        })}
+      >
         {messages.map((e, i) => {
           const mClass = classNames({
             "app-sm-fs-xx-small": true,
+            ...(e.css ? { [e.css]: true } : {}),
             "correct-color": e.lvl === DebugLevel.DEBUG,
             "question-color": e.lvl === DebugLevel.WARN,
             "incorrect-color": e.lvl === DebugLevel.ERROR,
@@ -134,16 +142,25 @@ class Console extends Component {
   }
 }
 
-Console.propTypes = {
-  messages: PropTypes.array,
-  debug: PropTypes.number,
-};
 // @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+const mapStateToProps = (state, ownProps) => {
+  if (ownProps.connected !== true && ownProps.messages) {
+    return {
+      messages: ownProps.messages,
+      debug: DebugLevel.DEBUG,
+    };
+  }
+
   return {
     messages: state.settings.global.console,
     debug: state.settings.global.debug,
   };
+};
+
+Console.propTypes = {
+  connected: PropTypes.bool,
+  messages: PropTypes.array,
+  debug: PropTypes.number,
 };
 
 export default connect(mapStateToProps, {})(Console);

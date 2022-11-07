@@ -11,6 +11,7 @@ import {
   togglePhrasesFilter,
   AutoPlaySetting,
   TermFilterBy,
+  DebugLevel,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -32,7 +33,7 @@ import {
   fadeOut,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
-import { spaceRepLog } from "../../helper/consoleHelper";
+import { logify, spaceRepLog } from "../../helper/consoleHelper";
 import {
   clearPreviousTerm,
   pushedPlay,
@@ -59,6 +60,8 @@ import {
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import { MinimalUI } from "../Form/MinimalUI";
+import Console from "../Form/Console";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -70,6 +73,8 @@ import {
 
 /**
  * @typedef {{
+ * errorMsgs: import("../Form/Console").ConsoleMessage[],
+ * errorSkipIndex: number,
  * lastNext: number,
  * selectedIndex: number,
  * showMeaning: boolean,
@@ -128,6 +133,8 @@ class Phrases extends Component {
 
     /** @type {PhrasesState} */
     this.state = {
+      errorMsgs: [],
+      errorSkipIndex: -1,
       lastNext: Date.now(),
       selectedIndex: 0,
       showMeaning: false,
@@ -359,6 +366,43 @@ class Phrases extends Component {
     mediaSessionDetachAll();
   }
 
+  /**
+   * @param {Error} error
+   */
+  static getDerivedStateFromError(error) {
+    const causeMsg =
+      // @ts-expect-error Error.cause
+      (error.cause !== undefined && [
+        // @ts-expect-error Error.cause
+        { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
+      ]) ||
+      [];
+
+    const errorMsgs = [
+      { msg: error.name + ": " + error.message, css: "px-2" },
+      ...causeMsg,
+    ].map((e) => ({ ...e, lvl: DebugLevel.ERROR }));
+
+    // state
+    return {
+      errorMsgs,
+    };
+  }
+
+  componentDidCatch(/*error*/) {
+    let errorSkipIndex;
+    if (this.state.reinforcedUID) {
+      const orderIdx = this.state.filteredPhrases.findIndex(
+        (p) => p.uid === this.state.reinforcedUID
+      );
+      errorSkipIndex = this.state.order?.indexOf(orderIdx);
+    } else {
+      errorSkipIndex = this.state.selectedIndex;
+    }
+
+    this.setState({ errorSkipIndex });
+  }
+
   abortLoop() {
     if (this.loopAbortControllers && this.loopAbortControllers.length > 0) {
       this.loopAbortControllers.forEach((ac) => {
@@ -485,15 +529,15 @@ class Phrases extends Component {
       this.props.filterType !== TermFilterBy.SPACE_REP
     ) {
       // randomized
-      this.props.logger("Randomized", 3);
+      this.props.logger("Randomized", DebugLevel.DEBUG);
       newOrder = randomOrder(filteredPhrases);
     } else if (this.props.filterType === TermFilterBy.SPACE_REP) {
       // space repetition order
-      this.props.logger("Space Rep", 3);
+      this.props.logger("Space Rep", DebugLevel.DEBUG);
       newOrder = spaceRepOrder(filteredPhrases, this.props.repetition);
     } else {
       // alphabetized
-      this.props.logger("Alphabetic", 3);
+      this.props.logger("Alphabetic", DebugLevel.DEBUG);
       ({ order: newOrder } = alphaOrder(filteredPhrases));
     }
 
@@ -536,7 +580,12 @@ class Phrases extends Component {
 
   gotoNext() {
     const l = this.state.filteredPhrases.length;
-    const newSel = (this.state.selectedIndex + 1) % l;
+    let newSel = (l + this.state.selectedIndex + 1) % l;
+
+    if (newSel === this.state.errorSkipIndex) {
+      newSel = (l + newSel + 1) % l;
+    }
+
     this.setState({
       lastNext: Date.now(),
       reinforcedUID: undefined,
@@ -544,6 +593,7 @@ class Phrases extends Component {
       showMeaning: false,
       showRomaji: false,
       showLit: false,
+      errorMsgs: [],
     });
   }
 
@@ -555,7 +605,11 @@ class Phrases extends Component {
     if (this.state.reinforcedUID) {
       newSel = this.state.selectedIndex;
     } else {
-      newSel = i < 0 ? (l + i) % l : i % l;
+      newSel = (l + i) % l;
+    }
+
+    if (newSel === this.state.errorSkipIndex) {
+      newSel = (l + newSel - 1) % l;
     }
 
     this.setState({
@@ -564,6 +618,7 @@ class Phrases extends Component {
       showMeaning: false,
       showRomaji: false,
       showLit: false,
+      errorMsgs: [],
     });
   }
 
@@ -585,7 +640,7 @@ class Phrases extends Component {
         ? phrase.english
         : phrase.english.slice(0, 15) + "...";
 
-    this.props.logger("reinforce (" + text + ")", 3);
+    this.props.logger("reinforce (" + text + ")", DebugLevel.DEBUG);
   }
 
   /**
@@ -714,7 +769,7 @@ class Phrases extends Component {
             japaneseAudio.play(),
           ]);
         } catch (e) {
-          this.props.logger("Swipe Play Error " + e, 1);
+          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
         }
 
         if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
@@ -758,7 +813,7 @@ class Phrases extends Component {
             englishAudio.play(),
           ]);
         } catch (e) {
-          this.props.logger("Swipe Play Error " + e, 1);
+          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
         }
 
         if (this.props.autoPlay !== AutoPlaySetting.EN_JP) {
@@ -770,6 +825,27 @@ class Phrases extends Component {
   }
 
   render() {
+    if (this.state.errorMsgs.length > 0) {
+      const minState = logify(this.state);
+      const minProps = logify(this.props);
+
+      const messages = [
+        ...this.state.errorMsgs,
+        { msg: "props:", lvl: DebugLevel.WARN, css: "px-2" },
+        { msg: minProps, lvl: DebugLevel.WARN, css: "px-4" },
+        { msg: "state:", lvl: DebugLevel.WARN, css: "px-2" },
+        { msg: minState, lvl: DebugLevel.WARN, css: "px-4" },
+      ];
+
+      return (
+        <MinimalUI next={this.gotoNext} prev={this.gotoPrev}>
+          <div className="d-flex flex-column justify-content-around">
+            <Console messages={messages} />
+          </div>
+        </MinimalUI>
+      );
+    }
+
     if (this.state.filteredPhrases.length < 1)
       return <NotReady addlStyle="main-panel" />;
 

@@ -578,9 +578,12 @@ export function audioPronunciation(vocabulary) {
     if (isAllKana) {
       q = vocabulary.pronounce;
     } else {
-      console.warn("pronunciation is not hiragana or katakana");
-      console.warn(JSON.stringify(vocabulary));
-      throw new Error("No valid pronunciation");
+      // @ts-expect-error Error.cause
+      const error = new Error("No valid pronunciation", {
+        cause: { code: "InvalidPronunciation", value: vocabulary },
+      });
+
+      throw error;
     }
   } else {
     const w = JapaneseText.parse(vocabulary);

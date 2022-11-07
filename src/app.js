@@ -76,7 +76,7 @@ class App extends Component {
     return (
       <Router basename="/">
         <div id="page-content" className={pClass}>
-          <Console />
+          <Console connected={true} />
           <Navigation />
           <Suspense fallback={<div />}>
             <Switch>

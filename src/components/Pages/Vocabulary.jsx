@@ -19,6 +19,7 @@ import {
   updateSpaceRepWord,
   toggleFurigana,
   TermFilterBy,
+  DebugLevel,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -45,7 +46,7 @@ import {
   toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
-import { spaceRepLog } from "../../helper/consoleHelper";
+import { logify, spaceRepLog } from "../../helper/consoleHelper";
 import {
   swipeEnd,
   swipeMove,
@@ -70,6 +71,8 @@ import {
   ToggleFuriganaBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import Console from "../Form/Console";
+import { MinimalUI } from "../Form/MinimalUI";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -82,7 +85,10 @@ import {
 
 /**
  * @typedef {{
- * lastNext:number, selectedIndex: number
+ * errorMsgs: import("../Form/Console").ConsoleMessage[],
+ * errorSkipIndex: number,
+ * lastNext:number,
+ * selectedIndex: number,
  * reinforcedUID?: string,
  * showHint: boolean,
  * filteredVocab: RawVocabulary[],
@@ -133,6 +139,7 @@ import {
  * pushedPlay: typeof pushedPlay,
  * touchSwipe: boolean,
  * toggleFurigana: typeof toggleFurigana,
+ * debugLevel: typeof DebugLevel[keyof DebugLevel]
  * }} VocabularyProps
  */
 
@@ -148,6 +155,8 @@ class Vocabulary extends Component {
 
     /** @type {VocabularyState} */
     this.state = {
+      errorMsgs: [],
+      errorSkipIndex: -1,
       lastNext: Date.now(),
       selectedIndex: 0,
       showHint: false,
@@ -321,6 +330,67 @@ class Vocabulary extends Component {
     mediaSessionDetachAll();
   }
 
+  /**
+   * @param {Error} error
+   */
+  static getDerivedStateFromError(error) {
+    const causeMsg =
+      // @ts-expect-error Error.cause
+      (error.cause !== undefined && [
+        // @ts-expect-error Error.cause
+        { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
+      ]) ||
+      [];
+
+    const errorMsgs = [
+      { msg: error.name + ": " + error.message, css: "px-2" },
+      ...causeMsg,
+    ].map((e) => ({ ...e, lvl: DebugLevel.ERROR }));
+
+    // state
+    return {
+      errorMsgs,
+    };
+  }
+
+  /**
+   * @param {Error} error
+   */
+  componentDidCatch(error) {
+    // @ts-expect-error Error.cause
+    const cause = error.cause;
+
+    switch (cause?.code) {
+      case "InvalidPronunciation":
+        if (
+          this.props.debugLevel !== DebugLevel.OFF &&
+          this.state.errorSkipIndex < this.state.filteredVocab.length - 1
+        ) {
+          this.props.logger("Error: " + error.message, DebugLevel.ERROR);
+          this.props.logger(
+            "[" + cause?.value.english + "] Skipped",
+            DebugLevel.ERROR
+          );
+          this.abortLoop();
+          this.gotoNext();
+        }
+
+        break;
+    }
+
+    let errorSkipIndex;
+    if (this.state.reinforcedUID) {
+      const orderIdx = this.state.filteredVocab.findIndex(
+        (v) => v.uid === this.state.reinforcedUID
+      );
+      errorSkipIndex = this.state.order?.indexOf(orderIdx);
+    } else {
+      errorSkipIndex = this.state.selectedIndex;
+    }
+
+    this.setState({ errorSkipIndex });
+  }
+
   abortLoop() {
     if (this.loopAbortControllers && this.loopAbortControllers.length > 0) {
       this.loopAbortControllers.forEach((ac) => {
@@ -471,15 +541,15 @@ class Vocabulary extends Component {
       this.props.filterType !== TermFilterBy.SPACE_REP
     ) {
       // randomized
-      this.props.logger("Randomized", 3);
+      this.props.logger("Randomized", DebugLevel.DEBUG);
       newOrder = randomOrder(filteredVocab);
     } else if (this.props.filterType === TermFilterBy.SPACE_REP) {
       // repetition order
-      this.props.logger("Space Rep", 3);
+      this.props.logger("Space Rep", DebugLevel.DEBUG);
       newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
     } else {
       // alphabetized
-      this.props.logger("Alphabetic", 3);
+      this.props.logger("Alphabetic", DebugLevel.DEBUG);
       ({
         order: newOrder,
         jOrder: jbare,
@@ -567,7 +637,11 @@ class Vocabulary extends Component {
 
   gotoNext() {
     const l = this.state.filteredVocab.length;
-    const newSel = (this.state.selectedIndex + 1) % l;
+    let newSel = (l + this.state.selectedIndex + 1) % l;
+
+    if (newSel === this.state.errorSkipIndex) {
+      newSel = (l + newSel + 1) % l;
+    }
 
     this.verbNonVerbTransition({ nextIndex: newSel }).then(() => {
       this.setState({
@@ -575,6 +649,7 @@ class Vocabulary extends Component {
         reinforcedUID: undefined,
         selectedIndex: newSel,
         showHint: false,
+        errorMsgs: [],
       });
     });
   }
@@ -621,7 +696,11 @@ class Vocabulary extends Component {
     if (this.state.reinforcedUID) {
       newSel = this.state.selectedIndex;
     } else {
-      newSel = i < 0 ? (l + i) % l : i % l;
+      newSel = (l + i) % l;
+    }
+
+    if (newSel === this.state.errorSkipIndex) {
+      newSel = (l + newSel - 1) % l;
     }
 
     this.verbNonVerbTransition({ nextIndex: newSel });
@@ -630,6 +709,7 @@ class Vocabulary extends Component {
       reinforcedUID: undefined,
       selectedIndex: newSel,
       showHint: false,
+      errorMsgs: [],
     });
   }
 
@@ -646,7 +726,10 @@ class Vocabulary extends Component {
 
     const vocabulary = getTerm(uid, this.props.vocab);
 
-    this.props.logger("reinforce (" + vocabulary.english + ")", 3);
+    this.props.logger(
+      "reinforce (" + vocabulary.english + ")",
+      DebugLevel.DEBUG
+    );
   }
 
   /**
@@ -805,7 +888,7 @@ class Vocabulary extends Component {
             japaneseAudio.play(),
           ]);
         } catch (e) {
-          this.props.logger("Swipe Play Error " + e, 1);
+          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
         }
 
         if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
@@ -851,7 +934,7 @@ class Vocabulary extends Component {
             englishAudio.play(),
           ]);
         } catch (e) {
-          this.props.logger("Swipe Play Error " + e, 1);
+          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
         }
 
         if (this.props.autoPlay !== AutoPlaySetting.EN_JP) {
@@ -863,6 +946,27 @@ class Vocabulary extends Component {
   }
 
   render() {
+    if (this.state.errorMsgs.length > 0) {
+      const minState = logify(this.state);
+      const minProps = logify(this.props);
+
+      const messages = [
+        ...this.state.errorMsgs,
+        { msg: "props:", lvl: DebugLevel.WARN, css: "px-2" },
+        { msg: minProps, lvl: DebugLevel.WARN, css: "px-4" },
+        { msg: "state:", lvl: DebugLevel.WARN, css: "px-2" },
+        { msg: minState, lvl: DebugLevel.WARN, css: "px-4" },
+      ];
+
+      return (
+        <MinimalUI next={this.gotoNext} prev={this.gotoPrev}>
+          <div className="d-flex flex-column justify-content-around">
+            <Console messages={messages} />
+          </div>
+        </MinimalUI>
+      );
+    }
+
     if (this.state.filteredVocab.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
@@ -1155,6 +1259,7 @@ const mapStateToProps = (state) => {
     repetition: state.settings.vocabulary.repetition,
     verbForm: state.vocabulary.verbForm,
     touchSwipe: state.settings.global.touchSwipe,
+    debugLevel: state.settings.global.debug,
   };
 };
 
@@ -1190,6 +1295,7 @@ Vocabulary.propTypes = {
   pushedPlay: PropTypes.func,
   touchSwipe: PropTypes.bool,
   toggleFurigana: PropTypes.func,
+  debugLevel: PropTypes.number,
 };
 
 export default connect(mapStateToProps, {
