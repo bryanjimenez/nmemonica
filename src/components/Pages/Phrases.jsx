@@ -62,6 +62,8 @@ import {
 } from "../Form/OptionsBar";
 import { MinimalUI } from "../Form/MinimalUI";
 import Console from "../Form/Console";
+import Sizable from "../Form/Sizable";
+import classNames from "classnames";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -859,7 +861,8 @@ class Phrases extends Component {
     const phrase = getTerm(uid, this.props.phrases);
     const phrase_reinforce = this.state.frequency.includes(phrase.uid);
 
-    const japanesePhrase = JapaneseText.parse(phrase).toHTML();
+    const jObj = JapaneseText.parse(phrase);
+    const japanesePhrase = jObj.toHTML();
 
     const englishPhrase = (
       <span
@@ -930,6 +933,9 @@ class Phrases extends Component {
       );
     }
 
+    const shortEN = (phrase.lit?.length || phrase.english.length) < 55;
+    const shortJP = jObj.getSpelling().length < 55;
+
     const progress =
       ((this.state.selectedIndex + 1) / this.state.filteredPhrases.length) *
       100;
@@ -950,7 +956,20 @@ class Phrases extends Component {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
-            <h1>{topValue}</h1>
+            <Sizable
+              breakPoint="md"
+              largeView={classNames({ "fs-display-5": true })}
+              smallView={classNames(
+                // {Japanese : English}
+                {
+                  ...(!this.props.practiceSide
+                    ? { [shortJP ? "h1" : "h3"]: true }
+                    : { [shortEN ? "h1" : "h3"]: true }),
+                }
+              )}
+            >
+              {topValue}
+            </Sizable>
             {this.props.romajiActive && romaji && (
               <h5>
                 <span
@@ -965,18 +984,27 @@ class Phrases extends Component {
                 </span>
               </h5>
             )}
-            <h2>
-              <span
-                onClick={() => {
-                  this.setState((/** @type {PhrasesState} */ state) => ({
-                    showMeaning: !state.showMeaning,
-                  }));
-                }}
-                className="clickable loop-no-interrupt"
-              >
-                {this.state.showMeaning ? bottomValue : bottomLabel}
-              </span>
-            </h2>
+
+            <Sizable
+              className="loop-no-interrupt"
+              breakPoint="md"
+              onClick={() => {
+                this.setState((/** @type {PhrasesState} */ state) => ({
+                  showMeaning: !state.showMeaning,
+                }));
+              }}
+              largeView={classNames({ "fs-display-5": true })}
+              smallView={classNames(
+                // {Japanese : English}
+                {
+                  ...(this.props.practiceSide
+                    ? { [shortJP ? "h1" : "h3"]: true }
+                    : { [shortEN ? "h1" : "h3"]: true }),
+                }
+              )}
+            >
+              {this.state.showMeaning ? bottomValue : bottomLabel}
+            </Sizable>
 
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>

@@ -20,6 +20,7 @@ import {
 } from "../../helper/gameHelper";
 import { furiganaHintBuilder } from "../../helper/kanjiHelper";
 import { kanaHintBuilder } from "../../helper/kanaHelper";
+import classNames from "classnames";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -183,18 +184,25 @@ class VocabularyMain extends Component {
       />
     );
 
+    const shortEN = inEnglish.length < 55;
+
     return (
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
         <Sizable
-          smallStyle={{
-            fontSize: !practiceSide ? "2.5rem" : "2rem",
-          }}
-          largeStyle={{ fontSize: "2.5rem" }}
-          onClick={() => {
-            if (this.props.autoPlay) {
-              this.props.flipVocabularyPracticeSide();
+          breakPoint="md"
+          largeView={classNames({ "fs-display-5": true })}
+          smallView={classNames(
+            // {Japanese : English}
+            {
+              ...(!practiceSide
+                ? { "fs-display-6": true }
+                : { [shortEN ? "fs-display-6" : "h3"]: true }),
             }
-          }}
+          )}
+          onClick={
+            (this.props.autoPlay && this.props.flipVocabularyPracticeSide) ||
+            undefined
+          }
         >
           {this.props.autoPlay && practiceSide ? topLabel : topValue}
         </Sizable>
@@ -212,25 +220,34 @@ class VocabularyMain extends Component {
             </span>
           </h5>
         )}
-        <h2>
-          <span
-            onClick={() => {
-              if (this.props.autoPlay) {
-                this.props.flipVocabularyPracticeSide();
-              } else {
-                this.setState((/** @type {VocabularyMainState} */ state) => ({
-                  showMeaning: !state.showMeaning,
-                }));
-              }
-            }}
-            className="clickable loop-no-interrupt"
-          >
-            {(this.props.autoPlay && !practiceSide) ||
-            (!this.props.autoPlay && this.state.showMeaning)
-              ? bottomValue
-              : bottomLabel}
-          </span>
-        </h2>
+        <Sizable
+          className="loop-no-interrupt"
+          breakPoint="md"
+          largeView={classNames({ "fs-display-5": true })}
+          smallView={classNames(
+            // {Japanese : English}
+            {
+              ...(practiceSide
+                ? { "fs-display-6": true }
+                : { [shortEN ? "fs-display-6" : "h3"]: true }),
+            }
+          )}
+          onClick={() => {
+            if (this.props.autoPlay) {
+              this.props.flipVocabularyPracticeSide();
+            } else {
+              this.setState((/** @type {VocabularyMainState} */ state) => ({
+                showMeaning: !state.showMeaning,
+              }));
+            }
+          }}
+        >
+          {(this.props.autoPlay && !practiceSide) ||
+          (!this.props.autoPlay && this.state.showMeaning)
+            ? bottomValue
+            : bottomLabel}
+        </Sizable>
+
         <div className="d-flex justify-content-center">{playButton}</div>
       </div>
     );

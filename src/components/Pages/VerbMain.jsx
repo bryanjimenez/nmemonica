@@ -288,7 +288,9 @@ class VerbMain extends Component {
 
     const practiceSide = this.props.practiceSide;
     let eLabel = <span>{"[English]"}</span>;
-    let jLabel = <Sizable largeValue="[Japanese]" smallValue="[J]" />;
+    let jLabel = (
+      <Sizable breakPoint="sm" smallValue="[J]" largeValue="[Japanese]" />
+    );
 
     const vObj = JapaneseVerb.parse(verb);
     const jValue = japaneseLabel(
@@ -322,9 +324,6 @@ class VerbMain extends Component {
 
     const { topValue, topLabel, bottomValue, bottomLabel } =
       labelPlacementHelper(practiceSide, eValue, jValue, eLabel, jLabel);
-
-    const topStyle = { fontSize: !practiceSide ? "2.5rem" : "1rem" };
-    const btmStyle = { fontSize: practiceSide ? "2.5rem" : "1rem" };
 
     const verbJapanese = {
       ...verb,
@@ -386,9 +385,12 @@ class VerbMain extends Component {
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
         <div>
-          <span
-            className="clickable"
-            style={topStyle}
+          <Sizable
+            breakPoint="md"
+            smallView={classNames({
+              ...(!practiceSide ? { "fs-display-6": true } : { h5: true }),
+            })}
+            largeView={classNames({ "fs-display-6": true })}
             onClick={
               this.props.autoPlay
                 ? () => this.props.flipVocabularyPracticeSide()
@@ -396,7 +398,7 @@ class VerbMain extends Component {
             }
           >
             {this.props.autoPlay && practiceSide ? topLabel : topValue}
-          </span>
+          </Sizable>
         </div>
 
         {this.props.romajiActive && romaji && (
@@ -415,9 +417,13 @@ class VerbMain extends Component {
         )}
 
         <div>
-          <span
-            className="clickable loop-no-interrupt"
-            style={btmStyle}
+          <Sizable
+            breakPoint="md"
+            className="loop-no-interrupt"
+            smallView={classNames({
+              ...(practiceSide ? { "fs-display-6": true } : { h5: true }),
+            })}
+            largeView={classNames({ "fs-display-6": true })}
             onClick={() => {
               if (this.props.autoPlay) {
                 this.props.flipVocabularyPracticeSide();
@@ -432,7 +438,7 @@ class VerbMain extends Component {
             (!this.props.autoPlay && this.state.showMeaning)
               ? bottomValue
               : bottomLabel}
-          </span>
+          </Sizable>
         </div>
         <div className="d-flex justify-content-center">{playButton}</div>
       </div>,
