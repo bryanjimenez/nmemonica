@@ -66,7 +66,8 @@ module.exports = function (webpackEnv, argv) {
           [path.join("index.html"), `${path.join(__dirname, "src")}/**/*`],
           { nodir: true }
         ),
-        whitelist: ["html", "body"],
+        safelist: {
+          standard: [/\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/]},
       }),
     ],
 
