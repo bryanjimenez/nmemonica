@@ -35,6 +35,8 @@ import SettingsVocab from "../Form/SettingsVocab";
 import SettingsPhrase from "../Form/SettingsPhrase";
 import { logger } from "../../actions/consoleAct";
 import { ErrorInfo } from "../../helper/ErrorInfo";
+import Console from "../Form/Console";
+import { logify } from "../../helper/consoleHelper";
 
 import "./Settings.css";
 import "./spin.css";
@@ -44,6 +46,7 @@ import "./spin.css";
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
  * @typedef {"sectionPhrase"|"sectionVocabulary"|"sectionKanji"} Sections
  * @typedef {{ quota: number, usage: number, persistent: boolean }} MemoryDataObject
+ * @typedef {import("../Form/Console").ConsoleMessage} ConsoleMessage
  */
 
 const SettingsMeta = {
@@ -53,6 +56,7 @@ const SettingsMeta = {
 
 /**
  * @typedef {{
+ * errorMsgs: ConsoleMessage[],
  * spin: boolean,
  * sectionKanji: boolean,
  * sectionVocabulary: boolean,
@@ -107,6 +111,7 @@ class Settings extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {SettingsState} */
     this.state = {
       spin: false,
       sectionKanji: false,
@@ -116,6 +121,7 @@ class Settings extends Component {
       jsVersion: "",
       bundleVersion: "",
       hardRefreshUnavailable: false,
+      errorMsgs: [],
     };
 
     /** @type {SettingsProps} */
@@ -156,6 +162,68 @@ class Settings extends Component {
       "message",
       this.swMessageEventListener
     );
+  }
+
+  /**
+   * @param {Error} error
+   */
+  static getDerivedStateFromError(error) {
+    const causeMsg =
+      // @ts-expect-error Error.cause
+      (error.cause !== undefined && [
+        // @ts-expect-error Error.cause
+        { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
+      ]) ||
+      [];
+
+    const errorMsgs = [
+      { msg: error.name + ": " + error.message, css: "px-2" },
+      ...causeMsg,
+    ].map((e) => ({ ...e, lvl: DebugLevel.ERROR }));
+
+    // state
+    return {
+      errorMsgs,
+    };
+  }
+
+  /**
+   * @param {Error} error
+   */
+  componentDidCatch(error) {
+    // @ts-expect-error Error.cause
+    const cause = error.cause;
+
+    this.props.toggleDebug(DebugLevel.DEBUG);
+
+    switch (cause?.code) {
+      case "StaleVocabActiveGrp":
+        {
+          const stale = cause.value;
+          this.props.logger("Error: " + error.message, DebugLevel.ERROR);
+          this.props.logger(
+            "Group " + JSON.stringify(stale) + " Removed",
+            DebugLevel.ERROR
+          );
+          this.props.toggleActiveGrp("vocabulary", stale);
+          this.setState({ errorMsgs: [] });
+        }
+
+        break;
+      case "StalePhraseActiveGrp":
+        {
+          const stale = cause.value;
+          this.props.logger("Error: " + error.message, DebugLevel.ERROR);
+          this.props.logger(
+            "Group " + JSON.stringify(stale) + " Removed",
+            DebugLevel.ERROR
+          );
+          this.props.toggleActiveGrp("phrases", stale);
+          this.setState({ errorMsgs: [] });
+        }
+
+        break;
+    }
   }
 
   /**
@@ -244,6 +312,27 @@ class Settings extends Component {
   }
 
   render() {
+    if (this.state.errorMsgs.length > 0) {
+      const minState = logify(this.state);
+      const minProps = logify(this.props);
+
+      const messages = [
+        ...this.state.errorMsgs,
+        { msg: "props:", lvl: DebugLevel.WARN, css: "px-2" },
+        { msg: minProps, lvl: DebugLevel.WARN, css: "px-4" },
+        { msg: "state:", lvl: DebugLevel.WARN, css: "px-2" },
+        { msg: minState, lvl: DebugLevel.WARN, css: "px-4" },
+      ];
+
+      return (
+        <div>
+          <div className="d-flex flex-column justify-content-around">
+            <Console messages={messages} />
+          </div>
+        </div>
+      );
+    }
+
     const pageClassName = classNames({ "mb-5": true });
 
     if (

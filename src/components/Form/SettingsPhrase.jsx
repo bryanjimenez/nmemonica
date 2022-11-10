@@ -16,7 +16,7 @@ import {
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";
-import { labelOptions } from "../../helper/gameHelper";
+import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
 
 /**
@@ -77,6 +77,15 @@ class SettingsPhrase extends Component {
 
     if (phrases.length < 1 || Object.keys(phraseGroups).length < 1)
       return <NotReady addlStyle="phrases-settings" />;
+
+    const stale = getStaleGroups(phraseGroups, phraseActive);
+    if (stale.length > 0) {
+      // @ts-expect-error Error.cause
+      const error = new Error("Stale phrases active group", {
+        cause: { code: "StalePhraseActiveGrp", value: stale },
+      });
+      throw error;
+    }
 
     let el;
     try {

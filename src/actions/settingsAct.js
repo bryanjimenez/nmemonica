@@ -483,7 +483,7 @@ export function toggleVocabularyFilter(override) {
 
 /**
  * @param {string} parent
- * @param {string} grpName
+ * @param {string|string[]} grpName
  * @returns {ActCreator}
  */
 export function toggleActiveGrp(parent, grpName) {
@@ -500,7 +500,8 @@ export function toggleActiveGrp(parent, grpName) {
       action = TOGGLE_PHRASES_ACTIVE_GROUP;
     }
 
-    const newValue = grpParse(grpName, activeGroup);
+    const groups = Array.isArray(grpName) ? grpName : [grpName];
+    const newValue = grpParse(groups, activeGroup);
 
     const path = "/" + parent + "/";
     const attr = "activeGroup";
@@ -950,31 +951,39 @@ export function togglePhrasesReinforcement() {
 }
 
 /**
- * Adds or removes grpName to the activeGroup list
- * @param {string} grpName a group name to be toggled
+ * Adds or removes grpNames to the activeGroup list.
+ * Returns an updated list of selected groups
+ * @param {string[]} grpNames a group name to be toggled
  * @param {string[]} activeGroup a list of groups that are selected
- * @returns {string[]} newValue an updated list of selected groups
  */
-export function grpParse(grpName, activeGroup) {
-  const isGrp = grpName.indexOf(".") === -1;
+export function grpParse(grpNames, activeGroup) {
+  /** @type {string[]} */
+  let newValue = [];
 
-  let newValue;
-  if (isGrp) {
-    if (activeGroup.some((e) => e.indexOf(grpName + ".") !== -1)) {
-      newValue = [
-        ...activeGroup.filter((v) => v.indexOf(grpName + ".") === -1),
-        grpName,
-      ];
-    } else if (activeGroup.includes(grpName)) {
-      newValue = [...activeGroup.filter((v) => v !== grpName)];
+  const grpNamesSet = [...new Set(grpNames)];
+  const activeGroupSet = [...new Set(activeGroup)];
+
+  grpNamesSet.forEach((grpEl) => {
+    const isGrp = grpEl.indexOf(".") === -1;
+
+    if (isGrp) {
+      if (activeGroupSet.some((e) => e.indexOf(grpEl + ".") !== -1)) {
+        newValue = [
+          ...activeGroupSet.filter((v) => v.indexOf(grpEl + ".") === -1),
+          grpEl,
+        ];
+      } else if (activeGroupSet.includes(grpEl)) {
+        newValue = [...activeGroupSet.filter((v) => v !== grpEl)];
+      } else {
+        newValue = [...activeGroupSet, grpEl];
+      }
     } else {
-      newValue = [...activeGroup, grpName];
+      newValue = activeGroupSet.includes(grpEl)
+        ? activeGroupSet.filter((v) => v !== grpEl)
+        : [...activeGroupSet, grpEl];
     }
-  } else {
-    newValue = activeGroup.includes(grpName)
-      ? activeGroup.filter((v) => v !== grpName)
-      : [...activeGroup, grpName];
-  }
+  });
+
   return newValue;
 }
 

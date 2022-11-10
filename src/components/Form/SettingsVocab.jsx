@@ -30,7 +30,7 @@ import { DEFAULT_SETTINGS } from "../../reducers/settingsRed";
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";
-import { labelOptions } from "../../helper/gameHelper";
+import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
 import VerbFormSlider from "./VerbFormSlider";
 
@@ -133,6 +133,15 @@ class SettingsVocab extends Component {
 
       return acc;
     }, []);
+
+    const stale = getStaleGroups(vocabGroups, vocabActive);
+    if (stale.length > 0) {
+      // @ts-expect-error Error.cause
+      const error = new Error("Stale vocabulary active group", {
+        cause: { code: "StaleVocabActiveGrp", value: stale },
+      });
+      throw error;
+    }
 
     let el;
     try {

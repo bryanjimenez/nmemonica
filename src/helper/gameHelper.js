@@ -13,6 +13,7 @@ import { JapaneseVerb } from "./JapaneseVerb";
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../typings/raw").VerbFormArray} VerbFormArray
  * @typedef {import("../typings/raw").FuriganaToggleMap} FuriganaToggleMap
+ * @typedef {import("../typings/raw").GroupListMap} GroupListMap
  */
 
 /**
@@ -176,6 +177,32 @@ export function activeGroupIncludes(activeGrpList, term) {
       (activeGrpList.includes("undefined") ||
         activeGrpList.includes("undefined" + "." + term.subGrp)))
   );
+}
+
+/**
+ * Returns a list of groups that no longer are available,
+ * but remain on the active groups list
+ * @param {import("../typings/raw").GroupListMap} termGroups
+ * @param {string[]} termActive
+ */
+export function getStaleGroups(termGroups, termActive) {
+  const allGroups = Object.keys(termGroups).reduce(
+    (/** @type {string[]} */ acc, g) => {
+      acc = [...acc, g, ...termGroups[g].map((sg) => g + "." + sg)];
+
+      return acc;
+    },
+    []
+  );
+
+  const stale = termActive.reduce((/** @type {string[]} */ acc, active) => {
+    if (!allGroups.includes(active)) {
+      acc = [...acc, active];
+    }
+    return acc;
+  }, []);
+
+  return stale;
 }
 
 /**
