@@ -20,7 +20,6 @@ import {
 } from "../../helper/gameHelper";
 import { furiganaHintBuilder } from "../../helper/kanjiHelper";
 import { kanaHintBuilder } from "../../helper/kanaHelper";
-import classNames from "classnames";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -190,15 +189,15 @@ class VocabularyMain extends Component {
       <div className="pt-3 d-flex flex-column justify-content-around text-center">
         <Sizable
           breakPoint="md"
-          largeView={classNames({ "fs-display-5": true })}
-          smallView={classNames(
+          largeClassName={{ "fs-display-5": true }}
+          smallClassName={
             // {Japanese : English}
             {
               ...(!practiceSide
                 ? { "fs-display-6": true }
                 : { [shortEN ? "fs-display-6" : "h3"]: true }),
             }
-          )}
+          }
           onClick={
             (this.props.autoPlay && this.props.flipVocabularyPracticeSide) ||
             undefined
@@ -221,17 +220,17 @@ class VocabularyMain extends Component {
           </h5>
         )}
         <Sizable
-          className="loop-no-interrupt"
+          className={{ "loop-no-interrupt": true }}
           breakPoint="md"
-          largeView={classNames({ "fs-display-5": true })}
-          smallView={classNames(
+          largeClassName={{ "fs-display-5": true }}
+          smallClassName={
             // {Japanese : English}
             {
               ...(practiceSide
                 ? { "fs-display-6": true }
                 : { [shortEN ? "fs-display-6" : "h3"]: true }),
             }
-          )}
+          }
           onClick={() => {
             if (this.props.autoPlay) {
               this.props.flipVocabularyPracticeSide();

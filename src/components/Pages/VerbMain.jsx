@@ -289,7 +289,12 @@ class VerbMain extends Component {
     const practiceSide = this.props.practiceSide;
     let eLabel = <span>{"[English]"}</span>;
     let jLabel = (
-      <Sizable breakPoint="sm" smallValue="[J]" largeValue="[Japanese]" />
+      <Sizable
+        fragment={true}
+        breakPoint="sm"
+        smallValue="[J]"
+        largeValue="[Japanese]"
+      />
     );
 
     const vObj = JapaneseVerb.parse(verb);
@@ -384,22 +389,20 @@ class VerbMain extends Component {
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
       >
-        <div>
-          <Sizable
-            breakPoint="md"
-            smallView={classNames({
-              ...(!practiceSide ? { "fs-display-6": true } : { h5: true }),
-            })}
-            largeView={classNames({ "fs-display-6": true })}
-            onClick={
-              this.props.autoPlay
-                ? () => this.props.flipVocabularyPracticeSide()
-                : undefined
-            }
-          >
-            {this.props.autoPlay && practiceSide ? topLabel : topValue}
-          </Sizable>
-        </div>
+        <Sizable
+          breakPoint="md"
+          smallClassName={{
+            ...(!practiceSide ? { "fs-display-6": true } : { h5: true }),
+          }}
+          largeClassName={{ "fs-display-6": true }}
+          onClick={
+            this.props.autoPlay
+              ? () => this.props.flipVocabularyPracticeSide()
+              : undefined
+          }
+        >
+          {this.props.autoPlay && practiceSide ? topLabel : topValue}
+        </Sizable>
 
         {this.props.romajiActive && romaji && (
           <div>
@@ -416,30 +419,28 @@ class VerbMain extends Component {
           </div>
         )}
 
-        <div>
-          <Sizable
-            breakPoint="md"
-            className="loop-no-interrupt"
-            smallView={classNames({
-              ...(practiceSide ? { "fs-display-6": true } : { h5: true }),
-            })}
-            largeView={classNames({ "fs-display-6": true })}
-            onClick={() => {
-              if (this.props.autoPlay) {
-                this.props.flipVocabularyPracticeSide();
-              } else {
-                this.setState((/** @type {VerbMainState} */ state) => ({
-                  showMeaning: !state.showMeaning,
-                }));
-              }
-            }}
-          >
-            {(this.props.autoPlay && !practiceSide) ||
-            (!this.props.autoPlay && this.state.showMeaning)
-              ? bottomValue
-              : bottomLabel}
-          </Sizable>
-        </div>
+        <Sizable
+          breakPoint="md"
+          className={{ "loop-no-interrupt": true }}
+          smallClassName={{
+            ...(practiceSide ? { "fs-display-6": true } : { h5: true }),
+          }}
+          largeClassName={{ "fs-display-6": true }}
+          onClick={() => {
+            if (this.props.autoPlay) {
+              this.props.flipVocabularyPracticeSide();
+            } else {
+              this.setState((/** @type {VerbMainState} */ state) => ({
+                showMeaning: !state.showMeaning,
+              }));
+            }
+          }}
+        >
+          {(this.props.autoPlay && !practiceSide) ||
+          (!this.props.autoPlay && this.state.showMeaning)
+            ? bottomValue
+            : bottomLabel}
+        </Sizable>
         <div className="d-flex justify-content-center">{playButton}</div>
       </div>,
 

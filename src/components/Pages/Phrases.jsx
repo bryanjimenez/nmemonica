@@ -63,7 +63,6 @@ import {
 import { MinimalUI } from "../Form/MinimalUI";
 import Console from "../Form/Console";
 import Sizable from "../Form/Sizable";
-import classNames from "classnames";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -958,15 +957,15 @@ class Phrases extends Component {
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
             <Sizable
               breakPoint="md"
-              largeView={classNames({ "fs-display-5": true })}
-              smallView={classNames(
+              largeClassName={{ "fs-display-5": true }}
+              smallClassName={
                 // {Japanese : English}
                 {
                   ...(!this.props.practiceSide
                     ? { [shortJP ? "h1" : "h3"]: true }
                     : { [shortEN ? "h1" : "h3"]: true }),
                 }
-              )}
+              }
             >
               {topValue}
             </Sizable>
@@ -984,28 +983,26 @@ class Phrases extends Component {
                 </span>
               </h5>
             )}
-
             <Sizable
-              className="loop-no-interrupt"
+              className={{ "loop-no-interrupt": true }}
               breakPoint="md"
               onClick={() => {
                 this.setState((/** @type {PhrasesState} */ state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }}
-              largeView={classNames({ "fs-display-5": true })}
-              smallView={classNames(
+              largeClassName={{ "fs-display-5": true }}
+              smallClassName={
                 // {Japanese : English}
                 {
                   ...(this.props.practiceSide
                     ? { [shortJP ? "h1" : "h3"]: true }
                     : { [shortEN ? "h1" : "h3"]: true }),
                 }
-              )}
+              }
             >
               {this.state.showMeaning ? bottomValue : bottomLabel}
             </Sizable>
-
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>
           <StackNavButton

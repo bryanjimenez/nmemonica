@@ -3,15 +3,26 @@ import PropTypes from "prop-types";
 import classNames from "classnames";
 
 /**
+ * Conditinal css mapping
+ * @typedef {{[key:string]: boolean}} CSSMap
+ */
+/**
+ * xs and xxl omitted
+ * @typedef {"sm"|"md"|"lg"|"xl"} BootStrapBreakPoints
+ */
+
+/**
  * @typedef {{
- * breakPoint: string,
- * className?: string,
+ * fragment?: boolean,
+ * breakPoint: BootStrapBreakPoints,
+ * rootClassName?: CSSMap,
+ * className?: CSSMap,
+ * largeClassName?: CSSMap,
+ * smallClassName?: CSSMap
  * onClick?: function,
  * children?: string|JSX.Element,
  * largeValue?: string|JSX.Element,
- * smallValue?: string|JSX.Element,
- * largeView?: string,
- * smallView?: string}} SizableProps
+ * smallValue?: string|JSX.Element}} SizableProps
  */
 
 /**
@@ -32,53 +43,81 @@ export default function Sizable(props) {
     smallValue = props.smallValue;
   }
 
-  const parentConstClass =
-    (props.className && { [props.className]: true }) || {};
+  const rootClass =
+    (props.rootClassName !== undefined && classNames(props.rootClassName)) ||
+    undefined;
+  const unconditionalClass =
+    (props.className !== undefined && props.className) || {};
 
-  let largeViewClass = "d-none d-" + props.breakPoint + "-inline";
-  // let largeViewClass = "d-none d-md-inline"
-  if (props.largeView) {
-    largeViewClass += " " + props.largeView;
-  }
+  const largeViewClass =
+    "d-none d-" +
+    props.breakPoint +
+    "-inline" +
+    (props.largeClassName !== undefined
+      ? " " + classNames(props.largeClassName)
+      : "");
+  const smallViewClass =
+    "d-inline d-" +
+    props.breakPoint +
+    "-none" +
+    (props.smallClassName !== undefined
+      ? " " + classNames(props.smallClassName)
+      : "");
 
-  let smallViewClass = "d-inline d-" + props.breakPoint + "-none";
-  // let smallViewClass = "d-inline d-md-none";
-  if (props.smallView) {
-    smallViewClass += " " + props.smallView;
-  }
+  const onClickHandler = () => {
+    if (typeof props.onClick === "function") {
+      props.onClick();
+    }
+  };
 
-  return (
+  const content = [
     <span
+      key={0}
+      data-name="large"
       className={
         classNames({
-          ...parentConstClass,
+          [largeViewClass]: true,
+          ...unconditionalClass,
           clickable: typeof props.onClick === "function",
         }) || undefined
       }
-      onClick={() => {
-        if (typeof props.onClick === "function") {
-          props.onClick();
-        }
-      }}
+      onClick={onClickHandler}
     >
-      <span data-name="large" className={largeViewClass}>
-        {largeValue}
-      </span>
-      <span data-name="small" className={smallViewClass}>
-        {smallValue}
-      </span>
-    </span>
+      {largeValue}
+    </span>,
+    <span
+      key={1}
+      data-name="small"
+      className={
+        classNames({
+          [smallViewClass]: true,
+          ...unconditionalClass,
+          clickable: typeof props.onClick === "function",
+        }) || undefined
+      }
+      onClick={onClickHandler}
+    >
+      {smallValue}
+    </span>,
+  ];
+
+  return props.fragment === true ? (
+    <React.Fragment>{content}</React.Fragment>
+  ) : (
+    <div className={rootClass}>{content}</div>
   );
 }
 
 Sizable.propTypes = {
+  fragment: PropTypes.bool,
   breakPoint: PropTypes.string,
-  className: PropTypes.string,
+  rootClassName: PropTypes.object,
+  className: PropTypes.object,
+  largeClassName: PropTypes.object,
+  smallClassName: PropTypes.object,
+
   onClick: PropTypes.func,
   children: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   largeValue: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   smallValue: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-
-  largeView: PropTypes.string,
-  smallView: PropTypes.string,
 };
