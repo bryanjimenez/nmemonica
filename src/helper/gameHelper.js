@@ -741,17 +741,23 @@ export function toggleFuriganaSettingHelper(
  * A thenable pause
  * @param {number} ms to pause
  * @param {{signal: AbortSignal}} AbortController signal
+ * @param {function} [countDownFn]
  * @returns {Promise<void>} empty promise
  */
-export function pause(ms, { signal }) {
+export function pause(ms, { signal }, countDownFn) {
   return new Promise((resolve, reject) => {
     const listener = () => {
       clearTimeout(timer);
+      clearInterval(animation);
       reject(new Error("Aborted"));
     };
 
+    const animation =
+      typeof countDownFn === "function" ? setInterval(countDownFn, 200, 200, ms) : -1;
+
     const timer = setTimeout(() => {
       signal?.removeEventListener("abort", listener);
+      clearInterval(animation);
       resolve();
     }, ms);
 

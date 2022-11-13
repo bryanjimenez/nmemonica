@@ -104,6 +104,7 @@ import {
  * ebare: BareIdx[],
  * jbare: BareIdx[],
  * loop: 0|1|2|3,
+ * timer?: number,
  * }} VocabularyState
  */
 
@@ -333,6 +334,7 @@ class Vocabulary extends Component {
       });
       this.loopAbortControllers = undefined;
 
+      this.setState({ timer: undefined });
       setMediaSessionPlaybackState("paused");
     }
   }
@@ -355,6 +357,25 @@ class Vocabulary extends Component {
     const english = (/** @type {AbortController} */ ac) =>
       this.looperSwipe("down", ac);
 
+    /**
+     * @param {number} p Part
+     * @param {number} w Whole
+     */
+    const countDown = (p, w) => {
+      this.setState((/** @type {VocabularyState} */ state) => {
+        // console.log('progess '+(state.timer>0?(state.timer+p)/w*100:0))
+
+        let step;
+        if (!state.timer || 100 - state.timer < 1) {
+          step = (p / w) * 100;
+        } else {
+          step = state.timer + (p / w) * 100;
+        }
+
+        return { timer: step };
+      });
+    };
+
     pause(700, ac1)
       .then(() => {
         return english(ac2).catch(() => {
@@ -362,7 +383,7 @@ class Vocabulary extends Component {
           // continue
         });
       })
-      .then(() => pause(3000, ac3))
+      .then(() => pause(3000, ac3, countDown))
       .then(() => {
         return japanese(ac4)
           .then(() => {
@@ -1095,8 +1116,11 @@ class Vocabulary extends Component {
           }}
         >
           <LinearProgress
-            variant="determinate"
+            variant={!this.loopAbortControllers ? "determinate" : "buffer"}
             value={progress}
+            valueBuffer={
+              this.loopAbortControllers ? this.state.timer || 0 : undefined
+            }
             color={vocabulary_reinforce ? "secondary" : "primary"}
           />
         </div>,
