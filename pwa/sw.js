@@ -6,6 +6,7 @@ const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
 const ghURL = ghURLConst; // eslint-disable-line no-undef
 const fbURL = fbURLConst; // eslint-disable-line no-undef
 const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-undef
+const DEV_SA_TOKEN = swDevSATokenConst; // eslint-disable-line no-undef
 
 const SW_MSG_TYPE_LOGGER = swMsgTypeLoggerConst; // eslint-disable-line no-undef
 const SW_MSG_TYPE_NEW_TERMS_ADDED = swMsgTypeNewTermsAddedConst; // eslint-disable-line no-undef
@@ -140,17 +141,18 @@ self.addEventListener("fetch", (e) => {
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const uid = getParam(url, "uid");
     const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
+    const myRequest = toRequest(cleanUrl);
 
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-      e.respondWith(recache(appMediaCache, cleanUrl));
+      e.respondWith(recache(appMediaCache, myRequest));
     } else {
       // use indexedDB
       clientLogger("IDB.override", WARN);
 
-      const fetchP = fetch(cleanUrl);
+      const fetchP = fetch(myRequest);
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
@@ -176,12 +178,13 @@ self.addEventListener("fetch", (e) => {
     const word = decodeURI(getParam(url, "q"));
 
     const cleanUrl = removeParam(url, "uid");
+    const myRequest = toRequest(cleanUrl);
 
     if (!self.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-      e.respondWith(appMediaReq(cleanUrl));
+      e.respondWith(appMediaReq(myRequest));
     } else {
       // use indexedDB
       const dbOpenPromise = openIDB();
@@ -198,7 +201,7 @@ self.addEventListener("fetch", (e) => {
             //not found
             clientLogger("IDB.get [] " + word, WARN);
 
-            return fetch(cleanUrl)
+            return fetch(myRequest)
               .then((res) => res.blob())
               .then((blob) =>
                 addIDBItem({ db }, { uid, blob }).then((dataO) =>
@@ -214,6 +217,24 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(fetch(e.request));
   }
 });
+
+/**
+ * Creates a request from url
+ * Adds bearer token in development env
+ * @param {string} url
+ */
+function toRequest(url){
+  const myHeaders = new Headers();
+  if(DEV_SA_TOKEN){
+    myHeaders.append('Authorization', 'Bearer '+DEV_SA_TOKEN);
+  }
+  const myInit = {
+    method: 'GET',
+    headers: myHeaders,
+  };
+
+  return new Request(url, myInit);
+}
 
 function toResponse(obj) {
   const status = 200,

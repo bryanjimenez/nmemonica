@@ -5,7 +5,8 @@ import {
   pronounceEndoint,
   appUIEndpoint,
   firebaseConfig,
-} from "../../environment.development";
+  DEV_SA_TOKEN,
+} from "../../environment.production";  // typesscript does not do module replace
 import {
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
@@ -74,7 +75,13 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     );
 
     stream.write(
-      "const swMsgTypeLoggerConst = '" + SERVICE_WORKER_LOGGER_MSG + "';\n\n"
+      "const swDevSATokenConst = " +
+        (DEV_SA_TOKEN !== undefined ? "'" + DEV_SA_TOKEN + "'" : "undefined") +
+        ";\n\n"
+    );
+
+    stream.write(
+      "const swMsgTypeLoggerConst = '" + SERVICE_WORKER_LOGGER_MSG + "';\n"
     );
     stream.write(
       "const swMsgTypeNewTermsAddedConst = '" +
