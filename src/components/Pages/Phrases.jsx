@@ -110,7 +110,7 @@ import Sizable from "../Form/Sizable";
  * activeGroup: string[],
  * repetition: SpaceRepetitionMap,
  * lastNext: number,
- * updateSpaceRepPhrase: typeof updateSpaceRepPhrase,
+ * updateSpaceRepPhrase: import("../../actions/settingsAct").updateSpaceRepPhraseYield,
  * logger: typeof logger,
  * prevTerm: RawPhrase,
  * prevPushPlay: boolean,
@@ -563,8 +563,11 @@ class Phrases extends Component {
     // prevent updates when quick scrolling
     if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
       const shouldIncrement = !this.state.frequency.includes(phrase.uid);
-      const repO = this.props.updateSpaceRepPhrase(phrase.uid, shouldIncrement);
-      spaceRepLog(this.props.logger, phrase, { [phrase.uid]: repO });
+      const { prevMap } = this.props.updateSpaceRepPhrase(
+        phrase.uid,
+        shouldIncrement
+      );
+      spaceRepLog(this.props.logger, phrase, prevMap);
     }
 
     play(

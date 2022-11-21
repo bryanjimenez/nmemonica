@@ -67,7 +67,6 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * verbFormsOrder: string[],
  * hintEnabled: boolean,
  * showHint: boolean,
- * loopPlayBtn?: JSX.Element,
  * }} VerbMainProps
  */
 
@@ -344,7 +343,7 @@ class VerbMain extends Component {
       this.state.prevVocab
     );
 
-    const playButton = this.props.loopPlayBtn || (
+    const playButton = (
       <AudioItem
         visible={!this.props.touchSwipe}
         word={audioWords}
@@ -493,7 +492,6 @@ VerbMain.propTypes = {
   verbFormsOrder: PropTypes.array,
   hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
-  loopPlayBtn: PropTypes.object,
 };
 
 export default connect(mapStateToProps, {

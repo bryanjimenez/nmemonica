@@ -40,6 +40,7 @@ export const SET_VERB_FORM_ORDER = "set_verb_form_order";
 /**
  * @typedef {import("../typings/act").ActCreator} ActCreator
  * @typedef {import("../typings/act").ThenableActCreator} ThenableActCreator
+ * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  */
 
 // enum
@@ -775,6 +776,7 @@ export function addFrequencyTerm(aType, uidArr) {
 }
 
 /**
+ * @typedef {(uid:string, shouldIncrement?: boolean | undefined) => updateSpaceRepTermYield} updateSpaceRepWordYield
  * @param {string} uid
  * @param {boolean} [shouldIncrement]
  */
@@ -783,6 +785,7 @@ export function updateSpaceRepWord(uid, shouldIncrement = true) {
 }
 
 /**
+ * @typedef {(uid:string, shouldIncrement?: boolean | undefined) => updateSpaceRepTermYield} updateSpaceRepPhraseYield
  * @param {string} uid
  * @param {boolean} [shouldIncrement]
  */
@@ -791,6 +794,7 @@ export function updateSpaceRepPhrase(uid, shouldIncrement = true) {
 }
 
 /**
+ * @typedef {(uid:string) => updateSpaceRepTermYield} toggleFuriganaYield
  * @param {string} uid
  */
 export function toggleFurigana(uid) {
@@ -798,11 +802,35 @@ export function toggleFurigana(uid) {
 }
 
 /**
+ * Sets term time-elapsed to answer
+ * @typedef {(uid:string, time: number) => updateSpaceRepTermYield} setWordTimeToAnswerYield
+ * @param {string} uid
+ * @param {number} time
+ */
+export function setWordTimeToAnswer(uid, time) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+    set: { tpMs: time },
+  });
+}
+
+/**
+ * Sets term incorrect answer count
+ * @typedef {(uid:string, count: number) => updateSpaceRepTermYield} setWordTPWrongCountYield
+ * @param {string} uid
+ * @param {number | null} count
+ */
+export function setWordTPWrongCount(uid, count) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+    set: { tpWc: count },
+  });
+}
+/**
+ * @typedef {{map: SpaceRepetitionMap, prevMap: SpaceRepetitionMap}} updateSpaceRepTermYield
  * @param {ADD_SPACE_REP_WORD | ADD_SPACE_REP_PHRASE} aType
  * @param {string} uid
  * @param {boolean} shouldIncrement should view count increment
- * @param {{toggle: string[]}} [options] additional optional settable attributes ({@link toggleFurigana })
- * @returns {ActCreator}
+ * @param {{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: {[k in keyof SpaceRepetitionMap["uid"]]+?: SpaceRepetitionMap["uid"][k]|null}}} [options] additional optional settable attributes ({@link toggleFurigana })
+ * @returns {(dispatch: function, getState: function) => updateSpaceRepTermYield}
  */
 export function updateSpaceRepTerm(
   aType,
@@ -824,29 +852,61 @@ export function updateSpaceRepTerm(
     const attr = "repetition";
     const time = new Date();
 
+    /** @type {SpaceRepetitionMap} */
     const spaceRep = getLastStateValue(getState, path, attr);
+    const prevMap = { [uid]: spaceRep[uid] };
 
     let count;
-    if (spaceRep[uid] && spaceRep[uid].c > 0 && shouldIncrement) {
-      count = spaceRep[uid].c + 1;
-    } else if (spaceRep[uid] && spaceRep[uid].c > 0 && !shouldIncrement) {
-      count = spaceRep[uid].c;
+    if (spaceRep[uid] && spaceRep[uid].vC > 0 && shouldIncrement) {
+      count = spaceRep[uid].vC + 1;
+    } else if (spaceRep[uid] && spaceRep[uid].vC > 0 && !shouldIncrement) {
+      count = spaceRep[uid].vC;
     } else {
       count = 1;
     }
 
-    let toggled = {};
-    if (options && options.toggle) {
-      toggled = options.toggle.reduce((acc, attr) => {
-        // this default is only for furigana so far
-        const val = !(spaceRep[uid] && spaceRep[uid][attr] === false) || false;
-        return { ...acc, [attr]: !val };
-      }, {});
+    let uidChangedAttr = {};
+    if (options !== undefined) {
+      if (options.toggle) {
+        uidChangedAttr = options.toggle.reduce((acc, attr) => {
+          let val;
+          if (["f"].includes(attr)) {
+            // this default is only for furigana so far
+            val = !(spaceRep[uid] && spaceRep[uid][attr] === false) || false;
+          } else {
+            val = spaceRep[uid] && spaceRep[uid][attr];
+          }
+
+          return { ...acc, [attr]: !val };
+        }, {});
+      }
+
+      if (options.set !== undefined) {
+        const toggledSet = Object.keys(options.set).reduce((acc, k) => {
+          if (options.set !== undefined && options.set[k] !== undefined) {
+            if (options.set[k] === null) {
+              spaceRep[uid][k] = undefined;
+            } else {
+              acc = { ...acc, [k]: options.set[k] };
+            }
+          }
+          return acc;
+        }, {});
+
+        uidChangedAttr = { ...uidChangedAttr, ...toggledSet };
+      }
     }
 
     const now = new Date().toJSON();
-    const o = { ...(spaceRep[uid] || {}), c: count, d: now, ...toggled };
+    /** @type {SpaceRepetitionMap["uid"]} */
+    const o = {
+      ...(spaceRep[uid] || {}),
+      vC: count,
+      d: now,
+      ...uidChangedAttr,
+    };
 
+    /** @type {SpaceRepetitionMap} */
     const newValue = { ...spaceRep, [uid]: o };
     localStoreAttrUpdate(time, getState, path, attr, newValue);
 
@@ -868,7 +928,7 @@ export function updateSpaceRepTerm(
       });
     }
 
-    return o;
+    return { map: { [uid]: o }, prevMap };
   };
 }
 

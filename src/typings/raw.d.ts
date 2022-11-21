@@ -50,32 +50,42 @@ export interface RawKanji {
 }
 
 export interface GroupListMap {
-  [mainGrp:string]: string[]
+  [mainGrp: string]: string[];
 }
 
 export interface SpaceRepetitionMap {
   [uid: string]: {
-    d: Date;
-    c: number;
-    f?: boolean;
+    /**
+     * Last view
+     * (Date.toJSON '2020-01-01T01:01:01.001Z')
+     **/
+    d: string;
+    /** View count */ vC: number;
+    /** Furigana shown (yes:undefined|true) */ f?: boolean;
+    /**
+     * Timed play last correct ms
+     * (Date.now 1668827681134)
+     **/
+     tpMs?: number;
+     /** Timed play wrong count */ tpWc?: number;
   };
 }
 
 export interface FuriganaToggleMap {
   [uid: string]: {
-    f?: boolean;
+    /** Furigana shown (yes:undefined|true) */ f?: boolean;
   };
 }
 
 export interface AudioQueryParams {
-  tl: string;
-  q: string;
-  uid: string;
+  /** Target language */ tl: string;
+  /** Query */ q: string;
+  /** Caching/indexedDB key */ uid: string;
 }
 
 export type VerbFormArray = {
-  name: string;
-  value: JapaneseText;
+  /** Verb form (tense label) */ name: string;
+  /** inflected/conjugated verb */ value: JapaneseText;
 }[];
 
 /**
@@ -101,3 +111,21 @@ export type ActionHandlerTuple = [
   MediaSessionAction,
   MediaSessionActionHandler
 ];
+
+/**
+ * Removes optional (?) from all of O's properties
+ * @param O Object to remove optional attribute from properties
+ */
+export type WithoutOpt<O> = {
+  [k in keyof O]-?: O[k];
+}
+
+/**
+ * @param O Object
+ * @param type type to filter
+ */
+export type FilterKeysOfType<O,type> = {
+  [k in keyof WithoutOpt<O>]: WithoutOpt<O>[k] extends type? k: never
+}[keyof O]
+
+

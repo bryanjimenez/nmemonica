@@ -325,3 +325,47 @@ export function FrequencyTermIcon(props) {
 FrequencyTermIcon.propTypes = {
   visible: PropTypes.bool,
 };
+
+/**
+ * @typedef {{
+ * visible: boolean,
+ * minus: number,
+ * onClick: function,
+ * }} TimePlayVerifyBtnsProps
+ * @param {TimePlayVerifyBtnsProps} props
+ */
+export function TimePlayVerifyBtns(props) {
+  return !props.visible ? null : (
+    <React.Fragment>
+      <div
+        key={0}
+        className="sm-icon-grp"
+        onClick={() => {
+          if (typeof props.onClick === "function") {
+            const minus = props.minus || 0;
+            props.onClick(minus - 1);
+          }
+        }}
+      >
+        <span>{props.minus - 1}</span>
+      </div>
+      <div
+        key={1}
+        className="sm-icon-grp"
+        onClick={() => {
+          if (typeof props.onClick === "function") {
+            props.onClick(0);
+          }
+        }}
+      >
+        <span>0</span>
+      </div>
+    </React.Fragment>
+  );
+}
+
+TimePlayVerifyBtns.propTypes = {
+  visible: PropTypes.bool,
+  minus: PropTypes.number,
+  onClick: PropTypes.func,
+};

@@ -51,13 +51,12 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * pushedPlay: typeof pushedPlay,
  * touchSwipe: boolean,
  * furigana: any,
- * toggleFurigana: typeof toggleFurigana,
+ * toggleFurigana: import("../../actions/settingsAct").toggleFuriganaYield,
  * toggleFuriganaSettingHelper: typeof toggleFuriganaSettingHelper,
  * reCache: boolean,
  * prevTerm: RawVocabulary,
  * played: boolean,
  * prevPushPlay: boolean,
- * loopPlayBtn?: JSX.Element,
  * }} VocabularyMainProps
  */
 
@@ -162,7 +161,7 @@ class VocabularyMain extends Component {
       this.state.prevVocab
     );
 
-    const playButton = this.props.loopPlayBtn || (
+    const playButton = (
       <AudioItem
         visible={!this.props.touchSwipe}
         word={audioWords}
@@ -289,7 +288,6 @@ VocabularyMain.propTypes = {
   toggleFuriganaSettingHelper: PropTypes.func,
   hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
-  loopPlayBtn: PropTypes.object,
 };
 
 export default connect(mapStateToProps, {

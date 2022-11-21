@@ -60,7 +60,7 @@ export function LoopStartBtn(props) {
       aria-label="Loop start button"
     >
       <FontAwesomeIcon
-        size="2x"
+        size="sm"
         onClick={() => {
           if (props.onClick && typeof props.onClick === "function")
             props.onClick();
@@ -90,7 +90,7 @@ export function LoopStopBtn(props) {
       aria-label="Loop stop button"
     >
       <FontAwesomeIcon
-        size="2x"
+        size="sm"
         onClick={() => {
           if (props.onClick && typeof props.onClick === "function")
             props.onClick();

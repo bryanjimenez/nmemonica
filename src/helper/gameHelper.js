@@ -226,7 +226,7 @@ export function minimumTimeForSpaceRepUpdate(prevTime) {
 export function spaceRepOrder(terms, spaceRepObj) {
   /**
    * @type {{
-   * date: Date,
+   * date: string,
    * count: number,
    * uid: string,
    * index: number
@@ -234,24 +234,60 @@ export function spaceRepOrder(terms, spaceRepObj) {
    */
   let playedTemp = [];
   /**
+   * @type {{
+   * time: number,
+   * uid: string,
+   * index: number
+   * }[]}
+   */
+  let timedTemp = [];
+  /**
+   * @type {{
+   * wrong: number,
+   * uid: string,
+   * index: number
+   * }[]}
+   */
+  let failedTemp = [];
+
+  /**
    * @type {number[]}
    */
   let unPlayed = [];
   for (const tIdx in terms) {
     const tUid = terms[tIdx].uid;
+    const termRep = spaceRepObj[tUid];
 
-    if (spaceRepObj[tUid]) {
-      const date = spaceRepObj[terms[tIdx].uid].d;
-      const count = spaceRepObj[terms[tIdx].uid].c;
-      playedTemp = [
-        ...playedTemp,
-        {
-          date,
-          count,
-          uid: tUid,
-          index: Number(tIdx),
-        },
-      ];
+    if (termRep !== undefined) {
+      if (termRep.tpMs === undefined) {
+        playedTemp = [
+          ...playedTemp,
+          {
+            date: termRep.d,
+            count: termRep.vC,
+            uid: tUid,
+            index: Number(tIdx),
+          },
+        ];
+      } else if (termRep.tpMs >= 0) {
+        timedTemp = [
+          ...timedTemp,
+          {
+            time: termRep.tpMs,
+            uid: tUid,
+            index: Number(tIdx),
+          },
+        ];
+      } else if (termRep.tpMs < 0) {
+        failedTemp = [
+          ...failedTemp,
+          {
+            wrong: termRep.tpMs,
+            uid: tUid,
+            index: Number(tIdx),
+          },
+        ];
+      }
     } else {
       unPlayed = [...unPlayed, Number(tIdx)];
     }
@@ -263,14 +299,24 @@ export function spaceRepOrder(terms, spaceRepObj) {
     ["asc", "asc", "asc"]
   );
 
+  const timedOrdered = orderBy(timedTemp, ["time", "uid"], ["desc", "asc"]);
+
+  const failedOrdered = orderBy(failedTemp, ["wrong", "uid"], ["asc", "asc"]);
+
+  // console.log("failed");
+  // console.log(JSON.stringify(failedOrdered.map((p) => ({[terms[p.index].english]:p.wrong}))));
   // console.log("played");
   // console.log(JSON.stringify(playedOrdered.map((p) => ({[terms[p.index].english]:p.date,c:p.count}))));
   // console.log('unPlayed');
   // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
+  // console.log("timed");
+  // console.log(JSON.stringify(timedOrdered.map((p) => ({[terms[p.index].english]:p.time}))));
 
   const played = playedOrdered.map((el) => el.index);
+  const timed = timedOrdered.map((el) => el.index);
+  const failed = failedOrdered.map((el) => el.index);
 
-  return [...unPlayed, ...played];
+  return [...failed, ...unPlayed, ...played, ...timed];
 }
 
 /**
@@ -787,7 +833,9 @@ export function pause(ms, { signal }, countDownFn) {
     };
 
     const animation =
-      typeof countDownFn === "function" ? setInterval(countDownFn, 200, 200, ms) : -1;
+      typeof countDownFn === "function"
+        ? setInterval(countDownFn, 200, 200, ms)
+        : -1;
 
     const timer = setTimeout(() => {
       signal?.removeEventListener("abort", listener);
