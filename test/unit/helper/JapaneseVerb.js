@@ -24,7 +24,7 @@ const verbs = {
   ],
 
   u: [
-    { dic: { japanese: 'いく\n行く' }, class: 1, masu: 'いきます\n行きます', mashou: 'いきましょう\n行きましょう', te: 'いって\n行って', ta: 'いった\n行った', saseru: 'いかせる\n行かせる' },
+    { dic: { japanese: 'いく\n行く', exv: 1 }, class: 1, masu: 'いきます\n行きます', mashou: 'いきましょう\n行きましょう', te: 'いって\n行って', ta: 'いった\n行った', saseru: 'いかせる\n行かせる' },
     { dic: { japanese: 'つくる\n作る' }, class: 1, masu: 'つくります\n作ります', mashou: 'つくりましょう\n作りましょう', te: 'つくって\n作って', ta: 'つくった\n作った', saseru: 'つくらせる\n作らせる' },
     { dic: { japanese: '読む' }, class: 1, masu: '読みます', mashou: '読みましょう', te: '読んで', ta: '読んだ' },
     { dic: { japanese: 'きく\n聞く' }, class: 1, masu: 'ききます\n聞きます', mashou: 'ききましょう\n聞きましょう', te: 'きいて\n聞いて', ta: 'きいた\n聞いた' },
@@ -39,8 +39,8 @@ const verbs = {
     { dic: { japanese: 'はいる\n入る', exv: 1 }, class: 1, masu: 'はいります\n入ります', mashou: 'はいりましょう\n入りましょう', te: 'はいって\n入って', ta: 'はいった\n入った' },
     { dic: { japanese: 'かえる\n帰る', exv: 1 }, class: 1, masu: 'かえります\n帰ります', mashou: 'かえりましょう\n帰りましょう', te: 'かえって\n帰って', ta: 'かえった\n帰った' },
     { dic: { japanese: 'へる\n減る', exv: 1 }, class: 1, masu: 'へります\n減ります', mashou: 'へりましょう\n減りましょう', te: 'へって\n減って', ta: 'へった\n減った' },
-    { dic: { japanese: 'すべる\n滑る', exv: 1 }, class: 1, masu: 'すべります\n滑ります', mashou: 'すべりましょう\n滑りましょう', te: 'すべって\n滑って', ta: 'すべった\n滑った'
-    }
+    { dic: { japanese: 'すべる\n滑る', exv: 1 }, class: 1, masu: 'すべります\n滑ります', mashou: 'すべりましょう\n滑りましょう', te: 'すべって\n滑って', ta: 'すべった\n滑った'},
+    { dic: { japanese: 'いじる\n弄る', exv: 1 }, class: 1, masu: 'いじります\n弄ります', mashou: 'いじりましょう\n弄りましょう', te: 'いじって\n弄って', ta: 'いじった\n弄った'},
   ]
 };
 
