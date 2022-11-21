@@ -98,72 +98,70 @@ import { MinimalUI } from "../Form/MinimalUI";
  */
 
 /**
- * @typedef {{
- * errorMsgs: import("../Form/Console").ConsoleMessage[],
- * errorSkipIndex: number,
- * lastNext: number,
- * selectedIndex: number,
- * showHint: boolean,
- * filteredVocab: RawVocabulary[],
- * frequency: string[],
- * order?: number[],
- * reinforcedUID?: string,
- * naFlip?: string,
- * swiping?: any,
- * showPageBar?: boolean,
- * recacheAudio: boolean,
- * scrollJOrder?: boolean,
- * ebare: BareIdx[],
- * jbare: BareIdx[],
- * loop: 0|1|2|3, //loop loop response repetition setting value
- * loopQuitCount: number,   // countdown for auto disable loop
- * tpAnswered?: boolean,    // timed play answered
- * tpBtn?: "incorrect"|"pronunciation"|"reset", // answer verify options
- * tpAnimation?: number,    // progress/time bar value
- * tpTimeStamp?: number,    // timed play answer timestamp
- * tpElapsed?: number,      // time elapsed from prompt to answer (ms)
- * }} VocabularyState
+ * @typedef {Object} VocabularyState
+ * @property {import("../Form/Console").ConsoleMessage[]} errorMsgs,
+ * @property {number} errorSkipIndex
+ * @property {number} lastNext
+ * @property {number} selectedIndex
+ * @property {string} [reinforcedUID]
+ * @property {boolean} showHint
+ * @property {RawVocabulary[]} filteredVocab
+ * @property {string[]} frequency subset of frequency words within current active group
+ * @property {number[]} [order]
+ * @property {string} [naFlip]
+ * @property {any} [swiping]
+ * @property {boolean} [showPageBar]
+ * @property {boolean} recacheAudio
+ * @property {boolean} [scrollJOrder]
+ * @property {BareIdx[]} ebare
+ * @property {BareIdx[]} jbare
+ * @property {0|1|2|3} loop           // loop response repetition setting value
+ * @property {number} loopQuitCount   // countdown for auto disable loop
+ * @property {boolean} [tpAnswered]   // timed play answered
+ * @property {"incorrect"|"pronunciation"|"reset"} [tpBtn]  // answer verify options
+ * @property {number} [tpAnimation]   // progress/time bar value
+ * @property {number} [tpTimeStamp]   // timed play answer timestamp
+ * @property {number} [tpElapsed]     // time elapsed from prompt to answer (ms)
  */
 
 /**
- * @typedef {{
- * activeGroup: string[],
- * addFrequencyWord: typeof addFrequencyWord,
- * removeFrequencyWord: typeof removeFrequencyWord,
- * frequency: string[],
- * getVocabulary: typeof getVocabulary,
- * vocab: RawVocabulary[],
- * hintEnabled: boolean,
- * romajiActive: boolean,
- * flipVocabularyPracticeSide: typeof flipVocabularyPracticeSide,
- * practiceSide: boolean,
- * isOrdered: boolean,
- * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
- * scrollingDone: boolean,
- * scrollingState: function,
- * autoVerbView: boolean,
- * toggleAutoVerbView: typeof toggleAutoVerbView,
- * filterType: typeof TermFilterBy[keyof TermFilterBy],
- * toggleVocabularyFilter: typeof toggleVocabularyFilter,
- * reinforce: boolean,
- * prevTerm: RawVocabulary,
- * prevVerb: RawVocabulary,
- * clearPreviousTerm: typeof clearPreviousTerm,
- * setPreviousTerm: typeof setPreviousTerm,
- * repetition: SpaceRepetitionMap,
- * lastNext: number,
- * updateSpaceRepWord: import("../../actions/settingsAct").updateSpaceRepWordYield,
- * setWordTPCorrect: import("../../actions/settingsAct").setWordTPCorrectYield,
- * setWordTPIncorrect: import("../../actions/settingsAct").setWordTPIncorrectYield,
- * logger: typeof logger,
- * verbForm: string,
- * pushedPlay: typeof pushedPlay,
- * touchSwipe: boolean,
- * motionThreshold: number,
- * motionThresholdCondition: typeof motionThresholdCondition,
- * toggleFurigana: import("../../actions/settingsAct").toggleFuriganaYield,
- * debugLevel: typeof DebugLevel[keyof DebugLevel]
- * }} VocabularyProps
+ * @typedef {Object} VocabularyProps
+ * @property {string[]} activeGroup
+ * @property {typeof addFrequencyWord} addFrequencyWord
+ * @property {typeof removeFrequencyWord} removeFrequencyWord
+ * @property {string[]} frequency
+ * @property {typeof getVocabulary} getVocabulary
+ * @property {RawVocabulary[]} vocab
+ * @property {boolean} hintEnabled
+ * @property {boolean} romajiActive
+ * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
+ * @property {boolean} practiceSide
+ * @property {boolean} isOrdered
+ * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
+ * @property {boolean} scrollingDone
+ * @property {function} scrollingState
+ * @property {boolean} autoVerbView
+ * @property {typeof toggleAutoVerbView} toggleAutoVerbView
+ * @property {typeof TermFilterBy[keyof TermFilterBy]} filterType
+ * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter
+ * @property {boolean} reinforce
+ * @property {RawVocabulary} prevTerm
+ * @property {RawVocabulary} prevVerb
+ * @property {typeof clearPreviousTerm} clearPreviousTerm
+ * @property {typeof setPreviousTerm} setPreviousTerm
+ * @property {SpaceRepetitionMap} repetition
+ * @property {number} lastNext
+ * @property {import("../../actions/settingsAct").updateSpaceRepWordYield} updateSpaceRepWord
+ * @property {import("../../actions/settingsAct").setWordTPCorrectYield} setWordTPCorrect
+ * @property {import("../../actions/settingsAct").setWordTPIncorrectYield} setWordTPIncorrect
+ * @property {typeof logger} logger
+ * @property {string} verbForm
+ * @property {typeof pushedPlay} pushedPlay
+ * @property {boolean} touchSwipe
+ * @property {number} motionThreshold
+ * @property {function} motionThresholdCondition
+ * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
+ * @property {typeof DebugLevel[keyof DebugLevel]} debugLevel
  */
 
 const VocabularyMeta = {
@@ -190,7 +188,7 @@ class Vocabulary extends Component {
       selectedIndex: 0,
       showHint: false,
       filteredVocab: [],
-      frequency: [], // subset of frequency words within current active group
+      frequency: [],
       recacheAudio: false,
       jbare: [],
       ebare: [],
@@ -200,6 +198,9 @@ class Vocabulary extends Component {
 
     /** @type {VocabularyProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<VocabularyState>} */
+    this.setState;
 
     if (this.props.vocab.length === 0) {
       this.props.getVocabulary();
@@ -563,7 +564,7 @@ class Vocabulary extends Component {
         motionThresholdCondition(
           event,
           this.props.motionThreshold,
-          onShakeEventHandler
+          onShakeEventHandler,
         );
       } catch (error) {
         if (error instanceof Error) {
@@ -1135,7 +1136,7 @@ class Vocabulary extends Component {
 
       this.props.logger("Timed Play [" + msg + "]" + elapStr, DebugLevel.DEBUG);
     } else {
-      // guessed too late
+      // guessed too late or too early
 
       this.props.logger("Timed Play [" + msg + "] X-( ", DebugLevel.DEBUG);
     }
@@ -1195,7 +1196,7 @@ class Vocabulary extends Component {
             form: naFlip,
           };
 
-          this.setState((/** @type {VocabularyState} */ s) => ({
+          this.setState((s) => ({
             naFlip: s.naFlip ? undefined : "-na",
           }));
         } else {
@@ -1622,7 +1623,7 @@ class Vocabulary extends Component {
           >
             <div
               onClick={() => {
-                this.setState((/** @type {VocabularyState}*/ state) => ({
+                this.setState((state) => ({
                   scrollJOrder: !state.scrollJOrder,
                 }));
               }}

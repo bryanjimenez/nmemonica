@@ -111,11 +111,19 @@ export type ActionHandlerTuple = [
   MediaSessionActionHandler
 ];
 
+export type SetStateOb<T> = (arg0: Partial<T>) => void;
+export type SetStateFn<T> = (arg0: (arg0: T) => Partial<T> | undefined) => void;
+
+/**
+ * Function overloads for Component.setState
+ */
+export type SetState<T> = SetStateOb<T> & SetStateFn<T>;
+
 /**
  * Removes optional (?) from all of O's properties
  * @param O Object to remove optional attribute from properties
  */
-export type WithoutOpt<O> = {
+ export type WithoutOpt<O> = {
   [k in keyof O]-?: O[k];
 }
 
@@ -126,5 +134,3 @@ export type WithoutOpt<O> = {
 export type FilterKeysOfType<O,type> = {
   [k in keyof WithoutOpt<O>]: WithoutOpt<O>[k] extends type? k: never
 }[keyof O]
-
-

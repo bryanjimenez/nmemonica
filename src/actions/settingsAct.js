@@ -646,6 +646,7 @@ export function addFrequencyWord(uid) {
 }
 
 /**
+ * Removes frequency word
  * @param {string} uid
  * @returns {ActCreator}
  */

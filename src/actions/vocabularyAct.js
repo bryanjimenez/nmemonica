@@ -13,6 +13,7 @@ export const SET_PUSHED_PLAY = "set_pushed_play";
  */
 
 /**
+ * Fetches vocabulary
  * @return {ActCreator}
  */
 export function getVocabulary() {
