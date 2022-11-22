@@ -158,6 +158,8 @@ self.addEventListener("fetch", (e) => {
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
+        countIDBItem(db);
+
         return fetchP
           .then((res) => res.blob())
           .then((blob) =>
@@ -192,7 +194,6 @@ self.addEventListener("fetch", (e) => {
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
-        countIDBItem(db);
 
         return getIDBItem({ db }, uid)
           .then((dataO) =>
@@ -395,7 +396,6 @@ function clientLogger(msg, lvl) {
  * objectStore.count()
  * @param {*} db
  * @param {string} store
- * @returns
  */
 function countIDBItem(db, store = indexedDBStore) {
   var transaction = db.transaction([store]);
