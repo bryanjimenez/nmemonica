@@ -57,14 +57,16 @@ self.addEventListener("install", (e) => {
     )
   );
 
-  try {
-    const a = ghURL;
-    const b = ghURL + "/";
-    caches
-      .open(appStaticCache)
-      .then((cache) => cache.addAll([a, b]))
-  }
-  catch { }
+  
+  const a = ghURL;
+  const b = ghURL + "/";
+  caches
+    .open(appStaticCache)
+    .then((cache) => cache.addAll([a, b]))
+    .catch((e)=>{
+      console.log('Prefectch failed for some item')
+      console.log(JSON.stringify(e))
+    })
 
   e.waitUntil(
     caches
