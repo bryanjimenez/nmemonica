@@ -13,44 +13,47 @@ import { swapKana } from "../../helper/kanaHelper";
 import { DebugLevel } from "../../actions/settingsAct";
 
 /**
- * @typedef {{
- * val: string,
- * hint: string,
- * cSet: number,
- * q?: boolean,
- * practiceSide?: boolean}} Choice
+ * @typedef {Object} Choice
+ * @property {string} val
+ * @property {string} hint
+ * @property {number} cSet
+ * @property {boolean} [q]
+ * @property {boolean} [practiceSide]
+ */
+
+/**
  * @typedef {{
  * consonant: number,
  * vowel: number}} Mora
- * @typedef {0|1|2} KanaType
+ * @typedef {0|1|2} KanaType Hiragana | Katakana | Random mixed
  */
 
 /**
- * @typedef {{
- * hiragana: string[],
- * katakana: string[],
- * getKana: typeof getKana,
- * vowels: string[],
- * consonants: string[],
- * choiceN: number,
- * sounds: {[index:string]:string},
- * wideMode: boolean,
- * easyMode: boolean,
- * charSet: KanaType,
- * debug: number}} KanaGameProps
+ * @typedef {Object} KanaGameProps
+ * @property {string[]} hiragana
+ * @property {string[]} katakana
+ * @property {typeof getKana} getKana
+ * @property {string[]} vowels
+ * @property {string[]} consonants
+ * @property {number} choiceN
+ * @property {{[index:string]:string}} sounds
+ * @property {boolean} wideMode
+ * @property {boolean} easyMode
+ * @property {KanaType} charSet
+ * @property {number} debug
  */
 
 /**
- * @typedef {{
- * selectedIndex: number,
- * question: string,
- * answer: Choice,
- * choices: Choice[],
- * gameOrder: Mora[],
- * wrongs: number[],
- * reinforce: Choice[],
- * correct: boolean,
- * practiceSide: boolean}} KanaGameState
+ * @typedef {Object} KanaGameState
+ * @property {number} selectedIndex
+ * @property {string} question
+ * @property {Choice} answer
+ * @property {Choice[]} choices
+ * @property {Mora[]} gameOrder
+ * @property {number[]} wrongs
+ * @property {Choice[]} reinforce
+ * @property {boolean} correct
+ * @property {boolean} practiceSide
  */
 
 const KanaGameMeta = {
@@ -79,6 +82,9 @@ class KanaGame extends Component {
 
     /** @type {KanaGameProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<KanaGameState>} */
+    this.setState;
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -574,7 +580,7 @@ class KanaGame extends Component {
           <div className="col">
             <div
               onClick={() => {
-                this.setState((/** @type {KanaGameState} */ state) => ({
+                this.setState((state) => ({
                   practiceSide: !state.practiceSide,
                 }));
               }}

@@ -10,17 +10,17 @@ import { DebugLevel } from "../../actions/settingsAct";
  */
 
 /**
- * @typedef {{
- * window: number,
- * scroll: number,
- * messages: ConsoleMessage[]}} ConsoleState
+ * @typedef {Object} ConsoleState
+ * @property {number} window
+ * @property {number} scroll
+ * @property {ConsoleMessage[]} messages
  */
 
 /**
- * @typedef {{
- * connected: boolean,
- * debug: number,
- * messages: ConsoleMessage[]}} ConsoleProps
+ * @typedef {Object} ConsoleProps
+ * @property {boolean} connected
+ * @property {number} debug
+ * @property {ConsoleMessage[]} messages
  */
 
 class Console extends Component {
@@ -34,6 +34,13 @@ class Console extends Component {
       scroll: 0,
       messages: this.squashSeqMsgs(this.props.messages),
     };
+
+    /** @type {ConsoleProps} */
+    this.props;
+
+    /** @type {import("../../typings/raw").SetState<ConsoleState>} */
+    this.setState;
+
     this.scrollUp = this.scrollUp.bind(this);
   }
 
@@ -58,7 +65,7 @@ class Console extends Component {
     const max = messages.length - window > -1 ? messages.length - window : 0;
 
     if (this.state.scroll < max) {
-      this.setState((/** @type {ConsoleState} */ state) => ({
+      this.setState((state) => ({
         scroll: state.scroll + 1,
       }));
     }

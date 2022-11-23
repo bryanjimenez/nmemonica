@@ -33,41 +33,39 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  */
 
 /**
- * @typedef {{
- * showMeaning: boolean,
- * showRomaji: boolean,
- * prevVocab: RawVocabulary,
- * audioPlay: boolean,
- * prevPlayed: boolean,
- * }} VerbMainState
+ * @typedef {Object} VerbMainState
+ * @property {boolean} showMeaning
+ * @property {boolean} showRomaji
+ * @property {RawVocabulary} prevVocab
+ * @property {boolean} audioPlay
+ * @property {boolean} prevPlayed
  */
 
 /**
- * @typedef {{
- * verb: RawVocabulary,
- * reCache: boolean,
- * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
- * practiceSide: boolean,
- * romajiActive: boolean,
- * scrollingDone: boolean,
- * prevTerm: RawVocabulary,
- * setPreviousTerm: typeof setPreviousTerm,
- * played: boolean,
- * pushedPlay: function,
- * setShownForm: function,
- * verbForm: string,
- * prevPushPlay: boolean,
- * flipVocabularyPracticeSide: function,
- * touchSwipe: boolean,
- * linkToOtherTerm: function,
- * furigana: FuriganaToggleMap,
- * toggleFurigana: function,
- * toggleFuriganaSettingHelper: function,
- * verbColSplit: number,
- * verbFormsOrder: string[],
- * hintEnabled: boolean,
- * showHint: boolean,
- * }} VerbMainProps
+ * @typedef {Object} VerbMainProps
+ * @property {RawVocabulary} verb
+ * @property {boolean} reCache
+ * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
+ * @property {boolean} practiceSide
+ * @property {boolean} romajiActive
+ * @property {boolean} scrollingDone
+ * @property {RawVocabulary} prevTerm
+ * @property {typeof setPreviousTerm} setPreviousTerm
+ * @property {boolean} played
+ * @property {function} pushedPlay
+ * @property {function} setShownForm
+ * @property {string} verbForm
+ * @property {boolean} prevPushPlay
+ * @property {function} flipVocabularyPracticeSide
+ * @property {boolean} touchSwipe
+ * @property {function} linkToOtherTerm
+ * @property {FuriganaToggleMap} furigana
+ * @property {function} toggleFurigana
+ * @property {function} toggleFuriganaSettingHelper
+ * @property {number} verbColSplit
+ * @property {string[]} verbFormsOrder
+ * @property {boolean} hintEnabled
+ * @property {boolean} showHint
  */
 
 class VerbMain extends Component {
@@ -86,6 +84,9 @@ class VerbMain extends Component {
 
     /** @type {VerbMainProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<VerbMainState>} */
+    this.setState;
 
     this.buildTenseElement = this.buildTenseElement.bind(this);
     this.getVerbLabelItems = this.getVerbLabelItems.bind(this);
@@ -408,7 +409,7 @@ class VerbMain extends Component {
             <span
               className="clickable loop-no-interrupt"
               onClick={() => {
-                this.setState((/** @type {VerbMainState} */ state) => ({
+                this.setState((state) => ({
                   showRomaji: !state.showRomaji,
                 }));
               }}
@@ -429,7 +430,7 @@ class VerbMain extends Component {
             if (this.props.autoPlay) {
               this.props.flipVocabularyPracticeSide();
             } else {
-              this.setState((/** @type {VerbMainState} */ state) => ({
+              this.setState((state) => ({
                 showMeaning: !state.showMeaning,
               }));
             }

@@ -21,24 +21,24 @@ import "./ParticlesGame.css";
  */
 
 /**
- * @typedef {{
- * getParticlePhrases: typeof getParticlePhrases,
- * phrases: ParticleGamePhrase[],
- * particles: Particle[],
- * aRomaji: boolean}} ParticlesGameProps
+ * @typedef {Object} ParticlesGameProps
+ * @property {typeof getParticlePhrases} getParticlePhrases
+ * @property {ParticleGamePhrase[]} phrases
+ * @property {Particle[]} particles
+ * @property {boolean} aRomaji
  */
 
 /**
- * @typedef {{
- * order: number[],
- * selectedIndex: number,
- * showMeaning: boolean,
- * question: JapaneseText | undefined,
- * answer?: Particle,
- * english?: string,
- * choices: Particle[],
- * incorrect: number[]
- * correct: boolean}} ParticlesGameState
+ * @typedef {Object} ParticlesGameState
+ * @property {number[]} order
+ * @property {number} selectedIndex
+ * @property {boolean} showMeaning
+ * @property {JapaneseText | undefined} question
+ * @property {Particle} [answer]
+ * @property {string} [english]
+ * @property {Particle[]} choices
+ * @property {number[]} incorrect
+ * @property {boolean} correct
  */
 
 const ParticlesGameMeta = {
@@ -90,6 +90,9 @@ class ParticlesGame extends Component {
 
     /** @type {ParticlesGameProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<ParticlesGameState>} */
+    this.setState;
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -170,7 +173,7 @@ class ParticlesGame extends Component {
       setTimeout(this.gotoNext, 1000);
     } else {
       // console.log("WRONG");
-      this.setState((/** @type {ParticlesGameState} */ state) => ({
+      this.setState((state) => ({
         incorrect: [...state.incorrect, i],
       }));
     }
@@ -252,7 +255,7 @@ class ParticlesGame extends Component {
             <div
               className="clickable"
               onClick={() => {
-                this.setState((/** @type {ParticlesGameState} */ state) => ({
+                this.setState((state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }}

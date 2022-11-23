@@ -62,61 +62,59 @@ const SettingsMeta = {
 };
 
 /**
- * @typedef {{
- * errorMsgs: ConsoleMessage[],
- * spin: boolean,
- * sectionKanji: boolean,
- * sectionVocabulary: boolean,
- * sectionPhrase: boolean,
- * sectionStaleSpaceRep: boolean,
- * swVersion: string,
- * jsVersion: string,
- * bundleVersion: string,
- * hardRefreshUnavailable: boolean,
- * shakeIntensity: number,
- * }} SettingsState
+ * @typedef {Object} SettingsState
+ * @property {ConsoleMessage[]} errorMsgs
+ * @property {boolean} spin
+ * @property {boolean} sectionKanji
+ * @property {boolean} sectionVocabulary
+ * @property {boolean} sectionPhrase
+ * @property {boolean} sectionStaleSpaceRep
+ * @property {string} swVersion
+ * @property {string} jsVersion
+ * @property {string} bundleVersion
+ * @property {boolean} hardRefreshUnavailable
+ * @property {number} shakeIntensity
  */
 
 /**
- * @typedef {{
- * darkMode: boolean,
- * memory: MemoryDataObject,
- * debug: number,
- * touchSwipe: boolean,
- * motionThreshold: number,
- * phrases: RawVocabulary[],
- * vocabulary: RawVocabulary[],
- * wideMode: boolean,
- * easyMode: boolean,
- * charSet: number,
- * choiceN: number,
- * particlesARomaji: boolean,
- * kanjiFilter: number,
- * kanjiGroups: GroupListMap,
- * kanjiActive: string[],
- * oppositesQRomaji: boolean,
- * oppositesARomaji: boolean,
- * toggleKana: typeof toggleKana,
- * toggleDarkMode: typeof toggleDarkMode,
- * setPersistentStorage: typeof setPersistentStorage,
- * getMemoryStorageStatus: typeof getMemoryStorageStatus,
- * toggleDebug: typeof toggleDebug,
- * toggleSwipe: typeof toggleSwipe,
- * setMotionThreshold: typeof setMotionThreshold,
- * getPhrases: typeof getPhrases,
- * getVocabulary: typeof getVocabulary,
- * setHiraganaBtnN: typeof setHiraganaBtnN,
- * toggleKanaGameWideMode: typeof toggleKanaGameWideMode,
- * toggleKanaEasyMode: typeof toggleKanaEasyMode,
- * setParticlesARomaji: typeof setParticlesARomaji,
- * getKanji: typeof getKanji,
- * toggleActiveGrp: typeof toggleActiveGrp,
- * setOppositesQRomaji: typeof setOppositesQRomaji,
- * setOppositesARomaji: typeof setOppositesARomaji,
- * logger: typeof logger
- * vRepetition: SpaceRepetitionMap,
- * pRepetition: SpaceRepetitionMap,
- * }} SettingsProps
+ * @typedef {Object} SettingsProps
+ * @property {boolean} darkMode
+ * @property {MemoryDataObject} memory
+ * @property {number} debug
+ * @property {boolean} touchSwipe
+ * @property {number} motionThreshold
+ * @property {RawVocabulary[]} phrases
+ * @property {RawVocabulary[]} vocabulary
+ * @property {boolean} wideMode
+ * @property {boolean} easyMode
+ * @property {number} charSet
+ * @property {number} choiceN
+ * @property {boolean} particlesARomaji
+ * @property {number} kanjiFilter
+ * @property {GroupListMap} kanjiGroups
+ * @property {string[]} kanjiActive
+ * @property {boolean} oppositesQRomaji
+ * @property {boolean} oppositesARomaji
+ * @property {typeof toggleKana} toggleKana
+ * @property {typeof toggleDarkMode} toggleDarkMode
+ * @property {typeof setPersistentStorage} setPersistentStorage
+ * @property {typeof getMemoryStorageStatus} getMemoryStorageStatus
+ * @property {typeof toggleDebug} toggleDebug
+ * @property {typeof toggleSwipe} toggleSwipe
+ * @property {typeof setMotionThreshold} setMotionThreshold
+ * @property {typeof getPhrases} getPhrases
+ * @property {typeof getVocabulary} getVocabulary
+ * @property {typeof setHiraganaBtnN} setHiraganaBtnN
+ * @property {typeof toggleKanaGameWideMode} toggleKanaGameWideMode
+ * @property {typeof toggleKanaEasyMode} toggleKanaEasyMode
+ * @property {typeof setParticlesARomaji} setParticlesARomaji
+ * @property {typeof getKanji} getKanji
+ * @property {typeof toggleActiveGrp} toggleActiveGrp
+ * @property {typeof setOppositesQRomaji} setOppositesQRomaji
+ * @property {typeof setOppositesARomaji} setOppositesARomaji
+ * @property {typeof logger} logger
+ * @property {SpaceRepetitionMap} vRepetition
+ * @property {SpaceRepetitionMap} pRepetition
  */
 
 class Settings extends Component {
@@ -141,6 +139,9 @@ class Settings extends Component {
 
     /** @type {SettingsProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<SettingsState>} */
+    this.setState;
 
     this.collapseExpandToggler = this.collapseExpandToggler.bind(this);
 
@@ -392,7 +393,7 @@ class Settings extends Component {
     return (
       <h2
         onClick={() => {
-          this.setState((/** @type {SettingsState} */ state) => ({
+          this.setState((state) => ({
             [section]: !state[section],
           }));
         }}

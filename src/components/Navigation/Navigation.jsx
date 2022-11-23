@@ -34,10 +34,9 @@ import { labelOptions, toggleOptions } from "../../helper/gameHelper";
  */
 
 /**
- * @typedef {{
- * collapsed: boolean,
- * vocabType: number,
- * }} NavigationState
+ * @typedef {Object} NavigationState
+ * @property {boolean} collapsed
+ * @property {number} vocabType
  */
 
 class Navigation extends Component {
@@ -51,12 +50,15 @@ class Navigation extends Component {
       vocabType: 0,
     };
 
+    /** @type {import("../../typings/raw").SetState<NavigationState>} */
+    this.setState;
+
     this.menuToggle = this.menuToggle.bind(this);
     this.clickBehavior = this.clickBehavior.bind(this);
   }
 
   menuToggle() {
-    this.setState((/** @type {NavigationState} */ state) => {
+    this.setState((state) => {
       if (state.collapsed) {
         document.body.classList.add("no-scroll");
         window.scrollTo(0, 0);
@@ -78,9 +80,8 @@ class Navigation extends Component {
    * @param {MouseEvent<HTMLDivElement>} event
    */
   clickBehavior(event) {
-
-    if(event.target){
-      const tEl =/** @type {Element} */ (event.target);
+    if (event.target) {
+      const tEl = /** @type {Element} */ (event.target);
       if (
         Array.from(document.getElementsByClassName("force-collapse")).includes(
           tEl
@@ -89,9 +90,9 @@ class Navigation extends Component {
         // force a collapse, Link el is preventing?
         this.menuToggle();
       } else if (
-        !Array.from(document.getElementsByClassName("prevent-collapse")).includes(
-          tEl
-        )
+        !Array.from(
+          document.getElementsByClassName("prevent-collapse")
+        ).includes(tEl)
       ) {
         // any child elem without classname^ toggles
         this.menuToggle();
@@ -138,7 +139,7 @@ class Navigation extends Component {
           <div
             className="clickable prevent-collapse"
             onClick={() => {
-              this.setState((/** @type {NavigationState} */ s) => ({
+              this.setState((s) => ({
                 vocabType: toggleOptions(s.vocabType, ["Vocab", "Phrases"]),
               }));
             }}
@@ -201,10 +202,7 @@ class Navigation extends Component {
           >
             <ul className="w-100 d-flex justify-content-evenly flex-wrap p-4">
               {shortcuts.map((l, i) => (
-                <li
-                  key={i}
-                  className="w-25 text-center m-3"
-                >
+                <li key={i} className="w-25 text-center m-3">
                   <Link to={l.meta.location}>
                     <div className="icon force-collapse mb-2">{l.icon}</div>
                   </Link>

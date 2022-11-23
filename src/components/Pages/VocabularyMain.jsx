@@ -26,38 +26,36 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  */
 
 /**
- * @typedef {{
- * showMeaning: boolean,
- * showRomaji: boolean,
- * prevVocab:RawVocabulary,
- * showHint?: boolean,
- * naFlip?: string,
- * swiping?: any,
- * prevPlayed: boolean,
- * audioPlay: boolean,
- * }} VocabularyMainState
+ * @typedef {Object} VocabularyMainState
+ * @property {boolean} showMeaning
+ * @property {boolean} showRomaji
+ * @property {RawVocabulary} prevVocab
+ * @property {boolean} [showHint]
+ * @property {string} [naFlip]
+ * @property {any} [swiping]
+ * @property {boolean} prevPlayed
+ * @property {boolean} audioPlay
  */
 
 /**
- * @typedef {{
- * vocabulary: RawVocabulary,
- * showHint: boolean,
- * hintEnabled: boolean,
- * romajiActive: boolean,
- * flipVocabularyPracticeSide: typeof flipVocabularyPracticeSide,
- * practiceSide: boolean,
- * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
- * scrollingDone: boolean,
- * pushedPlay: typeof pushedPlay,
- * touchSwipe: boolean,
- * furigana: any,
- * toggleFurigana: import("../../actions/settingsAct").toggleFuriganaYield,
- * toggleFuriganaSettingHelper: typeof toggleFuriganaSettingHelper,
- * reCache: boolean,
- * prevTerm: RawVocabulary,
- * played: boolean,
- * prevPushPlay: boolean,
- * }} VocabularyMainProps
+ * @typedef {Object} VocabularyMainProps
+ * @property {RawVocabulary} vocabulary
+ * @property {boolean} showHint
+ * @property {boolean} hintEnabled
+ * @property {boolean} romajiActive
+ * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
+ * @property {boolean} practiceSide
+ * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
+ * @property {boolean} scrollingDone
+ * @property {typeof pushedPlay} pushedPlay
+ * @property {boolean} touchSwipe
+ * @property {any} furigana
+ * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
+ * @property {typeof toggleFuriganaSettingHelper} toggleFuriganaSettingHelper
+ * @property {boolean} reCache
+ * @property {RawVocabulary} prevTerm
+ * @property {boolean} played
+ * @property {boolean} prevPushPlay
  */
 
 class VocabularyMain extends Component {
@@ -76,6 +74,9 @@ class VocabularyMain extends Component {
 
     /** @type {VocabularyMainProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<VocabularyMainState>} */
+    this.setState;
   }
 
   componentDidMount() {
@@ -208,7 +209,7 @@ class VocabularyMain extends Component {
           <h5>
             <span
               onClick={() => {
-                this.setState((/** @type {VocabularyMainState} */ state) => ({
+                this.setState((state) => ({
                   showRomaji: !state.showRomaji,
                 }));
               }}
@@ -234,7 +235,7 @@ class VocabularyMain extends Component {
             if (this.props.autoPlay) {
               this.props.flipVocabularyPracticeSide();
             } else {
-              this.setState((/** @type {VocabularyMainState} */ state) => ({
+              this.setState((state) => ({
                 showMeaning: !state.showMeaning,
               }));
             }

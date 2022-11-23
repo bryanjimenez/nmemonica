@@ -73,53 +73,51 @@ import Sizable from "../Form/Sizable";
  */
 
 /**
- * @typedef {{
- * errorMsgs: import("../Form/Console").ConsoleMessage[],
- * errorSkipIndex: number,
- * lastNext: number,
- * selectedIndex: number,
- * showMeaning: boolean,
- * showRomaji: boolean,
- * showLit: boolean,
- * filteredPhrases: RawPhrase[],
- * frequency: string[], // subset of frequency words within current active group
- * prevPhrase: RawPhrase,
- * audioPlay: boolean,
- * prevPlayed: boolean,
- * order?: number[],
- * reinforcedUID?: string,
- * swiping?: any,
- * loop: 0|1|2|3,
- * }} PhrasesState
+ * @typedef {Object} PhrasesState
+ * @property {import("../Form/Console").ConsoleMessage[]} errorMsgs,
+ * @property {number} errorSkipIndex
+ * @property {number} lastNext
+ * @property {number} selectedIndex
+ * @property {boolean} showMeaning
+ * @property {boolean} showRomaji
+ * @property {boolean} showLit
+ * @property {RawPhrase[]} filteredPhrases
+ * @property {string[]} frequency subset of frequency words within current active group
+ * @property {RawPhrase} prevPhrase
+ * @property {boolean} audioPlay
+ * @property {boolean} prevPlayed
+ * @property {number[]} [order]
+ * @property {string} [reinforcedUID]
+ * @property {any} [swiping]
+ * @property {0|1|2|3} loop
  */
 
 /**
- * @typedef {{
- * getPhrases: typeof getPhrases,
- * phrases: RawPhrase[],
- * isOrdered: boolean,
- * flipPhrasesPracticeSide: typeof flipPhrasesPracticeSide,
- * practiceSide: boolean,
- * romajiActive: boolean,
- * removeFrequencyPhrase: typeof removeFrequencyPhrase,
- * addFrequencyPhrase: typeof addFrequencyPhrase,
- * frequency: string[],
- * filterType: typeof TermFilterBy[keyof TermFilterBy],
- * togglePhrasesFilter: typeof togglePhrasesFilter,
- * reinforce: boolean,
- * activeGroup: string[],
- * repetition: SpaceRepetitionMap,
- * lastNext: number,
- * updateSpaceRepPhrase: import("../../actions/settingsAct").updateSpaceRepPhraseYield,
- * logger: typeof logger,
- * prevTerm: RawPhrase,
- * prevPushPlay: boolean,
- * pushedPlay: typeof pushedPlay,
- * clearPreviousTerm: typeof clearPreviousTerm,
- * setPreviousTerm: typeof setPreviousTerm,
- * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
- * touchSwipe: boolean,
- * }} PhrasesProps
+ * @typedef {Object} PhrasesProps
+ * @property {typeof getPhrases} getPhrases
+ * @property {RawPhrase[]} phrases
+ * @property {boolean} isOrdered
+ * @property {typeof flipPhrasesPracticeSide} flipPhrasesPracticeSide
+ * @property {boolean} practiceSide   true: English, false: Japanese
+ * @property {boolean} romajiActive
+ * @property {typeof removeFrequencyPhrase} removeFrequencyPhrase
+ * @property {typeof addFrequencyPhrase} addFrequencyPhrase
+ * @property {string[]} frequency
+ * @property {typeof TermFilterBy[keyof TermFilterBy]} filterType
+ * @property {typeof togglePhrasesFilter} togglePhrasesFilter
+ * @property {boolean} reinforce
+ * @property {string[]} activeGroup
+ * @property {SpaceRepetitionMap} repetition
+ * @property {number} lastNext
+ * @property {import("../../actions/settingsAct").updateSpaceRepPhraseYield} updateSpaceRepPhrase
+ * @property {typeof logger} logger
+ * @property {RawPhrase} prevTerm
+ * @property {boolean} prevPushPlay
+ * @property {typeof pushedPlay} pushedPlay
+ * @property {typeof clearPreviousTerm} clearPreviousTerm
+ * @property {typeof setPreviousTerm} setPreviousTerm
+ * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
+ * @property {boolean} touchSwipe
  */
 
 const PhrasesMeta = {
@@ -142,7 +140,7 @@ class Phrases extends Component {
       showRomaji: false,
       showLit: false,
       filteredPhrases: [],
-      frequency: [], // subset of frequency words within current active group
+      frequency: [],
       prevPhrase: this.props.prevTerm,
       audioPlay: true,
       prevPlayed: this.props.prevPushPlay,
@@ -151,6 +149,9 @@ class Phrases extends Component {
 
     /** @type {PhrasesProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<PhrasesState>} */
+    this.setState;
 
     this.props.getPhrases();
 
@@ -282,6 +283,7 @@ class Phrases extends Component {
           const prevPhrase = {
             japanese: prevTerm.japanese,
             english: prevTerm.english,
+            romaji: prevTerm.romaji,
             uid: prevTerm.uid,
           };
 
@@ -879,7 +881,7 @@ class Phrases extends Component {
         onClick={
           phrase.lit
             ? () => {
-                this.setState((/** @type {PhrasesState} */ state) => ({
+                this.setState((state) => ({
                   showLit: !state.showLit,
                 }));
               }
@@ -983,7 +985,7 @@ class Phrases extends Component {
               <h5>
                 <span
                   onClick={() => {
-                    this.setState((/** @type {PhrasesState} */ state) => ({
+                    this.setState((state) => ({
                       showRomaji: !state.showRomaji,
                     }));
                   }}
@@ -997,7 +999,7 @@ class Phrases extends Component {
               className={{ "loop-no-interrupt": true }}
               breakPoint="md"
               onClick={() => {
-                this.setState((/** @type {PhrasesState} */ state) => ({
+                this.setState((state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }}
@@ -1039,8 +1041,10 @@ class Phrases extends Component {
                   loop={this.state.loop}
                   onClick={() => {
                     this.abortLoop();
-                    this.setState((/** @type {PhrasesState}*/ state) => ({
-                      loop: state.loop < 3 ? state.loop + 1 : 0,
+                    this.setState((state) => ({
+                      loop: /** @type {PhrasesState["loop"]} */ (
+                        state.loop < 3 ? state.loop + 1 : 0
+                      ),
                     }));
                   }}
                 />
@@ -1062,7 +1066,7 @@ class Phrases extends Component {
                 visible={phrase.lit !== undefined && phrase.lit !== ""}
                 toggle={this.state.showLit}
                 action={() => {
-                  this.setState((/** @type {PhrasesState} */ state) => ({
+                  this.setState((state) => ({
                     showLit: !state.showLit,
                   }));
                 }}

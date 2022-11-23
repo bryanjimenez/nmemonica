@@ -15,22 +15,22 @@ import { LinearProgress } from "@material-ui/core";
  */
 
 /**
- * @typedef {{
- * getOpposites: typeof getOpposites,
- * opposites: [question:RawOpposite, answer:RawOpposite][],
- * qRomaji: boolean,
- * aRomaji: boolean}} OppositesProps
+ * @typedef {Object} OppositesProps
+ * @property {typeof getOpposites} getOpposites
+ * @property {[question:RawOpposite, answer:RawOpposite][]} opposites
+ * @property {boolean} qRomaji
+ * @property {boolean} aRomaji
  */
 
 /**
- * @typedef {{
- * selectedIndex: number,
- * showMeaning: boolean,
- * question?: RawOpposite,
- * answer?: RawOpposite,
- * choices: RawOpposite[],
- * incorrect: number[]
- * correct: boolean}} OppositesState
+ * @typedef {Object} OppositesState
+ * @property {number} selectedIndex
+ * @property {boolean} showMeaning
+ * @property {RawOpposite} [question]
+ * @property {RawOpposite} [answer]
+ * @property {RawOpposite[]} choices
+ * @property {number[]} incorrect
+ * @property {boolean} correct
  */
 
 const OppositesMeta = {
@@ -56,6 +56,9 @@ class Opposites extends Component {
 
     /** @type {OppositesProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<OppositesState>} */
+    this.setState;
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -155,7 +158,7 @@ class Opposites extends Component {
       setTimeout(this.gotoNext, 500);
     } else {
       // console.log("WRONG");
-      this.setState((/** @type {OppositesState} */ state) => ({
+      this.setState((state) => ({
         incorrect: [...state.incorrect, i],
       }));
     }
@@ -227,7 +230,7 @@ class Opposites extends Component {
             <span
               className="clickable"
               onClick={() => {
-                this.setState((/** @type {OppositesState} */ state) => ({
+                this.setState((state) => ({
                   showMeaning: !state.showMeaning,
                 }));
               }}

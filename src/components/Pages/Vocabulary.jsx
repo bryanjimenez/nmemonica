@@ -106,7 +106,7 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {string} [reinforcedUID]
  * @property {boolean} showHint
  * @property {RawVocabulary[]} filteredVocab
- * @property {string[]} frequency subset of frequency words within current active group
+ * @property {string[]} frequency     subset of frequency words within current active group
  * @property {number[]} [order]
  * @property {string} [naFlip]
  * @property {any} [swiping]
@@ -115,13 +115,13 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {boolean} [scrollJOrder]
  * @property {BareIdx[]} ebare
  * @property {BareIdx[]} jbare
- * @property {0|1|2|3} loop           // loop response repetition setting value
- * @property {number} loopQuitCount   // countdown for auto disable loop
- * @property {boolean} [tpAnswered]   // timed play answered
- * @property {"incorrect"|"pronunciation"|"reset"} [tpBtn]  // answer verify options
- * @property {number} [tpAnimation]   // progress/time bar value
- * @property {number} [tpTimeStamp]   // timed play answer timestamp
- * @property {number} [tpElapsed]     // time elapsed from prompt to answer (ms)
+ * @property {0|1|2|3} loop           loop response repetition setting value
+ * @property {number} loopQuitCount   countdown for auto disable loop
+ * @property {boolean} [tpAnswered]   timed play answered
+ * @property {"incorrect"|"pronunciation"|"reset"} [tpBtn]  answer verify options
+ * @property {number} [tpAnimation]   progress/time bar value
+ * @property {number} [tpTimeStamp]   timed play answer timestamp
+ * @property {number} [tpElapsed]     time elapsed from prompt to answer (ms)
  */
 
 /**
@@ -135,7 +135,7 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {boolean} hintEnabled
  * @property {boolean} romajiActive
  * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
- * @property {boolean} practiceSide
+ * @property {boolean} practiceSide   true: English, false: Japanese
  * @property {boolean} isOrdered
  * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
  * @property {boolean} scrollingDone

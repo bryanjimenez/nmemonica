@@ -33,29 +33,27 @@ import "./Kanji.css";
  */
 
 /**
- * @typedef {{
- * kanji: RawKanji[],
- * vocabulary: RawVocabulary[],
- * activeGroup: string[],
- * touchSwipe: boolean,
- * getKanji: typeof getKanji,
- * getVocabulary: typeof getVocabulary,
- * logger: typeof logger,
- * }} KanjiProps
+ * @typedef {Object} KanjiProps
+ * @property {RawKanji[]} kanji
+ * @property {RawVocabulary[]} vocabulary
+ * @property {string[]} activeGroup
+ * @property {boolean} touchSwipe
+ * @property {typeof getKanji} getKanji
+ * @property {typeof getVocabulary} getVocabulary
+ * @property {typeof logger} logger
  */
 
 /**
- * @typedef {{
- * selectedIndex: number,
- * filteredVocab: RawKanji[],
- * frequency: string[],
- * showOn: boolean,
- * showKun: boolean,
- * showEx: boolean,
- * showMeaning: boolean,
- * swiping?: any,
- * order: number[],
- * }} KanjiState
+ * @typedef {Object} KanjiState
+ * @property {number} selectedIndex
+ * @property {RawKanji[]} filteredVocab
+ * @property {string[]} frequency subset of frequency words within current active group
+ * @property {boolean} showOn
+ * @property {boolean} showKun
+ * @property {boolean} showEx
+ * @property {boolean} showMeaning
+ * @property {any} [swiping]
+ * @property {number[]} order
  */
 
 const KanjiMeta = {
@@ -72,7 +70,7 @@ class Kanji extends Component {
     this.state = {
       selectedIndex: 0,
       filteredVocab: [],
-      frequency: [], // subset of frequency words within current active group
+      frequency: [],
       showOn: false,
       showKun: false,
       showEx: false,
@@ -82,6 +80,9 @@ class Kanji extends Component {
 
     /** @type {KanjiProps} */
     this.props;
+
+    /** @type {import("../../typings/raw").SetState<KanjiState>} */
+    this.setState;
 
     if (this.props.kanji.length === 0) {
       this.props.getKanji();
@@ -292,7 +293,7 @@ class Kanji extends Component {
                 <h3
                   className="pt-0"
                   onClick={() => {
-                    this.setState((/** @type {KanjiState} */ state) => ({
+                    this.setState((state) => ({
                       showOn: !state.showOn,
                     }));
                   }}
@@ -304,7 +305,7 @@ class Kanji extends Component {
                 <h3
                   className="pt-2"
                   onClick={() => {
-                    this.setState((/** @type {KanjiState} */ state) => ({
+                    this.setState((state) => ({
                       showKun: !state.showKun,
                     }));
                   }}
@@ -319,7 +320,7 @@ class Kanji extends Component {
                     "disabled-color": examples.length === 0,
                   })}
                   onClick={() => {
-                    this.setState((/** @type {KanjiState} */ state) => ({
+                    this.setState((state) => ({
                       showEx: !state.showEx,
                     }));
                   }}
@@ -334,7 +335,7 @@ class Kanji extends Component {
               <h3
                 className="pt-2 clickable"
                 onClick={() => {
-                  this.setState((/** @type {KanjiState} */ state) => ({
+                  this.setState((state) => ({
                     showMeaning: !state.showMeaning,
                   }));
                 }}
