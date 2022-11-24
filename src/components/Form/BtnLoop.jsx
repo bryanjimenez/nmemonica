@@ -50,13 +50,19 @@ LoopSettingBtn.propTypes = {
  * @typedef {{
  * visible?: boolean,
  * onClick?: function,
+ * className?: {[name:string]:boolean},
+ * countDown?: number,
  * }} LoopStartBtn
  * @param {LoopStartBtn} props
  */
 export function LoopStartBtn(props) {
+  const { className } = props;
   return props.visible ? null : (
     <div
-      className="loop-btn loop-start-btn clickable"
+      className={classNames({
+        "loop-btn loop-start-btn clickable": true,
+        ...(className || {}),
+      })}
       aria-label="Loop start button"
     >
       <FontAwesomeIcon
@@ -67,6 +73,9 @@ export function LoopStartBtn(props) {
         }}
         icon={faPlayCircle}
       />
+      {props.countDown != undefined && (
+        <span className="notification">{props.countDown}</span>
+      )}
     </div>
   );
 }
@@ -74,19 +83,26 @@ export function LoopStartBtn(props) {
 LoopStartBtn.propTypes = {
   visible: PropTypes.bool,
   onClick: PropTypes.func,
+  className: PropTypes.object,
+  countDown: PropTypes.number,
 };
 
 /**
  * @typedef {{
  * visible?: boolean,
  * onClick?: function,
+ * className?: {[name:string]:boolean},
  * }} LoopStopBtn
  * @param {LoopStopBtn} props
  */
 export function LoopStopBtn(props) {
+  const { className } = props;
   return props.visible ? null : (
     <div
-      className="loop-btn loop-stop-btn clickable"
+      className={classNames({
+        "loop-btn loop-stop-btn clickable": true,
+        ...(className || {}),
+      })}
       aria-label="Loop stop button"
     >
       <FontAwesomeIcon
@@ -104,4 +120,5 @@ export function LoopStopBtn(props) {
 LoopStopBtn.propTypes = {
   visible: PropTypes.bool,
   onClick: PropTypes.func,
+  className: PropTypes.object,
 };

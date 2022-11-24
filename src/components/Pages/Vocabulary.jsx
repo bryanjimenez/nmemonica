@@ -106,6 +106,7 @@ import { MinimalUI } from "../Form/MinimalUI";
  * ebare: BareIdx[],
  * jbare: BareIdx[],
  * loop: 0|1|2|3,
+ * loopQuitCount: number // countdown for auto disable loop
  * tpAnimation?: number,  // progress/time bar value
  * tpElapsed?: number,    // time till answer
  * tpWrongs?: number,     // wrong answer count
@@ -161,6 +162,12 @@ class Vocabulary extends Component {
   constructor(props) {
     super(props);
 
+    /** @type {AbortController[] | undefined} */
+    this.loopAbortControllers;
+    /** @type {NodeJS.Timeout[] | undefined} */
+    this.loopQuitTimer;
+    this.loopQuitMs = 15000;
+
     /** @type {VocabularyState} */
     this.state = {
       errorMsgs: [],
@@ -173,7 +180,8 @@ class Vocabulary extends Component {
       recacheAudio: false,
       jbare: [],
       ebare: [],
-      loop: 0, // number of times to repeat looped term
+      loop: 0,
+      loopQuitCount: this.loopQuitMs / 1000,
     };
 
     /** @type {VocabularyProps} */
@@ -328,7 +336,17 @@ class Vocabulary extends Component {
     ) {
       if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
         // loop enabled, but not interrupted
-        this.setState({ tpWrongs: undefined });
+
+        if (this.loopQuitTimer !== undefined) {
+          this.loopQuitTimer.forEach((t) => {
+            clearTimeout(t);
+          });
+          this.loopQuitTimer = undefined;
+        }
+        this.setState({
+          tpWrongs: undefined,
+          loopQuitCount: this.loopQuitMs / 1000,
+        });
         this.beginLoop();
       }
 
@@ -586,6 +604,23 @@ class Vocabulary extends Component {
                 keyPressHandler = noop; // avoid replaying ontop of loop
                 interruptAnimation = noop;
               }
+            } else {
+              // interrupt to auto quit
+              const quitLoop = setTimeout(() => {
+                this.setState({
+                  loop: 0,
+                  loopQuitCount: this.loopQuitMs / 1000,
+                });
+                clearTimeout(countDown);
+              }, this.loopQuitMs);
+
+              const countDown = setInterval(() => {
+                this.setState((state) => ({
+                  loopQuitCount: state.loopQuitCount - 1,
+                }));
+              }, 1000);
+
+              this.loopQuitTimer = [quitLoop, countDown];
             }
 
             this.setState({
@@ -883,6 +918,20 @@ class Vocabulary extends Component {
             swipeHandler = noop; // avoid replaying ontop of loop
             interruptAnimation = noop;
           }
+        } else {
+          // interrupt to auto quit
+          const quitLoop = setTimeout(() => {
+            this.setState({ loop: 0, loopQuitCount: this.loopQuitMs / 1000 });
+            clearTimeout(countDown);
+          }, this.loopQuitMs);
+
+          const countDown = setInterval(() => {
+            this.setState((state) => ({
+              loopQuitCount: state.loopQuitCount - 1,
+            }));
+          }, 1000);
+
+          this.loopQuitTimer = [quitLoop, countDown];
         }
 
         this.setState({
@@ -1164,13 +1213,26 @@ class Vocabulary extends Component {
 
     let loopActionBtn;
     if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
-      loopActionBtn = <LoopStartBtn onClick={this.beginLoop} />;
+      loopActionBtn = (
+        <LoopStartBtn
+          countDown={
+            this.loopQuitTimer !== undefined
+              ? this.state.loopQuitCount
+              : undefined
+          }
+          onClick={this.beginLoop}
+        />
+      );
     } else if (this.state.loop > 0 && this.loopAbortControllers !== undefined) {
       loopActionBtn = (
         <LoopStopBtn
           onClick={() => {
             this.abortLoop();
-            this.setState({ loop: 0 });
+            this.setState({
+              loop: 0,
+              tpElapsed: undefined,
+              tpAnimation: undefined,
+            });
           }}
         />
       );
