@@ -20,8 +20,8 @@ import {
   toggleFurigana,
   TermFilterBy,
   DebugLevel,
-  setWordTimeToAnswer,
-  setWordTPWrongCount,
+  setWordTPCorrect,
+  setWordTPIncorrect,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -48,7 +48,12 @@ import {
   toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
-import { logify, msgInnerTrim, spaceRepLog } from "../../helper/consoleHelper";
+import {
+  answerSeconds,
+  logify,
+  msgInnerTrim,
+  spaceRepLog,
+} from "../../helper/consoleHelper";
 import {
   swipeEnd,
   swipeMove,
@@ -91,13 +96,13 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @typedef {{
  * errorMsgs: import("../Form/Console").ConsoleMessage[],
  * errorSkipIndex: number,
- * lastNext:number,
+ * lastNext: number,
  * selectedIndex: number,
- * reinforcedUID?: string,
  * showHint: boolean,
  * filteredVocab: RawVocabulary[],
  * frequency: string[],
  * order?: number[],
+ * reinforcedUID?: string,
  * naFlip?: string,
  * swiping?: any,
  * showPageBar?: boolean,
@@ -105,11 +110,13 @@ import { MinimalUI } from "../Form/MinimalUI";
  * scrollJOrder?: boolean,
  * ebare: BareIdx[],
  * jbare: BareIdx[],
- * loop: 0|1|2|3,
- * loopQuitCount: number // countdown for auto disable loop
- * tpAnimation?: number,  // progress/time bar value
- * tpElapsed?: number,    // time till answer
- * tpWrongs?: number,     // wrong answer count
+ * loop: 0|1|2|3, //loop loop response repetition setting value
+ * loopQuitCount: number,   // countdown for auto disable loop
+ * tpAnswered?: boolean,    // timed play answered
+ * tpBtn?: "incorrect"|"pronunciation"|"reset", // answer verify options
+ * tpAnimation?: number,    // progress/time bar value
+ * tpTimeStamp?: number,    // timed play answer timestamp
+ * tpElapsed?: number,      // time elapsed from prompt to answer (ms)
  * }} VocabularyState
  */
 
@@ -141,8 +148,8 @@ import { MinimalUI } from "../Form/MinimalUI";
  * repetition: SpaceRepetitionMap,
  * lastNext: number,
  * updateSpaceRepWord: import("../../actions/settingsAct").updateSpaceRepWordYield,
- * setWordTimeToAnswer: import("../../actions/settingsAct").setWordTimeToAnswerYield,
- * setWordTPWrongCount: import("../../actions/settingsAct").setWordTPWrongCountYield,
+ * setWordTPCorrect: import("../../actions/settingsAct").setWordTPCorrectYield,
+ * setWordTPIncorrect: import("../../actions/settingsAct").setWordTPIncorrectYield,
  * logger: typeof logger,
  * verbForm: string,
  * pushedPlay: typeof pushedPlay,
@@ -205,7 +212,7 @@ class Vocabulary extends Component {
     this.looperSwipe = this.looperSwipe.bind(this);
     this.abortLoop = this.abortLoop.bind(this);
     this.arrowKeyPress = this.arrowKeyPress.bind(this);
-    this.setElapsedGetWrong = this.setElapsedGetWrong.bind(this);
+    this.getElapsedTimedPlay = this.getElapsedTimedPlay.bind(this);
   }
 
   componentDidMount() {
@@ -334,6 +341,31 @@ class Vocabulary extends Component {
       this.state.reinforcedUID !== prevState.reinforcedUID ||
       this.state.selectedIndex !== prevState.selectedIndex
     ) {
+      const uid =
+        prevState.reinforcedUID ||
+        getTermUID(
+          prevState.selectedIndex,
+          this.state.order,
+          this.state.filteredVocab
+        );
+
+      if (this.state.loop > 0 && this.state.tpAnswered !== undefined) {
+        if (this.state.tpAnswered === true) {
+          if (this.state.tpElapsed !== undefined) {
+            this.props.setWordTPCorrect(uid, this.state.tpElapsed);
+          }
+        } else {
+          if (this.state.tpBtn === "reset") {
+            // don't grade ... skip
+          } else {
+            const reason = {
+              pronunciation: this.state.tpBtn === "pronunciation" || undefined,
+            };
+            this.props.setWordTPIncorrect(uid, reason);
+          }
+        }
+      }
+
       if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
         // loop enabled, but not interrupted
 
@@ -343,19 +375,36 @@ class Vocabulary extends Component {
           });
           this.loopQuitTimer = undefined;
         }
+
         this.setState({
-          tpWrongs: undefined,
           loopQuitCount: this.loopQuitMs / 1000,
+          tpAnswered: undefined,
+          tpBtn: undefined,
+          tpTimeStamp: undefined,
+          tpElapsed: undefined,
         });
         this.beginLoop();
       }
 
-      if (this.state.loop === 0) {
-        this.setState({
-          showHint: false,
-          errorMsgs: [],
-        });
+      // prevent updates when quick scrolling
+      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+        const vocabulary = getTerm(uid, this.props.vocab);
+
+        const shouldIncrement = !this.state.frequency.includes(uid);
+        const { map, prevMap } = this.props.updateSpaceRepWord(
+          uid,
+          shouldIncrement
+        );
+
+        const prevDate = prevMap[uid] && prevMap[uid].d;
+        const repStats = { [uid]: { ...map[uid], d: prevDate } };
+        spaceRepLog(this.props.logger, vocabulary, repStats);
       }
+
+      this.setState({
+        showHint: false,
+        errorMsgs: [],
+      });
     }
   }
 
@@ -381,7 +430,10 @@ class Vocabulary extends Component {
     const errorMsgs = [
       { msg: error.name + ": " + error.message, css: "px-2" },
       ...causeMsg,
-    ].map((e) => ({ ...e, lvl: DebugLevel.ERROR }));
+    ].map((e) => ({
+      ...e,
+      lvl: DebugLevel.ERROR,
+    }));
 
     // state
     return {
@@ -477,9 +529,7 @@ class Vocabulary extends Component {
      * @param {number} w Whole
      */
     const countDown = (p, w) => {
-      this.setState((/** @type {VocabularyState} */ state) => {
-        // console.log('progess '+(state.tpAnimation>0?(state.tpAnimation+p)/w*100:0))
-
+      this.setState((state) => {
         let step;
         if (state.tpAnimation === undefined || 100 - state.tpAnimation < 1) {
           step = (p / w) * 100;
@@ -493,7 +543,7 @@ class Vocabulary extends Component {
     pause(700, ac1)
       .then(() => {
         // begin elapsing here
-        this.setState({ tpElapsed: Date.now() });
+        this.setState({ tpTimeStamp: Date.now() });
         return english(ac2).catch((error) => {
           if (error.cause?.code === "UserAborted") {
             // skip all playback
@@ -510,7 +560,7 @@ class Vocabulary extends Component {
       })
       .then(() => {
         // end tpAnimation here
-        this.setState({ tpAnimation: undefined, tpElapsed: undefined });
+        this.setState({ tpAnimation: undefined, tpTimeStamp: undefined });
         return japanese(ac4)
           .then(() => {
             this.loopAbortControllers = undefined;
@@ -586,25 +636,35 @@ class Vocabulary extends Component {
         if (action !== " ") {
           // interrupt loop
           if (this.abortLoop()) {
-            let tpWrongs;
+            /** @type {boolean|undefined} */
+            let tpAnswered;
+            let tpElapsed;
+
+            const duringQuery =
+              this.state.tpAnimation === undefined &&
+              this.state.tpTimeStamp !== undefined;
+            // const duringCountDown =
+            //   this.state.tpAnimation !== undefined &&
+            //   this.state.tpTimeStamp !== undefined;
+            const duringResponse =
+              this.state.tpAnimation === undefined &&
+              this.state.tpTimeStamp === undefined;
+
             if (action === "ArrowUp") {
-              ({ tpWrongs } = this.setElapsedGetWrong());
-              const duringQuery =
-                this.state.tpAnimation === undefined &&
-                this.state.tpElapsed !== undefined;
-              // const duringCountDown =
-              //   this.state.tpAnimation !== undefined &&
-              //   this.state.tpElapsed !== undefined;
-              const duringResponse =
-                this.state.tpAnimation === undefined &&
-                this.state.tpElapsed === undefined;
+              ({ tpElapsed } = this.getElapsedTimedPlay());
+              tpAnswered = true;
               if (duringQuery) {
                 interruptAnimation = noop;
               } else if (duringResponse) {
+                tpAnswered = false;
                 keyPressHandler = noop; // avoid replaying ontop of loop
                 interruptAnimation = noop;
               }
             } else {
+              if (duringResponse) {
+                interruptAnimation = noop;
+              }
+
               // interrupt to auto quit
               const quitLoop = setTimeout(() => {
                 this.setState({
@@ -624,8 +684,8 @@ class Vocabulary extends Component {
             }
 
             this.setState({
-              tpWrongs,
-              /*tpAnimation: undefined,*/ tpElapsed: undefined,
+              tpAnswered: tpAnswered,
+              tpElapsed: tpElapsed,
             });
             interruptAnimation();
           } else {
@@ -771,25 +831,6 @@ class Vocabulary extends Component {
   }
 
   gotoNextSlide() {
-    const uid =
-      this.state.reinforcedUID ||
-      getTermUID(
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredVocab
-      );
-    const vocabulary = getTerm(uid, this.props.vocab);
-
-    // prevent updates when quick scrolling
-    if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
-      const shouldIncrement = !this.state.frequency.includes(vocabulary.uid);
-      const { prevMap } = this.props.updateSpaceRepWord(
-        vocabulary.uid,
-        shouldIncrement
-      );
-      spaceRepLog(this.props.logger, vocabulary, prevMap);
-    }
-
     play(
       this.props.reinforce,
       this.props.filterType,
@@ -896,29 +937,40 @@ class Vocabulary extends Component {
     } else {
       // interrupt loop
       if (this.abortLoop()) {
-        let tpWrongs;
         const direction = getSwipeDirection(
           this.state.swiping.touchObject,
           true
         );
+
+        /** @type {boolean|undefined} */
+        let tpAnswered;
+        let tpElapsed;
+        const duringQuery =
+          this.state.tpAnimation === undefined &&
+          this.state.tpTimeStamp !== undefined;
+        // const duringCountDown =
+        //   this.state.tpAnimation !== undefined &&
+        //   this.state.tpTimeStamp !== undefined;
+        const duringResponse =
+          this.state.tpAnimation === undefined &&
+          this.state.tpTimeStamp === undefined;
+
         if (direction === "up") {
-          ({ tpWrongs } = this.setElapsedGetWrong());
-          const duringQuery =
-            this.state.tpAnimation === undefined &&
-            this.state.tpElapsed !== undefined;
-          // const duringCountDown =
-          //   this.state.tpAnimation !== undefined &&
-          //   this.state.tpElapsed !== undefined;
-          const duringResponse =
-            this.state.tpAnimation === undefined &&
-            this.state.tpElapsed === undefined;
+          ({ tpElapsed } = this.getElapsedTimedPlay());
+          tpAnswered = true;
+
           if (duringQuery) {
             interruptAnimation = noop;
           } else if (duringResponse) {
+            tpAnswered = false;
             swipeHandler = noop; // avoid replaying ontop of loop
             interruptAnimation = noop;
           }
         } else {
+          if (duringResponse) {
+            interruptAnimation = noop;
+          }
+
           // interrupt to auto quit
           const quitLoop = setTimeout(() => {
             this.setState({ loop: 0, loopQuitCount: this.loopQuitMs / 1000 });
@@ -935,8 +987,8 @@ class Vocabulary extends Component {
         }
 
         this.setState({
-          tpWrongs,
-          /*tpAnimation: undefined,*/ tpElapsed: undefined,
+          tpAnswered: tpAnswered,
+          tpElapsed: tpElapsed,
         });
         interruptAnimation();
       }
@@ -954,11 +1006,9 @@ class Vocabulary extends Component {
 
   /**
    * During timed play interrupt
-   * Sets current tpElapsed time before guess
-   * Gets previous wrong count for a term
    */
-  setElapsedGetWrong() {
-    let tpWrongs = 0;
+  getElapsedTimedPlay() {
+    let tpElapsed;
 
     const uid =
       this.state.reinforcedUID ||
@@ -970,31 +1020,21 @@ class Vocabulary extends Component {
     const term = getTerm(uid, this.props.vocab);
     const msg = msgInnerTrim(term.english, 30);
 
-    if (this.state.tpElapsed !== undefined) {
+    if (this.state.tpTimeStamp !== undefined) {
       // guessed within time
 
-      const dateThen = this.state.tpElapsed;
-      const diffMilli = Math.abs(Date.now() - dateThen);
-      const elapStr =
-        (Math.round(diffMilli) / 1000).toFixed(2) +
-        "".replace("0.", ".").replace(".00", "").replace(/0$/, "");
+      const dateThen = this.state.tpTimeStamp;
+      tpElapsed = Math.abs(Date.now() - dateThen);
+      const elapStr = " " + answerSeconds(tpElapsed) + "s";
 
-      this.props.logger(
-        "TimePlay [" + msg + "] " + elapStr + " s",
-        DebugLevel.DEBUG
-      );
-      const { prevMap } = this.props.setWordTimeToAnswer(
-        uid,
-        this.state.tpElapsed
-      );
-      tpWrongs = (prevMap && prevMap[uid] && prevMap[uid].tpWc) || 0;
+      this.props.logger("TimePlay [" + msg + "]" + elapStr, DebugLevel.DEBUG);
     } else {
       // guessed too late
 
       this.props.logger("TimePlay [" + msg + "] X-( ", DebugLevel.DEBUG);
     }
 
-    return { tpWrongs };
+    return { tpElapsed };
   }
 
   /**
@@ -1200,9 +1240,6 @@ class Vocabulary extends Component {
     /** @type {BareIdx[]} */
     let pList;
 
-    const progress =
-      ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
-
     if (this.state.scrollJOrder) {
       pIdx = this.state.selectedIndex;
       pList = this.state.jbare;
@@ -1230,13 +1267,16 @@ class Vocabulary extends Component {
             this.abortLoop();
             this.setState({
               loop: 0,
-              tpElapsed: undefined,
+              tpTimeStamp: undefined,
               tpAnimation: undefined,
             });
           }}
         />
       );
     }
+
+    const progress =
+      ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
 
     let page = [
       <div key={0} className="vocabulary main-panel h-100">
@@ -1321,9 +1361,11 @@ class Vocabulary extends Component {
                     loop={this.state.loop}
                     onClick={() => {
                       this.abortLoop();
-                      this.setState((/** @type {VocabularyState}*/ state) => ({
-                        loop: state.loop < 3 ? state.loop + 1 : 0,
-                        tpWrongs: undefined,
+                      this.loopQuitTimer = undefined;
+                      this.setState((state) => ({
+                        loop: /** @type {VocabularyState["loop"]} */ (
+                          state.loop < 3 ? state.loop + 1 : 0
+                        ),
                       }));
                     }}
                   />
@@ -1342,15 +1384,29 @@ class Vocabulary extends Component {
             <div className="col">
               <div className="d-flex justify-content-end">
                 <TimePlayVerifyBtns
-                  visible={this.state.tpWrongs !== undefined}
-                  minus={this.state.tpWrongs || 0}
-                  onClick={(count) => {
-                    if (count === 0) {
-                      count = null;
-                    }
-
-                    this.props.setWordTPWrongCount(uid, count);
-                    this.setState({ tpWrongs: undefined });
+                  visible={this.state.tpAnswered !== undefined}
+                  hover={this.state.tpBtn}
+                  onPronunciation={() => {
+                    this.setState((state) => ({
+                      tpAnswered: false,
+                      tpBtn:
+                        state.tpBtn === "pronunciation"
+                          ? undefined
+                          : "pronunciation",
+                    }));
+                  }}
+                  onIncorrect={() => {
+                    this.setState((state) => ({
+                      tpAnswered: false,
+                      tpBtn:
+                        state.tpBtn === "incorrect" ? undefined : "incorrect",
+                    }));
+                  }}
+                  onReset={() => {
+                    this.setState((state) => ({
+                      tpAnswered: false,
+                      tpBtn: state.tpBtn === "reset" ? undefined : "reset",
+                    }));
                   }}
                 />
                 <ShowHintBtn
@@ -1525,8 +1581,8 @@ Vocabulary.propTypes = {
   repetition: PropTypes.object,
   lastNext: PropTypes.number,
   updateSpaceRepWord: PropTypes.func,
-  setWordTimeToAnswer: PropTypes.func,
-  setWordTPWrongCount: PropTypes.func,
+  setWordTPCorrect: PropTypes.func,
+  setWordTPIncorrect: PropTypes.func,
   logger: PropTypes.func,
   verbForm: PropTypes.string,
   pushedPlay: PropTypes.func,
@@ -1547,8 +1603,8 @@ export default connect(mapStateToProps, {
   clearPreviousTerm,
   setPreviousTerm,
   updateSpaceRepWord,
-  setWordTimeToAnswer,
-  setWordTPWrongCount,
+  setWordTPCorrect,
+  setWordTPIncorrect,
   logger,
   pushedPlay,
 })(Vocabulary);

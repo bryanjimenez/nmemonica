@@ -802,27 +802,121 @@ export function toggleFurigana(uid) {
 }
 
 /**
- * Sets term time-elapsed to answer
- * @typedef {(uid:string, time: number) => updateSpaceRepTermYield} setWordTimeToAnswerYield
+ * Sets term timed play average stats (correct)
+ * @typedef {(uid:string, tpElapsed: number) => updateSpaceRepTermYield} setWordTPCorrectYield
  * @param {string} uid
- * @param {number} time
+ * @param {number} tpElapsed
+ * @returns {(dispatch: function, getState: function) => updateSpaceRepTermYield}
  */
-export function setWordTimeToAnswer(uid, time) {
-  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
-    set: { tpMs: time },
-  });
+export function setWordTPCorrect(uid, tpElapsed) {
+  return (dispatch, getState) => {
+    const aType = ADD_SPACE_REP_WORD;
+    const pathPart = "vocabulary";
+
+    const path = "/" + pathPart + "/";
+    const attr = "repetition";
+    const time = new Date();
+
+    /** @type {SpaceRepetitionMap} */
+    const spaceRep = getLastStateValue(getState, path, attr);
+    const prevMap = { [uid]: spaceRep[uid] };
+
+    let newPlayCount = 1;
+    let newAccuracy = 1.0;
+    let newCorrAvg = tpElapsed;
+
+    if (spaceRep[uid]) {
+      const playCount = spaceRep[uid].tpPc;
+      const accuracy = spaceRep[uid].tpAcc;
+      const correctAvg = spaceRep[uid].tpCAvg || 0;
+
+      if (playCount !== undefined && accuracy != undefined) {
+        newPlayCount = playCount + 1;
+
+        const scores = playCount * accuracy;
+        newAccuracy = (scores + 1.0) / newPlayCount;
+
+        const correctCount = scores;
+        const correctSum = correctAvg * correctCount;
+        newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
+      }
+    }
+
+    /** @type {SpaceRepetitionMap["uid"]} */
+    const o = {
+      ...(spaceRep[uid] || {}),
+      pron: undefined,
+      tpPc: newPlayCount,
+      tpAcc: newAccuracy,
+      tpCAvg: newCorrAvg,
+    };
+
+    /** @type {SpaceRepetitionMap} */
+    const newValue = { ...spaceRep, [uid]: o };
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    dispatch({
+      type: aType,
+      value: newValue,
+    });
+
+    return { map: { [uid]: o }, prevMap };
+  };
 }
 
 /**
- * Sets term incorrect answer count
- * @typedef {(uid:string, count: number) => updateSpaceRepTermYield} setWordTPWrongCountYield
+ * Sets term timed play average stats (incorrect)
+ * @typedef {(uid:string, option: {pronunciation?: boolean}|undefined) => updateSpaceRepTermYield} setWordTPIncorrectYield
  * @param {string} uid
- * @param {number | null} count
+ * @param {{pronunciation?: true}} options incorrect types
  */
-export function setWordTPWrongCount(uid, count) {
-  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
-    set: { tpWc: count },
-  });
+export function setWordTPIncorrect(uid, { pronunciation } = {}) {
+  return (dispatch, getState) => {
+    const aType = ADD_SPACE_REP_WORD;
+    const pathPart = "vocabulary";
+
+    const path = "/" + pathPart + "/";
+    const attr = "repetition";
+    const time = new Date();
+
+    /** @type {SpaceRepetitionMap} */
+    const spaceRep = getLastStateValue(getState, path, attr);
+    const prevMap = { [uid]: spaceRep[uid] };
+
+    let newPlayCount = 1;
+    let newAccuracy = 0;
+
+    if (spaceRep[uid]) {
+      const playCount = spaceRep[uid].tpPc;
+      const accuracy = spaceRep[uid].tpAcc;
+
+      if (playCount !== undefined && accuracy != undefined) {
+        newPlayCount = playCount + 1;
+
+        const scores = playCount * accuracy;
+        newAccuracy = (scores + 0) / newPlayCount;
+      }
+    }
+
+    /** @type {SpaceRepetitionMap["uid"]} */
+    const o = {
+      ...(spaceRep[uid] || {}),
+      tpPc: newPlayCount,
+      tpAcc: newAccuracy,
+      pron: pronunciation,
+    };
+
+    /** @type {SpaceRepetitionMap} */
+    const newValue = { ...spaceRep, [uid]: o };
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    dispatch({
+      type: aType,
+      value: newValue,
+    });
+
+    return { map: { [uid]: o }, prevMap };
+  };
 }
 /**
  * @typedef {{map: SpaceRepetitionMap, prevMap: SpaceRepetitionMap}} updateSpaceRepTermYield

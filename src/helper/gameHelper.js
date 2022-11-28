@@ -232,10 +232,11 @@ export function spaceRepOrder(terms, spaceRepObj) {
    * index: number
    * }[]}
    */
-  let playedTemp = [];
+  let notTimedTemp = [];
   /**
    * @type {{
-   * time: number,
+   * accuracy: number,
+   * correctAvg: number,
    * uid: string,
    * index: number
    * }[]}
@@ -243,7 +244,17 @@ export function spaceRepOrder(terms, spaceRepObj) {
   let timedTemp = [];
   /**
    * @type {{
-   * wrong: number,
+   * accuracy: number,
+   * correctAvg: number,
+   * uid: string,
+   * index: number
+   * }[]}
+   */
+  let misPronTemp = [];
+  /**
+   * @type {{
+   * accuracy: number,
+   * correctAvg: number,
    * uid: string,
    * index: number
    * }[]}
@@ -253,15 +264,15 @@ export function spaceRepOrder(terms, spaceRepObj) {
   /**
    * @type {number[]}
    */
-  let unPlayed = [];
+  let notPlayed = [];
   for (const tIdx in terms) {
     const tUid = terms[tIdx].uid;
     const termRep = spaceRepObj[tUid];
 
     if (termRep !== undefined) {
-      if (termRep.tpMs === undefined) {
-        playedTemp = [
-          ...playedTemp,
+      if (termRep.tpAcc === undefined) {
+        notTimedTemp = [
+          ...notTimedTemp,
           {
             date: termRep.d,
             count: termRep.vC,
@@ -269,54 +280,68 @@ export function spaceRepOrder(terms, spaceRepObj) {
             index: Number(tIdx),
           },
         ];
-      } else if (termRep.tpMs >= 0) {
-        timedTemp = [
-          ...timedTemp,
+      } else if (termRep.pron === true) {
+        misPronTemp = [
+          ...misPronTemp,
           {
-            time: termRep.tpMs,
+            accuracy: termRep.tpAcc,
+            correctAvg: termRep.tpCAvg || Number.MAX_SAFE_INTEGER,
             uid: tUid,
             index: Number(tIdx),
           },
         ];
-      } else if (termRep.tpMs < 0) {
+      } else if (termRep.tpAcc >= 0.65) {
+        timedTemp = [
+          ...timedTemp,
+          {
+            accuracy: termRep.tpAcc,
+            correctAvg: termRep.tpCAvg || Number.MAX_SAFE_INTEGER,
+            uid: tUid,
+            index: Number(tIdx),
+          },
+        ];
+      } else if (termRep.tpAcc < 0.65) {
         failedTemp = [
           ...failedTemp,
           {
-            wrong: termRep.tpMs,
+            accuracy: termRep.tpAcc,
+            correctAvg: termRep.tpCAvg || Number.MAX_SAFE_INTEGER,
             uid: tUid,
             index: Number(tIdx),
           },
         ];
       }
     } else {
-      unPlayed = [...unPlayed, Number(tIdx)];
+      notPlayed = [...notPlayed, Number(tIdx)];
     }
   }
 
-  const playedOrdered = orderBy(
-    playedTemp,
-    ["date", "count", "uid"],
-    ["asc", "asc", "asc"]
-  );
+  // prettier-ignore
+  const failedSort = orderBy(failedTemp, ["accuracy", "correctAvg", "uid"], ["asc", "desc", "asc"]);
+  // prettier-ignore
+  const misPronSort = orderBy(misPronTemp, ["accuracy", "correctAvg", "uid"], ["asc", "desc", "asc"]);
 
-  const timedOrdered = orderBy(timedTemp, ["time", "uid"], ["desc", "asc"]);
-
-  const failedOrdered = orderBy(failedTemp, ["wrong", "uid"], ["asc", "asc"]);
+  // prettier-ignore
+  const notTimedSort = orderBy(notTimedTemp, ["date", "count", "uid"], ["asc", "asc", "asc"]);
+  // prettier-ignore
+  const timedSort = orderBy(timedTemp, ["accuracy", "correctAvg", "uid"], ["asc", "desc", "asc"]);
 
   // console.log("failed");
-  // console.log(JSON.stringify(failedOrdered.map((p) => ({[terms[p.index].english]:p.wrong}))));
+  // console.log(JSON.stringify(failedOrdered.map((p) => ({[terms[p.index].english]:p.accuracy, u:terms[p.index].uid, c:p.correctAvg}))));
   // console.log("played");
   // console.log(JSON.stringify(playedOrdered.map((p) => ({[terms[p.index].english]:p.date,c:p.count}))));
   // console.log('unPlayed');
   // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
   // console.log("timed");
-  // console.log(JSON.stringify(timedOrdered.map((p) => ({[terms[p.index].english]:p.time}))));
+  // console.log(JSON.stringify(timedOrdered.map((p) => ({[terms[p.index].english]:p.accuracy, c:p.correctAvg}))));
 
-  const played = playedOrdered.map((el) => el.index);
-  const timed = timedOrdered.map((el) => el.index);
-  const failed = failedOrdered.map((el) => el.index);
+  const failed = failedSort.map((el) => el.index);
+  const misPron = misPronSort.map((el) => el.index);
 
-  return [...failed, ...unPlayed, ...played, ...timed];
+  const notTimed = notTimedSort.map((el) => el.index);
+  const timed = timedSort.map((el) => el.index);
+
+  return [...failed, ...misPron, ...notPlayed, ...notTimed, ...timed];
 }
 
 /**

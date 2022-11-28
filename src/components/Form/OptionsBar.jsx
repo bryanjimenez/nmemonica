@@ -329,8 +329,11 @@ FrequencyTermIcon.propTypes = {
 /**
  * @typedef {{
  * visible: boolean,
- * minus: number,
- * onClick: function,
+ * hover?: import("../Pages/Vocabulary").VocabularyState["tpBtn"],
+ * onClick?: function,
+ * onPronunciation?: function,
+ * onIncorrect?: function,
+ * onReset?: function,
  * }} TimePlayVerifyBtnsProps
  * @param {TimePlayVerifyBtnsProps} props
  */
@@ -342,23 +345,62 @@ export function TimePlayVerifyBtns(props) {
         className="sm-icon-grp"
         onClick={() => {
           if (typeof props.onClick === "function") {
-            const minus = props.minus || 0;
-            props.onClick(minus - 1);
+            props.onClick();
+          }
+
+          if (typeof props.onIncorrect === "function") {
+            props.onIncorrect();
           }
         }}
       >
-        <span>{props.minus - 1}</span>
+        <span
+          className={classNames({
+            "border-bottom": props.hover === "incorrect",
+          })}
+        >
+          {"-1"}
+        </span>
       </div>
       <div
         key={1}
         className="sm-icon-grp"
         onClick={() => {
           if (typeof props.onClick === "function") {
-            props.onClick(0);
+            props.onClick();
+          }
+
+          if (typeof props.onPronunciation === "function") {
+            props.onPronunciation();
           }
         }}
       >
-        <span>0</span>
+        <span
+          className={classNames({
+            "border-bottom": props.hover === "pronunciation",
+          })}
+        >
+          {"P"}
+        </span>
+      </div>
+      <div
+        key={2}
+        className="sm-icon-grp"
+        onClick={() => {
+          if (typeof props.onClick === "function") {
+            props.onClick();
+          }
+          if (typeof props.onReset === "function") {
+            props.onReset();
+          }
+        }}
+      >
+        <span
+          className={classNames({
+            "border-bottom": props.hover === "reset",
+          })}
+        >
+          0
+        </span>
       </div>
     </React.Fragment>
   );
@@ -366,6 +408,9 @@ export function TimePlayVerifyBtns(props) {
 
 TimePlayVerifyBtns.propTypes = {
   visible: PropTypes.bool,
-  minus: PropTypes.number,
+  hover: PropTypes.string,
   onClick: PropTypes.func,
+  onIncorrect: PropTypes.func,
+  onPronunciation: PropTypes.func,
+  onReset: PropTypes.func,
 };

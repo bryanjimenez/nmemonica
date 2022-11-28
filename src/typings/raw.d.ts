@@ -62,12 +62,11 @@ export interface SpaceRepetitionMap {
     d: string;
     /** View count */ vC: number;
     /** Furigana shown (yes:undefined|true) */ f?: boolean;
-    /**
-     * Timed play last correct ms
-     * (Date.now 1668827681134)
-     **/
-     tpMs?: number;
-     /** Timed play wrong count */ tpWc?: number;
+    /** Pronunciation incorrect */ pron?: true,
+
+    /** Timed play play-count */ tpPc?: number;
+    /** Timed play accuracy */ tpAcc?: number;
+    /** Timed play correct avg (ms) */ tpCAvg?: number;
   };
 }
 

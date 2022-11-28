@@ -20,6 +20,18 @@ export function msgInnerTrim(term, len) {
 
   return msg;
 }
+
+/**
+ * Console friendly string representation of elapsed
+ * @param {number} tpElapsed elapsed in ms
+ */
+export function answerSeconds(tpElapsed) {
+  const elapStr =
+    (Math.round(tpElapsed) / 1000).toFixed(2) +
+    "".replace("0.", ".").replace(".00", "").replace(/0$/, "");
+
+  return elapStr;
+}
 /**
  * UI logger
  * @param {function} logger
@@ -27,22 +39,28 @@ export function msgInnerTrim(term, len) {
  * @param {SpaceRepetitionMap} spaceRepMap
  */
 export function spaceRepLog(logger, term, spaceRepMap) {
-  const msg = msgInnerTrim(term.english, 30);
-
   if (spaceRepMap[term.uid] && spaceRepMap[term.uid].d) {
+    const msg = msgInnerTrim(term.english, 30);
+
     const [date] = spaceRepMap[term.uid].d.split("T");
     const dateThen = Date.parse(date);
     const diffTime = Math.abs(Date.now() - dateThen);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const dayStr = " " + (diffDays - 1) + "d";
 
     const views = spaceRepMap[term.uid].vC;
+    const viewStr = " " + views + "v";
+    const accuracy = spaceRepMap[term.uid].tpAcc;
+    const accStr =
+      accuracy !== undefined ? " " + (accuracy * 100).toFixed(0) + "%" : "";
+    const correctAvg = spaceRepMap[term.uid].tpCAvg;
+    const corAvgStr =
+      correctAvg !== undefined ? " " + answerSeconds(correctAvg) + "s" : "";
 
     logger(
-      "SRep [" + msg + "] " + (diffDays - 1) + "d" + " " + views + "v",
+      "SRep [" + msg + "]" + dayStr + viewStr + accStr + corAvgStr,
       DebugLevel.DEBUG
     );
-  } else {
-    logger("SRep [] " + msg, DebugLevel.DEBUG);
   }
 }
 
