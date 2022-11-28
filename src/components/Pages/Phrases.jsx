@@ -340,17 +340,45 @@ class Phrases extends Component {
       }
     }
 
-    if (this.state.loop !== prevState.loop) {
-      this.abortLoop();
-    }
-
     if (
-      this.state.loop > 0 &&
-      !this.loopAbortControllers &&
-      (this.state.reinforcedUID !== prevState.reinforcedUID ||
-        this.state.selectedIndex !== prevState.selectedIndex)
+      this.state.reinforcedUID !== prevState.reinforcedUID ||
+      this.state.selectedIndex !== prevState.selectedIndex
     ) {
-      this.beginLoop();
+      const uid =
+        prevState.reinforcedUID ||
+        getTermUID(
+          prevState.selectedIndex,
+          this.state.order,
+          this.state.filteredPhrases
+        );
+
+      if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
+        // loop enabled, but not interrupted
+        this.beginLoop();
+      }
+
+      // prevent updates when quick scrolling
+      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+        const phrase = getTerm(uid, this.props.phrases);
+
+        // don't increment reinforced terms
+        const shouldIncrement = uid !== prevState.reinforcedUID;
+        const { map, prevMap } = this.props.updateSpaceRepPhrase(
+          uid,
+          shouldIncrement
+        );
+
+        const prevDate = prevMap[uid] && prevMap[uid].d;
+        const repStats = { [uid]: { ...map[uid], d: prevDate } };
+        spaceRepLog(this.props.logger, phrase, repStats);
+      }
+
+      this.setState({
+        showMeaning: false,
+        showRomaji: false,
+        showLit: false,
+        errorMsgs: [],
+      });
     }
 
     if (this.state.audioPlay) {
@@ -382,7 +410,10 @@ class Phrases extends Component {
     const errorMsgs = [
       { msg: error.name + ": " + error.message, css: "px-2" },
       ...causeMsg,
-    ].map((e) => ({ ...e, lvl: DebugLevel.ERROR }));
+    ].map((e) => ({
+      ...e,
+      lvl: DebugLevel.ERROR,
+    }));
 
     // state
     return {
@@ -404,8 +435,13 @@ class Phrases extends Component {
     this.setState({ errorSkipIndex });
   }
 
+  /**
+   * Returns false had it not been looping.
+   */
   abortLoop() {
+    let wasLooping = false;
     if (this.loopAbortControllers && this.loopAbortControllers.length > 0) {
+      wasLooping = true;
       this.loopAbortControllers.forEach((ac) => {
         ac.abort();
       });
@@ -413,6 +449,7 @@ class Phrases extends Component {
 
       setMediaSessionPlaybackState("paused");
     }
+    return wasLooping;
   }
 
   beginLoop() {
@@ -426,6 +463,7 @@ class Phrases extends Component {
     const ac5 = new AbortController();
 
     this.loopAbortControllers = [ac1, ac2, ac3, ac4, ac5];
+    this.forceUpdate();
 
     const japanese = (/** @type {AbortController} */ ac) =>
       loopN(this.state.loop, () => this.looperSwipe("up", ac), 1500, ac);
@@ -435,9 +473,14 @@ class Phrases extends Component {
 
     pause(700, ac1)
       .then(() => {
-        return english(ac2).catch(() => {
-          // caught trying to fetch english
-          // continue
+        return english(ac2).catch((error) => {
+          if (error.cause?.code === "UserAborted") {
+            // skip all playback
+            throw error;
+          } else {
+            // caught trying to fetch english
+            // continue
+          }
         });
       })
       .then(() => pause(3000, ac3))
@@ -449,7 +492,7 @@ class Phrases extends Component {
           })
           .catch((/** @type {Error} */ error) => {
             // @ts-expect-error Error.cause
-            if (error?.cause?.code === "UserAborted") {
+            if (error.cause?.code === "UserAborted") {
               // user aborted
               // don't continue
             } else {
@@ -464,8 +507,6 @@ class Phrases extends Component {
       .catch(() => {
         // aborted
       });
-
-    this.forceUpdate();
   }
 
   /**
@@ -501,9 +542,9 @@ class Phrases extends Component {
     for (const [action, handler] of actionHandlers) {
       if (action === event.key) {
         if (action !== " ") {
-          if (this.state.loop && this.loopAbortControllers) {
-            this.abortLoop();
+          if (this.abortLoop()) {
             this.forceUpdate();
+          } else {
             setMediaSessionPlaybackState("paused");
           }
         }
@@ -550,38 +591,6 @@ class Phrases extends Component {
     this.setState({ filteredPhrases, order: newOrder, frequency });
   }
 
-  gotoNextSlide() {
-    const uid =
-      this.state.reinforcedUID ||
-      getTermUID(
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredPhrases
-      );
-    let phrase = getTerm(uid, this.props.phrases);
-
-    // prevent updates when quick scrolling
-    if (minimumTimeForSpaceRepUpdate(this.state.lastNext)) {
-      const shouldIncrement = !this.state.frequency.includes(phrase.uid);
-      const { prevMap } = this.props.updateSpaceRepPhrase(
-        phrase.uid,
-        shouldIncrement
-      );
-      spaceRepLog(this.props.logger, phrase, prevMap);
-    }
-
-    play(
-      this.props.reinforce,
-      this.props.filterType,
-      this.state.frequency,
-      this.state.filteredPhrases,
-      this.state.reinforcedUID,
-      this.updateReinforcedUID,
-      this.gotoNext,
-      this.props.removeFrequencyPhrase
-    );
-  }
-
   gotoNext() {
     const l = this.state.filteredPhrases.length;
     let newSel = (l + this.state.selectedIndex + 1) % l;
@@ -594,11 +603,20 @@ class Phrases extends Component {
       lastNext: Date.now(),
       reinforcedUID: undefined,
       selectedIndex: newSel,
-      showMeaning: false,
-      showRomaji: false,
-      showLit: false,
-      errorMsgs: [],
     });
+  }
+
+  gotoNextSlide() {
+    play(
+      this.props.reinforce,
+      this.props.filterType,
+      this.state.frequency,
+      this.state.filteredPhrases,
+      this.state.reinforcedUID,
+      this.updateReinforcedUID,
+      this.gotoNext,
+      this.props.removeFrequencyPhrase
+    );
   }
 
   gotoPrev() {
@@ -617,12 +635,9 @@ class Phrases extends Component {
     }
 
     this.setState({
+      lastNext: Date.now(),
       reinforcedUID: undefined,
       selectedIndex: newSel,
-      showMeaning: false,
-      showRomaji: false,
-      showLit: false,
-      errorMsgs: [],
     });
   }
 
@@ -632,19 +647,7 @@ class Phrases extends Component {
   updateReinforcedUID(uid) {
     this.setState({
       reinforcedUID: uid,
-      showMeaning: false,
-      showRomaji: false,
-      showLit: false,
     });
-
-    const phrase = getTerm(uid, this.props.phrases);
-
-    const text =
-      phrase.english.length < 15
-        ? phrase.english
-        : phrase.english.slice(0, 15) + "...";
-
-    this.props.logger("reinforce (" + text + ")", DebugLevel.DEBUG);
   }
 
   /**
@@ -691,9 +694,12 @@ class Phrases extends Component {
         // elements with this tag do not interrupt loop
         return;
       } else {
-        this.abortLoop();
-        this.forceUpdate();
-        setMediaSessionPlaybackState("paused");
+        // interrupt loop
+        if (this.abortLoop()) {
+          this.forceUpdate();
+        } else {
+          setMediaSessionPlaybackState("paused");
+        }
       }
     }
 
@@ -786,6 +792,7 @@ class Phrases extends Component {
           q: inEnglish,
           uid: phrase.uid + ".en",
         });
+
         const englishAudio = new Audio(audioUrl);
         try {
           swipePromise = Promise.all([
@@ -903,37 +910,37 @@ class Phrases extends Component {
       this.state.prevPhrase
     );
 
-    let playButton;
-
-    if (this.state.loop > 0 && !this.loopAbortControllers) {
-      playButton = <LoopStartBtn onClick={this.beginLoop} />;
-    } else if (this.state.loop > 0 && this.loopAbortControllers) {
-      playButton = (
+    let loopActionBtn;
+    if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
+      loopActionBtn = <LoopStartBtn onClick={this.beginLoop} />;
+    } else if (this.state.loop > 0 && this.loopAbortControllers !== undefined) {
+      loopActionBtn = (
         <LoopStopBtn
           onClick={() => {
+            this.abortLoop();
             this.setState({ loop: 0 });
           }}
         />
       );
-    } else if (this.state.loop === 0) {
-      playButton = (
-        <AudioItem
-          visible={!this.props.touchSwipe}
-          word={audioWords}
-          autoPlay={
-            !this.state.audioPlay ? AutoPlaySetting.OFF : this.props.autoPlay
-          }
-          onPushedPlay={() => {
-            if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
-              this.props.pushedPlay(true);
-            }
-          }}
-          onAutoPlayDone={() => {
-            this.props.pushedPlay(false);
-          }}
-        />
-      );
     }
+
+    const playButton = (
+      <AudioItem
+        visible={!this.props.touchSwipe && this.state.loop === 0}
+        word={audioWords}
+        autoPlay={
+          !this.state.audioPlay ? AutoPlaySetting.OFF : this.props.autoPlay
+        }
+        onPushedPlay={() => {
+          if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
+            this.props.pushedPlay(true);
+          }
+        }}
+        onAutoPlayDone={() => {
+          this.props.pushedPlay(false);
+        }}
+      />
+    );
 
     const shortEN = (phrase.lit?.length || phrase.english.length) < 55;
     const shortJP = jObj.getSpelling().length < 55;
@@ -1038,6 +1045,7 @@ class Phrases extends Component {
                   }}
                 />
               </div>
+              <div className="sm-icon-grp">{loopActionBtn}</div>
             </div>
           </div>
           <div className="col text-center">

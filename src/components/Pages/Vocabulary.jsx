@@ -390,7 +390,8 @@ class Vocabulary extends Component {
       if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
         const vocabulary = getTerm(uid, this.props.vocab);
 
-        const shouldIncrement = !this.state.frequency.includes(uid);
+        // don't increment reinforced terms
+        const shouldIncrement = uid !== prevState.reinforcedUID;
         const { map, prevMap } = this.props.updateSpaceRepWord(
           uid,
           shouldIncrement
