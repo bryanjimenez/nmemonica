@@ -962,7 +962,7 @@ export function updateSpaceRepTerm(
     let uidChangedAttr = {};
     if (options !== undefined) {
       if (options.toggle) {
-        uidChangedAttr = options.toggle.reduce((acc, attr) => {
+        const optToggled = options.toggle.reduce((acc, attr) => {
           let val;
           if (["f"].includes(attr)) {
             // this default is only for furigana so far
@@ -973,10 +973,12 @@ export function updateSpaceRepTerm(
 
           return { ...acc, [attr]: !val };
         }, {});
+
+        uidChangedAttr = { ...uidChangedAttr, ...optToggled };
       }
 
       if (options.set !== undefined) {
-        const toggledSet = Object.keys(options.set).reduce((acc, k) => {
+        const optSet = Object.keys(options.set).reduce((acc, k) => {
           if (options.set !== undefined && options.set[k] !== undefined) {
             if (options.set[k] === null) {
               spaceRep[uid][k] = undefined;
@@ -987,7 +989,7 @@ export function updateSpaceRepTerm(
           return acc;
         }, {});
 
-        uidChangedAttr = { ...uidChangedAttr, ...toggledSet };
+        uidChangedAttr = { ...uidChangedAttr, ...optSet };
       }
     }
 

@@ -350,13 +350,13 @@ class Vocabulary extends Component {
         );
 
       if (this.state.loop > 0 && this.state.tpAnswered !== undefined) {
-        if (this.state.tpAnswered === true) {
-          if (this.state.tpElapsed !== undefined) {
-            this.props.setWordTPCorrect(uid, this.state.tpElapsed);
-          }
+        if (this.state.tpBtn === "reset") {
+          // don't grade ... skip
         } else {
-          if (this.state.tpBtn === "reset") {
-            // don't grade ... skip
+          if (this.state.tpAnswered === true) {
+            if (this.state.tpElapsed !== undefined) {
+              this.props.setWordTPCorrect(uid, this.state.tpElapsed);
+            }
           } else {
             const reason = {
               pronunciation: this.state.tpBtn === "pronunciation" || undefined,

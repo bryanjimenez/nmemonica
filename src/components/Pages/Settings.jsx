@@ -29,7 +29,7 @@ import {
   getMemoryStorageStatus,
   setPersistentStorage,
 } from "../../actions/storageAct";
-import { labelOptions } from "../../helper/gameHelper";
+import { labelOptions, getStaleSpaceRepKeys } from "../../helper/gameHelper";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import SettingsVocab from "../Form/SettingsVocab";
 import SettingsPhrase from "../Form/SettingsPhrase";
@@ -44,9 +44,10 @@ import "./spin.css";
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
- * @typedef {"sectionPhrase"|"sectionVocabulary"|"sectionKanji"} Sections
+ * @typedef {"sectionPhrase"|"sectionVocabulary"|"sectionKanji"|"sectionStaleSpaceRep"} Sections
  * @typedef {{ quota: number, usage: number, persistent: boolean }} MemoryDataObject
  * @typedef {import("../Form/Console").ConsoleMessage} ConsoleMessage
+ * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  */
 
 const SettingsMeta = {
@@ -61,6 +62,7 @@ const SettingsMeta = {
  * sectionKanji: boolean,
  * sectionVocabulary: boolean,
  * sectionPhrase: boolean,
+ * sectionStaleSpaceRep: boolean,
  * swVersion: string,
  * jsVersion: string,
  * bundleVersion: string,
@@ -103,6 +105,8 @@ const SettingsMeta = {
  * setOppositesQRomaji: typeof setOppositesQRomaji,
  * setOppositesARomaji: typeof setOppositesARomaji,
  * logger: typeof logger
+ * vRepetition: SpaceRepetitionMap,
+ * pRepetition: SpaceRepetitionMap,
  * }} SettingsProps
  */
 
@@ -117,6 +121,7 @@ class Settings extends Component {
       sectionKanji: false,
       sectionVocabulary: false,
       sectionPhrase: false,
+      sectionStaleSpaceRep: false,
       swVersion: "",
       jsVersion: "",
       bundleVersion: "",
@@ -255,6 +260,30 @@ class Settings extends Component {
   }
 
   /**
+   * Build JSX element listing stale items
+   * @param {{key:string, uid:string, english:string}[]} terms
+   */
+  staleSpaceRep(terms) {
+    return terms.reduce((/** @type {JSX.Element[]} */ a, text, i) => {
+      const separator = <hr key={terms.length + i} />;
+
+      const row = (
+        <div key={i} className="row">
+          <span className="col p-0">{text.key}</span>
+          <span className="col p-0">{text.english}</span>
+          <span className="col p-0 app-sm-fs-xx-small">
+            <div>{text.uid}</div>
+          </span>
+        </div>
+      );
+
+      return a.length > 0 && i < terms.length
+        ? [...a, separator, row]
+        : [...a, row];
+    }, []);
+  }
+
+  /**
    * @param {RawVocabulary[]} terms
    */
   failedFuriganaList(terms) {
@@ -345,6 +374,23 @@ class Settings extends Component {
     const failedFurigana = this.failedFuriganaList([
       ...this.props.phrases,
       ...this.props.vocabulary,
+    ]);
+
+    const { keys: vKeys, list: vocabuStaleInfo } = getStaleSpaceRepKeys(
+      this.props.vRepetition,
+      this.props.vocabulary,
+      "[Stale Vocabulary]"
+    );
+    const { keys: pKeys, list: phraseStaleInfo } = getStaleSpaceRepKeys(
+      this.props.pRepetition,
+      this.props.phrases,
+      "[Stale Phrase]"
+    );
+    const staleSpaceRepKeys = new Set([...vKeys, ...pKeys]);
+
+    const staleSpaceRepTerms = this.staleSpaceRep([
+      ...vocabuStaleInfo,
+      ...phraseStaleInfo,
     ]);
 
     return (
@@ -601,11 +647,28 @@ class Settings extends Component {
                 </div>
               </div>
             </div>
+            {staleSpaceRepTerms.length > 0 && (
+              <div className="mb-2">
+                <div className="d-flex justify-content-between">
+                  <h5>Stale Space Repetition</h5>
+                  {this.collapseExpandToggler("sectionStaleSpaceRep")}
+                </div>
+                <div className="px-4">
+                  <span>
+                    {"keys: " + JSON.stringify(Array.from(staleSpaceRepKeys))}
+                  </span>
+                </div>
 
+                {this.state.sectionStaleSpaceRep && (
+                  <div className="failed-spacerep-view container mt-2 p-0">
+                    {staleSpaceRepTerms}
+                  </div>
+                )}
+              </div>
+            )}
             {failedFurigana.length > 0 && (
               <div className="mb-2">
                 <h5>Failed Furigana Parse</h5>
-
                 <div className="failed-furigana-view container mt-2 p-0">
                   {failedFurigana}
                 </div>
@@ -624,7 +687,9 @@ const mapStateToProps = (state) => {
     touchSwipe: state.settings.global.touchSwipe,
 
     phrases: state.phrases.value,
+    pRepetition: state.settings.phrases.repetition,
     vocabulary: state.vocabulary.value,
+    vRepetition: state.settings.vocabulary.repetition,
 
     kanjiGroups: state.kanji.grpObj,
     kanjiFilter: state.settings.kanji.filter,
@@ -660,10 +725,12 @@ Settings.propTypes = {
   // phrases
   getPhrases: PropTypes.func,
   phrases: PropTypes.array,
+  pRepetition: PropTypes.object,
 
   // vocabulary
   getVocabulary: PropTypes.func,
   vocabulary: PropTypes.array,
+  vRepetition: PropTypes.object,
 
   setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,

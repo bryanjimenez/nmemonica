@@ -9,6 +9,7 @@ import { JapaneseVerb } from "./JapaneseVerb";
 /**
  * @typedef {import("../typings/raw").RawJapanese} RawJapanese
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {import("../typings/raw").RawPhrase} RawPhrase
  * @typedef {import("../typings/raw").AudioQueryParams} AudioQueryParams
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../typings/raw").VerbFormArray} VerbFormArray
@@ -203,6 +204,55 @@ export function getStaleGroups(termGroups, termActive) {
   }, []);
 
   return stale;
+}
+
+/**
+ * Given a SpaceRepetitionMap and a term list
+ * finds stale keys, and uids in the SpaceRepetitionMap
+ * returns a set of stale keys and a list of which uid the key belonged to
+ * @param {SpaceRepetitionMap} repetition
+ * @param {RawVocabulary[]|RawPhrase[]} termList
+ * @param {string} staleLabel
+ */
+export function getStaleSpaceRepKeys(repetition, termList, staleLabel) {
+  /** @type {{[key in keyof SpaceRepetitionMap["uid"]]:null}} */
+  const SpaceRepetitionMapKeys = {
+    d: null,
+    vC: null,
+    f: null,
+    pron: null,
+    tpPc: null,
+    tpAcc: null,
+    tpCAvg: null,
+  };
+  const SpaceRepKeys = new Set(Object.keys(SpaceRepetitionMapKeys));
+
+  /** @type {Set<string>} */
+  let OldSpaceRepKeys = new Set();
+  /** @type {{key:string, uid:string, english:string}[]} */
+  let staleInfoList = [];
+  Object.keys(repetition).forEach((srepUid) => {
+    Object.keys(repetition[srepUid]).forEach((key) => {
+      let staleInfo;
+      if (!SpaceRepKeys.has(key)) {
+        let term;
+        try {
+          term = getTerm(srepUid, termList);
+        } catch (err) {
+          term = { english: staleLabel };
+        }
+
+        staleInfo = { key, uid: srepUid, english: term.english };
+      }
+
+      if (staleInfo !== undefined) {
+        OldSpaceRepKeys.add(key);
+        staleInfoList = [...staleInfoList, staleInfo];
+      }
+    });
+  });
+
+  return { keys: OldSpaceRepKeys, list: staleInfoList };
 }
 
 /**
