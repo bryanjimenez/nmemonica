@@ -22,6 +22,18 @@ export function msgInnerTrim(term, len) {
 }
 
 /**
+ * Days since rawDateString
+ * @param {string} rawDateString Date.toJSON string
+ */
+export function daysSince(rawDateString) {
+  const [date] = rawDateString.split("T");
+  const dateThen = Date.parse(date);
+  const diffTime = Math.abs(Date.now() - dateThen);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays;
+}
+/**
  * Console friendly string representation of elapsed
  * @param {number} tpElapsed elapsed in ms
  */
@@ -42,14 +54,38 @@ export function spaceRepLog(logger, term, spaceRepMap) {
   if (spaceRepMap[term.uid] && spaceRepMap[term.uid].d) {
     const msg = msgInnerTrim(term.english, 30);
 
-    const [date] = spaceRepMap[term.uid].d.split("T");
-    const dateThen = Date.parse(date);
-    const diffTime = Math.abs(Date.now() - dateThen);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = daysSince(spaceRepMap[term.uid].d);
     const dayStr = " " + (diffDays - 1) + "d";
 
     const views = spaceRepMap[term.uid].vC;
     const viewStr = " " + views + "v";
+    const accuracy = spaceRepMap[term.uid].tpAcc;
+    const accStr =
+      accuracy !== undefined ? " " + (accuracy * 100).toFixed(0) + "%" : "";
+
+    logger(
+      "Space Rep [" + msg + "]" + dayStr + viewStr + accStr,
+      DebugLevel.DEBUG
+    );
+  }
+}
+
+/**
+ * UI logger, display timed play play count
+ * instead of regular view count
+ * @param {function} logger
+ * @param {RawVocabulary|RawPhrase} term
+ * @param {SpaceRepetitionMap} spaceRepMap
+ */
+export function timedPlayLog(logger, term, spaceRepMap) {
+  if (spaceRepMap[term.uid] && spaceRepMap[term.uid].d) {
+    const msg = msgInnerTrim(term.english, 30);
+
+    const diffDays = daysSince(spaceRepMap[term.uid].d);
+    const dayStr = " " + (diffDays - 1) + "d";
+
+    const views = spaceRepMap[term.uid].tpPc;
+    const viewStr = views !== undefined ? " " + views + "v" : "";
     const accuracy = spaceRepMap[term.uid].tpAcc;
     const accStr =
       accuracy !== undefined ? " " + (accuracy * 100).toFixed(0) + "%" : "";
@@ -58,7 +94,7 @@ export function spaceRepLog(logger, term, spaceRepMap) {
       correctAvg !== undefined ? " " + answerSeconds(correctAvg) + "s" : "";
 
     logger(
-      "SRep [" + msg + "]" + dayStr + viewStr + accStr + corAvgStr,
+      "Timed Play [" + msg + "]" + dayStr + viewStr + accStr + corAvgStr,
       DebugLevel.DEBUG
     );
   }

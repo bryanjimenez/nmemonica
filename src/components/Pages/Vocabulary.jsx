@@ -53,6 +53,7 @@ import {
   logify,
   msgInnerTrim,
   spaceRepLog,
+  timedPlayLog,
 } from "../../helper/consoleHelper";
 import {
   swipeEnd,
@@ -366,6 +367,26 @@ class Vocabulary extends Component {
         }
       }
 
+      // prevent updates when quick scrolling
+      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+        const vocabulary = getTerm(uid, this.props.vocab);
+
+        // don't increment reinforced terms
+        const shouldIncrement = uid !== prevState.reinforcedUID;
+        const { map, prevMap } = this.props.updateSpaceRepWord(
+          uid,
+          shouldIncrement
+        );
+
+        const prevDate = prevMap[uid] && prevMap[uid].d;
+        const repStats = { [uid]: { ...map[uid], d: prevDate } };
+        if (this.state.tpAnswered !== undefined) {
+          timedPlayLog(this.props.logger, vocabulary, repStats);
+        } else {
+          spaceRepLog(this.props.logger, vocabulary, repStats);
+        }
+      }
+
       if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
         // loop enabled, but not interrupted
 
@@ -384,22 +405,6 @@ class Vocabulary extends Component {
           tpElapsed: undefined,
         });
         this.beginLoop();
-      }
-
-      // prevent updates when quick scrolling
-      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const vocabulary = getTerm(uid, this.props.vocab);
-
-        // don't increment reinforced terms
-        const shouldIncrement = uid !== prevState.reinforcedUID;
-        const { map, prevMap } = this.props.updateSpaceRepWord(
-          uid,
-          shouldIncrement
-        );
-
-        const prevDate = prevMap[uid] && prevMap[uid].d;
-        const repStats = { [uid]: { ...map[uid], d: prevDate } };
-        spaceRepLog(this.props.logger, vocabulary, repStats);
       }
 
       this.setState({
@@ -1028,11 +1033,11 @@ class Vocabulary extends Component {
       tpElapsed = Math.abs(Date.now() - dateThen);
       const elapStr = " " + answerSeconds(tpElapsed) + "s";
 
-      this.props.logger("TimePlay [" + msg + "]" + elapStr, DebugLevel.DEBUG);
+      this.props.logger("Timed Play [" + msg + "]" + elapStr, DebugLevel.DEBUG);
     } else {
       // guessed too late
 
-      this.props.logger("TimePlay [" + msg + "] X-( ", DebugLevel.DEBUG);
+      this.props.logger("Timed Play [" + msg + "] X-( ", DebugLevel.DEBUG);
     }
 
     return { tpElapsed };
