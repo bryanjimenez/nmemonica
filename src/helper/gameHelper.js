@@ -256,12 +256,21 @@ export function getStaleSpaceRepKeys(repetition, termList, staleLabel) {
 }
 
 /**
- * Minimum time between actions to trigger a space repetition update
+ * Minimum time between actions to trigger a space repetition update.
+ * Prevents SpaceRepetition updates during quick scrolling.
  * @param {number} prevTime
- * @returns {boolean}
  */
 export function minimumTimeForSpaceRepUpdate(prevTime) {
   return ~~(Date.now() - prevTime) > 1500;
+}
+
+/**
+ * Minimum time required to continue playing TimedPlay.
+ * Prevents TimedPlay during quick scrolling.
+ * @param {number} prevTime
+ */
+export function minimumTimeForTimedPlay(prevTime) {
+  return ~~(Date.now() - prevTime) > 300;
 }
 
 /**

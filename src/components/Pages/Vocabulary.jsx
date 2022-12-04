@@ -46,6 +46,7 @@ import {
   pause,
   fadeOut,
   toggleFuriganaSettingHelper,
+  minimumTimeForTimedPlay,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import {
@@ -170,9 +171,9 @@ class Vocabulary extends Component {
   constructor(props) {
     super(props);
 
-    /** @type {AbortController[] | undefined} */
+    /** @type {AbortController[] | undefined} Array of TimedPlay audio and pauses timers*/
     this.loopAbortControllers;
-    /** @type {NodeJS.Timeout[] | undefined} */
+    /** @type {NodeJS.Timeout[] | undefined} Array of TimedPlay auto quit timers*/
     this.loopQuitTimer;
     this.loopQuitMs = 15000;
 
@@ -404,7 +405,10 @@ class Vocabulary extends Component {
           tpTimeStamp: undefined,
           tpElapsed: undefined,
         });
-        this.beginLoop();
+
+        if (minimumTimeForTimedPlay(prevState.lastNext)) {
+          this.beginLoop();
+        }
       }
 
       this.setState({
