@@ -537,16 +537,16 @@ export function toggleOptions(index, options) {
  * @param {string[]} [order]
  */
 export function getVerbFormsArray(rawVerb, order) {
-  const dictionaryForm = JapaneseVerb.parse(rawVerb);
+  const verb = {dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb)};
 
   const allAvailable = [
-    { name: "-masu", value: dictionaryForm.masuForm() },
-    { name: "-mashou", value: dictionaryForm.mashouForm() },
-    { name: "dictionary", value: dictionaryForm },
-    { name: "-nai", value: dictionaryForm.naiForm() },
-    { name: "-saseru", value: dictionaryForm.saseruForm() },
-    { name: "-te", value: dictionaryForm.teForm() },
-    { name: "-ta", value: dictionaryForm.taForm() },
+    { name: "-masu", value: verb.dictionary?.masuForm() },
+    { name: "-mashou", value: verb.dictionary?.mashouForm() },
+    { name: "dictionary", value: verb.dictionary },
+    { name: "-nai", value: verb.dictionary?.naiForm() },
+    { name: "-saseru", value: verb.dictionary?.saseruForm() },
+    { name: "-te", value: verb.dictionary?.teForm() },
+    { name: "-ta", value: verb.dictionary?.taForm() },
   ];
 
   let filtered;

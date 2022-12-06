@@ -77,7 +77,7 @@ export const DEFAULT_SETTINGS = {
     autoPlay: 0,
     autoVerbView: false,
     verbColSplit: 0,
-    verbFormsOrder: getVerbFormsArray({ japanese: "いる" }).map((f) => f.name),
+    verbFormsOrder: getVerbFormsArray().map((f) => f.name),
   },
   kanji: {
     filter: 0,
