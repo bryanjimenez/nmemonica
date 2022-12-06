@@ -65,7 +65,7 @@ export interface SpaceRepetitionMap {
     /** Pronunciation incorrect */ pron?: true,
 
     /** Timed play play-count */ tpPc?: number;
-    /** Timed play accuracy */ tpAcc?: number;
+    /** Timed play accuracy [0,1] */ tpAcc?: number;
     /** Timed play correct avg (ms) */ tpCAvg?: number;
   };
 }

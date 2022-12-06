@@ -49,10 +49,13 @@ export function answerSeconds(tpElapsed) {
  * @param {function} logger
  * @param {RawVocabulary|RawPhrase} term
  * @param {SpaceRepetitionMap} spaceRepMap
+ * @param {{frequency:boolean}} options
  */
-export function spaceRepLog(logger, term, spaceRepMap) {
+export function spaceRepLog(logger, term, spaceRepMap, options) {
   if (spaceRepMap[term.uid] && spaceRepMap[term.uid].d) {
     const msg = msgInnerTrim(term.english, 30);
+
+    const freqStr = options?.frequency === true ? " F[w]" : "";
 
     const diffDays = daysSince(spaceRepMap[term.uid].d);
     const dayStr = " " + (diffDays - 1) + "d";
@@ -64,7 +67,7 @@ export function spaceRepLog(logger, term, spaceRepMap) {
       accuracy !== undefined ? " " + (accuracy * 100).toFixed(0) + "%" : "";
 
     logger(
-      "Space Rep [" + msg + "]" + dayStr + viewStr + accStr,
+      "Space Rep [" + msg + "]" + freqStr + dayStr + viewStr + accStr,
       DebugLevel.DEBUG
     );
   }
@@ -76,10 +79,13 @@ export function spaceRepLog(logger, term, spaceRepMap) {
  * @param {function} logger
  * @param {RawVocabulary|RawPhrase} term
  * @param {SpaceRepetitionMap} spaceRepMap
+ * @param {{frequency: boolean }} options
  */
-export function timedPlayLog(logger, term, spaceRepMap) {
+export function timedPlayLog(logger, term, spaceRepMap, options) {
   if (spaceRepMap[term.uid] && spaceRepMap[term.uid].d) {
     const msg = msgInnerTrim(term.english, 30);
+
+    const freqStr = options?.frequency === true ? " F[w]" : "";
 
     const diffDays = daysSince(spaceRepMap[term.uid].d);
     const dayStr = " " + (diffDays - 1) + "d";
@@ -94,7 +100,14 @@ export function timedPlayLog(logger, term, spaceRepMap) {
       correctAvg !== undefined ? " " + answerSeconds(correctAvg) + "s" : "";
 
     logger(
-      "Timed Play [" + msg + "]" + dayStr + viewStr + accStr + corAvgStr,
+      "Timed Play [" +
+        msg +
+        "]" +
+        freqStr +
+        dayStr +
+        viewStr +
+        accStr +
+        corAvgStr,
       DebugLevel.DEBUG
     );
   }

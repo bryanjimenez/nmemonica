@@ -5,6 +5,7 @@ import { AutoPlaySetting, TermFilterBy } from "../actions/settingsAct";
 import { shuffleArray } from "./arrayHelper";
 import { audioPronunciation, JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
+import { daysSince } from "./consoleHelper";
 
 /**
  * @typedef {import("../typings/raw").RawJapanese} RawJapanese
@@ -275,55 +276,26 @@ export function minimumTimeForTimedPlay(prevTime) {
 
 /**
  * space repetition order
- * terms not yet viewed
- * date last viewed
- * count of views
+ * [timedPlayFailed, timedPlayMispronounced, newTerms, notTimedPlayed, timedPlayedCorrect]
  * @param {RawVocabulary[]} terms
  * @param {SpaceRepetitionMap} spaceRepObj
  * @returns an array containing the indexes of terms in space repetition order
  */
 export function spaceRepOrder(terms, spaceRepObj) {
-  /**
-   * @type {{
-   * date: string,
-   * count: number,
-   * uid: string,
-   * index: number
-   * }[]}
-   */
-  let notTimedTemp = [];
-  /**
-   * @type {{
-   * accuracy: number,
-   * correctAvg: number,
-   * uid: string,
-   * index: number
-   * }[]}
-   */
-  let timedTemp = [];
-  /**
-   * @type {{
-   * accuracy: number,
-   * correctAvg: number,
-   * uid: string,
-   * index: number
-   * }[]}
-   */
-  let misPronTemp = [];
-  /**
-   * @type {{
-   * accuracy: number,
-   * correctAvg: number,
-   * uid: string,
-   * index: number
-   * }[]}
-   */
-  let failedTemp = [];
+  /** @typedef {{staleness: number, correctness: number, uid: string, index: number}} timedPlayedSortable */
+  /** @typedef {{date: string, views: number, uid: string, index: number}} notTimedPlayedSortable */
 
-  /**
-   * @type {number[]}
-   */
+  /** @type {timedPlayedSortable[]} */
+  let failedTemp = [];
+  /** @type {timedPlayedSortable[]} */
+  let misPronTemp = [];
+  /** @type {number[]} */
   let notPlayed = [];
+  /** @type {notTimedPlayedSortable[]} */
+  let notTimedTemp = [];
+  /** @type {timedPlayedSortable[]} */
+  let timedTemp = [];
+
   for (const tIdx in terms) {
     const tUid = terms[tIdx].uid;
     const termRep = spaceRepObj[tUid];
@@ -334,37 +306,58 @@ export function spaceRepOrder(terms, spaceRepObj) {
           ...notTimedTemp,
           {
             date: termRep.d,
-            count: termRep.vC,
+            views: termRep.vC,
             uid: tUid,
             index: Number(tIdx),
           },
         ];
       } else if (termRep.pron === true) {
+        const staleness = getStalenessScore(
+          termRep.d,
+          termRep.tpAcc,
+          termRep.vC
+        );
+        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
+
         misPronTemp = [
           ...misPronTemp,
           {
-            accuracy: termRep.tpAcc,
-            correctAvg: termRep.tpCAvg || Number.MAX_SAFE_INTEGER,
+            staleness,
+            correctness,
             uid: tUid,
             index: Number(tIdx),
           },
         ];
       } else if (termRep.tpAcc >= 0.65) {
+        const staleness = getStalenessScore(
+          termRep.d,
+          termRep.tpAcc,
+          termRep.vC
+        );
+        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
+
         timedTemp = [
           ...timedTemp,
           {
-            accuracy: termRep.tpAcc,
-            correctAvg: termRep.tpCAvg || Number.MAX_SAFE_INTEGER,
+            staleness,
+            correctness,
             uid: tUid,
             index: Number(tIdx),
           },
         ];
       } else if (termRep.tpAcc < 0.65) {
+        const staleness = getStalenessScore(
+          termRep.d,
+          termRep.tpAcc,
+          termRep.vC
+        );
+        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
+
         failedTemp = [
           ...failedTemp,
           {
-            accuracy: termRep.tpAcc,
-            correctAvg: termRep.tpCAvg || Number.MAX_SAFE_INTEGER,
+            staleness,
+            correctness,
             uid: tUid,
             index: Number(tIdx),
           },
@@ -376,14 +369,14 @@ export function spaceRepOrder(terms, spaceRepObj) {
   }
 
   // prettier-ignore
-  const failedSort = orderBy(failedTemp, ["accuracy", "correctAvg", "uid"], ["asc", "desc", "asc"]);
+  const failedSort = orderBy(failedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
   // prettier-ignore
-  const misPronSort = orderBy(misPronTemp, ["accuracy", "correctAvg", "uid"], ["asc", "desc", "asc"]);
+  const misPronSort = orderBy(misPronTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
 
   // prettier-ignore
-  const notTimedSort = orderBy(notTimedTemp, ["date", "count", "uid"], ["asc", "asc", "asc"]);
+  const notTimedSort = orderBy(notTimedTemp, ["date", "views", "uid"], ["asc", "asc", "asc"]);
   // prettier-ignore
-  const timedSort = orderBy(timedTemp, ["accuracy", "correctAvg", "uid"], ["asc", "desc", "asc"]);
+  const timedSort = orderBy(timedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
 
   // console.log("failed");
   // console.log(JSON.stringify(failedOrdered.map((p) => ({[terms[p.index].english]:p.accuracy, u:terms[p.index].uid, c:p.correctAvg}))));
@@ -403,6 +396,34 @@ export function spaceRepOrder(terms, spaceRepObj) {
   return [...failed, ...misPron, ...notPlayed, ...notTimed, ...timed];
 }
 
+/**
+ * Staleness score based on last viewed date and accuracy
+ * @param {string} date Last viewed
+ * @param {number} accuracy Correct/Times played
+ * @param {number} [views] Times viewed
+ */
+export function getStalenessScore(date, accuracy, views = 1) {
+  let staleness = Number.MAX_SAFE_INTEGER;
+  if (date !== undefined && accuracy > 0 && views > 0) {
+    staleness = daysSince(date) * (1 / accuracy) * (1 / views);
+  }
+
+  return staleness;
+}
+
+/**
+ * Correctness score based on times played and average answer time.
+ * @param {number} [count] Times played
+ * @param {number} [average] Answer (ms) average
+ */
+export function getCorrectnessScore(count = 0, average = 0) {
+  let correctness = Number.MIN_SAFE_INTEGER;
+  if (count > 0 && average > 0) {
+    correctness = count * (1 / average);
+  }
+
+  return correctness;
+}
 /**
  *
  * @param {RawVocabulary[]} terms

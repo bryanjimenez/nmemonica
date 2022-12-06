@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
+import partition from "lodash/partition";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import {
   clearPreviousTerm,
@@ -382,9 +383,13 @@ class Vocabulary extends Component {
         const prevDate = prevMap[uid] && prevMap[uid].d;
         const repStats = { [uid]: { ...map[uid], d: prevDate } };
         if (this.state.tpAnswered !== undefined) {
-          timedPlayLog(this.props.logger, vocabulary, repStats);
+          timedPlayLog(this.props.logger, vocabulary, repStats, {
+            frequency: prevState.reinforcedUID !== undefined,
+          });
         } else {
-          spaceRepLog(this.props.logger, vocabulary, repStats);
+          spaceRepLog(this.props.logger, vocabulary, repStats, {
+            frequency: prevState.reinforcedUID !== undefined,
+          });
         }
       }
 
@@ -710,7 +715,7 @@ class Vocabulary extends Component {
   }
 
   setOrder() {
-    const filteredVocab = termFilterByType(
+    let filteredVocab = termFilterByType(
       this.props.filterType,
       this.props.vocab,
       this.props.frequency,
@@ -734,7 +739,21 @@ class Vocabulary extends Component {
     } else if (this.props.filterType === TermFilterBy.SPACE_REP) {
       // repetition order
       this.props.logger("Space Rep", DebugLevel.DEBUG);
-      newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
+
+      if (this.props.reinforce === true) {
+        // if reinforce, place reinforced/frequency terms
+        // at the end
+        const [freqTerms, nonFreqTerms] = partition(filteredVocab, (o) =>
+          this.props.frequency.includes(o.uid)
+        );
+        filteredVocab = [...nonFreqTerms, ...freqTerms];
+
+        const nonFreqOrder = spaceRepOrder(nonFreqTerms, this.props.repetition);
+        const freqOrder = freqTerms.map((f, i) => nonFreqTerms.length + i);
+        newOrder = [...nonFreqOrder, ...freqOrder];
+      } else {
+        newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
+      }
     } else {
       // alphabetized
       this.props.logger("Alphabetic", DebugLevel.DEBUG);
@@ -1372,11 +1391,16 @@ class Vocabulary extends Component {
                     onClick={() => {
                       this.abortLoop();
                       this.loopQuitTimer = undefined;
-                      this.setState((state) => ({
-                        loop: /** @type {VocabularyState["loop"]} */ (
-                          state.loop < 3 ? state.loop + 1 : 0
-                        ),
-                      }));
+                      this.setState((state) => {
+                        const zero = state.loop === 3;
+
+                        return {
+                          loop: /** @type {VocabularyState["loop"]} */ (
+                            !zero ? state.loop + 1 : 0
+                          ),
+                          tpAnswered: !zero ? state.tpAnswered : undefined,
+                        };
+                      });
                     }}
                   />
                 </div>
