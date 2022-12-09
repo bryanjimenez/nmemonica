@@ -36,6 +36,7 @@ import {
   VERB_FORM_VIEW,
   TOGGLE_KANJI_ACTIVE_GROUP,
   SET_VERB_FORM_ORDER,
+  SET_MOTION_THRESHOLD,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS = {
     debug: 0,
     console: [],
     touchSwipe: false,
+    motionThreshold: 0,
   },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   phrases: {
@@ -135,6 +137,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         global: {
           ...state.global,
           touchSwipe: !state.global.touchSwipe,
+        },
+      };
+    case SET_MOTION_THRESHOLD:
+      return {
+        ...state,
+        global: {
+          ...state.global,
+          motionThreshold: action.value,
         },
       };
     case SET_KANA_BTN_N:

@@ -48,6 +48,8 @@ import {
   fadeOut,
   toggleFuriganaSettingHelper,
   minimumTimeForTimedPlay,
+  motionThresholdCondition,
+  getDeviceMotionEventPermission,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import {
@@ -157,6 +159,8 @@ import { MinimalUI } from "../Form/MinimalUI";
  * verbForm: string,
  * pushedPlay: typeof pushedPlay,
  * touchSwipe: boolean,
+ * motionThreshold: number,
+ * motionThresholdCondition: typeof motionThresholdCondition,
  * toggleFurigana: import("../../actions/settingsAct").toggleFuriganaYield,
  * debugLevel: typeof DebugLevel[keyof DebugLevel]
  * }} VocabularyProps
@@ -483,6 +487,11 @@ class Vocabulary extends Component {
         }
 
         break;
+      case "DeviceMotionEvent":
+        {
+          this.props.logger("Error: " + error.message, DebugLevel.ERROR);
+        }
+        break;
     }
 
     let errorSkipIndex;
@@ -529,6 +538,37 @@ class Vocabulary extends Component {
     const ac3 = new AbortController();
     const ac4 = new AbortController();
     const ac5 = new AbortController();
+
+    const onShakeEventHandler = () => {
+      if (this.state.tpTimeStamp !== undefined) {
+        this.abortLoop();
+        this.setState({
+          loop: 0,
+          tpTimeStamp: undefined,
+          tpAnimation: undefined,
+        });
+      }
+    };
+
+    const motionListener = (/** @type {DeviceMotionEvent} */ event) => {
+      try {
+        motionThresholdCondition(
+          event,
+          this.props.motionThreshold,
+          onShakeEventHandler
+        );
+      } catch (error) {
+        if (error instanceof Error) {
+          this.componentDidCatch(error);
+        }
+      }
+    };
+
+    if (this.props.motionThreshold > 0) {
+      getDeviceMotionEventPermission(() => {
+        window.addEventListener("devicemotion", motionListener);
+      }, this.componentDidCatch);
+    }
 
     this.loopAbortControllers = [ac1, ac2, ac3, ac4, ac5];
     this.forceUpdate();
@@ -597,6 +637,12 @@ class Vocabulary extends Component {
       .then(() => pause(100, ac5))
       .catch(() => {
         // aborted
+      })
+      .then(() => {
+        // finally
+        if (this.props.motionThreshold > 0) {
+          window.removeEventListener("devicemotion", motionListener);
+        }
       });
   }
 
@@ -1584,6 +1630,7 @@ const mapStateToProps = (state) => {
     repetition: state.settings.vocabulary.repetition,
     verbForm: state.vocabulary.verbForm,
     touchSwipe: state.settings.global.touchSwipe,
+    motionThreshold: state.settings.global.motionThreshold,
     debugLevel: state.settings.global.debug,
   };
 };
@@ -1621,6 +1668,7 @@ Vocabulary.propTypes = {
   verbForm: PropTypes.string,
   pushedPlay: PropTypes.func,
   touchSwipe: PropTypes.bool,
+  motionThreshold: PropTypes.number,
   toggleFurigana: PropTypes.func,
   debugLevel: PropTypes.number,
 };

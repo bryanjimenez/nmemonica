@@ -35,6 +35,7 @@ export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
 export const DEBUG = "toggle_debug";
 export const TOGGLE_SWIPE = "toggle_swipe";
+export const SET_MOTION_THRESHOLD = "set_motion_threshold";
 export const SET_VERB_FORM_ORDER = "set_verb_form_order";
 
 /**
@@ -1327,6 +1328,38 @@ export function toggleSwipe() {
     } else {
       dispatch({
         type: TOGGLE_SWIPE,
+      });
+    }
+  };
+}
+
+/**
+ * @param {number} value Motion threshold value
+ * @returns {ActCreator}
+ */
+export function setMotionThreshold(value) {
+  return (dispatch, getState) => {
+    const { user } = getState().login;
+
+    const path = "/global/";
+    const attr = "motionThreshold";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr, value);
+
+    if (user) {
+      firebaseAttrUpdate(
+        time,
+        dispatch,
+        getState,
+        user.uid,
+        path,
+        attr,
+        SET_MOTION_THRESHOLD
+      );
+    } else {
+      dispatch({
+        type: SET_MOTION_THRESHOLD,
+        value,
       });
     }
   };

@@ -17,6 +17,7 @@ import {
   toggleSwipe,
   toggleActiveGrp,
   DebugLevel,
+  setMotionThreshold,
 } from "../../actions/settingsAct";
 import { NotReady } from "../Form/NotReady";
 import { SetTermGList } from "./SetTermGList";
@@ -29,7 +30,12 @@ import {
   getMemoryStorageStatus,
   setPersistentStorage,
 } from "../../actions/storageAct";
-import { labelOptions, getStaleSpaceRepKeys } from "../../helper/gameHelper";
+import {
+  labelOptions,
+  getStaleSpaceRepKeys,
+  motionThresholdCondition,
+  getDeviceMotionEventPermission,
+} from "../../helper/gameHelper";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import SettingsVocab from "../Form/SettingsVocab";
 import SettingsPhrase from "../Form/SettingsPhrase";
@@ -67,6 +73,7 @@ const SettingsMeta = {
  * jsVersion: string,
  * bundleVersion: string,
  * hardRefreshUnavailable: boolean,
+ * shakeIntensity: number,
  * }} SettingsState
  */
 
@@ -76,6 +83,7 @@ const SettingsMeta = {
  * memory: MemoryDataObject,
  * debug: number,
  * touchSwipe: boolean,
+ * motionThreshold: number,
  * phrases: RawVocabulary[],
  * vocabulary: RawVocabulary[],
  * wideMode: boolean,
@@ -94,6 +102,7 @@ const SettingsMeta = {
  * getMemoryStorageStatus: typeof getMemoryStorageStatus,
  * toggleDebug: typeof toggleDebug,
  * toggleSwipe: typeof toggleSwipe,
+ * setMotionThreshold: typeof setMotionThreshold,
  * getPhrases: typeof getPhrases,
  * getVocabulary: typeof getVocabulary,
  * setHiraganaBtnN: typeof setHiraganaBtnN,
@@ -127,6 +136,7 @@ class Settings extends Component {
       bundleVersion: "",
       hardRefreshUnavailable: false,
       errorMsgs: [],
+      shakeIntensity: 0,
     };
 
     /** @type {SettingsProps} */
@@ -147,6 +157,7 @@ class Settings extends Component {
     }
 
     this.swMessageEventListener = this.swMessageEventListener.bind(this);
+    this.motionListener = this.motionListener.bind(this);
   }
 
   componentDidMount() {
@@ -160,6 +171,28 @@ class Settings extends Component {
     navigator.serviceWorker.controller?.postMessage({
       type: "SW_VERSION",
     });
+
+    if (this.props.motionThreshold > 0) {
+      getDeviceMotionEventPermission(() => {
+        window.addEventListener("devicemotion", this.motionListener);
+      }, this.componentDidCatch);
+    }
+  }
+
+  /**
+   * @param {SettingsProps} prevProps
+   */
+  componentDidUpdate(prevProps) {
+    if (this.props.motionThreshold > 0 && prevProps.motionThreshold === 0) {
+      getDeviceMotionEventPermission(() => {
+        window.addEventListener("devicemotion", this.motionListener);
+      }, this.componentDidCatch);
+    } else if (
+      this.props.motionThreshold === 0 &&
+      prevProps.motionThreshold > 0
+    ) {
+      window.removeEventListener("devicemotion", this.motionListener);
+    }
   }
 
   componentWillUnmount() {
@@ -167,6 +200,10 @@ class Settings extends Component {
       "message",
       this.swMessageEventListener
     );
+
+    if (this.props.motionThreshold > 0) {
+      window.removeEventListener("devicemotion", this.motionListener);
+    }
   }
 
   /**
@@ -228,6 +265,12 @@ class Settings extends Component {
         }
 
         break;
+      case "DeviceMotionEvent":
+        {
+          this.props.logger("Error: " + error.message, DebugLevel.ERROR);
+          this.props.setMotionThreshold(0);
+        }
+        break;
     }
   }
 
@@ -256,6 +299,25 @@ class Settings extends Component {
         jsVersion,
         bundleVersion,
       });
+    }
+  }
+
+  /**
+   * Handler for when device is shaken
+   * @param {DeviceMotionEvent} event
+   */
+  motionListener(event) {
+    try {
+      motionThresholdCondition(event, this.props.motionThreshold, (value) => {
+        this.setState({ shakeIntensity: Number(value.toFixed(2)) });
+        setTimeout(() => {
+          this.setState({ shakeIntensity: undefined });
+        }, 300);
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        this.componentDidCatch(error);
+      }
     }
   }
 
@@ -401,19 +463,91 @@ class Settings extends Component {
               <h2>Global</h2>
               <h2></h2>
             </div>
-            <div className="setting-block">
-              <SettingsSwitch
-                active={this.props.darkMode}
-                action={this.props.toggleDarkMode}
-                statusText={(this.props.darkMode ? "Dark" : "Light") + " Mode"}
-              />
-            </div>
-            <div className="setting-block">
-              <SettingsSwitch
-                active={this.props.touchSwipe}
-                action={this.props.toggleSwipe}
-                statusText={"Touch Swipes"}
-              />
+            <div>
+              <div className="d-flex flex-row justify-content-between">
+                <div className="column-1 d-flex flex-column justify-content-end">
+                  {this.props.motionThreshold > 0 && (
+                    <div className="w-25 d-flex flex-row justify-content-between">
+                      <div
+                        className="clickable px-2 pb-2"
+                        onClick={() => {
+                          if (this.props.motionThreshold - 0.5 <= 0) {
+                            this.props.setMotionThreshold(0);
+                          } else {
+                            this.props.setMotionThreshold(
+                              this.props.motionThreshold - 0.5
+                            );
+                          }
+                        }}
+                      >
+                        -
+                      </div>
+                      <div
+                        className={classNames({
+                          "px-2": true,
+                          "correct-color":
+                            this.state.shakeIntensity >
+                              this.props.motionThreshold &&
+                            this.state.shakeIntensity <=
+                              this.props.motionThreshold + 1,
+                          "question-color":
+                            this.state.shakeIntensity >
+                              this.props.motionThreshold + 1 &&
+                            this.state.shakeIntensity <=
+                              this.props.motionThreshold + 2,
+                          "incorrect-color":
+                            this.state.shakeIntensity >
+                            this.props.motionThreshold + 2,
+                        })}
+                      >
+                        {this.state.shakeIntensity ??
+                          this.props.motionThreshold}
+                      </div>
+                      <div
+                        className="clickable px-2"
+                        onClick={() => {
+                          this.props.setMotionThreshold(
+                            this.props.motionThreshold + 0.5
+                          );
+                        }}
+                      >
+                        +
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="column-2">
+                  <div className="setting-block">
+                    <SettingsSwitch
+                      active={this.props.darkMode}
+                      action={this.props.toggleDarkMode}
+                      statusText={
+                        (this.props.darkMode ? "Dark" : "Light") + " Mode"
+                      }
+                    />
+                  </div>
+                  <div className="setting-block">
+                    <SettingsSwitch
+                      active={this.props.touchSwipe}
+                      action={this.props.toggleSwipe}
+                      statusText={"Touch Swipes"}
+                    />
+                  </div>
+                  <div className="setting-block">
+                    <SettingsSwitch
+                      active={this.props.motionThreshold > 0}
+                      action={() => {
+                        if (this.props.motionThreshold === 0) {
+                          this.props.setMotionThreshold(6);
+                        } else {
+                          this.props.setMotionThreshold(0);
+                        }
+                      }}
+                      statusText={"Accelerometer"}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className={pageClassName}>
@@ -436,34 +570,32 @@ class Settings extends Component {
               {this.collapseExpandToggler("sectionKanji")}
             </div>
             {this.state.sectionKanji && (
-              <div className="outer">
-                <div className="d-flex flex-row justify-content-between">
-                  <div className="column-1">
-                    <h4>
-                      {labelOptions(this.props.kanjiFilter, [
-                        "Kanji Group",
-                        "Frequency List",
-                        "Space Repetition",
-                      ])}
-                    </h4>
-                    <div className="mb-2">
-                      <SettingsSwitch
-                        active={false}
-                        action={() => {}}
-                        color="default"
-                        statusText={"Filter by"}
-                      />
-                    </div>
-                    <SetTermGList
-                      vocabGroups={this.props.kanjiGroups}
-                      vocabActive={this.props.kanjiActive}
-                      toggleTermActiveGrp={(grp) =>
-                        this.props.toggleActiveGrp("kanji", grp)
-                      }
+              <div className="d-flex flex-row justify-content-between">
+                <div className="column-1">
+                  <h4>
+                    {labelOptions(this.props.kanjiFilter, [
+                      "Kanji Group",
+                      "Frequency List",
+                      "Space Repetition",
+                    ])}
+                  </h4>
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={false}
+                      action={() => {}}
+                      color="default"
+                      statusText={"Filter by"}
                     />
                   </div>
-                  <div className="column-2 setting-block"></div>
+                  <SetTermGList
+                    vocabGroups={this.props.kanjiGroups}
+                    vocabActive={this.props.kanjiActive}
+                    toggleTermActiveGrp={(grp) =>
+                      this.props.toggleActiveGrp("kanji", grp)
+                    }
+                  />
                 </div>
+                <div className="column-2"></div>
               </div>
             )}
           </div>
@@ -538,112 +670,110 @@ class Settings extends Component {
             <div className="d-flex justify-content-between">
               <h2>Application</h2>
             </div>
-            <div className="outer">
-              <div className="d-flex flex-row justify-content-between">
-                <div className="column-1">
-                  <div className="setting-block mb-2 mt-2">
-                    <div
-                      className="d-flex flex-row justify-content-between clickable"
-                      onClick={() => {
-                        this.setState({
-                          swVersion: "",
-                          jsVersion: "",
-                          bundleVersion: "",
+            <div className="d-flex flex-row justify-content-between">
+              <div className="column-1">
+                <div className="setting-block mb-2 mt-2">
+                  <div
+                    className="d-flex flex-row justify-content-between clickable"
+                    onClick={() => {
+                      this.setState({
+                        swVersion: "",
+                        jsVersion: "",
+                        bundleVersion: "",
+                      });
+                      setTimeout(() => {
+                        navigator.serviceWorker.controller?.postMessage({
+                          type: "SW_VERSION",
                         });
-                        setTimeout(() => {
-                          navigator.serviceWorker.controller?.postMessage({
-                            type: "SW_VERSION",
-                          });
-                        }, 1000);
-                      }}
-                    >
-                      <div className="pe-2">
-                        <div>{"swVersion:"}</div>
-                        <div>{"jsVersion:"}</div>
-                        <div>{"bundleVersion:"}</div>
-                      </div>
-                      <div>
-                        <div>{this.state.swVersion}</div>
-                        <div>{this.state.jsVersion}</div>
-                        <div>{this.state.bundleVersion}</div>
-                      </div>
+                      }, 1000);
+                    }}
+                  >
+                    <div className="pe-2">
+                      <div>{"swVersion:"}</div>
+                      <div>{"jsVersion:"}</div>
+                      <div>{"bundleVersion:"}</div>
+                    </div>
+                    <div>
+                      <div>{this.state.swVersion}</div>
+                      <div>{this.state.jsVersion}</div>
+                      <div>{this.state.bundleVersion}</div>
                     </div>
                   </div>
                 </div>
-                <div className="column-2">
-                  <div className="setting-block mb-2">
-                    <SettingsSwitch
-                      active={this.props.debug > DebugLevel.OFF}
-                      action={this.props.toggleDebug}
-                      color="default"
-                      statusText={labelOptions(this.props.debug, [
-                        "Debug",
-                        "Debug Error",
-                        "Debug Warn",
-                        "Debug",
-                      ])}
-                    />
-                  </div>
+              </div>
+              <div className="column-2">
+                <div className="setting-block mb-2">
+                  <SettingsSwitch
+                    active={this.props.debug > DebugLevel.OFF}
+                    action={this.props.toggleDebug}
+                    color="default"
+                    statusText={labelOptions(this.props.debug, [
+                      "Debug",
+                      "Debug Error",
+                      "Debug Warn",
+                      "Debug",
+                    ])}
+                  />
+                </div>
+                <div
+                  className={classNames({
+                    "d-flex justify-content-end mb-2": true,
+                    "disabled-color": this.state.hardRefreshUnavailable,
+                  })}
+                >
+                  <p id="hard-refresh" className="text-right">
+                    Hard Refresh
+                  </p>
                   <div
                     className={classNames({
-                      "d-flex justify-content-end mb-2": true,
-                      "disabled-color": this.state.hardRefreshUnavailable,
+                      "spin-a-bit": this.state.spin,
                     })}
+                    style={{ height: "24px" }}
+                    aria-labelledby="hard-refresh"
+                    onClick={() => {
+                      this.setState({
+                        spin: true,
+                        hardRefreshUnavailable: false,
+                      });
+
+                      setTimeout(() => {
+                        if (this.state.spin) {
+                          this.setState({
+                            spin: false,
+                            hardRefreshUnavailable: true,
+                          });
+                        }
+                      }, 3000);
+
+                      navigator.serviceWorker.controller?.postMessage({
+                        type: "DO_HARD_REFRESH",
+                      });
+                    }}
                   >
-                    <p id="hard-refresh" className="text-right">
-                      Hard Refresh
-                    </p>
-                    <div
-                      className={classNames({
-                        "spin-a-bit": this.state.spin,
-                      })}
-                      style={{ height: "24px" }}
-                      aria-labelledby="hard-refresh"
-                      onClick={() => {
-                        this.setState({
-                          spin: true,
-                          hardRefreshUnavailable: false,
-                        });
-
-                        setTimeout(() => {
-                          if (this.state.spin) {
-                            this.setState({
-                              spin: false,
-                              hardRefreshUnavailable: true,
-                            });
-                          }
-                        }, 3000);
-
-                        navigator.serviceWorker.controller?.postMessage({
-                          type: "DO_HARD_REFRESH",
-                        });
-                      }}
-                    >
-                      <SyncIcon
-                        className="clickable"
-                        size={24}
-                        aria-label="Hard Refresh"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="setting-block mb-2">
-                    <SettingsSwitch
-                      active={this.props.memory.persistent}
-                      action={this.props.setPersistentStorage}
-                      disabled={this.props.memory.persistent}
-                      color="default"
-                      statusText={
-                        this.props.memory.persistent
-                          ? "Persistent " +
-                            ~~(this.props.memory.usage / 1024 / 1024) +
-                            "/" +
-                            ~~(this.props.memory.quota / 1024 / 1024) +
-                            "MB"
-                          : "Persistent off"
-                      }
+                    <SyncIcon
+                      className="clickable"
+                      size={24}
+                      aria-label="Hard Refresh"
                     />
                   </div>
+                </div>
+
+                <div className="setting-block mb-2">
+                  <SettingsSwitch
+                    active={this.props.memory.persistent}
+                    action={this.props.setPersistentStorage}
+                    disabled={this.props.memory.persistent}
+                    color="default"
+                    statusText={
+                      this.props.memory.persistent
+                        ? "Persistent " +
+                          ~~(this.props.memory.usage / 1024 / 1024) +
+                          "/" +
+                          ~~(this.props.memory.quota / 1024 / 1024) +
+                          "MB"
+                        : "Persistent off"
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -685,6 +815,7 @@ const mapStateToProps = (state) => {
   return {
     darkMode: state.settings.global.darkMode,
     touchSwipe: state.settings.global.touchSwipe,
+    motionThreshold: state.settings.global.motionThreshold,
 
     phrases: state.phrases.value,
     pRepetition: state.settings.phrases.repetition,
@@ -721,6 +852,8 @@ Settings.propTypes = {
   toggleDebug: PropTypes.func,
   touchSwipe: PropTypes.bool,
   toggleSwipe: PropTypes.func,
+  motionThreshold: PropTypes.number,
+  setMotionThreshold: PropTypes.func,
 
   // phrases
   getPhrases: PropTypes.func,
@@ -778,6 +911,7 @@ export default connect(mapStateToProps, {
   getMemoryStorageStatus,
   toggleDebug,
   toggleSwipe,
+  setMotionThreshold,
   logger,
 })(Settings);
 

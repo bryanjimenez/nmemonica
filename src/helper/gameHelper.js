@@ -1028,3 +1028,50 @@ export function fadeOut(audio) {
     const i = setInterval(fade, 20);
   });
 }
+
+/**
+ * Triggers eventHandler if threshold condition is met
+ * @param {DeviceMotionEvent} event
+ * @param {number} threshold
+ * @param {(value:number)=>void} eventHandler
+ */
+export function motionThresholdCondition(event, threshold, eventHandler) {
+  // const x = event.acceleration.x;
+  const y = event.acceleration?.y;
+  const z = event.acceleration?.z;
+  if (y === undefined || y === null || z === undefined || z === null) {
+    // @ts-expect-error Error.cause
+    throw new Error("Device does not support DeviceMotionEvent", {
+      cause: { code: "DeviceMotionEvent" },
+    });
+  } else {
+    const yz = Math.sqrt(y * y + z * z);
+    // const xyz = Math.sqrt(x * x + y * y + z * z);
+
+    if (yz > threshold && typeof eventHandler === "function") {
+      eventHandler(yz);
+    }
+  }
+}
+
+/**
+ * If required request permission for DeviceMotionEvent
+ * @param {function} onGranted
+ * @param {function} onError
+ */
+export function getDeviceMotionEventPermission(onGranted, onError) {
+  // @ts-expect-error DeviceMotionEvent.requestPermission
+  if (typeof DeviceMotionEvent.requestPermission === "function") {
+    // @ts-expect-error DeviceMotionEvent.requestPermission
+    DeviceMotionEvent.requestPermission()
+      .then((/** @type {"default"|"denied"|"granted"}*/ permissionState) => {
+        if (permissionState === "granted") {
+          onGranted();
+        }
+      })
+      .catch(onError);
+  } else {
+    // handle regular non iOS 13+ devices
+    onGranted();
+  }
+}
