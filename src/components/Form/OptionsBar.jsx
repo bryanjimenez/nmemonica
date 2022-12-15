@@ -334,6 +334,7 @@ FrequencyTermIcon.propTypes = {
  * onPronunciation?: function,
  * onIncorrect?: function,
  * onReset?: function,
+ * prevMissPronu: boolean,
  * }} TimePlayVerifyBtnsProps
  * @param {TimePlayVerifyBtnsProps} props
  */
@@ -376,7 +377,9 @@ export function TimePlayVerifyBtns(props) {
       >
         <span
           className={classNames({
-            "border-bottom": props.hover === "pronunciation",
+            "border-bottom":
+              props.hover === "pronunciation" ||
+              (props.hover !== "reset" && props.prevMissPronu === true),
           })}
         >
           {"P"}
@@ -413,4 +416,5 @@ TimePlayVerifyBtns.propTypes = {
   onIncorrect: PropTypes.func,
   onPronunciation: PropTypes.func,
   onReset: PropTypes.func,
+  prevMissPronu: PropTypes.bool,
 };

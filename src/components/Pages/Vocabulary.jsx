@@ -358,7 +358,15 @@ class Vocabulary extends Component {
 
       if (this.state.loop > 0 && this.state.tpAnswered !== undefined) {
         if (this.state.tpBtn === "reset") {
-          // don't grade ... skip
+          if (this.props.repetition[uid].pron === true) {
+            // reset incorrect pronunciation
+            if (this.state.tpElapsed !== undefined) {
+              this.props.setWordTPCorrect(uid, this.state.tpElapsed, {
+                pronunciation: null,
+              });
+            }
+          }
+          // else don't grade ... skip
         } else {
           if (this.state.tpAnswered === true) {
             if (this.state.tpElapsed !== undefined) {
@@ -1466,14 +1474,22 @@ class Vocabulary extends Component {
                 <TimePlayVerifyBtns
                   visible={this.state.tpAnswered !== undefined}
                   hover={this.state.tpBtn}
+                  prevMissPronu={this.props.repetition[uid]?.pron === true}
                   onPronunciation={() => {
-                    this.setState((state) => ({
-                      tpAnswered: false,
-                      tpBtn:
-                        state.tpBtn === "pronunciation"
-                          ? undefined
-                          : "pronunciation",
-                    }));
+                    if (this.props.repetition[uid].pron === true) {
+                      this.setState((state) => ({
+                        tpAnswered: false,
+                        tpBtn: state.tpBtn === "reset" ? undefined : "reset",
+                      }));
+                    } else {
+                      this.setState((state) => ({
+                        tpAnswered: false,
+                        tpBtn:
+                          state.tpBtn === "pronunciation"
+                            ? undefined
+                            : "pronunciation",
+                      }));
+                    }
                   }}
                   onIncorrect={() => {
                     this.setState((state) => ({

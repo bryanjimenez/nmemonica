@@ -804,12 +804,13 @@ export function toggleFurigana(uid) {
 
 /**
  * Sets term timed play average stats (correct)
- * @typedef {(uid:string, tpElapsed: number) => updateSpaceRepTermYield} setWordTPCorrectYield
+ * @typedef {(uid:string, tpElapsed: number, options?: {pronunciation?: null}) => updateSpaceRepTermYield} setWordTPCorrectYield
  * @param {string} uid
  * @param {number} tpElapsed
+ * @param {{pronunciation?: null}} options reset incorrect types
  * @returns {(dispatch: function, getState: function) => updateSpaceRepTermYield}
  */
-export function setWordTPCorrect(uid, tpElapsed) {
+export function setWordTPCorrect(uid, tpElapsed, { pronunciation } = {}) {
   return (dispatch, getState) => {
     const aType = ADD_SPACE_REP_WORD;
     const pathPart = "vocabulary";
@@ -846,7 +847,7 @@ export function setWordTPCorrect(uid, tpElapsed) {
     /** @type {SpaceRepetitionMap["uid"]} */
     const o = {
       ...(spaceRep[uid] || {}),
-      pron: undefined,
+      pron: pronunciation === null ? undefined : spaceRep[uid].pron,
       tpPc: newPlayCount,
       tpAcc: newAccuracy,
       tpCAvg: newCorrAvg,
@@ -867,7 +868,7 @@ export function setWordTPCorrect(uid, tpElapsed) {
 
 /**
  * Sets term timed play average stats (incorrect)
- * @typedef {(uid:string, option: {pronunciation?: boolean}|undefined) => updateSpaceRepTermYield} setWordTPIncorrectYield
+ * @typedef {(uid:string, options: {pronunciation?: boolean}|undefined) => updateSpaceRepTermYield} setWordTPIncorrectYield
  * @param {string} uid
  * @param {{pronunciation?: true}} options incorrect types
  */
