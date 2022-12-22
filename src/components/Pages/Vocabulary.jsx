@@ -734,22 +734,24 @@ class Vocabulary extends Component {
                 interruptAnimation = noop;
               }
 
-              // interrupt to auto quit
-              const quitLoop = setTimeout(() => {
-                this.setState({
-                  loop: 0,
-                  loopQuitCount: this.loopQuitMs / 1000,
-                });
-                clearTimeout(countDown);
-              }, this.loopQuitMs);
-
+              // interrupt-to-auto-quit
               const countDown = setInterval(() => {
-                this.setState((state) => ({
-                  loopQuitCount: state.loopQuitCount - 1,
-                }));
+                this.setState((state) => {
+                  const zero = state.loopQuitCount === 1;
+                  if (zero) {
+                    clearTimeout(countDown);
+                  }
+
+                  return {
+                    loopQuitCount: !zero
+                      ? state.loopQuitCount - 1
+                      : this.loopQuitMs / 1000,
+                    loop: !zero ? state.loop : 0,
+                  };
+                });
               }, 1000);
 
-              this.loopQuitTimer = [quitLoop, countDown];
+              this.loopQuitTimer = [countDown];
             }
 
             this.setState({
@@ -1054,19 +1056,24 @@ class Vocabulary extends Component {
             interruptAnimation = noop;
           }
 
-          // interrupt to auto quit
-          const quitLoop = setTimeout(() => {
-            this.setState({ loop: 0, loopQuitCount: this.loopQuitMs / 1000 });
-            clearTimeout(countDown);
-          }, this.loopQuitMs);
-
+          // interrupt-to-auto-quit
           const countDown = setInterval(() => {
-            this.setState((state) => ({
-              loopQuitCount: state.loopQuitCount - 1,
-            }));
+            this.setState((state) => {
+              const zero = state.loopQuitCount === 1;
+              if (zero) {
+                clearTimeout(countDown);
+              }
+
+              return {
+                loopQuitCount: !zero
+                  ? state.loopQuitCount - 1
+                  : this.loopQuitMs / 1000,
+                loop: !zero ? state.loop : 0,
+              };
+            });
           }, 1000);
 
-          this.loopQuitTimer = [quitLoop, countDown];
+          this.loopQuitTimer = [countDown];
         }
 
         this.setState({
@@ -1340,7 +1347,16 @@ class Vocabulary extends Component {
               ? this.state.loopQuitCount
               : undefined
           }
-          onClick={this.beginLoop}
+          onClick={() => {
+            if (this.loopQuitTimer !== undefined) {
+              // abort interrupt-to-auto-quit
+              const [countDown] = this.loopQuitTimer;
+              clearInterval(countDown);
+              this.setState({ loopQuitCount: this.loopQuitMs / 1000 });
+            }
+
+            this.beginLoop();
+          }}
         />
       );
     } else if (this.state.loop > 0 && this.loopAbortControllers !== undefined) {
