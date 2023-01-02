@@ -581,11 +581,21 @@ class Vocabulary extends Component {
     this.loopAbortControllers = [ac1, ac2, ac3, ac4, ac5];
     this.forceUpdate();
 
-    const japanese = (/** @type {AbortController} */ ac) =>
-      loopN(this.state.loop, () => this.looperSwipe("up", ac), 1500, ac);
+    /** @type {(ac: AbortController) => Promise<[void] | [void, void]>} */
+    let gamePropmt;
+    /** @type {(ac: AbortController) => Promise<void>} */
+    let gameResponse;
+    if (this.props.practiceSide) {
+      gamePropmt = (ac) => this.looperSwipe("down", ac);
 
-    const english = (/** @type {AbortController} */ ac) =>
-      this.looperSwipe("down", ac);
+      gameResponse = (ac) =>
+        loopN(this.state.loop, () => this.looperSwipe("up", ac), 1500, ac);
+    } else {
+      gamePropmt = (ac) => this.looperSwipe("up", ac);
+
+      gameResponse = (ac) =>
+        loopN(this.state.loop, () => this.looperSwipe("down", ac), 1500, ac);
+    }
 
     /**
      * @param {number} p Part
@@ -607,12 +617,12 @@ class Vocabulary extends Component {
       .then(() => {
         // begin elapsing here
         this.setState({ tpTimeStamp: Date.now() });
-        return english(ac2).catch((error) => {
+        return gamePropmt(ac2).catch((error) => {
           if (error.cause?.code === "UserAborted") {
             // skip all playback
             throw error;
           } else {
-            // caught trying to fetch english
+            // caught trying to fetch gamePrompt
             // continue
           }
         });
@@ -624,7 +634,7 @@ class Vocabulary extends Component {
       .then(() => {
         // end tpAnimation here
         this.setState({ tpAnimation: undefined, tpTimeStamp: undefined });
-        return japanese(ac4)
+        return gameResponse(ac4)
           .then(() => {
             this.loopAbortControllers = undefined;
             return this.looperSwipe("left");
@@ -635,7 +645,7 @@ class Vocabulary extends Component {
               // user aborted
               // don't continue
             } else {
-              // caught trying to fetch japanese
+              // caught trying to fetch gameResponse
               // continue
               this.loopAbortControllers = undefined;
               return this.looperSwipe("left");
@@ -685,23 +695,23 @@ class Vocabulary extends Component {
     ];
 
     for (const [action, handler] of actionHandlers) {
-      /** @type {function} */
-      let keyPressHandler = handler;
-      const noop = () => {};
-      let interruptAnimation = () => {
-        setTimeout(() => {
-          this.setState({ tpAnimation: 0 });
-          setTimeout(() => {
-            this.setState((state) => {
-              if (state.tpAnimation === 0) {
-                return { tpAnimation: undefined };
-              }
-            });
-          }, 1000);
-        }, 1500);
-      };
-
       if (action === event.key) {
+        /** @type {function} */
+        let keyPressHandler = handler;
+        const noop = () => {};
+        let interruptAnimation = () => {
+          setTimeout(() => {
+            this.setState({ tpAnimation: 0 });
+            setTimeout(() => {
+              this.setState((state) => {
+                if (state.tpAnimation === 0) {
+                  return { tpAnimation: undefined };
+                }
+              });
+            }, 1000);
+          }, 1500);
+        };
+
         if (action !== " ") {
           // interrupt loop
           if (this.abortLoop()) {
@@ -719,7 +729,10 @@ class Vocabulary extends Component {
               this.state.tpAnimation === undefined &&
               this.state.tpTimeStamp === undefined;
 
-            if (action === "ArrowUp") {
+            if (
+              (action === "ArrowUp" && this.props.practiceSide) ||
+              (action === "ArrowDown" && !this.props.practiceSide)
+            ) {
               ({ tpElapsed } = this.getElapsedTimedPlay());
               tpAnswered = true;
               if (duringQuery) {
@@ -1040,7 +1053,10 @@ class Vocabulary extends Component {
           this.state.tpAnimation === undefined &&
           this.state.tpTimeStamp === undefined;
 
-        if (direction === "up") {
+        if (
+          (direction === "up" && this.props.practiceSide) ||
+          (direction === "down" && !this.props.practiceSide)
+        ) {
           ({ tpElapsed } = this.getElapsedTimedPlay());
           tpAnswered = true;
 
@@ -1429,7 +1445,15 @@ class Vocabulary extends Component {
               <div className="d-flex justify-content-start">
                 <TogglePracticeSideBtn
                   toggle={this.props.practiceSide}
-                  action={this.props.flipVocabularyPracticeSide}
+                  action={() => {
+                    if (this.abortLoop()) {
+                      this.setState({
+                        tpTimeStamp: undefined,
+                        tpAnimation: undefined,
+                      });
+                    }
+                    this.props.flipVocabularyPracticeSide();
+                  }}
                 />
                 <ReCacheAudioBtn
                   active={this.state.recacheAudio}

@@ -847,7 +847,10 @@ export function setWordTPCorrect(uid, tpElapsed, { pronunciation } = {}) {
     /** @type {SpaceRepetitionMap["uid"]} */
     const o = {
       ...(spaceRep[uid] || {}),
-      pron: pronunciation === null ? undefined : spaceRep[uid].pron,
+      pron:
+        pronunciation === null || spaceRep[uid] === undefined
+          ? undefined
+          : spaceRep[uid].pron,
       tpPc: newPlayCount,
       tpAcc: newAccuracy,
       tpCAvg: newCorrAvg,
