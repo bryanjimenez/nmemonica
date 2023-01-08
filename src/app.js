@@ -11,7 +11,7 @@ const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
 const Opposites = lazy(() => import("./components/Pages/Opposites"));
 const KanaGame = lazy(() => import("./components/Pages/KanaGame"));
 const Kanji = lazy(() => import("./components/Pages/Kanji"));
-const ParticlesGame = lazy(() => import("./components/Pages/ParticlesGame"));
+const ParticlesGame = lazy(() => import("./components/Games/ParticlesGame"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
 // const Logout = lazy(() => import("./components/Pages/Logout"));
 // const OAuthLogin = lazy(() => import("./components/Pages/OAuthLogin"));
@@ -23,7 +23,7 @@ import { SettingsMeta } from "./components/Pages/Settings";
 // import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
 import { KanaGameMeta } from "./components/Pages/KanaGame";
 import { KanjiMeta } from "./components/Pages/Kanji";
-import { ParticlesGameMeta } from "./components/Pages/ParticlesGame";
+import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import {
   initializeSettingsFromLocalStorage,
   initialize,

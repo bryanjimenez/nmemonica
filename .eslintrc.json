@@ -17,10 +17,12 @@
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
-  "plugins": ["react", "prettier"],
+  "plugins": ["react", "react-hooks", "prettier"],
   "rules": {
     "semi": ["error", "always"],
-    "space-infix-ops": ["error", {"int32Hint": false}],
+    "space-infix-ops": ["error", {"int32Hint": false}], // require spacing around infix operators
+    "react-hooks/rules-of-hooks": "error", // Checks rules of Hooks
+    "react-hooks/exhaustive-deps": "warn", // Checks effect dependencies
     "prettier/prettier": ["error"]
   }
 }

@@ -153,7 +153,9 @@ class Phrases extends Component {
     /** @type {import("../../typings/raw").SetState<PhrasesState>} */
     this.setState;
 
-    this.props.getPhrases();
+    if (this.props.phrases.length === 0) {
+      this.props.getPhrases();
+    }
 
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoNextSlide = this.gotoNextSlide.bind(this);

@@ -17,7 +17,7 @@ import { PhrasesMeta } from "../Pages/Phrases";
 import { VocabularyMeta } from "../Pages/Vocabulary";
 import { OppositesMeta } from "../Pages/Opposites";
 import { KanaGameMeta } from "../Pages/KanaGame";
-import { ParticlesGameMeta } from "../Pages/ParticlesGame";
+import { ParticlesGameMeta } from "../Games/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
 // import { OAuthLoginMeta } from "../Pages/OAuthLogin";
 // import { LogoutMeta } from "../Pages/Logout";
