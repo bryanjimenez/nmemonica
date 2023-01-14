@@ -27,6 +27,7 @@ import "./Navigation.css";
 import { KanjiMeta } from "../Pages/Kanji";
 import { toggleKana } from "../../actions/settingsAct";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
+import { KanjiGameMeta } from "../Games/KanjiGame";
 
 /**
  * @template T
@@ -37,6 +38,7 @@ import { labelOptions, toggleOptions } from "../../helper/gameHelper";
  * @typedef {Object} NavigationState
  * @property {boolean} collapsed
  * @property {number} vocabType
+ * @property {number} kanjiType
  */
 
 class Navigation extends Component {
@@ -48,6 +50,7 @@ class Navigation extends Component {
     this.state = {
       collapsed: true,
       vocabType: 0,
+      kanjiType: 0,
     };
 
     /** @type {import("../../typings/raw").SetState<NavigationState>} */
@@ -110,11 +113,7 @@ class Navigation extends Component {
         },
         icon: (
           <div className="not-a-real-icon">
-            {this.props.charSet === 0
-              ? "あ"
-              : this.props.charSet === 1
-              ? "ア"
-              : "*"}
+            {labelOptions(this.props.charSet, ["あ", "ア", "*"])}
           </div>
         ),
         wrap: (/** @type {string} */ child) => (
@@ -161,7 +160,26 @@ class Navigation extends Component {
       //     />
       //   ),
       // },
-      { meta: KanjiMeta, icon: <div className="not-a-real-icon">{"漢"}</div> },
+      {
+        meta: [KanjiMeta, KanjiGameMeta][this.state.kanjiType],
+        icon: (
+          <div className="not-a-real-icon">
+            {labelOptions(this.state.kanjiType, ["漢", "G"])}
+          </div>
+        ),
+        wrap: (/** @type {string} */ child) => (
+          <div
+            className="clickable prevent-collapse"
+            onClick={() => {
+              this.setState((s) => ({
+                kanjiType: toggleOptions(s.kanjiType, ["Kanji", "KanjiGame"]),
+              }));
+            }}
+          >
+            {child}
+          </div>
+        ),
+      },
       {
         meta: SettingsMeta,
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,

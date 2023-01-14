@@ -5,7 +5,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import StackNavButton from "../Form/StackNavButton";
 
 /**
- * @typedef {{english: string, romaji?: string, toHTML: (correct:boolean)=>JSX.Element}} GameQuestion
+ * @typedef {{english?: string, romaji?: string, toHTML: (correct:boolean)=>JSX.Element}} GameQuestion
  * @typedef {{english?: string, romaji?: string, toHTML: function}} GameChoice
  */
 
@@ -84,13 +84,13 @@ function FourChoices(props) {
   // console.log(question);
   // console.log(choices);
 
-  let meaning = "[English]";
+  let meaning = question.english !== undefined ? "[English]" : "";
   if (props.hint === undefined) {
-    if (state.showMeaning) {
+    if (state.showMeaning && question.english) {
       meaning = question.english;
     }
   } else {
-    if (state.showMeaning) {
+    if (state.showMeaning && question.english) {
       meaning = question.english;
     } else {
       meaning = props.hint;
@@ -123,7 +123,9 @@ function FourChoices(props) {
           <span
             className="clickable"
             onClick={() => {
-              dispatch({ showMeaning: !state.showMeaning });
+              if (question.english !== undefined || props.hint !== undefined) {
+                dispatch({ showMeaning: !state.showMeaning });
+              }
             }}
           >
             {meaning}
