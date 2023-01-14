@@ -15,7 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { VocabularyMeta } from "../Pages/Vocabulary";
-import { OppositesMeta } from "../Pages/Opposites";
+import { OppositesGameMeta } from "../Games/OppositesGame";
 import { KanaGameMeta } from "../Pages/KanaGame";
 import { ParticlesGameMeta } from "../Games/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
@@ -128,7 +128,7 @@ class Navigation extends Component {
         ),
       },
       {
-        meta: OppositesMeta,
+        meta: OppositesGameMeta,
         icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
       },
       {

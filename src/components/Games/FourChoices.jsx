@@ -6,7 +6,7 @@ import StackNavButton from "../Form/StackNavButton";
 
 /**
  * @typedef {{english?: string, romaji?: string, toHTML: (correct:boolean)=>JSX.Element}} GameQuestion
- * @typedef {{english?: string, romaji?: string, toHTML: function}} GameChoice
+ * @typedef {{compare: string, english?: string, romaji?: string, toHTML: function}} GameChoice
  */
 
 /**
@@ -152,6 +152,7 @@ function FourChoices(props) {
               >
                 <div>
                   <h4>{c.toHTML()}</h4>
+                  {isRight && <div>{c.english}</div>}
                   <span
                     className={classNames({
                       "transparent-color": !props.aRomaji,

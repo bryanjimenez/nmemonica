@@ -8,7 +8,7 @@ import Navigation from "./components/Navigation/Navigation";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
-const Opposites = lazy(() => import("./components/Pages/Opposites"));
+const OppositesGame = lazy(() => import("./components/Games/OppositesGame"));
 const KanaGame = lazy(() => import("./components/Pages/KanaGame"));
 const Kanji = lazy(() => import("./components/Pages/Kanji"));
 const KanjiGame = lazy(() => import("./components/Games/KanjiGame"));
@@ -18,7 +18,7 @@ const Settings = lazy(() => import("./components/Pages/Settings"));
 // const OAuthLogin = lazy(() => import("./components/Pages/OAuthLogin"));
 import { PhrasesMeta } from "./components/Pages/Phrases";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
-import { OppositesMeta } from "./components/Pages/Opposites";
+import { OppositesGameMeta } from "./components/Games/OppositesGame";
 import { SettingsMeta } from "./components/Pages/Settings";
 // import { LogoutMeta } from "./components/Pages/Logout";
 // import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
@@ -85,7 +85,10 @@ class App extends Component {
               <Route path="/" exact component={Vocabulary} />
               <Route path={PhrasesMeta.location} component={Phrases} />
               <Route path={VocabularyMeta.location} component={Vocabulary} />
-              <Route path={OppositesMeta.location} component={Opposites} />
+              <Route
+                path={OppositesGameMeta.location}
+                component={OppositesGame}
+              />
               <Route path={KanaGameMeta.location} component={KanaGame} />
               <Route path={KanjiMeta.location} component={Kanji} />
               <Route path={KanjiGameMeta.location} component={KanjiGame} />
