@@ -1,6 +1,6 @@
 import React, { Component, Suspense, lazy } from "react";
 import { connect } from "react-redux";
-import { HashRouter as Router, Route, Switch } from "react-router-dom";
+import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import PropTypes from "prop-types";
 
 import Console from "./components/Form/Console";
@@ -14,14 +14,10 @@ const Kanji = lazy(() => import("./components/Pages/Kanji"));
 const KanjiGame = lazy(() => import("./components/Games/KanjiGame"));
 const ParticlesGame = lazy(() => import("./components/Games/ParticlesGame"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
-// const Logout = lazy(() => import("./components/Pages/Logout"));
-// const OAuthLogin = lazy(() => import("./components/Pages/OAuthLogin"));
 import { PhrasesMeta } from "./components/Pages/Phrases";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import { OppositesGameMeta } from "./components/Games/OppositesGame";
 import { SettingsMeta } from "./components/Pages/Settings";
-// import { LogoutMeta } from "./components/Pages/Logout";
-// import { OAuthLoginMeta } from "./components/Pages/OAuthLogin";
 import { KanaGameMeta } from "./components/Pages/KanaGame";
 import { KanjiMeta } from "./components/Pages/Kanji";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
@@ -81,26 +77,24 @@ class App extends Component {
           <Console connected={true} />
           <Navigation />
           <Suspense fallback={<div />}>
-            <Switch>
-              <Route path="/" exact component={Vocabulary} />
-              <Route path={PhrasesMeta.location} component={Phrases} />
-              <Route path={VocabularyMeta.location} component={Vocabulary} />
+            <Routes>
+              <Route path="/" element={<Vocabulary/>} />
+              <Route path={PhrasesMeta.location} element={<Phrases/>} />
+              <Route path={VocabularyMeta.location} element={<Vocabulary/>} />
               <Route
                 path={OppositesGameMeta.location}
-                component={OppositesGame}
+                element={<OppositesGame/>}
               />
-              <Route path={KanaGameMeta.location} component={KanaGame} />
-              <Route path={KanjiMeta.location} component={Kanji} />
-              <Route path={KanjiGameMeta.location} component={KanjiGame} />
+              <Route path={KanaGameMeta.location} element={<KanaGame/>} />
+              <Route path={KanjiMeta.location} element={<Kanji/>} />
+              <Route path={KanjiGameMeta.location} element={<KanjiGame/>} />
               <Route
                 path={ParticlesGameMeta.location}
-                component={ParticlesGame}
+                element={<ParticlesGame/>}
               />
-              <Route path={SettingsMeta.location} component={Settings} />
-              {/* <Route path={OAuthLoginMeta.location} component={OAuthLogin} /> */}
-              {/* <Route path={LogoutMeta.location} component={Logout} /> */}
-              <Route component={NotFound} />
-            </Switch>
+              <Route path={SettingsMeta.location} element={<Settings/>} />
+              <Route element={NotFound} />
+            </Routes>
           </Suspense>
         </div>
       </Router>
