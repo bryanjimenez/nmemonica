@@ -109,7 +109,7 @@ function FourChoices(props) {
         </StackNavButton>
         <div
           className={classNames({
-            "question pt-3 pb-3 d-flex flex-column justify-content-center text-center w-50": true,
+            "question d-flex flex-column justify-content-center text-center w-50": true,
           })}
         >
           <h1>{question.toHTML(state.correct)}</h1>
@@ -120,24 +120,24 @@ function FourChoices(props) {
           >
             {question.romaji}
           </span>
-          <span
-            className="clickable"
-            onClick={() => {
-              if (question.english !== undefined || props.hint !== undefined) {
+          {meaning !== undefined && (
+            <span
+              className="clickable"
+              onClick={() => {
                 dispatch({ showMeaning: !state.showMeaning });
-              }
-            }}
-          >
-            {meaning}
-          </span>
+              }}
+            >
+              {meaning}
+            </span>
+          )}
         </div>
-        <div className="choices pt-3 d-flex justify-content-around flex-wrap w-50">
+        <div className="choices d-flex justify-content-around flex-wrap w-50">
           {choices.map((c, i) => {
             const isRight = props.isCorrect(choices[i]) && state.correct;
             const isWrong = state.incorrect.includes(i);
 
             const choiceCSS = classNames({
-              "w-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable": true,
+              "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable": true,
               "correct-color": isRight,
               "incorrect-color": isWrong,
             });

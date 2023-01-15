@@ -61,22 +61,36 @@ function KanjiGame() {
     }
 
     const kanji = rawKanjis[order.current[selectedIndex]];
-    const { eng: english, kanji: japanese } = kanji;
+    const { eng: english, kanji: japanese, on, kun } = kanji;
 
     // TODO: rename attr eng->english
     const choices = createChoices("eng", kanji, rawKanjis);
 
     /** @type {import("./FourChoices").GameQuestion} */
     const q = {
-      // english,
+      // english, not needed, shown as a choice
       toHTML: (correct) => (
-        <span
-          className={classNames({
-            "correct-color": correct,
-          })}
-        >
-          {japanese}
-        </span>
+        <div>
+          <div
+            className={classNames({
+              "correct-color": correct,
+            })}
+          >
+            <span>{japanese}</span>
+          </div>
+          {(on !== undefined || kun !== undefined) && (
+            <div
+              className={classNames({
+                "d-flex flex-column mt-3 h4": true,
+                "transparent-color": !correct,
+                "correct-color": correct,
+              })}
+            >
+              <span>{on}</span>
+              <span>{kun}</span>
+            </div>
+          )}
+        </div>
       ),
     };
 
