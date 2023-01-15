@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { LinearProgress } from "@material-ui/core";
+import { LinearProgress } from "@mui/material";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { NotReady } from "../Form/NotReady";

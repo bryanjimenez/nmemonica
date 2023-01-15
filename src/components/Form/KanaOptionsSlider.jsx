@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
-import Slider from "@material-ui/core/Slider";
+import {Slider, Typography} from "@mui/material"
+
+import "./KanaOptionsSlider.css";
 
 /**
  * @typedef {{ value: number, raw: number }} Marks
@@ -14,18 +14,11 @@ import Slider from "@material-ui/core/Slider";
  * wideMode: boolean,
  * setChoiceN: function,
  * toggleWide: function,
- * }} HiraganaOptionsSliderProps
+ * }} KanaOptionsSliderProps
  */
 
-const useStyles = makeStyles({
-  root: {
-    width: 300,
-  },
-});
-
-/** @param {HiraganaOptionsSliderProps} props */
-export default function HiraganaOptionsSlider(props) {
-  const classes = useStyles();
+/** @param {KanaOptionsSliderProps} props */
+export default function KanaOptionsSlider(props) {
 
   const min = 4;
   const max = 16;
@@ -89,7 +82,7 @@ export default function HiraganaOptionsSlider(props) {
   };
 
   return (
-    <div className={classes.root}>
+    <div className="kana-slider">
       <Typography id="discrete-slider-restrict" gutterBottom>
         Difficulty
       </Typography>
@@ -111,7 +104,7 @@ export default function HiraganaOptionsSlider(props) {
   );
 }
 
-HiraganaOptionsSlider.propTypes = {
+KanaOptionsSlider.propTypes = {
   initial: PropTypes.number,
   wideMode: PropTypes.bool,
   setChoiceN: PropTypes.func,

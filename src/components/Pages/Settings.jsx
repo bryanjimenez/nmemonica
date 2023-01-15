@@ -25,7 +25,7 @@ import { getKanji } from "../../actions/kanjiAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { getPhrases } from "../../actions/phrasesAct";
 import SettingsSwitch from "../Form/SettingsSwitch";
-import HiraganaOptionsSlider from "../Form/HiraganaOptionsSlider";
+import KanaOptionsSlider from "../Form/KanaOptionsSlider";
 import {
   getMemoryStorageStatus,
   setPersistentStorage,
@@ -639,7 +639,7 @@ class Settings extends Component {
                 />
               </div>
               <div className="d-flex justify-content-end p-2">
-                <HiraganaOptionsSlider
+                <KanaOptionsSlider
                   initial={this.props.choiceN}
                   wideMode={this.props.wideMode}
                   setChoiceN={this.props.setHiraganaBtnN}

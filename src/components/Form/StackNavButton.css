@@ -1,0 +1,4 @@
+.main-panel > div button {
+  width: 40px;
+  min-width: unset;
+}

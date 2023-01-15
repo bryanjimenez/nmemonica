@@ -1,7 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
-import Slider from "@material-ui/core/Slider";
+import {Slider} from "@mui/material";
+
+import "./VocabularyOrderSlider.css";
 
 /**
  * @typedef {{ uid: string, label: string, idx: number }} BareIdx
@@ -16,15 +17,10 @@ import Slider from "@material-ui/core/Slider";
  * }} VocabularyOrderSliderProps
  */
 
-const useStyles = makeStyles({
-  root: { maxHeight: "43px" },
-});
-
 /**
  * @param {VocabularyOrderSliderProps} props
  */
 export default function VocabularyOrderSlider(props) {
-  const classes = useStyles();
 
   const min = 1;
   const max = props.list.length;
@@ -78,7 +74,7 @@ export default function VocabularyOrderSlider(props) {
   };
 
   return (
-    <div className={classes.root}>
+    <div className="vocabulary-slider">
       <Slider
         value={rawToSlide(safeInitial)}
         valueLabelFormat={slideToLabel}
