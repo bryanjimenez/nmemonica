@@ -5,11 +5,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
-import {
-  swipeEnd,
-  swipeMove,
-  swipeStart,
-} from "react-slick/lib/utils/innerSliderUtils";
+import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 import { getKanji } from "../../actions/kanjiAct";
 import {
   getTerm,
@@ -37,7 +33,7 @@ import "./Kanji.css";
  * @property {RawKanji[]} kanji
  * @property {RawVocabulary[]} vocabulary
  * @property {string[]} activeGroup
- * @property {boolean} touchSwipe
+ * @property {number} swipeThreshold
  * @property {typeof getKanji} getKanji
  * @property {typeof getVocabulary} getVocabulary
  * @property {typeof logger} logger
@@ -173,7 +169,10 @@ class Kanji extends Component {
    * @type {TouchEventHandler}
    */
   startMove(e) {
-    const swiping = swipeStart(e, true, true);
+    const swiping = swipeStart(e, {
+      verticalSwiping: true,
+      touchThreshold: this.props.swipeThreshold,
+    });
     this.setState({ swiping });
   }
 
@@ -182,10 +181,7 @@ class Kanji extends Component {
    */
   inMove(e) {
     if (this.state.swiping) {
-      const swiping = swipeMove(e, {
-        ...this.state.swiping,
-        verticalSwiping: true,
-      });
+      const swiping = swipeMove(e, this.state.swiping);
       this.setState({ swiping });
     }
   }
@@ -195,14 +191,7 @@ class Kanji extends Component {
    */
   endMove(e) {
     // const direction = getSwipeDirection(this.state.swiping.touchObject,true);
-    swipeEnd(e, {
-      ...this.state.swiping,
-      dragging: true,
-      verticalSwiping: true,
-      listHeight: 1,
-      touchThreshold: 5,
-      onSwipe: this.swipeActionHandler,
-    });
+    swipeEnd(e, { ...this.state.swiping, onSwipe: this.swipeActionHandler });
   }
 
   /**
@@ -257,9 +246,11 @@ class Kanji extends Component {
       <div key={0} className="kanji main-panel h-100">
         <div
           className="d-flex justify-content-between h-100"
-          onTouchStart={this.props.touchSwipe ? this.startMove : undefined}
-          onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
-          onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
+          onTouchStart={
+            this.props.swipeThreshold > 0 ? this.startMove : undefined
+          }
+          onTouchMove={this.props.swipeThreshold > 0 ? this.inMove : undefined}
+          onTouchEnd={this.props.swipeThreshold > 0 ? this.endMove : undefined}
         >
           <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
             <ChevronLeftIcon size={16} />
@@ -359,7 +350,7 @@ const mapStateToProps = (state) => {
     vocabulary: state.vocabulary.value,
 
     activeGroup: state.settings.kanji.activeGroup,
-    touchSwipe: state.settings.global.touchSwipe,
+    swipeThreshold: state.settings.global.swipeThreshold,
   };
 };
 
@@ -367,7 +358,7 @@ Kanji.propTypes = {
   kanji: PropTypes.array,
   vocabulary: PropTypes.array,
   activeGroup: PropTypes.array,
-  touchSwipe: PropTypes.bool,
+  swipeThreshold: PropTypes.number,
   getKanji: PropTypes.func,
   getVocabulary: PropTypes.func,
   logger: PropTypes.func,

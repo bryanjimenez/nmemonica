@@ -16,7 +16,7 @@ import {
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
-import { LinearProgress } from "@material-ui/core";
+import { LinearProgress } from "@mui/material";
 import {
   alphaOrder,
   play,
@@ -40,11 +40,7 @@ import {
   setPreviousTerm,
 } from "../../actions/vocabularyAct";
 import AudioItem from "../Form/AudioItem";
-import {
-  swipeEnd,
-  swipeMove,
-  swipeStart,
-} from "react-slick/lib/utils/innerSliderUtils";
+import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
@@ -117,7 +113,7 @@ import Sizable from "../Form/Sizable";
  * @property {typeof clearPreviousTerm} clearPreviousTerm
  * @property {typeof setPreviousTerm} setPreviousTerm
  * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
- * @property {boolean} touchSwipe
+ * @property {number} swipeThreshold
  */
 
 const PhrasesMeta = {
@@ -658,7 +654,10 @@ class Phrases extends Component {
    * @type {TouchEventHandler}
    */
   startMove(e) {
-    const swiping = swipeStart(e, true, true);
+    const swiping = swipeStart(e, {
+      verticalSwiping: true,
+      touchThreshold: this.props.swipeThreshold,
+    });
     this.setState({ swiping });
   }
 
@@ -667,10 +666,7 @@ class Phrases extends Component {
    */
   inMove(e) {
     if (this.state.swiping) {
-      const swiping = swipeMove(e, {
-        ...this.state.swiping,
-        verticalSwiping: true,
-      });
+      const swiping = swipeMove(e, this.state.swiping);
       this.setState({ swiping });
     }
   }
@@ -707,14 +703,7 @@ class Phrases extends Component {
       }
     }
 
-    swipeEnd(e, {
-      ...this.state.swiping,
-      dragging: true,
-      verticalSwiping: true,
-      listHeight: 1,
-      touchThreshold: 5,
-      onSwipe: this.swipeActionHandler,
-    });
+    swipeEnd(e, { ...this.state.swiping, onSwipe: this.swipeActionHandler });
   }
 
   /**
@@ -930,7 +919,7 @@ class Phrases extends Component {
 
     const playButton = (
       <AudioItem
-        visible={!this.props.touchSwipe && this.state.loop === 0}
+        visible={this.props.swipeThreshold === 0 && this.state.loop === 0}
         word={audioWords}
         autoPlay={
           !this.state.audioPlay ? AutoPlaySetting.OFF : this.props.autoPlay
@@ -957,9 +946,11 @@ class Phrases extends Component {
       <div key={0} className="phrases main-panel h-100">
         <div
           className="d-flex justify-content-between h-100"
-          onTouchStart={this.props.touchSwipe ? this.startMove : undefined}
-          onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
-          onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
+          onTouchStart={
+            this.props.swipeThreshold > 0 ? this.startMove : undefined
+          }
+          onTouchMove={this.props.swipeThreshold > 0 ? this.inMove : undefined}
+          onTouchEnd={this.props.swipeThreshold > 0 ? this.endMove : undefined}
         >
           <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
             <ChevronLeftIcon size={16} />
@@ -1100,7 +1091,7 @@ const mapStateToProps = (state) => {
     reinforce: state.settings.phrases.reinforce,
     prevTerm: state.vocabulary.prevTerm,
     repetition: state.settings.phrases.repetition,
-    touchSwipe: state.settings.global.touchSwipe,
+    swipeThreshold: state.settings.global.swipeThreshold,
   };
 };
 
@@ -1132,7 +1123,7 @@ Phrases.propTypes = {
   clearPreviousTerm: PropTypes.func,
   setPreviousTerm: PropTypes.func,
   autoPlay: PropTypes.number,
-  touchSwipe: PropTypes.bool,
+  swipeThreshold: PropTypes.number,
 };
 
 export default connect(mapStateToProps, {

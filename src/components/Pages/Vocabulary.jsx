@@ -27,11 +27,11 @@ import {
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
-import { Avatar, Grow, LinearProgress } from "@material-ui/core";
+import { Avatar, Grow, LinearProgress } from "@mui/material";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import VocabularyMain from "./VocabularyMain";
 import VerbMain from "./VerbMain";
-import { deepOrange } from "@material-ui/core/colors";
+// import { deepOrange } from "@mui/material";
 import {
   alphaOrder,
   play,
@@ -60,11 +60,11 @@ import {
   timedPlayLog,
 } from "../../helper/consoleHelper";
 import {
+  getSwipeDirection,
   swipeEnd,
   swipeMove,
   swipeStart,
-  getSwipeDirection,
-} from "react-slick/lib/utils/innerSliderUtils";
+} from "../../helper/TouchSwipe";
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
 import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
@@ -157,7 +157,7 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {typeof logger} logger
  * @property {string} verbForm
  * @property {typeof pushedPlay} pushedPlay
- * @property {boolean} touchSwipe
+ * @property {number} swipeThreshold
  * @property {number} motionThreshold
  * @property {function} motionThresholdCondition
  * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
@@ -564,7 +564,7 @@ class Vocabulary extends Component {
         motionThresholdCondition(
           event,
           this.props.motionThreshold,
-          onShakeEventHandler,
+          onShakeEventHandler
         );
       } catch (error) {
         if (error instanceof Error) {
@@ -981,7 +981,10 @@ class Vocabulary extends Component {
    * @type {TouchEventHandler}
    */
   startMove(e) {
-    const swiping = swipeStart(e, true, true);
+    const swiping = swipeStart(e, {
+      verticalSwiping: true,
+      touchThreshold: this.props.swipeThreshold,
+    });
     this.setState({ swiping });
   }
 
@@ -990,10 +993,7 @@ class Vocabulary extends Component {
    */
   inMove(e) {
     if (this.state.swiping) {
-      const swiping = swipeMove(e, {
-        ...this.state.swiping,
-        verticalSwiping: true,
-      });
+      const swiping = swipeMove(e, this.state.swiping);
       this.setState({ swiping });
     }
   }
@@ -1101,14 +1101,7 @@ class Vocabulary extends Component {
       }
     }
 
-    swipeEnd(e, {
-      ...this.state.swiping,
-      dragging: true,
-      verticalSwiping: true,
-      listHeight: 1,
-      touchThreshold: 5,
-      onSwipe: swipeHandler,
-    });
+    swipeEnd(e, { ...this.state.swiping, onSwipe: swipeHandler });
   }
 
   /**
@@ -1398,9 +1391,11 @@ class Vocabulary extends Component {
       <div key={0} className="vocabulary main-panel h-100">
         <div
           className="d-flex justify-content-between h-100"
-          onTouchStart={this.props.touchSwipe ? this.startMove : undefined}
-          onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
-          onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
+          onTouchStart={
+            this.props.swipeThreshold > 0 ? this.startMove : undefined
+          }
+          onTouchMove={this.props.swipeThreshold > 0 ? this.inMove : undefined}
+          onTouchEnd={this.props.swipeThreshold > 0 ? this.endMove : undefined}
         >
           <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
             <ChevronLeftIcon size={16} />
@@ -1610,7 +1605,7 @@ class Vocabulary extends Component {
               position: "absolute",
               bottom: "25vh",
               left: "65vw",
-              backgroundColor: deepOrange[500],
+              // backgroundColor: deepOrange[500],
             }}
           >
             <div
@@ -1678,7 +1673,7 @@ const mapStateToProps = (state) => {
     prevVerb: state.vocabulary.prevVerb,
     repetition: state.settings.vocabulary.repetition,
     verbForm: state.vocabulary.verbForm,
-    touchSwipe: state.settings.global.touchSwipe,
+    swipeThreshold: state.settings.global.swipeThreshold,
     motionThreshold: state.settings.global.motionThreshold,
     debugLevel: state.settings.global.debug,
   };
@@ -1716,7 +1711,7 @@ Vocabulary.propTypes = {
   logger: PropTypes.func,
   verbForm: PropTypes.string,
   pushedPlay: PropTypes.func,
-  touchSwipe: PropTypes.bool,
+  swipeThreshold: PropTypes.number,
   motionThreshold: PropTypes.number,
   toggleFurigana: PropTypes.func,
   debugLevel: PropTypes.number,

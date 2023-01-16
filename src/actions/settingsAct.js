@@ -34,7 +34,7 @@ export const VERB_FORM_VIEW = "verb_form_view";
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
 export const DEBUG = "toggle_debug";
-export const TOGGLE_SWIPE = "toggle_swipe";
+export const SET_SWIPE_THRESHOLD = "set_swipe_threshold";
 export const SET_MOTION_THRESHOLD = "set_motion_threshold";
 export const SET_VERB_FORM_ORDER = "set_verb_form_order";
 
@@ -1309,16 +1309,17 @@ export function getLastStateValue(getState, path, attr) {
 }
 
 /**
+ * @param {number} value Swipe threshold value
  * @returns {ActCreator}
  */
-export function toggleSwipe() {
+export function setSwipeThreshold(value) {
   return (dispatch, getState) => {
     const { user } = getState().login;
 
     const path = "/global/";
-    const attr = "touchSwipe";
+    const attr = "swipeThreshold";
     const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+    localStoreAttrUpdate(time, getState, path, attr, value);
 
     if (user) {
       firebaseAttrUpdate(
@@ -1328,11 +1329,12 @@ export function toggleSwipe() {
         user.uid,
         path,
         attr,
-        TOGGLE_SWIPE
+        SET_SWIPE_THRESHOLD
       );
     } else {
       dispatch({
-        type: TOGGLE_SWIPE,
+        type: SET_SWIPE_THRESHOLD,
+        value,
       });
     }
   };

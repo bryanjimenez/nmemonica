@@ -1,15 +1,11 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-
 import { Link } from "react-router-dom";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAtom,
   faFont,
-  // faSignInAlt,
-  // faSignOutAlt,
   faWrench,
   faYinYang,
 } from "@fortawesome/free-solid-svg-icons";
@@ -19,15 +15,14 @@ import { OppositesGameMeta } from "../Games/OppositesGame";
 import { KanaGameMeta } from "../Pages/KanaGame";
 import { ParticlesGameMeta } from "../Games/ParticlesGame";
 import { SettingsMeta } from "../Pages/Settings";
-// import { OAuthLoginMeta } from "../Pages/OAuthLogin";
-// import { LogoutMeta } from "../Pages/Logout";
 import classNames from "classnames";
 
-import "./Navigation.css";
 import { KanjiMeta } from "../Pages/Kanji";
 import { toggleKana } from "../../actions/settingsAct";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 import { KanjiGameMeta } from "../Games/KanjiGame";
+
+import "./Navigation.css";
 
 /**
  * @template T

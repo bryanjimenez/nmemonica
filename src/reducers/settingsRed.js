@@ -32,7 +32,7 @@ import {
   ADD_SPACE_REP_WORD,
   ADD_SPACE_REP_PHRASE,
   DEBUG,
-  TOGGLE_SWIPE,
+  SET_SWIPE_THRESHOLD,
   VERB_FORM_VIEW,
   TOGGLE_KANJI_ACTIVE_GROUP,
   SET_VERB_FORM_ORDER,
@@ -50,7 +50,7 @@ export const DEFAULT_SETTINGS = {
     memory: { quota: 0, usage: 0, persistent: false },
     debug: 0,
     console: [],
-    touchSwipe: false,
+    swipeThreshold: 0,
     motionThreshold: 0,
   },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
@@ -131,12 +131,12 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           console: [...state.global.console, action.value],
         },
       };
-    case TOGGLE_SWIPE:
+    case SET_SWIPE_THRESHOLD:
       return {
         ...state,
         global: {
           ...state.global,
-          touchSwipe: !state.global.touchSwipe,
+          swipeThreshold: action.value,
         },
       };
     case SET_MOTION_THRESHOLD:

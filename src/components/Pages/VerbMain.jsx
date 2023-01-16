@@ -57,7 +57,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * @property {string} verbForm
  * @property {boolean} prevPushPlay
  * @property {function} flipVocabularyPracticeSide
- * @property {boolean} touchSwipe
+ * @property {number} swipeThreshold
  * @property {function} linkToOtherTerm
  * @property {FuriganaToggleMap} furigana
  * @property {function} toggleFurigana
@@ -346,7 +346,7 @@ class VerbMain extends Component {
 
     const playButton = (
       <AudioItem
-        visible={!this.props.touchSwipe}
+        visible={this.props.swipeThreshold === 0}
         word={audioWords}
         reCache={this.props.reCache}
         autoPlay={
@@ -457,7 +457,7 @@ const mapStateToProps = (state) => {
     prevTerm: state.vocabulary.prevTerm,
     prevPushPlay: state.vocabulary.pushedPlay,
     verbForm: state.vocabulary.verbForm,
-    touchSwipe: state.settings.global.touchSwipe,
+    swipeThreshold: state.settings.global.swipeThreshold,
     furigana: state.settings.vocabulary.repetition,
     verbColSplit: state.settings.vocabulary.verbColSplit,
     verbFormsOrder: state.settings.vocabulary.verbFormsOrder,
@@ -484,7 +484,7 @@ VerbMain.propTypes = {
   verbForm: PropTypes.string,
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
-  touchSwipe: PropTypes.bool,
+  swipeThreshold: PropTypes.number,
   linkToOtherTerm: PropTypes.func,
   furigana: PropTypes.object,
   toggleFurigana: PropTypes.func,

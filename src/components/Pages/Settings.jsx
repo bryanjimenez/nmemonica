@@ -14,7 +14,7 @@ import {
   toggleKana,
   toggleKanaEasyMode,
   toggleDebug,
-  toggleSwipe,
+  setSwipeThreshold,
   toggleActiveGrp,
   DebugLevel,
   setMotionThreshold,
@@ -81,7 +81,7 @@ const SettingsMeta = {
  * @property {boolean} darkMode
  * @property {MemoryDataObject} memory
  * @property {number} debug
- * @property {boolean} touchSwipe
+ * @property {number} swipeThreshold
  * @property {number} motionThreshold
  * @property {RawVocabulary[]} phrases
  * @property {RawVocabulary[]} vocabulary
@@ -100,7 +100,7 @@ const SettingsMeta = {
  * @property {typeof setPersistentStorage} setPersistentStorage
  * @property {typeof getMemoryStorageStatus} getMemoryStorageStatus
  * @property {typeof toggleDebug} toggleDebug
- * @property {typeof toggleSwipe} toggleSwipe
+ * @property {typeof setSwipeThreshold} setSwipeThreshold
  * @property {typeof setMotionThreshold} setMotionThreshold
  * @property {typeof getPhrases} getPhrases
  * @property {typeof getVocabulary} getVocabulary
@@ -467,55 +467,90 @@ class Settings extends Component {
             <div>
               <div className="d-flex flex-row justify-content-between">
                 <div className="column-1 d-flex flex-column justify-content-end">
-                  {this.props.motionThreshold > 0 && (
-                    <div className="w-25 d-flex flex-row justify-content-between">
-                      <div
-                        className="clickable px-2 pb-2"
-                        onClick={() => {
-                          if (this.props.motionThreshold - 0.5 <= 0) {
-                            this.props.setMotionThreshold(0);
-                          } else {
-                            this.props.setMotionThreshold(
-                              this.props.motionThreshold - 0.5
-                            );
-                          }
-                        }}
-                      >
-                        -
-                      </div>
-                      <div
-                        className={classNames({
-                          "px-2": true,
-                          "correct-color":
-                            this.state.shakeIntensity >
-                              this.props.motionThreshold &&
-                            this.state.shakeIntensity <=
-                              this.props.motionThreshold + 1,
-                          "question-color":
-                            this.state.shakeIntensity >
-                              this.props.motionThreshold + 1 &&
-                            this.state.shakeIntensity <=
-                              this.props.motionThreshold + 2,
-                          "incorrect-color":
-                            this.state.shakeIntensity >
-                            this.props.motionThreshold + 2,
-                        })}
-                      >
-                        {this.state.shakeIntensity ??
-                          this.props.motionThreshold}
-                      </div>
-                      <div
-                        className="clickable px-2"
-                        onClick={() => {
-                          this.props.setMotionThreshold(
-                            this.props.motionThreshold + 0.5
+                  <div
+                    className={classNames({
+                      "w-25 d-flex flex-row justify-content-between": true,
+                      invisible: this.props.swipeThreshold === 0,
+                    })}
+                  >
+                    <div
+                      className="clickable px-2 pb-2"
+                      onClick={() => {
+                        if (this.props.swipeThreshold - 1 <= 0) {
+                          this.props.setSwipeThreshold(0);
+                        } else {
+                          this.props.setSwipeThreshold(
+                            this.props.swipeThreshold - 1
                           );
-                        }}
-                      >
-                        +
-                      </div>
+                        }
+                      }}
+                    >
+                      -
                     </div>
-                  )}
+                    <div className="px-2">{this.props.swipeThreshold}</div>
+                    <div
+                      className="clickable px-2"
+                      onClick={() => {
+                        this.props.setSwipeThreshold(
+                          this.props.swipeThreshold + 1
+                        );
+                      }}
+                    >
+                      +
+                    </div>
+                  </div>
+
+                  <div
+                    className={classNames({
+                      "w-25 d-flex flex-row justify-content-between": true,
+                      invisible: this.props.motionThreshold === 0,
+                    })}
+                  >
+                    <div
+                      className="clickable px-2 pb-2"
+                      onClick={() => {
+                        if (this.props.motionThreshold - 0.5 <= 0) {
+                          this.props.setMotionThreshold(0);
+                        } else {
+                          this.props.setMotionThreshold(
+                            this.props.motionThreshold - 0.5
+                          );
+                        }
+                      }}
+                    >
+                      -
+                    </div>
+                    <div
+                      className={classNames({
+                        "px-2": true,
+                        "correct-color":
+                          this.state.shakeIntensity >
+                            this.props.motionThreshold &&
+                          this.state.shakeIntensity <=
+                            this.props.motionThreshold + 1,
+                        "question-color":
+                          this.state.shakeIntensity >
+                            this.props.motionThreshold + 1 &&
+                          this.state.shakeIntensity <=
+                            this.props.motionThreshold + 2,
+                        "incorrect-color":
+                          this.state.shakeIntensity >
+                          this.props.motionThreshold + 2,
+                      })}
+                    >
+                      {this.state.shakeIntensity ?? this.props.motionThreshold}
+                    </div>
+                    <div
+                      className="clickable px-2"
+                      onClick={() => {
+                        this.props.setMotionThreshold(
+                          this.props.motionThreshold + 0.5
+                        );
+                      }}
+                    >
+                      +
+                    </div>
+                  </div>
                 </div>
                 <div className="column-2">
                   <div className="setting-block">
@@ -529,8 +564,12 @@ class Settings extends Component {
                   </div>
                   <div className="setting-block">
                     <SettingsSwitch
-                      active={this.props.touchSwipe}
-                      action={this.props.toggleSwipe}
+                      active={this.props.swipeThreshold > 0}
+                      action={() => {
+                        this.props.swipeThreshold > 0
+                          ? this.props.setSwipeThreshold(0)
+                          : this.props.setSwipeThreshold(1);
+                      }}
                       statusText={"Touch Swipes"}
                     />
                   </div>
@@ -815,7 +854,7 @@ class Settings extends Component {
 const mapStateToProps = (state) => {
   return {
     darkMode: state.settings.global.darkMode,
-    touchSwipe: state.settings.global.touchSwipe,
+    swipeThreshold: state.settings.global.swipeThreshold,
     motionThreshold: state.settings.global.motionThreshold,
 
     phrases: state.phrases.value,
@@ -851,8 +890,8 @@ Settings.propTypes = {
   getMemoryStorageStatus: PropTypes.func,
   debug: PropTypes.number,
   toggleDebug: PropTypes.func,
-  touchSwipe: PropTypes.bool,
-  toggleSwipe: PropTypes.func,
+  swipeThreshold: PropTypes.number,
+  setSwipeThreshold: PropTypes.func,
   motionThreshold: PropTypes.number,
   setMotionThreshold: PropTypes.func,
 
@@ -911,7 +950,7 @@ export default connect(mapStateToProps, {
   setPersistentStorage,
   getMemoryStorageStatus,
   toggleDebug,
-  toggleSwipe,
+  setSwipeThreshold,
   setMotionThreshold,
   logger,
 })(Settings);

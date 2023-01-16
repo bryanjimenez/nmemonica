@@ -48,7 +48,7 @@ import { kanaHintBuilder } from "../../helper/kanaHelper";
  * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
  * @property {boolean} scrollingDone
  * @property {typeof pushedPlay} pushedPlay
- * @property {boolean} touchSwipe
+ * @property {number} swipeThreshold
  * @property {any} furigana
  * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
  * @property {typeof toggleFuriganaSettingHelper} toggleFuriganaSettingHelper
@@ -164,7 +164,7 @@ class VocabularyMain extends Component {
 
     const playButton = (
       <AudioItem
-        visible={!this.props.touchSwipe}
+        visible={this.props.swipeThreshold === 0}
         word={audioWords}
         reCache={this.props.reCache}
         autoPlay={
@@ -261,7 +261,7 @@ const mapStateToProps = (state) => {
     scrollingDone: !state.settings.global.scrolling,
     prevTerm: state.vocabulary.prevTerm,
     prevPushPlay: state.vocabulary.pushedPlay,
-    touchSwipe: state.settings.global.touchSwipe,
+    swipeThreshold: state.settings.global.swipeThreshold,
     furigana: state.settings.vocabulary.repetition,
     hintEnabled: state.settings.vocabulary.hintEnabled,
   };
@@ -283,7 +283,7 @@ VocabularyMain.propTypes = {
   pushedPlay: PropTypes.func,
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
-  touchSwipe: PropTypes.bool,
+  swipeThreshold: PropTypes.number,
   furigana: PropTypes.object,
   toggleFurigana: PropTypes.func,
   toggleFuriganaSettingHelper: PropTypes.func,
