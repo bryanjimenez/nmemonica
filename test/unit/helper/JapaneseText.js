@@ -1,7 +1,6 @@
-import React from "react";
+import 'jsdom-global/register';
+import { render, screen } from '@testing-library/react';
 import { expect } from "chai";
-// import { configure, shallow } from "enzyme";
-// import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
 import {
   furiganaParseRetry,
   JapaneseText,
@@ -13,10 +12,6 @@ import { kanaHintBuilder } from "../../../src/helper/kanaHelper";
 import { furiganaHintBuilder } from "../../../src/helper/kanjiHelper";
 
 /* global describe it */
-
-// FIXME: clean this
-// configure({ adapter: new Adapter() });
-const shallow =()=>{}
 
 describe("JapanseText", function () {
   describe("toString", function () {
@@ -38,27 +33,29 @@ describe("JapanseText", function () {
   });
 
   describe("toHTML", function () {
-    it.skip("no furigana", function () {
+    it("no furigana", function () {
       const hiragana = "する";
 
       const expected = hiragana;
 
       const text = new JapaneseText(hiragana);
-      const wrapper = shallow(text.toHTML());
+      render(text.toHTML());
 
-      expect(wrapper.text()).to.equal(expected);
+      expect(screen.getByText(expected).tagName).to.equal('SPAN');
     });
 
-    it.skip("furigana", function () {
+    it("furigana", function () {
       const said = "きたない";
       const written = "汚い";
 
       const expected = "汚" + "きたな" + "い";
 
       const text = new JapaneseText(said, written);
-      const wrapper = shallow(text.toHTML());
+      render(text.toHTML());
 
-      expect(wrapper.text()).to.equal(expected);
+      expect(screen.getByText("汚").tagName).to.equal('SPAN');
+      expect(screen.getByText("きたな").tagName).to.equal('SPAN');
+      expect(screen.getByText("い").tagName).to.equal('SPAN');
     });
 
     it.skip("repeated hiragana (furigana-okurigana)", function () {
@@ -69,9 +66,11 @@ describe("JapanseText", function () {
       const expected = "五" + "いつ" + "つ";
 
       const text = new JapaneseText(said, written);
-      const wrapper = shallow(text.toHTML());
+      render(text.toHTML());
 
-      expect(wrapper.text()).to.equal(expected);
+      expect(screen.getByText("五").tagName).to.equal('SPAN');
+      expect(screen.getByText("いつ").tagName).to.equal('SPAN');
+      expect(screen.getByText("つ").tagName).to.equal('SPAN');
     });
   });
 
@@ -335,60 +334,45 @@ describe("isHintable", function () {
     expect(actual.isHintable()).to.be.false;
     expect(actual.isHintable(2)).to.be.true;
   });
-  it.skip("hiragana only", function () {
+  it("hiragana only", function () {
     const j = { japanese: "かかる" };
     const actual = JapaneseText.parse(j);
 
-    const wrapper = shallow(actual.getHint(kanaHintBuilder, undefined, 3, 1));
+    /*const {container} =*/
+    render(actual.getHint(kanaHintBuilder, undefined, 3, 1));
 
     expect(actual.isHintable(), "isHintable").to.be.true;
-    expect(
-      wrapper.contains(
-        <span className="hint">
-          <span className="hint-mora">か</span>
-          <span className="transparent-color">かる</span>
-        </span>
-      ),
-      "getHint"
-    ).to.be.true;
+    // expect(container.querySelector('.hint').innerHTML, "getHint")
+    // .to.equal('<span class="hint-mora">か</span>'+'<span class="transparent-color">かる</span>');
+    expect(screen.queryByText('か').className).to.equal("hint-mora")
+    expect(screen.queryByText('かる').className).to.equal("transparent-color")
   });
-  it.skip("katakana only", function () {
+  it("katakana only", function () {
     const j = { japanese: "アパート" };
     const actual = JapaneseText.parse(j);
 
-    const wrapper = shallow(actual.getHint(kanaHintBuilder, undefined, 3, 1));
+    /*const {container} =*/
+    render(actual.getHint(kanaHintBuilder, undefined, 3, 1));
 
     expect(actual.isHintable(), "isHintable").to.be.true;
-    expect(
-      wrapper.contains(
-        <span className="hint">
-          <span className="hint-mora">ア</span>
-          <span className="transparent-color">パート</span>
-        </span>
-      ),
-      "getHint"
-    ).to.be.true;
+    // expect(container.querySelector('.hint').innerHTML, "getHint")
+    // .to.equal('<span class="hint-mora">ア</span>'+'<span class="transparent-color">パート</span>');
+    expect(screen.queryByText('ア').className).to.equal("hint-mora")
+    expect(screen.queryByText('パート').className).to.equal("transparent-color")
   });
-  it.skip("starting kanji with furigana", function () {
+  it("starting kanji with furigana", function () {
     const j = { japanese: "あさごはん\n朝ご飯" };
     const actual = JapaneseText.parse(j);
 
-    const wrapper = shallow(
-      actual.getHint(undefined, furiganaHintBuilder, 3, 1)
-    );
+    render(actual.getHint(undefined, furiganaHintBuilder, 3, 1));
 
     expect(actual.isHintable(), "isHintable").to.be.true;
 
-    expect(
-      wrapper.containsAllMatchingElements([
-        <span className="hint-mora">朝</span>,
-        <span className="hint-mora">あ</span>,
-        <span className="transparent-color">さ</span>,
-        <span className="transparent-color">ご</span>,
-        <span className="transparent-color">飯</span>,
-        <span className="transparent-color">はん</span>,
-      ]),
-      "getHint"
-    ).to.be.true;
+    expect(screen.getByText("朝").tagName).equal("SPAN");
+    expect(screen.getByText("あ").tagName).equal("SPAN");
+    expect(screen.getByText("さ").className).equal("transparent-color");
+    expect(screen.getByText("ご").className).equal("transparent-color");
+    expect(screen.getByText("飯").className).equal("transparent-color");
+    expect(screen.getByText("はん").className).equal("transparent-color");
   });
 });

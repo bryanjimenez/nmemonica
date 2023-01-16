@@ -1,7 +1,6 @@
-import React from "react";
+import 'jsdom-global/register';
+import { render, screen } from '@testing-library/react'
 import { expect } from "chai";
-// import { configure, shallow } from "enzyme";
-// import Adapter from "@wojtekmaj/enzyme-adapter-react-17";
 import { JapaneseText } from "../../../src/helper/JapaneseText";
 import { 
   getParseObjectHintMask,
@@ -10,13 +9,7 @@ import {
   kanjiOkuriganaSpliceApplyCss
 } from "../../../src/helper/kanjiHelper";
 
-
 /* global describe it */
-
-// FIXME: clean this
-// configure({ adapter: new Adapter() });
-const shallow =()=>{}
-
 
 describe("kanjiHelper", function () {
   describe("getParseObjectHintMask", function () {
@@ -1101,30 +1094,23 @@ describe("kanjiHelper", function () {
       japanese: "おかいけいをおねがいします\nお会計をお願いします",
     });
 
-    it.skip("apply css", function () {
+    it("apply css", function () {
       const boundary = "を";
       const start = testObj.getSpelling().indexOf(boundary);
       const end = start + boundary.length;
 
       const hidden = "transparent-font underline";
 
-      const wrapper = shallow(
-        kanjiOkuriganaSpliceApplyCss(testObj.parseObj, { hidden }, start, end)
-      );
+      render(kanjiOkuriganaSpliceApplyCss(testObj.parseObj, { hidden }, start, end));
 
-      expect(
-        wrapper.containsAllMatchingElements([
-        <span>お</span>,
-        <span>会計</span>,
-        <span>かいけい</span>,
-        <span className="transparent-font underline">{boundary}</span>,
-        <span>お</span>,
-        <span>願</span>,
-        <span>ねが</span>,
-        <span>いします</span>
-        ]),
-        "kanjiOkuriganaSpliceApplyCss"
-      ).to.be.true;
+      expect(screen.getAllByText("お")[0].tagName).equal("SPAN");
+      expect(screen.getByText("会計").tagName).equal("SPAN");
+      expect(screen.getByText("かいけい").tagName).equal("SPAN");
+      expect(screen.getByText(boundary).className).equal(hidden);
+      expect(screen.getAllByText("お")[1].tagName).equal("SPAN");
+      expect(screen.getByText("願").tagName).equal("SPAN");
+      expect(screen.getByText("ねが").tagName).equal("SPAN");
+      expect(screen.getByText("いします").tagName).equal("SPAN");
     });
   });
 });
