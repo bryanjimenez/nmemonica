@@ -30,7 +30,7 @@
     "@emotion/styled": "^11.10.5",
     "@mui/material": "^5.11.5",
     "@popperjs/core": "^2.11.6",
-    "@primer/octicons-react": "^17.10.2",
+    "@primer/octicons-react": "^15.1.0",
     "@reduxjs/toolkit": "^1.9.1",
     "babel-loader": "^9.1.2",
     "bootstrap": "^5.2.1",

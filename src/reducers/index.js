@@ -1,4 +1,4 @@
-import { combineReducers } from "redux";
+import { configureStore } from "@reduxjs/toolkit";
 import phrasesReducer from "./phrasesRed";
 import vocabularyReducer from "./vocabularyRed";
 import oppositesReducer from "./oppositesRed";
@@ -8,15 +8,15 @@ import loginReducer from "./loginRed";
 import versionsReducer from "./versionsRed";
 import kanjiReducer from "./kanjiRed";
 
-const rootReducer = combineReducers({
-  phrases: phrasesReducer,
-  vocabulary: vocabularyReducer,
-  opposites: oppositesReducer,
-  kana: kanaReducer,
-  kanji: kanjiReducer,
-  settings: settingsReducer,
-  login: loginReducer,
-  version: versionsReducer,
+export const store = configureStore({
+  reducer: {
+    phrases: phrasesReducer,
+    vocabulary: vocabularyReducer,
+    opposites: oppositesReducer,
+    kana: kanaReducer,
+    kanji: kanjiReducer,
+    settings: settingsReducer,
+    login: loginReducer,
+    version: versionsReducer,
+  },
 });
-
-export default rootReducer;
