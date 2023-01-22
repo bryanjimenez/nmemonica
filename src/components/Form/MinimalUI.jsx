@@ -7,17 +7,16 @@ import StackNavButton from "./StackNavButton";
  * @typedef {{
  * prev: function,
  * next: function,
- * color?: string,
  * children?: JSX.Element,
  * }} MinimalUIProps
  * @param {MinimalUIProps} props
  */
 export function MinimalUI(props) {
-  const color = props.color ? { color: props.color } : { color: "--bs-red" };
+  const color = "error";
   return (
     <div className="d-flex justify-content-between h-100">
       <StackNavButton
-        {...color}
+        color={color}
         ariaLabel="Previous"
         action={/** @type {React.MouseEventHandler} */ (props.prev)}
       >
@@ -25,7 +24,7 @@ export function MinimalUI(props) {
       </StackNavButton>
       {props.children}
       <StackNavButton
-        {...color}
+        color={color}
         ariaLabel="Next"
         action={/** @type {React.MouseEventHandler} */ (props.next)}
       >

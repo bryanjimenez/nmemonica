@@ -961,11 +961,7 @@ class Phrases extends Component {
           onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
           onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
         >
-          <StackNavButton
-            ariaLabel="Previous"
-            color={"--orange"}
-            action={this.gotoPrev}
-          >
+          <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           <div className="pt-3 d-flex flex-column justify-content-around text-center">
@@ -1019,11 +1015,7 @@ class Phrases extends Component {
             </Sizable>
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>
-          <StackNavButton
-            color={"--orange"}
-            ariaLabel="Next"
-            action={this.gotoNextSlide}
-          >
+          <StackNavButton ariaLabel="Next" action={this.gotoNextSlide}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
@@ -1083,7 +1075,7 @@ class Phrases extends Component {
           </div>
         </div>
       </div>,
-      <div key={2} className="progress-bar flex-shrink-1">
+      <div key={2} className="progress-line flex-shrink-1">
         <LinearProgress
           variant="determinate"
           value={progress}

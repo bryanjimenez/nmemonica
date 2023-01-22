@@ -539,11 +539,7 @@ class KanaGame extends Component {
     return [
       <div key={0} className={mainPanel}>
         <div className="d-flex justify-content-between h-100">
-          <StackNavButton
-            ariaLabel="Previous"
-            color={"--blue"}
-            action={this.gotoPrev}
-          >
+          <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
           {!this.props.wideMode && (
@@ -566,11 +562,7 @@ class KanaGame extends Component {
               {choices.map((c, i) => this.choiceButton(i))}
             </div>
           </div>
-          <StackNavButton
-            color={"--blue"}
-            ariaLabel="Next"
-            action={this.gotoNext}
-          >
+          <StackNavButton ariaLabel="Next" action={this.gotoNext}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>

@@ -1402,11 +1402,7 @@ class Vocabulary extends Component {
           onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
           onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
         >
-          <StackNavButton
-            ariaLabel="Previous"
-            color={"--yellow"}
-            action={this.gotoPrev}
-          >
+          <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
 
@@ -1426,11 +1422,7 @@ class Vocabulary extends Component {
             />
           )}
 
-          <StackNavButton
-            color={"--yellow"}
-            ariaLabel="Next"
-            action={this.gotoNextSlide}
-          >
+          <StackNavButton ariaLabel="Next" action={this.gotoNextSlide}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
@@ -1574,7 +1566,7 @@ class Vocabulary extends Component {
         </div>,
         <div
           key={2}
-          className="progress-bar flex-shrink-1"
+          className="progress-line flex-shrink-1"
           onClick={() => {
             if (
               this.props.isOrdered &&

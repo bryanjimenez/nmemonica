@@ -261,11 +261,7 @@ class Kanji extends Component {
           onTouchMove={this.props.touchSwipe ? this.inMove : undefined}
           onTouchEnd={this.props.touchSwipe ? this.endMove : undefined}
         >
-          <StackNavButton
-            ariaLabel="Previous"
-            color={"--yellow"}
-            action={this.gotoPrev}
-          >
+          <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
 
@@ -346,11 +342,7 @@ class Kanji extends Component {
           </div>
           <div className="right-info"></div>
 
-          <StackNavButton
-            color={"--yellow"}
-            ariaLabel="Next"
-            action={this.gotoNextSlide}
-          >
+          <StackNavButton ariaLabel="Next" action={this.gotoNextSlide}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>

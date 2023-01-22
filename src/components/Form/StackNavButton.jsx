@@ -1,13 +1,13 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Button } from "@mui/material"
+import { Button } from "@mui/material";
 
 import "./StackNavButton.css";
 
 /**
  * @typedef {{
  * action:  React.MouseEventHandler,
- * color: string,
+ * color?: "primary" | "secondary" | "success" | "info" | "warning" | "error" | "inherit",
  * ariaLabel: string,
  * children: JSX.Element}} StackNavButtonProps
  */
@@ -16,11 +16,14 @@ import "./StackNavButton.css";
  * @param {StackNavButtonProps} props
  */
 export function StackNavButton(props) {
-
   return (
     <Button
       size="small"
+      color={props.color}
       aria-label={props.ariaLabel}
+      sx={{
+        color: !props.color ? "unset" : undefined,
+      }}
       onClick={props.action}
     >
       {props.children}

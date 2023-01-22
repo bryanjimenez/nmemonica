@@ -153,7 +153,7 @@ function ParticlesGame() {
         gotoPrev={gotoPrev}
         gotoNext={gotoNext}
       />
-      <div key={1} className="progress-bar flex-shrink-1">
+      <div key={1} className="progress-line flex-shrink-1">
         <LinearProgress variant="determinate" value={progress} />
       </div>
     </>

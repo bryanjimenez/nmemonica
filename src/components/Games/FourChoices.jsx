@@ -102,7 +102,6 @@ function FourChoices(props) {
       <div className="d-flex justify-content-between h-100">
         <StackNavButton
           ariaLabel="Previous"
-          color={"--green"}
           action={/** @type {React.MouseEventHandler} */ (props.gotoPrev)}
         >
           <ChevronLeftIcon size={16} />
@@ -166,7 +165,6 @@ function FourChoices(props) {
           })}
         </div>
         <StackNavButton
-          color={"--green"}
           ariaLabel="Next"
           action={/** @type {React.MouseEventHandler} */ (props.gotoNext)}
         >
