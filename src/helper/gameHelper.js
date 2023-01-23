@@ -6,6 +6,8 @@ import { shuffleArray } from "./arrayHelper";
 import { audioPronunciation, JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
 import { daysSince } from "./consoleHelper";
+import { isYoon, kanaHintBuilder } from "./kanaHelper";
+import { furiganaHintBuilder } from "./kanjiHelper";
 
 /**
  * @typedef {import("../typings/raw").RawJapanese} RawJapanese
@@ -537,7 +539,9 @@ export function toggleOptions(index, options) {
  * @param {string[]} [order]
  */
 export function getVerbFormsArray(rawVerb, order) {
-  const verb = {dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb)};
+  const verb = {
+    dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb),
+  };
 
   const allAvailable = [
     { name: "-masu", value: verb.dictionary?.masuForm() },
@@ -820,6 +824,23 @@ export function getEnglishHint(vocabulary) {
       {vocabulary.grp + (vocabulary.subGrp ? ", " + vocabulary.subGrp : "")}
     </span>
   );
+}
+
+/**
+ *
+ * @param {JapaneseText} japaneseObj
+ */
+export function getJapaneseHint(japaneseObj) {
+  const yoon = japaneseObj.getPronunciation().slice(1, 2);
+
+  let jHint;
+  if (isYoon(yoon)) {
+    jHint = japaneseObj.getHint(kanaHintBuilder, furiganaHintBuilder, 3, 2);
+  } else {
+    jHint = japaneseObj.getHint(kanaHintBuilder, furiganaHintBuilder, 3, 1);
+  }
+
+  return jHint;
 }
 
 /**

@@ -17,9 +17,8 @@ import {
   japaneseLabel,
   toggleFuriganaSettingHelper,
   labelPlacementHelper,
+  getJapaneseHint,
 } from "../../helper/gameHelper";
-import { furiganaHintBuilder } from "../../helper/kanjiHelper";
-import { kanaHintBuilder } from "../../helper/kanaHelper";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -144,7 +143,7 @@ class VocabularyMain extends Component {
 
     if (this.props.hintEnabled && this.props.showHint) {
       if (practiceSide) {
-        const jHint = vObj.getHint(kanaHintBuilder, furiganaHintBuilder, 3, 1);
+        const jHint = getJapaneseHint(vObj);
         jLabel = jHint || jLabel;
       } else {
         const eHint = getEnglishHint(vocabulary);

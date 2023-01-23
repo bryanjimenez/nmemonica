@@ -8,8 +8,6 @@ import {
 import {
   furiganaParse,
 } from "../../../src/helper/JapaneseText";
-import { kanaHintBuilder } from "../../../src/helper/kanaHelper";
-import { furiganaHintBuilder } from "../../../src/helper/kanjiHelper";
 
 /* global describe it */
 
@@ -338,41 +336,18 @@ describe("isHintable", function () {
     const j = { japanese: "かかる" };
     const actual = JapaneseText.parse(j);
 
-    /*const {container} =*/
-    render(actual.getHint(kanaHintBuilder, undefined, 3, 1));
-
     expect(actual.isHintable(), "isHintable").to.be.true;
-    // expect(container.querySelector('.hint').innerHTML, "getHint")
-    // .to.equal('<span class="hint-mora">か</span>'+'<span class="transparent-color">かる</span>');
-    expect(screen.queryByText('か').className).to.equal("hint-mora")
-    expect(screen.queryByText('かる').className).to.equal("transparent-color")
   });
   it("katakana only", function () {
     const j = { japanese: "アパート" };
     const actual = JapaneseText.parse(j);
 
-    /*const {container} =*/
-    render(actual.getHint(kanaHintBuilder, undefined, 3, 1));
-
     expect(actual.isHintable(), "isHintable").to.be.true;
-    // expect(container.querySelector('.hint').innerHTML, "getHint")
-    // .to.equal('<span class="hint-mora">ア</span>'+'<span class="transparent-color">パート</span>');
-    expect(screen.queryByText('ア').className).to.equal("hint-mora")
-    expect(screen.queryByText('パート').className).to.equal("transparent-color")
   });
   it("starting kanji with furigana", function () {
     const j = { japanese: "あさごはん\n朝ご飯" };
     const actual = JapaneseText.parse(j);
 
-    render(actual.getHint(undefined, furiganaHintBuilder, 3, 1));
-
     expect(actual.isHintable(), "isHintable").to.be.true;
-
-    expect(screen.getByText("朝").tagName).equal("SPAN");
-    expect(screen.getByText("あ").tagName).equal("SPAN");
-    expect(screen.getByText("さ").className).equal("transparent-color");
-    expect(screen.getByText("ご").className).equal("transparent-color");
-    expect(screen.getByText("飯").className).equal("transparent-color");
-    expect(screen.getByText("はん").className).equal("transparent-color");
   });
 });

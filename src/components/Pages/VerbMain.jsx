@@ -21,9 +21,8 @@ import {
   labelPlacementHelper,
   verbToTargetForm,
   getEnglishHint,
+  getJapaneseHint,
 } from "../../helper/gameHelper";
-import { furiganaHintBuilder } from "../../helper/kanjiHelper";
-import { kanaHintBuilder } from "../../helper/kanaHelper";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -314,12 +313,7 @@ class VerbMain extends Component {
 
     if (this.props.hintEnabled && this.props.showHint) {
       if (practiceSide) {
-        const jHint = japaneseObj.getHint(
-          kanaHintBuilder,
-          furiganaHintBuilder,
-          3,
-          1
-        );
+        const jHint = getJapaneseHint(japaneseObj);
         jLabel = jHint || jLabel;
       } else {
         const eHint = getEnglishHint(verb);

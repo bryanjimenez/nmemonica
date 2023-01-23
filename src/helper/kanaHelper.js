@@ -31,6 +31,13 @@ export function isKatakana(char) {
 }
 
 /**
+ * @param {string} char character to check if is little
+ */
+export function isYoon(char) {
+  return new RegExp("^[ゃャゅュょョ]$").test(char);
+}
+
+/**
  * @returns {boolean}
  * @param {string} char the character to check against the punctuation table
  */
