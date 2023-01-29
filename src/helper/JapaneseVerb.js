@@ -407,6 +407,38 @@ export class JapaneseVerb extends JapaneseText {
   taForm() {
     return this.t_Form(taRule);
   }
+
+  chattaForm() {
+    if (this.getVerbClass() === 3) {
+      return null;
+    }
+
+    const verb = super.hasFurigana()
+      ? super.getSpelling()
+      : super.getPronunciation();
+
+    let ending;
+    const lastCharacter = verb[verb.length - 1];
+    switch (lastCharacter) {
+      case "ぶ":
+      case "む":
+      case "ぬ":
+      case "ぐ":
+        ending = "じゃった";
+        break;
+      default:
+        ending = "ちゃった";
+        break;
+    }
+
+    const ta = this.t_Form(taRule);
+
+    return new JapaneseText(
+      ta.getPronunciation().slice(0, -1) + ending,
+      ta.getSpelling().slice(0, -1) + ending
+    );
+  }
+
   /**
    * @returns {JapaneseText} the te form of a verb
    */

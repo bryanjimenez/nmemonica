@@ -551,6 +551,9 @@ export function getVerbFormsArray(rawVerb, order) {
     { name: "-saseru", value: verb.dictionary?.saseruForm() },
     { name: "-te", value: verb.dictionary?.teForm() },
     { name: "-ta", value: verb.dictionary?.taForm() },
+    ...(verb.dictionary?.chattaForm() !== null
+      ? [{ name: "-chatta", value: verb.dictionary?.chattaForm() }]
+      : []),
   ];
 
   let filtered;
