@@ -43,7 +43,6 @@ import "./Kanji.css";
  * @typedef {Object} KanjiState
  * @property {number} selectedIndex
  * @property {RawKanji[]} filteredVocab
- * @property {string[]} frequency subset of frequency words within current active group
  * @property {boolean} showOn
  * @property {boolean} showKun
  * @property {boolean} showEx
@@ -66,7 +65,6 @@ class Kanji extends Component {
     this.state = {
       selectedIndex: 0,
       filteredVocab: [],
-      frequency: [],
       showOn: false,
       showKun: false,
       showEx: false,
