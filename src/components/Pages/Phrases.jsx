@@ -52,6 +52,7 @@ import {
 } from "../../helper/mediaHelper";
 import {
   FrequencyTermIcon,
+  ReCacheAudioBtn,
   ToggleFrequencyTermBtn,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
@@ -85,6 +86,7 @@ import Sizable from "../Form/Sizable";
  * @property {number[]} [order]
  * @property {string} [reinforcedUID]
  * @property {any} [swiping]
+ * @property {boolean} recacheAudio
  * @property {0|1|2|3} loop
  */
 
@@ -137,6 +139,7 @@ class Phrases extends Component {
       showLit: false,
       filteredPhrases: [],
       frequency: [],
+      recacheAudio: false,
       prevPhrase: this.props.prevTerm,
       audioPlay: true,
       prevPlayed: this.props.prevPushPlay,
@@ -733,14 +736,16 @@ class Phrases extends Component {
           this.state.filteredPhrases
         );
       const phrase = getTerm(uid, this.props.phrases);
+      const override = this.state.recacheAudio ? "/override_cache" : "";
 
       if (direction === "up") {
         const inJapanese = audioPronunciation(phrase);
-        const audioUrl = addParam(pronounceEndoint, {
+        const audioUrl = addParam(pronounceEndoint + override, {
           tl: "ja",
           q: inJapanese,
           uid,
         });
+
         const japaneseAudio = new Audio(audioUrl);
         try {
           swipePromise = Promise.all([
@@ -780,7 +785,8 @@ class Phrases extends Component {
         }
       } else if (direction === "down") {
         const inEnglish = phrase.english;
-        const audioUrl = addParam(pronounceEndoint, {
+
+        const audioUrl = addParam(pronounceEndoint + override, {
           tl: "en",
           q: inEnglish,
           uid: phrase.uid + ".en",
@@ -1019,7 +1025,21 @@ class Phrases extends Component {
                 toggle={this.props.practiceSide}
                 action={this.props.flipPhrasesPracticeSide}
               />
+              <ReCacheAudioBtn
+                active={this.state.recacheAudio}
+                action={() => {
+                  if (this.state.recacheAudio === false) {
+                    const delayTime = 2000;
+                    this.setState({ recacheAudio: true });
 
+                    const delayToggle = () => {
+                      this.setState({ recacheAudio: false });
+                    };
+
+                    setTimeout(delayToggle, delayTime);
+                  }
+                }}
+              />
               <div className="sm-icon-grp">
                 <LoopSettingBtn
                   active={this.state.loop > 0}
