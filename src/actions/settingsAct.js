@@ -642,7 +642,17 @@ export function setParticlesARomaji() {
  * @param {string} uid
  */
 export function addFrequencyWord(uid) {
-  return addFrequencyTerm(ADD_FREQUENCY_WORD, [uid]);
+  return (dispatch, getState) => {
+    updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { set: { rein: true } })(
+      dispatch,
+      getState
+    );
+
+    dispatch({
+      type: ADD_FREQUENCY_WORD,
+      value: { uid },
+    });
+  };
 }
 
 /**
@@ -652,32 +662,24 @@ export function addFrequencyWord(uid) {
  */
 export function removeFrequencyWord(uid) {
   return (dispatch, getState) => {
-    const { user } = getState().login;
-
     const path = "/vocabulary/";
-    const attr = "frequency";
-    const time = new Date();
-    const currVal = /** @type {string[]} */ (
-      getLastStateValue(getState, path, attr)
-    );
-    const newValue = currVal.filter((i) => i !== uid);
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
+    const attr = "repetition";
+    /** @type {SpaceRepetitionMap} */
+    const spaceRep = getLastStateValue(getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        ADD_FREQUENCY_WORD,
-        newValue
+    if (spaceRep[uid]?.rein === true) {
+      // update frequency list count
+      const reinforceList = Object.keys(spaceRep).filter(
+        (k) => spaceRep[k].rein === true
       );
-    } else {
+      // null to delete
+      updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+        set: { rein: null },
+      })(dispatch, getState);
+
       dispatch({
         type: REMOVE_FREQUENCY_WORD,
-        value: newValue,
+        value: { uid, count: reinforceList.length - 1 },
       });
     }
   };
@@ -987,7 +989,7 @@ export function updateSpaceRepTerm(
         const optSet = Object.keys(options.set).reduce((acc, k) => {
           if (options.set !== undefined && options.set[k] !== undefined) {
             if (options.set[k] === null) {
-              spaceRep[uid][k] = undefined;
+              acc = { ...acc, [k]: undefined };
             } else {
               acc = { ...acc, [k]: options.set[k] };
             }
@@ -1289,10 +1291,10 @@ export function updateVerbColSplit(number) {
 }
 
 /**
+ * Retrieves last App settings state value for path and attr
  * @param {function} getState
  * @param {string} path
  * @param {string} attr
- * @returns {*}
  */
 export function getLastStateValue(getState, path, attr) {
   const stateSettings = getState().settings;

@@ -129,7 +129,7 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {string[]} activeGroup
  * @property {typeof addFrequencyWord} addFrequencyWord
  * @property {typeof removeFrequencyWord} removeFrequencyWord
- * @property {string[]} frequency
+ * @property {{uid: string, count: number}} frequency       value of *last* frequency word update
  * @property {typeof getVocabulary} getVocabulary
  * @property {RawVocabulary[]} vocab
  * @property {boolean} hintEnabled
@@ -325,22 +325,28 @@ class Vocabulary extends Component {
     }
 
     if (
-      this.props.frequency.length != prevProps.frequency.length ||
-      this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
-      prevProps.frequency.some((e) => !this.props.frequency.includes(e))
+      this.props.frequency.uid != prevProps.frequency.uid ||
+      this.props.frequency.count != prevProps.frequency.count
     ) {
       if (
         this.props.filterType === TermFilterBy.FREQUENCY &&
-        this.props.frequency.length === 0
+        this.props.frequency.count === 0
       ) {
+        // last frequency word was removed
         this.setOrder();
       } else {
         const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
-        const frequency = this.props.frequency.filter((f) =>
-          filteredKeys.includes(f)
+        const frequency = filteredKeys.reduce(
+          (/** @type {string[]} */ acc, cur) => {
+            if (this.props.repetition[cur]?.rein === true) {
+              acc = [...acc, cur];
+            }
+            return acc;
+          },
+          []
         );
-        // props.frequency is all frequency words
-        // state.frequency is a subset of frequency words within current active group
+        // props.frequency is a count of frequency words
+        // state.frequency is a subset list of frequency words within current active group
         this.setState({ frequency });
       }
     }
@@ -785,10 +791,20 @@ class Vocabulary extends Component {
   }
 
   setOrder() {
+    const allFrequency = Object.keys(this.props.repetition).reduce(
+      (/** @type {string[]}*/ acc, cur) => {
+        if (this.props.repetition[cur].rein === true) {
+          acc = [...acc, cur];
+        }
+        return acc;
+      },
+      []
+    );
+
     let filteredVocab = termFilterByType(
       this.props.filterType,
       this.props.vocab,
-      this.props.frequency,
+      allFrequency,
       this.props.activeGroup,
       this.props.toggleVocabularyFilter
     );
@@ -813,8 +829,9 @@ class Vocabulary extends Component {
       if (this.props.reinforce === true) {
         // if reinforce, place reinforced/frequency terms
         // at the end
-        const [freqTerms, nonFreqTerms] = partition(filteredVocab, (o) =>
-          this.props.frequency.includes(o.uid)
+        const [freqTerms, nonFreqTerms] = partition(
+          filteredVocab,
+          (o) => this.props.repetition[o.uid]?.rein === true
         );
         filteredVocab = [...nonFreqTerms, ...freqTerms];
 
@@ -835,8 +852,14 @@ class Vocabulary extends Component {
     }
 
     const filteredKeys = filteredVocab.map((f) => f.uid);
-    const frequency = this.props.frequency.filter((/** @type {string} */ f) =>
-      filteredKeys.includes(f)
+    const frequency = filteredKeys.reduce(
+      (/** @type {string[]} */ acc, cur) => {
+        if (this.props.repetition[cur]?.rein === true) {
+          acc = [...acc, cur];
+        }
+        return acc;
+      },
+      []
     );
 
     this.setState({
@@ -1323,7 +1346,8 @@ class Vocabulary extends Component {
         this.state.filteredVocab
       );
     const vocabulary = getTerm(uid, this.props.vocab);
-    const vocabulary_reinforce = this.state.frequency.includes(vocabulary.uid);
+    const vocabulary_reinforce =
+      this.props.repetition[vocabulary.uid]?.rein === true;
 
     const isVerb = vocabulary.grp === "Verb";
 
@@ -1684,7 +1708,7 @@ Vocabulary.propTypes = {
   activeGroup: PropTypes.array,
   addFrequencyWord: PropTypes.func.isRequired,
   removeFrequencyWord: PropTypes.func.isRequired,
-  frequency: PropTypes.array,
+  frequency: PropTypes.object,
   vocab: PropTypes.array.isRequired,
   hintEnabled: PropTypes.bool,
   romajiActive: PropTypes.bool,

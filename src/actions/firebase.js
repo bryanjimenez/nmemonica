@@ -6,7 +6,7 @@ import { localStorageKey } from "../constants/paths";
 import { getLocalStorageSettings } from "../helper/localStorage";
 import merge from "lodash/fp/merge";
 import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRed";
-import { getLastStateValue } from "./settingsAct";
+import { getLastStateValue, REMOVE_FREQUENCY_WORD } from "./settingsAct";
 
 export const FIREBASE_LOGIN = "firebase_login";
 export const FIREBASE_LOGOUT = "firebase_logout";
@@ -141,6 +141,15 @@ export function initializeSettingsFromLocalStorage() {
         dispatch({
           type: GET_USER_SETTINGS,
           value: mergedSettings,
+        });
+
+        // calculated values
+        const reinforceList = Object.keys(
+          mergedSettings.vocabulary.repetition
+        ).filter((k) => mergedSettings.vocabulary.repetition[k]?.rein === true);
+        dispatch({
+          type: REMOVE_FREQUENCY_WORD,
+          value: { count: reinforceList.length },
         });
       });
     }

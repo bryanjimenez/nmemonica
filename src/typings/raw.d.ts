@@ -62,6 +62,7 @@ export interface SpaceRepetitionMap {
     d: string;
     /** View count */ vC: number;
     /** Furigana shown (yes:undefined|true) */ f?: boolean;
+    /** Reinforce */ rein?: boolean;
     /** Pronunciation incorrect */ pron?: true,
 
     /** Timed play play-count */ tpPc?: number;

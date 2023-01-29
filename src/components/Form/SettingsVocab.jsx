@@ -37,6 +37,7 @@ import VerbFormSlider from "./VerbFormSlider";
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
+ * @typedef {import("../Pages/Settings").SpaceRepetitionMap} SpaceRepetitionMap
  */
 
 /**
@@ -48,7 +49,7 @@ import VerbFormSlider from "./VerbFormSlider";
  * vocabRomaji: boolean,
  * vocabHint: boolean,
  * vocabFilter: typeof TermFilterBy[keyof TermFilterBy],
- * vocabFreq: string[],
+ * vocabRep: SpaceRepetitionMap,
  * vocabReinforce: boolean,
  * vocabAutoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
  * vocabGroups: GroupListMap,
@@ -87,7 +88,7 @@ class SettingsVocab extends Component {
       vocabOrder,
       verbFormsOrder,
       vocabFilter,
-      vocabFreq,
+      vocabRep,
       vocabGroups,
       vocabActive,
       vocabReinforce,
@@ -109,6 +110,10 @@ class SettingsVocab extends Component {
       toggleVocabularyRomaji,
       updateVerbColSplit,
     } = this.props;
+
+    const vocabFreq = Object.keys(vocabRep).filter(
+      (k) => vocabRep[k]?.rein === true
+    );
 
     if (vocabulary.length < 1 || Object.keys(vocabGroups).length < 1)
       return <NotReady addlStyle="vocabulary-settings" />;
@@ -381,7 +386,7 @@ const mapStateToProps = (state) => {
     autoVerbView: state.settings.vocabulary.autoVerbView,
     verbColSplit: state.settings.vocabulary.verbColSplit,
     vocabFilter: state.settings.vocabulary.filter,
-    vocabFreq: state.settings.vocabulary.frequency,
+    vocabRep: state.settings.vocabulary.repetition,
     vocabReinforce: state.settings.vocabulary.reinforce,
     verbFormsOrder: state.settings.vocabulary.verbFormsOrder,
   };
@@ -398,7 +403,7 @@ SettingsVocab.propTypes = {
   autoVerbView: PropTypes.bool,
   verbColSplit: PropTypes.number,
   vocabFilter: PropTypes.number,
-  vocabFreq: PropTypes.array,
+  vocabRep: PropTypes.object,
   vocabReinforce: PropTypes.bool,
   verbFormsOrder: PropTypes.array,
 

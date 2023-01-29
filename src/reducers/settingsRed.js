@@ -72,7 +72,7 @@ export const DEFAULT_SETTINGS = {
     filter: 0,
     reinforce: false,
     repetition: {},
-    frequency: [],
+    frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     autoPlay: 0,
     autoVerbView: false,
@@ -240,7 +240,10 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          frequency: action.value,
+          frequency: {
+            ...action.value,
+            count: state.vocabulary.frequency.count + 1,
+          },
         },
       };
     case ADD_SPACE_REP_WORD:
