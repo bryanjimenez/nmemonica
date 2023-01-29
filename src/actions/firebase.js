@@ -6,7 +6,11 @@ import { localStorageKey } from "../constants/paths";
 import { getLocalStorageSettings } from "../helper/localStorage";
 import merge from "lodash/fp/merge";
 import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRed";
-import { getLastStateValue, REMOVE_FREQUENCY_WORD } from "./settingsAct";
+import {
+  getLastStateValue,
+  REMOVE_FREQUENCY_PHRASE,
+  REMOVE_FREQUENCY_WORD,
+} from "./settingsAct";
 
 export const FIREBASE_LOGIN = "firebase_login";
 export const FIREBASE_LOGOUT = "firebase_logout";
@@ -144,12 +148,20 @@ export function initializeSettingsFromLocalStorage() {
         });
 
         // calculated values
-        const reinforceList = Object.keys(
+        const vocabReinforceList = Object.keys(
           mergedSettings.vocabulary.repetition
         ).filter((k) => mergedSettings.vocabulary.repetition[k]?.rein === true);
+        const phraseReinforceList = Object.keys(
+          mergedSettings.phrases.repetition
+        ).filter((k) => mergedSettings.phrases.repetition[k]?.rein === true);
+
         dispatch({
           type: REMOVE_FREQUENCY_WORD,
-          value: { count: reinforceList.length },
+          value: { count: vocabReinforceList.length },
+        });
+        dispatch({
+          type: REMOVE_FREQUENCY_PHRASE,
+          value: { count: phraseReinforceList.length },
         });
       });
     }

@@ -689,41 +689,43 @@ export function removeFrequencyWord(uid) {
  * @param {string} uid
  */
 export function addFrequencyPhrase(uid) {
-  return addFrequencyTerm(ADD_FREQUENCY_PHRASE, [uid]);
+  return (dispatch, getState) => {
+    updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, false, {
+      set: { rein: true },
+    })(dispatch, getState);
+
+    dispatch({
+      type: ADD_FREQUENCY_PHRASE,
+      value: { uid },
+    });
+  };
 }
 
 /**
+ * Removes frequency word
  * @param {string} uid
  * @returns {ActCreator}
  */
 export function removeFrequencyPhrase(uid) {
   return (dispatch, getState) => {
-    const { user } = getState().login;
-
     const path = "/phrases/";
-    const attr = "frequency";
-    const time = new Date();
-    const currVal = /** @type {string[]}*/ (
-      getLastStateValue(getState, path, attr)
-    );
-    const newValue = currVal.filter((i) => i !== uid);
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
+    const attr = "repetition";
+    /** @type {SpaceRepetitionMap} */
+    const spaceRep = getLastStateValue(getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        REMOVE_FREQUENCY_PHRASE,
-        newValue
+    if (spaceRep[uid]?.rein === true) {
+      // update frequency list count
+      const reinforceList = Object.keys(spaceRep).filter(
+        (k) => spaceRep[k].rein === true
       );
-    } else {
+      // null to delete
+      updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, false, {
+        set: { rein: null },
+      })(dispatch, getState);
+
       dispatch({
         type: REMOVE_FREQUENCY_PHRASE,
-        value: newValue,
+        value: { uid, count: reinforceList.length - 1 },
       });
     }
   };

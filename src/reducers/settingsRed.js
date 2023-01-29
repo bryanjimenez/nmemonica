@@ -60,7 +60,7 @@ export const DEFAULT_SETTINGS = {
     romaji: false,
     reinforce: false,
     repetition: {},
-    frequency: [],
+    frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
   },
@@ -275,7 +275,10 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         phrases: {
           ...state.phrases,
-          frequency: action.value,
+          frequency: {
+            ...action.value,
+            count: state.phrases.frequency.count + 1,
+          },
         },
       };
     case ADD_SPACE_REP_PHRASE:

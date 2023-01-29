@@ -100,7 +100,7 @@ import Sizable from "../Form/Sizable";
  * @property {boolean} romajiActive
  * @property {typeof removeFrequencyPhrase} removeFrequencyPhrase
  * @property {typeof addFrequencyPhrase} addFrequencyPhrase
- * @property {string[]} frequency
+ * @property {{uid: string, count: number}} frequency       value of *last* frequency word update
  * @property {typeof TermFilterBy[keyof TermFilterBy]} filterType
  * @property {typeof togglePhrasesFilter} togglePhrasesFilter
  * @property {boolean} reinforce
@@ -321,24 +321,29 @@ class Phrases extends Component {
     }
 
     if (
-      this.props.frequency.length != prevProps.frequency.length ||
-      this.props.frequency.some((e) => !prevProps.frequency.includes(e)) ||
-      prevProps.frequency.some((e) => !this.props.frequency.includes(e))
+      this.props.frequency.uid != prevProps.frequency.uid ||
+      this.props.frequency.count != prevProps.frequency.count
     ) {
       // console.log('frequency word changed');
       if (
         this.props.filterType === TermFilterBy.FREQUENCY &&
-        this.props.frequency.length === 0
+        this.props.frequency.count === 0
       ) {
+        // last frequency phrase was removed
         this.setOrder();
       } else {
         const filteredKeys = this.state.filteredPhrases.map((f) => f.uid);
-        const frequency = this.props.frequency.filter((f) =>
-          filteredKeys.includes(f)
+        const frequency = filteredKeys.reduce(
+          (/** @type {string[]} */ acc, cur) => {
+            if (this.props.repetition[cur]?.rein === true) {
+              acc = [...acc, cur];
+            }
+            return acc;
+          },
+          []
         );
-        // console.log('frequency word changed');
-        // props.frequency is all frequency words
-        // state.frequency is a subset of frequency words within current active group
+        // props.frequency is a count of frequency words
+        // state.frequency is a subset list of frequency words within current active group
         this.setState({ frequency });
       }
     }
@@ -373,7 +378,9 @@ class Phrases extends Component {
 
         const prevDate = prevMap[uid] && prevMap[uid].d;
         const repStats = { [uid]: { ...map[uid], d: prevDate } };
-        spaceRepLog(this.props.logger, phrase, repStats);
+        spaceRepLog(this.props.logger, phrase, repStats, {
+          frequency: prevState.reinforcedUID !== undefined,
+        });
       }
 
       this.setState({
@@ -559,10 +566,20 @@ class Phrases extends Component {
   }
 
   setOrder() {
+    const allFrequency = Object.keys(this.props.repetition).reduce(
+      (/** @type {string[]}*/ acc, cur) => {
+        if (this.props.repetition[cur].rein === true) {
+          acc = [...acc, cur];
+        }
+        return acc;
+      },
+      []
+    );
+
     const filteredPhrases = termFilterByType(
       this.props.filterType,
       this.props.phrases,
-      this.props.frequency,
+      allFrequency,
       this.props.activeGroup,
       this.props.togglePhrasesFilter
     );
@@ -587,11 +604,21 @@ class Phrases extends Component {
     }
 
     const filteredKeys = filteredPhrases.map((f) => f.uid);
-    const frequency = this.props.frequency.filter((f) =>
-      filteredKeys.includes(f)
+    const frequency = filteredKeys.reduce(
+      (/** @type {string[]} */ acc, cur) => {
+        if (this.props.repetition[cur]?.rein === true) {
+          acc = [...acc, cur];
+        }
+        return acc;
+      },
+      []
     );
 
-    this.setState({ filteredPhrases, order: newOrder, frequency });
+    this.setState({
+      filteredPhrases,
+      frequency,
+      order: newOrder,
+    });
   }
 
   gotoNext() {
@@ -867,7 +894,7 @@ class Phrases extends Component {
         this.state.filteredPhrases
       );
     const phrase = getTerm(uid, this.props.phrases);
-    const phrase_reinforce = this.state.frequency.includes(phrase.uid);
+    const phrase_reinforce = this.props.repetition[phrase.uid]?.rein === true;
 
     const jObj = JapaneseText.parse(phrase);
     const japanesePhrase = jObj.toHTML();
@@ -1120,7 +1147,7 @@ Phrases.propTypes = {
   activeGroup: PropTypes.array,
   addFrequencyPhrase: PropTypes.func,
   removeFrequencyPhrase: PropTypes.func,
-  frequency: PropTypes.array,
+  frequency: PropTypes.object,
   phrases: PropTypes.array.isRequired,
   romajiActive: PropTypes.bool,
   flipPhrasesPracticeSide: PropTypes.func,

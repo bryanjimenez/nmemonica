@@ -22,6 +22,7 @@ import { NotReady } from "./NotReady";
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
+ * @typedef {import("../Pages/Settings").SpaceRepetitionMap} SpaceRepetitionMap
  */
 
 /**
@@ -31,7 +32,7 @@ import { NotReady } from "./NotReady";
  * phraseOrder: boolean,
  * phraseRomaji: boolean,
  * phraseFilter: typeof TermFilterBy[keyof TermFilterBy],
- * phraseFreq: string[],
+ * phraseRep: SpaceRepetitionMap,
  * phraseReinforce: boolean,
  * phraseGroups: GroupListMap,
  * phraseActive: string[],
@@ -61,7 +62,7 @@ class SettingsPhrase extends Component {
       phrases,
       phraseOrder,
       phraseRomaji,
-      phraseFreq,
+      phraseRep,
       phraseReinforce,
       phraseGroups,
       phraseActive,
@@ -74,6 +75,10 @@ class SettingsPhrase extends Component {
       togglePhrasesReinforcement,
       togglePhrasesRomaji,
     } = this.props;
+
+    const phraseFreq = Object.keys(phraseRep).filter(
+      (k) => phraseRep[k]?.rein === true
+    );
 
     if (phrases.length < 1 || Object.keys(phraseGroups).length < 1)
       return <NotReady addlStyle="phrases-settings" />;
@@ -179,10 +184,10 @@ const mapStateToProps = (state) => {
     phraseGroups: state.phrases.grpObj,
     phraseOrder: state.settings.phrases.ordered,
     phraseRomaji: state.settings.phrases.romaji,
-    phraseFreq: state.settings.phrases.frequency,
     phraseReinforce: state.settings.phrases.reinforce,
     phraseActive: state.settings.phrases.activeGroup,
     phraseFilter: state.settings.phrases.filter,
+    phraseRep: state.settings.phrases.repetition,
   };
 };
 
@@ -191,10 +196,10 @@ SettingsPhrase.propTypes = {
   phraseGroups: PropTypes.object,
   phraseOrder: PropTypes.bool,
   phraseRomaji: PropTypes.bool,
-  phraseFreq: PropTypes.array,
   phraseReinforce: PropTypes.bool,
   phraseActive: PropTypes.array,
   phraseFilter: PropTypes.number,
+  phraseRep: PropTypes.object,
 
   getPhrases: PropTypes.func,
   setPhrasesOrdering: PropTypes.func,
