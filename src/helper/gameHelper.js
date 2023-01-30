@@ -223,6 +223,7 @@ export function getStaleSpaceRepKeys(repetition, termList, staleLabel) {
     d: null,
     vC: null,
     f: null,
+    rein: null,
     pron: null,
     tpPc: null,
     tpAcc: null,
