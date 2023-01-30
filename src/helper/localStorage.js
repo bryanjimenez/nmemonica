@@ -49,6 +49,39 @@ export function localStoreAttrUpdate(time, getState, path, attr, value) {
 }
 
 /**
+ * modifies an attribute or toggles the existing value
+ * @returns {Promise<*>} a promise which returns the modified localStorage object
+ * @param {Date} time
+ * @param {string} path
+ * @param {string} attr
+ */
+export function localStoreAttrDelete(time, path, attr) {
+  return getLocalStorageSettings(localStorageKey).then((locStoSettings) => {
+    locStoSettings = locStoSettings || {};
+
+    let localPtr = locStoSettings;
+
+    path.split("/").forEach((p) => {
+      if (p) {
+        if (localPtr[p]) {
+          localPtr = localPtr[p];
+        } else {
+          localPtr[p] = {};
+          localPtr = localPtr[p];
+        }
+      }
+    });
+
+    localPtr[attr] = undefined;
+
+    return setLocalStorage(localStorageKey, {
+      ...locStoSettings,
+      lastModified: time,
+    });
+  });
+}
+
+/**
  * used to store a whole settings object to the localStorage
  * @returns {Promise<*>} a promise which resolves to the object stored
  * @param {string} localStorageKey

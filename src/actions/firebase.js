@@ -3,7 +3,11 @@ import { getAuth } from "firebase/auth";
 import { get, getDatabase, ref, update } from "firebase/database";
 import { firebaseConfig } from "../../environment.development";
 import { localStorageKey } from "../constants/paths";
-import { getLocalStorageSettings } from "../helper/localStorage";
+import {
+  getLocalStorageSettings,
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/localStorage";
 import merge from "lodash/fp/merge";
 import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRed";
 import {
@@ -126,6 +130,47 @@ export function getUserSettings() {
   };
 }
 
+function migrateStuff(getState, path, mergedSettings) {
+  console.log(path);
+  console.log("old freq: " + mergedSettings.frequency?.length);
+  let newRein = {};
+  if (mergedSettings.frequency && mergedSettings.frequency.length > 0) {
+    mergedSettings.frequency.forEach((uid) => {
+      if (mergedSettings.repetition[uid]?.rein === undefined) {
+        newRein = {
+          ...newRein,
+          [uid]: { ...mergedSettings.repetition[uid], rein: true },
+        };
+      }
+    });
+  }
+
+  const tempReinforce = { ...mergedSettings.repetition, ...newRein };
+  // app state only
+  // dispatch({
+  //   type: ADD_SPACE_REP_WORD,
+  //   value: tempReinforce,
+  // });
+  // localStore
+  // const path = "/vocabulary/";
+  const attr = "repetition";
+  const time = new Date();
+
+  let done = Promise.reject();
+  if (Object.keys(newRein).length > 0) {
+    done = localStoreAttrUpdate(time, getState, path, attr, tempReinforce).then(
+      () => localStoreAttrDelete(time, path, "frequency")
+    );
+  }
+
+  const tempCheck = Object.keys(tempReinforce).filter(
+    (k) => tempReinforce[k]?.rein === true
+  );
+  console.log("temp: " + tempCheck.length);
+
+  return done;
+}
+
 /**
  * Initializes redux state.settings from the
  * settings on localStorage
@@ -146,6 +191,10 @@ export function initializeSettingsFromLocalStorage() {
           type: GET_USER_SETTINGS,
           value: mergedSettings,
         });
+
+        migrateStuff(getState, "/vocabulary/", mergedSettings.vocabulary).then(
+          () => migrateStuff(getState, "/phrases/", mergedSettings.phrases)
+        );
 
         // calculated values
         const vocabReinforceList = Object.keys(
