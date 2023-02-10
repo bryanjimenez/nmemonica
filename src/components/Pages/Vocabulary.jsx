@@ -23,6 +23,7 @@ import {
   DebugLevel,
   setWordTPCorrect,
   setWordTPIncorrect,
+  TermSortBy,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -50,6 +51,7 @@ import {
   minimumTimeForTimedPlay,
   motionThresholdCondition,
   getDeviceMotionEventPermission,
+  dateViewOrder,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import {
@@ -136,7 +138,7 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {boolean} romajiActive
  * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
  * @property {boolean} practiceSide   true: English, false: Japanese
- * @property {boolean} isOrdered
+ * @property {typeof TermSortBy[keyof TermSortBy]} termsOrder
  * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
  * @property {boolean} scrollingDone
  * @property {function} scrollingState
@@ -309,7 +311,7 @@ class Vocabulary extends Component {
 
     if (
       this.props.vocab.length > 0 &&
-      this.props.isOrdered != prevProps.isOrdered
+      this.props.termsOrder != prevProps.termsOrder
     ) {
       // console.log("order changed");
       this.setOrder();
@@ -815,15 +817,13 @@ class Vocabulary extends Component {
     /** @type {BareIdx[]} */
     let ebare = [];
 
-    if (
-      !this.props.isOrdered &&
-      this.props.filterType !== TermFilterBy.SPACE_REP
-    ) {
-      // randomized
+    if (this.props.termsOrder === TermSortBy.RANDOM) {
       this.props.logger("Randomized", DebugLevel.DEBUG);
       newOrder = randomOrder(filteredVocab);
-    } else if (this.props.filterType === TermFilterBy.SPACE_REP) {
-      // repetition order
+    } else if (this.props.termsOrder === TermSortBy.VIEW_DATE) {
+      this.props.logger("Date Viewed", DebugLevel.DEBUG);
+      newOrder = dateViewOrder(filteredVocab, this.props.repetition);
+    } else if (this.props.termsOrder === TermSortBy.GAME) {
       this.props.logger("Space Rep", DebugLevel.DEBUG);
 
       if (this.props.reinforce === true) {
@@ -842,7 +842,6 @@ class Vocabulary extends Component {
         newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
       }
     } else {
-      // alphabetized
       this.props.logger("Alphabetic", DebugLevel.DEBUG);
       ({
         order: newOrder,
@@ -1587,10 +1586,7 @@ class Vocabulary extends Component {
           key={2}
           className="progress-line flex-shrink-1"
           onClick={() => {
-            if (
-              this.props.isOrdered &&
-              this.props.filterType !== TermFilterBy.SPACE_REP
-            ) {
+            if (this.props.termsOrder === TermSortBy.ALPHABETIC) {
               const delayTime = 4000;
               this.setState({ showPageBar: true });
 
@@ -1683,7 +1679,7 @@ const mapStateToProps = (state) => {
   return {
     vocab: state.vocabulary.value,
     practiceSide: state.settings.vocabulary.practiceSide,
-    isOrdered: state.settings.vocabulary.ordered,
+    termsOrder: state.settings.vocabulary.ordered,
     romajiActive: state.settings.vocabulary.romaji,
     hintEnabled: state.settings.vocabulary.hintEnabled,
     filterType: state.settings.vocabulary.filter,
@@ -1714,7 +1710,7 @@ Vocabulary.propTypes = {
   romajiActive: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func.isRequired,
   practiceSide: PropTypes.bool,
-  isOrdered: PropTypes.bool,
+  termsOrder: PropTypes.number,
   autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
   scrollingState: PropTypes.func,

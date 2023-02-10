@@ -56,7 +56,15 @@ export const DebugLevel = Object.freeze({
 export const TermFilterBy = Object.freeze({
   GROUP: 0,
   FREQUENCY: 1,
-  SPACE_REP: 2,
+  // TAGS: 2,
+});
+
+// enum
+export const TermSortBy = Object.freeze({
+  RANDOM: 0,
+  ALPHABETIC: 1,
+  VIEW_DATE: 2,
+  GAME: 3,
 });
 
 // enum
@@ -317,14 +325,18 @@ export function toggleVocabularyReinforcement() {
 /**
  * @returns {ActCreator}
  */
-export function setVocabularyOrdering() {
+export function toggleVocabularyOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
+
+    const { ordered } = getState().settings.vocabulary;
+    const newOrdered =
+      ordered + 1 < Object.keys(TermSortBy).length ? ordered + 1 : 0;
 
     const path = "/vocabulary/";
     const attr = "ordered";
     const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+    localStoreAttrUpdate(time, getState, path, attr, newOrdered);
 
     if (user) {
       firebaseAttrUpdate(
@@ -334,11 +346,13 @@ export function setVocabularyOrdering() {
         user.uid,
         path,
         attr,
-        SET_VOCABULARY_ORDERING
+        SET_VOCABULARY_ORDERING,
+        newOrdered
       );
     } else {
       dispatch({
         type: SET_VOCABULARY_ORDERING,
+        value: newOrdered,
       });
     }
   };

@@ -65,7 +65,7 @@ export const DEFAULT_SETTINGS = {
     filter: 0,
   },
   vocabulary: {
-    ordered: true,
+    ordered: 0,
     practiceSide: false,
     romaji: false,
     hintEnabled: false,
@@ -192,7 +192,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         vocabulary: {
           ...state.vocabulary,
-          ordered: !state.vocabulary.ordered,
+          ordered: action.value,
         },
       };
     case TOGGLE_VOCABULARY_ROMAJI:

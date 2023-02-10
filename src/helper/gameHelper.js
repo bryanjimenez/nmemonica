@@ -156,7 +156,6 @@ export function termFilterByType(
     }
   } else {
     // group filtering
-    // spaced repetition
     if (activeGrpList.length > 0) {
       filteredTerms = termList.filter((t) =>
         activeGroupIncludes(activeGrpList, t)
@@ -426,6 +425,48 @@ export function getCorrectnessScore(count = 0, average = 0) {
   }
 
   return correctness;
+}
+
+/**
+ * Terms in last viewed descending order
+ * @param {RawVocabulary[]} terms
+ * @param {SpaceRepetitionMap} spaceRepObj
+ */
+export function dateViewOrder(terms, spaceRepObj) {
+  /** @typedef {{date: string, uid: string, index: number}} lastSeenSortable */
+
+  /** @type {number[]} */
+  let notPlayed = [];
+  /** @type {lastSeenSortable[]} */
+  let prevPlayedTemp = [];
+
+  for (const tIdx in terms) {
+    const tUid = terms[tIdx].uid;
+    const termRep = spaceRepObj[tUid];
+
+    if (termRep !== undefined && termRep.d !== undefined) {
+      prevPlayedTemp = [
+        ...prevPlayedTemp,
+        {
+          date: termRep.d,
+          uid: tUid,
+          index: Number(tIdx),
+        },
+      ];
+    } else {
+      notPlayed = [...notPlayed, Number(tIdx)];
+    }
+  }
+
+  // prettier-ignore
+  const prevPlayedSort = orderBy(prevPlayedTemp, ["date", "uid"], ["asc", "asc", "asc"]);
+
+  // console.log('unPlayed');
+  // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
+
+  const prevPlayed = prevPlayedSort.map((el) => el.index);
+
+  return [...notPlayed, ...prevPlayed];
 }
 /**
  *

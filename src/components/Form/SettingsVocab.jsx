@@ -12,7 +12,7 @@ import {
   AutoPlaySetting,
   removeFrequencyWord,
   setVerbFormsOrder,
-  setVocabularyOrdering,
+  toggleVocabularyOrdering,
   TermFilterBy,
   toggleActiveGrp,
   toggleAutoVerbView,
@@ -38,36 +38,36 @@ import VerbFormSlider from "./VerbFormSlider";
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
  * @typedef {import("../Pages/Settings").SpaceRepetitionMap} SpaceRepetitionMap
+ * @typedef {typeof import("../../actions/settingsAct").TermSortBy} SortTypes
  */
 
 /**
- * @typedef {{
- * getVocabulary: typeof getVocabulary,
- * vocabulary: RawVocabulary[],
- * verbFormsOrder: string[],
- * vocabOrder: boolean,
- * vocabRomaji: boolean,
- * vocabHint: boolean,
- * vocabFilter: typeof TermFilterBy[keyof TermFilterBy],
- * vocabRep: SpaceRepetitionMap,
- * vocabReinforce: boolean,
- * vocabAutoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
- * vocabGroups: GroupListMap,
- * autoVerbView: boolean,
- * vocabActive: string[],
- * verbColSplit: number,
- * setVocabularyOrdering: typeof setVocabularyOrdering,
- * toggleVocabularyFilter: typeof toggleVocabularyFilter,
- * toggleActiveGrp: typeof toggleActiveGrp,
- * toggleVocabularyRomaji: typeof toggleVocabularyRomaji,
- * toggleVocabularyReinforcement: typeof toggleVocabularyReinforcement,
- * removeFrequencyWord: typeof removeFrequencyWord,
- * toggleVocabularyHint: typeof toggleVocabularyHint,
- * toggleVocabularyAutoPlay: typeof toggleVocabularyAutoPlay,
- * toggleAutoVerbView: typeof toggleAutoVerbView,
- * updateVerbColSplit: typeof updateVerbColSplit,
- * setVerbFormsOrder: typeof setVerbFormsOrder
- * }} SettingsVocabProps
+ * @typedef {Object} SettingsVocabProps
+ * @property {typeof getVocabulary} getVocabulary,
+ * @property {RawVocabulary[]} vocabulary,
+ * @property {string[]} verbFormsOrder,
+ * @property {SortTypes[keyof SortTypes]} vocabOrder,
+ * @property {boolean} vocabRomaji,
+ * @property {boolean} vocabHint,
+ * @property {typeof TermFilterBy[keyof TermFilterBy]} vocabFilter,
+ * @property {SpaceRepetitionMap} vocabRep,
+ * @property {boolean} vocabReinforce,
+ * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} vocabAutoPlay,
+ * @property {GroupListMap} vocabGroups,
+ * @property {boolean} autoVerbView,
+ * @property {string[]} vocabActive,
+ * @property {number} verbColSplit,
+ * @property {typeof toggleVocabularyOrdering} toggleVocabularyOrdering,
+ * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter,
+ * @property {typeof toggleActiveGrp} toggleActiveGrp,
+ * @property {typeof toggleVocabularyRomaji} toggleVocabularyRomaji,
+ * @property {typeof toggleVocabularyReinforcement} toggleVocabularyReinforcement,
+ * @property {typeof removeFrequencyWord} removeFrequencyWord,
+ * @property {typeof toggleVocabularyHint} toggleVocabularyHint,
+ * @property {typeof toggleVocabularyAutoPlay} toggleVocabularyAutoPlay,
+ * @property {typeof toggleAutoVerbView} toggleAutoVerbView,
+ * @property {typeof updateVerbColSplit} updateVerbColSplit,
+ * @property {typeof setVerbFormsOrder} setVerbFormsOrder,
  */
 
 class SettingsVocab extends Component {
@@ -100,7 +100,7 @@ class SettingsVocab extends Component {
 
       removeFrequencyWord,
       setVerbFormsOrder,
-      setVocabularyOrdering,
+      toggleVocabularyOrdering,
       toggleActiveGrp,
       toggleAutoVerbView,
       toggleVocabularyAutoPlay,
@@ -155,11 +155,7 @@ class SettingsVocab extends Component {
           <div className="d-flex flex-row justify-content-between">
             <div className="column-1">
               <h4>
-                {labelOptions(vocabFilter, [
-                  "Word Group",
-                  "Frequency List",
-                  "Space Repetition",
-                ])}
+                {labelOptions(vocabFilter, ["Word Group", "Frequency List"])}
               </h4>
               <div className="mb-2">
                 <SettingsSwitch
@@ -200,11 +196,15 @@ class SettingsVocab extends Component {
             <div className="column-2 setting-block">
               <div className="mb-2">
                 <SettingsSwitch
-                  active={!vocabOrder}
-                  action={setVocabularyOrdering}
+                  active={vocabOrder % 2 == 0}
+                  action={toggleVocabularyOrdering}
                   color="default"
-                  disabled={vocabFilter === TermFilterBy.SPACE_REP}
-                  statusText={!vocabOrder ? "Randomized" : "Alphabetic"}
+                  statusText={labelOptions(vocabOrder, [
+                    "Randomized",
+                    "Alphabetic",
+                    "Staleness",
+                    "Space Rep",
+                  ])}
                 />
               </div>
               <div className="mb-2">
@@ -394,7 +394,7 @@ const mapStateToProps = (state) => {
 
 SettingsVocab.propTypes = {
   vocabulary: PropTypes.array,
-  vocabOrder: PropTypes.bool,
+  vocabOrder: PropTypes.number,
   vocabRomaji: PropTypes.bool,
   vocabHint: PropTypes.bool,
   vocabGroups: PropTypes.object,
@@ -410,7 +410,7 @@ SettingsVocab.propTypes = {
   getVocabulary: PropTypes.func,
   removeFrequencyWord: PropTypes.func,
   setVerbFormsOrder: PropTypes.func,
-  setVocabularyOrdering: PropTypes.func,
+  toggleVocabularyOrdering: PropTypes.func,
   toggleActiveGrp: PropTypes.func,
   toggleAutoVerbView: PropTypes.func,
   toggleVocabularyAutoPlay: PropTypes.func,
@@ -425,7 +425,7 @@ export default connect(mapStateToProps, {
   getVocabulary,
   removeFrequencyWord,
   setVerbFormsOrder,
-  setVocabularyOrdering,
+  toggleVocabularyOrdering,
   toggleActiveGrp,
   toggleAutoVerbView,
   toggleVocabularyAutoPlay,
