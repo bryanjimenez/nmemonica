@@ -205,14 +205,27 @@ export function toggleKana() {
 /**
  * @returns {ActCreator}
  */
-export function setPhrasesOrdering() {
+export function togglePhrasesOrdering() {
   return (dispatch, getState) => {
     const { user } = getState().login;
+
+    const { ordered } = getState().settings.phrases;
+
+    let newOrdered = ordered + 1;
+    while (
+      newOrdered === TermSortBy.ALPHABETIC ||
+      newOrdered === TermSortBy.GAME
+    ) {
+      newOrdered++;
+    }
+    if (newOrdered >= Object.keys(TermSortBy).length) {
+      newOrdered = 0;
+    }
 
     const path = "/phrases/";
     const attr = "ordered";
     const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+    localStoreAttrUpdate(time, getState, path, attr, newOrdered);
 
     if (user) {
       firebaseAttrUpdate(
@@ -222,11 +235,13 @@ export function setPhrasesOrdering() {
         user.uid,
         path,
         attr,
-        SET_PHRASES_ORDERING
+        SET_PHRASES_ORDERING,
+        newOrdered
       );
     } else {
       dispatch({
         type: SET_PHRASES_ORDERING,
+        value: newOrdered,
       });
     }
   };

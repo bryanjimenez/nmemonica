@@ -12,6 +12,7 @@ import {
   AutoPlaySetting,
   TermFilterBy,
   DebugLevel,
+  TermSortBy,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -22,7 +23,6 @@ import {
   play,
   minimumTimeForSpaceRepUpdate,
   randomOrder,
-  spaceRepOrder,
   termFilterByType,
   audioWordsHelper,
   getTermUID,
@@ -31,6 +31,7 @@ import {
   loopN,
   pause,
   fadeOut,
+  dateViewOrder,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import { logify, spaceRepLog } from "../../helper/consoleHelper";
@@ -94,7 +95,7 @@ import Sizable from "../Form/Sizable";
  * @typedef {Object} PhrasesProps
  * @property {typeof getPhrases} getPhrases
  * @property {RawPhrase[]} phrases
- * @property {boolean} isOrdered
+ * @property {typeof TermSortBy[keyof TermSortBy]} termsOrder
  * @property {typeof flipPhrasesPracticeSide} flipPhrasesPracticeSide
  * @property {boolean} practiceSide   true: English, false: Japanese
  * @property {boolean} romajiActive
@@ -301,7 +302,7 @@ class Phrases extends Component {
 
     if (
       this.props.phrases.length != prevProps.phrases.length ||
-      this.props.isOrdered != prevProps.isOrdered
+      this.props.termsOrder != prevProps.termsOrder
     ) {
       // console.log("got game data");
       this.setOrder();
@@ -586,19 +587,13 @@ class Phrases extends Component {
 
     let newOrder;
 
-    if (
-      !this.props.isOrdered &&
-      this.props.filterType !== TermFilterBy.SPACE_REP
-    ) {
-      // randomized
+    if (this.props.termsOrder === TermSortBy.RANDOM) {
       this.props.logger("Randomized", DebugLevel.DEBUG);
       newOrder = randomOrder(filteredPhrases);
-    } else if (this.props.filterType === TermFilterBy.SPACE_REP) {
-      // space repetition order
-      this.props.logger("Space Rep", DebugLevel.DEBUG);
-      newOrder = spaceRepOrder(filteredPhrases, this.props.repetition);
+    } else if (this.props.termsOrder === TermSortBy.VIEW_DATE) {
+      this.props.logger("Date Viewed", DebugLevel.DEBUG);
+      newOrder = dateViewOrder(filteredPhrases, this.props.repetition);
     } else {
-      // alphabetized
       this.props.logger("Alphabetic", DebugLevel.DEBUG);
       ({ order: newOrder } = alphaOrder(filteredPhrases));
     }
@@ -1128,7 +1123,7 @@ const mapStateToProps = (state) => {
   return {
     phrases: state.phrases.value,
     practiceSide: state.settings.phrases.practiceSide,
-    isOrdered: state.settings.phrases.ordered,
+    termsOrder: state.settings.phrases.ordered,
     romajiActive: state.settings.phrases.romaji,
     filterType: state.settings.phrases.filter,
     frequency: state.settings.phrases.frequency,
@@ -1152,7 +1147,7 @@ Phrases.propTypes = {
   romajiActive: PropTypes.bool,
   flipPhrasesPracticeSide: PropTypes.func,
   practiceSide: PropTypes.bool,
-  isOrdered: PropTypes.bool,
+  termsOrder: PropTypes.number,
   filterType: PropTypes.number,
   togglePhrasesFilter: PropTypes.func,
   reinforce: PropTypes.bool,

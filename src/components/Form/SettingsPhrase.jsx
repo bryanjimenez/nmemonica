@@ -5,8 +5,9 @@ import PropTypes from "prop-types";
 import { getPhrases } from "../../actions/phrasesAct";
 import {
   removeFrequencyPhrase,
-  setPhrasesOrdering,
+  togglePhrasesOrdering,
   TermFilterBy,
+  TermSortBy,
   toggleActiveGrp,
   togglePhrasesFilter,
   togglePhrasesReinforcement,
@@ -23,26 +24,26 @@ import { NotReady } from "./NotReady";
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
  * @typedef {import("../Pages/Settings").SpaceRepetitionMap} SpaceRepetitionMap
+ * @typedef {typeof import("../../actions/settingsAct").TermSortBy} SortTypes
  */
 
 /**
- * @typedef {{
- * getPhrases: typeof getPhrases,
- * phrases: RawVocabulary[],
- * phraseOrder: boolean,
- * phraseRomaji: boolean,
- * phraseFilter: typeof TermFilterBy[keyof TermFilterBy],
- * phraseRep: SpaceRepetitionMap,
- * phraseReinforce: boolean,
- * phraseGroups: GroupListMap,
- * phraseActive: string[],
- * setPhrasesOrdering: typeof setPhrasesOrdering,
- * togglePhrasesFilter: typeof togglePhrasesFilter,
- * toggleActiveGrp: typeof toggleActiveGrp,
- * togglePhrasesRomaji: typeof togglePhrasesRomaji,
- * togglePhrasesReinforcement: typeof togglePhrasesReinforcement,
- * removeFrequencyPhrase: typeof removeFrequencyPhrase,
- * }} SettingsPhraseProps
+ * @typedef {Object} SettingsPhraseProps
+ * @property {typeof getPhrases} getPhrases,
+ * @property {RawVocabulary[]} phrases,
+ * @property {SortTypes[keyof SortTypes]} phraseOrder,
+ * @property {boolean} phraseRomaji,
+ * @property {typeof TermFilterBy[keyof TermFilterBy]} phraseFilter,
+ * @property {SpaceRepetitionMap} phraseRep,
+ * @property {boolean} phraseReinforce,
+ * @property {GroupListMap} phraseGroups,
+ * @property {string[]} phraseActive,
+ * @property {typeof togglePhrasesOrdering} togglePhrasesOrdering,
+ * @property {typeof togglePhrasesFilter} togglePhrasesFilter,
+ * @property {typeof toggleActiveGrp} toggleActiveGrp,
+ * @property {typeof togglePhrasesRomaji} togglePhrasesRomaji,
+ * @property {typeof togglePhrasesReinforcement} togglePhrasesReinforcement,
+ * @property {typeof removeFrequencyPhrase} removeFrequencyPhrase,
  */
 
 class SettingsPhrase extends Component {
@@ -71,7 +72,7 @@ class SettingsPhrase extends Component {
       togglePhrasesFilter,
       toggleActiveGrp,
       removeFrequencyPhrase,
-      setPhrasesOrdering,
+      togglePhrasesOrdering,
       togglePhrasesReinforcement,
       togglePhrasesRomaji,
     } = this.props;
@@ -102,7 +103,6 @@ class SettingsPhrase extends Component {
                 {labelOptions(phraseFilter, [
                   "Phrases Group",
                   "Frequency List",
-                  "Space Repetition",
                 ])}
               </h4>
               <div className="mb-2">
@@ -143,10 +143,15 @@ class SettingsPhrase extends Component {
               <div className="setting-block">
                 <div className="mb-2">
                   <SettingsSwitch
-                    active={!phraseOrder}
-                    action={setPhrasesOrdering}
-                    disabled={phraseFilter === TermFilterBy.SPACE_REP}
-                    statusText="Random Order"
+                    active={phraseOrder === TermSortBy.RANDOM}
+                    action={togglePhrasesOrdering}
+                    color="default"
+                    statusText={labelOptions(phraseOrder, [
+                      "Randomized",
+                      "NOT_USED_Alphabetic",
+                      "Staleness",
+                      "NOT_USED_Space Rep",
+                    ])}
                   />
                 </div>
                 <div className="mb-2">
@@ -194,7 +199,7 @@ const mapStateToProps = (state) => {
 SettingsPhrase.propTypes = {
   phrases: PropTypes.array,
   phraseGroups: PropTypes.object,
-  phraseOrder: PropTypes.bool,
+  phraseOrder: PropTypes.number,
   phraseRomaji: PropTypes.bool,
   phraseReinforce: PropTypes.bool,
   phraseActive: PropTypes.array,
@@ -202,7 +207,7 @@ SettingsPhrase.propTypes = {
   phraseRep: PropTypes.object,
 
   getPhrases: PropTypes.func,
-  setPhrasesOrdering: PropTypes.func,
+  togglePhrasesOrdering: PropTypes.func,
   togglePhrasesFilter: PropTypes.func,
   toggleActiveGrp: PropTypes.func,
   togglePhrasesRomaji: PropTypes.func,
@@ -216,7 +221,7 @@ export default connect(mapStateToProps, {
   togglePhrasesFilter,
   toggleActiveGrp,
   removeFrequencyPhrase,
-  setPhrasesOrdering,
+  togglePhrasesOrdering,
   togglePhrasesReinforcement,
   togglePhrasesRomaji,
 })(SettingsPhrase);

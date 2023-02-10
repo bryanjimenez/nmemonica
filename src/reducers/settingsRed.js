@@ -55,7 +55,7 @@ export const DEFAULT_SETTINGS = {
   },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   phrases: {
-    ordered: true,
+    ordered: 0,
     practiceSide: false,
     romaji: false,
     reinforce: false,
@@ -184,7 +184,7 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         phrases: {
           ...state.phrases,
-          ordered: !state.phrases.ordered,
+          ordered: action.value,
         },
       };
     case SET_VOCABULARY_ORDERING:
