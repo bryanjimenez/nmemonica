@@ -1040,19 +1040,21 @@ class Vocabulary extends Component {
       }, 1500);
     };
     const tEl = /** @type {Element} */ (e.target);
+    const targetIsStopBtn = Array.from(
+      document.getElementsByClassName("loop-stop-btn")
+    ).some((el) => el.contains(tEl));
+    const targetIsClickAllowed = Array.from(
+      document.getElementsByClassName("loop-no-interrupt")
+    ).some((el) => el.contains(tEl));
+    const eventIsNotSwipe =
+      this.state.swiping?.touchObject?.swipeLength === undefined ||
+      this.state.swiping.touchObject.swipeLength <
+        this.state.swiping.touchThreshold;
 
-    if (
-      Array.from(document.getElementsByClassName("loop-stop-btn")).some((el) =>
-        el.contains(tEl)
-      )
-    ) {
+    if (targetIsStopBtn) {
       this.setState({ loop: 0 });
       return;
-    } else if (
-      Array.from(document.getElementsByClassName("loop-no-interrupt")).some(
-        (el) => el.contains(tEl)
-      )
-    ) {
+    } else if (targetIsClickAllowed && eventIsNotSwipe) {
       // elements with this tag do not interrupt loop
       return;
     } else {
