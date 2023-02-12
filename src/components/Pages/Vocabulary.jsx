@@ -1071,22 +1071,26 @@ class Vocabulary extends Component {
         const duringQuery =
           this.state.tpAnimation === undefined &&
           this.state.tpTimeStamp !== undefined;
-        // const duringCountDown =
-        //   this.state.tpAnimation !== undefined &&
-        //   this.state.tpTimeStamp !== undefined;
+        const duringCountDown =
+          this.state.tpAnimation !== undefined &&
+          this.state.tpTimeStamp !== undefined;
         const duringResponse =
           this.state.tpAnimation === undefined &&
           this.state.tpTimeStamp === undefined;
 
-        if (
-          (direction === "up" && this.props.practiceSide) ||
-          (direction === "down" && !this.props.practiceSide)
-        ) {
+        if (direction === "up" || direction === "down") {
           ({ tpElapsed } = this.getElapsedTimedPlay());
           tpAnswered = true;
 
           if (duringQuery) {
             interruptAnimation = noop;
+          } else if (duringCountDown){
+            // force incorrect direction to correct handler
+            const correctDirection = this.props.practiceSide ? "up" : "down";
+            swipeHandler = (
+              /** @type {string} */ wrongDirection,
+              /** @type {AbortController | undefined} */ AC
+            ) => this.swipeActionHandler(correctDirection, AC);
           } else if (duringResponse) {
             tpAnswered = false;
             swipeHandler = noop; // avoid replaying ontop of loop
