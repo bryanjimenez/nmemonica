@@ -52,9 +52,9 @@ export default function AudioItem(props) {
   return (
     <div
       className="clickable"
-      onMouseDown={props.visible ? clickEvHan0 : undefined}
+      // onMouseDown={props.visible ? clickEvHan0 : undefined}
       onTouchStart={props.visible ? clickEvHan0 : undefined}
-      onMouseUp={props.visible ? clickEvHan1 : undefined}
+      // onMouseUp={props.visible ? clickEvHan1 : undefined}
       onTouchEnd={props.visible ? clickEvHan1 : undefined}
     >
       <audio

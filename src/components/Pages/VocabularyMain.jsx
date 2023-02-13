@@ -120,12 +120,25 @@ class VocabularyMain extends Component {
       jLabel
     );
 
+    let sayObj = vocabulary;
+    if (JapaneseText.parse(vocabulary).isNaAdj()) {
+      const naFlip = this.state.naFlip;
+      const naAdj = JapaneseText.parse(vocabulary).append(naFlip && "な");
+
+      sayObj = {
+        ...vocabulary,
+        japanese: naAdj.toString(),
+        pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
+        form: naFlip,
+      };
+    }
+
     const audioWords = this.props.practiceSide
       ? { tl: "en", q: vocabulary.english, uid: vocabulary.uid + ".en" }
       : {
           tl: this.props.practiceSide ? "en" : "ja",
-          q: audioPronunciation(vocabulary),
-          uid: getCacheUID(vocabulary),
+          q: audioPronunciation(sayObj),
+          uid: getCacheUID(sayObj),
         };
 
     const playButton = (
@@ -133,6 +146,11 @@ class VocabularyMain extends Component {
         visible={this.props.swipeThreshold === 0}
         word={audioWords}
         reCache={this.props.reCache}
+        onPushedPlay={() => {
+          this.setState((s) => ({
+            naFlip: s.naFlip ? undefined : "-na",
+          }));
+        }}
       />
     );
 
