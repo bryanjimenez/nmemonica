@@ -3,12 +3,7 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import partition from "lodash/partition";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import {
-  clearPreviousTerm,
-  getVocabulary,
-  pushedPlay,
-  setPreviousTerm,
-} from "../../actions/vocabularyAct";
+import { getVocabulary } from "../../actions/vocabularyAct";
 import {
   flipVocabularyPracticeSide,
   addFrequencyWord,
@@ -16,7 +11,6 @@ import {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
-  AutoPlaySetting,
   updateSpaceRepWord,
   toggleFurigana,
   TermFilterBy,
@@ -77,7 +71,6 @@ import {
   setMediaSessionPlaybackState,
 } from "../../helper/mediaHelper";
 import {
-  AutoPlayEnabledIcon,
   FrequencyTermIcon,
   ReCacheAudioBtn,
   ShowHintBtn,
@@ -139,7 +132,6 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
  * @property {boolean} practiceSide   true: English, false: Japanese
  * @property {typeof TermSortBy[keyof TermSortBy]} termsOrder
- * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
  * @property {boolean} scrollingDone
  * @property {function} scrollingState
  * @property {boolean} autoVerbView
@@ -147,10 +139,6 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {typeof TermFilterBy[keyof TermFilterBy]} filterType
  * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter
  * @property {boolean} reinforce
- * @property {RawVocabulary} prevTerm
- * @property {RawVocabulary} prevVerb
- * @property {typeof clearPreviousTerm} clearPreviousTerm
- * @property {typeof setPreviousTerm} setPreviousTerm
  * @property {SpaceRepetitionMap} repetition
  * @property {number} lastNext
  * @property {import("../../actions/settingsAct").updateSpaceRepWordYield} updateSpaceRepWord
@@ -158,7 +146,6 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {import("../../actions/settingsAct").setWordTPIncorrectYield} setWordTPIncorrect
  * @property {typeof logger} logger
  * @property {string} verbForm
- * @property {typeof pushedPlay} pushedPlay
  * @property {number} swipeThreshold
  * @property {number} motionThreshold
  * @property {function} motionThresholdCondition
@@ -213,7 +200,6 @@ class Vocabulary extends Component {
     this.gotoPrev = this.gotoPrev.bind(this);
     this.setOrder = this.setOrder.bind(this);
     this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
-    this.verbNonVerbTransition = this.verbNonVerbTransition.bind(this);
     this.startMove = this.startMove.bind(this);
     this.inMove = this.inMove.bind(this);
     this.endMove = this.endMove.bind(this);
@@ -226,9 +212,6 @@ class Vocabulary extends Component {
   }
 
   componentDidMount() {
-    // clear existing previous word on mount
-    this.props.clearPreviousTerm();
-
     if (this.props.vocab && this.props.vocab.length > 0) {
       // page navigation after initial mount
       // data retrival done, set up game
@@ -871,69 +854,6 @@ class Vocabulary extends Component {
     });
   }
 
-  /**
-   * @param {MEid} id either an uid or and index
-   */
-  verbNonVerbTransition({ nextIndex, nextUID }) {
-    let aPromise = Promise.resolve();
-
-    const uidPrev =
-      this.state.reinforcedUID ||
-      getTermUID(
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredVocab
-      );
-    const prevVocab = getTerm(uidPrev, this.props.vocab);
-
-    let uidNext;
-    if (nextIndex === undefined && nextUID !== undefined) {
-      uidNext = nextUID;
-    } else if (nextIndex !== undefined && nextUID === undefined) {
-      uidNext = getTermUID(
-        nextIndex,
-        this.state.order,
-        this.state.filteredVocab
-      );
-    } else {
-      // this will never happen nextIndex and nextUID are xor
-      uidNext = "0";
-    }
-
-    const nextVocab = getTerm(uidNext, this.props.vocab);
-
-    // non verb to verb
-    if (prevVocab.grp !== "Verb" && nextVocab.grp === "Verb") {
-      aPromise = this.props.setPreviousTerm({ lastTerm: prevVocab });
-    }
-
-    // verb to non verb
-    if (prevVocab.grp === "Verb" && nextVocab.grp !== "Verb") {
-      if (this.props.prevVerb) {
-        // multiple verbs
-        // non dictionary form on last verb
-        aPromise = this.props.setPreviousTerm({
-          lastVerb: this.props.prevVerb,
-        });
-      } else if (
-        this.props.prevTerm &&
-        this.props.prevTerm.uid === prevVocab.uid
-      ) {
-        // single/multiple verb DID form change (on last)
-        // prevent overriding same verb diff form
-        // setPreviousTerm done on VerbMain form change
-      } else if (
-        this.props.prevTerm &&
-        this.props.prevTerm.uid !== prevVocab.uid
-      ) {
-        // single/multiple no form change
-        aPromise = this.props.setPreviousTerm({ lastTerm: prevVocab });
-      }
-    }
-
-    return aPromise;
-  }
-
   gotoNext() {
     const l = this.state.filteredVocab.length;
     let newSel = (l + this.state.selectedIndex + 1) % l;
@@ -942,12 +862,10 @@ class Vocabulary extends Component {
       newSel = (l + newSel + 1) % l;
     }
 
-    this.verbNonVerbTransition({ nextIndex: newSel }).then(() => {
-      this.setState({
-        lastNext: Date.now(),
-        reinforcedUID: undefined,
-        selectedIndex: newSel,
-      });
+    this.setState({
+      lastNext: Date.now(),
+      reinforcedUID: undefined,
+      selectedIndex: newSel,
     });
   }
 
@@ -979,8 +897,6 @@ class Vocabulary extends Component {
       newSel = (l + newSel - 1) % l;
     }
 
-    this.verbNonVerbTransition({ nextIndex: newSel });
-
     this.setState({
       lastNext: Date.now(),
       reinforcedUID: undefined,
@@ -992,8 +908,6 @@ class Vocabulary extends Component {
    * @param {string} uid
    */
   updateReinforcedUID(uid) {
-    this.verbNonVerbTransition({ nextUID: uid });
-
     this.setState({
       reinforcedUID: uid,
     });
@@ -1084,7 +998,7 @@ class Vocabulary extends Component {
 
           if (duringQuery) {
             interruptAnimation = noop;
-          } else if (duringCountDown){
+          } else if (duringCountDown) {
             // force incorrect direction to correct handler
             const correctDirection = this.props.practiceSide ? "up" : "down";
             swipeHandler = (
@@ -1263,10 +1177,6 @@ class Vocabulary extends Component {
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
         }
-
-        if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
-          this.props.pushedPlay(true);
-        }
       } else if (direction === "down") {
         const inEnglish = vocabulary.english;
 
@@ -1308,10 +1218,6 @@ class Vocabulary extends Component {
           ]);
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
-        }
-
-        if (this.props.autoPlay !== AutoPlaySetting.EN_JP) {
-          this.props.pushedPlay(true);
         }
       }
     }
@@ -1486,9 +1392,6 @@ class Vocabulary extends Component {
                       setTimeout(delayToggle, delayTime);
                     }
                   }}
-                />
-                <AutoPlayEnabledIcon
-                  visible={this.props.autoPlay !== AutoPlaySetting.OFF}
                 />
                 <ToggleAutoVerbViewBtn
                   visible={isVerb}
@@ -1691,12 +1594,9 @@ const mapStateToProps = (state) => {
     filterType: state.settings.vocabulary.filter,
     frequency: state.settings.vocabulary.frequency,
     activeGroup: state.settings.vocabulary.activeGroup,
-    autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
-    prevTerm: state.vocabulary.prevTerm,
-    prevVerb: state.vocabulary.prevVerb,
     repetition: state.settings.vocabulary.repetition,
     verbForm: state.vocabulary.verbForm,
     swipeThreshold: state.settings.global.swipeThreshold,
@@ -1717,7 +1617,6 @@ Vocabulary.propTypes = {
   flipVocabularyPracticeSide: PropTypes.func.isRequired,
   practiceSide: PropTypes.bool,
   termsOrder: PropTypes.number,
-  autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
   scrollingState: PropTypes.func,
   autoVerbView: PropTypes.bool,
@@ -1725,10 +1624,7 @@ Vocabulary.propTypes = {
   filterType: PropTypes.number,
   toggleVocabularyFilter: PropTypes.func,
   reinforce: PropTypes.bool,
-  prevTerm: PropTypes.object,
-  prevVerb: PropTypes.object,
   clearPreviousTerm: PropTypes.func,
-  setPreviousTerm: PropTypes.func,
   repetition: PropTypes.object,
   lastNext: PropTypes.number,
   updateSpaceRepWord: PropTypes.func,
@@ -1736,7 +1632,6 @@ Vocabulary.propTypes = {
   setWordTPIncorrect: PropTypes.func,
   logger: PropTypes.func,
   verbForm: PropTypes.string,
-  pushedPlay: PropTypes.func,
   swipeThreshold: PropTypes.number,
   motionThreshold: PropTypes.number,
   toggleFurigana: PropTypes.func,
@@ -1752,13 +1647,10 @@ export default connect(mapStateToProps, {
   toggleAutoVerbView,
   toggleVocabularyFilter,
   toggleFurigana,
-  clearPreviousTerm,
-  setPreviousTerm,
   updateSpaceRepWord,
   setWordTPCorrect,
   setWordTPIncorrect,
   logger,
-  pushedPlay,
 })(Vocabulary);
 
 export { VocabularyMeta };

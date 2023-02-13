@@ -1,9 +1,9 @@
 import React from "react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
-import { AutoPlaySetting, TermFilterBy } from "../actions/settingsAct";
+import { TermFilterBy } from "../actions/settingsAct";
 import { shuffleArray } from "./arrayHelper";
-import { audioPronunciation, JapaneseText } from "./JapaneseText";
+import { JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
 import { daysSince } from "./consoleHelper";
 import { isYoon, kanaHintBuilder } from "./kanaHelper";
@@ -906,52 +906,6 @@ export function getCacheUID(word) {
   }
 
   return uid;
-}
-
-/**
- * Logic for building ordered array of terms for AudioItem
- * @param {boolean} prevPlayed has it been manually played
- * @param {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay autoPlay setting
- * @param {RawVocabulary} current current Term
- * @param {RawVocabulary} previous previous Term
- * @returns {AudioQueryParams[]} array in order to be played by AudioItem
- */
-export function audioWordsHelper(prevPlayed, autoPlay, current, previous) {
-  const currJ = {
-    tl: "ja",
-    q: audioPronunciation(current),
-    uid: getCacheUID(current),
-  };
-
-  let audioWords = [
-    currJ,
-    { tl: "en", q: current.english, uid: current.uid + ".en" },
-  ];
-  if (previous !== undefined && prevPlayed === false) {
-    if (autoPlay === AutoPlaySetting.EN_JP) {
-      audioWords = [
-        currJ,
-        { tl: "en", q: current.english, uid: current.uid + ".en" },
-        {
-          tl: "ja",
-          q: audioPronunciation(previous),
-          uid: getCacheUID(previous),
-        },
-      ];
-    } else if (autoPlay === AutoPlaySetting.JP_EN) {
-      audioWords = [
-        currJ,
-        currJ,
-        { tl: "en", q: previous.english, uid: previous.uid + ".en" },
-      ];
-    }
-  } else if (prevPlayed === true) {
-    if (autoPlay === AutoPlaySetting.JP_EN) {
-      audioWords = [currJ];
-    }
-  }
-
-  return audioWords;
 }
 
 /**

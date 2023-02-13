@@ -2,20 +2,14 @@ import React from "react";
 import PropTypes from "prop-types";
 import { UnmuteIcon } from "@primer/octicons-react";
 import { pronounceEndoint } from "../../../environment.development";
-import { AutoPlaySetting } from "../../actions/settingsAct";
 import { addParam } from "../../helper/urlHelper";
 
 /**
- * @typedef {{word: {
- * tl: string,
- * q: string,
- * uid: string
- * }[],
- * autoPlay: typeof AutoPlaySetting[keyof AutoPlaySetting],
- * reCache?: boolean,
- * onPushedPlay: function,
- * onAutoPlayDone: function,
- * visible: boolean,}} AudioItemProps
+ * @typedef {Object} AudioItemProps
+ * @property {boolean} visible,
+ * @property {boolean} [reCache],
+ * @property {{tl: string, q: string, uid: string }} word
+ * @property {function} [onPushedPlay]
  */
 
 /**
@@ -25,72 +19,16 @@ export default function AudioItem(props) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
   // https://dev.to/ma5ly/lets-make-a-little-audio-player-in-react-p4p
 
-  // console.log(props.autoPlay + " " + JSON.stringify(props.word));
-  // props.word = [currJWord, currEword, lastJWord]
-  // props.word = [playOnClick, playOnShow, playOnSwipe]
-  const words = props.word;
-
   /** @type {HTMLAudioElement|null} */
   let player;
   /** @type {number} */
   let tStart;
-  let playPushed = false;
 
-  const touchPlayParam = words[0];
-
-  /** @type {string[]} */
-  let autoPlayEndPoint = [];
-
-  if (props.autoPlay === AutoPlaySetting.EN_JP && words.length === 2) {
-    autoPlayEndPoint = [addParam(pronounceEndoint, words[1])];
-  } else if (props.autoPlay === AutoPlaySetting.JP_EN && words.length === 2) {
-    autoPlayEndPoint = [addParam(pronounceEndoint, words[0])];
-  } else if (props.autoPlay === AutoPlaySetting.EN_JP && words.length === 3) {
-    autoPlayEndPoint = [
-      addParam(pronounceEndoint, words[2]),
-      addParam(pronounceEndoint, words[1]),
-    ];
-  } else if (props.autoPlay === AutoPlaySetting.JP_EN && words.length === 3) {
-    autoPlayEndPoint = [
-      addParam(pronounceEndoint, words[2]),
-      addParam(pronounceEndoint, words[1]),
-    ];
-  } else {
-    autoPlayEndPoint = [addParam(pronounceEndoint, words[0])];
-  }
-
-  const playNextAudio = function () {
-    // trigger on last autoPlay if play was never pushed
-    const [, ...nextEndPoints] = autoPlayEndPoint;
-    autoPlayEndPoint = nextEndPoints;
-
-    if (
-      props.autoPlay > AutoPlaySetting.OFF &&
-      autoPlayEndPoint.length === 0 &&
-      playPushed === false
-    ) {
-      if (props.onAutoPlayDone && typeof props.onAutoPlayDone === "function") {
-        props.onAutoPlayDone();
-      }
-    }
-
-    if (
-      [AutoPlaySetting.EN_JP, AutoPlaySetting.JP_EN].includes(props.autoPlay) &&
-      autoPlayEndPoint.length > 0
-    ) {
-      if (player) {
-        player.src = autoPlayEndPoint[0];
-        player.play();
-      } else {
-        console.error("AudioItem not ready");
-      }
-    }
-  };
+  const touchPlayParam = props.word;
 
   const clickEvHan0 = () => {
     tStart = Date.now();
 
-    playPushed = true;
     if (props.onPushedPlay && typeof props.onPushedPlay === "function") {
       props.onPushedPlay();
     }
@@ -122,24 +60,15 @@ export default function AudioItem(props) {
       <audio
         ref={(ref) => {
           // src attr remains from last onClick
-          if (ref && ref.src && props.autoPlay === AutoPlaySetting.OFF) {
+          if (ref && ref.src) {
             ref.removeAttribute("src");
           }
           return (player = ref);
         }}
-        autoPlay={props.autoPlay !== AutoPlaySetting.OFF}
-        src={
-          props.autoPlay !== AutoPlaySetting.OFF
-            ? autoPlayEndPoint[0]
-            : undefined
-        }
         onError={() => {
           // likely failed to fetch resource
-          playNextAudio();
         }}
-        onEnded={() => {
-          playNextAudio();
-        }}
+        onEnded={() => {}}
       />
       {props.visible && <UnmuteIcon size="medium" aria-label="pronunciation" />}
     </div>
@@ -147,21 +76,16 @@ export default function AudioItem(props) {
 }
 
 AudioItem.defaultProps = {
-  autoPlay: 0,
   visible: false,
 };
 
 AudioItem.propTypes = {
-  word: PropTypes.arrayOf(
-    PropTypes.shape({
-      tl: PropTypes.string.isRequired, // target language used in req
-      q: PropTypes.string.isRequired, // query used in req
-      uid: PropTypes.string.isRequired, // index used in cache
-    })
-  ).isRequired,
-  autoPlay: PropTypes.number, //0->off,1->JP,2->EN,JP,3->JP,EN
+  word: PropTypes.shape({
+    tl: PropTypes.string.isRequired, // target language used in req
+    q: PropTypes.string.isRequired, // query used in req
+    uid: PropTypes.string.isRequired, // index used in cache
+  }).isRequired,
   reCache: PropTypes.bool,
   onPushedPlay: PropTypes.func,
-  onAutoPlayDone: PropTypes.func,
   visible: PropTypes.bool,
 };

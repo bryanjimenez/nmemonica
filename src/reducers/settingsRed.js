@@ -17,7 +17,6 @@ import {
   ADD_FREQUENCY_WORD,
   REMOVE_FREQUENCY_WORD,
   TOGGLE_VOCABULARY_ACTIVE_GROUP,
-  TOGGLE_VOCABULARY_AUTO_PLAY,
   TOGGLE_DARK_MODE,
   SCROLLING_STATE,
   AUTO_VERB_VIEW,
@@ -74,7 +73,6 @@ export const DEFAULT_SETTINGS = {
     repetition: {},
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
-    autoPlay: 0,
     autoVerbView: false,
     verbColSplit: 0,
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
@@ -217,14 +215,6 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         vocabulary: {
           ...state.vocabulary,
           practiceSide: !state.vocabulary.practiceSide,
-        },
-      };
-    case TOGGLE_VOCABULARY_AUTO_PLAY:
-      return {
-        ...state,
-        vocabulary: {
-          ...state.vocabulary,
-          autoPlay: action.value,
         },
       };
     case TOGGLE_VOCABULARY_REINFORCE:

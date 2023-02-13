@@ -5,24 +5,22 @@ import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 import { connect } from "react-redux";
-import { pushedPlay, setPreviousTerm } from "../../actions/vocabularyAct";
 import { setShownForm } from "../../actions/verbsAct";
 import {
-  AutoPlaySetting,
   flipVocabularyPracticeSide,
   toggleFurigana,
 } from "../../actions/settingsAct";
 import {
-  audioWordsHelper,
   englishLabel,
   getVerbFormsArray,
   japaneseLabel,
   toggleFuriganaSettingHelper,
   labelPlacementHelper,
-  verbToTargetForm,
   getEnglishHint,
   getJapaneseHint,
+  getCacheUID,
 } from "../../helper/gameHelper";
+import { audioPronunciation } from "../../helper/JapaneseText";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -35,26 +33,18 @@ import {
  * @typedef {Object} VerbMainState
  * @property {boolean} showMeaning
  * @property {boolean} showRomaji
- * @property {RawVocabulary} prevVocab
- * @property {boolean} audioPlay
- * @property {boolean} prevPlayed
  */
 
 /**
  * @typedef {Object} VerbMainProps
  * @property {RawVocabulary} verb
  * @property {boolean} reCache
- * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
  * @property {boolean} practiceSide
  * @property {boolean} romajiActive
  * @property {boolean} scrollingDone
- * @property {RawVocabulary} prevTerm
- * @property {typeof setPreviousTerm} setPreviousTerm
  * @property {boolean} played
- * @property {function} pushedPlay
- * @property {function} setShownForm
+ * @property {typeof setShownForm} setShownForm
  * @property {string} verbForm
- * @property {boolean} prevPushPlay
  * @property {function} flipVocabularyPracticeSide
  * @property {number} swipeThreshold
  * @property {function} linkToOtherTerm
@@ -76,9 +66,6 @@ class VerbMain extends Component {
     this.state = {
       showMeaning: false,
       showRomaji: false,
-      prevVocab: this.props.prevTerm,
-      audioPlay: true,
-      prevPlayed: this.props.prevPushPlay,
     };
 
     /** @type {VerbMainProps} */
@@ -92,90 +79,14 @@ class VerbMain extends Component {
     this.splitVerbFormsToColumns = this.splitVerbFormsToColumns.bind(this);
   }
 
-  componentDidMount() {
-    if (this.props.verbForm !== "dictionary") {
-      const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
-
-      // lastVerb to prevent verb-form loss between transition v->nv
-      const lastVerb = {
-        ...this.props.verb,
-        japanese: thisVerb.toString(),
-        pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
-        form: this.props.verbForm,
-      };
-      this.props.setPreviousTerm({ lastVerb });
-    }
-  }
-
-  /**
-   * @param {VerbMainProps} nextProps
-   * @param {VerbMainState} nextState
-   */
-  shouldComponentUpdate(nextProps, nextState) {
-    if (
-      this.state.prevVocab !== undefined &&
-      this.state.audioPlay !== nextState.audioPlay &&
-      nextState.audioPlay === false
-    ) {
-      return false;
-    }
-
-    return true;
-  }
-
   /**
    * @param {VerbMainProps} prevProps
    */
   componentDidUpdate(prevProps /*, prevState*/) {
     if (this.props.verb != prevProps.verb) {
-      // verb change
-      const prevVerb = verbToTargetForm(prevProps.verb, this.props.verbForm);
-      const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
-
-      const prevVocab = {
-        ...prevProps.verb,
-        japanese: prevVerb.toString(),
-        pronounce: prevProps.verb.pronounce && prevVerb.getPronunciation(),
-        form: this.props.verbForm,
-      };
-
-      // lastVerb to prevent verb-form loss between transition v->nv
-      const lastVerb = {
-        ...this.props.verb,
-        japanese: thisVerb.toString(),
-        pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
-        form: this.props.verbForm,
-      };
-      this.props.setPreviousTerm({ lastTerm: prevVocab, lastVerb }).then(() => {
-        this.setState({
-          showMeaning: false,
-          showRomaji: false,
-          prevVocab,
-          audioPlay: true,
-          prevPlayed: this.props.prevPushPlay,
-        });
-      });
-    }
-
-    if (this.props.verbForm !== prevProps.verbForm) {
-      // verb form change
-      const thisVerb = verbToTargetForm(this.props.verb, this.props.verbForm);
-
-      const prevVocab = {
-        ...this.props.verb,
-        japanese: thisVerb.toString(),
-        pronounce: this.props.verb.pronounce && thisVerb.getPronunciation(),
-        form: this.props.verbForm,
-      };
-
-      this.props.setPreviousTerm({ lastTerm: prevVocab }).then(() => {
-        this.setState({ prevVocab });
-      });
-    }
-
-    if (this.state.audioPlay) {
       this.setState({
-        audioPlay: false,
+        showMeaning: false,
+        showRomaji: false,
       });
     }
   }
@@ -321,8 +232,13 @@ class VerbMain extends Component {
       }
     }
 
-    const { topValue, topLabel, bottomValue, bottomLabel } =
-      labelPlacementHelper(practiceSide, eValue, jValue, eLabel, jLabel);
+    const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
+      practiceSide,
+      eValue,
+      jValue,
+      eLabel,
+      jLabel
+    );
 
     const verbJapanese = {
       ...verb,
@@ -331,49 +247,19 @@ class VerbMain extends Component {
       form: this.props.verbForm,
     };
 
-    const audioWords = audioWordsHelper(
-      this.state.prevPlayed,
-      this.props.autoPlay,
-      verbJapanese,
-      this.state.prevVocab
-    );
+    const audioWords = this.props.practiceSide
+      ? { tl: "en", q: verbJapanese.english, uid: verbJapanese.uid + ".en" }
+      : {
+          tl: "ja",
+          q: audioPronunciation(verbJapanese),
+          uid: getCacheUID(verbJapanese),
+        };
 
     const playButton = (
       <AudioItem
         visible={this.props.swipeThreshold === 0}
         word={audioWords}
         reCache={this.props.reCache}
-        autoPlay={
-          !this.props.scrollingDone || !this.state.audioPlay
-            ? AutoPlaySetting.OFF
-            : this.props.autoPlay
-        }
-        onPushedPlay={() => {
-          if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
-            this.setState({
-              audioPlay: false,
-            });
-            this.props.pushedPlay(true);
-          }
-        }}
-        onAutoPlayDone={() => {
-          if (!this.state.prevVocab) {
-            // this is the first verb let's set it for next term
-            const thisVerb = verbToTargetForm(
-              this.props.verb,
-              this.props.verbForm
-            );
-            const firstVerb = {
-              ...this.props.verb,
-              japanese: thisVerb.toString(),
-              pronounce:
-                this.props.verb.pronounce && thisVerb.getPronunciation(),
-              form: this.props.verbForm,
-            };
-            this.props.setPreviousTerm({ lastVerb: firstVerb });
-          }
-          this.props.pushedPlay(false);
-        }}
       />
     );
 
@@ -389,13 +275,8 @@ class VerbMain extends Component {
             ...(!practiceSide ? { "fs-display-6": true } : { h5: true }),
           }}
           largeClassName={{ "fs-display-6": true }}
-          onClick={
-            this.props.autoPlay
-              ? () => this.props.flipVocabularyPracticeSide()
-              : undefined
-          }
         >
-          {this.props.autoPlay && practiceSide ? topLabel : topValue}
+          {topValue}
         </Sizable>
 
         {this.props.romajiActive && romaji && (
@@ -421,19 +302,12 @@ class VerbMain extends Component {
           }}
           largeClassName={{ "fs-display-6": true }}
           onClick={() => {
-            if (this.props.autoPlay) {
-              this.props.flipVocabularyPracticeSide();
-            } else {
-              this.setState((state) => ({
-                showMeaning: !state.showMeaning,
-              }));
-            }
+            this.setState((state) => ({
+              showMeaning: !state.showMeaning,
+            }));
           }}
         >
-          {(this.props.autoPlay && !practiceSide) ||
-          (!this.props.autoPlay && this.state.showMeaning)
-            ? bottomValue
-            : bottomLabel}
+          {this.state.showMeaning ? bottomValue : bottomLabel}
         </Sizable>
         <div className="d-flex justify-content-center">{playButton}</div>
       </div>,
@@ -446,10 +320,7 @@ class VerbMain extends Component {
 const mapStateToProps = (state) => {
   return {
     romajiActive: state.settings.vocabulary.romaji,
-    autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
-    prevTerm: state.vocabulary.prevTerm,
-    prevPushPlay: state.vocabulary.pushedPlay,
     verbForm: state.vocabulary.verbForm,
     swipeThreshold: state.settings.global.swipeThreshold,
     furigana: state.settings.vocabulary.repetition,
@@ -462,21 +333,12 @@ const mapStateToProps = (state) => {
 VerbMain.propTypes = {
   verb: PropTypes.object.isRequired,
   reCache: PropTypes.bool,
-  autoPlay: PropTypes.number,
   practiceSide: PropTypes.bool,
   romajiActive: PropTypes.bool,
   scrollingDone: PropTypes.bool,
-  prevTerm: PropTypes.shape({
-    japanese: PropTypes.string.isRequired,
-    english: PropTypes.string.isRequired,
-    uid: PropTypes.string.isRequired,
-  }),
-  setPreviousTerm: PropTypes.func,
   played: PropTypes.bool,
-  pushedPlay: PropTypes.func,
   setShownForm: PropTypes.func,
   verbForm: PropTypes.string,
-  prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
   swipeThreshold: PropTypes.number,
   linkToOtherTerm: PropTypes.func,
@@ -490,8 +352,6 @@ VerbMain.propTypes = {
 };
 
 export default connect(mapStateToProps, {
-  setPreviousTerm,
-  pushedPlay,
   setShownForm,
   flipVocabularyPracticeSide,
   toggleFurigana,

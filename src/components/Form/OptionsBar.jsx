@@ -12,7 +12,6 @@ import {
   faBan,
   faDice,
   faGlasses,
-  faHeadphones,
   faPencilAlt,
   faRecycle,
   faRunning,
@@ -178,26 +177,6 @@ ToggleAutoVerbViewBtn.propTypes = {
   active: PropTypes.bool,
   toggleAutoVerbView: PropTypes.func,
   autoVerbView: PropTypes.bool,
-};
-
-/**
- * @typedef {{
- * visible: boolean,
- * active?: boolean,
- * }} AutoPlayEnabledProps
- * @param {AutoPlayEnabledProps} props
- */
-export function AutoPlayEnabledIcon(props) {
-  return !props.visible ? null : (
-    <div className="sm-icon-grp" aria-label="Auto play enabled">
-      <FontAwesomeIcon icon={faHeadphones} />
-    </div>
-  );
-}
-
-AutoPlayEnabledIcon.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
 };
 
 /**

@@ -9,14 +9,12 @@ import {
 } from "@primer/octicons-react";
 
 import {
-  AutoPlaySetting,
   removeFrequencyWord,
   setVerbFormsOrder,
   toggleVocabularyOrdering,
   TermFilterBy,
   toggleActiveGrp,
   toggleAutoVerbView,
-  toggleVocabularyAutoPlay,
   toggleVocabularyFilter,
   toggleVocabularyHint,
   toggleVocabularyReinforcement,
@@ -52,7 +50,6 @@ import VerbFormSlider from "./VerbFormSlider";
  * @property {typeof TermFilterBy[keyof TermFilterBy]} vocabFilter,
  * @property {SpaceRepetitionMap} vocabRep,
  * @property {boolean} vocabReinforce,
- * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} vocabAutoPlay,
  * @property {GroupListMap} vocabGroups,
  * @property {boolean} autoVerbView,
  * @property {string[]} vocabActive,
@@ -64,7 +61,6 @@ import VerbFormSlider from "./VerbFormSlider";
  * @property {typeof toggleVocabularyReinforcement} toggleVocabularyReinforcement,
  * @property {typeof removeFrequencyWord} removeFrequencyWord,
  * @property {typeof toggleVocabularyHint} toggleVocabularyHint,
- * @property {typeof toggleVocabularyAutoPlay} toggleVocabularyAutoPlay,
  * @property {typeof toggleAutoVerbView} toggleAutoVerbView,
  * @property {typeof updateVerbColSplit} updateVerbColSplit,
  * @property {typeof setVerbFormsOrder} setVerbFormsOrder,
@@ -94,7 +90,6 @@ class SettingsVocab extends Component {
       vocabReinforce,
       vocabRomaji,
       vocabHint,
-      vocabAutoPlay,
       autoVerbView,
       verbColSplit,
 
@@ -103,7 +98,6 @@ class SettingsVocab extends Component {
       toggleVocabularyOrdering,
       toggleActiveGrp,
       toggleAutoVerbView,
-      toggleVocabularyAutoPlay,
       toggleVocabularyFilter,
       toggleVocabularyHint,
       toggleVocabularyReinforcement,
@@ -229,18 +223,6 @@ class SettingsVocab extends Component {
                   statusText="Hint"
                 />
               </div>
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={vocabAutoPlay !== AutoPlaySetting.OFF}
-                  action={toggleVocabularyAutoPlay}
-                  statusText={labelOptions(vocabAutoPlay, [
-                    "Auto Play [ ]",
-                    "Auto Play [EN,JP]",
-                    "Auto Play [JP,EN]",
-                  ])}
-                />
-              </div>
-
               <div className="mb-2">
                 <SettingsSwitch
                   active={autoVerbView}
@@ -382,7 +364,6 @@ const mapStateToProps = (state) => {
     vocabHint: state.settings.vocabulary.hintEnabled,
     vocabGroups: state.vocabulary.grpObj,
     vocabActive: state.settings.vocabulary.activeGroup,
-    vocabAutoPlay: state.settings.vocabulary.autoPlay,
     autoVerbView: state.settings.vocabulary.autoVerbView,
     verbColSplit: state.settings.vocabulary.verbColSplit,
     vocabFilter: state.settings.vocabulary.filter,
@@ -399,7 +380,6 @@ SettingsVocab.propTypes = {
   vocabHint: PropTypes.bool,
   vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
-  vocabAutoPlay: PropTypes.number,
   autoVerbView: PropTypes.bool,
   verbColSplit: PropTypes.number,
   vocabFilter: PropTypes.number,
@@ -413,7 +393,6 @@ SettingsVocab.propTypes = {
   toggleVocabularyOrdering: PropTypes.func,
   toggleActiveGrp: PropTypes.func,
   toggleAutoVerbView: PropTypes.func,
-  toggleVocabularyAutoPlay: PropTypes.func,
   toggleVocabularyFilter: PropTypes.func,
   toggleVocabularyHint: PropTypes.func,
   toggleVocabularyReinforcement: PropTypes.func,
@@ -428,7 +407,6 @@ export default connect(mapStateToProps, {
   toggleVocabularyOrdering,
   toggleActiveGrp,
   toggleAutoVerbView,
-  toggleVocabularyAutoPlay,
   toggleVocabularyFilter,
   toggleVocabularyHint,
   toggleVocabularyReinforcement,

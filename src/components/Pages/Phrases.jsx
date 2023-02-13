@@ -9,7 +9,6 @@ import {
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
   togglePhrasesFilter,
-  AutoPlaySetting,
   TermFilterBy,
   DebugLevel,
   TermSortBy,
@@ -24,7 +23,6 @@ import {
   minimumTimeForSpaceRepUpdate,
   randomOrder,
   termFilterByType,
-  audioWordsHelper,
   getTermUID,
   getTerm,
   labelPlacementHelper,
@@ -32,14 +30,11 @@ import {
   pause,
   fadeOut,
   dateViewOrder,
+  getCacheUID,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import { logify, spaceRepLog } from "../../helper/consoleHelper";
-import {
-  clearPreviousTerm,
-  pushedPlay,
-  setPreviousTerm,
-} from "../../actions/vocabularyAct";
+import {} from "../../actions/vocabularyAct";
 import AudioItem from "../Form/AudioItem";
 import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 import { pronounceEndoint } from "../../../environment.development";
@@ -81,9 +76,6 @@ import Sizable from "../Form/Sizable";
  * @property {boolean} showLit
  * @property {RawPhrase[]} filteredPhrases
  * @property {string[]} frequency subset of frequency words within current active group
- * @property {RawPhrase} prevPhrase
- * @property {boolean} audioPlay
- * @property {boolean} prevPlayed
  * @property {number[]} [order]
  * @property {string} [reinforcedUID]
  * @property {any} [swiping]
@@ -110,12 +102,6 @@ import Sizable from "../Form/Sizable";
  * @property {number} lastNext
  * @property {import("../../actions/settingsAct").updateSpaceRepPhraseYield} updateSpaceRepPhrase
  * @property {typeof logger} logger
- * @property {RawPhrase} prevTerm
- * @property {boolean} prevPushPlay
- * @property {typeof pushedPlay} pushedPlay
- * @property {typeof clearPreviousTerm} clearPreviousTerm
- * @property {typeof setPreviousTerm} setPreviousTerm
- * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
  * @property {number} swipeThreshold
  */
 
@@ -141,9 +127,6 @@ class Phrases extends Component {
       filteredPhrases: [],
       frequency: [],
       recacheAudio: false,
-      prevPhrase: this.props.prevTerm,
-      audioPlay: true,
-      prevPlayed: this.props.prevPushPlay,
       loop: 0,
     };
 
@@ -173,9 +156,6 @@ class Phrases extends Component {
   }
 
   componentDidMount() {
-    // clear existing previous word on mount
-    this.props.clearPreviousTerm();
-
     if (this.props.phrases && this.props.phrases.length > 0) {
       // page navigation after initial mount
       // data retrival done, set up game
@@ -243,63 +223,10 @@ class Phrases extends Component {
   }
 
   /**
-   * @param {PhrasesProps} nextProps
-   * @param {PhrasesState} nextState
-   */
-  shouldComponentUpdate(nextProps, nextState) {
-    if (
-      this.state.prevPhrase !== undefined &&
-      this.state.audioPlay !== nextState.audioPlay &&
-      nextState.audioPlay === false
-    ) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
    * @param {PhrasesProps} prevProps
    * @param {PhrasesState} prevState
    */
   componentDidUpdate(prevProps, prevState) {
-    if (
-      this.state.order !== prevState.order ||
-      this.state.selectedIndex !== prevState.selectedIndex ||
-      this.state.reinforcedUID !== prevState.reinforcedUID
-    ) {
-      if (this.state.filteredPhrases.length > 0) {
-        if (
-          this.state.selectedIndex !== prevState.selectedIndex ||
-          this.state.reinforcedUID !== prevState.reinforcedUID
-        ) {
-          const prevUID =
-            prevState.reinforcedUID ||
-            getTermUID(
-              prevState.selectedIndex,
-              this.state.order,
-              this.state.filteredPhrases
-            );
-          const prevTerm = getTerm(prevUID, this.props.phrases);
-
-          const prevPhrase = {
-            japanese: prevTerm.japanese,
-            english: prevTerm.english,
-            romaji: prevTerm.romaji,
-            uid: prevTerm.uid,
-          };
-
-          this.props.setPreviousTerm({ lastTerm: prevPhrase }).then(() => {
-            this.setState({
-              prevPhrase,
-              audioPlay: true,
-              prevPlayed: this.props.prevPushPlay,
-            });
-          });
-        }
-      }
-    }
-
     if (
       this.props.phrases.length != prevProps.phrases.length ||
       this.props.termsOrder != prevProps.termsOrder
@@ -389,12 +316,6 @@ class Phrases extends Component {
         showRomaji: false,
         showLit: false,
         errorMsgs: [],
-      });
-    }
-
-    if (this.state.audioPlay) {
-      this.setState({
-        audioPlay: false,
       });
     }
   }
@@ -802,10 +723,6 @@ class Phrases extends Component {
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
         }
-
-        if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
-          this.props.pushedPlay(true);
-        }
       } else if (direction === "down") {
         const inEnglish = phrase.english;
 
@@ -847,10 +764,6 @@ class Phrases extends Component {
           ]);
         } catch (e) {
           this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
-        }
-
-        if (this.props.autoPlay !== AutoPlaySetting.EN_JP) {
-          this.props.pushedPlay(true);
         }
       }
     }
@@ -925,12 +838,13 @@ class Phrases extends Component {
       jLabel
     );
 
-    const audioWords = audioWordsHelper(
-      this.state.prevPlayed,
-      this.props.autoPlay,
-      phrase,
-      this.state.prevPhrase
-    );
+    const audioWords = this.props.practiceSide
+      ? { tl: "en", q: phrase.english, uid: phrase.uid + ".en" }
+      : {
+          tl: "ja",
+          q: audioPronunciation(phrase),
+          uid: getCacheUID(phrase),
+        };
 
     let loopActionBtn;
     if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
@@ -950,17 +864,7 @@ class Phrases extends Component {
       <AudioItem
         visible={this.props.swipeThreshold === 0 && this.state.loop === 0}
         word={audioWords}
-        autoPlay={
-          !this.state.audioPlay ? AutoPlaySetting.OFF : this.props.autoPlay
-        }
-        onPushedPlay={() => {
-          if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
-            this.props.pushedPlay(true);
-          }
-        }}
-        onAutoPlayDone={() => {
-          this.props.pushedPlay(false);
-        }}
+        reCache={this.state.recacheAudio}
       />
     );
 
@@ -1129,10 +1033,7 @@ const mapStateToProps = (state) => {
     filterType: state.settings.phrases.filter,
     frequency: state.settings.phrases.frequency,
     activeGroup: state.settings.phrases.activeGroup,
-    prevPushPlay: state.vocabulary.pushedPlay,
-    autoPlay: state.settings.vocabulary.autoPlay,
     reinforce: state.settings.phrases.reinforce,
-    prevTerm: state.vocabulary.prevTerm,
     repetition: state.settings.phrases.repetition,
     swipeThreshold: state.settings.global.swipeThreshold,
   };
@@ -1156,16 +1057,7 @@ Phrases.propTypes = {
   lastNext: PropTypes.number,
   updateSpaceRepPhrase: PropTypes.func,
   logger: PropTypes.func,
-  prevTerm: PropTypes.shape({
-    japanese: PropTypes.string.isRequired,
-    english: PropTypes.string.isRequired,
-    uid: PropTypes.string.isRequired,
-  }),
-  pushedPlay: PropTypes.func,
-  prevPushPlay: PropTypes.bool,
   clearPreviousTerm: PropTypes.func,
-  setPreviousTerm: PropTypes.func,
-  autoPlay: PropTypes.number,
   swipeThreshold: PropTypes.number,
 };
 
@@ -1175,11 +1067,8 @@ export default connect(mapStateToProps, {
   addFrequencyPhrase,
   removeFrequencyPhrase,
   togglePhrasesFilter,
-  clearPreviousTerm,
-  setPreviousTerm,
   updateSpaceRepPhrase,
   logger,
-  pushedPlay,
 })(Phrases);
 
 export { PhrasesMeta };

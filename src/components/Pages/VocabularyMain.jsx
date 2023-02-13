@@ -1,23 +1,21 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import { JapaneseText } from "../../helper/JapaneseText";
+import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
-import { pushedPlay } from "../../actions/vocabularyAct";
 import {
-  AutoPlaySetting,
   flipVocabularyPracticeSide,
   toggleFurigana,
 } from "../../actions/settingsAct";
 import Sizable from "../Form/Sizable";
 import {
-  audioWordsHelper,
   englishLabel,
   getEnglishHint,
   japaneseLabel,
   toggleFuriganaSettingHelper,
   labelPlacementHelper,
   getJapaneseHint,
+  getCacheUID,
 } from "../../helper/gameHelper";
 
 /**
@@ -28,12 +26,9 @@ import {
  * @typedef {Object} VocabularyMainState
  * @property {boolean} showMeaning
  * @property {boolean} showRomaji
- * @property {RawVocabulary} prevVocab
  * @property {boolean} [showHint]
  * @property {string} [naFlip]
  * @property {any} [swiping]
- * @property {boolean} prevPlayed
- * @property {boolean} audioPlay
  */
 
 /**
@@ -44,15 +39,12 @@ import {
  * @property {boolean} romajiActive
  * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
  * @property {boolean} practiceSide
- * @property {typeof AutoPlaySetting[keyof AutoPlaySetting]} autoPlay
  * @property {boolean} scrollingDone
- * @property {typeof pushedPlay} pushedPlay
  * @property {number} swipeThreshold
  * @property {any} furigana
  * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
  * @property {typeof toggleFuriganaSettingHelper} toggleFuriganaSettingHelper
  * @property {boolean} reCache
- * @property {RawVocabulary} prevTerm
  * @property {boolean} played
  * @property {boolean} prevPushPlay
  */
@@ -66,9 +58,6 @@ class VocabularyMain extends Component {
     this.state = {
       showMeaning: false,
       showRomaji: false,
-      prevVocab: this.props.prevTerm,
-      audioPlay: true,
-      prevPlayed: this.props.prevPushPlay,
     };
 
     /** @type {VocabularyMainProps} */
@@ -76,25 +65,6 @@ class VocabularyMain extends Component {
 
     /** @type {import("../../typings/raw").SetState<VocabularyMainState>} */
     this.setState;
-  }
-
-  componentDidMount() {
-    this.setState({ audioPlay: false });
-  }
-
-  /**
-   * @param {VocabularyMainProps} nextProps
-   * @param {VocabularyMainState} nextState
-   */
-  shouldComponentUpdate(nextProps, nextState) {
-    if (
-      this.state.audioPlay !== nextState.audioPlay &&
-      nextState.audioPlay === false
-    ) {
-      return false;
-    }
-
-    return true;
   }
 
   /**
@@ -105,15 +75,6 @@ class VocabularyMain extends Component {
       this.setState({
         showMeaning: false,
         showRomaji: false,
-        prevVocab: prevProps.vocabulary,
-        audioPlay: true,
-        prevPlayed: this.props.prevPushPlay,
-      });
-    }
-
-    if (this.state.audioPlay) {
-      this.setState({
-        audioPlay: false,
       });
     }
   }
@@ -151,34 +112,27 @@ class VocabularyMain extends Component {
       }
     }
 
-    const { topValue, topLabel, bottomValue, bottomLabel } =
-      labelPlacementHelper(practiceSide, eValue, jValue, eLabel, jLabel);
-
-    const audioWords = audioWordsHelper(
-      this.state.prevPlayed,
-      this.props.autoPlay,
-      vocabulary,
-      this.state.prevVocab
+    const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
+      practiceSide,
+      eValue,
+      jValue,
+      eLabel,
+      jLabel
     );
+
+    const audioWords = this.props.practiceSide
+      ? { tl: "en", q: vocabulary.english, uid: vocabulary.uid + ".en" }
+      : {
+          tl: this.props.practiceSide ? "en" : "ja",
+          q: audioPronunciation(vocabulary),
+          uid: getCacheUID(vocabulary),
+        };
 
     const playButton = (
       <AudioItem
         visible={this.props.swipeThreshold === 0}
         word={audioWords}
         reCache={this.props.reCache}
-        autoPlay={
-          !this.props.scrollingDone || !this.state.audioPlay
-            ? AutoPlaySetting.OFF
-            : this.props.autoPlay
-        }
-        onPushedPlay={() => {
-          if (this.props.autoPlay !== AutoPlaySetting.JP_EN) {
-            this.props.pushedPlay(true);
-          }
-        }}
-        onAutoPlayDone={() => {
-          this.props.pushedPlay(false);
-        }}
       />
     );
 
@@ -197,12 +151,8 @@ class VocabularyMain extends Component {
                 : { [shortEN ? "fs-display-6" : "h3"]: true }),
             }
           }
-          onClick={
-            (this.props.autoPlay && this.props.flipVocabularyPracticeSide) ||
-            undefined
-          }
         >
-          {this.props.autoPlay && practiceSide ? topLabel : topValue}
+          {topValue}
         </Sizable>
         {this.props.romajiActive && romaji && (
           <h5>
@@ -231,19 +181,12 @@ class VocabularyMain extends Component {
             }
           }
           onClick={() => {
-            if (this.props.autoPlay) {
-              this.props.flipVocabularyPracticeSide();
-            } else {
-              this.setState((state) => ({
-                showMeaning: !state.showMeaning,
-              }));
-            }
+            this.setState((state) => ({
+              showMeaning: !state.showMeaning,
+            }));
           }}
         >
-          {(this.props.autoPlay && !practiceSide) ||
-          (!this.props.autoPlay && this.state.showMeaning)
-            ? bottomValue
-            : bottomLabel}
+          {this.state.showMeaning ? bottomValue : bottomLabel}
         </Sizable>
 
         <div className="d-flex justify-content-center">{playButton}</div>
@@ -256,10 +199,7 @@ const mapStateToProps = (state) => {
   return {
     practiceSide: state.settings.vocabulary.practiceSide,
     romajiActive: state.settings.vocabulary.romaji,
-    autoPlay: state.settings.vocabulary.autoPlay,
     scrollingDone: !state.settings.global.scrolling,
-    prevTerm: state.vocabulary.prevTerm,
-    prevPushPlay: state.vocabulary.pushedPlay,
     swipeThreshold: state.settings.global.swipeThreshold,
     furigana: state.settings.vocabulary.repetition,
     hintEnabled: state.settings.vocabulary.hintEnabled,
@@ -271,15 +211,8 @@ VocabularyMain.propTypes = {
   romajiActive: PropTypes.bool,
   practiceSide: PropTypes.bool,
   reCache: PropTypes.bool,
-  autoPlay: PropTypes.number,
   scrollingDone: PropTypes.bool,
-  prevTerm: PropTypes.shape({
-    japanese: PropTypes.string.isRequired,
-    english: PropTypes.string.isRequired,
-    uid: PropTypes.string.isRequired,
-  }),
   played: PropTypes.bool,
-  pushedPlay: PropTypes.func,
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
   swipeThreshold: PropTypes.number,
@@ -291,7 +224,6 @@ VocabularyMain.propTypes = {
 };
 
 export default connect(mapStateToProps, {
-  pushedPlay,
   flipVocabularyPracticeSide,
   toggleFurigana,
 })(VocabularyMain);

@@ -14,7 +14,6 @@ export const TOGGLE_VOCABULARY_ROMAJI = "toggle_vocabulary_romaji";
 export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
 export const TOGGLE_VOCABULARY_FILTER = "toggle_vocabulary_filter";
 export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
-export const TOGGLE_VOCABULARY_AUTO_PLAY = "toggle_vocabulary_auto_play";
 export const TOGGLE_VOCABULARY_REINFORCE = "toggle_vocabulary_reinforce";
 export const TOGGLE_KANJI_FILTER = "toggle_kanji_filter";
 export const TOGGLE_KANJI_ACTIVE_GROUP = "toggle_kanji_active_group";
@@ -65,13 +64,6 @@ export const TermSortBy = Object.freeze({
   ALPHABETIC: 1,
   VIEW_DATE: 2,
   GAME: 3,
-});
-
-// enum
-export const AutoPlaySetting = Object.freeze({
-  OFF: 0,
-  EN_JP: 1,
-  JP_EN: 2,
 });
 
 /**
@@ -556,24 +548,6 @@ export function toggleActiveGrp(parent, grpName) {
         value: newValue,
       });
     }
-  };
-}
-
-/**
- * @returns {ActCreator}
- */
-export function toggleVocabularyAutoPlay() {
-  return (dispatch, getState) => {
-    const { autoPlay } = getState().settings.vocabulary;
-
-    const newValue = Object.values(AutoPlaySetting).includes(autoPlay + 1)
-      ? autoPlay + 1
-      : AutoPlaySetting.OFF;
-
-    dispatch({
-      type: TOGGLE_VOCABULARY_AUTO_PLAY,
-      value: newValue,
-    });
   };
 }
 
