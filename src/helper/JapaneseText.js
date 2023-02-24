@@ -4,6 +4,7 @@ import { ErrorInfo } from "./ErrorInfo";
 import {
   isHiragana,
   isKanji,
+  isFullWNumber,
   isKatakana,
   isPunctuation,
   toEnglishNumber,
@@ -407,7 +408,8 @@ export function furiganaParse(pronunciation, orthography) {
   const space = new RegExp(/\s/g);
   const hasWhiteSpace = space.test(pronunciation) || space.test(orthography);
 
-  const startsWKana = !isKanji(orthography.charAt(0));
+  const startsWKana =
+    !isKanji(orthography.charAt(0)) && !isFullWNumber(orthography.charAt(0));
 
   let start = 0;
   /**

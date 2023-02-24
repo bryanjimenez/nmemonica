@@ -314,6 +314,25 @@ describe("JapanseText", function () {
       );
       expect(actual()).to.deep.equal(expected);
     });
+    it("starts w/ arabic number with furigana", function () {
+      const said = "いっかいだけそのばしょにいったことがあるよ";
+      const written = "１回だけその場所に行ったことがあるよ";
+
+      const expected = {
+        kanjis: ["１回", "場所", "行"],
+        furiganas: ["いっかい", "ばしょ", "い"],
+        okuriganas: ["だけその", "に", "ったことがあるよ"],
+        startsWKana: false,
+      };
+
+      const actual = () => furiganaParseRetry(said, written);
+
+      expect(actual).to.not.throw(
+        Error,
+        "Failed to parse text to build furigana"
+      );
+      expect(actual()).to.deep.equal(expected);
+    });
   });
 });
 
