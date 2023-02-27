@@ -596,6 +596,9 @@ export function getVerbFormsArray(rawVerb, order) {
     ...(verb.dictionary?.chattaForm() !== null
       ? [{ name: "-chatta", value: verb.dictionary?.chattaForm() }]
       : []),
+    ...(verb.dictionary?.reruForm() !== null
+      ? [{ name: "-reru", value: verb.dictionary?.reruForm() }]
+      : []),
   ];
 
   let filtered;
