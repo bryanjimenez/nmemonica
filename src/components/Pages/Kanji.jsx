@@ -21,6 +21,8 @@ import { JapaneseText } from "../../helper/JapaneseText";
 import classNames from "classnames";
 
 import "./Kanji.css";
+import { LinearProgress } from "@mui/material";
+import { shuffleArray } from "../../helper/arrayHelper";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -42,7 +44,7 @@ import "./Kanji.css";
 /**
  * @typedef {Object} KanjiState
  * @property {number} selectedIndex
- * @property {RawKanji[]} filteredVocab
+ * @property {RawKanji[]} filteredTerms
  * @property {boolean} showOn
  * @property {boolean} showKun
  * @property {boolean} showEx
@@ -64,7 +66,7 @@ class Kanji extends Component {
     /** @type {KanjiState} */
     this.state = {
       selectedIndex: 0,
-      filteredVocab: [],
+      filteredTerms: [],
       showOn: false,
       showKun: false,
       showEx: false,
@@ -115,7 +117,7 @@ class Kanji extends Component {
   }
 
   setOrder() {
-    const filteredVocab = termFilterByType(
+    const filteredTerms = termFilterByType(
       TermFilterBy.GROUP,
       this.props.kanji,
       null,
@@ -123,16 +125,16 @@ class Kanji extends Component {
       null
     );
 
-    const order = randomOrder(filteredVocab);
+    const order = randomOrder(filteredTerms);
 
     this.setState({
-      filteredVocab,
+      filteredTerms,
       order,
     });
   }
 
   gotoNext() {
-    const l = this.state.filteredVocab.length;
+    const l = this.state.filteredTerms.length;
     const newSel = (this.state.selectedIndex + 1) % l;
 
     this.setState({
@@ -149,7 +151,7 @@ class Kanji extends Component {
   }
 
   gotoPrev() {
-    const l = this.state.filteredVocab.length;
+    const l = this.state.filteredTerms.length;
     const i = this.state.selectedIndex - 1;
 
     let newSel = i < 0 ? (l + i) % l : i % l;
@@ -214,20 +216,24 @@ class Kanji extends Component {
   }
 
   render() {
-    if (this.state.filteredVocab.length < 1)
+    if (this.state.filteredTerms.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
     const uid = getTermUID(
       this.state.selectedIndex,
       this.state.order,
-      this.state.filteredVocab
+      this.state.filteredTerms
     );
 
     /** @type {RawKanji} */
     const term = getTerm(uid, this.props.kanji);
 
-    const found = this.props.vocabulary.filter((v) =>
-      JapaneseText.parse(v).getSpelling().includes(term.kanji)
+    const found = shuffleArray(
+      this.props.vocabulary.filter(
+        (v) =>
+          JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
+          v.english.toLowerCase() !== term.eng.toLowerCase()
+      )
     );
 
     const maxShowEx = 3;
@@ -239,6 +245,21 @@ class Kanji extends Component {
         <wbr />
       </React.Fragment>
     ));
+
+    const inJapanese = found.find(
+      (v) => v.english.toLowerCase() === term.eng.toLowerCase()
+    );
+    const meaning = (
+      <div>
+        <div>
+          <span>{term.eng}</span>
+        </div>
+        <div>{inJapanese && JapaneseText.parse(inJapanese).toHTML()}</div>
+      </div>
+    );
+
+    const progress =
+      ((this.state.selectedIndex + 1) / this.state.filteredTerms.length) * 100;
 
     let page = [
       <div key={0} className="kanji main-panel h-100">
@@ -325,7 +346,7 @@ class Kanji extends Component {
                   }));
                 }}
               >
-                <span>{this.state.showMeaning ? term.eng : "[Meaning]"}</span>
+                {this.state.showMeaning ? meaning : <span>{"[Meaning]"}</span>}
               </h3>
             </div>
           </div>
@@ -335,6 +356,13 @@ class Kanji extends Component {
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
+      </div>,
+      <div key={2} className="progress-line flex-shrink-1">
+        <LinearProgress
+          variant="determinate"
+          value={progress}
+          // color={phrase_reinforce ? "secondary" : "primary"}
+        />
       </div>,
     ];
 
