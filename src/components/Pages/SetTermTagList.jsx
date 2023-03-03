@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { GroupItem } from "../Form/GroupItem";
 import orderBy from "lodash/orderBy";
@@ -16,8 +16,19 @@ import orderBy from "lodash/orderBy";
  * @param {SetTermGListProps} props
  */
 export function SetTermTagList(props) {
-  const numericTags = props.termTags.filter((t) => t.includes("_"));
-  const alphaTags = props.termTags.filter((t) => !t.includes("_"));
+  const { termActive, termTags, toggleTermActive, selectedCount } = props;
+
+  useEffect(() => {
+    // remove stale active tags
+    termActive.forEach((term) => {
+      if (!termTags.includes(term)) {
+        toggleTermActive(term);
+      }
+    });
+  }, [termActive, termTags, toggleTermActive]);
+
+  const numericTags = termTags.filter((t) => t.includes("_"));
+  const alphaTags = termTags.filter((t) => !t.includes("_"));
 
   const sorted = [
     ...orderBy(alphaTags),
@@ -32,10 +43,7 @@ export function SetTermTagList(props) {
   ];
 
   const count =
-    (props.selectedCount &&
-      props.selectedCount > 0 &&
-      "(" + props.selectedCount + ")") ||
-    "";
+    (selectedCount && selectedCount > 0 && "(" + selectedCount + ")") || "";
 
   return (
     <div>
@@ -44,9 +52,9 @@ export function SetTermTagList(props) {
         <div key={i + 1}>
           <GroupItem
             key={i}
-            active={props.termActive.includes(g)}
+            active={termActive.includes(g)}
             onClick={() => {
-              props.toggleTermActive(g);
+              toggleTermActive(g);
             }}
           >
             {g}

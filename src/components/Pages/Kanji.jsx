@@ -51,6 +51,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
  * @property {boolean} showMeaning
  * @property {any} [swiping]
  * @property {number[]} order
+ * @property {RawVocabulary[]} examples
  */
 
 const KanjiMeta = {
@@ -72,6 +73,7 @@ class Kanji extends Component {
       showEx: false,
       showMeaning: false,
       order: [],
+      examples: [],
     };
 
     /** @type {KanjiProps} */
@@ -108,11 +110,37 @@ class Kanji extends Component {
 
   /**
    * @param {KanjiProps} prevProps
+   * @param {KanjiState} prevState
+   *
    */
-  componentDidUpdate(prevProps /*, prevState*/) {
+  componentDidUpdate(prevProps, prevState) {
     if (this.props.kanji.length !== prevProps.kanji.length) {
-      // console.log("got game data");
       this.setOrder();
+    }
+
+    if (
+      this.state.order.length > 0 &&
+      (this.state.order.length !== prevState.order.length ||
+        this.state.selectedIndex !== prevState.selectedIndex)
+    ) {
+      const uid = getTermUID(
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredTerms
+      );
+
+      /** @type {RawKanji} */
+      const term = getTerm(uid, this.props.kanji);
+
+      const examples = shuffleArray(
+        this.props.vocabulary.filter(
+          (v) =>
+            JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
+            v.english.toLowerCase() !== term.english.toLowerCase()
+        )
+      );
+
+      this.setState({ examples });
     }
   }
 
@@ -229,25 +257,20 @@ class Kanji extends Component {
     const term = getTerm(uid, this.props.kanji);
     const radicalLevel =
       term.tag.find((t) => t.startsWith("Level_"))?.replace("Level_", "") || "";
-    const found = shuffleArray(
-      this.props.vocabulary.filter(
-        (v) =>
-          JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-          v.english.toLowerCase() !== term.english.toLowerCase()
-      )
-    );
 
     const maxShowEx = 3;
-    const examples = found.slice(0, maxShowEx).map((el, k, arr) => (
-      <React.Fragment key={k}>
-        {el.english + " "}
-        {JapaneseText.parse(el).toHTML()}
-        {k < arr.length - 1 ? "; " : ""}
-        <wbr />
-      </React.Fragment>
-    ));
+    const examples = this.state.examples
+      .slice(0, maxShowEx)
+      .map((el, k, arr) => (
+        <React.Fragment key={k}>
+          {el.english + " "}
+          {JapaneseText.parse(el).toHTML()}
+          {k < arr.length - 1 ? "; " : ""}
+          <wbr />
+        </React.Fragment>
+      ));
 
-    const inJapanese = found.find(
+    const inJapanese = this.state.examples.find(
       (v) => v.english.toLowerCase() === term.english.toLowerCase()
     );
     const meaning = (
