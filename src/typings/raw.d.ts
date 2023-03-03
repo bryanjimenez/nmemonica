@@ -42,7 +42,7 @@ export interface RawKanji {
   kanji: string;
   on: string;
   kun: string;
-  eng: string; // english
+  english: string;
 
   grp?: string;
   tag: string[];

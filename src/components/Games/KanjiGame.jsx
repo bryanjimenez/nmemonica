@@ -60,10 +60,9 @@ function KanjiGame() {
     }
 
     const kanji = rawKanjis[order.current[selectedIndex]];
-    const { eng: english, kanji: japanese, on, kun } = kanji;
+    const { english, kanji: japanese, on, kun } = kanji;
 
-    // TODO: rename attr eng->english
-    const choices = createChoices("eng", kanji, rawKanjis);
+    const choices = createChoices("english", kanji, rawKanjis);
 
     /** @type {import("./FourChoices").GameQuestion} */
     const q = {
@@ -96,7 +95,7 @@ function KanjiGame() {
     return {
       question: q,
       answer: english,
-      choices: choices.map((c) => ({ compare: c.eng, toHTML: () => c.eng })),
+      choices: choices.map((c) => ({ compare: c.english, toHTML: () => c.english })),
     };
   }
 

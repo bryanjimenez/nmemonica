@@ -65,7 +65,7 @@ export async function sheets_sync_kanji(req, res) {
       if (i > 0) {
         let kanji = {
           kanji: el[KANJI],
-          eng: el[EN],
+          english: el[EN],
         };
 
         const key = md5(kanji.kanji);

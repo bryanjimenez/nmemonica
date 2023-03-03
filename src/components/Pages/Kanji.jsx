@@ -233,7 +233,7 @@ class Kanji extends Component {
       this.props.vocabulary.filter(
         (v) =>
           JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-          v.english.toLowerCase() !== term.eng.toLowerCase()
+          v.english.toLowerCase() !== term.english.toLowerCase()
       )
     );
 
@@ -248,12 +248,12 @@ class Kanji extends Component {
     ));
 
     const inJapanese = found.find(
-      (v) => v.english.toLowerCase() === term.eng.toLowerCase()
+      (v) => v.english.toLowerCase() === term.english.toLowerCase()
     );
     const meaning = (
       <div>
         <div>
-          <span>{term.eng}</span>
+          <span>{term.english}</span>
         </div>
         <div>{inJapanese && JapaneseText.parse(inJapanese).toHTML()}</div>
       </div>
