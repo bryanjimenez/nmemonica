@@ -45,8 +45,7 @@ export interface RawKanji {
   eng: string; // english
 
   grp?: string;
-  subGrp?: string;
-  tag?: string[];
+  tag: string[];
 }
 
 export interface GroupListMap {

@@ -6,9 +6,14 @@ import { googleSheetId } from "../../../environment.development.js";
 import md5 from "md5";
 
 function setPropsFromTags(el, tag) {
-  const tags = tag.split(/[\n\s, ]+/);
+  const tags = tag.split(/[,]+/);
 
   tags.forEach((t) => {
+    t = t.trim();
+    if (t.endsWith(",")) {
+      t = t.slice(0, -1);
+    }
+
     switch (t) {
       case "slang":
         el.slang = true;
@@ -77,12 +82,10 @@ export async function sheets_sync_kanji(req, res) {
           kanji.grp = el[GRP];
         }
 
-        // use first tag as subGrp
         if (el[TAG] && el[TAG] !== "") {
           kanji = setPropsFromTags(kanji, el[TAG]);
-          kanji.subGrp = kanji.tag[0];
 
-          if (kanji.tag.length <= 1) {
+          if (kanji.tag.length === 0) {
             delete kanji.tag;
           }
         }

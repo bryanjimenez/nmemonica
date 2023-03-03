@@ -114,7 +114,7 @@ export function getTerm(uid, list) {
 /**
  * Filters terms (words or phrases) list
  * by groups, frequency, or space repetition
- * @template {{ uid: string, grp?: string, subGrp?: string }} T
+ * @template {{ uid: string, grp?: string, subGrp?: string, tag?: string[] }} T
  * @param {typeof TermFilterBy[keyof TermFilterBy]} filterType
  * @param {T[]} termList word or phrase list
  * @param {string[]?} frequencyList
@@ -153,6 +153,13 @@ export function termFilterByType(
     } else {
       // last frequency word was just removed
       toggleFilterType(TermFilterBy.GROUP);
+    }
+  } else if (filterType === TermFilterBy.TAGS) {
+    if (activeGrpList.length > 0) {
+      filteredTerms = termList.filter(
+        (term) =>
+          term.tag && term.tag.some((aTag) => activeGrpList.includes(aTag))
+      );
     }
   } else {
     // group filtering

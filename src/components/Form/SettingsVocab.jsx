@@ -149,7 +149,7 @@ class SettingsVocab extends Component {
           <div className="d-flex flex-row justify-content-between">
             <div className="column-1">
               <h4>
-                {labelOptions(vocabFilter, ["Word Group", "Frequency List"])}
+                {labelOptions(vocabFilter, ["Word Group", "Frequency List", "NOT_USED_Tags"])}
               </h4>
               <div className="mb-2">
                 <SettingsSwitch
@@ -159,11 +159,7 @@ class SettingsVocab extends Component {
                   statusText={"Filter by"}
                 />
               </div>
-              {vocabFilter === TermFilterBy.FREQUENCY &&
-                vocabFreq.length === 0 && (
-                  <div className="fst-italic">No words have been chosen</div>
-                )}
-              {vocabFilter !== TermFilterBy.FREQUENCY && (
+              {vocabFilter === TermFilterBy.GROUP && (
                 <SetTermGList
                   vocabGroups={vocabGroups}
                   vocabActive={vocabActive}
@@ -171,6 +167,10 @@ class SettingsVocab extends Component {
                     toggleActiveGrp("vocabulary", grp)
                   }
                 />
+              )}
+              {vocabFilter === TermFilterBy.FREQUENCY &&
+                vocabFreq.length === 0 && (
+                  <div className="fst-italic">No words have been chosen</div>
               )}
               {vocabFilter === TermFilterBy.FREQUENCY &&
                 vocabFreq.length > 0 && (

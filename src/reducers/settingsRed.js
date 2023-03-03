@@ -34,6 +34,7 @@ import {
   SET_SWIPE_THRESHOLD,
   VERB_FORM_VIEW,
   TOGGLE_KANJI_ACTIVE_GROUP,
+  TOGGLE_KANJI_ACTIVE_TAG,
   SET_VERB_FORM_ORDER,
   SET_MOTION_THRESHOLD,
 } from "../actions/settingsAct";
@@ -80,6 +81,7 @@ export const DEFAULT_SETTINGS = {
   kanji: {
     filter: 0,
     activeGroup: [],
+    activeTags: [],
   },
   opposites: { qRomaji: false, aRomaji: false },
   particles: { aRomaji: false },
@@ -317,6 +319,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         kanji: {
           ...state.kanji,
           activeGroup: action.value,
+        },
+      };
+    case TOGGLE_KANJI_ACTIVE_TAG:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
+          activeTags: action.value,
         },
       };
     case AUTO_VERB_VIEW:

@@ -1,9 +1,9 @@
 import { GET_KANJI } from "../actions/kanjiAct";
-import { buildGroupObject } from "../helper/reducerHelper";
+import { buildTagObject } from "../helper/reducerHelper";
 
 const DEFAULT_STATE = {
   value: [],
-  grpObj: {},
+  tagObj: [],
 };
 /** @type {{type:string, value:any}} to avoid ts-nocheck */
 const DEFAULT_ACTION = {};
@@ -14,11 +14,12 @@ const kanjiReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
       const value = Object.keys(action.value).map((k) => ({
         ...action.value[k],
         uid: k,
+        tag: action.value[k].tag === undefined ? [] : action.value[k].tag,
       }));
 
       return {
         ...state,
-        grpObj: buildGroupObject(action.value),
+        tagObj: buildTagObject(action.value),
         value,
       };
     }

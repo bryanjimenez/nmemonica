@@ -103,6 +103,7 @@ class SettingsPhrase extends Component {
                 {labelOptions(phraseFilter, [
                   "Phrases Group",
                   "Frequency List",
+                  "NOT_USED_Tags"
                 ])}
               </h4>
               <div className="mb-2">
@@ -113,18 +114,17 @@ class SettingsPhrase extends Component {
                   statusText={"Filter by"}
                 />
               </div>
-              {phraseFilter === TermFilterBy.FREQUENCY &&
-                phraseFreq.length === 0 && (
-                  <div className="fst-italic">No phrases have been chosen</div>
-                )}
-
-              {phraseFilter !== TermFilterBy.FREQUENCY && (
+              {phraseFilter === TermFilterBy.GROUP && (
                 <SetTermGList
                   vocabGroups={phraseGroups}
                   vocabActive={phraseActive}
                   toggleTermActiveGrp={(grp) => toggleActiveGrp("phrases", grp)}
                 />
               )}
+              {phraseFilter === TermFilterBy.FREQUENCY &&
+                phraseFreq.length === 0 && (
+                  <div className="fst-italic">No phrases have been chosen</div>
+                )}
               {phraseFilter === TermFilterBy.FREQUENCY &&
                 phraseFreq.length > 0 && (
                   <SetTermGFList

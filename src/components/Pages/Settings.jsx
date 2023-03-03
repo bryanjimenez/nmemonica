@@ -18,9 +18,10 @@ import {
   toggleActiveGrp,
   DebugLevel,
   setMotionThreshold,
+  toggleActiveTag,
 } from "../../actions/settingsAct";
 import { NotReady } from "../Form/NotReady";
-import { SetTermGList } from "./SetTermGList";
+import { SetTermTagList } from "./SetTermTagList";
 import { getKanji } from "../../actions/kanjiAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 import { getPhrases } from "../../actions/phrasesAct";
@@ -89,8 +90,9 @@ const SettingsMeta = {
  * @property {number} charSet
  * @property {number} choiceN
  * @property {boolean} particlesARomaji
+ * @property {import("./Kanji").RawKanji} kanji
  * @property {number} kanjiFilter
- * @property {GroupListMap} kanjiGroups
+ * @property {string[]} kanjiTags
  * @property {string[]} kanjiActive
  * @property {boolean} oppositesQRomaji
  * @property {boolean} oppositesARomaji
@@ -109,6 +111,7 @@ const SettingsMeta = {
  * @property {typeof setParticlesARomaji} setParticlesARomaji
  * @property {typeof getKanji} getKanji
  * @property {typeof toggleActiveGrp} toggleActiveGrp
+ * @property {typeof toggleActiveTag} toggleActiveTag
  * @property {typeof setOppositesQRomaji} setOppositesQRomaji
  * @property {typeof setOppositesARomaji} setOppositesARomaji
  * @property {typeof logger} logger
@@ -148,7 +151,7 @@ class Settings extends Component {
       this.props.getVocabulary();
     }
 
-    if (Object.keys(this.props.kanjiGroups).length === 0) {
+    if (this.props.kanjiTags.length === 0) {
       this.props.getKanji();
     }
 
@@ -436,7 +439,7 @@ class Settings extends Component {
     if (
       this.props.vocabulary.length < 1 ||
       this.props.phrases.length < 1 ||
-      Object.keys(this.props.kanjiGroups).length < 1
+      this.props.kanjiTags.length < 1
     )
       return <NotReady addlStyle="main-panel" />;
 
@@ -461,6 +464,12 @@ class Settings extends Component {
       ...vocabuStaleInfo,
       ...phraseStaleInfo,
     ]);
+
+    const kanjiSelectedTags = Object.values(this.props.kanji).filter((k) =>
+      k.tag.some((/** @type {string}*/ aTag) =>
+        this.props.kanjiActive.includes(aTag)
+      )
+    ).length;
 
     return (
       <div className="settings">
@@ -633,11 +642,16 @@ class Settings extends Component {
                       statusText={"Filter by"}
                     />
                   </div>
-                  <SetTermGList
-                    vocabGroups={this.props.kanjiGroups}
-                    vocabActive={this.props.kanjiActive}
-                    toggleTermActiveGrp={(grp) =>
-                      this.props.toggleActiveGrp("kanji", grp)
+                  <SetTermTagList
+                    selectedCount={
+                      kanjiSelectedTags === 0
+                        ? Object.values(this.props.kanji).length
+                        : kanjiSelectedTags
+                    }
+                    termTags={this.props.kanjiTags}
+                    termActive={this.props.kanjiActive}
+                    toggleTermActive={(tag) =>
+                      this.props.toggleActiveTag("kanji", tag)
                     }
                   />
                 </div>
@@ -868,9 +882,10 @@ const mapStateToProps = (state) => {
     vocabulary: state.vocabulary.value,
     vRepetition: state.settings.vocabulary.repetition,
 
-    kanjiGroups: state.kanji.grpObj,
+    kanji: state.kanji.value,
+    kanjiTags: state.kanji.tagObj,
     kanjiFilter: state.settings.kanji.filter,
-    kanjiActive: state.settings.kanji.activeGroup,
+    kanjiActive: state.settings.kanji.activeTags,
 
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
@@ -924,10 +939,12 @@ Settings.propTypes = {
   setParticlesARomaji: PropTypes.func,
 
   getKanji: PropTypes.func,
+  kanji: PropTypes.array,
   kanjiFilter: PropTypes.number,
-  kanjiGroups: PropTypes.object,
+  kanjiTags: PropTypes.array,
   kanjiActive: PropTypes.array,
   toggleActiveGrp: PropTypes.func,
+  toggleActiveTag: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
   setOppositesQRomaji: PropTypes.func,
@@ -952,6 +969,7 @@ export default connect(mapStateToProps, {
   getPhrases,
   getKanji,
   toggleActiveGrp,
+  toggleActiveTag,
 
   setPersistentStorage,
   getMemoryStorageStatus,

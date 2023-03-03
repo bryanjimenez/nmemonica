@@ -34,7 +34,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
  * @typedef {Object} KanjiProps
  * @property {RawKanji[]} kanji
  * @property {RawVocabulary[]} vocabulary
- * @property {string[]} activeGroup
+ * @property {string[]} activeTags
  * @property {number} swipeThreshold
  * @property {typeof getKanji} getKanji
  * @property {typeof getVocabulary} getVocabulary
@@ -118,10 +118,10 @@ class Kanji extends Component {
 
   setOrder() {
     const filteredTerms = termFilterByType(
-      TermFilterBy.GROUP,
+      TermFilterBy.TAGS,
       this.props.kanji,
       null,
-      this.props.activeGroup,
+      this.props.activeTags,
       null
     );
 
@@ -227,7 +227,8 @@ class Kanji extends Component {
 
     /** @type {RawKanji} */
     const term = getTerm(uid, this.props.kanji);
-
+    const radicalLevel =
+      term.tag.find((t) => t.startsWith("Level_"))?.replace("Level_", "") || "";
     const found = shuffleArray(
       this.props.vocabulary.filter(
         (v) =>
@@ -278,7 +279,7 @@ class Kanji extends Component {
           <div className="grp-info">
             <div>
               <div>{term.grp}</div>
-              <div>{term.subGrp?.replace("_", " ")}</div>
+              <div>{radicalLevel}</div>
             </div>
           </div>
 
@@ -375,7 +376,7 @@ const mapStateToProps = (state) => {
     kanji: state.kanji.value,
     vocabulary: state.vocabulary.value,
 
-    activeGroup: state.settings.kanji.activeGroup,
+    activeTags: state.settings.kanji.activeTags,
     swipeThreshold: state.settings.global.swipeThreshold,
   };
 };
@@ -383,7 +384,7 @@ const mapStateToProps = (state) => {
 Kanji.propTypes = {
   kanji: PropTypes.array,
   vocabulary: PropTypes.array,
-  activeGroup: PropTypes.array,
+  activeTags: PropTypes.array,
   swipeThreshold: PropTypes.number,
   getKanji: PropTypes.func,
   getVocabulary: PropTypes.func,

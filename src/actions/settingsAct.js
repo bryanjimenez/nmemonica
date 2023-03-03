@@ -8,15 +8,18 @@ export const SET_PHRASES_ORDERING = "set_phrases_ordering";
 export const FLIP_PHRASES_PRACTICE_SIDE = "flip_phrases_practice_side";
 export const TOGGLE_PHRASES_ROMAJI = "toggle_phrases_romaji";
 export const TOGGLE_PHRASES_ACTIVE_GROUP = "toggle_phrases_active_group";
+export const TOGGLE_PHRASES_ACTIVE_TAG = "toggle_phrases_active_tag";
 export const SET_VOCABULARY_ORDERING = "set_vocabulary_ordering";
 export const FLIP_VOCABULARY_PRACTICE_SIDE = "flip_vocabulary_practice_side";
 export const TOGGLE_VOCABULARY_ROMAJI = "toggle_vocabulary_romaji";
 export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
 export const TOGGLE_VOCABULARY_FILTER = "toggle_vocabulary_filter";
 export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
+export const TOGGLE_VOCABULARY_ACTIVE_TAG = "toggle_vocabulary_active_tag";
 export const TOGGLE_VOCABULARY_REINFORCE = "toggle_vocabulary_reinforce";
 export const TOGGLE_KANJI_FILTER = "toggle_kanji_filter";
 export const TOGGLE_KANJI_ACTIVE_GROUP = "toggle_kanji_active_group";
+export const TOGGLE_KANJI_ACTIVE_TAG = "toggle_kanji_active_tag";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -55,7 +58,7 @@ export const DebugLevel = Object.freeze({
 export const TermFilterBy = Object.freeze({
   GROUP: 0,
   FREQUENCY: 1,
-  // TAGS: 2,
+  TAGS: 2,
 });
 
 // enum
@@ -469,13 +472,18 @@ export function toggleVocabularyFilter(override) {
     const attr = "filter";
     const time = new Date();
 
-    let newFilter;
+    let newFilter = filter;
     if (override !== undefined) {
       newFilter = override;
     } else {
-      newFilter = Object.values(TermFilterBy).includes(filter + 1)
-        ? filter + 1
-        : TermFilterBy.GROUP;
+        while (
+          newFilter === filter ||
+          newFilter === TermFilterBy.TAGS
+        ) {
+          newFilter = Object.values(TermFilterBy).includes(newFilter + 1)
+          ? newFilter + 1
+          : 0;
+        }
     }
 
     localStoreAttrUpdate(time, getState, path, attr, newFilter);
@@ -548,6 +556,44 @@ export function toggleActiveGrp(parent, grpName) {
         value: newValue,
       });
     }
+  };
+}
+
+/**
+ * @param {string} parent
+ * @param {string} tagName
+ * @returns {ActCreator}
+ */
+export function toggleActiveTag(parent, tagName) {
+  return (dispatch, getState) => {
+    /** @type {{activeTags: string[]}} */
+    const { activeTags } = getState().settings[parent];
+
+    // if (parent === "vocabulary")
+    let action = TOGGLE_VOCABULARY_ACTIVE_TAG;
+
+    if (parent === "kanji") {
+      action = TOGGLE_KANJI_ACTIVE_TAG;
+    } else if (parent === "phrases") {
+      action = TOGGLE_PHRASES_ACTIVE_TAG;
+    }
+
+    let newValue;
+    if (activeTags.includes(tagName)) {
+      newValue = activeTags.filter((a) => a !== tagName);
+    } else {
+      newValue = [...activeTags, tagName];
+    }
+
+    const path = "/" + parent + "/";
+    const attr = "activeTags";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr, newValue);
+
+    dispatch({
+      type: action,
+      value: newValue,
+    });
   };
 }
 
@@ -1054,13 +1100,18 @@ export function togglePhrasesFilter(override) {
     const attr = "filter";
     const time = new Date();
 
-    let newFilter;
+    let newFilter = filter;
     if (override !== undefined) {
       newFilter = override;
     } else {
-      newFilter = Object.values(TermFilterBy).includes(filter + 1)
-        ? filter + 1
-        : TermFilterBy.GROUP;
+        while (
+          newFilter === filter ||
+          newFilter === TermFilterBy.TAGS
+        ) {
+          newFilter = Object.values(TermFilterBy).includes(newFilter + 1)
+          ? newFilter + 1
+          : 0;
+        }
     }
 
     localStoreAttrUpdate(time, getState, path, attr, newFilter);
