@@ -2,11 +2,12 @@ import React, { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { LinearProgress } from "@mui/material";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { randomOrder } from "../../helper/gameHelper";
+import { randomOrder, termFilterByType } from "../../helper/gameHelper";
 import { NotReady } from "../Form/NotReady";
 import FourChoices from "./FourChoices";
 import classNames from "classnames";
 import { useKanjiStore } from "../../hooks/kanjiHK";
+import { TermFilterBy } from "../../actions/settingsAct";
 
 /**
  * @typedef {import("../../typings/raw").RawKanji} RawKanji
@@ -50,16 +51,16 @@ function KanjiGame() {
 
   /**
    * @param {number} selectedIndex
-   * @param {RawKanji[]} rawKanjis
+   * @param {RawKanji[]} selectedKanjis
    */
-  function prepareGame(selectedIndex, rawKanjis) {
-    if (rawKanjis.length === 0) return;
+  function prepareGame(selectedIndex, selectedKanjis) {
+    if (selectedKanjis.length === 0) return;
 
     if (order.current.length === 0) {
-      order.current = randomOrder(rawKanjis);
+      order.current = randomOrder(selectedKanjis);
     }
 
-    const kanji = rawKanjis[order.current[selectedIndex]];
+    const kanji = selectedKanjis[order.current[selectedIndex]];
     const { english, kanji: japanese, on, kun } = kanji;
 
     const choices = createChoices("english", kanji, rawKanjis);
@@ -95,18 +96,21 @@ function KanjiGame() {
     return {
       question: q,
       answer: english,
-      choices: choices.map((c) => ({ compare: c.english, toHTML: () => c.english })),
+      choices: choices.map((c) => ({
+        compare: c.english,
+        toHTML: () => c.english,
+      })),
     };
   }
 
   function gotoNext() {
-    const l = rawKanjis.length;
+    const l = filteredTerms.length;
     const newSel = (selectedIndex + 1) % l;
     setSelectedIndex(newSel);
   }
 
   function gotoPrev() {
-    const l = rawKanjis.length;
+    const l = filteredTerms.length;
     const i = selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     setSelectedIndex(newSel);
@@ -123,14 +127,26 @@ function KanjiGame() {
   const rawKanjis = useMemo(() => kanjiArr, [kanjiArr]);
   useKanjiStore(dispatch, version, rawKanjis);
 
-  const game = prepareGame(selectedIndex, rawKanjis);
+  const { activeTags } = useSelector(
+    (/** @type {AppRootState}*/ { settings }) => settings.kanji
+  );
+  /** @type {RawKanji[]} */
+  const filteredTerms = termFilterByType(
+    TermFilterBy.TAGS,
+    rawKanjis,
+    null,
+    activeTags,
+    null
+  );
 
-  // console.log(selectedIndex)
+  const game = prepareGame(selectedIndex, filteredTerms);
+
+  // console.log(selectedIndex);
   // console.log("KanjiGame render");
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 
-  const progress = ((selectedIndex + 1) / rawKanjis.length) * 100;
+  const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
 
   return (
     <>
