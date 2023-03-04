@@ -2,27 +2,29 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import { LinearProgress } from "@mui/material";
+import classNames from "classnames";
+import orderBy from "lodash/orderBy";
 
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
-import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
+
 import { getKanji } from "../../actions/kanjiAct";
+import { logger } from "../../actions/consoleAct";
+import { TermFilterBy } from "../../actions/settingsAct";
+import { getVocabulary } from "../../actions/vocabularyAct";
+
+import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 import {
   getTerm,
   getTermUID,
   randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
-import { logger } from "../../actions/consoleAct";
-import { TermFilterBy } from "../../actions/settingsAct";
-
-import { getVocabulary } from "../../actions/vocabularyAct";
 import { JapaneseText } from "../../helper/JapaneseText";
-import classNames from "classnames";
+import { shuffleArray } from "../../helper/arrayHelper";
 
 import "./Kanji.css";
-import { LinearProgress } from "@mui/material";
-import { shuffleArray } from "../../helper/arrayHelper";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -118,6 +120,7 @@ class Kanji extends Component {
       this.setOrder();
     }
 
+    // find examples
     if (
       this.state.order.length > 0 &&
       (this.state.order.length !== prevState.order.length ||
@@ -132,13 +135,24 @@ class Kanji extends Component {
       /** @type {RawKanji} */
       const term = getTerm(uid, this.props.kanji);
 
-      const examples = shuffleArray(
-        this.props.vocabulary.filter(
-          (v) =>
-            JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-            v.english.toLowerCase() !== term.english.toLowerCase()
-        )
+      const match = this.props.vocabulary.filter(
+        (v) =>
+          (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
+            v.english.toLowerCase() === term.english.toLowerCase()) ||
+          (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
+            v.english.toLowerCase().includes(term.english.toLowerCase()) &&
+            v.grp === "Verb") ||
+          (JapaneseText.parse(v).getSpelling() === term.kanji &&
+            (v.english.toLowerCase().includes(term.english.toLowerCase()) ||
+              term.english.toLowerCase().includes(v.english.toLowerCase())))
       );
+
+      /** @type {RawVocabulary[]} */
+      let examples = [];
+      if (match.length > 0) {
+        const [first, ...theRest] = orderBy(match, (ex) => ex.english.length);
+        examples = [first, ...shuffleArray(theRest)];
+      }
 
       this.setState({ examples });
     }
@@ -270,17 +284,7 @@ class Kanji extends Component {
         </React.Fragment>
       ));
 
-    const inJapanese = this.state.examples.find(
-      (v) => v.english.toLowerCase() === term.english.toLowerCase()
-    );
-    const meaning = (
-      <div>
-        <div>
-          <span>{term.english}</span>
-        </div>
-        <div>{inJapanese && JapaneseText.parse(inJapanese).toHTML()}</div>
-      </div>
-    );
+    const meaning = <span>{term.english}</span>;
 
     const progress =
       ((this.state.selectedIndex + 1) / this.state.filteredTerms.length) * 100;
@@ -343,10 +347,10 @@ class Kanji extends Component {
                   <span>{this.state.showKun ? term.kun : "[Kun]"}</span>
                 </h3>
               )}
-              {[examples].length > 0 && (
-                <div
+              <div className="d-flex flex-column">
+                <span
                   className={classNames({
-                    "example-blk clickable h6 pt-2": true,
+                    "example-blk align-self-center clickable h6 pt-2": true,
                     "disabled-color": examples.length === 0,
                   })}
                   onClick={() => {
@@ -360,18 +364,23 @@ class Kanji extends Component {
                       ? examples
                       : "[Examples]"}
                   </span>
-                </div>
-              )}
-              <h3
-                className="pt-2 clickable"
-                onClick={() => {
-                  this.setState((state) => ({
-                    showMeaning: !state.showMeaning,
-                  }));
-                }}
-              >
-                {this.state.showMeaning ? meaning : <span>{"[Meaning]"}</span>}
-              </h3>
+                </span>
+
+                <h3
+                  className="align-self-center pt-2 clickable"
+                  onClick={() => {
+                    this.setState((state) => ({
+                      showMeaning: !state.showMeaning,
+                    }));
+                  }}
+                >
+                  {this.state.showMeaning ? (
+                    meaning
+                  ) : (
+                    <span>{"[Meaning]"}</span>
+                  )}
+                </h3>
+              </div>
             </div>
           </div>
           <div className="right-info"></div>
