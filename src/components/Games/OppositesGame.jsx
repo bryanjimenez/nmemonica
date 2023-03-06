@@ -76,8 +76,7 @@ function OppositesGame() {
       let antiHomophones = [answer.romaji, question.romaji];
 
       while (choices.length < 4) {
-        const max = Math.floor(opposites.length);
-        const idx = Math.floor(Math.random() * max);
+        const idx = Math.floor(Math.random() * opposites.length);
 
         const [wrongAnswer1, wrongAnswer2] = opposites[idx];
 

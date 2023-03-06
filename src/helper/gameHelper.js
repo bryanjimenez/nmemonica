@@ -51,7 +51,7 @@ export function play(
     frequency.length > 0
   ) {
     const min = 0;
-    const max = Math.floor(frequency.length);
+    const max = frequency.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
     const vocabulary = filteredTerms.find((v) => frequency[idx] === v.uid);
 

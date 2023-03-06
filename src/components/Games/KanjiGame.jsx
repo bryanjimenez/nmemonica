@@ -28,8 +28,7 @@ const KanjiGameMeta = {
 function createChoices(compareOn, answer, kanjiList) {
   let choices = [answer];
   while (choices.length < 4) {
-    const max = Math.floor(kanjiList.length);
-    const i = Math.floor(Math.random() * max);
+    const i = Math.floor(Math.random() * kanjiList.length);
 
     const choice = kanjiList[i];
 

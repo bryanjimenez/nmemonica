@@ -150,8 +150,8 @@ class KanaGame extends Component {
   shuffleGameOrder() {
     /** @type {Mora[]} */
     let gameOrder = [];
-    const xMax = Math.floor(this.props.hiragana[0].length);
-    const yMax = Math.floor(this.props.hiragana.length);
+    const xMax = this.props.hiragana[0].length;
+    const yMax = this.props.hiragana.length;
 
     for (let vowel = 0; vowel < xMax; vowel++) {
       for (let consonant = 0; consonant < yMax; consonant++) {
@@ -230,7 +230,7 @@ class KanaGame extends Component {
 
     while (choices.length < this.props.choiceN) {
       const min = 0;
-      const max = Math.floor(gameOrder.length);
+      const max = gameOrder.length;
       const idx = Math.floor(Math.random() * (max - min) + min);
 
       let useChar = this.kanaTypeLogic(this.props.charSet);

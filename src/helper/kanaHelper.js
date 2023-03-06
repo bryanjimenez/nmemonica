@@ -161,8 +161,8 @@ export function toEnglishNumber(char) {
  */
 export function getConsonantVowel(character) {
   const hiragana = data.hiragana;
-  const xMax = Math.floor(hiragana[0].length);
-  const yMax = Math.floor(hiragana.length);
+  const xMax = hiragana[0].length;
+  const yMax = hiragana.length;
   let iConsonant = -1;
   let iVowel = -1;
 

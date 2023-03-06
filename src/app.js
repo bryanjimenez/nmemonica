@@ -93,7 +93,7 @@ class App extends Component {
                 element={<ParticlesGame/>}
               />
               <Route path={SettingsMeta.location} element={<Settings/>} />
-              <Route element={NotFound} />
+              <Route element={<NotFound/>} />
             </Routes>
           </Suspense>
         </div>

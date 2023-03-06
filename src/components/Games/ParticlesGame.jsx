@@ -43,8 +43,7 @@ const ParticlesGameMeta = {
 function createChoices(answer, particleList) {
   let choices = /** @type {ParticleChoice[]} */ ([answer]);
   while (choices.length < 4) {
-    const max = Math.floor(particleList.length);
-    const i = Math.floor(Math.random() * max);
+    const i = Math.floor(Math.random() * particleList.length);
 
     const choice = particleList[i];
 
