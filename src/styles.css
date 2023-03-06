@@ -175,8 +175,9 @@ a {
 }
 
 .notification {
+  width: 0;
+  display: inline-block;
   font-size: xx-small;
   position: relative;
-  left: -3px;
-  top: -12px;
+  top: -11px;
 }

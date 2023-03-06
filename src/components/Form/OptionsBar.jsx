@@ -228,16 +228,19 @@ export function TogglePracticeSideBtn(props) {
   const { action, toggle } = props;
 
   return props.visible === false ? null : (
-    <div
-      className="clickable"
-      onClick={() => {
-        if (typeof action === "function") {
-          action();
-        }
-      }}
-      aria-label="Toggle practice side"
-    >
-      <FontAwesomeIcon icon={toggle ? faGlasses : faPencilAlt} />
+    <div aria-label="Toggle practice side">
+      <FontAwesomeIcon
+        className="clickable"
+        onClick={() => {
+          if (typeof action === "function") {
+            action();
+          }
+        }}
+        icon={toggle ? faGlasses : faPencilAlt}
+      />
+      <span className="notification">
+        <FontAwesomeIcon icon={!toggle ? faGlasses : faPencilAlt} />
+      </span>
     </div>
   );
 }
