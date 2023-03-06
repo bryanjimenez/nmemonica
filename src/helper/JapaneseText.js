@@ -1,6 +1,5 @@
 import classNames from "classnames";
 import React from "react";
-import { ErrorInfo } from "./ErrorInfo";
 import {
   isHiragana,
   isKanji,
@@ -328,7 +327,7 @@ function japaneseTextParse(rawObj, constructorFn) {
 
 /**
  * @returns  {{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean }} object containing parse info
- * @throws {ErrorInfo} if the two phrases do not match or if the parsed output is invalid.
+ * @throws {Error} if the two phrases do not match or if the parsed output is invalid.
  * @param {string} pronunciation (hiragana)
  * @param {string} ortography (kanji)
  */
@@ -341,7 +340,8 @@ export function furiganaParseRetry(pronunciation, ortography) {
     ));
   } catch (e) {
     // don't retry unless parse error
-    if (e instanceof Error && e.name === "ParseError") {
+    // @ts-expect-error Error.cause
+    if (e instanceof Error && e.cause?.code === "ParseError") {
       // reverse try
       try {
         const rP = pronunciation.split("").reverse().join("");
@@ -391,7 +391,7 @@ export function isNumericCounter(pos, pronunciation, orthography) {
 }
 /**
  * @returns  {{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean }} object containing parse info
- * @throws {ErrorInfo} if the two phrases do not match or if the parsed output is invalid.
+ * @throws {Error} if the two phrases do not match or if the parsed output is invalid.
  * @param {string} pronunciation (furigana)
  * @param {string} orthography (kanji)
  */
@@ -443,17 +443,23 @@ export function furiganaParse(pronunciation, orthography) {
           start++;
 
           if (start > pronunciation.length) {
-            const e = new ErrorInfo(
+            const eMsg =
               "The two phrases do not match" +
-                (hasWhiteSpace ? " (contains white space)" : "")
-            );
-            e.name = "InputError";
-            e.info = {
-              input: { pronunciation, orthography },
-              kanjis,
-              furiganas,
-              okuriganas,
-            };
+              (hasWhiteSpace ? " (contains white space)" : "");
+
+            // @ts-expect-error Error.cause
+            const e = new Error(eMsg, {
+              cause: {
+                code: "InputError",
+                info: {
+                  input: { pronunciation, orthography },
+                  kanjis,
+                  furiganas,
+                  okuriganas,
+                },
+              },
+            });
+
             throw e;
           }
         }
@@ -515,18 +521,23 @@ export function furiganaParse(pronunciation, orthography) {
     pronunciationOutput !== pronunciationNoSpace ||
     orthographyOutput !== ortographyNoSpace
   ) {
-    const e = new ErrorInfo(
+    const eMsg =
       "Failed to parse text to build furigana" +
-        (hasWhiteSpace ? " (contains white space)" : "")
-    );
-    e.name = "ParseError";
-    e.info = {
-      input: { pronunciation, orthography },
-      output: {
-        pronunciation: pronunciationOutput,
-        orthography: orthographyOutput,
+      (hasWhiteSpace ? " (contains white space)" : "");
+    // @ts-expect-error Error.cause
+    const e = new Error(eMsg, {
+      cause: {
+        code: "ParseError",
+        info: {
+          input: { pronunciation, orthography },
+          output: {
+            pronunciation: pronunciationOutput,
+            orthography: orthographyOutput,
+          },
+        },
       },
-    };
+    });
+
     throw e;
   }
 

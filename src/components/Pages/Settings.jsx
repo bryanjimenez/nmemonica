@@ -40,7 +40,6 @@ import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import SettingsVocab from "../Form/SettingsVocab";
 import SettingsPhrase from "../Form/SettingsPhrase";
 import { logger } from "../../actions/consoleAct";
-import { ErrorInfo } from "../../helper/ErrorInfo";
 import Console from "../Form/Console";
 import { logify } from "../../helper/consoleHelper";
 
@@ -356,7 +355,11 @@ class Settings extends Component {
         try {
           furiganaParseRetry(t.getPronunciation(), t.getSpelling());
         } catch (e) {
-          if (e instanceof ErrorInfo) {
+          if (
+            e instanceof Error &&
+            // @ts-expect-error Error.cause
+            (e.cause?.code === "ParseError" || e.cause?.code === "InputError")
+          ) {
             const separator = <hr key={terms.length + i} />;
 
             const row = (
@@ -365,7 +368,10 @@ class Settings extends Component {
                 <span className="col p-0">{text.english}</span>
                 <span className="col p-0 app-sm-fs-xx-small">
                   <div>{e.message}</div>
-                  <div>{e.info ? JSON.stringify(e.info) : ""}</div>
+                  <div>
+                    {/* @ts-expect-error Error.cause */}
+                    {e.cause?.info ? JSON.stringify(e.cause?.info) : ""}
+                  </div>
                 </span>
               </div>
             );
