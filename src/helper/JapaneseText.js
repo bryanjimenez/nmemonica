@@ -191,7 +191,7 @@ export class JapaneseText {
    * @param {number} [hintMora] number of mora to hint
    */
   getHint(kanaHintBuilder, furiganaHintBuilder, minMora = 3, hintMora = 1) {
-    const hiddenElCSS = "transparent-color";
+    const hiddenElCSS = "invisible";
     const shownElCSS = "hint-mora";
 
     const hintCSS = { shown: shownElCSS, hidden: hiddenElCSS };

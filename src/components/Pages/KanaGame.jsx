@@ -422,7 +422,7 @@ class KanaGame extends Component {
 
     const hintH6CSS = classNames({
       "mb-0": true,
-      "transparent-color": !isWrong,
+      "invisible": !isWrong,
     });
 
     const wide = this.props.wideMode ? 3 / 4 : 1;
@@ -465,7 +465,7 @@ class KanaGame extends Component {
         // keep hint transparent to match spacing
         hintElement = (
           <div className={hintDivCSS}>
-            <h6 className="mb-0 transparent-color">
+            <h6 className="mb-0 invisible">
               {swapKana(choices[index].val)}
             </h6>
           </div>

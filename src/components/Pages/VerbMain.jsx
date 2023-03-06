@@ -108,7 +108,7 @@ class VerbMain extends Component {
       });
 
       const braketClass = classNames({
-        "transparent-color": this.props.verbForm === t.name,
+        "invisible": this.props.verbForm === t.name,
       });
 
       return (

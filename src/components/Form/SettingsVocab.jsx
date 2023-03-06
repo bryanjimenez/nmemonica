@@ -293,7 +293,7 @@ class SettingsVocab extends Component {
                             key={shownForms.length + k}
                             className="d-flex justify-content-between"
                           >
-                            <div className="me-3 transparent-color">
+                            <div className="me-3 invisible">
                               <ChevronUpIcon
                                 className="mt-1"
                                 size="small"

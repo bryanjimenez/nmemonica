@@ -81,7 +81,7 @@ function KanjiGame() {
             <div
               className={classNames({
                 "d-flex flex-column mt-3 h4": true,
-                "transparent-color": !correct,
+                "invisible": !correct,
                 "correct-color": correct,
               })}
             >

@@ -851,7 +851,7 @@ describe("gameHelper", function () {
       render(getJapaneseHint(j));
 
       expect(screen.queryByText('か').className).to.equal("hint-mora")
-      expect(screen.queryByText('かる').className).to.equal("transparent-color")
+      expect(screen.queryByText('かる').className).to.equal("invisible")
     });
     it("katakana only", function () {
       const j = JapaneseText.parse({ japanese: "アパート" });
@@ -859,7 +859,7 @@ describe("gameHelper", function () {
       render(getJapaneseHint(j));
 
       expect(screen.queryByText('ア').className).to.equal("hint-mora")
-      expect(screen.queryByText('パート').className).to.equal("transparent-color")
+      expect(screen.queryByText('パート').className).to.equal("invisible")
     });
     it("starting kanji with furigana", function () {
       const j = JapaneseText.parse({ japanese: "あさごはん\n朝ご飯" });
@@ -868,10 +868,10 @@ describe("gameHelper", function () {
 
       expect(screen.getByText("朝").tagName).equal("SPAN");
       expect(screen.getByText("あ").tagName).equal("SPAN");
-      expect(screen.getByText("さ").className).equal("transparent-color");
-      expect(screen.getByText("ご").className).equal("transparent-color");
-      expect(screen.getByText("飯").className).equal("transparent-color");
-      expect(screen.getByText("はん").className).equal("transparent-color");
+      expect(screen.getByText("さ").className).equal("invisible");
+      expect(screen.getByText("ご").className).equal("invisible");
+      expect(screen.getByText("飯").className).equal("invisible");
+      expect(screen.getByText("はん").className).equal("invisible");
     });
     it("kanji with digraphs (yōon)", function () {
       const j = JapaneseText.parse({ japanese: "しょしんしゃ\n初心者" });
@@ -880,8 +880,8 @@ describe("gameHelper", function () {
 
       expect(screen.getByText("初").tagName).equal("SPAN");
       expect(screen.getByText("しょ").tagName).equal("SPAN");
-      expect(screen.getByText("心者").className).equal("transparent-color");
-      expect(screen.getByText("しんしゃ").className).equal("transparent-color");
+      expect(screen.getByText("心者").className).equal("invisible");
+      expect(screen.getByText("しんしゃ").className).equal("invisible");
     });
   })
 });

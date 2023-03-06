@@ -114,7 +114,7 @@ function FourChoices(props) {
           <h1>{question.toHTML(state.correct)}</h1>
           <span
             className={classNames({
-              "transparent-color": !props.qRomaji,
+              "invisible": !props.qRomaji,
             })}
           >
             {question.romaji}
@@ -154,7 +154,7 @@ function FourChoices(props) {
                   {isRight && <div>{c.english}</div>}
                   <span
                     className={classNames({
-                      "transparent-color": !props.aRomaji,
+                      "invisible": !props.aRomaji,
                     })}
                   >
                     {c.romaji}
