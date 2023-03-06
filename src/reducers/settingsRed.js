@@ -37,6 +37,7 @@ import {
   TOGGLE_KANJI_ACTIVE_TAG,
   SET_VERB_FORM_ORDER,
   SET_MOTION_THRESHOLD,
+  SET_KANJI_BTN_N,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -79,6 +80,7 @@ export const DEFAULT_SETTINGS = {
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
   },
   kanji: {
+    choiceN: 32,
     filter: 0,
     activeGroup: [],
     activeTags: [],
@@ -152,6 +154,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         ...state,
         kana: {
           ...state.kana,
+          choiceN: action.value,
+        },
+      };
+    case SET_KANJI_BTN_N:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
           choiceN: action.value,
         },
       };

@@ -17,6 +17,7 @@ export const TOGGLE_VOCABULARY_FILTER = "toggle_vocabulary_filter";
 export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
 export const TOGGLE_VOCABULARY_ACTIVE_TAG = "toggle_vocabulary_active_tag";
 export const TOGGLE_VOCABULARY_REINFORCE = "toggle_vocabulary_reinforce";
+export const SET_KANJI_BTN_N = "set_kanji_btn_number";
 export const TOGGLE_KANJI_FILTER = "toggle_kanji_filter";
 export const TOGGLE_KANJI_ACTIVE_GROUP = "toggle_kanji_active_group";
 export const TOGGLE_KANJI_ACTIVE_TAG = "toggle_kanji_active_tag";
@@ -99,6 +100,24 @@ export function setHiraganaBtnN(number) {
         value: number,
       });
     }
+  };
+}
+
+/**
+ * @param {number} number
+ * @returns {ActCreator}
+ */
+export function setKanjiBtnN(number) {
+  return (dispatch, getState) => {
+    const path = "/kanji/";
+    const attr = "choiceN";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr, number);
+
+    dispatch({
+      type: SET_KANJI_BTN_N,
+      value: number,
+    });
   };
 }
 

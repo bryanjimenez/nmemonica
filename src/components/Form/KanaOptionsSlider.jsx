@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {Slider, Typography} from "@mui/material"
+import { Slider, Typography } from "@mui/material";
 
 import "./KanaOptionsSlider.css";
 
@@ -9,17 +9,15 @@ import "./KanaOptionsSlider.css";
  */
 
 /**
- * @typedef {{
- * initial: number,
- * wideMode: boolean,
- * setChoiceN: function,
- * toggleWide: function,
- * }} KanaOptionsSliderProps
+ * @typedef {Object} KanaOptionsSliderProps
+ * @property {number} initial
+ * @property {function} setChoiceN
+ * @property {boolean} [wideMode]
+ * @property {function} [toggleWide]
  */
 
 /** @param {KanaOptionsSliderProps} props */
 export default function KanaOptionsSlider(props) {
-
   const min = 4;
   const max = 16;
   const wide = 32;
@@ -63,17 +61,17 @@ export default function KanaOptionsSlider(props) {
 
     if (curVal !== wide && prevVal !== wide && curVal !== prevVal) {
       props.setChoiceN(curVal);
-      if (props.wideMode) {
+      if (props.wideMode === true && typeof props.toggleWide === "function") {
         props.toggleWide();
       }
     } else if (curVal !== wide && prevVal === wide && curVal !== prevVal) {
       props.setChoiceN(curVal);
-      if (props.wideMode) {
+      if (props.wideMode === true && typeof props.toggleWide === "function") {
         props.toggleWide();
       }
     } else if (curVal === wide && curVal !== prevVal) {
       props.setChoiceN(curVal);
-      if (!props.wideMode) {
+      if (props.wideMode === false && typeof props.toggleWide === "function") {
         props.toggleWide();
       }
     }

@@ -102,7 +102,14 @@ function FourChoices(props) {
       <div className="d-flex justify-content-between h-100">
         <StackNavButton
           ariaLabel="Previous"
-          action={/** @type {React.MouseEventHandler} */ (props.gotoPrev)}
+          action={
+            /** @type {React.MouseEventHandler} */ (
+              () => {
+                clearAnswers();
+                props.gotoPrev();
+              }
+            )
+          }
         >
           <ChevronLeftIcon size={16} />
         </StackNavButton>
@@ -114,7 +121,7 @@ function FourChoices(props) {
           <h1>{question.toHTML(state.correct)}</h1>
           <span
             className={classNames({
-              "invisible": !props.qRomaji,
+              invisible: !props.qRomaji,
             })}
           >
             {question.romaji}
@@ -154,7 +161,7 @@ function FourChoices(props) {
                   {isRight && <div>{c.english}</div>}
                   <span
                     className={classNames({
-                      "invisible": !props.aRomaji,
+                      invisible: !props.aRomaji,
                     })}
                   >
                     {c.romaji}
@@ -166,7 +173,14 @@ function FourChoices(props) {
         </div>
         <StackNavButton
           ariaLabel="Next"
-          action={/** @type {React.MouseEventHandler} */ (props.gotoNext)}
+          action={
+            /** @type {React.MouseEventHandler} */ (
+              () => {
+                clearAnswers();
+                props.gotoNext();
+              }
+            )
+          }
         >
           <ChevronRightIcon size={16} />
         </StackNavButton>

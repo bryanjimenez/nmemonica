@@ -1,16 +1,16 @@
+import { LinearProgress } from "@mui/material";
+import classNames from "classnames";
 import React, { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { LinearProgress } from "@mui/material";
+import { Link } from "react-router-dom";
+import { TermFilterBy } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder, termFilterByType } from "../../helper/gameHelper";
-import { NotReady } from "../Form/NotReady";
-import FourChoices from "./FourChoices";
-import classNames from "classnames";
 import { useKanjiStore } from "../../hooks/kanjiHK";
-import { TermFilterBy } from "../../actions/settingsAct";
-import { Link } from "react-router-dom";
+import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
-import { KanjiGridMeta } from "./KanjiGrid";
+import { KanjiGameMeta, oneFromList } from "./KanjiGame";
+import XChoices from "./XChoices";
 
 /**
  * @typedef {import("../../typings/raw").RawKanji} RawKanji
@@ -18,37 +18,21 @@ import { KanjiGridMeta } from "./KanjiGrid";
  * @typedef {import("../../typings/state").AppRootState} AppRootState
  */
 
-const KanjiGameMeta = {
-  location: "/kanji-game/",
-  label: "Kanji Game",
+const KanjiGridMeta = {
+  location: "/kanji-grid/",
+  label: "Kanji Grid Game",
 };
 
 /**
- * Split comma separated string(list) and select one.
- * Apply ProperCase
- * @param {string} english
- */
-export function oneFromList(english) {
-  let englishShortened = english;
-  const engList = english.split(",");
-  if (engList.length > 1) {
-    const i = Math.floor(Math.random() * engList.length);
-    const e = engList[i].trim();
-    englishShortened = e.charAt(0).toUpperCase() + e.slice(1).toLowerCase();
-  }
-
-  return englishShortened;
-}
-
-/**
  * Returns a list of choices which includes the right answer
+ * @param {number} n
  * @param {keyof RawKanji} compareOn
  * @param {RawKanji} answer
  * @param {RawKanji[]} kanjiList
  */
-function createChoices(compareOn, answer, kanjiList) {
+function createChoices(n, compareOn, answer, kanjiList) {
   let choices = [answer];
-  while (choices.length < 4) {
+  while (choices.length < n) {
     const i = Math.floor(Math.random() * kanjiList.length);
 
     const choice = kanjiList[i];
@@ -64,10 +48,15 @@ function createChoices(compareOn, answer, kanjiList) {
   return choices;
 }
 
-function KanjiGame() {
+function KanjiGrid() {
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [writePractice, setEnglishSide] = useState(false);
+
+  const { choiceN } = useSelector(
+    (/** @type {AppRootState}*/ { settings }) => settings.kanji
+  );
 
   /**
    * @param {number} selectedIndex
@@ -81,44 +70,52 @@ function KanjiGame() {
     }
 
     const kanji = selectedKanjis[order.current[selectedIndex]];
-    const { english, kanji: japanese, on, kun } = kanji;
+    const { english, kanji: japanese, on, kun, uid } = kanji;
 
-    const choices = createChoices("english", kanji, rawKanjis);
+    const choices = createChoices(choiceN, "english", kanji, rawKanjis);
 
-    /** @type {import("./FourChoices").GameQuestion} */
+    let englishShortened = oneFromList(english);
+
+    /** @type {import("./XChoices").GameQuestion} */
     const q = {
       // english, not needed, shown as a choice
-      toHTML: (correct) => (
-        <div>
-          <div
-            className={classNames({
-              "correct-color": correct,
-            })}
-          >
-            <span>{japanese}</span>
-          </div>
-          {(on !== undefined || kun !== undefined) && (
-            <div
-              className={classNames({
-                "d-flex flex-column mt-3 h4": true,
-                invisible: !correct,
-                "correct-color": correct,
-              })}
-            >
-              <span>{on}</span>
-              <span>{kun}</span>
+      toHTML: (correct) => {
+        if (writePractice) {
+          return (
+            <div>
+              <div
+                className={classNames({
+                  "correct-color": correct,
+                })}
+              >
+                <span>{japanese}</span>
+              </div>
+              {(on !== undefined || kun !== undefined) && (
+                <div
+                  className={classNames({
+                    "d-flex flex-column mt-3 h4": true,
+                    "transparent-color": !correct,
+                    "correct-color": correct,
+                  })}
+                >
+                  <span>{on}</span>
+                  <span>{kun}</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      ),
+          );
+        } else {
+          return <>{englishShortened}</>;
+        }
+      },
     };
 
     return {
       question: q,
-      answer: english,
+      answer: uid,
       choices: choices.map((c) => ({
-        compare: c.english,
-        toHTML: () => oneFromList(c.english),
+        compare: c.uid,
+        toHTML: () => (writePractice ? c.english : c.kanji),
       })),
     };
   }
@@ -170,8 +167,7 @@ function KanjiGame() {
 
   return (
     <>
-      <FourChoices
-        key={0}
+      <XChoices
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
@@ -182,20 +178,28 @@ function KanjiGame() {
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
-              <Link to={KanjiGridMeta.location}>
-                <TogglePracticeSideBtn toggle={true} action={() => {}} />
+              <Link to={writePractice ? KanjiGridMeta.location : KanjiGameMeta.location}>
+                <TogglePracticeSideBtn
+                  toggle={writePractice}
+                  action={() => setEnglishSide((prevSide) => !prevSide)}
+                />
               </Link>
+            </div>
+          </div>
+          <div className="col">
+            <div className="d-flex justify-content-end">
+              <span>{game.question.toHTML(false)}</span>
             </div>
           </div>
         </div>
       </div>
-      <div key={1} className="progress-line flex-shrink-1">
+      <div className="progress-line flex-shrink-1">
         <LinearProgress variant="determinate" value={progress} />
       </div>
     </>
   );
 }
 
-export default KanjiGame;
+export default KanjiGrid;
 
-export { KanjiGameMeta };
+export { KanjiGridMeta };

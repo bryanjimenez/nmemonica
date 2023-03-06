@@ -12,6 +12,7 @@ const OppositesGame = lazy(() => import("./components/Games/OppositesGame"));
 const KanaGame = lazy(() => import("./components/Pages/KanaGame"));
 const Kanji = lazy(() => import("./components/Pages/Kanji"));
 const KanjiGame = lazy(() => import("./components/Games/KanjiGame"));
+const KanjiGrid = lazy(() => import("./components/Games/KanjiGrid"));
 const ParticlesGame = lazy(() => import("./components/Games/ParticlesGame"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
 import { PhrasesMeta } from "./components/Pages/Phrases";
@@ -22,6 +23,7 @@ import { KanaGameMeta } from "./components/Pages/KanaGame";
 import { KanjiMeta } from "./components/Pages/Kanji";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
+import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import {
   initializeSettingsFromLocalStorage,
   initialize,
@@ -88,6 +90,7 @@ class App extends Component {
               <Route path={KanaGameMeta.location} element={<KanaGame/>} />
               <Route path={KanjiMeta.location} element={<Kanji/>} />
               <Route path={KanjiGameMeta.location} element={<KanjiGame/>} />
+              <Route path={KanjiGridMeta.location} element={<KanjiGrid/>} />
               <Route
                 path={ParticlesGameMeta.location}
                 element={<ParticlesGame/>}

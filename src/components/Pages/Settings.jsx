@@ -19,6 +19,7 @@ import {
   DebugLevel,
   setMotionThreshold,
   toggleActiveTag,
+  setKanjiBtnN,
 } from "../../actions/settingsAct";
 import { NotReady } from "../Form/NotReady";
 import { SetTermTagList } from "./SetTermTagList";
@@ -94,6 +95,8 @@ const SettingsMeta = {
  * @property {number} kanjiFilter
  * @property {string[]} kanjiTags
  * @property {string[]} kanjiActive
+ * @property {number} kanjiChoiceN
+ * @property {typeof setKanjiBtnN} setKanjiBtnN
  * @property {boolean} oppositesQRomaji
  * @property {boolean} oppositesARomaji
  * @property {typeof toggleKana} toggleKana
@@ -716,6 +719,20 @@ class Settings extends Component {
           </div>
           <div className={pageClassName}>
             <div className="d-flex justify-content-between">
+              <h2>Kanji Game</h2>
+            </div>
+
+            <div className="setting-block">
+              <div className="d-flex justify-content-end p-2">
+                <KanaOptionsSlider
+                  initial={this.props.kanjiChoiceN}
+                  setChoiceN={this.props.setKanjiBtnN}
+                />
+              </div>
+            </div>
+          </div>
+          <div className={pageClassName}>
+            <div className="d-flex justify-content-between">
               <h2>Particles Game</h2>
             </div>
             <div className="setting-block">
@@ -884,6 +901,7 @@ const mapStateToProps = (state) => {
 
     kanji: state.kanji.value,
     kanjiTags: state.kanji.tagObj,
+    kanjiChoiceN: state.settings.kanji.choiceN,
     kanjiFilter: state.settings.kanji.filter,
     kanjiActive: state.settings.kanji.activeTags,
 
@@ -938,6 +956,7 @@ Settings.propTypes = {
   particlesARomaji: PropTypes.bool,
   setParticlesARomaji: PropTypes.func,
 
+  // kanji
   getKanji: PropTypes.func,
   kanji: PropTypes.array,
   kanjiFilter: PropTypes.number,
@@ -945,6 +964,8 @@ Settings.propTypes = {
   kanjiActive: PropTypes.array,
   toggleActiveGrp: PropTypes.func,
   toggleActiveTag: PropTypes.func,
+  kanjiChoiceN: PropTypes.number,
+  setKanjiBtnN: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
   setOppositesQRomaji: PropTypes.func,
@@ -968,6 +989,7 @@ export default connect(mapStateToProps, {
   getVocabulary,
   getPhrases,
   getKanji,
+  setKanjiBtnN,
   toggleActiveGrp,
   toggleActiveTag,
 
