@@ -1,49 +1,54 @@
+import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
+import classNames from "classnames";
+import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import PropTypes from "prop-types";
-import classNames from "classnames";
-import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
 
+import { logger } from "../../actions/consoleAct";
+import { getKanji } from "../../actions/kanjiAct";
+import { getPhrases } from "../../actions/phrasesAct";
 import {
+  DebugLevel,
+  removeFrequencyKanji,
   setHiraganaBtnN,
-  toggleKanaGameWideMode,
-  setOppositesQRomaji,
+  setKanjiBtnN,
+  setMotionThreshold,
   setOppositesARomaji,
+  setOppositesQRomaji,
   setParticlesARomaji,
+  setSwipeThreshold,
+  TermFilterBy,
+  toggleActiveGrp,
+  toggleActiveTag,
   toggleDarkMode,
+  toggleDebug,
   toggleKana,
   toggleKanaEasyMode,
-  toggleDebug,
-  setSwipeThreshold,
-  toggleActiveGrp,
-  DebugLevel,
-  setMotionThreshold,
-  toggleActiveTag,
-  setKanjiBtnN,
+  toggleKanaGameWideMode,
+  toggleKanjiFilter,
+  toggleKanjiReinforcement,
 } from "../../actions/settingsAct";
-import { NotReady } from "../Form/NotReady";
-import { SetTermTagList } from "./SetTermTagList";
-import { getKanji } from "../../actions/kanjiAct";
-import { getVocabulary } from "../../actions/vocabularyAct";
-import { getPhrases } from "../../actions/phrasesAct";
-import SettingsSwitch from "../Form/SettingsSwitch";
-import KanaOptionsSlider from "../Form/KanaOptionsSlider";
 import {
   getMemoryStorageStatus,
   setPersistentStorage,
 } from "../../actions/storageAct";
-import {
-  labelOptions,
-  getStaleSpaceRepKeys,
-  motionThresholdCondition,
-  getDeviceMotionEventPermission,
-} from "../../helper/gameHelper";
-import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
-import SettingsVocab from "../Form/SettingsVocab";
-import SettingsPhrase from "../Form/SettingsPhrase";
-import { logger } from "../../actions/consoleAct";
-import Console from "../Form/Console";
+import { getVocabulary } from "../../actions/vocabularyAct";
 import { logify } from "../../helper/consoleHelper";
+import {
+  getDeviceMotionEventPermission,
+  getStaleSpaceRepKeys,
+  labelOptions,
+  motionThresholdCondition,
+} from "../../helper/gameHelper";
+import { furiganaParseRetry, JapaneseText } from "../../helper/JapaneseText";
+import Console from "../Form/Console";
+import KanaOptionsSlider from "../Form/KanaOptionsSlider";
+import { NotReady } from "../Form/NotReady";
+import SettingsPhrase from "../Form/SettingsPhrase";
+import SettingsSwitch from "../Form/SettingsSwitch";
+import SettingsVocab from "../Form/SettingsVocab";
+import { SetTermTagList } from "./SetTermTagList";
+import { SetTermGFList } from "./SetTermGFList";
 
 import "./Settings.css";
 import "./spin.css";
@@ -91,8 +96,10 @@ const SettingsMeta = {
  * @property {number} charSet
  * @property {number} choiceN
  * @property {boolean} particlesARomaji
- * @property {import("./Kanji").RawKanji} kanji
+ * @property {import("./Kanji").RawKanji[]} kanji
+ * @property {SpaceRepetitionMap} kRepetition
  * @property {number} kanjiFilter
+ * @property {boolean} kanjiReinforce
  * @property {string[]} kanjiTags
  * @property {string[]} kanjiActive
  * @property {number} kanjiChoiceN
@@ -115,6 +122,8 @@ const SettingsMeta = {
  * @property {typeof getKanji} getKanji
  * @property {typeof toggleActiveGrp} toggleActiveGrp
  * @property {typeof toggleActiveTag} toggleActiveTag
+ * @property {typeof toggleKanjiReinforcement} toggleKanjiReinforcement
+ * @property {typeof toggleKanjiFilter} toggleKanjiFilter
  * @property {typeof setOppositesQRomaji} setOppositesQRomaji
  * @property {typeof setOppositesARomaji} setOppositesARomaji
  * @property {typeof logger} logger
@@ -461,11 +470,17 @@ class Settings extends Component {
       this.props.phrases,
       "[Stale Phrase]"
     );
-    const staleSpaceRepKeys = new Set([...vKeys, ...pKeys]);
+    const { keys: kKeys, list: kanjiStaleInfo } = getStaleSpaceRepKeys(
+      this.props.pRepetition,
+      this.props.phrases,
+      "[Stale Kanji]"
+    );
+    const staleSpaceRepKeys = new Set([...vKeys, ...pKeys, ...kKeys]);
 
     const staleSpaceRepTerms = this.staleSpaceRep([
       ...vocabuStaleInfo,
       ...phraseStaleInfo,
+      ...kanjiStaleInfo,
     ]);
 
     const kanjiSelectedTags = Object.values(this.props.kanji).filter((k) =>
@@ -473,6 +488,10 @@ class Settings extends Component {
         this.props.kanjiActive.includes(aTag)
       )
     ).length;
+
+    const kanjiFreq = Object.keys(this.props.kRepetition).filter(
+      (k) => this.props.kRepetition[k]?.rein === true
+    );
 
     return (
       <div className="settings">
@@ -634,31 +653,66 @@ class Settings extends Component {
                     {labelOptions(this.props.kanjiFilter, [
                       "Kanji Group",
                       "Frequency List",
-                      "Space Repetition",
+                      "Tags",
                     ])}
                   </h4>
                   <div className="mb-2">
                     <SettingsSwitch
-                      active={false}
-                      action={() => {}}
+                      active={this.props.kanjiFilter % 2 === 0}
+                      action={this.props.toggleKanjiFilter}
                       color="default"
                       statusText={"Filter by"}
                     />
                   </div>
-                  <SetTermTagList
-                    selectedCount={
-                      kanjiSelectedTags === 0
-                        ? Object.values(this.props.kanji).length
-                        : kanjiSelectedTags
-                    }
-                    termTags={this.props.kanjiTags}
-                    termActive={this.props.kanjiActive}
-                    toggleTermActive={(tag) =>
-                      this.props.toggleActiveTag("kanji", tag)
-                    }
-                  />
+                  {this.props.kanjiFilter === TermFilterBy.FREQUENCY &&
+                    kanjiFreq.length === 0 && (
+                      <div className="fst-italic">
+                        No words have been chosen
+                      </div>
+                    )}
+                  {this.props.kanjiFilter === TermFilterBy.TAGS && (
+                    <SetTermTagList
+                      selectedCount={
+                        kanjiSelectedTags === 0
+                          ? Object.values(this.props.kanji).length
+                          : kanjiSelectedTags
+                      }
+                      termTags={this.props.kanjiTags}
+                      termActive={this.props.kanjiActive}
+                      toggleTermActive={(tag) =>
+                        this.props.toggleActiveTag("kanji", tag)
+                      }
+                    />
+                  )}
+                  {this.props.kanjiFilter === TermFilterBy.FREQUENCY &&
+                    kanjiFreq.length > 0 && (
+                      <SetTermGFList
+                        vocabActive={this.props.kanjiActive}
+                        vocabFreq={kanjiFreq}
+                        vocabulary={this.props.kanji}
+                        removeFrequencyWord={removeFrequencyKanji}
+                        toggleTermActiveGrp={(grp) =>
+                          toggleActiveGrp("kanji", grp)
+                        }
+                      />
+                    )}
                 </div>
-                <div className="column-2"></div>
+                <div className="column-2 setting-block">
+                  <div className="mb-2">
+                    <SettingsSwitch
+                      active={this.props.kanjiReinforce}
+                      action={this.props.toggleKanjiReinforcement}
+                      disabled={
+                        this.props.kanjiFilter === TermFilterBy.FREQUENCY
+                      }
+                      statusText={
+                        (this.props.kanjiReinforce
+                          ? "(" + kanjiFreq.length + ") "
+                          : "") + "Reinforcement"
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -902,8 +956,10 @@ const mapStateToProps = (state) => {
     kanji: state.kanji.value,
     kanjiTags: state.kanji.tagObj,
     kanjiChoiceN: state.settings.kanji.choiceN,
-    kanjiFilter: state.settings.kanji.filter,
     kanjiActive: state.settings.kanji.activeTags,
+    kanjiFilter: state.settings.kanji.filter,
+    kRepetition: state.settings.kanji.repetition,
+    kanjiReinforce: state.settings.kanji.reinforce,
 
     oppositesQRomaji: state.settings.opposites.qRomaji,
     oppositesARomaji: state.settings.opposites.aRomaji,
@@ -964,6 +1020,10 @@ Settings.propTypes = {
   kanjiActive: PropTypes.array,
   toggleActiveGrp: PropTypes.func,
   toggleActiveTag: PropTypes.func,
+  kRepetition: PropTypes.object,
+  kanjiReinforce: PropTypes.bool,
+  toggleKanjiReinforcement: PropTypes.func,
+  toggleKanjiFilter: PropTypes.func,
   kanjiChoiceN: PropTypes.number,
   setKanjiBtnN: PropTypes.func,
 
@@ -992,6 +1052,8 @@ export default connect(mapStateToProps, {
   setKanjiBtnN,
   toggleActiveGrp,
   toggleActiveTag,
+  toggleKanjiReinforcement,
+  toggleKanjiFilter,
 
   setPersistentStorage,
   getMemoryStorageStatus,

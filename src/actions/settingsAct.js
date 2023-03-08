@@ -21,6 +21,7 @@ export const SET_KANJI_BTN_N = "set_kanji_btn_number";
 export const TOGGLE_KANJI_FILTER = "toggle_kanji_filter";
 export const TOGGLE_KANJI_ACTIVE_GROUP = "toggle_kanji_active_group";
 export const TOGGLE_KANJI_ACTIVE_TAG = "toggle_kanji_active_tag";
+export const TOGGLE_KANJI_REINFORCE = "toggle_kanji_reinforce";
 export const SET_OPPOSITES_Q_ROMAJI = "set_opposites_q_romaji";
 export const SET_OPPOSITES_A_ROMAJI = "set_opposites_a_romaji";
 export const SET_PARTICLES_A_ROMAJI = "set_particles_a_romaji";
@@ -28,6 +29,8 @@ export const ADD_FREQUENCY_WORD = "add_frequency_word";
 export const REMOVE_FREQUENCY_WORD = "remove_frequency_word";
 export const ADD_FREQUENCY_PHRASE = "add_frequency_phrase";
 export const REMOVE_FREQUENCY_PHRASE = "remove_frequency_phrase";
+export const ADD_FREQUENCY_KANJI = "add_frequency_kanji";
+export const REMOVE_FREQUENCY_KANJI = "remove_frequency_kanji";
 export const TOGGLE_PHRASES_FILTER = "toggle_phrases_filter";
 export const TOGGLE_PHRASES_REINFORCE = "toggle_phrases_reinforce";
 export const TOGGLE_DARK_MODE = "toggle_dark_mode";
@@ -36,6 +39,7 @@ export const AUTO_VERB_VIEW = "auto_verb_view";
 export const VERB_FORM_VIEW = "verb_form_view";
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
+export const ADD_SPACE_REP_KANJI = "add_space_rep_kanji";
 export const DEBUG = "toggle_debug";
 export const SET_SWIPE_THRESHOLD = "set_swipe_threshold";
 export const SET_MOTION_THRESHOLD = "set_motion_threshold";
@@ -478,7 +482,7 @@ export function toggleVocabularyHint() {
 }
 
 /**
- * toggle between groups, frequency, and spaced repetition
+ * Toggle between groups, frequency, and tags
  * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
  * @returns {ActCreator}
  */
@@ -800,6 +804,103 @@ export function removeFrequencyPhrase(uid) {
 }
 
 /**
+ * @param {string} uid
+ */
+export function addFrequencyKanji(uid) {
+  return (dispatch, getState) => {
+    updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
+      set: { rein: true },
+    })(dispatch, getState);
+
+    dispatch({
+      type: ADD_FREQUENCY_KANJI,
+      value: { uid },
+    });
+  };
+}
+
+/**
+ * Removes frequency word
+ * @param {string} uid
+ * @returns {ActCreator}
+ */
+export function removeFrequencyKanji(uid) {
+  return (dispatch, getState) => {
+    const path = "/kanji/";
+    const attr = "repetition";
+    /** @type {SpaceRepetitionMap} */
+    const spaceRep = getLastStateValue(getState, path, attr);
+
+    if (spaceRep[uid]?.rein === true) {
+      // update frequency list count
+      const reinforceList = Object.keys(spaceRep).filter(
+        (k) => spaceRep[k].rein === true
+      );
+      // null to delete
+      updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
+        set: { rein: null },
+      })(dispatch, getState);
+
+      dispatch({
+        type: REMOVE_FREQUENCY_KANJI,
+        value: { uid, count: reinforceList.length - 1 },
+      });
+    }
+  };
+}
+
+/**
+ * @returns {ActCreator}
+ */
+export function toggleKanjiReinforcement() {
+  return (dispatch, getState) => {
+    const path = "/kanji/";
+    const attr = "reinforce";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    dispatch({
+      type: TOGGLE_KANJI_REINFORCE,
+    });
+  };
+}
+
+/**
+ * Toggle between frequency and tags
+ * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
+ * @returns {ActCreator}
+ */
+export function toggleKanjiFilter(override) {
+  return (dispatch, getState) => {
+    const { filter, reinforce } = getState().settings.kanji;
+
+    const path = "/kanji/";
+    const attr = "filter";
+    const time = new Date();
+
+    let newFilter;
+    if (override !== undefined) {
+      newFilter = override;
+    } else {
+      newFilter = Object.values(TermFilterBy).includes(filter + 1)
+        ? filter + 1
+        : /*skip TermFilterBy.GROUP*/ TermFilterBy.FREQUENCY;
+    }
+
+    localStoreAttrUpdate(time, getState, path, attr, newFilter);
+
+    if (newFilter !== 0 && reinforce) {
+      toggleKanjiReinforcement()(dispatch, getState);
+    }
+
+    dispatch({
+      type: TOGGLE_KANJI_FILTER,
+      value: newFilter,
+    });
+  };
+}
+
+/**
  * @param {string} aType
  * @param {string[]} uidArr
  * @returns {ThenableActCreator}
@@ -998,7 +1099,7 @@ export function setWordTPIncorrect(uid, { pronunciation } = {}) {
 }
 /**
  * @typedef {{map: SpaceRepetitionMap, prevMap: SpaceRepetitionMap}} updateSpaceRepTermYield
- * @param {ADD_SPACE_REP_WORD | ADD_SPACE_REP_PHRASE} aType
+ * @param {ADD_SPACE_REP_WORD | ADD_SPACE_REP_PHRASE | ADD_SPACE_REP_KANJI} aType
  * @param {string} uid
  * @param {boolean} shouldIncrement should view count increment
  * @param {{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: {[k in keyof SpaceRepetitionMap["uid"]]+?: SpaceRepetitionMap["uid"][k]|null}}} [options] additional optional settable attributes ({@link toggleFurigana })
@@ -1018,6 +1119,8 @@ export function updateSpaceRepTerm(
       pathPart = "vocabulary";
     } else if (aType === ADD_SPACE_REP_PHRASE) {
       pathPart = "phrases";
+    } else if (aType === ADD_SPACE_REP_KANJI) {
+      pathPart = "kanji";
     }
 
     const path = "/" + pathPart + "/";
@@ -1107,6 +1210,7 @@ export function updateSpaceRepTerm(
 }
 
 /**
+ * Toggle between group, frequency, and tags filtering
  * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
  * @returns {ActCreator}
  */

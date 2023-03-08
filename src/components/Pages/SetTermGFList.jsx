@@ -8,12 +8,13 @@ import classNames from "classnames";
  */
 
 /**
- * @typedef {{
- * vocabulary:RawVocabulary[],
- * vocabFreq: string[],
- * vocabActive: string[],
- * toggleTermActiveGrp: (grp:string)=>function,
- * removeFrequencyWord: function}} SetTermGFListProps
+ * @template {{uid:string, english:string}} RawItem
+ * @typedef {Object} SetTermGFListProps
+ * @property {RawItem[]} vocabulary
+ * @property {string[]} vocabFreq
+ * @property {string[]} vocabActive
+ * @property {(grp:string)=>function} toggleTermActiveGrp
+ * @property {function} removeFrequencyWord
  */
 
 /**

@@ -27,6 +27,7 @@ import {
   TOGGLE_KANA_CHAR_SET,
   TOGGLE_VOCABULARY_REINFORCE,
   TOGGLE_PHRASES_REINFORCE,
+  TOGGLE_KANJI_REINFORCE,
   TOGGLE_PHRASES_ACTIVE_GROUP,
   ADD_SPACE_REP_WORD,
   ADD_SPACE_REP_PHRASE,
@@ -38,6 +39,10 @@ import {
   SET_VERB_FORM_ORDER,
   SET_MOTION_THRESHOLD,
   SET_KANJI_BTN_N,
+  ADD_SPACE_REP_KANJI,
+  ADD_FREQUENCY_KANJI,
+  REMOVE_FREQUENCY_KANJI,
+  TOGGLE_KANJI_FILTER,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -82,6 +87,9 @@ export const DEFAULT_SETTINGS = {
   kanji: {
     choiceN: 32,
     filter: 0,
+    reinforce: false,
+    repetition: {},
+    frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     activeTags: [],
   },
@@ -297,6 +305,49 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         phrases: {
           ...state.phrases,
           frequency: action.value,
+        },
+      };
+    case ADD_FREQUENCY_KANJI:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
+          frequency: {
+            ...action.value,
+            count: state.kanji.frequency.count + 1,
+          },
+        },
+      };
+    case ADD_SPACE_REP_KANJI:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
+          repetition: action.value,
+        },
+      };
+    case REMOVE_FREQUENCY_KANJI:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
+          frequency: action.value,
+        },
+      };
+    case TOGGLE_KANJI_REINFORCE:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
+          reinforce: !state.kanji.reinforce,
+        },
+      };
+    case TOGGLE_KANJI_FILTER:
+      return {
+        ...state,
+        kanji: {
+          ...state.kanji,
+          filter: action.value,
         },
       };
     case TOGGLE_PHRASES_FILTER:

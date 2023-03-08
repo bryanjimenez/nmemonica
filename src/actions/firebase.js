@@ -12,6 +12,7 @@ import merge from "lodash/fp/merge";
 import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRed";
 import {
   getLastStateValue,
+  REMOVE_FREQUENCY_KANJI,
   REMOVE_FREQUENCY_PHRASE,
   REMOVE_FREQUENCY_WORD,
 } from "./settingsAct";
@@ -158,6 +159,9 @@ export function initializeSettingsFromLocalStorage() {
         const phraseReinforceList = Object.keys(
           mergedSettings.phrases.repetition
         ).filter((k) => mergedSettings.phrases.repetition[k]?.rein === true);
+        const kanjiReinforceList = Object.keys(
+          mergedSettings.kanji.repetition
+        ).filter((k) => mergedSettings.kanji.repetition[k]?.rein === true);
 
         dispatch({
           type: REMOVE_FREQUENCY_WORD,
@@ -166,6 +170,10 @@ export function initializeSettingsFromLocalStorage() {
         dispatch({
           type: REMOVE_FREQUENCY_PHRASE,
           value: { count: phraseReinforceList.length },
+        });
+        dispatch({
+          type: REMOVE_FREQUENCY_KANJI,
+          value: { count: kanjiReinforceList.length },
         });
       });
     }

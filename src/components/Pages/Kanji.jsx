@@ -1,29 +1,36 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
-import PropTypes from "prop-types";
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { LinearProgress } from "@mui/material";
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
+import { connect } from "react-redux";
 
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 
-import { getKanji } from "../../actions/kanjiAct";
 import { logger } from "../../actions/consoleAct";
-import { TermFilterBy } from "../../actions/settingsAct";
+import { getKanji } from "../../actions/kanjiAct";
+import {
+  addFrequencyKanji,
+  removeFrequencyKanji,
+  TermFilterBy,
+  toggleKanjiFilter,
+} from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 
-import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
+import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
   getTermUID,
+  play,
   randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
-import { shuffleArray } from "../../helper/arrayHelper";
+import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 
+import { FrequencyTermIcon, ToggleFrequencyTermBtn } from "../Form/OptionsBar";
 import "./Kanji.css";
 import { isGroupLevel } from "./SetTermTagList";
 
@@ -31,6 +38,7 @@ import { isGroupLevel } from "./SetTermTagList";
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").RawKanji} RawKanji
+ * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  */
 
 /**
@@ -41,13 +49,22 @@ import { isGroupLevel } from "./SetTermTagList";
  * @property {number} swipeThreshold
  * @property {typeof getKanji} getKanji
  * @property {typeof getVocabulary} getVocabulary
+ * @property {typeof toggleKanjiFilter} toggleKanjiFilter
+ * @property {typeof TermFilterBy[keyof TermFilterBy]} filterType
+ * @property {boolean} reinforce
+ * @property {SpaceRepetitionMap} repetition
+ * @property {{uid: string, count: number}} frequency       value of *last* frequency word update
+ * @property {typeof removeFrequencyKanji} removeFrequencyKanji
+ * @property {typeof addFrequencyKanji} addFrequencyKanji
  * @property {typeof logger} logger
  */
 
 /**
  * @typedef {Object} KanjiState
  * @property {number} selectedIndex
+ * @property {string} [reinforcedUID]
  * @property {RawKanji[]} filteredTerms
+ * @property {string[]} frequency     subset of frequency words within current active group
  * @property {boolean} showOn
  * @property {boolean} showKun
  * @property {boolean} showEx
@@ -71,6 +88,7 @@ class Kanji extends Component {
     this.state = {
       selectedIndex: 0,
       filteredTerms: [],
+      frequency: [],
       showOn: false,
       showKun: false,
       showEx: false,
@@ -93,6 +111,7 @@ class Kanji extends Component {
       this.props.getVocabulary();
     }
 
+    this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
     this.gotoNext = this.gotoNext.bind(this);
     this.gotoNextSlide = this.gotoNextSlide.bind(this);
     this.gotoPrev = this.gotoPrev.bind(this);
@@ -121,17 +140,47 @@ class Kanji extends Component {
       this.setOrder();
     }
 
+    if (
+      this.props.frequency.uid != prevProps.frequency.uid ||
+      this.props.frequency.count != prevProps.frequency.count
+    ) {
+      if (
+        this.props.filterType === TermFilterBy.FREQUENCY &&
+        this.props.frequency.count === 0
+      ) {
+        // last frequency word was removed
+        this.setOrder();
+      } else {
+        const filteredKeys = this.state.filteredTerms.map((f) => f.uid);
+        const frequency = filteredKeys.reduce(
+          (/** @type {string[]} */ acc, cur) => {
+            if (this.props.repetition[cur]?.rein === true) {
+              acc = [...acc, cur];
+            }
+            return acc;
+          },
+          []
+        );
+        // props.frequency is a count of frequency terms
+        // state.frequency is a subset list of frequency term within current active group
+        this.setState({ frequency });
+      }
+    }
+
     // find examples
     if (
       this.state.order.length > 0 &&
       (this.state.order.length !== prevState.order.length ||
-        this.state.selectedIndex !== prevState.selectedIndex)
+        this.state.selectedIndex !== prevState.selectedIndex ||
+        this.state.reinforcedUID != prevState.reinforcedUID)
     ) {
-      const uid = getTermUID(
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredTerms
-      );
+      const uid =
+        this.state.reinforcedUID ||
+        getTermUID(
+          this.state.selectedIndex,
+          this.state.order,
+          this.state.filteredTerms
+        );
 
       /** @type {RawKanji} */
       const term = getTerm(uid, this.props.kanji);
@@ -160,19 +209,52 @@ class Kanji extends Component {
   }
 
   setOrder() {
-    const filteredTerms = termFilterByType(
-      TermFilterBy.TAGS,
-      this.props.kanji,
-      null,
-      this.props.activeTags,
-      null
+    const allFrequency = Object.keys(this.props.repetition).reduce(
+      (/** @type {string[]}*/ acc, cur) => {
+        if (this.props.repetition[cur].rein === true) {
+          acc = [...acc, cur];
+        }
+        return acc;
+      },
+      []
     );
 
-    const order = randomOrder(filteredTerms);
+    let filteredTerms = termFilterByType(
+      this.props.filterType,
+      this.props.kanji,
+      allFrequency,
+      this.props.filterType === TermFilterBy.TAGS ? this.props.activeTags : [],
+      () => this.props.toggleKanjiFilter(TermFilterBy.TAGS)
+    );
+
+    const newOrder = randomOrder(filteredTerms);
+
+    // needed if using frequency from filteredTerms not all Frequency
+    // const filteredKeys = filteredTerms.map((f) => f.uid);
+    // const frequency = filteredKeys.reduce(
+    //   (/** @type {string[]} */ acc, cur) => {
+    //     if (this.props.repetition[cur]?.rein === true) {
+    //       acc = [...acc, cur];
+    //     }
+    //     return acc;
+    //   },
+    //   []
+    // );
 
     this.setState({
       filteredTerms,
-      order,
+      // frequency,
+      frequency: allFrequency,
+      order: newOrder,
+    });
+  }
+
+  /**
+   * @param {string} uid
+   */
+  updateReinforcedUID(uid) {
+    this.setState({
+      reinforcedUID: uid,
     });
   }
 
@@ -182,6 +264,7 @@ class Kanji extends Component {
 
     this.setState({
       selectedIndex: newSel,
+      reinforcedUID: undefined,
       showOn: false,
       showKun: false,
       showEx: false,
@@ -190,7 +273,36 @@ class Kanji extends Component {
   }
 
   gotoNextSlide() {
-    this.gotoNext();
+    let filtered = this.state.filteredTerms;
+    // include frequency terms not in filtered set
+    if (this.props.filterType === TermFilterBy.TAGS) {
+      const allFrequency = Object.keys(this.props.repetition).reduce(
+        (/** @type {string[]}*/ acc, cur) => {
+          if (this.props.repetition[cur].rein === true) {
+            acc = [...acc, cur];
+          }
+          return acc;
+        },
+        []
+      );
+
+      const additional = this.props.kanji.filter((k) =>
+        allFrequency.includes(k.uid)
+      );
+      filtered = [...this.state.filteredTerms, ...additional];
+    }
+
+    play(
+      this.props.reinforce,
+      this.props.filterType,
+      this.state.frequency,
+      // this.state.filteredTerms,
+      filtered,
+      this.state.reinforcedUID,
+      this.updateReinforcedUID,
+      this.gotoNext,
+      this.props.removeFrequencyKanji
+    );
   }
 
   gotoPrev() {
@@ -201,6 +313,7 @@ class Kanji extends Component {
 
     this.setState({
       selectedIndex: newSel,
+      reinforcedUID: undefined,
       showOn: false,
       showKun: false,
       showEx: false,
@@ -262,16 +375,24 @@ class Kanji extends Component {
     if (this.state.filteredTerms.length < 1)
       return <NotReady addlStyle="main-panel" />;
 
-    const uid = getTermUID(
-      this.state.selectedIndex,
-      this.state.order,
-      this.state.filteredTerms
-    );
+    const uid =
+      this.state.reinforcedUID ||
+      getTermUID(
+        this.state.selectedIndex,
+        this.state.order,
+        this.state.filteredTerms
+      );
 
     /** @type {RawKanji} */
     const term = getTerm(uid, this.props.kanji);
     const aGroupLevel =
-      term.tag.find((t) => isGroupLevel(t))?.replace("_", " ") || "";
+      term.tag
+        .find((t) => this.props.activeTags.includes(t) && isGroupLevel(t))
+        ?.replace("_", " ") ||
+      term.tag.find((t) => isGroupLevel(t))?.replace("_", " ") ||
+      "";
+
+    const term_reinforce = this.props.repetition[term.uid]?.rein === true;
 
     const maxShowEx = 3;
     const examples = this.state.examples
@@ -312,76 +433,62 @@ class Kanji extends Component {
           </div>
 
           <div className="text-center">
-            <div className="">
-              <h1 className="pt-0">
-                <span>{term.kanji}</span>
-              </h1>
-              {/* temp spacer */}
-              {!term.on && !term.kun && (
-                <div>
-                  <h3 className="pt-0">.</h3>
-                  <h3 className="pt-2">.</h3>
-                </div>
-              )}
-
-              {term.on && (
-                <h3
-                  className="pt-0"
-                  onClick={() => {
-                    this.setState((state) => ({
-                      showOn: !state.showOn,
-                    }));
-                  }}
-                >
-                  <span>{this.state.showOn ? term.on : "[On]"}</span>
-                </h3>
-              )}
-              {term.kun && (
-                <h3
-                  className="pt-2"
-                  onClick={() => {
-                    this.setState((state) => ({
-                      showKun: !state.showKun,
-                    }));
-                  }}
-                >
-                  <span>{this.state.showKun ? term.kun : "[Kun]"}</span>
-                </h3>
-              )}
-              <div className="d-flex flex-column">
-                <span
-                  className={classNames({
-                    "example-blk align-self-center clickable h6 pt-2": true,
-                    "disabled-color": examples.length === 0,
-                  })}
-                  onClick={() => {
-                    this.setState((state) => ({
-                      showEx: !state.showEx,
-                    }));
-                  }}
-                >
-                  <span className="text-nowrap">
-                    {this.state.showEx && examples.length > 0
-                      ? examples
-                      : "[Examples]"}
-                  </span>
+            <h1 className="pt-0">
+              <span>{term.kanji}</span>
+            </h1>
+            {(term.on && (
+              <h3
+                className="pt-0"
+                onClick={() => {
+                  this.setState((state) => ({
+                    showOn: !state.showOn,
+                  }));
+                }}
+              >
+                <span>{this.state.showOn ? term.on : "[On]"}</span>
+              </h3>
+            )) || <h3 className="pt-0">.</h3>}
+            {(term.kun && (
+              <h3
+                className="pt-2"
+                onClick={() => {
+                  this.setState((state) => ({
+                    showKun: !state.showKun,
+                  }));
+                }}
+              >
+                <span>{this.state.showKun ? term.kun : "[Kun]"}</span>
+              </h3>
+            )) || <h3 className="pt-2">.</h3>}
+            <div className="d-flex flex-column">
+              <span
+                className={classNames({
+                  "example-blk align-self-center clickable h6 pt-2": true,
+                  "disabled-color": examples.length === 0,
+                })}
+                onClick={() => {
+                  this.setState((state) => ({
+                    showEx: !state.showEx,
+                  }));
+                }}
+              >
+                <span className="text-nowrap">
+                  {this.state.showEx && examples.length > 0
+                    ? examples
+                    : "[Examples]"}
                 </span>
+              </span>
 
-                <h3
-                  className="align-self-center pt-2 clickable"
-                  onClick={() => {
-                    this.setState((state) => ({
-                      showMeaning: !state.showMeaning,
-                    }));
-                  }}
-                >
-                  {this.state.showMeaning ? (
-                    meaning
-                  ) : (
-                    <span>{"[Meaning]"}</span>
-                  )}
-                </h3>
-              </div>
+              <h3
+                className="align-self-center pt-2 clickable"
+                onClick={() => {
+                  this.setState((state) => ({
+                    showMeaning: !state.showMeaning,
+                  }));
+                }}
+              >
+                {this.state.showMeaning ? meaning : <span>{"[Meaning]"}</span>}
+              </h3>
             </div>
           </div>
           <div className="right-info"></div>
@@ -391,11 +498,37 @@ class Kanji extends Component {
           </StackNavButton>
         </div>
       </div>,
+      <div key={1} className="options-bar mb-3 flex-shrink-1">
+        <div className="row opts-max-h">
+          <div className="col">
+            <div className="d-flex justify-content-start"></div>
+          </div>
+          <div className="col text-center">
+            <FrequencyTermIcon
+              visible={
+                this.state.reinforcedUID !== undefined &&
+                this.state.reinforcedUID !== ""
+              }
+            />
+          </div>
+          <div className="col">
+            <div className="d-flex justify-content-end">
+              <ToggleFrequencyTermBtn
+                addFrequencyTerm={this.props.addFrequencyKanji}
+                removeFrequencyTerm={this.props.removeFrequencyKanji}
+                toggle={term_reinforce}
+                term={term}
+                count={this.state.frequency.length}
+              />
+            </div>
+          </div>
+        </div>
+      </div>,
       <div key={2} className="progress-line flex-shrink-1">
         <LinearProgress
           variant="determinate"
           value={progress}
-          // color={phrase_reinforce ? "secondary" : "primary"}
+          color={term_reinforce ? "secondary" : "primary"}
         />
       </div>,
     ];
@@ -409,7 +542,12 @@ const mapStateToProps = (state) => {
     kanji: state.kanji.value,
     vocabulary: state.vocabulary.value,
 
+    filterType: state.settings.kanji.filter,
+    reinforce: state.settings.kanji.reinforce,
     activeTags: state.settings.kanji.activeTags,
+    repetition: state.settings.kanji.repetition,
+    frequency: state.settings.kanji.frequency,
+
     swipeThreshold: state.settings.global.swipeThreshold,
   };
 };
@@ -417,16 +555,26 @@ const mapStateToProps = (state) => {
 Kanji.propTypes = {
   kanji: PropTypes.array,
   vocabulary: PropTypes.array,
+  frequency: PropTypes.object,
+  filterType: PropTypes.number,
   activeTags: PropTypes.array,
   swipeThreshold: PropTypes.number,
   getKanji: PropTypes.func,
   getVocabulary: PropTypes.func,
+  toggleKanjiFilter: PropTypes.func,
+  reinforce: PropTypes.bool,
+  repetition: PropTypes.object,
+  removeFrequencyKanji: PropTypes.func,
+  addFrequencyKanji: PropTypes.func,
   logger: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
   getKanji,
   getVocabulary,
+  toggleKanjiFilter,
+  removeFrequencyKanji,
+  addFrequencyKanji,
   logger,
 })(Kanji);
 

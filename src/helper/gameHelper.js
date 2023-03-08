@@ -22,10 +22,11 @@ import { furiganaHintBuilder } from "./kanjiHelper";
 
 /**
  * Goes to the next term or selects one from the frequency list
+ * @template {{uid:string}} RawItem
  * @param {boolean} reinforce
  * @param {typeof TermFilterBy[keyof TermFilterBy]} freqFilter
  * @param {string[]} frequency
- * @param {RawVocabulary[]} filteredTerms
+ * @param {RawItem[]} filteredTerms
  * @param {string|undefined} reinforcedUID
  * @param {function} updateReinforcedUID
  * @param {function} gotoNext
