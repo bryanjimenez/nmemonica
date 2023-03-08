@@ -25,6 +25,7 @@ import { JapaneseText } from "../../helper/JapaneseText";
 import { shuffleArray } from "../../helper/arrayHelper";
 
 import "./Kanji.css";
+import { isGroupLevel } from "./SetTermTagList";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -269,8 +270,8 @@ class Kanji extends Component {
 
     /** @type {RawKanji} */
     const term = getTerm(uid, this.props.kanji);
-    const radicalLevel =
-      term.tag.find((t) => t.startsWith("Level_"))?.replace("Level_", "") || "";
+    const aGroupLevel =
+      term.tag.find((t) => isGroupLevel(t))?.replace("_", " ") || "";
 
     const maxShowEx = 3;
     const examples = this.state.examples
@@ -306,7 +307,7 @@ class Kanji extends Component {
           <div className="grp-info">
             <div>
               <div>{term.grp}</div>
-              <div>{radicalLevel}</div>
+              <div>{aGroupLevel}</div>
             </div>
           </div>
 
