@@ -19,7 +19,7 @@ import {
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
- * @typedef {import("../../typings/raw").RawPhrase} RawPhrase
+ * @typedef {{uid:string, english:string, grp?:string}} MinimunRawItem
  */
 
 /**
@@ -75,7 +75,7 @@ ToggleFuriganaBtn.propTypes = {
  * addFrequencyTerm: (uid:string)=>void,
  * removeFrequencyTerm: (uid:string)=>void,
  * toggle: boolean,
- * term: RawVocabulary | RawPhrase,
+ * term: MinimunRawItem,
  * }} ToggleFrequencyTermBtnProps
  * @param {ToggleFrequencyTermBtnProps} props
  */

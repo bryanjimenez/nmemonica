@@ -526,7 +526,7 @@ export class JapaneseVerb extends JapaneseText {
     let hiragana;
     let ending;
 
-    if (super.hasFurigana()) {
+    if (super.hasFurigana() && super.kanji) {
       // has kanji
       hiragana = super.furigana;
       verb = super.kanji;

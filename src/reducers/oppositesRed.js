@@ -1,6 +1,7 @@
 import { GET_OPPOSITES } from "../hooks/oppositesHK";
 
 const DEFAULT_STATE = { value: [] };
+/** @type {{type:string, value:any}} to avoid ts-nocheck */
 const DEFAULT_ACTION = {};
 
 const oppositesReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {

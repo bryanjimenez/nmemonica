@@ -5,6 +5,7 @@ const DEFAULT_STATE = {
   value: [],
   grpObj: {},
 };
+/** @type {{type:string, value:any}} to avoid ts-nocheck */
 const DEFAULT_ACTION = {};
 
 const kanjiReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {

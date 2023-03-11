@@ -28,6 +28,7 @@
 function safePreventDefault(event) {
   var passiveEvents = ["onTouchStart", "onTouchMove", "onWheel"];
 
+  // @ts-expect-error _reactName
   if (!passiveEvents.includes(event._reactName)) {
     event.preventDefault();
   }

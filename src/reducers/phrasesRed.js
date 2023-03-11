@@ -18,6 +18,7 @@ export const DEFAULT_STATE = {
     particles: /** @type {ParticleChoice[]} */ ([]),
   },
 };
+/** @type {{type:string, value:any}} to avoid ts-nocheck */
 const DEFAULT_ACTION = {};
 
 /**
