@@ -55,11 +55,9 @@ export default function KanaOptionsSlider(props) {
   };
 
   /**
-   * @template T
-   * @param {import("react").ChangeEvent<T>} event
    * @param {number} newValue
    */
-  const handleChange = (event, newValue) => {
+  const handleChange = (newValue) => {
     const prevVal = props.initial;
     const curVal = slideToRaw(newValue);
 
@@ -96,7 +94,7 @@ export default function KanaOptionsSlider(props) {
         marks={marks}
         onChange={(event, newValue) => {
           if (typeof newValue === "number") {
-            handleChange(event, newValue);
+            handleChange(newValue);
           }
         }}
       />

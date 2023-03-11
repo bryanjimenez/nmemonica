@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {Slider} from "@mui/material";
+import { Slider } from "@mui/material";
 
 import "./VocabularyOrderSlider.css";
 
@@ -10,18 +10,16 @@ import "./VocabularyOrderSlider.css";
  */
 
 /**
- * @typedef {{
- * initial: number,
- * list: BareIdx[],
- * setIndex: (index:number)=>void,
- * }} VocabularyOrderSliderProps
+ * @typedef {Object} VocabularyOrderSliderProps
+ * @property {number} initial
+ * @property {BareIdx[]} list
+ * @property {(index:number)=>void} setIndex
  */
 
 /**
  * @param {VocabularyOrderSliderProps} props
  */
 export default function VocabularyOrderSlider(props) {
-
   const min = 1;
   const max = props.list.length;
   const safeInitial = Math.min(max, props.initial);
@@ -39,11 +37,9 @@ export default function VocabularyOrderSlider(props) {
   }
 
   /**
-   * @template T
-   * @param {import("react").ChangeEvent<T>} event
    * @param {number} newValue
    */
-  const handleChange = (event, newValue) => {
+  const handleChange = (newValue) => {
     const prevVal = safeInitial;
     const curVal = slideToRaw(newValue);
 
@@ -85,7 +81,7 @@ export default function VocabularyOrderSlider(props) {
         marks={marks}
         onChange={(event, newValue) => {
           if (typeof newValue === "number") {
-            handleChange(event, newValue);
+            handleChange(newValue);
           }
         }}
       />

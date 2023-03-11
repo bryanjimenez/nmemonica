@@ -8,12 +8,11 @@ import "./VerbFormSlider.css";
  */
 
 /**
- * @typedef {{
- * initial: number,
- * max: number,
- * statusText: string,
- * setChoiceN: function,
- * }} VerbFormSliderProps
+ * @typedef {Object} VerbFormSliderProps
+ * @property {number} initial
+ * @property {number} max
+ * @property {string} statusText
+ * @property {function} setChoiceN
  */
 
 /** @param {VerbFormSliderProps} props */
@@ -68,11 +67,9 @@ export default function VerbFormSlider(props) {
   };
 
   /**
-   * @template T
-   * @param {import("react").ChangeEvent<T>} event
    * @param {number} newValue
    */
-  const handleChange = (event, newValue) => {
+  const handleChange = (newValue) => {
     const prevVal = safeInitial;
     const curVal = slideToRaw(newValue);
 
@@ -96,7 +93,7 @@ export default function VerbFormSlider(props) {
         marks={marks}
         onChange={(event, newValue) => {
           if (typeof newValue === "number") {
-            handleChange(event, newValue);
+            handleChange(newValue);
           }
         }}
       />
