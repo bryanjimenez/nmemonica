@@ -149,7 +149,11 @@ class SettingsVocab extends Component {
           <div className="d-flex flex-row justify-content-between">
             <div className="column-1">
               <h4>
-                {labelOptions(vocabFilter, ["Word Group", "Frequency List", "NOT_USED_Tags"])}
+                {labelOptions(vocabFilter, [
+                  "Word Group",
+                  "Frequency List",
+                  "NOT_USED_Tags",
+                ])}
               </h4>
               <div className="mb-2">
                 <SettingsSwitch
@@ -161,8 +165,8 @@ class SettingsVocab extends Component {
               </div>
               {vocabFilter === TermFilterBy.GROUP && (
                 <SetTermGList
-                  vocabGroups={vocabGroups}
-                  vocabActive={vocabActive}
+                  termsGroups={vocabGroups}
+                  termsActive={vocabActive}
                   toggleTermActiveGrp={(grp) =>
                     toggleActiveGrp("vocabulary", grp)
                   }
@@ -171,15 +175,14 @@ class SettingsVocab extends Component {
               {vocabFilter === TermFilterBy.FREQUENCY &&
                 vocabFreq.length === 0 && (
                   <div className="fst-italic">No words have been chosen</div>
-              )}
+                )}
               {vocabFilter === TermFilterBy.FREQUENCY &&
                 vocabFreq.length > 0 && (
                   <SetTermGFList
-                    vocabGroups={vocabGroups}
-                    vocabActive={vocabActive}
-                    vocabFreq={vocabFreq}
-                    vocabulary={vocabulary}
-                    removeFrequencyWord={removeFrequencyWord}
+                    termsActive={vocabActive}
+                    termsFreq={vocabFreq}
+                    terms={vocabulary}
+                    removeFrequencyTerm={removeFrequencyWord}
                     toggleTermActiveGrp={(grp) =>
                       toggleActiveGrp("vocabulary", grp)
                     }

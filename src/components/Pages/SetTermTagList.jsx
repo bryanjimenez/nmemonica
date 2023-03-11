@@ -5,11 +5,11 @@ import React, { useEffect } from "react";
 import { GroupItem } from "../Form/GroupItem";
 
 /**
- * @typedef {Object} SetTermGListProps
- * @property {string[]} termTags
- * @property {string[]} termActive
+ * @typedef {Object} SetTermTagListProps
+ * @property {string[]} termsTags List of all available tags
+ * @property {string[]} termsActive List of tags that are selected
  * @property {(grp:string)=>function} toggleTermActive
- * @property {number} [selectedCount]
+ * @property {number} [selectedCount] Number of terms currently selected by filter
  */
 
 /**
@@ -17,29 +17,29 @@ import { GroupItem } from "../Form/GroupItem";
  * example: Group_6
  * @param {string} groupName
  */
-export function isGroupLevel(groupName){
-  return groupName.includes("_") && Number.isInteger(parseInt(groupName.split("_")[1], 10));
+export function isGroupLevel(groupName) {
+  return (
+    groupName.includes("_") &&
+    Number.isInteger(parseInt(groupName.split("_")[1], 10))
+  );
 }
 /**
  * Group and subgroup list
- * @param {SetTermGListProps} props
+ * @param {SetTermTagListProps} props
  */
 export function SetTermTagList(props) {
-  const { termActive, termTags, toggleTermActive, selectedCount } = props;
+  const { termsActive, termsTags, toggleTermActive, selectedCount } = props;
 
   useEffect(() => {
     // remove stale active tags
-    termActive.forEach((term) => {
-      if (!termTags.includes(term)) {
+    termsActive.forEach((term) => {
+      if (!termsTags.includes(term)) {
         toggleTermActive(term);
       }
     });
-  }, [termActive, termTags, toggleTermActive]);
+  }, [termsActive, termsTags, toggleTermActive]);
 
-  const [numericTags, alphaTags] = partition(
-    termTags,
-    (t) => isGroupLevel(t)
-  );
+  const [numericTags, alphaTags] = partition(termsTags, (t) => isGroupLevel(t));
 
   // numericGroups = [[grpA_1, grpA_2, ..., grpA_X], [grpB_1, grpB_2, ..., grpB_X]]
   const numericGroups = Object.values(
@@ -81,7 +81,7 @@ export function SetTermTagList(props) {
         <div key={i + 1}>
           <GroupItem
             key={i}
-            active={termActive.includes(g)}
+            active={termsActive.includes(g)}
             onClick={() => {
               toggleTermActive(g);
             }}
@@ -95,8 +95,8 @@ export function SetTermTagList(props) {
 }
 
 SetTermTagList.propTypes = {
-  termTags: PropTypes.array,
-  termActive: PropTypes.array,
+  termsTags: PropTypes.array,
+  termsActive: PropTypes.array,
   toggleTermActive: PropTypes.func,
   selectedCount: PropTypes.number,
 };

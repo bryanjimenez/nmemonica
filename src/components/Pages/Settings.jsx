@@ -677,8 +677,8 @@ class Settings extends Component {
                           ? Object.values(this.props.kanji).length
                           : kanjiSelectedTags
                       }
-                      termTags={this.props.kanjiTags}
-                      termActive={this.props.kanjiActive}
+                      termsTags={this.props.kanjiTags}
+                      termsActive={this.props.kanjiActive}
                       toggleTermActive={(tag) =>
                         this.props.toggleActiveTag("kanji", tag)
                       }
@@ -687,10 +687,10 @@ class Settings extends Component {
                   {this.props.kanjiFilter === TermFilterBy.FREQUENCY &&
                     kanjiFreq.length > 0 && (
                       <SetTermGFList
-                        vocabActive={this.props.kanjiActive}
-                        vocabFreq={kanjiFreq}
-                        vocabulary={this.props.kanji}
-                        removeFrequencyWord={removeFrequencyKanji}
+                        termsActive={this.props.kanjiActive}
+                        termsFreq={kanjiFreq}
+                        terms={this.props.kanji}
+                        removeFrequencyTerm={removeFrequencyKanji}
                         toggleTermActiveGrp={(grp) =>
                           toggleActiveGrp("kanji", grp)
                         }

@@ -4,17 +4,17 @@ import { XCircleIcon, IssueDraftIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 
 /**
- * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
+ * @typedef {{uid:string, english:string, grp?:string}} MinimunRawItem
  */
 
 /**
- * @template {{uid:string, english:string}} RawItem
+ * @template {MinimunRawItem} RawItemType
  * @typedef {Object} SetTermGFListProps
- * @property {RawItem[]} vocabulary
- * @property {string[]} vocabFreq
- * @property {string[]} vocabActive
+ * @property {RawItemType[]} terms
+ * @property {string[]} termsFreq List of uid of terms to be reinforced/frequency
+ * @property {string[]} termsActive List of tags that are selected
  * @property {(grp:string)=>function} toggleTermActiveGrp
- * @property {function} removeFrequencyWord
+ * @property {function} removeFrequencyTerm
  */
 
 /**
@@ -22,10 +22,9 @@ import classNames from "classnames";
  * @param {number} i
  * @param {string} uid
  * @param {string} english
- * @param {function} removeFrequencyWord
- * @returns
+ * @param {function} removeFrequencyTerm
  */
-function listItem(grpActive, i, uid, english, removeFrequencyWord) {
+function listItem(grpActive, i, uid, english, removeFrequencyTerm) {
   return (
     <div
       key={i}
@@ -35,7 +34,7 @@ function listItem(grpActive, i, uid, english, removeFrequencyWord) {
       })}
       onClick={() => {
         if (grpActive) {
-          removeFrequencyWord(uid);
+          removeFrequencyTerm(uid);
         }
       }}
     >
@@ -61,16 +60,16 @@ function listItem(grpActive, i, uid, english, removeFrequencyWord) {
 }
 
 /**
- * Groups + Frequency words list
- * @param {SetTermGFListProps} props
+ * Groups + Frequency term list
+ * @param {SetTermGFListProps<MinimunRawItem>} props
  */
 export function SetTermGFList(props) {
   /** @type {string[]} */
   let cleanup = [];
 
-  const thisgrp = props.vocabFreq.reduce(
-    (/** @type {RawVocabulary[]} */ acc, f) => {
-      const found = props.vocabulary.find((v) => v.uid === f);
+  const thisgrp = props.termsFreq.reduce(
+    (/** @type {MinimunRawItem[]} */ acc, f) => {
+      const found = props.terms.find((v) => v.uid === f);
 
       if (found) {
         acc = [...acc, found];
@@ -84,7 +83,7 @@ export function SetTermGFList(props) {
   );
 
   const grplist = thisgrp.reduce(
-    (/** @type {{[key:string]:RawVocabulary[]}} */ acc, cur) => {
+    (/** @type {{[key:string]:MinimunRawItem[]}} */ acc, cur) => {
       const key = cur.grp ? cur.grp : "undefined";
 
       if (acc[key]) {
@@ -103,7 +102,7 @@ export function SetTermGFList(props) {
       <h5 key={0}>Frequency</h5>
       <div key={1}>
         {Object.keys(grplist).map((g, ig) => {
-          const grpActive = props.vocabActive.includes(g);
+          const grpActive = props.termsActive.includes(g);
 
           return (
             <div key={ig} className="mb-2">
@@ -122,7 +121,7 @@ export function SetTermGFList(props) {
                     iw,
                     word.uid,
                     word.english,
-                    props.removeFrequencyWord
+                    props.removeFrequencyTerm
                   )
                 )}
               </div>
@@ -134,7 +133,7 @@ export function SetTermGFList(props) {
         <div className="mt-5 text-break">
           <span className="font-weight-bold">Manual cleanup</span>
           {cleanup.map((orphanUid, i) =>
-            listItem(true, i, orphanUid, orphanUid, props.removeFrequencyWord)
+            listItem(true, i, orphanUid, orphanUid, props.removeFrequencyTerm)
           )}
         </div>
       )}
@@ -143,10 +142,9 @@ export function SetTermGFList(props) {
 }
 
 SetTermGFList.propTypes = {
-  vocabGroups: PropTypes.object,
-  vocabActive: PropTypes.array,
-  vocabFreq: PropTypes.array,
-  vocabulary: PropTypes.array,
-  removeFrequencyWord: PropTypes.func,
+  termsActive: PropTypes.array,
+  termsFreq: PropTypes.array,
+  terms: PropTypes.array,
+  removeFrequencyTerm: PropTypes.func,
   toggleTermActiveGrp: PropTypes.func,
 };

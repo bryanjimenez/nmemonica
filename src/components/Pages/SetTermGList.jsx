@@ -4,10 +4,10 @@ import { GroupItem } from "../Form/GroupItem";
 import orderBy from "lodash/orderBy";
 
 /**
- * @typedef {{
- * vocabGroups: any,
- * vocabActive: string[],
- * toggleTermActiveGrp: (grp:string)=>function}} SetTermGListProps
+ * @typedef {Object} SetTermGListProps
+ * @property {import("../../typings/raw").GroupListMap} termsGroups
+ * @property {string[]} termsActive
+ * @property {(grp:string)=>function} toggleTermActiveGrp
  */
 
 /**
@@ -19,14 +19,14 @@ export function SetTermGList(props) {
     <div>
       <h5 key={0}>Groups</h5>
 
-      {Object.keys(props.vocabGroups).map((g, i) => {
-        const grpActive = props.vocabActive.includes(g);
+      {Object.keys(props.termsGroups).map((g, i) => {
+        const grpActive = props.termsActive.includes(g);
 
         return (
           <div key={i + 1}>
             <GroupItem
               key={i}
-              active={props.vocabActive.includes(g)}
+              active={props.termsActive.includes(g)}
               onClick={() => {
                 props.toggleTermActiveGrp(g);
               }}
@@ -35,9 +35,9 @@ export function SetTermGList(props) {
             </GroupItem>
 
             {!grpActive &&
-              orderBy(props.vocabGroups[g], (o) => {
+              orderBy(props.termsGroups[g], (o) => {
                 // order numerically if group has _number
-                const [lbl, num] = o.split("_");
+                const [, /*lbl,*/ num] = o.split("_");
                 if (Number.isInteger(parseInt(num, 10))) {
                   return parseInt(num, 10);
                 }
@@ -46,7 +46,7 @@ export function SetTermGList(props) {
                 <GroupItem
                   key={i}
                   addlStyle="ms-3"
-                  active={props.vocabActive.includes(g + "." + s)}
+                  active={props.termsActive.includes(g + "." + s)}
                   onClick={() => {
                     props.toggleTermActiveGrp(g + "." + s);
                   }}
@@ -62,7 +62,7 @@ export function SetTermGList(props) {
 }
 
 SetTermGList.propTypes = {
-  vocabGroups: PropTypes.object,
-  vocabActive: PropTypes.array,
+  termsGroups: PropTypes.object,
+  termsActive: PropTypes.array,
   toggleTermActiveGrp: PropTypes.func,
 };
