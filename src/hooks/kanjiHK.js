@@ -4,7 +4,7 @@ import { firebaseConfig } from "../../environment.development";
 export const GET_KANJI = "get_kanji";
 
 /**
- * @typedef {import("../typings/raw").RawPhrase} RawPhrase
+ * @typedef {import("../components/Pages/Kanji").RawKanji} RawKanji
  * @typedef {import("../components/Games/ParticlesGame").ParticleGamePhrase} ParticleGamePhrase
  */
 
@@ -12,7 +12,7 @@ export const GET_KANJI = "get_kanji";
  * Fetches kanji data and updates Store state if no previous fetch
  * @param {function} dispatch redux dispatch
  * @param {string} version cache version
- * @param {RawPhrase[]} rawKanjis array of kanjis from previous fetch
+ * @param {RawKanji[]} rawKanjis array of kanjis from previous fetch
  */
 export function useKanjiStore(dispatch, version, rawKanjis) {
   useEffect(() => {

@@ -1,21 +1,34 @@
-import React, { useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { LinearProgress } from "@mui/material";
+import classNames from "classnames";
+import PropTypes from "prop-types";
+import React, { useMemo, useRef, useState } from "react";
+import { connect, useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import {
+  addFrequencyKanji,
+  removeFrequencyKanji,
+  TermFilterBy,
+} from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder, termFilterByType } from "../../helper/gameHelper";
-import { NotReady } from "../Form/NotReady";
-import FourChoices from "./FourChoices";
-import classNames from "classnames";
 import { useKanjiStore } from "../../hooks/kanjiHK";
-import { TermFilterBy } from "../../actions/settingsAct";
-import { Link } from "react-router-dom";
-import { TogglePracticeSideBtn } from "../Form/OptionsBar";
+import { NotReady } from "../Form/NotReady";
+import {
+  ToggleFrequencyTermBtn,
+  TogglePracticeSideBtn,
+} from "../Form/OptionsBar";
+import FourChoices from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 
 /**
- * @typedef {import("../../typings/raw").RawKanji} RawKanji
- *
  * @typedef {import("../../typings/state").AppRootState} AppRootState
+ * @typedef {import("../../typings/raw").RawKanji} RawKanji
+ */
+
+/**
+ * @typedef {Object} KanjiGameProps
+ * @property {typeof removeFrequencyKanji} removeFrequencyKanji
+ * @property {typeof addFrequencyKanji} addFrequencyKanji
  */
 
 const KanjiGameMeta = {
@@ -64,64 +77,66 @@ function createChoices(compareOn, answer, kanjiList) {
   return choices;
 }
 
-function KanjiGame() {
-  /** @type {React.MutableRefObject<number[]>} */
-  const order = useRef([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+/**
+ * @param {RawKanji} kanji
+ * @param {RawKanji[]} selectedKanjis
+ * @param {RawKanji[]} rawKanjis
+ */
+function prepareGame(kanji, selectedKanjis, rawKanjis) {
+  if (!kanji || rawKanjis.length === 0 || selectedKanjis.length === 0) return;
+  // console.log("prepareGame("+kanji.english+", "+selectedKanjis.length+", "+rawKanjis.length+")");
 
-  /**
-   * @param {number} selectedIndex
-   * @param {RawKanji[]} selectedKanjis
-   */
-  function prepareGame(selectedIndex, selectedKanjis) {
-    if (selectedKanjis.length === 0) return;
+  const { english, kanji: japanese, on, kun } = kanji;
 
-    if (order.current.length === 0) {
-      order.current = randomOrder(selectedKanjis);
-    }
+  const choices = createChoices("english", kanji, rawKanjis);
 
-    const kanji = selectedKanjis[order.current[selectedIndex]];
-    const { english, kanji: japanese, on, kun } = kanji;
-
-    const choices = createChoices("english", kanji, rawKanjis);
-
-    /** @type {import("./FourChoices").GameQuestion} */
-    const q = {
-      // english, not needed, shown as a choice
-      toHTML: (correct) => (
-        <div>
+  /** @type {import("./FourChoices").GameQuestion} */
+  const q = {
+    // english, not needed, shown as a choice
+    toHTML: (correct) => (
+      <div>
+        <div
+          className={classNames({
+            "correct-color": correct,
+          })}
+        >
+          <span>{japanese}</span>
+        </div>
+        {(on !== undefined || kun !== undefined) && (
           <div
             className={classNames({
+              "d-flex flex-column mt-3 h4": true,
+              invisible: !correct,
               "correct-color": correct,
             })}
           >
-            <span>{japanese}</span>
+            <span>{on}</span>
+            <span>{kun}</span>
           </div>
-          {(on !== undefined || kun !== undefined) && (
-            <div
-              className={classNames({
-                "d-flex flex-column mt-3 h4": true,
-                invisible: !correct,
-                "correct-color": correct,
-              })}
-            >
-              <span>{on}</span>
-              <span>{kun}</span>
-            </div>
-          )}
-        </div>
-      ),
-    };
+        )}
+      </div>
+    ),
+  };
 
-    return {
-      question: q,
-      answer: english,
-      choices: choices.map((c) => ({
-        compare: c.english,
-        toHTML: () => oneFromList(c.english),
-      })),
-    };
-  }
+  return {
+    question: q,
+    answer: english,
+    choices: choices.map((c) => ({
+      compare: c.english,
+      toHTML: () => oneFromList(c.english),
+    })),
+  };
+}
+
+/**
+ * @param {KanjiGameProps} props
+ */
+function KanjiGame(props) {
+  /** @type {React.MutableRefObject<number[]>} */
+  const order = useRef([]);
+  const repetitionRef = useRef({});
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   function gotoNext() {
     const l = filteredTerms.length;
@@ -144,25 +159,66 @@ function KanjiGame() {
   const { value: kanjiArr } = useSelector(
     (/** @type {AppRootState}*/ { kanji }) => kanji
   );
+  /** @type {RawKanji[]} */
   const rawKanjis = useMemo(() => kanjiArr, [kanjiArr]);
   useKanjiStore(dispatch, version, rawKanjis);
 
-  const { activeTags } = useSelector(
-    (/** @type {AppRootState}*/ { settings }) => settings.kanji
-  );
-  /** @type {RawKanji[]} */
-  const filteredTerms = termFilterByType(
-    TermFilterBy.TAGS,
-    rawKanjis,
-    null,
+  const {
     activeTags,
-    null
+    filter: filterType,
+    reinforce,
+    repetition,
+  } = useSelector((/** @type {AppRootState}*/ { settings }) => settings.kanji);
+  repetitionRef.current = repetition;
+
+  /** @type {RawKanji[]} */
+  const filteredTerms = useMemo(() => {
+    // console.log("termFilterByType("+Object.keys(TermFilterBy)[filterType]+", "+rawKanjis.length+", "+activeTags.length+")");
+
+    const allFrequency = Object.keys(repetitionRef.current).reduce(
+      (/** @type {string[]}*/ acc, cur) => {
+        if (repetitionRef.current[cur].rein === true) {
+          acc = [...acc, cur];
+        }
+        return acc;
+      },
+      []
+    );
+
+    let filtered = termFilterByType(
+      filterType,
+      rawKanjis,
+      allFrequency,
+      filterType === TermFilterBy.TAGS ? activeTags : [],
+      () => {} // Don't toggle filter if last freq is removed
+    );
+
+    if (reinforce && filterType === TermFilterBy.TAGS) {
+      const filteredList = filtered.map((k) => k.uid);
+      const additional = rawKanjis.filter(
+        (k) => allFrequency.includes(k.uid) && !filteredList.includes(k.uid)
+      );
+
+      filtered = [...filtered, ...additional];
+    }
+
+    order.current = randomOrder(filtered);
+
+    return filtered;
+  }, [filterType, rawKanjis, activeTags, reinforce]);
+
+  const kanji = useMemo(
+    () => filteredTerms[order.current[selectedIndex]],
+    [filteredTerms, selectedIndex]
+  );
+  const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
+
+  const game = useMemo(
+    () => prepareGame(kanji, filteredTerms, rawKanjis),
+    [kanji, filteredTerms, rawKanjis]
   );
 
-  const game = prepareGame(selectedIndex, filteredTerms);
-
-  // console.log(selectedIndex);
-  // console.log("KanjiGame render");
+  // console.log("           KanjiGame render " + selectedIndex);
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 
@@ -171,7 +227,6 @@ function KanjiGame() {
   return (
     <>
       <FourChoices
-        key={0}
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
@@ -187,15 +242,38 @@ function KanjiGame() {
               </Link>
             </div>
           </div>
+          <div className="col text-center"></div>
+          <div className="col">
+            <div className="d-flex justify-content-end">
+              <ToggleFrequencyTermBtn
+                addFrequencyTerm={props.addFrequencyKanji}
+                removeFrequencyTerm={props.removeFrequencyKanji}
+                toggle={term_reinforce}
+                term={kanji}
+              />
+            </div>
+          </div>
         </div>
       </div>
-      <div key={1} className="progress-line flex-shrink-1">
-        <LinearProgress variant="determinate" value={progress} />
+      <div className="progress-line flex-shrink-1">
+        <LinearProgress
+          variant="determinate"
+          value={progress}
+          color={term_reinforce ? "secondary" : "primary"}
+        />
       </div>
     </>
   );
 }
 
-export default KanjiGame;
+KanjiGame.propTypes = {
+  addFrequencyKanji: PropTypes.func,
+  removeFrequencyKanji: PropTypes.func,
+};
+
+export default connect(null, {
+  addFrequencyKanji,
+  removeFrequencyKanji,
+})(KanjiGame);
 
 export { KanjiGameMeta };

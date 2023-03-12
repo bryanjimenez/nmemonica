@@ -274,8 +274,8 @@ class Kanji extends Component {
 
   gotoNextSlide() {
     let filtered = this.state.filteredTerms;
-    // include frequency terms not in filtered set
-    if (this.props.filterType === TermFilterBy.TAGS) {
+    // include frequency terms outside of filtered set
+    if (this.props.reinforce && this.props.filterType === TermFilterBy.TAGS) {
       const allFrequency = Object.keys(this.props.repetition).reduce(
         (/** @type {string[]}*/ acc, cur) => {
           if (this.props.repetition[cur].rein === true) {

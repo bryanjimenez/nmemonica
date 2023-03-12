@@ -86,7 +86,7 @@ export const DEFAULT_SETTINGS = {
   },
   kanji: {
     choiceN: 32,
-    filter: 0,
+    filter: 2,
     reinforce: false,
     repetition: {},
     frequency: { uid: undefined, count: 0 },

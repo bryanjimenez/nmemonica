@@ -114,7 +114,7 @@ export function getTerm(uid, list) {
 
 /**
  * Filters terms (words or phrases) list
- * by groups, frequency, or space repetition
+ * by groups, frequency, or tags
  * @template {{ uid: string, grp?: string, subGrp?: string, tag?: string[] }} T
  * @param {typeof TermFilterBy[keyof TermFilterBy]} filterType
  * @param {T[]} termList word or phrase list

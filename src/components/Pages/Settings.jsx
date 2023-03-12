@@ -487,10 +487,16 @@ class Settings extends Component {
       k.tag.some((/** @type {string}*/ aTag) =>
         this.props.kanjiActive.includes(aTag)
       )
-    ).length;
+    );
+    const kanjiSelectedUids = kanjiSelectedTags.map((k) => k.uid);
 
     const kanjiFreq = Object.keys(this.props.kRepetition).filter(
       (k) => this.props.kRepetition[k]?.rein === true
+    );
+
+    // kanjis in frequency list, but outside of current tag selection
+    const kFreqExcluTagSelected = kanjiFreq.filter(
+      (k) => !kanjiSelectedUids.includes(k)
     );
 
     return (
@@ -673,9 +679,9 @@ class Settings extends Component {
                   {this.props.kanjiFilter === TermFilterBy.TAGS && (
                     <SetTermTagList
                       selectedCount={
-                        kanjiSelectedTags === 0
+                        kanjiSelectedTags.length === 0
                           ? Object.values(this.props.kanji).length
-                          : kanjiSelectedTags
+                          : kanjiSelectedTags.length
                       }
                       termsTags={this.props.kanjiTags}
                       termsActive={this.props.kanjiActive}
@@ -707,7 +713,7 @@ class Settings extends Component {
                       }
                       statusText={
                         (this.props.kanjiReinforce
-                          ? "(" + kanjiFreq.length + ") "
+                          ? "(+" + kFreqExcluTagSelected.length + ") "
                           : "") + "Reinforcement"
                       }
                     />
