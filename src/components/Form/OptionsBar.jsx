@@ -16,6 +16,7 @@ import {
   faRecycle,
   faRunning,
 } from "@fortawesome/free-solid-svg-icons";
+import { useFade } from "../../hooks/helperHK";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -76,25 +77,40 @@ ToggleFuriganaBtn.propTypes = {
  * removeFrequencyTerm: (uid:string)=>void,
  * toggle: boolean,
  * term: MinimunRawItem,
+ * count?: number,
  * }} ToggleFrequencyTermBtnProps
  * @param {ToggleFrequencyTermBtnProps} props
  */
 export function ToggleFrequencyTermBtn(props) {
-  const { addFrequencyTerm, removeFrequencyTerm, toggle, term } = props;
+  const [fade, doFade] = useFade(1000);
+  const { addFrequencyTerm, removeFrequencyTerm, toggle, term, count } = props;
 
   return props.visible === false ? null : (
     <div
+      aria-label={toggle ? "Remove term" : "Add term"}
       className="sm-icon-grp clickable"
       onClick={() => {
+        if (count !== undefined && count > -1) {
+          doFade();
+        }
         if (toggle) {
           removeFrequencyTerm(term.uid);
         } else {
           addFrequencyTerm(term.uid);
         }
       }}
-      aria-label={toggle ? "Remove term" : "Add term"}
     >
       {toggle ? <XCircleIcon size="small" /> : <PlusCircleIcon size="small" />}
+      {count !== undefined && count > -1 && (
+        <span
+          className={classNames({
+            notification: true,
+            "notification-fade": fade,
+          })}
+        >
+          {count}
+        </span>
+      )}
     </div>
   );
 }
@@ -106,6 +122,7 @@ ToggleFrequencyTermBtn.propTypes = {
   removeFrequencyTerm: PropTypes.func,
   toggle: PropTypes.bool,
   term: PropTypes.object,
+  count: PropTypes.number,
 };
 
 /**
