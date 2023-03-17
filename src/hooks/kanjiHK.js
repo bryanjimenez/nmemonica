@@ -1,9 +1,11 @@
 import { useEffect } from "react";
+import { useSelector } from "react-redux";
 import { firebaseConfig } from "../../environment.development";
 
 export const GET_KANJI = "get_kanji";
 
 /**
+ * @typedef {import("../typings/state").AppRootState} AppRootState
  * @typedef {import("../components/Pages/Kanji").RawKanji} RawKanji
  * @typedef {import("../components/Games/ParticlesGame").ParticleGamePhrase} ParticleGamePhrase
  */
@@ -12,9 +14,12 @@ export const GET_KANJI = "get_kanji";
  * Fetches kanji data and updates Store state if no previous fetch
  * @param {function} dispatch redux dispatch
  * @param {string} version cache version
- * @param {RawKanji[]} rawKanjis array of kanjis from previous fetch
  */
-export function useKanjiStore(dispatch, version, rawKanjis) {
+export function useKanjiStore(dispatch, version) {
+  const rawKanjis = useSelector(
+    (/** @type {AppRootState}*/ { kanji }) => kanji.value
+  );
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -32,4 +37,6 @@ export function useKanjiStore(dispatch, version, rawKanjis) {
       controller.abort();
     };
   }, [dispatch, version, rawKanjis]);
+
+  return rawKanjis;
 }

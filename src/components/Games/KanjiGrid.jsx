@@ -1,16 +1,15 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
-  TermFilterBy,
 } from "../../actions/settingsAct";
-import { shuffleArray } from "../../helper/arrayHelper";
-import { randomOrder, termFilterByType } from "../../helper/gameHelper";
+import { randomOrder } from "../../helper/gameHelper";
+import { useCreateChoices, useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
 import { NotReady } from "../Form/NotReady";
 import {
@@ -37,46 +36,19 @@ const KanjiGridMeta = {
 };
 
 /**
- * Returns a list of choices which includes the right answer
- * @param {number} n
- * @param {keyof RawKanji} compareOn
- * @param {RawKanji} answer
- * @param {RawKanji[]} kanjiList
- */
-function createChoices(n, compareOn, answer, kanjiList) {
-  let choices = [answer];
-  while (choices.length < n) {
-    const i = Math.floor(Math.random() * kanjiList.length);
-
-    const choice = kanjiList[i];
-
-    // should not be same choices or the right answer
-    if (choices.every((c) => c[compareOn] !== choice[compareOn])) {
-      choices = [...choices, choice];
-    }
-  }
-
-  shuffleArray(choices);
-
-  return choices;
-}
-
-/**
- * @param {number} choiceN
  * @param {RawKanji} kanji
- * @param {RawKanji[]} selectedKanjis
- * @param {RawKanji[]} rawKanjis
+ * @param {RawKanji[]} choices
  * @param {boolean} writePractice
+ * @param {string} currExmpl
+ * @param {function} nextExmpl
  */
-function prepareGame(choiceN, kanji, selectedKanjis, rawKanjis, writePractice) {
-  if (!kanji || selectedKanjis.length === 0 || rawKanjis.length === 0) return;
-  // console.log("prepareGame("+kanji.english+", "+selectedKanjis.length+", "+rawKanjis.length+")");
+function prepareGame(kanji, choices, writePractice, currExmpl, nextExmpl) {
+  if (!kanji || choices.length === 0) return;
+  // console.log("prepareGame("+kanji.english+", "+choices.length+")");
 
   const { english, kanji: japanese, on, kun, uid } = kanji;
 
-  const choices = createChoices(choiceN, "english", kanji, rawKanjis);
-
-  let englishShortened = oneFromList(english);
+  const isShortened = currExmpl !== english;
 
   /** @type {import("./XChoices").GameQuestion} */
   const q = {
@@ -107,7 +79,11 @@ function prepareGame(choiceN, kanji, selectedKanjis, rawKanjis, writePractice) {
           </div>
         );
       } else {
-        return <>{englishShortened}</>;
+        return (
+          <div onClick={isShortened ? nextExmpl : undefined}>
+            {currExmpl + (isShortened ? "..." : "")}
+          </div>
+        );
       }
     },
   };
@@ -128,13 +104,8 @@ function prepareGame(choiceN, kanji, selectedKanjis, rawKanjis, writePractice) {
 function KanjiGrid(props) {
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
-  const repetitionRef = useRef({});
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [writePractice, setEnglishSide] = useState(false);
-
-  const { choiceN } = useSelector(
-    (/** @type {AppRootState}*/ { settings }) => settings.kanji
-  );
 
   function gotoNext() {
     const l = filteredTerms.length;
@@ -154,66 +125,58 @@ function KanjiGrid(props) {
   const version = useSelector(
     (/** @type {AppRootState}*/ { version }) => version.kanji
   );
-  const { value: kanjiArr } = useSelector(
-    (/** @type {AppRootState}*/ { kanji }) => kanji
-  );
-  /** @type {RawKanji[]} */
-  const rawKanjis = useMemo(() => kanjiArr, [kanjiArr]);
-  useKanjiStore(dispatch, version, rawKanjis);
+
+  const rawKanjis = useKanjiStore(dispatch, version);
 
   const {
+    choiceN,
     activeTags,
     filter: filterType,
     reinforce,
     repetition,
   } = useSelector((/** @type {AppRootState}*/ { settings }) => settings.kanji);
-  repetitionRef.current = repetition;
 
-  /** @type {RawKanji[]} */
-  const filteredTerms = useMemo(() => {
-    // console.log("termFilterByType("+Object.keys(TermFilterBy)[filterType]+", "+rawKanjis.length+", "+activeTags.length+")");
+  const filteredTerms = useFilterTerms(
+    repetition,
+    rawKanjis,
+    reinforce,
+    filterType,
+    activeTags
+  );
+  order.current = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
-    const allFrequency = Object.keys(repetitionRef.current).reduce(
-      (/** @type {string[]}*/ acc, cur) => {
-        if (repetitionRef.current[cur].rein === true) {
-          acc = [...acc, cur];
-        }
-        return acc;
-      },
-      []
-    );
+  const [currExmpl, setCurrExmpl] = useState("");
+  const kanji = useMemo(() => {
+    const k = filteredTerms[order.current[selectedIndex]];
 
-    let filtered = termFilterByType(
-      filterType,
-      rawKanjis,
-      allFrequency,
-      filterType === TermFilterBy.TAGS ? activeTags : [],
-      () => {} // Don't toggle filter if last freq is removed
-    );
-
-    if (reinforce && filterType === TermFilterBy.TAGS) {
-      const filteredList = filtered.map((k) => k.uid);
-      const additional = rawKanjis.filter(
-        (k) => allFrequency.includes(k.uid) && !filteredList.includes(k.uid)
-      );
-
-      filtered = [...filtered, ...additional];
+    if (k) {
+      const englishShortened = oneFromList(k.english);
+      setCurrExmpl(englishShortened);
     }
 
-    order.current = randomOrder(filtered);
-
-    return filtered;
-  }, [filterType, rawKanjis, activeTags, reinforce]);
-
-  const kanji = useMemo(
-    () => filteredTerms[order.current[selectedIndex]],
-    [filteredTerms, selectedIndex]
-  );
+    return k;
+  }, [filteredTerms, selectedIndex]);
   const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
 
+  const choices = useCreateChoices(choiceN, "english", kanji, rawKanjis);
+
+  const nextExample = useCallback(() => {
+    // console.log('hint?')
+
+    if (kanji.english.includes(",")) {
+      let ex = currExmpl;
+      while (ex === currExmpl) {
+        ex = oneFromList(kanji.english);
+      }
+      // console.log(engShort+" "+englishShortened)
+
+      setCurrExmpl(ex);
+    }
+  }, [kanji, currExmpl]);
+
   const game = useMemo(
-    () => prepareGame(choiceN, kanji, filteredTerms, rawKanjis, writePractice),
-    [choiceN, kanji, filteredTerms, rawKanjis, writePractice]
+    () => prepareGame(kanji, choices, writePractice, currExmpl, nextExample),
+    [kanji, choices, writePractice, currExmpl, nextExample]
   );
 
   // console.log("KanjiGrid render "+selectedIndex);

@@ -7,10 +7,10 @@ import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
-  TermFilterBy,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { randomOrder, termFilterByType } from "../../helper/gameHelper";
+import { randomOrder } from "../../helper/gameHelper";
+import { useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
 import { NotReady } from "../Form/NotReady";
 import {
@@ -68,7 +68,10 @@ function createChoices(compareOn, answer, kanjiList) {
 
     // should not be same choices or the right answer
     if (choices.every((c) => c[compareOn] !== choice[compareOn])) {
-      choices = [...choices, choice];
+      choices = [
+        ...choices,
+        { ...choice, english: oneFromList(choice.english) },
+      ];
     }
   }
 
@@ -79,14 +82,13 @@ function createChoices(compareOn, answer, kanjiList) {
 
 /**
  * @param {RawKanji} kanji
- * @param {RawKanji[]} selectedKanjis
  * @param {RawKanji[]} rawKanjis
  */
-function prepareGame(kanji, selectedKanjis, rawKanjis) {
-  if (!kanji || rawKanjis.length === 0 || selectedKanjis.length === 0) return;
-  // console.log("prepareGame("+kanji.english+", "+selectedKanjis.length+", "+rawKanjis.length+")");
+function prepareGame(kanji, rawKanjis) {
+  if (!kanji || rawKanjis.length === 0) return;
+  // console.log("prepareGame("+kanji.english+", "+rawKanjis.length+")");
 
-  const { english, kanji: japanese, on, kun } = kanji;
+  const { uid, kanji: japanese, on, kun } = kanji;
 
   const choices = createChoices("english", kanji, rawKanjis);
 
@@ -120,10 +122,10 @@ function prepareGame(kanji, selectedKanjis, rawKanjis) {
 
   return {
     question: q,
-    answer: english,
+    answer: uid,
     choices: choices.map((c) => ({
-      compare: c.english,
-      toHTML: () => oneFromList(c.english),
+      compare: c.uid,
+      toHTML: () => c.english,
     })),
   };
 }
@@ -134,7 +136,6 @@ function prepareGame(kanji, selectedKanjis, rawKanjis) {
 function KanjiGame(props) {
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
-  const repetitionRef = useRef({});
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -156,12 +157,8 @@ function KanjiGame(props) {
   const version = useSelector(
     (/** @type {AppRootState}*/ { version }) => version.kanji
   );
-  const { value: kanjiArr } = useSelector(
-    (/** @type {AppRootState}*/ { kanji }) => kanji
-  );
-  /** @type {RawKanji[]} */
-  const rawKanjis = useMemo(() => kanjiArr, [kanjiArr]);
-  useKanjiStore(dispatch, version, rawKanjis);
+
+  const rawKanjis = useKanjiStore(dispatch, version);
 
   const {
     activeTags,
@@ -169,43 +166,15 @@ function KanjiGame(props) {
     reinforce,
     repetition,
   } = useSelector((/** @type {AppRootState}*/ { settings }) => settings.kanji);
-  repetitionRef.current = repetition;
 
-  /** @type {RawKanji[]} */
-  const filteredTerms = useMemo(() => {
-    // console.log("termFilterByType("+Object.keys(TermFilterBy)[filterType]+", "+rawKanjis.length+", "+activeTags.length+")");
-
-    const allFrequency = Object.keys(repetitionRef.current).reduce(
-      (/** @type {string[]}*/ acc, cur) => {
-        if (repetitionRef.current[cur].rein === true) {
-          acc = [...acc, cur];
-        }
-        return acc;
-      },
-      []
-    );
-
-    let filtered = termFilterByType(
-      filterType,
-      rawKanjis,
-      allFrequency,
-      filterType === TermFilterBy.TAGS ? activeTags : [],
-      () => {} // Don't toggle filter if last freq is removed
-    );
-
-    if (reinforce && filterType === TermFilterBy.TAGS) {
-      const filteredList = filtered.map((k) => k.uid);
-      const additional = rawKanjis.filter(
-        (k) => allFrequency.includes(k.uid) && !filteredList.includes(k.uid)
-      );
-
-      filtered = [...filtered, ...additional];
-    }
-
-    order.current = randomOrder(filtered);
-
-    return filtered;
-  }, [filterType, rawKanjis, activeTags, reinforce]);
+  const filteredTerms = useFilterTerms(
+    repetition,
+    rawKanjis,
+    reinforce,
+    filterType,
+    activeTags
+  );
+  order.current = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
   const kanji = useMemo(
     () => filteredTerms[order.current[selectedIndex]],
@@ -213,10 +182,7 @@ function KanjiGame(props) {
   );
   const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
 
-  const game = useMemo(
-    () => prepareGame(kanji, filteredTerms, rawKanjis),
-    [kanji, filteredTerms, rawKanjis]
-  );
+  const game = useMemo(() => prepareGame(kanji, rawKanjis), [kanji, rawKanjis]);
 
   // console.log("           KanjiGame render " + selectedIndex);
 
