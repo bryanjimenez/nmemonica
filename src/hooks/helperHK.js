@@ -20,3 +20,12 @@ export function useFade(delay) {
 
   return [!fade, () => setFade(true)];
 }
+
+/**
+ * Force a rerender
+ */
+export function useForceRender() {
+  const [toggle, forceRender] = useState(true);
+
+  return () => forceRender(!toggle);
+}

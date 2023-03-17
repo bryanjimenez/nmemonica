@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useEffect, useRef } from "react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import {
@@ -16,7 +16,7 @@ import {
   faRecycle,
   faRunning,
 } from "@fortawesome/free-solid-svg-icons";
-import { useFade } from "../../hooks/helperHK";
+import { useForceRender } from "../../hooks/helperHK";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -70,29 +70,45 @@ ToggleFuriganaBtn.propTypes = {
 };
 
 /**
- * @typedef {{
- * visible?: boolean,
- * active?: boolean,
- * addFrequencyTerm: (uid:string)=>void,
- * removeFrequencyTerm: (uid:string)=>void,
- * toggle: boolean,
- * term: MinimunRawItem,
- * count?: number,
- * }} ToggleFrequencyTermBtnProps
- * @param {ToggleFrequencyTermBtnProps} props
+ * @typedef {Object} ToggleFrequencyTermBtnProps
+ * @property {boolean} [visible]
+ * @property {boolean} [active]
+ * @property {(uid:string)=>void} addFrequencyTerm
+ * @property {(uid:string)=>void} removeFrequencyTerm
+ * @property {boolean} toggle
+ * @property {MinimunRawItem} term
+ * @property {number} [count]
  */
-export function ToggleFrequencyTermBtn(props) {
-  const [fade, doFade] = useFade(1000);
-  const { addFrequencyTerm, removeFrequencyTerm, toggle, term, count } = props;
+export function ToggleFrequencyTermBtn(
+  /** @type {ToggleFrequencyTermBtnProps}*/ props
+) {
+  const prevCount = useRef(0);
+
+  const {
+    addFrequencyTerm,
+    removeFrequencyTerm,
+    toggle,
+    term,
+    count = prevCount.current, // count is optional
+  } = props;
+  const forceRender = useForceRender();
+
+  const fade = prevCount.current === count;
+
+  useEffect(() => {
+    prevCount.current = count !== undefined ? count : 0;
+
+    if (fade === false) {
+      // fade this time
+      forceRender();
+    }
+  }, [count, fade, forceRender]);
 
   return props.visible === false ? null : (
     <div
       aria-label={toggle ? "Remove term" : "Add term"}
       className="sm-icon-grp clickable"
       onClick={() => {
-        if (count !== undefined && count > -1) {
-          doFade();
-        }
         if (toggle) {
           removeFrequencyTerm(term.uid);
         } else {
@@ -124,6 +140,40 @@ ToggleFrequencyTermBtn.propTypes = {
   term: PropTypes.object,
   count: PropTypes.number,
 };
+
+export const ToggleFrequencyTermBtnMemo = memo(
+  ToggleFrequencyTermBtn,
+  ToggleFrequencyTermBtnIsEq
+);
+
+/**
+ * @param {ToggleFrequencyTermBtnProps} oldProps
+ * @param {ToggleFrequencyTermBtnProps} newProps
+ */
+function ToggleFrequencyTermBtnIsEq(oldProps, newProps) {
+  // console.table({new: newProps, old: oldProps})
+
+  const optionalSame = oldProps.toggle === newProps.toggle;
+
+  const interDepSame =
+    (oldProps.count === newProps.count &&
+      oldProps.toggle === newProps.toggle) ||
+    (oldProps.count === newProps.count &&
+      oldProps.toggle !== newProps.toggle) ||
+    (oldProps.count !== newProps.count && oldProps.toggle === newProps.toggle);
+
+  const reqSame =
+    oldProps.term.uid === newProps.term.uid &&
+    oldProps.active === newProps.active &&
+    oldProps.visible === newProps.visible &&
+    oldProps.addFrequencyTerm === newProps.addFrequencyTerm &&
+    oldProps.removeFrequencyTerm === newProps.removeFrequencyTerm;
+
+  const isSame =
+    (newProps.count !== undefined ? interDepSame : optionalSame) && reqSame;
+
+  return isSame;
+}
 
 /**
  * @typedef {{
