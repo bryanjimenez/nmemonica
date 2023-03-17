@@ -14,7 +14,7 @@ import { useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
 import { NotReady } from "../Form/NotReady";
 import {
-  ToggleFrequencyTermBtn,
+  ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import FourChoices from "./FourChoices";
@@ -220,7 +220,7 @@ function KanjiGame(props) {
           <div className="col text-center"></div>
           <div className="col">
             <div className="d-flex justify-content-end">
-              <ToggleFrequencyTermBtn
+              <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={props.addFrequencyKanji}
                 removeFrequencyTerm={props.removeFrequencyKanji}
                 toggle={term_reinforce}

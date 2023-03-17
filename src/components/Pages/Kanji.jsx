@@ -30,7 +30,7 @@ import {
 import { JapaneseText } from "../../helper/JapaneseText";
 import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 
-import { FrequencyTermIcon, ToggleFrequencyTermBtn } from "../Form/OptionsBar";
+import { FrequencyTermIcon, ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import "./Kanji.css";
 import { isGroupLevel } from "./SetTermTagList";
 
@@ -513,7 +513,7 @@ class Kanji extends Component {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
-              <ToggleFrequencyTermBtn
+              <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={this.props.addFrequencyKanji}
                 removeFrequencyTerm={this.props.removeFrequencyKanji}
                 toggle={term_reinforce}

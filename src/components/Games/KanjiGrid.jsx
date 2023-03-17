@@ -13,7 +13,7 @@ import { useCreateChoices, useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
 import { NotReady } from "../Form/NotReady";
 import {
-  ToggleFrequencyTermBtn,
+  ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
@@ -215,7 +215,7 @@ function KanjiGrid(props) {
           <div className="col">
             <div className="d-flex justify-content-end">
               <span>{game.question.toHTML(false)}</span>
-              <ToggleFrequencyTermBtn
+              <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={props.addFrequencyKanji}
                 removeFrequencyTerm={props.removeFrequencyKanji}
                 toggle={term_reinforce}

@@ -49,7 +49,7 @@ import {
 import {
   FrequencyTermIcon,
   ReCacheAudioBtn,
-  ToggleFrequencyTermBtn,
+  ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -1003,11 +1003,12 @@ class Phrases extends Component {
                   }));
                 }}
               />
-              <ToggleFrequencyTermBtn
+              <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={this.props.addFrequencyPhrase}
                 removeFrequencyTerm={this.props.removeFrequencyPhrase}
                 toggle={phrase_reinforce}
                 term={phrase}
+                count={this.state.frequency.length}
               />
             </div>
           </div>
