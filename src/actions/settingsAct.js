@@ -72,7 +72,16 @@ export const TermSortBy = Object.freeze({
   ALPHABETIC: 1,
   VIEW_DATE: 2,
   GAME: 3,
+  DIFFICULTY: 4,
 });
+
+export const TermSortByLabel = [
+  "Randomized",
+  "Alphabetic",
+  "Staleness",
+  "Space Rep",
+  "Difficulty",
+];
 
 /**
  * @param {number} number
@@ -224,20 +233,19 @@ export function toggleKana() {
  * @returns {ActCreator}
  */
 export function togglePhrasesOrdering() {
+  const max = Object.values(TermSortBy).length - 1;
+  const allowed = /** @type {number[]} */ ([
+    TermSortBy.RANDOM,
+    TermSortBy.VIEW_DATE,
+  ]);
+
   return (dispatch, getState) => {
     const { user } = getState().login;
-
     const { ordered } = getState().settings.phrases;
 
     let newOrdered = ordered + 1;
-    while (
-      newOrdered === TermSortBy.ALPHABETIC ||
-      newOrdered === TermSortBy.GAME
-    ) {
-      newOrdered++;
-    }
-    if (newOrdered >= Object.keys(TermSortBy).length) {
-      newOrdered = 0;
+    while (!allowed.includes(newOrdered) || newOrdered > max) {
+      newOrdered = newOrdered + 1 > max ? 0 : newOrdered + 1;
     }
 
     const path = "/phrases/";
@@ -487,6 +495,12 @@ export function toggleVocabularyHint() {
  * @returns {ActCreator}
  */
 export function toggleVocabularyFilter(override) {
+  const max = Object.values(TermFilterBy).length - 1;
+  const allowed = /** @type {number[]} */ ([
+    TermFilterBy.FREQUENCY,
+    TermFilterBy.GROUP,
+  ]);
+
   return (dispatch, getState) => {
     const { user } = getState().login;
     const { filter, reinforce } = getState().settings.vocabulary;
@@ -495,18 +509,13 @@ export function toggleVocabularyFilter(override) {
     const attr = "filter";
     const time = new Date();
 
-    let newFilter = filter;
+    let newFilter = filter + 1;
     if (override !== undefined) {
       newFilter = override;
     } else {
-        while (
-          newFilter === filter ||
-          newFilter === TermFilterBy.TAGS
-        ) {
-          newFilter = Object.values(TermFilterBy).includes(newFilter + 1)
-          ? newFilter + 1
-          : 0;
-        }
+      while (!allowed.includes(newFilter) || newFilter > max) {
+        newFilter = newFilter + 1 > max ? 0 : newFilter + 1;
+      }
     }
 
     localStoreAttrUpdate(time, getState, path, attr, newFilter);
@@ -977,6 +986,17 @@ export function toggleFurigana(uid) {
 }
 
 /**
+ * @typedef {(uid:string, value:number) => updateSpaceRepTermYield} setWordDifficultyYield
+ * @param {string} uid
+ * @param {number} value
+ */
+export function setWordDifficulty(uid, value) {
+  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+    set: { difficulty: value },
+  });
+}
+
+/**
  * Sets term timed play average stats (correct)
  * @typedef {(uid:string, tpElapsed: number, options?: {pronunciation?: null}) => updateSpaceRepTermYield} setWordTPCorrectYield
  * @param {string} uid
@@ -1215,6 +1235,12 @@ export function updateSpaceRepTerm(
  * @returns {ActCreator}
  */
 export function togglePhrasesFilter(override) {
+  const max = Object.values(TermFilterBy).length - 1;
+  const allowed = /** @type {number[]} */ ([
+    TermFilterBy.FREQUENCY,
+    TermFilterBy.GROUP,
+  ]);
+
   return (dispatch, getState) => {
     const { user } = getState().login;
     const { filter, reinforce } = getState().settings.phrases;
@@ -1223,18 +1249,13 @@ export function togglePhrasesFilter(override) {
     const attr = "filter";
     const time = new Date();
 
-    let newFilter = filter;
+    let newFilter = filter + 1;
     if (override !== undefined) {
       newFilter = override;
     } else {
-        while (
-          newFilter === filter ||
-          newFilter === TermFilterBy.TAGS
-        ) {
-          newFilter = Object.values(TermFilterBy).includes(newFilter + 1)
-          ? newFilter + 1
-          : 0;
-        }
+      while (!allowed.includes(newFilter) || newFilter > max) {
+        newFilter = newFilter + 1 > max ? 0 : newFilter + 1;
+      }
     }
 
     localStoreAttrUpdate(time, getState, path, attr, newFilter);

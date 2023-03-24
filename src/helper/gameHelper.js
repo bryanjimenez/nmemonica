@@ -228,6 +228,8 @@ export function getStaleSpaceRepKeys(repetition, termList, staleLabel) {
   /** @type {{[key in keyof SpaceRepetitionMap["uid"]]:null}} */
   const SpaceRepetitionMapKeys = {
     d: null,
+    difficulty: null,
+    nextReview: null,
     vC: null,
     f: null,
     rein: null,
@@ -467,7 +469,7 @@ export function dateViewOrder(terms, spaceRepObj) {
   }
 
   // prettier-ignore
-  const prevPlayedSort = orderBy(prevPlayedTemp, ["date", "uid"], ["asc", "asc", "asc"]);
+  const prevPlayedSort = orderBy(prevPlayedTemp, ["date", "uid"], ["asc", "asc"]);
 
   // console.log('unPlayed');
   // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
@@ -475,6 +477,65 @@ export function dateViewOrder(terms, spaceRepObj) {
   const prevPlayed = prevPlayedSort.map((el) => el.index);
 
   return [...notPlayed, ...prevPlayed];
+}
+
+/**
+ * Difficulty order
+ * [DecreasingDifficulty, UndefinedDifficulty, KnownTerms]
+ * @param {RawVocabulary[]} terms
+ * @param {SpaceRepetitionMap} spaceRepObj
+ * @returns an array containing the indexes of terms in difficulty order
+ */
+export function difficultyOrder(terms, spaceRepObj) {
+  const knownTermThreshold = 80;
+  /** @typedef {{difficulty: number, uid: string, index: number}} difficultySortable */
+
+  /** @type {number[]} */
+  let undefDifficulty = [];
+  /** @type {difficultySortable[]} */
+  let withDifficulty = [];
+  /** @type {number[]} */
+  let noDifficulty = [];
+
+  for (const tIdx in terms) {
+    const tUid = terms[tIdx].uid;
+    const termRep = spaceRepObj[tUid];
+
+    if (termRep !== undefined && termRep.difficulty !== undefined) {
+      const difficulty = Number(termRep.difficulty);
+      if (difficulty < knownTermThreshold) {
+        withDifficulty = [
+          ...withDifficulty,
+          {
+            difficulty,
+            uid: tUid,
+            index: Number(tIdx),
+          },
+        ];
+      } else {
+        // noDifficulty = [
+        //   ...noDifficulty,
+        //   {
+        //     difficulty,
+        //     uid: tUid,
+        //     index: Number(tIdx),
+        //   },
+        // ];
+        noDifficulty = [...noDifficulty, Number(tIdx)];
+      }
+    } else {
+      undefDifficulty = [...undefDifficulty, Number(tIdx)];
+    }
+  }
+
+  // prettier-ignore
+  const withDifficultySort = orderBy(withDifficulty, ["difficulty", "uid"], ["asc", "asc"]);
+  // const noDifficultySort = orderBy(noDifficulty, ["difficulty", "uid"], ["asc", "asc"]);
+
+  const descDifficulty = withDifficultySort.map((el) => el.index);
+  // const easyDifficulty = noDifficulty.map((el) => el.index);
+
+  return [...descDifficulty, ...undefDifficulty, ...noDifficulty];
 }
 /**
  *

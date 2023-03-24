@@ -1,0 +1,23 @@
+#arrow,
+#arrow::before {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+}
+
+#arrow {
+  visibility: hidden;
+}
+
+#arrow::before {
+  visibility: visible;
+  content: "";
+  transform: rotate(45deg);
+}
+
+#tooltip {
+  background: rgb(227, 227, 227, 0.4);
+  border-radius: 8px;
+  padding: 10px 0;
+}

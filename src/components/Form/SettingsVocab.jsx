@@ -20,6 +20,7 @@ import {
   toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
   updateVerbColSplit,
+  TermSortByLabel,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 
@@ -196,12 +197,7 @@ class SettingsVocab extends Component {
                   active={vocabOrder % 2 == 0}
                   action={toggleVocabularyOrdering}
                   color="default"
-                  statusText={labelOptions(vocabOrder, [
-                    "Randomized",
-                    "Alphabetic",
-                    "Staleness",
-                    "Space Rep",
-                  ])}
+                  statusText={labelOptions(vocabOrder, TermSortByLabel)}
                 />
               </div>
               <div className="mb-2">

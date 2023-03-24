@@ -60,9 +60,12 @@ export interface SpaceRepetitionMap {
      **/
     d: string;
     /** View count */ vC: number;
+    difficulty: number;
+    /** number of days to */ nextReview: number;
+
     /** Furigana shown (yes:undefined|true) */ f?: boolean;
     /** Reinforce */ rein?: boolean;
-    /** Pronunciation incorrect */ pron?: true,
+    /** Pronunciation incorrect */ pron?: true;
 
     /** Timed play play-count */ tpPc?: number;
     /** Timed play accuracy [0,1] */ tpAcc?: number;
@@ -123,14 +126,14 @@ export type SetState<T> = SetStateOb<T> & SetStateFn<T>;
  * Removes optional (?) from all of O's properties
  * @param O Object to remove optional attribute from properties
  */
- export type WithoutOpt<O> = {
+export type WithoutOpt<O> = {
   [k in keyof O]-?: O[k];
-}
+};
 
 /**
  * @param O Object
  * @param type type to filter
  */
-export type FilterKeysOfType<O,type> = {
-  [k in keyof WithoutOpt<O>]: WithoutOpt<O>[k] extends type? k: never
-}[keyof O]
+export type FilterKeysOfType<O, type> = {
+  [k in keyof WithoutOpt<O>]: WithoutOpt<O>[k] extends type ? k : never;
+}[keyof O];

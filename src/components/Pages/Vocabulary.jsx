@@ -18,6 +18,7 @@ import {
   setWordTPCorrect,
   setWordTPIncorrect,
   TermSortBy,
+  setWordDifficulty,
 } from "../../actions/settingsAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -46,6 +47,7 @@ import {
   motionThresholdCondition,
   getDeviceMotionEventPermission,
   dateViewOrder,
+  difficultyOrder,
 } from "../../helper/gameHelper";
 import { logger } from "../../actions/consoleAct";
 import {
@@ -57,6 +59,7 @@ import {
 } from "../../helper/consoleHelper";
 import {
   getSwipeDirection,
+  isSwipeIgnored,
   swipeEnd,
   swipeMove,
   swipeStart,
@@ -82,6 +85,7 @@ import {
 } from "../Form/OptionsBar";
 import Console from "../Form/Console";
 import { MinimalUI } from "../Form/MinimalUI";
+import { DifficultySlider } from "../Form/Difficulty";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -144,6 +148,7 @@ import { MinimalUI } from "../Form/MinimalUI";
  * @property {import("../../actions/settingsAct").updateSpaceRepWordYield} updateSpaceRepWord
  * @property {import("../../actions/settingsAct").setWordTPCorrectYield} setWordTPCorrect
  * @property {import("../../actions/settingsAct").setWordTPIncorrectYield} setWordTPIncorrect
+ * @property {import("../../actions/settingsAct").setWordDifficultyYield} setWordDifficulty
  * @property {typeof logger} logger
  * @property {string} verbForm
  * @property {number} swipeThreshold
@@ -824,6 +829,10 @@ class Vocabulary extends Component {
       } else {
         newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
       }
+    } else if (this.props.termsOrder === TermSortBy.DIFFICULTY) {
+      this.props.logger("Difficulty", DebugLevel.DEBUG);
+
+      newOrder = difficultyOrder(filteredVocab, this.props.repetition);
     } else {
       this.props.logger("Alphabetic", DebugLevel.DEBUG);
       ({
@@ -917,6 +926,10 @@ class Vocabulary extends Component {
    * @type {TouchEventHandler}
    */
   startMove(e) {
+    if (isSwipeIgnored(e)) {
+      return;
+    }
+
     const swiping = swipeStart(e, {
       verticalSwiping: true,
       touchThreshold: this.props.swipeThreshold,
@@ -938,6 +951,10 @@ class Vocabulary extends Component {
    * @type {TouchEventHandler}
    */
   endMove(e) {
+    if (!this.state.swiping) {
+      return;
+    }
+
     /** @type {function} */
     let swipeHandler = this.swipeActionHandler;
     const noop = () => {};
@@ -1431,6 +1448,10 @@ class Vocabulary extends Component {
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">
+                <DifficultySlider
+                  value={this.props.repetition[uid]?.difficulty}
+                  onChange={(value) => this.props.setWordDifficulty(uid, value)}
+                />
                 <TimePlayVerifyBtns
                   visible={this.state.tpAnswered !== undefined}
                   hover={this.state.tpBtn}
@@ -1631,6 +1652,7 @@ Vocabulary.propTypes = {
   updateSpaceRepWord: PropTypes.func,
   setWordTPCorrect: PropTypes.func,
   setWordTPIncorrect: PropTypes.func,
+  setWordDifficulty: PropTypes.func,
   logger: PropTypes.func,
   verbForm: PropTypes.string,
   swipeThreshold: PropTypes.number,
@@ -1651,6 +1673,7 @@ export default connect(mapStateToProps, {
   updateSpaceRepWord,
   setWordTPCorrect,
   setWordTPIncorrect,
+  setWordDifficulty,
   logger,
 })(Vocabulary);
 

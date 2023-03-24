@@ -12,6 +12,7 @@ import {
   togglePhrasesFilter,
   togglePhrasesReinforcement,
   togglePhrasesRomaji,
+  TermSortByLabel,
 } from "../../actions/settingsAct";
 
 import SettingsSwitch from "./SettingsSwitch";
@@ -145,12 +146,7 @@ class SettingsPhrase extends Component {
                     active={phraseOrder === TermSortBy.RANDOM}
                     action={togglePhrasesOrdering}
                     color="default"
-                    statusText={labelOptions(phraseOrder, [
-                      "Randomized",
-                      "NOT_USED_Alphabetic",
-                      "Staleness",
-                      "NOT_USED_Space Rep",
-                    ])}
+                    statusText={labelOptions(phraseOrder, TermSortByLabel)}
                   />
                 </div>
                 <div className="mb-2">

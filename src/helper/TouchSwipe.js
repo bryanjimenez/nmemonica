@@ -1,6 +1,8 @@
 "use strict";
 // https://github.com/akiran/react-slick
 
+export const TouchSwipeIgnoreCss = "slick-swipe-ignore";
+
 /**
  * @typedef {Object} Spec
  * @property {boolean} verticalSwiping
@@ -178,4 +180,18 @@ export function swipeEnd(e, spec) {
   };
 
   return state;
+}
+
+/**
+ * Test if touch event originates from
+ * swipe-ignore element
+ * @param {import("react").TouchEvent} e
+ */
+export function isSwipeIgnored(e) {
+  const tEl = /** @type {Element} */ (e.target);
+  const targetSwipeIgnore = Array.from(
+    document.getElementsByClassName(TouchSwipeIgnoreCss)
+  ).some((el) => el.contains(tEl));
+
+  return targetSwipeIgnore;
 }
