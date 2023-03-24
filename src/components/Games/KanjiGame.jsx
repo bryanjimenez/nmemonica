@@ -55,19 +55,28 @@ export function oneFromList(english) {
 
 /**
  * Returns a list of choices which includes the right answer
- * @param {keyof RawKanji} compareOn
  * @param {RawKanji} answer
  * @param {RawKanji[]} kanjiList
  */
-function createChoices(compareOn, answer, kanjiList) {
-  let choices = [answer];
+function createEnglishChoices(answer, kanjiList) {
+  const splitToArray = (/** @type {string} */ term) =>
+    term.split(",").map((s) => s.trim());
+  let choices = [{ ...answer, english: oneFromList(answer.english) }];
+
+  const aArr = splitToArray(answer.english);
+
   while (choices.length < 4) {
     const i = Math.floor(Math.random() * kanjiList.length);
 
     const choice = kanjiList[i];
+    const cArr = splitToArray(choice.english);
 
-    // should not be same choices or the right answer
-    if (choices.every((c) => c[compareOn] !== choice[compareOn])) {
+    // should not match the right answer(s)
+    // should not match a previous choice
+    if (
+      cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
+      cArr.every((cCurr) => choices.every((cPrev) => cCurr !== cPrev.english))
+    ) {
       choices = [
         ...choices,
         { ...choice, english: oneFromList(choice.english) },
@@ -90,7 +99,7 @@ function prepareGame(kanji, rawKanjis) {
 
   const { uid, kanji: japanese, on, kun } = kanji;
 
-  const choices = createChoices("english", kanji, rawKanjis);
+  const choices = createEnglishChoices(kanji, rawKanjis);
 
   /** @type {import("./FourChoices").GameQuestion} */
   const q = {
