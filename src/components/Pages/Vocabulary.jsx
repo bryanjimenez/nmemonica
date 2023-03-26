@@ -1448,10 +1448,6 @@ class Vocabulary extends Component {
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">
-                <DifficultySlider
-                  value={this.props.repetition[uid]?.difficulty}
-                  onChange={(value) => this.props.setWordDifficulty(uid, value)}
-                />
                 <TimePlayVerifyBtns
                   visible={this.state.tpAnswered !== undefined}
                   hover={this.state.tpBtn}
@@ -1485,6 +1481,10 @@ class Vocabulary extends Component {
                       tpBtn: state.tpBtn === "reset" ? undefined : "reset",
                     }));
                   }}
+                />
+                <DifficultySlider
+                  value={this.props.repetition[uid]?.difficulty}
+                  onChange={(value) => this.props.setWordDifficulty(uid, value)}
                 />
                 <ShowHintBtn
                   visible={this.props.hintEnabled}

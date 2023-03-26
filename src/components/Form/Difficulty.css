@@ -1,23 +1,25 @@
-#arrow,
-#arrow::before {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: inherit;
-}
-
-#arrow {
-  visibility: hidden;
-}
-
-#arrow::before {
-  visibility: visible;
-  content: "";
-  transform: rotate(45deg);
+.dark-mode #tooltip {
+  background: #424242;
 }
 
 #tooltip {
-  background: rgb(227, 227, 227, 0.4);
+  background: #f5f5f5;
   border-radius: 8px;
-  padding: 10px 0;
+  padding: 20px 0;
+
+  -webkit-transition: visibility 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transition: visibility 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+#tooltip :first-child {
+  z-index: 1; /** show slider shadow above #arrow */
+}
+
+.tooltip-fade {
+  opacity: 0;
+}
+
+#arrow {
+  background: inherit;
+  transform: rotate(45deg);
 }

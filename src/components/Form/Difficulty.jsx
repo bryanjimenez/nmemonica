@@ -1,10 +1,10 @@
+import { useFloating, arrow } from "@floating-ui/react-dom";
 import { faBullseye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Slider } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
-import { usePopper } from "react-popper";
+import React, { useEffect, useRef, useState } from "react";
 import { lerp } from "../../helper/arrayHelper";
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
 
@@ -29,9 +29,11 @@ export function DifficultySlider(props) {
 
   const t = value / 100;
 
-  const RY = [255, lerp(0, 255, t), 0]; // [255,0,0],   [255,255,0]
-  const YG = [lerp(255, 0, t), 255, 0]; // [255,255,0], [0,255,0]
-  const GB = [0, lerp(255, 0, t), lerp(0, 255, t)]; // [0,255,0],   [0,0,255]
+  const [rB, gB, bB] = [13, 110, 256]; // nice blue
+
+  const RY = [255, lerp(0, 255, t), 0];               // [255,0,0],   [255,255,0]
+  const YG = [lerp(255, 0, t), 255, 0];               // [255,255,0], [0,255,0]
+  const GB = [rB, lerp(255, gB, t), lerp(0, bB, t)];  // [0,255,0],   [0,0,255]
 
   const RY_YG = [
     lerp(RY[0], YG[0], t),
@@ -61,34 +63,22 @@ export function DifficultySlider(props) {
     },
   ];
 
-  // FIXME: cleanup
-  // const refactorStyle = {
-  //   height: "200px",
-  //   transformOrigin: "bottom",
-  //   transform: "rotate(25deg)",
-  // };
-
-  // https://popper.js.org/react-popper/v2/
-  // https://popper.js.org/docs/v2/modifiers/arrow/
-  const [referenceElement, setReferenceElement] = useState(
-    /** @type {HTMLDivElement | null}*/ (null)
-  );
-  const [popperElement, setPopperElement] = useState(
-    /** @type {HTMLDivElement | null}*/ (null)
-  );
   const [showSlider, setShowSlider] = useState(-1);
-  const [arrowElement, setArrowElement] = useState(
-    /** @type {HTMLDivElement | null}*/ (null)
-  );
-  const { styles, attributes } = usePopper(referenceElement, popperElement, {
-    placement: "top-start",
-    modifiers: [{ name: "arrow", options: { element: arrowElement } }],
+  const arrowRef = useRef(null);
+
+  // https://floating-ui.com/docs/react
+  const xOffset = 8;  // horizontal alignment spacing
+  const yOffset = 10; // vertical spacing between tooltip and element
+  const arrowW = 8;   // arrow width
+  const { x, y, strategy, refs, middlewareData } = useFloating({
+    placement: "top",
+    middleware: [arrow({ element: arrowRef })],
   });
 
   return (
     <>
       <div
-        ref={setReferenceElement}
+        ref={refs.setReference}
         className="sm-icon-grp clickable"
         aria-label="Set difficulty"
         onClick={() => {
@@ -105,23 +95,28 @@ export function DifficultySlider(props) {
       </div>
       <div
         id="tooltip"
-        ref={setPopperElement}
+        ref={refs.setFloating}
+        style={{
+          height: "200px",
+          position: strategy,
+          top: y !== null ? y - yOffset : 0,
+          left: x !== null ? x + xOffset : 0,
+          width: "max-content",
+        }}
         className={classNames({
           invisible: showSlider < 0,
+          "tooltip-fade": showSlider < 0,
           [TouchSwipeIgnoreCss]: true,
         })}
-        style={{ height: "200px", ...styles.popper }}
-        {...attributes.popper}
       >
         <Slider
           sx={{ color: difficultyColor }}
           orientation="vertical"
           value={value}
-          // defaultValue={defaultDiffVal}
           onChange={(e, newValue) => {
-            if (showSlider > 0) {
-              clearTimeout(showSlider);
-            }
+            clearTimeout(showSlider);
+            setShowSlider(0);
+
             if (typeof newValue === "number") {
               setValue(newValue);
             }
@@ -142,7 +137,17 @@ export function DifficultySlider(props) {
           // valueLabelDisplay="on"
           valueLabelFormat={(value) => (value > 35 ? "Pass" : "Fail")}
         />
-        <div ref={setArrowElement} /*id="arrow"*/ style={styles.arrow} />
+        <div
+          ref={arrowRef}
+          id="arrow"
+          style={{
+            position: strategy,
+            height: arrowW,
+            width: arrowW,
+            bottom: -arrowW / 2,
+            left: middlewareData.arrow?.x ?? 0,
+          }}
+        />
       </div>
     </>
   );
