@@ -7,7 +7,8 @@ import {
 } from "../../../environment.development";
 import { defineString } from "firebase-functions/v2/params";
 
-const DEV_ORIGIN = defineString("DEV_ORIGIN").value();
+const DEV_ORIGIN = defineString("DEV_ORIGIN");
+const DEV_ENV = defineString("DEV_ENV").equals("true");
 
 /**
  * Authorization required if the origin is development
@@ -15,7 +16,7 @@ const DEV_ORIGIN = defineString("DEV_ORIGIN").value();
  */
 function requiredHeaders(origin) {
   let allowedHeaders = ["Content-Type"];
-  if (origin === DEV_ORIGIN) {
+  if (origin === DEV_ORIGIN.value()) {
     // development required headers
     allowedHeaders = [...allowedHeaders, "Authorization"];
   }
@@ -84,12 +85,21 @@ function log(message, severity) {
 }
 
 export async function g_translate_pronounce(req, res) {
-  const originIdx = pronounceAllowedOrigins.indexOf(req.headers.origin);
+  const isDevelopment = DEV_ENV.value();
+  const devOrigin = DEV_ORIGIN.value();
+  const devReferer = devOrigin + "/";
+
   const origin =
-    originIdx === -1
-      ? pronounceAllowedOrigins[0]
-      : pronounceAllowedOrigins[originIdx];
+    [...pronounceAllowedOrigins, devOrigin].find(
+      (o) => o === req.headers.origin
+    ) || pronounceAllowedOrigins[0];
+
+  // must be set before req.method check
   res.set("Access-Control-Allow-Origin", origin);
+
+  const prodReferer = pronounceAllowedOrigins
+    .map((o) => o + "/")
+    .includes(req.headers.referer);
 
   if (req.method === "OPTIONS") {
     // Send response to OPTIONS requests
@@ -100,7 +110,13 @@ export async function g_translate_pronounce(req, res) {
 
     return res.sendStatus(204);
   } else if (req.method === "GET") {
-    if (req.headers.origin === DEV_ORIGIN) {
+    if (isDevelopment) {
+      log("Development", "NOTICE");
+    } else if (prodReferer) {
+      // allowed referer
+    } else if (req.headers.referer === devReferer) {
+      // dev referer
+
       try {
         const idToken = getIdToken(req.headers);
         // log("Raw: " + idToken.slice(0, 4) + "..." + idToken.slice(-4), "DEBUG");
@@ -116,6 +132,7 @@ export async function g_translate_pronounce(req, res) {
 
         if (allowErr.some((iE) => e.message.includes(iE))) {
           // allow these errors
+          log("Authenticated", "INFO");
         } else if (
           e.cause?.code === "MissingAuth" ||
           rejectErr.some((rE) => e.message.includes(rE))
@@ -127,6 +144,18 @@ export async function g_translate_pronounce(req, res) {
           return res.status(403).send("Unauthorized");
         }
       }
+    } else {
+      // unknown origin/referer
+      // failed Access-Control-Allow-Origin
+      log(
+        {
+          message: "Unknown origin",
+          origin: req.headers.origin,
+          referer: req.header.referer,
+        },
+        "ALERT"
+      );
+      return res.sendStatus(401);
     }
 
     const { q, tl } = req.query;
