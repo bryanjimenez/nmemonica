@@ -13,8 +13,11 @@ const ContentSecurityPolicy = "<!--Content-Security-Policy-->";
 const ContentSecurityPolicyTag =
   `<meta http-equiv="Content-Security-Policy" content="default-src 'self' ` +
   firebaseConfig.databaseURL +
+  `; script-src 'self'` +
   `; media-src ` +
   gCloudFn +
+  `; connect-src 'self' `+
+  firebaseConfig.databaseURL+" "+ gCloudFn +
   `; style-src 'self' 'unsafe-inline';" />`;
 
 // FIXME: remove unsafe-inline ^^^
