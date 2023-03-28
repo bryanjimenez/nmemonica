@@ -1,4 +1,4 @@
-import { useFloating, arrow } from "@floating-ui/react-dom";
+import { arrow, offset, shift, useFloating } from "@floating-ui/react-dom";
 import { faBullseye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Slider } from "@mui/material";
@@ -7,6 +7,7 @@ import PropTypes from "prop-types";
 import React, { useEffect, useRef, useState } from "react";
 import { lerp } from "../../helper/arrayHelper";
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
+import { useWindowSize } from "../../hooks/helperHK";
 
 import "./Difficulty.css";
 
@@ -63,6 +64,8 @@ export function DifficultySlider(props) {
     },
   ];
 
+  const w = useWindowSize();
+
   const [showSlider, setShowSlider] = useState(-1);
   const arrowRef = useRef(null);
 
@@ -72,7 +75,11 @@ export function DifficultySlider(props) {
   const arrowW = 8;   // arrow width
   const { x, y, strategy, refs, middlewareData } = useFloating({
     placement: "top",
-    middleware: [arrow({ element: arrowRef })],
+    middleware: [
+      offset({ mainAxis: xOffset, crossAxis: yOffset }),
+      shift(2 * (w.height??0) + (w.width??0)), // FIXME: force a recalculate on window resize
+      arrow({ element: arrowRef }),
+    ],
   });
 
   return (
@@ -99,8 +106,8 @@ export function DifficultySlider(props) {
         style={{
           height: "200px",
           position: strategy,
-          top: y !== null ? y - yOffset : 0,
-          left: x !== null ? x + xOffset : 0,
+          top: y ?? 0,
+          left: x ?? 0,
           width: "max-content",
         }}
         className={classNames({
@@ -145,7 +152,7 @@ export function DifficultySlider(props) {
             height: arrowW,
             width: arrowW,
             bottom: -arrowW / 2,
-            left: middlewareData.arrow?.x ?? 0,
+            left: xOffset + (middlewareData.arrow?.x ?? 0),
           }}
         />
       </div>
