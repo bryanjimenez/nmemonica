@@ -6,6 +6,7 @@ import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useEffect, useRef, useState } from "react";
 import { lerp } from "../../helper/arrayHelper";
+import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/gameHelper";
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
 import { useWindowSize } from "../../hooks/helperHK";
 
@@ -59,7 +60,11 @@ export function DifficultySlider(props) {
 
   const marks = [
     {
-      value: 30,
+      value: MEMORIZED_THRLD,
+      // label: "memorized"
+    },
+    {
+      value: DIFFICULTY_THRLD,
       // label: "cutoff",
     },
   ];
@@ -142,7 +147,7 @@ export function DifficultySlider(props) {
           marks={marks}
           step={10}
           // valueLabelDisplay="on"
-          valueLabelFormat={(value) => (value > 35 ? "Pass" : "Fail")}
+          valueLabelFormat={(value) => (value > DIFFICULTY_THRLD ? "Pass" : "Fail")}
         />
         <div
           ref={arrowRef}

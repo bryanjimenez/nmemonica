@@ -480,6 +480,14 @@ export function dateViewOrder(terms, spaceRepObj) {
 }
 
 /**
+ * Below this threshold considered not memorized
+ */
+export const MEMORIZED_THRLD = 80;
+/**
+ * At or below this threshold considered incorrect
+ */
+export const DIFFICULTY_THRLD = 30;
+/**
  * Difficulty order
  * [DecreasingDifficulty, UndefinedDifficulty, KnownTerms]
  * @param {RawVocabulary[]} terms
@@ -487,7 +495,6 @@ export function dateViewOrder(terms, spaceRepObj) {
  * @returns an array containing the indexes of terms in difficulty order
  */
 export function difficultyOrder(terms, spaceRepObj) {
-  const knownTermThreshold = 80;
   /** @typedef {{difficulty: number, uid: string, index: number}} difficultySortable */
 
   /** @type {number[]} */
@@ -503,7 +510,7 @@ export function difficultyOrder(terms, spaceRepObj) {
 
     if (termRep !== undefined && termRep.difficulty !== undefined) {
       const difficulty = Number(termRep.difficulty);
-      if (difficulty < knownTermThreshold) {
+      if (difficulty < MEMORIZED_THRLD) {
         withDifficulty = [
           ...withDifficulty,
           {
