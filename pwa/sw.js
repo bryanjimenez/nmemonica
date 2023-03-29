@@ -161,7 +161,13 @@ self.addEventListener("fetch", (e) => {
         countIDBItem(db);
 
         return fetchP
-          .then((res) => res.blob())
+          .then((res) => {
+            if (!res.ok) {
+              clientLogger("fetch", ERROR);
+              throw new Error("Network response was not OK"+(res.status?" ("+res.status+")":""));
+            }
+            return res.blob()
+          })
           .then((blob) =>
             putIDBItem(
               { db },
@@ -205,8 +211,13 @@ self.addEventListener("fetch", (e) => {
             clientLogger("IDB.get [] " + word, WARN);
 
             return fetch(myRequest)
-              .then((res) => res.blob())
-              .then((blob) =>
+              .then((res) => {
+                if (!res.ok) {
+                  clientLogger("fetch", ERROR);
+                  throw new Error("Network response was not OK"+(res.status?" ("+res.status+")":""));
+                }
+                return res.blob()
+              }).then((blob) =>
                 addIDBItem({ db }, { uid, blob }).then((dataO) =>
                   toResponse(dataO)
                 )
