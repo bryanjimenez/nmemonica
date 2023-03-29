@@ -1,51 +1,52 @@
+import { LinearProgress } from "@mui/material";
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import PropTypes from "prop-types";
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import { pronounceEndoint } from "../../../environment.development";
+import { logger } from "../../actions/consoleAct";
 import { getPhrases } from "../../actions/phrasesAct";
 import {
   addFrequencyPhrase,
-  updateSpaceRepPhrase,
+  DebugLevel,
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
-  togglePhrasesFilter,
   TermFilterBy,
-  DebugLevel,
   TermSortBy,
+  togglePhrasesFilter,
+  updateSpaceRepPhrase,
 } from "../../actions/settingsAct";
-import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
-import { NotReady } from "../Form/NotReady";
-import StackNavButton from "../Form/StackNavButton";
-import { LinearProgress } from "@mui/material";
+import {} from "../../actions/vocabularyAct";
+import { fetchAudio } from "../../helper/audioHelper";
+import { logify, spaceRepLog } from "../../helper/consoleHelper";
 import {
   alphaOrder,
-  play,
-  minimumTimeForSpaceRepUpdate,
-  randomOrder,
-  termFilterByType,
-  getTermUID,
-  getTerm,
-  labelPlacementHelper,
-  loopN,
-  pause,
-  fadeOut,
   dateViewOrder,
   getCacheUID,
+  getTerm,
+  getTermUID,
+  labelPlacementHelper,
+  loopN,
+  minimumTimeForSpaceRepUpdate,
+  pause,
+  play,
+  randomOrder,
+  termFilterByType,
 } from "../../helper/gameHelper";
-import { logger } from "../../actions/consoleAct";
-import { logify, spaceRepLog } from "../../helper/consoleHelper";
-import {} from "../../actions/vocabularyAct";
-import AudioItem from "../Form/AudioItem";
-import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
-import { pronounceEndoint } from "../../../environment.development";
-import { addParam } from "../../helper/urlHelper";
-import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
+import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import {
   mediaSessionAttach,
   mediaSessionDetachAll,
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
 } from "../../helper/mediaHelper";
+import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
+import { addParam } from "../../helper/urlHelper";
+import AudioItem from "../Form/AudioItem";
+import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
+import Console from "../Form/Console";
+import { MinimalUI } from "../Form/MinimalUI";
+import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
   ReCacheAudioBtn,
@@ -53,9 +54,8 @@ import {
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
-import { MinimalUI } from "../Form/MinimalUI";
-import Console from "../Form/Console";
 import Sizable from "../Form/Sizable";
+import StackNavButton from "../Form/StackNavButton";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -658,12 +658,8 @@ class Phrases extends Component {
    * @param {AbortController} [AbortController]
    */
   swipeActionHandler(direction, AbortController) {
-    // this.props.logger("swiped " + direction, 3);
+    // this.props.logger("swiped " + direction, DebugLevel.WARN);
     let swipePromise;
-    // @ts-expect-error Error.cause
-    const userAbortError = new Error("User interrupted audio playback.", {
-      cause: { code: "UserAborted" },
-    });
 
     if (direction === "left") {
       this.gotoNextSlide();
@@ -690,39 +686,7 @@ class Phrases extends Component {
           uid,
         });
 
-        const japaneseAudio = new Audio(audioUrl);
-        try {
-          swipePromise = Promise.all([
-            /** @type {Promise<void>} */
-            (
-              new Promise((resolve, reject) => {
-                const listener = () => {
-                  fadeOut(japaneseAudio).then(() => {
-                    reject(userAbortError);
-                  });
-                };
-
-                japaneseAudio.addEventListener("ended", () => {
-                  AbortController?.signal.removeEventListener(
-                    "abort",
-                    listener
-                  );
-                  resolve();
-                });
-
-                if (AbortController?.signal.aborted) {
-                  listener();
-                }
-
-                AbortController?.signal.addEventListener("abort", listener);
-              })
-            ),
-
-            japaneseAudio.play(),
-          ]);
-        } catch (e) {
-          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
-        }
+        swipePromise = fetchAudio(audioUrl, AbortController);
       } else if (direction === "down") {
         const inEnglish = phrase.english;
 
@@ -732,39 +696,7 @@ class Phrases extends Component {
           uid: phrase.uid + ".en",
         });
 
-        const englishAudio = new Audio(audioUrl);
-        try {
-          swipePromise = Promise.all([
-            /** @type {Promise<void>} */
-            (
-              new Promise((resolve, reject) => {
-                const listener = () => {
-                  fadeOut(englishAudio).then(() => {
-                    reject(userAbortError);
-                  });
-                };
-
-                englishAudio.addEventListener("ended", () => {
-                  AbortController?.signal.removeEventListener(
-                    "abort",
-                    listener
-                  );
-                  resolve();
-                });
-
-                if (AbortController?.signal.aborted) {
-                  listener();
-                }
-
-                AbortController?.signal.addEventListener("abort", listener);
-              })
-            ),
-
-            englishAudio.play(),
-          ]);
-        } catch (e) {
-          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
-        }
+        swipePromise = fetchAudio(audioUrl, AbortController);
       }
     }
     return swipePromise || Promise.reject();

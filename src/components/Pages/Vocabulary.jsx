@@ -1,55 +1,36 @@
+import { Avatar, Grow, LinearProgress } from "@mui/material";
+import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import partition from "lodash/partition";
+import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import PropTypes from "prop-types";
-import partition from "lodash/partition";
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import { getVocabulary } from "../../actions/vocabularyAct";
 import {
-  flipVocabularyPracticeSide,
   addFrequencyWord,
+  DebugLevel,
+  flipVocabularyPracticeSide,
   removeFrequencyWord,
   scrollingState,
-  toggleAutoVerbView,
-  toggleVocabularyFilter,
-  updateSpaceRepWord,
-  toggleFurigana,
-  TermFilterBy,
-  DebugLevel,
+  setWordDifficulty,
   setWordTPCorrect,
   setWordTPIncorrect,
+  TermFilterBy,
   TermSortBy,
-  setWordDifficulty,
+  toggleAutoVerbView,
+  toggleFurigana,
+  toggleVocabularyFilter,
+  updateSpaceRepWord,
 } from "../../actions/settingsAct";
+import { getVocabulary } from "../../actions/vocabularyAct";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
-import { Avatar, Grow, LinearProgress } from "@mui/material";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
-import VocabularyMain from "./VocabularyMain";
 import VerbMain from "./VerbMain";
+import VocabularyMain from "./VocabularyMain";
 // import { deepOrange } from "@mui/material";
-import {
-  alphaOrder,
-  play,
-  minimumTimeForSpaceRepUpdate,
-  randomOrder,
-  spaceRepOrder,
-  termFilterByType,
-  verbToTargetForm,
-  getTermUID,
-  getTerm,
-  getCacheUID,
-  loopN,
-  pause,
-  fadeOut,
-  toggleFuriganaSettingHelper,
-  minimumTimeForTimedPlay,
-  motionThresholdCondition,
-  getDeviceMotionEventPermission,
-  dateViewOrder,
-  difficultyOrder,
-} from "../../helper/gameHelper";
+import { pronounceEndoint } from "../../../environment.development";
 import { logger } from "../../actions/consoleAct";
+import { fetchAudio } from "../../helper/audioHelper";
 import {
   answerSeconds,
   logify,
@@ -58,21 +39,43 @@ import {
   timedPlayLog,
 } from "../../helper/consoleHelper";
 import {
-  getSwipeDirection,
-  isSwipeIgnored,
-  swipeEnd,
-  swipeMove,
-  swipeStart,
-} from "../../helper/TouchSwipe";
-import { pronounceEndoint } from "../../../environment.development";
-import { addParam } from "../../helper/urlHelper";
-import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
+  alphaOrder,
+  dateViewOrder,
+  difficultyOrder,
+  getCacheUID,
+  getDeviceMotionEventPermission,
+  getTerm,
+  getTermUID,
+  loopN,
+  minimumTimeForSpaceRepUpdate,
+  minimumTimeForTimedPlay,
+  motionThresholdCondition,
+  pause,
+  play,
+  randomOrder,
+  spaceRepOrder,
+  termFilterByType,
+  toggleFuriganaSettingHelper,
+  verbToTargetForm,
+} from "../../helper/gameHelper";
 import {
   mediaSessionAttach,
   mediaSessionDetachAll,
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
 } from "../../helper/mediaHelper";
+import {
+  getSwipeDirection,
+  isSwipeIgnored,
+  swipeEnd,
+  swipeMove,
+  swipeStart,
+} from "../../helper/TouchSwipe";
+import { addParam } from "../../helper/urlHelper";
+import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
+import Console from "../Form/Console";
+import { DifficultySlider } from "../Form/Difficulty";
+import { MinimalUI } from "../Form/MinimalUI";
 import {
   FrequencyTermIcon,
   ReCacheAudioBtn,
@@ -83,9 +86,6 @@ import {
   ToggleFuriganaBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
-import Console from "../Form/Console";
-import { MinimalUI } from "../Form/MinimalUI";
-import { DifficultySlider } from "../Form/Difficulty";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
@@ -578,7 +578,7 @@ class Vocabulary extends Component {
     this.loopAbortControllers = [ac1, ac2, ac3, ac4, ac5];
     this.forceUpdate();
 
-    /** @type {(ac: AbortController) => Promise<[void] | [void, void]>} */
+    /** @type {(ac: AbortController) => Promise<Awaited<void>[]>} */
     let gamePropmt;
     /** @type {(ac: AbortController) => Promise<void>} */
     let gameResponse;
@@ -1101,12 +1101,8 @@ class Vocabulary extends Component {
    * @param {AbortController} [AbortController]
    */
   swipeActionHandler(direction, AbortController) {
-    // this.props.logger("swiped " + direction, 3);
+    // this.props.logger("swiped " + direction, DebugLevel.WARN);
     let swipePromise;
-    // @ts-expect-error Error.cause
-    const userAbortError = new Error("User interrupted audio playback.", {
-      cause: { code: "UserAborted" },
-    });
 
     if (direction === "left") {
       this.gotoNextSlide();
@@ -1161,39 +1157,7 @@ class Vocabulary extends Component {
           uid: getCacheUID(sayObj),
         });
 
-        const japaneseAudio = new Audio(audioUrl);
-        try {
-          swipePromise = Promise.all([
-            /** @type {Promise<void>} */
-            (
-              new Promise((resolve, reject) => {
-                const listener = () => {
-                  fadeOut(japaneseAudio).then(() => {
-                    reject(userAbortError);
-                  });
-                };
-
-                japaneseAudio.addEventListener("ended", () => {
-                  AbortController?.signal.removeEventListener(
-                    "abort",
-                    listener
-                  );
-                  resolve();
-                });
-
-                if (AbortController?.signal.aborted) {
-                  listener();
-                }
-
-                AbortController?.signal.addEventListener("abort", listener);
-              })
-            ),
-
-            japaneseAudio.play(),
-          ]);
-        } catch (e) {
-          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
-        }
+        swipePromise = fetchAudio(audioUrl, AbortController);
       } else if (direction === "down") {
         const inEnglish = vocabulary.english;
 
@@ -1203,39 +1167,7 @@ class Vocabulary extends Component {
           uid: vocabulary.uid + ".en",
         });
 
-        const englishAudio = new Audio(audioUrl);
-        try {
-          swipePromise = Promise.all([
-            /** @type {Promise<void>} */
-            (
-              new Promise((resolve, reject) => {
-                const listener = () => {
-                  fadeOut(englishAudio).then(() => {
-                    reject(userAbortError);
-                  });
-                };
-
-                englishAudio.addEventListener("ended", () => {
-                  AbortController?.signal.removeEventListener(
-                    "abort",
-                    listener
-                  );
-                  resolve();
-                });
-
-                if (AbortController?.signal.aborted) {
-                  listener();
-                }
-
-                AbortController?.signal.addEventListener("abort", listener);
-              })
-            ),
-
-            englishAudio.play(),
-          ]);
-        } catch (e) {
-          this.props.logger("Swipe Play Error " + e, DebugLevel.ERROR);
-        }
+        swipePromise = fetchAudio(audioUrl, AbortController);
       }
     }
     return swipePromise || Promise.reject();
