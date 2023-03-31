@@ -5,7 +5,6 @@ import {
   pronounceEndoint,
   appUIEndpoint,
   firebaseConfig,
-  DEV_SA_TOKEN,
 } from "../../environment.production";  // typesscript does not do module replace
 import {
   SERVICE_WORKER_LOGGER_MSG,
@@ -72,12 +71,6 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
     stream.write("const fbURLConst = '" + firebaseConfig.databaseURL + "';\n");
     stream.write(
       "const gCloudFnPronounceConst = '" + pronounceEndoint + "';\n\n"
-    );
-
-    stream.write(
-      "const swDevSATokenConst = " +
-        (DEV_SA_TOKEN !== undefined ? "'" + DEV_SA_TOKEN + "'" : "undefined") +
-        ";\n\n"
     );
 
     stream.write(

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { UnmuteIcon } from "@primer/octicons-react";
 import { pronounceEndoint } from "../../../environment.development";
 import { addParam } from "../../helper/urlHelper";
-import { fetchAudio } from "../../helper/audioHelper";
+import { fetchAudio } from "../../helper/audioHelper.development";
 
 /**
  * @typedef {Object} AudioItemProps

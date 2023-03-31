@@ -30,7 +30,7 @@ import VocabularyMain from "./VocabularyMain";
 // import { deepOrange } from "@mui/material";
 import { pronounceEndoint } from "../../../environment.development";
 import { logger } from "../../actions/consoleAct";
-import { fetchAudio } from "../../helper/audioHelper";
+import { fetchAudio } from "../../helper/audioHelper.development";
 import {
   answerSeconds,
   logify,

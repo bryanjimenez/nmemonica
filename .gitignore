@@ -50,6 +50,9 @@ node_modules/
 dist/
 pwa/built/
 
+# Keys directory
+crypto/
+
 # Optional npm cache directory
 .npm
 

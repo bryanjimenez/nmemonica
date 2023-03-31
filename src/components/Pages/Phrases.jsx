@@ -17,7 +17,7 @@ import {
   updateSpaceRepPhrase,
 } from "../../actions/settingsAct";
 import {} from "../../actions/vocabularyAct";
-import { fetchAudio } from "../../helper/audioHelper";
+import { fetchAudio } from "../../helper/audioHelper.development";
 import { logify, spaceRepLog } from "../../helper/consoleHelper";
 import {
   alphaOrder,

@@ -40,8 +40,9 @@ const audioCtx = new AudioContext();
 
 /**
  * Fetch audio
+ * 
  * Play using AudioContext
- * @param {string} audioUrl
+ * @param {Request|string} audioUrl
  * @param {AbortController} [AbortController]
  */
 export function fetchAudio(audioUrl, AbortController) {

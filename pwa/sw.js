@@ -6,7 +6,6 @@ const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
 const ghURL = ghURLConst; // eslint-disable-line no-undef
 const fbURL = fbURLConst; // eslint-disable-line no-undef
 const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-undef
-const DEV_SA_TOKEN = swDevSATokenConst; // eslint-disable-line no-undef
 
 const SW_MSG_TYPE_LOGGER = swMsgTypeLoggerConst; // eslint-disable-line no-undef
 const SW_MSG_TYPE_NEW_TERMS_ADDED = swMsgTypeNewTermsAddedConst; // eslint-disable-line no-undef
@@ -143,7 +142,8 @@ self.addEventListener("fetch", (e) => {
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const uid = getParam(url, "uid");
     const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
-    const myRequest = toRequest(cleanUrl);
+    const dev_env_auth = req.headers.get("Authorization");
+    const myRequest = toRequest(cleanUrl, dev_env_auth);
 
     if (!self.indexedDB) {
       // use cache
@@ -188,7 +188,8 @@ self.addEventListener("fetch", (e) => {
     const word = decodeURI(getParam(url, "q"));
 
     const cleanUrl = removeParam(url, "uid");
-    const myRequest = toRequest(cleanUrl);
+    const dev_env_auth = req.headers.get("Authorization");
+    const myRequest = toRequest(cleanUrl, dev_env_auth);
 
     if (!self.indexedDB) {
       // use cache
@@ -234,17 +235,16 @@ self.addEventListener("fetch", (e) => {
 
 /**
  * Creates a request from url
- * Adds bearer token in development env
+ *
+ * Adds authentication in development env
  * @param {string} url
+ * @param {string|null} auth development authentication
  */
-function toRequest(url){
-  const myHeaders = new Headers();
-  if(DEV_SA_TOKEN){
-    myHeaders.append('Authorization', 'Bearer '+DEV_SA_TOKEN);
-  }
+function toRequest(url, auth){
+  const devAuth = !auth ? undefined : new Headers({'Authorization': auth});
   const myInit = {
     method: 'GET',
-    headers: myHeaders,
+    headers: devAuth,
   };
 
   return new Request(url, myInit);

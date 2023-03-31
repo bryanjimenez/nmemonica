@@ -48,7 +48,31 @@ module.exports = function (webpackEnv, argv) {
         // webpack-dev-server has requests that need to be excluded
         if (res.context.indexOf("node_modules") === -1) {
           const match = new RegExp(envFile).exec(res.request);
-          res.request = match[1] + argv.mode + match[3];
+
+          // Allow in Dev Environment
+          // from dev file to include prod dependency
+          const envFileDev = /^(.*\.)(development)(\.js|\.json|)$/;
+          const envFileProd = /^(.*\.)(production)(\.js|\.json|)$/;
+          const srcFile = res.contextInfo.issuer.split("/").pop();
+          const depFile = res.request;
+
+          if (
+            argv.mode === "development" &&
+            new RegExp(envFileDev).test(srcFile) &&
+            new RegExp(envFileProd).test(depFile)
+          ) {
+            const depName = res.dependencies.reduce(
+              (acc, d) => (acc = !acc && d.name ? d.name : undefined),
+              undefined
+            );
+            console.log(
+              JSON.stringify({ at: srcFile, include: depName, from: depFile })
+            );
+
+            res.request = match[1] + "production" + match[3];
+          } else {
+            res.request = match[1] + argv.mode + match[3];
+          }
         }
       }),
       new MiniCssExtractPlugin({
@@ -67,7 +91,8 @@ module.exports = function (webpackEnv, argv) {
           { nodir: true }
         ),
         safelist: {
-          standard: [/\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/]},
+          standard: [/\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/],
+        },
       }),
     ],
 
