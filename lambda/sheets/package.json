@@ -3,7 +3,7 @@
   "description": "Cloud Functions for Firebase",
   "scripts": {
     "build:rm": "rm -rf functions && mkdir functions",
-    "build:0": "cp package.json .eslintrc.json ./functions",
+    "build:0": "cp package.json .eslintrc.json .env.nmemonica-9d977 ./functions",
     "prebuild": "npm run lint",
     "build": "npm run build:rm && npm run build:0 && rollup -c",
     "build:prod": "npm run build:rm && npm run build:0 && rollup --environment CONF_TARGET:production -c",
@@ -21,7 +21,7 @@
   "dependencies": {
     "axios": "latest",
     "firebase-admin": "^11.1.0",
-    "firebase-functions": "^3.24.1",
+    "firebase-functions": "^4.2.1",
     "googleapis": "^108.0.0",
     "md5": "^2.3.0",
     "regenerator-runtime": "^0.13.9"

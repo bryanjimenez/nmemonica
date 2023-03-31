@@ -1,13 +1,16 @@
 "use strict";
-import { default as admin } from "firebase-admin";
 import axios from "axios";
+import { verify } from "crypto";
+import { defineString } from "firebase-functions/params";
 import {
   gTranslateEndPoint,
   pronounceAllowedOrigins,
 } from "../../../environment.development";
-import { defineString } from "firebase-functions/v2/params";
 
 const DEV_ORIGIN = defineString("DEV_ORIGIN");
+const DEV_PUB_A = defineString("DEV_PUB_A");
+const DEV_PUB_K = defineString("DEV_PUB_K");
+const DEV_PUB_B = defineString("DEV_PUB_B");
 const DEV_ENV = defineString("DEV_ENV").equals("true");
 
 /**
@@ -24,22 +27,37 @@ function requiredHeaders(origin) {
   return allowedHeaders.join(", ");
 }
 
-/**
- * Get bearer token
- * @param {*} headers
- */
-function getIdToken(headers) {
-  let idToken;
-  if (headers.authorization && headers.authorization.startsWith("Bearer ")) {
-    // Read the ID Token from the Authorization header.
-    idToken = headers.authorization.split("Bearer ")[1];
-  } else {
+function validateAuthenticationSignature(headers, message) {
+  if (
+    !headers ||
+    !headers.authorization ||
+    !headers.authorization.startsWith("Bearer ")
+  )
     throw new Error("Header did not contain expected authorization.", {
       cause: { code: "MissingAuth" },
     });
-  }
 
-  return idToken;
+  // Read the ID Token from the Authorization header.
+  const sigString = headers.authorization.split("Bearer ")[1];
+
+  const key = {
+    public:
+      DEV_PUB_A.value() +
+      "\n" +
+      DEV_PUB_K.value() +
+      "\n" +
+      DEV_PUB_B.value() +
+      "\n",
+  };
+
+  const signature = Buffer.from(sigString, "hex");
+  const verified = verify(null, Buffer.from(message), key.public, signature);
+
+  if (!verified) {
+    throw new Error("Unauthenticated.", {
+      cause: { code: "UnverifiedAuth" },
+    });
+  }
 }
 
 /**
@@ -118,31 +136,15 @@ export async function g_translate_pronounce(req, res) {
       // dev referer
 
       try {
-        const idToken = getIdToken(req.headers);
-        // log("Raw: " + idToken.slice(0, 4) + "..." + idToken.slice(-4), "DEBUG");
-        const decodedIdToken = await admin.auth().verifyIdToken(idToken);
-
-        log("ID Token correctly decoded", "DEBUG");
+        const { q, tl } = req.query;
+        const message = JSON.stringify({ q, tl });
+        validateAuthenticationSignature(req.headers, message);
       } catch (e) {
-        const allowErr = [
-          'Firebase ID token has incorrect "iss" (issuer) claim.',
-          'Firebase ID token has incorrect "aud" (audience) claim.',
-        ];
-        const rejectErr = ["Decoding Firebase ID token failed."];
-
-        if (allowErr.some((iE) => e.message.includes(iE))) {
-          // allow these errors
-          log("Authenticated", "INFO");
-        } else if (
-          e.cause?.code === "MissingAuth" ||
-          rejectErr.some((rE) => e.message.includes(rE))
-        ) {
-          log(e, "ALERT");
-          return res.status(403).send("Unauthorized");
-        } else {
+        if (e.cause?.code === "UnverifiedAuth") {
           log(e, "EMERGENCY");
-          return res.status(403).send("Unauthorized");
         }
+
+        return res.status(403).send("Unauthorized");
       }
     } else {
       // unknown origin/referer
