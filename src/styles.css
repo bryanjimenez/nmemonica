@@ -90,7 +90,8 @@ a {
 }
 
 .sm-kanji rt {
-  font-size: 25%;
+  word-break: keep-all;
+  font-size: 30%;
 }
 
 /* bare container css no media queries */

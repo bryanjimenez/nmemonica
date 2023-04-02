@@ -1484,7 +1484,8 @@ class Vocabulary extends Component {
                 />
                 <DifficultySlider
                   value={this.props.repetition[uid]?.difficulty}
-                  onChange={(value) => this.props.setWordDifficulty(uid, value)}
+                  onChange={(value) => this.props.setWordDifficulty(uid, value)} // TODO: class>fn prop function causes rerender
+                  manualUpdate={uid}
                 />
                 <ShowHintBtn
                   visible={this.props.hintEnabled}

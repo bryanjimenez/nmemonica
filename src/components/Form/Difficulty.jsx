@@ -16,6 +16,7 @@ import "./Difficulty.css";
  * @typedef {Object} DifficultySliderProps
  * @property {number} value difficulty value
  * @property {(value:number)=>void} onChange is called after touch event ends
+ * @property {string} manualUpdate a changing value that will trigger an update to useFloating
  */
 
 /**
@@ -33,9 +34,9 @@ export function DifficultySlider(props) {
 
   const [rB, gB, bB] = [13, 110, 256]; // nice blue
 
-  const RY = [255, lerp(0, 255, t), 0];               // [255,0,0],   [255,255,0]
-  const YG = [lerp(255, 0, t), 255, 0];               // [255,255,0], [0,255,0]
-  const GB = [rB, lerp(255, gB, t), lerp(0, bB, t)];  // [0,255,0],   [0,0,255]
+  const RY = [255, lerp(0, 255, t), 0]; // [255,0,0],   [255,255,0]
+  const YG = [lerp(255, 0, t), 255, 0]; // [255,255,0], [0,255,0]
+  const GB = [rB, lerp(255, gB, t), lerp(0, bB, t)]; // [0,255,0],   [0,0,255]
 
   const RY_YG = [
     lerp(RY[0], YG[0], t),
@@ -75,17 +76,24 @@ export function DifficultySlider(props) {
   const arrowRef = useRef(null);
 
   // https://floating-ui.com/docs/react
-  const xOffset = 8;  // horizontal alignment spacing
+  const xOffset = 8; // horizontal alignment spacing
   const yOffset = 10; // vertical spacing between tooltip and element
-  const arrowW = 8;   // arrow width
-  const { x, y, strategy, refs, middlewareData } = useFloating({
+  const arrowW = 8; // arrow width
+  const { x, y, strategy, refs, middlewareData, update } = useFloating({
     placement: "top",
     middleware: [
       offset({ mainAxis: xOffset, crossAxis: yOffset }),
-      shift(2 * (w.height??0) + (w.width??0)), // FIXME: force a recalculate on window resize
+      shift(),
       arrow({ element: arrowRef }),
     ],
   });
+
+  useEffect(() => {
+    // force a recalculate on
+    // window resize
+    // term navigation (term properties change)
+    update();
+  }, [update, w.height, w.width, props.manualUpdate]);
 
   return (
     <>
@@ -147,7 +155,9 @@ export function DifficultySlider(props) {
           marks={marks}
           step={10}
           // valueLabelDisplay="on"
-          valueLabelFormat={(value) => (value > DIFFICULTY_THRLD ? "Pass" : "Fail")}
+          valueLabelFormat={(value) =>
+            value > DIFFICULTY_THRLD ? "Pass" : "Fail"
+          }
         />
         <div
           ref={arrowRef}
@@ -168,4 +178,5 @@ export function DifficultySlider(props) {
 DifficultySlider.propTypes = {
   value: PropTypes.number,
   onChange: PropTypes.func,
+  manualUpdate: PropTypes.string,
 };
