@@ -1,17 +1,18 @@
-/* globals clients*/
-const swVersion = swVersionConst; // eslint-disable-line no-undef
-const initCacheVer = initCacheVerConst; //eslint-disable-line no-undef
-const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
+/* globals
+  clients
 
-const ghURL = ghURLConst; // eslint-disable-line no-undef
-const fbURL = fbURLConst; // eslint-disable-line no-undef
-const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-undef
-
-const SW_MSG_TYPE_LOGGER = swMsgTypeLoggerConst; // eslint-disable-line no-undef
-const SW_MSG_TYPE_NEW_TERMS_ADDED = swMsgTypeNewTermsAddedConst; // eslint-disable-line no-undef
-
-const getParam = getParamConst; // eslint-disable-line no-undef
-const removeParam = removeParamConst; // eslint-disable-line no-undef
+  const swVersion
+  const initCacheVer
+  const cacheFiles
+  const ghURL
+  const fbURL
+  const gCloudFnPronounce
+  const SERVICE_WORKER_LOGGER_MSG
+  const SERVICE_WORKER_NEW_TERMS_ADDED
+  const getParam
+  const removeParam
+  const authenticationHeader
+*/
 
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
@@ -142,7 +143,7 @@ self.addEventListener("fetch", (e) => {
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const uid = getParam(url, "uid");
     const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
-    const dev_env_auth = req.headers.get("Authorization");
+    const dev_env_auth = req.headers.get(authenticationHeader);
     const myRequest = toRequest(cleanUrl, dev_env_auth);
 
     if (!self.indexedDB) {
@@ -188,7 +189,7 @@ self.addEventListener("fetch", (e) => {
     const word = decodeURI(getParam(url, "q"));
 
     const cleanUrl = removeParam(url, "uid");
-    const dev_env_auth = req.headers.get("Authorization");
+    const dev_env_auth = req.headers.get(authenticationHeader);
     const myRequest = toRequest(cleanUrl, dev_env_auth);
 
     if (!self.indexedDB) {
@@ -241,7 +242,7 @@ self.addEventListener("fetch", (e) => {
  * @param {string|null} auth development authentication
  */
 function toRequest(url, auth){
-  const devAuth = !auth ? undefined : new Headers({'Authorization': auth});
+  const devAuth = auth === null ? undefined : new Headers({[authenticationHeader]: auth});
   const myInit = {
     method: 'GET',
     headers: devAuth,
@@ -395,7 +396,7 @@ function clientLogger(msg, lvl) {
     .then((client) => {
       if (client && client.length) {
         return client[0].postMessage({
-          type: SW_MSG_TYPE_LOGGER,
+          type: SERVICE_WORKER_LOGGER_MSG,
           msg,
           lvl,
         });
@@ -862,7 +863,7 @@ function fetchVerSendNewDiffsMsg() {
                     if (client && client.length) {
                       // console.log("[SW] posting message");
                       return client[0].postMessage({
-                        type: SW_MSG_TYPE_NEW_TERMS_ADDED,
+                        type: SERVICE_WORKER_NEW_TERMS_ADDED,
                         msg: newlyAdded,
                       });
                     }

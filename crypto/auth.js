@@ -22,10 +22,10 @@ app.get(path, (req, res) => {
 
   const signature = crypto.sign(null, Buffer.from(message), key.private);
 
-  const sigString = signature.toString("hex");
-  console.log(JSON.stringify({ message, sigString })+"\n");
+  const signatureBase64 = signature.toString("base64");
+  console.log(JSON.stringify({ message, signature: signatureBase64 })+"\n");
 
-  return res.status(200).json({ auth: sigString });
+  return res.status(200).json({ auth: signatureBase64 });
 });
 
 app.listen(port, () => {

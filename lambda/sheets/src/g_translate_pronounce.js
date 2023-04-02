@@ -3,6 +3,7 @@ import axios from "axios";
 import { verify } from "crypto";
 import { defineString } from "firebase-functions/params";
 import {
+  authenticationHeader,
   gTranslateEndPoint,
   pronounceAllowedOrigins,
 } from "../../../environment.development";
@@ -11,7 +12,6 @@ const DEV_ORIGIN = defineString("DEV_ORIGIN");
 const DEV_PUB_A = defineString("DEV_PUB_A");
 const DEV_PUB_K = defineString("DEV_PUB_K");
 const DEV_PUB_B = defineString("DEV_PUB_B");
-const DEV_ENV = defineString("DEV_ENV").equals("true");
 
 /**
  * Authorization required if the origin is development
@@ -21,25 +21,18 @@ function requiredHeaders(origin) {
   let allowedHeaders = ["Content-Type"];
   if (origin === DEV_ORIGIN.value()) {
     // development required headers
-    allowedHeaders = [...allowedHeaders, "Authorization"];
+    allowedHeaders = [...allowedHeaders, authenticationHeader];
   }
 
   return allowedHeaders.join(", ");
 }
 
-function validateAuthenticationSignature(headers, message) {
-  if (
-    !headers ||
-    !headers.authorization ||
-    !headers.authorization.startsWith("Bearer ")
-  )
-    throw new Error("Header did not contain expected authorization.", {
-      cause: { code: "MissingAuth" },
-    });
-
-  // Read the ID Token from the Authorization header.
-  const sigString = headers.authorization.split("Bearer ")[1];
-
+/**
+ * Validate message is signed using provided key
+ * @param {string} signatureBase64
+ * @param {string} message
+ */
+function validateAuthenticationSignature(signatureBase64, message) {
   const key = {
     public:
       DEV_PUB_A.value() +
@@ -50,9 +43,8 @@ function validateAuthenticationSignature(headers, message) {
       "\n",
   };
 
-  const signature = Buffer.from(sigString, "hex");
+  const signature = Buffer.from(signatureBase64, "base64");
   const verified = verify(null, Buffer.from(message), key.public, signature);
-
   if (!verified) {
     throw new Error("Unauthenticated.", {
       cause: { code: "UnverifiedAuth" },
@@ -103,7 +95,6 @@ function log(message, severity) {
 }
 
 export async function g_translate_pronounce(req, res) {
-  const isDevelopment = DEV_ENV.value();
   const devOrigin = DEV_ORIGIN.value();
   const devReferer = devOrigin + "/";
 
@@ -128,9 +119,7 @@ export async function g_translate_pronounce(req, res) {
 
     return res.sendStatus(204);
   } else if (req.method === "GET") {
-    if (isDevelopment) {
-      log("Development", "NOTICE");
-    } else if (prodReferer) {
+    if (prodReferer) {
       // allowed referer
     } else if (req.headers.referer === devReferer) {
       // dev referer
@@ -138,9 +127,18 @@ export async function g_translate_pronounce(req, res) {
       try {
         const { q, tl } = req.query;
         const message = JSON.stringify({ q, tl });
-        validateAuthenticationSignature(req.headers, message);
+        const signature = req.header(authenticationHeader);
+        if (!signature)
+          throw new Error("Header did not contain expected authorization.", {
+            cause: { code: "MissingAuth" },
+          });
+
+        validateAuthenticationSignature(signature, message);
       } catch (e) {
-        if (e.cause?.code === "UnverifiedAuth") {
+        if (
+          e.cause?.code === "UnverifiedAuth" ||
+          e.cause?.code === "MissingAuth"
+        ) {
           log(e, "EMERGENCY");
         }
 

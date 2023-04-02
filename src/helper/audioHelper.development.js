@@ -1,4 +1,4 @@
-import { developmentAuthEndPoint } from "../../environment.development";
+import { authenticationHeader, developmentAuthEndPoint } from "../../environment.development";
 import { fetchAudio as fetchAudioWithAuth } from "./audioHelper.production";
 
 /**
@@ -15,7 +15,7 @@ export function fetchAudio(audioUrl, AbortController) {
 
   const authP = fetch(developmentAuthEndPoint + url)
     .then((res) => res.json())
-    .then((data) => ({ Authorization: "Bearer " + data.auth }))
+    .then((data) => ({ [authenticationHeader]: data.auth }))
     .catch((err) => {
       console.log("dev_auth failed");
       return err;
