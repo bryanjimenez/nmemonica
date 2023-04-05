@@ -2,18 +2,21 @@ import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useMemo, useRef, useState } from "react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
+  TermFilterBy,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
+import { useReinforcement } from "../../hooks/reinforceHK";
 import { NotReady } from "../Form/NotReady";
 import {
+  FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -95,7 +98,7 @@ function createEnglishChoices(answer, kanjiList) {
  */
 function prepareGame(kanji, rawKanjis) {
   if (!kanji || rawKanjis.length === 0) return;
-  // console.log("prepareGame("+kanji.english+", "+rawKanjis.length+")");
+  // console.warn("prepareGame("+kanji.english+", "+rawKanjis.length+")");
 
   const { uid, kanji: japanese, on, kun } = kanji;
 
@@ -148,26 +151,7 @@ function KanjiGame(props) {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  function gotoNext() {
-    const l = filteredTerms.length;
-    const newSel = (selectedIndex + 1) % l;
-    setSelectedIndex(newSel);
-  }
-
-  function gotoPrev() {
-    const l = filteredTerms.length;
-    const i = selectedIndex - 1;
-    const newSel = i < 0 ? (l + i) % l : i % l;
-    setSelectedIndex(newSel);
-  }
-
-  const dispatch = useDispatch();
-
-  const version = useSelector(
-    (/** @type {AppRootState}*/ { version }) => version.kanji
-  );
-
-  const rawKanjis = useKanjiStore(dispatch, version);
+  const rawKanjis = useKanjiStore();
 
   const {
     activeTags,
@@ -185,9 +169,21 @@ function KanjiGame(props) {
   );
   order.current = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
-  const kanji = useMemo(
-    () => filteredTerms[order.current[selectedIndex]],
-    [filteredTerms, selectedIndex]
+  const [move, setMove] = useState(0);
+
+  let kanji = useReinforcement(
+    reinforce,
+    TermFilterBy.TAGS,
+    move,
+    setSelectedIndex,
+    repetition,
+    filteredTerms,
+    undefined /** removeFrequencyTerm */
+  );
+
+  kanji = useMemo(
+    () => kanji ?? filteredTerms[order.current[selectedIndex]],
+    [kanji, filteredTerms, selectedIndex]
   );
   const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
 
@@ -197,7 +193,8 @@ function KanjiGame(props) {
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 
-  const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
+  const l = filteredTerms.length;
+  const progress = ((selectedIndex + 1) / l) * 100;
 
   return (
     <>
@@ -205,8 +202,8 @@ function KanjiGame(props) {
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
-        gotoPrev={gotoPrev}
-        gotoNext={gotoNext}
+        gotoPrev={() => setMove((v) => v - 1)}
+        gotoNext={() => setMove((v) => v + 1)}
       />
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">
@@ -217,7 +214,14 @@ function KanjiGame(props) {
               </Link>
             </div>
           </div>
-          <div className="col text-center"></div>
+          <div className="col text-center">
+            <FrequencyTermIcon
+              visible={
+                term_reinforce &&
+                kanji.uid !== filteredTerms[order.current[selectedIndex]].uid
+              }
+            />
+          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <ToggleFrequencyTermBtnMemo

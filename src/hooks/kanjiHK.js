@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { firebaseConfig } from "../../environment.development";
 
 export const GET_KANJI = "get_kanji";
@@ -12,10 +12,14 @@ export const GET_KANJI = "get_kanji";
 
 /**
  * Fetches kanji data and updates Store state if no previous fetch
- * @param {function} dispatch redux dispatch
- * @param {string} version cache version
  */
-export function useKanjiStore(dispatch, version) {
+export function useKanjiStore() {
+  const dispatch = useDispatch();
+
+  const version = useSelector(
+    (/** @type {AppRootState}*/ { version }) => version.kanji
+  );
+
   const rawKanjis = useSelector(
     (/** @type {AppRootState}*/ { kanji }) => kanji.value
   );

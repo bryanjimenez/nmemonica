@@ -2,9 +2,10 @@ import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
+  TermFilterBy,
   addFrequencyKanji,
   removeFrequencyKanji,
 } from "../../actions/settingsAct";
@@ -13,11 +14,13 @@ import { useCreateChoices, useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
 import { NotReady } from "../Form/NotReady";
 import {
+  FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
+import { useReinforcement } from "../../hooks/reinforceHK";
 
 /**
  * @typedef {import("../../typings/state").AppRootState} AppRootState
@@ -39,8 +42,8 @@ const KanjiGridMeta = {
  * @param {RawKanji} kanji
  * @param {RawKanji[]} choices
  * @param {boolean} writePractice
- * @param {string} currExmpl
- * @param {function} nextExmpl
+ * @param {string} currExmpl    current english example shown
+ * @param {function} nextExmpl  next english example when clicked
  */
 function prepareGame(kanji, choices, writePractice, currExmpl, nextExmpl) {
   if (!kanji || choices.length === 0) return;
@@ -107,26 +110,7 @@ function KanjiGrid(props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [writePractice, setEnglishSide] = useState(false);
 
-  function gotoNext() {
-    const l = filteredTerms.length;
-    const newSel = (selectedIndex + 1) % l;
-    setSelectedIndex(newSel);
-  }
-
-  function gotoPrev() {
-    const l = filteredTerms.length;
-    const i = selectedIndex - 1;
-    const newSel = i < 0 ? (l + i) % l : i % l;
-    setSelectedIndex(newSel);
-  }
-
-  const dispatch = useDispatch();
-
-  const version = useSelector(
-    (/** @type {AppRootState}*/ { version }) => version.kanji
-  );
-
-  const rawKanjis = useKanjiStore(dispatch, version);
+  const rawKanjis = useKanjiStore();
 
   const {
     choiceN,
@@ -146,8 +130,20 @@ function KanjiGrid(props) {
   order.current = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
   const [currExmpl, setCurrExmpl] = useState("");
-  const kanji = useMemo(() => {
-    const k = filteredTerms[order.current[selectedIndex]];
+
+  const [move, setMove] = useState(0);
+  let kanji = useReinforcement(
+    reinforce,
+    TermFilterBy.TAGS,
+    move,
+    setSelectedIndex,
+    repetition,
+    filteredTerms,
+    undefined /** removeFrequencyTerm */
+  );
+
+  kanji = useMemo(() => {
+    const k = kanji ?? filteredTerms[order.current[selectedIndex]];
 
     if (k) {
       const englishShortened = oneFromList(k.english);
@@ -155,7 +151,7 @@ function KanjiGrid(props) {
     }
 
     return k;
-  }, [filteredTerms, selectedIndex]);
+  }, [kanji, filteredTerms, selectedIndex]);
   const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
 
   const choices = useCreateChoices(choiceN, "english", kanji, rawKanjis);
@@ -191,8 +187,8 @@ function KanjiGrid(props) {
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
-        gotoPrev={gotoPrev}
-        gotoNext={gotoNext}
+        gotoPrev={() => setMove((v) => v - 1)}
+        gotoNext={() => setMove((v) => v + 1)}
       />
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">
@@ -211,6 +207,14 @@ function KanjiGrid(props) {
                 />
               </Link>
             </div>
+          </div>
+          <div className="col text-center">
+            <FrequencyTermIcon
+              visible={
+                term_reinforce &&
+                kanji.uid !== filteredTerms[order.current[selectedIndex]].uid
+              }
+            />
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
