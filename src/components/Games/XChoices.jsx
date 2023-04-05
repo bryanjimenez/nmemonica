@@ -2,8 +2,6 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useReducer } from "react";
-import { useSelector } from "react-redux";
-import { DebugLevel } from "../../actions/settingsAct";
 import StackNavButton from "../Form/StackNavButton";
 
 /**
@@ -17,7 +15,7 @@ import StackNavButton from "../Form/StackNavButton";
  * @property {GameQuestion} question
  * @property {string} [hint] a hint to be displayed if provided
  * @property {GameChoice[]} choices
- * @property {(answered: GameChoice)=>boolean} isCorrect answer validator
+ * @property {(answered: GameChoice)=>[boolean, number]} isCorrect Answer validator, returns if correct and correct answer index
  * @property {function} gotoPrev
  * @property {function} gotoNext
  */
@@ -26,7 +24,7 @@ import StackNavButton from "../Form/StackNavButton";
  * @typedef {Object} XChoicesState
  * @property {boolean} showMeaning
  * @property {number[]} incorrect
- * @property {boolean} correct
+ * @property {number} correct
  */
 
 /**
@@ -42,16 +40,12 @@ function XChoices(props) {
     {
       showMeaning: false,
       incorrect: [],
-      correct: false,
+      correct: -1,
     }
   );
 
-  const { debug } = useSelector(
-    (/** @type {AppRootState}*/ { settings }) => settings.global
-  );
-
   const clearAnswers = () => {
-    dispatch({ showMeaning: false, correct: false, incorrect: [] });
+    dispatch({ showMeaning: false, correct: -1, incorrect: [] });
   };
 
   /**
@@ -59,9 +53,11 @@ function XChoices(props) {
    * @param {number} i
    */
   const checkAnswer = (answered, i) => {
-    if (props.isCorrect(answered)) {
+    const [isCorrect, correctIdx] = props.isCorrect(answered);
+
+    if (isCorrect) {
       // console.log("RIGHT!");
-      dispatch({ correct: true, showMeaning: true });
+      dispatch({ correct: i, showMeaning: true });
       setTimeout(() => {
         clearAnswers();
         props.gotoNext();
@@ -70,7 +66,7 @@ function XChoices(props) {
       // console.log("WRONG");
       dispatch({
         incorrect: [...state.incorrect, i],
-        correct: true,
+        correct: correctIdx,
         showMeaning: true,
       });
       setTimeout(() => {
@@ -93,12 +89,10 @@ function XChoices(props) {
    * @param {number} index
    */
   const choiceButton = (index) => {
-    const correct = state.correct;
     const choiceN = choices.length;
 
     const isWrong = state.incorrect.includes(index);
-    const isRight = props.isCorrect(choices[index]) && correct;
-
+    const isRight = state.correct === index;
     const wideMode = true;
 
     const choiceCSS = classNames({
@@ -132,7 +126,7 @@ function XChoices(props) {
 
   const mainPanel = classNames({
     "pickXgame main-panel h-100": true,
-    "z-index-1": debug !== DebugLevel.OFF,
+    "z-index-2": true,
   });
 
   return (

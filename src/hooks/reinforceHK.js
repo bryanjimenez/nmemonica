@@ -1,7 +1,13 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { TermFilterBy } from "../actions/settingsAct";
 
 /**
+ * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
+ */
+
+/**
+ * Returns a term or undefined, and a function to update the next move
+ *
  * When moved forward
  * - at random selects a frequency term or moves forward
  *
@@ -10,21 +16,21 @@ import { TermFilterBy } from "../actions/settingsAct";
  * @template {{uid:string}} RawItem
  * @param {boolean} reinforce Menu setting
  * @param {typeof TermFilterBy[keyof TermFilterBy]} freqFilter Menu setting
- * @param {number} direction Increment: forward, decrement: back
  * @param {function} setSelectedIndex
- * @param {import("../typings/raw").SpaceRepetitionMap} repetition
+ * @param {SpaceRepetitionMap} repetition
  * @param {RawItem[]} filteredTerms
  * @param {function} removeFrequencyTerm
+ * @returns {[RawItem|undefined, React.Dispatch<React.SetStateAction<number>>]}
  */
 export function useReinforcement(
   reinforce,
   freqFilter,
-  direction,
   setSelectedIndex,
   repetition,
   filteredTerms,
   removeFrequencyTerm
 ) {
+  const [direction, setMove] = useState(0);
   const lastSelIdx = useRef(direction);
   const prevDirection = useRef(direction);
   const repetitionRef = useRef(repetition);
@@ -83,7 +89,7 @@ export function useReinforcement(
       [false, false, true][Math.floor(Math.random() * 3)];
 
     let term;
-    let fUid;
+    let fUid = "";
     if (
       freqFilter !== TermFilterBy.FREQUENCY &&
       reinforced &&
@@ -123,5 +129,5 @@ export function useReinforcement(
 
   prevDirection.current = direction;
   prevReinforcedTerm.current = reinforcedTerm?.uid;
-  return reinforcedTerm;
+  return [reinforcedTerm, setMove];
 }

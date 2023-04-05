@@ -1,7 +1,14 @@
+import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { connect, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
@@ -10,8 +17,10 @@ import {
   removeFrequencyKanji,
 } from "../../actions/settingsAct";
 import { randomOrder } from "../../helper/gameHelper";
+import { useWindowSize } from "../../hooks/helperHK";
 import { useCreateChoices, useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
+import { useReinforcement } from "../../hooks/reinforceHK";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -20,7 +29,6 @@ import {
 } from "../Form/OptionsBar";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
-import { useReinforcement } from "../../hooks/reinforceHK";
 
 /**
  * @typedef {import("../../typings/state").AppRootState} AppRootState
@@ -96,7 +104,8 @@ function prepareGame(kanji, choices, writePractice, currExmpl, nextExmpl) {
     answer: uid,
     choices: choices.map((c) => ({
       compare: c.uid,
-      toHTML: () => (writePractice ? c.english : c.kanji),
+      toHTML: (/** @type {boolean} */ side) =>
+        side ?? writePractice ? c.english : c.kanji,
     })),
   };
 }
@@ -131,11 +140,9 @@ function KanjiGrid(props) {
 
   const [currExmpl, setCurrExmpl] = useState("");
 
-  const [move, setMove] = useState(0);
-  let kanji = useReinforcement(
+  let [kanji, setMove] = useReinforcement(
     reinforce,
     TermFilterBy.TAGS,
-    move,
     setSelectedIndex,
     repetition,
     filteredTerms,
@@ -159,7 +166,7 @@ function KanjiGrid(props) {
   const nextExample = useCallback(() => {
     // console.log('hint?')
 
-    if (kanji.english.includes(",")) {
+    if (kanji?.english.includes(",")) {
       let ex = currExmpl;
       while (ex === currExmpl) {
         ex = oneFromList(kanji.english);
@@ -176,6 +183,32 @@ function KanjiGrid(props) {
   );
 
   // console.log("KanjiGrid render "+selectedIndex);
+  const fadeRef = useRef(-1);
+  const [answ, setAnswered] = useState("");
+
+  const [floatDim, setOffset] = useState({ w: 0, h: 0 });
+  const w = useWindowSize();
+  const { x, y, strategy, refs, update } = useFloating({
+    placement: "bottom",
+    middleware: [
+      offset({ mainAxis: w.height / 2 - floatDim.h, crossAxis: 0 }),
+      shift(),
+    ],
+  });
+
+  // get wrong answer float dimensions
+  useEffect(() => {
+    const floatW = refs.floating.current?.clientWidth;
+    const floatH = refs.floating.current?.clientHeight;
+
+    if (answ.length > 0 && floatW && floatW > 0 && floatH && floatH > 0) {
+      setOffset({
+        w: floatW,
+        h: floatH,
+      });
+      update();
+    }
+  }, [answ, setOffset, refs.floating, update]);
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 
@@ -183,9 +216,48 @@ function KanjiGrid(props) {
 
   return (
     <>
+      <div className="tooltip-anchor" ref={refs.setReference}></div>
+      <div
+        ref={refs.setFloating}
+        style={{
+          position: strategy,
+          top: y ?? 0,
+          left: x ?? 0,
+          width: "max-content",
+
+          fontWeight: "bold",
+          fontSize: "xxx-large",
+        }}
+        className={classNames({
+          "dark-mode-color": true,
+          "notification-fade": answ.length > 0,
+        })}
+      >
+        {answ}
+      </div>
       <XChoices
         question={game.question}
-        isCorrect={(answered) => answered.compare === game.answer}
+        isCorrect={(answered) => {
+          const correct = answered.compare === game.answer;
+          const correctIdx = game.choices.findIndex(
+            (c) => c.compare === game.answer
+          );
+
+          if (!correct) {
+            if (fadeRef.current > -1 && answ.length > 0) {
+              clearTimeout(fadeRef.current);
+              setAnswered("");
+              setTimeout(
+                () => setAnswered(answered.toHTML(!writePractice)),
+                100
+              );
+            } else {
+              setAnswered(answered.toHTML(!writePractice));
+              fadeRef.current = window.setTimeout(() => setAnswered(""), 2500);
+            }
+          }
+          return [correct, correctIdx];
+        }}
         choices={game.choices}
         gotoPrev={() => setMove((v) => v - 1)}
         gotoNext={() => setMove((v) => v + 1)}

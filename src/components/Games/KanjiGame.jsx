@@ -5,9 +5,9 @@ import React, { useMemo, useRef, useState } from "react";
 import { connect, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
+  TermFilterBy,
   addFrequencyKanji,
   removeFrequencyKanji,
-  TermFilterBy,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
@@ -169,12 +169,9 @@ function KanjiGame(props) {
   );
   order.current = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
-  const [move, setMove] = useState(0);
-
-  let kanji = useReinforcement(
+  let [kanji, setMove] = useReinforcement(
     reinforce,
     TermFilterBy.TAGS,
-    move,
     setSelectedIndex,
     repetition,
     filteredTerms,
