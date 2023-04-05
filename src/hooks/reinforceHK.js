@@ -30,9 +30,13 @@ export function useReinforcement(
   filteredTerms,
   removeFrequencyTerm
 ) {
+  /** used to determine move direction */
   const [direction, setMove] = useState(0);
-  const lastSelIdx = useRef(direction);
   const prevDirection = useRef(direction);
+
+  /** Term index */
+  const prevTermIdx = useRef(direction);
+
   const repetitionRef = useRef(repetition);
   /** @type {import("react").MutableRefObject<string|undefined>} */
   const prevReinforcedTerm = useRef(undefined);
@@ -62,8 +66,8 @@ export function useReinforcement(
 
     /** @param {number} nextIdx*/
     const goToNext = (nextIdx) => {
-      // console.log("goto next");
-      lastSelIdx.current = nextIdx;
+      // console.log(nextIdx+": "+filteredTerms[order.current[nextIdx]].english);
+      prevTermIdx.current = nextIdx;
       setSelectedIndex(nextIdx);
       return undefined;
     };
@@ -73,10 +77,10 @@ export function useReinforcement(
 
     let selIdx;
     if (dir === "prev") {
-      const ifNegative = lastSelIdx.current - 1 < 0 ? l : 0;
-      selIdx = ifNegative + ((lastSelIdx.current - 1) % l);
+      const ifNegative = prevTermIdx.current - 1 < 0 ? l : 0;
+      selIdx = ifNegative + ((prevTermIdx.current - 1) % l);
     } else {
-      selIdx = (lastSelIdx.current + 1) % l;
+      selIdx = (prevTermIdx.current + 1) % l;
     }
 
     // console.log(JSON.stringify({direction, selIdx}));
@@ -103,17 +107,23 @@ export function useReinforcement(
       // console.log("freq " + term.english);
     }
 
-    if (reinforced && term === undefined) {
+    if (
+      reinforced &&
+      term !== undefined &&
+      prevReinforcedTerm.current !== term.uid
+    ) {
+      // reinforce
+
+      // term = term;
+      goToNext(prevTermIdx.current); // no actual move discard selIdx
+    } else {
+      // no reinforce
+
       term = goToNext(selIdx);
       // remove stale frequency uid
       if (typeof removeFrequencyTerm === "function") {
         removeFrequencyTerm(fUid);
       }
-    } else if (
-      (reinforced && prevReinforcedTerm.current === term.uid) ||
-      !reinforced
-    ) {
-      term = goToNext(selIdx);
     }
 
     return term;
