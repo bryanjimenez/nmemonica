@@ -12,15 +12,16 @@ import React, {
 import { connect, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  TermFilterBy,
   addFrequencyKanji,
   removeFrequencyKanji,
 } from "../../actions/settingsAct";
 import { randomOrder } from "../../helper/gameHelper";
+import { useFrequency } from "../../hooks/frequencyHK";
 import { useWindowSize } from "../../hooks/helperHK";
 import { useCreateChoices, useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
-import { useReinforcement } from "../../hooks/reinforceHK";
+import { useRandomTerm } from "../../hooks/randomTermHK";
+import { useReinforcePlay } from "../../hooks/reinforcePlayHK";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -140,13 +141,15 @@ function KanjiGrid(props) {
 
   const [currExmpl, setCurrExmpl] = useState("");
 
-  let [kanji, setMove] = useReinforcement(
-    reinforce,
-    TermFilterBy.TAGS,
-    setSelectedIndex,
-    repetition,
-    filteredTerms,
-    undefined /** removeFrequencyTerm */
+  const [willReinforce, setWillReinforce] = useState(false);
+  const frequencyUids = useFrequency(repetition, filteredTerms);
+  const randomTerm = useRandomTerm(willReinforce, frequencyUids, filteredTerms);
+
+  let [kanji, setMove] = useReinforcePlay(
+    willReinforce,
+    randomTerm,
+    filteredTerms.length,
+    setSelectedIndex
   );
 
   kanji = useMemo(() => {
@@ -259,8 +262,15 @@ function KanjiGrid(props) {
           return [correct, correctIdx];
         }}
         choices={game.choices}
-        gotoPrev={() => setMove((v) => v - 1)}
-        gotoNext={() => setMove((v) => v + 1)}
+        gotoPrev={() => {
+          setWillReinforce(false);
+          setMove((v) => v - 1);
+        }}
+        gotoNext={() => {
+          const willReinforce = reinforce && Math.random() < 1 / 3;
+          setWillReinforce(willReinforce);
+          setMove((v) => v + 1);
+        }}
       />
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">

@@ -5,15 +5,15 @@ import React, { useMemo, useRef, useState } from "react";
 import { connect, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
-  TermFilterBy,
   addFrequencyKanji,
   removeFrequencyKanji,
 } from "../../actions/settingsAct";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
+import { useFrequency } from "../../hooks/frequencyHK";
 import { useFilterTerms } from "../../hooks/kanjiGamesHK";
 import { useKanjiStore } from "../../hooks/kanjiHK";
-import { useReinforcement } from "../../hooks/reinforceHK";
+import { useReinforcePlay } from "../../hooks/reinforcePlayHK";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -22,6 +22,7 @@ import {
 } from "../Form/OptionsBar";
 import FourChoices from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
+import { useRandomTerm } from "../../hooks/randomTermHK";
 
 /**
  * @typedef {import("../../typings/state").AppRootState} AppRootState
@@ -157,8 +158,9 @@ function KanjiGame(props) {
     activeTags,
     filter: filterType,
     reinforce,
-    repetition,
+    repetition: repetitionObj,
   } = useSelector((/** @type {AppRootState}*/ { settings }) => settings.kanji);
+  const repetition = useMemo(() => repetitionObj, [repetitionObj]);
 
   const filteredTerms = useFilterTerms(
     repetition,
@@ -169,13 +171,15 @@ function KanjiGame(props) {
   );
   order.current = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
-  let [kanji, setMove] = useReinforcement(
-    reinforce,
-    TermFilterBy.TAGS,
-    setSelectedIndex,
-    repetition,
-    filteredTerms,
-    undefined /** removeFrequencyTerm */
+  const [willReinforce, setWillReinforce] = useState(false);
+  const frequencyUids = useFrequency(repetition, filteredTerms);
+  const randomTerm = useRandomTerm(willReinforce, frequencyUids, filteredTerms);
+
+  let [kanji, setMove] = useReinforcePlay(
+    willReinforce,
+    randomTerm,
+    filteredTerms.length,
+    setSelectedIndex
   );
 
   kanji = useMemo(
@@ -199,8 +203,15 @@ function KanjiGame(props) {
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
-        gotoPrev={() => setMove((v) => v - 1)}
-        gotoNext={() => setMove((v) => v + 1)}
+        gotoPrev={() => {
+          setWillReinforce(false);
+          setMove((v) => v - 1);
+        }}
+        gotoNext={() => {
+          const willReinforce = reinforce && Math.random() < 1 / 3;
+          setWillReinforce(willReinforce);
+          setMove((v) => v + 1);
+        }}
       />
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">
