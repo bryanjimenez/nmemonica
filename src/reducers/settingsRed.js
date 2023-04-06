@@ -43,6 +43,7 @@ import {
   ADD_FREQUENCY_KANJI,
   REMOVE_FREQUENCY_KANJI,
   TOGGLE_KANJI_FILTER,
+  TOGGLE_VOCABULARY_BARE_KANJI,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 import { UI_LOGGER_MSG } from "../actions/consoleAct";
@@ -74,6 +75,7 @@ export const DEFAULT_SETTINGS = {
     ordered: 0,
     practiceSide: false,
     romaji: false,
+    bareKanji: false,
     hintEnabled: false,
     filter: 0,
     reinforce: false,
@@ -219,6 +221,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
         vocabulary: {
           ...state.vocabulary,
           romaji: !state.vocabulary.romaji,
+        },
+      };
+    case TOGGLE_VOCABULARY_BARE_KANJI:
+      return {
+        ...state,
+        vocabulary: {
+          ...state.vocabulary,
+          bareKanji: !state.vocabulary.bareKanji,
         },
       };
     case TOGGLE_VOCABULARY_HINT:

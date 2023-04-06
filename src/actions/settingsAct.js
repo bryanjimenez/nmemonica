@@ -12,6 +12,7 @@ export const TOGGLE_PHRASES_ACTIVE_TAG = "toggle_phrases_active_tag";
 export const SET_VOCABULARY_ORDERING = "set_vocabulary_ordering";
 export const FLIP_VOCABULARY_PRACTICE_SIDE = "flip_vocabulary_practice_side";
 export const TOGGLE_VOCABULARY_ROMAJI = "toggle_vocabulary_romaji";
+export const TOGGLE_VOCABULARY_BARE_KANJI = "TOGGLE_VOCABULARY_BARE_KANJI";
 export const TOGGLE_VOCABULARY_HINT = "toggle_vocabulary_hint";
 export const TOGGLE_VOCABULARY_FILTER = "toggle_vocabulary_filter";
 export const TOGGLE_VOCABULARY_ACTIVE_GROUP = "toggle_vocabulary_active_group";
@@ -456,6 +457,22 @@ export function toggleVocabularyRomaji() {
         type: TOGGLE_VOCABULARY_ROMAJI,
       });
     }
+  };
+}
+
+/**
+ * @returns {ActCreator}
+ */
+export function toggleVocabularyBareKanji() {
+  return (dispatch, getState) => {
+    const path = "/vocabulary/";
+    const attr = "bareKanji";
+    const time = new Date();
+    localStoreAttrUpdate(time, getState, path, attr);
+
+    dispatch({
+      type: TOGGLE_VOCABULARY_BARE_KANJI,
+    });
   };
 }
 

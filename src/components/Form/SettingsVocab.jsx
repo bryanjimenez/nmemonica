@@ -21,6 +21,7 @@ import {
   toggleVocabularyRomaji,
   updateVerbColSplit,
   TermSortByLabel,
+  toggleVocabularyBareKanji,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
 
@@ -42,29 +43,31 @@ import VerbFormSlider from "./VerbFormSlider";
 
 /**
  * @typedef {Object} SettingsVocabProps
- * @property {typeof getVocabulary} getVocabulary,
- * @property {RawVocabulary[]} vocabulary,
- * @property {string[]} verbFormsOrder,
- * @property {SortTypes[keyof SortTypes]} vocabOrder,
- * @property {boolean} vocabRomaji,
- * @property {boolean} vocabHint,
- * @property {typeof TermFilterBy[keyof TermFilterBy]} vocabFilter,
- * @property {SpaceRepetitionMap} vocabRep,
- * @property {boolean} vocabReinforce,
- * @property {GroupListMap} vocabGroups,
- * @property {boolean} autoVerbView,
- * @property {string[]} vocabActive,
- * @property {number} verbColSplit,
- * @property {typeof toggleVocabularyOrdering} toggleVocabularyOrdering,
- * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter,
- * @property {typeof toggleActiveGrp} toggleActiveGrp,
- * @property {typeof toggleVocabularyRomaji} toggleVocabularyRomaji,
- * @property {typeof toggleVocabularyReinforcement} toggleVocabularyReinforcement,
- * @property {typeof removeFrequencyWord} removeFrequencyWord,
- * @property {typeof toggleVocabularyHint} toggleVocabularyHint,
- * @property {typeof toggleAutoVerbView} toggleAutoVerbView,
- * @property {typeof updateVerbColSplit} updateVerbColSplit,
- * @property {typeof setVerbFormsOrder} setVerbFormsOrder,
+ * @property {typeof getVocabulary} getVocabulary
+ * @property {RawVocabulary[]} vocabulary
+ * @property {string[]} verbFormsOrder
+ * @property {SortTypes[keyof SortTypes]} vocabOrder
+ * @property {boolean} vocabRomaji
+ * @property {boolean} showBareKanji
+ * @property {boolean} vocabHint
+ * @property {typeof TermFilterBy[keyof TermFilterBy]} vocabFilter
+ * @property {SpaceRepetitionMap} vocabRep
+ * @property {boolean} vocabReinforce
+ * @property {GroupListMap} vocabGroups
+ * @property {boolean} autoVerbView
+ * @property {string[]} vocabActive
+ * @property {number} verbColSplit
+ * @property {typeof toggleVocabularyOrdering} toggleVocabularyOrdering
+ * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter
+ * @property {typeof toggleActiveGrp} toggleActiveGrp
+ * @property {typeof toggleVocabularyRomaji} toggleVocabularyRomaji
+ * @property {typeof toggleVocabularyReinforcement} toggleVocabularyReinforcement
+ * @property {typeof removeFrequencyWord} removeFrequencyWord
+ * @property {typeof toggleVocabularyHint} toggleVocabularyHint
+ * @property {typeof toggleAutoVerbView} toggleAutoVerbView
+ * @property {typeof updateVerbColSplit} updateVerbColSplit
+ * @property {typeof setVerbFormsOrder} setVerbFormsOrder
+ * @property {typeof toggleVocabularyBareKanji} toggleVocabularyBareKanji
  */
 
 class SettingsVocab extends Component {
@@ -90,6 +93,7 @@ class SettingsVocab extends Component {
       vocabActive,
       vocabReinforce,
       vocabRomaji,
+      showBareKanji,
       vocabHint,
       autoVerbView,
       verbColSplit,
@@ -104,6 +108,7 @@ class SettingsVocab extends Component {
       toggleVocabularyReinforcement,
       toggleVocabularyRomaji,
       updateVerbColSplit,
+      toggleVocabularyBareKanji,
     } = this.props;
 
     const vocabFreq = Object.keys(vocabRep).filter(
@@ -213,6 +218,13 @@ class SettingsVocab extends Component {
                   active={vocabRomaji}
                   action={toggleVocabularyRomaji}
                   statusText="Romaji"
+                />
+              </div>
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={showBareKanji}
+                  action={toggleVocabularyBareKanji}
+                  statusText="English+Kanji"
                 />
               </div>
               <div className="mb-2">
@@ -360,6 +372,7 @@ const mapStateToProps = (state) => {
     vocabulary: state.vocabulary.value,
     vocabOrder: state.settings.vocabulary.ordered,
     vocabRomaji: state.settings.vocabulary.romaji,
+    showBareKanji: state.settings.vocabulary.showBareKanji,
     vocabHint: state.settings.vocabulary.hintEnabled,
     vocabGroups: state.vocabulary.grpObj,
     vocabActive: state.settings.vocabulary.activeGroup,
@@ -376,6 +389,7 @@ SettingsVocab.propTypes = {
   vocabulary: PropTypes.array,
   vocabOrder: PropTypes.number,
   vocabRomaji: PropTypes.bool,
+  showBareKanji: PropTypes.bool,
   vocabHint: PropTypes.bool,
   vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
@@ -397,6 +411,7 @@ SettingsVocab.propTypes = {
   toggleVocabularyReinforcement: PropTypes.func,
   toggleVocabularyRomaji: PropTypes.func,
   updateVerbColSplit: PropTypes.func,
+  toggleVocabularyBareKanji: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -411,4 +426,5 @@ export default connect(mapStateToProps, {
   toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
   updateVerbColSplit,
+  toggleVocabularyBareKanji,
 })(SettingsVocab);

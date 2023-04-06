@@ -30,21 +30,21 @@ import { NotReady } from "./NotReady";
 
 /**
  * @typedef {Object} SettingsPhraseProps
- * @property {typeof getPhrases} getPhrases,
- * @property {RawVocabulary[]} phrases,
- * @property {SortTypes[keyof SortTypes]} phraseOrder,
- * @property {boolean} phraseRomaji,
- * @property {typeof TermFilterBy[keyof TermFilterBy]} phraseFilter,
- * @property {SpaceRepetitionMap} phraseRep,
- * @property {boolean} phraseReinforce,
- * @property {GroupListMap} phraseGroups,
- * @property {string[]} phraseActive,
- * @property {typeof togglePhrasesOrdering} togglePhrasesOrdering,
- * @property {typeof togglePhrasesFilter} togglePhrasesFilter,
- * @property {typeof toggleActiveGrp} toggleActiveGrp,
- * @property {typeof togglePhrasesRomaji} togglePhrasesRomaji,
- * @property {typeof togglePhrasesReinforcement} togglePhrasesReinforcement,
- * @property {typeof removeFrequencyPhrase} removeFrequencyPhrase,
+ * @property {typeof getPhrases} getPhrases
+ * @property {RawVocabulary[]} phrases
+ * @property {SortTypes[keyof SortTypes]} phraseOrder
+ * @property {boolean} phraseRomaji
+ * @property {typeof TermFilterBy[keyof TermFilterBy]} phraseFilter
+ * @property {SpaceRepetitionMap} phraseRep
+ * @property {boolean} phraseReinforce
+ * @property {GroupListMap} phraseGroups
+ * @property {string[]} phraseActive
+ * @property {typeof togglePhrasesOrdering} togglePhrasesOrdering
+ * @property {typeof togglePhrasesFilter} togglePhrasesFilter
+ * @property {typeof toggleActiveGrp} toggleActiveGrp
+ * @property {typeof togglePhrasesRomaji} togglePhrasesRomaji
+ * @property {typeof togglePhrasesReinforcement} togglePhrasesReinforcement
+ * @property {typeof removeFrequencyPhrase} removeFrequencyPhrase
  */
 
 class SettingsPhrase extends Component {

@@ -19,6 +19,7 @@ import {
 } from "../../helper/gameHelper";
 
 /**
+ * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  */
 
@@ -36,12 +37,13 @@ import {
  * @property {RawVocabulary} vocabulary
  * @property {boolean} showHint
  * @property {boolean} hintEnabled
+ * @property {boolean} showBareKanji
  * @property {boolean} romajiActive
  * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
- * @property {boolean} practiceSide
+ * @property {boolean} practiceSide   true: English, false: Japanese
  * @property {boolean} scrollingDone
  * @property {number} swipeThreshold
- * @property {any} furigana
+ * @property {SpaceRepetitionMap} furigana
  * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
  * @property {typeof toggleFuriganaSettingHelper} toggleFuriganaSettingHelper
  * @property {boolean} reCache
@@ -119,6 +121,12 @@ class VocabularyMain extends Component {
       eLabel,
       jLabel
     );
+
+    /** English showing, menu showBareKanji enabled, this terms furigana disabled */
+    const showBareKanji =
+      practiceSide === true &&
+      this.props.showBareKanji === true &&
+      this.props.furigana[vocabulary.uid]?.f === false;
 
     let sayObj = vocabulary;
     if (JapaneseText.parse(vocabulary).isNaAdj()) {
@@ -199,12 +207,14 @@ class VocabularyMain extends Component {
             }
           }
           onClick={() => {
-            this.setState((state) => ({
-              showMeaning: !state.showMeaning,
-            }));
+            if (!showBareKanji) {
+              this.setState((state) => ({
+                showMeaning: !state.showMeaning,
+              }));
+            }
           }}
         >
-          {this.state.showMeaning ? bottomValue : bottomLabel}
+          {this.state.showMeaning || showBareKanji ? bottomValue : bottomLabel}
         </Sizable>
 
         <div className="d-flex justify-content-center">{playButton}</div>
@@ -221,6 +231,7 @@ const mapStateToProps = (state) => {
     swipeThreshold: state.settings.global.swipeThreshold,
     furigana: state.settings.vocabulary.repetition,
     hintEnabled: state.settings.vocabulary.hintEnabled,
+    showBareKanji: state.settings.vocabulary.bareKanji,
   };
 };
 
@@ -239,6 +250,7 @@ VocabularyMain.propTypes = {
   toggleFuriganaSettingHelper: PropTypes.func,
   hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
+  showBareKanji: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, {
