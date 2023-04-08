@@ -7,7 +7,7 @@ export const SET_SHOWN_FORM = "set_shown_form";
 /**
  * Set the shown verb form in the state
  * @param {string} form
- * @returns {ActCreator}
+ * @returns {(dispatch:function)=>void}
  */
 export function setShownForm(form) {
   return (dispatch) => {

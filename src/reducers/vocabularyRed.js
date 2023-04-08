@@ -2,7 +2,7 @@ import { GET_VOCABULARY } from "../actions/vocabularyAct";
 import { SET_SHOWN_FORM } from "../actions/verbsAct";
 import { buildGroupObject } from "../helper/reducerHelper";
 
-const DEFAULT_STATE = {
+export const DEFAULT_STATE = {
   value: [],
   grpObj: {},
   verbForm: "dictionary",

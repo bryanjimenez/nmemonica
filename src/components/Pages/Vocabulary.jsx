@@ -1289,7 +1289,6 @@ class Vocabulary extends Component {
             <VerbMain
               verb={vocabulary}
               reCache={this.state.recacheAudio}
-              practiceSide={this.props.practiceSide}
               linkToOtherTerm={(uid) => this.setState({ reinforcedUID: uid })}
               showHint={showHint}
             />
@@ -1422,7 +1421,7 @@ class Vocabulary extends Component {
                 <ShowHintBtn
                   visible={this.props.hintEnabled}
                   active={isHintable}
-                  setState={(state) => this.setState(state)}
+                  setShowHint={(value) => this.setState({ showHint: value })}
                 />
                 <ToggleFuriganaBtn
                   active={hasFurigana}

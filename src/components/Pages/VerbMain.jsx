@@ -1,101 +1,142 @@
-import React, { Component } from "react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import { JapaneseVerb } from "../../helper/JapaneseVerb";
-import AudioItem from "../Form/AudioItem";
-import Sizable from "../Form/Sizable";
-import { connect } from "react-redux";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleFurigana } from "../../actions/settingsAct";
 import { setShownForm } from "../../actions/verbsAct";
+import { audioPronunciation } from "../../helper/JapaneseText";
+import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import {
-  flipVocabularyPracticeSide,
-  toggleFurigana,
-} from "../../actions/settingsAct";
-import {
-  englishLabel,
-  getVerbFormsArray,
-  japaneseLabel,
-  toggleFuriganaSettingHelper,
-  labelPlacementHelper,
+  getCacheUID,
   getEnglishHint,
   getJapaneseHint,
-  getCacheUID,
 } from "../../helper/gameHelper";
-import { audioPronunciation } from "../../helper/JapaneseText";
+import {
+  useEnglishLabel,
+  useGetVerbFormsArray,
+  useJapaneseLabel,
+  useLabelPlacementHelper,
+  useToggleFuriganaSettingHelper,
+} from "../../hooks/gameHelperHK";
+import AudioItem from "../Form/AudioItem";
+import Sizable from "../Form/Sizable";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").VerbFormArray} VerbFormArray
  * @typedef {import("../../typings/raw").FuriganaToggleMap} FuriganaToggleMap
  * @typedef {import("../../helper/JapaneseText").JapaneseText} JapaneseText
- */
-
-/**
- * @typedef {Object} VerbMainState
- * @property {boolean} showMeaning
- * @property {boolean} showRomaji
+ * @typedef {import("../../typings/state").AppRootState} AppState
  */
 
 /**
  * @typedef {Object} VerbMainProps
  * @property {RawVocabulary} verb
  * @property {boolean} reCache
- * @property {boolean} practiceSide
- * @property {boolean} romajiActive
- * @property {boolean} scrollingDone
- * @property {boolean} played
- * @property {typeof setShownForm} setShownForm
- * @property {string} verbForm
- * @property {function} flipVocabularyPracticeSide
- * @property {number} swipeThreshold
- * @property {function} linkToOtherTerm
- * @property {FuriganaToggleMap} furigana
- * @property {function} toggleFurigana
- * @property {function} toggleFuriganaSettingHelper
- * @property {number} verbColSplit
- * @property {string[]} verbFormsOrder
- * @property {boolean} hintEnabled
  * @property {boolean} showHint
+ *
+ * @property {(uid:string)=>void} linkToOtherTerm
  */
 
-class VerbMain extends Component {
-  // @ts-ignore constructor
-  constructor(props) {
-    super(props);
+/**
+ * @param {VerbFormArray} verbForms
+ * @param {number} verbColSplit
+ */
+function getSplitIdx(verbForms, verbColSplit) {
+  const middle =
+    Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
 
-    /** @type {VerbMainState} */
-    this.state = {
-      showMeaning: false,
-      showRomaji: false,
-    };
+  const rightShift = middle - verbColSplit;
+  const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
 
-    /** @type {VerbMainProps} */
-    this.props;
+  return splitIdx;
+}
 
-    /** @type {import("../../typings/raw").SetState<VerbMainState>} */
-    this.setState;
+/**
+ * splits the verb forms into two columns
+ * @param {VerbFormArray} verbForms
+ * @param {number} verbColSplit
+ * @returns an object containing two columns
+ */
+function splitVerbFormsToColumns(verbForms, verbColSplit) {
+  const splitIdx = getSplitIdx(verbForms, verbColSplit);
 
-    this.buildTenseElement = this.buildTenseElement.bind(this);
-    this.getVerbLabelItems = this.getVerbLabelItems.bind(this);
-    this.splitVerbFormsToColumns = this.splitVerbFormsToColumns.bind(this);
-  }
+  const t1 = verbForms.slice(0, splitIdx);
+  const t2 = verbForms.slice(splitIdx);
+  return { t1, t2 };
+}
 
-  /**
-   * @param {VerbMainProps} prevProps
-   */
-  componentDidUpdate(prevProps /*, prevState*/) {
-    if (this.props.verb != prevProps.verb) {
-      this.setState({
-        showMeaning: false,
-        showRomaji: false,
-      });
-    }
-  }
+/**
+ * @param {RawVocabulary} verb
+ * @param {VerbFormArray} verbForms
+ * @param {string} theForm the form to filter by
+ * @param {number} verbColSplit
+ * @param {import("../../helper/gameHelper").FuriganaToggleSetting} furiganaToggable
+ */
+function getVerbLabelItems(
+  verb,
+  verbForms,
+  theForm,
+  verbColSplit,
+  furiganaToggable
+) {
+  const romaji = verb.romaji || ".";
+  const splitIdx = getSplitIdx(verbForms, verbColSplit);
+
+  const formResult = verbForms.find((form) => form.name === theForm);
+  /** @type {JapaneseText} */
+  const japaneseObj = formResult ? formResult.value : verbForms[splitIdx].value;
+
+  let inJapanese = japaneseObj.toHTML(furiganaToggable);
+  let inEnglish = verb.english;
+
+  return { inJapanese, inEnglish, romaji, japaneseObj };
+}
+
+/**
+ * @param {VerbMainProps} props
+ */
+export default function VerbMain(props) {
+  const [showMeaning, setShowMeaning] = useState(false);
+  const [showRomaji, setShowRomaji] = useState(false);
+
+  const dispatch = useDispatch();
+
+  const stateSettings = useSelector(
+    (/** @type {AppState}*/ { settings }) => settings
+  );
+  const { swipeThreshold } = stateSettings.global;
+
+  const {
+    repetition,
+    romaji: romajiActive,
+    verbFormsOrder,
+    practiceSide: englishSideUp,
+    hintEnabled,
+    verbColSplit,
+  } = stateSettings.vocabulary;
+
+  const { verbForm } = useSelector(
+    (/** @type {AppState}*/ { vocabulary }) => vocabulary
+  );
+
+  const { verb, reCache, linkToOtherTerm, showHint } = props;
+
+  useEffect(() => {
+    setShowMeaning(false);
+    setShowRomaji(false);
+  }, [verb]);
 
   /**
    * @param {number} key
    * @param {VerbFormArray} tense
    */
-  buildTenseElement(key, tense) {
+  const buildTenseElement = (key, tense) => {
     const columnClass = classNames({
       "pt-3 pe-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap": true,
       "text-end": key !== 0,
@@ -108,7 +149,7 @@ class VerbMain extends Component {
       });
 
       const braketClass = classNames({
-        "invisible": this.props.verbForm === t.name,
+        invisible: verbForm === t.name,
       });
 
       return (
@@ -116,10 +157,10 @@ class VerbMain extends Component {
           className={tenseClass}
           key={i}
           onClick={() => {
-            if (this.props.verbForm === t.name) {
-              this.props.setShownForm("dictionary");
+            if (verbForm === t.name) {
+              setShownForm("dictionary")(dispatch);
             } else {
-              this.props.setShownForm(t.name);
+              setShownForm(t.name)(dispatch);
             }
           }}
         >
@@ -135,68 +176,46 @@ class VerbMain extends Component {
         {tenseRows}
       </div>
     );
-  }
+  };
 
-  /**
-   * @param {VerbFormArray} verbForms
-   */
-  getSplitIdx(verbForms) {
-    const middle =
-      Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
+  const verbForms = useGetVerbFormsArray(verb, verbFormsOrder);
+  const { t1, t2 } = splitVerbFormsToColumns(verbForms, verbColSplit);
 
-    const rightShift = middle - this.props.verbColSplit;
-    const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
+  const toggFurigana = useCallback(() => {
+    const getState = () => stateSettings;
+    toggleFurigana(verb.uid)(dispatch, getState);
+  }, [dispatch, stateSettings, verb]);
 
-    return splitIdx;
-  }
-  /**
-   * splits the verb forms into two columns
-   * @param {VerbFormArray} verbForms
-   * @returns an object containing two columns
-   */
-  splitVerbFormsToColumns(verbForms) {
-    const splitIdx = this.getSplitIdx(verbForms);
+  const furiganaToggable = useToggleFuriganaSettingHelper(
+    verb.uid,
+    repetition,
+    englishSideUp,
+    toggFurigana
+  );
 
-    const t1 = verbForms.slice(0, splitIdx);
-    const t2 = verbForms.slice(splitIdx);
-    return { t1, t2 };
-  }
+  const { inJapanese, inEnglish, romaji, japaneseObj } = getVerbLabelItems(
+    verb,
+    verbForms,
+    verbForm,
+    verbColSplit,
+    furiganaToggable
+  );
 
-  /**
-   * @param {VerbFormArray} verbForms
-   * @param {string} theForm the form to filter by
-   */
-  getVerbLabelItems(verbForms, theForm) {
-    const romaji = this.props.verb.romaji || ".";
-    const splitIdx = this.getSplitIdx(verbForms);
+  const vObj = useMemo(() => JapaneseVerb.parse(verb), [verb]);
+  const jValue = useJapaneseLabel(
+    englishSideUp,
+    vObj,
+    inJapanese,
+    linkToOtherTerm
+  );
+  const eValue = useEnglishLabel(
+    englishSideUp,
+    vObj,
+    inEnglish,
+    linkToOtherTerm
+  );
 
-    const formResult = verbForms.find((form) => form.name === theForm);
-    /** @type {JapaneseText} */
-    const japaneseObj = formResult
-      ? formResult.value
-      : verbForms[splitIdx].value;
-
-    const furiganaToggable = toggleFuriganaSettingHelper(
-      this.props.verb.uid,
-      this.props.furigana,
-      this.props.practiceSide,
-      this.props.toggleFurigana
-    );
-
-    let inJapanese = japaneseObj.toHTML(furiganaToggable);
-    let inEnglish = this.props.verb.english;
-
-    return { inJapanese, inEnglish, romaji, japaneseObj };
-  }
-
-  render() {
-    const verb = this.props.verb;
-    const verbForms = getVerbFormsArray(verb, this.props.verbFormsOrder);
-    const { t1, t2 } = this.splitVerbFormsToColumns(verbForms);
-    const { inJapanese, inEnglish, romaji, japaneseObj } =
-      this.getVerbLabelItems(verbForms, this.props.verbForm);
-
-    const practiceSide = this.props.practiceSide;
+  const { jLabel, eLabel } = useMemo(() => {
     let eLabel = <span>{"[English]"}</span>;
     let jLabel = (
       <Sizable
@@ -207,64 +226,64 @@ class VerbMain extends Component {
       />
     );
 
-    const vObj = JapaneseVerb.parse(verb);
-    const jValue = japaneseLabel(
-      practiceSide,
-      vObj,
-      inJapanese,
-      this.props.linkToOtherTerm
-    );
-
-    const eValue = englishLabel(
-      practiceSide,
-      vObj,
-      inEnglish,
-      this.props.linkToOtherTerm
-    );
-
-    if (this.props.hintEnabled && this.props.showHint) {
-      if (practiceSide) {
+    if (hintEnabled && showHint) {
+      if (englishSideUp) {
         const jHint = getJapaneseHint(japaneseObj);
-        jLabel = jHint || jLabel;
+        if (jHint) {
+          jLabel = jHint;
+        }
       } else {
         const eHint = getEnglishHint(verb);
-        eLabel = eHint || eLabel;
+        if (eHint) {
+          eLabel = eHint;
+        }
       }
     }
 
-    const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
-      practiceSide,
-      eValue,
-      jValue,
-      eLabel,
-      jLabel
-    );
+    return { jLabel, eLabel };
+  }, [hintEnabled, showHint, englishSideUp, japaneseObj, verb]);
 
-    const verbJapanese = {
+  const { topValue, bottomValue, bottomLabel } = useLabelPlacementHelper(
+    englishSideUp,
+    eValue,
+    jValue,
+    eLabel,
+    jLabel
+  );
+
+  const verbJapanese = useMemo(
+    () => ({
       ...verb,
       japanese: japaneseObj.toString(),
       pronounce: verb.pronounce && japaneseObj.getPronunciation(),
-      form: this.props.verbForm,
-    };
+      form: verbForm,
+    }),
+    [verb, japaneseObj, verbForm]
+  );
 
-    const audioWords = this.props.practiceSide
+  const audioWords = useMemo(() => {
+    return englishSideUp
       ? { tl: "en", q: verbJapanese.english, uid: verbJapanese.uid + ".en" }
       : {
           tl: "ja",
           q: audioPronunciation(verbJapanese),
           uid: getCacheUID(verbJapanese),
         };
+  }, [englishSideUp, verbJapanese]);
 
-    const playButton = (
-      <AudioItem
-        visible={this.props.swipeThreshold === 0}
-        word={audioWords}
-        reCache={this.props.reCache}
-      />
-    );
+  const playButton = (
+    <AudioItem
+      visible={swipeThreshold === 0}
+      word={audioWords}
+      reCache={reCache}
+    />
+  );
 
-    return [
-      this.buildTenseElement(0, t1),
+  // console.warn("VerbMain render ");
+
+  return (
+    <>
+      {buildTenseElement(0, t1)}
       <div
         key={1}
         className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
@@ -272,24 +291,20 @@ class VerbMain extends Component {
         <Sizable
           breakPoint="md"
           smallClassName={{
-            ...(!practiceSide ? { "fs-display-6": true } : { h5: true }),
+            ...(!englishSideUp ? { "fs-display-6": true } : { h5: true }),
           }}
           largeClassName={{ "fs-display-6": true }}
         >
           {topValue}
         </Sizable>
 
-        {this.props.romajiActive && romaji && (
+        {romajiActive && romaji && (
           <div>
             <span
               className="clickable loop-no-interrupt"
-              onClick={() => {
-                this.setState((state) => ({
-                  showRomaji: !state.showRomaji,
-                }));
-              }}
+              onClick={() => setShowRomaji((show) => !show)}
             >
-              {this.state.showRomaji ? romaji : "[romaji]"}
+              {showRomaji ? romaji : "[romaji]"}
             </span>
           </div>
         )}
@@ -298,61 +313,24 @@ class VerbMain extends Component {
           breakPoint="md"
           className={{ "loop-no-interrupt": true }}
           smallClassName={{
-            ...(practiceSide ? { "fs-display-6": true } : { h5: true }),
+            ...(englishSideUp ? { "fs-display-6": true } : { h5: true }),
           }}
           largeClassName={{ "fs-display-6": true }}
-          onClick={() => {
-            this.setState((state) => ({
-              showMeaning: !state.showMeaning,
-            }));
-          }}
+          onClick={() => setShowMeaning((show) => !show)}
         >
-          {this.state.showMeaning ? bottomValue : bottomLabel}
+          {showMeaning ? bottomValue : bottomLabel}
         </Sizable>
         <div className="d-flex justify-content-center">{playButton}</div>
-      </div>,
+      </div>
 
-      this.buildTenseElement(2, t2),
-    ];
-  }
+      {buildTenseElement(2, t2)}
+    </>
+  );
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
-  return {
-    romajiActive: state.settings.vocabulary.romaji,
-    scrollingDone: !state.settings.global.scrolling,
-    verbForm: state.vocabulary.verbForm,
-    swipeThreshold: state.settings.global.swipeThreshold,
-    furigana: state.settings.vocabulary.repetition,
-    verbColSplit: state.settings.vocabulary.verbColSplit,
-    verbFormsOrder: state.settings.vocabulary.verbFormsOrder,
-    hintEnabled: state.settings.vocabulary.hintEnabled,
-  };
-};
 
 VerbMain.propTypes = {
   verb: PropTypes.object.isRequired,
   reCache: PropTypes.bool,
-  practiceSide: PropTypes.bool,
-  romajiActive: PropTypes.bool,
-  scrollingDone: PropTypes.bool,
-  played: PropTypes.bool,
-  setShownForm: PropTypes.func,
-  verbForm: PropTypes.string,
-  flipVocabularyPracticeSide: PropTypes.func,
-  swipeThreshold: PropTypes.number,
   linkToOtherTerm: PropTypes.func,
-  furigana: PropTypes.object,
-  toggleFurigana: PropTypes.func,
-  toggleFuriganaSettingHelper: PropTypes.func,
-  verbColSplit: PropTypes.number,
-  verbFormsOrder: PropTypes.array,
-  hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
 };
-
-export default connect(mapStateToProps, {
-  setShownForm,
-  flipVocabularyPracticeSide,
-  toggleFurigana,
-})(VerbMain);

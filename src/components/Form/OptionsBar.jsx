@@ -179,12 +179,11 @@ function ToggleFrequencyTermBtnIsEq(oldProps, newProps) {
  * @typedef {{
  * visible: boolean,
  * active: boolean,
- * setState: (state:{showHint:boolean})=>void }} ShowHintBtnProps
+ * setShowHint: (showHintValue:boolean)=>void }} ShowHintBtnProps
  * @param {ShowHintBtnProps} props
  */
 export function ShowHintBtn(props) {
-  const active = props.active;
-  const parentSetState = props.setState;
+  const { active, setShowHint } = props;
 
   return !props.visible ? null : (
     <div
@@ -196,9 +195,9 @@ export function ShowHintBtn(props) {
       onClick={
         active
           ? () => {
-              parentSetState({ showHint: true });
+              setShowHint(true);
               setTimeout(() => {
-                parentSetState({ showHint: false });
+                setShowHint(false);
               }, 1500);
             }
           : undefined
@@ -213,7 +212,7 @@ export function ShowHintBtn(props) {
 ShowHintBtn.propTypes = {
   visible: PropTypes.bool,
   active: PropTypes.bool,
-  setState: PropTypes.func,
+  setShowHint: PropTypes.func,
 };
 
 /**
