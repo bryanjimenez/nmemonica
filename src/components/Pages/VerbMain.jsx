@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFurigana } from "../../actions/settingsAct";
-import { setShownForm } from "../../actions/verbsAct";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import {
@@ -23,6 +22,7 @@ import {
   useLabelPlacementHelper,
   useToggleFuriganaSettingHelper,
 } from "../../hooks/gameHelperHK";
+import { verbFormChanged } from "../../slices/verbsSlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 
@@ -121,9 +121,7 @@ export default function VerbMain(props) {
     verbColSplit,
   } = stateSettings.vocabulary;
 
-  const { verbForm } = useSelector(
-    (/** @type {AppState}*/ { vocabulary }) => vocabulary
-  );
+  const { verbForm } = useSelector((/** @type {AppState}*/ { verb }) => verb);
 
   const { verb, reCache, linkToOtherTerm, showHint } = props;
 
@@ -158,9 +156,9 @@ export default function VerbMain(props) {
           key={i}
           onClick={() => {
             if (verbForm === t.name) {
-              setShownForm("dictionary")(dispatch);
+              dispatch(verbFormChanged("dictionary"));
             } else {
-              setShownForm(t.name)(dispatch);
+              dispatch(verbFormChanged(t.name));
             }
           }}
         >
@@ -278,8 +276,6 @@ export default function VerbMain(props) {
       reCache={reCache}
     />
   );
-
-  // console.warn("VerbMain render ");
 
   return (
     <>

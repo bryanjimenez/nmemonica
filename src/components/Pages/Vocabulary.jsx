@@ -1552,7 +1552,7 @@ const mapStateToProps = (state) => {
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
     repetition: state.settings.vocabulary.repetition,
-    verbForm: state.vocabulary.verbForm,
+    verbForm: state.verb.verbForm,
     swipeThreshold: state.settings.global.swipeThreshold,
     motionThreshold: state.settings.global.motionThreshold,
     debugLevel: state.settings.global.debug,

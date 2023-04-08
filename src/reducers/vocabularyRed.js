@@ -1,11 +1,9 @@
 import { GET_VOCABULARY } from "../actions/vocabularyAct";
-import { SET_SHOWN_FORM } from "../actions/verbsAct";
 import { buildGroupObject } from "../helper/reducerHelper";
 
 export const DEFAULT_STATE = {
   value: [],
   grpObj: {},
-  verbForm: "dictionary",
 };
 const DEFAULT_ACTION = {};
 
@@ -39,11 +37,6 @@ const vocabularyReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
         value,
       };
     }
-    case SET_SHOWN_FORM:
-      return {
-        ...state,
-        verbForm: action.value,
-      };
     default:
       return state;
   }
