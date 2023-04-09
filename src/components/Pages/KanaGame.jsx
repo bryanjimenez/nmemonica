@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import { getKana } from "../../actions/kanaAct";
+import { getKana } from "../../slices/kanaSlice";
 import { shuffleArray } from "../../helper/arrayHelper";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -422,7 +422,7 @@ class KanaGame extends Component {
 
     const hintH6CSS = classNames({
       "mb-0": true,
-      "invisible": !isWrong,
+      invisible: !isWrong,
     });
 
     const wide = this.props.wideMode ? 3 / 4 : 1;
@@ -465,9 +465,7 @@ class KanaGame extends Component {
         // keep hint transparent to match spacing
         hintElement = (
           <div className={hintDivCSS}>
-            <h6 className="mb-0 invisible">
-              {swapKana(choices[index].val)}
-            </h6>
+            <h6 className="mb-0 invisible">{swapKana(choices[index].val)}</h6>
           </div>
         );
       }
