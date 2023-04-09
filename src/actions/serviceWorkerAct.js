@@ -1,4 +1,3 @@
-import { GET_PHRASES } from "./phrasesAct";
 import {
   addFrequencyTerm,
   ADD_FREQUENCY_PHRASE,
@@ -43,20 +42,20 @@ export function serviceWorkerNewTermsAdded(newestWords) {
       let actType = ADD_FREQUENCY_WORD;
       let type = "GET_VOCABULARY";
 
-      if (termType === "phrases") {
-        actType = ADD_FREQUENCY_PHRASE;
-        type = GET_PHRASES;
-      }
+      // if (termType === "phrases") {
+      //   actType = ADD_FREQUENCY_PHRASE;
+      //   type = GET_PHRASES;
+      // }
 
-      addFrequencyTerm(actType, uidArr)(dispatch, getState).then(() => {
-        // TODO: serviceWorkerNewTermsAdded
-        if (termType === "phrases") {
-          dispatch({
-            type,
-            value: termObj,
-          });
-        }
-      });
+      // FIXME: hook + class
+      console.warn("serviceWorkerNewTermsAdded Broken");
+      // addFrequencyTerm(actType, uidArr)(dispatch, getState).then(() => {
+
+      //     dispatch({
+      //       type,
+      //       value: termObj,
+      //     });
+      // });
     }
   };
 }

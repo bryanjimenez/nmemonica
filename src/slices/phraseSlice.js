@@ -1,8 +1,8 @@
-import { GET_PHRASES } from "../actions/phrasesAct";
-import { GET_PARTICLE_PHRASES } from "../hooks/phrasesHK";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { firebaseConfig } from "../../environment.development";
 import { buildGroupObject } from "../helper/reducerHelper";
-import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
+import { JapaneseText } from "../helper/JapaneseText";
 
 /**
  * @typedef {import("../typings/raw").RawPhrase} RawPhrase
@@ -10,16 +10,21 @@ import { romajiParticle } from "../helper/kanaHelper";
  * @typedef {import("../components/Games/ParticlesGame").ParticleGamePhrase} ParticleGamePhrase
  */
 
-export const DEFAULT_STATE = {
-  value: /** @type {RawPhrase[]} */ ([]),
-  grpObj: {},
-  particleGame: {
-    phrases: /** @type {ParticleGamePhrase[]} */ ([]),
-    particles: /** @type {ParticleChoice[]} */ ([]),
-  },
-};
-/** @type {{type:string, value:any}} to avoid ts-nocheck */
-const DEFAULT_ACTION = {};
+/**
+ * Fetch vocabulary
+ */
+export const getPhrase = createAsyncThunk(
+  "phrase/getPhrase",
+  async (v, thunkAPI) => {
+    const state = thunkAPI.getState();
+    const version = state.version.phrases || 0;
+
+    console.warn("getPhrase " + JSON.stringify({ version: state.version }));
+    return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
+      headers: { "Data-Version": version },
+    }).then((res) => res.json());
+  }
+);
 
 /**
  * Filters RawPhrase to be used by PhrasesGame
@@ -84,30 +89,40 @@ export function getParticleGame(rawPhrases) {
   return { phrases: wParticles, particles: particleList };
 }
 
-const phrasesReducer = (state = DEFAULT_STATE, action = DEFAULT_ACTION) => {
-  switch (action.type) {
-    case GET_PHRASES: {
-      const value = Object.keys(action.value).map((k) => ({
-        ...action.value[k],
+export const initialState = {
+  value: /** @type {RawPhrase[]} */ ([]),
+  grpObj: {},
+  particleGame: {
+    phrases: /** @type {ParticleGamePhrase[]} */ ([]),
+    particles: /** @type {ParticleChoice[]} */ ([]),
+  },
+};
+
+const phraseSlice = createSlice({
+  name: "phrase",
+  initialState,
+  reducers: {
+    getParticleGamePhrases(state, action) {
+      return {
+        ...state,
+        particleGame: getParticleGame(action.payload),
+        value: action.payload,
+      };
+    },
+  },
+
+  extraReducers: (builder) => {
+    builder.addCase(getPhrase.fulfilled, (state, action) => {
+      const value = Object.keys(action.payload).map((k) => ({
+        ...action.payload[k],
         uid: k,
       }));
 
-      return {
-        ...state,
-        grpObj: buildGroupObject(action.value),
-        value,
-      };
-    }
-    case GET_PARTICLE_PHRASES:
-      return {
-        ...state,
-        particleGame: getParticleGame(action.value),
-        value: action.value,
-      };
+      state.grpObj = buildGroupObject(action.payload);
+      state.value = value;
+    });
+  },
+});
 
-    default:
-      return state;
-  }
-};
-
-export default phrasesReducer;
+export const { getParticleGamePhrases } = phraseSlice.actions;
+export default phraseSlice.reducer;

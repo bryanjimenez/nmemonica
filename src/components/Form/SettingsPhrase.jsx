@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 
-import { getPhrases } from "../../actions/phrasesAct";
+import { getPhrase } from "../../slices/phraseSlice";
 import {
   removeFrequencyPhrase,
   togglePhrasesOrdering,
@@ -30,7 +30,7 @@ import { NotReady } from "./NotReady";
 
 /**
  * @typedef {Object} SettingsPhraseProps
- * @property {typeof getPhrases} getPhrases
+ * @property {typeof getPhrase} getPhrase
  * @property {RawVocabulary[]} phrases
  * @property {SortTypes[keyof SortTypes]} phraseOrder
  * @property {boolean} phraseRomaji
@@ -55,7 +55,7 @@ class SettingsPhrase extends Component {
     /** @type {SettingsPhraseProps} */
     this.props;
     if (this.props.phrases.length === 0) {
-      this.props.getPhrases();
+      this.props.getPhrase();
     }
   }
 
@@ -201,7 +201,7 @@ SettingsPhrase.propTypes = {
   phraseFilter: PropTypes.number,
   phraseRep: PropTypes.object,
 
-  getPhrases: PropTypes.func,
+  getPhrase: PropTypes.func,
   togglePhrasesOrdering: PropTypes.func,
   togglePhrasesFilter: PropTypes.func,
   toggleActiveGrp: PropTypes.func,
@@ -212,7 +212,7 @@ SettingsPhrase.propTypes = {
 };
 
 export default connect(mapStateToProps, {
-  getPhrases,
+  getPhrase,
   togglePhrasesFilter,
   toggleActiveGrp,
   removeFrequencyPhrase,

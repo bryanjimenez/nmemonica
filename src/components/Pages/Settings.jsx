@@ -6,7 +6,7 @@ import { connect } from "react-redux";
 
 import { logger } from "../../actions/consoleAct";
 import { getKanji } from "../../actions/kanjiAct";
-import { getPhrases } from "../../actions/phrasesAct";
+import { getPhrase } from "../../slices/phraseSlice";
 import {
   DebugLevel,
   removeFrequencyKanji,
@@ -113,7 +113,7 @@ const SettingsMeta = {
  * @property {typeof toggleDebug} toggleDebug
  * @property {typeof setSwipeThreshold} setSwipeThreshold
  * @property {typeof setMotionThreshold} setMotionThreshold
- * @property {typeof getPhrases} getPhrases
+ * @property {typeof getPhrase} getPhrase
  * @property {typeof getVocabulary} getVocabulary
  * @property {typeof setHiraganaBtnN} setHiraganaBtnN
  * @property {typeof toggleKanaGameWideMode} toggleKanaGameWideMode
@@ -168,7 +168,7 @@ class Settings extends Component {
     }
 
     if (this.props.phrases.length === 0) {
-      this.props.getPhrases();
+      this.props.getPhrase();
     }
 
     this.swMessageEventListener = this.swMessageEventListener.bind(this);
@@ -997,7 +997,7 @@ Settings.propTypes = {
   setMotionThreshold: PropTypes.func,
 
   // phrases
-  getPhrases: PropTypes.func,
+  getPhrase: PropTypes.func,
   phrases: PropTypes.array,
   pRepetition: PropTypes.object,
 
@@ -1053,7 +1053,7 @@ export default connect(mapStateToProps, {
   toggleDarkMode,
 
   getVocabulary,
-  getPhrases,
+  getPhrase,
   getKanji,
   setKanjiBtnN,
   toggleActiveGrp,

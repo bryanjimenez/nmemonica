@@ -5,7 +5,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { pronounceEndoint } from "../../../environment.development";
 import { logger } from "../../actions/consoleAct";
-import { getPhrases } from "../../actions/phrasesAct";
+import { getPhrase } from "../../slices/phraseSlice";
 import {
   addFrequencyPhrase,
   DebugLevel,
@@ -84,7 +84,7 @@ import StackNavButton from "../Form/StackNavButton";
 
 /**
  * @typedef {Object} PhrasesProps
- * @property {typeof getPhrases} getPhrases
+ * @property {typeof getPhrase} getPhrase
  * @property {RawPhrase[]} phrases
  * @property {typeof TermSortBy[keyof TermSortBy]} termsOrder
  * @property {typeof flipPhrasesPracticeSide} flipPhrasesPracticeSide
@@ -136,7 +136,7 @@ class Phrases extends Component {
     this.setState;
 
     if (this.props.phrases.length === 0) {
-      this.props.getPhrases();
+      this.props.getPhrase();
     }
 
     this.gotoNext = this.gotoNext.bind(this);
@@ -972,7 +972,7 @@ const mapStateToProps = (state) => {
 };
 
 Phrases.propTypes = {
-  getPhrases: PropTypes.func.isRequired,
+  getPhrase: PropTypes.func.isRequired,
   activeGroup: PropTypes.array,
   addFrequencyPhrase: PropTypes.func,
   removeFrequencyPhrase: PropTypes.func,
@@ -994,7 +994,7 @@ Phrases.propTypes = {
 };
 
 export default connect(mapStateToProps, {
-  getPhrases,
+  getPhrase,
   flipPhrasesPracticeSide,
   addFrequencyPhrase,
   removeFrequencyPhrase,

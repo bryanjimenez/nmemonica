@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { firebaseConfig } from "../../environment.development";
-
-export const GET_PARTICLE_PHRASES = "get_particle_phrases";
+import { getParticleGamePhrases } from "../slices/phraseSlice";
 
 /**
  * @typedef {import("../typings/raw").RawPhrase} RawPhrase
@@ -37,13 +36,13 @@ export function useParticlePhrasesStore(
             ...data[k],
             uid: k,
           }));
-          dispatch({ type: GET_PARTICLE_PHRASES, value });
+          dispatch(getParticleGamePhrases(value));
         });
     }
 
     if (rawPhrases.length > 0 && gamePhrases.length === 0) {
       // console.log("no fetch");
-      dispatch({ type: GET_PARTICLE_PHRASES, value: rawPhrases });
+      dispatch(getParticleGamePhrases(rawPhrases));
     }
 
     return function cleanup() {

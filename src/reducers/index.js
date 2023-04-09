@@ -3,7 +3,7 @@ import kanaReducer from "./kanaRed";
 import kanjiReducer from "./kanjiRed";
 import loginReducer from "./loginRed";
 import oppositesReducer from "./oppositesRed";
-import phrasesReducer from "./phrasesRed";
+import phrasesReducer from "../slices/phraseSlice";
 import settingsReducer from "./settingsRed";
 import settingsReducerHK from "../slices/settingSlice";
 import versionsReducer from "../slices/versionSlice";
