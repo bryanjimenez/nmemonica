@@ -18,7 +18,9 @@ export const getVocabulary = createAsyncThunk(
     const state = thunkAPI.getState();
     const version = state.version.vocabulary || 0;
 
-    console.warn("getVocabulary " + JSON.stringify({ version: state.version }));
+    if(version===0){
+      console.error('fetching vocabulary: 0')
+    }
     return fetch(firebaseConfig.databaseURL + "/lambda/vocabulary.json", {
       headers: { "Data-Version": version },
     }).then((res) => res.json());

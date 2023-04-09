@@ -17,12 +17,7 @@ const versionSlice = createSlice({
   reducers: {},
 
   extraReducers: (builder) => {
-    builder.addCase(getVersions.fulfilled, (state, action) => {
-      return {
-        ...state,
-        ...action.payload,
-      };
-    });
+    builder.addCase(getVersions.fulfilled, (state, action) => state = action.payload);
   },
 });
 

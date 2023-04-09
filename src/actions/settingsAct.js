@@ -646,65 +646,65 @@ export function toggleActiveTag(parent, tagName) {
   };
 }
 
-/**
- * @returns {ActCreator}
- */
-export function setOppositesQRomaji() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function setOppositesQRomaji() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/opposites/";
-    const attr = "qRomaji";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/opposites/";
+//     const attr = "qRomaji";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_OPPOSITES_Q_ROMAJI
-      );
-    } else {
-      dispatch({
-        type: SET_OPPOSITES_Q_ROMAJI,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         SET_OPPOSITES_Q_ROMAJI
+//       );
+//     } else {
+//       dispatch({
+//         type: SET_OPPOSITES_Q_ROMAJI,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function setOppositesARomaji() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function setOppositesARomaji() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/opposites/";
-    const attr = "aRomaji";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/opposites/";
+//     const attr = "aRomaji";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_OPPOSITES_A_ROMAJI
-      );
-    } else {
-      dispatch({
-        type: SET_OPPOSITES_A_ROMAJI,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         SET_OPPOSITES_A_ROMAJI
+//       );
+//     } else {
+//       dispatch({
+//         type: SET_OPPOSITES_A_ROMAJI,
+//       });
+//     }
+//   };
+// }
 
 /**
  * @returns {ActCreator}

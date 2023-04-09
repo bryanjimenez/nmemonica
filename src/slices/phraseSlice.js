@@ -19,7 +19,9 @@ export const getPhrase = createAsyncThunk(
     const state = thunkAPI.getState();
     const version = state.version.phrases || 0;
 
-    console.warn("getPhrase " + JSON.stringify({ version: state.version }));
+    if(version===0){
+      console.error('fetching phrase: 0')
+    }
     return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
       headers: { "Data-Version": version },
     }).then((res) => res.json());

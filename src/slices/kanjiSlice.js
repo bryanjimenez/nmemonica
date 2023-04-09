@@ -15,7 +15,9 @@ export const getKanji = createAsyncThunk(
     const state = thunkAPI.getState();
     const version = state.version.kanji || 0;
 
-    console.warn("getKanji " + JSON.stringify({ version: state.version }));
+    if(version===0){
+      console.error('fetching kanji: 0')
+    }
     return fetch(firebaseConfig.databaseURL + "/lambda/kanji.json", {
       headers: { "Data-Version": version },
     }).then((res) => res.json());

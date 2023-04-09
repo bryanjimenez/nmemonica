@@ -5,8 +5,8 @@ import {
   SET_KANA_BTN_N,
   TOGGLE_KANA_WIDEMODE,
   TOGGLE_KANA_EASYMODE,
-  SET_OPPOSITES_A_ROMAJI,
-  SET_OPPOSITES_Q_ROMAJI,
+  // SET_OPPOSITES_A_ROMAJI,
+  // SET_OPPOSITES_Q_ROMAJI,
   SET_PHRASES_ORDERING,
   TOGGLE_PHRASES_ROMAJI,
   SET_VOCABULARY_ORDERING,
@@ -424,22 +424,22 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           verbFormsOrder: action.value,
         },
       };
-    case SET_OPPOSITES_Q_ROMAJI:
-      return {
-        ...state,
-        opposites: {
-          ...state.opposites,
-          qRomaji: !state.opposites.qRomaji,
-        },
-      };
-    case SET_OPPOSITES_A_ROMAJI:
-      return {
-        ...state,
-        opposites: {
-          ...state.opposites,
-          aRomaji: !state.opposites.aRomaji,
-        },
-      };
+    // case SET_OPPOSITES_Q_ROMAJI:
+    //   return {
+    //     ...state,
+    //     opposites: {
+    //       ...state.opposites,
+    //       qRomaji: !state.opposites.qRomaji,
+    //     },
+    //   };
+    // case SET_OPPOSITES_A_ROMAJI:
+    //   return {
+    //     ...state,
+    //     opposites: {
+    //       ...state.opposites,
+    //       aRomaji: !state.opposites.aRomaji,
+    //     },
+    //   };
     case SET_PARTICLES_A_ROMAJI:
       return {
         ...state,

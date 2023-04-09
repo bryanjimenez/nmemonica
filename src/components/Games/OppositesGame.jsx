@@ -6,13 +6,11 @@ import { randomOrder } from "../../helper/gameHelper";
 import { NotReady } from "../Form/NotReady";
 import FourChoices from "./FourChoices";
 import classNames from "classnames";
-import { useOppositesStore } from "../../hooks/oppositesHK";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { getOpposite } from "../../slices/oppositeSlice";
 
 /**
  * @typedef {{english: string, japanese: string, romaji: string, toHTML: (correct:boolean)=>JSX.Element}} RawOpposite
- *
- * @typedef {import("../../typings/state").AppRootState} AppRootState
  */
 
 /**
@@ -31,6 +29,19 @@ const OppositesGameMeta = {
 };
 
 function OppositesGame() {
+  const dispatch = useDispatch();
+  const {
+    value: oppositesArr,
+    qRomaji,
+    aRomaji,
+  } = useSelector((/** @type {RootState}*/ { opposite }) => opposite);
+  useMemo(() => {
+    if (oppositesArr.length === 0) {
+      dispatch(getOpposite());
+    }
+  }, []);
+  const rawOpposites = useMemo(() => oppositesArr, [oppositesArr]);
+
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -130,19 +141,6 @@ function OppositesGame() {
     const newSel = i < 0 ? (l + i) % l : i % l;
     setSelectedIndex(newSel);
   }
-
-  const dispatch = useDispatch();
-  const { qRomaji, aRomaji } = useSelector(
-    (/** @type {AppRootState}*/ state) => state.settings.opposites
-  );
-  const version = useSelector(
-    (/** @type {AppRootState}*/ { version }) => version.opposites
-  );
-  const { value: oppositesArr } = useSelector(
-    (/** @type {AppRootState}*/ { opposites }) => opposites
-  );
-  const rawOpposites = useMemo(() => oppositesArr, [oppositesArr]);
-  useOppositesStore(dispatch, version, rawOpposites);
 
   const game = prepareGame(selectedIndex, rawOpposites);
 

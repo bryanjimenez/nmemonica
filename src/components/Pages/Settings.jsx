@@ -8,13 +8,15 @@ import { logger, debugToggled } from "../../slices/settingSlice";
 import { getKanji } from "../../slices/kanjiSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
+  setOppositesARomaji,
+  setOppositesQRomaji,
+} from "../../slices/oppositeSlice";
+import {
   DebugLevel,
   removeFrequencyKanji,
   setHiraganaBtnN,
   setKanjiBtnN,
   setMotionThreshold,
-  setOppositesARomaji,
-  setOppositesQRomaji,
   setParticlesARomaji,
   setSwipeThreshold,
   TermFilterBy,
@@ -966,8 +968,8 @@ const mapStateToProps = (state) => {
     kRepetition: state.settings.kanji.repetition,
     kanjiReinforce: state.settings.kanji.reinforce,
 
-    oppositesQRomaji: state.settings.opposites.qRomaji,
-    oppositesARomaji: state.settings.opposites.aRomaji,
+    oppositesQRomaji: state.opposite.qRomaji,
+    oppositesARomaji: state.opposite.aRomaji,
 
     choiceN: state.settings.kana.choiceN,
     wideMode: state.settings.kana.wideMode,
@@ -977,7 +979,7 @@ const mapStateToProps = (state) => {
     particlesARomaji: state.settings.particles.aRomaji,
 
     memory: state.settings.global.memory,
-    debug: state.settingsHK.global.debug,   // FIXME: hook + class
+    debug: state.settingsHK.global.debug, // FIXME: hook + class
   };
 };
 

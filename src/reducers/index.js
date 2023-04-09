@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import kanaReducer from "../slices/kanaSlice";
 import kanjiReducer from "../slices/kanjiSlice";
 import loginReducer from "./loginRed";
-import oppositesReducer from "./oppositesRed";
+import oppositesReducer from "../slices/oppositeSlice";
 import phrasesReducer from "../slices/phraseSlice";
 import settingsReducer from "./settingsRed";
 import settingsReducerHK from "../slices/settingSlice";
@@ -12,16 +12,16 @@ import serviceWorkerReducer from "../slices/serviceWorkerSlice";
 
 export const store = configureStore({
   reducer: {
-    login: loginReducer,
+    login: loginReducer,            // PENDING delete
     sw: serviceWorkerReducer,
     version: versionsReducer,
 
-    settings: settingsReducer,
-    settingsHK: settingsReducerHK, // FIXME: hooks + class
+    settings: settingsReducer,      // PENDING delete
+    settingsHK: settingsReducerHK,  // FIXME: hooks + class
 
     kana: kanaReducer,
     vocabulary: vocabularyReducer,
-    opposites: oppositesReducer,
+    opposite: oppositesReducer,
     phrases: phrasesReducer,
     kanji: kanjiReducer,
   },
