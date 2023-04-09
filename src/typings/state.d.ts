@@ -5,7 +5,7 @@ import { DEFAULT_STATE as VOCABULARY_DEFAULT_STATE } from "../reducers/vocabular
 import { DEFAULT_STATE as PHRASES_DEFAULT_STATE } from "../reducers/phrasesRed";
 import { DEFAULT_STATE as KANJI_DEFAULT_STATE } from "../reducers/kanjiRed";
 import { DEFAULT_STATE as OPPOSITES_DEFAULT_STATE } from "../reducers/oppositesRed";
-import { initialState as VERB_INITIAL_STATE } from "../slices/verbsSlice";
+import { initialState as VERB_INITIAL_STATE } from "../slices/vocabularySlice";
 
 type VocabularyRootState = typeof VOCABULARY_DEFAULT_STATE;
 type PhrasesRootState = typeof PHRASES_DEFAULT_STATE;

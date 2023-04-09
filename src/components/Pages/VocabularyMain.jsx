@@ -227,7 +227,7 @@ const mapStateToProps = (state) => {
     romajiActive: state.settings.vocabulary.romaji,
     scrollingDone: !state.settings.global.scrolling,
     swipeThreshold: state.settings.global.swipeThreshold,
-    furigana: state.settings.vocabulary.repetition,
+    repetition: state.settingsHK.vocabulary.repetition, // TODO: hook + class
     hintEnabled: state.settings.vocabulary.hintEnabled,
     showBareKanji: state.settings.vocabulary.bareKanji,
   };

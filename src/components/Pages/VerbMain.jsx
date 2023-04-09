@@ -16,10 +16,9 @@ import {
   useLabelPlacementHelper,
   useToggleFuriganaSettingHelper,
 } from "../../hooks/gameHelperHK";
-import { verbFormChanged } from "../../slices/verbsSlice";
+import { verbFormChanged } from "../../slices/vocabularySlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
-import { localStorageSettingsInitialized } from "../../slices/settingSlice";
 import { useVerbMainSelectorConnected } from "../../hooks/selectorConnected";
 
 /**
@@ -102,11 +101,6 @@ export default function VerbMain(props) {
 
   const dispatch = useDispatch();
 
-  // FIXME: initialize *hooks* localstore
-  useMemo(() => {
-    dispatch(localStorageSettingsInitialized());
-  }, []);
-
   const {
     swipeThreshold,
     englishSideUp,
@@ -117,9 +111,9 @@ export default function VerbMain(props) {
   } = useVerbMainSelectorConnected();
 
   const { repetition, verbForm } = useSelector(
-    (/** @type {RootState}*/ {settingsHK, vocabularyHK}) => {
+    (/** @type {RootState}*/ { settingsHK, vocabulary }) => {
       const { repetition } = settingsHK.vocabulary;
-      const { verbForm } = vocabularyHK;
+      const { verbForm } = vocabulary;
       return { repetition, verbForm };
     }
   );

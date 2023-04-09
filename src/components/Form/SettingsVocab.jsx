@@ -23,7 +23,7 @@ import {
   TermSortByLabel,
   toggleVocabularyBareKanji,
 } from "../../actions/settingsAct";
-import { getVocabulary } from "../../actions/vocabularyAct";
+import { getVocabulary } from "../../slices/vocabularySlice";
 
 import { DEFAULT_SETTINGS } from "../../reducers/settingsRed";
 

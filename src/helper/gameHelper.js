@@ -1004,7 +1004,7 @@ export function toggleFuriganaSettingHelper(
   let furiganaToggable;
 
   // show by default unless explicitly set to false
-  const show = !(settings[uid] && settings[uid].f === false);
+  const show = !(settings && settings[uid] && settings[uid].f === false);
   furiganaToggable = {
     furigana: {
       show,

@@ -32,7 +32,7 @@ import {
   getMemoryStorageStatus,
   setPersistentStorage,
 } from "../../actions/storageAct";
-import { getVocabulary } from "../../actions/vocabularyAct";
+import { getVocabulary } from "../../slices/vocabularySlice";
 import { logify } from "../../helper/consoleHelper";
 import {
   getDeviceMotionEventPermission,

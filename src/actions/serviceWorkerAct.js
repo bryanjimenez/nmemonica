@@ -4,7 +4,6 @@ import {
   ADD_FREQUENCY_PHRASE,
   ADD_FREQUENCY_WORD,
 } from "./settingsAct";
-import { GET_VOCABULARY } from "./vocabularyAct";
 
 export const SERVICE_WORKER_REGISTERED = "service_worker_registered";
 export const SERVICE_WORKER_LOGGER_MSG = "service_worker_logger_msg";
@@ -42,7 +41,7 @@ export function serviceWorkerNewTermsAdded(newestWords) {
 
       // if (termType === "vocabulary")
       let actType = ADD_FREQUENCY_WORD;
-      let type = GET_VOCABULARY;
+      let type = "GET_VOCABULARY";
 
       if (termType === "phrases") {
         actType = ADD_FREQUENCY_PHRASE;
@@ -50,10 +49,13 @@ export function serviceWorkerNewTermsAdded(newestWords) {
       }
 
       addFrequencyTerm(actType, uidArr)(dispatch, getState).then(() => {
-        dispatch({
-          type,
-          value: termObj,
-        });
+        // TODO: serviceWorkerNewTermsAdded
+        if (termType === "phrases") {
+          dispatch({
+            type,
+            value: termObj,
+          });
+        }
       });
     }
   };

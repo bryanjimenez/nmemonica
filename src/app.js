@@ -24,13 +24,14 @@ import { KanjiMeta } from "./components/Pages/Kanji";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
+import { localStorageSettingsInitialized } from "./slices/settingSlice";
 import {
   initializeSettingsFromLocalStorage,
   initialize,
 } from "./actions/firebase";
 import "./styles.css";
 import { logger } from "./actions/consoleAct";
-import { getVersions } from "./actions/firebase";
+import { getVersions } from "./slices/versionSlice";
 import {
   registerServiceWorker,
   serviceWorkerNewTermsAdded,
@@ -47,6 +48,7 @@ class App extends Component {
     this.state = {};
     this.props.initialize();
     this.props.getVersions();
+    this.props.localStorageSettingsInitialized();
     this.props.initializeSettingsFromLocalStorage();
 
     this.props.registerServiceWorker().then(() => {
@@ -80,23 +82,23 @@ class App extends Component {
           <Navigation />
           <Suspense fallback={<div />}>
             <Routes>
-              <Route path="/" element={<Vocabulary/>} />
-              <Route path={PhrasesMeta.location} element={<Phrases/>} />
-              <Route path={VocabularyMeta.location} element={<Vocabulary/>} />
+              <Route path="/" element={<Vocabulary />} />
+              <Route path={PhrasesMeta.location} element={<Phrases />} />
+              <Route path={VocabularyMeta.location} element={<Vocabulary />} />
               <Route
                 path={OppositesGameMeta.location}
-                element={<OppositesGame/>}
+                element={<OppositesGame />}
               />
-              <Route path={KanaGameMeta.location} element={<KanaGame/>} />
-              <Route path={KanjiMeta.location} element={<Kanji/>} />
-              <Route path={KanjiGameMeta.location} element={<KanjiGame/>} />
-              <Route path={KanjiGridMeta.location} element={<KanjiGrid/>} />
+              <Route path={KanaGameMeta.location} element={<KanaGame />} />
+              <Route path={KanjiMeta.location} element={<Kanji />} />
+              <Route path={KanjiGameMeta.location} element={<KanjiGame />} />
+              <Route path={KanjiGridMeta.location} element={<KanjiGrid />} />
               <Route
                 path={ParticlesGameMeta.location}
-                element={<ParticlesGame/>}
+                element={<ParticlesGame />}
               />
-              <Route path={SettingsMeta.location} element={<Settings/>} />
-              <Route element={<NotFound/>} />
+              <Route path={SettingsMeta.location} element={<Settings />} />
+              <Route element={<NotFound />} />
             </Routes>
           </Suspense>
         </div>
@@ -114,6 +116,7 @@ const mapStateToProps = (state) => {
 App.propTypes = {
   initialize: PropTypes.func,
   initializeSettingsFromLocalStorage: PropTypes.func,
+  localStorageSettingsInitialized: PropTypes.func,
   getVersions: PropTypes.func,
   registerServiceWorker: PropTypes.func,
   serviceWorkerEventListeners: PropTypes.func,
@@ -126,6 +129,7 @@ export default connect(mapStateToProps, {
   initialize,
   getVersions,
   initializeSettingsFromLocalStorage,
+  localStorageSettingsInitialized, // hook
   registerServiceWorker,
   serviceWorkerNewTermsAdded,
   logger,

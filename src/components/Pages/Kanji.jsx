@@ -17,7 +17,7 @@ import {
   TermFilterBy,
   toggleKanjiFilter,
 } from "../../actions/settingsAct";
-import { getVocabulary } from "../../actions/vocabularyAct";
+import { getVocabulary } from "../../slices/vocabularySlice";
 
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
@@ -30,7 +30,10 @@ import {
 import { JapaneseText } from "../../helper/JapaneseText";
 import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 
-import { FrequencyTermIcon, ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
+import {
+  FrequencyTermIcon,
+  ToggleFrequencyTermBtnMemo,
+} from "../Form/OptionsBar";
 import "./Kanji.css";
 import { isGroupLevel } from "./SetTermTagList";
 

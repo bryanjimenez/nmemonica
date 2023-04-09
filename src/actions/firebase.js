@@ -3,11 +3,7 @@ import { getAuth } from "firebase/auth";
 import { get, getDatabase, ref, update } from "firebase/database";
 import { firebaseConfig } from "../../environment.development";
 import { localStorageKey } from "../constants/paths";
-import {
-  getLocalStorageSettings,
-  localStoreAttrDelete,
-  localStoreAttrUpdate,
-} from "../helper/localStorage";
+import { getLocalStorageSettings } from "../helper/localStorage";
 import merge from "lodash/fp/merge";
 import { DEFAULT_SETTINGS as stateSettingDefaults } from "../reducers/settingsRed";
 import {
@@ -184,18 +180,18 @@ export function initializeSettingsFromLocalStorage() {
  * Get app data versions file
  * @returns {ThenableActCreator}
  */
-export function getVersions() {
-  return (dispatch) => {
-    return fetch(firebaseConfig.databaseURL + "/lambda/cache.json")
-      .then((res) => res.json())
-      .then((data) =>
-        dispatch({
-          type: GET_VERSIONS,
-          value: data,
-        })
-      );
-  };
-}
+// export function getVersions() {
+//   return (dispatch) => {
+//     return fetch(firebaseConfig.databaseURL + "/lambda/cache.json")
+//       .then((res) => res.json())
+//       .then((data) =>
+//         dispatch({
+//           type: GET_VERSIONS,
+//           value: data,
+//         })
+//       );
+//   };
+// }
 
 /**
  * Toggles or sets a firebase setting

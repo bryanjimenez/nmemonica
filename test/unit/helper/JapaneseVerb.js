@@ -1,7 +1,6 @@
 import { expect } from "chai";
-import { GET_VOCABULARY } from "../../../src/actions/vocabularyAct";
 import { JapaneseVerb } from "../../../src/helper/JapaneseVerb";
-import vocabularyReducer from "../../../src/reducers/vocabularyRed";
+import {buildVocabularyObject}  from '../../../src/helper/reducerHelper.js'
 /* global describe it */
 
 const verbs = {
@@ -97,8 +96,7 @@ const rawVocabularyObj = {
 };
 
 const DEFAULT_STATE = { value: [] };
-const action = { type: GET_VOCABULARY, value: rawVocabularyObj };
-const vocabulary = vocabularyReducer(DEFAULT_STATE, action);
+const vocabulary ={value: buildVocabularyObject(rawVocabularyObj)}
 
 describe("JapaneseVerb", function () {
   describe("getVerbClass", function () {
@@ -244,8 +242,8 @@ describe("JapaneseVerb", function () {
   describe("chattaForm", function () {
     const chattaAble = (v)=>{
       const actual = JapaneseVerb.parse(v.dic).chattaForm();
-      expect(actual, actual.toString()).to.be.a("JapaneseText");
-      expect(actual.toString(), v.dic).to.eq(v.chatta);
+      expect(actual, actual?.toString()).to.be.a("JapaneseText");
+      expect(actual?.toString(), v.dic).to.eq(v.chatta);
     }
 
     const chattaNotAble = (v)=>{
@@ -320,8 +318,8 @@ describe("JapaneseVerb", function () {
         verbClass.forEach((v) => {
           if (v.reru) {
             const actual = JapaneseVerb.parse(v.dic).reruForm();
-            expect(actual, actual.toString()).to.be.a("JapaneseText");
-            expect(actual.toString(), v.dic).to.eq(v.reru);
+            expect(actual, actual?.toString()).to.be.a("JapaneseText");
+            expect(actual?.toString(), v.dic).to.eq(v.reru);
           }
         });
       } else {

@@ -300,15 +300,11 @@ export function useLabelPlacementHelper(
  * @param {FuriganaToggleMap} settings
  * @param {boolean} [englishSideUp]
  */
-export function useToggleFuriganaSettingHelper(
-  uid,
-  settings,
-  englishSideUp,
-) {
+export function useToggleFuriganaSettingHelper(uid, settings, englishSideUp) {
   const dispatch = useDispatch();
 
   // show by default unless explicitly set to false
-  const show = !(settings[uid] && settings[uid].f === false);
+  const show = !(settings && settings[uid] && settings[uid].f === false);
 
   return useMemo(() => {
     const furiganaToggleObject = {

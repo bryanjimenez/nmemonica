@@ -19,7 +19,7 @@ import {
   toggleVocabularyFilter,
   updateSpaceRepWord,
 } from "../../actions/settingsAct";
-import { getVocabulary } from "../../actions/vocabularyAct";
+import { getVocabulary } from "../../slices/vocabularySlice";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
@@ -1428,7 +1428,7 @@ class Vocabulary extends Component {
                   toggle={
                     toggleFuriganaSettingHelper(
                       vocabulary.uid,
-                      this.props.repetition
+                      this.props.furigana
                     ).furigana.show
                   }
                   toggleFurigana={(uid) => this.props.furiganaToggled(uid)}
@@ -1552,7 +1552,8 @@ const mapStateToProps = (state) => {
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
     repetition: state.settings.vocabulary.repetition,
-    verbForm: state.vocabularyHK.verbForm,
+    furigana: state.settingsHK.vocabulary.repetition, // TODO: hook + class
+    verbForm: state.vocabulary.verbForm,
     swipeThreshold: state.settings.global.swipeThreshold,
     motionThreshold: state.settings.global.motionThreshold,
     debugLevel: state.settings.global.debug,
@@ -1580,6 +1581,7 @@ Vocabulary.propTypes = {
   reinforce: PropTypes.bool,
   clearPreviousTerm: PropTypes.func,
   repetition: PropTypes.object,
+  furigana: PropTypes.object, // TODO: hook + class
   lastNext: PropTypes.number,
   updateSpaceRepWord: PropTypes.func,
   setWordTPCorrect: PropTypes.func,

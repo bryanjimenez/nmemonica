@@ -4,6 +4,36 @@
  */
 
 /**
+ * Adds intransitive transitive info to RawVocabulary
+ * @param {{[uid:string]:RawVocabulary}} original
+ */
+export function buildVocabularyObject(original) {
+  /** @type {{[uid:string]: {trans:string, intr:string}}} */
+  let transitivity = {};
+  /** @type {RawVocabulary[]} */
+  let value = Object.keys(original).map((k) => {
+    const uid = original[k].trans;
+    if (uid) {
+      transitivity[uid] = {
+        intr: k,
+        trans: original[k].trans,
+      };
+    }
+
+    return {
+      ...original[k],
+      uid: k,
+    };
+  });
+
+  value = value.map((v) => {
+    return transitivity[v.uid] ? { ...v, intr: transitivity[v.uid].intr } : v;
+  });
+
+  return value;
+}
+
+/**
  * Builds group info object. Keys are mainGrp.
  * For each mainGrp aggregates all subGrp of a mainGrp
  * @param {{[uid:string]:RawVocabulary}} termObj
