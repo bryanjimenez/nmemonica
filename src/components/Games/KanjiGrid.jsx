@@ -9,7 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { connect, useSelector } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
@@ -19,7 +19,6 @@ import { randomOrder } from "../../helper/gameHelper";
 import { useFrequency } from "../../hooks/frequencyHK";
 import { useWindowSize } from "../../hooks/helperHK";
 import { useCreateChoices, useFilterTerms } from "../../hooks/kanjiGamesHK";
-import { useKanjiStore } from "../../hooks/kanjiHK";
 import { useRandomTerm } from "../../hooks/randomTermHK";
 import { useReinforcePlay } from "../../hooks/reinforcePlayHK";
 import { NotReady } from "../Form/NotReady";
@@ -30,6 +29,7 @@ import {
 } from "../Form/OptionsBar";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
+import { getKanji } from "../../slices/kanjiSlice";
 
 /**
  * @typedef {import("../../typings/state").AppRootState} AppRootState
@@ -115,12 +115,20 @@ function prepareGame(kanji, choices, writePractice, currExmpl, nextExmpl) {
  * @param {KanjiGridProps} props
  */
 function KanjiGrid(props) {
+  const dispatch = useDispatch();
+  const { value: rawKanjis } = useSelector(
+    (/** @type {RootState} */ { kanji }) => kanji
+  );
+  useMemo(() => {
+    if (rawKanjis.length === 0) {
+      dispatch(getKanji());
+    }
+  }, []);
+
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [writePractice, setEnglishSide] = useState(false);
-
-  const rawKanjis = useKanjiStore();
 
   const {
     choiceN,
@@ -194,7 +202,10 @@ function KanjiGrid(props) {
   const { x, y, strategy, refs, update } = useFloating({
     placement: "bottom",
     middleware: [
-      offset({ mainAxis: w.height / 2 - floatDim.h, crossAxis: 0 }),
+      offset({
+        mainAxis: w.height === undefined ? 0 : w.height / 2 - floatDim.h,
+        crossAxis: 0,
+      }),
       shift(),
     ],
   });

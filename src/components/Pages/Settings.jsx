@@ -5,7 +5,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 
 import { logger } from "../../actions/consoleAct";
-import { getKanji } from "../../actions/kanjiAct";
+import { getKanji } from "../../slices/kanjiSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
   DebugLevel,

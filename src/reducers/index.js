@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import kanaReducer from "./kanaRed";
-import kanjiReducer from "./kanjiRed";
+import kanjiReducer from "../slices/kanjiSlice";
 import loginReducer from "./loginRed";
 import oppositesReducer from "./oppositesRed";
 import phrasesReducer from "../slices/phraseSlice";

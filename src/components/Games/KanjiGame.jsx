@@ -2,7 +2,7 @@ import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useMemo, useRef, useState } from "react";
-import { connect, useSelector } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
@@ -12,7 +12,6 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { useFrequency } from "../../hooks/frequencyHK";
 import { useFilterTerms } from "../../hooks/kanjiGamesHK";
-import { useKanjiStore } from "../../hooks/kanjiHK";
 import { useReinforcePlay } from "../../hooks/reinforcePlayHK";
 import { NotReady } from "../Form/NotReady";
 import {
@@ -23,6 +22,7 @@ import {
 import FourChoices from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { useRandomTerm } from "../../hooks/randomTermHK";
+import { getKanji } from "../../slices/kanjiSlice";
 
 /**
  * @typedef {import("../../typings/state").AppRootState} AppRootState
@@ -147,12 +147,18 @@ function prepareGame(kanji, rawKanjis) {
  * @param {KanjiGameProps} props
  */
 function KanjiGame(props) {
+  const dispatch = useDispatch()
+  const {value: rawKanjis} = useSelector((/** @type {RootState} */ {kanji})=>kanji)
+  useMemo(()=>{
+    if(rawKanjis.length===0){
+      dispatch(getKanji())
+    }
+  },[])
+
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
 
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const rawKanjis = useKanjiStore();
+  const [selectedIndex, setSelectedIndex] = useState(0);  
 
   const {
     activeTags,

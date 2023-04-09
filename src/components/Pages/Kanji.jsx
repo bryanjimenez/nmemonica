@@ -10,7 +10,7 @@ import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 
 import { logger } from "../../actions/consoleAct";
-import { getKanji } from "../../actions/kanjiAct";
+import { getKanji } from "../../slices/kanjiSlice";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
