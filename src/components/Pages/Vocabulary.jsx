@@ -5,23 +5,22 @@ import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import {
-  addFrequencyWord,
   DebugLevel,
+  TermFilterBy,
+  TermSortBy,
+  addFrequencyWord,
   flipVocabularyPracticeSide,
   removeFrequencyWord,
   scrollingState,
   setWordDifficulty,
   setWordTPCorrect,
   setWordTPIncorrect,
-  TermFilterBy,
-  TermSortBy,
   toggleAutoVerbView,
-  toggleFurigana,
   toggleVocabularyFilter,
   updateSpaceRepWord,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../actions/vocabularyAct";
-import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
+import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
@@ -30,6 +29,13 @@ import VocabularyMain from "./VocabularyMain";
 // import { deepOrange } from "@mui/material";
 import { pronounceEndoint } from "../../../environment.development";
 import { logger } from "../../actions/consoleAct";
+import {
+  getSwipeDirection,
+  isSwipeIgnored,
+  swipeEnd,
+  swipeMove,
+  swipeStart,
+} from "../../helper/TouchSwipe";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import {
   answerSeconds,
@@ -64,14 +70,8 @@ import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
 } from "../../helper/mediaHelper";
-import {
-  getSwipeDirection,
-  isSwipeIgnored,
-  swipeEnd,
-  swipeMove,
-  swipeStart,
-} from "../../helper/TouchSwipe";
 import { addParam } from "../../helper/urlHelper";
+import { furiganaToggled } from "../../slices/settingSlice";
 import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
 import Console from "../Form/Console";
 import { DifficultySlider } from "../Form/Difficulty";
@@ -154,7 +154,7 @@ import {
  * @property {number} swipeThreshold
  * @property {number} motionThreshold
  * @property {function} motionThresholdCondition
- * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
+ * @property {typeof furiganaToggled} furiganaToggled
  * @property {typeof DebugLevel[keyof DebugLevel]} debugLevel
  */
 
@@ -1431,7 +1431,7 @@ class Vocabulary extends Component {
                       this.props.repetition
                     ).furigana.show
                   }
-                  toggleFurigana={this.props.toggleFurigana}
+                  toggleFurigana={(uid) => this.props.furiganaToggled(uid)}
                   vocabulary={vocabulary}
                 />
                 <ToggleFrequencyTermBtnMemo
@@ -1552,7 +1552,7 @@ const mapStateToProps = (state) => {
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
     repetition: state.settings.vocabulary.repetition,
-    verbForm: state.verb.verbForm,
+    verbForm: state.vocabularyHK.verbForm,
     swipeThreshold: state.settings.global.swipeThreshold,
     motionThreshold: state.settings.global.motionThreshold,
     debugLevel: state.settings.global.debug,
@@ -1589,7 +1589,7 @@ Vocabulary.propTypes = {
   verbForm: PropTypes.string,
   swipeThreshold: PropTypes.number,
   motionThreshold: PropTypes.number,
-  toggleFurigana: PropTypes.func,
+  furiganaToggled: PropTypes.func,
   debugLevel: PropTypes.number,
 };
 
@@ -1601,7 +1601,7 @@ export default connect(mapStateToProps, {
   scrollingState,
   toggleAutoVerbView,
   toggleVocabularyFilter,
-  toggleFurigana,
+  furiganaToggled,
   updateSpaceRepWord,
   setWordTPCorrect,
   setWordTPIncorrect,

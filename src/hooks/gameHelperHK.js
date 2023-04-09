@@ -1,6 +1,8 @@
 import classNames from "classnames";
 import React, { useMemo } from "react";
 import { JapaneseVerb } from "../helper/JapaneseVerb";
+import { furiganaToggled } from "../slices/settingSlice";
+import { useDispatch } from "react-redux";
 
 /**
  * @typedef {import("../typings/raw").RawJapanese} RawJapanese
@@ -297,14 +299,14 @@ export function useLabelPlacementHelper(
  * @param {string} uid
  * @param {FuriganaToggleMap} settings
  * @param {boolean} [englishSideUp]
- * @param {function} [toggleFn]
  */
 export function useToggleFuriganaSettingHelper(
   uid,
   settings,
   englishSideUp,
-  toggleFn
 ) {
+  const dispatch = useDispatch();
+
   // show by default unless explicitly set to false
   const show = !(settings[uid] && settings[uid].f === false);
 
@@ -314,14 +316,13 @@ export function useToggleFuriganaSettingHelper(
         show,
         toggle:
           (englishSideUp === false &&
-            toggleFn &&
             (() => {
-              toggleFn(uid);
+              dispatch(furiganaToggled(uid));
             })) ||
           undefined,
       },
     };
 
     return furiganaToggleObject;
-  }, [uid, show, englishSideUp, toggleFn]);
+  }, [dispatch, uid, show, englishSideUp]);
 }

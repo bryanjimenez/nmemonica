@@ -3,10 +3,7 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
-import {
-  flipVocabularyPracticeSide,
-  toggleFurigana,
-} from "../../actions/settingsAct";
+import { flipVocabularyPracticeSide } from "../../actions/settingsAct";
 import Sizable from "../Form/Sizable";
 import {
   englishLabel,
@@ -17,6 +14,7 @@ import {
   getJapaneseHint,
   getCacheUID,
 } from "../../helper/gameHelper";
+import { furiganaToggled } from "../../slices/settingSlice";
 
 /**
  * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
@@ -43,8 +41,8 @@ import {
  * @property {boolean} practiceSide   true: English, false: Japanese
  * @property {boolean} scrollingDone
  * @property {number} swipeThreshold
- * @property {SpaceRepetitionMap} furigana
- * @property {import("../../actions/settingsAct").toggleFuriganaYield} toggleFurigana
+ * @property {SpaceRepetitionMap} repetition
+ * @property {typeof furiganaToggled} furiganaToggled
  * @property {typeof toggleFuriganaSettingHelper} toggleFuriganaSettingHelper
  * @property {boolean} reCache
  * @property {boolean} played
@@ -87,9 +85,9 @@ class VocabularyMain extends Component {
 
     const furiganaToggable = toggleFuriganaSettingHelper(
       vocabulary.uid,
-      this.props.furigana,
+      this.props.repetition,
       practiceSide,
-      this.props.toggleFurigana
+      this.props.furiganaToggled
     );
 
     let jLabel = <span>{"[Japanese]"}</span>;
@@ -126,7 +124,7 @@ class VocabularyMain extends Component {
     const showBareKanji =
       practiceSide === true &&
       this.props.showBareKanji === true &&
-      this.props.furigana[vocabulary.uid]?.f === false;
+      this.props.repetition[vocabulary.uid]?.f === false;
 
     let sayObj = vocabulary;
     if (JapaneseText.parse(vocabulary).isNaAdj()) {
@@ -245,8 +243,8 @@ VocabularyMain.propTypes = {
   prevPushPlay: PropTypes.bool,
   flipVocabularyPracticeSide: PropTypes.func,
   swipeThreshold: PropTypes.number,
-  furigana: PropTypes.object,
-  toggleFurigana: PropTypes.func,
+  repetition: PropTypes.object,
+  furiganaToggled: PropTypes.func,
   toggleFuriganaSettingHelper: PropTypes.func,
   hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
@@ -255,5 +253,5 @@ VocabularyMain.propTypes = {
 
 export default connect(mapStateToProps, {
   flipVocabularyPracticeSide,
-  toggleFurigana,
+  furiganaToggled,
 })(VocabularyMain);

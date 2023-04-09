@@ -994,13 +994,13 @@ export function updateSpaceRepPhrase(uid, shouldIncrement = true) {
   return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, shouldIncrement);
 }
 
-/**
- * @typedef {(uid:string) => updateSpaceRepTermYield} toggleFuriganaYield
- * @param {string} uid
- */
-export function toggleFurigana(uid) {
-  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { toggle: ["f"] });
-}
+// /**
+//  * @typedef {(uid:string) => updateSpaceRepTermYield} toggleFuriganaYield
+//  * @param {string} uid
+//  */
+// export function toggleFurigana(uid) {
+//   return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { toggle: ["f"] });
+// }
 
 /**
  * @typedef {(uid:string, value:number) => updateSpaceRepTermYield} setWordDifficultyYield

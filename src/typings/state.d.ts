@@ -1,3 +1,5 @@
+import {store} from '../reducers/index'
+
 import { DEFAULT_SETTINGS } from "../reducers/settingsRed";
 import { DEFAULT_STATE as VOCABULARY_DEFAULT_STATE } from "../reducers/vocabularyRed";
 import { DEFAULT_STATE as PHRASES_DEFAULT_STATE } from "../reducers/phrasesRed";
@@ -21,3 +23,8 @@ export type AppRootState = {
   opposites: OppositesRootState;
   settings: SettigsRootState;
 };
+
+
+declare global {
+  type RootState = ReturnType<typeof store.getState>
+}

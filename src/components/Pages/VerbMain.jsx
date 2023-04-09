@@ -1,13 +1,7 @@
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleFurigana } from "../../actions/settingsAct";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import {
@@ -25,13 +19,14 @@ import {
 import { verbFormChanged } from "../../slices/verbsSlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
+import { localStorageSettingsInitialized } from "../../slices/settingSlice";
+import { useVerbMainSelectorConnected } from "../../hooks/selectorConnected";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").VerbFormArray} VerbFormArray
  * @typedef {import("../../typings/raw").FuriganaToggleMap} FuriganaToggleMap
  * @typedef {import("../../helper/JapaneseText").JapaneseText} JapaneseText
- * @typedef {import("../../typings/state").AppRootState} AppState
  */
 
 /**
@@ -107,21 +102,27 @@ export default function VerbMain(props) {
 
   const dispatch = useDispatch();
 
-  const stateSettings = useSelector(
-    (/** @type {AppState}*/ { settings }) => settings
-  );
-  const { swipeThreshold } = stateSettings.global;
+  // FIXME: initialize *hooks* localstore
+  useMemo(() => {
+    dispatch(localStorageSettingsInitialized());
+  }, []);
 
   const {
-    repetition,
-    romaji: romajiActive,
+    swipeThreshold,
+    englishSideUp,
     verbFormsOrder,
-    practiceSide: englishSideUp,
+    romajiActive,
     hintEnabled,
     verbColSplit,
-  } = stateSettings.vocabulary;
+  } = useVerbMainSelectorConnected();
 
-  const { verbForm } = useSelector((/** @type {AppState}*/ { verb }) => verb);
+  const { repetition, verbForm } = useSelector(
+    (/** @type {RootState}*/ {settingsHK, vocabularyHK}) => {
+      const { repetition } = settingsHK.vocabulary;
+      const { verbForm } = vocabularyHK;
+      return { repetition, verbForm };
+    }
+  );
 
   const { verb, reCache, linkToOtherTerm, showHint } = props;
 
@@ -179,16 +180,10 @@ export default function VerbMain(props) {
   const verbForms = useGetVerbFormsArray(verb, verbFormsOrder);
   const { t1, t2 } = splitVerbFormsToColumns(verbForms, verbColSplit);
 
-  const toggFurigana = useCallback(() => {
-    const getState = () => stateSettings;
-    toggleFurigana(verb.uid)(dispatch, getState);
-  }, [dispatch, stateSettings, verb]);
-
   const furiganaToggable = useToggleFuriganaSettingHelper(
     verb.uid,
     repetition,
-    englishSideUp,
-    toggFurigana
+    englishSideUp
   );
 
   const { inJapanese, inEnglish, romaji, japaneseObj } = getVerbLabelItems(
