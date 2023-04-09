@@ -1,5 +1,5 @@
 import { localStorageKey } from "../constants/paths";
-import { getWindowLocalStorage } from "./browserGlobal";
+import { getWindowLocalStorage } from "../helper/browserGlobal";
 
 /**
  * Modifies an attribute or toggles the existing value

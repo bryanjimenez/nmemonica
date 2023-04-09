@@ -1398,53 +1398,53 @@ export function toggleDarkMode() {
   };
 }
 
-/**
- * @param {typeof DebugLevel[keyof DebugLevel]} override
- * @returns {ActCreator}
- */
-export function toggleDebug(override) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-    const { debug } = getState().settings.global;
+// /**
+//  * @param {typeof DebugLevel[keyof DebugLevel]} override
+//  * @returns {ActCreator}
+//  */
+// export function toggleDebug(override) {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
+//     const { debug } = getState().settings.global;
 
-    const path = "/global/";
-    const attr = "debug";
-    const time = new Date();
+//     const path = "/global/";
+//     const attr = "debug";
+//     const time = new Date();
 
-    let newDebug;
-    if (override !== undefined) {
-      if (Object.values(DebugLevel).includes(override)) {
-        newDebug = override;
-      } else {
-        throw new Error("Debug override not valid");
-      }
-    } else {
-      newDebug = Object.values(DebugLevel).includes(debug + 1)
-        ? debug + 1
-        : DebugLevel.OFF;
-    }
+//     let newDebug;
+//     if (override !== undefined) {
+//       if (Object.values(DebugLevel).includes(override)) {
+//         newDebug = override;
+//       } else {
+//         throw new Error("Debug override not valid");
+//       }
+//     } else {
+//       newDebug = Object.values(DebugLevel).includes(debug + 1)
+//         ? debug + 1
+//         : DebugLevel.OFF;
+//     }
 
-    localStoreAttrUpdate(time, getState, path, attr, newDebug);
+//     localStoreAttrUpdate(time, getState, path, attr, newDebug);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        DEBUG,
-        newDebug
-      );
-    } else {
-      dispatch({
-        type: DEBUG,
-        value: newDebug,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         DEBUG,
+//         newDebug
+//       );
+//     } else {
+//       dispatch({
+//         type: DEBUG,
+//         value: newDebug,
+//       });
+//     }
+//   };
+// }
 
 /**
  * @param {string} value

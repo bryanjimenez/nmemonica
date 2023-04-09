@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
-import { logger } from "../../actions/consoleAct";
+import { logger, debugToggled } from "../../slices/settingSlice";
 import { getKanji } from "../../slices/kanjiSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
@@ -21,7 +21,6 @@ import {
   toggleActiveGrp,
   toggleActiveTag,
   toggleDarkMode,
-  toggleDebug,
   toggleKana,
   toggleKanaEasyMode,
   toggleKanaGameWideMode,
@@ -110,7 +109,7 @@ const SettingsMeta = {
  * @property {typeof toggleDarkMode} toggleDarkMode
  * @property {typeof setPersistentStorage} setPersistentStorage
  * @property {typeof getMemoryStorageStatus} getMemoryStorageStatus
- * @property {typeof toggleDebug} toggleDebug
+ * @property {typeof debugToggled} debugToggled
  * @property {typeof setSwipeThreshold} setSwipeThreshold
  * @property {typeof setMotionThreshold} setMotionThreshold
  * @property {typeof getPhrase} getPhrase
@@ -251,7 +250,7 @@ class Settings extends Component {
     // @ts-expect-error Error.cause
     const cause = error.cause;
 
-    this.props.toggleDebug(DebugLevel.DEBUG);
+    this.props.debugToggled(DebugLevel.DEBUG);
 
     switch (cause?.code) {
       case "StaleVocabActiveGrp":
@@ -842,7 +841,7 @@ class Settings extends Component {
                 <div className="setting-block mb-2">
                   <SettingsSwitch
                     active={this.props.debug > DebugLevel.OFF}
-                    action={this.props.toggleDebug}
+                    action={this.props.debugToggled}
                     color="default"
                     statusText={labelOptions(this.props.debug, [
                       "Debug",
@@ -978,7 +977,7 @@ const mapStateToProps = (state) => {
     particlesARomaji: state.settings.particles.aRomaji,
 
     memory: state.settings.global.memory,
-    debug: state.settings.global.debug,
+    debug: state.settingsHK.global.debug,   // FIXME: hook + class
   };
 };
 
@@ -990,7 +989,7 @@ Settings.propTypes = {
   setPersistentStorage: PropTypes.func,
   getMemoryStorageStatus: PropTypes.func,
   debug: PropTypes.number,
-  toggleDebug: PropTypes.func,
+  debugToggled: PropTypes.func,
   swipeThreshold: PropTypes.number,
   setSwipeThreshold: PropTypes.func,
   motionThreshold: PropTypes.number,
@@ -1063,7 +1062,7 @@ export default connect(mapStateToProps, {
 
   setPersistentStorage,
   getMemoryStorageStatus,
-  toggleDebug,
+  debugToggled,
   setSwipeThreshold,
   setMotionThreshold,
   logger,

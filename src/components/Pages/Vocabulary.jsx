@@ -28,7 +28,7 @@ import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 // import { deepOrange } from "@mui/material";
 import { pronounceEndoint } from "../../../environment.development";
-import { logger } from "../../actions/consoleAct";
+import { logger } from "../../slices/settingSlice";
 import {
   getSwipeDirection,
   isSwipeIgnored,
@@ -1556,7 +1556,7 @@ const mapStateToProps = (state) => {
     verbForm: state.vocabulary.verbForm,
     swipeThreshold: state.settings.global.swipeThreshold,
     motionThreshold: state.settings.global.motionThreshold,
-    debugLevel: state.settings.global.debug,
+    debugLevel: state.settingsHK.global.debug,        // FIXME: hook + class
   };
 };
 

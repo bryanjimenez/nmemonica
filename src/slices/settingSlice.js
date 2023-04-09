@@ -1,109 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import {
-  ADD_SPACE_REP_KANJI,
-  ADD_SPACE_REP_PHRASE,
-  ADD_SPACE_REP_WORD,
-  getLastStateValue,
-} from "../actions/settingsAct";
 import { localStorageKey } from "../constants/paths";
 import { getVerbFormsArray } from "../helper/gameHelper";
-import {
-  getLocalStorageSettings,
-  localStoreAttrUpdate,
-} from "../helper/localStorageNoPromise";
+import { getLocalStorageSettings } from "./localStorageHelper";
+import { ADD_SPACE_REP_WORD, DebugLevel, toggleDebugAct, updateSpaceRepTerm } from "./settingHelper";
+import { SERVICE_WORKER_LOGGER_MSG } from "../actions/serviceWorkerAct";
 
 /**
  * @typedef {typeof import("../actions/settingsAct").TermSortBy} TermSortBy
  * @typedef {typeof import("../actions/settingsAct").TermFilterBy} TermFilterBy
- */
-
-/**
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
- * @typedef {{map: SpaceRepetitionMap, prevMap: SpaceRepetitionMap}} updateSpaceRepTermYield
- * @param {ADD_SPACE_REP_WORD | ADD_SPACE_REP_PHRASE | ADD_SPACE_REP_KANJI} aType
- * @param {string} uid
- * @param {boolean} shouldIncrement should view count increment
- * @param {{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: {[k in keyof SpaceRepetitionMap["uid"]]+?: SpaceRepetitionMap["uid"][k]|null}}} [options] additional optional settable attributes ({@link furiganaToggled })
  */
-function updateSpaceRepTerm(aType, uid, shouldIncrement = true, options) {
-  return (/** @type {function} */ getState) => {
-    let pathPart;
-    if (aType === ADD_SPACE_REP_WORD) {
-      pathPart = "vocabulary";
-    } else if (aType === ADD_SPACE_REP_PHRASE) {
-      pathPart = "phrases";
-    } else if (aType === ADD_SPACE_REP_KANJI) {
-      pathPart = "kanji";
-    }
+/**
+ * @typedef {{msg:string, lvl:number, type:string}} Msg
+ */
 
-    const path = "/" + pathPart + "/";
-    const attr = "repetition";
-    const time = new Date();
-
-    /** @type {SpaceRepetitionMap} */
-    const spaceRep = getLastStateValue(getState, path, attr);
-    const prevMap = { [uid]: spaceRep[uid] };
-
-    let count;
-    if (spaceRep[uid] && spaceRep[uid].vC > 0 && shouldIncrement) {
-      count = spaceRep[uid].vC + 1;
-    } else if (spaceRep[uid] && spaceRep[uid].vC > 0 && !shouldIncrement) {
-      count = spaceRep[uid].vC;
-    } else {
-      count = 1;
-    }
-
-    let uidChangedAttr = {};
-    if (options !== undefined) {
-      if (options.toggle) {
-        const optToggled = options.toggle.reduce((acc, attr) => {
-          let val;
-          if (["f"].includes(attr)) {
-            // this default is only for furigana so far
-            val = !(spaceRep[uid] && spaceRep[uid][attr] === false) || false;
-          } else {
-            val = spaceRep[uid] && spaceRep[uid][attr];
-          }
-
-          return { ...acc, [attr]: !val };
-        }, {});
-
-        uidChangedAttr = { ...uidChangedAttr, ...optToggled };
-      }
-
-      if (options.set !== undefined) {
-        const optSet = Object.keys(options.set).reduce((acc, k) => {
-          if (options.set !== undefined && options.set[k] !== undefined) {
-            if (options.set[k] === null) {
-              acc = { ...acc, [k]: undefined };
-            } else {
-              acc = { ...acc, [k]: options.set[k] };
-            }
-          }
-          return acc;
-        }, {});
-
-        uidChangedAttr = { ...uidChangedAttr, ...optSet };
-      }
-    }
-
-    const now = new Date().toJSON();
-    /** @type {SpaceRepetitionMap["uid"]} */
-    const o = {
-      ...(spaceRep[uid] || {}),
-      vC: count,
-      d: now,
-      ...uidChangedAttr,
-    };
-
-    /** @type {SpaceRepetitionMap} */
-    const newValue = { ...spaceRep, [uid]: o };
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
-
-    return { map: { [uid]: o }, prevMap, value: newValue };
-  };
-}
+export const UI_LOGGER_MSG = "ui_logger_msg";
 
 export const initialState = {
   global: {
@@ -111,7 +23,7 @@ export const initialState = {
     scrolling: false,
     memory: { quota: 0, usage: 0, persistent: false },
     debug: 0,
-    console: [],
+    console: /** @type {{msg:string, lvl:number}[]}*/ ([]),
     swipeThreshold: 0,
     motionThreshold: 0,
   },
@@ -191,6 +103,44 @@ const settingSlice = createSlice({
       };
     },
 
+    debugToggled: {
+      reducer: (
+        state,
+        /** @type {import("@reduxjs/toolkit").PayloadAction<typeof DebugLevel[keyof DebugLevel]>} */ action
+      ) => {
+        const getState = () => ({ settings: state });
+        const override = action.payload;
+        state.global.debug = toggleDebugAct(override)(getState);
+      },
+
+      prepare: (override) => ({
+        payload: override,
+      }),
+    },
+
+    logger: {
+      reducer: (
+        state,
+        /** @type {import("@reduxjs/toolkit").PayloadAction<Msg>} */ action
+      ) => {
+        const { debug } = state.global;
+        const { msg, lvl, type } = action.payload;
+        if (debug !== 0 && lvl <= debug) {
+          let m;
+          if (type === SERVICE_WORKER_LOGGER_MSG) {
+            m = "SW: " + msg;
+          } else {
+            m = "UI: " + msg;
+          }
+          state.global.console = [...state.global.console, { msg: m, lvl }];
+        }
+      },
+
+      prepare: (msg, lvl = DebugLevel.DEBUG, type = UI_LOGGER_MSG) => ({
+        payload: { msg, lvl, type },
+      }),
+    },
+
     furiganaToggled(state, action) {
       // FIXME: hacky
       const getState = () => ({ settings: state });
@@ -203,9 +153,10 @@ const settingSlice = createSlice({
 
       state.vocabulary.repetition = value;
     },
+
   },
 });
 
-export const { localStorageSettingsInitialized, furiganaToggled } =
+export const { localStorageSettingsInitialized, debugToggled, logger, furiganaToggled } =
   settingSlice.actions;
 export default settingSlice.reducer;

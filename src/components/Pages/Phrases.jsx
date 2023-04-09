@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { pronounceEndoint } from "../../../environment.development";
-import { logger } from "../../actions/consoleAct";
+import { logger } from "../../slices/settingSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
   addFrequencyPhrase,

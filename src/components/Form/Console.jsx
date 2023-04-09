@@ -159,8 +159,8 @@ const mapStateToProps = (state, ownProps) => {
   }
 
   return {
-    messages: state.settings.global.console,
-    debug: state.settings.global.debug,
+    messages: state.settingsHK.global.console,    // FIXME: hook + class
+    debug: state.settingsHK.global.debug,         // FIXME: hook + class
   };
 };
 

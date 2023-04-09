@@ -27,10 +27,9 @@ import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import { localStorageSettingsInitialized } from "./slices/settingSlice";
 import {
   initializeSettingsFromLocalStorage,
-  initialize,
 } from "./actions/firebase";
 import "./styles.css";
-import { logger } from "./actions/consoleAct";
+import { logger } from "./slices/settingSlice";
 import { getVersions } from "./slices/versionSlice";
 import {
   registerServiceWorker,
@@ -46,7 +45,6 @@ class App extends Component {
     super(props);
 
     this.state = {};
-    this.props.initialize();
     this.props.getVersions();
     this.props.localStorageSettingsInitialized();
     this.props.initializeSettingsFromLocalStorage();
@@ -126,7 +124,6 @@ App.propTypes = {
 };
 
 export default connect(mapStateToProps, {
-  initialize,
   getVersions,
   initializeSettingsFromLocalStorage,
   localStorageSettingsInitialized, // hook

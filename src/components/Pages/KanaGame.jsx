@@ -600,7 +600,7 @@ const mapStateToProps = (state) => {
     wideMode: state.settings.kana.wideMode,
     easyMode: state.settings.kana.easyMode,
     charSet: state.settings.kana.charSet,
-    debug: state.settings.global.debug,
+    debug: state.settingsHK.global.debug,   // FIXME: hook + class
   };
 };
 

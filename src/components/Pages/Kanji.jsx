@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 
-import { logger } from "../../actions/consoleAct";
+import { logger } from "../../slices/settingSlice";
 import { getKanji } from "../../slices/kanjiSlice";
 import {
   addFrequencyKanji,

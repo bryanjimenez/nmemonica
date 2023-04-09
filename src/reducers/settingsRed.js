@@ -31,7 +31,7 @@ import {
   TOGGLE_PHRASES_ACTIVE_GROUP,
   ADD_SPACE_REP_WORD,
   ADD_SPACE_REP_PHRASE,
-  DEBUG,
+  // DEBUG,
   SET_SWIPE_THRESHOLD,
   VERB_FORM_VIEW,
   TOGGLE_KANJI_ACTIVE_GROUP,
@@ -46,8 +46,8 @@ import {
   TOGGLE_VOCABULARY_BARE_KANJI,
 } from "../actions/settingsAct";
 import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
-import { UI_LOGGER_MSG } from "../actions/consoleAct";
-import { SERVICE_WORKER_LOGGER_MSG } from "../actions/serviceWorkerAct";
+// import { UI_LOGGER_MSG } from "../actions/consoleAct";
+// import { SERVICE_WORKER_LOGGER_MSG } from "../actions/serviceWorkerAct";
 import { getVerbFormsArray } from "../helper/gameHelper";
 
 export const DEFAULT_SETTINGS = {
@@ -55,8 +55,8 @@ export const DEFAULT_SETTINGS = {
     darkMode: false,
     scrolling: false,
     memory: { quota: 0, usage: 0, persistent: false },
-    debug: 0,
-    console: [],
+    // debug: 0,
+    // console: [],
     swipeThreshold: 0,
     motionThreshold: 0,
   },
@@ -126,23 +126,23 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           memory: action.value,
         },
       };
-    case DEBUG:
-      return {
-        ...state,
-        global: {
-          ...state.global,
-          debug: action.value,
-        },
-      };
-    case SERVICE_WORKER_LOGGER_MSG:
-    case UI_LOGGER_MSG:
-      return {
-        ...state,
-        global: {
-          ...state.global,
-          console: [...state.global.console, action.value],
-        },
-      };
+    // case DEBUG:
+    //   return {
+    //     ...state,
+    //     global: {
+    //       ...state.global,
+    //       debug: action.value,
+    //     },
+    //   };
+    // case SERVICE_WORKER_LOGGER_MSG:
+    // case UI_LOGGER_MSG:
+    //   return {
+    //     ...state,
+    //     global: {
+    //       ...state.global,
+    //       console: [...state.global.console, action.value],
+    //     },
+    //   };
     case SET_SWIPE_THRESHOLD:
       return {
         ...state,
