@@ -3,8 +3,13 @@ import merge from "lodash/fp/merge";
 import { localStorageKey } from "../constants/paths";
 import { getVerbFormsArray } from "../helper/gameHelper";
 import { getLocalStorageSettings } from "./localStorageHelper";
-import { ADD_SPACE_REP_WORD, DebugLevel, toggleDebugAct, updateSpaceRepTerm } from "./settingHelper";
-import { SERVICE_WORKER_LOGGER_MSG } from "../actions/serviceWorkerAct";
+import {
+  ADD_SPACE_REP_WORD,
+  DebugLevel,
+  toggleDebugAct,
+  updateSpaceRepTerm,
+} from "./settingHelper";
+import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 
 /**
  * @typedef {typeof import("../actions/settingsAct").TermSortBy} TermSortBy
@@ -153,10 +158,13 @@ const settingSlice = createSlice({
 
       state.vocabulary.repetition = value;
     },
-
   },
 });
 
-export const { localStorageSettingsInitialized, debugToggled, logger, furiganaToggled } =
-  settingSlice.actions;
+export const {
+  localStorageSettingsInitialized,
+  debugToggled,
+  logger,
+  furiganaToggled,
+} = settingSlice.actions;
 export default settingSlice.reducer;

@@ -25,19 +25,15 @@ import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import { localStorageSettingsInitialized } from "./slices/settingSlice";
-import {
-  initializeSettingsFromLocalStorage,
-} from "./actions/firebase";
+import { initializeSettingsFromLocalStorage } from "./actions/firebase";
 import "./styles.css";
 import { logger } from "./slices/settingSlice";
 import { getVersions } from "./slices/versionSlice";
-import {
-  registerServiceWorker,
-  serviceWorkerNewTermsAdded,
-  SERVICE_WORKER_LOGGER_MSG,
-  SERVICE_WORKER_NEW_TERMS_ADDED,
-} from "./actions/serviceWorkerAct";
 import classNames from "classnames";
+import {
+  SERVICE_WORKER_LOGGER_MSG,
+  serviceWorkerRegistered,
+} from "./slices/serviceWorkerSlice";
 
 class App extends Component {
   // @ts-ignore constructor
@@ -49,7 +45,7 @@ class App extends Component {
     this.props.localStorageSettingsInitialized();
     this.props.initializeSettingsFromLocalStorage();
 
-    this.props.registerServiceWorker().then(() => {
+    this.props.serviceWorkerRegistered().then(() => {
       if ("serviceWorker" in navigator) {
         // set event listener
         navigator.serviceWorker.addEventListener("message", (event) => {
@@ -59,9 +55,10 @@ class App extends Component {
               event.data.lvl,
               SERVICE_WORKER_LOGGER_MSG
             );
-          } else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
-            this.props.serviceWorkerNewTermsAdded(event.data.msg);
           }
+          // else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
+          //   this.props.serviceWorkerNewTermsAdded(event.data.msg);
+          // }
         });
       }
     });
@@ -116,18 +113,18 @@ App.propTypes = {
   initializeSettingsFromLocalStorage: PropTypes.func,
   localStorageSettingsInitialized: PropTypes.func,
   getVersions: PropTypes.func,
-  registerServiceWorker: PropTypes.func,
+  serviceWorkerRegistered: PropTypes.func,
   serviceWorkerEventListeners: PropTypes.func,
   darkMode: PropTypes.bool,
   logger: PropTypes.func,
-  serviceWorkerNewTermsAdded: PropTypes.func,
+  // serviceWorkerNewTermsAdded: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
   getVersions,
   initializeSettingsFromLocalStorage,
   localStorageSettingsInitialized, // hook
-  registerServiceWorker,
-  serviceWorkerNewTermsAdded,
+  serviceWorkerRegistered,
+  // serviceWorkerNewTermsAdded,   // unused temp disable
   logger,
 })(App);

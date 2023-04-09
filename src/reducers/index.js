@@ -8,17 +8,21 @@ import settingsReducer from "./settingsRed";
 import settingsReducerHK from "../slices/settingSlice";
 import versionsReducer from "../slices/versionSlice";
 import vocabularyReducer from "../slices/vocabularySlice";
+import serviceWorkerReducer from "../slices/serviceWorkerSlice";
 
 export const store = configureStore({
   reducer: {
-    phrases: phrasesReducer,
-    vocabulary: vocabularyReducer,
-    opposites: oppositesReducer,
-    kana: kanaReducer,
-    kanji: kanjiReducer,
+    login: loginReducer,
+    sw: serviceWorkerReducer,
+    version: versionsReducer,
+
     settings: settingsReducer,
     settingsHK: settingsReducerHK, // FIXME: hooks + class
-    login: loginReducer,
-    version: versionsReducer,
+
+    kana: kanaReducer,
+    vocabulary: vocabularyReducer,
+    opposites: oppositesReducer,
+    phrases: phrasesReducer,
+    kanji: kanjiReducer,
   },
 });
