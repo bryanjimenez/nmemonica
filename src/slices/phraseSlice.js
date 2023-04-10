@@ -10,8 +10,14 @@ import { JapaneseText } from "../helper/JapaneseText";
  * @typedef {import("../components/Games/ParticlesGame").ParticleGamePhrase} ParticleGamePhrase
  */
 
+const buildPhraseArray = (object) =>
+  Object.keys(object).map((k) => ({
+    ...object[k],
+    uid: k,
+  }));
+
 /**
- * Fetch vocabulary
+ * Fetch phrases
  */
 export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
@@ -19,8 +25,8 @@ export const getPhrase = createAsyncThunk(
     const state = thunkAPI.getState();
     const version = state.version.phrases || 0;
 
-    if(version===0){
-      console.error('fetching phrase: 0')
+    if (version === 0) {
+      console.error("fetching phrase: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
       headers: { "Data-Version": version },
@@ -28,14 +34,36 @@ export const getPhrase = createAsyncThunk(
   }
 );
 
+export const getParticleGame = createAsyncThunk(
+  "phrase/getParticleGame",
+  async (v, thunkAPI) => {
+    const phrases = thunkAPI.getState().phrases.value;
+
+    if (phrases.length > 0) {
+      const needGame =
+        thunkAPI.getState().phrases.particleGame.phrases.length === 0;
+      if (needGame) {
+        return { game: buildParticleGame(phrases) };
+      }
+    } else {
+      return thunkAPI.dispatch(getPhrase()).then((res) => {
+        const phraseObject = res.payload;
+        const phraseArray = buildPhraseArray(phraseObject);
+        return { phrase: phraseArray, game: buildParticleGame(phraseArray) };
+      });
+    }
+  }
+);
 /**
  * Filters RawPhrase to be used by PhrasesGame
  * @param {RawPhrase[]} rawPhrases
  */
-export function getParticleGame(rawPhrases) {
+export function buildParticleGame(rawPhrases) {
   /** @type {ParticleChoice[]} */
   let particleList = [];
   /** @type {ParticleGamePhrase[]} */
+  let multipleMatch = {};
+
   const wParticles = rawPhrases.reduce(
     (/** @type {ParticleGamePhrase[]} */ acc, curr) => {
       if (curr.particles && curr.particles?.length > 0) {
@@ -47,13 +75,13 @@ export function getParticleGame(rawPhrases) {
             const romaji = romajiParticle(p);
             const start = spelling.indexOf(p);
             const end = start + p.length;
-            const particle = { japanese: p, romaji, toHTML: () => p };
+            const particle = { japanese: p, romaji, html: p };
             const particleCopy = {
               japanese: p,
               romaji,
               start,
               end,
-              toHTML: () => p,
+              html: p,
             };
 
             particleList = [...particleList, particle];
@@ -61,7 +89,7 @@ export function getParticleGame(rawPhrases) {
               ...acc,
               {
                 answer: particleCopy,
-                question: phrase,
+                question: curr,
                 english: curr.english,
                 literal: curr.lit,
               },
@@ -76,9 +104,14 @@ export function getParticleGame(rawPhrases) {
             // mo f919e262650b21a4c7c52be575554f59
 
             // haha deaab959582cef2051b908d4d6421e00
-            console.error(
-              JSON.stringify({ split: spelling.split(p).length, curr, p })
-            );
+            multipleMatch = {
+              ...multipleMatch,
+              [curr.english]: {
+                japanese: spelling,
+                particle: p,
+                times: spelling.split(p).length,
+              },
+            };
           }
         });
       }
@@ -87,6 +120,8 @@ export function getParticleGame(rawPhrases) {
     },
     []
   );
+  console.error("More than one match " + Object.keys(multipleMatch).length);
+  console.table(multipleMatch);
 
   return { phrases: wParticles, particles: particleList };
 }
@@ -103,28 +138,26 @@ export const initialState = {
 const phraseSlice = createSlice({
   name: "phrase",
   initialState,
-  reducers: {
-    getParticleGamePhrases(state, action) {
-      return {
-        ...state,
-        particleGame: getParticleGame(action.payload),
-        value: action.payload,
-      };
-    },
-  },
+  reducers: {},
 
   extraReducers: (builder) => {
     builder.addCase(getPhrase.fulfilled, (state, action) => {
-      const value = Object.keys(action.payload).map((k) => ({
-        ...action.payload[k],
-        uid: k,
-      }));
-
       state.grpObj = buildGroupObject(action.payload);
-      state.value = value;
+      state.value = buildPhraseArray(action.payload);
+    });
+
+    builder.addCase(getParticleGame.fulfilled, (state, action) => {
+      const { phrase, game } = action.payload;
+
+      if (game) {
+        state.particleGame = game;
+      }
+
+      if (phrase) {
+        state.value = phrase;
+      }
     });
   },
 });
 
-export const { getParticleGamePhrases } = phraseSlice.actions;
 export default phraseSlice.reducer;

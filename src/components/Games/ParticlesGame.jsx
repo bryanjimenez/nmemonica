@@ -6,16 +6,16 @@ import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { NotReady } from "../Form/NotReady";
 import FourChoices from "./FourChoices";
-import { useParticlePhrasesStore } from "../../hooks/phrasesHK";
 
 import "./ParticlesGame.css";
+import { getParticleGame } from "../../slices/phraseSlice";
+import { JapaneseText } from "../../helper/JapaneseText";
 
 /**
- * @typedef {import("../../helper/JapaneseText").JapaneseText} JapaneseText
  * @typedef {import("../../typings/raw").RawPhrase} RawPhrase
  * @typedef {{ japanese: string, romaji: string, start?:number, end?:number, toHTML: (correct:boolean)=>void }} ParticleChoice
  * @typedef {{ japanese: string, romaji: string, start:number, end:number, toHTML: (correct:boolean)=>void }} ParticleAnswer
- * @typedef {{ answer: ParticleAnswer, question: JapaneseText, english:string, literal?:string }} ParticleGamePhrase
+ * @typedef {{ answer: {japanese:string, romaji:string, start:number, end:number, html:string}, question: RawPhrase, english:string, literal?:string }} ParticleGamePhrase
  *
  * @typedef {import("../../typings/state").AppRootState} AppRootState
  */
@@ -59,6 +59,16 @@ function createChoices(answer, particleList) {
 }
 
 function ParticlesGame() {
+  const dispatch = useDispatch();
+  const {
+    particleGame: { phrases, particles },
+  } = useSelector((/** @type {RootState}*/ { phrases }) => phrases);
+  useMemo(() => {
+    if (phrases.length === 0) {
+      dispatch(getParticleGame());
+    }
+  }, []);
+
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -76,16 +86,20 @@ function ParticlesGame() {
     }
 
     const phrase = phrases[order.current[selectedIndex]];
-    const { answer, question, english, literal } = phrase;
+    const { answer: a, question: q, english, literal } = phrase;
+    const answer = { ...a, toHTML: () => a.html };
+    particles = particles.map((p) => ({ ...p, toHTML: () => p.html }));
+
     const choices = createChoices(answer, particles);
 
     /** @type {import("./FourChoices").GameQuestion} */
-    const q = {
+    const question = {
       english: english,
-      toHTML: (correct) => buildQuestionElement(question, answer, correct),
+      toHTML: (correct) =>
+        buildQuestionElement(JapaneseText.parse(q), answer, correct),
     };
 
-    return { question: q, answer, choices, literal };
+    return { question, answer, choices, literal };
   }
 
   /**
@@ -117,20 +131,10 @@ function ParticlesGame() {
     setSelectedIndex(newSel);
   }
 
-  const dispatch = useDispatch();
   const aRomaji = useSelector(
-    (/** @type {AppRootState}*/ { settings }) => settings.particles.aRomaji
+    (/** @type {RootState}*/ { settings }) => settings.particles.aRomaji
   );
-  const version = useSelector(
-    (/** @type {AppRootState}*/ { version }) => version.phrases
-  );
-  const {
-    value: phrasesArr,
-    particleGame: { phrases, particles },
-  } = useSelector((/** @type {AppRootState}*/ { phrases }) => phrases);
-  const rawPhrases = useMemo(() => phrasesArr, [phrasesArr]);
-  const gamePhrases = useMemo(() => phrases, [phrases]);
-  useParticlePhrasesStore(dispatch, version, rawPhrases, gamePhrases);
+
   const game = prepareGame(selectedIndex, phrases, particles);
 
   // console.log(selectedIndex)
