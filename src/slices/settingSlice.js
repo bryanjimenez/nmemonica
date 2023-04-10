@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import { localStorageKey } from "../constants/paths";
 import { getVerbFormsArray } from "../helper/gameHelper";
@@ -10,6 +10,7 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
+import { memoryStorageStatus, persistStorage } from "./storageHelper";
 
 /**
  * @typedef {typeof import("../actions/settingsAct").TermSortBy} TermSortBy
@@ -71,8 +72,39 @@ export const initialState = {
   particles: { aRomaji: false },
 };
 
+export const getMemoryStorageStatus = createAsyncThunk(
+  "setting/getMemoryStorageStatus",
+  async (v, thunkAPI) => {
+    return memoryStorageStatus().catch((e) => {
+      thunkAPI.dispatch(
+        logger("Could not get memory storage status", DebugLevel.WARN)
+      );
+
+      thunkAPI.dispatch(
+        logger(e.message, DebugLevel.WARN)
+      );
+      throw e;
+    });
+  }
+);
+
+export const setPersistentStorage = createAsyncThunk(
+  "setting/setPersistentStorage",
+  async (v, thunkAPI) => {
+    return persistStorage().catch((e) => {
+      thunkAPI.dispatch(
+        logger("Could not set persistent storage", DebugLevel.WARN)
+      );
+      thunkAPI.dispatch(
+        logger(e.message, DebugLevel.WARN)
+      );
+      throw e;
+    });
+  }
+);
+
 const settingSlice = createSlice({
-  name: "settings",
+  name: "setting",
   initialState,
   reducers: {
     localStorageSettingsInitialized(state) {
@@ -158,6 +190,24 @@ const settingSlice = createSlice({
 
       state.vocabulary.repetition = value;
     },
+  },
+
+  extraReducers: (builder) => {
+    builder.addCase(getMemoryStorageStatus.fulfilled, (state, action) => {
+      const { quota, usage, persistent } = action.payload;
+
+      state.global.memory = { quota, usage, persistent };
+    });
+
+    builder.addCase(setPersistentStorage.fulfilled, (state, action) => {
+      const { quota, usage, persistent, warning } = action.payload;
+
+      if (warning) {
+        console.warn(warning);
+      }
+
+      state.global.memory = { quota, usage, persistent };
+    });
   },
 });
 

@@ -4,7 +4,12 @@ import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 
-import { logger, debugToggled } from "../../slices/settingSlice";
+import {
+  logger,
+  debugToggled,
+  getMemoryStorageStatus,
+  setPersistentStorage,
+} from "../../slices/settingSlice";
 import { getKanji } from "../../slices/kanjiSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
@@ -29,10 +34,6 @@ import {
   toggleKanjiFilter,
   toggleKanjiReinforcement,
 } from "../../actions/settingsAct";
-import {
-  getMemoryStorageStatus,
-  setPersistentStorage,
-} from "../../actions/storageAct";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { logify } from "../../helper/consoleHelper";
 import {
@@ -978,8 +979,8 @@ const mapStateToProps = (state) => {
 
     particlesARomaji: state.settings.particles.aRomaji,
 
-    memory: state.settings.global.memory,
-    debug: state.settingsHK.global.debug, // FIXME: hook + class
+    memory: state.settingsHK.global.memory, // FIXME: hook + class
+    debug: state.settingsHK.global.debug,   // FIXME: hook + class
   };
 };
 

@@ -45,7 +45,7 @@ import {
   TOGGLE_KANJI_FILTER,
   TOGGLE_VOCABULARY_BARE_KANJI,
 } from "../actions/settingsAct";
-import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
+// import { MEMORY_STORAGE_STATUS } from "../actions/storageAct";
 // import { UI_LOGGER_MSG } from "../actions/consoleAct";
 // import { SERVICE_WORKER_LOGGER_MSG } from "../actions/serviceWorkerAct";
 import { getVerbFormsArray } from "../helper/gameHelper";
@@ -118,14 +118,14 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
           scrolling: action.value,
         },
       };
-    case MEMORY_STORAGE_STATUS:
-      return {
-        ...state,
-        global: {
-          ...state.global,
-          memory: action.value,
-        },
-      };
+    // case MEMORY_STORAGE_STATUS:
+    //   return {
+    //     ...state,
+    //     global: {
+    //       ...state.global,
+    //       memory: action.value,
+    //     },
+    //   };
     // case DEBUG:
     //   return {
     //     ...state,
