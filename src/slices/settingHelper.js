@@ -1,6 +1,4 @@
-import {
-  localStoreAttrUpdate,
-} from "./localStorageHelper";
+import { localStoreAttrUpdate } from "./localStorageHelper";
 
 /**
  * @typedef {typeof import("../actions/settingsAct").TermSortBy} TermSortBy
@@ -43,13 +41,12 @@ export const TermSortByLabel = [
   "Difficulty",
 ];
 
-
 /**
  * @param {typeof DebugLevel[keyof DebugLevel]} override
  */
 export function toggleDebugAct(override) {
-  return (getState)=>{
-    const { debug } = getState().settings.global;
+  return (/** @type {RootState} */ state) => {
+    const { debug } = state.settingsHK.global;
 
     const path = "/global/";
     const attr = "debug";
@@ -68,9 +65,9 @@ export function toggleDebugAct(override) {
         : DebugLevel.OFF;
     }
 
-    localStoreAttrUpdate(time, getState, path, attr, newDebug);
+    localStoreAttrUpdate(time, state, path, attr, newDebug);
     return newDebug;
-  }
+  };
 }
 
 /**
@@ -81,8 +78,13 @@ export function toggleDebugAct(override) {
  * @param {boolean} shouldIncrement should view count increment
  * @param {{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: {[k in keyof SpaceRepetitionMap["uid"]]+?: SpaceRepetitionMap["uid"][k]|null}}} [options] additional optional settable attributes ({@link furiganaToggled })
  */
-export function updateSpaceRepTerm(aType, uid, shouldIncrement = true, options) {
-  return (/** @type {function} */ getState) => {
+export function updateSpaceRepTerm(
+  aType,
+  uid,
+  shouldIncrement = true,
+  options
+) {
+  return (/** @type {SettingState} */ state) => {
     let pathPart;
     if (aType === ADD_SPACE_REP_WORD) {
       pathPart = "vocabulary";
@@ -97,7 +99,7 @@ export function updateSpaceRepTerm(aType, uid, shouldIncrement = true, options) 
     const time = new Date();
 
     /** @type {SpaceRepetitionMap} */
-    const spaceRep = getLastStateValue(getState, path, attr);
+    const spaceRep = getLastStateValue(state, path, attr);
     const prevMap = { [uid]: spaceRep[uid] };
 
     let count;
@@ -154,7 +156,7 @@ export function updateSpaceRepTerm(aType, uid, shouldIncrement = true, options) 
 
     /** @type {SpaceRepetitionMap} */
     const newValue = { ...spaceRep, [uid]: o };
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
+    localStoreAttrUpdate(time, state, path, attr, newValue);
 
     return { map: { [uid]: o }, prevMap, value: newValue };
   };
@@ -162,12 +164,12 @@ export function updateSpaceRepTerm(aType, uid, shouldIncrement = true, options) 
 
 /**
  * Retrieves last App settings state value for path and attr
- * @param {function} getState
+ * @param {SettingState} state
  * @param {string} path
  * @param {string} attr
  */
-export function getLastStateValue(getState, path, attr) {
-  const stateSettings = getState().settings;
+export function getLastStateValue(state, path, attr) {
+  const stateSettings = state;
 
   let statePtr = stateSettings;
 

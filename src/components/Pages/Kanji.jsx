@@ -551,7 +551,7 @@ const mapStateToProps = (state) => {
     repetition: state.settings.kanji.repetition,
     frequency: state.settings.kanji.frequency,
 
-    swipeThreshold: state.settings.global.swipeThreshold,
+    swipeThreshold: state.settingsHK.global.swipeThreshold,
   };
 };
 

@@ -4,16 +4,16 @@ import { getWindowLocalStorage } from "../helper/browserGlobal";
 /**
  * Modifies an attribute or toggles the existing value
  * @param {Date} time
- * @param {function} getState
+ * @param {*} state
  * @param {string} path
  * @param {string} attr
  * @param {*} [value] optional if absent [attr] will be toggled
  */
-export function localStoreAttrUpdate(time, getState, path, attr, value) {
-  const stateSettings = getState().settings;
+export function localStoreAttrUpdate(time, state, path, attr, value) {
+  // const stateSettings = getState().settings;
 
   let locStoSettings = getLocalStorageSettings(localStorageKey) || {};
-  let statePtr = stateSettings;
+  let statePtr = state;
   let localPtr = locStoSettings;
 
   path.split("/").forEach((p) => {

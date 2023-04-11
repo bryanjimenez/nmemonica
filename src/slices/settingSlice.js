@@ -2,15 +2,14 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import { localStorageKey } from "../constants/paths";
 import { getVerbFormsArray } from "../helper/gameHelper";
-import { getLocalStorageSettings } from "./localStorageHelper";
 import {
-  ADD_SPACE_REP_WORD,
-  DebugLevel,
-  toggleDebugAct,
-  updateSpaceRepTerm,
-} from "./settingHelper";
+  getLocalStorageSettings,
+  localStoreAttrUpdate,
+} from "./localStorageHelper";
+import { DebugLevel, toggleDebugAct } from "./settingHelper";
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
+import { vocabularySettings } from "./vocabularySlice";
 
 /**
  * @typedef {typeof import("../actions/settingsAct").TermSortBy} TermSortBy
@@ -80,9 +79,7 @@ export const getMemoryStorageStatus = createAsyncThunk(
         logger("Could not get memory storage status", DebugLevel.WARN)
       );
 
-      thunkAPI.dispatch(
-        logger(e.message, DebugLevel.WARN)
-      );
+      thunkAPI.dispatch(logger(e.message, DebugLevel.WARN));
       throw e;
     });
   }
@@ -95,9 +92,7 @@ export const setPersistentStorage = createAsyncThunk(
       thunkAPI.dispatch(
         logger("Could not set persistent storage", DebugLevel.WARN)
       );
-      thunkAPI.dispatch(
-        logger(e.message, DebugLevel.WARN)
-      );
+      thunkAPI.dispatch(logger(e.message, DebugLevel.WARN));
       throw e;
     });
   }
@@ -107,9 +102,34 @@ const settingSlice = createSlice({
   name: "setting",
   initialState,
   reducers: {
+    toggleDarkMode(state) {
+      const path = "/global/";
+      const attr = "darkMode";
+      const time = new Date();
+      localStoreAttrUpdate(time, state, path, attr, !state.global.darkMode);
+      state.global.darkMode = !state.global.darkMode;
+    },
+    scrollingState(state, action) {
+      state.global.scrolling = action.payload;
+    },
+    setSwipeThreshold(state, action) {
+      const path = "/global/";
+      const attr = "swipeThreshold";
+      const time = new Date();
+      localStoreAttrUpdate(time, state, path, attr, action.payload);
+      state.global.swipeThreshold = action.payload;
+    },
+    setMotionThreshold(state, action) {
+      const path = "/global/";
+      const attr = "motionThreshold";
+      const time = new Date();
+      localStoreAttrUpdate(time, state, path, attr, action.payload);
+      state.global.motionThreshold = action.payload;
+    },
     localStorageSettingsInitialized(state) {
       const lsSettings = getLocalStorageSettings(localStorageKey);
       // use merge to prevent losing defaults not found in localStorage
+
       const mergedSettings = merge(initialState, lsSettings);
       delete mergedSettings.lastModified;
       state.vocabulary = mergedSettings.vocabulary;
@@ -145,9 +165,8 @@ const settingSlice = createSlice({
         state,
         /** @type {import("@reduxjs/toolkit").PayloadAction<typeof DebugLevel[keyof DebugLevel]>} */ action
       ) => {
-        const getState = () => ({ settings: state });
         const override = action.payload;
-        state.global.debug = toggleDebugAct(override)(getState);
+        state.global.debug = toggleDebugAct(override)(state);
       },
 
       prepare: (override) => ({
@@ -179,16 +198,9 @@ const settingSlice = createSlice({
     },
 
     furiganaToggled(state, action) {
-      // FIXME: hacky
-      const getState = () => ({ settings: state });
-      const { value } = updateSpaceRepTerm(
-        ADD_SPACE_REP_WORD,
-        action.payload,
-        false,
-        { toggle: ["f"] }
-      )(getState);
-
-      state.vocabulary.repetition = value;
+      state.vocabulary.repetition = vocabularySettings.toggleFurigana(
+        action.payload
+      )(state);
     },
   },
 
@@ -212,9 +224,15 @@ const settingSlice = createSlice({
 });
 
 export const {
-  localStorageSettingsInitialized,
+  toggleDarkMode,
+  setMotionThreshold,
+  setSwipeThreshold,
+  scrollingState,
+
   debugToggled,
   logger,
+  localStorageSettingsInitialized,
+
   furiganaToggled,
 } = settingSlice.actions;
 export default settingSlice.reducer;

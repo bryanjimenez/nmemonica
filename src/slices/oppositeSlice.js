@@ -11,8 +11,8 @@ export const getOpposite = createAsyncThunk(
     const state = thunkAPI.getState();
     const version = state.version.phrases || 0;
 
-    if(version===0){
-      console.error('fetching opposite: 0')
+    if (version === 0) {
+      console.error("fetching opposite: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/opposites.json", {
       headers: { "Data-Version": version },
@@ -26,20 +26,18 @@ const oppositeSlice = createSlice({
 
   reducers: {
     setOppositesARomaji(state) {
-      const getState = () => ({ settings: state });
       const path = "/opposite/";
       const attr = "aRomaji";
       const time = new Date();
-      localStoreAttrUpdate(time, getState, path, attr, !state.aRomaji);
+      localStoreAttrUpdate(time, state, path, attr, !state.aRomaji);
       state.aRomaji = !state.aRomaji;
     },
 
     setOppositesQRomaji(state) {
-      const getState = () => ({ settings: state });
       const path = "/opposite/";
       const attr = "qRomaji";
       const time = new Date();
-      localStoreAttrUpdate(time, getState, path, attr, !state.qRomaji);
+      localStoreAttrUpdate(time, state, path, attr, !state.qRomaji);
       state.qRomaji = !state.qRomaji;
     },
   },

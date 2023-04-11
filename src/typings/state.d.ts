@@ -5,4 +5,5 @@ export type AppRootState = {};
 
 declare global {
   type RootState = ReturnType<typeof store.getState>
+  type SettingState = RootState['settingsHK']
 }

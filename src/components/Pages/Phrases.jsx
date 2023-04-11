@@ -967,7 +967,7 @@ const mapStateToProps = (state) => {
     activeGroup: state.settings.phrases.activeGroup,
     reinforce: state.settings.phrases.reinforce,
     repetition: state.settings.phrases.repetition,
-    swipeThreshold: state.settings.global.swipeThreshold,
+    swipeThreshold: state.settingsHK.global.swipeThreshold,
   };
 };
 

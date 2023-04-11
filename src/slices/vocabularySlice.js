@@ -4,6 +4,7 @@ import {
   buildGroupObject,
   buildVocabularyObject,
 } from "../helper/reducerHelper";
+import { ADD_SPACE_REP_WORD, updateSpaceRepTerm } from "./settingHelper";
 
 /**
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
@@ -18,14 +19,29 @@ export const getVocabulary = createAsyncThunk(
     const state = thunkAPI.getState();
     const version = state.version.vocabulary || 0;
 
-    if(version===0){
-      console.error('fetching vocabulary: 0')
+    if (version === 0) {
+      console.error("fetching vocabulary: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/vocabulary.json", {
       headers: { "Data-Version": version },
     }).then((res) => res.json());
   }
 );
+
+export const vocabularySettings = {
+  /**
+   * @param {string} uid
+   */
+  toggleFurigana(uid) {
+    return (/** @type {SettingState} */ state) => {
+      const { value } = updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+        toggle: ["f"],
+      })(state);
+
+      return value;
+    };
+  },
+};
 
 export const initialState = {
   value: /** @type {RawVocabulary[]} */ ([]),

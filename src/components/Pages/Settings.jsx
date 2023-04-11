@@ -9,6 +9,9 @@ import {
   debugToggled,
   getMemoryStorageStatus,
   setPersistentStorage,
+  setMotionThreshold,
+  setSwipeThreshold,
+  toggleDarkMode,
 } from "../../slices/settingSlice";
 import { getKanji } from "../../slices/kanjiSlice";
 import { getPhrase } from "../../slices/phraseSlice";
@@ -21,13 +24,10 @@ import {
   removeFrequencyKanji,
   setHiraganaBtnN,
   setKanjiBtnN,
-  setMotionThreshold,
   setParticlesARomaji,
-  setSwipeThreshold,
   TermFilterBy,
   toggleActiveGrp,
   toggleActiveTag,
-  toggleDarkMode,
   toggleKana,
   toggleKanaEasyMode,
   toggleKanaGameWideMode,
@@ -952,9 +952,9 @@ class Settings extends Component {
 // @ts-ignore mapStateToProps
 const mapStateToProps = (state) => {
   return {
-    darkMode: state.settings.global.darkMode,
-    swipeThreshold: state.settings.global.swipeThreshold,
-    motionThreshold: state.settings.global.motionThreshold,
+    darkMode: state.settingsHK.global.darkMode,
+    swipeThreshold: state.settingsHK.global.swipeThreshold,
+    motionThreshold: state.settingsHK.global.motionThreshold,
 
     phrases: state.phrases.value,
     pRepetition: state.settings.phrases.repetition,

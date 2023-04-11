@@ -11,7 +11,6 @@ import {
   addFrequencyWord,
   flipVocabularyPracticeSide,
   removeFrequencyWord,
-  scrollingState,
   setWordDifficulty,
   setWordTPCorrect,
   setWordTPIncorrect,
@@ -28,7 +27,7 @@ import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 // import { deepOrange } from "@mui/material";
 import { pronounceEndoint } from "../../../environment.development";
-import { logger } from "../../slices/settingSlice";
+import { logger, scrollingState } from "../../slices/settingSlice";
 import {
   getSwipeDirection,
   isSwipeIgnored,
@@ -1548,14 +1547,14 @@ const mapStateToProps = (state) => {
     filterType: state.settings.vocabulary.filter,
     frequency: state.settings.vocabulary.frequency,
     activeGroup: state.settings.vocabulary.activeGroup,
-    scrollingDone: !state.settings.global.scrolling,
+    scrollingDone: !state.settingsHK.global.scrolling,
     autoVerbView: state.settings.vocabulary.autoVerbView,
     reinforce: state.settings.vocabulary.reinforce,
     repetition: state.settings.vocabulary.repetition,
     furigana: state.settingsHK.vocabulary.repetition, // TODO: hook + class
     verbForm: state.vocabulary.verbForm,
-    swipeThreshold: state.settings.global.swipeThreshold,
-    motionThreshold: state.settings.global.motionThreshold,
+    swipeThreshold: state.settingsHK.global.swipeThreshold,
+    motionThreshold: state.settingsHK.global.motionThreshold,
     debugLevel: state.settingsHK.global.debug,        // FIXME: hook + class
   };
 };

@@ -225,8 +225,8 @@ const mapStateToProps = (state) => {
   return {
     practiceSide: state.settings.vocabulary.practiceSide,
     romajiActive: state.settings.vocabulary.romaji,
-    scrollingDone: !state.settings.global.scrolling,
-    swipeThreshold: state.settings.global.swipeThreshold,
+    scrollingDone: !state.settingsHK.global.scrolling,
+    swipeThreshold: state.settingsHK.global.swipeThreshold,
     repetition: state.settingsHK.vocabulary.repetition, // TODO: hook + class
     hintEnabled: state.settings.vocabulary.hintEnabled,
     showBareKanji: state.settings.vocabulary.bareKanji,
