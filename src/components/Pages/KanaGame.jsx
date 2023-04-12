@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencilAlt, faGlasses } from "@fortawesome/free-solid-svg-icons";
 import StackNavButton from "../Form/StackNavButton";
 import { swapKana } from "../../helper/kanaHelper";
-import { DebugLevel } from "../../actions/settingsAct";
+import { DebugLevel } from "../../slices/settingHelper";
 
 /**
  * @typedef {Object} Choice

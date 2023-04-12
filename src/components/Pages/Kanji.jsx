@@ -14,10 +14,10 @@ import { getKanji } from "../../slices/kanjiSlice";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
-  TermFilterBy,
   toggleKanjiFilter,
 } from "../../actions/settingsAct";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import { TermFilterBy } from "../../slices/settingHelper";
 
 import { shuffleArray } from "../../helper/arrayHelper";
 import {

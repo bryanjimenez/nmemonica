@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { TermFilterBy } from "../actions/settingsAct";
+import { TermFilterBy } from "../slices/settingHelper";
 import { shuffleArray } from "../helper/arrayHelper";
 import { termFilterByType } from "../helper/gameHelper";
 

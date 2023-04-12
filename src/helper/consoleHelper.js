@@ -1,4 +1,4 @@
-import { DebugLevel } from "../actions/settingsAct";
+import { DebugLevel } from "../slices/settingHelper";
 
 /**
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary

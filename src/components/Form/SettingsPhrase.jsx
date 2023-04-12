@@ -6,20 +6,18 @@ import { getPhrase } from "../../slices/phraseSlice";
 import {
   removeFrequencyPhrase,
   togglePhrasesOrdering,
-  TermFilterBy,
-  TermSortBy,
   togglePhrasesFilter,
   togglePhrasesReinforcement,
   togglePhrasesRomaji,
-  TermSortByLabel,
 } from "../../actions/settingsAct";
-
+import { TermFilterBy, TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
 import { toggleActiveGrp } from "../../slices/settingSlice";
+
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary

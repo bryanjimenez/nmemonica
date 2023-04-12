@@ -1,7 +1,7 @@
 import React from "react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
-import { TermFilterBy } from "../actions/settingsAct";
+import { TermFilterBy } from "../slices/settingHelper";
 import { shuffleArray } from "./arrayHelper";
 import { JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";

@@ -3,7 +3,8 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 
 import classNames from "classnames";
-import { DebugLevel } from "../../actions/settingsAct";
+import { DebugLevel } from "../../slices/settingHelper";
+
 
 /**
  * @typedef {{msg:string, lvl:number, css?: string}} ConsoleMessage

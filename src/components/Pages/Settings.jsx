@@ -21,12 +21,10 @@ import {
   setOppositesQRomaji,
 } from "../../slices/oppositeSlice";
 import {
-  DebugLevel,
   removeFrequencyKanji,
   setHiraganaBtnN,
   setKanjiBtnN,
   setParticlesARomaji,
-  TermFilterBy,
   toggleActiveTag,
   toggleKana,
   toggleKanaEasyMode,
@@ -34,6 +32,7 @@ import {
   toggleKanjiFilter,
   toggleKanjiReinforcement,
 } from "../../actions/settingsAct";
+import { DebugLevel, TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { logify } from "../../helper/consoleHelper";
 import {

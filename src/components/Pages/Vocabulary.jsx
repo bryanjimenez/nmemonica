@@ -147,10 +147,10 @@ import {
  * @property {boolean} reinforce
  * @property {SpaceRepetitionMap} repetition
  * @property {number} lastNext
- * @property {import("../../actions/settingsAct").updateSpaceRepWordYield} updateSpaceRepWord
- * @property {import("../../actions/settingsAct").setWordTPCorrectYield} setWordTPCorrect
- * @property {import("../../actions/settingsAct").setWordTPIncorrectYield} setWordTPIncorrect
- * @property {import("../../actions/settingsAct").setWordDifficultyYield} setWordDifficulty
+ * @property {function} updateSpaceRepWord
+ * @property {function} setWordTPCorrect
+ * @property {function} setWordTPIncorrect
+ * @property {function} setWordDifficulty
  * @property {typeof logger} logger
  * @property {string} verbForm
  * @property {number} swipeThreshold

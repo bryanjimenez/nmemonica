@@ -8,14 +8,12 @@ import { logger } from "../../slices/settingSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
   addFrequencyPhrase,
-  DebugLevel,
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
-  TermFilterBy,
-  TermSortBy,
   togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../actions/settingsAct";
+import { DebugLevel, TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import { logify, spaceRepLog } from "../../helper/consoleHelper";
 import {

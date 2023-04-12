@@ -1,8 +1,8 @@
 import { localStoreAttrUpdate } from "./localStorageHelper";
 
 /**
- * @typedef {typeof import("../actions/settingsAct").TermSortBy} TermSortBy
- * @typedef {typeof import("../actions/settingsAct").TermFilterBy} TermFilterBy
+ * @typedef {typeof import("../slices/settingHelper").TermSortBy} TermSortBy
+ * @typedef {typeof import("../slices/settingHelper").TermFilterBy} TermFilterBy
  */
 
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";

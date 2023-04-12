@@ -37,7 +37,7 @@ import { TermFilterBy, TermSortByLabel } from "../../slices/settingHelper";
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
  * @typedef {import("../Pages/Settings").SpaceRepetitionMap} SpaceRepetitionMap
- * @typedef {typeof import("../../actions/settingsAct").TermSortBy} SortTypes
+ * @typedef {typeof import("../../slices/settingHelper").TermSortBy} SortTypes
  */
 
 /**

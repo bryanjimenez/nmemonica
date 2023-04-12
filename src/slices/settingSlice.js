@@ -16,8 +16,8 @@ import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
 
 /**
- * @typedef {typeof import("../actions/settingsAct").TermSortBy} TermSortBy
- * @typedef {typeof import("../actions/settingsAct").TermFilterBy} TermFilterBy
+ * @typedef {typeof import("../slices/settingHelper").TermSortBy} TermSortBy
+ * @typedef {typeof import("../slices/settingHelper").TermFilterBy} TermFilterBy
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  */
 /**
