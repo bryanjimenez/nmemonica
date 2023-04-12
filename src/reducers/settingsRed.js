@@ -52,13 +52,13 @@ import { getVerbFormsArray } from "../helper/gameHelper";
 
 export const DEFAULT_SETTINGS = {
   global: {
-    darkMode: false,
-    scrolling: false,
-    memory: { quota: 0, usage: 0, persistent: false },
+    // darkMode: false,
+    // scrolling: false,
+    // memory: { quota: 0, usage: 0, persistent: false },
     // debug: 0,
     // console: [],
-    swipeThreshold: 0,
-    motionThreshold: 0,
+    // swipeThreshold: 0,
+    // motionThreshold: 0,
   },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   phrases: {
@@ -102,22 +102,22 @@ const DEFAULT_ACTION = {};
 
 const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
   switch (action.type) {
-    case TOGGLE_DARK_MODE:
-      return {
-        ...state,
-        global: {
-          ...state.global,
-          darkMode: !state.global.darkMode,
-        },
-      };
-    case SCROLLING_STATE:
-      return {
-        ...state,
-        global: {
-          ...state.global,
-          scrolling: action.value,
-        },
-      };
+    // case TOGGLE_DARK_MODE:
+    //   return {
+    //     ...state,
+    //     global: {
+    //       ...state.global,
+    //       darkMode: !state.global.darkMode,
+    //     },
+    //   };
+    // case SCROLLING_STATE:
+    //   return {
+    //     ...state,
+    //     global: {
+    //       ...state.global,
+    //       scrolling: action.value,
+    //     },
+    //   };
     // case MEMORY_STORAGE_STATUS:
     //   return {
     //     ...state,
@@ -143,22 +143,22 @@ const settingsReducer = (state = DEFAULT_SETTINGS, action = DEFAULT_ACTION) => {
     //       console: [...state.global.console, action.value],
     //     },
     //   };
-    case SET_SWIPE_THRESHOLD:
-      return {
-        ...state,
-        global: {
-          ...state.global,
-          swipeThreshold: action.value,
-        },
-      };
-    case SET_MOTION_THRESHOLD:
-      return {
-        ...state,
-        global: {
-          ...state.global,
-          motionThreshold: action.value,
-        },
-      };
+    // case SET_SWIPE_THRESHOLD:
+    //   return {
+    //     ...state,
+    //     global: {
+    //       ...state.global,
+    //       swipeThreshold: action.value,
+    //     },
+    //   };
+    // case SET_MOTION_THRESHOLD:
+    //   return {
+    //     ...state,
+    //     global: {
+    //       ...state.global,
+    //       motionThreshold: action.value,
+    //     },
+    //   };
     case SET_KANA_BTN_N:
       return {
         ...state,

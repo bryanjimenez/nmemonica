@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
-import { flipVocabularyPracticeSide } from "../../actions/settingsAct";
+import { flipVocabularyPracticeSide } from "../../slices/settingSlice";
 import Sizable from "../Form/Sizable";
 import {
   englishLabel,
@@ -220,16 +220,16 @@ class VocabularyMain extends Component {
     );
   }
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
-    practiceSide: state.settings.vocabulary.practiceSide,
-    romajiActive: state.settings.vocabulary.romaji,
+    practiceSide: state.settingsHK.vocabulary.practiceSide,
+    romajiActive: state.settingsHK.vocabulary.romaji,
     scrollingDone: !state.settingsHK.global.scrolling,
     swipeThreshold: state.settingsHK.global.swipeThreshold,
-    repetition: state.settingsHK.vocabulary.repetition, // TODO: hook + class
-    hintEnabled: state.settings.vocabulary.hintEnabled,
-    showBareKanji: state.settings.vocabulary.bareKanji,
+    repetition: state.settingsHK.vocabulary.repetition,
+    hintEnabled: state.settingsHK.vocabulary.hintEnabled,
+    showBareKanji: state.settingsHK.vocabulary.bareKanji,
   };
 };
 
@@ -241,14 +241,15 @@ VocabularyMain.propTypes = {
   scrollingDone: PropTypes.bool,
   played: PropTypes.bool,
   prevPushPlay: PropTypes.bool,
-  flipVocabularyPracticeSide: PropTypes.func,
   swipeThreshold: PropTypes.number,
   repetition: PropTypes.object,
-  furiganaToggled: PropTypes.func,
-  toggleFuriganaSettingHelper: PropTypes.func,
   hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
   showBareKanji: PropTypes.bool,
+
+  flipVocabularyPracticeSide: PropTypes.func,
+  furiganaToggled: PropTypes.func,
+  toggleFuriganaSettingHelper: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {

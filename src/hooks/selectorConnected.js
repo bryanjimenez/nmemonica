@@ -5,16 +5,18 @@ import { useSelector } from "react-redux";
  */
 
 /**
- * Hook for non connected functional components
- * uses useSelector for not yet refactored action/reducer
+ * VerbMain app-state props
  */
-export function useVerbMainSelectorConnected() {
-  const stateSettingsTEMP = useSelector(
-    (/** @type {RootState}*/ { settings }) => settings
+export function useVerbMainConnected() {
+  const { vocabulary, stateSettingsTEMP } = useSelector(
+    (/** @type {RootState}*/ { vocabulary, settingsHK }) => ({
+      vocabulary,
+      stateSettingsTEMP: settingsHK,
+    })
   );
   const { swipeThreshold } = stateSettingsTEMP.global;
   const {
-    // repetition,                  // refactored
+    repetition,
     romaji: romajiActive,
     verbFormsOrder,
     practiceSide: englishSideUp,
@@ -23,7 +25,8 @@ export function useVerbMainSelectorConnected() {
   } = stateSettingsTEMP.vocabulary;
 
   return {
-    // repetition,                  // refactored
+    verbForm: vocabulary.verbForm,
+    repetition,
     swipeThreshold,
     romajiActive,
     verbFormsOrder,

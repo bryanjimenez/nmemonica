@@ -6,7 +6,11 @@ import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "./localStorageHelper";
-import { DebugLevel, toggleDebugAct } from "./settingHelper";
+import {
+  DebugLevel,
+  toggleActiveGrpHelper,
+  toggleDebugHelper,
+} from "./settingHelper";
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
@@ -73,7 +77,7 @@ export const initialState = {
 
 export const getMemoryStorageStatus = createAsyncThunk(
   "setting/getMemoryStorageStatus",
-  async (v, thunkAPI) => {
+  async (arg, thunkAPI) => {
     return memoryStorageStatus().catch((e) => {
       thunkAPI.dispatch(
         logger("Could not get memory storage status", DebugLevel.WARN)
@@ -87,7 +91,7 @@ export const getMemoryStorageStatus = createAsyncThunk(
 
 export const setPersistentStorage = createAsyncThunk(
   "setting/setPersistentStorage",
-  async (v, thunkAPI) => {
+  async (arg, thunkAPI) => {
     return persistStorage().catch((e) => {
       thunkAPI.dispatch(
         logger("Could not set persistent storage", DebugLevel.WARN)
@@ -95,6 +99,16 @@ export const setPersistentStorage = createAsyncThunk(
       thunkAPI.dispatch(logger(e.message, DebugLevel.WARN));
       throw e;
     });
+  }
+);
+
+export const updateSpaceRepWord = createAsyncThunk(
+  "setting/updateSpaceRepWord",
+  async (arg, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = thunkAPI.getState().settingsHK;
+
+    return vocabularySettings.updateSpaceRepWord(uid, shouldIncrement)(state);
   }
 );
 
@@ -126,19 +140,17 @@ const settingSlice = createSlice({
       localStoreAttrUpdate(time, state, path, attr, action.payload);
       state.global.motionThreshold = action.payload;
     },
-    localStorageSettingsInitialized(state) {
+    localStorageSettingsInitialized() {
       const lsSettings = getLocalStorageSettings(localStorageKey);
       // use merge to prevent losing defaults not found in localStorage
-
       const mergedSettings = merge(initialState, lsSettings);
       delete mergedSettings.lastModified;
-      state.vocabulary = mergedSettings.vocabulary;
 
       // calculated values
       const vocabReinforceList = Object.keys(
         mergedSettings.vocabulary.repetition
       ).filter((k) => mergedSettings.vocabulary.repetition[k]?.rein === true);
-      state.vocabulary.frequency = {
+      mergedSettings.vocabulary.frequency = {
         uid: undefined,
         count: vocabReinforceList.length,
       };
@@ -146,7 +158,7 @@ const settingSlice = createSlice({
       const phraseReinforceList = Object.keys(
         mergedSettings.phrases.repetition
       ).filter((k) => mergedSettings.phrases.repetition[k]?.rein === true);
-      state.phrases.frequency = {
+      mergedSettings.phrases.frequency = {
         uid: undefined,
         count: phraseReinforceList.length,
       };
@@ -154,9 +166,14 @@ const settingSlice = createSlice({
       const kanjiReinforceList = Object.keys(
         mergedSettings.kanji.repetition
       ).filter((k) => mergedSettings.kanji.repetition[k]?.rein === true);
-      state.kanji.frequency = {
+      mergedSettings.kanji.frequency = {
         uid: undefined,
         count: kanjiReinforceList.length,
+      };
+
+      // mergedSettings is a multi-level deep object
+      return {
+        ...mergedSettings,
       };
     },
 
@@ -166,7 +183,7 @@ const settingSlice = createSlice({
         /** @type {import("@reduxjs/toolkit").PayloadAction<typeof DebugLevel[keyof DebugLevel]>} */ action
       ) => {
         const override = action.payload;
-        state.global.debug = toggleDebugAct(override)(state);
+        state.global.debug = toggleDebugHelper(override)(state);
       },
 
       prepare: (override) => ({
@@ -196,11 +213,141 @@ const settingSlice = createSlice({
         payload: { msg, lvl, type },
       }),
     },
+    toggleActiveGrp: {
+      reducer: (state, action) => {
+        const { parent, grpName } = action.payload;
 
+        state[parent].activeGroup = toggleActiveGrpHelper(
+          parent,
+          grpName
+        )(state);
+      },
+      prepare: (parent, grpName) => ({ payload: { parent, grpName } }),
+    },
+
+    // Vocabulary Settings
     furiganaToggled(state, action) {
       state.vocabulary.repetition = vocabularySettings.toggleFurigana(
         action.payload
       )(state);
+    },
+
+    toggleVocabularyReinforcement(state) {
+      state.vocabulary.reinforce =
+        vocabularySettings.toggleVocabularyReinforcement()(state);
+    },
+
+    toggleVocabularyOrdering(state) {
+      state.vocabulary.ordered =
+        vocabularySettings.toggleVocabularyOrdering()(state);
+    },
+
+    flipVocabularyPracticeSide(state) {
+      state.vocabulary.practiceSide =
+        vocabularySettings.flipVocabularyPracticeSide()(state);
+    },
+
+    toggleVocabularyRomaji(state) {
+      state.vocabulary.romaji =
+        vocabularySettings.toggleVocabularyRomaji()(state);
+    },
+
+    toggleVocabularyBareKanji(state) {
+      state.vocabulary.bareKanji =
+        vocabularySettings.toggleVocabularyBareKanji()(state);
+    },
+
+    toggleVocabularyHint(state) {
+      state.vocabulary.hintEnabled =
+        vocabularySettings.toggleVocabularyHint()(state);
+    },
+
+    toggleVocabularyFilter(state) {
+      state.vocabulary.filter = vocabularySettings.toggleVocabularyFilter(
+        state.vocabulary.filter
+      )(state);
+    },
+
+    setVerbFormsOrder(state, action) {
+      state.vocabulary.verbFormsOrder = vocabularySettings.setVerbFormsOrder(
+        action.payload
+      )(state);
+    },
+
+    toggleAutoVerbView(state) {
+      state.vocabulary.autoVerbView = vocabularySettings.toggleAutoVerbView(
+        state.vocabulary.autoVerbView
+      )(state);
+    },
+
+    updateVerbColSplit(state, action) {
+      state.vocabulary.verbColSplit = vocabularySettings.updateVerbColSplit(
+        action.payload
+      )(state);
+    },
+
+    addFrequencyWord(state, action) {
+      const { value } = vocabularySettings.addFrequencyWord(action.payload)(
+        state
+      );
+
+      state.vocabulary.repetition = value;
+      state.vocabulary.frequency.uid = action.payload;
+      state.vocabulary.frequency.count = state.vocabulary.frequency.count + 1;
+    },
+
+    removeFrequencyWord(state, action) {
+      const { value } = vocabularySettings.removeFrequencyWord(action.payload)(
+        state
+      );
+
+      if (value) {
+        state.vocabulary.repetition = value;
+      }
+
+      state.vocabulary.frequency.uid = action.payload;
+      state.vocabulary.frequency.count = state.vocabulary.frequency.count - 1;
+    },
+
+    setWordDifficulty: {
+      reducer: (state, action) => {
+        const { uid, value } = action.payload;
+        const { value: newValue } = vocabularySettings.setWordDifficulty(
+          uid,
+          value
+        )(state);
+
+        state.vocabulary.repetition = newValue;
+      },
+      prepare: (uid, value) => ({ payload: { uid, value } }),
+    },
+    setWordTPCorrect: {
+      reducer: (state, action) => {
+        const { uid, tpElapsed, pronunciation } = action.payload;
+        const { newValue } = vocabularySettings.setWordTPCorrect(
+          uid,
+          tpElapsed,
+          { pronunciation }
+        )(state);
+
+        state.vocabulary.repetition = newValue;
+      },
+      prepare: (uid, tpElapsed, { pronunciation } = {}) => ({
+        payload: { uid, tpElapsed, pronunciation },
+      }),
+    },
+    setWordTPIncorrect: {
+      reducer: (state, action) => {
+        const { uid, pronunciation } = action.payload;
+        const { newValue } = vocabularySettings.setWordTPIncorrect(uid, {
+          pronunciation,
+        })(state);
+
+        state.vocabulary.repetition = newValue;
+      },
+      prepare: (uid, { pronunciation } = {}) => ({
+        payload: { uid, pronunciation },
+      }),
     },
   },
 
@@ -220,6 +367,11 @@ const settingSlice = createSlice({
 
       state.global.memory = { quota, usage, persistent };
     });
+
+    builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
+      const { value } = action.payload;
+      state.vocabulary.repetition = value;
+    });
   },
 });
 
@@ -234,5 +386,22 @@ export const {
   localStorageSettingsInitialized,
 
   furiganaToggled,
+  removeFrequencyWord,
+  setVerbFormsOrder,
+  toggleVocabularyOrdering,
+  toggleActiveGrp,
+  toggleAutoVerbView,
+  toggleVocabularyFilter,
+  toggleVocabularyHint,
+  toggleVocabularyReinforcement,
+  toggleVocabularyRomaji,
+  updateVerbColSplit,
+  toggleVocabularyBareKanji,
+  flipVocabularyPracticeSide,
+  addFrequencyWord,
+
+  setWordDifficulty,
+  setWordTPCorrect,
+  setWordTPIncorrect,
 } = settingSlice.actions;
 export default settingSlice.reducer;

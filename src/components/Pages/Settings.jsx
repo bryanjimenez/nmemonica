@@ -12,6 +12,7 @@ import {
   setMotionThreshold,
   setSwipeThreshold,
   toggleDarkMode,
+  toggleActiveGrp,
 } from "../../slices/settingSlice";
 import { getKanji } from "../../slices/kanjiSlice";
 import { getPhrase } from "../../slices/phraseSlice";
@@ -26,7 +27,6 @@ import {
   setKanjiBtnN,
   setParticlesARomaji,
   TermFilterBy,
-  toggleActiveGrp,
   toggleActiveTag,
   toggleKana,
   toggleKanaEasyMode,
@@ -949,8 +949,8 @@ class Settings extends Component {
     );
   }
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     darkMode: state.settingsHK.global.darkMode,
     swipeThreshold: state.settingsHK.global.swipeThreshold,
@@ -987,57 +987,57 @@ const mapStateToProps = (state) => {
 Settings.propTypes = {
   // global
   darkMode: PropTypes.bool,
-  toggleDarkMode: PropTypes.func,
   memory: PropTypes.object,
+  debug: PropTypes.number,
+  swipeThreshold: PropTypes.number,
+  motionThreshold: PropTypes.number,
+  toggleDarkMode: PropTypes.func,
+  debugToggled: PropTypes.func,
   setPersistentStorage: PropTypes.func,
   getMemoryStorageStatus: PropTypes.func,
-  debug: PropTypes.number,
-  debugToggled: PropTypes.func,
-  swipeThreshold: PropTypes.number,
-  setSwipeThreshold: PropTypes.func,
-  motionThreshold: PropTypes.number,
   setMotionThreshold: PropTypes.func,
+  setSwipeThreshold: PropTypes.func,
 
   // phrases
-  getPhrase: PropTypes.func,
   phrases: PropTypes.array,
   pRepetition: PropTypes.object,
+  getPhrase: PropTypes.func,
 
   // vocabulary
-  getVocabulary: PropTypes.func,
   vocabulary: PropTypes.array,
   vRepetition: PropTypes.object,
+  getVocabulary: PropTypes.func,
 
-  setHiraganaBtnN: PropTypes.func,
   wideMode: PropTypes.bool,
   easyMode: PropTypes.bool,
+  charSet: PropTypes.number,
+  choiceN: PropTypes.number,
+  setHiraganaBtnN: PropTypes.func,
   toggleKanaGameWideMode: PropTypes.func,
   toggleKanaEasyMode: PropTypes.func,
-  charSet: PropTypes.number,
   toggleKana: PropTypes.func,
-  choiceN: PropTypes.number,
 
   particlesARomaji: PropTypes.bool,
   setParticlesARomaji: PropTypes.func,
 
   // kanji
-  getKanji: PropTypes.func,
   kanji: PropTypes.array,
   kanjiFilter: PropTypes.number,
   kanjiTags: PropTypes.array,
   kanjiActive: PropTypes.array,
-  toggleActiveGrp: PropTypes.func,
-  toggleActiveTag: PropTypes.func,
   kRepetition: PropTypes.object,
   kanjiReinforce: PropTypes.bool,
+  kanjiChoiceN: PropTypes.number,
+  getKanji: PropTypes.func,
+  toggleActiveGrp: PropTypes.func,
+  toggleActiveTag: PropTypes.func,
   toggleKanjiReinforcement: PropTypes.func,
   toggleKanjiFilter: PropTypes.func,
-  kanjiChoiceN: PropTypes.number,
   setKanjiBtnN: PropTypes.func,
 
   oppositesQRomaji: PropTypes.bool,
-  setOppositesQRomaji: PropTypes.func,
   oppositesARomaji: PropTypes.bool,
+  setOppositesQRomaji: PropTypes.func,
   setOppositesARomaji: PropTypes.func,
 
   logger: PropTypes.func,

@@ -11,7 +11,7 @@ import { buildTagObject } from "../helper/reducerHelper";
  */
 export const getKanji = createAsyncThunk(
   "kanji/getKanji",
-  async (v, thunkAPI) => {
+  async (arg, thunkAPI) => {
     const state = thunkAPI.getState();
     const version = state.version.kanji || 0;
 

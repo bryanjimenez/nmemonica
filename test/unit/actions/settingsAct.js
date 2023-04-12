@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { grpParse } from "../../../src/actions/settingsAct";
+import { grpParse } from "../../../src/slices/settingHelper";
 
 describe("settingsAct", function () {
   describe("grpParse", function () {

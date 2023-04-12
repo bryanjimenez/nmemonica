@@ -8,7 +8,6 @@ import {
   togglePhrasesOrdering,
   TermFilterBy,
   TermSortBy,
-  toggleActiveGrp,
   togglePhrasesFilter,
   togglePhrasesReinforcement,
   togglePhrasesRomaji,
@@ -20,6 +19,7 @@ import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
+import { toggleActiveGrp } from "../../slices/settingSlice";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -177,8 +177,7 @@ class SettingsPhrase extends Component {
   }
 }
 
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     phrases: state.phrases.value,
     phraseGroups: state.phrases.grpObj,

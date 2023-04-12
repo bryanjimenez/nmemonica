@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import {
@@ -19,7 +19,7 @@ import {
 import { verbFormChanged } from "../../slices/vocabularySlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
-import { useVerbMainSelectorConnected } from "../../hooks/selectorConnected";
+import { useVerbMainConnected } from "../../hooks/selectorConnected";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -102,21 +102,16 @@ export default function VerbMain(props) {
   const dispatch = useDispatch();
 
   const {
+    verbForm,
+
+    repetition,
     swipeThreshold,
     englishSideUp,
     verbFormsOrder,
     romajiActive,
     hintEnabled,
     verbColSplit,
-  } = useVerbMainSelectorConnected();
-
-  const { repetition, verbForm } = useSelector(
-    (/** @type {RootState}*/ { settingsHK, vocabulary }) => {
-      const { repetition } = settingsHK.vocabulary;
-      const { verbForm } = vocabulary;
-      return { repetition, verbForm };
-    }
-  );
+  } = useVerbMainConnected();
 
   const { verb, reCache, linkToOtherTerm, showHint } = props;
 

@@ -3,15 +3,15 @@ import { getWindowLocalStorage } from "../helper/browserGlobal";
 
 /**
  * Modifies an attribute or toggles the existing value
+ * @template {unknown} T
  * @param {Date} time
- * @param {*} state
+ * @param {SettingState} state
  * @param {string} path
  * @param {string} attr
- * @param {*} [value] optional if absent [attr] will be toggled
+ * @param {T} [value] optional if absent [attr] will be toggled
  */
 export function localStoreAttrUpdate(time, state, path, attr, value) {
-  // const stateSettings = getState().settings;
-
+  /** @type {SettingState}*/
   let locStoSettings = getLocalStorageSettings(localStorageKey) || {};
   let statePtr = state;
   let localPtr = locStoSettings;
@@ -38,10 +38,12 @@ export function localStoreAttrUpdate(time, state, path, attr, value) {
     console.error("failed localStoreAttrUpdate");
   }
 
-  return setLocalStorage(localStorageKey, {
+  setLocalStorage(localStorageKey, {
     ...locStoSettings,
     lastModified: time,
   });
+
+  return localPtr[attr];
 }
 
 /**

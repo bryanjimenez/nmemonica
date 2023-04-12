@@ -7,7 +7,7 @@ import { localStoreAttrUpdate } from "./localStorageHelper";
  */
 export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
-  async (v, thunkAPI) => {
+  async (arg, thunkAPI) => {
     const state = thunkAPI.getState();
     const version = state.version.phrases || 0;
 

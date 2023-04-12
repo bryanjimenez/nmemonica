@@ -8,16 +8,7 @@ import {
   DebugLevel,
   TermFilterBy,
   TermSortBy,
-  addFrequencyWord,
-  flipVocabularyPracticeSide,
-  removeFrequencyWord,
-  setWordDifficulty,
-  setWordTPCorrect,
-  setWordTPIncorrect,
-  toggleAutoVerbView,
-  toggleVocabularyFilter,
-  updateSpaceRepWord,
-} from "../../actions/settingsAct";
+} from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
@@ -27,7 +18,19 @@ import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 // import { deepOrange } from "@mui/material";
 import { pronounceEndoint } from "../../../environment.development";
-import { logger, scrollingState } from "../../slices/settingSlice";
+import {
+  logger,
+  scrollingState,
+  flipVocabularyPracticeSide,
+  removeFrequencyWord,
+  setWordDifficulty,
+  setWordTPCorrect,
+  setWordTPIncorrect,
+  toggleAutoVerbView,
+  toggleVocabularyFilter,
+  updateSpaceRepWord,
+  addFrequencyWord,
+} from "../../slices/settingSlice";
 import {
   getSwipeDirection,
   isSwipeIgnored,
@@ -383,22 +386,27 @@ class Vocabulary extends Component {
 
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
-        const { map, prevMap } = this.props.updateSpaceRepWord(
-          uid,
-          shouldIncrement
-        );
 
-        const prevDate = prevMap[uid] && prevMap[uid].d;
-        const repStats = { [uid]: { ...map[uid], d: prevDate } };
-        if (this.state.tpAnswered !== undefined) {
-          timedPlayLog(this.props.logger, vocabulary, repStats, {
-            frequency: prevState.reinforcedUID !== undefined,
+        this.props
+          .updateSpaceRepWord({
+            uid,
+            shouldIncrement,
+          })
+          .then(({ payload }) => {
+            const { map, prevMap } = payload;
+
+            const prevDate = prevMap && prevMap[uid] && prevMap[uid].d;
+            const repStats = { [uid]: { ...map[uid], d: prevDate } };
+            if (this.state.tpAnswered !== undefined) {
+              timedPlayLog(this.props.logger, vocabulary, repStats, {
+                frequency: prevState.reinforcedUID !== undefined,
+              });
+            } else {
+              spaceRepLog(this.props.logger, vocabulary, repStats, {
+                frequency: prevState.reinforcedUID !== undefined,
+              });
+            }
           });
-        } else {
-          spaceRepLog(this.props.logger, vocabulary, repStats, {
-            frequency: prevState.reinforcedUID !== undefined,
-          });
-        }
       }
 
       if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
@@ -1536,62 +1544,65 @@ class Vocabulary extends Component {
     return page;
   }
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (/** @type {RootState}*/ state) => {
   return {
     vocab: state.vocabulary.value,
-    practiceSide: state.settings.vocabulary.practiceSide,
-    termsOrder: state.settings.vocabulary.ordered,
-    romajiActive: state.settings.vocabulary.romaji,
-    hintEnabled: state.settings.vocabulary.hintEnabled,
-    filterType: state.settings.vocabulary.filter,
-    frequency: state.settings.vocabulary.frequency,
-    activeGroup: state.settings.vocabulary.activeGroup,
-    scrollingDone: !state.settingsHK.global.scrolling,
-    autoVerbView: state.settings.vocabulary.autoVerbView,
-    reinforce: state.settings.vocabulary.reinforce,
-    repetition: state.settings.vocabulary.repetition,
-    furigana: state.settingsHK.vocabulary.repetition, // TODO: hook + class
     verbForm: state.vocabulary.verbForm,
+
+    practiceSide: state.settingsHK.vocabulary.practiceSide,
+    termsOrder: state.settingsHK.vocabulary.ordered,
+    romajiActive: state.settingsHK.vocabulary.romaji,
+    hintEnabled: state.settingsHK.vocabulary.hintEnabled,
+    filterType: state.settingsHK.vocabulary.filter,
+    frequency: state.settingsHK.vocabulary.frequency,
+    activeGroup: state.settingsHK.vocabulary.activeGroup,
+    scrollingDone: !state.settingsHK.global.scrolling,
+    autoVerbView: state.settingsHK.vocabulary.autoVerbView,
+    reinforce: state.settingsHK.vocabulary.reinforce,
+    repetition: state.settingsHK.vocabulary.repetition,
+    furigana: state.settingsHK.vocabulary.repetition,
     swipeThreshold: state.settingsHK.global.swipeThreshold,
     motionThreshold: state.settingsHK.global.motionThreshold,
-    debugLevel: state.settingsHK.global.debug,        // FIXME: hook + class
+    debugLevel: state.settingsHK.global.debug,
   };
 };
 
 Vocabulary.propTypes = {
-  getVocabulary: PropTypes.func.isRequired,
-  activeGroup: PropTypes.array,
-  addFrequencyWord: PropTypes.func.isRequired,
-  removeFrequencyWord: PropTypes.func.isRequired,
-  frequency: PropTypes.object,
   vocab: PropTypes.array.isRequired,
+  verbForm: PropTypes.string,
+
+  activeGroup: PropTypes.array,
+  frequency: PropTypes.object,
   hintEnabled: PropTypes.bool,
   romajiActive: PropTypes.bool,
-  flipVocabularyPracticeSide: PropTypes.func.isRequired,
   practiceSide: PropTypes.bool,
   termsOrder: PropTypes.number,
   scrollingDone: PropTypes.bool,
-  scrollingState: PropTypes.func,
-  autoVerbView: PropTypes.bool,
-  toggleAutoVerbView: PropTypes.func,
   filterType: PropTypes.number,
-  toggleVocabularyFilter: PropTypes.func,
+  autoVerbView: PropTypes.bool,
   reinforce: PropTypes.bool,
-  clearPreviousTerm: PropTypes.func,
   repetition: PropTypes.object,
-  furigana: PropTypes.object, // TODO: hook + class
+  furigana: PropTypes.object,
   lastNext: PropTypes.number,
-  updateSpaceRepWord: PropTypes.func,
-  setWordTPCorrect: PropTypes.func,
-  setWordTPIncorrect: PropTypes.func,
-  setWordDifficulty: PropTypes.func,
-  logger: PropTypes.func,
-  verbForm: PropTypes.string,
   swipeThreshold: PropTypes.number,
   motionThreshold: PropTypes.number,
-  furiganaToggled: PropTypes.func,
   debugLevel: PropTypes.number,
+
+  flipVocabularyPracticeSide: PropTypes.func.isRequired,
+  logger: PropTypes.func,
+  furiganaToggled: PropTypes.func,
+  setWordDifficulty: PropTypes.func,
+  setWordTPIncorrect: PropTypes.func,
+  updateSpaceRepWord: PropTypes.func,
+  setWordTPCorrect: PropTypes.func,
+  clearPreviousTerm: PropTypes.func,
+  getVocabulary: PropTypes.func.isRequired,
+  addFrequencyWord: PropTypes.func.isRequired,
+  removeFrequencyWord: PropTypes.func.isRequired,
+  scrollingState: PropTypes.func,
+  toggleAutoVerbView: PropTypes.func,
+  toggleVocabularyFilter: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {

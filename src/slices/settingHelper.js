@@ -44,9 +44,9 @@ export const TermSortByLabel = [
 /**
  * @param {typeof DebugLevel[keyof DebugLevel]} override
  */
-export function toggleDebugAct(override) {
-  return (/** @type {RootState} */ state) => {
-    const { debug } = state.settingsHK.global;
+export function toggleDebugHelper(override) {
+  return (/** @type {SettingState} */ state) => {
+    const { debug } = state.global;
 
     const path = "/global/";
     const attr = "debug";
@@ -65,9 +65,63 @@ export function toggleDebugAct(override) {
         : DebugLevel.OFF;
     }
 
-    localStoreAttrUpdate(time, state, path, attr, newDebug);
-    return newDebug;
+    return localStoreAttrUpdate(time, state, path, attr, newDebug);
   };
+}
+
+/**
+ * @param {string} parent
+ * @param {string|string[]} grpName
+ */
+export function toggleActiveGrpHelper(parent, grpName) {
+  return (/** @type {SettingState} */ state) => {
+    const { activeGroup } = state[parent];
+
+    const groups = Array.isArray(grpName) ? grpName : [grpName];
+    const newValue = grpParse(groups, activeGroup);
+
+    const path = "/" + parent + "/";
+    const attr = "activeGroup";
+    const time = new Date();
+    return localStoreAttrUpdate(time, state, path, attr, newValue);
+  };
+}
+
+/**
+ * Adds or removes grpNames to the activeGroup list.
+ * Returns an updated list of selected groups
+ * @param {string[]} grpNames a group name to be toggled
+ * @param {string[]} activeGroup a list of groups that are selected
+ */
+export function grpParse(grpNames, activeGroup) {
+  /** @type {string[]} */
+  let newValue = [];
+
+  const grpNamesSet = [...new Set(grpNames)];
+  const activeGroupSet = [...new Set(activeGroup)];
+
+  grpNamesSet.forEach((grpEl) => {
+    const isGrp = grpEl.indexOf(".") === -1;
+
+    if (isGrp) {
+      if (activeGroupSet.some((e) => e.indexOf(grpEl + ".") !== -1)) {
+        newValue = [
+          ...activeGroupSet.filter((v) => v.indexOf(grpEl + ".") === -1),
+          grpEl,
+        ];
+      } else if (activeGroupSet.includes(grpEl)) {
+        newValue = [...activeGroupSet.filter((v) => v !== grpEl)];
+      } else {
+        newValue = [...activeGroupSet, grpEl];
+      }
+    } else {
+      newValue = activeGroupSet.includes(grpEl)
+        ? activeGroupSet.filter((v) => v !== grpEl)
+        : [...activeGroupSet, grpEl];
+    }
+  });
+
+  return newValue;
 }
 
 /**
@@ -100,7 +154,8 @@ export function updateSpaceRepTerm(
 
     /** @type {SpaceRepetitionMap} */
     const spaceRep = getLastStateValue(state, path, attr);
-    const prevMap = { [uid]: spaceRep[uid] };
+    let prevMap =
+      spaceRep[uid] === undefined ? undefined : { [uid]: spaceRep[uid] };
 
     let count;
     if (spaceRep[uid] && spaceRep[uid].vC > 0 && shouldIncrement) {
@@ -154,11 +209,14 @@ export function updateSpaceRepTerm(
       ...uidChangedAttr,
     };
 
+    const map = { [uid]: o };
+    prevMap = prevMap === undefined ? { ...map } : prevMap;
+
     /** @type {SpaceRepetitionMap} */
-    const newValue = { ...spaceRep, [uid]: o };
+    const newValue = { ...spaceRep, ...map };
     localStoreAttrUpdate(time, state, path, attr, newValue);
 
-    return { map: { [uid]: o }, prevMap, value: newValue };
+    return { map, prevMap, value: newValue };
   };
 }
 

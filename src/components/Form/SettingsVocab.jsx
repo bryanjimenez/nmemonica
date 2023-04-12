@@ -12,7 +12,6 @@ import {
   removeFrequencyWord,
   setVerbFormsOrder,
   toggleVocabularyOrdering,
-  TermFilterBy,
   toggleActiveGrp,
   toggleAutoVerbView,
   toggleVocabularyFilter,
@@ -20,9 +19,8 @@ import {
   toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
   updateVerbColSplit,
-  TermSortByLabel,
   toggleVocabularyBareKanji,
-} from "../../actions/settingsAct";
+} from "../../slices/settingSlice";
 import { getVocabulary } from "../../slices/vocabularySlice";
 
 import { DEFAULT_SETTINGS } from "../../reducers/settingsRed";
@@ -33,6 +31,7 @@ import { SetTermGFList } from "../Pages/SetTermGFList";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
 import VerbFormSlider from "./VerbFormSlider";
+import { TermFilterBy, TermSortByLabel } from "../../slices/settingHelper";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -366,32 +365,33 @@ class SettingsVocab extends Component {
   }
 }
 
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     vocabulary: state.vocabulary.value,
-    vocabOrder: state.settings.vocabulary.ordered,
-    vocabRomaji: state.settings.vocabulary.romaji,
-    showBareKanji: state.settings.vocabulary.showBareKanji,
-    vocabHint: state.settings.vocabulary.hintEnabled,
     vocabGroups: state.vocabulary.grpObj,
-    vocabActive: state.settings.vocabulary.activeGroup,
-    autoVerbView: state.settings.vocabulary.autoVerbView,
-    verbColSplit: state.settings.vocabulary.verbColSplit,
-    vocabFilter: state.settings.vocabulary.filter,
-    vocabRep: state.settings.vocabulary.repetition,
-    vocabReinforce: state.settings.vocabulary.reinforce,
-    verbFormsOrder: state.settings.vocabulary.verbFormsOrder,
+
+    vocabOrder: state.settingsHK.vocabulary.ordered,
+    vocabRomaji: state.settingsHK.vocabulary.romaji,
+    showBareKanji: state.settingsHK.vocabulary.bareKanji,
+    vocabHint: state.settingsHK.vocabulary.hintEnabled,
+    vocabActive: state.settingsHK.vocabulary.activeGroup,
+    autoVerbView: state.settingsHK.vocabulary.autoVerbView,
+    verbColSplit: state.settingsHK.vocabulary.verbColSplit,
+    vocabFilter: state.settingsHK.vocabulary.filter,
+    vocabRep: state.settingsHK.vocabulary.repetition,
+    vocabReinforce: state.settingsHK.vocabulary.reinforce,
+    verbFormsOrder: state.settingsHK.vocabulary.verbFormsOrder,
   };
 };
 
 SettingsVocab.propTypes = {
   vocabulary: PropTypes.array,
+  vocabGroups: PropTypes.object,
+
   vocabOrder: PropTypes.number,
   vocabRomaji: PropTypes.bool,
   showBareKanji: PropTypes.bool,
   vocabHint: PropTypes.bool,
-  vocabGroups: PropTypes.object,
   vocabActive: PropTypes.array,
   autoVerbView: PropTypes.bool,
   verbColSplit: PropTypes.number,

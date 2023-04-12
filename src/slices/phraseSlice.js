@@ -21,7 +21,7 @@ const buildPhraseArray = (object) =>
  */
 export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
-  async (v, thunkAPI) => {
+  async (arg, thunkAPI) => {
     const state = thunkAPI.getState();
     const version = state.version.phrases || 0;
 
@@ -36,7 +36,7 @@ export const getPhrase = createAsyncThunk(
 
 export const getParticleGame = createAsyncThunk(
   "phrase/getParticleGame",
-  async (v, thunkAPI) => {
+  async (arg, thunkAPI) => {
     const phrases = thunkAPI.getState().phrases.value;
 
     if (phrases.length > 0) {

@@ -334,279 +334,279 @@ export function togglePhrasesRomaji() {
   };
 }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleVocabularyReinforcement() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleVocabularyReinforcement() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/vocabulary/";
-    const attr = "reinforce";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/vocabulary/";
+//     const attr = "reinforce";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_VOCABULARY_REINFORCE
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_VOCABULARY_REINFORCE,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_VOCABULARY_REINFORCE
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_VOCABULARY_REINFORCE,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleVocabularyOrdering() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleVocabularyOrdering() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const { ordered } = getState().settings.vocabulary;
-    const newOrdered =
-      ordered + 1 < Object.keys(TermSortBy).length ? ordered + 1 : 0;
+//     const { ordered } = getState().settings.vocabulary;
+//     const newOrdered =
+//       ordered + 1 < Object.keys(TermSortBy).length ? ordered + 1 : 0;
 
-    const path = "/vocabulary/";
-    const attr = "ordered";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, newOrdered);
+//     const path = "/vocabulary/";
+//     const attr = "ordered";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, newOrdered);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_VOCABULARY_ORDERING,
-        newOrdered
-      );
-    } else {
-      dispatch({
-        type: SET_VOCABULARY_ORDERING,
-        value: newOrdered,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         SET_VOCABULARY_ORDERING,
+//         newOrdered
+//       );
+//     } else {
+//       dispatch({
+//         type: SET_VOCABULARY_ORDERING,
+//         value: newOrdered,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function flipVocabularyPracticeSide() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function flipVocabularyPracticeSide() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/vocabulary/";
-    const attr = "practiceSide";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/vocabulary/";
+//     const attr = "practiceSide";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        FLIP_VOCABULARY_PRACTICE_SIDE
-      );
-    } else {
-      dispatch({
-        type: FLIP_VOCABULARY_PRACTICE_SIDE,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         FLIP_VOCABULARY_PRACTICE_SIDE
+//       );
+//     } else {
+//       dispatch({
+//         type: FLIP_VOCABULARY_PRACTICE_SIDE,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleVocabularyRomaji() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleVocabularyRomaji() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/vocabulary/";
-    const attr = "romaji";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/vocabulary/";
+//     const attr = "romaji";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_VOCABULARY_ROMAJI
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_VOCABULARY_ROMAJI,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_VOCABULARY_ROMAJI
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_VOCABULARY_ROMAJI,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleVocabularyBareKanji() {
-  return (dispatch, getState) => {
-    const path = "/vocabulary/";
-    const attr = "bareKanji";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleVocabularyBareKanji() {
+//   return (dispatch, getState) => {
+//     const path = "/vocabulary/";
+//     const attr = "bareKanji";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    dispatch({
-      type: TOGGLE_VOCABULARY_BARE_KANJI,
-    });
-  };
-}
+//     dispatch({
+//       type: TOGGLE_VOCABULARY_BARE_KANJI,
+//     });
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleVocabularyHint() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleVocabularyHint() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/vocabulary/";
-    const attr = "hintEnabled";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/vocabulary/";
+//     const attr = "hintEnabled";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_VOCABULARY_HINT
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_VOCABULARY_HINT,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_VOCABULARY_HINT
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_VOCABULARY_HINT,
+//       });
+//     }
+//   };
+// }
 
-/**
- * Toggle between groups, frequency, and tags
- * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
- * @returns {ActCreator}
- */
-export function toggleVocabularyFilter(override) {
-  const max = Object.values(TermFilterBy).length - 1;
-  const allowed = /** @type {number[]} */ ([
-    TermFilterBy.FREQUENCY,
-    TermFilterBy.GROUP,
-  ]);
+// /**
+//  * Toggle between groups, frequency, and tags
+//  * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
+//  * @returns {ActCreator}
+//  */
+// export function toggleVocabularyFilter(override) {
+//   const max = Object.values(TermFilterBy).length - 1;
+//   const allowed = /** @type {number[]} */ ([
+//     TermFilterBy.FREQUENCY,
+//     TermFilterBy.GROUP,
+//   ]);
 
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-    const { filter, reinforce } = getState().settings.vocabulary;
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
+//     const { filter, reinforce } = getState().settings.vocabulary;
 
-    const path = "/vocabulary/";
-    const attr = "filter";
-    const time = new Date();
+//     const path = "/vocabulary/";
+//     const attr = "filter";
+//     const time = new Date();
 
-    let newFilter = filter + 1;
-    if (override !== undefined) {
-      newFilter = override;
-    } else {
-      while (!allowed.includes(newFilter) || newFilter > max) {
-        newFilter = newFilter + 1 > max ? 0 : newFilter + 1;
-      }
-    }
+//     let newFilter = filter + 1;
+//     if (override !== undefined) {
+//       newFilter = override;
+//     } else {
+//       while (!allowed.includes(newFilter) || newFilter > max) {
+//         newFilter = newFilter + 1 > max ? 0 : newFilter + 1;
+//       }
+//     }
 
-    localStoreAttrUpdate(time, getState, path, attr, newFilter);
+//     localStoreAttrUpdate(time, getState, path, attr, newFilter);
 
-    if (newFilter !== 0 && reinforce) {
-      toggleVocabularyReinforcement()(dispatch, getState);
-    }
+//     if (newFilter !== 0 && reinforce) {
+//       toggleVocabularyReinforcement()(dispatch, getState);
+//     }
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_VOCABULARY_FILTER,
-        newFilter
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_VOCABULARY_FILTER,
-        value: newFilter,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_VOCABULARY_FILTER,
+//         newFilter
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_VOCABULARY_FILTER,
+//         value: newFilter,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @param {string} parent
- * @param {string|string[]} grpName
- * @returns {ActCreator}
- */
-export function toggleActiveGrp(parent, grpName) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-    const { activeGroup } = getState().settings[parent];
+// /**
+//  * @param {string} parent
+//  * @param {string|string[]} grpName
+//  * @returns {ActCreator}
+//  */
+// export function toggleActiveGrp(parent, grpName) {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
+//     const { activeGroup } = getState().settings[parent];
 
-    // if (parent === "vocabulary")
-    let action = TOGGLE_VOCABULARY_ACTIVE_GROUP;
+//     // if (parent === "vocabulary")
+//     let action = TOGGLE_VOCABULARY_ACTIVE_GROUP;
 
-    if (parent === "kanji") {
-      action = TOGGLE_KANJI_ACTIVE_GROUP;
-    } else if (parent === "phrases") {
-      action = TOGGLE_PHRASES_ACTIVE_GROUP;
-    }
+//     if (parent === "kanji") {
+//       action = TOGGLE_KANJI_ACTIVE_GROUP;
+//     } else if (parent === "phrases") {
+//       action = TOGGLE_PHRASES_ACTIVE_GROUP;
+//     }
 
-    const groups = Array.isArray(grpName) ? grpName : [grpName];
-    const newValue = grpParse(groups, activeGroup);
+//     const groups = Array.isArray(grpName) ? grpName : [grpName];
+//     const newValue = grpParse(groups, activeGroup);
 
-    const path = "/" + parent + "/";
-    const attr = "activeGroup";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
+//     const path = "/" + parent + "/";
+//     const attr = "activeGroup";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, newValue);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        action,
-        newValue
-      );
-    } else {
-      dispatch({
-        type: action,
-        value: newValue,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         action,
+//         newValue
+//       );
+//     } else {
+//       dispatch({
+//         type: action,
+//         value: newValue,
+//       });
+//     }
+//   };
+// }
 
 /**
  * @param {string} parent
@@ -736,52 +736,52 @@ export function setParticlesARomaji() {
   };
 }
 
-/**
- * @param {string} uid
- */
-export function addFrequencyWord(uid) {
-  return (dispatch, getState) => {
-    updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { set: { rein: true } })(
-      dispatch,
-      getState
-    );
+// /**
+//  * @param {string} uid
+//  */
+// export function addFrequencyWord(uid) {
+//   return (dispatch, getState) => {
+//     updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { set: { rein: true } })(
+//       dispatch,
+//       getState
+//     );
 
-    dispatch({
-      type: ADD_FREQUENCY_WORD,
-      value: { uid },
-    });
-  };
-}
+//     dispatch({
+//       type: ADD_FREQUENCY_WORD,
+//       value: { uid },
+//     });
+//   };
+// }
 
-/**
- * Removes frequency word
- * @param {string} uid
- * @returns {ActCreator}
- */
-export function removeFrequencyWord(uid) {
-  return (dispatch, getState) => {
-    const path = "/vocabulary/";
-    const attr = "repetition";
-    /** @type {SpaceRepetitionMap} */
-    const spaceRep = getLastStateValue(getState, path, attr);
+// /**
+//  * Removes frequency word
+//  * @param {string} uid
+//  * @returns {ActCreator}
+//  */
+// export function removeFrequencyWord(uid) {
+//   return (dispatch, getState) => {
+//     const path = "/vocabulary/";
+//     const attr = "repetition";
+//     /** @type {SpaceRepetitionMap} */
+//     const spaceRep = getLastStateValue(getState, path, attr);
 
-    if (spaceRep[uid]?.rein === true) {
-      // update frequency list count
-      const reinforceList = Object.keys(spaceRep).filter(
-        (k) => spaceRep[k].rein === true
-      );
-      // null to delete
-      updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
-        set: { rein: null },
-      })(dispatch, getState);
+//     if (spaceRep[uid]?.rein === true) {
+//       // update frequency list count
+//       const reinforceList = Object.keys(spaceRep).filter(
+//         (k) => spaceRep[k].rein === true
+//       );
+//       // null to delete
+//       updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+//         set: { rein: null },
+//       })(dispatch, getState);
 
-      dispatch({
-        type: REMOVE_FREQUENCY_WORD,
-        value: { uid, count: reinforceList.length - 1 },
-      });
-    }
-  };
-}
+//       dispatch({
+//         type: REMOVE_FREQUENCY_WORD,
+//         value: { uid, count: reinforceList.length - 1 },
+//       });
+//     }
+//   };
+// }
 
 /**
  * @param {string} uid
@@ -926,64 +926,64 @@ export function toggleKanjiFilter(override) {
   };
 }
 
-/**
- * @param {string} aType
- * @param {string[]} uidArr
- * @returns {ThenableActCreator}
- */
-export function addFrequencyTerm(aType, uidArr) {
-  return (dispatch, getState) =>
-    /** @type {Promise<void>} */ (
-      new Promise((resolve) => {
-        const { user } = getState().login;
+// /**
+//  * @param {string} aType
+//  * @param {string[]} uidArr
+//  * @returns {ThenableActCreator}
+//  */
+// export function addFrequencyTerm(aType, uidArr) {
+//   return (dispatch, getState) =>
+//     /** @type {Promise<void>} */ (
+//       new Promise((resolve) => {
+//         const { user } = getState().login;
 
-        let pathType;
-        if (aType === ADD_FREQUENCY_WORD) {
-          pathType = "vocabulary";
-        } else if (aType === ADD_FREQUENCY_PHRASE) {
-          pathType = "phrases";
-        }
+//         let pathType;
+//         if (aType === ADD_FREQUENCY_WORD) {
+//           pathType = "vocabulary";
+//         } else if (aType === ADD_FREQUENCY_PHRASE) {
+//           pathType = "phrases";
+//         }
 
-        const path = "/" + pathType + "/";
-        const attr = "frequency";
-        const time = new Date();
+//         const path = "/" + pathType + "/";
+//         const attr = "frequency";
+//         const time = new Date();
 
-        const uidList = getLastStateValue(getState, path, attr);
-        const newValue = [...new Set([...uidList, ...uidArr])];
-        localStoreAttrUpdate(time, getState, path, attr, newValue);
+//         const uidList = getLastStateValue(getState, path, attr);
+//         const newValue = [...new Set([...uidList, ...uidArr])];
+//         localStoreAttrUpdate(time, getState, path, attr, newValue);
 
-        if (user) {
-          firebaseAttrUpdate(
-            time,
-            dispatch,
-            getState,
-            user.uid,
-            path,
-            attr,
-            aType,
-            newValue
-          ).then(() => {
-            resolve();
-          });
-        } else {
-          dispatch({
-            type: aType,
-            value: newValue,
-          });
-          resolve();
-        }
-      })
-    );
-}
+//         if (user) {
+//           firebaseAttrUpdate(
+//             time,
+//             dispatch,
+//             getState,
+//             user.uid,
+//             path,
+//             attr,
+//             aType,
+//             newValue
+//           ).then(() => {
+//             resolve();
+//           });
+//         } else {
+//           dispatch({
+//             type: aType,
+//             value: newValue,
+//           });
+//           resolve();
+//         }
+//       })
+//     );
+// }
 
-/**
- * @typedef {(uid:string, shouldIncrement?: boolean | undefined) => updateSpaceRepTermYield} updateSpaceRepWordYield
- * @param {string} uid
- * @param {boolean} [shouldIncrement]
- */
-export function updateSpaceRepWord(uid, shouldIncrement = true) {
-  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, shouldIncrement);
-}
+// /**
+//  * @typedef {(uid:string, shouldIncrement?: boolean | undefined) => updateSpaceRepTermYield} updateSpaceRepWordYield
+//  * @param {string} uid
+//  * @param {boolean} [shouldIncrement]
+//  */
+// export function updateSpaceRepWord(uid, shouldIncrement = true) {
+//   return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, shouldIncrement);
+// }
 
 /**
  * @typedef {(uid:string, shouldIncrement?: boolean | undefined) => updateSpaceRepTermYield} updateSpaceRepPhraseYield
@@ -1002,138 +1002,138 @@ export function updateSpaceRepPhrase(uid, shouldIncrement = true) {
 //   return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, { toggle: ["f"] });
 // }
 
-/**
- * @typedef {(uid:string, value:number) => updateSpaceRepTermYield} setWordDifficultyYield
- * @param {string} uid
- * @param {number} value
- */
-export function setWordDifficulty(uid, value) {
-  return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
-    set: { difficulty: value },
-  });
-}
+// /**
+//  * @typedef {(uid:string, value:number) => updateSpaceRepTermYield} setWordDifficultyYield
+//  * @param {string} uid
+//  * @param {number} value
+//  */
+// export function setWordDifficulty(uid, value) {
+//   return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+//     set: { difficulty: value },
+//   });
+// }
 
-/**
- * Sets term timed play average stats (correct)
- * @typedef {(uid:string, tpElapsed: number, options?: {pronunciation?: null}) => updateSpaceRepTermYield} setWordTPCorrectYield
- * @param {string} uid
- * @param {number} tpElapsed
- * @param {{pronunciation?: null}} options reset incorrect types
- * @returns {(dispatch: function, getState: function) => updateSpaceRepTermYield}
- */
-export function setWordTPCorrect(uid, tpElapsed, { pronunciation } = {}) {
-  return (dispatch, getState) => {
-    const aType = ADD_SPACE_REP_WORD;
-    const pathPart = "vocabulary";
+// /**
+//  * Sets term timed play average stats (correct)
+//  * @typedef {(uid:string, tpElapsed: number, options?: {pronunciation?: null}) => updateSpaceRepTermYield} setWordTPCorrectYield
+//  * @param {string} uid
+//  * @param {number} tpElapsed
+//  * @param {{pronunciation?: null}} options reset incorrect types
+//  * @returns {(dispatch: function, getState: function) => updateSpaceRepTermYield}
+//  */
+// export function setWordTPCorrect(uid, tpElapsed, { pronunciation } = {}) {
+//   return (dispatch, getState) => {
+//     const aType = ADD_SPACE_REP_WORD;
+//     const pathPart = "vocabulary";
 
-    const path = "/" + pathPart + "/";
-    const attr = "repetition";
-    const time = new Date();
+//     const path = "/" + pathPart + "/";
+//     const attr = "repetition";
+//     const time = new Date();
 
-    /** @type {SpaceRepetitionMap} */
-    const spaceRep = getLastStateValue(getState, path, attr);
-    const prevMap = { [uid]: spaceRep[uid] };
+//     /** @type {SpaceRepetitionMap} */
+//     const spaceRep = getLastStateValue(getState, path, attr);
+//     const prevMap = { [uid]: spaceRep[uid] };
 
-    let newPlayCount = 1;
-    let newAccuracy = 1.0;
-    let newCorrAvg = tpElapsed;
+//     let newPlayCount = 1;
+//     let newAccuracy = 1.0;
+//     let newCorrAvg = tpElapsed;
 
-    if (spaceRep[uid]) {
-      const playCount = spaceRep[uid].tpPc;
-      const accuracy = spaceRep[uid].tpAcc;
-      const correctAvg = spaceRep[uid].tpCAvg || 0;
+//     if (spaceRep[uid]) {
+//       const playCount = spaceRep[uid].tpPc;
+//       const accuracy = spaceRep[uid].tpAcc;
+//       const correctAvg = spaceRep[uid].tpCAvg || 0;
 
-      if (playCount !== undefined && accuracy != undefined) {
-        newPlayCount = playCount + 1;
+//       if (playCount !== undefined && accuracy != undefined) {
+//         newPlayCount = playCount + 1;
 
-        const scores = playCount * accuracy;
-        newAccuracy = (scores + 1.0) / newPlayCount;
+//         const scores = playCount * accuracy;
+//         newAccuracy = (scores + 1.0) / newPlayCount;
 
-        const correctCount = scores;
-        const correctSum = correctAvg * correctCount;
-        newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
-      }
-    }
+//         const correctCount = scores;
+//         const correctSum = correctAvg * correctCount;
+//         newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
+//       }
+//     }
 
-    /** @type {SpaceRepetitionMap["uid"]} */
-    const o = {
-      ...(spaceRep[uid] || {}),
-      pron:
-        pronunciation === null || spaceRep[uid] === undefined
-          ? undefined
-          : spaceRep[uid].pron,
-      tpPc: newPlayCount,
-      tpAcc: newAccuracy,
-      tpCAvg: newCorrAvg,
-    };
+//     /** @type {SpaceRepetitionMap["uid"]} */
+//     const o = {
+//       ...(spaceRep[uid] || {}),
+//       pron:
+//         pronunciation === null || spaceRep[uid] === undefined
+//           ? undefined
+//           : spaceRep[uid].pron,
+//       tpPc: newPlayCount,
+//       tpAcc: newAccuracy,
+//       tpCAvg: newCorrAvg,
+//     };
 
-    /** @type {SpaceRepetitionMap} */
-    const newValue = { ...spaceRep, [uid]: o };
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
+//     /** @type {SpaceRepetitionMap} */
+//     const newValue = { ...spaceRep, [uid]: o };
+//     localStoreAttrUpdate(time, getState, path, attr, newValue);
 
-    dispatch({
-      type: aType,
-      value: newValue,
-    });
+//     dispatch({
+//       type: aType,
+//       value: newValue,
+//     });
 
-    return { map: { [uid]: o }, prevMap };
-  };
-}
+//     return { map: { [uid]: o }, prevMap };
+//   };
+// }
 
-/**
- * Sets term timed play average stats (incorrect)
- * @typedef {(uid:string, options: {pronunciation?: boolean}|undefined) => updateSpaceRepTermYield} setWordTPIncorrectYield
- * @param {string} uid
- * @param {{pronunciation?: true}} options incorrect types
- */
-export function setWordTPIncorrect(uid, { pronunciation } = {}) {
-  return (dispatch, getState) => {
-    const aType = ADD_SPACE_REP_WORD;
-    const pathPart = "vocabulary";
+// /**
+//  * Sets term timed play average stats (incorrect)
+//  * @typedef {(uid:string, options: {pronunciation?: boolean}|undefined) => updateSpaceRepTermYield} setWordTPIncorrectYield
+//  * @param {string} uid
+//  * @param {{pronunciation?: true}} options incorrect types
+//  */
+// export function setWordTPIncorrect(uid, { pronunciation } = {}) {
+//   return (dispatch, getState) => {
+//     const aType = ADD_SPACE_REP_WORD;
+//     const pathPart = "vocabulary";
 
-    const path = "/" + pathPart + "/";
-    const attr = "repetition";
-    const time = new Date();
+//     const path = "/" + pathPart + "/";
+//     const attr = "repetition";
+//     const time = new Date();
 
-    /** @type {SpaceRepetitionMap} */
-    const spaceRep = getLastStateValue(getState, path, attr);
-    const prevMap = { [uid]: spaceRep[uid] };
+//     /** @type {SpaceRepetitionMap} */
+//     const spaceRep = getLastStateValue(getState, path, attr);
+//     const prevMap = { [uid]: spaceRep[uid] };
 
-    let newPlayCount = 1;
-    let newAccuracy = 0;
+//     let newPlayCount = 1;
+//     let newAccuracy = 0;
 
-    if (spaceRep[uid]) {
-      const playCount = spaceRep[uid].tpPc;
-      const accuracy = spaceRep[uid].tpAcc;
+//     if (spaceRep[uid]) {
+//       const playCount = spaceRep[uid].tpPc;
+//       const accuracy = spaceRep[uid].tpAcc;
 
-      if (playCount !== undefined && accuracy != undefined) {
-        newPlayCount = playCount + 1;
+//       if (playCount !== undefined && accuracy != undefined) {
+//         newPlayCount = playCount + 1;
 
-        const scores = playCount * accuracy;
-        newAccuracy = (scores + 0) / newPlayCount;
-      }
-    }
+//         const scores = playCount * accuracy;
+//         newAccuracy = (scores + 0) / newPlayCount;
+//       }
+//     }
 
-    /** @type {SpaceRepetitionMap["uid"]} */
-    const o = {
-      ...(spaceRep[uid] || {}),
-      tpPc: newPlayCount,
-      tpAcc: newAccuracy,
-      pron: pronunciation,
-    };
+//     /** @type {SpaceRepetitionMap["uid"]} */
+//     const o = {
+//       ...(spaceRep[uid] || {}),
+//       tpPc: newPlayCount,
+//       tpAcc: newAccuracy,
+//       pron: pronunciation,
+//     };
 
-    /** @type {SpaceRepetitionMap} */
-    const newValue = { ...spaceRep, [uid]: o };
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
+//     /** @type {SpaceRepetitionMap} */
+//     const newValue = { ...spaceRep, [uid]: o };
+//     localStoreAttrUpdate(time, getState, path, attr, newValue);
 
-    dispatch({
-      type: aType,
-      value: newValue,
-    });
+//     dispatch({
+//       type: aType,
+//       value: newValue,
+//     });
 
-    return { map: { [uid]: o }, prevMap };
-  };
-}
+//     return { map: { [uid]: o }, prevMap };
+//   };
+// }
 /**
  * @typedef {{map: SpaceRepetitionMap, prevMap: SpaceRepetitionMap}} updateSpaceRepTermYield
  * @param {ADD_SPACE_REP_WORD | ADD_SPACE_REP_PHRASE | ADD_SPACE_REP_KANJI} aType
@@ -1331,72 +1331,72 @@ export function togglePhrasesReinforcement() {
   };
 }
 
-/**
- * Adds or removes grpNames to the activeGroup list.
- * Returns an updated list of selected groups
- * @param {string[]} grpNames a group name to be toggled
- * @param {string[]} activeGroup a list of groups that are selected
- */
-export function grpParse(grpNames, activeGroup) {
-  /** @type {string[]} */
-  let newValue = [];
+// /**
+//  * Adds or removes grpNames to the activeGroup list.
+//  * Returns an updated list of selected groups
+//  * @param {string[]} grpNames a group name to be toggled
+//  * @param {string[]} activeGroup a list of groups that are selected
+//  */
+// export function grpParse(grpNames, activeGroup) {
+//   /** @type {string[]} */
+//   let newValue = [];
 
-  const grpNamesSet = [...new Set(grpNames)];
-  const activeGroupSet = [...new Set(activeGroup)];
+//   const grpNamesSet = [...new Set(grpNames)];
+//   const activeGroupSet = [...new Set(activeGroup)];
 
-  grpNamesSet.forEach((grpEl) => {
-    const isGrp = grpEl.indexOf(".") === -1;
+//   grpNamesSet.forEach((grpEl) => {
+//     const isGrp = grpEl.indexOf(".") === -1;
 
-    if (isGrp) {
-      if (activeGroupSet.some((e) => e.indexOf(grpEl + ".") !== -1)) {
-        newValue = [
-          ...activeGroupSet.filter((v) => v.indexOf(grpEl + ".") === -1),
-          grpEl,
-        ];
-      } else if (activeGroupSet.includes(grpEl)) {
-        newValue = [...activeGroupSet.filter((v) => v !== grpEl)];
-      } else {
-        newValue = [...activeGroupSet, grpEl];
-      }
-    } else {
-      newValue = activeGroupSet.includes(grpEl)
-        ? activeGroupSet.filter((v) => v !== grpEl)
-        : [...activeGroupSet, grpEl];
-    }
-  });
+//     if (isGrp) {
+//       if (activeGroupSet.some((e) => e.indexOf(grpEl + ".") !== -1)) {
+//         newValue = [
+//           ...activeGroupSet.filter((v) => v.indexOf(grpEl + ".") === -1),
+//           grpEl,
+//         ];
+//       } else if (activeGroupSet.includes(grpEl)) {
+//         newValue = [...activeGroupSet.filter((v) => v !== grpEl)];
+//       } else {
+//         newValue = [...activeGroupSet, grpEl];
+//       }
+//     } else {
+//       newValue = activeGroupSet.includes(grpEl)
+//         ? activeGroupSet.filter((v) => v !== grpEl)
+//         : [...activeGroupSet, grpEl];
+//     }
+//   });
 
-  return newValue;
-}
+//   return newValue;
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleDarkMode() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleDarkMode() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/global/";
-    const attr = "darkMode";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/global/";
+//     const attr = "darkMode";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_DARK_MODE
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_DARK_MODE,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_DARK_MODE
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_DARK_MODE,
+//       });
+//     }
+//   };
+// }
 
 // /**
 //  * @param {typeof DebugLevel[keyof DebugLevel]} override
@@ -1446,48 +1446,48 @@ export function toggleDarkMode() {
 //   };
 // }
 
-/**
- * @param {string} value
- * @returns {ActCreator}
- */
-export function scrollingState(value) {
-  return (dispatch) => {
-    dispatch({
-      type: SCROLLING_STATE,
-      value,
-    });
-  };
-}
+// /**
+//  * @param {string} value
+//  * @returns {ActCreator}
+//  */
+// export function scrollingState(value) {
+//   return (dispatch) => {
+//     dispatch({
+//       type: SCROLLING_STATE,
+//       value,
+//     });
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleAutoVerbView() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleAutoVerbView() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/vocabulary/";
-    const attr = "autoVerbView";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/vocabulary/";
+//     const attr = "autoVerbView";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        AUTO_VERB_VIEW
-      );
-    } else {
-      dispatch({
-        type: AUTO_VERB_VIEW,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         AUTO_VERB_VIEW
+//       );
+//     } else {
+//       dispatch({
+//         type: AUTO_VERB_VIEW,
+//       });
+//     }
+//   };
+// }
 
 /**
  * @param {number} number
@@ -1527,84 +1527,84 @@ export function getLastStateValue(getState, path, attr) {
   return statePtr[attr];
 }
 
-/**
- * @param {number} value Swipe threshold value
- * @returns {ActCreator}
- */
-export function setSwipeThreshold(value) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @param {number} value Swipe threshold value
+//  * @returns {ActCreator}
+//  */
+// export function setSwipeThreshold(value) {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/global/";
-    const attr = "swipeThreshold";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, value);
+//     const path = "/global/";
+//     const attr = "swipeThreshold";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, value);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_SWIPE_THRESHOLD
-      );
-    } else {
-      dispatch({
-        type: SET_SWIPE_THRESHOLD,
-        value,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         SET_SWIPE_THRESHOLD
+//       );
+//     } else {
+//       dispatch({
+//         type: SET_SWIPE_THRESHOLD,
+//         value,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @param {number} value Motion threshold value
- * @returns {ActCreator}
- */
-export function setMotionThreshold(value) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @param {number} value Motion threshold value
+//  * @returns {ActCreator}
+//  */
+// export function setMotionThreshold(value) {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/global/";
-    const attr = "motionThreshold";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, value);
+//     const path = "/global/";
+//     const attr = "motionThreshold";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, value);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_MOTION_THRESHOLD
-      );
-    } else {
-      dispatch({
-        type: SET_MOTION_THRESHOLD,
-        value,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         SET_MOTION_THRESHOLD
+//       );
+//     } else {
+//       dispatch({
+//         type: SET_MOTION_THRESHOLD,
+//         value,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @param {string[]} order
- * @returns {ActCreator}
- */
-export function setVerbFormsOrder(order) {
-  return (dispatch, getState) => {
-    const path = "/vocabulary/";
-    const attr = "verbFormsOrder";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, order);
+// /**
+//  * @param {string[]} order
+//  * @returns {ActCreator}
+//  */
+// export function setVerbFormsOrder(order) {
+//   return (dispatch, getState) => {
+//     const path = "/vocabulary/";
+//     const attr = "verbFormsOrder";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, order);
 
-    dispatch({
-      type: SET_VERB_FORM_ORDER,
-      value: order,
-    });
-  };
-}
+//     dispatch({
+//       type: SET_VERB_FORM_ORDER,
+//       value: order,
+//     });
+//   };
+// }
