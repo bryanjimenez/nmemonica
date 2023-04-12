@@ -3,6 +3,14 @@ import { firebaseConfig } from "../../environment.development";
 import { buildGroupObject } from "../helper/reducerHelper";
 import { romajiParticle } from "../helper/kanaHelper";
 import { JapaneseText } from "../helper/JapaneseText";
+import { localStoreAttrUpdate } from "./localStorageHelper";
+import {
+  ADD_SPACE_REP_PHRASE,
+  TermFilterBy,
+  TermSortBy,
+  getLastStateValue,
+  updateSpaceRepTerm,
+} from "./settingHelper";
 
 /**
  * @typedef {import("../typings/raw").RawPhrase} RawPhrase
@@ -22,6 +30,7 @@ const buildPhraseArray = (object) =>
 export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (arg, thunkAPI) => {
+    /** @type {RootState} */
     const state = thunkAPI.getState();
     const version = state.version.phrases || 0;
 
@@ -37,7 +46,9 @@ export const getPhrase = createAsyncThunk(
 export const getParticleGame = createAsyncThunk(
   "phrase/getParticleGame",
   async (arg, thunkAPI) => {
-    const phrases = thunkAPI.getState().phrases.value;
+    /** @type {RootState} */
+    const state = thunkAPI.getState();
+    const phrases = state.phrases.value;
 
     if (phrases.length > 0) {
       const needGame =
@@ -125,6 +136,143 @@ export function buildParticleGame(rawPhrases) {
 
   return { phrases: wParticles, particles: particleList };
 }
+
+export const phraseSettings = {
+  /**
+   * Toggle between group, frequency, and tags filtering
+   * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
+   */
+  togglePhrasesFilter(override) {
+    const max = Object.values(TermFilterBy).length - 1;
+    const allowed = /** @type {number[]} */ ([
+      TermFilterBy.FREQUENCY,
+      TermFilterBy.GROUP,
+    ]);
+
+    return (/** @type {SettingState}*/ state) => {
+      const { filter, reinforce } = state.phrases;
+
+      const path = "/phrases/";
+      const attr = "filter";
+      const time = new Date();
+
+      let newFilter = filter + 1;
+      if (override !== undefined) {
+        newFilter = override;
+      } else {
+        while (!allowed.includes(newFilter) || newFilter > max) {
+          newFilter = newFilter + 1 > max ? 0 : newFilter + 1;
+        }
+      }
+
+      localStoreAttrUpdate(time, state, path, attr, newFilter);
+
+      if (newFilter !== TermFilterBy.GROUP && reinforce) {
+        phraseSettings.togglePhrasesReinforcement()(state);
+      }
+
+      return newFilter;
+    };
+  },
+
+  togglePhrasesReinforcement() {
+    return (/** @type {SettingState}*/ state) => {
+      const path = "/phrases/";
+      const attr = "reinforce";
+      const time = new Date();
+      return localStoreAttrUpdate(time, state, path, attr);
+    };
+  },
+
+  /**
+   * @param {string} uid
+   */
+  addFrequencyPhrase(uid) {
+    return (/** @type {SettingState} */ state) => {
+      return updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, false, {
+        set: { rein: true },
+      })(state);
+    };
+  },
+
+  /**
+   * Removes frequency word
+   * @param {string} uid
+   */
+  removeFrequencyPhrase(uid) {
+    return (/** @type {SettingState} */ state) => {
+      const path = "/phrases/";
+      const attr = "repetition";
+
+      const spaceRep = getLastStateValue(state, path, attr);
+
+      if (spaceRep[uid]?.rein === true) {
+        // update frequency list count
+        const reinforceList = Object.keys(spaceRep).filter(
+          (k) => spaceRep[k].rein === true
+        );
+        // null to delete
+        const { value } = updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, false, {
+          set: { rein: null },
+        })(state);
+
+        return { uid, count: reinforceList.length - 1, value };
+      }
+      return {};
+    };
+  },
+
+  flipPhrasesPracticeSide() {
+    return (/** @type {SettingState} */ state) => {
+      const path = "/phrases/";
+      const attr = "practiceSide";
+      const time = new Date();
+      return localStoreAttrUpdate(time, state, path, attr);
+    };
+  },
+
+  togglePhrasesRomaji() {
+    return (/** @type {SettingState} */ state) => {
+      const path = "/phrases/";
+      const attr = "romaji";
+      const time = new Date();
+      return localStoreAttrUpdate(time, state, path, attr);
+    };
+  },
+
+  /**
+   * @param {string} uid
+   * @param {boolean} [shouldIncrement]
+   */
+  updateSpaceRepPhrase(uid, shouldIncrement = true) {
+    return (/** @type {SettingState} */ state) =>
+      updateSpaceRepTerm(ADD_SPACE_REP_PHRASE, uid, shouldIncrement)(state);
+  },
+
+  togglePhrasesOrdering() {
+    const max = Object.values(TermSortBy).length - 1;
+    const allowed = /** @type {number[]} */ ([
+      TermSortBy.RANDOM,
+      TermSortBy.VIEW_DATE,
+    ]);
+
+    return (/** @type {SettingState} */ state) => {
+      const { ordered } = state.phrases;
+
+      let newOrdered = ordered + 1;
+      while (!allowed.includes(newOrdered) || newOrdered > max) {
+        newOrdered = newOrdered + 1 > max ? 0 : newOrdered + 1;
+      }
+
+      const path = "/phrases/";
+      const attr = "ordered";
+      const time = new Date();
+      localStoreAttrUpdate(time, state, path, attr, newOrdered);
+
+      return newOrdered;
+    };
+  },
+};
 
 export const initialState = {
   value: /** @type {RawPhrase[]} */ ([]),

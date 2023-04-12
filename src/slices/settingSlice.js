@@ -14,6 +14,7 @@ import {
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
+import { phraseSettings } from "./phraseSlice";
 
 /**
  * @typedef {typeof import("../slices/settingHelper").TermSortBy} TermSortBy
@@ -109,6 +110,16 @@ export const updateSpaceRepWord = createAsyncThunk(
     const state = thunkAPI.getState().settingsHK;
 
     return vocabularySettings.updateSpaceRepWord(uid, shouldIncrement)(state);
+  }
+);
+
+export const updateSpaceRepPhrase = createAsyncThunk(
+  "setting/updateSpaceRepPhrase",
+  async (arg, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = thunkAPI.getState().settingsHK;
+
+    return phraseSettings.updateSpaceRepPhrase(uid, shouldIncrement)(state);
   }
 );
 
@@ -349,6 +360,47 @@ const settingSlice = createSlice({
         payload: { uid, pronunciation },
       }),
     },
+
+    // Phrases Settings
+    flipPhrasesPracticeSide(state) {
+      const side = phraseSettings.flipPhrasesPracticeSide()(state);
+
+      state.phrases.practiceSide = side;
+    },
+    togglePhrasesRomaji(state) {
+      state.phrases.romaji = phraseSettings.togglePhrasesRomaji()(state);
+    },
+    togglePhrasesOrdering(state) {
+      state.phrases.ordered = phraseSettings.togglePhrasesOrdering()(state);
+    },
+    togglePhrasesFilter(state) {
+      state.phrases.filter = phraseSettings.togglePhrasesFilter()(state);
+    },
+    togglePhrasesReinforcement(state) {
+      state.phrases.reinforce =
+        phraseSettings.togglePhrasesReinforcement()(state);
+    },
+    addFrequencyPhrase(state, action) {
+      const uid = action.payload;
+      const { value } = phraseSettings.addFrequencyPhrase(uid)(state);
+
+      state.phrases.repetition = value;
+      state.phrases.frequency.uid = action.payload;
+      state.phrases.frequency.count = state.phrases.frequency.count + 1;
+    },
+
+    removeFrequencyPhrase(state, action) {
+      const { value } = phraseSettings.removeFrequencyPhrase(action.payload)(
+        state
+      );
+
+      if (value) {
+        state.phrases.repetition = value;
+      }
+
+      state.phrases.frequency.uid = action.payload;
+      state.phrases.frequency.count = state.phrases.frequency.count - 1;
+    },
   },
 
   extraReducers: (builder) => {
@@ -403,5 +455,13 @@ export const {
   setWordDifficulty,
   setWordTPCorrect,
   setWordTPIncorrect,
+
+  flipPhrasesPracticeSide,
+  togglePhrasesRomaji,
+  togglePhrasesFilter,
+  togglePhrasesReinforcement,
+  addFrequencyPhrase,
+  removeFrequencyPhrase,
+  togglePhrasesOrdering,
 } = settingSlice.actions;
 export default settingSlice.reducer;

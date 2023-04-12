@@ -4,16 +4,19 @@ import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { pronounceEndoint } from "../../../environment.development";
-import { logger } from "../../slices/settingSlice";
+import { logger, togglePhrasesFilter } from "../../slices/settingSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
   addFrequencyPhrase,
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
-  togglePhrasesFilter,
   updateSpaceRepPhrase,
-} from "../../actions/settingsAct";
-import { DebugLevel, TermFilterBy, TermSortBy } from "../../slices/settingHelper";
+} from "../../slices/settingSlice";
+import {
+  DebugLevel,
+  TermFilterBy,
+  TermSortBy,
+} from "../../slices/settingHelper";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import { logify, spaceRepLog } from "../../helper/consoleHelper";
 import {
@@ -97,7 +100,7 @@ import StackNavButton from "../Form/StackNavButton";
  * @property {string[]} activeGroup
  * @property {SpaceRepetitionMap} repetition
  * @property {number} lastNext
- * @property {import("../../actions/settingsAct").updateSpaceRepPhraseYield} updateSpaceRepPhrase
+ * @property {function} updateSpaceRepPhrase
  * @property {typeof logger} logger
  * @property {number} swipeThreshold
  */
@@ -296,16 +299,17 @@ class Phrases extends Component {
 
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
-        const { map, prevMap } = this.props.updateSpaceRepPhrase(
-          uid,
-          shouldIncrement
-        );
+        this.props
+          .updateSpaceRepPhrase(uid, shouldIncrement)
+          .then(({ payload }) => {
+            const { map, prevMap } = payload;
 
-        const prevDate = prevMap[uid] && prevMap[uid].d;
-        const repStats = { [uid]: { ...map[uid], d: prevDate } };
-        spaceRepLog(this.props.logger, phrase, repStats, {
-          frequency: prevState.reinforcedUID !== undefined,
-        });
+            const prevDate = prevMap[uid] && prevMap[uid].d;
+            const repStats = { [uid]: { ...map[uid], d: prevDate } };
+            spaceRepLog(this.props.logger, phrase, repStats, {
+              frequency: prevState.reinforcedUID !== undefined,
+            });
+          });
       }
 
       this.setState({
@@ -957,14 +961,14 @@ class Phrases extends Component {
 const mapStateToProps = (state) => {
   return {
     phrases: state.phrases.value,
-    practiceSide: state.settings.phrases.practiceSide,
-    termsOrder: state.settings.phrases.ordered,
-    romajiActive: state.settings.phrases.romaji,
-    filterType: state.settings.phrases.filter,
-    frequency: state.settings.phrases.frequency,
-    activeGroup: state.settings.phrases.activeGroup,
-    reinforce: state.settings.phrases.reinforce,
-    repetition: state.settings.phrases.repetition,
+    practiceSide: state.settingsHK.phrases.practiceSide,
+    termsOrder: state.settingsHK.phrases.ordered,
+    romajiActive: state.settingsHK.phrases.romaji,
+    filterType: state.settingsHK.phrases.filter,
+    frequency: state.settingsHK.phrases.frequency,
+    activeGroup: state.settingsHK.phrases.activeGroup,
+    reinforce: state.settingsHK.phrases.reinforce,
+    repetition: state.settingsHK.phrases.repetition,
     swipeThreshold: state.settingsHK.global.swipeThreshold,
   };
 };

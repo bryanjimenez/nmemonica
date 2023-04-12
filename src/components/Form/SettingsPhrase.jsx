@@ -6,24 +6,29 @@ import { getPhrase } from "../../slices/phraseSlice";
 import {
   removeFrequencyPhrase,
   togglePhrasesOrdering,
-  togglePhrasesFilter,
-  togglePhrasesReinforcement,
   togglePhrasesRomaji,
-} from "../../actions/settingsAct";
-import { TermFilterBy, TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+} from "../../slices/settingSlice";
+import {
+  TermFilterBy,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
-import { toggleActiveGrp } from "../../slices/settingSlice";
-
+import {
+  toggleActiveGrp,
+  togglePhrasesFilter,
+  togglePhrasesReinforcement,
+} from "../../slices/settingSlice";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").GroupListMap} GroupListMap
  * @typedef {import("../Pages/Settings").SpaceRepetitionMap} SpaceRepetitionMap
- * @typedef {typeof import("../../actions/settingsAct").TermSortBy} SortTypes
+ * @typedef {typeof import("../../slices/settingHelper").TermSortBy} SortTypes
  */
 
 /**
@@ -179,12 +184,12 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     phrases: state.phrases.value,
     phraseGroups: state.phrases.grpObj,
-    phraseOrder: state.settings.phrases.ordered,
-    phraseRomaji: state.settings.phrases.romaji,
-    phraseReinforce: state.settings.phrases.reinforce,
-    phraseActive: state.settings.phrases.activeGroup,
-    phraseFilter: state.settings.phrases.filter,
-    phraseRep: state.settings.phrases.repetition,
+    phraseOrder: state.settingsHK.phrases.ordered,
+    phraseRomaji: state.settingsHK.phrases.romaji,
+    phraseReinforce: state.settingsHK.phrases.reinforce,
+    phraseActive: state.settingsHK.phrases.activeGroup,
+    phraseFilter: state.settingsHK.phrases.filter,
+    phraseRep: state.settingsHK.phrases.repetition,
   };
 };
 

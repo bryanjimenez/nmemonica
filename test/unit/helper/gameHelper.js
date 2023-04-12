@@ -11,8 +11,7 @@ import {
   spaceRepOrder,
   termFilterByType,
 } from "../../../src/helper/gameHelper";
-import { TermFilterBy } from "../../../src/actions/settingsAct";
-
+import { TermFilterBy } from '../../../src/slices/settingHelper';
 /* global describe it */
 
 describe("gameHelper", function () {
