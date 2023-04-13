@@ -15,7 +15,7 @@ import {
   addFrequencyKanji,
   removeFrequencyKanji,
   toggleKanjiFilter,
-} from "../../actions/settingsAct";
+} from "../../slices/settingSlice";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { TermFilterBy } from "../../slices/settingHelper";
 
@@ -440,7 +440,7 @@ class Kanji extends Component {
               <span>{term.kanji}</span>
             </h1>
             {(term.on && (
-              <h3
+              <h4
                 className="pt-0"
                 onClick={() => {
                   this.setState((state) => ({
@@ -449,10 +449,10 @@ class Kanji extends Component {
                 }}
               >
                 <span>{this.state.showOn ? term.on : "[On]"}</span>
-              </h3>
-            )) || <h3 className="pt-0">.</h3>}
+              </h4>
+            )) || <h4 className="pt-0">.</h4>}
             {(term.kun && (
-              <h3
+              <h4
                 className="pt-2"
                 onClick={() => {
                   this.setState((state) => ({
@@ -461,8 +461,8 @@ class Kanji extends Component {
                 }}
               >
                 <span>{this.state.showKun ? term.kun : "[Kun]"}</span>
-              </h3>
-            )) || <h3 className="pt-2">.</h3>}
+              </h4>
+            )) || <h4 className="pt-2">.</h4>}
             <div className="d-flex flex-column">
               <span
                 className={classNames({
@@ -482,7 +482,7 @@ class Kanji extends Component {
                 </span>
               </span>
 
-              <h3
+              <h4
                 className="align-self-center pt-2 clickable"
                 onClick={() => {
                   this.setState((state) => ({
@@ -491,7 +491,7 @@ class Kanji extends Component {
                 }}
               >
                 {this.state.showMeaning ? meaning : <span>{"[Meaning]"}</span>}
-              </h3>
+              </h4>
             </div>
           </div>
           <div className="right-info"></div>
@@ -539,17 +539,17 @@ class Kanji extends Component {
     return page;
   }
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (/** @type {RootState} */state) => {
   return {
     kanji: state.kanji.value,
     vocabulary: state.vocabulary.value,
 
-    filterType: state.settings.kanji.filter,
-    reinforce: state.settings.kanji.reinforce,
-    activeTags: state.settings.kanji.activeTags,
-    repetition: state.settings.kanji.repetition,
-    frequency: state.settings.kanji.frequency,
+    filterType: state.settingsHK.kanji.filter,
+    reinforce: state.settingsHK.kanji.reinforce,
+    activeTags: state.settingsHK.kanji.activeTags,
+    repetition: state.settingsHK.kanji.repetition,
+    frequency: state.settingsHK.kanji.frequency,
 
     swipeThreshold: state.settingsHK.global.swipeThreshold,
   };

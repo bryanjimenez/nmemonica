@@ -31,7 +31,7 @@ import {
   toggleKanaGameWideMode,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
-} from "../../actions/settingsAct";
+} from "../../slices/settingSlice";
 import { DebugLevel, TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { logify } from "../../helper/consoleHelper";
@@ -956,17 +956,17 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     motionThreshold: state.settingsHK.global.motionThreshold,
 
     phrases: state.phrases.value,
-    pRepetition: state.settings.phrases.repetition,
+    pRepetition: state.settingsHK.phrases.repetition,
     vocabulary: state.vocabulary.value,
-    vRepetition: state.settings.vocabulary.repetition,
+    vRepetition: state.settingsHK.vocabulary.repetition,
 
     kanji: state.kanji.value,
     kanjiTags: state.kanji.tagObj,
-    kanjiChoiceN: state.settings.kanji.choiceN,
-    kanjiActive: state.settings.kanji.activeTags,
-    kanjiFilter: state.settings.kanji.filter,
-    kRepetition: state.settings.kanji.repetition,
-    kanjiReinforce: state.settings.kanji.reinforce,
+    kanjiChoiceN: state.settingsHK.kanji.choiceN,
+    kanjiActive: state.settingsHK.kanji.activeTags,
+    kanjiFilter: state.settingsHK.kanji.filter,
+    kRepetition: state.settingsHK.kanji.repetition,
+    kanjiReinforce: state.settingsHK.kanji.reinforce,
 
     oppositesQRomaji: state.opposite.qRomaji,
     oppositesARomaji: state.opposite.aRomaji,

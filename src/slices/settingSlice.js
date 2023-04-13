@@ -9,12 +9,14 @@ import {
 import {
   DebugLevel,
   toggleActiveGrpHelper,
+  toggleActiveTagHelper,
   toggleDebugHelper,
 } from "./settingHelper";
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
 import { phraseSettings } from "./phraseSlice";
+import { kanjiSettings } from "./kanjiSlice";
 
 /**
  * @typedef {typeof import("../slices/settingHelper").TermSortBy} TermSortBy
@@ -235,6 +237,17 @@ const settingSlice = createSlice({
       },
       prepare: (parent, grpName) => ({ payload: { parent, grpName } }),
     },
+    toggleActiveTag: {
+      reducer: (state, action) => {
+        const { parent, tagName } = action.payload;
+
+        state[parent].activeTags = toggleActiveTagHelper(
+          parent,
+          tagName
+        )(state);
+      },
+      prepare: (parent, tagName) => ({ payload: { parent, tagName } }),
+    },
 
     // Vocabulary Settings
     furiganaToggled(state, action) {
@@ -401,6 +414,39 @@ const settingSlice = createSlice({
       state.phrases.frequency.uid = action.payload;
       state.phrases.frequency.count = state.phrases.frequency.count - 1;
     },
+
+    // Kanji Settings
+    addFrequencyKanji(state, action) {
+      const uid = action.payload;
+      const { value } = kanjiSettings.addFrequencyKanji(uid)(state);
+
+      state.kanji.repetition = value;
+      state.kanji.frequency.uid = action.payload;
+      state.kanji.frequency.count = state.kanji.frequency.count + 1;
+    },
+    removeFrequencyKanji(state, action) {
+      const uid = action.payload;
+
+      const { value, count } = kanjiSettings.removeFrequencyKanji(uid)(state);
+
+      if (value) {
+        state.kanji.repetition = value;
+      }
+
+      state.kanji.frequency.uid = uid;
+      state.kanji.frequency.count = count;
+    },
+    setKanjiBtnN(state, action) {
+      const number = action.payload;
+      state.kanji.choiceN = kanjiSettings.setKanjiBtnN(number)(state);
+    },
+    toggleKanjiFilter(state, action) {
+      const override = action.payload;
+      state.kanji.filter = kanjiSettings.toggleKanjiFilter(override)(state);
+    },
+    toggleKanjiReinforcement(state) {
+      state.kanji.reinforce = kanjiSettings.toggleKanjiReinforcement()(state);
+    },
   },
 
   extraReducers: (builder) => {
@@ -463,5 +509,17 @@ export const {
   addFrequencyPhrase,
   removeFrequencyPhrase,
   togglePhrasesOrdering,
+
+  addFrequencyKanji,
+  removeFrequencyKanji,
+  setHiraganaBtnN,
+  setKanjiBtnN,
+  setParticlesARomaji,
+  toggleActiveTag,
+  toggleKana,
+  toggleKanaEasyMode,
+  toggleKanaGameWideMode,
+  toggleKanjiFilter,
+  toggleKanjiReinforcement,
 } = settingSlice.actions;
 export default settingSlice.reducer;

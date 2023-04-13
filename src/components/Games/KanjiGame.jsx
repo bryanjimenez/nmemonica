@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
-} from "../../actions/settingsAct";
+} from "../../slices/settingSlice";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { useFrequency } from "../../hooks/frequencyHK";
@@ -147,18 +147,20 @@ function prepareGame(kanji, rawKanjis) {
  * @param {KanjiGameProps} props
  */
 function KanjiGame(props) {
-  const dispatch = useDispatch()
-  const {value: rawKanjis} = useSelector((/** @type {RootState} */ {kanji})=>kanji)
-  useMemo(()=>{
-    if(rawKanjis.length===0){
-      dispatch(getKanji())
+  const dispatch = useDispatch();
+  const { value: rawKanjis } = useSelector(
+    (/** @type {RootState} */ { kanji }) => kanji
+  );
+  useMemo(() => {
+    if (rawKanjis.length === 0) {
+      dispatch(getKanji());
     }
-  },[])
+  }, []);
 
   /** @type {React.MutableRefObject<number[]>} */
   const order = useRef([]);
 
-  const [selectedIndex, setSelectedIndex] = useState(0);  
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const {
     activeTags,

@@ -84,56 +84,56 @@ export const TermSortByLabel = [
   "Difficulty",
 ];
 
-/**
- * @param {number} number
- * @returns {ActCreator}
- */
-export function setHiraganaBtnN(number) {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @param {number} number
+//  * @returns {ActCreator}
+//  */
+// export function setHiraganaBtnN(number) {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/kana/";
-    const attr = "choiceN";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, number);
+//     const path = "/kana/";
+//     const attr = "choiceN";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, number);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_KANA_BTN_N,
-        number
-      );
-    } else {
-      dispatch({
-        type: SET_KANA_BTN_N,
-        value: number,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         SET_KANA_BTN_N,
+//         number
+//       );
+//     } else {
+//       dispatch({
+//         type: SET_KANA_BTN_N,
+//         value: number,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @param {number} number
- * @returns {ActCreator}
- */
-export function setKanjiBtnN(number) {
-  return (dispatch, getState) => {
-    const path = "/kanji/";
-    const attr = "choiceN";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, number);
+// /**
+//  * @param {number} number
+//  * @returns {ActCreator}
+//  */
+// export function setKanjiBtnN(number) {
+//   return (dispatch, getState) => {
+//     const path = "/kanji/";
+//     const attr = "choiceN";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, number);
 
-    dispatch({
-      type: SET_KANJI_BTN_N,
-      value: number,
-    });
-  };
-}
+//     dispatch({
+//       type: SET_KANJI_BTN_N,
+//       value: number,
+//     });
+//   };
+// }
 
 /**
  * @returns {ActCreator}
@@ -608,43 +608,43 @@ export function toggleKana() {
 //   };
 // }
 
-/**
- * @param {string} parent
- * @param {string} tagName
- * @returns {ActCreator}
- */
-export function toggleActiveTag(parent, tagName) {
-  return (dispatch, getState) => {
-    /** @type {{activeTags: string[]}} */
-    const { activeTags } = getState().settings[parent];
+// /**
+//  * @param {string} parent
+//  * @param {string} tagName
+//  * @returns {ActCreator}
+//  */
+// export function toggleActiveTag(parent, tagName) {
+//   return (dispatch, getState) => {
+//     /** @type {{activeTags: string[]}} */
+//     const { activeTags } = getState().settings[parent];
 
-    // if (parent === "vocabulary")
-    let action = TOGGLE_VOCABULARY_ACTIVE_TAG;
+//     // if (parent === "vocabulary")
+//     let action = TOGGLE_VOCABULARY_ACTIVE_TAG;
 
-    if (parent === "kanji") {
-      action = TOGGLE_KANJI_ACTIVE_TAG;
-    } else if (parent === "phrases") {
-      action = TOGGLE_PHRASES_ACTIVE_TAG;
-    }
+//     if (parent === "kanji") {
+//       action = TOGGLE_KANJI_ACTIVE_TAG;
+//     } else if (parent === "phrases") {
+//       action = TOGGLE_PHRASES_ACTIVE_TAG;
+//     }
 
-    let newValue;
-    if (activeTags.includes(tagName)) {
-      newValue = activeTags.filter((a) => a !== tagName);
-    } else {
-      newValue = [...activeTags, tagName];
-    }
+//     let newValue;
+//     if (activeTags.includes(tagName)) {
+//       newValue = activeTags.filter((a) => a !== tagName);
+//     } else {
+//       newValue = [...activeTags, tagName];
+//     }
 
-    const path = "/" + parent + "/";
-    const attr = "activeTags";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, newValue);
+//     const path = "/" + parent + "/";
+//     const attr = "activeTags";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, newValue);
 
-    dispatch({
-      type: action,
-      value: newValue,
-    });
-  };
-}
+//     dispatch({
+//       type: action,
+//       value: newValue,
+//     });
+//   };
+// }
 
 // /**
 //  * @returns {ActCreator}
@@ -829,102 +829,102 @@ export function setParticlesARomaji() {
 //   };
 // }
 
-/**
- * @param {string} uid
- */
-export function addFrequencyKanji(uid) {
-  return (dispatch, getState) => {
-    updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
-      set: { rein: true },
-    })(dispatch, getState);
+// /**
+//  * @param {string} uid
+//  */
+// export function addFrequencyKanji(uid) {
+//   return (dispatch, getState) => {
+//     updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
+//       set: { rein: true },
+//     })(dispatch, getState);
 
-    dispatch({
-      type: ADD_FREQUENCY_KANJI,
-      value: { uid },
-    });
-  };
-}
+//     dispatch({
+//       type: ADD_FREQUENCY_KANJI,
+//       value: { uid },
+//     });
+//   };
+// }
 
-/**
- * Removes frequency word
- * @param {string} uid
- * @returns {ActCreator}
- */
-export function removeFrequencyKanji(uid) {
-  return (dispatch, getState) => {
-    const path = "/kanji/";
-    const attr = "repetition";
-    /** @type {SpaceRepetitionMap} */
-    const spaceRep = getLastStateValue(getState, path, attr);
+// /**
+//  * Removes frequency word
+//  * @param {string} uid
+//  * @returns {ActCreator}
+//  */
+// export function removeFrequencyKanji(uid) {
+//   return (dispatch, getState) => {
+//     const path = "/kanji/";
+//     const attr = "repetition";
+//     /** @type {SpaceRepetitionMap} */
+//     const spaceRep = getLastStateValue(getState, path, attr);
 
-    if (spaceRep[uid]?.rein === true) {
-      // update frequency list count
-      const reinforceList = Object.keys(spaceRep).filter(
-        (k) => spaceRep[k].rein === true
-      );
-      // null to delete
-      updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
-        set: { rein: null },
-      })(dispatch, getState);
+//     if (spaceRep[uid]?.rein === true) {
+//       // update frequency list count
+//       const reinforceList = Object.keys(spaceRep).filter(
+//         (k) => spaceRep[k].rein === true
+//       );
+//       // null to delete
+//       updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
+//         set: { rein: null },
+//       })(dispatch, getState);
 
-      dispatch({
-        type: REMOVE_FREQUENCY_KANJI,
-        value: { uid, count: reinforceList.length - 1 },
-      });
-    }
-  };
-}
+//       dispatch({
+//         type: REMOVE_FREQUENCY_KANJI,
+//         value: { uid, count: reinforceList.length - 1 },
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleKanjiReinforcement() {
-  return (dispatch, getState) => {
-    const path = "/kanji/";
-    const attr = "reinforce";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleKanjiReinforcement() {
+//   return (dispatch, getState) => {
+//     const path = "/kanji/";
+//     const attr = "reinforce";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    dispatch({
-      type: TOGGLE_KANJI_REINFORCE,
-    });
-  };
-}
+//     dispatch({
+//       type: TOGGLE_KANJI_REINFORCE,
+//     });
+//   };
+// }
 
-/**
- * Toggle between frequency and tags
- * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
- * @returns {ActCreator}
- */
-export function toggleKanjiFilter(override) {
-  return (dispatch, getState) => {
-    const { filter, reinforce } = getState().settings.kanji;
+// /**
+//  * Toggle between frequency and tags
+//  * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
+//  * @returns {ActCreator}
+//  */
+// export function toggleKanjiFilter(override) {
+//   return (dispatch, getState) => {
+//     const { filter, reinforce } = getState().settings.kanji;
 
-    const path = "/kanji/";
-    const attr = "filter";
-    const time = new Date();
+//     const path = "/kanji/";
+//     const attr = "filter";
+//     const time = new Date();
 
-    let newFilter;
-    if (override !== undefined) {
-      newFilter = override;
-    } else {
-      newFilter = Object.values(TermFilterBy).includes(filter + 1)
-        ? filter + 1
-        : /*skip TermFilterBy.GROUP*/ TermFilterBy.FREQUENCY;
-    }
+//     let newFilter;
+//     if (override !== undefined) {
+//       newFilter = override;
+//     } else {
+//       newFilter = Object.values(TermFilterBy).includes(filter + 1)
+//         ? filter + 1
+//         : /*skip TermFilterBy.GROUP*/ TermFilterBy.FREQUENCY;
+//     }
 
-    localStoreAttrUpdate(time, getState, path, attr, newFilter);
+//     localStoreAttrUpdate(time, getState, path, attr, newFilter);
 
-    if (newFilter !== 0 && reinforce) {
-      toggleKanjiReinforcement()(dispatch, getState);
-    }
+//     if (newFilter !== 0 && reinforce) {
+//       toggleKanjiReinforcement()(dispatch, getState);
+//     }
 
-    dispatch({
-      type: TOGGLE_KANJI_FILTER,
-      value: newFilter,
-    });
-  };
-}
+//     dispatch({
+//       type: TOGGLE_KANJI_FILTER,
+//       value: newFilter,
+//     });
+//   };
+// }
 
 // /**
 //  * @param {string} aType

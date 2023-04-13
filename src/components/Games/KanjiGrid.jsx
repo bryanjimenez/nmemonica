@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
-} from "../../actions/settingsAct";
+} from "../../slices/settingSlice";
 import { randomOrder } from "../../helper/gameHelper";
 import { useFrequency } from "../../hooks/frequencyHK";
 import { useWindowSize } from "../../hooks/helperHK";

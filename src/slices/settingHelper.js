@@ -87,6 +87,29 @@ export function toggleActiveGrpHelper(parent, grpName) {
   };
 }
 
+ /**
+   * @param {string} parent
+   * @param {string} tagName
+   */
+ export function toggleActiveTagHelper(parent, tagName) {
+  return (/** @type {SettingState} */ state) => {
+    /** @type {{activeTags: string[]}} */
+    const { activeTags } = state[parent];
+
+    let newValue;
+    if (activeTags.includes(tagName)) {
+      newValue = activeTags.filter((a) => a !== tagName);
+    } else {
+      newValue = [...activeTags, tagName];
+    }
+
+    const path = "/" + parent + "/";
+    const attr = "activeTags";
+    const time = new Date();
+    return localStoreAttrUpdate(time, state, path, attr, newValue);
+  };
+}
+
 /**
  * Adds or removes grpNames to the activeGroup list.
  * Returns an updated list of selected groups
