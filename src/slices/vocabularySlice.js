@@ -11,7 +11,7 @@ import {
   getLastStateValue,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { localStoreAttrUpdate } from "./localStorageHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 /**
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary

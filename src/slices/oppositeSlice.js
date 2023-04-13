@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { firebaseConfig } from "../../environment.development";
-import { localStoreAttrUpdate } from "./localStorageHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 /**
  * Get app data versions file

@@ -1,9 +1,4 @@
-import { localStoreAttrUpdate } from "./localStorageHelper";
-
-/**
- * @typedef {typeof import("../slices/settingHelper").TermSortBy} TermSortBy
- * @typedef {typeof import("../slices/settingHelper").TermFilterBy} TermFilterBy
- */
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 export const ADD_SPACE_REP_WORD = "add_space_rep_word";
 export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";

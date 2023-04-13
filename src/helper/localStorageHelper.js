@@ -1,5 +1,45 @@
 import { localStorageKey } from "../constants/paths";
-import { getWindowLocalStorage } from "../helper/browserGlobal";
+import { getWindowLocalStorage } from "./browserGlobal";
+
+/**
+ * Reads a value from storage
+ * @template {Object} T
+ * @param {T} storage
+ * @param {[keyof T, ...string[]]} path
+ * @return {unknown}
+ */
+function usingPathRead(storage, path) {
+  if (path.length === 1) {
+    const attr = path[0];
+    return storage[attr];
+  }
+
+  const [first, ...rest] = path;
+
+  return usingPathRead(storage[first], rest);
+}
+
+/**
+ * Writes a value to storage
+ * @template {Object} T
+ * @param {T} storage
+ * @param {[keyof T, ...string[]]} path
+ * @param {unknown} value
+ * @return {T}
+ */
+function usingPathWrite(storage, path, value) {
+  if (path.length === 1) {
+    const attr = path[0];
+    return { ...storage, [attr]: value };
+  }
+
+  const [first, ...rest] = path;
+
+  return {
+    ...storage,
+    [first]: usingPathWrite(storage[first] || {}, rest, value),
+  };
+}
 
 /**
  * Modifies an attribute or toggles the existing value
@@ -8,42 +48,30 @@ import { getWindowLocalStorage } from "../helper/browserGlobal";
  * @param {Partial<SettingState>} state
  * @param {string} path
  * @param {string} attr
- * @param {T} [value] optional if absent [attr] will be toggled
+ * @param {T | boolean} [value] optional if absent [attr] will be toggled
+ * @returns {unknown extends T ? boolean : T}
  */
 export function localStoreAttrUpdate(time, state, path, attr, value) {
   /** @type {SettingState}*/
   let locStoSettings = getLocalStorageSettings(localStorageKey) || {};
-  let statePtr = state;
-  let localPtr = locStoSettings;
 
-  path.split("/").forEach((p) => {
-    if (p) {
-      statePtr = statePtr[p];
+  /** @type {[keyof SettingState, ...string[]]} */
+  const cleanPath = [...path.split("/").filter((p) => p !== ""), attr];
 
-      if (localPtr[p]) {
-        localPtr = localPtr[p];
-      } else {
-        localPtr[p] = {};
-        localPtr = localPtr[p];
-      }
-    }
-  });
-
-  // use value passed else toggle previous value
-  if (value !== undefined) {
-    localPtr[attr] = value;
-  } else if (statePtr[attr] === true || statePtr[attr] === false) {
-    localPtr[attr] = !statePtr[attr];
-  } else {
-    console.error("failed localStoreAttrUpdate");
+  if(value===undefined){
+    // toggle
+    value = !usingPathRead(state, cleanPath);
   }
 
+  const modifiedLocalStorage = usingPathWrite({...locStoSettings}, cleanPath, value)
+  const modifiedValue = /** @type {T | boolean} */ (usingPathRead(modifiedLocalStorage, cleanPath));
+
   setLocalStorage(localStorageKey, {
-    ...locStoSettings,
+    ...modifiedLocalStorage,
     lastModified: time,
   });
 
-  return localPtr[attr];
+  return modifiedValue;
 }
 
 /**

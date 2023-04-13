@@ -3,7 +3,7 @@ import { firebaseConfig } from "../../environment.development";
 import { buildGroupObject } from "../helper/reducerHelper";
 import { romajiParticle } from "../helper/kanaHelper";
 import { JapaneseText } from "../helper/JapaneseText";
-import { localStoreAttrUpdate } from "./localStorageHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   ADD_SPACE_REP_PHRASE,
   TermFilterBy,

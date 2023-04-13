@@ -5,7 +5,7 @@ import { getVerbFormsArray } from "../helper/gameHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
-} from "./localStorageHelper";
+} from "../helper/localStorageHelper";
 import {
   DebugLevel,
   toggleActiveGrpHelper,

@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import data from "../../data/kana.json";
-import { localStoreAttrUpdate } from "./localStorageHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 export const kanaSettings = {
   toggleKana() {

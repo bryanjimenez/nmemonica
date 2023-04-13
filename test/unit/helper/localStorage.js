@@ -4,7 +4,7 @@ import {
   getLocalStorageSettings,
   setLocalStorage,
   localStoreAttrUpdate,
-} from "../../../src/helper/localStorage";
+} from "../../../src/helper/localStorageHelper";
 
 import * as theModule from "../../../src/helper/browserGlobal";
 
@@ -37,9 +37,10 @@ describe("localStorage", function () {
   describe("setLocalStorage", function () {
     it("setLocalStorage", function () {
       const expected = { a: 1, b: 2 };
-      return setLocalStorage(userSettingsKey, expected).then((r) => {
-        expect(r).to.deep.eq({ a: 1, b: 2 });
-      });
+      setLocalStorage(userSettingsKey, expected)
+      // setLocalStorage does not return value
+      const r = getLocalStorageSettings(userSettingsKey)
+      expect(r).to.deep.eq({ a: 1, b: 2 });
     });
   });
 
@@ -50,17 +51,15 @@ describe("localStorage", function () {
       // preload with expected value
       lsMock().setItem(userSettingsKey, JSON.stringify(expected));
 
-      return getLocalStorageSettings(userSettingsKey).then((r) => {
-        expect(r).to.deep.eq(expected);
-      });
+      const r = getLocalStorageSettings(userSettingsKey)
+      expect(r).to.deep.eq(expected);
     });
 
     it("empty localStorage value", function () {
       const expected = undefined;
 
-      return getLocalStorageSettings(userSettingsKey).then((r) => {
-        expect(r).to.deep.eq(expected);
-      });
+      const r = getLocalStorageSettings(userSettingsKey)
+      expect(r).to.deep.eq(expected);
     });
 
     it("catch from reading invalid data", function () {
@@ -74,36 +73,30 @@ describe("localStorage", function () {
 
   describe("localStoreAttrUpdate", function () {
     it("set", function () {
-      const getStateMock = () => ({ settings: { a: { hint: true } } });
+      const initialState = { a: { hint: true } };
       const time = new Date();
       const path = "/a/";
       const attr = "choices";
       const value = 8;
       const expected = { a: { choices: 8 }, lastModified: time };
 
-      return localStoreAttrUpdate(time, getStateMock, path, attr, value).then(
-        (r) => {
-          expect(r).to.deep.equal(expected);
-        }
-      );
+      const r = localStoreAttrUpdate(time, initialState, path, attr, value)
+      expect(r).to.deep.equal(expected.a.choices);
     });
 
     it("toggle", function () {
-      const getStateMock = () => ({ settings: { a: { hint: true } } });
+      const initialState = { a: { hint: true } };
       const time = new Date();
       const path = "/a/";
       const attr = "hint";
       const expected = { a: { hint: false }, lastModified: time };
 
-      return localStoreAttrUpdate(time, getStateMock, path, attr).then((r) => {
-        expect(r).to.deep.equal(expected);
-      });
+      const r = localStoreAttrUpdate(time, initialState, path, attr)
+      expect(r).to.deep.equal(expected.a.hint);
     });
 
     it("toggle multiple", function () {
-      const getStateMock = () => ({
-        settings: { a: { hint: true }, b: { order: true } },
-      });
+      const initialState = { a: { hint: true }, b: { order: true } };
       const time = new Date();
 
       const expected1 = {
@@ -117,17 +110,11 @@ describe("localStorage", function () {
         lastModified: time,
       };
 
-      return localStoreAttrUpdate(time, getStateMock, "/a/", "hint").then(
-        (r1) => {
-          expect(r1).to.deep.equal(expected1);
+      const r1 = localStoreAttrUpdate(time, initialState, "/a/", "hint")
+      expect(r1).to.deep.equal(expected1.a.hint);
 
-          return localStoreAttrUpdate(time, getStateMock, "/b/", "order").then(
-            (r2) => {
-              expect(r2).to.deep.equal(expected2);
-            }
-          );
-        }
-      );
+      const r2 = localStoreAttrUpdate(time, initialState, "/b/", "order")
+      expect(r2).to.deep.equal(expected2.b.order);
     });
   });
 });
