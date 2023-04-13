@@ -8,15 +8,24 @@ import { localStoreAttrUpdate } from "./localStorageHelper";
 export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState();
-    const version = state.version.phrases || 0;
+    const state = /** @type {RootState} */ (thunkAPI.getState());
+    const version = state.version.phrases || '0';
 
-    if (version === 0) {
+    if (version === '0') {
       console.error("fetching opposite: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/opposites.json", {
       headers: { "Data-Version": version },
     }).then((res) => res.json());
+  }
+);
+
+export const oppositeFromLocalStorage = createAsyncThunk(
+  "opposite/oppositeFromLocalStorage",
+  async (arg, thunkAPI) => {
+    const initValues = arg;
+    
+    return initValues;
   }
 );
 
@@ -49,6 +58,14 @@ const oppositeSlice = createSlice({
     builder.addCase(getOpposite.fulfilled, (state, action) => {
       state.value = action.payload;
     });
+
+    builder.addCase(oppositeFromLocalStorage.fulfilled, (state,action)=>{
+      const localStorageValue = action.payload;
+      return{
+        ...state,
+        ...localStorageValue,
+      }
+    })
   },
 });
 
