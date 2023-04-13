@@ -18,7 +18,7 @@ import { SettingsMeta } from "../Pages/Settings";
 import classNames from "classnames";
 
 import { KanjiMeta } from "../Pages/Kanji";
-import { toggleKana } from "../../actions/settingsAct";
+import { toggleKana } from "../../slices/settingSlice";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 import { KanjiGameMeta } from "../Games/KanjiGame";
 

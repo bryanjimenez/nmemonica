@@ -135,100 +135,100 @@ export const TermSortByLabel = [
 //   };
 // }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleKanaGameWideMode() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleKanaGameWideMode() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/kana/";
-    const attr = "wideMode";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/kana/";
+//     const attr = "wideMode";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_KANA_WIDEMODE
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_KANA_WIDEMODE,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_KANA_WIDEMODE
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_KANA_WIDEMODE,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleKanaEasyMode() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleKanaEasyMode() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/kana/";
-    const attr = "easyMode";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/kana/";
+//     const attr = "easyMode";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_KANA_EASYMODE
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_KANA_EASYMODE,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_KANA_EASYMODE
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_KANA_EASYMODE,
+//       });
+//     }
+//   };
+// }
 
-/**
- * @returns {ActCreator}
- */
-export function toggleKana() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
-    const { charSet } = getState().settings.kana;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function toggleKana() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
+//     const { charSet } = getState().settings.kana;
 
-    const newCharSet = charSet + 1 < 3 ? charSet + 1 : 0;
+//     const newCharSet = charSet + 1 < 3 ? charSet + 1 : 0;
 
-    const path = "/kana/";
-    const attr = "charSet";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr, newCharSet);
+//     const path = "/kana/";
+//     const attr = "charSet";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr, newCharSet);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        TOGGLE_KANA_CHAR_SET,
-        newCharSet
-      );
-    } else {
-      dispatch({
-        type: TOGGLE_KANA_CHAR_SET,
-        value: newCharSet,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         TOGGLE_KANA_CHAR_SET,
+//         newCharSet
+//       );
+//     } else {
+//       dispatch({
+//         type: TOGGLE_KANA_CHAR_SET,
+//         value: newCharSet,
+//       });
+//     }
+//   };
+// }
 
 // /**
 //  * @returns {ActCreator}

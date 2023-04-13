@@ -588,18 +588,18 @@ class KanaGame extends Component {
     ];
   }
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     hiragana: state.kana.hiragana,
     katakana: state.kana.katakana,
     vowels: state.kana.vowels,
     consonants: state.kana.consonants,
     sounds: state.kana.sounds,
-    choiceN: state.settings.kana.wideMode ? 31 : state.settings.kana.choiceN,
-    wideMode: state.settings.kana.wideMode,
-    easyMode: state.settings.kana.easyMode,
-    charSet: state.settings.kana.charSet,
+    choiceN: state.settingsHK.kana.wideMode ? 31 : state.settingsHK.kana.choiceN,
+    wideMode: state.settingsHK.kana.wideMode,
+    easyMode: state.settingsHK.kana.easyMode,
+    charSet: state.settingsHK.kana.charSet,
     debug: state.settingsHK.global.debug,   // FIXME: hook + class
   };
 };

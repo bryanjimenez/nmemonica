@@ -17,6 +17,7 @@ import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
 import { phraseSettings } from "./phraseSlice";
 import { kanjiSettings } from "./kanjiSlice";
+import { kanaSettings } from "./kanaSlice";
 
 /**
  * @typedef {typeof import("../slices/settingHelper").TermSortBy} TermSortBy
@@ -447,6 +448,21 @@ const settingSlice = createSlice({
     toggleKanjiReinforcement(state) {
       state.kanji.reinforce = kanjiSettings.toggleKanjiReinforcement()(state);
     },
+
+    // Kana Game Settings
+    toggleKana(state) {
+      state.kana.charSet = kanaSettings.toggleKana()(state);
+    },
+    setKanaBtnN(state, action) {
+      const number = action.payload;
+      state.kana.choiceN = kanaSettings.setKanaBtnN(number)(state);
+    },
+    toggleKanaEasyMode(state) {
+      state.kana.easyMode = kanaSettings.toggleKanaEasyMode()(state);
+    },
+    toggleKanaGameWideMode(state) {
+      state.kana.wideMode = kanaSettings.toggleKanaGameWideMode()(state);
+    },
   },
 
   extraReducers: (builder) => {
@@ -512,7 +528,7 @@ export const {
 
   addFrequencyKanji,
   removeFrequencyKanji,
-  setHiraganaBtnN,
+  setKanaBtnN,
   setKanjiBtnN,
   setParticlesARomaji,
   toggleActiveTag,

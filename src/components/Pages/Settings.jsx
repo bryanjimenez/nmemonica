@@ -22,7 +22,7 @@ import {
 } from "../../slices/oppositeSlice";
 import {
   removeFrequencyKanji,
-  setHiraganaBtnN,
+  setKanaBtnN,
   setKanjiBtnN,
   setParticlesARomaji,
   toggleActiveTag,
@@ -116,7 +116,7 @@ const SettingsMeta = {
  * @property {typeof setMotionThreshold} setMotionThreshold
  * @property {typeof getPhrase} getPhrase
  * @property {typeof getVocabulary} getVocabulary
- * @property {typeof setHiraganaBtnN} setHiraganaBtnN
+ * @property {typeof setKanaBtnN} setKanaBtnN
  * @property {typeof toggleKanaGameWideMode} toggleKanaGameWideMode
  * @property {typeof toggleKanaEasyMode} toggleKanaEasyMode
  * @property {typeof setParticlesARomaji} setParticlesARomaji
@@ -765,7 +765,7 @@ class Settings extends Component {
                 <KanaOptionsSlider
                   initial={this.props.choiceN}
                   wideMode={this.props.wideMode}
-                  setChoiceN={this.props.setHiraganaBtnN}
+                  setChoiceN={this.props.setKanaBtnN}
                   toggleWide={this.props.toggleKanaGameWideMode}
                 />
               </div>
@@ -971,10 +971,10 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     oppositesQRomaji: state.opposite.qRomaji,
     oppositesARomaji: state.opposite.aRomaji,
 
-    choiceN: state.settings.kana.choiceN,
-    wideMode: state.settings.kana.wideMode,
-    easyMode: state.settings.kana.easyMode,
-    charSet: state.settings.kana.charSet,
+    choiceN: state.settingsHK.kana.choiceN,
+    wideMode: state.settingsHK.kana.wideMode,
+    easyMode: state.settingsHK.kana.easyMode,
+    charSet: state.settingsHK.kana.charSet,
 
     particlesARomaji: state.settings.particles.aRomaji,
 
@@ -1011,7 +1011,7 @@ Settings.propTypes = {
   easyMode: PropTypes.bool,
   charSet: PropTypes.number,
   choiceN: PropTypes.number,
-  setHiraganaBtnN: PropTypes.func,
+  setKanaBtnN: PropTypes.func,
   toggleKanaGameWideMode: PropTypes.func,
   toggleKanaEasyMode: PropTypes.func,
   toggleKana: PropTypes.func,
@@ -1043,7 +1043,7 @@ Settings.propTypes = {
 };
 
 export default connect(mapStateToProps, {
-  setHiraganaBtnN,
+  setKanaBtnN,
   toggleKanaGameWideMode,
   toggleKanaEasyMode,
   toggleKana,
