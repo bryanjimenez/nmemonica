@@ -110,7 +110,7 @@ export const updateSpaceRepWord = createAsyncThunk(
   "setting/updateSpaceRepWord",
   async (arg, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
-    const state = thunkAPI.getState().settingsHK;
+    const state = thunkAPI.getState().setting;
 
     return vocabularySettings.updateSpaceRepWord(uid, shouldIncrement)(state);
   }
@@ -120,7 +120,7 @@ export const updateSpaceRepPhrase = createAsyncThunk(
   "setting/updateSpaceRepPhrase",
   async (arg, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
-    const state = thunkAPI.getState().settingsHK;
+    const state = thunkAPI.getState().setting;
 
     return phraseSettings.updateSpaceRepPhrase(uid, shouldIncrement)(state);
   }

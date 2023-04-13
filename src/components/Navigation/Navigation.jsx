@@ -246,13 +246,13 @@ class Navigation extends Component {
 }
 
 Navigation.propTypes = {
-  user: PropTypes.object,
+  // user: PropTypes.object,
   charSet: PropTypes.number,
   toggleKana: PropTypes.func,
 };
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
-  return { user: state.login.user, charSet: state.settings.kana.charSet };
+
+const mapStateToProps = (/** @type {RootState} */ state) => {
+  return { /*user: state.login.user,*/ charSet: state.setting.kana.charSet };
 };
 
 export default connect(mapStateToProps, { toggleKana })(Navigation);

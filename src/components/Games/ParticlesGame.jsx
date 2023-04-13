@@ -16,8 +16,6 @@ import { JapaneseText } from "../../helper/JapaneseText";
  * @typedef {{ japanese: string, romaji: string, start?:number, end?:number, toHTML: (correct:boolean)=>void }} ParticleChoice
  * @typedef {{ japanese: string, romaji: string, start:number, end:number, toHTML: (correct:boolean)=>void }} ParticleAnswer
  * @typedef {{ answer: {japanese:string, romaji:string, start:number, end:number, html:string}, question: RawPhrase, english:string, literal?:string }} ParticleGamePhrase
- *
- * @typedef {import("../../typings/state").AppRootState} AppRootState
  */
 
 /**
@@ -132,7 +130,7 @@ function ParticlesGame() {
   }
 
   const aRomaji = useSelector(
-    (/** @type {RootState}*/ { settingsHK }) => settingsHK.particles.aRomaji
+    (/** @type {RootState}*/ { setting }) => setting.particles.aRomaji
   );
 
   const game = prepareGame(selectedIndex, phrases, particles);

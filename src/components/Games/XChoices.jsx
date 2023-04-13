@@ -5,7 +5,6 @@ import React, { useReducer } from "react";
 import StackNavButton from "../Form/StackNavButton";
 
 /**
- * @typedef {import("../../typings/state").AppRootState} AppRootState
  * @typedef {{english?: string, toHTML: (correct:boolean)=>JSX.Element}} GameQuestion
  * @typedef {{english?: string, toHTML: function, compare: string}} GameChoice
  */

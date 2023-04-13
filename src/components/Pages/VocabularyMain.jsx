@@ -223,13 +223,13 @@ class VocabularyMain extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
-    practiceSide: state.settingsHK.vocabulary.practiceSide,
-    romajiActive: state.settingsHK.vocabulary.romaji,
-    scrollingDone: !state.settingsHK.global.scrolling,
-    swipeThreshold: state.settingsHK.global.swipeThreshold,
-    repetition: state.settingsHK.vocabulary.repetition,
-    hintEnabled: state.settingsHK.vocabulary.hintEnabled,
-    showBareKanji: state.settingsHK.vocabulary.bareKanji,
+    practiceSide: state.setting.vocabulary.practiceSide,
+    romajiActive: state.setting.vocabulary.romaji,
+    scrollingDone: !state.setting.global.scrolling,
+    swipeThreshold: state.setting.global.swipeThreshold,
+    repetition: state.setting.vocabulary.repetition,
+    hintEnabled: state.setting.vocabulary.hintEnabled,
+    showBareKanji: state.setting.vocabulary.bareKanji,
   };
 };
 

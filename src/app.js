@@ -25,7 +25,6 @@ import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import { localStorageSettingsInitialized } from "./slices/settingSlice";
-import { initializeSettingsFromLocalStorage } from "./actions/firebase";
 import "./styles.css";
 import { logger } from "./slices/settingSlice";
 import { getVersions } from "./slices/versionSlice";
@@ -43,7 +42,6 @@ class App extends Component {
     this.state = {};
     this.props.getVersions();
     this.props.localStorageSettingsInitialized();
-    this.props.initializeSettingsFromLocalStorage();
 
     this.props.serviceWorkerRegistered().then(() => {
       if ("serviceWorker" in navigator) {
@@ -101,16 +99,15 @@ class App extends Component {
     );
   }
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
-    darkMode: state.settingsHK.global.darkMode,
+    darkMode: state.setting.global.darkMode,
   };
 };
 
 App.propTypes = {
   initialize: PropTypes.func,
-  initializeSettingsFromLocalStorage: PropTypes.func,
   localStorageSettingsInitialized: PropTypes.func,
   getVersions: PropTypes.func,
   serviceWorkerRegistered: PropTypes.func,
@@ -122,8 +119,7 @@ App.propTypes = {
 
 export default connect(mapStateToProps, {
   getVersions,
-  initializeSettingsFromLocalStorage,
-  localStorageSettingsInitialized, // hook
+  localStorageSettingsInitialized,
   serviceWorkerRegistered,
   // serviceWorkerNewTermsAdded,   // unused temp disable
   logger,

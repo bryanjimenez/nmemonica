@@ -20,10 +20,9 @@ import {
   toggleVocabularyRomaji,
   updateVerbColSplit,
   toggleVocabularyBareKanji,
+  initialState,
 } from "../../slices/settingSlice";
 import { getVocabulary } from "../../slices/vocabularySlice";
-
-import { DEFAULT_SETTINGS } from "../../reducers/settingsRed";
 
 import SettingsSwitch from "./SettingsSwitch";
 import { SetTermGList } from "../Pages/SetTermGList";
@@ -117,7 +116,8 @@ class SettingsVocab extends Component {
     if (vocabulary.length < 1 || Object.keys(vocabGroups).length < 1)
       return <NotReady addlStyle="vocabulary-settings" />;
 
-    const allForms = DEFAULT_SETTINGS.vocabulary.verbFormsOrder;
+    initialState.vocabulary.verbFormsOrder;
+    const allForms = initialState.vocabulary.verbFormsOrder;
 
     const shownForms = verbFormsOrder.reduce(
       (/** @type {string[]}*/ acc, form) => {
@@ -370,17 +370,17 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     vocabulary: state.vocabulary.value,
     vocabGroups: state.vocabulary.grpObj,
 
-    vocabOrder: state.settingsHK.vocabulary.ordered,
-    vocabRomaji: state.settingsHK.vocabulary.romaji,
-    showBareKanji: state.settingsHK.vocabulary.bareKanji,
-    vocabHint: state.settingsHK.vocabulary.hintEnabled,
-    vocabActive: state.settingsHK.vocabulary.activeGroup,
-    autoVerbView: state.settingsHK.vocabulary.autoVerbView,
-    verbColSplit: state.settingsHK.vocabulary.verbColSplit,
-    vocabFilter: state.settingsHK.vocabulary.filter,
-    vocabRep: state.settingsHK.vocabulary.repetition,
-    vocabReinforce: state.settingsHK.vocabulary.reinforce,
-    verbFormsOrder: state.settingsHK.vocabulary.verbFormsOrder,
+    vocabOrder: state.setting.vocabulary.ordered,
+    vocabRomaji: state.setting.vocabulary.romaji,
+    showBareKanji: state.setting.vocabulary.bareKanji,
+    vocabHint: state.setting.vocabulary.hintEnabled,
+    vocabActive: state.setting.vocabulary.activeGroup,
+    autoVerbView: state.setting.vocabulary.autoVerbView,
+    verbColSplit: state.setting.vocabulary.verbColSplit,
+    vocabFilter: state.setting.vocabulary.filter,
+    vocabRep: state.setting.vocabulary.repetition,
+    vocabReinforce: state.setting.vocabulary.reinforce,
+    verbFormsOrder: state.setting.vocabulary.verbFormsOrder,
   };
 };
 

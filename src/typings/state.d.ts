@@ -1,9 +1,6 @@
-import {store} from '../reducers/index'
-
-// FIXME: delete
-export type AppRootState = {};
+import {store} from '../slices/index'
 
 declare global {
   type RootState = ReturnType<typeof store.getState>
-  type SettingState = RootState['settingsHK']
+  type SettingState = RootState['setting']
 }

@@ -1,7 +1,6 @@
 import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import React, {
   useCallback,
   useEffect,
@@ -9,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
@@ -30,16 +29,10 @@ import {
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
 import { getKanji } from "../../slices/kanjiSlice";
+import { useKanjiGameConnected } from "../../hooks/selectorConnected";
 
 /**
- * @typedef {import("../../typings/state").AppRootState} AppRootState
  * @typedef {import("../../typings/raw").RawKanji} RawKanji
- */
-
-/**
- * @typedef {Object} KanjiGridProps
- * @property {typeof removeFrequencyKanji} removeFrequencyKanji
- * @property {typeof addFrequencyKanji} addFrequencyKanji
  */
 
 const KanjiGridMeta = {
@@ -111,14 +104,15 @@ function prepareGame(kanji, choices, writePractice, currExmpl, nextExmpl) {
   };
 }
 
-/**
- * @param {KanjiGridProps} props
- */
-function KanjiGrid(props) {
+export default function KanjiGrid() {
   const dispatch = useDispatch();
-  const { value: rawKanjis } = useSelector(
-    (/** @type {RootState} */ { kanji }) => kanji
-  );
+  const {rawKanjis,
+    activeTags,
+    filterType,
+    reinforce,
+    choiceN,
+    repetition,
+    } = useKanjiGameConnected()
   useMemo(() => {
     if (rawKanjis.length === 0) {
       dispatch(getKanji());
@@ -129,14 +123,6 @@ function KanjiGrid(props) {
   const order = useRef([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [writePractice, setEnglishSide] = useState(false);
-
-  const {
-    choiceN,
-    activeTags,
-    filter: filterType,
-    reinforce,
-    repetition,
-  } = useSelector((/** @type {AppRootState}*/ { settings }) => settings.kanji);
 
   const filteredTerms = useFilterTerms(
     repetition,
@@ -223,6 +209,9 @@ function KanjiGrid(props) {
       update();
     }
   }, [answ, setOffset, refs.floating, update]);
+
+  const addFrequencyTerm=useCallback((uid)=>{dispatch(addFrequencyKanji(uid))},[dispatch]);
+  const removeFrequencyTerm=useCallback((uid)=>{dispatch(removeFrequencyKanji(uid))},[dispatch]);
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 
@@ -313,8 +302,8 @@ function KanjiGrid(props) {
             <div className="d-flex justify-content-end">
               <span>{game.question.toHTML(false)}</span>
               <ToggleFrequencyTermBtnMemo
-                addFrequencyTerm={props.addFrequencyKanji}
-                removeFrequencyTerm={props.removeFrequencyKanji}
+                addFrequencyTerm={addFrequencyTerm}
+                removeFrequencyTerm={removeFrequencyTerm}
                 toggle={term_reinforce}
                 term={kanji}
               />
@@ -333,13 +322,4 @@ function KanjiGrid(props) {
   );
 }
 
-KanjiGrid.propTypes = {
-  addFrequencyKanji: PropTypes.func,
-  removeFrequencyKanji: PropTypes.func,
-};
-
-export default connect(null, {
-  addFrequencyKanji,
-  removeFrequencyKanji,
-})(KanjiGrid);
 export { KanjiGridMeta };

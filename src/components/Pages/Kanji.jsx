@@ -540,18 +540,18 @@ class Kanji extends Component {
   }
 }
 
-const mapStateToProps = (/** @type {RootState} */state) => {
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     kanji: state.kanji.value,
     vocabulary: state.vocabulary.value,
 
-    filterType: state.settingsHK.kanji.filter,
-    reinforce: state.settingsHK.kanji.reinforce,
-    activeTags: state.settingsHK.kanji.activeTags,
-    repetition: state.settingsHK.kanji.repetition,
-    frequency: state.settingsHK.kanji.frequency,
+    filterType: state.setting.kanji.filter,
+    reinforce: state.setting.kanji.reinforce,
+    activeTags: state.setting.kanji.activeTags,
+    repetition: state.setting.kanji.repetition,
+    frequency: state.setting.kanji.frequency,
 
-    swipeThreshold: state.settingsHK.global.swipeThreshold,
+    swipeThreshold: state.setting.global.swipeThreshold,
   };
 };
 

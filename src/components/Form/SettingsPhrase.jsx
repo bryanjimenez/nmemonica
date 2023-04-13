@@ -184,12 +184,12 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     phrases: state.phrases.value,
     phraseGroups: state.phrases.grpObj,
-    phraseOrder: state.settingsHK.phrases.ordered,
-    phraseRomaji: state.settingsHK.phrases.romaji,
-    phraseReinforce: state.settingsHK.phrases.reinforce,
-    phraseActive: state.settingsHK.phrases.activeGroup,
-    phraseFilter: state.settingsHK.phrases.filter,
-    phraseRep: state.settingsHK.phrases.repetition,
+    phraseOrder: state.setting.phrases.ordered,
+    phraseRomaji: state.setting.phrases.romaji,
+    phraseReinforce: state.setting.phrases.reinforce,
+    phraseActive: state.setting.phrases.activeGroup,
+    phraseFilter: state.setting.phrases.filter,
+    phraseRep: state.setting.phrases.repetition,
   };
 };
 

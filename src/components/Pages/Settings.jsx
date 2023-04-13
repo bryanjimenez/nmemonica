@@ -951,35 +951,35 @@ class Settings extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
-    darkMode: state.settingsHK.global.darkMode,
-    swipeThreshold: state.settingsHK.global.swipeThreshold,
-    motionThreshold: state.settingsHK.global.motionThreshold,
+    darkMode: state.setting.global.darkMode,
+    swipeThreshold: state.setting.global.swipeThreshold,
+    motionThreshold: state.setting.global.motionThreshold,
 
     phrases: state.phrases.value,
-    pRepetition: state.settingsHK.phrases.repetition,
+    pRepetition: state.setting.phrases.repetition,
     vocabulary: state.vocabulary.value,
-    vRepetition: state.settingsHK.vocabulary.repetition,
+    vRepetition: state.setting.vocabulary.repetition,
 
     kanji: state.kanji.value,
     kanjiTags: state.kanji.tagObj,
-    kanjiChoiceN: state.settingsHK.kanji.choiceN,
-    kanjiActive: state.settingsHK.kanji.activeTags,
-    kanjiFilter: state.settingsHK.kanji.filter,
-    kRepetition: state.settingsHK.kanji.repetition,
-    kanjiReinforce: state.settingsHK.kanji.reinforce,
+    kanjiChoiceN: state.setting.kanji.choiceN,
+    kanjiActive: state.setting.kanji.activeTags,
+    kanjiFilter: state.setting.kanji.filter,
+    kRepetition: state.setting.kanji.repetition,
+    kanjiReinforce: state.setting.kanji.reinforce,
 
     oppositesQRomaji: state.opposite.qRomaji,
     oppositesARomaji: state.opposite.aRomaji,
 
-    choiceN: state.settingsHK.kana.choiceN,
-    wideMode: state.settingsHK.kana.wideMode,
-    easyMode: state.settingsHK.kana.easyMode,
-    charSet: state.settingsHK.kana.charSet,
+    choiceN: state.setting.kana.choiceN,
+    wideMode: state.setting.kana.wideMode,
+    easyMode: state.setting.kana.easyMode,
+    charSet: state.setting.kana.charSet,
 
-    particlesARomaji: state.settingsHK.particles.aRomaji,
+    particlesARomaji: state.setting.particles.aRomaji,
 
-    memory: state.settingsHK.global.memory, // FIXME: hook + class
-    debug: state.settingsHK.global.debug,   // FIXME: hook + class
+    memory: state.setting.global.memory,
+    debug: state.setting.global.debug,
   };
 };
 

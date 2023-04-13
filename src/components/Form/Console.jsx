@@ -5,7 +5,6 @@ import PropTypes from "prop-types";
 import classNames from "classnames";
 import { DebugLevel } from "../../slices/settingHelper";
 
-
 /**
  * @typedef {{msg:string, lvl:number, css?: string}} ConsoleMessage
  */
@@ -150,8 +149,7 @@ class Console extends Component {
   }
 }
 
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state, ownProps) => {
+const mapStateToProps = (/** @type {RootState} */ state, ownProps) => {
   if (ownProps.connected !== true && ownProps.messages) {
     return {
       messages: ownProps.messages,
@@ -160,8 +158,8 @@ const mapStateToProps = (state, ownProps) => {
   }
 
   return {
-    messages: state.settingsHK.global.console,    // FIXME: hook + class
-    debug: state.settingsHK.global.debug,         // FIXME: hook + class
+    messages: state.setting.global.console,
+    debug: state.setting.global.debug,
   };
 };
 

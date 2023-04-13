@@ -1,8 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
-import PropTypes from "prop-types";
-import React, { useMemo, useRef, useState } from "react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
@@ -23,16 +22,10 @@ import FourChoices from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { useRandomTerm } from "../../hooks/randomTermHK";
 import { getKanji } from "../../slices/kanjiSlice";
+import { useKanjiGameConnected } from "../../hooks/selectorConnected";
 
 /**
- * @typedef {import("../../typings/state").AppRootState} AppRootState
  * @typedef {import("../../typings/raw").RawKanji} RawKanji
- */
-
-/**
- * @typedef {Object} KanjiGameProps
- * @property {typeof removeFrequencyKanji} removeFrequencyKanji
- * @property {typeof addFrequencyKanji} addFrequencyKanji
  */
 
 const KanjiGameMeta = {
@@ -143,14 +136,14 @@ function prepareGame(kanji, rawKanjis) {
   };
 }
 
-/**
- * @param {KanjiGameProps} props
- */
-function KanjiGame(props) {
+export default function KanjiGame() {
   const dispatch = useDispatch();
-  const { value: rawKanjis } = useSelector(
-    (/** @type {RootState} */ { kanji }) => kanji
-  );
+  const {rawKanjis,
+    activeTags,
+    filterType,
+    reinforce,
+    repetitionObj} = useKanjiGameConnected()
+
   useMemo(() => {
     if (rawKanjis.length === 0) {
       dispatch(getKanji());
@@ -162,12 +155,6 @@ function KanjiGame(props) {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const {
-    activeTags,
-    filter: filterType,
-    reinforce,
-    repetition: repetitionObj,
-  } = useSelector((/** @type {AppRootState}*/ { settings }) => settings.kanji);
   const repetition = useMemo(() => repetitionObj, [repetitionObj]);
 
   const filteredTerms = useFilterTerms(
@@ -199,6 +186,9 @@ function KanjiGame(props) {
   const game = useMemo(() => prepareGame(kanji, rawKanjis), [kanji, rawKanjis]);
 
   // console.log("           KanjiGame render " + selectedIndex);
+
+  const addFrequencyTerm=useCallback((uid)=>{dispatch(addFrequencyKanji(uid))},[dispatch]);
+  const removeFrequencyTerm=useCallback((uid)=>{dispatch(removeFrequencyKanji(uid))},[dispatch]);
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 
@@ -241,8 +231,8 @@ function KanjiGame(props) {
           <div className="col">
             <div className="d-flex justify-content-end">
               <ToggleFrequencyTermBtnMemo
-                addFrequencyTerm={props.addFrequencyKanji}
-                removeFrequencyTerm={props.removeFrequencyKanji}
+                addFrequencyTerm={addFrequencyTerm}
+                removeFrequencyTerm={removeFrequencyTerm}
                 toggle={term_reinforce}
                 term={kanji}
               />
@@ -260,15 +250,5 @@ function KanjiGame(props) {
     </>
   );
 }
-
-KanjiGame.propTypes = {
-  addFrequencyKanji: PropTypes.func,
-  removeFrequencyKanji: PropTypes.func,
-};
-
-export default connect(null, {
-  addFrequencyKanji,
-  removeFrequencyKanji,
-})(KanjiGame);
 
 export { KanjiGameMeta };

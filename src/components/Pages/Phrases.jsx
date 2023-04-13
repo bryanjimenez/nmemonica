@@ -957,19 +957,19 @@ class Phrases extends Component {
     ];
   }
 }
-// @ts-ignore mapStateToProps
-const mapStateToProps = (state) => {
+
+const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     phrases: state.phrases.value,
-    practiceSide: state.settingsHK.phrases.practiceSide,
-    termsOrder: state.settingsHK.phrases.ordered,
-    romajiActive: state.settingsHK.phrases.romaji,
-    filterType: state.settingsHK.phrases.filter,
-    frequency: state.settingsHK.phrases.frequency,
-    activeGroup: state.settingsHK.phrases.activeGroup,
-    reinforce: state.settingsHK.phrases.reinforce,
-    repetition: state.settingsHK.phrases.repetition,
-    swipeThreshold: state.settingsHK.global.swipeThreshold,
+    practiceSide: state.setting.phrases.practiceSide,
+    termsOrder: state.setting.phrases.ordered,
+    romajiActive: state.setting.phrases.romaji,
+    filterType: state.setting.phrases.filter,
+    frequency: state.setting.phrases.frequency,
+    activeGroup: state.setting.phrases.activeGroup,
+    reinforce: state.setting.phrases.reinforce,
+    repetition: state.setting.phrases.repetition,
+    swipeThreshold: state.setting.global.swipeThreshold,
   };
 };
 
