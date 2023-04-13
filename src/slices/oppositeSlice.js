@@ -29,15 +29,18 @@ const oppositeSlice = createSlice({
       const path = "/opposite/";
       const attr = "aRomaji";
       const time = new Date();
-      localStoreAttrUpdate(time, state, path, attr, !state.aRomaji);
-      state.aRomaji = !state.aRomaji;
+
+      const partState = /** @type {Partial<SettingState>} */ ({opposite: state});
+      state.aRomaji = localStoreAttrUpdate(time, partState, path, attr);
     },
 
     setOppositesQRomaji(state) {
       const path = "/opposite/";
       const attr = "qRomaji";
       const time = new Date();
-      localStoreAttrUpdate(time, state, path, attr, !state.qRomaji);
+
+      const partState = /** @type {Partial<SettingState>} */ ({opposite: state});
+      localStoreAttrUpdate(time,  partState, path, attr, !state.qRomaji);
       state.qRomaji = !state.qRomaji;
     },
   },

@@ -19,10 +19,10 @@ import { localStoreAttrUpdate } from "./localStorageHelper";
 export const getKanji = createAsyncThunk(
   "kanji/getKanji",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState();
-    const version = state.version.kanji || 0;
+    const state = /** @type {RootState} */ (thunkAPI.getState());
+    const version = state.version.kanji || "0";
 
-    if (version === 0) {
+    if (version === "0") {
       console.error("fetching kanji: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/kanji.json", {

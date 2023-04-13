@@ -18,6 +18,7 @@ import {
  * @typedef {import("../components/Games/ParticlesGame").ParticleGamePhrase} ParticleGamePhrase
  */
 
+/** @param {{[uid:string]: RawPhrase}} object */
 const buildPhraseArray = (object) =>
   Object.keys(object).map((k) => ({
     ...object[k],
@@ -30,11 +31,12 @@ const buildPhraseArray = (object) =>
 export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (arg, thunkAPI) => {
-    /** @type {RootState} */
-    const state = thunkAPI.getState();
-    const version = state.version.phrases || 0;
+    const state = /** @type {RootState} */ (
+      /** @type {RootState} */ (thunkAPI.getState())
+    );
+    const version = state.version.phrases || "0";
 
-    if (version === 0) {
+    if (version === "0") {
       console.error("fetching phrase: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
@@ -47,14 +49,15 @@ export const getParticleGame = createAsyncThunk(
   "phrase/getParticleGame",
   async (arg, thunkAPI) => {
     /** @type {RootState} */
-    const state = thunkAPI.getState();
+    const state = /** @type {RootState} */ (thunkAPI.getState());
     const phrases = state.phrases.value;
 
     if (phrases.length > 0) {
       const needGame =
-        thunkAPI.getState().phrases.particleGame.phrases.length === 0;
+        /** @type {RootState} */ (thunkAPI.getState()).phrases.particleGame
+          .phrases.length === 0;
       if (needGame) {
-        return { game: buildParticleGame(phrases) };
+        return { phrase: [], game: buildParticleGame(phrases) };
       }
     } else {
       return thunkAPI.dispatch(getPhrase()).then((res) => {
@@ -72,7 +75,7 @@ export const getParticleGame = createAsyncThunk(
 export function buildParticleGame(rawPhrases) {
   /** @type {ParticleChoice[]} */
   let particleList = [];
-  /** @type {ParticleGamePhrase[]} */
+  /** @type {{[english:string]:{}}} */
   let multipleMatch = {};
 
   const wParticles = rawPhrases.reduce(
@@ -311,7 +314,7 @@ const phraseSlice = createSlice({
         state.particleGame = game;
       }
 
-      if (phrase) {
+      if (state.value.length === 0 && phrase.length > 0) {
         state.value = phrase;
       }
     });

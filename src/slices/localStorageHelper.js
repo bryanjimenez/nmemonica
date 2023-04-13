@@ -5,7 +5,7 @@ import { getWindowLocalStorage } from "../helper/browserGlobal";
  * Modifies an attribute or toggles the existing value
  * @template {unknown} T
  * @param {Date} time
- * @param {SettingState} state
+ * @param {Partial<SettingState>} state
  * @param {string} path
  * @param {string} attr
  * @param {T} [value] optional if absent [attr] will be toggled

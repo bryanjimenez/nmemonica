@@ -12,12 +12,22 @@ export const getVersions = createAsyncThunk("version/getVersions", async () =>
 
 const versionSlice = createSlice({
   name: "version",
-  initialState: {},
+  initialState: {
+    vocabulary: undefined,
+    phrases: undefined,
+    kanji: undefined,
+    opposites: undefined,
+    particles: undefined,
+    suffixes: undefined,
+  },
 
   reducers: {},
 
   extraReducers: (builder) => {
-    builder.addCase(getVersions.fulfilled, (state, action) => state = action.payload);
+    builder.addCase(
+      getVersions.fulfilled,
+      (state, action) => (state = action.payload)
+    );
   },
 });
 

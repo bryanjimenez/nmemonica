@@ -23,10 +23,10 @@ import { localStoreAttrUpdate } from "./localStorageHelper";
 export const getVocabulary = createAsyncThunk(
   "vocabulary/getVocabulary",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState();
-    const version = state.version.vocabulary || 0;
+    const state = /** @type {RootState} */ (thunkAPI.getState());
+    const version = state.version.vocabulary || "0";
 
-    if (version === 0) {
+    if (version === "0") {
       console.error("fetching vocabulary: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/vocabulary.json", {
@@ -272,7 +272,7 @@ export const vocabularySettings = {
       if (spaceRep[uid]) {
         const playCount = spaceRep[uid].tpPc;
         const accuracy = spaceRep[uid].tpAcc;
-        const correctAvg = spaceRep[uid].tpCAvg || 0;
+        const correctAvg = spaceRep[uid].tpCAvg || "0";
 
         if (playCount !== undefined && accuracy != undefined) {
           newPlayCount = playCount + 1;
