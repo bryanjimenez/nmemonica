@@ -706,35 +706,35 @@ export const TermSortByLabel = [
 //   };
 // }
 
-/**
- * @returns {ActCreator}
- */
-export function setParticlesARomaji() {
-  return (dispatch, getState) => {
-    const { user } = getState().login;
+// /**
+//  * @returns {ActCreator}
+//  */
+// export function setParticlesARomaji() {
+//   return (dispatch, getState) => {
+//     const { user } = getState().login;
 
-    const path = "/particles/";
-    const attr = "aRomaji";
-    const time = new Date();
-    localStoreAttrUpdate(time, getState, path, attr);
+//     const path = "/particles/";
+//     const attr = "aRomaji";
+//     const time = new Date();
+//     localStoreAttrUpdate(time, getState, path, attr);
 
-    if (user) {
-      firebaseAttrUpdate(
-        time,
-        dispatch,
-        getState,
-        user.uid,
-        path,
-        attr,
-        SET_PARTICLES_A_ROMAJI
-      );
-    } else {
-      dispatch({
-        type: SET_PARTICLES_A_ROMAJI,
-      });
-    }
-  };
-}
+//     if (user) {
+//       firebaseAttrUpdate(
+//         time,
+//         dispatch,
+//         getState,
+//         user.uid,
+//         path,
+//         attr,
+//         SET_PARTICLES_A_ROMAJI
+//       );
+//     } else {
+//       dispatch({
+//         type: SET_PARTICLES_A_ROMAJI,
+//       });
+//     }
+//   };
+// }
 
 // /**
 //  * @param {string} uid

@@ -272,6 +272,16 @@ export const phraseSettings = {
       return newOrdered;
     };
   },
+
+  // ParticleGame Setting
+  setParticlesARomaji() {
+    return (/** @type {SettingState} */ state) => {
+      const path = "/particles/";
+      const attr = "aRomaji";
+      const time = new Date();
+      return localStoreAttrUpdate(time, state, path, attr);
+    };
+  },
 };
 
 export const initialState = {

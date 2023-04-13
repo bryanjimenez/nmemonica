@@ -416,6 +416,11 @@ const settingSlice = createSlice({
       state.phrases.frequency.count = state.phrases.frequency.count - 1;
     },
 
+    // Particle Game Settings
+    setParticlesARomaji(state) {
+      state.particles.aRomaji = phraseSettings.setParticlesARomaji()(state);
+    },
+
     // Kanji Settings
     addFrequencyKanji(state, action) {
       const uid = action.payload;

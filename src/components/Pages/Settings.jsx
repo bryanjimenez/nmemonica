@@ -976,7 +976,7 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     easyMode: state.settingsHK.kana.easyMode,
     charSet: state.settingsHK.kana.charSet,
 
-    particlesARomaji: state.settings.particles.aRomaji,
+    particlesARomaji: state.settingsHK.particles.aRomaji,
 
     memory: state.settingsHK.global.memory, // FIXME: hook + class
     debug: state.settingsHK.global.debug,   // FIXME: hook + class

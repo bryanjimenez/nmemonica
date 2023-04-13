@@ -132,7 +132,7 @@ function ParticlesGame() {
   }
 
   const aRomaji = useSelector(
-    (/** @type {RootState}*/ { settings }) => settings.particles.aRomaji
+    (/** @type {RootState}*/ { settingsHK }) => settingsHK.particles.aRomaji
   );
 
   const game = prepareGame(selectedIndex, phrases, particles);
