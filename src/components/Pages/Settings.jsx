@@ -14,24 +14,28 @@ import {
   toggleDarkMode,
   toggleActiveGrp,
 } from "../../slices/settingSlice";
-import { getKanji } from "../../slices/kanjiSlice";
+import {
+  getKanji,
+  removeFrequencyKanji,
+  setKanjiBtnN,
+  toggleKanjiActiveTag,
+  toggleKanjiActiveGrp,
+  toggleKanjiFilter,
+  toggleKanjiReinforcement,
+} from "../../slices/kanjiSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
   setOppositesARomaji,
   setOppositesQRomaji,
 } from "../../slices/oppositeSlice";
 import {
-  removeFrequencyKanji,
   setKanaBtnN,
-  setKanjiBtnN,
   setParticlesARomaji,
-  toggleActiveTag,
   toggleKana,
   toggleKanaEasyMode,
   toggleKanaGameWideMode,
-  toggleKanjiFilter,
-  toggleKanjiReinforcement,
 } from "../../slices/settingSlice";
+
 import { DebugLevel, TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { logify } from "../../helper/consoleHelper";
@@ -122,7 +126,8 @@ const SettingsMeta = {
  * @property {typeof setParticlesARomaji} setParticlesARomaji
  * @property {typeof getKanji} getKanji
  * @property {typeof toggleActiveGrp} toggleActiveGrp
- * @property {typeof toggleActiveTag} toggleActiveTag
+ * @property {typeof toggleKanjiActiveTag} toggleKanjiActiveTag
+ * @property {typeof toggleKanjiActiveGrp} toggleKanjiActiveGrp
  * @property {typeof toggleKanjiReinforcement} toggleKanjiReinforcement
  * @property {typeof toggleKanjiFilter} toggleKanjiFilter
  * @property {typeof setOppositesQRomaji} setOppositesQRomaji
@@ -686,9 +691,7 @@ class Settings extends Component {
                       }
                       termsTags={this.props.kanjiTags}
                       termsActive={this.props.kanjiActive}
-                      toggleTermActive={(tag) =>
-                        this.props.toggleActiveTag("kanji", tag)
-                      }
+                      toggleTermActive={this.props.toggleKanjiActiveTag}
                     />
                   )}
                   {this.props.kanjiFilter === TermFilterBy.FREQUENCY &&
@@ -698,9 +701,7 @@ class Settings extends Component {
                         termsFreq={kanjiFreq}
                         terms={this.props.kanji}
                         removeFrequencyTerm={removeFrequencyKanji}
-                        toggleTermActiveGrp={(grp) =>
-                          toggleActiveGrp("kanji", grp)
-                        }
+                        toggleTermActiveGrp={toggleKanjiActiveGrp}
                       />
                     )}
                 </div>
@@ -962,11 +963,11 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
 
     kanji: state.kanji.value,
     kanjiTags: state.kanji.tagObj,
-    kanjiChoiceN: state.setting.kanji.choiceN,
-    kanjiActive: state.setting.kanji.activeTags,
-    kanjiFilter: state.setting.kanji.filter,
-    kRepetition: state.setting.kanji.repetition,
-    kanjiReinforce: state.setting.kanji.reinforce,
+    kanjiChoiceN: state.kanji.setting.choiceN,
+    kanjiActive: state.kanji.setting.activeTags,
+    kanjiFilter: state.kanji.setting.filter,
+    kRepetition: state.kanji.setting.repetition,
+    kanjiReinforce: state.kanji.setting.reinforce,
 
     oppositesQRomaji: state.opposite.qRomaji,
     oppositesARomaji: state.opposite.aRomaji,
@@ -1028,8 +1029,8 @@ Settings.propTypes = {
   kanjiReinforce: PropTypes.bool,
   kanjiChoiceN: PropTypes.number,
   getKanji: PropTypes.func,
-  toggleActiveGrp: PropTypes.func,
-  toggleActiveTag: PropTypes.func,
+  toggleKanjiActiveGrp: PropTypes.func,
+  toggleKanjiActiveTag: PropTypes.func,
   toggleKanjiReinforcement: PropTypes.func,
   toggleKanjiFilter: PropTypes.func,
   setKanjiBtnN: PropTypes.func,
@@ -1058,7 +1059,8 @@ export default connect(mapStateToProps, {
   getKanji,
   setKanjiBtnN,
   toggleActiveGrp,
-  toggleActiveTag,
+  toggleKanjiActiveTag,
+  toggleKanjiActiveGrp,
   toggleKanjiReinforcement,
   toggleKanjiFilter,
 

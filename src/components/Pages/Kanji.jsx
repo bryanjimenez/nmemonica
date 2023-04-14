@@ -15,7 +15,7 @@ import {
   addFrequencyKanji,
   removeFrequencyKanji,
   toggleKanjiFilter,
-} from "../../slices/settingSlice";
+} from "../../slices/kanjiSlice";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { TermFilterBy } from "../../slices/settingHelper";
 
@@ -545,11 +545,11 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     kanji: state.kanji.value,
     vocabulary: state.vocabulary.value,
 
-    filterType: state.setting.kanji.filter,
-    reinforce: state.setting.kanji.reinforce,
-    activeTags: state.setting.kanji.activeTags,
-    repetition: state.setting.kanji.repetition,
-    frequency: state.setting.kanji.frequency,
+    filterType: state.kanji.setting.filter,
+    reinforce: state.kanji.setting.reinforce,
+    activeTags: state.kanji.setting.activeTags,
+    repetition: state.kanji.setting.repetition,
+    frequency: state.kanji.setting.frequency,
 
     swipeThreshold: state.setting.global.swipeThreshold,
   };

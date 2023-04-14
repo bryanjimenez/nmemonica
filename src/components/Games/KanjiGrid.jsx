@@ -8,12 +8,12 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
-} from "../../slices/settingSlice";
+} from "../../slices/kanjiSlice";
 import { randomOrder } from "../../helper/gameHelper";
 import { useFrequency } from "../../hooks/frequencyHK";
 import { useWindowSize } from "../../hooks/helperHK";
@@ -106,13 +106,8 @@ function prepareGame(kanji, choices, writePractice, currExmpl, nextExmpl) {
 
 export default function KanjiGrid() {
   const dispatch = useDispatch();
-  const {rawKanjis,
-    activeTags,
-    filterType,
-    reinforce,
-    choiceN,
-    repetition,
-    } = useKanjiGameConnected()
+  const { rawKanjis, activeTags, filterType, reinforce, choiceN, repetition } =
+    useKanjiGameConnected();
   useMemo(() => {
     if (rawKanjis.length === 0) {
       dispatch(getKanji());
@@ -210,8 +205,18 @@ export default function KanjiGrid() {
     }
   }, [answ, setOffset, refs.floating, update]);
 
-  const addFrequencyTerm=useCallback((uid)=>{dispatch(addFrequencyKanji(uid))},[dispatch]);
-  const removeFrequencyTerm=useCallback((uid)=>{dispatch(removeFrequencyKanji(uid))},[dispatch]);
+  const addFrequencyTerm = useCallback(
+    (uid) => {
+      dispatch(addFrequencyKanji(uid));
+    },
+    [dispatch]
+  );
+  const removeFrequencyTerm = useCallback(
+    (uid) => {
+      dispatch(removeFrequencyKanji(uid));
+    },
+    [dispatch]
+  );
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 

@@ -16,7 +16,7 @@ import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
 import { phraseFromLocalStorage, phraseSettings } from "./phraseSlice";
-import { kanjiSettings } from "./kanjiSlice";
+import { kanjiFromLocalStorage } from "./kanjiSlice";
 import { kanaSettings } from "./kanaSlice";
 import { oppositeFromLocalStorage } from "./oppositeSlice";
 
@@ -56,15 +56,6 @@ export const initialState = {
     autoVerbView: false,
     verbColSplit: 0,
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
-  },
-  kanji: {
-    choiceN: 32,
-    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (2),
-    reinforce: false,
-    repetition: /** @type {SpaceRepetitionMap}*/ ({}),
-    frequency: { uid: undefined, count: 0 },
-    activeGroup: [],
-    activeTags: [],
   },
   particles: { aRomaji: false },
 };
@@ -114,6 +105,7 @@ export const localStorageSettingsInitialized = createAsyncThunk(
     // TODO: distribute localStorage initial settings
     thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
     thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
+    thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
     // use merge to prevent losing defaults not found in localStorage
     const mergedSettings = merge(initialState, lsSettings);
     delete mergedSettings.lastModified;
@@ -357,39 +349,6 @@ const settingSlice = createSlice({
       state.particles.aRomaji = phraseSettings.setParticlesARomaji()(state);
     },
 
-    // Kanji Settings
-    addFrequencyKanji(state, action) {
-      const uid = action.payload;
-      const { value } = kanjiSettings.addFrequencyKanji(uid)(state);
-
-      state.kanji.repetition = value;
-      state.kanji.frequency.uid = action.payload;
-      state.kanji.frequency.count = state.kanji.frequency.count + 1;
-    },
-    removeFrequencyKanji(state, action) {
-      const uid = action.payload;
-
-      const { value, count } = kanjiSettings.removeFrequencyKanji(uid)(state);
-
-      if (value) {
-        state.kanji.repetition = value;
-      }
-
-      state.kanji.frequency.uid = uid;
-      state.kanji.frequency.count = count;
-    },
-    setKanjiBtnN(state, action) {
-      const number = action.payload;
-      state.kanji.choiceN = kanjiSettings.setKanjiBtnN(number)(state);
-    },
-    toggleKanjiFilter(state, action) {
-      const override = action.payload;
-      state.kanji.filter = kanjiSettings.toggleKanjiFilter(override)(state);
-    },
-    toggleKanjiReinforcement(state) {
-      state.kanji.reinforce = kanjiSettings.toggleKanjiReinforcement()(state);
-    },
-
     // Kana Game Settings
     toggleKana(state) {
       state.kana.charSet = kanaSettings.toggleKana()(state);
@@ -468,16 +427,11 @@ export const {
   setWordTPCorrect,
   setWordTPIncorrect,
 
-  addFrequencyKanji,
-  removeFrequencyKanji,
-  setKanaBtnN,
-  setKanjiBtnN,
   setParticlesARomaji,
   toggleActiveTag,
   toggleKana,
+  setKanaBtnN,
   toggleKanaEasyMode,
   toggleKanaGameWideMode,
-  toggleKanjiFilter,
-  toggleKanjiReinforcement,
 } = settingSlice.actions;
 export default settingSlice.reducer;

@@ -40,7 +40,7 @@ export function useVerbMainConnected() {
  * KanjiGame app-state props
  */
 export function useKanjiGameConnected() {
-  const { value: rawKanjis } = useSelector(
+  const { value: rawKanjis, setting: kanjiSettings } = useSelector(
     (/** @type {RootState} */ { kanji }) => kanji
   );
 
@@ -51,7 +51,7 @@ export function useKanjiGameConnected() {
     repetition: repetitionObj,
     choiceN,
     repetition,
-  } = useSelector((/** @type {RootState}*/ { setting }) => setting.kanji);
+  } = kanjiSettings;
 
   return {
     rawKanjis,

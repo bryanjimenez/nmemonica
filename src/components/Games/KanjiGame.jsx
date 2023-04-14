@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import {
   addFrequencyKanji,
   removeFrequencyKanji,
-} from "../../slices/settingSlice";
+} from "../../slices/kanjiSlice";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { useFrequency } from "../../hooks/frequencyHK";
@@ -138,11 +138,8 @@ function prepareGame(kanji, rawKanjis) {
 
 export default function KanjiGame() {
   const dispatch = useDispatch();
-  const {rawKanjis,
-    activeTags,
-    filterType,
-    reinforce,
-    repetitionObj} = useKanjiGameConnected()
+  const { rawKanjis, activeTags, filterType, reinforce, repetitionObj } =
+    useKanjiGameConnected();
 
   useMemo(() => {
     if (rawKanjis.length === 0) {
@@ -187,8 +184,18 @@ export default function KanjiGame() {
 
   // console.log("           KanjiGame render " + selectedIndex);
 
-  const addFrequencyTerm=useCallback((uid)=>{dispatch(addFrequencyKanji(uid))},[dispatch]);
-  const removeFrequencyTerm=useCallback((uid)=>{dispatch(removeFrequencyKanji(uid))},[dispatch]);
+  const addFrequencyTerm = useCallback(
+    (uid) => {
+      dispatch(addFrequencyKanji(uid));
+    },
+    [dispatch]
+  );
+  const removeFrequencyTerm = useCallback(
+    (uid) => {
+      dispatch(removeFrequencyKanji(uid));
+    },
+    [dispatch]
+  );
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 

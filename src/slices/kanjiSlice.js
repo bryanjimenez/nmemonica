@@ -1,12 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import merge from "lodash/fp/merge";
 import { firebaseConfig } from "../../environment.development";
 import { buildTagObject } from "../helper/reducerHelper";
-import {
-  ADD_SPACE_REP_KANJI,
-  TermFilterBy,
-  getLastStateValue,
-  updateSpaceRepTermOLD,
-} from "./settingHelper";
+import { TermFilterBy, updateSpaceRepTerm } from "./settingHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 /**
@@ -31,65 +27,152 @@ export const getKanji = createAsyncThunk(
   }
 );
 
-export const kanjiSettings = {
-  /**
-   * @param {string} uid
-   */
-  addFrequencyKanji(uid) {
-    return (/** @type {SettingState} */ state) =>
-      updateSpaceRepTermOLD(ADD_SPACE_REP_KANJI, uid, false, {
-        set: { rein: true },
-      })(state);
+export const kanjiFromLocalStorage = createAsyncThunk(
+  "kanji/kanjiFromLocalStorage",
+  /** @param {typeof initialState['setting']} arg */
+  async (arg) => {
+    const initValues = arg;
+
+    return initValues;
+  }
+);
+
+export const initialState = {
+  value: /** @type {RawKanji[]} */ ([]),
+  tagObj: /** @type {string[]} */ ([]),
+
+  setting: {
+    choiceN: 32,
+    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (2),
+    reinforce: false,
+    repetition: /** @type {SpaceRepetitionMap}*/ ({}),
+    frequency: { uid: undefined, count: 0 },
+    activeGroup: [],
+    activeTags: [],
   },
-  /**
-   * Removes frequency word
-   * @param {string} uid
-   */
-  removeFrequencyKanji(uid) {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/kanji/";
-      const attr = "repetition";
-      /** @type {SpaceRepetitionMap} */
-      const spaceRep = getLastStateValue(state, path, attr);
+};
+
+const kanjiSlice = createSlice({
+  name: "kanji",
+  initialState,
+  reducers: {
+    toggleKanjiActiveTag(state, action) {
+      const tagName = action.payload;
+
+      const { activeTags } = state.setting;
+
+      let newValue;
+      if (activeTags.includes(tagName)) {
+        newValue = activeTags.filter((a) => a !== tagName);
+      } else {
+        newValue = [...activeTags, tagName];
+      }
+
+      state.setting.activeTags = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "activeTags",
+        newValue
+      );
+    },
+    toggleKanjiActiveGrp: (state, action) => {
+      const grpName = action.payload;
+
+      const { activeGroup } = state.setting;
+
+      const groups = Array.isArray(grpName) ? grpName : [grpName];
+      const newValue = grpParse(groups, activeGroup);
+
+      state.setting.activeGroup = localStoreAttrUpdate(
+        new Date(),
+        { kaji: state.setting },
+        "/kanji/",
+        "activeGroup",
+        newValue
+      );
+  },
+
+    addFrequencyKanji(state, action) {
+      const uid = action.payload;
+
+      const { value: newValue } = updateSpaceRepTerm(
+        uid,
+        state.setting.repetition,
+        false,
+        {
+          set: { rein: true },
+        }
+      );
+
+      localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "repetition",
+        newValue
+      );
+      state.setting.repetition = newValue;
+
+      let frequency = { uid, count: state.setting.frequency.count + 1 };
+      localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "frequency",
+        frequency
+      );
+      state.setting.frequency = frequency;
+    },
+    removeFrequencyKanji(state, action) {
+      const uid = action.payload;
+
+      const spaceRep = state.setting.repetition;
 
       if (spaceRep[uid]?.rein === true) {
-        // update frequency list count
-        const reinforceList = Object.keys(spaceRep).filter(
-          (k) => spaceRep[k].rein === true
-        );
         // null to delete
-        const { value } = updateSpaceRepTermOLD(ADD_SPACE_REP_KANJI, uid, false, {
+        const { value: newValue } = updateSpaceRepTerm(uid, spaceRep, false, {
           set: { rein: null },
-        })(state);
+        });
 
-        return { uid, count: reinforceList.length - 1, value };
+        localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "repetition",
+          newValue
+        );
+
+        if (newValue) {
+          state.setting.repetition = newValue;
+        }
+
+        let frequency = { uid, count: state.setting.frequency.count - 1 };
+        localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "frequency",
+          frequency
+        );
+        state.setting.frequency = frequency;
       }
-    };
-  },
+    },
+    setKanjiBtnN(state, action) {
+      const number = action.payload;
 
-  /**
-   * @param {number} number
-   */
-  setKanjiBtnN(number) {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/kanji/";
-      const attr = "choiceN";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr, number);
-    };
-  },
+      state.setting.choiceN = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "choiceN",
+        number
+      );
+    },
 
-  /**
-   * Toggle between frequency and tags
-   * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
-   */
-  toggleKanjiFilter(override) {
-    return (/** @type {SettingState} */ state) => {
-      const { filter, reinforce } = state.kanji;
-
-      const path = "/kanji/";
-      const attr = "filter";
-      const time = new Date();
+    toggleKanjiFilter(state, action) {
+      const override = action.payload;
+      const { filter, reinforce } = state.setting;
 
       let newFilter;
       if (override !== undefined) {
@@ -100,35 +183,28 @@ export const kanjiSettings = {
           : /*skip TermFilterBy.GROUP*/ TermFilterBy.FREQUENCY;
       }
 
-      localStoreAttrUpdate(time, state, path, attr, newFilter);
+      state.setting.filter = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "filter",
+        newFilter
+      );
 
       if (newFilter !== 0 && reinforce) {
-        kanjiSettings.toggleKanjiReinforcement()(state);
+        state.setting.reinforce = false;
       }
+    },
 
-      return newFilter;
-    };
+    toggleKanjiReinforcement(state) {
+      state.setting.reinforce = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "reinforce"
+      );
+    },
   },
-
-  toggleKanjiReinforcement() {
-    return (state) => {
-      const path = "/kanji/";
-      const attr = "reinforce";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr);
-    };
-  },
-};
-
-export const initialState = {
-  value: /** @type {RawKanji[]} */ ([]),
-  tagObj: /** @type {string[]} */ ([]),
-};
-
-const kanjiSlice = createSlice({
-  name: "kanji",
-  initialState,
-  reducers: {},
 
   extraReducers: (builder) => {
     builder.addCase(getKanji.fulfilled, (state, action) => {
@@ -141,7 +217,36 @@ const kanjiSlice = createSlice({
       state.tagObj = buildTagObject(action.payload);
       state.value = value;
     });
+
+    builder.addCase(kanjiFromLocalStorage.fulfilled, (state, action) => {
+      const localStorageValue = action.payload;
+      const mergedSettings = merge(initialState.setting, localStorageValue);
+
+
+    const kanjiReinforceList = Object.keys(
+      mergedSettings.repetition
+    ).filter((k) => mergedSettings.repetition[k]?.rein === true);
+    mergedSettings.frequency = {
+      uid: undefined,
+      count: kanjiReinforceList.length,
+    };
+
+      return {
+        ...state,
+        setting: { ...mergedSettings },
+      };
+    });
   },
 });
+
+export const {
+  toggleKanjiActiveTag,
+  toggleKanjiActiveGrp,
+  addFrequencyKanji,
+  removeFrequencyKanji,
+  setKanjiBtnN,
+  toggleKanjiFilter,
+  toggleKanjiReinforcement,
+} = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;
