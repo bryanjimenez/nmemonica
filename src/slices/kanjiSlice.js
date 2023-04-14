@@ -5,7 +5,7 @@ import {
   ADD_SPACE_REP_KANJI,
   TermFilterBy,
   getLastStateValue,
-  updateSpaceRepTerm,
+  updateSpaceRepTermOLD,
 } from "./settingHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
@@ -37,7 +37,7 @@ export const kanjiSettings = {
    */
   addFrequencyKanji(uid) {
     return (/** @type {SettingState} */ state) =>
-      updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
+      updateSpaceRepTermOLD(ADD_SPACE_REP_KANJI, uid, false, {
         set: { rein: true },
       })(state);
   },
@@ -58,7 +58,7 @@ export const kanjiSettings = {
           (k) => spaceRep[k].rein === true
         );
         // null to delete
-        const { value } = updateSpaceRepTerm(ADD_SPACE_REP_KANJI, uid, false, {
+        const { value } = updateSpaceRepTermOLD(ADD_SPACE_REP_KANJI, uid, false, {
           set: { rein: null },
         })(state);
 

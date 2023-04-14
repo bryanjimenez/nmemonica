@@ -4,14 +4,15 @@ import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { pronounceEndoint } from "../../../environment.development";
-import { logger, togglePhrasesFilter } from "../../slices/settingSlice";
+import { logger } from "../../slices/settingSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
   addFrequencyPhrase,
   flipPhrasesPracticeSide,
   removeFrequencyPhrase,
   updateSpaceRepPhrase,
-} from "../../slices/settingSlice";
+  togglePhrasesFilter,
+} from "../../slices/phraseSlice";
 import {
   DebugLevel,
   TermFilterBy,
@@ -67,9 +68,9 @@ import StackNavButton from "../Form/StackNavButton";
 
 /**
  * @typedef {Object} PhrasesState
- * @property {import("../Form/Console").ConsoleMessage[]} errorMsgs,
+ * @property {import("../Form/Console").ConsoleMessage[]} errorMsgs
  * @property {number} errorSkipIndex
- * @property {number} lastNext
+ * @property {number} lastNext        timestamp of last swipe
  * @property {number} selectedIndex
  * @property {boolean} showMeaning
  * @property {boolean} showRomaji
@@ -99,8 +100,7 @@ import StackNavButton from "../Form/StackNavButton";
  * @property {boolean} reinforce
  * @property {string[]} activeGroup
  * @property {SpaceRepetitionMap} repetition
- * @property {number} lastNext
- * @property {function} updateSpaceRepPhrase
+ * @property {typeof updateSpaceRepPhrase} updateSpaceRepPhrase
  * @property {typeof logger} logger
  * @property {number} swipeThreshold
  */
@@ -300,7 +300,7 @@ class Phrases extends Component {
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
         this.props
-          .updateSpaceRepPhrase(uid, shouldIncrement)
+          .updateSpaceRepPhrase({uid, shouldIncrement})
           .then(({ payload }) => {
             const { map, prevMap } = payload;
 
@@ -961,38 +961,37 @@ class Phrases extends Component {
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     phrases: state.phrases.value,
-    practiceSide: state.setting.phrases.practiceSide,
-    termsOrder: state.setting.phrases.ordered,
-    romajiActive: state.setting.phrases.romaji,
-    filterType: state.setting.phrases.filter,
-    frequency: state.setting.phrases.frequency,
-    activeGroup: state.setting.phrases.activeGroup,
-    reinforce: state.setting.phrases.reinforce,
-    repetition: state.setting.phrases.repetition,
+    practiceSide: state.phrases.setting.practiceSide,
+    termsOrder: state.phrases.setting.ordered,
+    romajiActive: state.phrases.setting.romaji,
+    filterType: state.phrases.setting.filter,
+    frequency: state.phrases.setting.frequency,
+    activeGroup: state.phrases.setting.activeGroup,
+    reinforce: state.phrases.setting.reinforce,
+    repetition: state.phrases.setting.repetition,
     swipeThreshold: state.setting.global.swipeThreshold,
   };
 };
 
 Phrases.propTypes = {
-  getPhrase: PropTypes.func.isRequired,
   activeGroup: PropTypes.array,
-  addFrequencyPhrase: PropTypes.func,
-  removeFrequencyPhrase: PropTypes.func,
   frequency: PropTypes.object,
   phrases: PropTypes.array.isRequired,
   romajiActive: PropTypes.bool,
-  flipPhrasesPracticeSide: PropTypes.func,
   practiceSide: PropTypes.bool,
   termsOrder: PropTypes.number,
   filterType: PropTypes.number,
-  togglePhrasesFilter: PropTypes.func,
   reinforce: PropTypes.bool,
   repetition: PropTypes.object,
-  lastNext: PropTypes.number,
+  swipeThreshold: PropTypes.number,
+
+  getPhrase: PropTypes.func.isRequired,
+  addFrequencyPhrase: PropTypes.func,
+  removeFrequencyPhrase: PropTypes.func,
+  flipPhrasesPracticeSide: PropTypes.func,
+  togglePhrasesFilter: PropTypes.func,
   updateSpaceRepPhrase: PropTypes.func,
   logger: PropTypes.func,
-  clearPreviousTerm: PropTypes.func,
-  swipeThreshold: PropTypes.number,
 };
 
 export default connect(mapStateToProps, {

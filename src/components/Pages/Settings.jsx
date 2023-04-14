@@ -956,7 +956,7 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     motionThreshold: state.setting.global.motionThreshold,
 
     phrases: state.phrases.value,
-    pRepetition: state.setting.phrases.repetition,
+    pRepetition: state.phrases.setting.repetition,
     vocabulary: state.vocabulary.value,
     vRepetition: state.setting.vocabulary.repetition,
 

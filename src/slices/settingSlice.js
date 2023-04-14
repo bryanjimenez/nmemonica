@@ -15,7 +15,7 @@ import {
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
-import { phraseSettings } from "./phraseSlice";
+import { phraseFromLocalStorage, phraseSettings } from "./phraseSlice";
 import { kanjiSettings } from "./kanjiSlice";
 import { kanaSettings } from "./kanaSlice";
 import { oppositeFromLocalStorage } from "./oppositeSlice";
@@ -42,16 +42,6 @@ export const initialState = {
     motionThreshold: 0,
   },
   kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
-  phrases: {
-    ordered: /** @type {TermSortBy[keyof TermSortBy]} */ (0),
-    practiceSide: false,
-    romaji: false,
-    reinforce: false,
-    repetition: /** @type {SpaceRepetitionMap}*/ ({}),
-    frequency: { uid: undefined, count: 0 },
-    activeGroup: [],
-    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (0),
-  },
   vocabulary: {
     ordered: /** @type {TermSortBy[keyof TermSortBy]} */ (0),
     practiceSide: false,
@@ -116,58 +106,36 @@ export const updateSpaceRepWord = createAsyncThunk(
   }
 );
 
-export const updateSpaceRepPhrase = createAsyncThunk(
-  "setting/updateSpaceRepPhrase",
-  async (arg, thunkAPI) => {
-    const { uid, shouldIncrement } = arg;
-    const state = /** @type {RootState} */ (thunkAPI.getState()).setting;
-
-    return phraseSettings.updateSpaceRepPhrase(uid, shouldIncrement)(state);
-  }
-);
-
-
 export const localStorageSettingsInitialized = createAsyncThunk(
   "setting/localStorageSettingsInitialized",
   async (arg, thunkAPI) => {
+    const lsSettings = getLocalStorageSettings(localStorageKey);
 
-      const lsSettings = getLocalStorageSettings(localStorageKey);
+    // TODO: distribute localStorage initial settings
+    thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
+    thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
+    // use merge to prevent losing defaults not found in localStorage
+    const mergedSettings = merge(initialState, lsSettings);
+    delete mergedSettings.lastModified;
 
-      // TODO: distribute localStorage initial settings
-      thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
+    // calculated values
+    const vocabReinforceList = Object.keys(
+      mergedSettings.vocabulary.repetition
+    ).filter((k) => mergedSettings.vocabulary.repetition[k]?.rein === true);
+    mergedSettings.vocabulary.frequency = {
+      uid: undefined,
+      count: vocabReinforceList.length,
+    };
 
+    const kanjiReinforceList = Object.keys(
+      mergedSettings.kanji.repetition
+    ).filter((k) => mergedSettings.kanji.repetition[k]?.rein === true);
+    mergedSettings.kanji.frequency = {
+      uid: undefined,
+      count: kanjiReinforceList.length,
+    };
 
-
-      // use merge to prevent losing defaults not found in localStorage
-      const mergedSettings = merge(initialState, lsSettings);
-      delete mergedSettings.lastModified;
-
-      // calculated values
-      const vocabReinforceList = Object.keys(
-        mergedSettings.vocabulary.repetition
-      ).filter((k) => mergedSettings.vocabulary.repetition[k]?.rein === true);
-      mergedSettings.vocabulary.frequency = {
-        uid: undefined,
-        count: vocabReinforceList.length,
-      };
-
-      const phraseReinforceList = Object.keys(
-        mergedSettings.phrases.repetition
-      ).filter((k) => mergedSettings.phrases.repetition[k]?.rein === true);
-      mergedSettings.phrases.frequency = {
-        uid: undefined,
-        count: phraseReinforceList.length,
-      };
-
-      const kanjiReinforceList = Object.keys(
-        mergedSettings.kanji.repetition
-      ).filter((k) => mergedSettings.kanji.repetition[k]?.rein === true);
-      mergedSettings.kanji.frequency = {
-        uid: undefined,
-        count: kanjiReinforceList.length,
-      };
-
-      return mergedSettings;
+    return mergedSettings;
   }
 );
 
@@ -384,47 +352,6 @@ const settingSlice = createSlice({
       }),
     },
 
-    // Phrases Settings
-    flipPhrasesPracticeSide(state) {
-      const side = phraseSettings.flipPhrasesPracticeSide()(state);
-
-      state.phrases.practiceSide = side;
-    },
-    togglePhrasesRomaji(state) {
-      state.phrases.romaji = phraseSettings.togglePhrasesRomaji()(state);
-    },
-    togglePhrasesOrdering(state) {
-      state.phrases.ordered = phraseSettings.togglePhrasesOrdering()(state);
-    },
-    togglePhrasesFilter(state) {
-      state.phrases.filter = phraseSettings.togglePhrasesFilter()(state);
-    },
-    togglePhrasesReinforcement(state) {
-      state.phrases.reinforce =
-        phraseSettings.togglePhrasesReinforcement()(state);
-    },
-    addFrequencyPhrase(state, action) {
-      const uid = action.payload;
-      const { value } = phraseSettings.addFrequencyPhrase(uid)(state);
-
-      state.phrases.repetition = value;
-      state.phrases.frequency.uid = action.payload;
-      state.phrases.frequency.count = state.phrases.frequency.count + 1;
-    },
-
-    removeFrequencyPhrase(state, action) {
-      const { value } = phraseSettings.removeFrequencyPhrase(action.payload)(
-        state
-      );
-
-      if (value) {
-        state.phrases.repetition = value;
-      }
-
-      state.phrases.frequency.uid = action.payload;
-      state.phrases.frequency.count = state.phrases.frequency.count - 1;
-    },
-
     // Particle Game Settings
     setParticlesARomaji(state) {
       state.particles.aRomaji = phraseSettings.setParticlesARomaji()(state);
@@ -480,13 +407,16 @@ const settingSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(localStorageSettingsInitialized.fulfilled, (state, action)=>{
-      const mergedSettings = action.payload;
-      // mergedSettings is a multi-level deep object
-      return {
-        ...mergedSettings,
-      };
-    })
+    builder.addCase(
+      localStorageSettingsInitialized.fulfilled,
+      (state, action) => {
+        const mergedSettings = action.payload;
+        // mergedSettings is a multi-level deep object
+        return {
+          ...mergedSettings,
+        };
+      }
+    );
     builder.addCase(getMemoryStorageStatus.fulfilled, (state, action) => {
       const { quota, usage, persistent } = action.payload;
 
@@ -537,14 +467,6 @@ export const {
   setWordDifficulty,
   setWordTPCorrect,
   setWordTPIncorrect,
-
-  flipPhrasesPracticeSide,
-  togglePhrasesRomaji,
-  togglePhrasesFilter,
-  togglePhrasesReinforcement,
-  addFrequencyPhrase,
-  removeFrequencyPhrase,
-  togglePhrasesOrdering,
 
   addFrequencyKanji,
   removeFrequencyKanji,

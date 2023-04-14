@@ -9,7 +9,8 @@ import {
   TermFilterBy,
   TermSortBy,
   getLastStateValue,
-  updateSpaceRepTerm,
+  toggleAFilter,
+  updateSpaceRepTermOLD,
 } from "./settingHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
@@ -41,7 +42,7 @@ export const vocabularySettings = {
    */
   toggleFurigana(uid) {
     return (/** @type {SettingState} */ state) => {
-      const { value } = updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+      const { value } = updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
         toggle: ["f"],
       })(state);
 
@@ -49,7 +50,10 @@ export const vocabularySettings = {
     };
   },
 
-  toggleVocabularyReinforcement() {
+  /**
+   * @param {boolean} [override]
+   */
+  toggleVocabularyReinforcement(override) {
     return (/** @type {SettingState} */ state) => {
       const path = "/vocabulary/";
       const attr = "reinforce";
@@ -128,14 +132,7 @@ export const vocabularySettings = {
       const time = new Date();
 
       /** @type {typeof TermFilterBy[keyof TermFilterBy]}*/
-      let newFilter = filter + 1;
-      if (override !== undefined) {
-        newFilter = override;
-      } else {
-        while (!allowed.includes(newFilter) || newFilter > max) {
-          newFilter = newFilter + 1 > max ? 0 : newFilter + 1;
-        }
-      }
+      const newFilter = toggleAFilter(filter+1, allowed, max, override);
 
       localStoreAttrUpdate(time, state, path, attr, newFilter);
 
@@ -152,7 +149,7 @@ export const vocabularySettings = {
    */
   addFrequencyWord(uid) {
     return (/** @type {SettingState} */ state) => {
-      return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+      return updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
         set: { rein: true },
       })(state);
     };
@@ -175,7 +172,7 @@ export const vocabularySettings = {
           (k) => spaceRep[k].rein === true
         );
         // null to delete
-        const { value } = updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+        const { value } = updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
           set: { rein: null },
         })(state);
 
@@ -190,7 +187,7 @@ export const vocabularySettings = {
    * @param {boolean} [shouldIncrement]
    */
   updateSpaceRepWord(uid, shouldIncrement = true) {
-    return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, shouldIncrement);
+    return updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, shouldIncrement);
   },
 
   /**
@@ -243,7 +240,7 @@ export const vocabularySettings = {
    * @param {number} value
    */
   setWordDifficulty(uid, value) {
-    return updateSpaceRepTerm(ADD_SPACE_REP_WORD, uid, false, {
+    return updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
       set: { difficulty: value },
     });
   },

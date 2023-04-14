@@ -2,12 +2,15 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 
-import { getPhrase } from "../../slices/phraseSlice";
 import {
+  getPhrase,
+  togglePhraseActiveGrp,
   removeFrequencyPhrase,
   togglePhrasesOrdering,
   togglePhrasesRomaji,
-} from "../../slices/settingSlice";
+  togglePhrasesFilter,
+  togglePhrasesReinforcement,
+} from "../../slices/phraseSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -18,11 +21,6 @@ import { SetTermGList } from "../Pages/SetTermGList";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { NotReady } from "./NotReady";
-import {
-  toggleActiveGrp,
-  togglePhrasesFilter,
-  togglePhrasesReinforcement,
-} from "../../slices/settingSlice";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -44,7 +42,7 @@ import {
  * @property {string[]} phraseActive
  * @property {typeof togglePhrasesOrdering} togglePhrasesOrdering
  * @property {typeof togglePhrasesFilter} togglePhrasesFilter
- * @property {typeof toggleActiveGrp} toggleActiveGrp
+ * @property {typeof togglePhraseActiveGrp} togglePhraseActiveGrp
  * @property {typeof togglePhrasesRomaji} togglePhrasesRomaji
  * @property {typeof togglePhrasesReinforcement} togglePhrasesReinforcement
  * @property {typeof removeFrequencyPhrase} removeFrequencyPhrase
@@ -74,7 +72,7 @@ class SettingsPhrase extends Component {
       phraseFilter,
 
       togglePhrasesFilter,
-      toggleActiveGrp,
+      togglePhraseActiveGrp,
       removeFrequencyPhrase,
       togglePhrasesOrdering,
       togglePhrasesReinforcement,
@@ -122,7 +120,7 @@ class SettingsPhrase extends Component {
                 <SetTermGList
                   termsGroups={phraseGroups}
                   termsActive={phraseActive}
-                  toggleTermActiveGrp={(grp) => toggleActiveGrp("phrases", grp)}
+                  toggleTermActiveGrp={togglePhraseActiveGrp}
                 />
               )}
               {phraseFilter === TermFilterBy.FREQUENCY &&
@@ -136,9 +134,7 @@ class SettingsPhrase extends Component {
                     termsFreq={phraseFreq}
                     terms={phrases}
                     removeFrequencyTerm={removeFrequencyPhrase}
-                    toggleTermActiveGrp={(grp) =>
-                      toggleActiveGrp("phrases", grp)
-                    }
+                    toggleTermActiveGrp={togglePhraseActiveGrp}
                   />
                 )}
             </div>
@@ -184,12 +180,12 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
     phrases: state.phrases.value,
     phraseGroups: state.phrases.grpObj,
-    phraseOrder: state.setting.phrases.ordered,
-    phraseRomaji: state.setting.phrases.romaji,
-    phraseReinforce: state.setting.phrases.reinforce,
-    phraseActive: state.setting.phrases.activeGroup,
-    phraseFilter: state.setting.phrases.filter,
-    phraseRep: state.setting.phrases.repetition,
+    phraseOrder: state.phrases.setting.ordered,
+    phraseRomaji: state.phrases.setting.romaji,
+    phraseReinforce: state.phrases.setting.reinforce,
+    phraseActive: state.phrases.setting.activeGroup,
+    phraseFilter: state.phrases.setting.filter,
+    phraseRep: state.phrases.setting.repetition,
   };
 };
 
@@ -206,7 +202,7 @@ SettingsPhrase.propTypes = {
   getPhrase: PropTypes.func,
   togglePhrasesOrdering: PropTypes.func,
   togglePhrasesFilter: PropTypes.func,
-  toggleActiveGrp: PropTypes.func,
+  togglePhraseActiveGrp: PropTypes.func,
   togglePhrasesRomaji: PropTypes.func,
 
   togglePhrasesReinforcement: PropTypes.func,
@@ -216,7 +212,7 @@ SettingsPhrase.propTypes = {
 export default connect(mapStateToProps, {
   getPhrase,
   togglePhrasesFilter,
-  toggleActiveGrp,
+  togglePhraseActiveGrp,
   removeFrequencyPhrase,
   togglePhrasesOrdering,
   togglePhrasesReinforcement,

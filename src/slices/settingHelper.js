@@ -37,6 +37,27 @@ export const TermSortByLabel = [
 ];
 
 /**
+ * Toggle a filter, or override. Skips non-allowed values
+ * @param {number} filter
+ * @param {number[]} allowed
+ * @param {number} [override]
+ */
+export function toggleAFilter(filter, allowed, override) {
+  const max = Math.max(...allowed);
+
+  let newFilter = filter;
+  if (override !== undefined && allowed.includes(override)) {
+    newFilter = override;
+  } else {
+    while (!allowed.includes(newFilter) || newFilter > max) {
+      newFilter = filter + 1 > max ? 0 : filter + 1;
+    }
+  }
+
+  return newFilter;
+}
+
+/**
  * @param {typeof DebugLevel[keyof DebugLevel]} override
  */
 export function toggleDebugHelper(override) {
@@ -82,11 +103,11 @@ export function toggleActiveGrpHelper(parent, grpName) {
   };
 }
 
- /**
-   * @param {string} parent
-   * @param {string} tagName
-   */
- export function toggleActiveTagHelper(parent, tagName) {
+/**
+ * @param {string} parent
+ * @param {string} tagName
+ */
+export function toggleActiveTagHelper(parent, tagName) {
   return (/** @type {SettingState} */ state) => {
     /** @type {{activeTags: string[]}} */
     const { activeTags } = state[parent];
@@ -143,6 +164,7 @@ export function grpParse(grpNames, activeGroup) {
 }
 
 /**
+ * @deprecated
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {{map: SpaceRepetitionMap, prevMap: SpaceRepetitionMap}} updateSpaceRepTermYield
  * @param {ADD_SPACE_REP_WORD | ADD_SPACE_REP_PHRASE | ADD_SPACE_REP_KANJI} aType
@@ -150,7 +172,7 @@ export function grpParse(grpNames, activeGroup) {
  * @param {boolean} shouldIncrement should view count increment
  * @param {{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: {[k in keyof SpaceRepetitionMap["uid"]]+?: SpaceRepetitionMap["uid"][k]|null}}} [options] additional optional settable attributes ({@link furiganaToggled })
  */
-export function updateSpaceRepTerm(
+export function updateSpaceRepTermOLD(
   aType,
   uid,
   shouldIncrement = true,
@@ -236,6 +258,83 @@ export function updateSpaceRepTerm(
 
     return { map, prevMap, value: newValue };
   };
+}
+
+/**
+ * Update term metadata
+ * @param {string} uid
+ * @param {SpaceRepetitionMap} spaceRep
+ * @param {boolean} shouldIncrement should view count increment
+ * @param {{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: {[k in keyof SpaceRepetitionMap["uid"]]+?: SpaceRepetitionMap["uid"][k]|null}}} [options] additional optional settable attributes ({@link furiganaToggled })
+ */
+export function updateSpaceRepTerm(
+  uid,
+  spaceRep,
+  shouldIncrement = true,
+  options
+) {
+  let prevMap =
+    spaceRep[uid] === undefined ? undefined : { [uid]: spaceRep[uid] };
+
+  let count;
+  if (spaceRep[uid] && spaceRep[uid].vC > 0 && shouldIncrement) {
+    count = spaceRep[uid].vC + 1;
+  } else if (spaceRep[uid] && spaceRep[uid].vC > 0 && !shouldIncrement) {
+    count = spaceRep[uid].vC;
+  } else {
+    count = 1;
+  }
+
+  let uidChangedAttr = {};
+  if (options !== undefined) {
+    if (options.toggle) {
+      const optToggled = options.toggle.reduce((acc, attr) => {
+        let val;
+        if (["f"].includes(attr)) {
+          // this default is only for furigana so far
+          val = !(spaceRep[uid] && spaceRep[uid][attr] === false) || false;
+        } else {
+          val = spaceRep[uid] && spaceRep[uid][attr];
+        }
+
+        return { ...acc, [attr]: !val };
+      }, {});
+
+      uidChangedAttr = { ...uidChangedAttr, ...optToggled };
+    }
+
+    if (options.set !== undefined) {
+      const optSet = Object.keys(options.set).reduce((acc, k) => {
+        if (options.set !== undefined && options.set[k] !== undefined) {
+          if (options.set[k] === null) {
+            acc = { ...acc, [k]: undefined };
+          } else {
+            acc = { ...acc, [k]: options.set[k] };
+          }
+        }
+        return acc;
+      }, {});
+
+      uidChangedAttr = { ...uidChangedAttr, ...optSet };
+    }
+  }
+
+  const now = new Date().toJSON();
+  /** @type {SpaceRepetitionMap["uid"]} */
+  const o = {
+    ...(spaceRep[uid] || {}),
+    vC: count,
+    d: now,
+    ...uidChangedAttr,
+  };
+
+  const map = { [uid]: o };
+  prevMap = prevMap === undefined ? { ...map } : prevMap;
+
+  /** @type {SpaceRepetitionMap} */
+  const newValue = { ...spaceRep, ...map };
+
+  return { map, prevMap, value: newValue };
 }
 
 /**
