@@ -28,14 +28,13 @@ import {
   setOppositesARomaji,
   setOppositesQRomaji,
 } from "../../slices/oppositeSlice";
+import { setParticlesARomaji } from "../../slices/settingSlice";
 import {
   setKanaBtnN,
-  setParticlesARomaji,
   toggleKana,
   toggleKanaEasyMode,
   toggleKanaGameWideMode,
-} from "../../slices/settingSlice";
-
+} from "../../slices/kanaSlice";
 import { DebugLevel, TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { logify } from "../../helper/consoleHelper";
@@ -972,10 +971,10 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     oppositesQRomaji: state.opposite.qRomaji,
     oppositesARomaji: state.opposite.aRomaji,
 
-    choiceN: state.setting.kana.choiceN,
-    wideMode: state.setting.kana.wideMode,
-    easyMode: state.setting.kana.easyMode,
-    charSet: state.setting.kana.charSet,
+    choiceN: state.kana.setting.choiceN,
+    wideMode: state.kana.setting.wideMode,
+    easyMode: state.kana.setting.easyMode,
+    charSet: state.kana.setting.charSet,
 
     particlesARomaji: state.setting.particles.aRomaji,
 

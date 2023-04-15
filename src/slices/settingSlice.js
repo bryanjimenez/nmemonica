@@ -9,7 +9,6 @@ import {
 import {
   DebugLevel,
   toggleActiveGrpHelper,
-  toggleActiveTagHelper,
   toggleDebugHelper,
 } from "./settingHelper";
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
@@ -17,7 +16,7 @@ import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
 import { phraseFromLocalStorage, phraseSettings } from "./phraseSlice";
 import { kanjiFromLocalStorage } from "./kanjiSlice";
-import { kanaSettings } from "./kanaSlice";
+import { kanaFromLocalStorage } from "./kanaSlice";
 import { oppositeFromLocalStorage } from "./oppositeSlice";
 
 /**
@@ -41,7 +40,6 @@ export const initialState = {
     swipeThreshold: 0,
     motionThreshold: 0,
   },
-  kana: { choiceN: 16, wideMode: false, easyMode: false, charSet: 0 },
   vocabulary: {
     ordered: /** @type {TermSortBy[keyof TermSortBy]} */ (0),
     practiceSide: false,
@@ -106,6 +104,8 @@ export const localStorageSettingsInitialized = createAsyncThunk(
     thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
     thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
     thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
+    thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
+
     // use merge to prevent losing defaults not found in localStorage
     const mergedSettings = merge(initialState, lsSettings);
     delete mergedSettings.lastModified;
@@ -206,17 +206,6 @@ const settingSlice = createSlice({
         )(state);
       },
       prepare: (parent, grpName) => ({ payload: { parent, grpName } }),
-    },
-    toggleActiveTag: {
-      reducer: (state, action) => {
-        const { parent, tagName } = action.payload;
-
-        state[parent].activeTags = toggleActiveTagHelper(
-          parent,
-          tagName
-        )(state);
-      },
-      prepare: (parent, tagName) => ({ payload: { parent, tagName } }),
     },
 
     // Vocabulary Settings
@@ -348,21 +337,6 @@ const settingSlice = createSlice({
     setParticlesARomaji(state) {
       state.particles.aRomaji = phraseSettings.setParticlesARomaji()(state);
     },
-
-    // Kana Game Settings
-    toggleKana(state) {
-      state.kana.charSet = kanaSettings.toggleKana()(state);
-    },
-    setKanaBtnN(state, action) {
-      const number = action.payload;
-      state.kana.choiceN = kanaSettings.setKanaBtnN(number)(state);
-    },
-    toggleKanaEasyMode(state) {
-      state.kana.easyMode = kanaSettings.toggleKanaEasyMode()(state);
-    },
-    toggleKanaGameWideMode(state) {
-      state.kana.wideMode = kanaSettings.toggleKanaGameWideMode()(state);
-    },
   },
 
   extraReducers: (builder) => {
@@ -428,10 +402,5 @@ export const {
   setWordTPIncorrect,
 
   setParticlesARomaji,
-  toggleActiveTag,
-  toggleKana,
-  setKanaBtnN,
-  toggleKanaEasyMode,
-  toggleKanaGameWideMode,
 } = settingSlice.actions;
 export default settingSlice.reducer;

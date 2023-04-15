@@ -18,7 +18,7 @@ import { SettingsMeta } from "../Pages/Settings";
 import classNames from "classnames";
 
 import { KanjiMeta } from "../Pages/Kanji";
-import { toggleKana } from "../../slices/settingSlice";
+import { toggleKana } from "../../slices/kanaSlice";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 import { KanjiGameMeta } from "../Games/KanjiGame";
 
@@ -252,7 +252,7 @@ Navigation.propTypes = {
 };
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
-  return { /*user: state.login.user,*/ charSet: state.setting.kana.charSet };
+  return { /*user: state.login.user,*/ charSet: state.kana.setting.charSet };
 };
 
 export default connect(mapStateToProps, { toggleKana })(Navigation);

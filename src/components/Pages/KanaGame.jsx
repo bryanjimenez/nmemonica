@@ -596,10 +596,10 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     vowels: state.kana.vowels,
     consonants: state.kana.consonants,
     sounds: state.kana.sounds,
-    choiceN: state.setting.kana.wideMode ? 31 : state.setting.kana.choiceN,
-    wideMode: state.setting.kana.wideMode,
-    easyMode: state.setting.kana.easyMode,
-    charSet: state.setting.kana.charSet,
+    choiceN: state.kana.setting.wideMode ? 31 : state.kana.setting.choiceN,
+    wideMode: state.kana.setting.wideMode,
+    easyMode: state.kana.setting.easyMode,
+    charSet: state.kana.setting.charSet,
     debug: state.setting.global.debug,
   };
 };
