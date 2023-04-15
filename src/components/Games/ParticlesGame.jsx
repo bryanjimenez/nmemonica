@@ -8,7 +8,7 @@ import { NotReady } from "../Form/NotReady";
 import FourChoices from "./FourChoices";
 
 import "./ParticlesGame.css";
-import { getParticleGame } from "../../slices/phraseSlice";
+import { getParticleGame } from "../../slices/particleSlice";
 import { JapaneseText } from "../../helper/JapaneseText";
 
 /**
@@ -60,7 +60,7 @@ function ParticlesGame() {
   const dispatch = useDispatch();
   const {
     particleGame: { phrases, particles },
-  } = useSelector((/** @type {RootState}*/ { phrases }) => phrases);
+  } = useSelector((/** @type {RootState}*/ { particle }) => particle);
   useMemo(() => {
     if (phrases.length === 0) {
       dispatch(getParticleGame());
@@ -129,8 +129,8 @@ function ParticlesGame() {
     setSelectedIndex(newSel);
   }
 
-  const aRomaji = useSelector(
-    (/** @type {RootState}*/ { setting }) => setting.particles.aRomaji
+  const { aRomaji } = useSelector(
+    (/** @type {RootState}*/ { particle }) => particle.setting
   );
 
   const game = prepareGame(selectedIndex, phrases, particles);

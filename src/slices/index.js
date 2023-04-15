@@ -7,6 +7,7 @@ import settingReducer from "./settingSlice";
 import versionsReducer from "./versionSlice";
 import vocabularyReducer from "./vocabularySlice";
 import serviceWorkerReducer from "./serviceWorkerSlice";
+import particleGameReducer from "./particleSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,5 +21,6 @@ export const store = configureStore({
     opposite: oppositesReducer,
     phrases: phrasesReducer,
     kanji: kanjiReducer,
+    particle: particleGameReducer,
   },
 });

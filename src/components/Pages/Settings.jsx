@@ -28,7 +28,7 @@ import {
   setOppositesARomaji,
   setOppositesQRomaji,
 } from "../../slices/oppositeSlice";
-import { setParticlesARomaji } from "../../slices/settingSlice";
+import { setParticlesARomaji } from "../../slices/particleSlice";
 import {
   setKanaBtnN,
   toggleKana,
@@ -976,7 +976,7 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     easyMode: state.kana.setting.easyMode,
     charSet: state.kana.setting.charSet,
 
-    particlesARomaji: state.setting.particles.aRomaji,
+    particlesARomaji: state.particle.setting.aRomaji,
 
     memory: state.setting.global.memory,
     debug: state.setting.global.debug,

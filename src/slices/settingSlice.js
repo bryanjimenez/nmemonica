@@ -14,10 +14,11 @@ import {
 import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettings } from "./vocabularySlice";
-import { phraseFromLocalStorage, phraseSettings } from "./phraseSlice";
+import { phraseFromLocalStorage } from "./phraseSlice";
 import { kanjiFromLocalStorage } from "./kanjiSlice";
 import { kanaFromLocalStorage } from "./kanaSlice";
 import { oppositeFromLocalStorage } from "./oppositeSlice";
+import { particleFromLocalStorage } from "./particleSlice";
 
 /**
  * @typedef {typeof import("../slices/settingHelper").TermSortBy} TermSortBy
@@ -55,7 +56,6 @@ export const initialState = {
     verbColSplit: 0,
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
   },
-  particles: { aRomaji: false },
 };
 
 export const getMemoryStorageStatus = createAsyncThunk(
@@ -105,6 +105,7 @@ export const localStorageSettingsInitialized = createAsyncThunk(
     thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
     thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
     thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
+    thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
 
     // use merge to prevent losing defaults not found in localStorage
     const mergedSettings = merge(initialState, lsSettings);
@@ -332,11 +333,6 @@ const settingSlice = createSlice({
         payload: { uid, pronunciation },
       }),
     },
-
-    // Particle Game Settings
-    setParticlesARomaji(state) {
-      state.particles.aRomaji = phraseSettings.setParticlesARomaji()(state);
-    },
   },
 
   extraReducers: (builder) => {
@@ -400,7 +396,5 @@ export const {
   setWordDifficulty,
   setWordTPCorrect,
   setWordTPIncorrect,
-
-  setParticlesARomaji,
 } = settingSlice.actions;
 export default settingSlice.reducer;
