@@ -9,7 +9,6 @@ import {
   TermFilterBy,
   TermSortBy,
 } from "../../slices/settingHelper";
-import { getVocabulary } from "../../slices/vocabularySlice";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
@@ -19,8 +18,8 @@ import VocabularyMain from "./VocabularyMain";
 // import { deepOrange } from "@mui/material";
 import { pronounceEndoint } from "../../../environment.development";
 import {
-  logger,
-  scrollingState,
+  furiganaToggled,
+  getVocabulary,
   flipVocabularyPracticeSide,
   removeFrequencyWord,
   setWordDifficulty,
@@ -30,7 +29,8 @@ import {
   toggleVocabularyFilter,
   updateSpaceRepWord,
   addFrequencyWord,
-} from "../../slices/settingSlice";
+} from "../../slices/vocabularySlice";
+import { logger, scrollingState } from "../../slices/globalSlice";
 import {
   getSwipeDirection,
   isSwipeIgnored,
@@ -73,7 +73,6 @@ import {
   setMediaSessionPlaybackState,
 } from "../../helper/mediaHelper";
 import { addParam } from "../../helper/urlHelper";
-import { furiganaToggled } from "../../slices/settingSlice";
 import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
 import Console from "../Form/Console";
 import { DifficultySlider } from "../Form/Difficulty";
@@ -102,7 +101,7 @@ import {
  * @typedef {Object} VocabularyState
  * @property {import("../Form/Console").ConsoleMessage[]} errorMsgs,
  * @property {number} errorSkipIndex
- * @property {number} lastNext
+ * @property {number} lastNext        timestamp of last swipe
  * @property {number} selectedIndex
  * @property {string} [reinforcedUID]
  * @property {boolean} showHint
@@ -146,11 +145,10 @@ import {
  * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter
  * @property {boolean} reinforce
  * @property {SpaceRepetitionMap} repetition
- * @property {number} lastNext
- * @property {function} updateSpaceRepWord
- * @property {function} setWordTPCorrect
- * @property {function} setWordTPIncorrect
- * @property {function} setWordDifficulty
+ * @property {typeof updateSpaceRepWord} updateSpaceRepWord
+ * @property {typeof setWordTPCorrect} setWordTPCorrect
+ * @property {typeof setWordTPIncorrect} setWordTPIncorrect
+ * @property {typeof setWordDifficulty} setWordDifficulty
  * @property {typeof logger} logger
  * @property {string} verbForm
  * @property {number} swipeThreshold
@@ -386,6 +384,8 @@ class Vocabulary extends Component {
 
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
+        const answered = this.state.tpAnswered;
+        const frequency = prevState.reinforcedUID !== undefined;
 
         this.props
           .updateSpaceRepWord({
@@ -397,13 +397,13 @@ class Vocabulary extends Component {
 
             const prevDate = prevMap && prevMap[uid] && prevMap[uid].d;
             const repStats = { [uid]: { ...map[uid], d: prevDate } };
-            if (this.state.tpAnswered !== undefined) {
+            if (answered !== undefined) {
               timedPlayLog(this.props.logger, vocabulary, repStats, {
-                frequency: prevState.reinforcedUID !== undefined,
+                frequency
               });
             } else {
               spaceRepLog(this.props.logger, vocabulary, repStats, {
-                frequency: prevState.reinforcedUID !== undefined,
+                frequency
               });
             }
           });
@@ -1547,24 +1547,25 @@ class Vocabulary extends Component {
 
 const mapStateToProps = (/** @type {RootState}*/ state) => {
   return {
+    swipeThreshold: state.global.swipeThreshold,
+    motionThreshold: state.global.motionThreshold,
+    debugLevel: state.global.debug,
+    scrollingDone: !state.global.scrolling,
+
     vocab: state.vocabulary.value,
     verbForm: state.vocabulary.verbForm,
 
-    practiceSide: state.setting.vocabulary.practiceSide,
-    termsOrder: state.setting.vocabulary.ordered,
-    romajiActive: state.setting.vocabulary.romaji,
-    hintEnabled: state.setting.vocabulary.hintEnabled,
-    filterType: state.setting.vocabulary.filter,
-    frequency: state.setting.vocabulary.frequency,
-    activeGroup: state.setting.vocabulary.activeGroup,
-    scrollingDone: !state.setting.global.scrolling,
-    autoVerbView: state.setting.vocabulary.autoVerbView,
-    reinforce: state.setting.vocabulary.reinforce,
-    repetition: state.setting.vocabulary.repetition,
-    furigana: state.setting.vocabulary.repetition,
-    swipeThreshold: state.setting.global.swipeThreshold,
-    motionThreshold: state.setting.global.motionThreshold,
-    debugLevel: state.setting.global.debug,
+    practiceSide: state.vocabulary.setting.practiceSide,
+    termsOrder: state.vocabulary.setting.ordered,
+    romajiActive: state.vocabulary.setting.romaji,
+    hintEnabled: state.vocabulary.setting.hintEnabled,
+    filterType: state.vocabulary.setting.filter,
+    frequency: state.vocabulary.setting.frequency,
+    activeGroup: state.vocabulary.setting.activeGroup,
+    autoVerbView: state.vocabulary.setting.autoVerbView,
+    reinforce: state.vocabulary.setting.reinforce,
+    repetition: state.vocabulary.setting.repetition,
+    furigana: state.vocabulary.setting.repetition,
   };
 };
 
@@ -1584,7 +1585,6 @@ Vocabulary.propTypes = {
   reinforce: PropTypes.bool,
   repetition: PropTypes.object,
   furigana: PropTypes.object,
-  lastNext: PropTypes.number,
   swipeThreshold: PropTypes.number,
   motionThreshold: PropTypes.number,
   debugLevel: PropTypes.number,
@@ -1596,7 +1596,6 @@ Vocabulary.propTypes = {
   setWordTPIncorrect: PropTypes.func,
   updateSpaceRepWord: PropTypes.func,
   setWordTPCorrect: PropTypes.func,
-  clearPreviousTerm: PropTypes.func,
   getVocabulary: PropTypes.func.isRequired,
   addFrequencyWord: PropTypes.func.isRequired,
   removeFrequencyWord: PropTypes.func.isRequired,

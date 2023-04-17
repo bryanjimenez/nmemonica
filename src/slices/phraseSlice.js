@@ -44,6 +44,7 @@ export const getPhrase = createAsyncThunk(
 
 export const phraseFromLocalStorage = createAsyncThunk(
   "phrase/phraseFromLocalStorage",
+  /** @param {typeof initialState['setting']} arg */
   async (arg) => {
     const initValues = arg;
 
@@ -59,11 +60,7 @@ export const updateSpaceRepPhrase = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
 
-    return updateSpaceRepTerm(
-      uid,
-      spaceRep,
-      shouldIncrement
-    );
+    return updateSpaceRepTerm(uid, spaceRep, shouldIncrement);
   }
 );
 

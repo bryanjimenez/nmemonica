@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import React, { useMemo } from "react";
 import { JapaneseVerb } from "../helper/JapaneseVerb";
-import { furiganaToggled } from "../slices/settingSlice";
+import { furiganaToggled } from "../slices/vocabularySlice";
 import { useDispatch } from "react-redux";
 
 /**

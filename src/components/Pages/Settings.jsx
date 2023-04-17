@@ -3,17 +3,15 @@ import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
-
 import {
-  logger,
   debugToggled,
-  getMemoryStorageStatus,
-  setPersistentStorage,
+  logger,
   setMotionThreshold,
   setSwipeThreshold,
   toggleDarkMode,
-  toggleActiveGrp,
-} from "../../slices/settingSlice";
+  getMemoryStorageStatus,
+  setPersistentStorage,
+} from "../../slices/globalSlice";
 import {
   getKanji,
   removeFrequencyKanji,
@@ -23,7 +21,7 @@ import {
   toggleKanjiFilter,
   toggleKanjiReinforcement,
 } from "../../slices/kanjiSlice";
-import { getPhrase } from "../../slices/phraseSlice";
+import { getPhrase, togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import {
   setOppositesARomaji,
   setOppositesQRomaji,
@@ -36,7 +34,10 @@ import {
   toggleKanaGameWideMode,
 } from "../../slices/kanaSlice";
 import { DebugLevel, TermFilterBy } from "../../slices/settingHelper";
-import { getVocabulary } from "../../slices/vocabularySlice";
+import {
+  getVocabulary,
+  toggleVocabularyActiveGrp,
+} from "../../slices/vocabularySlice";
 import { logify } from "../../helper/consoleHelper";
 import {
   getDeviceMotionEventPermission,
@@ -124,7 +125,7 @@ const SettingsMeta = {
  * @property {typeof toggleKanaEasyMode} toggleKanaEasyMode
  * @property {typeof setParticlesARomaji} setParticlesARomaji
  * @property {typeof getKanji} getKanji
- * @property {typeof toggleActiveGrp} toggleActiveGrp
+ * @property {typeof toggleKanjiActiveGrp} toggleKanjiActiveGrp
  * @property {typeof toggleKanjiActiveTag} toggleKanjiActiveTag
  * @property {typeof toggleKanjiActiveGrp} toggleKanjiActiveGrp
  * @property {typeof toggleKanjiReinforcement} toggleKanjiReinforcement
@@ -267,7 +268,7 @@ class Settings extends Component {
             "Group " + JSON.stringify(stale) + " Removed",
             DebugLevel.ERROR
           );
-          this.props.toggleActiveGrp("vocabulary", stale);
+          this.props.toggleVocabularyActiveGrp(stale);
           this.setState({ errorMsgs: [] });
         }
 
@@ -280,7 +281,7 @@ class Settings extends Component {
             "Group " + JSON.stringify(stale) + " Removed",
             DebugLevel.ERROR
           );
-          this.props.toggleActiveGrp("phrases", stale);
+          this.props.togglePhraseActiveGrp(stale);
           this.setState({ errorMsgs: [] });
         }
 
@@ -951,14 +952,16 @@ class Settings extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
-    darkMode: state.setting.global.darkMode,
-    swipeThreshold: state.setting.global.swipeThreshold,
-    motionThreshold: state.setting.global.motionThreshold,
+    darkMode: state.global.darkMode,
+    swipeThreshold: state.global.swipeThreshold,
+    motionThreshold: state.global.motionThreshold,
+    memory: state.global.memory,
+    debug: state.global.debug,
 
     phrases: state.phrases.value,
     pRepetition: state.phrases.setting.repetition,
     vocabulary: state.vocabulary.value,
-    vRepetition: state.setting.vocabulary.repetition,
+    vRepetition: state.vocabulary.setting.repetition,
 
     kanji: state.kanji.value,
     kanjiTags: state.kanji.tagObj,
@@ -977,9 +980,6 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     charSet: state.kana.setting.charSet,
 
     particlesARomaji: state.particle.setting.aRomaji,
-
-    memory: state.setting.global.memory,
-    debug: state.setting.global.debug,
   };
 };
 
@@ -1001,11 +1001,13 @@ Settings.propTypes = {
   phrases: PropTypes.array,
   pRepetition: PropTypes.object,
   getPhrase: PropTypes.func,
+  togglePhraseActiveGrp: PropTypes.func,
 
   // vocabulary
   vocabulary: PropTypes.array,
   vRepetition: PropTypes.object,
   getVocabulary: PropTypes.func,
+  toggleVocabularyActiveGrp: PropTypes.func,
 
   wideMode: PropTypes.bool,
   easyMode: PropTypes.bool,
@@ -1057,7 +1059,8 @@ export default connect(mapStateToProps, {
   getPhrase,
   getKanji,
   setKanjiBtnN,
-  toggleActiveGrp,
+  toggleVocabularyActiveGrp,
+  togglePhraseActiveGrp,
   toggleKanjiActiveTag,
   toggleKanjiActiveGrp,
   toggleKanjiReinforcement,

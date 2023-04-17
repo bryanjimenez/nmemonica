@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { pronounceEndoint } from "../../../environment.development";
-import { logger } from "../../slices/settingSlice";
+import { logger } from "../../slices/globalSlice";
 import { getPhrase } from "../../slices/phraseSlice";
 import {
   addFrequencyPhrase,
@@ -960,6 +960,7 @@ class Phrases extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
+    swipeThreshold: state.global.swipeThreshold,
     phrases: state.phrases.value,
     practiceSide: state.phrases.setting.practiceSide,
     termsOrder: state.phrases.setting.ordered,
@@ -969,7 +970,6 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     activeGroup: state.phrases.setting.activeGroup,
     reinforce: state.phrases.setting.reinforce,
     repetition: state.phrases.setting.repetition,
-    swipeThreshold: state.setting.global.swipeThreshold,
   };
 };
 

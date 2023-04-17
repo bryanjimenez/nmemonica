@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 import { NotReady } from "../Form/NotReady";
 import StackNavButton from "../Form/StackNavButton";
 
-import { logger } from "../../slices/settingSlice";
+import { logger } from "../../slices/globalSlice";
 import { getKanji } from "../../slices/kanjiSlice";
 import {
   addFrequencyKanji,
@@ -542,6 +542,8 @@ class Kanji extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
+    swipeThreshold: state.global.swipeThreshold,
+
     kanji: state.kanji.value,
     vocabulary: state.vocabulary.value,
 
@@ -550,8 +552,6 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     activeTags: state.kanji.setting.activeTags,
     repetition: state.kanji.setting.repetition,
     frequency: state.kanji.setting.frequency,
-
-    swipeThreshold: state.setting.global.swipeThreshold,
   };
 };
 

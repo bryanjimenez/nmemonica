@@ -591,6 +591,7 @@ class KanaGame extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
+    debug: state.global.debug,
     hiragana: state.kana.hiragana,
     katakana: state.kana.katakana,
     vowels: state.kana.vowels,
@@ -600,7 +601,6 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     wideMode: state.kana.setting.wideMode,
     easyMode: state.kana.setting.easyMode,
     charSet: state.kana.setting.charSet,
-    debug: state.setting.global.debug,
   };
 };
 

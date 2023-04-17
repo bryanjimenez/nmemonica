@@ -3,18 +3,17 @@ import kanaReducer from "./kanaSlice";
 import kanjiReducer from "./kanjiSlice";
 import oppositesReducer from "./oppositeSlice";
 import phrasesReducer from "./phraseSlice";
-import settingReducer from "./settingSlice";
 import versionsReducer from "./versionSlice";
 import vocabularyReducer from "./vocabularySlice";
 import serviceWorkerReducer from "./serviceWorkerSlice";
 import particleGameReducer from "./particleSlice";
+import globalSlice from "./globalSlice";
 
 export const store = configureStore({
   reducer: {
+    global: globalSlice,
     sw: serviceWorkerReducer,
     version: versionsReducer,
-
-    setting: settingReducer,
 
     kana: kanaReducer,
     vocabulary: vocabularyReducer,

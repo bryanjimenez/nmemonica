@@ -24,9 +24,9 @@ import { KanjiMeta } from "./components/Pages/Kanji";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
-import { localStorageSettingsInitialized } from "./slices/settingSlice";
+import { localStorageSettingsInitialized } from "./slices/globalSlice";
 import "./styles.css";
-import { logger } from "./slices/settingSlice";
+import { logger } from "./slices/globalSlice";
 import { getVersions } from "./slices/versionSlice";
 import classNames from "classnames";
 import {
@@ -102,7 +102,7 @@ class App extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
-    darkMode: state.setting.global.darkMode,
+    darkMode: state.global.darkMode,
   };
 };
 

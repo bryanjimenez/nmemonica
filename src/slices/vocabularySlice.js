@@ -1,18 +1,19 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import merge from "lodash/fp/merge";
 import { firebaseConfig } from "../../environment.development";
 import {
   buildGroupObject,
   buildVocabularyObject,
 } from "../helper/reducerHelper";
 import {
-  ADD_SPACE_REP_WORD,
   TermFilterBy,
   TermSortBy,
-  getLastStateValue,
+  grpParse,
   toggleAFilter,
-  updateSpaceRepTermOLD,
+  updateSpaceRepTerm,
 } from "./settingHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { getVerbFormsArray } from "../helper/gameHelper";
 
 /**
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
@@ -36,318 +37,49 @@ export const getVocabulary = createAsyncThunk(
   }
 );
 
-export const vocabularySettings = {
-  /**
-   * @param {string} uid
-   */
-  toggleFurigana(uid) {
-    return (/** @type {SettingState} */ state) => {
-      const { value } = updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
-        toggle: ["f"],
-      })(state);
+export const updateSpaceRepWord = createAsyncThunk(
+  "vocabulary/updateSpaceRepWord",
+  /** @argument {{uid:string, shouldIncrement?:boolean}} arg */
+  async (arg, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = /** @type {RootState} */ (thunkAPI.getState()).vocabulary;
 
-      return value;
-    };
-  },
+    const spaceRep = state.setting.repetition;
 
-  /**
-   * @param {boolean} [override]
-   */
-  toggleVocabularyReinforcement(override) {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/vocabulary/";
-      const attr = "reinforce";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr);
-    };
-  },
+    return updateSpaceRepTerm(uid, spaceRep, shouldIncrement);
+  }
+);
 
-  toggleVocabularyOrdering() {
-    return (/** @type {SettingState} */ state) => {
-      const { ordered } = state.vocabulary;
+export const vocabularyFromLocalStorage = createAsyncThunk(
+  "vocabulary/vocabularyFromLocalStorage",
+  /** @param {typeof initialState['setting']} arg */
+  async (arg) => {
+    const initValues = arg;
 
-      const newOrdered = /** @type {typeof TermSortBy[keyof TermSortBy]} */ (
-        ordered + 1 < Object.keys(TermSortBy).length ? ordered + 1 : 0
-      );
-
-      const path = "/vocabulary/";
-      const attr = "ordered";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr, newOrdered);
-    };
-  },
-
-  flipVocabularyPracticeSide() {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/vocabulary/";
-      const attr = "practiceSide";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr);
-    };
-  },
-
-  toggleVocabularyRomaji() {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/vocabulary/";
-      const attr = "romaji";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr);
-    };
-  },
-
-  toggleVocabularyBareKanji() {
-    return (/** @type {SettingState}*/ state) => {
-      const path = "/vocabulary/";
-      const attr = "bareKanji";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr);
-    };
-  },
-
-  toggleVocabularyHint() {
-    return (/** @type {SettingState}*/ state) => {
-      const path = "/vocabulary/";
-      const attr = "hintEnabled";
-      const time = new Date();
-      return localStoreAttrUpdate(time, state, path, attr);
-    };
-  },
-
-  /**
-   * Toggle between groups, frequency, and tags
-   * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
-   */
-  toggleVocabularyFilter(override) {
-    const max = Object.values(TermFilterBy).length - 1;
-    const allowed = /** @type {number[]} */ ([
-      TermFilterBy.FREQUENCY,
-      TermFilterBy.GROUP,
-    ]);
-
-    return (/** @type {SettingState} */ state) => {
-      const { filter, reinforce } = state.vocabulary;
-
-      const path = "/vocabulary/";
-      const attr = "filter";
-      const time = new Date();
-
-      /** @type {typeof TermFilterBy[keyof TermFilterBy]}*/
-      const newFilter = toggleAFilter(filter+1, allowed, max, override);
-
-      localStoreAttrUpdate(time, state, path, attr, newFilter);
-
-      if (newFilter !== 0 && reinforce) {
-        vocabularySettings.toggleVocabularyReinforcement(false)(state);
-      }
-
-      return newFilter;
-    };
-  },
-
-  /**
-   * @param {string} uid
-   */
-  addFrequencyWord(uid) {
-    return (/** @type {SettingState} */ state) => {
-      return updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
-        set: { rein: true },
-      })(state);
-    };
-  },
-
-  /**
-   * Removes frequency word
-   * @param {string} uid
-   */
-  removeFrequencyWord(uid) {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/vocabulary/";
-      const attr = "repetition";
-
-      const spaceRep = getLastStateValue(state, path, attr);
-
-      if (spaceRep[uid]?.rein === true) {
-        // update frequency list count
-        const reinforceList = Object.keys(spaceRep).filter(
-          (k) => spaceRep[k].rein === true
-        );
-        // null to delete
-        const { value } = updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
-          set: { rein: null },
-        })(state);
-
-        return { uid, count: reinforceList.length - 1, value };
-      }
-      return {};
-    };
-  },
-
-  /**
-   * @param {string} uid
-   * @param {boolean} [shouldIncrement]
-   */
-  updateSpaceRepWord(uid, shouldIncrement = true) {
-    return updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, shouldIncrement);
-  },
-
-  /**
-   * Sets term timed play average stats (incorrect)
-   * @param {string} uid
-   * @param {{pronunciation?: true}} options incorrect types
-   */
-  setWordTPIncorrect(uid, { pronunciation } = {}) {
-    return (/** @type {SettingState} */ state) => {
-      const pathPart = "vocabulary";
-
-      const path = "/" + pathPart + "/";
-      const attr = "repetition";
-      const time = new Date();
-
-      const spaceRep = getLastStateValue(state, path, attr);
-      const prevMap = { [uid]: spaceRep[uid] };
-
-      let newPlayCount = 1;
-      let newAccuracy = 0;
-
-      if (spaceRep[uid]) {
-        const playCount = spaceRep[uid].tpPc;
-        const accuracy = spaceRep[uid].tpAcc;
-
-        if (playCount !== undefined && accuracy != undefined) {
-          newPlayCount = playCount + 1;
-
-          const scores = playCount * accuracy;
-          newAccuracy = (scores + 0) / newPlayCount;
-        }
-      }
-
-      const o = {
-        ...(spaceRep[uid] || {}),
-        tpPc: newPlayCount,
-        tpAcc: newAccuracy,
-        pron: pronunciation,
-      };
-
-      const newValue = { ...spaceRep, [uid]: o };
-      localStoreAttrUpdate(time, state, path, attr, newValue);
-
-      return { map: { [uid]: o }, prevMap, newValue };
-    };
-  },
-
-  /**
-   * @param {string} uid
-   * @param {number} value
-   */
-  setWordDifficulty(uid, value) {
-    return updateSpaceRepTermOLD(ADD_SPACE_REP_WORD, uid, false, {
-      set: { difficulty: value },
-    });
-  },
-
-  /**
-   * Sets term timed play average stats (correct)
-   * @param {string} uid
-   * @param {number} tpElapsed
-   * @param {{pronunciation?: null}} options reset incorrect types
-   */
-  setWordTPCorrect(uid, tpElapsed, { pronunciation } = {}) {
-    return (/** @type {SettingState} */ state) => {
-      const pathPart = "vocabulary";
-
-      const path = "/" + pathPart + "/";
-      const attr = "repetition";
-      const time = new Date();
-
-      const spaceRep = getLastStateValue(state, path, attr);
-      const prevMap = { [uid]: spaceRep[uid] };
-
-      let newPlayCount = 1;
-      let newAccuracy = 1.0;
-      let newCorrAvg = tpElapsed;
-
-      if (spaceRep[uid]) {
-        const playCount = spaceRep[uid].tpPc;
-        const accuracy = spaceRep[uid].tpAcc;
-        const correctAvg = spaceRep[uid].tpCAvg || "0";
-
-        if (playCount !== undefined && accuracy != undefined) {
-          newPlayCount = playCount + 1;
-
-          const scores = playCount * accuracy;
-          newAccuracy = (scores + 1.0) / newPlayCount;
-
-          const correctCount = scores;
-          const correctSum = correctAvg * correctCount;
-          newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
-        }
-      }
-
-      const o = {
-        ...(spaceRep[uid] || {}),
-        pron:
-          pronunciation === null || spaceRep[uid] === undefined
-            ? undefined
-            : spaceRep[uid].pron,
-        tpPc: newPlayCount,
-        tpAcc: newAccuracy,
-        tpCAvg: newCorrAvg,
-      };
-
-      const newValue = { ...spaceRep, [uid]: o };
-      localStoreAttrUpdate(time, state, path, attr, newValue);
-
-      return { map: { [uid]: o }, prevMap, newValue };
-    };
-  },
-
-  /**
-   * @param {boolean} prevVal
-   */
-  toggleAutoVerbView(prevVal) {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/vocabulary/";
-      const attr = "autoVerbView";
-      const time = new Date();
-      localStoreAttrUpdate(time, state, path, attr, !prevVal);
-
-      return !prevVal;
-    };
-  },
-
-  /**
-   * @param {string[]} order
-   */
-  setVerbFormsOrder(order) {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/vocabulary/";
-      const attr = "verbFormsOrder";
-      const time = new Date();
-      localStoreAttrUpdate(time, state, path, attr, order);
-
-      return order;
-    };
-  },
-
-  /**
-   * @param {number} split
-   */
-  updateVerbColSplit(split) {
-    return (/** @type {SettingState} */ state) => {
-      const path = "/vocabulary/";
-      const attr = "verbColSplit";
-      const time = new Date();
-      localStoreAttrUpdate(time, state, path, attr, split);
-
-      return split;
-    };
-  },
-};
+    return initValues;
+  }
+);
 
 export const initialState = {
   value: /** @type {RawVocabulary[]} */ ([]),
   grpObj: {},
   verbForm: "dictionary",
+
+  setting: {
+    ordered: /** @type {TermSortBy[keyof TermSortBy]} */ (0),
+    practiceSide: false,
+    romaji: false,
+    bareKanji: false,
+    hintEnabled: false,
+    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (0),
+    reinforce: false,
+    repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
+    frequency: { uid: undefined, count: 0 },
+    activeGroup: [],
+    autoVerbView: false,
+    verbColSplit: 0,
+    verbFormsOrder: getVerbFormsArray().map((f) => f.name),
+  },
 };
 
 const vocabularySlice = createSlice({
@@ -360,15 +92,395 @@ const vocabularySlice = createSlice({
         verbForm: action.payload,
       };
     },
+
+    toggleVocabularyActiveGrp: (state, action) => {
+      const grpName = action.payload;
+
+      const { activeGroup } = state.setting;
+
+      const groups = Array.isArray(grpName) ? grpName : [grpName];
+      const newValue = grpParse(groups, activeGroup);
+
+      state.setting.activeGroup = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "activeGroup",
+        newValue
+      );
+    },
+
+    furiganaToggled(state, action) {
+      const uid = action.payload;
+
+      const { value: newValue } = updateSpaceRepTerm(
+        uid,
+        state.setting.repetition,
+        false,
+        {
+          toggle: ["f"],
+        }
+      );
+
+      state.setting.repetition = newValue;
+    },
+
+    toggleVocabularyReinforcement(state) {
+      state.setting.reinforce = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "reinforce"
+      );
+    },
+
+    toggleVocabularyOrdering(state) {
+      const { ordered } = state.setting;
+
+      const newOrdered = /** @type {typeof TermSortBy[keyof TermSortBy]} */ (
+        ordered + 1 < Object.keys(TermSortBy).length ? ordered + 1 : 0
+      );
+
+      state.setting.ordered = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "ordered",
+        newOrdered
+      );
+    },
+
+    flipVocabularyPracticeSide(state) {
+      state.setting.practiceSide = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "practiceSide"
+      );
+    },
+
+    toggleVocabularyRomaji(state) {
+      state.setting.romaji = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "romaji"
+      );
+    },
+
+    toggleVocabularyBareKanji(state) {
+      state.setting.bareKanji = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "bareKanji"
+      );
+    },
+
+    toggleVocabularyHint(state) {
+      state.setting.hintEnabled = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "hintEnabled"
+      );
+    },
+
+    toggleVocabularyFilter(state, action) {
+      const allowed = /** @type {number[]} */ ([
+        TermFilterBy.FREQUENCY,
+        TermFilterBy.GROUP,
+      ]);
+
+      const override = action.payload;
+      const { filter, reinforce } = state.setting;
+
+      const newFilter = /** @type {typeof TermFilterBy[keyof TermFilterBy]}*/ (
+        toggleAFilter(filter + 1, allowed, override)
+      );
+
+      state.setting.filter = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "filter",
+        newFilter
+      );
+
+      if (newFilter !== 0 && reinforce) {
+        state.setting.reinforce = false;
+      }
+    },
+
+    setVerbFormsOrder(state, action) {
+      /** @type {string[]} */
+      const order = action.payload;
+      state.setting.verbFormsOrder = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "verbFormsOrder",
+        order
+      );
+    },
+
+    toggleAutoVerbView(state) {
+      state.setting.autoVerbView = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "autoVerbView"
+      );
+    },
+
+    updateVerbColSplit(state, action) {
+      /** @type {number} */
+      const split = action.payload;
+      state.setting.verbColSplit = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "verbColSplit",
+        split
+      );
+    },
+
+    addFrequencyWord(state, action) {
+      const uid = action.payload;
+
+      const { value: newValue } = updateSpaceRepTerm(
+        uid,
+        state.setting.repetition,
+        false,
+        {
+          set: { rein: true },
+        }
+      );
+
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "repetition",
+        newValue
+      );
+
+      const frequency = { uid, count: state.setting.frequency.count + 1 };
+
+      state.setting.frequency = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "frequency",
+        frequency
+      );
+    },
+
+    removeFrequencyWord(state, action) {
+      const uid = action.payload;
+      const spaceRep = state.setting.repetition;
+
+      if (spaceRep[uid]?.rein === true) {
+        // null to delete
+        const { value: newValue } = updateSpaceRepTerm(uid, spaceRep, false, {
+          set: { rein: null },
+        });
+
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "repetition",
+          newValue
+        );
+
+        const frequency = { uid, count: state.setting.frequency.count - 1 };
+
+        state.setting.frequency = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "frequency",
+          frequency
+        );
+      }
+    },
+
+    setWordDifficulty: {
+      reducer: (state, /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, value:number}>}*/ action) => {
+        const { uid, value } = action.payload;
+
+        const { value: newValue } = updateSpaceRepTerm(
+          uid,
+          state.setting.repetition,
+          false,
+          {
+            set: { difficulty: value },
+          }
+        );
+
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid, value) => ({ payload: { uid, value } }),
+    },
+    setWordTPCorrect: {
+      reducer: (state, /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, tpElapsed:number, pronunciation:boolean}>}*/ action) => {
+        const { uid, tpElapsed, pronunciation } = action.payload;
+
+        const spaceRep = state.setting.repetition;
+
+        let newPlayCount = 1;
+        let newAccuracy = 1.0;
+        let newCorrAvg = tpElapsed;
+
+        if (spaceRep[uid]) {
+          const playCount = spaceRep[uid].tpPc;
+          const accuracy = spaceRep[uid].tpAcc;
+          const correctAvg = spaceRep[uid].tpCAvg || 0;
+
+          if (playCount !== undefined && accuracy != undefined) {
+            newPlayCount = playCount + 1;
+
+            const scores = playCount * accuracy;
+            newAccuracy = (scores + 1.0) / newPlayCount;
+
+            const correctCount = scores;
+            const correctSum = correctAvg * correctCount;
+            newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
+          }
+        }
+
+        const o = {
+          ...(spaceRep[uid] || {}),
+          pron:
+            pronunciation === null || spaceRep[uid] === undefined
+              ? undefined
+              : spaceRep[uid].pron,
+          tpPc: newPlayCount,
+          tpAcc: newAccuracy,
+          tpCAvg: newCorrAvg,
+        };
+
+        const newValue = { ...spaceRep, [uid]: o };
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid, tpElapsed, { pronunciation } = {}) => ({
+        payload: { uid, tpElapsed, pronunciation },
+      }),
+    },
+    setWordTPIncorrect: {
+      reducer: (state, /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, pronunciation:boolean}>}*/ action) => {
+        const { uid, pronunciation } = action.payload;
+
+        const spaceRep = state.setting.repetition;
+
+        let newPlayCount = 1;
+        let newAccuracy = 0;
+
+        if (spaceRep[uid]) {
+          const playCount = spaceRep[uid].tpPc;
+          const accuracy = spaceRep[uid].tpAcc;
+
+          if (playCount !== undefined && accuracy != undefined) {
+            newPlayCount = playCount + 1;
+
+            const scores = playCount * accuracy;
+            newAccuracy = (scores + 0) / newPlayCount;
+          }
+        }
+
+        const o = {
+          ...(spaceRep[uid] || {}),
+          tpPc: newPlayCount,
+          tpAcc: newAccuracy,
+          pron: pronunciation,
+        };
+
+        const newValue = { ...spaceRep, [uid]: o };
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid, { pronunciation } = {}) => ({
+        payload: { uid, pronunciation },
+      }),
+    },
   },
 
   extraReducers: (builder) => {
+    builder.addCase(vocabularyFromLocalStorage.fulfilled, (state, action) => {
+      const localStorageValue = action.payload;
+      const mergedSettings = merge(initialState.setting, localStorageValue);
+
+      // calculated values
+      const vocabReinforceList = Object.keys(mergedSettings.repetition).filter(
+        (k) => mergedSettings.repetition[k]?.rein === true
+      );
+      mergedSettings.frequency = {
+        uid: undefined,
+        count: vocabReinforceList.length,
+      };
+
+      return {
+        ...state,
+        setting: { ...mergedSettings },
+      };
+    });
+
     builder.addCase(getVocabulary.fulfilled, (state, action) => {
       state.grpObj = buildGroupObject(action.payload);
       state.value = buildVocabularyObject(action.payload);
     });
+
+    builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
+      const { value: newValue } = action.payload;
+
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "repetition",
+        newValue
+      );
+    });
   },
 });
 
-export const { verbFormChanged } = vocabularySlice.actions;
+export const {
+  verbFormChanged,
+  furiganaToggled,
+  removeFrequencyWord,
+  setVerbFormsOrder,
+  toggleVocabularyOrdering,
+  toggleVocabularyActiveGrp,
+  toggleAutoVerbView,
+  toggleVocabularyFilter,
+  toggleVocabularyHint,
+  toggleVocabularyReinforcement,
+  toggleVocabularyRomaji,
+  updateVerbColSplit,
+  toggleVocabularyBareKanji,
+  flipVocabularyPracticeSide,
+  addFrequencyWord,
+
+  setWordDifficulty,
+  setWordTPCorrect,
+  setWordTPIncorrect,
+} = vocabularySlice.actions;
 export default vocabularySlice.reducer;

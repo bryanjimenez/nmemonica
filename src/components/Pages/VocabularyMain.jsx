@@ -3,7 +3,10 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
 import AudioItem from "../Form/AudioItem";
-import { flipVocabularyPracticeSide } from "../../slices/settingSlice";
+import {
+  furiganaToggled,
+  flipVocabularyPracticeSide,
+} from "../../slices/vocabularySlice";
 import Sizable from "../Form/Sizable";
 import {
   englishLabel,
@@ -14,7 +17,6 @@ import {
   getJapaneseHint,
   getCacheUID,
 } from "../../helper/gameHelper";
-import { furiganaToggled } from "../../slices/settingSlice";
 
 /**
  * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
@@ -223,13 +225,13 @@ class VocabularyMain extends Component {
 
 const mapStateToProps = (/** @type {RootState} */ state) => {
   return {
-    practiceSide: state.setting.vocabulary.practiceSide,
-    romajiActive: state.setting.vocabulary.romaji,
-    scrollingDone: !state.setting.global.scrolling,
-    swipeThreshold: state.setting.global.swipeThreshold,
-    repetition: state.setting.vocabulary.repetition,
-    hintEnabled: state.setting.vocabulary.hintEnabled,
-    showBareKanji: state.setting.vocabulary.bareKanji,
+    scrollingDone: !state.global.scrolling,
+    swipeThreshold: state.global.swipeThreshold,
+    practiceSide: state.vocabulary.setting.practiceSide,
+    romajiActive: state.vocabulary.setting.romaji,
+    repetition: state.vocabulary.setting.repetition,
+    hintEnabled: state.vocabulary.setting.hintEnabled,
+    showBareKanji: state.vocabulary.setting.bareKanji,
   };
 };
 

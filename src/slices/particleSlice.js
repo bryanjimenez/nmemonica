@@ -36,6 +36,7 @@ export const getParticleGame = createAsyncThunk(
 
 export const particleFromLocalStorage = createAsyncThunk(
   "particleGame/particleFromLocalStorage",
+  /** @param {typeof initialState['setting']} arg */
   async (arg) => {
     const initValues = arg;
 

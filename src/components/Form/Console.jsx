@@ -158,8 +158,8 @@ const mapStateToProps = (/** @type {RootState} */ state, ownProps) => {
   }
 
   return {
-    messages: state.setting.global.console,
-    debug: state.setting.global.debug,
+    messages: state.global.console,
+    debug: state.global.debug,
   };
 };
 

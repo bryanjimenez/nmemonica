@@ -5,6 +5,7 @@ import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 export const kanaFromLocalStorage = createAsyncThunk(
   "kana/kanaFromLocalStorage",
+  /** @param {typeof initialState['setting']} arg */
   async (arg) => {
     const initValues = arg;
 

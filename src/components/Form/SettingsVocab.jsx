@@ -12,7 +12,7 @@ import {
   removeFrequencyWord,
   setVerbFormsOrder,
   toggleVocabularyOrdering,
-  toggleActiveGrp,
+  toggleVocabularyActiveGrp,
   toggleAutoVerbView,
   toggleVocabularyFilter,
   toggleVocabularyHint,
@@ -20,8 +20,8 @@ import {
   toggleVocabularyRomaji,
   updateVerbColSplit,
   toggleVocabularyBareKanji,
-  initialState,
-} from "../../slices/settingSlice";
+  initialState as VOCABULARY_INIT,
+} from "../../slices/vocabularySlice";
 import { getVocabulary } from "../../slices/vocabularySlice";
 
 import SettingsSwitch from "./SettingsSwitch";
@@ -57,7 +57,7 @@ import { TermFilterBy, TermSortByLabel } from "../../slices/settingHelper";
  * @property {number} verbColSplit
  * @property {typeof toggleVocabularyOrdering} toggleVocabularyOrdering
  * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter
- * @property {typeof toggleActiveGrp} toggleActiveGrp
+ * @property {typeof toggleVocabularyActiveGrp} toggleVocabularyActiveGrp
  * @property {typeof toggleVocabularyRomaji} toggleVocabularyRomaji
  * @property {typeof toggleVocabularyReinforcement} toggleVocabularyReinforcement
  * @property {typeof removeFrequencyWord} removeFrequencyWord
@@ -99,7 +99,7 @@ class SettingsVocab extends Component {
       removeFrequencyWord,
       setVerbFormsOrder,
       toggleVocabularyOrdering,
-      toggleActiveGrp,
+      toggleVocabularyActiveGrp,
       toggleAutoVerbView,
       toggleVocabularyFilter,
       toggleVocabularyHint,
@@ -116,8 +116,7 @@ class SettingsVocab extends Component {
     if (vocabulary.length < 1 || Object.keys(vocabGroups).length < 1)
       return <NotReady addlStyle="vocabulary-settings" />;
 
-    initialState.vocabulary.verbFormsOrder;
-    const allForms = initialState.vocabulary.verbFormsOrder;
+    const allForms = VOCABULARY_INIT.setting.verbFormsOrder;
 
     const shownForms = verbFormsOrder.reduce(
       (/** @type {string[]}*/ acc, form) => {
@@ -172,9 +171,7 @@ class SettingsVocab extends Component {
                 <SetTermGList
                   termsGroups={vocabGroups}
                   termsActive={vocabActive}
-                  toggleTermActiveGrp={(grp) =>
-                    toggleActiveGrp("vocabulary", grp)
-                  }
+                  toggleTermActiveGrp={toggleVocabularyActiveGrp}
                 />
               )}
               {vocabFilter === TermFilterBy.FREQUENCY &&
@@ -188,9 +185,7 @@ class SettingsVocab extends Component {
                     termsFreq={vocabFreq}
                     terms={vocabulary}
                     removeFrequencyTerm={removeFrequencyWord}
-                    toggleTermActiveGrp={(grp) =>
-                      toggleActiveGrp("vocabulary", grp)
-                    }
+                    toggleTermActiveGrp={toggleVocabularyActiveGrp}
                   />
                 )}
             </div>
@@ -370,17 +365,17 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     vocabulary: state.vocabulary.value,
     vocabGroups: state.vocabulary.grpObj,
 
-    vocabOrder: state.setting.vocabulary.ordered,
-    vocabRomaji: state.setting.vocabulary.romaji,
-    showBareKanji: state.setting.vocabulary.bareKanji,
-    vocabHint: state.setting.vocabulary.hintEnabled,
-    vocabActive: state.setting.vocabulary.activeGroup,
-    autoVerbView: state.setting.vocabulary.autoVerbView,
-    verbColSplit: state.setting.vocabulary.verbColSplit,
-    vocabFilter: state.setting.vocabulary.filter,
-    vocabRep: state.setting.vocabulary.repetition,
-    vocabReinforce: state.setting.vocabulary.reinforce,
-    verbFormsOrder: state.setting.vocabulary.verbFormsOrder,
+    vocabOrder: state.vocabulary.setting.ordered,
+    vocabRomaji: state.vocabulary.setting.romaji,
+    showBareKanji: state.vocabulary.setting.bareKanji,
+    vocabHint: state.vocabulary.setting.hintEnabled,
+    vocabActive: state.vocabulary.setting.activeGroup,
+    autoVerbView: state.vocabulary.setting.autoVerbView,
+    verbColSplit: state.vocabulary.setting.verbColSplit,
+    vocabFilter: state.vocabulary.setting.filter,
+    vocabRep: state.vocabulary.setting.repetition,
+    vocabReinforce: state.vocabulary.setting.reinforce,
+    verbFormsOrder: state.vocabulary.setting.verbFormsOrder,
   };
 };
 
@@ -404,7 +399,7 @@ SettingsVocab.propTypes = {
   removeFrequencyWord: PropTypes.func,
   setVerbFormsOrder: PropTypes.func,
   toggleVocabularyOrdering: PropTypes.func,
-  toggleActiveGrp: PropTypes.func,
+  toggleVocabularyActiveGrp: PropTypes.func,
   toggleAutoVerbView: PropTypes.func,
   toggleVocabularyFilter: PropTypes.func,
   toggleVocabularyHint: PropTypes.func,
@@ -419,7 +414,7 @@ export default connect(mapStateToProps, {
   removeFrequencyWord,
   setVerbFormsOrder,
   toggleVocabularyOrdering,
-  toggleActiveGrp,
+  toggleVocabularyActiveGrp,
   toggleAutoVerbView,
   toggleVocabularyFilter,
   toggleVocabularyHint,

@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import { firebaseConfig } from "../../environment.development";
 import { buildTagObject } from "../helper/reducerHelper";
-import { TermFilterBy, updateSpaceRepTerm } from "./settingHelper";
+import { TermFilterBy, grpParse, updateSpaceRepTerm } from "./settingHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 /**
@@ -91,7 +91,7 @@ const kanjiSlice = createSlice({
         "activeGroup",
         newValue
       );
-  },
+    },
 
     addFrequencyKanji(state, action) {
       const uid = action.payload;
@@ -222,14 +222,13 @@ const kanjiSlice = createSlice({
       const localStorageValue = action.payload;
       const mergedSettings = merge(initialState.setting, localStorageValue);
 
-
-    const kanjiReinforceList = Object.keys(
-      mergedSettings.repetition
-    ).filter((k) => mergedSettings.repetition[k]?.rein === true);
-    mergedSettings.frequency = {
-      uid: undefined,
-      count: kanjiReinforceList.length,
-    };
+      const kanjiReinforceList = Object.keys(mergedSettings.repetition).filter(
+        (k) => mergedSettings.repetition[k]?.rein === true
+      );
+      mergedSettings.frequency = {
+        uid: undefined,
+        count: kanjiReinforceList.length,
+      };
 
       return {
         ...state,

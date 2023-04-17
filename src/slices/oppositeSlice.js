@@ -9,9 +9,9 @@ export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
   async (arg, thunkAPI) => {
     const state = /** @type {RootState} */ (thunkAPI.getState());
-    const version = state.version.phrases || '0';
+    const version = state.version.phrases || "0";
 
-    if (version === '0') {
+    if (version === "0") {
       console.error("fetching opposite: 0");
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/opposites.json", {
@@ -22,16 +22,23 @@ export const getOpposite = createAsyncThunk(
 
 export const oppositeFromLocalStorage = createAsyncThunk(
   "opposite/oppositeFromLocalStorage",
-  async (arg, thunkAPI) => {
+  /** @param {typeof initialState} arg */
+  async (arg) => {
     const initValues = arg;
-    
+
     return initValues;
   }
 );
 
+const initialState = {
+  value: [],
+  aRomaji: false,
+  qRomaji: false,
+};
+
 const oppositeSlice = createSlice({
   name: "opposite",
-  initialState: { value: [], aRomaji: false, qRomaji: false },
+  initialState,
 
   reducers: {
     setOppositesARomaji(state) {
@@ -39,7 +46,9 @@ const oppositeSlice = createSlice({
       const attr = "aRomaji";
       const time = new Date();
 
-      const partState = /** @type {Partial<SettingState>} */ ({opposite: state});
+      const partState = /** @type {Partial<SettingState>} */ ({
+        opposite: state,
+      });
       state.aRomaji = localStoreAttrUpdate(time, partState, path, attr);
     },
 
@@ -48,8 +57,10 @@ const oppositeSlice = createSlice({
       const attr = "qRomaji";
       const time = new Date();
 
-      const partState = /** @type {Partial<SettingState>} */ ({opposite: state});
-      localStoreAttrUpdate(time,  partState, path, attr, !state.qRomaji);
+      const partState = /** @type {Partial<SettingState>} */ ({
+        opposite: state,
+      });
+      localStoreAttrUpdate(time, partState, path, attr, !state.qRomaji);
       state.qRomaji = !state.qRomaji;
     },
   },
@@ -59,13 +70,13 @@ const oppositeSlice = createSlice({
       state.value = action.payload;
     });
 
-    builder.addCase(oppositeFromLocalStorage.fulfilled, (state,action)=>{
+    builder.addCase(oppositeFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;
-      return{
+      return {
         ...state,
         ...localStorageValue,
-      }
-    })
+      };
+    });
   },
 });
 

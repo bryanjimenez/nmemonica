@@ -8,13 +8,10 @@ import { useSelector } from "react-redux";
  * VerbMain app-state props
  */
 export function useVerbMainConnected() {
-  const { vocabulary, stateSettings } = useSelector(
-    (/** @type {RootState}*/ { vocabulary, setting }) => ({
-      vocabulary,
-      stateSettings: setting,
-    })
+  const { global, vocabulary } = useSelector(
+    (/** @type {RootState}*/ { global, vocabulary }) => ({global, vocabulary})
   );
-  const { swipeThreshold } = stateSettings.global;
+  const { swipeThreshold } = global;
   const {
     repetition,
     romaji: romajiActive,
@@ -22,7 +19,7 @@ export function useVerbMainConnected() {
     practiceSide: englishSideUp,
     hintEnabled,
     verbColSplit,
-  } = stateSettings.vocabulary;
+  } = vocabulary.setting;
 
   return {
     verbForm: vocabulary.verbForm,
