@@ -1,8 +1,6 @@
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-
-export const ADD_SPACE_REP_WORD = "add_space_rep_word";
-export const ADD_SPACE_REP_PHRASE = "add_space_rep_phrase";
-export const ADD_SPACE_REP_KANJI = "add_space_rep_kanji";
+/**
+ * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
+ */
 
 // enum
 export const DebugLevel = Object.freeze({
@@ -55,34 +53,6 @@ export function toggleAFilter(filter, allowed, override) {
   }
 
   return newFilter;
-}
-
-/**
- * @param {typeof DebugLevel[keyof DebugLevel]} override
- */
-export function toggleDebugHelper(override) {
-  return (/** @type {SettingState} */ state) => {
-    const { debug } = state.global;
-
-    const path = "/global/";
-    const attr = "debug";
-    const time = new Date();
-
-    let newDebug;
-    if (override !== undefined) {
-      if (Object.values(DebugLevel).includes(override)) {
-        newDebug = override;
-      } else {
-        throw new Error("Debug override not valid");
-      }
-    } else {
-      newDebug = Object.values(DebugLevel).includes(debug + 1)
-        ? debug + 1
-        : DebugLevel.OFF;
-    }
-
-    return localStoreAttrUpdate(time, state, path, attr, newDebug);
-  };
 }
 
 /**
@@ -197,24 +167,4 @@ export function updateSpaceRepTerm(
   const newValue = { ...spaceRep, ...map };
 
   return { map, prevMap, value: newValue };
-}
-
-/**
- * Retrieves last App settings state value for path and attr
- * @param {SettingState} state
- * @param {string} path
- * @param {string} attr
- */
-export function getLastStateValue(state, path, attr) {
-  const stateSettings = state;
-
-  let statePtr = stateSettings;
-
-  path.split("/").forEach((p) => {
-    if (p) {
-      statePtr = statePtr[p];
-    }
-  });
-
-  return statePtr[attr];
 }
