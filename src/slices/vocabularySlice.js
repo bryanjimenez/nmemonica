@@ -66,16 +66,16 @@ export const initialState = {
   verbForm: "dictionary",
 
   setting: {
-    ordered: /** @type {TermSortBy[keyof TermSortBy]} */ (0),
+    ordered: /** @satisfies {TermSortBy[keyof TermSortBy]} */ 0,
     practiceSide: false,
     romaji: false,
     bareKanji: false,
     hintEnabled: false,
-    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (0),
+    filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 0,
     reinforce: false,
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
     frequency: { uid: undefined, count: 0 },
-    activeGroup: [],
+    activeGroup: /** @type {string[]}*/ ([]),
     autoVerbView: false,
     verbColSplit: 0,
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
@@ -307,7 +307,10 @@ const vocabularySlice = createSlice({
     },
 
     setWordDifficulty: {
-      reducer: (state, /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, value:number}>}*/ action) => {
+      reducer: (
+        state,
+        /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, value:number}>}*/ action
+      ) => {
         const { uid, value } = action.payload;
 
         const { value: newValue } = updateSpaceRepTerm(
@@ -330,7 +333,10 @@ const vocabularySlice = createSlice({
       prepare: (uid, value) => ({ payload: { uid, value } }),
     },
     setWordTPCorrect: {
-      reducer: (state, /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, tpElapsed:number, pronunciation:boolean}>}*/ action) => {
+      reducer: (
+        state,
+        /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, tpElapsed:number, pronunciation:boolean}>}*/ action
+      ) => {
         const { uid, tpElapsed, pronunciation } = action.payload;
 
         const spaceRep = state.setting.repetition;
@@ -381,7 +387,10 @@ const vocabularySlice = createSlice({
       }),
     },
     setWordTPIncorrect: {
-      reducer: (state, /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, pronunciation:boolean}>}*/ action) => {
+      reducer: (
+        state,
+        /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, pronunciation:boolean}>}*/ action
+      ) => {
         const { uid, pronunciation } = action.payload;
 
         const spaceRep = state.setting.repetition;
@@ -405,7 +414,9 @@ const vocabularySlice = createSlice({
           ...(spaceRep[uid] || {}),
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
-          pron: pronunciation,
+          pron: /** @type {true|undefined} */ (
+            pronunciation === true ? true : undefined
+          ),
         };
 
         const newValue = { ...spaceRep, [uid]: o };

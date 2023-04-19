@@ -149,7 +149,7 @@ class Console extends Component {
   }
 }
 
-const mapStateToProps = (/** @type {RootState} */ state, ownProps) => {
+const mapStateToProps = (/** @type {RootState} */ state, /** @type {ConsoleProps} */ ownProps) => {
   if (ownProps.connected !== true && ownProps.messages) {
     return {
       messages: ownProps.messages,

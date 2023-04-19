@@ -56,6 +56,7 @@ const kanaSlice = createSlice({
       );
     },
     setKanaBtnN(state, action) {
+      /** @type {number} */
       const number = action.payload;
       state.setting.choiceN = localStoreAttrUpdate(
         new Date(),

@@ -54,6 +54,7 @@ export const phraseFromLocalStorage = createAsyncThunk(
 
 export const updateSpaceRepPhrase = createAsyncThunk(
   "phrase/updateSpaceRepPhrase",
+  /** @param {{uid: string, shouldIncrement: boolean}} arg */
   async (arg, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
     const state = /** @type {RootState} */ (thunkAPI.getState()).phrases;
@@ -69,14 +70,14 @@ export const initialState = {
   grpObj: {},
 
   setting: {
-    ordered: /** @type {TermSortBy[keyof TermSortBy]} */ (0),
+    ordered: /** @satisfies {TermSortBy[keyof TermSortBy]} */ 0,
     practiceSide: false,
     romaji: false,
     reinforce: false,
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
     frequency: { uid: undefined, count: 0 },
-    activeGroup: [],
-    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (0),
+    activeGroup: /** @type {string[]} */ ([]),
+    filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 0,
   },
 };
 

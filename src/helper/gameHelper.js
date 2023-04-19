@@ -653,7 +653,7 @@ export function toggleOptions(index, options) {
 /**
  * Array containing the avaiable verb forms
  * @returns {VerbFormArray}
- * @param {RawJapanese} rawVerb
+ * @param {RawJapanese} [rawVerb]
  * @param {string[]} [order]
  */
 export function getVerbFormsArray(rawVerb, order) {

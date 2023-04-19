@@ -1,10 +1,6 @@
 import { useSelector } from "react-redux";
 
 /**
- * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
- */
-
-/**
  * VerbMain app-state props
  */
 export function useVerbMainConnected() {

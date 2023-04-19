@@ -2,11 +2,17 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import { firebaseConfig } from "../../environment.development";
 import { buildTagObject } from "../helper/reducerHelper";
-import { TermFilterBy, grpParse, updateSpaceRepTerm } from "./settingHelper";
+import {
+  TermFilterBy,
+  grpParse,
+  toggleAFilter,
+  updateSpaceRepTerm,
+} from "./settingHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
 /**
  * @typedef {import("../typings/raw").RawKanji} RawKanji
+ * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  */
 
 /**
@@ -43,12 +49,12 @@ export const initialState = {
 
   setting: {
     choiceN: 32,
-    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (2),
+    filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 2,
     reinforce: false,
     repetition: /** @type {SpaceRepetitionMap}*/ ({}),
     frequency: { uid: undefined, count: 0 },
-    activeGroup: [],
-    activeTags: [],
+    activeGroup: /** @type {string[]}*/ ([]),
+    activeTags: /** @type {string[]}*/ ([]),
   },
 };
 
@@ -57,6 +63,7 @@ const kanjiSlice = createSlice({
   initialState,
   reducers: {
     toggleKanjiActiveTag(state, action) {
+      /** @type {string} */
       const tagName = action.payload;
 
       const { activeTags } = state.setting;
@@ -159,6 +166,7 @@ const kanjiSlice = createSlice({
       }
     },
     setKanjiBtnN(state, action) {
+      /** @type {number} */
       const number = action.payload;
 
       state.setting.choiceN = localStoreAttrUpdate(
@@ -174,14 +182,11 @@ const kanjiSlice = createSlice({
       const override = action.payload;
       const { filter, reinforce } = state.setting;
 
-      let newFilter;
-      if (override !== undefined) {
-        newFilter = override;
-      } else {
-        newFilter = Object.values(TermFilterBy).includes(filter + 1)
-          ? filter + 1
-          : /*skip TermFilterBy.GROUP*/ TermFilterBy.FREQUENCY;
-      }
+      const newFilter = toggleAFilter(
+        filter + 1,
+        [TermFilterBy.FREQUENCY, TermFilterBy.TAGS],
+        override
+      );
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),

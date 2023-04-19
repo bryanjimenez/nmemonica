@@ -21,9 +21,11 @@ export const getParticleGame = createAsyncThunk(
 
     if (phrases.length > 0) {
       const needGame = state.particleGame.phrases.length === 0;
+      let game = undefined;
       if (needGame) {
-        return { phrase: [], game: buildParticleGame(phrases) };
+        game = buildParticleGame(phrases);
       }
+      return { game };
     } else {
       return thunkAPI.dispatch(getPhrase()).then((res) => {
         const phraseObject = res.payload;
