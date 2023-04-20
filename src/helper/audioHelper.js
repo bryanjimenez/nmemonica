@@ -35,6 +35,9 @@ export function fadeOut(audio) {
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio#crossorigin
 // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API
 
+// Single instance of AudioContext https://web.dev/webaudio-intro/#toc-play
+const audioCtx = new AudioContext();
+
 /**
  * Fetch audio
  * Play using AudioContext
@@ -42,7 +45,6 @@ export function fadeOut(audio) {
  * @param {AbortController} [AbortController]
  */
 export function fetchAudio(audioUrl, AbortController) {
-  const audioCtx = new AudioContext();
   const source = audioCtx.createBufferSource();
 
   const fetchP = fetch(audioUrl)
