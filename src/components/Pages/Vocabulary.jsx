@@ -355,7 +355,7 @@ class Vocabulary extends Component {
 
       if (this.state.loop > 0 && this.state.tpAnswered !== undefined) {
         if (this.state.tpBtn === "reset") {
-          if (this.props.repetition[uid].pron === true) {
+          if (this.props.repetition[uid]?.pron === true) {
             // reset incorrect pronunciation
             if (this.state.tpElapsed !== undefined) {
               this.props.setWordTPCorrect(uid, this.state.tpElapsed, {
@@ -1391,7 +1391,7 @@ class Vocabulary extends Component {
                   hover={this.state.tpBtn}
                   prevMissPronu={this.props.repetition[uid]?.pron === true}
                   onPronunciation={() => {
-                    if (this.props.repetition[uid].pron === true) {
+                    if (this.props.repetition[uid]?.pron === true) {
                       this.setState((state) => ({
                         tpAnswered: false,
                         tpBtn: state.tpBtn === "reset" ? undefined : "reset",
