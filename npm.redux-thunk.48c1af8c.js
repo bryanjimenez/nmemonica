@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunknmemonica=self.webpackChunknmemonica||[]).push([[623],{3894:(n,t,e)=>{function u(n){return function(t){var e=t.dispatch,u=t.getState;return function(t){return function(r){return"function"==typeof r?r(e,u,n):t(r)}}}}e.d(t,{Z:()=>c});var r=u();r.withExtraArgument=u;const c=r}}]);

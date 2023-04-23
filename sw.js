@@ -1,39 +1,81 @@
-const cacheFilesConst = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.7ef92152.js","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.1484bec4.js","main.9971e6584057a97fa160.css","manifest.webmanifest","maskable512.png","npm.babel.c5e8247e.js","npm.bootstrap.1176cc60d9b0614f08a8.css","npm.classnames.8f12f1d7.js","npm.clsx.6e5cca71.js","npm.css-vendor.4df2fdfe.js","npm.firebase.c44ecf6b.js","npm.fortawesome.6919438d.js","npm.history.e2ef1c87.js","npm.hoist-non-react-statics.00a88bd9.js","npm.hyphenate-style-name.0055c82f.js","npm.is-in-browser.3a68dd2c.js","npm.isarray.b99faedf.js","npm.jss-plugin-camel-case.271794fc.js","npm.jss-plugin-default-unit.d2fb9396.js","npm.jss-plugin-global.36a61ec9.js","npm.jss-plugin-nested.27ee2039.js","npm.jss-plugin-props-sort.f9c7060e.js","npm.jss-plugin-rule-value-function.c8aeda87.js","npm.jss-plugin-vendor-prefixer.6f58513f.js","npm.jss.eab36002.js","npm.lodash.16180d03.js","npm.material-ui.29fcee2f.js","npm.mini-create-react-context.cd39d446.js","npm.object-assign.43cf34ba.js","npm.path-to-regexp.3c245515.js","npm.primer.d3adb01c.js","npm.prop-types.5a8543b5.js","npm.react-dom.bf3dcfe3.js","npm.react-redux.c8f4b3d9.js","npm.react-router-dom.43e290bb.js","npm.react-router.7a8be827.js","npm.react-transition-group.9c9f1895.js","npm.react.0ff3225b.js","npm.redux-thunk.571a5839.js","npm.redux.57848e49.js","npm.resolve-pathname.05213e20.js","npm.scheduler.d7588745.js","npm.tiny-invariant.fe2a2a3b.js","npm.tslib.4e3f6e7b.js","runtime.81618bf7.js"];
+const cacheFiles = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.8f6c57f5.js","35872f035bddb00bb6bed6802ee78d72.png","388.c9673a94d0e8d5a5c862.css","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.5b8a4b37.js","main.ff83731c367b7b618fde.css","manifest.webmanifest","maskable512.png","npm.babel.479f3568.js","npm.classnames.823a8774.js","npm.clsx.c3e3d397.js","npm.emotion.cf42943c.js","npm.floating-ui.a92dd0a2.js","npm.fortawesome.ceeb4cda.js","npm.hoist-non-react-statics.dbbb31f5.js","npm.immer.9873f11d.js","npm.lodash.5c728589.js","npm.mui.c08f0895.js","npm.primer.0a2701b7.js","npm.prop-types.d2fd4bb1.js","npm.react-dom.20d1eb9e.js","npm.react-is.7ad977b4.js","npm.react-redux.366951f5.js","npm.react-router-dom.8295b443.js","npm.react-router.414896e0.js","npm.react-transition-group.5874eeba.js","npm.react.f2ea7f4a.js","npm.redux-thunk.48c1af8c.js","npm.redux.77b762bc.js","npm.reduxjs.d77ae776.js","npm.remix-run.7c09a2bc.js","npm.scheduler.d902fb35.js","npm.stylis.8dce1ef3.js","npm.use-sync-external-store.28a436a0.js","runtime.2d1d154d.js"];
 
-const swVersionConst =  '91da99a600d614c19f2f2fc8ff093337';
+const swVersion = '5cae908c';
+const initCacheVer = 'da2f620e';
 
-const ghURLConst =  'https://bryanjimenez.github.io/nmemonica';
-const fbURLConst =  'https://nmemonica-9d977.firebaseio.com';
-const gCloudFnPronounceConst =  'https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce';
+const ghURL = 'https://bryanjimenez.github.io/nmemonica';
+const fbURL = 'https://nmemonica-9d977.firebaseio.com';
+const gCloudFnPronounce = 'https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce';
 
-/* globals clients*/
-const swVersion = swVersionConst; // eslint-disable-line no-undef
-const cacheFiles = cacheFilesConst; // eslint-disable-line no-undef
+const SERVICE_WORKER_LOGGER_MSG = 'service_worker_logger_msg';
+const SERVICE_WORKER_NEW_TERMS_ADDED = 'service_worker_new_terms';
 
-const ghURL = ghURLConst; // eslint-disable-line no-undef
-const fbURL = fbURLConst; // eslint-disable-line no-undef
-const gCloudFnPronounce = gCloudFnPronounceConst; // eslint-disable-line no-undef
+const getParam = function getParam(baseUrl, param) {
+    var queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
+    var search = new URLSearchParams(queryPart);
+    var result = search.get(param);
+    return result;
+};
+
+const removeParam = function removeParam(baseUrl, param) {
+    var _a = baseUrl.includes("?")
+        ? baseUrl.split("?")
+        : [baseUrl, ""], basePart = _a[0], queryPart = _a[1];
+    var search = new URLSearchParams(queryPart);
+    search.delete(param);
+    return [basePart, search.toString()].join("?");
+};
+
+const authenticationHeader = 'X-API-KEY';
+
+/* globals
+  clients
+
+  const swVersion
+  const initCacheVer
+  const cacheFiles
+  const ghURL
+  const fbURL
+  const gCloudFnPronounce
+  const SERVICE_WORKER_LOGGER_MSG
+  const SERVICE_WORKER_NEW_TERMS_ADDED
+  const getParam
+  const removeParam
+  const authenticationHeader
+*/
 
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 const appMediaCache = "nmemonica-media";
+const indexedDBVersion = 2;
+const indexedDBStore = "media";
+const NO_INDEXEDDB_SUPPORT =
+  "Your browser doesn't support a stable version of IndexedDB.";
 
 const dataVerURL = fbURL + "/lambda/cache.json";
 const dataURL = [
   fbURL + "/lambda/phrases.json",
   fbURL + "/lambda/vocabulary.json",
   fbURL + "/lambda/opposites.json",
-  fbURL + "/lambda/suffixes.json",
-  fbURL + "/lambda/particles.json",
+  fbURL + "/lambda/kanji.json",
 ];
 
 let ERROR = 1,
   WARN = 2,
   DEBUG = 3;
 
+function getVersions(){
+  const jsVersion = cacheFiles
+    .join(",")
+    .match(new RegExp(/main.([a-z0-9]+).js/))[1];
+  return { swVersion, jsVersion, bundleVersion: initCacheVer};
+}
+
 self.addEventListener("install", (e) => {
   self.skipWaiting();
-  console.log("[ServiceWorker] Version: " + swVersion);
+
+  const versions = getVersions();
+  clientMsg("SW_VERSION", versions);
 
   caches.open(appDataCache).then((cache) =>
     cache.add(dataVerURL).then(() =>
@@ -45,13 +87,21 @@ self.addEventListener("install", (e) => {
     )
   );
 
+  
   const a = ghURL;
   const b = ghURL + "/";
+  caches
+    .open(appStaticCache)
+    .then((cache) => cache.addAll([a, b]))
+    .catch((e)=>{
+      console.log('Prefectch failed for some item')
+      console.log(JSON.stringify(e))
+    })
 
   e.waitUntil(
     caches
       .open(appStaticCache)
-      .then((cache) => cache.addAll([...cacheFiles, a, b]))
+      .then((cache) => cache.addAll([...cacheFiles]))
   );
 });
 
@@ -63,6 +113,7 @@ self.addEventListener("activate", (e) => {
         return client.url;
       });
       console.log("[ServiceWorker] Matching clients:", urls.join(", "));
+      clientLogger("Matching clients:", urls.join(", "), DEBUG);
     });
 
   e.waitUntil(
@@ -71,88 +122,139 @@ self.addEventListener("activate", (e) => {
       // claim the client
       .then(function () {
         console.log("[ServiceWorker] Claiming clients");
+        clientLogger("Claiming clients", DEBUG);
         return self.clients.claim();
       })
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "DO_HARD_REFRESH") {
+    fetch(dataVerURL)
+      .then((res) => {
+        if (res.status < 400) {
+          return caches.delete(appStaticCache).then(() => {
+            self.registration.unregister();
+            clientMsg("DO_HARD_REFRESH", {
+              msg: "Hard Refresh",
+              status: res.status,
+            });
+          });
+        } else {
+          throw new Error("Service Unavailable");
+        }
+      })
+      .catch((error) => {
+        clientMsg("DO_HARD_REFRESH", { msg: "Hard Refresh", error });
+      });
+  } else if (event.data && event.data.type === "SW_VERSION") {
+    const versions = getVersions();
+    clientMsg("SW_VERSION", versions);
+  }
 });
 
 self.addEventListener("fetch", (e) => {
   const req = e.request.clone();
   const url = e.request.url;
 
+  if (e.request.method !== "GET") {
+    return;
+  }
+
   if (url === dataVerURL) {
     e.respondWith(appVersionReq());
   } else if (req.headers.get("Data-Version")) {
     e.respondWith(appDataReq(e.request));
-  } else if (url === ghURL + "/refresh") {
-    console.log("[ServiceWorker] Hard Refresh");
-    caches.delete(appStaticCache);
-    self.registration.unregister();
-    e.respondWith(fetch(ghURL));
-  } else if (url.indexOf(ghURL) === 0) {
+  } else if (url.startsWith(ghURL)) {
     // site asset
     e.respondWith(appAssetReq(url));
-  } else if (url.indexOf(gCloudFnPronounce + "/override_cache") === 0) {
+  } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
     // override cache site media asset
     console.log("[ServiceWorker] Overriding Asset in Cache");
-    const newUrl = url.split("/override_cache").join("");
+    const uid = getParam(url, "uid");
+    const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
+    const dev_env_auth = req.headers.get(authenticationHeader);
+    const myRequest = toRequest(cleanUrl, dev_env_auth);
+
     if (!self.indexedDB) {
       // use cache
-      console.log(
-        "Your browser doesn't support a stable version of IndexedDB."
-      );
-      clientLogger("CACHE.override", WARN);
-      e.respondWith(recache(appMediaCache, newUrl));
+      console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
+      e.respondWith(recache(appMediaCache, myRequest));
     } else {
       // use indexedDB
       clientLogger("IDB.override", WARN);
 
-      // TODO: parallel?
+      const fetchP = fetch(myRequest);
       const dbOpenPromise = openIDB();
-      const dbResults = dbOpenPromise.then((db) => {
-        const query = newUrl.split(gCloudFnPronounce)[1];
 
-        return fetch(newUrl)
-          .then((res) => res.blob())
+      const dbResults = dbOpenPromise.then((db) => {
+        countIDBItem(db);
+
+        return fetchP
+          .then((res) => {
+            if (!res.ok) {
+              clientLogger("fetch", ERROR);
+              throw new Error("Network response was not OK"+(res.status?" ("+res.status+")":""));
+            }
+            return res.blob()
+          })
           .then((blob) =>
-            putIDBItem(db, { query, blob }).then((dataO) => toResponse(dataO))
+            putIDBItem(
+              { db },
+              {
+                uid,
+                blob,
+              }
+            ).then((dataO) => toResponse(dataO))
           );
       });
 
       e.respondWith(dbResults);
     }
-  } else if (url.indexOf(gCloudFnPronounce) === 0) {
+  } else if (url.startsWith(gCloudFnPronounce)) {
     // site media asset
+
+    const uid = getParam(url, "uid");
+    const word = decodeURI(getParam(url, "q"));
+
+    const cleanUrl = removeParam(url, "uid");
+    const dev_env_auth = req.headers.get(authenticationHeader);
+    const myRequest = toRequest(cleanUrl, dev_env_auth);
+
     if (!self.indexedDB) {
       // use cache
-      console.log(
-        "Your browser doesn't support a stable version of IndexedDB."
-      );
-      e.respondWith(appMediaReq(url));
+      console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
+      e.respondWith(appMediaReq(myRequest));
     } else {
       // use indexedDB
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db) => {
-        const query = url.split(gCloudFnPronounce)[1];
 
-        countIDBItem(db);
-
-        return getIDBItem(db, query)
+        return getIDBItem({ db }, uid)
           .then((dataO) =>
             //found
             toResponse(dataO)
           )
-          .catch(() =>
+          .catch(() => {
             //not found
-            fetch(url)
-              .then((res) => res.blob())
-              .then((blob) =>
-                addIDBItem(db, { query, blob }).then((dataO) =>
+            clientLogger("IDB.get [] " + word, WARN);
+
+            return fetch(myRequest)
+              .then((res) => {
+                if (!res.ok) {
+                  clientLogger("fetch", ERROR);
+                  throw new Error("Network response was not OK"+(res.status?" ("+res.status+")":""));
+                }
+                return res.blob()
+              }).then((blob) =>
+                addIDBItem({ db }, { uid, blob }).then((dataO) =>
                   toResponse(dataO)
                 )
-              )
-          );
+              );
+          });
       });
       e.respondWith(dbResults);
     }
@@ -162,6 +264,23 @@ self.addEventListener("fetch", (e) => {
   }
 });
 
+/**
+ * Creates a request from url
+ *
+ * Adds authentication in development env
+ * @param {string} url
+ * @param {string|null} auth development authentication
+ */
+function toRequest(url, auth){
+  const devAuth = auth === null ? undefined : new Headers({[authenticationHeader]: auth});
+  const myInit = {
+    method: 'GET',
+    headers: devAuth,
+  };
+
+  return new Request(url, myInit);
+}
+
 function toResponse(obj) {
   const status = 200,
     statusText = "OK";
@@ -169,31 +288,87 @@ function toResponse(obj) {
   return new Response(obj.blob, init);
 }
 
-function openIDB() {
-  let openRequest = indexedDB.open(appMediaCache);
+/**
+ * indexedDB.open()
+ * @param {*} version
+ * @param {*} objStoreToCreate name of store to open or create
+ * @param {{onUpgrDelStore:string}} {onUpgrDelStore} name of store to delete
+ * @returns
+ */
+function openIDB(
+  version = indexedDBVersion,
+  objStoreToCreate = indexedDBStore,
+  objStoreToDelete
+) {
+  let openRequest = indexedDB.open(appMediaCache, version);
 
-  const upgradeP = new Promise((resolve, reject) => {
+  const dbUpgradeP = new Promise((resolve /*reject*/) => {
     openRequest.onupgradeneeded = function (event) {
       // Save the IDBDatabase interface
       let db = event.target.result;
 
+      if (objStoreToDelete) {
+        db.deleteObjectStore(objStoreToDelete);
+      }
+
       // Create an objectStore for this database
-      let objectStore = db.createObjectStore("media", { keyPath: "query" });
-      objectStore.createIndex("query", "query", { unique: true });
+      let objectStore = db.createObjectStore(objStoreToCreate, {
+        keyPath: "uid",
+      });
+      // objectStore.createIndex("last", "last", { unique: false });
 
       // Use transaction oncomplete to make sure the objectStore creation is
       // finished before adding data into it.
-      objectStore.transaction.oncomplete = function (event) {
+      objectStore.transaction.oncomplete = function () {
         // Store values in the newly created objectStore.
         // console.log("upgrade success");
-        clientLogger("IDB.upgrade", DEBUG);
-        resolve(db);
+        // clientLogger("IDB.upgrade", DEBUG);
+        resolve({ type: "upgrade", val: db });
       };
     };
   });
 
+  const dbOpenP = new Promise((resolve, reject) => {
+    openRequest.onerror = function (/*event*/) {
+      clientLogger("IDB.open X(", ERROR);
+      reject();
+    };
+    openRequest.onsuccess = function (event) {
+      let db = event.target.result;
+
+      db.onerror = function (event) {
+        // Generic error handler for all errors targeted at this database's
+        // requests!
+        clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
+        console.error("Database error: " + event.target.errorCode);
+      };
+
+      // console.log("open success");
+      resolve({ type: "open", val: db });
+    };
+  });
+
+  return Promise.any([dbUpgradeP, dbOpenP]).then((pArr) => {
+    // if upgradeP happens wait for dbOpenP
+    if (pArr.type === "upgrade") {
+      return dbOpenP.then((db) => db.val);
+    }
+
+    return pArr.val;
+  });
+}
+
+/**
+ * objectStore.getAll()
+ * @param {number} version
+ * @param {string} store
+ * @returns {Promise} a promise containing array of results
+ */
+function dumpIDB(version, store) {
+  let openRequest = indexedDB.open(appMediaCache, version);
+
   const dbOpenPromise = new Promise((resolve, reject) => {
-    openRequest.onerror = function (event) {
+    openRequest.onerror = function (/*event*/) {
       clientLogger("IDB.open X(", ERROR);
       reject();
     };
@@ -212,8 +387,37 @@ function openIDB() {
     };
   });
 
-  // TODO: upgrade and open
-  return dbOpenPromise;
+  return dbOpenPromise.then((db) => {
+    let transaction = db.transaction([store], "readonly");
+    let objectStore = transaction.objectStore(store);
+
+    const getAllP = new Promise((resolve, reject) => {
+      const request = objectStore.getAll();
+      request.onerror = () => {
+        clientLogger("IDB.getAll X(", ERROR);
+        reject();
+      };
+      request.onsuccess = (event) => {
+        db.close();
+        resolve(event.target.result);
+      };
+    });
+
+    return getAllP;
+  });
+}
+
+function clientMsg(type, msg) {
+  return clients
+    .matchAll({ includeUncontrolled: true, type: "window" })
+    .then((client) => {
+      if (client && client.length) {
+        return client[0].postMessage({
+          type,
+          ...msg,
+        });
+      }
+    });
 }
 
 function clientLogger(msg, lvl) {
@@ -222,7 +426,7 @@ function clientLogger(msg, lvl) {
     .then((client) => {
       if (client && client.length) {
         return client[0].postMessage({
-          type: "SW_LOGGER",
+          type: SERVICE_WORKER_LOGGER_MSG,
           msg,
           lvl,
         });
@@ -230,17 +434,21 @@ function clientLogger(msg, lvl) {
     });
 }
 
-function countIDBItem(db) {
-  var transaction = db.transaction(["media"]);
-  var objectStore = transaction.objectStore("media");
-  var request = objectStore.count();
+/**
+ * objectStore.count()
+ * @param {*} db
+ * @param {string} store
+ */
+function countIDBItem(db, store = indexedDBStore) {
+  var transaction = db.transaction([store]);
+  var request = transaction.objectStore(store).count();
 
   const requestP = new Promise((resolve, reject) => {
-    request.onerror = function (event) {
+    request.onerror = function (/*event*/) {
       clientLogger("IDB.count X(", ERROR);
       reject();
     };
-    request.onsuccess = function (event) {
+    request.onsuccess = function () {
       if (request.result) {
         clientLogger("IDB [" + request.result + "]", DEBUG);
         resolve(request.result);
@@ -252,10 +460,10 @@ function countIDBItem(db) {
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve();
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
@@ -263,32 +471,35 @@ function countIDBItem(db) {
   return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
 }
 
-function getIDBItem(db, key) {
-  var transaction = db.transaction(["media"]);
-  var objectStore = transaction.objectStore("media");
-  var request = objectStore.get(key);
+/**
+ * objectStore.get(key)
+ * @param {{db:*, store:string}} param0
+ * @param {*} key
+ * @returns
+ */
+function getIDBItem({ db, store = indexedDBStore }, key) {
+  var transaction = db.transaction([store]);
+  var request = transaction.objectStore(store).get(key);
 
   const requestP = new Promise((resolve, reject) => {
-    request.onerror = function (event) {
+    request.onerror = function (/*event*/) {
       clientLogger("IDB.get X(", ERROR);
       reject();
     };
-    request.onsuccess = function (event) {
+    request.onsuccess = function () {
       if (request.result) {
         resolve(request.result);
       } else {
-        const word = decodeURI(key.split("&q=")[1]);
-        clientLogger("IDB.get [] " + word, WARN);
         reject();
       }
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve();
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
@@ -297,88 +508,93 @@ function getIDBItem(db, key) {
 }
 
 /**
- *
- * @param {*} db
+ * objectStore.add(value)
+ * @param {{db:*, store:string}} {db, store}
  * @param {*} value
  * @returns
  */
-function addIDBItem(db, value) {
-  let transaction = db.transaction(["media"], "readwrite");
+function addIDBItem({ db, store = indexedDBStore }, value) {
+  let transaction = db.transaction([store], "readwrite");
 
-  let objectStore = transaction.objectStore("media");
-  let request = objectStore.add(value);
+  let request = transaction.objectStore(store).add(value);
 
   const requestP = new Promise((resolve, reject) => {
-    request.onsuccess = function (event) {
+    request.onsuccess = function (/*event*/) {
       resolve();
     };
-    request.onerror = function (event) {
+    request.onerror = function () {
       clientLogger("IDB.add X(", ERROR);
       reject();
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve(value);
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
 
-  return Promise.all([requestP, transactionP]).then(() => value);
+  return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
 }
 
 /**
- *
- * @param {*} db
+ * objectStore.put(value)
+ * @param {{db:*, store:string}} {db, store}
  * @param {*} value
  * @returns
  */
-function putIDBItem(db, value) {
-  let transaction = db.transaction(["media"], "readwrite");
+function putIDBItem({ db, store = indexedDBStore }, value) {
+  let transaction = db.transaction([store], "readwrite");
 
-  let objectStore = transaction.objectStore("media");
-  let request = objectStore.put(value);
+  let request = transaction.objectStore(store).put(value);
 
   const requestP = new Promise((resolve, reject) => {
-    request.onsuccess = function (event) {
+    request.onsuccess = function (/*event*/) {
       resolve();
     };
-    request.onerror = function (event) {
+    request.onerror = function () {
       clientLogger("IDB.put X(", ERROR);
       reject();
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve(value);
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
 
-  return Promise.all([requestP, transactionP]).then(() => value);
+  return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
 }
 
-function deleteIDBItem(db, key) {
-  var transaction = db.transaction(["media"], "readwrite");
+/**
+ * objectStore.delete(key)
+ * @param {*} db
+ * @param {*} store
+ * @param {*} key
+ * @returns
+ */
+function deleteIDBItem(db, store, key) {
+  var transaction = db.transaction([store], "readwrite");
 
-  let request = transaction.objectStore("media").delete(key);
+  let request = transaction.objectStore(store).delete(key);
 
-  request.onsuccess = function (event) {};
+  request.onsuccess = function (/*event*/) {};
   request.onerror = function () {
     clientLogger("IDB.delete X(", ERROR);
   };
 
   const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function (event) {
+    transaction.oncomplete = function () {
       resolve();
     };
-    transaction.onerror = function (event) {
+    transaction.onerror = function () {
       reject();
     };
   });
@@ -392,7 +608,6 @@ function deleteIDBItem(db, key) {
  * @returns a Promise with a cache response
  */
 function appVersionReq() {
-
   // return what's on cache
   const cacheRes = caches
     .open(appDataCache)
@@ -566,7 +781,7 @@ function removeOldStaticCaches() {
 }
 
 /**
- * @returns {Promise} a promise with the catched jsonObj
+ * @returns {Promise} a promise with the cached jsonObj
  * @param {String} cacheName
  * @param {String} url
  * @param {Object} jsonObj
@@ -591,9 +806,7 @@ function updateCacheWithJSON(
 
   return caches
     .open(cacheName)
-    .then((cache) =>
-      cache.put(url, createdRes).then(() => cache.match(url))
-    );
+    .then((cache) => cache.put(url, createdRes).then(() => cache.match(url)));
 }
 
 // TODO: refactor this
@@ -680,7 +893,7 @@ function fetchVerSendNewDiffsMsg() {
                     if (client && client.length) {
                       // console.log("[SW] posting message");
                       return client[0].postMessage({
-                        type: "NEW_TERMS_ADDED",
+                        type: SERVICE_WORKER_NEW_TERMS_ADDED,
                         msg: newlyAdded,
                       });
                     }
