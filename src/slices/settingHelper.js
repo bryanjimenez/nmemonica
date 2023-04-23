@@ -96,22 +96,22 @@ export function grpParse(grpNames, activeGroup) {
  * Update term metadata
  * @param {string} uid
  * @param {SpaceRepetitionMap} spaceRep
- * @param {boolean} shouldIncrement should view count increment
+ * @param {{count?: boolean, date?: boolean}} update Update options
  * @param {{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: {[k in keyof SpaceRepetitionMap["uid"]]+?: SpaceRepetitionMap["uid"][k]|null}}} [options] additional optional settable attributes ({@link furiganaToggled })
  */
 export function updateSpaceRepTerm(
   uid,
   spaceRep,
-  shouldIncrement = true,
+  update = { count: true, date: true },
   options
 ) {
   let prevMap =
     spaceRep[uid] === undefined ? undefined : { [uid]: spaceRep[uid] };
 
   let count;
-  if (spaceRep[uid] && spaceRep[uid].vC > 0 && shouldIncrement) {
+  if (spaceRep[uid] && spaceRep[uid].vC > 0 && update.count === true) {
     count = spaceRep[uid].vC + 1;
-  } else if (spaceRep[uid] && spaceRep[uid].vC > 0 && !shouldIncrement) {
+  } else if (spaceRep[uid] && spaceRep[uid].vC > 0 && update.count === false) {
     count = spaceRep[uid].vC;
   } else {
     count = 1;
@@ -151,7 +151,8 @@ export function updateSpaceRepTerm(
     }
   }
 
-  const now = new Date().toJSON();
+  const keepPrevDate = spaceRep[uid]?.d !== undefined && update.date === false;
+  const now = keepPrevDate ? spaceRep[uid].d : new Date().toJSON();
   /** @type {SpaceRepetitionMap["uid"]} */
   const o = {
     ...(spaceRep[uid] || {}),

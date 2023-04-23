@@ -61,7 +61,7 @@ export const updateSpaceRepPhrase = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
 
-    return updateSpaceRepTerm(uid, spaceRep, shouldIncrement);
+    return updateSpaceRepTerm(uid, spaceRep, { count: shouldIncrement, date: true });
   }
 );
 
@@ -143,7 +143,7 @@ const phraseSlice = createSlice({
       const { value: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
-        false,
+        { count: false, date: false },
         {
           set: { rein: true },
         }
@@ -173,9 +173,14 @@ const phraseSlice = createSlice({
       const spaceRep = state.setting.repetition;
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(uid, spaceRep, false, {
-          set: { rein: null },
-        });
+        const { value: newValue } = updateSpaceRepTerm(
+          uid,
+          spaceRep,
+          { count: false, date: false },
+          {
+            set: { rein: null },
+          }
+        );
 
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),

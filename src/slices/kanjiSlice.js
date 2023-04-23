@@ -106,7 +106,7 @@ const kanjiSlice = createSlice({
       const { value: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
-        false,
+        { count: false, date: false },
         {
           set: { rein: true },
         }
@@ -138,9 +138,14 @@ const kanjiSlice = createSlice({
 
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(uid, spaceRep, false, {
-          set: { rein: null },
-        });
+        const { value: newValue } = updateSpaceRepTerm(
+          uid,
+          spaceRep,
+          { count: false, date: false },
+          {
+            set: { rein: null },
+          }
+        );
 
         localStoreAttrUpdate(
           new Date(),

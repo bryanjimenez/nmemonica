@@ -46,7 +46,7 @@ export const updateSpaceRepWord = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
 
-    return updateSpaceRepTerm(uid, spaceRep, shouldIncrement);
+    return updateSpaceRepTerm(uid, spaceRep, { count: shouldIncrement, date: true });
   }
 );
 
@@ -116,7 +116,7 @@ const vocabularySlice = createSlice({
       const { value: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
-        false,
+        { count: false, date: false },
         {
           toggle: ["f"],
         }
@@ -251,7 +251,7 @@ const vocabularySlice = createSlice({
       const { value: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
-        false,
+        { count: false, date: false },
         {
           set: { rein: true },
         }
@@ -282,9 +282,14 @@ const vocabularySlice = createSlice({
 
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(uid, spaceRep, false, {
-          set: { rein: null },
-        });
+        const { value: newValue } = updateSpaceRepTerm(
+          uid,
+          spaceRep,
+          { count: false, date: false },
+          {
+            set: { rein: null },
+          }
+        );
 
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
@@ -316,7 +321,7 @@ const vocabularySlice = createSlice({
         const { value: newValue } = updateSpaceRepTerm(
           uid,
           state.setting.repetition,
-          false,
+          { count: false, date: false },
           {
             set: { difficulty: value },
           }
