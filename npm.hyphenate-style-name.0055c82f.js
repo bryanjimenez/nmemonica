@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunknmemonica=self.webpackChunknmemonica||[]).push([[692],{5477:(e,n,r)=>{r.d(n,{Z:()=>u});var t=/[A-Z]/g,s=/^ms-/,a={};function c(e){return"-"+e.toLowerCase()}const u=function(e){if(a.hasOwnProperty(e))return a[e];var n=e.replace(t,c);return a[e]=s.test(n)?"-"+n:n}}}]);
