@@ -525,7 +525,6 @@ class KanaGame extends Component {
     // console.log(choices);
     const mainPanel = classNames({
       "kana main-panel h-100": true,
-      "z-index-1": this.props.debug !== DebugLevel.OFF,
     });
 
     const choiceAreaCSS = classNames({

@@ -5,14 +5,18 @@ import PropTypes from "prop-types";
 import classNames from "classnames";
 import { DebugLevel } from "../../slices/settingHelper";
 
+const MAX_CONSOLE_MESSAGES = 6;
+const COLLAPSE_T = 3000;
+const SCROLL_COLLAPSE_T = 10000;
+
 /**
  * @typedef {{msg:string, lvl:number, css?: string}} ConsoleMessage
  */
 
 /**
  * @typedef {Object} ConsoleState
- * @property {number} window
- * @property {number} scroll
+ * @property {number} window              Max number of messages to display
+ * @property {number} scroll              Number of lines to scroll up
  * @property {ConsoleMessage[]} messages
  */
 
@@ -30,7 +34,7 @@ class Console extends Component {
 
     /** @type {ConsoleState} */
     this.state = {
-      window: 6,
+      window: MAX_CONSOLE_MESSAGES,
       scroll: 0,
       messages: this.squashSeqMsgs(this.props.messages),
     };
@@ -40,6 +44,9 @@ class Console extends Component {
 
     /** @type {import("../../typings/raw").SetState<ConsoleState>} */
     this.setState;
+
+    /** @type {number | undefined} */
+    this.collapse = undefined;
 
     this.scrollUp = this.scrollUp.bind(this);
   }
@@ -55,7 +62,18 @@ class Console extends Component {
 
     if (this.props.messages.length !== prevProps.messages.length) {
       const messages = this.squashSeqMsgs(this.props.messages);
-      this.setState({ scroll: 0, messages });
+      this.setState({ scroll: 0, messages, window: MAX_CONSOLE_MESSAGES });
+
+      if (this.collapse !== undefined) {
+        clearTimeout(this.collapse);
+      }
+
+      const t = setTimeout(() => {
+        this.setState({ window: 3 });
+        this.collapse = undefined;
+      }, COLLAPSE_T);
+
+      this.collapse = Number(t);
     }
   }
 
@@ -66,8 +84,20 @@ class Console extends Component {
 
     if (this.state.scroll < max) {
       this.setState((state) => ({
+        window: MAX_CONSOLE_MESSAGES,
         scroll: state.scroll + 1,
       }));
+
+      if (this.collapse !== undefined) {
+        clearTimeout(this.collapse);
+      }
+
+      const t = setTimeout(() => {
+        this.setState({ window: 3, scroll: 0 });
+        this.collapse = undefined;
+      }, SCROLL_COLLAPSE_T);
+
+      this.collapse = Number(t);
     }
   }
 
@@ -149,7 +179,10 @@ class Console extends Component {
   }
 }
 
-const mapStateToProps = (/** @type {RootState} */ state, /** @type {ConsoleProps} */ ownProps) => {
+const mapStateToProps = (
+  /** @type {RootState} */ state,
+  /** @type {ConsoleProps} */ ownProps
+) => {
   if (ownProps.connected !== true && ownProps.messages) {
     return {
       messages: ownProps.messages,

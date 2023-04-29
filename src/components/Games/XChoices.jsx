@@ -125,7 +125,6 @@ function XChoices(props) {
 
   const mainPanel = classNames({
     "pickXgame main-panel h-100": true,
-    "z-index-2": true,
   });
 
   return (
