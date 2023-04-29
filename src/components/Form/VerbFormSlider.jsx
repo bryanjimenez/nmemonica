@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Slider, Typography } from "@mui/material";
 import "./VerbFormSlider.css";
@@ -17,7 +17,9 @@ import "./VerbFormSlider.css";
 
 /** @param {VerbFormSliderProps} props */
 export default function VerbFormSlider(props) {
-  const safeInitial = Math.min(props.max, props.initial);
+  const [initVal] = useState(props.initial);
+
+  const safeInitial = Math.min(props.max, initVal);
   const max = props.max;
   const min = 0;
 
@@ -84,14 +86,14 @@ export default function VerbFormSlider(props) {
         {props.statusText}
       </Typography>
       <Slider
-        value={rawToSlide(safeInitial)}
+        defaultValue={rawToSlide(safeInitial)}
         valueLabelFormat={slideToLabel}
         getAriaValueText={slideToLabel}
         aria-labelledby="discrete-slider-restrict"
         step={null}
         valueLabelDisplay="auto"
         marks={marks}
-        onChange={(event, newValue) => {
+        onChangeCommitted={(event, newValue) => {
           if (typeof newValue === "number") {
             handleChange(newValue);
           }

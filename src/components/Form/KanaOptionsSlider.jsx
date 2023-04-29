@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Slider, Typography } from "@mui/material";
 
@@ -18,6 +18,8 @@ import "./KanaOptionsSlider.css";
 
 /** @param {KanaOptionsSliderProps} props */
 export default function KanaOptionsSlider(props) {
+  const [initVal] = useState(props.initial);
+
   const min = 4;
   const max = 16;
   const wide = 32;
@@ -83,14 +85,14 @@ export default function KanaOptionsSlider(props) {
         Difficulty
       </Typography>
       <Slider
-        value={rawToSlide(props.initial)}
+        defaultValue={rawToSlide(initVal)}
         valueLabelFormat={slideToRaw}
         getAriaValueText={slideToRawString}
         aria-labelledby="discrete-slider-restrict"
         step={null}
         valueLabelDisplay="auto"
         marks={marks}
-        onChange={(event, newValue) => {
+        onChangeCommitted={(event, newValue) => {
           if (typeof newValue === "number") {
             handleChange(newValue);
           }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Slider } from "@mui/material";
 
@@ -20,9 +20,10 @@ import "./VocabularyOrderSlider.css";
  * @param {VocabularyOrderSliderProps} props
  */
 export default function VocabularyOrderSlider(props) {
+  const [initVal] = useState(props.initial);
   const min = 1;
   const max = props.list.length;
-  const safeInitial = Math.min(max, props.initial);
+  const safeInitial = Math.min(max, initVal);
 
   /** @type {Marks[]} */
   let marks = [];
@@ -72,14 +73,14 @@ export default function VocabularyOrderSlider(props) {
   return (
     <div className="vocabulary-slider">
       <Slider
-        value={rawToSlide(safeInitial)}
+        defaultValue={rawToSlide(safeInitial)}
         valueLabelFormat={slideToLabel}
         getAriaValueText={slideToRawString}
         aria-label="Quick card scroll"
         step={null}
         valueLabelDisplay="auto"
         marks={marks}
-        onChange={(event, newValue) => {
+        onChangeCommitted={(event, newValue) => {
           if (typeof newValue === "number") {
             handleChange(newValue);
           }
