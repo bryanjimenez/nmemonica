@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import { firebaseConfig } from "../../environment.development";
+import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   buildGroupObject,
   buildVocabularyObject,
@@ -12,8 +14,6 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { getVerbFormsArray } from "../helper/gameHelper";
 
 /**
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
@@ -46,7 +46,10 @@ export const updateSpaceRepWord = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
 
-    return updateSpaceRepTerm(uid, spaceRep, { count: shouldIncrement, date: true });
+    return updateSpaceRepTerm(uid, spaceRep, {
+      count: shouldIncrement,
+      date: true,
+    });
   }
 );
 
@@ -72,6 +75,7 @@ export const initialState = {
     bareKanji: false,
     hintEnabled: false,
     filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 0,
+    memoThreshold: MEMORIZED_THRLD,
     reinforce: false,
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
     frequency: { uid: undefined, count: 0 },
@@ -134,12 +138,18 @@ const vocabularySlice = createSlice({
       );
     },
 
-    toggleVocabularyOrdering(state) {
+    toggleVocabularyOrdering(state, action) {
       const { ordered } = state.setting;
+      const override = action.payload;
 
-      const newOrdered = /** @type {typeof TermSortBy[keyof TermSortBy]} */ (
-        ordered + 1 < Object.keys(TermSortBy).length ? ordered + 1 : 0
-      );
+      const allowed = [
+        TermSortBy.ALPHABETIC,
+        TermSortBy.DIFFICULTY,
+        TermSortBy.GAME,
+        TermSortBy.RANDOM,
+        TermSortBy.VIEW_DATE,
+      ];
+      const newOrdered = toggleAFilter(ordered + 1, allowed, override);
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -309,6 +319,22 @@ const vocabularySlice = createSlice({
           frequency
         );
       }
+    },
+
+    /**
+     * Filter vocabulary excluding terms with value above
+     */
+    setMemorizedThreshold(state, action) {
+      /** @type {number} */
+      const threshold = action.payload;
+
+      state.setting.memoThreshold = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "memoThreshold",
+        threshold
+      );
     },
 
     setWordDifficulty: {
@@ -496,6 +522,7 @@ export const {
   addFrequencyWord,
 
   setWordDifficulty,
+  setMemorizedThreshold,
   setWordTPCorrect,
   setWordTPIncorrect,
 } = vocabularySlice.actions;

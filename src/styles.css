@@ -161,6 +161,10 @@ a {
   z-index: 2;
 }
 
+.rotate-transition {
+  transition: transform 1s;
+}
+
 .rotate-90 {
   -webkit-transform: rotate(90deg);
   -ms-transform: rotate(90deg);

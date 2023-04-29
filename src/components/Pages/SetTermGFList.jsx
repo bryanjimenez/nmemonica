@@ -13,7 +13,7 @@ import classNames from "classnames";
  * @property {RawItemType[]} terms
  * @property {string[]} termsFreq List of uid of terms to be reinforced/frequency
  * @property {string[]} termsActive List of tags that are selected
- * @property {(grp:string)=>function} toggleTermActiveGrp
+ * @property {(grp:string)=>void} toggleTermActiveGrp
  * @property {function} removeFrequencyTerm
  */
 
@@ -108,9 +108,7 @@ export function SetTermGFList(props) {
             <div key={ig} className="mb-2">
               <span
                 className={classNames({ "font-weight-bold": grpActive })}
-                onClick={() => {
-                  props.toggleTermActiveGrp(g);
-                }}
+                onClick={() => props.toggleTermActiveGrp(g)}
               >
                 {g}
               </span>

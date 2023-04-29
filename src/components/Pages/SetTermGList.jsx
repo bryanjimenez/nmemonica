@@ -7,7 +7,7 @@ import orderBy from "lodash/orderBy";
  * @typedef {Object} SetTermGListProps
  * @property {import("../../typings/raw").GroupListMap} termsGroups
  * @property {string[]} termsActive
- * @property {(grp:string)=>function} toggleTermActiveGrp
+ * @property {(grp:string)=>void} toggleTermActiveGrp
  */
 
 /**
@@ -27,9 +27,7 @@ export function SetTermGList(props) {
             <GroupItem
               key={i}
               active={props.termsActive.includes(g)}
-              onClick={() => {
-                props.toggleTermActiveGrp(g);
-              }}
+              onClick={() => props.toggleTermActiveGrp(g)}
             >
               {g}
             </GroupItem>

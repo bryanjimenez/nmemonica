@@ -47,6 +47,7 @@ import {
   timedPlayLog,
 } from "../../helper/consoleHelper";
 import {
+  DIFFICULTY_THRLD,
   alphaOrder,
   dateViewOrder,
   difficultyOrder,
@@ -142,6 +143,7 @@ import {
  * @property {boolean} autoVerbView
  * @property {typeof toggleAutoVerbView} toggleAutoVerbView
  * @property {typeof TermFilterBy[keyof TermFilterBy]} filterType
+ * @property {number} memoThreshold Threshold describing how far memorized a word is
  * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter
  * @property {boolean} reinforce
  * @property {SpaceRepetitionMap} repetition
@@ -399,11 +401,11 @@ class Vocabulary extends Component {
             const repStats = { [uid]: { ...map[uid], d: prevDate } };
             if (answered !== undefined) {
               timedPlayLog(this.props.logger, vocabulary, repStats, {
-                frequency
+                frequency,
               });
             } else {
               spaceRepLog(this.props.logger, vocabulary, repStats, {
-                frequency
+                frequency,
               });
             }
           });
@@ -838,6 +840,28 @@ class Vocabulary extends Component {
       }
     } else if (this.props.termsOrder === TermSortBy.DIFFICULTY) {
       this.props.logger("Difficulty", DebugLevel.DEBUG);
+
+      // exclude vocab with difficulty beyond memoThreshold
+      const subFilter = filteredVocab.filter((v) => {
+        const dT = this.props.memoThreshold;
+        const d = this.props.repetition[v.uid]?.difficulty;
+
+        const showUndefMemoV =
+          d === undefined &&
+          (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
+        const showV = dT < 0 ? d > -1 * dT : d < dT;
+
+        return showUndefMemoV || showV;
+      });
+
+      if (subFilter.length > 0) {
+        filteredVocab = subFilter;
+      } else {
+        this.props.logger(
+          "Excluded all terms. Removing memorized subfiltering.",
+          DebugLevel.WARN
+        );
+      }
 
       newOrder = difficultyOrder(filteredVocab, this.props.repetition);
     } else {
@@ -1560,6 +1584,7 @@ const mapStateToProps = (/** @type {RootState}*/ state) => {
     romajiActive: state.vocabulary.setting.romaji,
     hintEnabled: state.vocabulary.setting.hintEnabled,
     filterType: state.vocabulary.setting.filter,
+    memoThreshold: state.vocabulary.setting.memoThreshold,
     frequency: state.vocabulary.setting.frequency,
     activeGroup: state.vocabulary.setting.activeGroup,
     autoVerbView: state.vocabulary.setting.autoVerbView,
@@ -1581,6 +1606,7 @@ Vocabulary.propTypes = {
   termsOrder: PropTypes.number,
   scrollingDone: PropTypes.bool,
   filterType: PropTypes.number,
+  memoThreshold: PropTypes.number,
   autoVerbView: PropTypes.bool,
   reinforce: PropTypes.bool,
   repetition: PropTypes.object,

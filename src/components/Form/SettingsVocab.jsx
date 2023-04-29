@@ -1,36 +1,45 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
-import PropTypes from "prop-types";
-import classNames from "classnames";
 import {
   ChevronUpIcon,
   PlusCircleIcon,
+  SortAscIcon,
+  SortDescIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
+import classNames from "classnames";
+import PropTypes from "prop-types";
+import React, { Component } from "react";
+import { connect } from "react-redux";
 
 import {
+  initialState as VOCABULARY_INIT,
+  getVocabulary,
   removeFrequencyWord,
+  setMemorizedThreshold,
   setVerbFormsOrder,
-  toggleVocabularyOrdering,
-  toggleVocabularyActiveGrp,
   toggleAutoVerbView,
+  toggleVocabularyActiveGrp,
+  toggleVocabularyBareKanji,
   toggleVocabularyFilter,
   toggleVocabularyHint,
+  toggleVocabularyOrdering,
   toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
   updateVerbColSplit,
-  toggleVocabularyBareKanji,
-  initialState as VOCABULARY_INIT,
 } from "../../slices/vocabularySlice";
-import { getVocabulary } from "../../slices/vocabularySlice";
 
-import SettingsSwitch from "./SettingsSwitch";
-import { SetTermGList } from "../Pages/SetTermGList";
+import { Slider } from "@mui/material";
+import { getStaleGroups } from "../../helper/gameHelper";
+import {
+  TermFilterBy,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import { SetTermGFList } from "../Pages/SetTermGFList";
-import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
+import { SetTermGList } from "../Pages/SetTermGList";
 import { NotReady } from "./NotReady";
+import SettingsSwitch from "./SettingsSwitch";
+import SimpleListMenu from "./SimpleListMenu";
 import VerbFormSlider from "./VerbFormSlider";
-import { TermFilterBy, TermSortByLabel } from "../../slices/settingHelper";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
@@ -49,6 +58,7 @@ import { TermFilterBy, TermSortByLabel } from "../../slices/settingHelper";
  * @property {boolean} showBareKanji
  * @property {boolean} vocabHint
  * @property {typeof TermFilterBy[keyof TermFilterBy]} vocabFilter
+ * @property {number} memoThreshold Threshold describing how far memorized a word is
  * @property {SpaceRepetitionMap} vocabRep
  * @property {boolean} vocabReinforce
  * @property {GroupListMap} vocabGroups
@@ -66,6 +76,7 @@ import { TermFilterBy, TermSortByLabel } from "../../slices/settingHelper";
  * @property {typeof updateVerbColSplit} updateVerbColSplit
  * @property {typeof setVerbFormsOrder} setVerbFormsOrder
  * @property {typeof toggleVocabularyBareKanji} toggleVocabularyBareKanji
+ * @property {typeof setMemorizedThreshold} setMemorizedThreshold
  */
 
 class SettingsVocab extends Component {
@@ -75,6 +86,9 @@ class SettingsVocab extends Component {
 
     /** @type {SettingsVocabProps} */
     this.props;
+
+    this.initialMemoThreshold = Math.abs(this.props.memoThreshold);
+
     if (Object.keys(this.props.vocabGroups).length === 0) {
       this.props.getVocabulary();
     }
@@ -152,21 +166,17 @@ class SettingsVocab extends Component {
         <div className="outer">
           <div className="d-flex flex-row justify-content-between">
             <div className="column-1">
-              <h4>
-                {labelOptions(vocabFilter, [
+              <SimpleListMenu
+                flip={true}
+                title={"Filter by:"}
+                options={[
                   "Word Group",
                   "Frequency List",
-                  "NOT_USED_Tags",
-                ])}
-              </h4>
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={vocabFilter % 2 === 0}
-                  action={toggleVocabularyFilter}
-                  color="default"
-                  statusText={"Filter by"}
-                />
-              </div>
+                  // "NOT_USED_Tags",
+                ]}
+                initial={vocabFilter}
+                onChange={toggleVocabularyFilter}
+              />
               {vocabFilter === TermFilterBy.GROUP && (
                 <SetTermGList
                   termsGroups={vocabGroups}
@@ -191,14 +201,45 @@ class SettingsVocab extends Component {
             </div>
 
             <div className="column-2 setting-block">
-              <div className="mb-2">
-                <SettingsSwitch
-                  active={vocabOrder % 2 == 0}
-                  action={toggleVocabularyOrdering}
-                  color="default"
-                  statusText={labelOptions(vocabOrder, TermSortByLabel)}
-                />
-              </div>
+              <SimpleListMenu
+                title={"Sort by:"}
+                options={TermSortByLabel}
+                initial={vocabOrder}
+                onChange={toggleVocabularyOrdering}
+              />
+
+              {vocabOrder === TermSortBy.DIFFICULTY && (
+                <div className="d-flex justify-content-end">
+                  <Slider
+                    defaultValue={this.initialMemoThreshold}
+                    track={
+                      this.props.memoThreshold < 0 ? "inverted" : undefined
+                    }
+                    onChangeCommitted={(e, newValue) => {
+                      const sign = this.props.memoThreshold < 0 ? -1 : 1;
+                      if(typeof newValue === "number"){
+                        this.props.setMemorizedThreshold(sign * newValue);
+                      }
+                    }}
+                    valueLabelDisplay="auto"
+                  />
+
+                  <div
+                    className="mt-2 ms-3 "
+                    onClick={() => {
+                      const inv = -1 * this.props.memoThreshold;
+                      this.props.setMemorizedThreshold(inv);
+                    }}
+                  >
+                    {this.props.memoThreshold < 0 ? (
+                      <SortDescIcon />
+                    ) : (
+                      <SortAscIcon />
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="mb-2">
                 <SettingsSwitch
                   active={vocabReinforce}
@@ -373,6 +414,7 @@ const mapStateToProps = (/** @type {RootState} */ state) => {
     autoVerbView: state.vocabulary.setting.autoVerbView,
     verbColSplit: state.vocabulary.setting.verbColSplit,
     vocabFilter: state.vocabulary.setting.filter,
+    memoThreshold: state.vocabulary.setting.memoThreshold,
     vocabRep: state.vocabulary.setting.repetition,
     vocabReinforce: state.vocabulary.setting.reinforce,
     verbFormsOrder: state.vocabulary.setting.verbFormsOrder,
@@ -391,6 +433,7 @@ SettingsVocab.propTypes = {
   autoVerbView: PropTypes.bool,
   verbColSplit: PropTypes.number,
   vocabFilter: PropTypes.number,
+  memoThreshold: PropTypes.number,
   vocabRep: PropTypes.object,
   vocabReinforce: PropTypes.bool,
   verbFormsOrder: PropTypes.array,
@@ -407,6 +450,7 @@ SettingsVocab.propTypes = {
   toggleVocabularyRomaji: PropTypes.func,
   updateVerbColSplit: PropTypes.func,
   toggleVocabularyBareKanji: PropTypes.func,
+  setMemorizedThreshold: PropTypes.func,
 };
 
 export default connect(mapStateToProps, {
@@ -422,4 +466,5 @@ export default connect(mapStateToProps, {
   toggleVocabularyRomaji,
   updateVerbColSplit,
   toggleVocabularyBareKanji,
+  setMemorizedThreshold,
 })(SettingsVocab);
