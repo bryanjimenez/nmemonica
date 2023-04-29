@@ -389,13 +389,13 @@ a {
   }
 }
 
-.z-index-1 {
+/* .z-index-1 {
   z-index: 1;
 }
 
 .z-index-2 {
   z-index: 2;
-}
+} */
 
 .rotate-transition {
   transition: transform 1s;
