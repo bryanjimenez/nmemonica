@@ -418,3 +418,7 @@ a {
   opacity: 0;
 }
 
+.notification-fade-in {
+  transition: opacity 5s;
+  opacity: 100%;
+}
