@@ -1,8 +1,7 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
 import PropTypes from "prop-types";
-
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
+import { useSelector } from "react-redux";
 import { DebugLevel } from "../../slices/settingHelper";
 
 const MAX_CONSOLE_MESSAGES = 6;
@@ -14,192 +13,154 @@ const SCROLL_COLLAPSE_T = 10000;
  */
 
 /**
- * @typedef {Object} ConsoleState
- * @property {number} window              Max number of messages to display
- * @property {number} scroll              Number of lines to scroll up
- * @property {ConsoleMessage[]} messages
+ * @typedef {Object} ConsoleProps
+ * @property {boolean} [connected]
+ * @property {ConsoleMessage[]} [messages]
  */
 
 /**
- * @typedef {Object} ConsoleProps
- * @property {boolean} connected
- * @property {number} debug
- * @property {ConsoleMessage[]} messages
+ * squashes sequential messages that are the same
+ * incrementing a counter on the final message
+ * @param {ConsoleMessage[]} messages
  */
+function squashSeqMsgs(messages) {
+  /** @type {ConsoleMessage[]} */
+  let squashed = [];
+  let count = 0;
 
-class Console extends Component {
-  // @ts-ignore constructor
-  constructor(props) {
-    super(props);
+  messages.forEach((element, i) => {
+    if (i > 0 && element.msg === messages[i - 1].msg) {
+      count++;
+    } else {
+      if (count > 0) {
+        const front = squashed.slice(0, -1);
+        const last = squashed.slice(-1)[0];
 
-    /** @type {ConsoleState} */
-    this.state = {
-      window: MAX_CONSOLE_MESSAGES,
-      scroll: 0,
-      messages: this.squashSeqMsgs(this.props.messages),
-    };
-
-    /** @type {ConsoleProps} */
-    this.props;
-
-    /** @type {import("../../typings/raw").SetState<ConsoleState>} */
-    this.setState;
-
-    /** @type {number | undefined} */
-    this.collapse = undefined;
-
-    this.scrollUp = this.scrollUp.bind(this);
-  }
-
-  /** @param {ConsoleProps} prevProps */
-  componentDidUpdate(prevProps) {
-    if (
-      this.props.debug === DebugLevel.OFF &&
-      this.props.debug !== prevProps.debug
-    ) {
-      this.setState({ scroll: 0, messages: [] });
-    }
-
-    if (this.props.messages.length !== prevProps.messages.length) {
-      const messages = this.squashSeqMsgs(this.props.messages);
-      this.setState({ scroll: 0, messages, window: MAX_CONSOLE_MESSAGES });
-
-      if (this.collapse !== undefined) {
-        clearTimeout(this.collapse);
-      }
-
-      const t = setTimeout(() => {
-        this.setState({ window: 3 });
-        this.collapse = undefined;
-      }, COLLAPSE_T);
-
-      this.collapse = Number(t);
-    }
-  }
-
-  scrollUp() {
-    const messages = this.state.messages;
-    const window = this.state.window;
-    const max = messages.length - window > -1 ? messages.length - window : 0;
-
-    if (this.state.scroll < max) {
-      this.setState((state) => ({
-        window: MAX_CONSOLE_MESSAGES,
-        scroll: state.scroll + 1,
-      }));
-
-      if (this.collapse !== undefined) {
-        clearTimeout(this.collapse);
-      }
-
-      const t = setTimeout(() => {
-        this.setState({ window: 3, scroll: 0 });
-        this.collapse = undefined;
-      }, SCROLL_COLLAPSE_T);
-
-      this.collapse = Number(t);
-    }
-  }
-
-  /**
-   * squashes sequential messages that are the same
-   * incrementing a counter on the final message
-   * @param {ConsoleMessage[]} messages
-   */
-  squashSeqMsgs(messages) {
-    /** @type {ConsoleMessage[]} */
-    let squashed = [];
-    let count = 0;
-
-    messages.forEach((element, i) => {
-      if (i > 0 && element.msg === messages[i - 1].msg) {
-        count++;
+        squashed = [
+          ...front,
+          { ...last, msg: last.msg + " " + (count + 1) + "+" },
+          element,
+        ];
+        count = 0;
       } else {
-        if (count > 0) {
-          const front = squashed.slice(0, -1);
-          const last = squashed.slice(-1)[0];
-
-          squashed = [
-            ...front,
-            { ...last, msg: last.msg + " " + (count + 1) + "+" },
-            element,
-          ];
-          count = 0;
-        } else {
-          squashed = [...squashed, element];
-        }
+        squashed = [...squashed, element];
       }
-    });
+    }
+  });
 
-    // update last line's count
-    // if(count>0 && squashed.length>0){
-    //   const front = squashed.slice(0,-1);
-    //   const last = squashed.slice(-1)[0];
-    //   squashed = [...front,{...last, msg:last.msg+" "+(count+1)+"+"}]
-    // }
+  // update last line's count
+  // if(count>0 && squashed.length>0){
+  //   const front = squashed.slice(0,-1);
+  //   const last = squashed.slice(-1)[0];
+  //   squashed = [...front,{...last, msg:last.msg+" "+(count+1)+"+"}]
+  // }
 
-    return squashed;
-  }
-
-  render() {
-    const window = this.state.window;
-    const start = -window - this.state.scroll;
-    const end = this.state.scroll > 0 ? -1 * this.state.scroll : undefined;
-    const messages = this.state.messages.slice(start, end);
-
-    // const tester = [{msg:'a'},{msg:'a'},{msg:'a'},{msg:'c'},{msg:'d'},{msg:'d'},{msg:'a'},{msg:'a'}]
-    // const ar = this.squashSeqMsgs(tester);
-    // console.log(ar)
-
-    return (
-      <div
-        className={classNames({
-          "console p-1": true,
-          "position-absolute": this.props.connected === true,
-          "mw-50": this.props.connected === true,
-        })}
-      >
-        {messages.map((e, i) => {
-          const mClass = classNames({
-            "app-sm-fs-xx-small": true,
-            ...(e.css ? { [e.css]: true } : {}),
-            "correct-color": e.lvl === DebugLevel.DEBUG,
-            "question-color": e.lvl === DebugLevel.WARN,
-            "incorrect-color": e.lvl === DebugLevel.ERROR,
-          });
-
-          return (
-            <div key={i} className={mClass} onClick={this.scrollUp}>
-              {e.msg}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
+  return squashed;
 }
 
-const mapStateToProps = (
-  /** @type {RootState} */ state,
-  /** @type {ConsoleProps} */ ownProps
-) => {
-  if (ownProps.connected !== true && ownProps.messages) {
-    return {
-      messages: ownProps.messages,
-      debug: DebugLevel.DEBUG,
-    };
-  }
+/**
+ * @param {ConsoleProps} props
+ */
+export default function Console(props) {
+  const isConnected = props.connected === true;
 
-  return {
-    messages: state.global.console,
-    debug: state.global.debug,
-  };
-};
+  const { messages: pMessages, debug } = useSelector(
+    (/** @type {RootState}*/ { global }) => {
+      if (!isConnected && props.messages) {
+        return {
+          messages: props.messages,
+          debug: DebugLevel.DEBUG,
+        };
+      } else {
+        return { messages: global.console, ...global };
+      }
+    }
+  );
+
+  const [window, setWindow] = useState(MAX_CONSOLE_MESSAGES); // Max number of messages to display
+  const [scroll, setScroll] = useState(0);                    // Number of lines to scroll up
+  const [messages, setMessages] = useState(squashSeqMsgs(pMessages));
+  /** @type {{current: number|undefined}} */
+  const collapse = useRef();
+
+  useMemo(() => {
+    if (debug === DebugLevel.OFF) {
+      setScroll(0);
+      setMessages([]);
+    } else {
+      const squashed = squashSeqMsgs(pMessages);
+      setScroll(0);
+      setMessages(squashed);
+      setWindow(MAX_CONSOLE_MESSAGES);
+
+      if (collapse.current !== undefined) {
+        clearTimeout(collapse.current);
+      }
+
+      if (isConnected) {
+        const t = setTimeout(() => {
+          setWindow(3);
+          collapse.current = undefined;
+        }, COLLAPSE_T);
+
+        collapse.current = Number(t);
+      }
+    }
+  }, [isConnected, debug, pMessages]);
+
+  const start = -window - scroll;
+  const end = scroll > 0 ? -1 * scroll : undefined;
+  const m = messages.slice(start, end);
+
+  const scrollUp = useCallback(() => {
+    const max = messages.length - window > -1 ? messages.length - window : 0;
+
+    if (scroll < max) {
+      setWindow(MAX_CONSOLE_MESSAGES);
+      setScroll((s) => s + 1);
+
+      if (collapse.current !== undefined) {
+        clearTimeout(collapse.current);
+      }
+
+      const t = setTimeout(() => {
+        setWindow(3);
+        setScroll(0);
+        collapse.current = undefined;
+      }, SCROLL_COLLAPSE_T);
+
+      collapse.current = Number(t);
+    }
+  }, [window, scroll, messages]);
+
+  return (
+    <div
+      className={classNames({
+        "console p-1": true,
+        "position-absolute": props.connected === true,
+        "mw-50": props.connected === true,
+      })}
+    >
+      {m.map((e, i) => {
+        const mClass = classNames({
+          "app-sm-fs-xx-small": true,
+          ...(e.css ? { [e.css]: true } : {}),
+          "correct-color": e.lvl === DebugLevel.DEBUG,
+          "question-color": e.lvl === DebugLevel.WARN,
+          "incorrect-color": e.lvl === DebugLevel.ERROR,
+        });
+
+        return (
+          <div key={i} className={mClass} onClick={scrollUp}>
+            {e.msg}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 Console.propTypes = {
   connected: PropTypes.bool,
   messages: PropTypes.array,
-  debug: PropTypes.number,
 };
-
-export default connect(mapStateToProps, {})(Console);
