@@ -1,27 +1,25 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
-import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAtom,
   faFont,
   faWrench,
   faYinYang,
 } from "@fortawesome/free-solid-svg-icons";
-import { PhrasesMeta } from "../Pages/Phrases";
-import { VocabularyMeta } from "../Pages/Vocabulary";
-import { OppositesGameMeta } from "../Games/OppositesGame";
-import { KanaGameMeta } from "../Pages/KanaGame";
-import { ParticlesGameMeta } from "../Games/ParticlesGame";
-import { SettingsMeta } from "../Pages/Settings";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import classNames from "classnames";
-
-import { KanjiMeta } from "../Pages/Kanji";
-import { toggleKana } from "../../slices/kanaSlice";
+import React, { useCallback, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
+import { buildAction, setStateFunction } from "../../hooks/helperHK";
+import { toggleKana } from "../../slices/kanaSlice";
 import { KanjiGameMeta } from "../Games/KanjiGame";
-
+import { OppositesGameMeta } from "../Games/OppositesGame";
+import { ParticlesGameMeta } from "../Games/ParticlesGame";
+import { KanaGameMeta } from "../Pages/KanaGame";
+import { KanjiMeta } from "../Pages/Kanji";
+import { PhrasesMeta } from "../Pages/Phrases";
+import { SettingsMeta } from "../Pages/Settings";
+import { VocabularyMeta } from "../Pages/Vocabulary";
 import "./Navigation.css";
 
 /**
@@ -29,94 +27,76 @@ import "./Navigation.css";
  * @typedef {import("react").MouseEvent<T>} MouseEvent
  */
 
-/**
- * @typedef {Object} NavigationState
- * @property {boolean} collapsed
- * @property {number} vocabType
- * @property {number} kanjiType
- */
+export default function Navigation() {
+  const dispatch = useDispatch();
 
-class Navigation extends Component {
-  // @ts-ignore constructor
-  constructor(props) {
-    super(props);
+  const { charSet } = useSelector(
+    (/** @type {RootState}*/ { kana }) => kana.setting
+  );
 
-    /** @type {NavigationState} */
-    this.state = {
-      collapsed: true,
-      vocabType: 0,
-      kanjiType: 0,
-    };
+  const [collapsed, setCollapsed] = useState(true);
+  const [vocabType, setVocabType] = useState(0);
+  const [kanjiType, setKanjiType] = useState(0);
 
-    /** @type {import("../../typings/raw").SetState<NavigationState>} */
-    this.setState;
-
-    this.menuToggle = this.menuToggle.bind(this);
-    this.clickBehavior = this.clickBehavior.bind(this);
-  }
-
-  menuToggle() {
-    this.setState((state) => {
-      if (state.collapsed) {
-        document.body.classList.add("no-scroll");
-        window.scrollTo(0, 0);
-      } else {
-        document.body.classList.remove("no-scroll");
-      }
-
-      return {
-        collapsed: !state.collapsed,
-      };
-    });
-  }
-
-  /**
-   * Clicking on icons should collapse menu (force-collapse).
-   * Clicking on captions should not (prevent-collapse).
-   * Anywhere else should.
-   * @template HTMLDivElement
-   * @param {MouseEvent<HTMLDivElement>} event
-   */
-  clickBehavior(event) {
-    if (event.target) {
-      const tEl = /** @type {Element} */ (event.target);
-      if (
-        Array.from(document.getElementsByClassName("force-collapse")).includes(
-          tEl
-        )
-      ) {
-        // force a collapse, Link el is preventing?
-        this.menuToggle();
-      } else if (
-        !Array.from(
-          document.getElementsByClassName("prevent-collapse")
-        ).includes(tEl)
-      ) {
-        // any child elem without classname^ toggles
-        this.menuToggle();
-        return false;
-      }
+  const menuToggle = useCallback(() => {
+    if (collapsed) {
+      setCollapsed(false);
+      document.body.classList.add("no-scroll");
+      window.scrollTo(0, 0);
+    } else {
+      setCollapsed(true);
+      document.body.classList.remove("no-scroll");
     }
-  }
+  }, [collapsed]);
 
-  render() {
-    let shortcuts = [
+  const clickBehavior = useCallback(
+    /**
+     * Clicking on icons should collapse menu (force-collapse).
+     * Clicking on captions should not (prevent-collapse).
+     * Anywhere else should.
+     * @template HTMLDivElement
+     * @param {MouseEvent<HTMLDivElement>} event
+     */
+    (event) => {
+      if (event.target) {
+        const tEl = /** @type {Element} */ (event.target);
+        if (
+          Array.from(
+            document.getElementsByClassName("force-collapse")
+          ).includes(tEl)
+        ) {
+          // force a collapse, Link el is preventing?
+          menuToggle();
+        } else if (
+          !Array.from(
+            document.getElementsByClassName("prevent-collapse")
+          ).includes(tEl)
+        ) {
+          // any child elem without classname^ toggles
+          menuToggle();
+          return false;
+        }
+      }
+    },
+    [menuToggle]
+  );
+
+  let shortcuts = useMemo(
+    () => [
       {
         meta: {
           ...KanaGameMeta,
-          label: labelOptions(this.props.charSet, KanaGameMeta.label),
+          label: labelOptions(charSet, KanaGameMeta.label),
         },
         icon: (
           <div className="not-a-real-icon">
-            {labelOptions(this.props.charSet, ["あ", "ア", "*"])}
+            {labelOptions(charSet, ["あ", "ア", "*"])}
           </div>
         ),
         wrap: (/** @type {string} */ child) => (
           <div
             className="clickable prevent-collapse"
-            onClick={() => {
-              this.props.toggleKana();
-            }}
+            onClick={buildAction(dispatch, toggleKana)}
           >
             {child}
           </div>
@@ -127,16 +107,14 @@ class Navigation extends Component {
         icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
       },
       {
-        meta: [VocabularyMeta, PhrasesMeta][this.state.vocabType],
+        meta: [VocabularyMeta, PhrasesMeta][vocabType],
         icon: <FontAwesomeIcon icon={faFont} size="2x" />,
         wrap: (/** @type {string} */ child) => (
           <div
             className="clickable prevent-collapse"
-            onClick={() => {
-              this.setState((s) => ({
-                vocabType: toggleOptions(s.vocabType, ["Vocab", "Phrases"]),
-              }));
-            }}
+            onClick={setStateFunction(setVocabType, (t) =>
+              toggleOptions(t, ["Vocab", "Phrases"])
+            )}
           >
             {child}
           </div>
@@ -156,20 +134,18 @@ class Navigation extends Component {
       //   ),
       // },
       {
-        meta: [KanjiMeta, KanjiGameMeta][this.state.kanjiType],
+        meta: [KanjiMeta, KanjiGameMeta][kanjiType],
         icon: (
           <div className="not-a-real-icon">
-            {labelOptions(this.state.kanjiType, ["漢", "G"])}
+            {labelOptions(kanjiType, ["漢", "G"])}
           </div>
         ),
         wrap: (/** @type {string} */ child) => (
           <div
             className="clickable prevent-collapse"
-            onClick={() => {
-              this.setState((s) => ({
-                kanjiType: toggleOptions(s.kanjiType, ["Kanji", "KanjiGame"]),
-              }));
-            }}
+            onClick={setStateFunction(setKanjiType, (t) =>
+              toggleOptions(t, ["Kanji", "KanjiGame"])
+            )}
           >
             {child}
           </div>
@@ -179,80 +155,69 @@ class Navigation extends Component {
         meta: SettingsMeta,
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
       },
-    ];
+    ],
+    [dispatch, charSet, kanjiType, vocabType]
+  );
 
-    return (
-      <div className="navigation">
-        <nav className="my-navbar">
-          <Link /*className="navbar-brand"*/ aria-label="Home" to="/">
-            {/* <span>Nmemonica</span> */}
-            {/* <span>Language Flash Cards</span> */}
-          </Link>
-          <div className="button d-lg-none mt-2 me-2" onClick={this.menuToggle}>
-            <button
-              className={classNames({
-                "nav-menu-btn": true,
-                collapsed: this.state.collapsed,
-              })}
-              type="button"
-              aria-controls="nav-menu-mobile"
-              aria-expanded="false"
-              aria-label="Toggle mobile navigation"
-            >
-              <span className="nav-btn-line" />
-              <span className="nav-btn-line" />
-              <span className="nav-btn-line" />
-            </button>
-          </div>
-          {/* Mobile navigation icons */}
-          <div
+  return (
+    <div className="navigation">
+      <nav className="my-navbar">
+        <Link /*className="navbar-brand"*/ aria-label="Home" to="/">
+          {/* <span>Nmemonica</span> */}
+          {/* <span>Language Flash Cards</span> */}
+        </Link>
+        <div className="button d-lg-none mt-2 me-2" onClick={menuToggle}>
+          <button
             className={classNames({
-              "mobile d-lg-none": true,
-              collapse: this.state.collapsed,
+              "nav-menu-btn": true,
+              collapsed: collapsed,
             })}
-            id="nav-menu-mobile"
-            onClick={this.clickBehavior}
+            type="button"
+            aria-controls="nav-menu-mobile"
+            aria-expanded="false"
+            aria-label="Toggle mobile navigation"
           >
-            <ul className="w-100 d-flex justify-content-evenly flex-wrap p-4">
-              {shortcuts.map((l, i) => (
-                <li key={i} className="w-25 text-center m-3">
-                  <Link to={l.meta.location}>
-                    <div className="icon force-collapse mb-2">{l.icon}</div>
-                  </Link>
-                  <div className="caption">
-                    {l.wrap ? l.wrap(l.meta.label) : l.meta.label}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <span className="nav-btn-line" />
+            <span className="nav-btn-line" />
+            <span className="nav-btn-line" />
+          </button>
+        </div>
+        {/* Mobile navigation icons */}
+        <div
+          className={classNames({
+            "mobile d-lg-none": true,
+            collapse: collapsed,
+          })}
+          id="nav-menu-mobile"
+          onClick={clickBehavior}
+        >
+          <ul className="w-100 d-flex justify-content-evenly flex-wrap p-4">
+            {shortcuts.map((l, i) => (
+              <li key={i} className="w-25 text-center m-3">
+                <Link to={l.meta.location}>
+                  <div className="icon force-collapse mb-2">{l.icon}</div>
+                </Link>
+                <div className="caption">
+                  {l.wrap ? l.wrap(l.meta.label) : l.meta.label}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-          {/* Desktop navigation links */}
-          <div className="desktop d-none d-lg-block pt-2 pe-2">
-            <ul className="d-flex">
-              {shortcuts.map((s, i) => (
-                <li key={i}>
-                  <Link className="desktop-link" to={s.meta.location}>
-                    {s.wrap ? s.wrap(s.meta.label) : s.meta.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </nav>
-      </div>
-    );
-  }
+        {/* Desktop navigation links */}
+        <div className="desktop d-none d-lg-block pt-2 pe-2">
+          <ul className="d-flex">
+            {shortcuts.map((s, i) => (
+              <li key={i}>
+                <Link className="desktop-link" to={s.meta.location}>
+                  {s.wrap ? s.wrap(s.meta.label) : s.meta.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+    </div>
+  );
 }
-
-Navigation.propTypes = {
-  // user: PropTypes.object,
-  charSet: PropTypes.number,
-  toggleKana: PropTypes.func,
-};
-
-const mapStateToProps = (/** @type {RootState} */ state) => {
-  return { /*user: state.login.user,*/ charSet: state.kana.setting.charSet };
-};
-
-export default connect(mapStateToProps, { toggleKana })(Navigation);
