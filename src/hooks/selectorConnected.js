@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
  */
 export function useVerbMainConnected() {
   const { global, vocabulary } = useSelector(
-    (/** @type {RootState}*/ { global, vocabulary }) => ({global, vocabulary})
+    (/** @type {RootState}*/ { global, vocabulary }) => ({ global, vocabulary })
   );
   const { swipeThreshold } = global;
   const {
@@ -54,5 +54,34 @@ export function useKanjiGameConnected() {
     repetitionObj,
     choiceN,
     repetition,
+  };
+}
+
+/**
+ * SettingsPhrase app-state props
+ */
+export function useSettingsPhraseConnected() {
+  const { phrases } = useSelector((/** @type {RootState}*/ { phrases }) => ({
+    phrases,
+  }));
+
+  const {
+    ordered: phraseOrder,
+    romaji: phraseRomaji,
+    reinforce: phraseReinforce,
+    activeGroup: phraseActive,
+    filter: phraseFilter,
+    repetition: phraseRep,
+  } = phrases.setting;
+
+  return {
+    phrases: phrases.value,
+    phraseGroups: phrases.grpObj,
+    phraseOrder,
+    phraseRomaji,
+    phraseReinforce,
+    phraseActive,
+    phraseFilter,
+    phraseRep,
   };
 }

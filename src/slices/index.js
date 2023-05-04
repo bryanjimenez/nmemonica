@@ -23,3 +23,6 @@ export const store = configureStore({
     particle: particleGameReducer,
   },
 });
+
+// https://redux-toolkit.js.org/tutorials/typescript#define-root-state-and-dispatch-types
+// export type AppDispatch = typeof store.dispatch

@@ -61,7 +61,10 @@ export const updateSpaceRepPhrase = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
 
-    return updateSpaceRepTerm(uid, spaceRep, { count: shouldIncrement, date: true });
+    return updateSpaceRepTerm(uid, spaceRep, {
+      count: shouldIncrement,
+      date: true,
+    });
   }
 );
 
@@ -75,7 +78,7 @@ export const initialState = {
     romaji: false,
     reinforce: false,
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
-    frequency: { uid: undefined, count: 0 },
+    frequency: { uid: /** @type {string | undefined} */ (undefined), count: 0 },
     activeGroup: /** @type {string[]} */ ([]),
     filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 0,
   },
@@ -85,6 +88,10 @@ const phraseSlice = createSlice({
   name: "phrase",
   initialState,
   reducers: {
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: number|undefined}} action
+     */
     togglePhrasesFilter(state, action) {
       /**
        * Toggle between group, frequency, and tags filtering
@@ -113,6 +120,11 @@ const phraseSlice = createSlice({
         state.setting.reinforce = false;
       }
     },
+
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     togglePhraseActiveGrp(state, action) {
       const grpName = action.payload;
 
@@ -167,6 +179,10 @@ const phraseSlice = createSlice({
       );
     },
 
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     removeFrequencyPhrase(state, action) {
       const uid = action.payload;
 

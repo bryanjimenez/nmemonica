@@ -14,7 +14,7 @@ import classNames from "classnames";
  * @property {string[]} termsFreq List of uid of terms to be reinforced/frequency
  * @property {string[]} termsActive List of tags that are selected
  * @property {(grp:string)=>void} toggleTermActiveGrp
- * @property {function} removeFrequencyTerm
+ * @property {(uid:string)=>void} removeFrequencyTerm
  */
 
 /**
@@ -22,7 +22,7 @@ import classNames from "classnames";
  * @param {number} i
  * @param {string} uid
  * @param {string} english
- * @param {function} removeFrequencyTerm
+ * @param {(uid: string)=>void} removeFrequencyTerm
  */
 function listItem(grpActive, i, uid, english, removeFrequencyTerm) {
   return (
