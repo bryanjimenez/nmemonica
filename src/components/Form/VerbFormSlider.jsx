@@ -12,7 +12,7 @@ import "./VerbFormSlider.css";
  * @property {number} initial
  * @property {number} max
  * @property {string} statusText
- * @property {function} setChoiceN
+ * @property {(split: number)=>void} setChoiceN
  */
 
 /** @param {VerbFormSliderProps} props */

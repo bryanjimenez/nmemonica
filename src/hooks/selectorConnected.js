@@ -85,3 +85,45 @@ export function useSettingsPhraseConnected() {
     phraseRep,
   };
 }
+
+/**
+ * SettingsVocab app-state props
+ */
+export function useSettingsVocabConnected() {
+  const { vocabulary } = useSelector((/** @type {RootState}*/ { vocabulary }) => ({
+    vocabulary,
+  }));
+
+  const {
+    ordered: vocabOrder,
+    romaji: vocabRomaji,
+    bareKanji: showBareKanji,
+    hintEnabled: vocabHint,
+    activeGroup: vocabActive,
+    autoVerbView,
+    verbColSplit,
+    filter: vocabFilter,
+    memoThreshold: memoThreshold,
+    repetition: vocabRep,
+    reinforce: vocabReinforce,
+    verbFormsOrder,
+  } = vocabulary.setting;
+
+  return {
+    vocabulary: vocabulary.value,
+    vocabGroups: vocabulary.grpObj,
+
+    vocabOrder,
+    vocabRomaji,
+    showBareKanji,
+    vocabHint,
+    vocabActive,
+    autoVerbView,
+    verbColSplit,
+    vocabFilter,
+    memoThreshold,
+    vocabRep,
+    vocabReinforce,
+    verbFormsOrder,
+  };
+}
