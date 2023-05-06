@@ -26,6 +26,13 @@ export const TermSortBy = Object.freeze({
   DIFFICULTY: 4,
 });
 
+// enum
+export const KanaType = Object.freeze({
+  HIRAGANA: 0,
+  KATAKANA: 1,
+  MIXED: 2,
+});
+
 export const TermSortByLabel = [
   "Randomized",
   "Alphabetic",

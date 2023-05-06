@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import data from "../../data/kana.json";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { KanaType } from "./settingHelper";
 
 export const kanaFromLocalStorage = createAsyncThunk(
   "kana/kanaFromLocalStorage",
@@ -14,17 +15,17 @@ export const kanaFromLocalStorage = createAsyncThunk(
 );
 
 const initialState = {
-  hiragana: /** @type {string[][]}*/ ([]),
-  katakana: /** @type {string[][]}*/ ([]),
-  vowels: /** @type {string[]}*/ ([]),
-  consonants: /** @type {string[]}*/ ([]),
-  sounds: /** @type {{[uid:string]:string}}*/ ({}),
+  hiragana: data.hiragana,
+  katakana: data.katakana,
+  vowels: data.vowels,
+  consonants: data.consonants,
+  sounds: data.sounds,
 
   setting: {
     choiceN: 16,
     wideMode: false,
     easyMode: false,
-    charSet: 0,
+    charSet: /** @type {typeof KanaType[keyof KanaType]} */ (0),
   },
 };
 
@@ -33,19 +34,13 @@ const kanaSlice = createSlice({
   initialState,
 
   reducers: {
-    getKana(state) {
-      return {
-        ...state,
-        hiragana: data.hiragana,
-        katakana: data.katakana,
-        vowels: data.vowels,
-        consonants: data.consonants,
-        sounds: data.sounds,
-      };
-    },
     toggleKana(state) {
       const { charSet } = state.setting;
-      const newCharSet = charSet + 1 < 3 ? charSet + 1 : 0;
+      const newCharSet = /** @type {typeof KanaType[keyof KanaType]} */ (
+        charSet + 1 < Object.keys(KanaType).length
+          ? charSet + 1
+          : KanaType.HIRAGANA
+      );
 
       state.setting.charSet = localStoreAttrUpdate(
         new Date(),
@@ -97,7 +92,6 @@ const kanaSlice = createSlice({
 });
 
 export const {
-  getKana,
   toggleKana,
   setKanaBtnN,
   toggleKanaEasyMode,
