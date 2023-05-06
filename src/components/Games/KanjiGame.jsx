@@ -1,17 +1,22 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import { shuffleArray } from "../../helper/arrayHelper";
+import {
+  getTerm,
+  getTermUID,
+  play,
+  randomOrder,
+  termFilterByType,
+} from "../../helper/gameHelper";
+import { useConnectKanji } from "../../hooks/useConnectKanji";
 import {
   addFrequencyKanji,
+  getKanji,
   removeFrequencyKanji,
 } from "../../slices/kanjiSlice";
-import { shuffleArray } from "../../helper/arrayHelper";
-import { randomOrder } from "../../helper/gameHelper";
-import { useFrequency } from "../../hooks/frequencyHK";
-import { useFilterTerms } from "../../hooks/kanjiGamesHK";
-import { useReinforcePlay } from "../../hooks/reinforcePlayHK";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -20,9 +25,7 @@ import {
 } from "../Form/OptionsBar";
 import FourChoices from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
-import { useRandomTerm } from "../../hooks/randomTermHK";
-import { getKanji } from "../../slices/kanjiSlice";
-import { useKanjiGameConnected } from "../../hooks/selectorConnected";
+import { TermFilterBy } from "../../slices/settingHelper";
 
 /**
  * @typedef {import("../../typings/raw").RawKanji} RawKanji
@@ -88,15 +91,12 @@ function createEnglishChoices(answer, kanjiList) {
 
 /**
  * @param {RawKanji} kanji
- * @param {RawKanji[]} rawKanjis
+ * @param {RawKanji[]} kanjiList
  */
-function prepareGame(kanji, rawKanjis) {
-  if (!kanji || rawKanjis.length === 0) return;
-  // console.warn("prepareGame("+kanji.english+", "+rawKanjis.length+")");
-
+function prepareGame(kanji, kanjiList) {
   const { uid, kanji: japanese, on, kun } = kanji;
 
-  const choices = createEnglishChoices(kanji, rawKanjis);
+  const choices = createEnglishChoices(kanji, kanjiList);
 
   /** @type {import("./FourChoices").GameQuestion} */
   const q = {
@@ -137,70 +137,183 @@ function prepareGame(kanji, rawKanjis) {
 }
 
 export default function KanjiGame() {
-  const dispatch = useDispatch();
-  const { rawKanjis, activeTags, filterType, reinforce, repetitionObj } =
-    useKanjiGameConnected();
+  const dispatch = /** @type {AppDispatch} */ (useDispatch());
+  const {
+    kanjiList,
+    activeTags,
+    repetition,
 
-  useMemo(() => {
-    if (rawKanjis.length === 0) {
+    filterType: filterTypeRef,
+    reinforce: reinforceRef,
+  } = useConnectKanji();
+
+  useEffect(() => {
+    if (kanjiList.length === 0) {
       dispatch(getKanji());
     }
   }, []);
 
-  /** @type {React.MutableRefObject<number[]>} */
-  const order = useRef([]);
+  const metadata = useRef(repetition);
+  metadata.current = repetition;
+
+  const [frequency, setFrequency] = useState(/** @type {string[]}*/ ([]));
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const repetition = useMemo(() => repetitionObj, [repetitionObj]);
-
-  const filteredTerms = useFilterTerms(
-    repetition,
-    rawKanjis,
-    reinforce,
-    filterType,
-    activeTags
-  );
-  order.current = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
-
-  const [willReinforce, setWillReinforce] = useState(false);
-  const frequencyUids = useFrequency(repetition, filteredTerms);
-  const randomTerm = useRandomTerm(willReinforce, frequencyUids, filteredTerms);
-
-  let [kanji, setMove] = useReinforcePlay(
-    willReinforce,
-    randomTerm,
-    filteredTerms.length,
-    setSelectedIndex
+  const [reinforcedUID, setReinforcedUID] = useState(
+    /** @type {string|undefined}*/ (undefined)
   );
 
-  kanji = useMemo(
-    () => kanji ?? filteredTerms[order.current[selectedIndex]],
-    [kanji, filteredTerms, selectedIndex]
-  );
-  const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
+  /** @type {RawKanji[]} */
+  const filteredTerms = useMemo(() => {
+    if (kanjiList.length === 0) return [];
+    if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
+      return kanjiList;
 
-  const game = useMemo(() => prepareGame(kanji, rawKanjis), [kanji, rawKanjis]);
+    const allFrequency = Object.keys(metadata.current).reduce(
+      (/** @type {string[]}*/ acc, cur) => {
+        if (metadata.current[cur].rein === true) {
+          acc = [...acc, cur];
+        }
+        return acc;
+      },
+      []
+    );
 
-  // console.log("           KanjiGame render " + selectedIndex);
+    let filtered = termFilterByType(
+      filterTypeRef.current,
+      kanjiList,
+      allFrequency,
+      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
+      () => {} // Don't toggle filter if last freq is removed
+    );
+
+    if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
+      const filteredList = filtered.map((k) => k.uid);
+      const additional = kanjiList.filter(
+        (k) => allFrequency.includes(k.uid) && !filteredList.includes(k.uid)
+      );
+
+      filtered = [...filtered, ...additional];
+    }
+
+    const initialFrequency = filtered.reduce(
+      (/** @type {string[]}*/ acc, cur) => {
+        if (metadata.current[cur.uid]?.rein === true) {
+          return [...acc, cur.uid];
+        }
+        return acc;
+      },
+      []
+    );
+
+    setFrequency(initialFrequency);
+
+    return filtered;
+  }, [kanjiList, activeTags, reinforceRef, filterTypeRef]);
+
+  const order = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
+
+  const gotoNext = useCallback(() => {
+    const l = filteredTerms.length;
+    let newSel = (selectedIndex + 1) % l;
+
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel + 1) % l;
+    // }
+
+    // prevLastNext.current = lastNext;
+    // setLastNext(Date.now());
+    // prevSelectedIndex.current = selectedIndex;
+    setSelectedIndex(newSel);
+    setReinforcedUID(undefined);
+  }, [filteredTerms, selectedIndex /* lastNext, errorSkipIndex*/]);
+
+  const gotoNextSlide = useCallback(() => {
+    play(
+      reinforceRef.current,
+      filterTypeRef.current,
+      frequency,
+      filteredTerms,
+      metadata.current,
+      reinforcedUID,
+      (value) => {
+        setReinforcedUID(value);
+      },
+      gotoNext
+    );
+  }, [
+    frequency,
+    filteredTerms,
+    reinforcedUID,
+    gotoNext,
+    reinforceRef,
+    filterTypeRef,
+  ]);
+
+  const gotoPrev = useCallback(() => {
+    const l = filteredTerms.length;
+    const i = selectedIndex - 1;
+
+    let newSel;
+    if (reinforcedUID) {
+      newSel = selectedIndex;
+    } else {
+      newSel = (l + i) % l;
+    }
+
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel - 1) % l;
+    // }
+
+    // prevLastNext.current = lastNext;
+    // setLastNext(Date.now());
+    // prevSelectedIndex.current = selectedIndex;
+    setSelectedIndex(newSel);
+    setReinforcedUID(undefined);
+  }, [
+    filteredTerms,
+    selectedIndex,
+    reinforcedUID /*lastNext, errorSkipIndex*/,
+  ]);
 
   const addFrequencyTerm = useCallback(
-    (uid) => {
+    (/** @type {string} */ uid) => {
+      setFrequency((p) => [...p, uid]);
       dispatch(addFrequencyKanji(uid));
     },
     [dispatch]
   );
   const removeFrequencyTerm = useCallback(
-    (uid) => {
+    (/** @type {string} */ uid) => {
+      setFrequency((p) => p.filter((pUid) => pUid !== uid));
       dispatch(removeFrequencyKanji(uid));
     },
     [dispatch]
   );
 
-  if (game === undefined) return <NotReady addlStyle="main-panel" />;
+  if (order.length === 0) return <NotReady addlStyle="main-panel" />;
 
-  const l = filteredTerms.length;
-  const progress = ((selectedIndex + 1) / l) * 100;
+  const uid = reinforcedUID || getTermUID(selectedIndex, order, filteredTerms);
+  const kanji = getTerm(uid, kanjiList);
+
+  // console.log(
+  //   JSON.stringify({
+  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
+  //     idx: selectedIndex,
+  //     uid: (uid && uid.slice(0, 6)) || "",
+  //     ord: order.length,
+  //     rep: Object.keys(metadata.current).length,
+  //     fre: frequency.length,
+  //     filt: filteredTerms.length,
+  //   })
+  // );
+
+  const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
+
+  const game = prepareGame(kanji, kanjiList);
+
+
+  const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
 
   return (
     <>
@@ -208,15 +321,8 @@ export default function KanjiGame() {
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
-        gotoPrev={() => {
-          setWillReinforce(false);
-          setMove((v) => v - 1);
-        }}
-        gotoNext={() => {
-          const willReinforce = reinforce && Math.random() < 1 / 3;
-          setWillReinforce(willReinforce);
-          setMove((v) => v + 1);
-        }}
+        gotoPrev={gotoPrev}
+        gotoNext={gotoNextSlide}
       />
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">
@@ -231,7 +337,7 @@ export default function KanjiGame() {
             <FrequencyTermIcon
               visible={
                 term_reinforce &&
-                kanji.uid !== filteredTerms[order.current[selectedIndex]].uid
+                kanji.uid !== filteredTerms[order[selectedIndex]].uid
               }
             />
           </div>

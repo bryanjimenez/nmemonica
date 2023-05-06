@@ -1,7 +1,7 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, { useReducer } from "react";
+import React, { useCallback, useReducer } from "react";
 import StackNavButton from "../Form/StackNavButton";
 
 /**
@@ -29,7 +29,7 @@ import StackNavButton from "../Form/StackNavButton";
 /**
  * @param {XChoicesProps} props
  */
-function XChoices(props) {
+export default function XChoices(props) {
   /** @type {[XChoicesState, import("react").Dispatch<Partial<XChoicesState>>]} */
   const [state, dispatch] = useReducer(
     (
@@ -43,23 +43,25 @@ function XChoices(props) {
     }
   );
 
-  const clearAnswers = () => {
+  const clearAnswers = useCallback(() => {
     dispatch({ showMeaning: false, correct: -1, incorrect: [] });
-  };
+  }, [dispatch]);
+
+  const { isCorrect, choices, gotoNext, gotoPrev } = props;
 
   /**
    * @param {GameChoice} answered
    * @param {number} i
    */
   const checkAnswer = (answered, i) => {
-    const [isCorrect, correctIdx] = props.isCorrect(answered);
+    const [wasCorrect, correctIdx] = isCorrect(answered);
 
-    if (isCorrect) {
+    if (wasCorrect) {
       // console.log("RIGHT!");
       dispatch({ correct: i, showMeaning: true });
       setTimeout(() => {
         clearAnswers();
-        props.gotoNext();
+        gotoNext();
       }, 1000);
     } else if (state.incorrect.length === 2) {
       // console.log("WRONG");
@@ -70,19 +72,13 @@ function XChoices(props) {
       });
       setTimeout(() => {
         clearAnswers();
-        props.gotoNext();
+        gotoNext();
       }, 2500);
     } else {
       // console.log("WRONG");
       dispatch({ incorrect: [...state.incorrect, i] });
     }
   };
-
-  // const question = props.question;
-  const choices = props.choices;
-
-  // console.log(question);
-  // console.log(choices);
 
   /**
    * @param {number} index
@@ -123,6 +119,25 @@ function XChoices(props) {
     );
   };
 
+  const gotoPrevLogic = useCallback(
+    /** @type {React.MouseEventHandler} */ (
+      () => {
+        clearAnswers();
+        gotoPrev();
+      }
+    ),
+    [clearAnswers, gotoPrev]
+  );
+
+  const gotoNextLogic = useCallback(
+    /** @type {React.MouseEventHandler} */ (
+      () => {
+        clearAnswers();
+        gotoNext();
+      }
+    ),
+    [clearAnswers, gotoNext]
+  );
   const mainPanel = classNames({
     "pickXgame main-panel h-100": true,
   });
@@ -130,33 +145,13 @@ function XChoices(props) {
   return (
     <div key={0} className={mainPanel}>
       <div className="d-flex justify-content-between h-100">
-        <StackNavButton
-          ariaLabel="Previous"
-          action={
-            /** @type {React.MouseEventHandler} */ (
-              () => {
-                clearAnswers();
-                props.gotoPrev();
-              }
-            )
-          }
-        >
+        <StackNavButton ariaLabel="Previous" action={gotoPrevLogic}>
           <ChevronLeftIcon size={16} />
         </StackNavButton>
         <div className="choices d-flex justify-content-around flex-wrap w-100">
           {choices.map((c, i) => choiceButton(i))}
         </div>
-        <StackNavButton
-          ariaLabel="Next"
-          action={
-            /** @type {React.MouseEventHandler} */ (
-              () => {
-                clearAnswers();
-                props.gotoNext();
-              }
-            )
-          }
-        >
+        <StackNavButton ariaLabel="Next" action={gotoNextLogic}>
           <ChevronRightIcon size={16} />
         </StackNavButton>
       </div>
@@ -173,4 +168,3 @@ XChoices.propTypes = {
   gotoPrev: PropTypes.func.isRequired,
 };
 
-export default XChoices;
