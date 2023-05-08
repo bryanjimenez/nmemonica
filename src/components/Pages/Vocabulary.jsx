@@ -84,7 +84,7 @@ import {
   ShowHintBtn,
   TimePlayVerifyBtns,
   ToggleAutoVerbViewBtn,
-  ToggleFrequencyTermBtnMemo,
+  ToggleFrequencyTermBtnMemoLegacy,
   ToggleFuriganaBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -1465,7 +1465,7 @@ class Vocabulary extends Component {
                   toggleFurigana={(uid) => this.props.furiganaToggled(uid)}
                   vocabulary={vocabulary}
                 />
-                <ToggleFrequencyTermBtnMemo
+                <ToggleFrequencyTermBtnMemoLegacy
                   addFrequencyTerm={this.props.addFrequencyWord}
                   removeFrequencyTerm={this.props.removeFrequencyWord}
                   toggle={vocabulary_reinforce}

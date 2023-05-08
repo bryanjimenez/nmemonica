@@ -52,7 +52,7 @@ export const initialState = {
     filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 2,
     reinforce: false,
     repetition: /** @type {SpaceRepetitionMap}*/ ({}),
-    frequency: { uid: undefined, count: 0 },
+    frequency: { uid: /** @type {string | undefined}*/ (undefined), count: 0 },
     activeGroup: /** @type {string[]}*/ ([]),
     activeTags: /** @type {string[]}*/ ([]),
   },
@@ -100,6 +100,10 @@ const kanjiSlice = createSlice({
       );
     },
 
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     addFrequencyKanji(state, action) {
       const uid = action.payload;
 
@@ -131,6 +135,11 @@ const kanjiSlice = createSlice({
       );
       state.setting.frequency = frequency;
     },
+
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     removeFrequencyKanji(state, action) {
       const uid = action.payload;
 

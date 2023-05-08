@@ -51,7 +51,7 @@ import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
   ReCacheAudioBtn,
-  ToggleFrequencyTermBtnMemo,
+  ToggleFrequencyTermBtnMemoLegacy,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -300,7 +300,7 @@ class Phrases extends Component {
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
         this.props
-          .updateSpaceRepPhrase({uid, shouldIncrement})
+          .updateSpaceRepPhrase({ uid, shouldIncrement })
           .then(({ payload }) => {
             const { map, prevMap } = payload;
 
@@ -936,7 +936,7 @@ class Phrases extends Component {
                   }));
                 }}
               />
-              <ToggleFrequencyTermBtnMemo
+              <ToggleFrequencyTermBtnMemoLegacy
                 addFrequencyTerm={this.props.addFrequencyPhrase}
                 removeFrequencyTerm={this.props.removeFrequencyPhrase}
                 toggle={phrase_reinforce}

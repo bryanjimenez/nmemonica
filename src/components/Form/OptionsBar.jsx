@@ -141,7 +141,9 @@ ToggleFrequencyTermBtn.propTypes = {
   count: PropTypes.number,
 };
 
-export const ToggleFrequencyTermBtnMemo = memo(
+export const ToggleFrequencyTermBtnMemo = memo(ToggleFrequencyTermBtn);
+
+export const ToggleFrequencyTermBtnMemoLegacy = memo(
   ToggleFrequencyTermBtn,
   ToggleFrequencyTermBtnIsEq
 );
@@ -151,7 +153,7 @@ export const ToggleFrequencyTermBtnMemo = memo(
  * @param {ToggleFrequencyTermBtnProps} newProps
  */
 function ToggleFrequencyTermBtnIsEq(oldProps, newProps) {
-  // console.table({new: newProps, old: oldProps})
+  // console.table({old: oldProps, new: newProps})
 
   const optionalSame = oldProps.toggle === newProps.toggle;
 
