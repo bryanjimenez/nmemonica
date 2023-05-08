@@ -114,6 +114,10 @@ const vocabularySlice = createSlice({
       );
     },
 
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     furiganaToggled(state, action) {
       const uid = action.payload;
 

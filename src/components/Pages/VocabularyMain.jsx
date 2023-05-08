@@ -1,136 +1,127 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import { audioPronunciation, JapaneseText } from "../../helper/JapaneseText";
-import AudioItem from "../Form/AudioItem";
-import {
-  furiganaToggled,
-  flipVocabularyPracticeSide,
-} from "../../slices/vocabularySlice";
-import Sizable from "../Form/Sizable";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
   englishLabel,
-  getEnglishHint,
-  japaneseLabel,
-  toggleFuriganaSettingHelper,
-  labelPlacementHelper,
-  getJapaneseHint,
   getCacheUID,
+  getEnglishHint,
+  getJapaneseHint,
+  japaneseLabel,
+  labelPlacementHelper,
+  toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
+import { setStateFunction } from "../../hooks/helperHK";
+import { furiganaToggled } from "../../slices/vocabularySlice";
+import AudioItem from "../Form/AudioItem";
+import Sizable from "../Form/Sizable";
 
 /**
- * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
- */
-
-/**
- * @typedef {Object} VocabularyMainState
- * @property {boolean} showMeaning
- * @property {boolean} showRomaji
- * @property {boolean} [showHint]
- * @property {string} [naFlip]
- * @property {any} [swiping]
  */
 
 /**
  * @typedef {Object} VocabularyMainProps
  * @property {RawVocabulary} vocabulary
  * @property {boolean} showHint
- * @property {boolean} hintEnabled
- * @property {boolean} showBareKanji
- * @property {boolean} romajiActive
- * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
- * @property {boolean} practiceSide   true: English, false: Japanese
- * @property {boolean} scrollingDone
- * @property {number} swipeThreshold
- * @property {SpaceRepetitionMap} repetition
- * @property {typeof furiganaToggled} furiganaToggled
- * @property {typeof toggleFuriganaSettingHelper} toggleFuriganaSettingHelper
  * @property {boolean} reCache
- * @property {boolean} played
- * @property {boolean} prevPushPlay
  */
 
-class VocabularyMain extends Component {
-  // @ts-ignore constructor
-  constructor(props) {
-    super(props);
+/**
+ * @param {VocabularyMainProps} props
+ */
+export default function VocabularyMain(props) {
+  const dispatch = /** @type {AppDispatch} */ (useDispatch());
 
-    /** @type {VocabularyMainState} */
-    this.state = {
-      showMeaning: false,
-      showRomaji: false,
-    };
+  const [showMeaning, setShowMeaning] = useState(
+    /** @type {string|undefined} */ (undefined)
+  );
+  const [showRomaji, setShowRomaji] = useState(
+    /** @type {string|undefined} */ (undefined)
+  );
+  const [naFlip, setNaFlip] = useState(
+    /** @type {"-na" | undefined} */ (undefined)
+  );
 
-    /** @type {VocabularyMainProps} */
-    this.props;
+  const { global, vocabulary: v } = useSelector(
+    (/** @type {RootState}*/ { global, vocabulary }) => ({ global, vocabulary })
+  );
+  const { swipeThreshold } = global;
+  const {
+    repetition,
+    romaji: romajiActive,
+    practiceSide: englishSideUp,
+    hintEnabled,
+    bareKanji: showBareKanjiSetting,
+  } = v.setting;
 
-    /** @type {import("../../typings/raw").SetState<VocabularyMainState>} */
-    this.setState;
-  }
+  const { vocabulary, reCache, showHint } = props;
 
-  /**
-   * @param {VocabularyMainProps} prevProps
-   */
-  componentDidUpdate(prevProps /*, prevState*/) {
-    if (this.props.vocabulary !== prevProps.vocabulary) {
-      this.setState({
-        showMeaning: false,
-        showRomaji: false,
-      });
+  useEffect(() => {
+    if (showMeaning && vocabulary.uid !== showMeaning) {
+      setShowMeaning(undefined);
+    }
+
+    if (showRomaji && vocabulary.uid !== showRomaji) {
+      setShowRomaji(undefined);
+    }
+  }, [vocabulary]);
+
+  const toggleFuriganaCB = useCallback(
+    (/** @type {string} */ uid) => dispatch(furiganaToggled(uid)),
+    [dispatch]
+  );
+
+  const furiganaToggable = useMemo(
+    () =>
+      toggleFuriganaSettingHelper(
+        vocabulary.uid,
+        repetition,
+        englishSideUp,
+        toggleFuriganaCB
+      ),
+    [toggleFuriganaCB, vocabulary.uid, repetition, englishSideUp]
+  );
+
+  let jLabel = <span>{"[Japanese]"}</span>;
+  let eLabel = <span>{"[English]"}</span>;
+
+  const vObj = JapaneseText.parse(vocabulary);
+  const inJapanese = vObj.toHTML(furiganaToggable);
+
+  const inEnglish = vocabulary.english;
+  const romaji = vocabulary.romaji;
+
+  const jValue = japaneseLabel(englishSideUp, vObj, inJapanese);
+  const eValue = englishLabel(englishSideUp, vObj, inEnglish);
+
+  if (hintEnabled && showHint) {
+    if (englishSideUp) {
+      const jHint = getJapaneseHint(vObj);
+      jLabel = jHint || jLabel;
+    } else {
+      const eHint = getEnglishHint(vocabulary);
+      eLabel = eHint || eLabel;
     }
   }
 
-  render() {
-    const vocabulary = this.props.vocabulary;
-    const practiceSide = this.props.practiceSide;
+  const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
+    englishSideUp,
+    eValue,
+    jValue,
+    eLabel,
+    jLabel
+  );
 
-    const furiganaToggable = toggleFuriganaSettingHelper(
-      vocabulary.uid,
-      this.props.repetition,
-      practiceSide,
-      this.props.furiganaToggled
-    );
+  /** English showing, menu showBareKanji enabled, this terms furigana disabled */
+  const showBareKanji =
+    englishSideUp === true &&
+    showBareKanjiSetting === true &&
+    repetition[vocabulary.uid]?.f === false;
 
-    let jLabel = <span>{"[Japanese]"}</span>;
-    let eLabel = <span>{"[English]"}</span>;
-
-    const vObj = JapaneseText.parse(vocabulary);
-    const inJapanese = vObj.toHTML(furiganaToggable);
-
-    const inEnglish = vocabulary.english;
-    const romaji = vocabulary.romaji;
-
-    const jValue = japaneseLabel(practiceSide, vObj, inJapanese);
-    const eValue = englishLabel(practiceSide, vObj, inEnglish);
-
-    if (this.props.hintEnabled && this.props.showHint) {
-      if (practiceSide) {
-        const jHint = getJapaneseHint(vObj);
-        jLabel = jHint || jLabel;
-      } else {
-        const eHint = getEnglishHint(vocabulary);
-        eLabel = eHint || eLabel;
-      }
-    }
-
-    const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
-      practiceSide,
-      eValue,
-      jValue,
-      eLabel,
-      jLabel
-    );
-
-    /** English showing, menu showBareKanji enabled, this terms furigana disabled */
-    const showBareKanji =
-      practiceSide === true &&
-      this.props.showBareKanji === true &&
-      this.props.repetition[vocabulary.uid]?.f === false;
-
+  const audioWords = useMemo(() => {
     let sayObj = vocabulary;
     if (JapaneseText.parse(vocabulary).isNaAdj()) {
-      const naFlip = this.state.naFlip;
       const naAdj = JapaneseText.parse(vocabulary).append(naFlip && "な");
 
       sayObj = {
@@ -141,120 +132,91 @@ class VocabularyMain extends Component {
       };
     }
 
-    const audioWords = this.props.practiceSide
+    return englishSideUp
       ? { tl: "en", q: vocabulary.english, uid: vocabulary.uid + ".en" }
       : {
-          tl: this.props.practiceSide ? "en" : "ja",
+          tl: englishSideUp ? "en" : "ja",
           q: audioPronunciation(sayObj),
           uid: getCacheUID(sayObj),
         };
+  }, [vocabulary, englishSideUp, naFlip]);
 
-    const playButton = (
-      <AudioItem
-        visible={this.props.swipeThreshold === 0}
-        word={audioWords}
-        reCache={this.props.reCache}
-        onPushedPlay={() => {
-          this.setState((s) => ({
-            naFlip: s.naFlip ? undefined : "-na",
-          }));
-        }}
-      />
-    );
+  const onPushedPlay = useCallback(
+    () => setNaFlip((na) => (na ? undefined : "-na")),
+    []
+  );
 
-    const shortEN = inEnglish.length < 55;
+  const playButton = (
+    <AudioItem
+      visible={swipeThreshold === 0}
+      word={audioWords}
+      reCache={reCache}
+      onPushedPlay={onPushedPlay}
+    />
+  );
 
-    return (
-      <div className="pt-3 d-flex flex-column justify-content-around text-center">
-        <Sizable
-          breakPoint="md"
-          largeClassName={{ "fs-display-5": true }}
-          smallClassName={
-            // {Japanese : English}
-            {
-              ...(!practiceSide
-                ? { "fs-display-6": true }
-                : { [shortEN ? "fs-display-6" : "h3"]: true }),
-            }
+  const shortEN = inEnglish.length < 55;
+
+  return (
+    <div className="pt-3 d-flex flex-column justify-content-around text-center">
+      <Sizable
+        breakPoint="md"
+        largeClassName={{ "fs-display-5": true }}
+        smallClassName={
+          // {Japanese : English}
+          {
+            ...(!englishSideUp
+              ? { "fs-display-6": true }
+              : { [shortEN ? "fs-display-6" : "h3"]: true }),
           }
-        >
-          {topValue}
-        </Sizable>
-        {this.props.romajiActive && romaji && (
-          <h5>
-            <span
-              onClick={() => {
-                this.setState((state) => ({
-                  showRomaji: !state.showRomaji,
-                }));
-              }}
-              className="clickable loop-no-interrupt"
-            >
-              {this.state.showRomaji ? romaji : "[Romaji]"}
-            </span>
-          </h5>
-        )}
-        <Sizable
-          className={{ "loop-no-interrupt": true }}
-          breakPoint="md"
-          largeClassName={{ "fs-display-5": true }}
-          smallClassName={
-            // {Japanese : English}
-            {
-              ...(practiceSide
-                ? { "fs-display-6": true }
-                : { [shortEN ? "fs-display-6" : "h3"]: true }),
-            }
+        }
+      >
+        {topValue}
+      </Sizable>
+      {romajiActive && romaji && (
+        <h5>
+          <span
+            onClick={setStateFunction(setShowRomaji, (r) =>
+              r === vocabulary.uid ? undefined : vocabulary.uid
+            )}
+            className="clickable loop-no-interrupt"
+          >
+            {showRomaji === vocabulary.uid ? romaji : "[Romaji]"}
+          </span>
+        </h5>
+      )}
+      <Sizable
+        className={{ "loop-no-interrupt": true }}
+        breakPoint="md"
+        largeClassName={{ "fs-display-5": true }}
+        smallClassName={
+          // {Japanese : English}
+          {
+            ...(englishSideUp
+              ? { "fs-display-6": true }
+              : { [shortEN ? "fs-display-6" : "h3"]: true }),
           }
-          onClick={() => {
-            if (!showBareKanji) {
-              this.setState((state) => ({
-                showMeaning: !state.showMeaning,
-              }));
-            }
-          }}
-        >
-          {this.state.showMeaning || showBareKanji ? bottomValue : bottomLabel}
-        </Sizable>
+        }
+        onClick={
+          showBareKanji
+            ? undefined
+            : setStateFunction(setShowMeaning, (m) =>
+                m === vocabulary.uid ? undefined : vocabulary.uid
+              )
+        }
+      >
+        {showMeaning === vocabulary.uid || showBareKanji
+          ? bottomValue
+          : bottomLabel}
+      </Sizable>
 
-        <div className="d-flex justify-content-center">{playButton}</div>
-      </div>
-    );
-  }
+      <div className="d-flex justify-content-center">{playButton}</div>
+    </div>
+  );
 }
-
-const mapStateToProps = (/** @type {RootState} */ state) => {
-  return {
-    scrollingDone: !state.global.scrolling,
-    swipeThreshold: state.global.swipeThreshold,
-    practiceSide: state.vocabulary.setting.practiceSide,
-    romajiActive: state.vocabulary.setting.romaji,
-    repetition: state.vocabulary.setting.repetition,
-    hintEnabled: state.vocabulary.setting.hintEnabled,
-    showBareKanji: state.vocabulary.setting.bareKanji,
-  };
-};
 
 VocabularyMain.propTypes = {
   vocabulary: PropTypes.object.isRequired,
-  romajiActive: PropTypes.bool,
-  practiceSide: PropTypes.bool,
   reCache: PropTypes.bool,
-  scrollingDone: PropTypes.bool,
-  played: PropTypes.bool,
-  prevPushPlay: PropTypes.bool,
-  swipeThreshold: PropTypes.number,
-  repetition: PropTypes.object,
-  hintEnabled: PropTypes.bool,
   showHint: PropTypes.bool,
-  showBareKanji: PropTypes.bool,
-
-  flipVocabularyPracticeSide: PropTypes.func,
-  furiganaToggled: PropTypes.func,
-  toggleFuriganaSettingHelper: PropTypes.func,
 };
-
-export default connect(mapStateToProps, {
-  flipVocabularyPracticeSide,
-  furiganaToggled,
-})(VocabularyMain);
