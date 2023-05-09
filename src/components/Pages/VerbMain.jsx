@@ -16,15 +16,14 @@ import {
   useLabelPlacementHelper,
   useToggleFuriganaSettingHelper,
 } from "../../hooks/gameHelperHK";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { verbFormChanged } from "../../slices/vocabularySlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
-import { useVerbMainConnected } from "../../hooks/selectorConnected";
 
 /**
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").VerbFormArray} VerbFormArray
- * @typedef {import("../../typings/raw").FuriganaToggleMap} FuriganaToggleMap
  * @typedef {import("../../helper/JapaneseText").JapaneseText} JapaneseText
  */
 
@@ -33,7 +32,6 @@ import { useVerbMainConnected } from "../../hooks/selectorConnected";
  * @property {RawVocabulary} verb
  * @property {boolean} reCache
  * @property {boolean} showHint
- *
  * @property {(uid:string)=>void} linkToOtherTerm
  */
 
@@ -96,28 +94,35 @@ function getVerbLabelItems(
  * @param {VerbMainProps} props
  */
 export default function VerbMain(props) {
-  const [showMeaning, setShowMeaning] = useState(false);
-  const [showRomaji, setShowRomaji] = useState(false);
-
-  const dispatch = useDispatch();
-
-  const {
-    verbForm,
-
-    repetition,
-    swipeThreshold,
-    englishSideUp,
-    verbFormsOrder,
-    romajiActive,
-    hintEnabled,
-    verbColSplit,
-  } = useVerbMainConnected();
+  const dispatch = /** @type {AppDispatch} */ (useDispatch());
 
   const { verb, reCache, linkToOtherTerm, showHint } = props;
 
+  const [showMeaning, setShowMeaning] = useState(
+    /** @type {string|undefined}*/ (undefined)
+  );
+  const [showRomaji, setShowRomaji] = useState(
+    /** @type {string|undefined}*/ (undefined)
+  );
+
+  const {
+    verbForm,
+    swipeThreshold,
+    repetition,
+    romajiEnabled,
+    englishSideUp,
+    hintEnabled,
+    verbFormsOrder,
+    verbColSplit,
+  } = useConnectVocabulary();
+
   useEffect(() => {
-    setShowMeaning(false);
-    setShowRomaji(false);
+    // When scrolling back and forth
+    // reset last words shownMeaning (etc.)
+    // avoids re-showing when scrolling back
+    const currUid = verb.uid;
+    setShowMeaning((prev) => (prev === currUid ? prev : undefined));
+    setShowRomaji((prev) => (prev === currUid ? prev : undefined));
   }, [verb]);
 
   /**
@@ -278,13 +283,15 @@ export default function VerbMain(props) {
           {topValue}
         </Sizable>
 
-        {romajiActive && romaji && (
+        {romajiEnabled && romaji && (
           <div>
             <span
               className="clickable loop-no-interrupt"
-              onClick={() => setShowRomaji((show) => !show)}
+              onClick={() =>
+                setShowRomaji((r) => (r === verb.uid ? undefined : verb.uid))
+              }
             >
-              {showRomaji ? romaji : "[romaji]"}
+              {showRomaji === verb.uid ? romaji : "[romaji]"}
             </span>
           </div>
         )}
@@ -296,9 +303,11 @@ export default function VerbMain(props) {
             ...(englishSideUp ? { "fs-display-6": true } : { h5: true }),
           }}
           largeClassName={{ "fs-display-6": true }}
-          onClick={() => setShowMeaning((show) => !show)}
+          onClick={() =>
+            setShowMeaning((m) => (m === verb.uid ? undefined : verb.uid))
+          }
         >
-          {showMeaning ? bottomValue : bottomLabel}
+          {showMeaning === verb.uid ? bottomValue : bottomLabel}
         </Sizable>
         <div className="d-flex justify-content-center">{playButton}</div>
       </div>

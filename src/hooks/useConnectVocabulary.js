@@ -8,10 +8,11 @@ import { shallowEqual, useSelector } from "react-redux";
 /**
  * Vocabulary app-state props
  */
-export function useVocabularyConnected() {
-  const [debug, motionThreshold] = useSelector(
+export function useConnectVocabulary() {
+  const [debug, swipeThreshold, motionThreshold] = useSelector(
     (/** @type {RootState}*/ { global }) => [
       global.debug,
+      global.swipeThreshold,
       global.motionThreshold,
     ],
     shallowEqual
@@ -33,7 +34,6 @@ export function useVocabularyConnected() {
 
       const { verbForm } = vocabulary;
 
-
       // TODO: https://github.com/reduxjs/reselect#basic-usage
       return /** @type {[boolean, boolean, string ]} */ ([
         practiceSide,
@@ -44,30 +44,41 @@ export function useVocabularyConnected() {
     shallowEqual
   );
 
-  const [mt, r, ft, he, sm] = useSelector(
-    (/** @type {RootState}*/ { vocabulary }) => {
+  const [mt, r, ft, he, romajiEnabled, bareKanji, verbColSplit, sm] =
+    useSelector((/** @type {RootState}*/ { vocabulary }) => {
       const {
         memoThreshold,
         reinforce,
         filter,
         hintEnabled,
+        romaji,
+        bareKanji,
+        verbColSplit,
         ordered,
       } = vocabulary.setting;
 
-      return /** @type {[number, boolean, TermFilterBy[keyof TermFilterBy], boolean, number]} */ ([
+      return /** @type {[typeof memoThreshold, typeof reinforce, typeof filter, typeof hintEnabled, typeof romaji, typeof bareKanji, typeof verbColSplit, typeof ordered]} */ ([
         memoThreshold,
         reinforce,
         filter,
         hintEnabled,
+        romaji,
+        bareKanji,
+        verbColSplit,
         ordered,
       ]);
+    }, shallowEqual);
+
+  const verbFormsOrder = useSelector(
+    (/** @type {RootState}*/ { vocabulary }) => {
+      const { verbFormsOrder } = vocabulary.setting;
+      return verbFormsOrder;
     },
     shallowEqual
   );
 
   const activeGroup = useSelector((/** @type {RootState}*/ { vocabulary }) => {
     const { activeGroup } = vocabulary.setting;
-
     return activeGroup;
   }, shallowEqual);
 
@@ -95,8 +106,13 @@ export function useVocabularyConnected() {
 
     // Not changing during game
     debugLevel: debug,
+    swipeThreshold,
     motionThreshold,
     vocabList,
+    romajiEnabled,
+    bareKanji,
+    verbFormsOrder,
+    verbColSplit,
     activeGroup,
 
     // Refs ()

@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
   englishLabel,
@@ -12,6 +12,7 @@ import {
   toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
 import { setStateFunction } from "../../hooks/helperHK";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { furiganaToggled } from "../../slices/vocabularySlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
@@ -33,6 +34,8 @@ import Sizable from "../Form/Sizable";
 export default function VocabularyMain(props) {
   const dispatch = /** @type {AppDispatch} */ (useDispatch());
 
+  const { vocabulary, reCache, showHint } = props;
+
   const [showMeaning, setShowMeaning] = useState(
     /** @type {string|undefined} */ (undefined)
   );
@@ -43,28 +46,22 @@ export default function VocabularyMain(props) {
     /** @type {"-na" | undefined} */ (undefined)
   );
 
-  const { global, vocabulary: v } = useSelector(
-    (/** @type {RootState}*/ { global, vocabulary }) => ({ global, vocabulary })
-  );
-  const { swipeThreshold } = global;
   const {
+    swipeThreshold,
     repetition,
-    romaji: romajiActive,
-    practiceSide: englishSideUp,
+    romajiEnabled,
+    englishSideUp,
     hintEnabled,
     bareKanji: showBareKanjiSetting,
-  } = v.setting;
-
-  const { vocabulary, reCache, showHint } = props;
+  } = useConnectVocabulary();
 
   useEffect(() => {
-    if (showMeaning && vocabulary.uid !== showMeaning) {
-      setShowMeaning(undefined);
-    }
-
-    if (showRomaji && vocabulary.uid !== showRomaji) {
-      setShowRomaji(undefined);
-    }
+    // When scrolling back and forth
+    // reset last words shownMeaning (etc.)
+    // avoids re-showing when scrolling back
+    const currUid = vocabulary.uid;
+    setShowMeaning((prev) => (prev === currUid ? prev : undefined));
+    setShowRomaji((prev) => (prev === currUid ? prev : undefined));
   }, [vocabulary]);
 
   const toggleFuriganaCB = useCallback(
@@ -167,13 +164,14 @@ export default function VocabularyMain(props) {
           {
             ...(!englishSideUp
               ? { "fs-display-6": true }
-              : { [shortEN ? "fs-display-6" : "h3"]: true }),
+              : { [shortEN ? "fs-display-6" : "h3"]: true,
+              ...(shortEN ? {"lh-xs": true}: {}) }),
           }
         }
       >
         {topValue}
       </Sizable>
-      {romajiActive && romaji && (
+      {romajiEnabled && romaji && (
         <h5>
           <span
             onClick={setStateFunction(setShowRomaji, (r) =>

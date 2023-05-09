@@ -38,7 +38,7 @@ import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
-import { useVocabularyConnected } from "../../hooks/useVocabularyConnected";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { logger } from "../../slices/globalSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
 import {
@@ -133,7 +133,7 @@ export default function Vocabulary() {
     englishSideUp,
     verbForm,
     repetition,
-  } = useVocabularyConnected();
+  } = useConnectVocabulary();
 
   /** metadata table ref */
   const metadata = useRef(repetition);
