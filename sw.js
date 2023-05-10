@@ -130,6 +130,7 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "DO_HARD_REFRESH") {
+    console.log('sw: hard refresh')
     fetch(dataVerURL)
       .then((res) => {
         if (res.status < 400) {
