@@ -11,7 +11,7 @@ import React, { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { getStaleGroups } from "../../helper/gameHelper";
 import { buildAction } from "../../hooks/helperHK";
-import { useSettingsVocabConnected } from "../../hooks/selectorConnected";
+import { useSettingsVocabConnected } from "../../hooks/useConnectSettings";
 import {
   TermFilterBy,
   TermSortBy,

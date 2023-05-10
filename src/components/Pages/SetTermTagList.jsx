@@ -8,7 +8,7 @@ import { GroupItem } from "../Form/GroupItem";
  * @typedef {Object} SetTermTagListProps
  * @property {string[]} termsTags List of all available tags
  * @property {string[]} termsActive List of tags that are selected
- * @property {(grp:string)=>function} toggleTermActive
+ * @property {(grp:string)=>void} toggleTermActive
  * @property {number} [selectedCount] Number of terms currently selected by filter
  */
 

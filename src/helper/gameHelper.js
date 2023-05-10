@@ -13,6 +13,7 @@ import { furiganaHintBuilder } from "./kanjiHelper";
  * @typedef {import("../typings/raw").RawJapanese} RawJapanese
  * @typedef {import("../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../typings/raw").RawPhrase} RawPhrase
+ * @typedef {import("../typings/raw").RawKanji} RawKanji
  * @typedef {import("../typings/raw").AudioQueryParams} AudioQueryParams
  * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../typings/raw").VerbFormArray} VerbFormArray
@@ -221,7 +222,7 @@ export function getStaleGroups(termGroups, termActive) {
  * finds stale keys, and uids in the SpaceRepetitionMap
  * returns a set of stale keys and a list of which uid the key belonged to
  * @param {SpaceRepetitionMap} repetition
- * @param {RawVocabulary[]|RawPhrase[]} termList
+ * @param {RawVocabulary[]|RawPhrase[]|RawKanji[]} termList
  * @param {string} staleLabel
  */
 export function getStaleSpaceRepKeys(repetition, termList, staleLabel) {

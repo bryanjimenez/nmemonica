@@ -29,7 +29,7 @@ export const getKanji = createAsyncThunk(
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/kanji.json", {
       headers: { "Data-Version": version },
-    }).then((res) => res.json());
+    }).then((res) => res.json().then((value) => ({ value, version })));
   }
 );
 
@@ -45,12 +45,14 @@ export const kanjiFromLocalStorage = createAsyncThunk(
 
 export const initialState = {
   value: /** @type {RawKanji[]} */ ([]),
+  version: "",
   tagObj: /** @type {string[]} */ ([]),
 
   setting: {
     choiceN: 32,
     filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 2,
     reinforce: false,
+    repTID: -1,
     repetition: /** @type {SpaceRepetitionMap}*/ ({}),
     frequency: { uid: /** @type {string | undefined}*/ (undefined), count: 0 },
     activeGroup: /** @type {string[]}*/ ([]),
@@ -62,8 +64,11 @@ const kanjiSlice = createSlice({
   name: "kanji",
   initialState,
   reducers: {
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     toggleKanjiActiveTag(state, action) {
-      /** @type {string} */
       const tagName = action.payload;
 
       const { activeTags } = state.setting;
@@ -116,14 +121,15 @@ const kanjiSlice = createSlice({
         }
       );
 
-      localStoreAttrUpdate(
+      state.setting.repTID = Date.now();
+
+      state.setting.repetition = localStoreAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",
         newValue
       );
-      state.setting.repetition = newValue;
 
       let frequency = { uid, count: state.setting.frequency.count + 1 };
       localStoreAttrUpdate(
@@ -165,6 +171,7 @@ const kanjiSlice = createSlice({
         );
 
         if (newValue) {
+          state.setting.repTID = Date.now();
           state.setting.repetition = newValue;
         }
 
@@ -192,6 +199,10 @@ const kanjiSlice = createSlice({
       );
     },
 
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: number|undefined}} action
+     */
     toggleKanjiFilter(state, action) {
       const override = action.payload;
       const { filter, reinforce } = state.setting;
@@ -227,14 +238,16 @@ const kanjiSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(getKanji.fulfilled, (state, action) => {
-      const value = Object.keys(action.payload).map((k) => ({
-        ...action.payload[k],
+      const { value: v, version } = action.payload;
+      const value = Object.keys(v).map((k) => ({
+        ...v[k],
         uid: k,
-        tag: action.payload[k].tag === undefined ? [] : action.payload[k].tag,
+        tag: v[k].tag === undefined ? [] : v[k].tag,
       }));
 
-      state.tagObj = buildTagObject(action.payload);
+      state.tagObj = buildTagObject(v);
       state.value = value;
+      state.version = version;
     });
 
     builder.addCase(kanjiFromLocalStorage.fulfilled, (state, action) => {
@@ -251,7 +264,7 @@ const kanjiSlice = createSlice({
 
       return {
         ...state,
-        setting: { ...mergedSettings },
+        setting: { ...mergedSettings, repTID: Date.now() },
       };
     });
   },

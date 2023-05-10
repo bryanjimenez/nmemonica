@@ -33,7 +33,7 @@ export const getVocabulary = createAsyncThunk(
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/vocabulary.json", {
       headers: { "Data-Version": version },
-    }).then((res) => res.json());
+    }).then((res) => res.json().then((value) => ({ value, version })));
   }
 );
 
@@ -65,6 +65,7 @@ export const vocabularyFromLocalStorage = createAsyncThunk(
 
 export const initialState = {
   value: /** @type {RawVocabulary[]} */ ([]),
+  version: "",
   grpObj: {},
   verbForm: "dictionary",
 
@@ -77,6 +78,7 @@ export const initialState = {
     filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 0,
     memoThreshold: MEMORIZED_THRLD,
     reinforce: false,
+    repTID: -1,
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
     frequency: { uid: undefined, count: 0 },
     activeGroup: /** @type {string[]}*/ ([]),
@@ -130,6 +132,7 @@ const vocabularySlice = createSlice({
         }
       );
 
+      state.setting.repTID = Date.now();
       state.setting.repetition = newValue;
     },
 
@@ -271,6 +274,7 @@ const vocabularySlice = createSlice({
         }
       );
 
+      state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
@@ -305,6 +309,7 @@ const vocabularySlice = createSlice({
           }
         );
 
+        state.setting.repTID = Date.now();
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
@@ -357,6 +362,7 @@ const vocabularySlice = createSlice({
           }
         );
 
+        state.setting.repTID = Date.now();
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
@@ -409,6 +415,7 @@ const vocabularySlice = createSlice({
         };
 
         const newValue = { ...spaceRep, [uid]: o };
+        state.setting.repTID = Date.now();
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
@@ -455,6 +462,7 @@ const vocabularySlice = createSlice({
         };
 
         const newValue = { ...spaceRep, [uid]: o };
+        state.setting.repTID = Date.now();
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
@@ -485,18 +493,21 @@ const vocabularySlice = createSlice({
 
       return {
         ...state,
-        setting: { ...mergedSettings },
+        setting: { ...mergedSettings, repTID: Date.now() },
       };
     });
 
     builder.addCase(getVocabulary.fulfilled, (state, action) => {
-      state.grpObj = buildGroupObject(action.payload);
-      state.value = buildVocabularyObject(action.payload);
+      const { value, version } = action.payload;
+      state.grpObj = buildGroupObject(value);
+      state.value = buildVocabularyObject(value);
+      state.version = version;
     });
 
     builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
       const { value: newValue } = action.payload;
 
+      state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },

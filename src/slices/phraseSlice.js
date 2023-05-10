@@ -38,7 +38,7 @@ export const getPhrase = createAsyncThunk(
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
       headers: { "Data-Version": version },
-    }).then((res) => res.json());
+    }).then((res) => res.json().then((value) => ({ value, version })));
   }
 );
 
@@ -70,6 +70,7 @@ export const updateSpaceRepPhrase = createAsyncThunk(
 
 export const initialState = {
   value: /** @type {RawPhrase[]} */ ([]),
+  version: "",
   grpObj: {},
 
   setting: {
@@ -77,6 +78,7 @@ export const initialState = {
     practiceSide: false,
     romaji: false,
     reinforce: false,
+    repTID: -1,
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
     frequency: { uid: /** @type {string | undefined} */ (undefined), count: 0 },
     activeGroup: /** @type {string[]} */ ([]),
@@ -161,6 +163,7 @@ const phraseSlice = createSlice({
         }
       );
 
+      state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(
         new Date(),
         { phrases: state.setting },
@@ -198,6 +201,7 @@ const phraseSlice = createSlice({
           }
         );
 
+        state.setting.repTID = Date.now();
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
           { phrases: state.setting },
@@ -257,8 +261,10 @@ const phraseSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(getPhrase.fulfilled, (state, action) => {
-      state.grpObj = buildGroupObject(action.payload);
-      state.value = buildPhraseArray(action.payload);
+      const { value, version } = action.payload;
+      state.grpObj = buildGroupObject(value);
+      state.value = buildPhraseArray(value);
+      state.version = version;
     });
 
     builder.addCase(phraseFromLocalStorage.fulfilled, (state, action) => {
@@ -275,12 +281,13 @@ const phraseSlice = createSlice({
 
       return {
         ...state,
-        setting: { ...mergedSettings },
+        setting: { ...mergedSettings, repTID: Date.now() },
       };
     });
     builder.addCase(updateSpaceRepPhrase.fulfilled, (state, action) => {
       const { value: newValue } = action.payload;
 
+      state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(
         new Date(),
         { phrases: state.setting },

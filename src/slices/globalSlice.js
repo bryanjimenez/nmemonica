@@ -103,18 +103,34 @@ const globalSlice = createSlice({
       state.scrolling = action.payload;
     },
     setSwipeThreshold(state, action) {
+      /** @type {number} */
+      let override = action.payload;
+
       const path = "/global/";
       const attr = "swipeThreshold";
       const time = new Date();
-      localStoreAttrUpdate(time, { global: state }, path, attr, action.payload);
-      state.swipeThreshold = action.payload;
+      state.swipeThreshold = localStoreAttrUpdate(
+        time,
+        { global: state },
+        path,
+        attr,
+        override
+      );
     },
     setMotionThreshold(state, action) {
+      /** @type {number} */
+      let override = action.payload;
+
       const path = "/global/";
       const attr = "motionThreshold";
       const time = new Date();
-      localStoreAttrUpdate(time, { global: state }, path, attr, action.payload);
-      state.motionThreshold = action.payload;
+      state.motionThreshold = localStoreAttrUpdate(
+        time,
+        { global: state },
+        path,
+        attr,
+        override
+      );
     },
 
     debugToggled: {
@@ -123,9 +139,19 @@ const globalSlice = createSlice({
         /** @type {import("@reduxjs/toolkit").PayloadAction<typeof DebugLevel[keyof DebugLevel]>} */ action
       ) => {
         const override = action.payload;
-        const newDebug = toggleAFilter(state.debug+1, Object.values(DebugLevel), override);
+        const newDebug = toggleAFilter(
+          state.debug + 1,
+          Object.values(DebugLevel),
+          override
+        );
 
-        state.debug = localStoreAttrUpdate(new Date(), {global: state}, "/global/", "debug", newDebug);
+        state.debug = localStoreAttrUpdate(
+          new Date(),
+          { global: state },
+          "/global/",
+          "debug",
+          newDebug
+        );
       },
 
       prepare: (override) => ({

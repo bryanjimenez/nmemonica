@@ -11,7 +11,7 @@ import "./KanaOptionsSlider.css";
 /**
  * @typedef {Object} KanaOptionsSliderProps
  * @property {number} initial
- * @property {function} setChoiceN
+ * @property {(n:number)=>void} setChoiceN
  * @property {boolean} [wideMode]
  * @property {function} [toggleWide]
  */

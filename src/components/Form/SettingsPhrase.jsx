@@ -2,7 +2,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { buildAction } from "../../hooks/helperHK";
-import { useSettingsPhraseConnected } from "../../hooks/selectorConnected";
+import { useSettingsPhraseConnected } from "../../hooks/useConnectSettings";
 import {
   getPhrase,
   removeFrequencyPhrase,

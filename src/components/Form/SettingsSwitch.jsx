@@ -27,9 +27,7 @@ export function SettingsSwitch(props) {
       <Switch
         {...other}
         checked={props.active}
-        onChange={() => {
-          props.action();
-        }}
+        onChange={() => props.action()}
         color={props.color || "primary"}
         inputProps={{ "aria-label": props.statusText + " checkbox" }}
       />
