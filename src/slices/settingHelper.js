@@ -55,7 +55,7 @@ export function toggleAFilter(filter, allowed, override) {
     newFilter = override;
   } else {
     while (!allowed.includes(newFilter) || newFilter > max) {
-      newFilter = filter + 1 > max ? 0 : filter + 1;
+      newFilter = newFilter + 1 > max ? 0 : newFilter + 1;
     }
   }
 
