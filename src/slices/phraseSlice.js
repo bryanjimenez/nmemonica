@@ -82,7 +82,7 @@ export const initialState = {
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
     frequency: { uid: /** @type {string | undefined} */ (undefined), count: 0 },
     activeGroup: /** @type {string[]} */ ([]),
-    filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 0,
+    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (0),
   },
 };
 
@@ -108,7 +108,9 @@ const phraseSlice = createSlice({
 
       const { filter, reinforce } = state.setting;
 
-      const newFilter = toggleAFilter(filter + 1, allowed, override);
+      const newFilter = /** @type {TermFilterBy[keyof TermFilterBy]} */ (
+        toggleAFilter(filter + 1, allowed, override)
+      );
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),

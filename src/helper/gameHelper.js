@@ -29,9 +29,9 @@ import { furiganaHintBuilder } from "./kanjiHelper";
  * @param {string[]} frequency
  * @param {RawItem[]} filteredTerms
  * @param {string|undefined} reinforcedUID
- * @param {function} updateReinforcedUID
+ * @param {(uid:string)=>void} updateReinforcedUID
  * @param {function} gotoNext
- * @param {function} removeFrequencyTerm
+ * @param {(uid:string)=>void} removeFrequencyTerm
  */
 export function play(
   reinforce,
@@ -45,8 +45,7 @@ export function play(
 ) {
   // some games will come from the reinforced list
   // unless filtering from frequency list
-  const reinforced =
-    reinforce && [false, false, true][Math.floor(Math.random() * 3)];
+  const reinforced = reinforce && Math.random() < 1 / 3;
   if (
     freqFilter !== TermFilterBy.FREQUENCY &&
     reinforced &&
@@ -911,6 +910,7 @@ export function englishLabel(isOnTop, jObj, inEnglish, jumpToTerm) {
 }
 
 /**
+ * Flips En > Jp or Jp > En
  * @param {boolean} practiceSide
  * @param {JSX.Element} inEnglish
  * @param {JSX.Element} inJapanese
