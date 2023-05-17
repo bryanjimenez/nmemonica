@@ -75,12 +75,11 @@ export const initialState = {
     romaji: false,
     bareKanji: false,
     hintEnabled: false,
-    filter: /** @satisfies {TermFilterBy[keyof TermFilterBy]} */ 0,
+    filter: /** @type {TermFilterBy[keyof TermFilterBy]} */ (0),
     memoThreshold: MEMORIZED_THRLD,
     reinforce: false,
     repTID: -1,
     repetition: /** @type {import("../typings/raw").SpaceRepetitionMap}*/ ({}),
-    frequency: { uid: undefined, count: 0 },
     activeGroup: /** @type {string[]}*/ ([]),
     autoVerbView: false,
     verbColSplit: 0,
@@ -92,6 +91,10 @@ const vocabularySlice = createSlice({
   name: "vocabulary",
   initialState,
   reducers: {
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     verbFormChanged(state, action) {
       return {
         ...state,
@@ -133,7 +136,13 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "repetition",
+        newValue
+      );
     },
 
     toggleVocabularyReinforcement(state) {
@@ -229,8 +238,11 @@ const vocabularySlice = createSlice({
       }
     },
 
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string[]}} action
+     */
     setVerbFormsOrder(state, action) {
-      /** @type {string[]} */
       const order = action.payload;
       state.setting.verbFormsOrder = localStoreAttrUpdate(
         new Date(),
@@ -250,8 +262,11 @@ const vocabularySlice = createSlice({
       );
     },
 
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: number}} action
+     */
     updateVerbColSplit(state, action) {
-      /** @type {number} */
       const split = action.payload;
       state.setting.verbColSplit = localStoreAttrUpdate(
         new Date(),
@@ -262,6 +277,10 @@ const vocabularySlice = createSlice({
       );
     },
 
+    /**
+     * @param {typeof initialState} state
+     * @param {{payload: string}} action
+     */
     addFrequencyWord(state, action) {
       const uid = action.payload;
 
@@ -281,16 +300,6 @@ const vocabularySlice = createSlice({
         "/vocabulary/",
         "repetition",
         newValue
-      );
-
-      const frequency = { uid, count: state.setting.frequency.count + 1 };
-
-      state.setting.frequency = localStoreAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "frequency",
-        frequency
       );
     },
 
@@ -317,24 +326,15 @@ const vocabularySlice = createSlice({
           "repetition",
           newValue
         );
-
-        const frequency = { uid, count: state.setting.frequency.count - 1 };
-
-        state.setting.frequency = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "frequency",
-          frequency
-        );
       }
     },
 
     /**
      * Filter vocabulary excluding terms with value above
+     * @param {typeof initialState} state
+     * @param {{payload: number}} action
      */
     setMemorizedThreshold(state, action) {
-      /** @type {number} */
       const threshold = action.payload;
 
       state.setting.memoThreshold = localStoreAttrUpdate(
@@ -347,133 +347,155 @@ const vocabularySlice = createSlice({
     },
 
     setWordDifficulty: {
-      reducer: (
-        state,
-        /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, value:number}>}*/ action
-      ) => {
-        const { uid, value } = action.payload;
+      reducer:
+        /**
+         * @param {typeof initialState} state
+         * @param {{payload: {uid: string, value: number}}} action
+         */
+        (state, action) => {
+          const { uid, value } = action.payload;
 
-        const { value: newValue } = updateSpaceRepTerm(
-          uid,
-          state.setting.repetition,
-          { count: false, date: false },
-          {
-            set: { difficulty: value },
-          }
-        );
+          const { value: newValue } = updateSpaceRepTerm(
+            uid,
+            state.setting.repetition,
+            { count: false, date: false },
+            {
+              set: { difficulty: value },
+            }
+          );
 
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-      },
-      prepare: (uid, value) => ({ payload: { uid, value } }),
+          state.setting.repTID = Date.now();
+          state.setting.repetition = localStoreAttrUpdate(
+            new Date(),
+            { vocabulary: state.setting },
+            "/vocabulary/",
+            "repetition",
+            newValue
+          );
+        },
+      prepare:
+        /**
+         * @param {string} uid
+         * @param {number} value
+         */
+        (uid, value) => ({ payload: { uid, value } }),
     },
     setWordTPCorrect: {
-      reducer: (
-        state,
-        /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, tpElapsed:number, pronunciation:boolean}>}*/ action
-      ) => {
-        const { uid, tpElapsed, pronunciation } = action.payload;
+      reducer:
+        /**
+         * @param {typeof initialState} state
+         * @param {{payload: {uid:string, tpElapsed:number, pronunciation:boolean}}} action
+         */
+        (state, action) => {
+          const { uid, tpElapsed, pronunciation } = action.payload;
 
-        const spaceRep = state.setting.repetition;
+          const spaceRep = state.setting.repetition;
 
-        let newPlayCount = 1;
-        let newAccuracy = 1.0;
-        let newCorrAvg = tpElapsed;
+          let newPlayCount = 1;
+          let newAccuracy = 1.0;
+          let newCorrAvg = tpElapsed;
 
-        if (spaceRep[uid]) {
-          const playCount = spaceRep[uid].tpPc;
-          const accuracy = spaceRep[uid].tpAcc;
-          const correctAvg = spaceRep[uid].tpCAvg || 0;
+          if (spaceRep[uid]) {
+            const playCount = spaceRep[uid].tpPc;
+            const accuracy = spaceRep[uid].tpAcc;
+            const correctAvg = spaceRep[uid].tpCAvg || 0;
 
-          if (playCount !== undefined && accuracy != undefined) {
-            newPlayCount = playCount + 1;
+            if (playCount !== undefined && accuracy != undefined) {
+              newPlayCount = playCount + 1;
 
-            const scores = playCount * accuracy;
-            newAccuracy = (scores + 1.0) / newPlayCount;
+              const scores = playCount * accuracy;
+              newAccuracy = (scores + 1.0) / newPlayCount;
 
-            const correctCount = scores;
-            const correctSum = correctAvg * correctCount;
-            newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
+              const correctCount = scores;
+              const correctSum = correctAvg * correctCount;
+              newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
+            }
           }
-        }
 
-        const o = {
-          ...(spaceRep[uid] || {}),
-          pron:
-            pronunciation === null || spaceRep[uid] === undefined
-              ? undefined
-              : spaceRep[uid].pron,
-          tpPc: newPlayCount,
-          tpAcc: newAccuracy,
-          tpCAvg: newCorrAvg,
-        };
+          const o = {
+            ...(spaceRep[uid] || {}),
+            pron:
+              pronunciation === null || spaceRep[uid] === undefined
+                ? undefined
+                : spaceRep[uid].pron,
+            tpPc: newPlayCount,
+            tpAcc: newAccuracy,
+            tpCAvg: newCorrAvg,
+          };
 
-        const newValue = { ...spaceRep, [uid]: o };
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-      },
-      prepare: (uid, tpElapsed, { pronunciation } = {}) => ({
-        payload: { uid, tpElapsed, pronunciation },
-      }),
+          const newValue = { ...spaceRep, [uid]: o };
+          state.setting.repTID = Date.now();
+          state.setting.repetition = localStoreAttrUpdate(
+            new Date(),
+            { vocabulary: state.setting },
+            "/vocabulary/",
+            "repetition",
+            newValue
+          );
+        },
+      prepare:
+        /**
+         * @param {string} uid
+         * @param {number} tpElapsed
+         * @param {unknown} param2
+         */
+        (uid, tpElapsed, { pronunciation } = {}) => ({
+          payload: { uid, tpElapsed, pronunciation },
+        }),
     },
     setWordTPIncorrect: {
-      reducer: (
-        state,
-        /** @type {import("@reduxjs/toolkit").PayloadAction<{uid:string, pronunciation:boolean}>}*/ action
-      ) => {
-        const { uid, pronunciation } = action.payload;
+      reducer:
+        /**
+         * @param {typeof initialState} state
+         * @param {{payload: {uid:string, pronunciation:boolean}}} action
+         */
+        (state, action) => {
+          const { uid, pronunciation } = action.payload;
 
-        const spaceRep = state.setting.repetition;
+          const spaceRep = state.setting.repetition;
 
-        let newPlayCount = 1;
-        let newAccuracy = 0;
+          let newPlayCount = 1;
+          let newAccuracy = 0;
 
-        if (spaceRep[uid]) {
-          const playCount = spaceRep[uid].tpPc;
-          const accuracy = spaceRep[uid].tpAcc;
+          if (spaceRep[uid]) {
+            const playCount = spaceRep[uid].tpPc;
+            const accuracy = spaceRep[uid].tpAcc;
 
-          if (playCount !== undefined && accuracy != undefined) {
-            newPlayCount = playCount + 1;
+            if (playCount !== undefined && accuracy != undefined) {
+              newPlayCount = playCount + 1;
 
-            const scores = playCount * accuracy;
-            newAccuracy = (scores + 0) / newPlayCount;
+              const scores = playCount * accuracy;
+              newAccuracy = (scores + 0) / newPlayCount;
+            }
           }
-        }
 
-        const o = {
-          ...(spaceRep[uid] || {}),
-          tpPc: newPlayCount,
-          tpAcc: newAccuracy,
-          pron: /** @type {true|undefined} */ (
-            pronunciation === true ? true : undefined
-          ),
-        };
+          const o = {
+            ...(spaceRep[uid] || {}),
+            tpPc: newPlayCount,
+            tpAcc: newAccuracy,
+            pron: /** @type {true|undefined} */ (
+              pronunciation === true ? true : undefined
+            ),
+          };
 
-        const newValue = { ...spaceRep, [uid]: o };
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-      },
-      prepare: (uid, { pronunciation } = {}) => ({
-        payload: { uid, pronunciation },
-      }),
+          const newValue = { ...spaceRep, [uid]: o };
+          state.setting.repTID = Date.now();
+          state.setting.repetition = localStoreAttrUpdate(
+            new Date(),
+            { vocabulary: state.setting },
+            "/vocabulary/",
+            "repetition",
+            newValue
+          );
+        },
+      prepare:
+        /**
+         * @param {string} uid
+         * @param {unknown} param1
+         */
+        (uid, { pronunciation } = {}) => ({
+          payload: { uid, pronunciation },
+        }),
     },
   },
 
@@ -481,15 +503,6 @@ const vocabularySlice = createSlice({
     builder.addCase(vocabularyFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;
       const mergedSettings = merge(initialState.setting, localStorageValue);
-
-      // calculated values
-      const vocabReinforceList = Object.keys(mergedSettings.repetition).filter(
-        (k) => mergedSettings.repetition[k]?.rein === true
-      );
-      mergedSettings.frequency = {
-        uid: undefined,
-        count: vocabReinforceList.length,
-      };
 
       return {
         ...state,

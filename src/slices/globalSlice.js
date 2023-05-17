@@ -28,7 +28,6 @@ export const UI_LOGGER_MSG = "ui_logger_msg";
 
 export const initialState = {
   darkMode: false,
-  scrolling: false,
   memory: { quota: 0, usage: 0, persistent: false },
   debug: 0,
   console: /** @type {{msg:string, lvl:number}[]}*/ ([]),
@@ -98,9 +97,6 @@ const globalSlice = createSlice({
         !state.darkMode
       );
       state.darkMode = !state.darkMode;
-    },
-    scrollingState(state, action) {
-      state.scrolling = action.payload;
     },
     setSwipeThreshold(state, action) {
       /** @type {number} */
@@ -216,7 +212,6 @@ export const {
   toggleDarkMode,
   setMotionThreshold,
   setSwipeThreshold,
-  scrollingState,
 
   debugToggled,
   logger,

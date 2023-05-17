@@ -1,65 +1,28 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import partition from "lodash/partition";
-import PropTypes from "prop-types";
-import React, { Component } from "react";
-import { connect } from "react-redux";
-import {
-  DebugLevel,
-  TermFilterBy,
-  TermSortBy,
-} from "../../slices/settingHelper";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
-import { NotReady } from "../Form/NotReady";
-import StackNavButton from "../Form/StackNavButton";
-import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
-import VerbMain from "./VerbMain";
-import VocabularyMain from "./VocabularyMain";
-// import { deepOrange } from "@mui/material";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useDispatch } from "react-redux";
 import { pronounceEndoint } from "../../../environment.development";
-import {
-  furiganaToggled,
-  getVocabulary,
-  flipVocabularyPracticeSide,
-  removeFrequencyWord,
-  setWordDifficulty,
-  setWordTPCorrect,
-  setWordTPIncorrect,
-  toggleAutoVerbView,
-  toggleVocabularyFilter,
-  updateSpaceRepWord,
-  addFrequencyWord,
-} from "../../slices/vocabularySlice";
-import { logger, scrollingState } from "../../slices/globalSlice";
-import {
-  getSwipeDirection,
-  isSwipeIgnored,
-  swipeEnd,
-  swipeMove,
-  swipeStart,
-} from "../../helper/TouchSwipe";
+import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { fetchAudio } from "../../helper/audioHelper.development";
-import {
-  answerSeconds,
-  logify,
-  msgInnerTrim,
-  spaceRepLog,
-  timedPlayLog,
-} from "../../helper/consoleHelper";
+import { logify, spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
 import {
   DIFFICULTY_THRLD,
   alphaOrder,
   dateViewOrder,
   difficultyOrder,
   getCacheUID,
-  getDeviceMotionEventPermission,
   getTerm,
   getTermUID,
-  loopN,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
-  motionThresholdCondition,
-  pause,
   play,
   randomOrder,
   spaceRepOrder,
@@ -67,97 +30,50 @@ import {
   toggleFuriganaSettingHelper,
   verbToTargetForm,
 } from "../../helper/gameHelper";
-import {
-  mediaSessionAttach,
-  mediaSessionDetachAll,
-  setMediaSessionMetadata,
-  setMediaSessionPlaybackState,
-} from "../../helper/mediaHelper";
+import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import { addParam } from "../../helper/urlHelper";
-import { LoopSettingBtn, LoopStartBtn, LoopStopBtn } from "../Form/BtnLoop";
+import { buildAction, setStateFunction } from "../../hooks/helperHK";
+import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
+import { useMediaSession } from "../../hooks/useMediaSession";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
+import { useTimedGame } from "../../hooks/useTimedGame";
+import { useVocabularyConnected } from "../../hooks/useVocabularyConnected";
+import { logger } from "../../slices/globalSlice";
+import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
+import {
+  addFrequencyWord,
+  flipVocabularyPracticeSide,
+  furiganaToggled,
+  getVocabulary,
+  removeFrequencyWord,
+  setWordDifficulty,
+  toggleAutoVerbView,
+  toggleVocabularyFilter,
+  updateSpaceRepWord,
+} from "../../slices/vocabularySlice";
 import Console from "../Form/Console";
 import { DifficultySlider } from "../Form/Difficulty";
 import { MinimalUI } from "../Form/MinimalUI";
+import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
   ReCacheAudioBtn,
   ShowHintBtn,
-  TimePlayVerifyBtns,
   ToggleAutoVerbViewBtn,
-  ToggleFrequencyTermBtnMemoLegacy,
+  ToggleFrequencyTermBtnMemo,
   ToggleFuriganaBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import StackNavButton from "../Form/StackNavButton";
+import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
+import VerbMain from "./VerbMain";
+import VocabularyMain from "./VocabularyMain";
 
 /**
- * @typedef {import("react").TouchEventHandler} TouchEventHandler
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
- * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  * @typedef {import("../Form/VocabularyOrderSlider").BareIdx} BareIdx
- * @typedef {{nextUID:string, nextIndex?:undefined}|{nextUID?:undefined, nextIndex:number}} MEid
- * @typedef {import("../../typings/raw").ActionHandlerTuple} ActionHandlerTuple
- */
-
-/**
- * @typedef {Object} VocabularyState
- * @property {import("../Form/Console").ConsoleMessage[]} errorMsgs,
- * @property {number} errorSkipIndex
- * @property {number} lastNext        timestamp of last swipe
- * @property {number} selectedIndex
- * @property {string} [reinforcedUID]
- * @property {boolean} showHint
- * @property {RawVocabulary[]} filteredVocab
- * @property {string[]} frequency     subset of frequency words within current active group
- * @property {number[]} [order]
- * @property {string} [naFlip]
- * @property {any} [swiping]
- * @property {boolean} [showPageBar]
- * @property {boolean} recacheAudio
- * @property {boolean} [scrollJOrder]
- * @property {BareIdx[]} ebare
- * @property {BareIdx[]} jbare
- * @property {0|1|2|3} loop           loop response repetition setting value
- * @property {number} loopQuitCount   countdown for auto disable loop
- * @property {boolean} [tpAnswered]   timed play answered
- * @property {"incorrect"|"pronunciation"|"reset"} [tpBtn]  answer verify options
- * @property {number} [tpAnimation]   progress/time bar value
- * @property {number} [tpTimeStamp]   timed play answer timestamp
- * @property {number} [tpElapsed]     time elapsed from prompt to answer (ms)
- */
-
-/**
- * @typedef {Object} VocabularyProps
- * @property {string[]} activeGroup
- * @property {typeof addFrequencyWord} addFrequencyWord
- * @property {typeof removeFrequencyWord} removeFrequencyWord
- * @property {{uid: string, count: number}} frequency       value of *last* frequency word update
- * @property {typeof getVocabulary} getVocabulary
- * @property {RawVocabulary[]} vocab
- * @property {boolean} hintEnabled
- * @property {boolean} romajiActive
- * @property {typeof flipVocabularyPracticeSide} flipVocabularyPracticeSide
- * @property {boolean} practiceSide   true: English, false: Japanese
- * @property {typeof TermSortBy[keyof TermSortBy]} termsOrder
- * @property {boolean} scrollingDone
- * @property {function} scrollingState
- * @property {boolean} autoVerbView
- * @property {typeof toggleAutoVerbView} toggleAutoVerbView
- * @property {typeof TermFilterBy[keyof TermFilterBy]} filterType
- * @property {number} memoThreshold Threshold describing how far memorized a word is
- * @property {typeof toggleVocabularyFilter} toggleVocabularyFilter
- * @property {boolean} reinforce
- * @property {SpaceRepetitionMap} repetition
- * @property {typeof updateSpaceRepWord} updateSpaceRepWord
- * @property {typeof setWordTPCorrect} setWordTPCorrect
- * @property {typeof setWordTPIncorrect} setWordTPIncorrect
- * @property {typeof setWordDifficulty} setWordDifficulty
- * @property {typeof logger} logger
- * @property {string} verbForm
- * @property {number} swipeThreshold
- * @property {number} motionThreshold
- * @property {function} motionThresholdCondition
- * @property {typeof furiganaToggled} furiganaToggled
- * @property {typeof DebugLevel[keyof DebugLevel]} debugLevel
+ * @typedef {import("../Form/Console").ConsoleMessage} ConsoleMessage
  */
 
 const VocabularyMeta = {
@@ -165,634 +81,78 @@ const VocabularyMeta = {
   label: "Vocabulary",
 };
 
-class Vocabulary extends Component {
-  // @ts-ignore constructor
-  constructor(props) {
-    super(props);
+export default function Vocabulary() {
+  const dispatch = /** @type {AppDispatch}*/ (useDispatch());
 
-    /** @type {AbortController[] | undefined} Array of TimedPlay audio and pauses timers*/
-    this.loopAbortControllers;
-    /** @type {NodeJS.Timeout[] | undefined} Array of TimedPlay auto quit timers*/
-    this.loopQuitTimer;
-    this.loopQuitMs = 15000;
+  const [showPageBar, setShowPageBar] = useState(false);
+  /** Alphabetic order quick scroll in progress */
+  const isAlphaSortScrolling = useRef(false);
 
-    /** @type {VocabularyState} */
-    this.state = {
-      errorMsgs: [],
-      errorSkipIndex: -1,
-      lastNext: Date.now(),
-      selectedIndex: 0,
-      showHint: false,
-      filteredVocab: [],
-      frequency: [],
-      recacheAudio: false,
-      jbare: [],
-      ebare: [],
-      loop: 0,
-      loopQuitCount: this.loopQuitMs / 1000,
-    };
+  const prevReinforcedUID = useRef(
+    /** @type {string | undefined} */ (undefined)
+  );
+  const prevSelectedIndex = useRef(0);
 
-    /** @type {VocabularyProps} */
-    this.props;
+  const [reinforcedUID, setReinforcedUID] = useState(
+    /** @type {string | undefined} */ (undefined)
+  );
+  const [errorMsgs, setErrorMsgs] = useState(
+    /** @type {ConsoleMessage[]}*/ ([])
+  );
+  const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
+  const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
+  const prevLastNext = useRef(/** @type {number} */ (Date.now()));
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
-    /** @type {import("../../typings/raw").SetState<VocabularyState>} */
-    this.setState;
+  const [showHint, setShowHint] = useState(
+    /** @type {string | undefined} */ (undefined)
+  );
 
-    if (this.props.vocab.length === 0) {
-      this.props.getVocabulary();
+  const [frequency, setFrequency] = useState(/** @type {string[]} */ ([])); // subset of frequency words within current active group
+
+  const [recacheAudio, setRecacheAudio] = useState(false);
+  const naFlip = useRef();
+
+  const [scrollJOrder, setScrollJOrder] = useState(false);
+
+  const {
+    motionThreshold,
+
+    vocabList,
+
+    // Refs
+    memoThreshold,
+    reinforce,
+    filterType,
+    hintEnabled,
+    sortMethod,
+    activeGroup,
+
+    // modifiable during game
+    autoVerbView,
+    englishSideUp,
+    verbForm,
+    repetition,
+  } = useVocabularyConnected();
+
+  /** metadata table ref */
+  const metadata = useRef(repetition);
+  metadata.current = repetition;
+
+  useEffect(() => {
+    if (vocabList.length === 0) {
+      dispatch(getVocabulary());
     }
+  }, []);
 
-    this.gotoNext = this.gotoNext.bind(this);
-    this.gotoNextSlide = this.gotoNextSlide.bind(this);
-    this.gotoPrev = this.gotoPrev.bind(this);
-    this.setOrder = this.setOrder.bind(this);
-    this.updateReinforcedUID = this.updateReinforcedUID.bind(this);
-    this.startMove = this.startMove.bind(this);
-    this.inMove = this.inMove.bind(this);
-    this.endMove = this.endMove.bind(this);
-    this.swipeActionHandler = this.swipeActionHandler.bind(this);
-    this.beginLoop = this.beginLoop.bind(this);
-    this.looperSwipe = this.looperSwipe.bind(this);
-    this.abortLoop = this.abortLoop.bind(this);
-    this.arrowKeyPress = this.arrowKeyPress.bind(this);
-    this.getElapsedTimedPlay = this.getElapsedTimedPlay.bind(this);
-  }
+  const filteredVocab = useMemo(() => {
+    if (vocabList.length === 0) return [];
+    if (Object.keys(metadata.current).length === 0 && activeGroup.length === 0)
+      return vocabList;
 
-  componentDidMount() {
-    if (this.props.vocab && this.props.vocab.length > 0) {
-      // page navigation after initial mount
-      // data retrival done, set up game
-      this.setOrder();
-    }
-    document.addEventListener("keydown", this.arrowKeyPress, true);
-
-    setMediaSessionMetadata("Vocabulary Loop");
-    setMediaSessionPlaybackState("paused");
-
-    /**
-     * @type {ActionHandlerTuple[]}
-     */
-    const actionHandlers = [
-      [
-        "play",
-        () => {
-          if (this.state.loop) {
-            this.beginLoop();
-            setMediaSessionPlaybackState("playing");
-          }
-        },
-      ],
-      [
-        "pause",
-        () => {
-          if (this.state.loop) {
-            if (this.abortLoop()) {
-              this.forceUpdate();
-            } else {
-              setMediaSessionPlaybackState("paused");
-            }
-          }
-        },
-      ],
-      [
-        "stop",
-        () => {
-          if (this.state.loop) {
-            if (this.abortLoop()) {
-              this.forceUpdate();
-            } else {
-              setMediaSessionPlaybackState("paused");
-            }
-          }
-        },
-      ],
-      [
-        "previoustrack",
-        () => {
-          if (this.state.loop) {
-            this.abortLoop();
-            this.looperSwipe("right");
-          }
-        },
-      ],
-      [
-        "nexttrack",
-        () => {
-          if (this.state.loop) {
-            this.abortLoop();
-            this.looperSwipe("left");
-          }
-        },
-      ],
-    ];
-
-    mediaSessionAttach(actionHandlers);
-  }
-
-  /**
-   * @param {VocabularyProps} prevProps
-   * @param {VocabularyState} prevState
-   */
-  componentDidUpdate(prevProps, prevState) {
-    if (this.props.vocab.length !== prevProps.vocab.length) {
-      // console.log("got game data");
-      this.setOrder();
-    }
-
-    if (
-      this.props.vocab.length > 0 &&
-      this.props.termsOrder != prevProps.termsOrder
-    ) {
-      // console.log("order changed");
-      this.setOrder();
-    }
-
-    if (
-      this.props.activeGroup.length != prevProps.activeGroup.length ||
-      this.props.activeGroup.some((e) => !prevProps.activeGroup.includes(e)) ||
-      prevProps.activeGroup.some((e) => !this.props.activeGroup.includes(e))
-    ) {
-      // console.log("activeGroup changed");
-      this.setOrder();
-    }
-
-    if (
-      this.props.frequency.uid != prevProps.frequency.uid ||
-      this.props.frequency.count != prevProps.frequency.count
-    ) {
-      if (
-        this.props.filterType === TermFilterBy.FREQUENCY &&
-        this.props.frequency.count === 0
-      ) {
-        // last frequency word was removed
-        this.setOrder();
-      } else {
-        const filteredKeys = this.state.filteredVocab.map((f) => f.uid);
-        const frequency = filteredKeys.reduce(
-          (/** @type {string[]} */ acc, cur) => {
-            if (this.props.repetition[cur]?.rein === true) {
-              acc = [...acc, cur];
-            }
-            return acc;
-          },
-          []
-        );
-        // props.frequency is a count of frequency words
-        // state.frequency is a subset list of frequency words within current active group
-        this.setState({ frequency });
-      }
-    }
-
-    if (
-      this.state.reinforcedUID !== prevState.reinforcedUID ||
-      this.state.selectedIndex !== prevState.selectedIndex
-    ) {
-      const uid =
-        prevState.reinforcedUID ||
-        getTermUID(
-          prevState.selectedIndex,
-          this.state.order,
-          this.state.filteredVocab
-        );
-
-      if (this.state.loop > 0 && this.state.tpAnswered !== undefined) {
-        if (this.state.tpBtn === "reset") {
-          if (this.props.repetition[uid]?.pron === true) {
-            // reset incorrect pronunciation
-            if (this.state.tpElapsed !== undefined) {
-              this.props.setWordTPCorrect(uid, this.state.tpElapsed, {
-                pronunciation: null,
-              });
-            }
-          }
-          // else don't grade ... skip
-        } else {
-          if (this.state.tpAnswered === true) {
-            if (this.state.tpElapsed !== undefined) {
-              this.props.setWordTPCorrect(uid, this.state.tpElapsed);
-            }
-          } else {
-            const reason = {
-              pronunciation: this.state.tpBtn === "pronunciation" || undefined,
-            };
-            this.props.setWordTPIncorrect(uid, reason);
-          }
-        }
-      }
-
-      // prevent updates when quick scrolling
-      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const vocabulary = getTerm(uid, this.props.vocab);
-
-        // don't increment reinforced terms
-        const shouldIncrement = uid !== prevState.reinforcedUID;
-        const answered = this.state.tpAnswered;
-        const frequency = prevState.reinforcedUID !== undefined;
-
-        this.props
-          .updateSpaceRepWord({
-            uid,
-            shouldIncrement,
-          })
-          .then(({ payload }) => {
-            const { map, prevMap } = payload;
-
-            const prevDate = prevMap && prevMap[uid] && prevMap[uid].d;
-            const repStats = { [uid]: { ...map[uid], d: prevDate } };
-            if (answered !== undefined) {
-              timedPlayLog(this.props.logger, vocabulary, repStats, {
-                frequency,
-              });
-            } else {
-              spaceRepLog(this.props.logger, vocabulary, repStats, {
-                frequency,
-              });
-            }
-          });
-      }
-
-      if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
-        // loop enabled, but not interrupted
-
-        if (this.loopQuitTimer !== undefined) {
-          this.loopQuitTimer.forEach((t) => {
-            clearTimeout(t);
-          });
-          this.loopQuitTimer = undefined;
-        }
-
-        this.setState({
-          loopQuitCount: this.loopQuitMs / 1000,
-          tpAnswered: undefined,
-          tpBtn: undefined,
-          tpTimeStamp: undefined,
-          tpElapsed: undefined,
-        });
-
-        if (minimumTimeForTimedPlay(prevState.lastNext)) {
-          this.beginLoop();
-        }
-      }
-
-      this.setState({
-        showHint: false,
-        errorMsgs: [],
-      });
-    }
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener("keydown", this.arrowKeyPress, true);
-    this.abortLoop();
-
-    mediaSessionDetachAll();
-  }
-
-  /**
-   * @param {Error} error
-   */
-  static getDerivedStateFromError(error) {
-    const causeMsg =
-      // @ts-expect-error Error.cause
-      (error.cause !== undefined && [
-        // @ts-expect-error Error.cause
-        { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
-      ]) ||
-      [];
-
-    const errorMsgs = [
-      { msg: error.name + ": " + error.message, css: "px-2" },
-      ...causeMsg,
-    ].map((e) => ({
-      ...e,
-      lvl: DebugLevel.ERROR,
-    }));
-
-    // state
-    return {
-      errorMsgs,
-    };
-  }
-
-  /**
-   * @param {Error} error
-   */
-  componentDidCatch(error) {
-    // @ts-expect-error Error.cause
-    const cause = error.cause;
-
-    let selectedIndex;
-
-    switch (cause && cause.code) {
-      case "InvalidPronunciation":
-        if (
-          this.props.debugLevel !== DebugLevel.OFF &&
-          this.state.errorSkipIndex < this.state.filteredVocab.length - 1
-        ) {
-          this.props.logger("Error: " + error.message, DebugLevel.ERROR);
-          this.props.logger(
-            "[" + cause.value?.english + "] Skipped",
-            DebugLevel.ERROR
-          );
-          this.abortLoop();
-
-          const l = this.state.filteredVocab.length;
-          selectedIndex = (l + this.state.selectedIndex + 1) % l;
-        }
-
-        break;
-      case "DeviceMotionEvent":
-        {
-          this.props.logger("Error: " + error.message, DebugLevel.ERROR);
-        }
-        break;
-    }
-
-    let errorSkipIndex;
-    if (this.state.reinforcedUID) {
-      const orderIdx = this.state.filteredVocab.findIndex(
-        (v) => v.uid === this.state.reinforcedUID
-      );
-      errorSkipIndex = this.state.order?.indexOf(orderIdx);
-    } else {
-      errorSkipIndex = this.state.selectedIndex;
-    }
-
-    this.setState({
-      reinforcedUID: undefined,
-      ...(selectedIndex ? { selectedIndex } : {}),
-      errorSkipIndex,
-      errorMsgs: [],
-    });
-  }
-
-  /**
-   * Returns false had it not been looping.
-   */
-  abortLoop() {
-    let wasLooping = false;
-    if (this.loopAbortControllers && this.loopAbortControllers.length > 0) {
-      wasLooping = true;
-      this.loopAbortControllers.forEach((ac) => {
-        ac.abort();
-      });
-      this.loopAbortControllers = undefined;
-
-      setMediaSessionPlaybackState("paused");
-    }
-    return wasLooping;
-  }
-
-  beginLoop() {
-    setMediaSessionPlaybackState("playing");
-
-    this.abortLoop(); // beginLoop
-    const ac1 = new AbortController();
-    const ac2 = new AbortController();
-    const ac3 = new AbortController();
-    const ac4 = new AbortController();
-    const ac5 = new AbortController();
-
-    const onShakeEventHandler = () => {
-      if (this.state.tpTimeStamp !== undefined) {
-        this.abortLoop();
-        this.setState({
-          loop: 0,
-          tpTimeStamp: undefined,
-          tpAnimation: undefined,
-        });
-      }
-    };
-
-    const motionListener = (/** @type {DeviceMotionEvent} */ event) => {
-      try {
-        motionThresholdCondition(
-          event,
-          this.props.motionThreshold,
-          onShakeEventHandler
-        );
-      } catch (error) {
-        if (error instanceof Error) {
-          this.componentDidCatch(error);
-        }
-      }
-    };
-
-    if (this.props.motionThreshold > 0) {
-      getDeviceMotionEventPermission(() => {
-        window.addEventListener("devicemotion", motionListener);
-      }, this.componentDidCatch);
-    }
-
-    this.loopAbortControllers = [ac1, ac2, ac3, ac4, ac5];
-    this.forceUpdate();
-
-    /** @type {(ac: AbortController) => Promise<Awaited<void>[]>} */
-    let gamePropmt;
-    /** @type {(ac: AbortController) => Promise<void>} */
-    let gameResponse;
-    if (this.props.practiceSide) {
-      gamePropmt = (ac) => this.looperSwipe("down", ac);
-
-      gameResponse = (ac) =>
-        loopN(this.state.loop, () => this.looperSwipe("up", ac), 1500, ac);
-    } else {
-      gamePropmt = (ac) => this.looperSwipe("up", ac);
-
-      gameResponse = (ac) =>
-        loopN(this.state.loop, () => this.looperSwipe("down", ac), 1500, ac);
-    }
-
-    /**
-     * @param {number} p Part
-     * @param {number} w Whole
-     */
-    const countDown = (p, w) => {
-      this.setState((state) => {
-        let step;
-        if (state.tpAnimation === undefined || 100 - state.tpAnimation < 1) {
-          step = (p / w) * 100;
-        } else {
-          step = state.tpAnimation + (p / w) * 100;
-        }
-        return { tpAnimation: step };
-      });
-    };
-
-    pause(700, ac1)
-      .then(() => {
-        // begin elapsing here
-        this.setState({ tpTimeStamp: Date.now() });
-        return gamePropmt(ac2).catch((error) => {
-          if (error.cause?.code === "UserAborted") {
-            // skip all playback
-            throw error;
-          } else {
-            // caught trying to fetch gamePrompt
-            // continue
-          }
-        });
-      })
-      .then(() => {
-        // begin tpAnimation here
-        return pause(3000, ac3, countDown);
-      })
-      .then(() => {
-        // end tpAnimation here
-        this.setState({ tpAnimation: undefined, tpTimeStamp: undefined });
-        return gameResponse(ac4)
-          .then(() => {
-            this.loopAbortControllers = undefined;
-            return this.looperSwipe("left");
-          })
-          .catch((/** @type {Error} */ error) => {
-            // @ts-expect-error Error.cause
-            if (error.cause?.code === "UserAborted") {
-              // user aborted
-              // don't continue
-            } else {
-              // caught trying to fetch gameResponse
-              // continue
-              this.loopAbortControllers = undefined;
-              return this.looperSwipe("left");
-            }
-          });
-      })
-      .then(() => pause(100, ac5))
-      .catch(() => {
-        // aborted
-      })
-      .then(() => {
-        // finally
-        if (this.props.motionThreshold > 0) {
-          window.removeEventListener("devicemotion", motionListener);
-        }
-      });
-  }
-
-  /**
-   * For the loop
-   * @param {string} direction
-   * @param {AbortController} [AbortController]
-   */
-  looperSwipe(direction, AbortController) {
-    let promise;
-    if (this.state.loop > 0) {
-      promise = this.swipeActionHandler(direction, AbortController);
-    }
-    return promise || Promise.reject("loop disabled");
-  }
-
-  /**
-   * @param {KeyboardEvent} event
-   */
-  arrowKeyPress(event) {
-    /**
-     * @typedef {[string, function][]} ActionHandlerTuple
-     * @type {ActionHandlerTuple}
-     */
-    const actionHandlers = [
-      ["ArrowRight", () => this.swipeActionHandler("left")],
-      ["ArrowLeft", () => this.swipeActionHandler("right")],
-      ["ArrowUp", () => this.swipeActionHandler("up")],
-      ["ArrowDown", () => this.swipeActionHandler("down")],
-      ["MediaPlayPause", () => {}],
-      [" ", this.props.flipVocabularyPracticeSide],
-    ];
-
-    for (const [action, handler] of actionHandlers) {
-      if (action === event.key) {
-        /** @type {function} */
-        let keyPressHandler = handler;
-        const noop = () => {};
-        let interruptAnimation = () => {
-          setTimeout(() => {
-            this.setState({ tpAnimation: 0 });
-            setTimeout(() => {
-              this.setState((state) => {
-                if (state.tpAnimation === 0) {
-                  return { tpAnimation: undefined };
-                }
-              });
-            }, 1000);
-          }, 1500);
-        };
-
-        if (action !== " ") {
-          // interrupt loop
-          if (this.abortLoop()) {
-            /** @type {boolean|undefined} */
-            let tpAnswered;
-            let tpElapsed;
-
-            const duringQuery =
-              this.state.tpAnimation === undefined &&
-              this.state.tpTimeStamp !== undefined;
-            // const duringCountDown =
-            //   this.state.tpAnimation !== undefined &&
-            //   this.state.tpTimeStamp !== undefined;
-            const duringResponse =
-              this.state.tpAnimation === undefined &&
-              this.state.tpTimeStamp === undefined;
-
-            if (
-              (action === "ArrowUp" && this.props.practiceSide) ||
-              (action === "ArrowDown" && !this.props.practiceSide)
-            ) {
-              ({ tpElapsed } = this.getElapsedTimedPlay());
-              tpAnswered = true;
-              if (duringQuery) {
-                interruptAnimation = noop;
-              } else if (duringResponse) {
-                tpAnswered = false;
-                keyPressHandler = noop; // avoid replaying ontop of loop
-                interruptAnimation = noop;
-              }
-            } else {
-              if (duringResponse) {
-                interruptAnimation = noop;
-              }
-
-              // interrupt-to-auto-quit
-              const countDown = setInterval(() => {
-                this.setState((state) => {
-                  const zero = state.loopQuitCount === 1;
-                  if (zero) {
-                    clearTimeout(countDown);
-                  }
-
-                  return {
-                    loopQuitCount: !zero
-                      ? state.loopQuitCount - 1
-                      : this.loopQuitMs / 1000,
-                    loop: !zero ? state.loop : 0,
-                  };
-                });
-              }, 1000);
-
-              this.loopQuitTimer = [countDown];
-            }
-
-            this.setState({
-              tpAnswered: tpAnswered,
-              tpElapsed: tpElapsed,
-            });
-            interruptAnimation();
-          } else {
-            setMediaSessionPlaybackState("paused");
-          }
-        }
-
-        keyPressHandler();
-        break;
-      }
-    }
-  }
-
-  setOrder() {
-    const allFrequency = Object.keys(this.props.repetition).reduce(
+    const allFrequency = Object.keys(metadata.current).reduce(
       (/** @type {string[]}*/ acc, cur) => {
-        if (this.props.repetition[cur].rein === true) {
+        if (metadata.current[cur].rein === true) {
           acc = [...acc, cur];
         }
         return acc;
@@ -800,693 +160,499 @@ class Vocabulary extends Component {
       []
     );
 
-    let filteredVocab = termFilterByType(
-      this.props.filterType,
-      this.props.vocab,
+    let filtered = termFilterByType(
+      filterType.current,
+      vocabList,
       allFrequency,
-      this.props.activeGroup,
-      this.props.toggleVocabularyFilter
+      activeGroup,
+      buildAction(dispatch, toggleVocabularyFilter)
     );
 
-    let newOrder;
-    /** @type {BareIdx[]} */
-    let jbare = [];
-    /** @type {BareIdx[]} */
-    let ebare = [];
+    switch (sortMethod.current) {
+      case TermSortBy.DIFFICULTY: {
+        // exclude vocab with difficulty beyond memoThreshold
+        const subFilter = filtered.filter((v) => {
+          const dT = memoThreshold.current;
+          const d = metadata.current[v.uid]?.difficulty;
 
-    if (this.props.termsOrder === TermSortBy.RANDOM) {
-      this.props.logger("Randomized", DebugLevel.DEBUG);
-      newOrder = randomOrder(filteredVocab);
-    } else if (this.props.termsOrder === TermSortBy.VIEW_DATE) {
-      this.props.logger("Date Viewed", DebugLevel.DEBUG);
-      newOrder = dateViewOrder(filteredVocab, this.props.repetition);
-    } else if (this.props.termsOrder === TermSortBy.GAME) {
-      this.props.logger("Space Rep", DebugLevel.DEBUG);
+          const showUndefMemoV =
+            d === undefined &&
+            (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
+          const showV = dT < 0 ? d > -1 * dT : d < dT;
 
-      if (this.props.reinforce === true) {
-        // if reinforce, place reinforced/frequency terms
-        // at the end
-        const [freqTerms, nonFreqTerms] = partition(
-          filteredVocab,
-          (o) => this.props.repetition[o.uid]?.rein === true
-        );
-        filteredVocab = [...nonFreqTerms, ...freqTerms];
+          return showUndefMemoV || showV;
+        });
 
-        const nonFreqOrder = spaceRepOrder(nonFreqTerms, this.props.repetition);
-        const freqOrder = freqTerms.map((f, i) => nonFreqTerms.length + i);
-        newOrder = [...nonFreqOrder, ...freqOrder];
-      } else {
-        newOrder = spaceRepOrder(filteredVocab, this.props.repetition);
+        if (subFilter.length > 0) {
+          filtered = subFilter;
+        } else {
+          console.warn(
+            "Excluded all terms. Discarding memorized subfiltering."
+          );
+        }
+        break;
       }
-    } else if (this.props.termsOrder === TermSortBy.DIFFICULTY) {
-      this.props.logger("Difficulty", DebugLevel.DEBUG);
+      case TermSortBy.GAME:
+        if (reinforce.current === true) {
+          // if reinforce, place reinforced/frequency terms
+          // at the end
+          const [freqTerms, nonFreqTerms] = partition(
+            filtered,
+            (o) => metadata.current[o.uid]?.rein === true
+          );
 
-      // exclude vocab with difficulty beyond memoThreshold
-      const subFilter = filteredVocab.filter((v) => {
-        const dT = this.props.memoThreshold;
-        const d = this.props.repetition[v.uid]?.difficulty;
-
-        const showUndefMemoV =
-          d === undefined &&
-          (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
-        const showV = dT < 0 ? d > -1 * dT : d < dT;
-
-        return showUndefMemoV || showV;
-      });
-
-      if (subFilter.length > 0) {
-        filteredVocab = subFilter;
-      } else {
-        this.props.logger(
-          "Excluded all terms. Removing memorized subfiltering.",
-          DebugLevel.WARN
-        );
-      }
-
-      newOrder = difficultyOrder(filteredVocab, this.props.repetition);
-    } else {
-      this.props.logger("Alphabetic", DebugLevel.DEBUG);
-      ({
-        order: newOrder,
-        jOrder: jbare,
-        eOrder: ebare,
-      } = alphaOrder(filteredVocab));
+          filtered = [...nonFreqTerms, ...freqTerms];
+        }
+        break;
     }
 
-    const filteredKeys = filteredVocab.map((f) => f.uid);
-    const frequency = filteredKeys.reduce(
+    const frequency = filtered.reduce(
       (/** @type {string[]} */ acc, cur) => {
-        if (this.props.repetition[cur]?.rein === true) {
-          acc = [...acc, cur];
+        if (metadata.current[cur.uid]?.rein === true) {
+          acc = [...acc, cur.uid];
         }
         return acc;
       },
       []
     );
+    setFrequency(frequency);
 
-    this.setState({
-      filteredVocab,
-      frequency,
-      order: newOrder,
-      jbare, // bare min Japanese ordered word list
-      ebare, // bare min English ordered word list
-      scrollJOrder: true,
-    });
-  }
+    return filtered;
+  }, [dispatch, vocabList, activeGroup]);
 
-  gotoNext() {
-    const l = this.state.filteredVocab.length;
-    let newSel = (l + this.state.selectedIndex + 1) % l;
+  const {
+    newOrder: order,
+    ebare,
+    jbare,
+  } = useMemo(() => {
+    if (filteredVocab.length === 0) return { newOrder: [] };
 
-    if (newSel === this.state.errorSkipIndex) {
+    let newOrder, jOrder, eOrder;
+    switch (sortMethod.current) {
+      case TermSortBy.RANDOM:
+        newOrder = randomOrder(filteredVocab);
+        break;
+      case TermSortBy.VIEW_DATE:
+        newOrder = dateViewOrder(filteredVocab, metadata.current);
+        break;
+      case TermSortBy.GAME:
+        if (reinforce.current === true) {
+          // search backwards for splitIdx where [...nonFreqTerms, ...freqTerms]
+          let splitIdx = -1;
+          for (let idx = filteredVocab.length - 1; idx > -1; idx--) {
+            const currEl = metadata.current[filteredVocab[idx].uid];
+            const prevIdx = idx - 1 > -1 ? idx - 1 : 0;
+            const prevEl = metadata.current[filteredVocab[prevIdx].uid];
+            if (currEl?.rein === true && !prevEl?.rein) {
+              splitIdx = idx;
+              break;
+            }
+          }
+
+          if (splitIdx !== -1) {
+            const nonFreqTerms = filteredVocab.slice(0, splitIdx);
+            const freqTerms = filteredVocab.slice(splitIdx);
+
+            const nonFreqOrder = spaceRepOrder(nonFreqTerms, metadata.current);
+            const freqOrder = freqTerms.map((f, i) => nonFreqTerms.length + i);
+            newOrder = [...nonFreqOrder, ...freqOrder];
+          }
+        }
+
+        // not reinforced or no reinforcement terms
+        if (newOrder === undefined) {
+          newOrder = spaceRepOrder(filteredVocab, metadata.current);
+        }
+        break;
+
+      case TermSortBy.DIFFICULTY:
+        // exclude vocab with difficulty beyond memoThreshold
+
+        newOrder = difficultyOrder(filteredVocab, metadata.current);
+        break;
+
+      default: //TermSortBy.ALPHABETIC:
+        ({ order: newOrder, jOrder, eOrder } = alphaOrder(filteredVocab));
+        break;
+    }
+
+    // jbare, // bare min Japanese ordered word list
+    // ebare, // bare min English ordered word list
+
+    setScrollJOrder(true);
+
+    return { newOrder, jbare: jOrder, ebare: eOrder };
+  }, [filteredVocab]);
+
+  const gotoNext = useCallback(() => {
+    const l = filteredVocab.length;
+    let newSel = (selectedIndex + 1) % l;
+
+    if (newSel === errorSkipIndex) {
       newSel = (l + newSel + 1) % l;
     }
 
-    this.setState({
-      lastNext: Date.now(),
-      reinforcedUID: undefined,
-      selectedIndex: newSel,
-    });
-  }
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+    prevSelectedIndex.current = selectedIndex;
+    setSelectedIndex(newSel);
+    setReinforcedUID(undefined);
+  }, [filteredVocab, selectedIndex, lastNext, errorSkipIndex]);
 
-  gotoNextSlide() {
+  const gotoNextSlide = useCallback(() => {
     play(
-      this.props.reinforce,
-      this.props.filterType,
-      this.state.frequency,
-      this.state.filteredVocab,
-      this.state.reinforcedUID,
-      this.updateReinforcedUID,
-      this.gotoNext,
-      this.props.removeFrequencyWord
+      reinforce.current,
+      filterType.current,
+      frequency,
+      filteredVocab,
+      reinforcedUID,
+      (value) => {
+        prevReinforcedUID.current = reinforcedUID;
+        setReinforcedUID(value);
+      },
+      gotoNext,
+      buildAction(dispatch, removeFrequencyWord)
     );
-  }
+  }, [dispatch, frequency, filteredVocab, reinforcedUID, gotoNext]);
 
-  gotoPrev() {
-    const l = this.state.filteredVocab.length;
-    const i = this.state.selectedIndex - 1;
+  const gotoPrev = useCallback(() => {
+    const l = filteredVocab.length;
+    const i = selectedIndex - 1;
 
     let newSel;
-    if (this.state.reinforcedUID) {
-      newSel = this.state.selectedIndex;
+    if (reinforcedUID) {
+      newSel = selectedIndex;
     } else {
       newSel = (l + i) % l;
     }
 
-    if (newSel === this.state.errorSkipIndex) {
+    if (newSel === errorSkipIndex) {
       newSel = (l + newSel - 1) % l;
     }
 
-    this.setState({
-      lastNext: Date.now(),
-      reinforcedUID: undefined,
-      selectedIndex: newSel,
-    });
-  }
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+    prevSelectedIndex.current = selectedIndex;
+    setSelectedIndex(newSel);
+    setReinforcedUID(undefined);
+  }, [filteredVocab, selectedIndex, reinforcedUID, lastNext, errorSkipIndex]);
 
-  /**
-   * @param {string} uid
-   */
-  updateReinforcedUID(uid) {
-    this.setState({
-      reinforcedUID: uid,
-    });
-  }
+  const gameActionHandler = buildGameActionsHandler(
+    gotoNextSlide,
+    gotoPrev,
+    reinforcedUID,
+    selectedIndex,
+    vocabList,
+    verbForm,
+    order,
+    filteredVocab,
+    recacheAudio,
+    naFlip
+  );
 
-  /**
-   * @type {TouchEventHandler}
-   */
-  startMove(e) {
-    if (isSwipeIgnored(e)) {
-      return;
-    }
+  const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
 
-    const swiping = swipeStart(e, {
-      verticalSwiping: true,
-      touchThreshold: this.props.swipeThreshold,
-    });
-    this.setState({ swiping });
-  }
+  const {
+    beginLoop,
+    abortLoop,
+    looperSwipe,
 
-  /**
-   * @type {TouchEventHandler}
-   */
-  inMove(e) {
-    if (this.state.swiping) {
-      const swiping = swipeMove(e, this.state.swiping);
-      this.setState({ swiping });
-    }
-  }
+    loopSettingBtn,
+    loopActionBtn,
+    timedPlayVerifyBtn,
 
-  /**
-   * @type {TouchEventHandler}
-   */
-  endMove(e) {
-    if (!this.state.swiping) {
-      return;
-    }
+    timedPlayAnswerHandlerWrapper,
+    gradeTimedPlayEvent,
+    resetTimedPlay,
 
-    /** @type {function} */
-    let swipeHandler = this.swipeActionHandler;
-    const noop = () => {};
-    let interruptAnimation = () => {
-      setTimeout(() => {
-        this.setState({ tpAnimation: 0 });
-        setTimeout(() => {
-          this.setState((state) => {
-            if (state.tpAnimation === 0) {
-              return { tpAnimation: undefined };
+    loop,
+    tpAnswered,
+    tpAnimation,
+  } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
+
+  useKeyboardActions(
+    gameActionHandler,
+    buildAction(dispatch, flipVocabularyPracticeSide),
+    timedPlayAnswerHandlerWrapper
+  );
+
+  const { HTMLDivElementSwipeRef } = useSwipeActions(
+    gameActionHandler,
+    timedPlayAnswerHandlerWrapper
+  );
+
+  useMediaSession("Vocabulary Loop", loop, beginLoop, abortLoop, looperSwipe);
+
+  useEffect(() => {
+    const prevState = {
+      selectedIndex: prevSelectedIndex.current,
+      reinforcedUID: prevReinforcedUID.current,
+      lastNext: prevLastNext.current,
+    };
+
+    if (
+      reinforcedUID !== prevState.reinforcedUID ||
+      selectedIndex !== prevState.selectedIndex
+    ) {
+      const uid =
+        prevState.reinforcedUID ||
+        getTermUID(prevState.selectedIndex, order, filteredVocab);
+
+      gradeTimedPlayEvent(dispatch, uid, metadata.current);
+
+      // prevent updates when quick scrolling
+      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+        const vocabulary = getTerm(uid, vocabList);
+
+        // don't increment reinforced terms
+        const shouldIncrement = uid !== prevState.reinforcedUID;
+        const frequency = prevState.reinforcedUID !== undefined;
+
+        dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
+          .unwrap()
+          .then((payload) => {
+            const { map, prevMap } = payload;
+
+            const prevDate = prevMap[uid] && prevMap[uid].d;
+            const repStats = { [uid]: { ...map[uid], d: prevDate } };
+            const messageLog = (
+              /** @type {string} */ m,
+              /** @type {number} */ l
+            ) => dispatch(logger(m, l));
+            if (tpAnswered.current !== undefined) {
+              timedPlayLog(messageLog, vocabulary, repStats, { frequency });
+            } else {
+              spaceRepLog(messageLog, vocabulary, repStats, { frequency });
             }
           });
-        }, 1000);
-      }, 1500);
-    };
-    const tEl = /** @type {Element} */ (e.target);
-    const targetIsStopBtn = Array.from(
-      document.getElementsByClassName("loop-stop-btn")
-    ).some((el) => el.contains(tEl));
-    const targetIsClickAllowed = Array.from(
-      document.getElementsByClassName("loop-no-interrupt")
-    ).some((el) => el.contains(tEl));
-    const eventIsNotSwipe =
-      this.state.swiping?.touchObject?.swipeLength === undefined ||
-      this.state.swiping.touchObject.swipeLength <
-        this.state.swiping.touchThreshold;
-
-    if (targetIsStopBtn) {
-      this.setState({ loop: 0 });
-      return;
-    } else if (targetIsClickAllowed && eventIsNotSwipe) {
-      // elements with this tag do not interrupt loop
-      return;
-    } else {
-      // interrupt loop
-      if (this.abortLoop()) {
-        const direction = getSwipeDirection(
-          this.state.swiping.touchObject,
-          true
-        );
-
-        /** @type {boolean|undefined} */
-        let tpAnswered;
-        let tpElapsed;
-        const duringQuery =
-          this.state.tpAnimation === undefined &&
-          this.state.tpTimeStamp !== undefined;
-        const duringCountDown =
-          this.state.tpAnimation !== undefined &&
-          this.state.tpTimeStamp !== undefined;
-        const duringResponse =
-          this.state.tpAnimation === undefined &&
-          this.state.tpTimeStamp === undefined;
-
-        if (direction === "up" || direction === "down") {
-          ({ tpElapsed } = this.getElapsedTimedPlay());
-          tpAnswered = true;
-
-          if (duringQuery) {
-            interruptAnimation = noop;
-          } else if (duringCountDown) {
-            // force incorrect direction to correct handler
-            const correctDirection = this.props.practiceSide ? "up" : "down";
-            swipeHandler = (
-              /** @type {string} */ wrongDirection,
-              /** @type {AbortController | undefined} */ AC
-            ) => this.swipeActionHandler(correctDirection, AC);
-          } else if (duringResponse) {
-            tpAnswered = false;
-            swipeHandler = noop; // avoid replaying ontop of loop
-            interruptAnimation = noop;
-          }
-        } else {
-          if (duringResponse) {
-            interruptAnimation = noop;
-          }
-
-          // interrupt-to-auto-quit
-          const countDown = setInterval(() => {
-            this.setState((state) => {
-              const zero = state.loopQuitCount === 1;
-              if (zero) {
-                clearTimeout(countDown);
-              }
-
-              return {
-                loopQuitCount: !zero
-                  ? state.loopQuitCount - 1
-                  : this.loopQuitMs / 1000,
-                loop: !zero ? state.loop : 0,
-              };
-            });
-          }, 1000);
-
-          this.loopQuitTimer = [countDown];
-        }
-
-        this.setState({
-          tpAnswered: tpAnswered,
-          tpElapsed: tpElapsed,
-        });
-        interruptAnimation();
       }
-    }
 
-    swipeEnd(e, { ...this.state.swiping, onSwipe: swipeHandler });
-  }
-
-  /**
-   * During timed play interrupt
-   */
-  getElapsedTimedPlay() {
-    let tpElapsed;
-
-    const uid =
-      this.state.reinforcedUID ||
-      getTermUID(
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredVocab
-      );
-    const term = getTerm(uid, this.props.vocab);
-    const msg = msgInnerTrim(term.english, 30);
-
-    if (this.state.tpTimeStamp !== undefined) {
-      // guessed within time
-
-      const dateThen = this.state.tpTimeStamp;
-      tpElapsed = Math.abs(Date.now() - dateThen);
-      const elapStr = " " + answerSeconds(tpElapsed) + "s";
-
-      this.props.logger("Timed Play [" + msg + "]" + elapStr, DebugLevel.DEBUG);
-    } else {
-      // guessed too late or too early
-
-      this.props.logger("Timed Play [" + msg + "] X-( ", DebugLevel.DEBUG);
-    }
-
-    return { tpElapsed };
-  }
-
-  /**
-   * @param {string} direction
-   * @param {AbortController} [AbortController]
-   */
-  swipeActionHandler(direction, AbortController) {
-    // this.props.logger("swiped " + direction, DebugLevel.WARN);
-    let swipePromise;
-
-    if (direction === "left") {
-      this.gotoNextSlide();
-      swipePromise = Promise.all([Promise.resolve()]);
-    } else if (direction === "right") {
-      this.gotoPrev();
-      swipePromise = Promise.all([Promise.resolve()]);
-    } else {
-      const uid =
-        this.state.reinforcedUID ||
-        getTermUID(
-          this.state.selectedIndex,
-          this.state.order,
-          this.state.filteredVocab
-        );
-      const vocabulary = getTerm(uid, this.props.vocab);
-
-      const override = this.state.recacheAudio ? "/override_cache" : "";
-
-      if (direction === "up") {
-        let sayObj;
-        if (vocabulary.grp === "Verb" && this.props.verbForm !== "dictionary") {
-          const verb = verbToTargetForm(vocabulary, this.props.verbForm);
-
-          sayObj = {
-            ...vocabulary,
-            japanese: verb.toString(),
-            pronounce: vocabulary.pronounce && verb.getPronunciation(),
-            form: this.props.verbForm,
-          };
-        } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
-          const naFlip = this.state.naFlip;
-          const naAdj = JapaneseText.parse(vocabulary).append(naFlip && "な");
-
-          sayObj = {
-            ...vocabulary,
-            japanese: naAdj.toString(),
-            pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
-            form: naFlip,
-          };
-
-          this.setState((s) => ({
-            naFlip: s.naFlip ? undefined : "-na",
-          }));
-        } else {
-          sayObj = vocabulary;
+      const wasReset = resetTimedPlay();
+      if (wasReset) {
+        if (minimumTimeForTimedPlay(prevState.lastNext)) {
+          beginLoop();
         }
-
-        const audioUrl = addParam(pronounceEndoint + override, {
-          tl: "ja",
-          q: audioPronunciation(sayObj),
-          uid: getCacheUID(sayObj),
-        });
-
-        swipePromise = fetchAudio(audioUrl, AbortController);
-      } else if (direction === "down") {
-        const inEnglish = vocabulary.english;
-
-        const audioUrl = addParam(pronounceEndoint + override, {
-          tl: "en",
-          q: inEnglish,
-          uid: vocabulary.uid + ".en",
-        });
-
-        swipePromise = fetchAudio(audioUrl, AbortController);
       }
+
+      setShowHint(undefined);
+      setErrorMsgs([]);
+      prevSelectedIndex.current = selectedIndex;
+      prevReinforcedUID.current = reinforcedUID;
     }
-    return swipePromise || Promise.reject();
+  }, [
+    dispatch,
+    beginLoop,
+    gradeTimedPlayEvent,
+    resetTimedPlay,
+    vocabList,
+    reinforcedUID,
+    selectedIndex,
+    filteredVocab,
+    order,
+  ]);
+
+  if (errorMsgs.length > 0) {
+    const minState = logify(this.state);
+    const minProps = logify(this.props);
+
+    const messages = [
+      ...errorMsgs,
+      { msg: "props:", lvl: DebugLevel.WARN, css: "px-2" },
+      { msg: minProps, lvl: DebugLevel.WARN, css: "px-4" },
+      { msg: "state:", lvl: DebugLevel.WARN, css: "px-2" },
+      { msg: minState, lvl: DebugLevel.WARN, css: "px-4" },
+    ];
+
+    return (
+      <MinimalUI next={gotoNext} prev={gotoPrev}>
+        <div className="d-flex flex-column justify-content-around">
+          <Console messages={messages} />
+        </div>
+      </MinimalUI>
+    );
   }
 
-  render() {
-    if (this.state.errorMsgs.length > 0) {
-      const minState = logify(this.state);
-      const minProps = logify(this.props);
+  if (filteredVocab.length < 1 || order.length < 1)
+    return <NotReady addlStyle="main-panel" />;
 
-      const messages = [
-        ...this.state.errorMsgs,
-        { msg: "props:", lvl: DebugLevel.WARN, css: "px-2" },
-        { msg: minProps, lvl: DebugLevel.WARN, css: "px-4" },
-        { msg: "state:", lvl: DebugLevel.WARN, css: "px-2" },
-        { msg: minState, lvl: DebugLevel.WARN, css: "px-4" },
-      ];
+  const uid = reinforcedUID || getTermUID(selectedIndex, order, filteredVocab);
 
-      return (
-        <MinimalUI next={this.gotoNext} prev={this.gotoPrev}>
-          <div className="d-flex flex-column justify-content-around">
-            <Console messages={messages} />
-          </div>
-        </MinimalUI>
-      );
+  // console.log(
+  //   JSON.stringify({
+  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
+  //     idx: selectedIndex,
+  //     uid: (uid && uid.slice(0, 6)) || "",
+  //     v: vocabList.length,
+  //     ord: order.length,
+  //     rep: Object.keys(metadata.current).length,
+  //     fre: frequency.length,
+  //     filt: filteredVocab.length,
+  //   })
+  // );
+
+  const vocabulary = getTerm(uid, vocabList);
+  const vocabulary_reinforce = metadata.current[vocabulary.uid]?.rein === true;
+
+  const isVerb = vocabulary.grp === "Verb";
+
+  const jText = JapaneseText.parse(vocabulary);
+  const hasFurigana = jText.hasFurigana();
+  const hasJHint = jText.isHintable(3);
+  const hasEHint = vocabulary.grp !== undefined && vocabulary.grp !== "";
+
+  const isHintable = showHint !== uid && englishSideUp ? hasJHint : hasEHint;
+
+  let pIdx = selectedIndex;
+  /** @type {BareIdx[]} */
+  let pList = [];
+
+  if (scrollJOrder) {
+    if (jbare) {
+      pList = jbare;
     }
-
-    if (this.state.filteredVocab.length < 1)
-      return <NotReady addlStyle="main-panel" />;
-
-    const uid =
-      this.state.reinforcedUID ||
-      getTermUID(
-        this.state.selectedIndex,
-        this.state.order,
-        this.state.filteredVocab
-      );
-    const vocabulary = getTerm(uid, this.props.vocab);
-    const vocabulary_reinforce =
-      this.props.repetition[vocabulary.uid]?.rein === true;
-
-    const isVerb = vocabulary.grp === "Verb";
-
-    const jText = JapaneseText.parse(vocabulary);
-    const hasFurigana = jText.hasFurigana();
-    const hasJHint = jText.isHintable(3);
-    const hasEHint = vocabulary.grp !== undefined && vocabulary.grp !== "";
-
-    const showHint = this.state.showHint;
-    const isHintable =
-      !showHint && this.props.practiceSide ? hasJHint : hasEHint;
-
-    let pIdx;
-    /** @type {BareIdx[]} */
-    let pList;
-
-    if (this.state.scrollJOrder) {
-      pIdx = this.state.selectedIndex;
-      pList = this.state.jbare;
-    } else {
-      pIdx = this.state.jbare[this.state.selectedIndex].idx;
-      pList = this.state.ebare;
+  } else {
+    if (jbare) {
+      pIdx = jbare[selectedIndex].idx;
     }
-
-    let loopActionBtn;
-    if (this.state.loop > 0 && this.loopAbortControllers === undefined) {
-      loopActionBtn = (
-        <LoopStartBtn
-          countDown={
-            this.loopQuitTimer !== undefined
-              ? this.state.loopQuitCount
-              : undefined
-          }
-          onClick={() => {
-            if (this.loopQuitTimer !== undefined) {
-              // abort interrupt-to-auto-quit
-              const [countDown] = this.loopQuitTimer;
-              clearInterval(countDown);
-              this.setState({ loopQuitCount: this.loopQuitMs / 1000 });
-            }
-
-            this.beginLoop();
-          }}
-        />
-      );
-    } else if (this.state.loop > 0 && this.loopAbortControllers !== undefined) {
-      loopActionBtn = (
-        <LoopStopBtn
-          onClick={() => {
-            this.abortLoop();
-            this.setState({
-              loop: 0,
-              tpTimeStamp: undefined,
-              tpAnimation: undefined,
-            });
-          }}
-        />
-      );
+    if (ebare) {
+      pList = ebare;
     }
+  }
 
-    const progress =
-      ((this.state.selectedIndex + 1) / this.state.filteredVocab.length) * 100;
+  const progress = ((selectedIndex + 1) / filteredVocab.length) * 100;
 
-    let page = [
-      <div key={0} className="vocabulary main-panel h-100">
+  let page = (
+    <React.Fragment>
+      <div className="vocabulary main-panel h-100">
         <div
+          ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
-          onTouchStart={
-            this.props.swipeThreshold > 0 ? this.startMove : undefined
-          }
-          onTouchMove={this.props.swipeThreshold > 0 ? this.inMove : undefined}
-          onTouchEnd={this.props.swipeThreshold > 0 ? this.endMove : undefined}
         >
-          <StackNavButton ariaLabel="Previous" action={this.gotoPrev}>
+          <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
 
-          {isVerb && this.props.autoVerbView ? (
+          {isVerb && autoVerbView ? (
             <VerbMain
               verb={vocabulary}
-              reCache={this.state.recacheAudio}
-              linkToOtherTerm={(uid) => this.setState({ reinforcedUID: uid })}
-              showHint={showHint}
+              reCache={recacheAudio}
+              linkToOtherTerm={(uid) => setReinforcedUID(uid)}
+              showHint={showHint === uid}
             />
           ) : (
             <VocabularyMain
               vocabulary={vocabulary}
-              reCache={this.state.recacheAudio}
-              showHint={showHint}
+              reCache={recacheAudio}
+              showHint={showHint === uid}
             />
           )}
 
-          <StackNavButton ariaLabel="Next" action={this.gotoNextSlide}>
+          <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
-      </div>,
-    ];
+      </div>
+    </React.Fragment>
+  );
 
-    if (!this.state.showPageBar) {
-      page = [
-        ...page,
-        <div key={1} className="options-bar mb-3 flex-shrink-1">
+  if (!showPageBar) {
+    page = (
+      <React.Fragment>
+        {page}
+        <div className="options-bar mb-3 flex-shrink-1">
           <div className="row opts-max-h">
             <div className="col">
               <div className="d-flex justify-content-start">
                 <TogglePracticeSideBtn
-                  toggle={this.props.practiceSide}
+                  toggle={englishSideUp}
                   action={() => {
-                    if (this.abortLoop()) {
-                      this.setState({
-                        tpTimeStamp: undefined,
-                        tpAnimation: undefined,
-                      });
+                    if (abortLoop()) {
+                      resetTimedPlay();
                     }
-                    this.props.flipVocabularyPracticeSide();
+                    dispatch(flipVocabularyPracticeSide());
                   }}
                 />
                 <ReCacheAudioBtn
-                  active={this.state.recacheAudio}
-                  action={() => {
-                    if (this.state.recacheAudio === false) {
-                      const delayTime = 2000;
-                      this.setState({ recacheAudio: true });
-
-                      const delayToggle = () => {
-                        this.setState({ recacheAudio: false });
-                      };
-
-                      setTimeout(delayToggle, delayTime);
-                    }
-                  }}
+                  active={recacheAudio}
+                  action={buildRecacheAudioHandler(
+                    recacheAudio,
+                    setRecacheAudio
+                  )}
                 />
                 <ToggleAutoVerbViewBtn
                   visible={isVerb}
-                  toggleAutoVerbView={this.props.toggleAutoVerbView}
-                  autoVerbView={this.props.autoVerbView}
+                  toggleAutoVerbView={buildAction(dispatch, toggleAutoVerbView)}
+                  autoVerbView={autoVerbView}
                 />
-                <div className="sm-icon-grp">
-                  <LoopSettingBtn
-                    active={this.state.loop > 0}
-                    loop={this.state.loop}
-                    onClick={() => {
-                      this.abortLoop();
-                      this.loopQuitTimer = undefined;
-                      this.setState((state) => {
-                        const zero = state.loop === 3;
-
-                        return {
-                          loop: /** @type {VocabularyState["loop"]} */ (
-                            !zero ? state.loop + 1 : 0
-                          ),
-                          tpAnswered: !zero ? state.tpAnswered : undefined,
-                        };
-                      });
-                    }}
-                  />
-                </div>
+                <div className="sm-icon-grp">{loopSettingBtn}</div>
                 <div className="sm-icon-grp">{loopActionBtn}</div>
               </div>
             </div>
             <div className="col text-center">
               <FrequencyTermIcon
-                visible={
-                  this.state.reinforcedUID !== undefined &&
-                  this.state.reinforcedUID !== ""
-                }
+                visible={reinforcedUID !== undefined && reinforcedUID !== ""}
               />
             </div>
             <div className="col">
               <div className="d-flex justify-content-end">
-                <TimePlayVerifyBtns
-                  visible={this.state.tpAnswered !== undefined}
-                  hover={this.state.tpBtn}
-                  prevMissPronu={this.props.repetition[uid]?.pron === true}
-                  onPronunciation={() => {
-                    if (this.props.repetition[uid]?.pron === true) {
-                      this.setState((state) => ({
-                        tpAnswered: false,
-                        tpBtn: state.tpBtn === "reset" ? undefined : "reset",
-                      }));
-                    } else {
-                      this.setState((state) => ({
-                        tpAnswered: false,
-                        tpBtn:
-                          state.tpBtn === "pronunciation"
-                            ? undefined
-                            : "pronunciation",
-                      }));
-                    }
-                  }}
-                  onIncorrect={() => {
-                    this.setState((state) => ({
-                      tpAnswered: false,
-                      tpBtn:
-                        state.tpBtn === "incorrect" ? undefined : "incorrect",
-                    }));
-                  }}
-                  onReset={() => {
-                    this.setState((state) => ({
-                      tpAnswered: false,
-                      tpBtn: state.tpBtn === "reset" ? undefined : "reset",
-                    }));
-                  }}
-                />
+                {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
                 <DifficultySlider
-                  value={this.props.repetition[uid]?.difficulty}
-                  onChange={(value) => this.props.setWordDifficulty(uid, value)} // TODO: class>fn prop function causes rerender
+                  value={metadata.current[uid]?.difficulty}
+                  onChange={buildAction(
+                    dispatch,
+                    (/** @type {number} */ value) =>
+                      setWordDifficulty(uid, value)
+                  )}
                   manualUpdate={uid}
                 />
                 <ShowHintBtn
-                  visible={this.props.hintEnabled}
+                  visible={hintEnabled.current}
                   active={isHintable}
-                  setShowHint={(value) => this.setState({ showHint: value })}
+                  setShowHint={setStateFunction(setShowHint, (prev) =>
+                    prev ? undefined : uid
+                  )}
                 />
                 <ToggleFuriganaBtn
                   active={hasFurigana}
                   toggle={
                     toggleFuriganaSettingHelper(
                       vocabulary.uid,
-                      this.props.furigana
+                      metadata.current
                     ).furigana.show
                   }
-                  toggleFurigana={(uid) => this.props.furiganaToggled(uid)}
+                  toggleFurigana={buildAction(dispatch, furiganaToggled)}
                   vocabulary={vocabulary}
                 />
-                <ToggleFrequencyTermBtnMemoLegacy
-                  addFrequencyTerm={this.props.addFrequencyWord}
-                  removeFrequencyTerm={this.props.removeFrequencyWord}
+                <ToggleFrequencyTermBtnMemo
+                  addFrequencyTerm={
+                    // TODO: memoize me ?
+                    (uid) => {
+                      setFrequency((f) => [...f, uid]);
+                      buildAction(dispatch, addFrequencyWord)(uid);
+                    }
+                  }
+                  removeFrequencyTerm={(uid) => {
+                    setFrequency((f) => f.filter((id) => id !== uid));
+                    buildAction(dispatch, removeFrequencyWord)(uid);
+                  }}
                   toggle={vocabulary_reinforce}
                   term={vocabulary}
-                  count={this.state.frequency.length}
+                  count={frequency.length}
                 />
               </div>
             </div>
           </div>
-        </div>,
+        </div>
         <div
-          key={2}
           className="progress-line flex-shrink-1"
           onClick={() => {
-            if (this.props.termsOrder === TermSortBy.ALPHABETIC) {
+            if (sortMethod.current === TermSortBy.ALPHABETIC) {
               const delayTime = 4000;
-              this.setState({ showPageBar: true });
+              setShowPageBar(true);
 
               const delay = () => {
-                if (this.props.scrollingDone) {
-                  this.setState({ showPageBar: false });
+                if (isAlphaSortScrolling.current === false) {
+                  setShowPageBar(false);
                 } else {
                   setTimeout(delay, delayTime);
                 }
@@ -1497,23 +663,19 @@ class Vocabulary extends Component {
           }}
         >
           <LinearProgress
-            variant={
-              this.state.tpAnimation === undefined ? "determinate" : "buffer"
-            }
-            value={this.state.tpAnimation === undefined ? progress : 0}
-            valueBuffer={
-              this.state.tpAnimation === undefined
-                ? undefined
-                : this.state.tpAnimation
-            }
+            variant={tpAnimation === null ? "determinate" : "buffer"}
+            value={tpAnimation === null ? progress : 0}
+            valueBuffer={tpAnimation ?? undefined}
             color={vocabulary_reinforce ? "secondary" : "primary"}
           />
-        </div>,
-      ];
-    } else {
-      page = [
-        ...page,
-        <Grow in={this.state.showPageBar} timeout={500} key={3}>
+        </div>
+      </React.Fragment>
+    );
+  } else {
+    page = (
+      <React.Fragment>
+        {page}
+        <Grow in={showPageBar} timeout={500}>
           <Avatar
             style={{
               position: "absolute",
@@ -1522,128 +684,162 @@ class Vocabulary extends Component {
               // backgroundColor: deepOrange[500],
             }}
           >
-            <div
-              onClick={() => {
-                this.setState((state) => ({
-                  scrollJOrder: !state.scrollJOrder,
-                }));
-              }}
-            >
-              {this.state.scrollJOrder ? "JP" : "EN"}
+            <div onClick={setStateFunction(setScrollJOrder, (prev) => !prev)}>
+              {scrollJOrder ? "JP" : "EN"}
             </div>
           </Avatar>
-        </Grow>,
+        </Grow>
         <div
-          key={4}
           className="page-bar flex-shrink-1"
-          // onMouseDown={() => {
-          //   this.props.scrollingState(true)
-          // }}
-          // onMouseUp={() => {
-          //   this.props.scrollingState(false)
-          // }}
           onTouchStart={() => {
-            this.props.scrollingState(true);
+            isAlphaSortScrolling.current = true;
           }}
           onTouchEnd={() => {
-            this.props.scrollingState(false);
+            isAlphaSortScrolling.current = false;
+          }}
+          onMouseDown={() => {
+            isAlphaSortScrolling.current = true;
+          }}
+          onMouseUp={() => {
+            isAlphaSortScrolling.current = false;
           }}
         >
           <VocabularyOrderSlider
             initial={pIdx}
             list={pList}
             setIndex={(index) => {
-              if (this.state.scrollJOrder) {
-                this.setState({ selectedIndex: index });
-              } else {
-                const idx = this.state.ebare[index].idx;
-                this.setState({ selectedIndex: idx });
+              if (scrollJOrder) {
+                setSelectedIndex(index);
+              } else if (ebare) {
+                const idx = ebare[index].idx;
+                setSelectedIndex(idx);
               }
             }}
           />
-        </div>,
-      ];
-    }
-
-    return page;
+        </div>
+      </React.Fragment>
+    );
   }
+
+  return page;
 }
 
-const mapStateToProps = (/** @type {RootState}*/ state) => {
-  return {
-    swipeThreshold: state.global.swipeThreshold,
-    motionThreshold: state.global.motionThreshold,
-    debugLevel: state.global.debug,
-    scrollingDone: !state.global.scrolling,
+/**
+ * @param {boolean} recacheAudio
+ * @param {React.Dispatch<React.SetStateAction<boolean>>} setRecacheAudio
+ */
+function buildRecacheAudioHandler(recacheAudio, setRecacheAudio) {
+  return function recacheAudioHandler() {
+    if (recacheAudio === false) {
+      const delayTime = 2000;
+      setRecacheAudio(true);
 
-    vocab: state.vocabulary.value,
-    verbForm: state.vocabulary.verbForm,
+      const delayToggle = () => {
+        setRecacheAudio(false);
+      };
 
-    practiceSide: state.vocabulary.setting.practiceSide,
-    termsOrder: state.vocabulary.setting.ordered,
-    romajiActive: state.vocabulary.setting.romaji,
-    hintEnabled: state.vocabulary.setting.hintEnabled,
-    filterType: state.vocabulary.setting.filter,
-    memoThreshold: state.vocabulary.setting.memoThreshold,
-    frequency: state.vocabulary.setting.frequency,
-    activeGroup: state.vocabulary.setting.activeGroup,
-    autoVerbView: state.vocabulary.setting.autoVerbView,
-    reinforce: state.vocabulary.setting.reinforce,
-    repetition: state.vocabulary.setting.repetition,
-    furigana: state.vocabulary.setting.repetition,
+      setTimeout(delayToggle, delayTime);
+    }
   };
-};
+}
 
-Vocabulary.propTypes = {
-  vocab: PropTypes.array.isRequired,
-  verbForm: PropTypes.string,
+/**
+ * @param {function} gotoNextSlide
+ * @param {function} gotoPrev
+ * @param {string|undefined} reinforcedUID
+ * @param {number} selectedIndex
+ * @param {RawVocabulary[]} vocab
+ * @param {string} verbForm
+ * @param {number[]} order
+ * @param {RawVocabulary[]} filteredVocab
+ * @param {boolean} recacheAudio
+ * @param {React.MutableRefObject<string|undefined>} naFlip
+ */
+function buildGameActionsHandler(
+  gotoNextSlide,
+  gotoPrev,
+  reinforcedUID,
+  selectedIndex,
+  vocab,
+  verbForm,
+  order,
+  filteredVocab,
+  recacheAudio,
+  naFlip
+) {
+  /**
+   * @param {string} direction
+   * @param {AbortController} [AbortController]
+   */
+  return function gameActionHandler(direction, AbortController) {
+    let actionPromise;
 
-  activeGroup: PropTypes.array,
-  frequency: PropTypes.object,
-  hintEnabled: PropTypes.bool,
-  romajiActive: PropTypes.bool,
-  practiceSide: PropTypes.bool,
-  termsOrder: PropTypes.number,
-  scrollingDone: PropTypes.bool,
-  filterType: PropTypes.number,
-  memoThreshold: PropTypes.number,
-  autoVerbView: PropTypes.bool,
-  reinforce: PropTypes.bool,
-  repetition: PropTypes.object,
-  furigana: PropTypes.object,
-  swipeThreshold: PropTypes.number,
-  motionThreshold: PropTypes.number,
-  debugLevel: PropTypes.number,
+    if (direction === "left") {
+      gotoNextSlide();
+      actionPromise = Promise.all([Promise.resolve()]);
+    } else if (direction === "right") {
+      gotoPrev();
+      actionPromise = Promise.all([Promise.resolve()]);
+    } else {
+      const uid =
+        reinforcedUID || getTermUID(selectedIndex, order, filteredVocab);
+      const vocabulary = getTerm(uid, vocab);
 
-  flipVocabularyPracticeSide: PropTypes.func.isRequired,
-  logger: PropTypes.func,
-  furiganaToggled: PropTypes.func,
-  setWordDifficulty: PropTypes.func,
-  setWordTPIncorrect: PropTypes.func,
-  updateSpaceRepWord: PropTypes.func,
-  setWordTPCorrect: PropTypes.func,
-  getVocabulary: PropTypes.func.isRequired,
-  addFrequencyWord: PropTypes.func.isRequired,
-  removeFrequencyWord: PropTypes.func.isRequired,
-  scrollingState: PropTypes.func,
-  toggleAutoVerbView: PropTypes.func,
-  toggleVocabularyFilter: PropTypes.func,
-};
+      const override = recacheAudio ? "/override_cache" : "";
 
-export default connect(mapStateToProps, {
-  getVocabulary,
-  flipVocabularyPracticeSide,
-  addFrequencyWord,
-  removeFrequencyWord,
-  scrollingState,
-  toggleAutoVerbView,
-  toggleVocabularyFilter,
-  furiganaToggled,
-  updateSpaceRepWord,
-  setWordTPCorrect,
-  setWordTPIncorrect,
-  setWordDifficulty,
-  logger,
-})(Vocabulary);
+      if (direction === "up") {
+        setMediaSessionPlaybackState("playing");
+
+        let sayObj;
+        if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {
+          const verb = verbToTargetForm(vocabulary, verbForm);
+
+          sayObj = {
+            ...vocabulary,
+            japanese: verb.toString(),
+            pronounce: vocabulary.pronounce && verb.getPronunciation(),
+            form: verbForm,
+          };
+        } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
+          const naAdj = JapaneseText.parse(vocabulary).append(
+            naFlip.current && "な"
+          );
+
+          sayObj = {
+            ...vocabulary,
+            japanese: naAdj.toString(),
+            pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
+            form: naFlip.current,
+          };
+
+          naFlip.current = naFlip.current ? undefined : "-na";
+        } else {
+          sayObj = vocabulary;
+        }
+
+        const audioUrl = addParam(pronounceEndoint + override, {
+          tl: "ja",
+          q: audioPronunciation(sayObj),
+          uid: getCacheUID(sayObj),
+        });
+
+        actionPromise = fetchAudio(audioUrl, AbortController);
+      } else if (direction === "down") {
+        setMediaSessionPlaybackState("playing");
+
+        const inEnglish = vocabulary.english;
+
+        const audioUrl = addParam(pronounceEndoint + override, {
+          tl: "en",
+          q: inEnglish,
+          uid: vocabulary.uid + ".en",
+        });
+
+        actionPromise = fetchAudio(audioUrl, AbortController);
+      }
+    }
+    return actionPromise || Promise.reject();
+  };
+}
 
 export { VocabularyMeta };
