@@ -107,9 +107,6 @@
   }
 }
 
-.vocabulary-slider {
-  max-height: 43px;
-}
 .dark-mode #tooltip {
   background: #424242;
 }
@@ -136,6 +133,9 @@
   transform: rotate(45deg);
 }
 
+.vocabulary-slider {
+  max-height: 43px;
+}
 .my-navbar {
   height: 20px;
   margin-bottom: 20px;
