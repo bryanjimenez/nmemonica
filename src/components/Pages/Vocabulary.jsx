@@ -305,13 +305,13 @@ export default function Vocabulary() {
       filterType.current,
       frequency,
       filteredVocab,
+      metadata.current,
       reinforcedUID,
       (value) => {
         prevReinforcedUID.current = reinforcedUID;
         setReinforcedUID(value);
       },
       gotoNext,
-      buildAction(dispatch, removeFrequencyWord)
     );
   }, [dispatch, frequency, filteredVocab, reinforcedUID, gotoNext]);
 

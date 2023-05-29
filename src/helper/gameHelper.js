@@ -5,7 +5,7 @@ import { TermFilterBy } from "../slices/settingHelper";
 import { shuffleArray } from "./arrayHelper";
 import { JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
-import { daysSince } from "./consoleHelper";
+import { daysSince, minsSince } from "./consoleHelper";
 import { isYoon, kanaHintBuilder } from "./kanaHelper";
 import { furiganaHintBuilder } from "./kanjiHelper";
 
@@ -28,20 +28,20 @@ import { furiganaHintBuilder } from "./kanjiHelper";
  * @param {typeof TermFilterBy[keyof TermFilterBy]} freqFilter
  * @param {string[]} frequency
  * @param {RawItem[]} filteredTerms
+ * @param {SpaceRepetitionMap} metadata
  * @param {string|undefined} reinforcedUID
  * @param {(uid:string)=>void} updateReinforcedUID
  * @param {function} gotoNext
- * @param {(uid:string)=>void} removeFrequencyTerm
  */
 export function play(
   reinforce,
   freqFilter,
   frequency,
   filteredTerms,
+  metadata,
   reinforcedUID,
   updateReinforcedUID,
   gotoNext,
-  removeFrequencyTerm
 ) {
   // some games will come from the reinforced list
   // unless filtering from frequency list
@@ -52,25 +52,21 @@ export function play(
     frequency.length > 0
   ) {
     const min = 0;
-    const max = frequency.length;
+    const staleFreq = frequency.filter(f=>minsSince(metadata[f].d)>frequency.length)
+    const max = staleFreq.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
-    const vocabulary = filteredTerms.find((v) => frequency[idx] === v.uid);
+    const vocabulary = filteredTerms.find((v) => staleFreq[idx] === v.uid);
 
     if (vocabulary) {
+      // avoid repeating the same reinforced word
       if (reinforcedUID !== vocabulary.uid) {
         updateReinforcedUID(vocabulary.uid);
-      } else {
-        // avoid repeating the same reinforced word
-        gotoNext();
+        return;
       }
-    } else {
-      console.warn("uid no longer exists");
-      removeFrequencyTerm(frequency[idx]);
-      gotoNext();
     }
-  } else {
-    gotoNext();
   }
+  
+  gotoNext();
 }
 
 /**

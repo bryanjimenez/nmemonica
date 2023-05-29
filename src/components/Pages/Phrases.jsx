@@ -208,13 +208,13 @@ export default function Phrases() {
       filterType.current,
       frequency,
       filteredPhrases,
+      metadata.current,
       reinforcedUID,
       (value) => {
         prevReinforcedUID.current = reinforcedUID;
         setReinforcedUID(value);
       },
       gotoNext,
-      buildAction(dispatch, removeFrequencyPhrase)
     );
   }, [
     dispatch,

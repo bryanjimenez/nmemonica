@@ -180,10 +180,10 @@ export default function Kanji() {
       frequency,
       // filteredTerms,
       filtered,
+      repetition,//metadata,
       reinforcedUID,
       setReinforcedUID,
       gotoNext,
-      removeFrequencyTerm
     );
   }, [
     gotoNext,

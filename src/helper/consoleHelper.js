@@ -33,6 +33,20 @@ export function daysSince(rawDateString) {
 
   return diffDays;
 }
+
+/**
+ * Minutes since rawDateString
+ * @param {string} rawDateString Date.toJSON string
+ */
+export function minsSince(rawDateString) {
+  const dateThen = Date.parse(rawDateString);
+  const diffTime = Math.abs(Date.now() - dateThen);
+  const diffMins = Math.ceil(diffTime / (1000 * 60));
+
+  return diffMins;
+}
+
+
 /**
  * Console friendly string representation of elapsed
  * @param {number} tpElapsed elapsed in ms
