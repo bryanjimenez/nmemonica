@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { LinearProgress } from "@mui/material";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -56,12 +56,16 @@ function createChoices(answer, particleList) {
   return choices;
 }
 
-function ParticlesGame() {
-  const dispatch = useDispatch();
+export default function ParticlesGame() {
+  const dispatch = /** @type {AppDispatch}*/ (useDispatch());
+
   const {
     particleGame: { phrases, particles },
-  } = useSelector((/** @type {RootState}*/ { particle }) => particle);
-  useMemo(() => {
+  } = useSelector((/** @type {RootState}*/ { particle }) => {
+    return particle;
+  });
+
+  useEffect(() => {
     if (phrases.length === 0) {
       dispatch(getParticleGame());
     }
@@ -129,8 +133,8 @@ function ParticlesGame() {
     setSelectedIndex(newSel);
   }
 
-  const { aRomaji } = useSelector(
-    (/** @type {RootState}*/ { particle }) => particle.setting
+  const aRomaji = useSelector(
+    (/** @type {RootState}*/ { particle }) => particle.setting.aRomaji
   );
 
   const game = prepareGame(selectedIndex, phrases, particles);
@@ -160,7 +164,5 @@ function ParticlesGame() {
     </>
   );
 }
-
-export default ParticlesGame;
 
 export { ParticlesGameMeta };

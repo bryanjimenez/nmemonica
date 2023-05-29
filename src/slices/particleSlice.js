@@ -28,7 +28,11 @@ export const getParticleGame = createAsyncThunk(
       return { game };
     } else {
       return thunkAPI.dispatch(getPhrase()).then((res) => {
-        const phraseObject = res.payload;
+        const rawObject =
+          /** @type {{value:{[uid: string]: RawPhrase }, version: string}} */ (
+            res.payload
+          );
+        const phraseObject = rawObject.value;
         const phraseArray = buildPhraseArray(phraseObject);
         return { phrase: phraseArray, game: buildParticleGame(phraseArray) };
       });
