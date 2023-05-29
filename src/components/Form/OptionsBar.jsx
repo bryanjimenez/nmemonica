@@ -143,40 +143,6 @@ ToggleFrequencyTermBtn.propTypes = {
 
 export const ToggleFrequencyTermBtnMemo = memo(ToggleFrequencyTermBtn);
 
-export const ToggleFrequencyTermBtnMemoLegacy = memo(
-  ToggleFrequencyTermBtn,
-  ToggleFrequencyTermBtnIsEq
-);
-
-/**
- * @param {ToggleFrequencyTermBtnProps} oldProps
- * @param {ToggleFrequencyTermBtnProps} newProps
- */
-function ToggleFrequencyTermBtnIsEq(oldProps, newProps) {
-  // console.table({old: oldProps, new: newProps})
-
-  const optionalSame = oldProps.toggle === newProps.toggle;
-
-  const interDepSame =
-    (oldProps.count === newProps.count &&
-      oldProps.toggle === newProps.toggle) ||
-    (oldProps.count === newProps.count &&
-      oldProps.toggle !== newProps.toggle) ||
-    (oldProps.count !== newProps.count && oldProps.toggle === newProps.toggle);
-
-  const reqSame =
-    oldProps.term.uid === newProps.term.uid &&
-    oldProps.active === newProps.active &&
-    oldProps.visible === newProps.visible &&
-    oldProps.addFrequencyTerm === newProps.addFrequencyTerm &&
-    oldProps.removeFrequencyTerm === newProps.removeFrequencyTerm;
-
-  const isSame =
-    (newProps.count !== undefined ? interDepSame : optionalSame) && reqSame;
-
-  return isSame;
-}
-
 /**
  * @typedef {{
  * visible: boolean,
@@ -287,7 +253,7 @@ ReCacheAudioBtn.propTypes = {
  * @typedef {{
  * visible?: boolean,
  * active?: boolean,
- * action: function,
+ * action: import("react").MouseEventHandler,
  * toggle: boolean,
  * }} TogglePracticeSideBtnProps
  * @param {TogglePracticeSideBtnProps} props
@@ -299,11 +265,7 @@ export function TogglePracticeSideBtn(props) {
     <div aria-label="Toggle practice side">
       <FontAwesomeIcon
         className="clickable"
-        onClick={() => {
-          if (typeof action === "function") {
-            action();
-          }
-        }}
+        onClick={action}
         icon={toggle ? faGlasses : faPencilAlt}
       />
       <span className="notification">
