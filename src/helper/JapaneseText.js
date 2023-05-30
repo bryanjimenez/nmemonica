@@ -157,6 +157,15 @@ export class JapaneseText {
     let hint = true;
     const text = this;
 
+    const isKanaOrKanjiOnly = text
+      .toString()
+      .split("")
+      .every(
+        (char) =>
+          isKanji(char) || isHiragana(char) || isKatakana(char) || char === "\n"
+      );
+    if (!isKanaOrKanjiOnly) return false;
+
     if (text.hasFurigana()) {
       const pronunciation = text.getPronunciation();
       const orthography = text.getSpelling();
