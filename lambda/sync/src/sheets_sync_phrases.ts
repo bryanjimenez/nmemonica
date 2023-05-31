@@ -1,18 +1,32 @@
-"use strict";
-import { default as admin } from "firebase-admin";
+import * as express from "express";
+import * as admin from "firebase-admin";
 import { google } from "googleapis";
-import { googleSheetId } from "../../../environment.development.js";
-import md5 from "md5";
+import { googleSheetId } from "./constants"; // FIXME: import { googleSheetId } from "../../../environment.development";
+import * as md5 from "md5";
 
-export function getParticles(tag) {
+// TODO: use main type
+type Phrase = {
+  japanese: string;
+  romaji?: string;
+  english: string;
+  lit?: string,
+  grp?: string;
+  subGrp?: string;
+
+  tag?:string[],
+  lesson?: string,
+  particles?: string[],
+}
+
+export function getParticles(tag:string) {
   const tagList = tag.split(/[\n\s ]+/);
   const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
   const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
   const nonWhiteSpace = new RegExp(/\S/);
 
-  let remainingTags = [];
-  let particles = [];
-  tagList.forEach((t) => {
+  let remainingTags:string[] = [];
+  let particles:string[] = [];
+  tagList.forEach((t:string) => {
     switch (t) {
       case hasParticle.test(t) && t:
         particles = t.split(":")[1].split(",");
@@ -32,7 +46,7 @@ export function getParticles(tag) {
   return { tags: remainingTags, particles };
 }
 
-export async function sheets_sync_phrases(req, res) {
+export async function sheets_sync_phrases(req: express.Request, res: express.Response) {
   try {
     const spreadsheetId = googleSheetId;
     const range = "Phrases!A1:H";
@@ -43,13 +57,16 @@ export async function sheets_sync_phrases(req, res) {
 
     const api = google.sheets({ version: "v4", auth });
 
-    const sheetDataPromise = new Promise((res, rej) => {
+    const sheetDataPromise: Promise<string[][]>  = new Promise((resolve, reject) => {
       api.spreadsheets.values.get({ spreadsheetId, range }, (err, response) => {
         if (err) {
-          rej(new Error("The API returned an error: " + err));
+          reject(new Error("The API returned an error: " + err));
+        } else if(!response || !response.data || !response.data.values){
+          reject(new Error("The API returned no data"));
+        } else {
+          const rows = response.data.values;
+          resolve(rows);
         }
-        const rows = response.data.values;
-        res(rows);
       });
     });
     const phrasesPromise = admin.database().ref("lambda/phrases").once("value");
@@ -60,8 +77,8 @@ export async function sheets_sync_phrases(req, res) {
     ]);
     const phrasesBefore = phrasesSnapshot.val();
 
-    const ORDER = -1,
-      JP = 0,
+    const JP = 0,
+    // ORDER = -1,
       RM = 1,
       EN = 2,
       LIT = 3,
@@ -70,10 +87,10 @@ export async function sheets_sync_phrases(req, res) {
       LSN = 6,
       TAG = 7;
 
-    let sheetHeaders = [];
-    const phrasesAfter = sheetData.reduce((acc, el, i) => {
+    // let sheetHeaders = [];
+    const phrasesAfter = sheetData.reduce<{[uid: string]:Phrase}>((acc, el, i) => {
       if (i > 0) {
-        let phrase = {
+        let phrase:Phrase = {
           japanese: el[JP],
           english: el[EN],
         };
@@ -119,9 +136,10 @@ export async function sheets_sync_phrases(req, res) {
         }
 
         acc[key] = phrase;
-      } else {
-        sheetHeaders = el;
-      }
+      } 
+      // else {
+      //   sheetHeaders = el;
+      // }
       return acc;
     }, {});
 
@@ -129,11 +147,13 @@ export async function sheets_sync_phrases(req, res) {
     admin
       .database()
       .ref("lambda/cache")
-      .update({ phrases: md5(JSON.stringify(phrasesAfter)).substr(0, 4) });
+      .update({ phrases: md5(JSON.stringify(phrasesAfter)).slice(0, 5) });
 
-    return res.sendStatus(200);
+    res.sendStatus(200);
   } catch (e) {
-    console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
-    return res.sendStatus(500);
+    if(e instanceof Error){
+      console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
+    }
+    res.sendStatus(500);
   }
 }

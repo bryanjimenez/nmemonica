@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "functions",
+    "sourceMap": true,
+    "strict": true,
+  },
+  "compileOnSave": true,
+  "exclude": ["./node_modules"],
+  "include": ["./sync/src", "./translate/src"]
+}

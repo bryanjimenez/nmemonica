@@ -1,12 +1,9 @@
-"use strict";
 import axios from "axios";
 import { verify } from "crypto";
+import * as express from "express";
 import { defineString } from "firebase-functions/params";
-import {
-  authenticationHeader,
-  gTranslateEndPoint,
-  pronounceAllowedOrigins,
-} from "../../../environment.development";
+import { authenticationHeader, gTranslateEndPoint, pronounceAllowedOrigins } from "./constants";
+
 
 const DEV_ORIGIN = defineString("DEV_ORIGIN");
 const DEV_PUB_A = defineString("DEV_PUB_A");
@@ -15,9 +12,8 @@ const DEV_PUB_B = defineString("DEV_PUB_B");
 
 /**
  * Authorization required if the origin is development
- * @param {string} origin
  */
-function requiredHeaders(origin) {
+function requiredHeaders(origin:string) {
   let allowedHeaders = ["Content-Type"];
   if (origin === DEV_ORIGIN.value()) {
     // development required headers
@@ -29,10 +25,8 @@ function requiredHeaders(origin) {
 
 /**
  * Validate message is signed using provided key
- * @param {string} signatureBase64
- * @param {string} message
  */
-function validateAuthenticationSignature(signatureBase64, message) {
+function validateAuthenticationSignature(signatureBase64:string, message:string) {
   const key = {
     public:
       DEV_PUB_A.value() +
@@ -46,6 +40,7 @@ function validateAuthenticationSignature(signatureBase64, message) {
   const signature = Buffer.from(signatureBase64, "base64");
   const verified = verify(null, Buffer.from(message), key.public, signature);
   if (!verified) {
+    // @ts-expect-error Error.cause
     throw new Error("Unauthenticated.", {
       cause: { code: "UnverifiedAuth" },
     });
@@ -55,7 +50,7 @@ function validateAuthenticationSignature(signatureBase64, message) {
 /**
  * Replacer function for JSON.stringify
  */
-function replaceErrors(key, value) {
+function replaceErrors(key:string, value:unknown) {
   if (value instanceof Error) {
     var error = {};
 
@@ -69,11 +64,9 @@ function replaceErrors(key, value) {
   return value;
 }
 
-/**
- * @param {"DEFAULT"|"DEBUG"|"INFO"|"NOTICE"|"WARNING"|"ERROR"|"CRITICAL"|"ALERT"|"EMERGENCY"} severity
- * @param {*} message
- */
-function log(message, severity) {
+type severity = "DEFAULT"|"DEBUG"|"INFO"|"NOTICE"|"WARNING"|"ERROR"|"CRITICAL"|"ALERT"|"EMERGENCY"
+
+function log(message:unknown, severity:severity) {
   if (message instanceof Error && !("toJSON" in message)) {
     const error = message;
     const jsonError = JSON.parse(JSON.stringify(error, replaceErrors));
@@ -94,7 +87,7 @@ function log(message, severity) {
   }
 }
 
-export async function g_translate_pronounce(req, res) {
+export async function g_translate_pronounce(req: express.Request, res: express.Response) {
   const devOrigin = DEV_ORIGIN.value();
   const devReferer = devOrigin + "/";
 
@@ -117,7 +110,8 @@ export async function g_translate_pronounce(req, res) {
     res.set("Access-Control-Allow-Headers", allowed);
     res.set("Access-Control-Max-Age", "3600");
 
-    return res.sendStatus(204);
+    res.sendStatus(204);
+    return;
   } else if (req.method === "GET") {
     if (prodReferer) {
       // allowed referer
@@ -128,21 +122,27 @@ export async function g_translate_pronounce(req, res) {
         const { q, tl } = req.query;
         const message = JSON.stringify({ q, tl });
         const signature = req.header(authenticationHeader);
-        if (!signature)
+        if (!signature){
+          // @ts-expect-error Error.cause
           throw new Error("Header did not contain expected authorization.", {
             cause: { code: "MissingAuth" },
           });
+        }
 
         validateAuthenticationSignature(signature, message);
       } catch (e) {
-        if (
-          e.cause?.code === "UnverifiedAuth" ||
-          e.cause?.code === "MissingAuth"
-        ) {
-          log(e, "EMERGENCY");
+        if(e instanceof Error){
+
+          if (
+            e.cause?.code === "UnverifiedAuth" ||
+            e.cause?.code === "MissingAuth"
+          ) {
+            log(e, "EMERGENCY");
+          }
         }
 
-        return res.status(403).send("Unauthorized");
+         res.status(403).send("Unauthorized");
+         return;
       }
     } else {
       // unknown origin/referer
@@ -155,7 +155,8 @@ export async function g_translate_pronounce(req, res) {
         },
         "ALERT"
       );
-      return res.sendStatus(401);
+      res.sendStatus(401);
+      return;
     }
 
     const { q, tl } = req.query;
@@ -171,11 +172,18 @@ export async function g_translate_pronounce(req, res) {
         res.set("content-type", "audio/mpeg");
       }
 
-      return res.status(googleTranslate.status).send(googleTranslate.data);
+      res.status(googleTranslate.status).send(googleTranslate.data);
+      return;
     } catch (e) {
-      log(e, "CRITICAL");
-      return res.status(500).json({ error: e.message });
+      let msg = e;
+      if(e instanceof Error){
+        log(e, "CRITICAL");
+        msg = {error: e.message};
+      }
+      res.status(500).json(msg);
+      return;
     }
   }
-  return res.sendStatus(400);
+  res.sendStatus(400);
+  return;
 }

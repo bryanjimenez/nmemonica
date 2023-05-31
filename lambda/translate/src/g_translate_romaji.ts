@@ -1,8 +1,8 @@
-"use strict";
-import { default as admin } from "firebase-admin";
+import * as express from "express";
+import * as admin from "firebase-admin";
 import axios from "axios";
-import qs from "qs";
-import md5 from "md5";
+import * as qs from "qs";
+import * as md5 from "md5";
 
 // axios.interceptors.request.use(e=>{
 //   console.log('req intercept');
@@ -10,7 +10,7 @@ import md5 from "md5";
 //   return e;
 // });
 
-export async function g_translate_romaji(req, res) {
+export async function g_translate_romaji(req: express.Request, res: express.Response) {
   try {
     const { path } = req.body;
 
@@ -22,14 +22,16 @@ export async function g_translate_romaji(req, res) {
         throw new Error("missingPathException");
     }
 
-    return res.sendStatus(200);
+    res.sendStatus(200);
   } catch (e) {
+    if(e instanceof Error){
     if (e.message === "missingPathException") {
       console.log(JSON.stringify({ severity: "ERROR", message: e.message }));
-      return res.status(500).json({ error: e.message });
+      res.status(500).json({ error: e.message });
     } else {
       console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
-      return res.sendStatus(500);
+      res.sendStatus(500);
+    }
     }
   }
 }
@@ -88,17 +90,17 @@ async function updatePhrases() {
     admin
       .database()
       .ref("lambda/cache")
-      .update({ phrases: md5(JSON.stringify(oldPhrase)).substr(0, 4) }),
+      .update({ phrases: md5(JSON.stringify(oldPhrase)).slice(0, 5) }),
   ]);
 }
 
 /**
  * makes a request to google translate to obtain a romaji equivalent of the japanese param
  * NOTE: don't abuse the api
- * @param {String} japanese japanese input text
+ * @param {string} japanese japanese input text
  * @returns an AxiosPromise
  */
-function getRomaji(japanese) {
+function getRomaji(japanese:string) {
   var data = qs.stringify({
     "f.req":
       '[[["MkEWBc","[[\\"' +
