@@ -1,11 +1,17 @@
-const webpack = require("webpack");
-const HtmlWebPackPlugin = require("html-webpack-plugin");
-const path = require("path");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const PurgeCSSPlugin = require("purgecss-webpack-plugin").PurgeCSSPlugin;
-const glob = require("glob-all");
+import glob from "glob-all";
+import HtmlWebPackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import path from "path";
+import { PurgeCSSPlugin } from "purgecss-webpack-plugin";
+import webpack from "webpack";
 
-module.exports = function (webpackEnv, argv) {
+import { fileURLToPath } from "url";
+
+// mimic CommonJS variables -- not needed if using CommonJS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default function (webpackEnv, argv) {
   const envFile = /^(.*\.)(development|production)(\.js|\.json|)$/;
 
   return {
@@ -16,6 +22,12 @@ module.exports = function (webpackEnv, argv) {
           include: path.resolve(__dirname, "src"),
           use: {
             loader: "babel-loader",
+          },
+          // because package.json type: "module"
+          // and imports don't have extensions
+          // https://github.com/webpack/webpack/issues/11467#issuecomment-691873586
+          resolve: {
+            fullySpecified: false,
           },
         },
         {
@@ -91,7 +103,9 @@ module.exports = function (webpackEnv, argv) {
           { nodir: true }
         ),
         safelist: {
-          standard: [/\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/],
+          standard: [
+            /\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/,
+          ],
         },
       }),
     ],
@@ -142,4 +156,4 @@ module.exports = function (webpackEnv, argv) {
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };
-};
+}

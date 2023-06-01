@@ -1,6 +1,6 @@
-const express = require("express");
-const fs = require("fs");
-const crypto = require("crypto");
+import express from "express";
+import fs from "fs";
+import crypto from "crypto";
 
 const key_private = fs.readFileSync("./crypto/nmemonica_private.pem", "utf8");
 const key_public = fs.readFileSync("./crypto/nmemonica_public.pem", "utf8");
@@ -23,7 +23,7 @@ app.get(path, (req, res) => {
   const signature = crypto.sign(null, Buffer.from(message), key.private);
 
   const signatureBase64 = signature.toString("base64");
-  console.log(JSON.stringify({ message, signature: signatureBase64 })+"\n");
+  console.log(JSON.stringify({ message, signature: signatureBase64 }) + "\n");
 
   return res.status(200).json({ auth: signatureBase64 });
 });
