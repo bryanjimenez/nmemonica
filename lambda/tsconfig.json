@@ -5,10 +5,11 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "outDir": "functions",
-    "sourceMap": true,
+    "sourceMap": false,
     "strict": true,
+    "noImplicitAny": true,
   },
   "compileOnSave": true,
   "exclude": ["./node_modules"],
-  "include": ["./sync/src", "./translate/src"]
+  "include": ["**/*.ts"]
 }

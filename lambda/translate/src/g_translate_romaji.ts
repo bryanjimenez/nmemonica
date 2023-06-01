@@ -1,8 +1,10 @@
-import * as express from "express";
-import * as admin from "firebase-admin";
+import type { AxiosResponse } from "axios";
 import axios from "axios";
-import * as qs from "qs";
+import type * as express from "express";
+import * as admin from "firebase-admin";
 import * as md5 from "md5";
+import * as qs from "qs";
+import type { RawPhrase } from "../../../src/typings/raw";
 
 // axios.interceptors.request.use(e=>{
 //   console.log('req intercept');
@@ -10,7 +12,10 @@ import * as md5 from "md5";
 //   return e;
 // });
 
-export async function g_translate_romaji(req: express.Request, res: express.Response) {
+export async function g_translate_romaji(
+  req: express.Request,
+  res: express.Response
+) {
   try {
     const { path } = req.body;
 
@@ -24,14 +29,16 @@ export async function g_translate_romaji(req: express.Request, res: express.Resp
 
     res.sendStatus(200);
   } catch (e) {
-    if(e instanceof Error){
-    if (e.message === "missingPathException") {
-      console.log(JSON.stringify({ severity: "ERROR", message: e.message }));
-      res.status(500).json({ error: e.message });
-    } else {
-      console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
-      res.sendStatus(500);
-    }
+    if (e instanceof Error) {
+      if (e.message === "missingPathException") {
+        console.log(JSON.stringify({ severity: "ERROR", message: e.message }));
+        res.status(500).json({ error: e.message });
+      } else {
+        console.log(
+          JSON.stringify({ severity: "ERROR", message: e.toString() })
+        );
+        res.sendStatus(500);
+      }
     }
   }
 }
@@ -44,45 +51,50 @@ async function updatePhrases() {
     return;
   }
 
-  let romajiReqPromises = [];
-  let phraseOrig = [];
-  let oldPhrase = {};
+  let romajiReqPromises: Promise<AxiosResponse>[] = [];
+  let phraseOrig: { key: string; phrase: RawPhrase }[] = [];
+  let oldPhrase: Record<string, RawPhrase> = {};
   phrase.forEach((childSnapshot) => {
-    let p = childSnapshot.val();
+    let p: RawPhrase = childSnapshot.val();
     let key = childSnapshot.key;
 
-    let japanese;
-    if (p.japanese.indexOf("\n") > -1) {
-      japanese = p.japanese.split("\n")[1];
-    } else {
-      japanese = p.japanese;
-    }
+    if (key !== null) {
+      let japanese: string;
+      if (p.japanese.includes("\n")) {
+        japanese = p.japanese.split("\n")[1];
+      } else {
+        japanese = p.japanese;
+      }
 
-    if (!p.romaji || p.romaji === "") {
-      romajiReqPromises.push(getRomaji(japanese));
-      phraseOrig.push({ key, phrase: p });
-    }
+      if (!p.romaji || p.romaji === "") {
+        romajiReqPromises.push(getRomaji(japanese));
+        phraseOrig.push({ key, phrase: p });
+      }
 
-    oldPhrase[key] = { ...p };
+      oldPhrase[key] = { ...p };
+    }
   });
 
   const responses = await Promise.all(romajiReqPromises);
 
-  const romajis = responses.reduce((acc, cur, idx) => {
-    const [a, b] = JSON.parse(
-      JSON.parse(cur.data.split("\n").slice(1)[1] + "]")[0][2]
-    );
+  const romajis = responses.reduce<Record<string, RawPhrase>>(
+    (acc, cur, idx) => {
+      const [a, _b] = JSON.parse(
+        JSON.parse(cur.data.split("\n").slice(1)[1] + "]")[0][2]
+      );
 
-    const romaji = a[0];
-    acc[phraseOrig[idx].key] = { ...phraseOrig[idx].phrase, romaji };
+      const romaji: string = a[0];
+      acc[phraseOrig[idx].key] = { ...phraseOrig[idx].phrase, romaji };
 
-    oldPhrase[phraseOrig[idx].key] = {
-      ...oldPhrase[phraseOrig[idx].key],
-      romaji,
-    };
+      oldPhrase[phraseOrig[idx].key] = {
+        ...oldPhrase[phraseOrig[idx].key],
+        romaji,
+      };
 
-    return acc;
-  }, {});
+      return acc;
+    },
+    {}
+  );
 
   return Promise.all([
     admin.database().ref("lambda/phrases").update(romajis),
@@ -90,7 +102,7 @@ async function updatePhrases() {
     admin
       .database()
       .ref("lambda/cache")
-      .update({ phrases: md5(JSON.stringify(oldPhrase)).slice(0, 5) }),
+      .update({ phrases: md5(JSON.stringify(oldPhrase)).slice(0, 4) }),
   ]);
 }
 
@@ -100,7 +112,7 @@ async function updatePhrases() {
  * @param {string} japanese japanese input text
  * @returns an AxiosPromise
  */
-function getRomaji(japanese:string) {
+async function getRomaji(japanese: string) {
   var data = qs.stringify({
     "f.req":
       '[[["MkEWBc","[[\\"' +
@@ -109,8 +121,7 @@ function getRomaji(japanese:string) {
   });
   var config = {
     method: "post",
-    url:
-      "https://translate.google.com/_/TranslateWebserverUi/data/batchexecute",
+    url: "https://translate.google.com/_/TranslateWebserverUi/data/batchexecute",
     // headers: {
     //   "X-Same-Domain": "1",
     //   "User-Agent":

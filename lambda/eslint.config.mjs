@@ -4,6 +4,7 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import googlePlugin from "eslint-config-google";
 import importPlugin from "eslint-plugin-import";
+import prettierPlugin from "eslint-plugin-prettier";
 
 export default [
   {
@@ -18,17 +19,21 @@ export default [
       sourceType: "commonjs",
       // globals: globals.browser,
       globals: {
-        console: "readonly",  // FIXME: use gloabl.browser?
-        Buffer: "readonly",   // FIXME: use global.node
+        console: "readonly", // FIXME: use gloabl.browser?
+        Buffer: "readonly", // FIXME: use global.node
       },
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
-      "google": googlePlugin,
-      "import": importPlugin,
+      google: googlePlugin,
+      import: importPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
-      ...tsPlugin.configs.recommended.rules,
+      // ...tsPlugin.configs.recommended.rules,
+      // ...tsPlugin.configs['recommended-requiring-type-checking'].rules,
+      ...tsPlugin.configs.strict.rules,
+      ...prettierPlugin.configs.recommended.rules,
 
       "no-console": "warn",
 

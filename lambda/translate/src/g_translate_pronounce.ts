@@ -1,9 +1,12 @@
 import axios from "axios";
 import { verify } from "crypto";
-import * as express from "express";
+import type * as express from "express";
 import { defineString } from "firebase-functions/params";
-import { authenticationHeader, gTranslateEndPoint, pronounceAllowedOrigins } from "./constants";
-
+import {
+  authenticationHeader,
+  gTranslateEndPoint,
+  pronounceAllowedOrigins,
+} from "./constants";
 
 const DEV_ORIGIN = defineString("DEV_ORIGIN");
 const DEV_PUB_A = defineString("DEV_PUB_A");
@@ -13,7 +16,7 @@ const DEV_PUB_B = defineString("DEV_PUB_B");
 /**
  * Authorization required if the origin is development
  */
-function requiredHeaders(origin:string) {
+function requiredHeaders(origin?: string) {
   let allowedHeaders = ["Content-Type"];
   if (origin === DEV_ORIGIN.value()) {
     // development required headers
@@ -26,7 +29,10 @@ function requiredHeaders(origin:string) {
 /**
  * Validate message is signed using provided key
  */
-function validateAuthenticationSignature(signatureBase64:string, message:string) {
+function validateAuthenticationSignature(
+  signatureBase64: string,
+  message: string
+) {
   const key = {
     public:
       DEV_PUB_A.value() +
@@ -50,11 +56,12 @@ function validateAuthenticationSignature(signatureBase64:string, message:string)
 /**
  * Replacer function for JSON.stringify
  */
-function replaceErrors(key:string, value:unknown) {
+function replaceErrors(key: string, value: unknown) {
   if (value instanceof Error) {
-    var error = {};
+    var error: Record<string, Error[keyof Error]> = {};
 
-    Object.getOwnPropertyNames(value).forEach((propName) => {
+    const keys = Object.getOwnPropertyNames(value) as (keyof Error)[];
+    keys.forEach((propName) => {
       error[propName] = value[propName];
     });
 
@@ -64,9 +71,18 @@ function replaceErrors(key:string, value:unknown) {
   return value;
 }
 
-type severity = "DEFAULT"|"DEBUG"|"INFO"|"NOTICE"|"WARNING"|"ERROR"|"CRITICAL"|"ALERT"|"EMERGENCY"
+type severity =
+  | "ALERT"
+  | "CRITICAL"
+  | "DEBUG"
+  | "DEFAULT"
+  | "EMERGENCY"
+  | "ERROR"
+  | "INFO"
+  | "NOTICE"
+  | "WARNING";
 
-function log(message:unknown, severity:severity) {
+function log(message: unknown, severity: severity) {
   if (message instanceof Error && !("toJSON" in message)) {
     const error = message;
     const jsonError = JSON.parse(JSON.stringify(error, replaceErrors));
@@ -87,21 +103,24 @@ function log(message:unknown, severity:severity) {
   }
 }
 
-export async function g_translate_pronounce(req: express.Request, res: express.Response) {
+export async function g_translate_pronounce(
+  req: express.Request,
+  res: express.Response
+) {
   const devOrigin = DEV_ORIGIN.value();
   const devReferer = devOrigin + "/";
 
   const origin =
     [...pronounceAllowedOrigins, devOrigin].find(
       (o) => o === req.headers.origin
-    ) || pronounceAllowedOrigins[0];
+    ) ?? pronounceAllowedOrigins[0];
 
   // must be set before req.method check
   res.set("Access-Control-Allow-Origin", origin);
 
-  const prodReferer = pronounceAllowedOrigins
-    .map((o) => o + "/")
-    .includes(req.headers.referer);
+  const prodReferer =
+    req.headers.referer &&
+    pronounceAllowedOrigins.map((o) => o + "/").includes(req.headers.referer);
 
   if (req.method === "OPTIONS") {
     // Send response to OPTIONS requests
@@ -122,7 +141,7 @@ export async function g_translate_pronounce(req: express.Request, res: express.R
         const { q, tl } = req.query;
         const message = JSON.stringify({ q, tl });
         const signature = req.header(authenticationHeader);
-        if (!signature){
+        if (!signature) {
           // @ts-expect-error Error.cause
           throw new Error("Header did not contain expected authorization.", {
             cause: { code: "MissingAuth" },
@@ -131,18 +150,17 @@ export async function g_translate_pronounce(req: express.Request, res: express.R
 
         validateAuthenticationSignature(signature, message);
       } catch (e) {
-        if(e instanceof Error){
+        if (e instanceof Error) {
+          // @ts-expect-error Error.cause
+          const cause = e.cause?.code;
 
-          if (
-            e.cause?.code === "UnverifiedAuth" ||
-            e.cause?.code === "MissingAuth"
-          ) {
+          if (cause === "UnverifiedAuth" || cause === "MissingAuth") {
             log(e, "EMERGENCY");
           }
         }
 
-         res.status(403).send("Unauthorized");
-         return;
+        res.status(403).send("Unauthorized");
+        return;
       }
     } else {
       // unknown origin/referer
@@ -151,7 +169,7 @@ export async function g_translate_pronounce(req: express.Request, res: express.R
         {
           message: "Unknown origin",
           origin: req.headers.origin,
-          referer: req.header.referer,
+          referer: req.headers.referer,
         },
         "ALERT"
       );
@@ -176,9 +194,9 @@ export async function g_translate_pronounce(req: express.Request, res: express.R
       return;
     } catch (e) {
       let msg = e;
-      if(e instanceof Error){
+      if (e instanceof Error) {
         log(e, "CRITICAL");
-        msg = {error: e.message};
+        msg = { error: e.message };
       }
       res.status(500).json(msg);
       return;

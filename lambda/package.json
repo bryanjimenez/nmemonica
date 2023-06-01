@@ -1,8 +1,11 @@
 {
-  "name": "nmemonica-gcp-sheets-sync",
-  "description": "Cloud Functions for Firebase",
+  "name": "nmemonica-gcf",
+  "description": "Nmemonica services",
   "scripts": {
-    "lint": "eslint -c eslint.config.mjs ./sync ./translate",
+    "staged": "git diff --staged --diff-filter=d --name-only | sed 's/lambda/./g'",
+    "lint": "npm run -s staged | xargs eslint -c eslint.config.mjs --fix",
+    "lint:all": "DEBUG='*,-@hwc*,-eslint:code-path' eslint -c eslint.config.mjs .",
+    "type": "tsc --noEmit",
     "prebuild": "#npm run build:rm && npm run build:0",
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -30,6 +33,7 @@
     "eslint": "^8.9.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-prettier": "^4.2.1",
     "firebase-functions-test": "^3.1.0",
     "firebase-tools": "^12.2.1",
     "typescript": "^5.0.4"

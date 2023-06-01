@@ -6,10 +6,9 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 admin.initializeApp();
 
-import { g_translate_romaji as romaji} from "./g_translate_romaji";
-import { g_translate_pronounce  as pronounce} from "./g_translate_pronounce";
+import { g_translate_romaji as romaji } from "./g_translate_romaji";
+import { g_translate_pronounce as pronounce } from "./g_translate_pronounce";
 const PROJECT_REGION = "us-east1";
-
 
 export const g_translate_romaji = functions
   .region(PROJECT_REGION)

@@ -1,45 +1,25 @@
-import * as express from "express";
+import type * as express from "express";
 import * as admin from "firebase-admin";
-import { google } from "googleapis";
-import { googleSheetId } from "./constants"; // FIXME: import { googleSheetId } from "../../../environment.development";
+import { googleSheetId } from "./constants";
 import * as md5 from "md5";
+import type { RawVocabulary } from "../../../src/typings/raw";
+import { fetchGSheetsData } from "./sheets";
 
+type Vocabulary = Omit<RawVocabulary, "uid">;
 
-// TODO: use main type
-type Vocabulary = {
-  japanese: string;
-  romaji: string;
-  english: string;
-}
-
-export async function sheets_sync_opposites(req: express.Request, res: express.Response) {
+export async function sheets_sync_opposites(
+  req: express.Request,
+  res: express.Response
+) {
   try {
     const spreadsheetId = googleSheetId;
     const range = "Vocabulary!A1:I";
 
-    const auth = await google.auth.getClient({
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
-
-    const api = google.sheets({ version: "v4", auth });
-
-    const sheetData:string[][] = await new Promise((resolve, reject) => {
-      api.spreadsheets.values.get({ spreadsheetId, range }, (err, response) => {
-        if (err) {
-          reject(new Error("The API returned an error: " + err));
-        } else if(!response || !response.data || !response.data.values){
-          reject(new Error("The API returned no data"));
-        } else {
-          const rows = response.data.values;
-          resolve(rows);
-        }
-      });
-    });
+    const sheetData = await fetchGSheetsData(spreadsheetId, range);
 
     // let sheetHeaders = [];
 
-    const 
-      JP = 1,
+    const JP = 1,
       RM = 2,
       EN = 3,
       // GRP = 4,
@@ -47,43 +27,50 @@ export async function sheets_sync_opposites(req: express.Request, res: express.R
       // ORDER = 0,
       OPP = 8;
     // UID = 8;
-    
 
-    type Pair = {japanese:string, romaji:string,english:string, opposite:string};
-    let pairs:Pair[] = [];
-    const vocabulary = sheetData.reduce<{[uid:string]: Vocabulary}>((acc, el, i) => {
-      if (i > 0) {
-        if (el[OPP] && el[OPP] !== "") {
-          const key = md5(el[JP]);
+    interface Pair {
+      japanese: string;
+      romaji: string;
+      english: string;
+      opposite: string;
+    }
+    let pairs: Pair[] = [];
+    const vocabulary = sheetData.reduce<Record<string, Vocabulary>>(
+      (acc, el, i) => {
+        if (i > 0) {
+          if (el[OPP] && el[OPP] !== "") {
+            const key = md5(el[JP]);
 
-          const relationship = el[OPP].split("\n");
+            const relationship = el[OPP].split("\n");
 
-          relationship.forEach((opposite) => {
-            pairs.push({
-              japanese: el[JP],
-              romaji: el[RM],
-              english: el[EN],
-              opposite,
+            relationship.forEach((opposite) => {
+              pairs.push({
+                japanese: el[JP],
+                romaji: el[RM],
+                english: el[EN],
+                opposite,
+              });
             });
-          });
 
-          return {
-            ...acc,
-            [key]: {
-              japanese: el[JP],
-              romaji: el[RM],
-              english: el[EN],
-            },
-          };
+            return {
+              ...acc,
+              [key]: {
+                japanese: el[JP],
+                romaji: el[RM],
+                english: el[EN],
+              },
+            };
+          }
         }
-      } 
-      // else {
-      //   sheetHeaders = el;
-      // }
-      return acc;
-    }, {});
+        // else {
+        //   sheetHeaders = el;
+        // }
+        return acc;
+      },
+      {}
+    );
 
-    const opposites:[Vocabulary, Vocabulary][] = pairs.map((p) => [
+    const opposites: [Vocabulary, Vocabulary][] = pairs.map((p) => [
       {
         japanese: p.japanese,
         romaji: p.romaji,
@@ -98,14 +85,14 @@ export async function sheets_sync_opposites(req: express.Request, res: express.R
       .database()
       .ref("lambda/cache")
       .update({
-        opposites: md5(JSON.stringify(opposites)).slice(0, 5),
+        opposites: md5(JSON.stringify(opposites)).slice(0, 4),
       });
 
     // return res.status(200).json({ opposites });
     res.sendStatus(200);
   } catch (e) {
-    if(e instanceof Error){
-    console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
+    if (e instanceof Error) {
+      console.log(JSON.stringify({ severity: "ERROR", message: e.toString() }));
     }
     res.sendStatus(500);
   }
