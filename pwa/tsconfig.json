@@ -1,11 +1,22 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonJS",
-    "outDir": "./built",
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution":"node",
     "allowJs": true,
     "checkJs": true,
-    "removeComments": true
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es2021", "dom", "webworker"],
+    "outDir": "../.tsc-dist/",
+    "rootDir": "../",
   },
-  "files": ["./src/swHelper.ts", "./src/indexHelper.ts"]
+  // "exclude": ["./src/sw.js"],
+  "include": [
+    ".",
+    "../environment.development.js",
+    "../environment.production.js",
+    "../src/constants/actionNames.js",
+    "../src/helper/urlHelper.js",
+  ]
 }

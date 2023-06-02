@@ -1,0 +1,25 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": true,
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "jsx": "react-jsx", // missing import React
+    "lib": ["es6", "dom", "es2017", "es2021.String"],
+    "rootDir": "../",
+    "outDir": "../.tsc-dist/",
+  },
+  "include": [
+    ".",
+    "../data/kana.json",
+    "../environment.development.js",
+    "../environment.production.js",
+  ],
+}

@@ -14,12 +14,10 @@ import { PhrasesMeta } from "./components/Pages/Phrases";
 import { SettingsMeta } from "./components/Pages/Settings";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
-import {
-  SERVICE_WORKER_LOGGER_MSG,
-  serviceWorkerRegistered,
-} from "./slices/serviceWorkerSlice";
+import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { getVersions } from "./slices/versionSlice";
 import "./styles.css";
+import { SERVICE_WORKER_LOGGER_MSG } from "./constants/actionNames";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));

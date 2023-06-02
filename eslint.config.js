@@ -1,6 +1,6 @@
 import globals from "globals";
 // import tsPlugin from "@typescript-eslint/eslint-plugin";
-// import tsParser from "@typescript-eslint/parser";
+import tsParser from "@typescript-eslint/parser";
 import eslintJsPlugin from "@eslint/js";
 import babelParser from "@babel/eslint-parser";
 import prettierPlugin from "eslint-plugin-prettier";
@@ -83,6 +83,13 @@ export default [
       "no-console": "warn",
       "react/react-in-jsx-scope": 0, // will be obsolete soon?
       "react/jsx-uses-react": 0, // TODO: remove React from imports
+    },
+  },
+  {
+    files: ["pwa/**/*.js", "pwa/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      globals: { ...globals.browser },
     },
   },
   {

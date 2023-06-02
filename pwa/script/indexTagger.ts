@@ -1,13 +1,23 @@
-import * as fs from "fs";
-import * as path from "path";
+import fs from "fs";
+import path from "path";
 import {
   firebaseConfig,
   gCloudFn,
-} from "../../environment.development";
+} from "../../environment.development.js";
+
+/**
+ * Add HTTP Security tags to index.html
+ * <!--Content-Security-Policy-->   https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
+ * <!--Strict-Transport-Security--> https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+ * <!--X-Content-Type-Options-->    https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+ * <!--X-Frame-Options-->           https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+ * X XSS Protection   [Not Added]   https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+ * <!--PreConnect-->                https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/preconnect
+ */
 
 const projectRoot = path.resolve();
-const swPartialCode = projectRoot + "/index.html";
-const swOutput = projectRoot + "/index.html";
+const indexDevelopment = projectRoot + "/index.html";
+const indexProduction = projectRoot + "/index.production.html";
 
 const ContentSecurityPolicy = "<!--Content-Security-Policy-->";
 const ContentSecurityPolicyTag =
@@ -35,7 +45,7 @@ const PreConnect = "<!--PreConnect-->";
 const PreConnectTag =`<link rel="preconnect" href="`+firebaseConfig.databaseURL+`">`
 
 
-fs.open(swPartialCode, "r", (err, fd_sw) => {
+fs.open(indexDevelopment, "r", (err, fd_sw) => {
   if (err) {
     throw err;
   }
@@ -46,7 +56,7 @@ fs.open(swPartialCode, "r", (err, fd_sw) => {
       throw err;
     }
 
-    var stream = fs.createWriteStream(swOutput, {
+    var stream = fs.createWriteStream(indexProduction, {
       flags: "w",
     });
 

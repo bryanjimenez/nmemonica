@@ -6,7 +6,6 @@ import {
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
 import { DebugLevel, toggleAFilter } from "./settingHelper";
-import { SERVICE_WORKER_LOGGER_MSG } from "./serviceWorkerSlice";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { phraseFromLocalStorage } from "./phraseSlice";
 import { kanjiFromLocalStorage } from "./kanjiSlice";
@@ -14,6 +13,7 @@ import { kanaFromLocalStorage } from "./kanaSlice";
 import { oppositeFromLocalStorage } from "./oppositeSlice";
 import { particleFromLocalStorage } from "./particleSlice";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
+import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
 
 /**
  * @typedef {typeof import("./settingHelper").TermSortBy} TermSortBy

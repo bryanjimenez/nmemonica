@@ -1,4 +1,4 @@
-import glob from "glob-all";
+import glob from "glob";
 import HtmlWebPackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import path from "path";
@@ -13,6 +13,7 @@ const __dirname = path.dirname(__filename);
 
 export default function (webpackEnv, argv) {
   const envFile = /^(.*\.)(development|production)(\.js|\.json|)$/;
+  const prodIndexHtmlTemplate = "./index.production.html";
 
   return {
     module: {
@@ -50,7 +51,9 @@ export default function (webpackEnv, argv) {
 
     plugins: [
       new HtmlWebPackPlugin({
-        template: "./index.html",
+        // template: "./index.html",
+        template:
+          argv.mode === "production" ? prodIndexHtmlTemplate : "./index.html",
         filename: "./index.html",
       }),
 
@@ -98,10 +101,10 @@ export default function (webpackEnv, argv) {
           argv.mode === "development" ? "[id].css" : "[id].[contenthash].css",
       }),
       new PurgeCSSPlugin({
-        paths: glob.sync(
-          [path.join("index.html"), `${path.join(__dirname, "src")}/**/*`],
-          { nodir: true }
-        ),
+        paths: [
+          ...glob.sync(path.join("index.html"), { nodir: true }),
+          ...glob.sync(`${path.join(__dirname, "src")}/**/*`, { nodir: true }),
+        ],
         safelist: {
           standard: [
             /\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/,

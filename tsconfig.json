@@ -1,20 +1,17 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "allowJs": true,
-    "checkJs": true,
-    "strictNullChecks": true,
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "jsx": "react-jsx", // missing import React
-    "lib": ["es6", "dom", "es2017", "es2021.String"],
-    "outDir": "../tsc-out/",
-    "sourceMap": true
+    "rootDir": ".",
+    "outDir": "./.tsc-dist/",
   },
-  // "exclude": ["./src/index.js"],
-  "include": ["./src/**/*"]
-  // "files": ["./helper/JapaneseText.js"]
+  "exclude": ["./node_modules", "./dist"],
+  "include": [
+    "./data",
+    "./environment.development.js",
+    "./environment.production.js",
+  ],
+  "references": [
+    { "path": "./src" },
+    { "path": "./pwa" },
+  ],
 }
