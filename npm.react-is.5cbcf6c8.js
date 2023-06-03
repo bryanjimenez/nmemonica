@@ -1,2 +1,2 @@
-/*! For license information please see npm.react-is.e4a43d25.js.LICENSE.txt */
+/*! For license information please see npm.react-is.5cbcf6c8.js.LICENSE.txt */
 "use strict";(self.webpackChunknmemonica=self.webpackChunknmemonica||[]).push([[220],{9921:(e,r)=>{Symbol.for("react.element"),Symbol.for("react.portal"),Symbol.for("react.fragment"),Symbol.for("react.strict_mode"),Symbol.for("react.profiler"),Symbol.for("react.provider"),Symbol.for("react.context"),Symbol.for("react.server_context"),Symbol.for("react.forward_ref"),Symbol.for("react.suspense"),Symbol.for("react.suspense_list"),Symbol.for("react.memo"),Symbol.for("react.lazy"),Symbol.for("react.offscreen");Symbol.for("react.module.reference")},9864:(e,r,o)=>{o(9921)}}]);
