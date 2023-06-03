@@ -1,6 +1,6 @@
 const cacheFiles = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.e763b2d9.js","323.1fe7592c3a9f64f7a70d.css","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.2c942fa2d922d115c3d6.css","main.5bf94c4a.js","manifest.webmanifest","maskable512.png","npm.babel.2752a87f.js","npm.classnames.4de3c114.js","npm.clsx.661141cd.js","npm.emotion.5efd7341.js","npm.floating-ui.2936b969.js","npm.fortawesome.85a013ed.js","npm.hoist-non-react-statics.e96f9d17.js","npm.immer.b12d5ecd.js","npm.lodash.6d338baa.js","npm.mui.ffc7f895.js","npm.primer.f6acad8d.js","npm.prop-types.63f6b250.js","npm.react-dom.41cff530.js","npm.react-is.5cbcf6c8.js","npm.react-redux.7cfa81cd.js","npm.react-router-dom.ab355566.js","npm.react-router.5c6274cd.js","npm.react-transition-group.455a3994.js","npm.react.1e043b6a.js","npm.redux-thunk.22628ab8.js","npm.redux.a0702fe6.js","npm.reduxjs.f755e63c.js","npm.remix-run.42b156f6.js","npm.scheduler.8b7de4c1.js","npm.stylis.eb0e238b.js","npm.use-sync-external-store.9e6045ba.js","runtime.0d7976f6.js"];
 
-const swVersion = 'c491a23b';
+const swVersion = '8e003fd3';
 const initCacheVer = '9f6bb995';
 
 const ghURL = 'https://bryanjimenez.github.io/nmemonica';
@@ -31,19 +31,21 @@ const authenticationHeader = 'X-API-KEY';
 /* imports */
 // const swVersion = "";
 // const initCacheVer = "";
-// const cacheFiles =/** @type {string[]} */ ([]);
+// const cacheFiles = /** @type {string[]} */ ([]);
 // const ghURL = "";
 // const fbURL = "";
 // const gCloudFnPronounce = "";
 // const SERVICE_WORKER_LOGGER_MSG = "";
 // const SERVICE_WORKER_NEW_TERMS_ADDED = "";
-// const getParam = (...args)=>"";
-// const removeParam = (...args)=>"";
+// const getParam = (...args) => "";
+// const removeParam = (...args) => "";
 // const authenticationHeader = "";
 /* /imports */
 
 // declare var sw: ServiceWorkerGlobalScope;
-const swSelf = /** @type {ServiceWorkerGlobalScope} */(/** @type {unknown} */(globalThis.self))
+const swSelf = /** @type {ServiceWorkerGlobalScope} */ (
+  /** @type {unknown} */ (globalThis.self)
+);
 
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
@@ -66,7 +68,10 @@ let ERROR = 1,
   DEBUG = 3;
 
 function getVersions() {
-  const [_jsName, jsVersion] = cacheFiles.find((f)=>f.match(new RegExp(/main.([a-z0-9]+).js/))).split(".");
+  const main =
+    cacheFiles.find((f) => f.match(new RegExp(/main.([a-z0-9]+).js/))) ||
+    "main.00000000.js";
+  const [_jsName, jsVersion] = main.split(".");
   return { swVersion, jsVersion, bundleVersion: initCacheVer };
 }
 
@@ -184,7 +189,7 @@ swSelf.addEventListener("fetch", (e) => {
       const fetchP = fetch(myRequest);
       const dbOpenPromise = openIDB();
 
-      const dbResults = dbOpenPromise.then((/** @type {IDBDatabase} */db) => {
+      const dbResults = dbOpenPromise.then((/** @type {IDBDatabase} */ db) => {
         countIDBItem(db);
 
         return fetchP
@@ -230,7 +235,7 @@ swSelf.addEventListener("fetch", (e) => {
       // use indexedDB
       const dbOpenPromise = openIDB();
 
-      const dbResults = dbOpenPromise.then((/** @type {IDBDatabase}*/db) => {
+      const dbResults = dbOpenPromise.then((/** @type {IDBDatabase}*/ db) => {
         return getIDBItem({ db }, uid)
           .then((dataO) =>
             //found
@@ -307,7 +312,7 @@ function openIDB(
   const dbUpgradeP = new Promise((resolve /*reject*/) => {
     openRequest.onupgradeneeded = function (event) {
       // Save the IDBDatabase interface
-      let db/*:IDBDatabase*/ = event.target.result;
+      let db /*:IDBDatabase*/ = event.target.result;
 
       if (objStoreToDelete) {
         db.deleteObjectStore(objStoreToDelete);
@@ -409,6 +414,10 @@ function dumpIDB(version, store) {
   });
 }
 
+/**
+ * @param {string} type
+ * @param {Object} msg
+ */
 function clientMsg(type, msg) {
   return swSelf.clients
     .matchAll({ includeUncontrolled: true, type: "window" })
