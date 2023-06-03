@@ -1,6 +1,6 @@
 const cacheFiles = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.6b3c612c.js","323.1fe7592c3a9f64f7a70d.css","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.2c942fa2d922d115c3d6.css","main.bf2315a8.js","manifest.webmanifest","maskable512.png","npm.babel.efb47f4f.js","npm.classnames.de7cb98f.js","npm.clsx.7e6fea38.js","npm.emotion.ea654435.js","npm.floating-ui.8e22a859.js","npm.fortawesome.2fda98c9.js","npm.hoist-non-react-statics.6619cf76.js","npm.immer.b6567f37.js","npm.lodash.f7cddbcc.js","npm.mui.db6f7e84.js","npm.primer.a7155f70.js","npm.prop-types.7fc0d9e5.js","npm.react-dom.b5b6cc61.js","npm.react-is.e4a43d25.js","npm.react-redux.0fc9f80e.js","npm.react-router-dom.7d75b0d1.js","npm.react-router.d82f0ac6.js","npm.react-transition-group.c2c3b7ee.js","npm.react.b362e411.js","npm.redux-thunk.60b838da.js","npm.redux.e2b65d7e.js","npm.reduxjs.586cada3.js","npm.remix-run.fa3014d5.js","npm.scheduler.2dce80c4.js","npm.stylis.8b78c7c6.js","npm.use-sync-external-store.11d1df37.js","runtime.fa8202b0.js"];
 
-const swVersion = 'bc6666fb';
+const swVersion = 'c491a23b';
 const initCacheVer = 'efdb2bbb';
 
 const ghURL = 'https://bryanjimenez.github.io/nmemonica';
@@ -11,17 +11,17 @@ const SERVICE_WORKER_LOGGER_MSG = 'service_worker_logger_msg';
 const SERVICE_WORKER_NEW_TERMS_ADDED = 'service_worker_new_terms';
 
 const getParam = function getParam(baseUrl, param) {
-    var queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
-    var search = new URLSearchParams(queryPart);
-    var result = search.get(param);
+    const queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
+    const search = new URLSearchParams(queryPart);
+    const result = search.get(param);
     return result;
 };
 
 const removeParam = function removeParam(baseUrl, param) {
-    var _a = baseUrl.includes("?")
+    const [basePart, queryPart] = baseUrl.includes("?")
         ? baseUrl.split("?")
-        : [baseUrl, ""], basePart = _a[0], queryPart = _a[1];
-    var search = new URLSearchParams(queryPart);
+        : [baseUrl, ""];
+    const search = new URLSearchParams(queryPart);
     search.delete(param);
     return [basePart, search.toString()].join("?");
 };
@@ -29,17 +29,17 @@ const removeParam = function removeParam(baseUrl, param) {
 const authenticationHeader = 'X-API-KEY';
 
 /* imports */
-const swVersion = "";
-const initCacheVer = "";
-const cacheFiles =/** @type {string[]} */ ([]);
-const ghURL = "";
-const fbURL = "";
-const gCloudFnPronounce = "";
-const SERVICE_WORKER_LOGGER_MSG = "";
-const SERVICE_WORKER_NEW_TERMS_ADDED = "";
-const getParam = (...args)=>"";
-const removeParam = (...args)=>"";
-const authenticationHeader = "";
+// const swVersion = "";
+// const initCacheVer = "";
+// const cacheFiles =/** @type {string[]} */ ([]);
+// const ghURL = "";
+// const fbURL = "";
+// const gCloudFnPronounce = "";
+// const SERVICE_WORKER_LOGGER_MSG = "";
+// const SERVICE_WORKER_NEW_TERMS_ADDED = "";
+// const getParam = (...args)=>"";
+// const removeParam = (...args)=>"";
+// const authenticationHeader = "";
 /* /imports */
 
 // declare var sw: ServiceWorkerGlobalScope;
