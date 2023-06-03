@@ -1,6 +1,6 @@
 const cacheFiles = ["0301fbe829087f4e8b91cde9bf9496c5.jpeg","1062f5e41ef989b5973a457e55770974.png","236.0cb615c6104aa0af46e1.css","236.6b3c612c.js","323.1fe7592c3a9f64f7a70d.css","35872f035bddb00bb6bed6802ee78d72.png","388582fe2fdbf34450b199396860911c.png","edb1f64724de9f6f175c1efab91a9473.png","favicon.ico","fb3f97e84cbbbf0c3fdedec024222e88.png","icon192.png","icon512.png","index.html","main.2c942fa2d922d115c3d6.css","main.bf2315a8.js","manifest.webmanifest","maskable512.png","npm.babel.efb47f4f.js","npm.classnames.de7cb98f.js","npm.clsx.7e6fea38.js","npm.emotion.ea654435.js","npm.floating-ui.8e22a859.js","npm.fortawesome.2fda98c9.js","npm.hoist-non-react-statics.6619cf76.js","npm.immer.b6567f37.js","npm.lodash.f7cddbcc.js","npm.mui.db6f7e84.js","npm.primer.a7155f70.js","npm.prop-types.7fc0d9e5.js","npm.react-dom.b5b6cc61.js","npm.react-is.e4a43d25.js","npm.react-redux.0fc9f80e.js","npm.react-router-dom.7d75b0d1.js","npm.react-router.d82f0ac6.js","npm.react-transition-group.c2c3b7ee.js","npm.react.b362e411.js","npm.redux-thunk.60b838da.js","npm.redux.e2b65d7e.js","npm.reduxjs.586cada3.js","npm.remix-run.fa3014d5.js","npm.scheduler.2dce80c4.js","npm.stylis.8b78c7c6.js","npm.use-sync-external-store.11d1df37.js","runtime.fa8202b0.js"];
 
-const swVersion = '5cae908c';
+const swVersion = '02962dbd';
 const initCacheVer = 'efdb2bbb';
 
 const ghURL = 'https://bryanjimenez.github.io/nmemonica';
@@ -28,21 +28,23 @@ const removeParam = function removeParam(baseUrl, param) {
 
 const authenticationHeader = 'X-API-KEY';
 
-/* globals
-  clients
+/* imports */
+// const swVersion = "";
+// const initCacheVer = "";
+// const cacheFiles =/** @type {string[]} */ ([]);
+// const ghURL = "";
+// const fbURL = "";
+// const gCloudFnPronounce = "";
+// const SERVICE_WORKER_LOGGER_MSG = "";
+// const SERVICE_WORKER_NEW_TERMS_ADDED = "";
+// const getParam = (...args)=>"";
+// const removeParam = (...args)=>"";
+// const authenticationHeader = "";
+/* /imports */
 
-  const swVersion
-  const initCacheVer
-  const cacheFiles
-  const ghURL
-  const fbURL
-  const gCloudFnPronounce
-  const SERVICE_WORKER_LOGGER_MSG
-  const SERVICE_WORKER_NEW_TERMS_ADDED
-  const getParam
-  const removeParam
-  const authenticationHeader
-*/
+// declare var self: ServiceWorkerGlobalScope;
+/** @type {ServiceWorkerGlobalScope} */
+var self;
 
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
@@ -64,11 +66,11 @@ let ERROR = 1,
   WARN = 2,
   DEBUG = 3;
 
-function getVersions(){
+function getVersions() {
   const jsVersion = cacheFiles
     .join(",")
     .match(new RegExp(/main.([a-z0-9]+).js/))[1];
-  return { swVersion, jsVersion, bundleVersion: initCacheVer};
+  return { swVersion, jsVersion, bundleVersion: initCacheVer };
 }
 
 self.addEventListener("install", (e) => {
@@ -87,21 +89,18 @@ self.addEventListener("install", (e) => {
     )
   );
 
-  
   const a = ghURL;
   const b = ghURL + "/";
   caches
     .open(appStaticCache)
     .then((cache) => cache.addAll([a, b]))
-    .catch((e)=>{
-      console.log('Prefectch failed for some item')
-      console.log(JSON.stringify(e))
-    })
+    .catch((e) => {
+      console.log("Prefectch failed for some item");
+      console.log(JSON.stringify(e));
+    });
 
   e.waitUntil(
-    caches
-      .open(appStaticCache)
-      .then((cache) => cache.addAll([...cacheFiles]))
+    caches.open(appStaticCache).then((cache) => cache.addAll([...cacheFiles]))
   );
 });
 
@@ -113,7 +112,7 @@ self.addEventListener("activate", (e) => {
         return client.url;
       });
       console.log("[ServiceWorker] Matching clients:", urls.join(", "));
-      clientLogger("Matching clients:", urls.join(", "), DEBUG);
+      clientLogger("Matching clients:" + urls.join(", "), DEBUG);
     });
 
   e.waitUntil(
@@ -188,16 +187,19 @@ self.addEventListener("fetch", (e) => {
       const fetchP = fetch(myRequest);
       const dbOpenPromise = openIDB();
 
-      const dbResults = dbOpenPromise.then((db) => {
+      const dbResults = dbOpenPromise.then((/** @type {IDBDatabase} */db) => {
         countIDBItem(db);
 
         return fetchP
           .then((res) => {
             if (!res.ok) {
               clientLogger("fetch", ERROR);
-              throw new Error("Network response was not OK"+(res.status?" ("+res.status+")":""));
+              throw new Error(
+                "Network response was not OK" +
+                  (res.status ? " (" + res.status + ")" : "")
+              );
             }
-            return res.blob()
+            return res.blob();
           })
           .then((blob) =>
             putIDBItem(
@@ -231,8 +233,7 @@ self.addEventListener("fetch", (e) => {
       // use indexedDB
       const dbOpenPromise = openIDB();
 
-      const dbResults = dbOpenPromise.then((db) => {
-
+      const dbResults = dbOpenPromise.then((/** @type {IDBDatabase}*/db) => {
         return getIDBItem({ db }, uid)
           .then((dataO) =>
             //found
@@ -246,10 +247,14 @@ self.addEventListener("fetch", (e) => {
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", ERROR);
-                  throw new Error("Network response was not OK"+(res.status?" ("+res.status+")":""));
+                  throw new Error(
+                    "Network response was not OK" +
+                      (res.status ? " (" + res.status + ")" : "")
+                  );
                 }
-                return res.blob()
-              }).then((blob) =>
+                return res.blob();
+              })
+              .then((blob) =>
                 addIDBItem({ db }, { uid, blob }).then((dataO) =>
                   toResponse(dataO)
                 )
@@ -271,10 +276,11 @@ self.addEventListener("fetch", (e) => {
  * @param {string} url
  * @param {string|null} auth development authentication
  */
-function toRequest(url, auth){
-  const devAuth = auth === null ? undefined : new Headers({[authenticationHeader]: auth});
+function toRequest(url, auth) {
+  const devAuth =
+    auth === null ? undefined : new Headers({ [authenticationHeader]: auth });
   const myInit = {
-    method: 'GET',
+    method: "GET",
     headers: devAuth,
   };
 
@@ -290,10 +296,9 @@ function toResponse(obj) {
 
 /**
  * indexedDB.open()
- * @param {*} version
- * @param {*} objStoreToCreate name of store to open or create
- * @param {{onUpgrDelStore:string}} {onUpgrDelStore} name of store to delete
- * @returns
+ * @param {number|undefined} version
+ * @param {string} [objStoreToCreate] name of store to open or create
+ * @param {string} [objStoreToDelete] name of store to delete
  */
 function openIDB(
   version = indexedDBVersion,
@@ -305,7 +310,7 @@ function openIDB(
   const dbUpgradeP = new Promise((resolve /*reject*/) => {
     openRequest.onupgradeneeded = function (event) {
       // Save the IDBDatabase interface
-      let db = event.target.result;
+      let db/*:IDBDatabase*/ = event.target.result;
 
       if (objStoreToDelete) {
         db.deleteObjectStore(objStoreToDelete);
@@ -408,7 +413,7 @@ function dumpIDB(version, store) {
 }
 
 function clientMsg(type, msg) {
-  return clients
+  return self.clients
     .matchAll({ includeUncontrolled: true, type: "window" })
     .then((client) => {
       if (client && client.length) {
@@ -421,7 +426,7 @@ function clientMsg(type, msg) {
 }
 
 function clientLogger(msg, lvl) {
-  return clients
+  return self.clients
     .matchAll({ includeUncontrolled: true, type: "window" })
     .then((client) => {
       if (client && client.length) {
@@ -436,7 +441,7 @@ function clientLogger(msg, lvl) {
 
 /**
  * objectStore.count()
- * @param {*} db
+ * @param {IDBDatabase} db
  * @param {string} store
  */
 function countIDBItem(db, store = indexedDBStore) {
@@ -454,14 +459,14 @@ function countIDBItem(db, store = indexedDBStore) {
         resolve(request.result);
       } else {
         clientLogger("IDB []", WARN);
-        resolve();
+        resolve(undefined);
       }
     };
   });
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function () {
-      resolve();
+      resolve(undefined);
     };
     transaction.onerror = function () {
       reject();
@@ -473,9 +478,8 @@ function countIDBItem(db, store = indexedDBStore) {
 
 /**
  * objectStore.get(key)
- * @param {{db:*, store:string}} param0
- * @param {*} key
- * @returns
+ * @param {{db:IDBDatabase, store?:string}} param0
+ * @param {string} key
  */
 function getIDBItem({ db, store = indexedDBStore }, key) {
   var transaction = db.transaction([store]);
@@ -497,7 +501,7 @@ function getIDBItem({ db, store = indexedDBStore }, key) {
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function () {
-      resolve();
+      resolve(undefined);
     };
     transaction.onerror = function () {
       reject();
@@ -509,9 +513,8 @@ function getIDBItem({ db, store = indexedDBStore }, key) {
 
 /**
  * objectStore.add(value)
- * @param {{db:*, store:string}} {db, store}
- * @param {*} value
- * @returns
+ * @param {{db:IDBDatabase, store?:string}} arg0
+ * @param {unknown} value
  */
 function addIDBItem({ db, store = indexedDBStore }, value) {
   let transaction = db.transaction([store], "readwrite");
@@ -520,7 +523,7 @@ function addIDBItem({ db, store = indexedDBStore }, value) {
 
   const requestP = new Promise((resolve, reject) => {
     request.onsuccess = function (/*event*/) {
-      resolve();
+      resolve(undefined);
     };
     request.onerror = function () {
       clientLogger("IDB.add X(", ERROR);
@@ -542,9 +545,8 @@ function addIDBItem({ db, store = indexedDBStore }, value) {
 
 /**
  * objectStore.put(value)
- * @param {{db:*, store:string}} {db, store}
- * @param {*} value
- * @returns
+ * @param {{db:IDBDatabase, store?:string}} {db, store}
+ * @param {unknown} value
  */
 function putIDBItem({ db, store = indexedDBStore }, value) {
   let transaction = db.transaction([store], "readwrite");
@@ -553,7 +555,7 @@ function putIDBItem({ db, store = indexedDBStore }, value) {
 
   const requestP = new Promise((resolve, reject) => {
     request.onsuccess = function (/*event*/) {
-      resolve();
+      resolve(undefined);
     };
     request.onerror = function () {
       clientLogger("IDB.put X(", ERROR);
@@ -575,10 +577,9 @@ function putIDBItem({ db, store = indexedDBStore }, value) {
 
 /**
  * objectStore.delete(key)
- * @param {*} db
- * @param {*} store
- * @param {*} key
- * @returns
+ * @param {IDBDatabase} db
+ * @param {string} store
+ * @param {string} key
  */
 function deleteIDBItem(db, store, key) {
   var transaction = db.transaction([store], "readwrite");
@@ -592,7 +593,7 @@ function deleteIDBItem(db, store, key) {
 
   const transactionP = new Promise((resolve, reject) => {
     transaction.oncomplete = function () {
-      resolve();
+      resolve(undefined);
     };
     transaction.onerror = function () {
       reject();
@@ -826,7 +827,7 @@ function fetchVerSendNewDiffsMsg() {
         .then((r) => r.json())
         .then((resOld) => {
           // create obj with new and old hashes
-          let newTermsMsgPromise = Promise.resolve();
+          let newTermsMsgPromise = Promise.resolve(undefined);
           let versionChange = {};
           let update = false;
           const allowedSets = ["vocabulary", "phrases"];
@@ -878,7 +879,7 @@ function fetchVerSendNewDiffsMsg() {
                           };
                         }
 
-                        return Promise.resolve();
+                        return Promise.resolve(undefined);
                       })
                   )
               );
@@ -887,7 +888,7 @@ function fetchVerSendNewDiffsMsg() {
             // message results to client
             newTermsMsgPromise = Promise.all(ps).then(() => {
               if (update) {
-                return clients
+                return self.clients
                   .matchAll({ includeUncontrolled: true, type: "window" })
                   .then((client) => {
                     if (client && client.length) {
@@ -898,7 +899,7 @@ function fetchVerSendNewDiffsMsg() {
                       });
                     }
 
-                    return Promise.resolve();
+                    return Promise.resolve(undefined);
                   });
               }
             });
