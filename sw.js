@@ -1,4 +1,4 @@
-const buildConstants = {"swVersion":"2","initCacheVer":"9f6bb995","SERVICE_WORKER_LOGGER_MSG":"service_worker_logger_msg","SERVICE_WORKER_NEW_TERMS_ADDED":"service_worker_new_terms","authenticationHeader":"X-API-KEY","ghURL":"https://bryanjimenez.github.io/nmemonica","fbURL":"https://nmemonica-9d977.firebaseio.com","gCloudFnPronounce":"https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce"}
+const buildConstants = {"swVersion":"ebf45c87","initCacheVer":"9f6bb995","SERVICE_WORKER_LOGGER_MSG":"service_worker_logger_msg","SERVICE_WORKER_NEW_TERMS_ADDED":"service_worker_new_terms","authenticationHeader":"X-API-KEY","ghURL":"https://bryanjimenez.github.io/nmemonica","fbURL":"https://nmemonica-9d977.firebaseio.com","gCloudFnPronounce":"https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce"}
 
 function getParam(baseUrl, param) {
     const queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
@@ -17,7 +17,7 @@ function removeParam(baseUrl, param) {
 }
 
 function initServiceWorker({ swVersion, initCacheVer, cacheFiles, ghURL, fbURL, gCloudFnPronounce, SERVICE_WORKER_LOGGER_MSG, SERVICE_WORKER_NEW_TERMS_ADDED, getParam, removeParam, authenticationHeader, }) {
-    //@ts-expect-error ServiceWorkerGlobalScope
+    //@ts-expect-error FIXME: ServiceWorkerGlobalScope
     const swSelf = globalThis.self;
     const appStaticCache = "nmemonica-static";
     const appDataCache = "nmemonica-data";
@@ -324,7 +324,8 @@ function initServiceWorker({ swVersion, initCacheVer, cacheFiles, ghURL, fbURL, 
                     db.close();
                     if (event.target === null)
                         throw new Error("dumpIDB transaction failed");
-                    const transactionDb = event.target.result;
+                    const transactionDb = event.target
+                        .result;
                     resolve(transactionDb);
                 };
             });
