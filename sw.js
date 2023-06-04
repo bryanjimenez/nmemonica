@@ -1014,4 +1014,4 @@ const cacheFiles = [
   "runtime.0d7976f6.js",
 ];
 
-initServiceWorker({ buildConstants, getParam, removeParam, cacheFiles });
+initServiceWorker({ ...buildConstants, getParam, removeParam, cacheFiles });
