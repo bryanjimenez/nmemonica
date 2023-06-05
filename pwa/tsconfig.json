@@ -18,5 +18,10 @@
     "../environment.production.js",
     "../src/constants/actionNames.js",
     "../src/helper/urlHelper.js",
-  ]
+  ],
+
+  "ts-node": {
+    // ERR_UNKNOWN_FILE_EXTENSION .ts
+    "esm": true
+  }
 }
