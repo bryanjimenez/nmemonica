@@ -54,7 +54,6 @@ export const initialState = {
     reinforce: false,
     repTID: -1,
     repetition: /** @type {SpaceRepetitionMap}*/ ({}),
-    frequency: { uid: /** @type {string | undefined}*/ (undefined), count: 0 },
     activeGroup: /** @type {string[]}*/ ([]),
     activeTags: /** @type {string[]}*/ ([]),
   },
@@ -130,16 +129,6 @@ const kanjiSlice = createSlice({
         "repetition",
         newValue
       );
-
-      let frequency = { uid, count: state.setting.frequency.count + 1 };
-      localStoreAttrUpdate(
-        new Date(),
-        { kanji: state.setting },
-        "/kanji/",
-        "frequency",
-        frequency
-      );
-      state.setting.frequency = frequency;
     },
 
     /**
@@ -174,16 +163,6 @@ const kanjiSlice = createSlice({
           state.setting.repTID = Date.now();
           state.setting.repetition = newValue;
         }
-
-        let frequency = { uid, count: state.setting.frequency.count - 1 };
-        localStoreAttrUpdate(
-          new Date(),
-          { kanji: state.setting },
-          "/kanji/",
-          "frequency",
-          frequency
-        );
-        state.setting.frequency = frequency;
       }
     },
     setKanjiBtnN(state, action) {
@@ -253,14 +232,6 @@ const kanjiSlice = createSlice({
     builder.addCase(kanjiFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;
       const mergedSettings = merge(initialState.setting, localStorageValue);
-
-      const kanjiReinforceList = Object.keys(mergedSettings.repetition).filter(
-        (k) => mergedSettings.repetition[k]?.rein === true
-      );
-      mergedSettings.frequency = {
-        uid: undefined,
-        count: kanjiReinforceList.length,
-      };
 
       return {
         ...state,

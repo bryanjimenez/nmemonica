@@ -11,7 +11,6 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 import { JapaneseText } from "../../helper/JapaneseText";
-import { swipeEnd, swipeMove, swipeStart } from "../../helper/TouchSwipe";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
@@ -21,7 +20,7 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { setStateFunction } from "../../hooks/helperHK";
-import { useKanjiConnected } from "../../hooks/kanjiHK";
+import { useConnectKanji } from "../../hooks/useConnectKanji";
 import {
   addFrequencyKanji,
   getKanji,
@@ -38,12 +37,13 @@ import {
 import StackNavButton from "../Form/StackNavButton";
 import "./Kanji.css";
 import { isGroupLevel } from "./SetTermTagList";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
+import { buildAction } from "../../hooks/helperHK";
 
 /**
  * @typedef {import("react").TouchEventHandler} TouchEventHandler
  * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
  * @typedef {import("../../typings/raw").RawKanji} RawKanji
- * @typedef {import("../../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
  */
 
 const KanjiMeta = {
@@ -55,59 +55,63 @@ export default function Kanji() {
   const dispatch = /** @type {AppDispatch} */ (useDispatch());
 
   const addFrequencyTerm = useCallback(
-    (/** @type {string} */ uid) => dispatch(addFrequencyKanji(uid)),
+    (/** @type {string} */ uid) => {
+      setFrequency((f) => [...f, uid]);
+      dispatch(addFrequencyKanji(uid));
+    },
     [dispatch]
   );
   const removeFrequencyTerm = useCallback(
-    (/** @type {string} */ uid) => dispatch(removeFrequencyKanji(uid)),
+    (/** @type {string} */ uid) => {
+      setFrequency((f) => f.filter((id) => id !== uid));
+      dispatch(removeFrequencyKanji(uid));
+    },
     [dispatch]
   );
 
   const {
-    swipeThreshold,
+    kanjiList,
+    vocabList,
 
-    kanji: k,
-    vocabulary: v,
-
-    filterType,
-    reinforce,
+    filterType: filterTypeRef,
+    reinforce: reinforceRef,
     activeTags,
     repetition,
-    frequency: frequencyInfo, //value of *last* frequency word update
-  } = useKanjiConnected();
+  } = useConnectKanji();
 
-  // TODO: compare versions
-  const kanji = useRef(k);
-  if (k.length !== kanji.current.length) {
-    kanji.current = k;
-  }
-  const vocabulary = useRef(v);
-  if (v.length !== vocabulary.current.length) {
-    vocabulary.current = v;
-  }
+  // after initial render
+  useEffect(() => {
+    if (kanjiList.length === 0) {
+      dispatch(getKanji());
+    }
+    if (vocabList.length === 0) {
+      dispatch(getVocabulary());
+    }
+  }, []);
+
+  /** metadata table ref */
+  const metadata = useRef(repetition);
+  metadata.current = repetition;
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState(
     /** @type {string | undefined}*/ (undefined)
   );
-  const [filteredTerms, setFilteredTerms] = useState(
-    /** @type {RawKanji[]}*/ ([])
-  );
+
   const [frequency, setFrequency] = useState(/** @type {string[]}*/ ([])); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
   const [showKun, setShowKun] = useState(false);
   const [showEx, setShowEx] = useState(false);
   const [showMeaning, setShowMeaning] = useState(false);
-  const [order, setOrder] = useState(/** @type {number[]}*/ ([]));
-  const [examples, setExamples] = useState(/** @type {RawVocabulary[]}*/ ([]));
-  const [swiping, setSwiping] = useState(
-    /** @type {ReturnType<swipeStart> | ReturnType<swipeMove>}*/ ({})
-  );
 
-  const buildOrder = useCallback(() => {
-    const allFrequency = Object.keys(repetition).reduce(
+  const filteredTerms = useMemo(() => {
+    if (kanjiList.length === 0) return [];
+    if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
+      return kanjiList;
+
+    const allFrequency = Object.keys(metadata.current).reduce(
       (/** @type {string[]}*/ acc, cur) => {
-        if (repetition[cur].rein === true) {
+        if (metadata.current[cur].rein === true) {
           acc = [...acc, cur];
         }
         return acc;
@@ -115,32 +119,33 @@ export default function Kanji() {
       []
     );
 
-    let filteredTerms = termFilterByType(
-      filterType,
-      kanji.current,
+    let filtered = termFilterByType(
+      filterTypeRef.current,
+      kanjiList,
       allFrequency,
-      filterType === TermFilterBy.TAGS ? activeTags : [],
-      () => dispatch(toggleKanjiFilter(TermFilterBy.TAGS))
+      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
+      buildAction(dispatch, toggleKanjiFilter)
     );
 
-    const newOrder = randomOrder(filteredTerms);
+    const frequency = filtered.reduce(
+      (/** @type {string[]} */ acc, cur) => {
+        if (metadata.current[cur.uid]?.rein === true) {
+          acc = [...acc, cur.uid];
+        }
+        return acc;
+      },
+      []
+    );
+    setFrequency(frequency);
 
-    // needed if using frequency from filteredTerms not all Frequency
-    // const filteredKeys = filteredTerms.map((f) => f.uid);
-    // const frequency = filteredKeys.reduce(
-    //   (/** @type {string[]} */ acc, cur) => {
-    //     if (this.props.repetition[cur]?.rein === true) {
-    //       acc = [...acc, cur];
-    //     }
-    //     return acc;
-    //   },
-    //   []
-    // );
+    return filtered;
+  }, [dispatch, kanjiList, filterTypeRef, activeTags]);
 
-    setFilteredTerms(filteredTerms);
-    setFrequency(allFrequency);
-    setOrder(newOrder);
-  }, [dispatch, filterType, activeTags, repetition]);
+  const order = useMemo(() => {
+    if (filteredTerms.length === 0) return [];
+
+    return randomOrder(filteredTerms);
+  }, [filteredTerms]);
 
   const gotoNext = useCallback(() => {
     const l = filteredTerms.length;
@@ -157,7 +162,7 @@ export default function Kanji() {
   const gotoNextSlide = useCallback(() => {
     let filtered = filteredTerms;
     // include frequency terms outside of filtered set
-    if (reinforce && filterType === TermFilterBy.TAGS) {
+    if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
       const allFrequency = Object.keys(repetition).reduce(
         (/** @type {string[]}*/ acc, cur) => {
           if (repetition[cur].rein === true) {
@@ -168,33 +173,32 @@ export default function Kanji() {
         []
       );
 
-      const additional = kanji.current.filter((k) =>
-        allFrequency.includes(k.uid)
-      );
+      const additional = kanjiList.filter((k) => allFrequency.includes(k.uid));
       filtered = [...filteredTerms, ...additional];
     }
 
     play(
-      reinforce,
-      filterType,
+      reinforceRef.current,
+      filterTypeRef.current,
       frequency,
       // filteredTerms,
       filtered,
-      repetition,//metadata,
+      repetition, //metadata,
       reinforcedUID,
       setReinforcedUID,
-      gotoNext,
+      gotoNext
     );
   }, [
     gotoNext,
-    removeFrequencyTerm,
 
-    filterType,
+    kanjiList,
     filteredTerms,
     frequency,
-    reinforce,
     reinforcedUID,
     repetition,
+
+    reinforceRef,
+    filterTypeRef,
   ]);
 
   const gotoPrev = useCallback(() => {
@@ -235,121 +239,45 @@ export default function Kanji() {
     [gotoNextSlide, gotoPrev]
   );
 
-  const startMove = useCallback(
-    /** @type {TouchEventHandler} */
-    (e) => {
-      const s = swipeStart(e, {
-        verticalSwiping: true,
-        touchThreshold: swipeThreshold,
-      });
-      setSwiping(s);
-    },
-    [swipeThreshold]
+  const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
+
+  if (order.length < 1) return <NotReady addlStyle="main-panel" />;
+
+  const uid = reinforcedUID || getTermUID(selectedIndex, order, filteredTerms);
+  const term = getTerm(uid, kanjiList);
+
+  const match = vocabList.filter(
+    (v) =>
+      (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
+        v.english.toLowerCase() === term.english.toLowerCase()) ||
+      (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
+        v.english.toLowerCase().includes(term.english.toLowerCase()) &&
+        v.grp === "Verb") ||
+      (JapaneseText.parse(v).getSpelling() === term.kanji &&
+        (v.english.toLowerCase().includes(term.english.toLowerCase()) ||
+          term.english.toLowerCase().includes(v.english.toLowerCase())))
   );
 
-  const inMove = useCallback(
-    /** @type {TouchEventHandler} */
-    (e) => {
-      if (swiping) {
-        const s = swipeMove(e, swiping);
-        setSwiping(s);
-      }
-    },
-    [swiping]
-  );
+  /** @type {RawVocabulary[]} */
+  let examples = [];
+  if (match.length > 0) {
+    const [first, ...theRest] = orderBy(match, (ex) => ex.english.length);
+    examples = [first, ...shuffleArray(theRest)];
+  }
 
-  const endMove = useCallback(
-    /** @type {TouchEventHandler} */
-    (e) => {
-      // const direction = getSwipeDirection(this.state.swiping.touchObject,true);
-      if (swiping) {
-        swipeEnd(e, { ...swiping, onSwipe: swipeActionHandler });
-      }
-    },
-    [swiping, swipeActionHandler]
-  );
-
-  // after initial render
-  useEffect(() => {
-    if (kanji.current.length === 0) {
-      dispatch(getKanji());
-    }
-    if (vocabulary.current.length === 0) {
-      dispatch(getVocabulary());
-    }
-  }, []);
-
-  useEffect(() => {
-    if (kanji.current.length > 0 && order.length === 0) {
-      buildOrder();
-    }
-  }, [buildOrder, order, kanji.current.length]);
-
-  useEffect(() => {
-    if (filterType === TermFilterBy.FREQUENCY && frequencyInfo.count === 0) {
-      // last frequency word was removed
-      buildOrder();
-    } else {
-      const filteredKeys = filteredTerms.map((f) => f.uid);
-      const frequency = filteredKeys.reduce(
-        (/** @type {string[]} */ acc, cur) => {
-          if (repetition[cur]?.rein === true) {
-            acc = [...acc, cur];
-          }
-          return acc;
-        },
-        []
-      );
-      // props.frequency is a count of frequency terms
-      // state.frequency is a subset list of frequency term within current active group
-      setFrequency(frequency);
-    }
-  }, [buildOrder, filterType, filteredTerms, frequencyInfo, repetition]);
-
-  useEffect(() => {
-    // find examples
-    if (order.length > 0) {
-      const uid =
-        reinforcedUID || getTermUID(selectedIndex, order, filteredTerms);
-
-      /** @type {RawKanji} */
-      const term = getTerm(uid, kanji.current);
-
-      const match = vocabulary.current.filter(
-        (v) =>
-          (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-            v.english.toLowerCase() === term.english.toLowerCase()) ||
-          (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-            v.english.toLowerCase().includes(term.english.toLowerCase()) &&
-            v.grp === "Verb") ||
-          (JapaneseText.parse(v).getSpelling() === term.kanji &&
-            (v.english.toLowerCase().includes(term.english.toLowerCase()) ||
-              term.english.toLowerCase().includes(v.english.toLowerCase())))
-      );
-
-      /** @type {RawVocabulary[]} */
-      let examples = [];
-      if (match.length > 0) {
-        const [first, ...theRest] = orderBy(match, (ex) => ex.english.length);
-        examples = [first, ...shuffleArray(theRest)];
-      }
-
-      setExamples(examples);
-    }
-  }, [selectedIndex, reinforcedUID, order, filteredTerms, frequency]);
-
-  const uid = useMemo(() => {
-    if (reinforcedUID || (order.length > 0 && filteredTerms.length > 0))
-      return reinforcedUID || getTermUID(selectedIndex, order, filteredTerms);
-  }, [reinforcedUID, selectedIndex, order, filteredTerms]);
-
-  /** @type {RawKanji} */
-  const term = useMemo(() => {
-    if (uid && kanji.current.length > 0) return getTerm(uid, kanji.current);
-  }, [uid]);
-
-  // render()
-  if (filteredTerms.length < 1) return <NotReady addlStyle="main-panel" />;
+  // console.log(
+  //   JSON.stringify({
+  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
+  //     idx: selectedIndex,
+  //     uid: (uid && uid.slice(0, 6)) || "",
+  //     k: kanjiList.length,
+  //     v: vocabList.length,
+  //     ord: order.length,
+  //     rep: Object.keys(repetition).length,
+  //     fre: frequency.length,
+  //     filt: filteredTerms.length,
+  //   })
+  // );
 
   const aGroupLevel =
     term.tag
@@ -378,10 +306,8 @@ export default function Kanji() {
     <React.Fragment>
       <div className="kanji main-panel h-100">
         <div
+          ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
-          onTouchStart={swipeThreshold > 0 ? startMove : undefined}
-          onTouchMove={swipeThreshold > 0 ? inMove : undefined}
-          onTouchEnd={swipeThreshold > 0 ? endMove : undefined}
         >
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
