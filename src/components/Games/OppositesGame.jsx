@@ -1,13 +1,13 @@
-import React, { useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { LinearProgress } from "@mui/material";
+import classNames from "classnames";
+import { useEffect, useMemo, useState } from "react";
+import { shallowEqual, useDispatch, useSelector } from "react-redux";
+import { JapaneseText } from "../../helper/JapaneseText";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
+import { getOpposite } from "../../slices/oppositeSlice";
 import { NotReady } from "../Form/NotReady";
 import FourChoices from "./FourChoices";
-import classNames from "classnames";
-import { JapaneseText } from "../../helper/JapaneseText";
-import { getOpposite } from "../../slices/oppositeSlice";
 
 /**
  * @typedef {{english: string, japanese: string, romaji: string, toHTML: (correct:boolean)=>JSX.Element}} RawOpposite
@@ -28,128 +28,53 @@ const OppositesGameMeta = {
   label: "Opposites Game",
 };
 
-function OppositesGame() {
-  const dispatch = useDispatch();
-  const {
-    value: oppositesArr,
-    qRomaji,
-    aRomaji,
-  } = useSelector((/** @type {RootState}*/ { opposite }) => opposite);
-  useMemo(() => {
-    if (oppositesArr.length === 0) {
+export default function OppositesGame() {
+  const dispatch = /** @type {AppDispatch}*/ (useDispatch());
+  const { value: oppositeList } = useSelector(
+    (/** @type {RootState}*/ { opposite }) => opposite,
+    (before, after) => before.version === after.version
+  );
+  const [qRomaji, aRomaji] = useSelector(
+    (/** @type {RootState}*/ { opposite }) => {
+      const { qRomaji, aRomaji } = opposite;
+
+      return [qRomaji, aRomaji];
+    },
+    shallowEqual
+  );
+
+  useEffect(() => {
+    if (oppositeList.length === 0) {
       dispatch(getOpposite());
     }
   }, []);
-  const rawOpposites = useMemo(() => oppositesArr, [oppositesArr]);
 
-  /** @type {React.MutableRefObject<number[]>} */
-  const order = useRef([]);
+  const order = useMemo(() => {
+    if (oppositeList.length === 0) return [];
+
+    return randomOrder(oppositeList);
+  }, [oppositeList]);
+
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  /**
-   *
-   * @param {number} selectedIndex
-   * @param {[question:RawOpposite, answer:RawOpposite][]} opposites
-   */
-  function prepareGame(selectedIndex, opposites) {
-    if (opposites.length > 0) {
-      // console.log("preparing");
-
-      if (order.current.length === 0) {
-        order.current = randomOrder(opposites);
-      }
-
-      let [questionObj, answerObj] = opposites[order.current[selectedIndex]];
-      const q = JapaneseText.parse(questionObj);
-      const a = JapaneseText.parse(answerObj);
-
-      const question = {
-        ...questionObj,
-        toHTML: (/** @type {boolean} */ correct) => (
-          <span
-            className={classNames({
-              "correct-color": correct,
-            })}
-          >
-            {q.toHTML()}
-          </span>
-        ),
-      };
-      /** @type {import("./FourChoices").GameChoice} */
-      const answer = {
-        ...answerObj,
-        compare: answerObj.japanese,
-        toHTML: () => a.toHTML(),
-      };
-
-      /** @type {import("./FourChoices").GameChoice[]} */
-      let choices = [answer];
-      let antiHomophones = [answer.romaji, question.romaji];
-
-      while (choices.length < 4) {
-        const idx = Math.floor(Math.random() * opposites.length);
-
-        const [wrongAnswer1, wrongAnswer2] = opposites[idx];
-
-        if (
-          !antiHomophones.includes(wrongAnswer1.romaji) &&
-          !antiHomophones.includes(wrongAnswer2.romaji)
-        ) {
-          const headsOrTails = Math.floor(Math.random() * 2);
-
-          if (headsOrTails === 0) {
-            const w1 = JapaneseText.parse(wrongAnswer1);
-            choices = [
-              ...choices,
-              {
-                ...wrongAnswer1,
-                compare: wrongAnswer1.japanese,
-                toHTML: () => w1.toHTML(),
-              },
-            ];
-            antiHomophones = [...antiHomophones, wrongAnswer1.romaji];
-          } else {
-            const w2 = JapaneseText.parse(wrongAnswer2);
-            choices = [
-              ...choices,
-              {
-                ...wrongAnswer2,
-                compare: wrongAnswer2.japanese,
-                toHTML: () => w2.toHTML(),
-              },
-            ];
-            antiHomophones = [...antiHomophones, wrongAnswer2.romaji];
-          }
-        }
-      }
-
-      shuffleArray(choices);
-
-      return { question, answer, choices };
-    }
-  }
-
   function gotoNext() {
-    const l = rawOpposites.length;
+    const l = oppositeList.length;
     const newSel = (selectedIndex + 1) % l;
     setSelectedIndex(newSel);
   }
 
   function gotoPrev() {
-    const l = rawOpposites.length;
+    const l = oppositeList.length;
     const i = selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     setSelectedIndex(newSel);
   }
 
-  const game = prepareGame(selectedIndex, rawOpposites);
+  if (order.length === 0) return <NotReady addlStyle="main-panel" />;
 
-  // console.log(selectedIndex)
-  // console.log("KanjiGame render");
+  const game = prepareGame(oppositeList, order, selectedIndex);
 
-  if (game === undefined) return <NotReady addlStyle="main-panel" />;
-
-  const progress = ((selectedIndex + 1) / rawOpposites.length) * 100;
+  const progress = ((selectedIndex + 1) / oppositeList.length) * 100;
 
   return (
     <>
@@ -177,6 +102,79 @@ function OppositesGame() {
   );
 }
 
-export default OppositesGame;
+/**
+ * @param {[question:RawOpposite, answer:RawOpposite][]} opposites
+ * @param {number[]} order
+ * @param {number} selectedIndex
+ */
+function prepareGame(opposites, order, selectedIndex) {
+  let [questionObj, answerObj] = opposites[order[selectedIndex]];
+  const q = JapaneseText.parse(questionObj);
+  const a = JapaneseText.parse(answerObj);
+
+  const question = {
+    ...questionObj,
+    toHTML: (/** @type {boolean} */ correct) => (
+      <span
+        className={classNames({
+          "correct-color": correct,
+        })}
+      >
+        {q.toHTML()}
+      </span>
+    ),
+  };
+  /** @type {import("./FourChoices").GameChoice} */
+  const answer = {
+    ...answerObj,
+    compare: answerObj.japanese,
+    toHTML: () => a.toHTML(),
+  };
+
+  /** @type {import("./FourChoices").GameChoice[]} */
+  let choices = [answer];
+  let antiHomophones = [answer.romaji, question.romaji];
+
+  while (choices.length < 4) {
+    const idx = Math.floor(Math.random() * opposites.length);
+
+    const [wrongAnswer1, wrongAnswer2] = opposites[idx];
+
+    if (
+      !antiHomophones.includes(wrongAnswer1.romaji) &&
+      !antiHomophones.includes(wrongAnswer2.romaji)
+    ) {
+      const headsOrTails = Math.floor(Math.random() * 2);
+
+      if (headsOrTails === 0) {
+        const w1 = JapaneseText.parse(wrongAnswer1);
+        choices = [
+          ...choices,
+          {
+            ...wrongAnswer1,
+            compare: wrongAnswer1.japanese,
+            toHTML: () => w1.toHTML(),
+          },
+        ];
+        antiHomophones = [...antiHomophones, wrongAnswer1.romaji];
+      } else {
+        const w2 = JapaneseText.parse(wrongAnswer2);
+        choices = [
+          ...choices,
+          {
+            ...wrongAnswer2,
+            compare: wrongAnswer2.japanese,
+            toHTML: () => w2.toHTML(),
+          },
+        ];
+        antiHomophones = [...antiHomophones, wrongAnswer2.romaji];
+      }
+    }
+  }
+
+  shuffleArray(choices);
+
+  return { question, answer, choices };
+}
 
 export { OppositesGameMeta };

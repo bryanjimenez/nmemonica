@@ -16,7 +16,7 @@ export const getOpposite = createAsyncThunk(
     }
     return fetch(firebaseConfig.databaseURL + "/lambda/opposites.json", {
       headers: { "Data-Version": version },
-    }).then((res) => res.json());
+    }).then((res) => res.json().then((value) => ({ value, version })));
   }
 );
 
@@ -32,6 +32,7 @@ export const oppositeFromLocalStorage = createAsyncThunk(
 
 const initialState = {
   value: [],
+  version: "",
   aRomaji: false,
   qRomaji: false,
 };
@@ -67,7 +68,9 @@ const oppositeSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(getOpposite.fulfilled, (state, action) => {
-      state.value = action.payload;
+      const { value, version } = action.payload;
+      state.value = value;
+      state.version = version;
     });
 
     builder.addCase(oppositeFromLocalStorage.fulfilled, (state, action) => {
