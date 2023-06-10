@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Slider } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { lerp } from "../../helper/arrayHelper";
 import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/gameHelper";
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
@@ -23,12 +23,12 @@ import "./Difficulty.css";
  * @param {DifficultySliderProps} props
  */
 export function DifficultySlider(props) {
-  const defaultDifficulty = props.value !== undefined ? props.value : 30;
+  const defaultDifficulty = props.value ?? 30;
   const [value, setValue] = useState(defaultDifficulty);
 
   useEffect(() => {
     setValue(defaultDifficulty);
-  }, [defaultDifficulty, setValue]);
+  }, [defaultDifficulty]);
 
   const t = value / 100;
 
