@@ -52,8 +52,7 @@ export interface GroupListMap {
   [mainGrp: string]: string[];
 }
 
-export interface SpaceRepetitionMap {
-  [uid: string]: {
+export interface MetaDataObj {
     /**
      * Last view
      * (Date.toJSON '2020-01-01T01:01:01.001Z')
@@ -70,7 +69,10 @@ export interface SpaceRepetitionMap {
     /** Timed play play-count */ tpPc?: number;
     /** Timed play accuracy [0,1] */ tpAcc?: number;
     /** Timed play correct avg (ms) */ tpCAvg?: number;
-  };
+}
+
+export interface SpaceRepetitionMap {
+  [uid: string]: MetaDataObj
 }
 
 export interface FuriganaToggleMap {

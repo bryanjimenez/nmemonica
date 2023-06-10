@@ -11,34 +11,13 @@ import reactHookPlugin from "eslint-plugin-react-hooks";
 // eslint flat config info
 // https://eslint.org/blog/2022/08/new-config-system-part-2/
 
-// import { FlatCompat } from "@eslint/eslintrc";
-// import path from "path";
-// import { fileURLToPath } from "url";
-
-// mimic CommonJS variables -- not needed if using CommonJS
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-
-// const compat = new FlatCompat({
-//     baseDirectory: __dirname,
-//     recommendedConfig: {},
-// });
-
 export default [
   {
-    ignores: [".*", "node_modules/","dist/", "test/"],
+    ignores: [".*", "node_modules/", "dist/"],
   },
   {
     rules: eslintJsPlugin.configs.recommended.rules,
   },
-  // mimic ESLintRC-style extends
-  //  ...compat.extends("eslint:recommended", "plugin:react/recommended","plugin:react/jsx-runtime", "prettier"),
-  // ...compat.extends("plugin:react/jsx-runtime"),
-  // mimic environments
-  //  ...compat.env({
-  //      es2020: true,
-  //      node: true
-  //  }),
   {
     plugins: {
       // "@typescript-eslint": tsPlugin,
@@ -90,6 +69,13 @@ export default [
     languageOptions: {
       parser: tsParser,
       globals: { ...globals.browser },
+    },
+  },
+  {
+    files: ["test/**/*.js", "test/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      globals: { ...globals.mocha },
     },
   },
   {

@@ -193,7 +193,7 @@ export class JapaneseText {
   }
 
   /**
-   * @returns {JSX.Element|undefined}
+   * @returns {import("react").ReactElement}
    * @param {function} kanaHintBuilder
    * @param {function} furiganaHintBuilder
    * @param {number} [minMora] minimum mora japaneseText must have for hint

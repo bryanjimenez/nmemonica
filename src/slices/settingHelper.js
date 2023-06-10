@@ -69,34 +69,28 @@ export function toggleAFilter(filter, allowed, override) {
  * @param {string[]} activeGroup a list of groups that are selected
  */
 export function grpParse(grpNames, activeGroup) {
-  /** @type {string[]} */
-  let newValue = [];
-
   const grpNamesSet = [...new Set(grpNames)];
-  const activeGroupSet = [...new Set(activeGroup)];
+  let activeGroupSet = [...new Set(activeGroup)];
 
   grpNamesSet.forEach((grpEl) => {
-    const isGrp = grpEl.indexOf(".") === -1;
+    const isParentGrp = !grpEl.includes(".");
 
-    if (isGrp) {
-      if (activeGroupSet.some((e) => e.indexOf(grpEl + ".") !== -1)) {
-        newValue = [
-          ...activeGroupSet.filter((v) => v.indexOf(grpEl + ".") === -1),
-          grpEl,
-        ];
-      } else if (activeGroupSet.includes(grpEl)) {
-        newValue = [...activeGroupSet.filter((v) => v !== grpEl)];
-      } else {
-        newValue = [...activeGroupSet, grpEl];
+    // toggle parent
+    activeGroupSet = activeGroupSet.includes(grpEl)
+      ? activeGroupSet.filter((v) => v !== grpEl)
+      : [...activeGroupSet, grpEl];
+
+    if (isParentGrp) {
+      // remove children
+      if (activeGroupSet.some((e) => e.includes(grpEl + "."))) {
+        activeGroupSet = activeGroupSet.filter(
+          (e) => !e.startsWith(grpEl + ".")
+        );
       }
-    } else {
-      newValue = activeGroupSet.includes(grpEl)
-        ? activeGroupSet.filter((v) => v !== grpEl)
-        : [...activeGroupSet, grpEl];
     }
   });
 
-  return newValue;
+  return activeGroupSet;
 }
 
 /**

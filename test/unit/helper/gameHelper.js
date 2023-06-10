@@ -1,5 +1,5 @@
-// @ts-check 
-import 'jsdom-global/register';
+// @ts-check
+import "jsdom-global/register";
 import { expect } from "chai";
 import { render, screen } from "@testing-library/react";
 import { JapaneseText } from "../../../src/helper/JapaneseText";
@@ -11,8 +11,7 @@ import {
   spaceRepOrder,
   termFilterByType,
 } from "../../../src/helper/gameHelper";
-import { TermFilterBy } from '../../../src/slices/settingHelper';
-/* global describe it */
+import { TermFilterBy } from "../../../src/slices/settingHelper";
 
 describe("gameHelper", function () {
   /** @type {import("../../../src/helper/consoleHelper").RawVocabulary[]} */
@@ -123,7 +122,10 @@ describe("gameHelper", function () {
     },
   ];
   describe("spaceRepOrder", function () {
-    /** @typedef {import("../../../src/helper/consoleHelper").SpaceRepetitionMap} SpaceRepetitionMap*/
+    /**
+     * @typedef {import("../../../src/typings/raw").MetaDataObj} MetaDataObj
+     * @typedef {Record<string,Partial<MetaDataObj>>} SpaceRepetitionMap
+     * */
 
     it("term order when undefined", function () {
       const expected = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0];
@@ -177,32 +179,32 @@ describe("gameHelper", function () {
           vC: 1,
           d: "2020-01-01T01:06:00.000Z",
         },
-        "a8787c646e16617ba878fe462e4d1ffe": {
+        a8787c646e16617ba878fe462e4d1ffe: {
           // english: 'black',
           vC: 1,
           d: "2020-01-01T01:05:00.000Z",
         },
-        "b78d1a33132a9090a7b545f7aa3d2f63": {
+        b78d1a33132a9090a7b545f7aa3d2f63: {
           // english: 'brown',
           vC: 1,
           d: "2020-01-01T01:04:00.000Z",
         },
-        "de108914e6e86883ed97dc62918ae89a": {
+        de108914e6e86883ed97dc62918ae89a: {
           // english: 'grey',
           vC: 1,
           d: "2020-01-01T01:03:00.000Z",
         },
-        "e5d47019e1b948c2445b6c1ea3850c2b": {
+        e5d47019e1b948c2445b6c1ea3850c2b: {
           // english: 'red',
           vC: 1,
           d: "2020-01-01T01:02:00.000Z",
         },
-        "e86638b52f2028b1ff3685e13bfd71ac": {
+        e86638b52f2028b1ff3685e13bfd71ac: {
           // english: 'orange',
           vC: 1,
           d: "2020-01-01T01:01:00.000Z",
         },
-        "ee5b790c89a6e8811e7b3c97ee79534c": {
+        ee5b790c89a6e8811e7b3c97ee79534c: {
           // english: 'pink',
           vC: 1,
           d: "2020-01-01T01:00:00.000Z",
@@ -251,32 +253,32 @@ describe("gameHelper", function () {
           vC: 7,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "a8787c646e16617ba878fe462e4d1ffe": {
+        a8787c646e16617ba878fe462e4d1ffe: {
           // english: 'black',
           vC: 6,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "b78d1a33132a9090a7b545f7aa3d2f63": {
+        b78d1a33132a9090a7b545f7aa3d2f63: {
           // english: 'brown',
           vC: 5,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "de108914e6e86883ed97dc62918ae89a": {
+        de108914e6e86883ed97dc62918ae89a: {
           // english: 'grey',
           vC: 4,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "e5d47019e1b948c2445b6c1ea3850c2b": {
+        e5d47019e1b948c2445b6c1ea3850c2b: {
           // english: 'red',
           vC: 3,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "e86638b52f2028b1ff3685e13bfd71ac": {
+        e86638b52f2028b1ff3685e13bfd71ac: {
           // english: 'orange',
           vC: 2,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "ee5b790c89a6e8811e7b3c97ee79534c": {
+        ee5b790c89a6e8811e7b3c97ee79534c: {
           // english: 'pink',
           vC: 1,
           d: "2020-01-01T01:00:00.000Z",
@@ -325,32 +327,32 @@ describe("gameHelper", function () {
           vC: 1,
           d: "2020-01-01T01:06:00.000Z",
         },
-        "a8787c646e16617ba878fe462e4d1ffe": {
+        a8787c646e16617ba878fe462e4d1ffe: {
           // english: 'black',
           vC: 1,
           d: "2020-01-01T01:05:00.000Z",
         },
-        "b78d1a33132a9090a7b545f7aa3d2f63": {
+        b78d1a33132a9090a7b545f7aa3d2f63: {
           // english: 'brown',
           vC: 1,
           d: "2020-01-01T01:04:00.000Z",
         },
-        "de108914e6e86883ed97dc62918ae89a": {
+        de108914e6e86883ed97dc62918ae89a: {
           // english: 'grey',
           vC: 1,
           d: "2020-01-01T01:03:00.000Z",
         },
-        "e5d47019e1b948c2445b6c1ea3850c2b": {
+        e5d47019e1b948c2445b6c1ea3850c2b: {
           // english: 'red',
           vC: 1,
           d: "2020-01-01T01:02:00.000Z",
         },
-        "e86638b52f2028b1ff3685e13bfd71ac": {
+        e86638b52f2028b1ff3685e13bfd71ac: {
           // english: 'orange',
           vC: 1,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "ee5b790c89a6e8811e7b3c97ee79534c": {
+        ee5b790c89a6e8811e7b3c97ee79534c: {
           // english: 'pink',
           vC: 1,
           d: "2020-01-01T01:01:00.000Z",
@@ -400,32 +402,32 @@ describe("gameHelper", function () {
           vC: 7,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "a8787c646e16617ba878fe462e4d1ffe": {
+        a8787c646e16617ba878fe462e4d1ffe: {
           // english: 'black',
           vC: 6,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "b78d1a33132a9090a7b545f7aa3d2f63": {
+        b78d1a33132a9090a7b545f7aa3d2f63: {
           // english: 'brown',
           vC: 5,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "de108914e6e86883ed97dc62918ae89a": {
+        de108914e6e86883ed97dc62918ae89a: {
           // english: 'grey',
           vC: 4,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "e5d47019e1b948c2445b6c1ea3850c2b": {
+        e5d47019e1b948c2445b6c1ea3850c2b: {
           // english: 'red',
           vC: 3,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "e86638b52f2028b1ff3685e13bfd71ac": {
+        e86638b52f2028b1ff3685e13bfd71ac: {
           // english: 'orange',
           vC: 2,
           d: "2020-01-01T01:00:00.000Z",
         },
-        "ee5b790c89a6e8811e7b3c97ee79534c": {
+        ee5b790c89a6e8811e7b3c97ee79534c: {
           // english: 'pink',
           vC: 1,
           d: "2020-01-01T01:00:00.000Z",
@@ -437,7 +439,21 @@ describe("gameHelper", function () {
       expect(actual).to.deep.eq(expected);
     });
     it("has right type", function () {
-      const wrongType = ["1","2","3","4","5","6","7","8","9","10","11","12","0"];
+      const wrongType = [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "0",
+      ];
       /** @type {SpaceRepetitionMap} */
       const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
@@ -648,8 +664,12 @@ describe("gameHelper", function () {
         },
       ];
 
-      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
-      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const positive = pExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
+      const negative = nExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
 
       expect(positive).to.deep.equal(pExamples.map(() => true));
       expect(negative).to.deep.equal(nExamples.map(() => false));
@@ -703,8 +723,12 @@ describe("gameHelper", function () {
         },
       ];
 
-      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
-      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const positive = pExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
+      const negative = nExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
 
       expect(positive).to.deep.equal(pExamples.map(() => true));
       expect(negative).to.deep.equal(nExamples.map(() => false));
@@ -766,8 +790,12 @@ describe("gameHelper", function () {
         },
       ];
 
-      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
-      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const positive = pExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
+      const negative = nExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
 
       expect(positive).to.deep.equal(pExamples.map(() => true));
       expect(negative).to.deep.equal(nExamples.map(() => false));
@@ -829,8 +857,12 @@ describe("gameHelper", function () {
         },
       ];
 
-      const positive = pExamples.map((t) => activeGroupIncludes(activeGroup, t));
-      const negative = nExamples.map((t) => activeGroupIncludes(activeGroup, t));
+      const positive = pExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
+      const negative = nExamples.map((t) =>
+        activeGroupIncludes(activeGroup, t)
+      );
 
       expect(positive).to.deep.equal(pExamples.map(() => true));
       expect(negative).to.deep.equal(nExamples.map(() => false));
@@ -840,25 +872,25 @@ describe("gameHelper", function () {
     it("not hintable", function () {
       const j = JapaneseText.parse({ japanese: "うん\n運" });
 
-      const {container} = render(getJapaneseHint(j));
+      const { container } = render(getJapaneseHint(j));
       // screen.debug()
-      expect(container.querySelector('.hint-mora')).to.be.null;
+      expect(container.querySelector(".hint-mora")).to.be.null;
     });
     it("hiragana only", function () {
       const j = JapaneseText.parse({ japanese: "かかる" });
 
       render(getJapaneseHint(j));
 
-      expect(screen.queryByText('か').className).to.equal("hint-mora")
-      expect(screen.queryByText('かる').className).to.equal("invisible")
+      expect(screen.queryByText("か")?.className).to.equal("hint-mora");
+      expect(screen.queryByText("かる")?.className).to.equal("invisible");
     });
     it("katakana only", function () {
       const j = JapaneseText.parse({ japanese: "アパート" });
 
       render(getJapaneseHint(j));
 
-      expect(screen.queryByText('ア').className).to.equal("hint-mora")
-      expect(screen.queryByText('パート').className).to.equal("invisible")
+      expect(screen.queryByText("ア")?.className).to.equal("hint-mora");
+      expect(screen.queryByText("パート")?.className).to.equal("invisible");
     });
     it("starting kanji with furigana", function () {
       const j = JapaneseText.parse({ japanese: "あさごはん\n朝ご飯" });
@@ -882,5 +914,5 @@ describe("gameHelper", function () {
       expect(screen.getByText("心者").className).equal("invisible");
       expect(screen.getByText("しんしゃ").className).equal("invisible");
     });
-  })
+  });
 });
