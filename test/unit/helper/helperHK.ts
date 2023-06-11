@@ -8,9 +8,44 @@ import {
   buildAction,
   setStateFunction,
   useWindowSize,
+  useFade,
 } from "../../../src/hooks/helperHK.js";
 
 describe("helperHK", function () {
+  describe("useFade", function () {
+    const timeout = 50;
+    let result;
+
+    it("initial", function (done) {
+      ({ result } = renderHook(() => useFade(timeout)));
+      const [fade] = result.current;
+
+      expect(fade, "fade initial").to.eq(false);
+
+      setTimeout(() => {
+        done();
+      }, timeout);
+    });
+
+    it("after " + timeout + "ms timeout", function () {
+      const [fadeAfter] = result.current;
+      expect(fadeAfter, "after timeout").to.eq(true);
+    });
+
+    // it("after toggle", function () {
+    //   const [fade] = result.current;
+
+    //   expect(fade, "fade initial").to.eq(true);
+    //   act(()=>{
+    //     const [,setFade] = result.current;
+    //     setFade()
+    //   })
+
+    //   const [afterToggle] = result.current;
+    //   expect(afterToggle, "after toggle").to.eq(false);
+    // })
+  }); // useFade
+
   describe("useWindowSize", function () {
     class MyMockWindow /*pretends to extends EventTarget*/ {
       constructor({ width, height }) {
