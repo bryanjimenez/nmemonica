@@ -1,15 +1,11 @@
-import 'jsdom-global/register';
-import { render, screen } from '@testing-library/react';
+import "jsdom-global/register";
+import { render, screen } from "@testing-library/react";
 import { expect } from "chai";
 import {
   furiganaParseRetry,
   JapaneseText,
 } from "../../../src/helper/JapaneseText";
-import {
-  furiganaParse,
-} from "../../../src/helper/JapaneseText";
-
-/* global describe it */
+import { furiganaParse } from "../../../src/helper/JapaneseText";
 
 describe("JapanseText", function () {
   describe("toString", function () {
@@ -39,7 +35,7 @@ describe("JapanseText", function () {
       const text = new JapaneseText(hiragana);
       render(text.toHTML());
 
-      expect(screen.getByText(expected).tagName).to.equal('SPAN');
+      expect(screen.getByText(expected).tagName).to.equal("SPAN");
     });
 
     it("furigana", function () {
@@ -51,9 +47,9 @@ describe("JapanseText", function () {
       const text = new JapaneseText(said, written);
       render(text.toHTML());
 
-      expect(screen.getByText("汚").tagName).to.equal('SPAN');
-      expect(screen.getByText("きたな").tagName).to.equal('SPAN');
-      expect(screen.getByText("い").tagName).to.equal('SPAN');
+      expect(screen.getByText("汚").tagName).to.equal("SPAN");
+      expect(screen.getByText("きたな").tagName).to.equal("SPAN");
+      expect(screen.getByText("い").tagName).to.equal("SPAN");
     });
 
     it.skip("repeated hiragana (furigana-okurigana)", function () {
@@ -66,9 +62,9 @@ describe("JapanseText", function () {
       const text = new JapaneseText(said, written);
       render(text.toHTML());
 
-      expect(screen.getByText("五").tagName).to.equal('SPAN');
-      expect(screen.getByText("いつ").tagName).to.equal('SPAN');
-      expect(screen.getByText("つ").tagName).to.equal('SPAN');
+      expect(screen.getByText("五").tagName).to.equal("SPAN");
+      expect(screen.getByText("いつ").tagName).to.equal("SPAN");
+      expect(screen.getByText("つ").tagName).to.equal("SPAN");
     });
   });
 
@@ -368,5 +364,11 @@ describe("isHintable", function () {
     const actual = JapaneseText.parse(j);
 
     expect(actual.isHintable(), "isHintable").to.be.true;
+  });
+  it("contains non kanji or kana", function () {
+    const j = { japanese: "(な)ので" };
+    const actual = JapaneseText.parse(j);
+
+    expect(actual.isHintable(), "isHintable").to.be.false;
   });
 });
