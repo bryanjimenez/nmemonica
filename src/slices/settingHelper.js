@@ -168,5 +168,6 @@ export function updateSpaceRepTerm(
   /** @type {SpaceRepetitionMap} */
   const newValue = { ...spaceRep, ...map };
 
+  // TODO: rename this to value-> record, map->value, prevMap -> prevValue
   return { map, prevMap, value: newValue };
 }

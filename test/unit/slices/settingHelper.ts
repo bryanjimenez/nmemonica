@@ -3,6 +3,7 @@ import {
   DebugLevel,
   grpParse,
   toggleAFilter,
+  updateSpaceRepTerm,
 } from "../../../src/slices/settingHelper";
 
 describe("settingHelper", function () {
@@ -205,5 +206,76 @@ describe("settingHelper", function () {
         expect(actual).to.contain.members(expectedActiveGroup);
       });
     });
-  });
+  }); // grpParse
+  describe("updateSpaceRepTerm", function () {
+    const metaData = {
+      uid0: {
+        d: new Date().toJSON(),
+        difficulty: 40,
+        f: true,
+        rein: false,
+        vC: 1,
+      },
+    };
+    it("increment view count", function () {
+
+      const { map, prevMap, value } = updateSpaceRepTerm(
+        "uid0",
+        metaData,
+        { count: true, date: false },
+        // {
+        //   set: { rein: true },
+        // }
+        undefined
+      );
+
+      expect(prevMap["uid0"].vC).to.eq(1);
+      expect(map["uid0"].vC).to.eq(2);
+      expect(value["uid0"].vC).to.eq(2);
+    });
+    it("set reinforce", function () {
+      const { map, prevMap, value } = updateSpaceRepTerm(
+        "uid0",
+        metaData,
+        { count: false, date: false },
+        {
+          set: { rein: true },
+        }
+      );
+
+      expect(prevMap["uid0"].rein).to.eq(false);
+      expect(map["uid0"].rein).to.eq(true);
+      expect(value["uid0"].rein).to.eq(true);
+    });
+    it("toggle reinforce", function () {
+      const { map, prevMap, value } = updateSpaceRepTerm(
+        "uid0",
+        metaData,
+        { count: false, date: false },
+        {
+          toggle: ['rein'],
+        }
+      );
+
+      expect(prevMap["uid0"].rein).to.eq(false);
+      expect(map["uid0"].rein).to.eq(true);
+      expect(value["uid0"].rein).to.eq(true);
+    });
+   
+    it("toggle furigana", function () {
+
+      const { map, prevMap, value } = updateSpaceRepTerm(
+        "uid0",
+        metaData,
+        { count: true, date: false },
+        {
+          toggle: ["f"],
+        }
+      );
+
+      expect(prevMap["uid0"].f).to.eq(true);
+      expect(map["uid0"].f).to.eq(false);
+      expect(value["uid0"].f).to.eq(false);
+    });
+  }); // updateSpaceRepTerm
 });
