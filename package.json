@@ -7,7 +7,7 @@
   "scripts": {
     "test": "mocha -r ./test/require.js ./test/unit/**/*.{js,ts}",
     "type": "tsc -b --verbose",
-    "coverage": "nyc -e .jsx npm run test",
+    "coverage": "nyc -e .jsx npm run test > '/dev/null'; nyc report",
     "b:clean": "rm -rf ./dist/*",
     "b:tag": "ts-node ./pwa/script/indexTagger.ts",
     "b:webpack": "webpack --mode=production",
