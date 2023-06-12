@@ -4,8 +4,6 @@
     "composite": true,
     "module": "ESNext",
     "moduleResolution":"node",
-    "allowJs": true,
-    "checkJs": true,
     "allowSyntheticDefaultImports": true,
     "lib": ["es2021", "dom", "webworker"],
     "outDir": "../.tsc-dist/",
@@ -14,10 +12,10 @@
   // "exclude": ["./src/sw.js"],
   "include": [
     ".",
-    "../environment.development.js",
-    "../environment.production.js",
-    "../src/constants/actionNames.js",
-    "../src/helper/urlHelper.js",
+    "../environment.development.ts",
+    "../environment.production.ts",
+    "../src/constants/actionNames.ts",
+    "../src/helper/urlHelper.ts",
   ],
 
   "ts-node": {

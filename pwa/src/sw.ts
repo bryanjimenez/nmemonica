@@ -151,13 +151,11 @@ export function initServiceWorker({
     }
 
     if (url === dataVerURL) {
-      //@ts-expect-error FIXME: appVersionReq
       e.respondWith(appVersionReq());
     } else if (req.headers.get("Data-Version")) {
       e.respondWith(appDataReq(e.request));
     } else if (url.startsWith(ghURL)) {
       // site asset
-      //@ts-expect-error FIXME: appAssetReq
       e.respondWith(appAssetReq(url));
     } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
       // override cache site media asset
@@ -171,7 +169,6 @@ export function initServiceWorker({
         // use cache
         console.log(NO_INDEXEDDB_SUPPORT);
         clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-        //@ts-expect-error FIXME: recache
         e.respondWith(recache(appMediaCache, myRequest));
       } else {
         // use indexedDB

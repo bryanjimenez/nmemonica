@@ -19,11 +19,16 @@ export default function (webpackEnv, argv) {
     module: {
       rules: [
         {
-          test: /\.(js|jsx)$/,
+          test: /\.(ts|tsx)$/,
           include: path.resolve(__dirname, "src"),
           use: {
-            loader: "babel-loader",
+            loader: "ts-loader",
+            options:{
+              // webpack build with tsc errors
+              transpileOnly: true,
+            },
           },
+      
           // because package.json type: "module"
           // and imports don't have extensions
           // https://github.com/webpack/webpack/issues/11467#issuecomment-691873586
@@ -44,6 +49,7 @@ export default function (webpackEnv, argv) {
         },
         {
           test: /\.(png|svg|jpg|jpeg|gif)$/,
+          include: path.resolve(__dirname, "image"),
           use: ["file-loader"],
         },
       ],
@@ -66,8 +72,8 @@ export default function (webpackEnv, argv) {
 
           // Allow in Dev Environment
           // from dev file to include prod dependency
-          const envFileDev = /^(.*\.)(development)(\.js|\.json|)$/;
-          const envFileProd = /^(.*\.)(production)(\.js|\.json|)$/;
+          const envFileDev = /^(.*\.)(development)(\.ts|\.js|\.json|)$/;
+          const envFileProd = /^(.*\.)(production)(\.ts|\.js|\.json|)$/;
           const srcFile = res.contextInfo.issuer.split("/").pop();
           const depFile = res.request;
 
@@ -114,7 +120,7 @@ export default function (webpackEnv, argv) {
     ],
 
     resolve: {
-      extensions: [".js", ".jsx"],
+      extensions: [".ts", ".tsx", ".js"],
     },
 
     output: {
