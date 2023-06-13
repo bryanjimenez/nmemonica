@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "ebf45c87",
-  initCacheVer: "0295c5e4",
+  swVersion: "97bcb0f8",
+  initCacheVer: "8e514627",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   authenticationHeader: "X-API-KEY",
@@ -142,13 +142,11 @@ function initServiceWorker({
       return;
     }
     if (url === dataVerURL) {
-      //@ts-expect-error FIXME: appVersionReq
       e.respondWith(appVersionReq());
     } else if (req.headers.get("Data-Version")) {
       e.respondWith(appDataReq(e.request));
     } else if (url.startsWith(ghURL)) {
       // site asset
-      //@ts-expect-error FIXME: appAssetReq
       e.respondWith(appAssetReq(url));
     } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
       // override cache site media asset
@@ -161,7 +159,6 @@ function initServiceWorker({
         // use cache
         console.log(NO_INDEXEDDB_SUPPORT);
         clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-        //@ts-expect-error FIXME: recache
         e.respondWith(recache(appMediaCache, myRequest));
       } else {
         // use indexedDB
@@ -383,10 +380,7 @@ function initServiceWorker({
       .matchAll({ includeUncontrolled: true, type: "window" })
       .then((client) => {
         if (client && client.length) {
-          return client[0].postMessage({
-            type,
-            ...msg,
-          });
+          return client[0].postMessage(Object.assign({ type }, msg));
         }
       });
   }
@@ -808,8 +802,6 @@ function initServiceWorker({
 const cacheFiles = [
   "0301fbe829087f4e8b91cde9bf9496c5.jpeg",
   "1062f5e41ef989b5973a457e55770974.png",
-  "236.0cb615c6104aa0af46e1.css",
-  "236.e763b2d9.js",
   "323.ec1e53c920c40244a26e.css",
   "35872f035bddb00bb6bed6802ee78d72.png",
   "388582fe2fdbf34450b199396860911c.png",
@@ -819,37 +811,37 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.3921f3c2b67ffb1f7941.css",
-  "main.c654c7bc.js",
+  "main.1a46e01672caa8fdcb1d.css",
+  "main.3f0e29f6.js",
   "manifest.webmanifest",
   "maskable512.png",
-  "npm.babel.2752a87f.js",
-  "npm.classnames.4de3c114.js",
-  "npm.clsx.661141cd.js",
-  "npm.emotion.5efd7341.js",
-  "npm.floating-ui.2936b969.js",
-  "npm.fortawesome.85a013ed.js",
-  "npm.hoist-non-react-statics.e96f9d17.js",
-  "npm.immer.b12d5ecd.js",
-  "npm.lodash.6d338baa.js",
-  "npm.mui.ffc7f895.js",
-  "npm.primer.f6acad8d.js",
-  "npm.prop-types.63f6b250.js",
-  "npm.react-dom.41cff530.js",
-  "npm.react-is.5cbcf6c8.js",
-  "npm.react-redux.7cfa81cd.js",
-  "npm.react-router-dom.ab355566.js",
-  "npm.react-router.5c6274cd.js",
-  "npm.react-transition-group.455a3994.js",
-  "npm.react.1e043b6a.js",
-  "npm.redux-thunk.22628ab8.js",
-  "npm.redux.a0702fe6.js",
-  "npm.reduxjs.f755e63c.js",
-  "npm.remix-run.42b156f6.js",
-  "npm.scheduler.8b7de4c1.js",
-  "npm.stylis.eb0e238b.js",
-  "npm.use-sync-external-store.9e6045ba.js",
-  "runtime.0d7976f6.js",
+  "npm.babel.40c54934.js",
+  "npm.classnames.dd86a6ac.js",
+  "npm.clsx.7ddff11c.js",
+  "npm.emotion.75920948.js",
+  "npm.floating-ui.2f394a3a.js",
+  "npm.fortawesome.ab4a2a17.js",
+  "npm.hoist-non-react-statics.4f4e1047.js",
+  "npm.immer.8087ad1f.js",
+  "npm.lodash.00516801.js",
+  "npm.mui.8f052b66.js",
+  "npm.primer.5b477cf9.js",
+  "npm.prop-types.7e691e47.js",
+  "npm.react-dom.260f9b41.js",
+  "npm.react-is.61e06aae.js",
+  "npm.react-redux.19a7a1ff.js",
+  "npm.react-router-dom.caeb8d8f.js",
+  "npm.react-router.13388b70.js",
+  "npm.react-transition-group.2af8b3ac.js",
+  "npm.react.9d1c4645.js",
+  "npm.redux-thunk.7f479a86.js",
+  "npm.redux.8f76a38c.js",
+  "npm.reduxjs.053a74d6.js",
+  "npm.remix-run.fba8b29a.js",
+  "npm.scheduler.7afb3de9.js",
+  "npm.stylis.cd8656fe.js",
+  "npm.use-sync-external-store.7c62a7e3.js",
+  "runtime.920e7d48.js",
 ];
 
 initServiceWorker({ ...buildConstants, getParam, removeParam, cacheFiles });
