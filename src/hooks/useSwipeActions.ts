@@ -1,34 +1,39 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
+
 import {
   getSwipeDirection,
   swipeEnd,
   swipeMove,
   swipeStart,
 } from "../helper/TouchSwipe";
-import type {
-  Spec,
-} from "../helper/TouchSwipe";
+import type { Spec } from "../helper/TouchSwipe";
+import type { RootState } from "../slices";
 
+export type GameActionHandler = (
+  direction: string,
+  ab?: AbortController
+) => void;
 /**
  * @param gameActionHandler a function that takes a direction and does an action
  * @param timedPlayAnswerHandlerWrapper
  */
 export function useSwipeActions(
-  gameActionHandler:(direction: string)=>unknown,
-  timedPlayAnswerHandlerWrapper?:Function
+  gameActionHandler: GameActionHandler,
+  timedPlayAnswerHandlerWrapper?: (
+    direction: string,
+    handler: GameActionHandler
+  ) => typeof gameActionHandler
 ) {
   const swipeThreshold = useSelector(
-    ({ global }:RootState) => global.swipeThreshold
+    ({ global }: RootState) => global.swipeThreshold
   );
 
   // FIXME: swiping can be null?
-  const swiping = useRef<Spec|{}>({});
+  const swiping = useRef<Spec | Record<string, never>>({});
 
   /** HTMLElement ref */
-  const HTMLDivElementSwipeRef = useRef<HTMLDivElement| null>(
-    null
-  );
+  const HTMLDivElementSwipeRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const startMove = buildStartMove(swipeThreshold, swiping);
@@ -67,8 +72,11 @@ export function useSwipeActions(
  * @param swipeThreshold
  * @param swiping is mutated
  */
-function buildStartMove(swipeThreshold:number, swiping:React.MutableRefObject<Object>) {
-  return function startMove(e:TouchEvent) {
+function buildStartMove(
+  swipeThreshold: number,
+  swiping: React.MutableRefObject<Spec | Record<string, never>>
+) {
+  return function startMove(e: TouchEvent) {
     swiping.current = swipeStart(e, {
       verticalSwiping: true,
       touchThreshold: swipeThreshold,
@@ -79,8 +87,8 @@ function buildStartMove(swipeThreshold:number, swiping:React.MutableRefObject<Ob
 /**
  * @param swiping is mutated
  */
-function buildInMove(swiping:React.MutableRefObject<Spec>) {
-  return function inMove(e:TouchEvent) {
+function buildInMove(swiping: React.MutableRefObject<Spec>) {
+  return function inMove(e: TouchEvent) {
     if (swiping.current) {
       swiping.current = swipeMove(e, swiping.current);
     }
@@ -94,12 +102,15 @@ function buildInMove(swiping:React.MutableRefObject<Spec>) {
  * @param timedPlayAnswerHandlerWrapper
  */
 function buildEndMove(
-  swiping:React.MutableRefObject<Spec>,
-  swipeEnd:Function,
-  gameActionHandler:Function,
-  timedPlayAnswerHandlerWrapper:Function
+  swiping: React.MutableRefObject<Spec>,
+  swipeEnd: (e: Event, spec: Spec) => void,
+  gameActionHandler: GameActionHandler,
+  timedPlayAnswerHandlerWrapper: (
+    direction: string,
+    handler: GameActionHandler
+  ) => typeof gameActionHandler
 ) {
-  return function endMove(e:TouchEvent) {
+  return function endMove(e: TouchEvent) {
     let swipeHandler = gameActionHandler;
 
     const tEl = e.target as Element;

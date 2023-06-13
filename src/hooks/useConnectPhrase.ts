@@ -1,17 +1,18 @@
 import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
-import { TermFilterBy } from "../slices/settingHelper";
 
-/**
- * @typedef {import("../slices/globalSlice").TermFilterBy} TermFilterBy
- */
+import type { RootState } from "../slices";
+import { TermFilterBy } from "../slices/settingHelper";
 
 /**
  * Phrase app-state props
  */
 export function useConnectPhrase() {
-  const [debug, motionThreshold, swipeThreshold] = useSelector(
-    ({ global }:RootState) => [
+  const [debug, motionThreshold, swipeThreshold] = useSelector<
+    RootState,
+    [number, number, number]
+  >(
+    ({ global }: RootState) => [
       global.debug,
       global.motionThreshold,
       global.swipeThreshold,
@@ -25,7 +26,7 @@ export function useConnectPhrase() {
   );
 
   const { repetition } = useSelector(
-    ({ phrases }:RootState) => phrases.setting,
+    ({ phrases }: RootState) => phrases.setting,
     (before, after) => before.repTID === after.repTID
   );
 
@@ -34,22 +35,22 @@ export function useConnectPhrase() {
     return practiceSide;
   });
 
-  const [r, ft, sm, rm]:[boolean, typeof TermFilterBy[keyof typeof TermFilterBy], number, boolean] = useSelector(({ phrases }:RootState) => {
+  const [r, ft, sm, rm] = useSelector<
+    RootState,
+    [boolean, (typeof TermFilterBy)[keyof typeof TermFilterBy], number, boolean]
+  >(({ phrases }: RootState) => {
     const { reinforce, filter, ordered, romaji } = phrases.setting;
-    return [
-      reinforce,
-      filter,
-      ordered,
-      romaji,
-    ];
+    return [reinforce, filter, ordered, romaji];
   }, shallowEqual);
 
   const activeGroup = useSelector<RootState, string[]>(
     ({ phrases }: RootState) => {
       const { activeGroup } = phrases.setting;
 
-    return activeGroup;
-  }, shallowEqual);
+      return activeGroup;
+    },
+    shallowEqual
+  );
 
   /** setting to randomly re-quiz marked terms */
   const reinforce = useRef(r);

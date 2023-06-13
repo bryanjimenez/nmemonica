@@ -1,4 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+
+import { useForceRender } from "./helperHK";
+import type { useDeviceMotionActions } from "./useDeviceMotionActions";
+import type { GameActionHandler } from "./useSwipeActions";
 import {
   LoopSettingBtn,
   LoopStartBtn,
@@ -7,37 +11,41 @@ import {
 import { TimePlayVerifyBtns } from "../components/Form/OptionsBar";
 import { loopN, pause } from "../helper/gameHelper";
 import { setMediaSessionPlaybackState } from "../helper/mediaHelper";
+import type { AppDispatch } from "../slices";
 import {
   setWordTPCorrect,
   setWordTPIncorrect,
 } from "../slices/vocabularySlice";
-import { useForceRender } from "./helperHK";
 import type { SpaceRepetitionMap } from "../typings/raw";
+
+/* globals NodeJS */
 
 /** Time duration for interrupt-to-auto-quit countdown */
 const LOOP_QUIT_MS = 15000;
 
 export function useTimedGame(
-  gameActionHandler:Function,
-  englishSideUp:boolean,
-  deviceMotionEvent?:Function
+  gameActionHandler: GameActionHandler,
+  englishSideUp: boolean,
+  deviceMotionEvent?: ReturnType<typeof useDeviceMotionActions>
 ) {
-  const loopAbortControllers = useRef<AbortController[] | undefined>(undefined)
+  const loopAbortControllers = useRef<AbortController[] | undefined>(undefined);
 
   /** Array of TimedPlay auto quit timers */
-  const loopQuitTimer = useRef<NodeJS.Timeout[] | null>(null)
+  const loopQuitTimer = useRef<NodeJS.Timeout[] | null>(null);
 
-  const [loop, setLoop] = useState<0|1|2|3>(0); // number of times to repeat a word/phrase
+  const [loop, setLoop] = useState<0 | 1 | 2 | 3>(0); // number of times to repeat a word/phrase
   const [loopQuitCount, setLoopQuitCount] = useState(LOOP_QUIT_MS / 1000); // countdown for auto disable loop
 
   /** timed play answered */
-  const tpAnswered = useRef<boolean | undefined>(undefined)
+  const tpAnswered = useRef<boolean | undefined>(undefined);
   const [tpAnimation, setTpAnimation] = useState<number | null>(null); //progress/time bar value
   /** timed play answer timestamp */
-  const tpTimeStamp = useRef<number | undefined> (undefined)
+  const tpTimeStamp = useRef<number | undefined>(undefined);
   /** time elapsed from prompt to answer (ms) */
   const tpElapsed = useRef<number | undefined>(undefined);
-  const [tpBtn, setTpBtn] = useState<"incorrect"|"pronunciation"|"reset"|undefined>(undefined ); //answer verify options
+  const [tpBtn, setTpBtn] = useState<
+    "incorrect" | "pronunciation" | "reset" | undefined
+  >(undefined); //answer verify options
 
   useEffect(() => {
     const ab = loopAbortControllers;
@@ -113,16 +121,14 @@ export function useTimedGame(
 
             tpAnswered.current = zero ? undefined : tpAnswered.current;
 
-            return (!zero ? prevLoop + 1 : 0) as 0|1|2|3;
+            return (!zero ? prevLoop + 1 : 0) as 0 | 1 | 2 | 3;
           });
         }
       }
     />
   );
 
-  const timedPlayVerifyBtn = (
-    misPronounced:boolean
-  ) => (
+  const timedPlayVerifyBtn = (misPronounced: boolean) => (
     <TimePlayVerifyBtns
       visible={tpAnswered.current !== undefined}
       hover={tpBtn}
@@ -165,7 +171,7 @@ export function useTimedGame(
       }
     };
 
-    let endMotionEventListen:Function | undefined;
+    let endMotionEventListen: (() => void) | undefined;
     if (typeof deviceMotionEvent === "function") {
       const {
         addDeviceMotionEvent: startMotionEventListen,
@@ -179,8 +185,8 @@ export function useTimedGame(
 
     loopAbortControllers.current = [ac1, ac2, ac3, ac4, ac5];
 
-    let gamePropmt:(ac: AbortController) => Promise<Awaited<void>[]>;
-    let gameResponse:(ac: AbortController) => Promise<void>;
+    let gamePropmt: (ac: AbortController) => Promise<Awaited<void>[]>;
+    let gameResponse: (ac: AbortController) => Promise<void>;
     if (englishSideUp) {
       gamePropmt = (ac) => looperSwipe("down", ac);
 
@@ -192,7 +198,7 @@ export function useTimedGame(
         loopN(loop, () => looperSwipe("down", ac), 1500, ac);
     }
 
-    const countDown = (p:number, w:number) => {
+    const countDown = (p: number, w: number) => {
       setTpAnimation((prevVal) => {
         let step;
         if (prevVal === null || 100 - prevVal < 1) {
@@ -231,7 +237,7 @@ export function useTimedGame(
             loopAbortControllers.current = undefined;
             return looperSwipe("left");
           })
-          .catch((error:Error) => {
+          .catch((error: Error) => {
             if (error.cause?.code === "UserAborted") {
               // user aborted
               // don't continue
@@ -278,7 +284,7 @@ export function useTimedGame(
   /**
    * For the loop
    */
-  function looperSwipe(direction:string, AbortController?:AbortController) {
+  function looperSwipe(direction: string, AbortController?: AbortController) {
     let promise;
     if (loop > 0) {
       promise = gameActionHandler(direction, AbortController);
@@ -323,7 +329,11 @@ export function useTimedGame(
   /**
    * Update Timed Play score for term on metadata object
    */
-  function gradeTimedPlayEvent(dispatch:AppDispatch, uid:string, repetition:SpaceRepetitionMap) {
+  function gradeTimedPlayEvent(
+    dispatch: AppDispatch,
+    uid: string,
+    repetition: SpaceRepetitionMap
+  ) {
     if (loop > 0 && tpAnswered.current !== undefined) {
       if (tpBtn === "reset") {
         if (repetition[uid]?.pron === true) {
@@ -338,7 +348,7 @@ export function useTimedGame(
         }
         // else don't grade ... skip
       } else {
-        if (tpAnswered.current === true) {
+        if (tpAnswered.current) {
           if (tpElapsed.current !== undefined) {
             dispatch(setWordTPCorrect(uid, tpElapsed.current));
           }
@@ -382,15 +392,17 @@ export function useTimedGame(
    * @param direction Direction of move
    * @param handler
    */
-  function timedPlayAnswerHandlerWrapper(direction:string, handler:Function) {
-    if(loop === 0)
-      return handler
+  function timedPlayAnswerHandlerWrapper(
+    direction: string,
+    handler: (direction: string) => void
+  ) {
+    if (loop === 0) return handler;
 
     let answerHandler = handler;
     if (direction === "up" || direction === "down") {
       // force incorrect direction to correct handler
       const correctedDirection = englishSideUp ? "up" : "down";
-      answerHandler = (wrongDirection:string) =>
+      answerHandler = (/*wrongDirection: string*/) =>
         handler(correctedDirection);
     }
 
@@ -435,30 +447,30 @@ export function useTimedGame(
  * Logic during Timed Play swipe or key action
  */
 function interruptTimedPlayToAnswer(
-  direction:string,
-  answerHandler:Function,
-  setLoop:React.Dispatch<React.SetStateAction<0|1|2|3>>,
-  tpAnimation:number|null,
-  setTpAnimation:React.Dispatch<React.SetStateAction<number|null>>,
-  setLoopQuitCount:React.Dispatch<React.SetStateAction<number>>,
-  loopQuitTimer:React.MutableRefObject<NodeJS.Timer[]|null>,
-  tpTimeStamp:React.MutableRefObject<number|undefined>,
-  abortLoop:()=>boolean,
-  getElapsedTimedPlay:Function,
-  tpAnswered:React.MutableRefObject<boolean|undefined>,
-  tpElapsed:React.MutableRefObject<number|undefined>
+  direction: string,
+  answerHandler: GameActionHandler,
+  setLoop: React.Dispatch<React.SetStateAction<0 | 1 | 2 | 3>>,
+  tpAnimation: number | null,
+  setTpAnimation: React.Dispatch<React.SetStateAction<number | null>>,
+  setLoopQuitCount: React.Dispatch<React.SetStateAction<number>>,
+  loopQuitTimer: React.MutableRefObject<NodeJS.Timer[] | null>,
+  tpTimeStamp: React.MutableRefObject<number | undefined>,
+  abortLoop: () => boolean,
+  getElapsedTimedPlay: () => { tpElapsed?: number },
+  tpAnswered: React.MutableRefObject<boolean | undefined>,
+  tpElapsed: React.MutableRefObject<number | undefined>
 ) {
-
   let handler = answerHandler;
-  const noop = () => {};
+  const noop = () => {
+    /** override handler with no-op */
+  };
   let userInterruptAnimation = () =>
     interruptTimedPlayAnimation(tpAnimation, setTpAnimation);
 
   // interrupt loop
   const wasLooping = abortLoop();
   if (wasLooping) {
-
-    const duringQuery:boolean|undefined =
+    const duringQuery: boolean | undefined =
       tpAnimation === null && tpTimeStamp.current !== undefined;
     const duringCountDown =
       tpAnimation !== null && tpTimeStamp.current !== undefined;
@@ -508,7 +520,10 @@ function interruptTimedPlayToAnswer(
 /**
  * Interrupt Timed play animation
  */
-function interruptTimedPlayAnimation(tpAnimation:number|null, setTpAnimation:React.Dispatch<React.SetStateAction<number|null>>) {
+function interruptTimedPlayAnimation(
+  tpAnimation: number | null,
+  setTpAnimation: React.Dispatch<React.SetStateAction<number | null>>
+) {
   if (tpAnimation !== null) {
     setTimeout(() => {
       setTpAnimation(0);
@@ -520,7 +535,10 @@ function interruptTimedPlayAnimation(tpAnimation:number|null, setTpAnimation:Rea
   }
 }
 
-function interruptTimedPlayToAutoQuit(setLoop:React.Dispatch<React.SetStateAction<0|1|2|3>>, setLoopQuitCount:React.Dispatch<React.SetStateAction<number>>) {
+function interruptTimedPlayToAutoQuit(
+  setLoop: React.Dispatch<React.SetStateAction<0 | 1 | 2 | 3>>,
+  setLoopQuitCount: React.Dispatch<React.SetStateAction<number>>
+) {
   const countDown = setInterval(() => {
     setLoopQuitCount((prev) => {
       const zero = prev === 1;

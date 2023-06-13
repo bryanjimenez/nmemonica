@@ -4,9 +4,9 @@ import { useEffect } from "react";
  * Attaches keyboard actions to component
  */
 export function useKeyboardActions(
-  gameActionHandler:Function,
-  flipPhrasesPracticeSide:Function,
-  timedPlayAnswerHandlerWrapper?:Function
+  gameActionHandler: Function,
+  flipPhrasesPracticeSide: Function,
+  timedPlayAnswerHandlerWrapper?: Function
 ) {
   useEffect(() => {
     const kHandler = buildArrowKeyPress(
@@ -27,13 +27,12 @@ export function useKeyboardActions(
 }
 
 function buildArrowKeyPress(
-  gameActionHandler:Function,
-  flipVocabularyPracticeSide:Function,
-  timedPlayAnswerHandlerWrapper?:Function
+  gameActionHandler: Function,
+  flipVocabularyPracticeSide: Function,
+  timedPlayAnswerHandlerWrapper?: Function
 ) {
-
-  return function arrowKeyPress(event:KeyboardEvent) {
-    const actionHandlers:[string,Function][] = [
+  return function arrowKeyPress(event: KeyboardEvent) {
+    const actionHandlers: [string, Function][] = [
       ["ArrowRight", () => gameActionHandler("left")],
       ["ArrowLeft", () => gameActionHandler("right")],
       ["ArrowUp", () => gameActionHandler("up")],
@@ -58,9 +57,7 @@ function buildArrowKeyPress(
                 ArrowRight: "right",
               }[action] || "";
 
-            const handlerWrapper = (
-             correctedDirection:string
-            ) => {
+            const handlerWrapper = (correctedDirection: string) => {
               if (correctedDirection) {
                 gameActionHandler(correctedDirection);
               } else {

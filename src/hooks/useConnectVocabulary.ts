@@ -1,13 +1,18 @@
 import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
+
+import type { RootState } from "../slices";
 import { TermFilterBy, TermSortBy } from "../slices/settingHelper";
 
 /**
  * Vocabulary app-state props
  */
 export function useConnectVocabulary() {
-  const [debug, swipeThreshold, motionThreshold] = useSelector(
-    ({ global }:RootState) => [
+  const [debug, swipeThreshold, motionThreshold] = useSelector<
+    RootState,
+    [number, number, number]
+  >(
+    ({ global }: RootState) => [
       global.debug,
       global.swipeThreshold,
       global.motionThreshold,
@@ -15,34 +20,42 @@ export function useConnectVocabulary() {
     shallowEqual
   );
 
-  const { value: vocabList } = useSelector(
-    ({ vocabulary }:RootState) => vocabulary,
+  const { value: vocabList, grpObj: vocabGroups } = useSelector(
+    ({ vocabulary }: RootState) => vocabulary,
     (before, after) => before.version === after.version
   );
 
   const { repetition } = useSelector(
-    ( { vocabulary }:RootState) => vocabulary.setting,
+    ({ vocabulary }: RootState) => vocabulary.setting,
     (before, after) => before.repTID === after.repTID
   );
 
-  const [practiceSide, autoVerbView, verbForm]:[boolean, boolean, string ] = useSelector(
-    ({ vocabulary }:RootState) => {
-      const { practiceSide, autoVerbView } = vocabulary.setting;
+  const [practiceSide, autoVerbView, verbForm] = useSelector<
+    RootState,
+    [boolean, boolean, string]
+  >(({ vocabulary }: RootState) => {
+    const { practiceSide, autoVerbView } = vocabulary.setting;
 
-      const { verbForm } = vocabulary;
+    const { verbForm } = vocabulary;
 
-      // TODO: https://github.com/reduxjs/reselect#basic-usage
-      return [
-        practiceSide,
-        autoVerbView,
-        verbForm,
-      ];
-    },
-    shallowEqual
-  );
+    // TODO: https://github.com/reduxjs/reselect#basic-usage
+    return [practiceSide, autoVerbView, verbForm];
+  }, shallowEqual);
 
-  const [mt, r, ft, he, romajiEnabled, bareKanji, verbColSplit, sm]:[number,boolean,typeof TermFilterBy[keyof typeof TermFilterBy],boolean,boolean,boolean,number,typeof TermSortBy[keyof typeof TermSortBy]] =
-    useSelector(({ vocabulary }:RootState) => {
+  const [mt, r, ft, he, romajiEnabled, bareKanji, verbColSplit, sm] =
+    useSelector<
+      RootState,
+      [
+        number,
+        boolean,
+        (typeof TermFilterBy)[keyof typeof TermFilterBy],
+        boolean,
+        boolean,
+        boolean,
+        number,
+        (typeof TermSortBy)[keyof typeof TermSortBy]
+      ]
+    >(({ vocabulary }: RootState) => {
       const {
         memoThreshold,
         reinforce,
@@ -66,18 +79,21 @@ export function useConnectVocabulary() {
       ];
     }, shallowEqual);
 
-  const verbFormsOrder = useSelector(
-    ({ vocabulary }:RootState) => {
+  const verbFormsOrder = useSelector<RootState, string[]>(
+    ({ vocabulary }: RootState) => {
       const { verbFormsOrder } = vocabulary.setting;
       return verbFormsOrder;
     },
     shallowEqual
   );
 
-  const activeGroup = useSelector(({ vocabulary }:RootState) => {
-    const { activeGroup } = vocabulary.setting;
-    return activeGroup;
-  }, shallowEqual);
+  const activeGroup = useSelector<RootState, string[]>(
+    ({ vocabulary }: RootState) => {
+      const { activeGroup } = vocabulary.setting;
+      return activeGroup;
+    },
+    shallowEqual
+  );
 
   /** Threshold describing how far memorized a word is */
   const memoThreshold = useRef(mt);
@@ -106,6 +122,7 @@ export function useConnectVocabulary() {
     swipeThreshold,
     motionThreshold,
     vocabList,
+    vocabGroups,
     romajiEnabled,
     bareKanji,
     verbFormsOrder,

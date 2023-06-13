@@ -8,15 +8,15 @@ import {
  *
  * expects an onShakeEventHandler
  */
-export function useDeviceMotionActions(motionThreshold:number) {
+export function useDeviceMotionActions(motionThreshold: number) {
   /**
    * Returns object with two functions
    *
    * addDeviceMotionEvent and removeDeviceMotionEvent
    * @param onShakeEventHandler function to call on shake event
    */
-  function deviceMotionEvent(onShakeEventHandler:(value: number) => void) {
-    const motionListener = (event:DeviceMotionEvent) => {
+  function deviceMotionEvent(onShakeEventHandler: (value: number) => void) {
+    const motionListener = (event: DeviceMotionEvent) => {
       try {
         motionThresholdCondition(event, motionThreshold, onShakeEventHandler);
       } catch (error) {

@@ -3,14 +3,17 @@ import React, { useMemo } from "react";
 import { JapaneseVerb } from "../helper/JapaneseVerb";
 import { furiganaToggled } from "../slices/vocabularySlice";
 import { useDispatch } from "react-redux";
-import type { RawJapanese, RawVocabulary, VerbFormArray, FuriganaToggleMap } from "../typings/raw";
+import type {
+  RawJapanese,
+  VerbFormArray,
+  FuriganaToggleMap,
+} from "../typings/raw";
 import { JapaneseText } from "../helper/JapaneseText";
-
 
 /**
  * Array containing the avaiable verb forms
  */
-export function useGetVerbFormsArray(rawVerb:RawJapanese, order?:string[]) {
+export function useGetVerbFormsArray(rawVerb: RawJapanese, order?: string[]) {
   return useMemo(() => {
     const verb = {
       dictionary:
@@ -52,21 +55,26 @@ export function useGetVerbFormsArray(rawVerb:RawJapanese, order?:string[]) {
 /**
  * decorates label with metadata info (intransitive, keigo, etc.)
  */
-export function useJapaneseLabel(isOnBottom:boolean, jObj:JapaneseText | JapaneseVerb, inJapanese:JSX.Element, jumpToTerm?:Function) {
+export function useJapaneseLabel(
+  isOnBottom: boolean,
+  jObj: JapaneseText | JapaneseVerb,
+  inJapanese: React.JSX.Element,
+  jumpToTerm?: Function
+) {
   return useMemo(() => {
     const isOnTop = !isOnBottom;
-    let indicators:JSX.Element[] = [];
+    let indicators: React.JSX.Element[] = [];
 
     let showAsterix = false;
     let showIntr = false;
-    let pairUID:string|undefined;
+    let pairUID: string | undefined;
     if (
       jObj.constructor.name === JapaneseVerb.name &&
       "isExceptionVerb" in jObj
     ) {
       showAsterix = jObj.isExceptionVerb() || jObj.getVerbClass() === 3;
       showIntr = jObj.isIntransitive();
-      pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
+      pairUID = jObj.getTransitivePair() ?? jObj.getIntransitivePair();
     }
 
     const showNaAdj = jObj.isNaAdj();
@@ -117,7 +125,7 @@ export function useJapaneseLabel(isOnBottom:boolean, jObj:JapaneseText | Japanes
           {showNaAdj && <span className="opacity-25"> {"な"}</span>}
           <span className="fs-5">
             <span> (</span>
-            {indicators.reduce<JSX.Element[]>((a, c, i) => {
+            {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
               if (i > 0 && i < indicators.length) {
                 return [...a, <span key={indicators.length + i}> , </span>, c];
               } else {
@@ -153,18 +161,22 @@ export function useJapaneseLabel(isOnBottom:boolean, jObj:JapaneseText | Japanes
 /**
  * decorates label with metadata info (intransitive, keigo, etc.)
  */
-export function useEnglishLabel(isOnTop:boolean, jObj:JapaneseText | JapaneseVerb, inEnglish:JSX.Element | string, jumpToTerm?:Function) {
+export function useEnglishLabel(
+  isOnTop: boolean,
+  jObj: JapaneseText | JapaneseVerb,
+  inEnglish: React.JSX.Element | string,
+  jumpToTerm?: Function
+) {
   return useMemo(() => {
-    
-    let indicators:JSX.Element[] = [];
+    let indicators: React.JSX.Element[] = [];
     let showIntr = false;
-    let pairUID:string|undefined;
+    let pairUID: string | undefined;
     if (
       jObj.constructor.name === JapaneseVerb.name &&
       "isExceptionVerb" in jObj
     ) {
       showIntr = jObj.isIntransitive();
-      pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
+      pairUID = jObj.getTransitivePair() ?? jObj.getIntransitivePair();
     }
 
     const showSlang = jObj.isSlang();
@@ -211,7 +223,7 @@ export function useEnglishLabel(isOnTop:boolean, jObj:JapaneseText | JapaneseVer
           {inEnglish}
           <span>
             <span> (</span>
-            {indicators.reduce<JSX.Element[]>((a, c, i) => {
+            {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
               if (i > 0 && i < indicators.length) {
                 return [...a, <span key={indicators.length + i}> , </span>, c];
               } else {
@@ -231,11 +243,11 @@ export function useEnglishLabel(isOnTop:boolean, jObj:JapaneseText | JapaneseVer
 }
 
 export function useLabelPlacementHelper(
-  englishSideUp:boolean,
-  inEnglish:JSX.Element | string,
-  inJapanese:JSX.Element,
-  eLabel:JSX.Element | string,
-  jLabel:JSX.Element
+  englishSideUp: boolean,
+  inEnglish: React.JSX.Element | string,
+  inJapanese: React.JSX.Element,
+  eLabel: React.JSX.Element | string,
+  jLabel: React.JSX.Element
 ) {
   return useMemo(() => {
     let topValue, bottomValue, topLabel, bottomLabel;
@@ -257,16 +269,17 @@ export function useLabelPlacementHelper(
 }
 
 /**
- * @typedef {{furigana: { show: boolean, toggle: (() => void) | undefined }}} FuriganaToggleSetting
- */
-/**
  * Creates the settings object for furigana toggling
  */
-export function useToggleFuriganaSettingHelper(uid:string, settings:FuriganaToggleMap, englishSideUp?:boolean) {
+export function useToggleFuriganaSettingHelper(
+  uid: string,
+  settings: FuriganaToggleMap,
+  englishSideUp?: boolean
+) {
   const dispatch = useDispatch();
 
   // show by default unless explicitly set to false
-  const show = !(settings && settings[uid] && settings[uid].f === false);
+  const show = !(settings?.[uid]?.f === false);
 
   return useMemo(() => {
     const furiganaToggleObject = {

@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
-import { getWindow } from "../helper/browserGlobal";
 import type {
   ActionCreatorWithoutPayload,
   PayloadActionCreator,
 } from "@reduxjs/toolkit";
+import React, { useEffect, useState } from "react";
+
+import { getWindow } from "../helper/browserGlobal";
+import type { AppDispatch } from "../slices";
+
 /**
  * For fading/transition
  * @param delay in ms
  */
-export function useFade(delay:number):[boolean, Function] {
+export function useFade(delay: number): [boolean, () => void] {
   const [fade, setFade] = useState(true);
 
   useEffect(() => {
@@ -39,9 +42,12 @@ export function useForceRender() {
 export function useWindowSize() {
   // Initialize state with undefined width/height so server and client renders match
   // Learn more here: https://joshwcomeau.com/react/the-perils-of-rehydration/
-  const [windowSize, setWindowSize] = useState<{width?:number, height?:number}>({
-   width: undefined,
-   height: undefined,
+  const [windowSize, setWindowSize] = useState<{
+    width?: number;
+    height?: number;
+  }>({
+    width: undefined,
+    height: undefined,
   });
   useEffect(() => {
     const w = getWindow();
@@ -64,13 +70,14 @@ export function useWindowSize() {
 }
 
 /**
-* State setter from event
-* @param updaterFunction useState updater function
-* @param stateValue value to set state
-*/
+ * State setter from event
+ * @param updaterFunction useState updater function
+ * @param stateValue value to set state
+ */
 export function setStateFunction<T>(
-  updaterFunction:React.Dispatch<React.SetStateAction<T>>, 
-  stateValue:T|((prevState:T)=>T) ):()=>void {
+  updaterFunction: React.Dispatch<React.SetStateAction<T>>,
+  stateValue: T | ((prevState: T) => T)
+): () => void {
   return function eventHandler() {
     if (stateValue || typeof stateValue === "function") {
       updaterFunction(stateValue);
@@ -78,8 +85,6 @@ export function setStateFunction<T>(
     }
   };
 }
-
-
 
 /**
  * @overload Wrap dispatch around an action
@@ -103,7 +108,7 @@ export function buildAction(
 export function buildAction(
   dispatch: AppDispatch,
   action: Function
-): (childValue:unknown) => void;
+): (childValue: unknown) => void;
 
 /**
  * @overload Wrap dispatch around an action
@@ -115,7 +120,7 @@ export function buildAction(
  */
 export function buildAction<P>(
   dispatch: AppDispatch,
-  act: PayloadActionCreator<P, string, void>,
+  act: PayloadActionCreator<P>,
   parentValue: P
 ): () => void;
 
@@ -128,17 +133,20 @@ export function buildAction<P>(
  */
 export function buildAction<P>(
   dispatch: AppDispatch,
-  act: PayloadActionCreator<P, string, void>
+  act: PayloadActionCreator<P>
 ): (childValue: P) => void;
-
 
 /**
  * @param dispatch Redux store's dispatch function
  * @param action Redux Toolkit Action creator
  * @param parentValue Action payload value
  */
-export function buildAction(dispatch:AppDispatch, action:Function, parentValue?:unknown) {
-  return function eventHandler(childValue:unknown) {
+export function buildAction(
+  dispatch: AppDispatch,
+  action: Function,
+  parentValue?: unknown
+) {
+  return function eventHandler(childValue: unknown) {
     if (parentValue) {
       // parentValue
       dispatch(action(parentValue));

@@ -10,12 +10,18 @@ import type { ActionHandlerTuple } from "../typings/raw";
 /**
  * Use browser's media session controls
  */
-export function useMediaSession(name:string, loop:number, beginLoop:Function, abortLoop:Function, looperSwipe:Function) {
+export function useMediaSession(
+  name: string,
+  loop: number,
+  beginLoop: Function,
+  abortLoop: Function,
+  looperSwipe: Function
+) {
   useEffect(() => {
     setMediaSessionMetadata(name);
     // setMediaSession___PlaybackState("paused???");
 
-    const actionHandlers:ActionHandlerTuple[] = [
+    const actionHandlers: ActionHandlerTuple[] = [
       [
         "play",
         () => {
