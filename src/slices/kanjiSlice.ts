@@ -10,52 +10,25 @@ import {
 } from "./settingHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import type { RawKanji, SpaceRepetitionMap } from "../typings/raw";
+import type { RootState } from ".";
 
-/**
- * Fetch vocabulary
- */
-export const getKanji = createAsyncThunk(
-  "kanji/getKanji",
-  async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const version = state.version.kanji || "0";
-
-    if (version === "0") {
-      console.error("fetching kanji: 0");
-    }
-    return fetch(firebaseConfig.databaseURL + "/lambda/kanji.json", {
-      headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
-  }
-);
-
-export const kanjiFromLocalStorage = createAsyncThunk(
-  "kanji/kanjiFromLocalStorage",
-  /** @param {typeof initialState['setting']} arg */
-  async (arg) => {
-    const initValues = arg;
-
-    return initValues;
-  }
-);
-
-export interface KanjiIniSt {
+export interface KanjiInitSlice {
   value: RawKanji[];
   version: string;
   tagObj: string[];
 
   setting: {
-    choiceN: number,
-    filter: typeof TermFilterBy[keyof typeof TermFilterBy];
-    reinforce: boolean,
-    repTID: number,
+    choiceN: number;
+    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+    reinforce: boolean;
+    repTID: number;
     repetition: SpaceRepetitionMap;
     activeGroup: string[];
     activeTags: string[];
-  },
+  };
 }
 
-export const initialState:KanjiIniSt = {
+export const kanjiInitState: KanjiInitSlice = {
   value: [],
   version: "",
   tagObj: [],
@@ -65,22 +38,45 @@ export const initialState:KanjiIniSt = {
     filter: 2,
     reinforce: false,
     repTID: -1,
-    repetition:{},
+    repetition: {},
     activeGroup: [],
     activeTags: [],
   },
 };
 
+/**
+ * Fetch vocabulary
+ */
+export const getKanji = createAsyncThunk(
+  "kanji/getKanji",
+  async (arg, thunkAPI) => {
+    const state = thunkAPI.getState() as RootState;
+    const version = state.version.kanji ?? "0";
+
+    // if (version === "0") {
+    //   console.error("fetching kanji: 0");
+    // }
+    return fetch(firebaseConfig.databaseURL + "/lambda/kanji.json", {
+      headers: { "Data-Version": version },
+    }).then((res) => res.json().then((value) => ({ value, version })));
+  }
+);
+
+export const kanjiFromLocalStorage = createAsyncThunk(
+  "kanji/kanjiFromLocalStorage",
+  async (arg: typeof kanjiInitState.setting) => {
+    const initValues = arg;
+
+    return initValues;
+  }
+);
+
 const kanjiSlice = createSlice({
   name: "kanji",
-  initialState,
+  initialState: kanjiInitState,
   reducers: {
-    /**
-     * @param {typeof initialState} state
-     * @param {{payload: string}} action
-     */
-    toggleKanjiActiveTag(state, action) {
-      const tagName:string = action.payload;
+    toggleKanjiActiveTag(state, action: { payload: string }) {
+      const tagName: string = action.payload;
 
       const { activeTags } = state.setting;
 
@@ -99,7 +95,7 @@ const kanjiSlice = createSlice({
         newValue
       );
     },
-    toggleKanjiActiveGrp: (state, action) => {
+    toggleKanjiActiveGrp: (state, action: { payload: string }) => {
       const grpName = action.payload;
 
       const { activeGroup } = state.setting;
@@ -109,18 +105,14 @@ const kanjiSlice = createSlice({
 
       state.setting.activeGroup = localStoreAttrUpdate(
         new Date(),
-        { kaji: state.setting },
+        { kanji: state.setting },
         "/kanji/",
         "activeGroup",
         newValue
       );
     },
 
-    /**
-     * @param {typeof initialState} state
-     * @param {{payload: string}} action
-     */
-    addFrequencyKanji(state, action) {
+    addFrequencyKanji(state, action: { payload: string }) {
       const uid = action.payload;
 
       const { value: newValue } = updateSpaceRepTerm(
@@ -143,11 +135,7 @@ const kanjiSlice = createSlice({
       );
     },
 
-    /**
-     * @param {typeof initialState} state
-     * @param {{payload: string}} action
-     */
-    removeFrequencyKanji(state, action) {
+    removeFrequencyKanji(state, action: { payload: string }) {
       const uid = action.payload;
 
       const spaceRep = state.setting.repetition;
@@ -177,8 +165,8 @@ const kanjiSlice = createSlice({
         }
       }
     },
-    setKanjiBtnN(state, action) {
-      const number:number = action.payload;
+    setKanjiBtnN(state, action: { payload: number }) {
+      const number = action.payload;
 
       state.setting.choiceN = localStoreAttrUpdate(
         new Date(),
@@ -189,11 +177,7 @@ const kanjiSlice = createSlice({
       );
     },
 
-    /**
-     * @param {typeof initialState} state
-     * @param {{payload: number|undefined}} action
-     */
-    toggleKanjiFilter(state, action) {
+    toggleKanjiFilter(state, action: { payload?: number }) {
       const override = action.payload;
       const { filter, reinforce } = state.setting;
 
@@ -201,7 +185,7 @@ const kanjiSlice = createSlice({
         filter + 1,
         [TermFilterBy.FREQUENCY, TermFilterBy.TAGS],
         override
-      ) as typeof TermFilterBy[keyof typeof TermFilterBy];
+      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),
@@ -227,22 +211,33 @@ const kanjiSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(getKanji.fulfilled, (state, action) => {
-      const { value: v, version } = action.payload;
-      const value = Object.keys(v).map((k) => ({
-        ...v[k],
-        uid: k,
-        tag: v[k].tag === undefined ? [] : v[k].tag,
-      }));
+    builder.addCase(
+      getKanji.fulfilled,
+      (
+        state,
+        action: {
+          payload: {
+            value: Record<string, RawKanji>;
+            version: KanjiInitSlice["version"];
+          };
+        }
+      ) => {
+        const { value: v, version } = action.payload;
+        const value = Object.keys(v).map((k) => ({
+          ...v[k],
+          uid: k,
+          tag: v[k].tag === undefined ? [] : v[k].tag,
+        }));
 
-      state.tagObj = buildTagObject(v);
-      state.value = value;
-      state.version = version;
-    });
+        state.tagObj = buildTagObject(v);
+        state.value = value;
+        state.version = version;
+      }
+    );
 
     builder.addCase(kanjiFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;
-      const mergedSettings = merge(initialState.setting, localStorageValue);
+      const mergedSettings = merge(kanjiInitState.setting, localStorageValue);
 
       return {
         ...state,

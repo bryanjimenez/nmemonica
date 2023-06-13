@@ -1,8 +1,8 @@
-/**
- * @typedef {import("../typings/raw").SpaceRepetitionMap} SpaceRepetitionMap
- */
-
-import type { MetaDataObj, SpaceRepetitionMap } from "../typings/raw";
+import type {
+  FilterKeysOfType,
+  MetaDataObj,
+  SpaceRepetitionMap,
+} from "../typings/raw";
 
 // enum
 export const DebugLevel = Object.freeze({
@@ -46,7 +46,11 @@ export const TermSortByLabel = [
 /**
  * Toggle a filter, or override. Skips non-allowed values
  */
-export function toggleAFilter(filter:number, allowed:number[], override?:number) {
+export function toggleAFilter(
+  filter: number,
+  allowed: number[],
+  override?: number
+) {
   const max = Math.max(...allowed);
 
   let newFilter = filter;
@@ -70,8 +74,8 @@ export function toggleAFilter(filter:number, allowed:number[], override?:number)
 export function grpParse(grpNames: string[], activeGroup: string[]) {
   // const grpNamesSet = [...new Set(grpNames)];
   // let activeGroupSet = [...new Set(activeGroup)];
-  const grpNamesSet = Array.from(new Set(grpNames))
-  let activeGroupSet = Array.from(new Set(activeGroup))
+  const grpNamesSet = Array.from(new Set(grpNames));
+  let activeGroupSet = Array.from(new Set(activeGroup));
 
   grpNamesSet.forEach((grpEl) => {
     const isParentGrp = !grpEl.includes(".");
@@ -102,19 +106,25 @@ export function grpParse(grpNames: string[], activeGroup: string[]) {
  * @param options additional optional settable attributes ({@link furiganaToggled })
  */
 export function updateSpaceRepTerm(
-  uid:string,
-  spaceRep:SpaceRepetitionMap,
-  update:{count?: boolean, date?: boolean} = { count: true, date: true },
-  options?:{toggle?: (import("../typings/raw").FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>)[], set?: Record<string,unknown>}
+  uid: string,
+  spaceRep: SpaceRepetitionMap,
+  update: { count?: boolean; date?: boolean } = { count: true, date: true },
+  options?: {
+    toggle?: FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>[];
+    set?: Record<string, unknown>;
+  }
 ) {
-  let prevMap =
-    spaceRep[uid] === undefined ? undefined : { [uid]: spaceRep[uid] };
+  // TODO: create test updateSpaceRepTerm
+  const uidData = spaceRep[uid];
+  let prevMap = uidData === undefined ? undefined : { [uid]: spaceRep[uid] };
+
+  const views = uidData?.vC ?? -1;
 
   let count;
-  if (spaceRep[uid] && spaceRep[uid].vC > 0 && update.count === true) {
-    count = spaceRep[uid].vC + 1;
-  } else if (spaceRep[uid] && spaceRep[uid].vC > 0 && update.count === false) {
-    count = spaceRep[uid].vC;
+  if (views > 0 && update.count === true) {
+    count = views + 1;
+  } else if (views > 0 && update.count === false) {
+    count = views;
   } else {
     count = 1;
   }
@@ -153,9 +163,10 @@ export function updateSpaceRepTerm(
     }
   }
 
-  const keepPrevDate = spaceRep[uid]?.d !== undefined && update.date === false;
-  const now = keepPrevDate ? spaceRep[uid].d : new Date().toJSON();
-  const o:MetaDataObj = {
+  const prevDate = uidData?.d;
+  const keepPrevDate = prevDate !== undefined && update.date === false;
+  const now = keepPrevDate ? prevDate : new Date().toJSON();
+  const o: MetaDataObj = {
     ...(spaceRep[uid] || {}),
     vC: count,
     d: now,
@@ -165,7 +176,7 @@ export function updateSpaceRepTerm(
   const map = { [uid]: o };
   prevMap = prevMap === undefined ? { ...map } : prevMap;
 
-  const newValue:SpaceRepetitionMap = { ...spaceRep, ...map };
+  const newValue: SpaceRepetitionMap = { ...spaceRep, ...map };
 
   // TODO: rename this to value-> record, map->value, prevMap -> prevValue
   return { map, prevMap, value: newValue };

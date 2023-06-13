@@ -11,77 +11,27 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import type { RawPhrase, SpaceRepetitionMap } from "../typings/raw";
+import type { RootState } from ".";
 
-
-export const buildPhraseArray = (object:Record<string,RawPhrase>) =>
-  Object.keys(object).map((k) => ({
-    ...object[k],
-    uid: k,
-  }));
-
-/**
- * Fetch phrases
- */
-export const getPhrase = createAsyncThunk(
-  "phrase/getPhrase",
-  async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState
-    // TODO: rename state.phrases -> state.phrase
-    const version = state.version.phrases || "0";
-
-    if (version === "0") {
-      console.error("fetching phrase: 0");
-    }
-    return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
-      headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
-  }
-);
-
-export const phraseFromLocalStorage = createAsyncThunk(
-  "phrase/phraseFromLocalStorage",
-  /** @param {typeof initialState['setting']} arg */
-  async (arg) => {
-    const initValues = arg;
-
-    return initValues;
-  }
-);
-
-export const updateSpaceRepPhrase = createAsyncThunk(
-  "phrase/updateSpaceRepPhrase",
-  async (arg:{uid: string, shouldIncrement: boolean}, thunkAPI) => {
-    const { uid, shouldIncrement } = arg;
-    const state = (thunkAPI.getState() as RootState).phrases;
-
-    const spaceRep = state.setting.repetition;
-
-    return updateSpaceRepTerm(uid, spaceRep, {
-      count: shouldIncrement,
-      date: true,
-    });
-  }
-);
-
-export interface phraseStTy {
-  value:RawPhrase[];
-  version: string,
-  grpObj: {},
+export interface PhraseInitSlice {
+  value: RawPhrase[];
+  version: string;
+  grpObj: {};
 
   setting: {
-    ordered: typeof TermSortBy[keyof typeof TermSortBy]
-    practiceSide: boolean,
-    romaji: boolean,
-    reinforce: boolean,
-    repTID: number,
+    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
+    practiceSide: boolean;
+    romaji: boolean;
+    reinforce: boolean;
+    repTID: number;
     repetition: SpaceRepetitionMap;
-    frequency: { uid?: string, count: number },
-    activeGroup: string[],
-    filter: typeof TermFilterBy[keyof typeof TermFilterBy];
-  },
+    frequency: { uid?: string; count: number };
+    activeGroup: string[];
+    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+  };
 }
 
-export const initialState:phraseStTy = {
+export const phraseInitState: PhraseInitSlice = {
   value: [],
   version: "",
   grpObj: {},
@@ -99,31 +49,77 @@ export const initialState:phraseStTy = {
   },
 };
 
+export const buildPhraseArray = (object: Record<string, RawPhrase>) =>
+  Object.keys(object).map((k) => ({
+    ...object[k],
+    uid: k,
+  }));
+
+/**
+ * Fetch phrases
+ */
+export const getPhrase = createAsyncThunk(
+  "phrase/getPhrase",
+  async (arg, thunkAPI) => {
+    const state = thunkAPI.getState() as RootState;
+    // TODO: rename state.phrases -> state.phrase
+    const version = state.version.phrases ?? "0";
+
+    // if (version === "0") {
+    //   console.error("fetching phrase: 0");
+    // }
+    return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
+      headers: { "Data-Version": version },
+    }).then((res) => res.json().then((value) => ({ value, version })));
+  }
+);
+
+export const phraseFromLocalStorage = createAsyncThunk(
+  "phrase/phraseFromLocalStorage",
+  async (arg: typeof phraseInitState.setting) => {
+    const initValues = arg;
+
+    return initValues;
+  }
+);
+
+export const updateSpaceRepPhrase = createAsyncThunk(
+  "phrase/updateSpaceRepPhrase",
+  async (arg: { uid: string; shouldIncrement: boolean }, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = (thunkAPI.getState() as RootState).phrases;
+
+    const spaceRep = state.setting.repetition;
+
+    return updateSpaceRepTerm(uid, spaceRep, {
+      count: shouldIncrement,
+      date: true,
+    });
+  }
+);
+
 const phraseSlice = createSlice({
   name: "phrase",
-  initialState,
+  initialState: phraseInitState,
   reducers: {
     /**
-     * @param {typeof initialState} state
-     * @param {{payload: number|undefined}} action
+     * Toggle between group, frequency, and tags filtering
      */
-    togglePhrasesFilter(state, action) {
-      /**
-       * Toggle between group, frequency, and tags filtering
-       * @param {typeof TermFilterBy[keyof TermFilterBy]} [override]
-       */
+    togglePhrasesFilter(
+      state,
+      action: { payload?: (typeof TermFilterBy)[keyof typeof TermFilterBy] }
+    ) {
       const override = action.payload;
 
-      const allowed:number[] =[
-        TermFilterBy.FREQUENCY,
-        TermFilterBy.GROUP,
-      ];
+      const allowed = [TermFilterBy.FREQUENCY, TermFilterBy.GROUP];
 
       const { filter, reinforce } = state.setting;
 
-      const newFilter =
-        toggleAFilter(filter + 1, allowed, override) as typeof TermFilterBy[keyof typeof TermFilterBy]
-      
+      const newFilter = toggleAFilter(
+        filter + 1,
+        allowed,
+        override
+      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),
@@ -138,17 +134,13 @@ const phraseSlice = createSlice({
       }
     },
 
-    /**
-     * @param {typeof initialState} state
-     * @param {{payload: string}} action
-     */
-    togglePhraseActiveGrp(state, action) {
+    togglePhraseActiveGrp(state, action: { payload: string }) {
       const grpName = action.payload;
 
       const { activeGroup } = state.setting;
 
       const groups = Array.isArray(grpName) ? grpName : [grpName];
-      const newValue:string[] = grpParse(groups, activeGroup);
+      const newValue: string[] = grpParse(groups, activeGroup);
 
       state.setting.activeGroup = localStoreAttrUpdate(
         new Date(),
@@ -197,11 +189,7 @@ const phraseSlice = createSlice({
       );
     },
 
-    /**
-     * @param {typeof initialState} state
-     * @param {{payload: string}} action
-     */
-    removeFrequencyPhrase(state, action) {
+    removeFrequencyPhrase(state, action: { payload: string }) {
       const uid = action.payload;
 
       const spaceRep = state.setting.repetition;
@@ -255,14 +243,14 @@ const phraseSlice = createSlice({
     },
 
     togglePhrasesOrdering(state) {
-      const allowed = [
-        TermSortBy.RANDOM,
-        TermSortBy.VIEW_DATE,
-      ];
+      const allowed = [TermSortBy.RANDOM, TermSortBy.VIEW_DATE];
 
       const { ordered } = state.setting;
 
-      let newOrdered = toggleAFilter(ordered + 1, allowed) as typeof TermSortBy[keyof typeof TermSortBy]
+      let newOrdered = toggleAFilter(
+        ordered + 1,
+        allowed
+      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -284,7 +272,7 @@ const phraseSlice = createSlice({
 
     builder.addCase(phraseFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;
-      const mergedSettings = merge(initialState.setting, localStorageValue);
+      const mergedSettings = merge(phraseInitState.setting, localStorageValue);
 
       const phraseReinforceList = Object.keys(mergedSettings.repetition).filter(
         (k) => mergedSettings.repetition[k]?.rein === true

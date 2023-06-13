@@ -4,6 +4,10 @@ import {
   ADD_FREQUENCY_WORD,
 } from "../constants/actionNames";
 
+const serviceWorkerInitState = {
+  registered: false,
+};
+
 export const serviceWorkerRegistered = createAsyncThunk(
   "serviceWorker/serviceWorkerRegistered",
   async () => {
@@ -17,16 +21,19 @@ export const serviceWorkerRegistered = createAsyncThunk(
   }
 );
 
-const initialState = {
-  registered: false,
-};
-
 const serviceWorkerSlice = createSlice({
   name: "serviceWorker",
-  initialState,
+  initialState: serviceWorkerInitState,
 
   reducers: {
-    serviceWorkerNewTermsAdded(state, action) {
+    serviceWorkerNewTermsAdded(
+      state,
+      action: {
+        payload: {
+          newestWords: Record<string, { freq: string[]; dic: unknown }>;
+        };
+      }
+    ) {
       // const getState = () => ({ settings: state });
       const { newestWords } = action.payload;
       for (let termType in newestWords) {
@@ -42,7 +49,7 @@ const serviceWorkerSlice = createSlice({
         }
 
         console.warn("serviceWorkerNewTermsAdded Disabled");
-        console.warn(uidArr.length + " new " + termType);
+        console.warn(`${uidArr.length} new ${termType}`);
         // addFrequencyTerm(actType, uidArr)(getState).then(()=>{
         //trigger getVocab or getPhrases
         // })

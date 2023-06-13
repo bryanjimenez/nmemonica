@@ -1,6 +1,24 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { firebaseConfig } from "../../environment.development";
 
+export interface VersionInitSlice {
+    vocabulary?: string,
+    phrases?: string,
+    kanji?: string,
+    opposites?: string,
+    particles?: string,
+    suffixes?: string,
+}
+
+const initialState:VersionInitSlice = {
+  vocabulary: undefined,
+  phrases: undefined,
+  kanji: undefined,
+  opposites: undefined,
+  particles: undefined,
+  suffixes: undefined,
+}
+
 /**
  * Get app data versions file
  */
@@ -12,15 +30,7 @@ export const getVersions = createAsyncThunk("version/getVersions", async () =>
 
 const versionSlice = createSlice({
   name: "version",
-  initialState: {
-    vocabulary: undefined,
-    phrases: undefined,
-    kanji: undefined,
-    opposites: undefined,
-    particles: undefined,
-    suffixes: undefined,
-  },
-
+  initialState,
   reducers: {},
 
   extraReducers: (builder) => {

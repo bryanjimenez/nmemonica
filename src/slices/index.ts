@@ -1,13 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
-import kanaReducer from "./kanaSlice";
-import kanjiReducer from "./kanjiSlice";
-import oppositesReducer from "./oppositeSlice";
-import phrasesReducer from "./phraseSlice";
-import versionsReducer from "./versionSlice";
-import vocabularyReducer from "./vocabularySlice";
+
+import globalSlice, { GlobalInitSlice } from "./globalSlice";
+import kanaReducer, { KanaInitSlice } from "./kanaSlice";
+import kanjiReducer, { KanjiInitSlice } from "./kanjiSlice";
+import oppositesReducer, { OppositeInitSlice } from "./oppositeSlice";
+import particleGameReducer, { ParticleInitSlice } from "./particleSlice";
+import phrasesReducer, { PhraseInitSlice } from "./phraseSlice";
 import serviceWorkerReducer from "./serviceWorkerSlice";
-import particleGameReducer from "./particleSlice";
-import globalSlice from "./globalSlice";
+import versionsReducer from "./versionSlice";
+import vocabularyReducer, { VocabularyInitSlice } from "./vocabularySlice";
 
 export const store = configureStore({
   reducer: {
@@ -25,7 +26,18 @@ export const store = configureStore({
 });
 
 // https://redux-toolkit.js.org/tutorials/typescript#define-root-state-and-dispatch-types
-// export type AppDispatch = typeof store.dispatch
-export type RootState = ReturnType<typeof store.getState>
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 
-export default store
+export interface LocalStorageState {
+  global: GlobalInitSlice;
+  vocabulary: VocabularyInitSlice["setting"];
+  phrases: PhraseInitSlice["setting"];
+  kanji: KanjiInitSlice["setting"];
+  kana: KanaInitSlice["setting"];
+
+  opposite: OppositeInitSlice;
+  particle: ParticleInitSlice["setting"];
+}
+
+export default store;

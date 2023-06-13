@@ -4,33 +4,22 @@ import data from "../../data/kana.json";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { KanaType } from "./settingHelper";
 
-export const kanaFromLocalStorage = createAsyncThunk(
-  "kana/kanaFromLocalStorage",
-  /** @param {typeof initialState['setting']} arg */
-  async (arg) => {
-    const initValues = arg;
-
-    return initValues;
-  }
-);
-
-// TODO: rename all initialState interfaces to match
-export interface KanaIniSt {
-  hiragana: string[][],
-  katakana: string[][],
-  vowels: string[],
-  consonants: string[],
-  sounds: typeof data.sounds,
+export interface KanaInitSlice {
+  hiragana: string[][];
+  katakana: string[][];
+  vowels: string[];
+  consonants: string[];
+  sounds: typeof data.sounds;
 
   setting: {
-    choiceN: number,
-    wideMode: boolean,
-    easyMode: boolean,
-    charSet: typeof KanaType[keyof typeof KanaType]
-  },
+    choiceN: number;
+    wideMode: boolean;
+    easyMode: boolean;
+    charSet: (typeof KanaType)[keyof typeof KanaType];
+  };
 }
 
-const initialState:KanaIniSt = {
+const kanaInitState: KanaInitSlice = {
   hiragana: data.hiragana,
   katakana: data.katakana,
   vowels: data.vowels,
@@ -45,9 +34,18 @@ const initialState:KanaIniSt = {
   },
 };
 
+export const kanaFromLocalStorage = createAsyncThunk(
+  "kana/kanaFromLocalStorage",
+  async (arg: typeof kanaInitState.setting) => {
+    const initValues = arg;
+
+    return initValues;
+  }
+);
+
 const kanaSlice = createSlice({
   name: "kana",
-  initialState,
+  initialState: kanaInitState,
 
   reducers: {
     toggleKana(state) {
@@ -56,7 +54,7 @@ const kanaSlice = createSlice({
         charSet + 1 < Object.keys(KanaType).length
           ? charSet + 1
           : KanaType.HIRAGANA
-      ) as typeof KanaType[keyof typeof KanaType];
+      ) as (typeof KanaType)[keyof typeof KanaType];
 
       state.setting.charSet = localStoreAttrUpdate(
         new Date(),
@@ -67,8 +65,7 @@ const kanaSlice = createSlice({
       );
     },
     setKanaBtnN(state, action) {
-
-      const number:number = action.payload;
+      const number: number = action.payload;
       state.setting.choiceN = localStoreAttrUpdate(
         new Date(),
         { kana: state.setting },
@@ -97,7 +94,7 @@ const kanaSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(kanaFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;
-      const mergedSettings = merge(initialState.setting, localStorageValue);
+      const mergedSettings = merge(kanaInitState.setting, localStorageValue);
 
       return {
         ...state,
