@@ -503,14 +503,14 @@ export class JapaneseVerb extends JapaneseText {
   t_Form<Rule extends typeof taRule>(rule:Rule) {
     const type = this.getVerbClass();
     let t_Con;
-    let verb = super.furigana;
+    let verb = this.furigana;
     let hiragana;
     let ending;
 
-    if (super.hasFurigana() && super.kanji) {
+    if (this.hasFurigana() && this.kanji) {
       // has kanji
-      hiragana = super.furigana;
-      verb = super.kanji;
+      hiragana = this.furigana;
+      verb = this.kanji;
     }
 
     const lastCharacter = verb[verb.length - 1];

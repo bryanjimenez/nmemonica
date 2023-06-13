@@ -67,9 +67,11 @@ export function toggleAFilter(filter:number, allowed:number[], override?:number)
  * @param grpNames a list of group names to be toggled
  * @param activeGroup a list of groups that are selected
  */
-export function grpParse(grpNames:string[], activeGroup:string[]) {
-  const grpNamesSet = [...new Set(grpNames)];
-  let activeGroupSet = [...new Set(activeGroup)];
+export function grpParse(grpNames: string[], activeGroup: string[]) {
+  // const grpNamesSet = [...new Set(grpNames)];
+  // let activeGroupSet = [...new Set(activeGroup)];
+  const grpNamesSet = Array.from(new Set(grpNames))
+  let activeGroupSet = Array.from(new Set(activeGroup))
 
   grpNamesSet.forEach((grpEl) => {
     const isParentGrp = !grpEl.includes(".");
