@@ -3,32 +3,30 @@ import { getConsonantVowel } from "./kanaHelper";
 import { JapaneseText } from "./JapaneseText";
 import type { RawJapanese } from "../typings/raw";
 
-
 export class JapaneseVerb extends JapaneseText {
-  trans?:string;
-  intr?:true|string;
-  exv?:1|2|3;
+  trans?: string;
+  intr?: true | string;
+  exv?: 1 | 2 | 3;
 
-  constructor(furigana:string, kanji:string) {
+  constructor(furigana: string, kanji: string) {
     super(furigana, kanji);
     this.trans = undefined;
     this.intr = undefined;
     this.exv = undefined;
   }
 
+  // eslint-disable-next-line @typescript-eslint/class-literal-property-style
   get [Symbol.toStringTag]() {
     return "JapaneseVerb";
   }
 
-  static parse = (dataObj:RawJapanese):JapaneseVerb => {
-    const constructorFn = (params:RawJapanese) => {
+  static parse = (dataObj: RawJapanese): JapaneseVerb => {
+    const constructorFn = (params: RawJapanese) => {
       const [furigana, kanji] = params.japanese.split("\n");
       return new JapaneseVerb(furigana, kanji);
     };
 
-    const jVerb = 
-      JapaneseText.parser(dataObj, constructorFn) as JapaneseVerb
-    
+    const jVerb = JapaneseText.parser(dataObj, constructorFn) as JapaneseVerb;
 
     if (dataObj.intr) {
       jVerb.intr = dataObj.intr;
@@ -500,7 +498,7 @@ export class JapaneseVerb extends JapaneseText {
    * @returns the t- form of a verb
    * @param rule rule to use
    */
-  t_Form<Rule extends typeof taRule>(rule:Rule) {
+  t_Form<Rule extends typeof taRule>(rule: Rule) {
     const type = this.getVerbClass();
     let t_Con;
     let verb = this.furigana;

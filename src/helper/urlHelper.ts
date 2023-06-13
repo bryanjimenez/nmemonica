@@ -1,7 +1,7 @@
 /**
  * @returns the param
  */
-export function getParam(baseUrl:string, param:string) {
+export function getParam(baseUrl: string, param: string) {
   const queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
   const search = new URLSearchParams(queryPart);
 
@@ -12,7 +12,7 @@ export function getParam(baseUrl:string, param:string) {
 /**
  * @returns a constructed url using the baseUrl and the params
  */
-export function addParam(baseUrl:string, params:Record<string,string>) {
+export function addParam(baseUrl: string, params: Record<string, string>) {
   const [basePart, queryPart] = baseUrl.includes("?")
     ? baseUrl.split("?")
     : [baseUrl, ""];
@@ -32,7 +32,7 @@ export function addParam(baseUrl:string, params:Record<string,string>) {
  * @param baseUrl
  * @param param to be removed
  */
-export function removeParam(baseUrl:string, param:string) {
+export function removeParam(baseUrl: string, param: string) {
   const [basePart, queryPart] = baseUrl.includes("?")
     ? baseUrl.split("?")
     : [baseUrl, ""];

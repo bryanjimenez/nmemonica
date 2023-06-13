@@ -1,7 +1,7 @@
 /**
  * NOTE: This function modifies the array parameter order
  */
-export function shuffleArray<T>(array:T[]) {
+export function shuffleArray<T>(array: T[]) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
@@ -15,7 +15,7 @@ export function shuffleArray<T>(array:T[]) {
  * @param t
  * @param {{clamped?:boolean}} options
  */
-export function lerp(a:number, b:number, t:number, { clamped = true } = {}) {
+export function lerp(a: number, b: number, t: number, { clamped = true } = {}) {
   const max = Math.min(...[1, t]);
   const t_c = clamped ? Math.max(...[max, 0]) : t;
 
@@ -29,7 +29,7 @@ export function lerp(a:number, b:number, t:number, { clamped = true } = {}) {
  * @param b
  * @param v
  */
-export function invLerp(a:number, b:number, v:number) {
+export function invLerp(a: number, b: number, v: number) {
   const t = (v - a) / (a + b);
   return t;
 }

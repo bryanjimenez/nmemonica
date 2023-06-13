@@ -1,7 +1,9 @@
 import classNames from "classnames";
 import React from "react";
-import type { FuriganaParseObject,FuriganaParseObjectMask } from "../typings/raw";
-
+import type {
+  FuriganaParseObject,
+  FuriganaParseObjectMask,
+} from "../typings/raw";
 
 /**
  * From a splice of 0 to nMora, creates a FuriganaParseObject mask
@@ -9,8 +11,8 @@ import type { FuriganaParseObject,FuriganaParseObjectMask } from "../typings/raw
  * @param nMora
  */
 export function getParseObjectHintMask(
-  { kanjis, furiganas, okuriganas, startsWKana }:FuriganaParseObject,
-  nMora:number
+  { kanjis, furiganas, okuriganas, startsWKana }: FuriganaParseObject,
+  nMora: number
 ) {
   let hintRem = nMora;
   let startEl, trailEl;
@@ -22,64 +24,61 @@ export function getParseObjectHintMask(
     furiganas = [...furiganas, ""];
   }
 
-  return furiganas.reduce<FuriganaParseObjectMask>(
-    (acc, el, i) => {
-      const fpk = Math.trunc(furiganas[i].length / kanjis[i].length);
+  return furiganas.reduce<FuriganaParseObjectMask>((acc, el, i) => {
+    const fpk = Math.trunc(furiganas[i].length / kanjis[i].length);
 
-      if (hintRem > 0) {
-        if (!startsWKana) {
-          startEl = furiganas[i];
-          trailEl = okuriganas[i];
-          // starts with kanji
-          if (startEl.length <= hintRem) {
-            hintRem -= startEl.length;
-            let o;
-            if (trailEl.length < hintRem) {
-              hintRem -= trailEl.length;
-              o = trailEl.length;
-            } else {
-              o = hintRem;
-              hintRem = 0;
-            }
-
-            acc = [...acc, { k: kanjis[i].length, f: startEl.length, o }];
+    if (hintRem > 0) {
+      if (!startsWKana) {
+        startEl = furiganas[i];
+        trailEl = okuriganas[i];
+        // starts with kanji
+        if (startEl.length <= hintRem) {
+          hintRem -= startEl.length;
+          let o;
+          if (trailEl.length < hintRem) {
+            hintRem -= trailEl.length;
+            o = trailEl.length;
           } else {
-            const k = Math.ceil(hintRem / fpk);
-            acc = [...acc, { k, f: hintRem, o: 0 }];
+            o = hintRem;
             hintRem = 0;
           }
+
+          acc = [...acc, { k: kanjis[i].length, f: startEl.length, o }];
         } else {
-          startEl = okuriganas[i];
-          trailEl = furiganas[i];
-          // starts with kana
-          if (startEl.length <= hintRem) {
-            hintRem -= startEl.length;
-            let k;
-            let f = hintRem;
-            if (trailEl.length <= hintRem) {
-              hintRem -= trailEl.length;
-              k = kanjis[i].length;
-              f = trailEl.length;
-            } else {
-              k = Math.ceil(hintRem / fpk);
-
-              hintRem = 0;
-            }
-
-            acc = [...acc, { k, f, o: startEl.length }];
-          } else {
-            acc = [...acc, { k: 0, f: 0, o: hintRem }];
-            hintRem = 0;
-          }
+          const k = Math.ceil(hintRem / fpk);
+          acc = [...acc, { k, f: hintRem, o: 0 }];
+          hintRem = 0;
         }
       } else {
-        acc = [...acc, { k: 0, f: 0, o: 0 }];
-      }
+        startEl = okuriganas[i];
+        trailEl = furiganas[i];
+        // starts with kana
+        if (startEl.length <= hintRem) {
+          hintRem -= startEl.length;
+          let k;
+          let f = hintRem;
+          if (trailEl.length <= hintRem) {
+            hintRem -= trailEl.length;
+            k = kanjis[i].length;
+            f = trailEl.length;
+          } else {
+            k = Math.ceil(hintRem / fpk);
 
-      return acc;
-    },
-    []
-  );
+            hintRem = 0;
+          }
+
+          acc = [...acc, { k, f, o: startEl.length }];
+        } else {
+          acc = [...acc, { k: 0, f: 0, o: hintRem }];
+          hintRem = 0;
+        }
+      }
+    } else {
+      acc = [...acc, { k: 0, f: 0, o: 0 }];
+    }
+
+    return acc;
+  }, []);
 }
 
 /**
@@ -91,11 +90,11 @@ export function getParseObjectHintMask(
  * @param hintMora
  */
 export function furiganaHintBuilder(
-  css:{hidden:string, shown:string},
-  kanjis:string[],
-  furiganas:string[],
-  okuriganas:string[],
-  startsWKana:boolean,
+  css: { hidden: string; shown: string },
+  kanjis: string[],
+  furiganas: string[],
+  okuriganas: string[],
+  startsWKana: boolean,
   hintMora = 1
 ) {
   const mask = getParseObjectHintMask(
@@ -115,7 +114,7 @@ export function furiganaHintBuilder(
    * @param content
    * @param key
    */
-  const wrap = (css:string|undefined, content:string, key = 1) =>
+  const wrap = (css: string | undefined, content: string, key = 1) =>
     !content
       ? []
       : [
@@ -150,7 +149,7 @@ export function furiganaHintBuilder(
 /**
  * Creates a FuriganaParseObject mask (lengths)
  */
-export function getParseObjectMask(furiganaParseObject:FuriganaParseObject) {
+export function getParseObjectMask(furiganaParseObject: FuriganaParseObject) {
   let { kanjis, furiganas, okuriganas } = furiganaParseObject;
 
   if (furiganas.length > okuriganas.length) {
@@ -174,8 +173,8 @@ export function getParseObjectMask(furiganaParseObject:FuriganaParseObject) {
  * @param end non inclusive ending index, if not specified will be one after start
  */
 export function getParseObjectSpliceMask(
-  { kanjis, furiganas, okuriganas, startsWKana }:FuriganaParseObject,
-  start:number,
+  { kanjis, furiganas, okuriganas, startsWKana }: FuriganaParseObject,
+  start: number,
   end = start + 1
 ) {
   let blankLength = end - start;
@@ -264,9 +263,9 @@ export function getParseObjectSpliceMask(
  * @param end
  */
 export function kanjiOkuriganaSpliceApplyCss(
-  { kanjis, furiganas, okuriganas, startsWKana }:FuriganaParseObject,
-  css:{hidden:string, shown?:string},
-  start:number,
+  { kanjis, furiganas, okuriganas, startsWKana }: FuriganaParseObject,
+  css: { hidden: string; shown?: string },
+  start: number,
   end = start + 1
 ) {
   const { shown, hidden } = css;
@@ -289,7 +288,7 @@ export function kanjiOkuriganaSpliceApplyCss(
    * @param content
    * @param key
    */
-  const wrap = (css:string|undefined, content:string, key = 1) =>
+  const wrap = (css: string | undefined, content: string, key = 1) =>
     !content
       ? []
       : [
@@ -305,9 +304,14 @@ export function kanjiOkuriganaSpliceApplyCss(
    * @param remaining the length of the splice left
    * @param prevChunksLen total length of chunks upto current
    */
-  const wrapChunks = (chunk:string, c:number, remaining:number, prevChunksLen:number) => {
-    let selectEl:JSX.Element[] = [];
-    let ignoreEl:JSX.Element[] = [];
+  const wrapChunks = (
+    chunk: string,
+    c: number,
+    remaining: number,
+    prevChunksLen: number
+  ) => {
+    let selectEl: React.JSX.Element[] = [];
+    let ignoreEl: React.JSX.Element[] = [];
     const chunkLen = chunk.length;
 
     if (chunkLen > 0) {
@@ -373,7 +377,7 @@ export function kanjiOkuriganaSpliceApplyCss(
     ));
 
     const sf = wrap(shown, furiganas[i]);
-    const hf:JSX.Element[] = [];
+    const hf: React.JSX.Element[] = [];
 
     let so, ho;
     ({
@@ -398,7 +402,7 @@ export function kanjiOkuriganaSpliceApplyCss(
  * @param css
  * @param key
  */
-export function wrap(content?:string, css?:string, key = 1) {
+export function wrap(content?: string, css?: string, key = 1) {
   return !content
     ? []
     : [
@@ -417,11 +421,11 @@ export function wrap(content?:string, css?:string, key = 1) {
  * @param startsWKana
  */
 export function buildRubyElement(
-  key:number,
-  { sk, hk }:{sk:JSX.Element[],hk:JSX.Element[]},
-  { sf, hf }:{sf:JSX.Element[],hf:JSX.Element[]},
-  { so, ho }:{so:JSX.Element[],ho:JSX.Element[]},
-  startsWKana:boolean
+  key: number,
+  { sk, hk }: { sk: React.JSX.Element[]; hk: React.JSX.Element[] },
+  { sf, hf }: { sf: React.JSX.Element[]; hf: React.JSX.Element[] },
+  { so, ho }: { so: React.JSX.Element[]; ho: React.JSX.Element[] },
+  startsWKana: boolean
 ) {
   const hasKanji = sk.length > 0 || hk.length > 0;
   const hasFurigana = sf.length > 0 || hf.length > 0;

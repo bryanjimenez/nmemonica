@@ -1,26 +1,28 @@
 import classNames from "classnames";
+import React from "react";
+
 import {
+  isFullWNumber,
   isHiragana,
   isKanji,
-  isFullWNumber,
   isKatakana,
   isPunctuation,
   toEnglishNumber,
 } from "./kanaHelper";
 import { buildRubyElement, getParseObjectMask, wrap } from "./kanjiHelper";
-import type { FuriganaParseObject,RawJapanese } from "../typings/raw";
-import React from "react";
-
+import type { kanaHintBuilder as kanaHintBuilderType } from "../helper/kanaHelper";
+import type { furiganaHintBuilder as furiganaHintBuilderType } from "../helper/kanjiHelper";
+import type { FuriganaParseObject, RawJapanese } from "../typings/raw";
 
 export class JapaneseText {
   _furigana: string;
   _kanji?: string;
   _parseObj: FuriganaParseObject;
   slang: boolean;
-  keigo : boolean;
-  adj : string;
+  keigo: boolean;
+  adj: string;
 
-  constructor(furigana:string, kanji?:string) {
+  constructor(furigana: string, kanji?: string) {
     this._furigana = furigana;
     this._kanji = kanji;
 
@@ -36,6 +38,7 @@ export class JapaneseText {
     this.adj = "";
   }
 
+  // eslint-disable-next-line @typescript-eslint/class-literal-property-style
   get [Symbol.toStringTag]() {
     return "JapaneseText";
   }
@@ -61,7 +64,7 @@ export class JapaneseText {
       this._parseObj.furiganas.length === 0 &&
       this._parseObj.kanjis.length === 0 &&
       this._parseObj.okuriganas.length === 0 &&
-      this._parseObj.startsWKana === false
+      !this._parseObj.startsWKana
     ) {
       if (this.hasFurigana()) {
         this._parseObj = furiganaParseRetry(
@@ -97,9 +100,9 @@ export class JapaneseText {
   }
 
   /**
-   * @returns {string} pronunciation only in hiragana
+   * @returns pronunciation only in hiragana
    */
-  getPronunciation() {
+  getPronunciation(): string {
     return this._furigana;
   }
 
@@ -107,15 +110,15 @@ export class JapaneseText {
     return { furigana: this._furigana, kanji: this._kanji };
   }
 
-  static parse = (rawObj:RawJapanese) => japaneseTextParse(rawObj);
+  static parse = (rawObj: RawJapanese) => japaneseTextParse(rawObj);
   static parser = japaneseTextParse;
 
   isSlang() {
-    return this.slang === true;
+    return this.slang;
   }
 
   isKeigo() {
-    return this.keigo === true;
+    return this.keigo;
   }
 
   isNaAdj() {
@@ -141,7 +144,7 @@ export class JapaneseText {
     }
   }
 
-  toString() {
+  toString(): string {
     return this._furigana + (this._kanji ? "\n" + this._kanji : "");
   }
 
@@ -151,10 +154,8 @@ export class JapaneseText {
    */
   isHintable(minimumMora = 3) {
     let hint = true;
-    const text = this;
 
-    const isKanaOrKanjiOnly = text
-      .toString()
+    const isKanaOrKanjiOnly = this.toString()
       .split("")
       .every(
         (char) =>
@@ -162,9 +163,9 @@ export class JapaneseText {
       );
     if (!isKanaOrKanjiOnly) return false;
 
-    if (text.hasFurigana()) {
-      const pronunciation = text.getPronunciation();
-      const orthography = text.getSpelling();
+    if (this.hasFurigana()) {
+      const pronunciation = this.getPronunciation();
+      const orthography = this.getSpelling();
 
       if (pronunciation.length < minimumMora) {
         hint = false;
@@ -179,7 +180,7 @@ export class JapaneseText {
       }
     } else {
       // no kanji
-      const kana = text.getSpelling();
+      const kana = this.getSpelling();
       if (kana.length < minimumMora) {
         hint = false;
       }
@@ -194,16 +195,21 @@ export class JapaneseText {
    * @param minMora minimum mora japaneseText must have for hint
    * @param hintMora number of mora to hint
    */
-  getHint(kanaHintBuilder:Function, furiganaHintBuilder:Function, minMora = 3, hintMora = 1): JSX.Element {
+  getHint(
+    kanaHintBuilder: typeof kanaHintBuilderType,
+    furiganaHintBuilder: typeof furiganaHintBuilderType,
+    minMora = 3,
+    hintMora = 1
+  ) {
     const hiddenElCSS = "invisible";
     const shownElCSS = "hint-mora";
 
     const hintCSS = { shown: shownElCSS, hidden: hiddenElCSS };
 
-    let hint;
+    let hint: React.JSX.Element | null;
 
     if (!this.isHintable(minMora)) {
-      hint = undefined;
+      hint = null;
     } else {
       if (this.hasFurigana()) {
         const pronunciation = this.getPronunciation();
@@ -229,9 +235,11 @@ export class JapaneseText {
     return hint;
   }
 
-
-  toHTML(options?:{showError?:boolean, furigana?:{show?:boolean, toggle?:Function}}):JSX.Element {
-    let htmlElement:JSX.Element;
+  toHTML(options?: {
+    showError?: boolean;
+    furigana?: { show?: boolean; toggle?: () => void };
+  }): React.JSX.Element {
+    let htmlElement: React.JSX.Element;
 
     const furiganaHide = options?.furigana?.show === false;
     const furiganaToggle = options?.furigana?.toggle;
@@ -241,10 +249,12 @@ export class JapaneseText {
       "d-block": true,
     });
 
-    const fallBackHtml = ( <span>
-      <span className={eClass}>{this.getPronunciation()}</span>
-      <span>{this.getSpelling()}</span>
-    </span>)
+    const fallBackHtml = (
+      <span>
+        <span className={eClass}>{this.getPronunciation()}</span>
+        <span>{this.getSpelling()}</span>
+      </span>
+    );
 
     if (!this.hasFurigana()) {
       htmlElement = <span>{this.getSpelling()}</span>;
@@ -257,7 +267,7 @@ export class JapaneseText {
         const clickableCss =
           classNames({ clickable: !!furiganaToggle }) || undefined;
         const toggleHandler = furiganaToggle
-          ? furiganaToggle as React.MouseEventHandler
+          ? (furiganaToggle as React.MouseEventHandler)
           : undefined;
         const hideFuriganaCss = furiganaHide ? "transparent-font" : undefined;
 
@@ -284,7 +294,7 @@ export class JapaneseText {
           </span>
         );
       } catch (e) {
-        if(options?.showError!==false){
+        if (options?.showError !== false) {
           console.error(e);
         }
         htmlElement = fallBackHtml;
@@ -298,7 +308,10 @@ export class JapaneseText {
 /**
  * Static parsing fn for JapaneseText and sub types
  */
-function japaneseTextParse(rawObj:RawJapanese, constructorFn?:(constructorParams:RawJapanese)=>JapaneseText) {
+function japaneseTextParse(
+  rawObj: RawJapanese,
+  constructorFn?: (constructorParams: RawJapanese) => JapaneseText
+) {
   const constructorParams = rawObj.japanese.split("\n");
 
   let jText;
@@ -309,10 +322,10 @@ function japaneseTextParse(rawObj:RawJapanese, constructorFn?:(constructorParams
     jText = new JapaneseText(furigana, kanji);
   }
 
-  if (rawObj.slang && rawObj.slang === true) {
+  if (rawObj.slang && rawObj.slang) {
     jText.slang = true;
   }
-  if (rawObj.keigo && rawObj.keigo === true) {
+  if (rawObj.keigo && rawObj.keigo) {
     jText.keigo = true;
   }
   if (rawObj.adj && (rawObj.adj === "na" || rawObj.adj === "i")) {
@@ -328,7 +341,15 @@ function japaneseTextParse(rawObj:RawJapanese, constructorFn?:(constructorParams
  * @param pronunciation (hiragana)
  * @param ortography (kanji)
  */
-export function furiganaParseRetry(pronunciation:string, ortography:string):{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean } {
+export function furiganaParseRetry(
+  pronunciation: string,
+  ortography: string
+): {
+  kanjis: string[];
+  furiganas: string[];
+  okuriganas: string[];
+  startsWKana: boolean;
+} {
   let kanjis, furiganas, okuriganas, startsWKana;
   try {
     ({ kanjis, furiganas, okuriganas, startsWKana } = furiganaParse(
@@ -373,7 +394,11 @@ export function furiganaParseRetry(pronunciation:string, ortography:string):{ ka
  * @param orthography
  * @returns whether is numeric with furigana
  */
-export function isNumericCounter(pos:number, pronunciation:string, orthography:string) {
+export function isNumericCounter(
+  pos: number,
+  pronunciation: string,
+  orthography: string
+) {
   const char = orthography.charAt(pos);
 
   return (
@@ -392,7 +417,15 @@ export function isNumericCounter(pos:number, pronunciation:string, orthography:s
  * @param pronunciation (furigana)
  * @param orthography (kanji)
  */
-export function furiganaParse(pronunciation:string, orthography:string):{ kanjis:string[], furiganas:string[], okuriganas:string[], startsWKana:boolean } {
+export function furiganaParse(
+  pronunciation: string,
+  orthography: string
+): {
+  kanjis: string[];
+  furiganas: string[];
+  okuriganas: string[];
+  startsWKana: boolean;
+} {
   if (orthography.split("").every((c) => isKanji(c) || isPunctuation(c))) {
     return {
       kanjis: [orthography],
@@ -409,9 +442,9 @@ export function furiganaParse(pronunciation:string, orthography:string):{ kanjis
     !isKanji(orthography.charAt(0)) && !isFullWNumber(orthography.charAt(0));
 
   let start = 0;
-  let furiganas:string[] = [];
-  let kanjis:string[] = [];
-  let okuriganas:string[] = [];
+  let furiganas: string[] = [];
+  let kanjis: string[] = [];
+  let okuriganas: string[] = [];
   let fword = "";
   let kword = "";
   let oword = "";
@@ -540,11 +573,11 @@ export function furiganaParse(pronunciation:string, orthography:string):{ kanjis
  * @param startsWKana
  */
 export function validateParseFurigana(
-  kanjis:string[],
-  furiganas:string[],
-  okuriganas:string[],
-  startsWKana:boolean
-):[string,string] {
+  kanjis: string[],
+  furiganas: string[],
+  okuriganas: string[],
+  startsWKana: boolean
+): [string, string] {
   let pronunciation, orthography;
 
   if (startsWKana) {
@@ -569,7 +602,7 @@ export function validateParseFurigana(
  * @returns kana pronunciation or it's spelling
  * @param vocabulary data object
  */
-export function audioPronunciation(vocabulary:RawJapanese) {
+export function audioPronunciation(vocabulary: RawJapanese) {
   let q;
   if (vocabulary.pronounce) {
     const isAllKana = vocabulary.pronounce

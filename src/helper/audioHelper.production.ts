@@ -3,7 +3,7 @@ const userAbortError = new Error("User interrupted audio playback.", {
   cause: { code: "UserAborted" },
 });
 
-export function fadeOut(audio:HTMLAudioElement) {
+export function fadeOut(audio: HTMLAudioElement) {
   return new Promise<void>((resolve) => {
     const fade = () => {
       if (audio.volume < 0.000001) {
@@ -36,10 +36,13 @@ const audioCtx = new AudioContext();
 
 /**
  * Fetch audio
- * 
+ *
  * Play using AudioContext
  */
-export function fetchAudio(audioUrl:Request|string, AbortController?:AbortController) {
+export function fetchAudio(
+  audioUrl: Request | string,
+  AbortController?: AbortController
+) {
   const source = audioCtx.createBufferSource();
 
   const fetchP = fetch(audioUrl)
@@ -58,7 +61,7 @@ export function fetchAudio(audioUrl:Request|string, AbortController?:AbortContro
       })
     );
 
-  const interruptP:Promise<void> = new Promise((resolve, reject) => {
+  const interruptP: Promise<void> = new Promise((resolve, reject) => {
     const listener = () => {
       source.stop();
       reject(userAbortError);
@@ -83,33 +86,33 @@ export function fetchAudio(audioUrl:Request|string, AbortController?:AbortContro
  * Use HTMLAudioElement Audio() to play media
  * @deprecated use fetchAudio
  */
-export function sourceAudio(audioUrl:string, AbortController:AbortController) {
+export function sourceAudio(
+  audioUrl: string,
+  AbortController: AbortController
+) {
   let swipePromise;
 
   const audio = new Audio(audioUrl);
 
   swipePromise = Promise.all([
-    (
-      new Promise<void>((resolve, reject) => {
-        const listener = () => {
-          fadeOut(audio).then(() => {
-            reject(userAbortError);
-          });
-        };
-
-        audio.addEventListener("ended", () => {
-          AbortController?.signal.removeEventListener("abort", listener);
-          resolve();
+    new Promise<void>((resolve, reject) => {
+      const listener = () => {
+        fadeOut(audio).then(() => {
+          reject(userAbortError);
         });
+      };
 
-        if (AbortController?.signal.aborted) {
-          listener();
-        }
+      audio.addEventListener("ended", () => {
+        AbortController?.signal.removeEventListener("abort", listener);
+        resolve();
+      });
 
-        AbortController?.signal.addEventListener("abort", listener);
-      })
-    ),
+      if (AbortController?.signal.aborted) {
+        listener();
+      }
 
+      AbortController?.signal.addEventListener("abort", listener);
+    }),
     audio.play(),
   ]);
 

@@ -4,7 +4,7 @@ import data from "../../data/kana.json";
 /**
  * @param char the character to check against the Kanji table
  */
-export function isKanji(char:string) {
+export function isKanji(char: string) {
   const common = "\u4E00-\u9FAF";
   const rare = "\u3400-\u4DBF";
   const exception = "\u3005"; // noma repeater from isPunctuation
@@ -14,14 +14,14 @@ export function isKanji(char:string) {
 /**
  * @param char the character to check against the Hiragana table
  */
-export function isHiragana(char:string) {
+export function isHiragana(char: string) {
   return new RegExp("[\u3041-\u309F]").test(char);
 }
 
 /**
  * @param char the character to check against the Katakana table
  */
-export function isKatakana(char:string) {
+export function isKatakana(char: string) {
   const fullWidth = "\u30A0-\u30FF";
   const halfWidth = "\uFF66-\uFF9F"; /*eslint-disable-line*/ // FIXME: is this needed?
   return new RegExp("[" + fullWidth + "]").test(char);
@@ -30,14 +30,14 @@ export function isKatakana(char:string) {
 /**
  * @param char character to check if is little
  */
-export function isYoon(char:string) {
+export function isYoon(char: string) {
   return new RegExp("^[ゃャゅュょョ]$").test(char);
 }
 
 /**
  * @param char the character to check against the punctuation table
  */
-export function isFullWNumber(char:string) {
+export function isFullWNumber(char: string) {
   // English
   const eNumber = "\uFF10-\uFF19";
 
@@ -47,7 +47,7 @@ export function isFullWNumber(char:string) {
 /**
  * @param char the character to check against the punctuation table
  */
-export function isPunctuation(char:string) {
+export function isPunctuation(char: string) {
   // English
   const eSymbol = "\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF5E";
   const eLetter = "\uFF21-\uFF3A\uFF41-\uFF5A"; /* eslint-disable-line */
@@ -62,7 +62,7 @@ export function isPunctuation(char:string) {
  * swaps hiragana for katakana and vicecersa
  * @param char
  */
-export function swapKana(char:string) {
+export function swapKana(char: string) {
   let swap = char;
   if (isHiragana(char)) {
     const cpv = char.codePointAt(0);
@@ -84,7 +84,7 @@ export function swapKana(char:string) {
 /**
  * @param particle
  */
-export function romajiParticle(particle:string) {
+export function romajiParticle(particle: string) {
   let romaji;
   switch (particle) {
     case "は":
@@ -112,7 +112,7 @@ export function romajiParticle(particle:string) {
  * Kana to romaji
  * @param kana
  */
-export function swapToRomaji(kana:string) {
+export function swapToRomaji(kana: string) {
   let swap = kana;
   if (isHiragana(kana)) {
     const { iConsonant, iVowel } = getConsonantVowel(kana);
@@ -134,7 +134,7 @@ export function swapToRomaji(kana:string) {
  * swaps Full-width roman characters number to number
  * @param char
  */
-export function toEnglishNumber(char:string) {
+export function toEnglishNumber(char: string) {
   let swap = Number.NaN;
   if (isFullWNumber(char)) {
     const cpv = char.codePointAt(0);
@@ -151,7 +151,7 @@ export function toEnglishNumber(char:string) {
  * gets the indexes of the character in the hiragana chart
  * @param character
  */
-export function getConsonantVowel(character:string) {
+export function getConsonantVowel(character: string) {
   const hiragana = data.hiragana;
   const xMax = hiragana[0].length;
   const yMax = hiragana.length;
@@ -181,7 +181,11 @@ export function getConsonantVowel(character:string) {
   return { iConsonant, iVowel };
 }
 
-export function kanaHintBuilder(css:{hidden:string, shown:string}, kana:string, hintMora:number) {
+export function kanaHintBuilder(
+  css: { hidden: string; shown: string },
+  kana: string,
+  hintMora: number
+) {
   return (
     <span className="hint">
       <span className={css.shown}>{kana.slice(0, hintMora)}</span>

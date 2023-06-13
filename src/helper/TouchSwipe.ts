@@ -3,26 +3,25 @@
 export const TouchSwipeIgnoreCss = "slick-swipe-ignore";
 
 export interface Spec {
-  verticalSwiping?: boolean
-  touchThreshold:number
-  scrolling?:boolean
-  swiped?:boolean
-  swiping?:boolean
-  onSwipe?:Function
-  swipeEvent?:Function
-  touchObject:TouchObject
+  verticalSwiping?: boolean;
+  touchThreshold: number;
+  scrolling?: boolean;
+  swiped?: boolean;
+  swiping?: boolean;
+  onSwipe?: Function;
+  swipeEvent?: Function;
+  touchObject: TouchObject;
 }
 
 interface TouchObject {
-  swipeLength:number;
-  curX:number;
-  curY:number;
-  startX:number;
-  startY:number;
+  swipeLength: number;
+  curX: number;
+  curY: number;
+  startX: number;
+  startY: number;
 }
 
-
-function safePreventDefault(event:TouchEvent|MouseEvent) {
+function safePreventDefault(event: TouchEvent | MouseEvent) {
   var passiveEvents = ["onTouchStart", "onTouchMove", "onWheel"];
 
   // @ts-expect-error _reactName
@@ -31,8 +30,10 @@ function safePreventDefault(event:TouchEvent|MouseEvent) {
   }
 }
 
-
-export function getSwipeDirection(touchObject:TouchObject, verticalSwiping = false) {
+export function getSwipeDirection(
+  touchObject: TouchObject,
+  verticalSwiping = false
+) {
   var xDist, yDist, r, swipeAngle;
   xDist = touchObject.startX - touchObject.curX;
   yDist = touchObject.startY - touchObject.curY;
@@ -66,14 +67,13 @@ export function getSwipeDirection(touchObject:TouchObject, verticalSwiping = fal
 }
 
 export function swipeStart(
-  e:TouchEvent | MouseEvent,
+  e: TouchEvent | MouseEvent,
   { verticalSwiping, touchThreshold } = {
     verticalSwiping: false,
     touchThreshold: 5,
   }
 ) {
-  (e.target as HTMLElement).tagName === "IMG" &&
-    safePreventDefault(e);
+  (e.target as HTMLElement).tagName === "IMG" && safePreventDefault(e);
 
   return {
     verticalSwiping,
@@ -87,7 +87,7 @@ export function swipeStart(
   };
 }
 
-export function swipeMove(e:TouchEvent | MouseEvent, spec:Spec):Spec {
+export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
   var verticalSwiping = spec.verticalSwiping,
     touchThreshold = spec.touchThreshold,
     swiped = spec.swiped,
@@ -137,7 +137,7 @@ export function swipeMove(e:TouchEvent | MouseEvent, spec:Spec):Spec {
   return state;
 }
 
-export function swipeEnd(e:TouchEvent, spec:Spec) {
+export function swipeEnd(e: TouchEvent, spec: Spec) {
   var touchObject = spec.touchObject,
     touchThreshold = spec.touchThreshold,
     verticalSwiping = spec.verticalSwiping,
@@ -170,8 +170,8 @@ export function swipeEnd(e:TouchEvent, spec:Spec) {
  * Test if touch event originates from
  * swipe-ignore element
  */
-export function isSwipeIgnored(e:TouchEvent) {
-  const tEl = (e.target) as Element;
+export function isSwipeIgnored(e: TouchEvent) {
+  const tEl = e.target as Element;
   const targetSwipeIgnore = Array.from(
     document.getElementsByClassName(TouchSwipeIgnoreCss)
   ).some((el) => el.contains(tEl));

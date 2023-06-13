@@ -1,4 +1,7 @@
-import { authenticationHeader, developmentAuthEndPoint } from "../../environment.development";
+import {
+  authenticationHeader,
+  developmentAuthEndPoint,
+} from "../../environment.development";
 import { fetchAudio as fetchAudioWithAuth } from "./audioHelper.production";
 
 /**
@@ -8,7 +11,10 @@ import { fetchAudio as fetchAudioWithAuth } from "./audioHelper.production";
  *
  * Play using AudioContext
  */
-export function fetchAudio(audioUrl:string, AbortController?:AbortController) {
+export function fetchAudio(
+  audioUrl: string,
+  AbortController?: AbortController
+) {
   const url = audioUrl.split("?")[1];
 
   const authP = fetch(developmentAuthEndPoint + url)

@@ -1,28 +1,37 @@
-import React from "react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
-import { TermFilterBy } from "../slices/settingHelper";
+import React from "react";
+
 import { shuffleArray } from "./arrayHelper";
+import { daysSince, minsSince } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
-import { daysSince, minsSince } from "./consoleHelper";
 import { isYoon, kanaHintBuilder } from "./kanaHelper";
 import { furiganaHintBuilder } from "./kanjiHelper";
-import type { RawVocabulary,RawJapanese,RawPhrase,RawKanji,AudioQueryParams,SpaceRepetitionMap,VerbFormArray,FuriganaToggleMap,GroupListMap } from "../typings/raw";
-
+import { TermFilterBy } from "../slices/settingHelper";
+import type {
+  FuriganaToggleMap,
+  GroupListMap,
+  RawJapanese,
+  RawKanji,
+  RawPhrase,
+  RawVocabulary,
+  SpaceRepetitionMap,
+  VerbFormArray,
+} from "../typings/raw";
 
 /**
  * Goes to the next term or selects one from the frequency list
  */
-export function play<RawItem extends {uid:string}>(
-  reinforce:boolean,
-  freqFilter:typeof TermFilterBy[keyof typeof TermFilterBy],
-  frequency:string[],
-  filteredTerms:RawItem[],
-  metadata:SpaceRepetitionMap,
-  reinforcedUID:string|undefined,
-  updateReinforcedUID:(uid:string)=>void,
-  gotoNext:Function,
+export function play<RawItem extends { uid: string }>(
+  reinforce: boolean,
+  freqFilter: (typeof TermFilterBy)[keyof typeof TermFilterBy],
+  frequency: string[],
+  filteredTerms: RawItem[],
+  metadata: SpaceRepetitionMap,
+  reinforcedUID: string | undefined,
+  updateReinforcedUID: (uid: string) => void,
+  gotoNext: () => void
 ) {
   // some games will come from the reinforced list
   // unless filtering from frequency list
@@ -33,7 +42,9 @@ export function play<RawItem extends {uid:string}>(
     frequency.length > 0
   ) {
     const min = 0;
-    const staleFreq = frequency.filter(f=>minsSince(metadata[f].d)>frequency.length)
+    const staleFreq = frequency.filter(
+      (f) => minsSince(metadata[f]?.d) > frequency.length
+    );
     const max = staleFreq.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
     const vocabulary = filteredTerms.find((v) => staleFreq[idx] === v.uid);
@@ -46,11 +57,15 @@ export function play<RawItem extends {uid:string}>(
       }
     }
   }
-  
+
   gotoNext();
 }
 
-export function getTermUID<Term extends {uid:string}>(selectedIndex:number, filteredTerms:Term[], alternateOrder?:number[]) {
+export function getTermUID<Term extends { uid: string }>(
+  selectedIndex: number,
+  filteredTerms: Term[],
+  alternateOrder?: number[]
+) {
   let term;
 
   if (alternateOrder) {
@@ -72,7 +87,10 @@ export function getTermUID<Term extends {uid:string}>(selectedIndex:number, filt
  * @param uid
  * @param list of terms
  */
-export function getTerm<Term extends {uid:string}>(uid:string, list:Term[]) {
+export function getTerm<Term extends { uid: string }>(
+  uid: string,
+  list: Term[]
+) {
   const term = list.find((v) => uid === v.uid);
 
   if (!term) {
@@ -92,12 +110,14 @@ export function getTerm<Term extends {uid:string}>(uid:string, list:Term[]) {
  * @param toggleFilterType
  * @returns filteredPhrases
  */
-export function termFilterByType<Term extends {uid: string, grp?: string, subGrp?: string, tag?: string[]}>(
-  filterType:typeof TermFilterBy[keyof typeof TermFilterBy],
-  termList:Term[],
-  frequencyList:string[] = [],
-  activeGrpList:string[],
-  toggleFilterType?:Function
+export function termFilterByType<
+  Term extends { uid: string; grp?: string; subGrp?: string; tag?: string[] }
+>(
+  filterType: (typeof TermFilterBy)[keyof typeof TermFilterBy],
+  termList: Term[],
+  frequencyList: string[] = [],
+  activeGrpList: string[],
+  toggleFilterType?: (override: number) => void
 ) {
   let filteredTerms = termList;
 
@@ -106,9 +126,9 @@ export function termFilterByType<Term extends {uid: string, grp?: string, subGrp
     if (!frequencyList) {
       throw new TypeError("Filter type requires frequencyList");
     }
-    if (!toggleFilterType) {
-      throw new TypeError("Filter type requires toggleFilterType");
-    }
+    // if (!toggleFilterType) {
+    //   throw new TypeError("Filter type requires toggleFilterType");
+    // }
 
     if (frequencyList.length > 0) {
       if (activeGrpList.length > 0) {
@@ -122,13 +142,14 @@ export function termFilterByType<Term extends {uid: string, grp?: string, subGrp
       }
     } else {
       // last frequency word was just removed
-      toggleFilterType(TermFilterBy.GROUP);
+      if (typeof toggleFilterType === "function") {
+        toggleFilterType(TermFilterBy.GROUP);
+      }
     }
   } else if (filterType === TermFilterBy.TAGS) {
     if (activeGrpList.length > 0) {
-      filteredTerms = termList.filter(
-        (term) =>
-          term.tag && term.tag.some((aTag) => activeGrpList.includes(aTag))
+      filteredTerms = termList.filter((term) =>
+        term.tag?.some((aTag) => activeGrpList.includes(aTag))
       );
     }
   } else {
@@ -146,13 +167,18 @@ export function termFilterByType<Term extends {uid: string, grp?: string, subGrp
 /**
  * Active group filtering logic
  */
-export function activeGroupIncludes<Term extends{ grp?: string, subGrp?: string }>(activeGrpList:string[], term:Term) {
+export function activeGroupIncludes<
+  Term extends { grp?: string; subGrp?: string }
+>(activeGrpList: string[], term: Term) {
   return (
-    (term.grp && activeGrpList.includes(term.grp)) ||
-    activeGrpList.includes(term.grp + "." + term.subGrp) ||
+    (term.grp !== undefined &&
+      (activeGrpList.includes(term.grp) ||
+        (term.subGrp !== undefined &&
+          activeGrpList.includes(`${term.grp}.${term.subGrp}`)))) ||
     (term.grp === undefined &&
       (activeGrpList.includes("undefined") ||
-        activeGrpList.includes("undefined" + "." + term.subGrp)))
+        (term.subGrp !== undefined &&
+          activeGrpList.includes(`undefined.${term.subGrp}`))))
   );
 }
 
@@ -160,15 +186,12 @@ export function activeGroupIncludes<Term extends{ grp?: string, subGrp?: string 
  * Returns a list of groups that no longer are available,
  * but remain on the active groups list
  */
-export function getStaleGroups(termGroups:GroupListMap, termActive:string[]) {
-  const allGroups = Object.keys(termGroups).reduce<string[]>(
-    (acc, g) => {
-      acc = [...acc, g, ...termGroups[g].map((sg) => g + "." + sg)];
+export function getStaleGroups(termGroups: GroupListMap, termActive: string[]) {
+  const allGroups = Object.keys(termGroups).reduce<string[]>((acc, g) => {
+    acc = [...acc, g, ...termGroups[g].map((sg) => g + "." + sg)];
 
-      return acc;
-    },
-    []
-  );
+    return acc;
+  }, []);
 
   const stale = termActive.reduce<string[]>((acc, active) => {
     if (!allGroups.includes(active)) {
@@ -185,8 +208,14 @@ export function getStaleGroups(termGroups:GroupListMap, termActive:string[]) {
  * finds stale keys, and uids in the SpaceRepetitionMap
  * returns a set of stale keys and a list of which uid the key belonged to
  */
-export function getStaleSpaceRepKeys(repetition:SpaceRepetitionMap, termList:RawVocabulary[]|RawPhrase[]|RawKanji[], staleLabel:string) {
-  const SpaceRepetitionMapKeys:{[key in keyof SpaceRepetitionMap["uid"]]:null} = {
+export function getStaleSpaceRepKeys(
+  repetition: SpaceRepetitionMap,
+  termList: RawVocabulary[] | RawPhrase[] | RawKanji[],
+  staleLabel: string
+) {
+  const SpaceRepetitionMapKeys: {
+    [key in keyof SpaceRepetitionMap["uid"]]: null;
+  } = {
     d: null,
     difficulty: null,
     nextReview: null,
@@ -200,15 +229,15 @@ export function getStaleSpaceRepKeys(repetition:SpaceRepetitionMap, termList:Raw
   };
   const SpaceRepKeys = new Set(Object.keys(SpaceRepetitionMapKeys));
 
-  let OldSpaceRepKeys:Set<string> = new Set();
-  let staleInfoList:{key:string, uid:string, english:string}[] = [];
+  let OldSpaceRepKeys = new Set<string>();
+  let staleInfoList: { key: string; uid: string; english: string }[] = [];
   Object.keys(repetition).forEach((srepUid) => {
     Object.keys(repetition[srepUid]).forEach((key) => {
       let staleInfo;
       if (!SpaceRepKeys.has(key)) {
         let term;
         try {
-          term = getTerm<typeof termList[0]>(srepUid, termList);
+          term = getTerm<(typeof termList)[0]>(srepUid, termList);
         } catch (err) {
           term = { english: staleLabel };
         }
@@ -230,7 +259,7 @@ export function getStaleSpaceRepKeys(repetition:SpaceRepetitionMap, termList:Raw
  * Minimum time between actions to trigger a space repetition update.
  * Prevents SpaceRepetition updates during quick scrolling.
  */
-export function minimumTimeForSpaceRepUpdate(prevTime:number) {
+export function minimumTimeForSpaceRepUpdate(prevTime: number) {
   return ~~(Date.now() - prevTime) > 1500;
 }
 
@@ -238,7 +267,7 @@ export function minimumTimeForSpaceRepUpdate(prevTime:number) {
  * Minimum time required to continue playing TimedPlay.
  * Prevents TimedPlay during quick scrolling.
  */
-export function minimumTimeForTimedPlay(prevTime:number) {
+export function minimumTimeForTimedPlay(prevTime: number) {
   return ~~(Date.now() - prevTime) > 300;
 }
 
@@ -247,15 +276,28 @@ export function minimumTimeForTimedPlay(prevTime:number) {
  * [timedPlayFailed, timedPlayMispronounced, newTerms, notTimedPlayed, timedPlayedCorrect]
  * @returns an array containing the indexes of terms in space repetition order
  */
-export function spaceRepOrder(terms:RawVocabulary[], spaceRepObj:SpaceRepetitionMap) {
-  type timedPlayedSortable = {staleness: number, correctness: number, uid: string, index: number};
-  type notTimedPlayedSortable = {date: string, views: number, uid: string, index: number}
-  
-  let failedTemp:timedPlayedSortable[] = [];
-  let misPronTemp:timedPlayedSortable[] = [];
-  let notPlayed:number[] = [];
-  let notTimedTemp:notTimedPlayedSortable[] = [];
-  let timedTemp:timedPlayedSortable[] = [];
+export function spaceRepOrder(
+  terms: RawVocabulary[],
+  spaceRepObj: SpaceRepetitionMap
+) {
+  interface timedPlayedSortable {
+    staleness: number;
+    correctness: number;
+    uid: string;
+    index: number;
+  }
+  interface notTimedPlayedSortable {
+    date: string;
+    views: number;
+    uid: string;
+    index: number;
+  }
+
+  let failedTemp: timedPlayedSortable[] = [];
+  let misPronTemp: timedPlayedSortable[] = [];
+  let notPlayed: number[] = [];
+  let notTimedTemp: notTimedPlayedSortable[] = [];
+  let timedTemp: timedPlayedSortable[] = [];
 
   for (const tIdx in terms) {
     const tUid = terms[tIdx].uid;
@@ -363,7 +405,7 @@ export function spaceRepOrder(terms:RawVocabulary[], spaceRepObj:SpaceRepetition
  * @param accuracy Correct/Times played
  * @param views Times viewed
  */
-export function getStalenessScore(date:string, accuracy:number, views = 1) {
+export function getStalenessScore(date: string, accuracy: number, views = 1) {
   let staleness = Number.MAX_SAFE_INTEGER;
   if (date !== undefined && accuracy > 0 && views > 0) {
     staleness = daysSince(date) * (1 / accuracy) * (1 / views);
@@ -391,17 +433,24 @@ export function getCorrectnessScore(count = 0, average = 0) {
  * @param terms
  * @param spaceRepObj
  */
-export function dateViewOrder(terms:RawVocabulary[], spaceRepObj:SpaceRepetitionMap) {
-  type lastSeenSortable = {date: string, uid: string, index: number}
+export function dateViewOrder(
+  terms: RawVocabulary[],
+  spaceRepObj: SpaceRepetitionMap
+) {
+  interface lastSeenSortable {
+    date: string;
+    uid: string;
+    index: number;
+  }
 
-  let notPlayed:number[] = [];
-  let prevPlayedTemp:lastSeenSortable[] = [];
+  let notPlayed: number[] = [];
+  let prevPlayedTemp: lastSeenSortable[] = [];
 
   for (const tIdx in terms) {
     const tUid = terms[tIdx].uid;
     const termRep = spaceRepObj[tUid];
 
-    if (termRep !== undefined && termRep.d !== undefined) {
+    if (termRep?.d !== undefined) {
       prevPlayedTemp = [
         ...prevPlayedTemp,
         {
@@ -441,18 +490,25 @@ export const DIFFICULTY_THRLD = 30;
  * @param spaceRepObj
  * @returns an array containing the indexes of terms in difficulty order
  */
-export function difficultyOrder(terms:RawVocabulary[], spaceRepObj:SpaceRepetitionMap) {
-  type difficultySortable = {difficulty: number, uid: string, index: number}
-  
-  let undefDifficulty:number[] = [];
-  let withDifficulty:difficultySortable[] = [];
-  let noDifficulty:number[] = [];
+export function difficultyOrder(
+  terms: RawVocabulary[],
+  spaceRepObj: SpaceRepetitionMap
+) {
+  interface difficultySortable {
+    difficulty: number;
+    uid: string;
+    index: number;
+  }
+
+  let undefDifficulty: number[] = [];
+  let withDifficulty: difficultySortable[] = [];
+  let noDifficulty: number[] = [];
 
   for (const tIdx in terms) {
-    const tUid:string = terms[tIdx].uid;
+    const tUid: string = terms[tIdx].uid;
     const termRep = spaceRepObj[tUid];
 
-    if (termRep !== undefined && termRep.difficulty !== undefined) {
+    if (termRep?.difficulty !== undefined) {
       const difficulty = Number(termRep.difficulty);
       if (difficulty < MEMORIZED_THRLD) {
         withDifficulty = [
@@ -491,11 +547,11 @@ export function difficultyOrder(terms:RawVocabulary[], spaceRepObj:SpaceRepetiti
 /**
  * @returns an array containing the indexes of terms in alphabetic order
  */
-export function alphaOrder(terms:RawVocabulary[]) {
+export function alphaOrder(terms: RawVocabulary[]) {
   // preserve terms unmodified
-  
-  let originalIndex:{[uid:string]:number} = {};
-  let modifiableTerms:RawVocabulary[] = [];
+
+  let originalIndex: Record<string, number> = {};
+  let modifiableTerms: RawVocabulary[] = [];
   terms.forEach((t, i) => {
     originalIndex[t.uid] = i;
 
@@ -509,9 +565,9 @@ export function alphaOrder(terms:RawVocabulary[]) {
     ];
   });
 
-  let order:number[] = [],
-    eOrder:{uid:string,label:string,idx:number}[] = [],
-    jOrder:{uid:string,label:string,idx:number}[] = [];
+  let order: number[] = [],
+    eOrder: { uid: string; label: string; idx: number }[] = [],
+    jOrder: { uid: string; label: string; idx: number }[] = [];
 
   // order in japanese
   modifiableTerms = orderBy(modifiableTerms, ["japanese"], ["asc"]);
@@ -547,7 +603,7 @@ export function alphaOrder(terms:RawVocabulary[]) {
 /**
  * @returns an array containing the indexes of terms in random order
  */
-export function randomOrder<T>(terms:T[]) {
+export function randomOrder<T>(terms: T[]) {
   const order = terms.map((v, i) => i);
 
   shuffleArray(order);
@@ -555,11 +611,11 @@ export function randomOrder<T>(terms:T[]) {
   return order;
 }
 
-export function labelOptions(index:number, options:string[]) {
+export function labelOptions(index: number, options: string[]) {
   return options[index];
 }
 
-export function toggleOptions<T>(index:number, options:T[]) {
+export function toggleOptions<T>(index: number, options: T[]) {
   const len = options.length;
 
   return index + 1 < len ? index + 1 : 0;
@@ -568,7 +624,7 @@ export function toggleOptions<T>(index:number, options:T[]) {
 /**
  * Array containing the avaiable verb forms
  */
-export function getVerbFormsArray(rawVerb?:RawJapanese, order?:string[]) {
+export function getVerbFormsArray(rawVerb?: RawJapanese, order?: string[]) {
   const verb = {
     dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb),
   };
@@ -607,7 +663,10 @@ export function getVerbFormsArray(rawVerb?:RawJapanese, order?:string[]) {
 /**
  * @throws {Error} if the target form is not valid
  */
-export function verbToTargetForm(rawVerb:RawJapanese, targetForm:string) {
+export function verbToTargetForm(
+  rawVerb: RawJapanese,
+  targetForm: string
+): JapaneseText {
   const theForm = getVerbFormsArray(rawVerb).find(
     (form) => form.name === targetForm
   );
@@ -622,19 +681,24 @@ export function verbToTargetForm(rawVerb:RawJapanese, targetForm:string) {
 /**
  * decorates label with metadata info (intransitive, keigo, etc.)
  */
-export function japaneseLabel(isOnBottom:boolean, jObj:JapaneseText | JapaneseVerb, inJapanese:JSX.Element, jumpToTerm?:Function) {
+export function japaneseLabel(
+  isOnBottom: boolean,
+  jObj: JapaneseText | JapaneseVerb,
+  inJapanese: React.JSX.Element,
+  jumpToTerm?: (uid: string) => void
+) {
   const isOnTop = !isOnBottom;
-  let indicators:JSX.Element[] = [];
+  let indicators: React.JSX.Element[] = [];
   let showAsterix = false;
   let showIntr = false;
-  let pairUID:string|undefined;
+  let pairUID: string | undefined;
   if (
     jObj.constructor.name === JapaneseVerb.name &&
     "isExceptionVerb" in jObj
   ) {
     showAsterix = jObj.isExceptionVerb() || jObj.getVerbClass() === 3;
     showIntr = jObj.isIntransitive();
-    pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
+    pairUID = jObj.getTransitivePair() ?? jObj.getIntransitivePair();
   }
 
   const showNaAdj = jObj.isNaAdj();
@@ -686,7 +750,7 @@ export function japaneseLabel(isOnBottom:boolean, jObj:JapaneseText | JapaneseVe
         {showNaAdj && <span className="opacity-25"> {"な"}</span>}
         <span className="fs-5">
           <span> (</span>
-          {indicators.reduce<JSX.Element[]>((a, c, i) => {
+          {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
               return [...a, <span key={indicators.length + i}> , </span>, c];
             } else {
@@ -724,18 +788,23 @@ export function japaneseLabel(isOnBottom:boolean, jObj:JapaneseText | JapaneseVe
  * @param {JapaneseText | JapaneseVerb} jObj
  * @param {*} inEnglish
  * @param {function} [jumpToTerm]
- * @returns {JSX.Element}
+ * @returns {React.JSX.Element}
  */
-export function englishLabel(isOnTop:boolean, jObj:JapaneseText | JapaneseVerb, inEnglish:JSX.Element, jumpToTerm?:Function) {
-  let indicators:JSX.Element[] = [];
+export function englishLabel(
+  isOnTop: boolean,
+  jObj: JapaneseText | JapaneseVerb,
+  inEnglish: React.JSX.Element,
+  jumpToTerm?: (uid: string) => void
+) {
+  let indicators: React.JSX.Element[] = [];
   let showIntr = false;
-  let pairUID:string|undefined;
+  let pairUID: string | undefined;
   if (
     jObj.constructor.name === JapaneseVerb.name &&
     "isExceptionVerb" in jObj
   ) {
     showIntr = jObj.isIntransitive();
-    pairUID = jObj.getTransitivePair() || jObj.getIntransitivePair();
+    pairUID = jObj.getTransitivePair() ?? jObj.getIntransitivePair();
   }
 
   const showSlang = jObj.isSlang();
@@ -782,7 +851,7 @@ export function englishLabel(isOnTop:boolean, jObj:JapaneseText | JapaneseVerb, 
         {inEnglish}
         <span>
           <span> (</span>
-          {indicators.reduce<JSX.Element[]>((a, c, i) => {
+          {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
               return [...a, <span key={indicators.length + i}> , </span>, c];
             } else {
@@ -804,11 +873,11 @@ export function englishLabel(isOnTop:boolean, jObj:JapaneseText | JapaneseVerb, 
  * Flips En > Jp or Jp > En
  */
 export function labelPlacementHelper(
-  practiceSide:boolean,
-  inEnglish:JSX.Element,
-  inJapanese:JSX.Element,
-  eLabel:JSX.Element,
-  jLabel:JSX.Element
+  practiceSide: boolean,
+  inEnglish: React.JSX.Element,
+  inJapanese: React.JSX.Element,
+  eLabel: React.JSX.Element,
+  jLabel: React.JSX.Element
 ) {
   let topValue, bottomValue, topLabel, bottomLabel;
   if (practiceSide) {
@@ -826,7 +895,7 @@ export function labelPlacementHelper(
   return { topValue, topLabel, bottomValue, bottomLabel };
 }
 
-export function getEnglishHint(vocabulary:RawVocabulary) {
+export function getEnglishHint(vocabulary: RawVocabulary) {
   return !vocabulary.grp || vocabulary.grp === "" ? undefined : (
     <span className="hint">
       {vocabulary.grp + (vocabulary.subGrp ? ", " + vocabulary.subGrp : "")}
@@ -834,10 +903,10 @@ export function getEnglishHint(vocabulary:RawVocabulary) {
   );
 }
 
-export function getJapaneseHint(japaneseObj:JapaneseText) {
+export function getJapaneseHint(japaneseObj: JapaneseText) {
   const yoon = japaneseObj.getPronunciation().slice(1, 2);
 
-  let jHint;
+  let jHint: React.JSX.Element | null;
   if (isYoon(yoon)) {
     jHint = japaneseObj.getHint(kanaHintBuilder, furiganaHintBuilder, 3, 2);
   } else {
@@ -850,7 +919,7 @@ export function getJapaneseHint(japaneseObj:JapaneseText) {
 /**
  * indexedDB key
  */
-export function getCacheUID(word:RawVocabulary) {
+export function getCacheUID(word: RawVocabulary) {
   let { uid } = word;
 
   if (!uid) {
@@ -869,15 +938,15 @@ export function getCacheUID(word:RawVocabulary) {
  * Creates the settings object for furigana toggling
  */
 export function toggleFuriganaSettingHelper(
-  uid:string,
-  settings:FuriganaToggleMap,
-  englishSideUp?:boolean,
-  toggleFn?:Function
+  uid: string,
+  settings: FuriganaToggleMap,
+  englishSideUp?: boolean,
+  toggleFn?: (uid: string) => void
 ) {
   let furiganaToggable;
 
   // show by default unless explicitly set to false
-  const show = !(settings && settings[uid] && settings[uid].f === false);
+  const show = !(settings?.[uid]?.f === false);
   furiganaToggable = {
     furigana: {
       show,
@@ -901,7 +970,11 @@ export function toggleFuriganaSettingHelper(
  * @param countDownFn
  * @returns empty promise
  */
-export function pause(ms:number, { signal }:{signal:AbortSignal}, countDownFn?:Function) {
+export function pause(
+  ms: number,
+  { signal }: { signal: AbortSignal },
+  countDownFn?: () => void
+) {
   return new Promise<void>((resolve, reject) => {
     const listener = () => {
       clearTimeout(timer);
@@ -934,7 +1007,12 @@ export function pause(ms:number, { signal }:{signal:AbortSignal}, countDownFn?:F
  * @param waitBeforeEach ms to wait before triggering actions
  * @param AbortController signal
  */
-export function loopN<T>(n:number, action:()=>Promise<T>, waitBeforeEach:number, { signal }:{signal:AbortSignal}) {
+export function loopN<T>(
+  n: number,
+  action: () => Promise<T>,
+  waitBeforeEach: number,
+  { signal }: { signal: AbortSignal }
+) {
   const loopPromise = new Promise<void>((resolve, reject) => {
     const listener = () => {
       clearTimeout(timer);
@@ -979,7 +1057,11 @@ export function loopN<T>(n:number, action:()=>Promise<T>, waitBeforeEach:number,
  * @param threshold
  * @param eventHandler
  */
-export function motionThresholdCondition(event:DeviceMotionEvent, threshold:number, eventHandler:(value:number)=>void) {
+export function motionThresholdCondition(
+  event: DeviceMotionEvent,
+  threshold: number,
+  eventHandler: (value: number) => void
+) {
   // const x = event.acceleration.x;
   const y = event.acceleration?.y;
   const z = event.acceleration?.z;
@@ -1001,12 +1083,15 @@ export function motionThresholdCondition(event:DeviceMotionEvent, threshold:numb
 /**
  * If required request permission for DeviceMotionEvent
  */
-export function getDeviceMotionEventPermission(onGranted:Function, onError:Function) {
+export function getDeviceMotionEventPermission(
+  onGranted: () => void,
+  onError: () => void
+) {
   // @ts-expect-error DeviceMotionEvent.requestPermission
   if (typeof DeviceMotionEvent.requestPermission === "function") {
     // @ts-expect-error DeviceMotionEvent.requestPermission
     DeviceMotionEvent.requestPermission()
-      .then((permissionState:"default"|"denied"|"granted") => {
+      .then((permissionState: "default" | "denied" | "granted") => {
         if (permissionState === "granted") {
           onGranted();
         }

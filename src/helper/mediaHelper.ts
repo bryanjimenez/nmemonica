@@ -1,10 +1,9 @@
-
 import type { ActionHandlerTuple } from "../typings/raw";
 
 export function setMediaSessionMetadata(
-  title:string,
+  title: string,
   artist = "Nmemonica App",
-  album?:string
+  album?: string
 ) {
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -23,7 +22,9 @@ export function setMediaSessionMetadata(
   }
 }
 
-export function setMediaSessionPlaybackState(state:"playing"|"paused"|"none") {
+export function setMediaSessionPlaybackState(
+  state: "playing" | "paused" | "none"
+) {
   if ("mediaSession" in navigator) {
     const mediaSession = navigator.mediaSession;
     try {
@@ -36,7 +37,7 @@ export function setMediaSessionPlaybackState(state:"playing"|"paused"|"none") {
   }
 }
 
-export function mediaSessionAttach(actionHandlers:ActionHandlerTuple[]) {
+export function mediaSessionAttach(actionHandlers: ActionHandlerTuple[]) {
   if ("mediaSession" in navigator) {
     const mediaSession = navigator.mediaSession;
     try {

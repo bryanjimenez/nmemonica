@@ -3,9 +3,9 @@ import type { RawVocabulary, GroupListMap } from "../typings/raw";
 /**
  * Adds intransitive transitive info to RawVocabulary
  */
-export function buildVocabularyObject(original:Record<string,RawVocabulary>) {
-  let transitivity:{[uid:string]: {trans?:string, intr:string}} = {};
-  let value:RawVocabulary[] = Object.keys(original).map((k) => {
+export function buildVocabularyObject(original: Record<string, RawVocabulary>) {
+  let transitivity: Record<string, { trans?: string; intr: string }> = {};
+  let value: RawVocabulary[] = Object.keys(original).map((k) => {
     const uid = original[k].trans;
     if (uid) {
       transitivity[uid] = {
@@ -31,9 +31,9 @@ export function buildVocabularyObject(original:Record<string,RawVocabulary>) {
  * Builds group info object. Keys are mainGrp.
  * For each mainGrp aggregates all subGrp of a mainGrp
  */
-export function buildGroupObject(termObj:Record<string,RawVocabulary>) {
-  const mainGrp:keyof RawVocabulary = "grp";
-  const subGrp:keyof RawVocabulary = "subGrp";
+export function buildGroupObject(termObj: Record<string, RawVocabulary>) {
+  const mainGrp: keyof RawVocabulary = "grp";
+  const subGrp: keyof RawVocabulary = "subGrp";
 
   return Object.values(termObj).reduce<GroupListMap>((a, o) => {
     if (o[mainGrp]) {
@@ -59,9 +59,11 @@ export function buildGroupObject(termObj:Record<string,RawVocabulary>) {
 /**
  * Creates a list of unique tags
  */
-export function buildTagObject(termObj:Record<string,RawVocabulary>) {
-  const tag:keyof RawVocabulary = "tag";
-  let tags:string[] = [];
+export function buildTagObject<T extends { tag: string[] }>(
+  termObj: Record<string, T>
+) {
+  const tag: keyof RawVocabulary = "tag";
+  let tags: string[] = [];
 
   Object.values(termObj).forEach((o) => {
     if (o[tag] && o[tag].length > 0) {
