@@ -6,16 +6,16 @@ import { addParam } from "../../helper/urlHelper";
 import { fetchAudio } from "../../helper/audioHelper.development";
 
 interface AudioItemProps {
-  visible:boolean;
-  reCache?:boolean;
-  word:{tl: string, q: string, uid: string },
-  onPushedPlay?:Function
+  visible: boolean;
+  reCache?: boolean;
+  word: { tl: string; q: string; uid: string };
+  onPushedPlay?: Function;
 }
 
-export default function AudioItem(props:AudioItemProps) {
+export default function AudioItem(props: AudioItemProps) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
 
-  let tStart:number;
+  let tStart: number;
 
   const touchPlayParam = props.word;
 
@@ -57,8 +57,8 @@ AudioItem.defaultProps = {
 
 AudioItem.propTypes = {
   word: PropTypes.shape({
-    tl: PropTypes.string.isRequired,  // target language used in req
-    q: PropTypes.string.isRequired,   // query used in req
+    tl: PropTypes.string.isRequired, // target language used in req
+    q: PropTypes.string.isRequired, // query used in req
     uid: PropTypes.string.isRequired, // index used in cache
   }).isRequired,
   reCache: PropTypes.bool,

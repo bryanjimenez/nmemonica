@@ -5,14 +5,14 @@ import classNames from "classnames";
 import "./SettingsSwitch.css";
 
 interface SettingsSwitchProps {
-  active: boolean,
- action: Function,
-  statusText: string,
-  color?: "primary"|"secondary"|"default"|undefined,
-  disabled?: boolean
+  active: boolean;
+  action: Function;
+  statusText: string;
+  color?: "primary" | "secondary" | "default" | undefined;
+  disabled?: boolean;
 }
 
-export function SettingsSwitch(props:SettingsSwitchProps) {
+export function SettingsSwitch(props: SettingsSwitchProps) {
   const other = { disabled: props.disabled ? true : undefined };
 
   return (

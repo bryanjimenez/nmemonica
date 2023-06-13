@@ -5,11 +5,16 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import StackNavButton from "../Form/StackNavButton";
 
 interface GameQuestion {
-  english?: string, romaji?: string, toHTML: (correct:boolean)=>JSX.Element
+  english?: string;
+  romaji?: string;
+  toHTML: (correct: boolean) => React.JSX.Element;
 }
 
 interface GameChoice {
-  compare: string, english?: string, romaji?: string, toHTML: Function
+  compare: string;
+  english?: string;
+  romaji?: string;
+  toHTML: Function;
 }
 
 interface FourChoicesProps {
@@ -18,7 +23,7 @@ interface FourChoicesProps {
   aRomaji?: boolean;
   hint?: string;
   choices: GameChoice[];
-  isCorrect: (answered: GameChoice)=>boolean;
+  isCorrect: (answered: GameChoice) => boolean;
   gotoPrev: Function;
   gotoNext: Function;
 }
@@ -29,13 +34,15 @@ interface FourChoicesState {
   correct: boolean;
 }
 
-function FourChoices(props:FourChoicesProps) {
-
-  const [state, dispatch]:[FourChoicesState, import("react").Dispatch<Partial<FourChoicesState>>] = useReducer(
-    (
-      state:FourChoicesState,
-      action:Partial<FourChoicesState>
-    ) => ({ ...state, ...action }),
+function FourChoices(props: FourChoicesProps) {
+  const [state, dispatch]: [
+    FourChoicesState,
+    React.Dispatch<Partial<FourChoicesState>>
+  ] = useReducer(
+    (state: FourChoicesState, action: Partial<FourChoicesState>) => ({
+      ...state,
+      ...action,
+    }),
     {
       showMeaning: false,
       incorrect: [],
@@ -47,7 +54,7 @@ function FourChoices(props:FourChoicesProps) {
     dispatch({ showMeaning: false, correct: false, incorrect: [] });
   };
 
-  const checkAnswer = (answered:GameChoice, i:number) => {
+  const checkAnswer = (answered: GameChoice, i: number) => {
     if (props.isCorrect(answered)) {
       // console.log("RIGHT!");
       dispatch({ correct: true, showMeaning: true });
@@ -96,19 +103,17 @@ function FourChoices(props:FourChoicesProps) {
       <div className="d-flex justify-content-between h-100">
         <StackNavButton
           ariaLabel="Previous"
-          action={
-              () => {
-                clearAnswers();
-                props.gotoPrev();
-              }
-            
-          }
+          action={() => {
+            clearAnswers();
+            props.gotoPrev();
+          }}
         >
           <ChevronLeftIcon size={16} />
         </StackNavButton>
         <div
           className={classNames({
-            "question d-flex flex-column justify-content-center text-center w-50": true,
+            "question d-flex flex-column justify-content-center text-center w-50":
+              true,
           })}
         >
           <h1>{question.toHTML(state.correct)}</h1>
@@ -136,14 +141,15 @@ function FourChoices(props:FourChoicesProps) {
             const isWrong = state.incorrect.includes(i);
 
             const choiceCSS = classNames({
-              "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable": true,
+              "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable":
+                true,
               "correct-color": isRight,
               "incorrect-color": isWrong,
             });
 
             return (
               <div
-                key={i}
+                key={`${c.english ?? "blank"}-${c.compare}`}
                 className={choiceCSS}
                 onClick={() => {
                   checkAnswer(c, i);
@@ -166,12 +172,10 @@ function FourChoices(props:FourChoicesProps) {
         </div>
         <StackNavButton
           ariaLabel="Next"
-          action={
-              () => {
-                clearAnswers();
-                props.gotoNext();
-              }
-          }
+          action={() => {
+            clearAnswers();
+            props.gotoNext();
+          }}
         >
           <ChevronRightIcon size={16} />
         </StackNavButton>

@@ -2,7 +2,6 @@ import { Avatar, Grow, LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import partition from "lodash/partition";
 import React, {
-  MouseEventHandler,
   useCallback,
   useEffect,
   useMemo,
@@ -10,10 +9,12 @@ import React, {
   useState,
 } from "react";
 import { useDispatch } from "react-redux";
+
+import VerbMain from "./VerbMain";
+import VocabularyMain from "./VocabularyMain";
 import { pronounceEndoint } from "../../../environment.development";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { fetchAudio } from "../../helper/audioHelper.development";
-import { logify, spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
 import {
   DIFFICULTY_THRLD,
   alphaOrder,
@@ -31,17 +32,19 @@ import {
   toggleFuriganaSettingHelper,
   verbToTargetForm,
 } from "../../helper/gameHelper";
+import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import { addParam } from "../../helper/urlHelper";
 import { buildAction, setStateFunction } from "../../hooks/helperHK";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
-import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import type { AppDispatch } from "../../slices";
 import { logger } from "../../slices/globalSlice";
-import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
+import { TermSortBy } from "../../slices/settingHelper";
 import {
   addFrequencyWord,
   flipVocabularyPracticeSide,
@@ -53,9 +56,8 @@ import {
   toggleVocabularyFilter,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
-import Console from "../Form/Console";
+import type { RawVocabulary } from "../../typings/raw";
 import { DifficultySlider } from "../Form/Difficulty";
-import { MinimalUI } from "../Form/MinimalUI";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -68,12 +70,7 @@ import {
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
-import VerbMain from "./VerbMain";
-import VocabularyMain from "./VocabularyMain";
-import type { RawVocabulary } from "../../typings/raw";
-import type { ConsoleMessage } from "../Form/Console";
 import type { BareIdx } from "../Form/VocabularyOrderSlider";
-
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -87,17 +84,19 @@ export default function Vocabulary() {
   /** Alphabetic order quick scroll in progress */
   const isAlphaSortScrolling = useRef(false);
 
-  const prevReinforcedUID = useRef<string | undefined>( undefined)
+  const prevReinforcedUID = useRef<string | undefined>(undefined);
   const prevSelectedIndex = useRef(0);
 
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(undefined  );
-  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]  );
-  const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
+  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
+    undefined
+  );
+  // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
+  // const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
-  const prevLastNext = useRef<number>(Date.now())
+  const prevLastNext = useRef<number>(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const [showHint, setShowHint] = useState<string | undefined>(undefined  );
+  const [showHint, setShowHint] = useState<string | undefined>(undefined);
 
   const [frequency, setFrequency] = useState<string[]>([]); // subset of frequency words within current active group
 
@@ -143,7 +142,7 @@ export default function Vocabulary() {
 
     const allFrequency = Object.keys(metadata.current).reduce<string[]>(
       (acc, cur) => {
-        if (metadata.current[cur].rein === true) {
+        if (metadata.current[cur]?.rein === true) {
           acc = [...acc, cur];
         }
         return acc;
@@ -184,7 +183,7 @@ export default function Vocabulary() {
         break;
       }
       case TermSortBy.GAME:
-        if (reinforce.current === true) {
+        if (reinforce.current) {
           // if reinforce, place reinforced/frequency terms
           // at the end
           const [freqTerms, nonFreqTerms] = partition(
@@ -197,15 +196,12 @@ export default function Vocabulary() {
         break;
     }
 
-    const frequency = filtered.reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur.uid]?.rein === true) {
-          acc = [...acc, cur.uid];
-        }
-        return acc;
-      },
-      []
-    );
+    const frequency = filtered.reduce<string[]>((acc, cur) => {
+      if (metadata.current[cur.uid]?.rein === true) {
+        acc = [...acc, cur.uid];
+      }
+      return acc;
+    }, []);
     setFrequency(frequency);
 
     return filtered;
@@ -227,7 +223,7 @@ export default function Vocabulary() {
         newOrder = dateViewOrder(filteredVocab, metadata.current);
         break;
       case TermSortBy.GAME:
-        if (reinforce.current === true) {
+        if (reinforce.current) {
           // search backwards for splitIdx where [...nonFreqTerms, ...freqTerms]
           let splitIdx = -1;
           for (let idx = filteredVocab.length - 1; idx > -1; idx--) {
@@ -279,16 +275,16 @@ export default function Vocabulary() {
     const l = filteredVocab.length;
     let newSel = (selectedIndex + 1) % l;
 
-    if (newSel === errorSkipIndex) {
-      newSel = (l + newSel + 1) % l;
-    }
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel + 1) % l;
+    // }
 
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(undefined);
-  }, [filteredVocab, selectedIndex, lastNext, errorSkipIndex]);
+  }, [filteredVocab, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
     play(
@@ -302,7 +298,7 @@ export default function Vocabulary() {
         prevReinforcedUID.current = reinforcedUID;
         setReinforcedUID(value);
       },
-      gotoNext,
+      gotoNext
     );
   }, [dispatch, frequency, filteredVocab, reinforcedUID, gotoNext]);
 
@@ -317,16 +313,16 @@ export default function Vocabulary() {
       newSel = (l + i) % l;
     }
 
-    if (newSel === errorSkipIndex) {
-      newSel = (l + newSel - 1) % l;
-    }
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel - 1) % l;
+    // }
 
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(undefined);
-  }, [filteredVocab, selectedIndex, reinforcedUID, lastNext, errorSkipIndex]);
+  }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
@@ -386,8 +382,8 @@ export default function Vocabulary() {
       selectedIndex !== prevState.selectedIndex
     ) {
       const uid =
-        prevState.reinforcedUID ||
-        getTermUID(prevState.selectedIndex, filteredVocab,order, );
+        prevState.reinforcedUID ??
+        getTermUID(prevState.selectedIndex, filteredVocab, order);
 
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
@@ -404,12 +400,9 @@ export default function Vocabulary() {
           .then((payload) => {
             const { map, prevMap } = payload;
 
-            const prevDate = prevMap[uid] && prevMap[uid].d;
+            const prevDate = prevMap[uid]?.d;
             const repStats = { [uid]: { ...map[uid], d: prevDate } };
-            const messageLog = (
-              m:string,
-              l:number
-            ) => dispatch(logger(m, l));
+            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
             if (tpAnswered.current !== undefined) {
               timedPlayLog(messageLog, vocabulary, repStats, { frequency });
             } else {
@@ -426,7 +419,7 @@ export default function Vocabulary() {
       }
 
       setShowHint(undefined);
-      setErrorMsgs([]);
+      // setErrorMsgs([]);
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
     }
@@ -467,7 +460,7 @@ export default function Vocabulary() {
   if (filteredVocab.length < 1 || order.length < 1)
     return <NotReady addlStyle="main-panel" />;
 
-  const uid = reinforcedUID || getTermUID(selectedIndex,filteredVocab, order, );
+  const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
 
   // console.log(
   //   JSON.stringify({
@@ -495,7 +488,7 @@ export default function Vocabulary() {
   const isHintable = showHint !== uid && englishSideUp ? hasJHint : hasEHint;
 
   let pIdx = selectedIndex;
-  let pList:BareIdx[] = [];
+  let pList: BareIdx[] = [];
 
   if (scrollJOrder) {
     if (jbare) {
@@ -589,10 +582,8 @@ export default function Vocabulary() {
                 {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
                 <DifficultySlider
                   value={metadata.current[uid]?.difficulty}
-                  onChange={buildAction(
-                    dispatch,
-                    (value:number) =>
-                      setWordDifficulty(uid, value)
+                  onChange={buildAction(dispatch, (value: number) =>
+                    setWordDifficulty(uid, value)
                   )}
                   manualUpdate={uid}
                 />
@@ -642,7 +633,7 @@ export default function Vocabulary() {
               setShowPageBar(true);
 
               const delay = () => {
-                if (isAlphaSortScrolling.current === false) {
+                if (!isAlphaSortScrolling.current) {
                   setShowPageBar(false);
                 } else {
                   setTimeout(delay, delayTime);
@@ -715,9 +706,12 @@ export default function Vocabulary() {
   return page;
 }
 
-function buildRecacheAudioHandler(recacheAudio:boolean, setRecacheAudio:React.Dispatch<React.SetStateAction<boolean>>) {
+function buildRecacheAudioHandler(
+  recacheAudio: boolean,
+  setRecacheAudio: React.Dispatch<React.SetStateAction<boolean>>
+) {
   return function recacheAudioHandler() {
-    if (recacheAudio === false) {
+    if (!recacheAudio) {
       const delayTime = 2000;
       setRecacheAudio(true);
 
@@ -731,18 +725,21 @@ function buildRecacheAudioHandler(recacheAudio:boolean, setRecacheAudio:React.Di
 }
 
 function buildGameActionsHandler(
-  gotoNextSlide:Function,
-  gotoPrev:Function,
-  reinforcedUID:string|undefined,
-  selectedIndex:number,
-  vocab:RawVocabulary[],
-  verbForm:string,
-  order:number[],
-  filteredVocab:RawVocabulary[],
-  recacheAudio:boolean,
-  naFlip:React.MutableRefObject<string|undefined>
+  gotoNextSlide: () => void,
+  gotoPrev: () => void,
+  reinforcedUID: string | undefined,
+  selectedIndex: number,
+  vocab: RawVocabulary[],
+  verbForm: string,
+  order: number[],
+  filteredVocab: RawVocabulary[],
+  recacheAudio: boolean,
+  naFlip: React.MutableRefObject<string | undefined>
 ) {
-  return function gameActionHandler(direction:string, AbortController?:AbortController) {
+  return function gameActionHandler(
+    direction: string,
+    AbortController?: AbortController
+  ) {
     let actionPromise;
 
     if (direction === "left") {
@@ -753,7 +750,7 @@ function buildGameActionsHandler(
       actionPromise = Promise.all([Promise.resolve()]);
     } else {
       const uid =
-        reinforcedUID || getTermUID(selectedIndex,filteredVocab, order, );
+        reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
       const vocabulary = getTerm(uid, vocab);
 
       const override = recacheAudio ? "/override_cache" : "";
@@ -809,7 +806,7 @@ function buildGameActionsHandler(
         actionPromise = fetchAudio(audioUrl, AbortController);
       }
     }
-    return actionPromise || Promise.reject();
+    return actionPromise ?? Promise.reject();
   };
 }
 

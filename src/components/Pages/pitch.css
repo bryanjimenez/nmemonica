@@ -1,0 +1,18 @@
+/*
+https://japanese.stackexchange.com/questions/53487/what-is-the-difference-in-pronunciation-between-%E6%A1%83%E3%82%82%E3%82%82-and-%E8%85%BF%E3%82%82%E3%82%82
+*/
+
+span.tone-h {
+  border-top: 1px solid red;
+}
+span.tone-l-change {
+  border: solid red;
+  border-width: 0 0 1px 1px;
+}
+span.tone-l {
+  border-bottom: 1px solid red;
+}
+span.tone-h-change {
+  border: solid red;
+  border-width: 1px 0 0 1px;
+}

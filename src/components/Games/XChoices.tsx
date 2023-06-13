@@ -5,34 +5,40 @@ import React, { useCallback, useReducer } from "react";
 import StackNavButton from "../Form/StackNavButton";
 
 export interface GameQuestion {
-  english?: string, toHTML: (correct:boolean)=>JSX.Element
+  english?: string;
+  toHTML: (correct: boolean) => React.JSX.Element;
 }
 
 export interface GameChoice {
-  english?: string, toHTML: Function, compare: string
+  english?: string;
+  toHTML: Function;
+  compare: string;
 }
 
 interface XChoicesProps {
   question: GameQuestion;
-  hint?:string; // a hint to be displayed if provided
+  hint?: string; // a hint to be displayed if provided
   choices: GameChoice[];
-  isCorrect: (answered: GameChoice)=>[boolean, number]  //Answer validator, returns if correct and correct answer index
+  isCorrect: (answered: GameChoice) => [boolean, number]; //Answer validator, returns if correct and correct answer index
   gotoPrev: Function;
   gotoNext: Function;
 }
 
 interface XChoicesState {
-  showMeaning:boolean;
+  showMeaning: boolean;
   incorrect: number[];
-  correct: number
+  correct: number;
 }
 
-export default function XChoices(props:XChoicesProps) {
-  const [state, dispatch]:[XChoicesState, import("react").Dispatch<Partial<XChoicesState>>] = useReducer(
-    (
-      state:XChoicesState,
-      action:Partial<XChoicesState>
-    ) => ({ ...state, ...action }),
+export default function XChoices(props: XChoicesProps) {
+  const [state, dispatch]: [
+    XChoicesState,
+    React.Dispatch<Partial<XChoicesState>>
+  ] = useReducer(
+    (state: XChoicesState, action: Partial<XChoicesState>) => ({
+      ...state,
+      ...action,
+    }),
     {
       showMeaning: false,
       incorrect: [],
@@ -46,7 +52,7 @@ export default function XChoices(props:XChoicesProps) {
 
   const { isCorrect, choices, gotoNext, gotoPrev } = props;
 
-  const checkAnswer = (answered:GameChoice, i:number) => {
+  const checkAnswer = (answered: GameChoice, i: number) => {
     const [wasCorrect, correctIdx] = isCorrect(answered);
 
     if (wasCorrect) {
@@ -73,7 +79,7 @@ export default function XChoices(props:XChoicesProps) {
     }
   };
 
-  const choiceButton = (index:number) => {
+  const choiceButton = (index: number) => {
     const choiceN = choices.length;
 
     const isWrong = state.incorrect.includes(index);
@@ -94,8 +100,9 @@ export default function XChoices(props:XChoicesProps) {
 
     const wide = wideMode ? 3 / 4 : 1;
 
-    const width =
-      Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * wide * 100) + "%";
+    const width = `${Math.trunc(
+      (1 / Math.ceil(Math.sqrt(choiceN))) * wide * 100
+    )}%`;
 
     return (
       <div
@@ -109,25 +116,15 @@ export default function XChoices(props:XChoicesProps) {
     );
   };
 
-  const gotoPrevLogic:React.MouseEventHandler = useCallback(
-    (
-      () => {
-        clearAnswers();
-        gotoPrev();
-      }
-    ),
-    [clearAnswers, gotoPrev]
-  );
+  const gotoPrevLogic: React.MouseEventHandler = useCallback(() => {
+    clearAnswers();
+    gotoPrev();
+  }, [clearAnswers, gotoPrev]);
 
-  const gotoNextLogic:React.MouseEventHandler = useCallback(
-     (
-      () => {
-        clearAnswers();
-        gotoNext();
-      }
-    ),
-    [clearAnswers, gotoNext]
-  );
+  const gotoNextLogic: React.MouseEventHandler = useCallback(() => {
+    clearAnswers();
+    gotoNext();
+  }, [clearAnswers, gotoNext]);
   const mainPanel = classNames({
     "pickXgame main-panel h-100": true,
   });
@@ -157,4 +154,3 @@ XChoices.propTypes = {
   gotoNext: PropTypes.func.isRequired,
   gotoPrev: PropTypes.func.isRequired,
 };
-

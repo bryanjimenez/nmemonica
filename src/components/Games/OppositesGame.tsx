@@ -1,6 +1,6 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -9,11 +9,14 @@ import { getOpposite } from "../../slices/oppositeSlice";
 import { NotReady } from "../Form/NotReady";
 import FourChoices from "./FourChoices";
 import type { GameChoice } from "./XChoices";
+import type { RootState, AppDispatch } from "../../slices";
 
-interface RawOpposite{
-  english: string, japanese: string, romaji: string, toHTML: (correct:boolean)=>JSX.Element
+export interface RawOpposite {
+  english: string;
+  japanese: string;
+  romaji: string;
+  toHTML: (correct: boolean) => React.JSX.Element;
 }
-
 
 const OppositesGameMeta = {
   location: "/opposites/",
@@ -23,11 +26,11 @@ const OppositesGameMeta = {
 export default function OppositesGame() {
   const dispatch = useDispatch<AppDispatch>();
   const { value: oppositeList } = useSelector(
-    ({ opposite }:RootState) => opposite,
+    ({ opposite }: RootState) => opposite,
     (before, after) => before.version === after.version
   );
-  const [qRomaji, aRomaji] = useSelector(
-    ( { opposite }:RootState) => {
+  const [qRomaji, aRomaji] = useSelector<RootState, boolean[]>(
+    ({ opposite }: RootState) => {
       const { qRomaji, aRomaji } = opposite;
 
       return [qRomaji, aRomaji];
@@ -94,14 +97,18 @@ export default function OppositesGame() {
   );
 }
 
-function prepareGame(opposites:[RawOpposite,RawOpposite][], order:number[], selectedIndex:number) {
+function prepareGame(
+  opposites: [RawOpposite, RawOpposite][],
+  order: number[],
+  selectedIndex: number
+) {
   let [questionObj, answerObj] = opposites[order[selectedIndex]];
   const q = JapaneseText.parse(questionObj);
   const a = JapaneseText.parse(answerObj);
 
   const question = {
     ...questionObj,
-    toHTML: ( correct:boolean) => (
+    toHTML: (correct: boolean) => (
       <span
         className={classNames({
           "correct-color": correct,
@@ -111,14 +118,14 @@ function prepareGame(opposites:[RawOpposite,RawOpposite][], order:number[], sele
       </span>
     ),
   };
-  const answer:GameChoice = {
+  const answer: GameChoice = {
     ...answerObj,
     compare: answerObj.japanese,
     toHTML: () => a.toHTML(),
   };
 
-  let choices:GameChoice[] = [answer];
-  let antiHomophones = [answer.romaji, question.romaji];
+  let choices: GameChoice[] = [answer];
+  let antiHomophones: string[] = [answer.romaji, question.romaji];
 
   while (choices.length < 4) {
     const idx = Math.floor(Math.random() * opposites.length);

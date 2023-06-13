@@ -2,8 +2,7 @@ import React from "react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 
-
-export function NotReady(props:{ addlStyle: string}) {
+export function NotReady(props: { addlStyle: string }) {
   const css = classNames({
     [props.addlStyle]: true,
     "d-flex flex-column justify-content-around text-center h-100": true,

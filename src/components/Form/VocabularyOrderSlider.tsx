@@ -4,16 +4,20 @@ import React, { useState } from "react";
 import "./VocabularyOrderSlider.css";
 
 export interface BareIdx {
-  uid: string, label: string, idx: number
+  uid: string;
+  label: string;
+  idx: number;
 }
 
 interface VocabularyOrderSliderProps {
-  initial:number,
-  list:BareIdx[],
-  setIndex:(index:number)=>void
+  initial: number;
+  list: BareIdx[];
+  setIndex: (index: number) => void;
 }
 
-export default function VocabularyOrderSlider(props:VocabularyOrderSliderProps) {
+export default function VocabularyOrderSlider(
+  props: VocabularyOrderSliderProps
+) {
   const min = 0;
   const max = props.list.length - 1;
   const [value, setValue] = useState(() => Math.min(max, props.initial));

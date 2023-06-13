@@ -12,12 +12,12 @@ import { useWindowSize } from "../../hooks/helperHK";
 import "./Difficulty.css";
 
 interface DifficultySliderProps {
-  value:number; //difficulty value
-  onChange: (value:number)=>void; //is called after touch event ends
-  manualUpdate: string;// a changing value that will trigger an update to useFloating
+  value: number; //difficulty value
+  onChange: (value: number) => void; //is called after touch event ends
+  manualUpdate: string; // a changing value that will trigger an update to useFloating
 }
 
-export function DifficultySlider(props:DifficultySliderProps) {
+export function DifficultySlider(props: DifficultySliderProps) {
   const defaultDifficulty = props.value ?? 30;
   const [value, setValue] = useState(defaultDifficulty);
 

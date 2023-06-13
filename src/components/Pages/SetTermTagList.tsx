@@ -5,18 +5,17 @@ import React, { useEffect } from "react";
 import { GroupItem } from "../Form/GroupItem";
 
 interface SetTermTagListProps {
-  termsTags:string[]; //List of all available tags
+  termsTags: string[]; //List of all available tags
   termsActive: string[]; //List of tags that are selected
-  toggleTermActive: (grp:string)=>void
-  selectedCount?: number //Number of terms currently selected by filter
+  toggleTermActive: (grp: string) => void;
+  selectedCount?: number; //Number of terms currently selected by filter
 }
-
 
 /**
  * If the string contains a name of a group and a level.
  * example: Group_6
  */
-export function isGroupLevel(groupName:string) {
+export function isGroupLevel(groupName: string) {
   return (
     groupName.includes("_") &&
     Number.isInteger(parseInt(groupName.split("_")[1], 10))
@@ -25,7 +24,7 @@ export function isGroupLevel(groupName:string) {
 /**
  * Group and subgroup list
  */
-export function SetTermTagList(props:SetTermTagListProps) {
+export function SetTermTagList(props: SetTermTagListProps) {
   const { termsActive, termsTags, toggleTermActive, selectedCount } = props;
 
   useEffect(() => {
@@ -41,7 +40,7 @@ export function SetTermTagList(props:SetTermTagListProps) {
 
   // numericGroups = [[grpA_1, grpA_2, ..., grpA_X], [grpB_1, grpB_2, ..., grpB_X]]
   const numericGroups = Object.values(
-    numericTags.reduce<{[idx:string]:string[]}>((acc, curr) => {
+    numericTags.reduce<{ [idx: string]: string[] }>((acc, curr) => {
       const groupName = curr.split("_")[0];
       if (acc[groupName]) {
         acc[groupName] = [...acc[groupName], curr];

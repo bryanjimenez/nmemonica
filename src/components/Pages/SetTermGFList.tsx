@@ -4,28 +4,26 @@ import { XCircleIcon, IssueDraftIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 
 interface MinimunRawItem {
-  uid:string, english:string, grp?:string
+  uid: string;
+  english: string;
+  grp?: string;
 }
 
 interface SetTermGFListProps {
-  terms:MinimunRawItem[];
-  termsFreq:string[];//List of uid of terms to be reinforced/frequency
-  termsActive:string[];//List of tags that are selected
-  toggleTermActiveGrp: (grp:string)=>void;
-  removeFrequencyTerm: (uid:string)=>void;
+  terms: MinimunRawItem[];
+  termsFreq: string[]; //List of uid of terms to be reinforced/frequency
+  termsActive: string[]; //List of tags that are selected
+  toggleTermActiveGrp: (grp: string) => void;
+  removeFrequencyTerm: (uid: string) => void;
 }
-/**
- * @template {MinimunRawItem} RawItemType
- * @typedef {Object} SetTermGFListProps
- * @property {RawItemType[]} terms
- * @property {string[]} termsFreq List of uid of terms to be reinforced/frequency
- * @property {string[]} termsActive List of tags that are selected
- * @property {(grp:string)=>void} toggleTermActiveGrp
- * @property {(uid:string)=>void} removeFrequencyTerm
- */
 
-
-function listItem(grpActive:boolean, i:number, uid:string, english:string, removeFrequencyTerm:(uid:string)=>void) {
+function listItem(
+  grpActive: boolean,
+  i: number,
+  uid: string,
+  english: string,
+  removeFrequencyTerm: (uid: string) => void
+) {
   return (
     <div
       key={i}
@@ -63,32 +61,29 @@ function listItem(grpActive:boolean, i:number, uid:string, english:string, remov
 /**
  * Groups + Frequency term list
  */
-export function SetTermGFList(props:SetTermGFListProps) {
-  let cleanup:string[] = [];
+export function SetTermGFList(props: SetTermGFListProps) {
+  let cleanup: string[] = [];
 
-  const thisgrp = props.termsFreq.reduce<MinimunRawItem[]>(
-    (acc, f) => {
-      const found = props.terms.find((v) => v.uid === f);
+  const thisgrp = props.termsFreq.reduce<MinimunRawItem[]>((acc, f) => {
+    const found = props.terms.find((v) => v.uid === f);
 
-      if (found) {
-        acc = [...acc, found];
-      } else {
-        cleanup = [...cleanup, f];
-      }
+    if (found) {
+      acc = [...acc, found];
+    } else {
+      cleanup = [...cleanup, f];
+    }
 
-      return acc;
-    },
-    []
-  );
+    return acc;
+  }, []);
 
-  const grplist = thisgrp.reduce<Record<string,MinimunRawItem>>(
+  const grplist = thisgrp.reduce<Record<string, MinimunRawItem[]>>(
     (acc, cur) => {
       const key = cur.grp ? cur.grp : "undefined";
 
       if (acc[key]) {
-      acc[key] = [...acc[key], cur];
+        acc[key] = [...acc[key], cur];
       } else {
-      acc[key] = [cur];
+        acc[key] = [cur];
       }
 
       return acc;
@@ -104,7 +99,7 @@ export function SetTermGFList(props:SetTermGFListProps) {
           const grpActive = props.termsActive.includes(g);
 
           return (
-            <div key={ig} className="mb-2">
+            <div key={g} className="mb-2">
               <span
                 className={classNames({ "font-weight-bold": grpActive })}
                 onClick={() => props.toggleTermActiveGrp(g)}
@@ -112,9 +107,7 @@ export function SetTermGFList(props:SetTermGFListProps) {
                 {g}
               </span>
               <div>
-                
-                {
-                grplist[g].map((word, iw) =>
+                {grplist[g].map((word, iw) =>
                   listItem(
                     grpActive,
                     iw,

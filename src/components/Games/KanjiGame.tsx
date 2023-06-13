@@ -28,6 +28,7 @@ import { KanjiGridMeta } from "./KanjiGrid";
 import { TermFilterBy } from "../../slices/settingHelper";
 import type { RawKanji } from "../../typings/raw";
 import { GameQuestion } from "./XChoices";
+import type { AppDispatch } from "../../slices";
 
 const KanjiGameMeta = {
   location: "/kanji-game/",
@@ -38,7 +39,7 @@ const KanjiGameMeta = {
  * Split comma separated string(list) and select one.
  * Apply ProperCase
  */
-export function oneFromList(english:string) {
+export function oneFromList(english: string) {
   let englishShortened = english;
   const engList = english.split(",");
   if (engList.length > 1) {
@@ -53,9 +54,8 @@ export function oneFromList(english:string) {
 /**
  * Returns a list of choices which includes the right answer
  */
-function createEnglishChoices(answer:RawKanji, kanjiList:RawKanji[]) {
-  const splitToArray = (term:string) =>
-    term.split(",").map((s) => s.trim());
+function createEnglishChoices(answer: RawKanji, kanjiList: RawKanji[]) {
+  const splitToArray = (term: string) => term.split(",").map((s) => s.trim());
   let choices = [{ ...answer, english: oneFromList(answer.english) }];
 
   const aArr = splitToArray(answer.english);
@@ -84,14 +84,14 @@ function createEnglishChoices(answer:RawKanji, kanjiList:RawKanji[]) {
   return choices;
 }
 
-function prepareGame(kanji:RawKanji, kanjiList:RawKanji[]) {
+function prepareGame(kanji: RawKanji, kanjiList: RawKanji[]) {
   const { uid, kanji: japanese, on, kun } = kanji;
 
   const choices = createEnglishChoices(kanji, kanjiList);
 
-  const q :GameQuestion = {
+  const q: GameQuestion = {
     // english, not needed, shown as a choice
-    toHTML: (correct:boolean) => (
+    toHTML: (correct: boolean) => (
       <div>
         <div
           className={classNames({
@@ -149,19 +149,18 @@ export default function KanjiGame() {
   const [frequency, setFrequency] = useState<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string|undefined>(
+  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
     undefined
   );
 
-  
-  const filteredTerms:RawKanji[] = useMemo(() => {
+  const filteredTerms: RawKanji[] = useMemo(() => {
     if (kanjiList.length === 0) return [];
     if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
       return kanjiList;
 
     const allFrequency = Object.keys(metadata.current).reduce<string[]>(
       (acc, cur) => {
-        if (metadata.current[cur].rein === true) {
+        if (metadata.current[cur]?.rein === true) {
           acc = [...acc, cur];
         }
         return acc;
@@ -186,15 +185,12 @@ export default function KanjiGame() {
       filtered = [...filtered, ...additional];
     }
 
-    const initialFrequency = filtered.reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur.uid]?.rein === true) {
-          return [...acc, cur.uid];
-        }
-        return acc;
-      },
-      []
-    );
+    const initialFrequency = filtered.reduce<string[]>((acc, cur) => {
+      if (metadata.current[cur.uid]?.rein === true) {
+        return [...acc, cur.uid];
+      }
+      return acc;
+    }, []);
 
     setFrequency(initialFrequency);
 
@@ -267,14 +263,14 @@ export default function KanjiGame() {
   ]);
 
   const addFrequencyTerm = useCallback(
-    (uid:string) => {
+    (uid: string) => {
       setFrequency((p) => [...p, uid]);
       dispatch(addFrequencyKanji(uid));
     },
     [dispatch]
   );
   const removeFrequencyTerm = useCallback(
-    (uid:string) => {
+    (uid: string) => {
       setFrequency((p) => p.filter((pUid) => pUid !== uid));
       dispatch(removeFrequencyKanji(uid));
     },

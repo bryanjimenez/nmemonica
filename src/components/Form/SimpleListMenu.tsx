@@ -9,16 +9,16 @@ import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 
 interface SimpleListMenuProps {
-  disabled?:boolean; //whether menu is interdisabled
-  flip?:boolean; //whether elipsis and options are horizontally reversed
-  title:string;
-  options:string[]
-  initial:number;
-  onChange:(index:number)=>void
+  disabled?: boolean; //whether menu is interdisabled
+  flip?: boolean; //whether elipsis and options are horizontally reversed
+  title: string;
+  options: string[];
+  initial: number;
+  onChange: (index: number) => void;
 }
 
-export default function SimpleListMenu(props:SimpleListMenuProps) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null  );
+export default function SimpleListMenu(props: SimpleListMenuProps) {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(props.initial);
 
   const options = useMemo(() => props.options, []);
@@ -28,15 +28,13 @@ export default function SimpleListMenu(props:SimpleListMenuProps) {
   }, [props.initial]);
 
   const open = Boolean(anchorEl);
-  const handleClickListItem = (
-    event:React.MouseEvent<HTMLElement>
-  ) => {
+  const handleClickListItem = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
   const handleMenuItemClick = (
-    event:React.MouseEvent<HTMLElement>,
-     index:number
+    event: React.MouseEvent<HTMLElement>,
+    index: number
   ) => {
     setSelectedIndex(index);
     setAnchorEl(null);

@@ -4,26 +4,26 @@ import { Slider, Typography } from "@mui/material";
 import "./VerbFormSlider.css";
 
 interface Marks {
-  value: number, raw: number
+  value: number;
+  raw: number;
 }
 
 interface VerbFormSliderProps {
-  initial:number;
-  max:number;
-  statusText:string;
-  setChoiceN:(slipt:number)=>void
+  initial: number;
+  max: number;
+  statusText: string;
+  setChoiceN: (slipt: number) => void;
 }
 
-export default function VerbFormSlider(props:VerbFormSliderProps) {
+export default function VerbFormSlider(props: VerbFormSliderProps) {
   const [initVal] = useState(props.initial);
 
   const safeInitial = Math.min(props.max, initVal);
   const max = props.max;
   const min = 0;
 
-  
-  let marks:Marks[] = [];
-  let marksMap:{[key:string]:number} = {};
+  let marks: Marks[] = [];
+  let marksMap: { [key: string]: number } = {};
 
   for (let x = min; x < max + 1; x++) {
     const slide = ((x - min) / (max - min)) * 100;
@@ -32,15 +32,15 @@ export default function VerbFormSlider(props:VerbFormSliderProps) {
     marksMap["s" + x] = slide;
   }
 
-  const slideToRaw = (slide:number) => {
+  const slideToRaw = (slide: number) => {
     return marksMap["r" + slide];
   };
 
-  const rawToSlide = (raw:number) => {
+  const rawToSlide = (raw: number) => {
     return marksMap["s" + raw];
   };
 
-  const slideToLabel = (slide:number) => {
+  const slideToLabel = (slide: number) => {
     const idx = slideToRaw(slide);
     const half = Math.trunc(max / 2);
 
@@ -62,7 +62,7 @@ export default function VerbFormSlider(props:VerbFormSliderProps) {
     return label;
   };
 
-  const handleChange = (newValue:number) => {
+  const handleChange = (newValue: number) => {
     const prevVal = safeInitial;
     const curVal = slideToRaw(newValue);
 

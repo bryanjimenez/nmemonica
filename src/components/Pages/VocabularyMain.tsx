@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+
 import {
   englishLabel,
   getCacheUID,
@@ -11,26 +11,28 @@ import {
   labelPlacementHelper,
   toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
+import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setStateFunction } from "../../hooks/helperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import type { AppDispatch } from "../../slices";
 import { furiganaToggled } from "../../slices/vocabularySlice";
+import type { RawVocabulary } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
-import type { RawVocabulary } from "../../typings/raw";
 
 interface VocabularyMainProps {
-  vocabulary: RawVocabulary,
-  showHint:boolean;
-  reCache:boolean
+  vocabulary: RawVocabulary;
+  showHint: boolean;
+  reCache: boolean;
 }
 
-export default function VocabularyMain(props:VocabularyMainProps) {
-  const dispatch = useDispatch<AppDispatch>()
+export default function VocabularyMain(props: VocabularyMainProps) {
+  const dispatch = useDispatch<AppDispatch>();
 
   const { vocabulary, reCache, showHint } = props;
 
-  const [showMeaning, setShowMeaning] = useState<string|undefined>(undefined);
-  const [showRomaji, setShowRomaji] = useState<string|undefined>(undefined);
+  const [showMeaning, setShowMeaning] = useState<string | undefined>(undefined);
+  const [showRomaji, setShowRomaji] = useState<string | undefined>(undefined);
   const [naFlip, setNaFlip] = useState<"-na" | undefined>(undefined);
 
   const {
@@ -52,7 +54,7 @@ export default function VocabularyMain(props:VocabularyMainProps) {
   }, [vocabulary]);
 
   const toggleFuriganaCB = useCallback(
-    (uid:string) => dispatch(furiganaToggled(uid)),
+    (uid: string) => dispatch(furiganaToggled(uid)),
     [dispatch]
   );
 
@@ -82,10 +84,10 @@ export default function VocabularyMain(props:VocabularyMainProps) {
   if (hintEnabled && showHint) {
     if (englishSideUp) {
       const jHint = getJapaneseHint(vObj);
-      jLabel = jHint || jLabel;
+      jLabel = jHint ?? jLabel;
     } else {
       const eHint = getEnglishHint(vocabulary);
-      eLabel = eHint || eLabel;
+      eLabel = eHint ?? eLabel;
     }
   }
 
@@ -99,8 +101,8 @@ export default function VocabularyMain(props:VocabularyMainProps) {
 
   /** English showing, menu showBareKanji enabled, this terms furigana disabled */
   const showBareKanji =
-    englishSideUp === true &&
-    showBareKanjiSetting === true &&
+    englishSideUp &&
+    showBareKanjiSetting &&
     repetition[vocabulary.uid]?.f === false;
 
   const audioWords = useMemo(() => {
@@ -151,8 +153,10 @@ export default function VocabularyMain(props:VocabularyMainProps) {
           {
             ...(!englishSideUp
               ? { "fs-display-6": true }
-              : { [shortEN ? "fs-display-6" : "h3"]: true,
-              ...(shortEN ? {"lh-xs": true}: {}) }),
+              : {
+                  [shortEN ? "fs-display-6" : "h3"]: true,
+                  ...(shortEN ? { "lh-xs": true } : {}),
+                }),
           }
         }
       >

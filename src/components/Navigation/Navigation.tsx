@@ -6,11 +6,18 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import classNames from "classnames";
-import React, { MouseEventHandler, useCallback, useMemo, useState } from "react";
+import React, {
+  MouseEventHandler,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 import { buildAction, setStateFunction } from "../../hooks/helperHK";
+import type { RootState } from "../../slices";
 import { toggleKana } from "../../slices/kanaSlice";
 import { KanjiGameMeta } from "../Games/KanjiGame";
 import { OppositesGameMeta } from "../Games/OppositesGame";
@@ -22,17 +29,10 @@ import { SettingsMeta } from "../Pages/Settings";
 import { VocabularyMeta } from "../Pages/Vocabulary";
 import "./Navigation.css";
 
-/**
- * @template T
- * @typedef {import("react").MouseEvent<T>} MouseEvent
- */
-
 export default function Navigation() {
   const dispatch = useDispatch();
 
-  const charSet = useSelector(
-    (state:RootState) => state.kana.setting.charSet
-  );
+  const charSet = useSelector((state: RootState) => state.kana.setting.charSet);
 
   const [collapsed, setCollapsed] = useState(true);
   const [vocabType, setVocabType] = useState(0);
@@ -49,7 +49,7 @@ export default function Navigation() {
     }
   }, [collapsed]);
 
-  const clickBehavior:MouseEventHandler<HTMLDivElement> = useCallback(
+  const clickBehavior: MouseEventHandler<HTMLDivElement> = useCallback(
     /**
      * Clicking on icons should collapse menu (force-collapse).
      * Clicking on captions should not (prevent-collapse).
@@ -91,7 +91,7 @@ export default function Navigation() {
             {labelOptions(charSet, ["あ", "ア", "*"])}
           </div>
         ),
-        wrap: (child:string) => (
+        wrap: (child: string) => (
           <div
             className="clickable prevent-collapse"
             onClick={buildAction(dispatch, toggleKana)}
@@ -107,7 +107,7 @@ export default function Navigation() {
       {
         meta: [VocabularyMeta, PhrasesMeta][vocabType],
         icon: <FontAwesomeIcon icon={faFont} size="2x" />,
-        wrap: (child:string) => (
+        wrap: (child: string) => (
           <div
             className="clickable prevent-collapse"
             onClick={setStateFunction(setVocabType, (t) =>
@@ -138,7 +138,7 @@ export default function Navigation() {
             {labelOptions(kanjiType, ["漢", "G"])}
           </div>
         ),
-        wrap: (child:string) => (
+        wrap: (child: string) => (
           <div
             className="clickable prevent-collapse"
             onClick={setStateFunction(setKanjiType, (t) =>
@@ -190,8 +190,8 @@ export default function Navigation() {
           onClick={clickBehavior}
         >
           <ul className="w-100 d-flex justify-content-evenly flex-wrap p-4">
-            {shortcuts.map((l, i) => (
-              <li key={i} className="w-25 text-center m-3">
+            {shortcuts.map((l) => (
+              <li key={`${l.meta.location}`} className="w-25 text-center m-3">
                 <Link to={l.meta.location}>
                   <div className="icon force-collapse mb-2">{l.icon}</div>
                 </Link>
@@ -206,8 +206,8 @@ export default function Navigation() {
         {/* Desktop navigation links */}
         <div className="desktop d-none d-lg-block pt-2 pe-2">
           <ul className="d-flex">
-            {shortcuts.map((s, i) => (
-              <li key={i}>
+            {shortcuts.map((s) => (
+              <li key={`${s.meta.location}`}>
                 <Link className="desktop-link" to={s.meta.location}>
                   {s.wrap ? s.wrap(s.meta.label) : s.meta.label}
                 </Link>

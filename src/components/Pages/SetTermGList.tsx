@@ -5,16 +5,16 @@ import orderBy from "lodash/orderBy";
 import type { GroupListMap } from "../../typings/raw";
 
 interface SetTermGListProps {
-  termsGroups:GroupListMap
+  termsGroups: GroupListMap;
   termsActive: string[];
-  toggleTermActiveGrp:(grp:string)=>void;
+  toggleTermActiveGrp: (grp: string) => void;
 }
 
 /**
  * Group and subgroup list
  * @param {SetTermGListProps} props
  */
-export function SetTermGList(props:SetTermGListProps) {
+export function SetTermGList(props: SetTermGListProps) {
   return (
     <div>
       <h5 key={0}>Groups</h5>

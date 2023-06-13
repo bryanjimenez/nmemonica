@@ -2,13 +2,14 @@ import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
-import { JapaneseVerb } from "../../helper/JapaneseVerb";
+
 import {
   getCacheUID,
   getEnglishHint,
   getJapaneseHint,
 } from "../../helper/gameHelper";
+import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import {
   useEnglishLabel,
   useGetVerbFormsArray,
@@ -17,20 +18,20 @@ import {
   useToggleFuriganaSettingHelper,
 } from "../../hooks/gameHelperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import type { AppDispatch } from "../../slices";
 import { verbFormChanged } from "../../slices/vocabularySlice";
+import type { RawVocabulary, VerbFormArray } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
-import type { RawVocabulary, VerbFormArray } from "../../typings/raw";
 
 interface VerbMainProps {
   verb: RawVocabulary;
-  reCache:boolean;
-  showHint:boolean;
-  linkToOtherTerm:(uid:string)=>void;
+  reCache: boolean;
+  showHint: boolean;
+  linkToOtherTerm: (uid: string) => void;
 }
 
-
-function getSplitIdx(verbForms:VerbFormArray, verbColSplit:number) {
+function getSplitIdx(verbForms: VerbFormArray, verbColSplit: number) {
   const middle =
     Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
 
@@ -44,7 +45,10 @@ function getSplitIdx(verbForms:VerbFormArray, verbColSplit:number) {
  * splits the verb forms into two columns
  * @returns an object containing two columns
  */
-function splitVerbFormsToColumns(verbForms:VerbFormArray, verbColSplit:number) {
+function splitVerbFormsToColumns(
+  verbForms: VerbFormArray,
+  verbColSplit: number
+) {
   const splitIdx = getSplitIdx(verbForms, verbColSplit);
 
   const t1 = verbForms.slice(0, splitIdx);
@@ -57,20 +61,21 @@ function splitVerbFormsToColumns(verbForms:VerbFormArray, verbColSplit:number) {
  * @param verbForms
  * @param theForm the form to filter by
  * @param verbColSplit
- * @param {import("../../helper/gameHelper").FuriganaToggleSetting} furiganaToggable
+ * @param furiganaToggable
  */
 function getVerbLabelItems(
-  verb:RawVocabulary,
-  verbForms:VerbFormArray,
-  theForm:string,
-  verbColSplit:number,
-  furiganaToggable:{furigana:{show?:boolean, toggle?:Function}} // TODO: refactor? JapaneseText.toHTML
+  verb: RawVocabulary,
+  verbForms: VerbFormArray,
+  theForm: string,
+  verbColSplit: number,
+  furiganaToggable: { furigana: { show?: boolean; toggle?: () => void } } // TODO: refactor? JapaneseText.toHTML
 ) {
-  const romaji = verb.romaji || ".";
+  const romaji = verb.romaji ?? ".";
   const splitIdx = getSplitIdx(verbForms, verbColSplit);
 
   const formResult = verbForms.find((form) => form.name === theForm);
-  const japaneseObj:JapaneseText = formResult ? formResult.value : verbForms[splitIdx].value;
+  const japaneseObj = (formResult?.value ??
+    verbForms[splitIdx].value) as JapaneseText;
 
   let inJapanese = japaneseObj.toHTML(furiganaToggable);
   let inEnglish = verb.english;
@@ -78,14 +83,13 @@ function getVerbLabelItems(
   return { inJapanese, inEnglish, romaji, japaneseObj };
 }
 
-
-export default function VerbMain(props:VerbMainProps) {
-  const dispatch =  useDispatch<AppDispatch>();
+export default function VerbMain(props: VerbMainProps) {
+  const dispatch = useDispatch<AppDispatch>();
 
   const { verb, reCache, linkToOtherTerm, showHint } = props;
 
-  const [showMeaning, setShowMeaning] = useState<string|undefined>(undefined  );
-  const [showRomaji, setShowRomaji] = useState<string|undefined>(undefined  );
+  const [showMeaning, setShowMeaning] = useState<string | undefined>(undefined);
+  const [showRomaji, setShowRomaji] = useState<string | undefined>(undefined);
 
   const {
     verbForm,
@@ -107,13 +111,14 @@ export default function VerbMain(props:VerbMainProps) {
     setShowRomaji((prev) => (prev === currUid ? prev : undefined));
   }, [verb]);
 
-  const buildTenseElement = (key:number, tense:VerbFormArray) => {
+  const buildTenseElement = (key: number, tense: VerbFormArray) => {
     const columnClass = classNames({
-      "pt-3 pe-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap": true,
+      "pt-3 pe-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap":
+        true,
       "text-end": key !== 0,
     });
 
-    const tenseRows = tense.map((t, i) => {
+    const tenseRows = tense.map((t) => {
       const tenseClass = classNames({
         clickable: true,
         // "font-weight-bold": this.props.verbForm === t.t,
@@ -126,7 +131,7 @@ export default function VerbMain(props:VerbMainProps) {
       return (
         <div
           className={tenseClass}
-          key={i}
+          key={t.name}
           onClick={() => {
             if (verbForm === t.name) {
               dispatch(verbFormChanged("dictionary"));

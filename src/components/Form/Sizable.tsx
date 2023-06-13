@@ -4,26 +4,26 @@ import classNames from "classnames";
 
 // Conditinal css mapping
 interface CSSMap {
-  [key:string]: boolean
+  [key: string]: boolean;
 }
 
 // xs and xxl omitted
-type BootStrapBreakPoints = "sm"|"md"|"lg"|"xl"
+type BootStrapBreakPoints = "sm" | "md" | "lg" | "xl";
 
 interface SizableProps {
-  fragment?: boolean,
-  breakPoint: BootStrapBreakPoints,
-  rootClassName?: CSSMap,
-  className?: CSSMap,
-  largeClassName?: CSSMap,
-  smallClassName?: CSSMap
-  onClick?: Function,
-  children?: string|JSX.Element,
-  largeValue?: string|JSX.Element,
-  smallValue?: string|JSX.Element
+  fragment?: boolean;
+  breakPoint: BootStrapBreakPoints;
+  rootClassName?: CSSMap;
+  className?: CSSMap;
+  largeClassName?: CSSMap;
+  smallClassName?: CSSMap;
+  onClick?: Function;
+  children?: string | React.JSX.Element;
+  largeValue?: string | React.JSX.Element;
+  smallValue?: string | React.JSX.Element;
 }
 
-export default function Sizable(props:SizableProps) {
+export default function Sizable(props: SizableProps) {
   let largeValue, smallValue;
   if (props.children) {
     largeValue = props.children;

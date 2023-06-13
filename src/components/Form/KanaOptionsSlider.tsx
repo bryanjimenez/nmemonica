@@ -1,30 +1,29 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Slider, Typography } from "@mui/material";
-
 import "./KanaOptionsSlider.css";
 
 interface Marks {
-  value: number, raw: number
+  value: number;
+  raw: number;
 }
 
 interface KanaOptionsSliderProps {
-  initial:number;
-  setChoiceN: (n:number)=>void;
-  wideMode?:boolean;
-  toggleWide?:Function;
+  initial: number;
+  setChoiceN: (n: number) => void;
+  wideMode?: boolean;
+  toggleWide?: Function;
 }
 
-export default function KanaOptionsSlider(props:KanaOptionsSliderProps) {
+export default function KanaOptionsSlider(props: KanaOptionsSliderProps) {
   const [initVal] = useState(props.initial);
 
   const min = 4;
   const max = 16;
   const wide = 32;
 
-
-  let marks:Marks[] = [];
-  let marksMap:{[key:string]:number} = {};
+  let marks: Marks[] = [];
+  let marksMap: { [key: string]: number } = {};
 
   for (let x = min; x < max + 1; x++) {
     const slide = ((x - min) / (max + 1 - min)) * 75;
@@ -36,19 +35,19 @@ export default function KanaOptionsSlider(props:KanaOptionsSliderProps) {
   marksMap["r" + 100] = wide;
   marksMap["s" + wide] = 100;
 
-  const slideToRaw = (slide:number) => {
+  const slideToRaw = (slide: number) => {
     return marksMap["r" + slide];
   };
 
-  const slideToRawString = (slide:number) => {
+  const slideToRawString = (slide: number) => {
     return "" + slideToRaw(slide);
   };
 
-  const rawToSlide = (raw:number) => {
+  const rawToSlide = (raw: number) => {
     return marksMap["s" + raw];
   };
 
-  const handleChange = (newValue:number) => {
+  const handleChange = (newValue: number) => {
     const prevVal = props.initial;
     const curVal = slideToRaw(newValue);
 

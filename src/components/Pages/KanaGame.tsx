@@ -11,11 +11,16 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { KanaType } from "../../slices/settingHelper";
 
 interface Choice {
-  val:string,hint:string,cSet:number,q?:boolean,practiceSide?:boolean
+  val: string;
+  hint: string;
+  cSet: number;
+  q?: boolean;
+  practiceSide?: boolean;
 }
 
 interface Mora {
-  consonant:number, vowel:number
+  consonant: number;
+  vowel: number;
 }
 
 const KanaGameMeta = {
@@ -157,7 +162,8 @@ export default function KanaGame() {
           {!wideMode.current && (
             <div
               className={classNames({
-                "pt-3 d-flex flex-column justify-content-center text-center w-50": true,
+                "pt-3 d-flex flex-column justify-content-center text-center w-50":
+                  true,
                 "correct-color": correct,
               })}
             >
@@ -202,10 +208,10 @@ export default function KanaGame() {
  *
  * 2 = randomize 0 or 1
  */
-function kanaTypeLogic(charSet:typeof KanaType[keyof typeof KanaType]) {
+function kanaTypeLogic(charSet: (typeof KanaType)[keyof typeof KanaType]) {
   let useCharSet;
   if (charSet === KanaType.MIXED) {
-    useCharSet = Math.floor(Math.random() * 2) as 0|1;
+    useCharSet = Math.floor(Math.random() * 2) as 0 | 1;
   } else {
     useCharSet = charSet;
   }
@@ -217,8 +223,8 @@ function kanaTypeLogic(charSet:typeof KanaType[keyof typeof KanaType]) {
  * of {consonant,vowel} corresponding to hiragana
  * consonant and vowel are indexes
  */
-function shuffleGameOrder(hiragana:string[][]) {
-  let gameOrder:Mora[] = [];
+function shuffleGameOrder(hiragana: string[][]) {
+  let gameOrder: Mora[] = [];
   const xMax = hiragana[0].length;
   const yMax = hiragana.length;
 
@@ -239,17 +245,30 @@ function shuffleGameOrder(hiragana:string[][]) {
   return gameOrder;
 }
 
-function buildPronunciation({ vowels, consonants, sounds }:{vowels:string[],consonants:string[],sounds:Record<string,string>}) {
-  return (consonant:number, vowel:number) => {
+function buildPronunciation({
+  vowels,
+  consonants,
+  sounds,
+}: {
+  vowels: string[];
+  consonants: string[];
+  sounds: Record<string, string>;
+}) {
+  return (consonant: number, vowel: number) => {
     const sound = consonants[consonant] + vowels[vowel];
 
     return sounds[sound] || sound;
   };
 }
 
-function buildKanaCharacter({ hiragana, katakana }:{ hiragana:string[][], katakana:string[][] }) {
- 
-  return (consonant:number, vowel:number, set:number) => {
+function buildKanaCharacter({
+  hiragana,
+  katakana,
+}: {
+  hiragana: string[][];
+  katakana: string[][];
+}) {
+  return (consonant: number, vowel: number, set: number) => {
     let kana;
 
     if (set === KanaType.HIRAGANA) {
@@ -266,10 +285,21 @@ function buildKanaCharacter({ hiragana, katakana }:{ hiragana:string[][], kataka
  * Creates a shuffled list of choices containing the answer
  */
 function populateChoices(
-  { getPronunciation, getKanaCharacter, charSet, choiceN, practiceSide }:{getPronunciation:Function, getKanaCharacter:Function, charSet: typeof KanaType[keyof typeof KanaType]
-    , choiceN:number, practiceSide:boolean},
-  answer:Choice,
-  gameOrder:Mora[]
+  {
+    getPronunciation,
+    getKanaCharacter,
+    charSet,
+    choiceN,
+    practiceSide,
+  }: {
+    getPronunciation: Function;
+    getKanaCharacter: Function;
+    charSet: (typeof KanaType)[keyof typeof KanaType];
+    choiceN: number;
+    practiceSide: boolean;
+  },
+  answer: Choice,
+  gameOrder: Mora[]
 ) {
   let choices = [answer];
 
@@ -285,14 +315,14 @@ function populateChoices(
     const cPronunciation = getPronunciation(
       gameOrder[idx].consonant,
       gameOrder[idx].vowel
-    );
+    ) as string;
     const cCharacter = getKanaCharacter(
       gameOrder[idx].consonant,
       gameOrder[idx].vowel,
       useChar
-    );
-    
-    let choice:Choice;
+    ) as string;
+
+    let choice: Choice;
     if (difficult) {
       choice = {
         val: cCharacter,
@@ -321,21 +351,6 @@ function populateChoices(
   return choices;
 }
 
-/**
- * @template {{
- * vowelsR: React.MutableRefObject<string[]>
- * consonantsR: React.MutableRefObject<string[]>
- * soundsR: React.MutableRefObject<{ [uid: string]: string }>
- * hiraganaR: React.MutableRefObject<string[][]>
- * katakanaR: React.MutableRefObject<string[][]>
- * charSet: typeof KanaType[keyof typeof KanaType]
- * choiceN: number
- * wideMode: boolean
- * practiceSide: boolean
- * reinforce: Choice[]
- * selectedIndex: number}} T
- * @param {T} param0
- */
 export function usePrepareGame({
   charSet,
   choiceN,
@@ -349,24 +364,26 @@ export function usePrepareGame({
   practiceSide,
   reinforce,
   selectedIndex,
-}:{
-  charSet:typeof KanaType[keyof typeof KanaType],
-  choiceN:number,
-  wideMode:boolean,
-  vowelsR:React.MutableRefObject<string[]>,
-  consonantsR:React.MutableRefObject<string[]>,
-  soundsR:React.MutableRefObject<{ [uid: string]: string }>,
-  hiraganaR:React.MutableRefObject<string[][]>,
-  katakanaR:React.MutableRefObject<string[][]>,
+}: {
+  charSet: (typeof KanaType)[keyof typeof KanaType];
+  choiceN: number;
+  wideMode: boolean;
+  vowelsR: React.MutableRefObject<string[]>;
+  consonantsR: React.MutableRefObject<string[]>;
+  soundsR: React.MutableRefObject<Record<string, string>>;
+  hiraganaR: React.MutableRefObject<string[][]>;
+  katakanaR: React.MutableRefObject<string[][]>;
 
-  practiceSide:boolean,
-  reinforce:Choice[],
-  selectedIndex:number,
+  practiceSide: boolean;
+  reinforce: Choice[];
+  selectedIndex: number;
 }) {
   const [question, setQuestion] = useState("undefined");
-  const [answer, setAnswer] = useState<Choice>(
-   { val: "", hint: "", cSet: KanaType.HIRAGANA }
-  );
+  const [answer, setAnswer] = useState<Choice>({
+    val: "",
+    hint: "",
+    cSet: KanaType.HIRAGANA,
+  });
   const [choices, setChoices] = useState<Choice[]>([]);
   const [gameOrder, setGameOrder] = useState<Mora[]>([]);
   const [wrongs, setWrongs] = useState<number[]>([]); // list of index of current wrong answered choices used for visual hints
@@ -383,8 +400,8 @@ export function usePrepareGame({
       gameOrderCurr = shuffleGameOrder(hiragana);
     }
 
-    let question:string;
-    let answer:Choice;
+    let question: string;
+    let answer: Choice;
 
     // some games will come from the reinforced list
     const willReinforce = Math.random() < 1 / 3;
@@ -490,19 +507,18 @@ function buildCheckAnswer({
   wrongs,
   reinforce,
   practiceSide,
-}:{
-  setCorrect:Function,
-  setWrongs:Function,
-  setReinforce:Function,
-  gotoNext:Function,
-  answer:Choice,
-  choices:Choice[],
-  wrongs:number[],
-  reinforce:Choice[],
-  practiceSide:boolean,
+}: {
+  setCorrect: Function;
+  setWrongs: Function;
+  setReinforce: Function;
+  gotoNext: Function;
+  answer: Choice;
+  choices: Choice[];
+  wrongs: number[];
+  reinforce: Choice[];
+  practiceSide: boolean;
 }) {
-  
-  return function checkAnswer(answered:Choice) {
+  return function checkAnswer(answered: Choice) {
     if (answered.val === answer?.val) {
       // console.log("RIGHT!");
       setCorrect(true);
@@ -528,20 +544,19 @@ export function buildChoiceButton({
   answer,
   correct,
   choiceN,
-}:{
-  checkAnswer:Function,
-  wideMode:boolean,
-  easyMode:boolean,
-  charSet:typeof KanaType[keyof typeof KanaType],
-  practiceSide:boolean,
-  wrongs: number[],
-  choices: Choice[],
-  answer: Choice,
-  correct: boolean,
-  choiceN: number,
+}: {
+  checkAnswer: Function;
+  wideMode: boolean;
+  easyMode: boolean;
+  charSet: (typeof KanaType)[keyof typeof KanaType];
+  practiceSide: boolean;
+  wrongs: number[];
+  choices: Choice[];
+  answer: Choice;
+  correct: boolean;
+  choiceN: number;
 }) {
-  
-  return function choiceButton(index:number) {
+  return function choiceButton(index: number) {
     const isWrong = wrongs.includes(index);
     const isRight = choices[index].val === answer.val && correct;
 
@@ -567,8 +582,9 @@ export function buildChoiceButton({
 
     const wide = wideMode ? 3 / 4 : 1;
 
-    const width =
-      Math.trunc((1 / Math.ceil(Math.sqrt(choiceN))) * wide * 100) + "%";
+    const width = `${Math.trunc(
+      (1 / Math.ceil(Math.sqrt(choiceN))) * wide * 100
+    )}%`;
 
     const englishShown = !practiceSide;
 

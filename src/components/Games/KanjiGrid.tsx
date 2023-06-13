@@ -1,6 +1,12 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import {
@@ -30,10 +36,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { useBlast } from "../../hooks/useBlast";
 import type { RawKanji } from "../../typings/raw";
 import type { GameQuestion, GameChoice } from "./XChoices";
-
-/**
- * @typedef {import("../../typings/raw").RawKanji} RawKanji
- */
+import type { AppDispatch } from "../../slices";
 
 const KanjiGridMeta = {
   location: "/kanji-grid/",
@@ -46,11 +49,16 @@ const KanjiGridMeta = {
  * @param writePractice
  * @param example current english example and next
  */
-function prepareGame(kanji:RawKanji, choices:RawKanji[], writePractice:boolean, [currExmpl, nextExmpl]:[string,Function]) {
+function prepareGame(
+  kanji: RawKanji,
+  choices: RawKanji[],
+  writePractice: boolean,
+  [currExmpl, nextExmpl]: [string, Function]
+) {
   const { english, kanji: japanese, on, kun, uid } = kanji;
   const isShortened = currExmpl !== english;
 
-  const q:GameQuestion = {
+  const q: GameQuestion = {
     // english, not needed, shown as a choice
     toHTML: (correct) => {
       if (writePractice) {
@@ -92,8 +100,7 @@ function prepareGame(kanji:RawKanji, choices:RawKanji[], writePractice:boolean, 
     answer: uid,
     choices: choices.map((c) => ({
       compare: c.uid,
-      toHTML: (side:boolean) =>
-        side ?? writePractice ? c.english : c.kanji,
+      toHTML: (side: boolean) => (side ?? writePractice ? c.english : c.kanji),
     })),
   };
 }
@@ -101,7 +108,12 @@ function prepareGame(kanji:RawKanji, choices:RawKanji[], writePractice:boolean, 
 /**
  * Returns a list of choices which includes the right answer
  */
-export function useCreateChoices(n:number, compareOn:keyof RawKanji, answer:RawKanji, kanjiList:RawKanji[]) {
+export function useCreateChoices(
+  n: number,
+  compareOn: keyof RawKanji,
+  answer: RawKanji,
+  kanjiList: RawKanji[]
+) {
   const c = useMemo(() => {
     if (!answer) return [];
 
@@ -149,24 +161,23 @@ export default function KanjiGrid() {
   const [frequency, setFrequency] = useState<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string|undefined>(
+  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
     undefined
   );
 
-  const prevUidRef = useRef<string|undefined>("");
+  const prevUidRef = useRef<string | undefined>("");
   const [writePractice, setEnglishSide] = useState(false);
   const choices = useRef<RawKanji[]>([]);
-  const [currExmpl, setCurrExmpl] = useState<string|null>(null);
+  const [currExmpl, setCurrExmpl] = useState<string | null>(null);
 
-  
-  const filteredTerms:RawKanji[] = useMemo(() => {
+  const filteredTerms: RawKanji[] = useMemo(() => {
     if (kanjiList.length === 0) return [];
     if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
       return kanjiList;
 
     const allFrequency = Object.keys(metadata.current).reduce<string[]>(
       (acc, cur) => {
-        if (metadata.current[cur].rein === true) {
+        if (metadata.current[cur]?.rein === true) {
           acc = [...acc, cur];
         }
         return acc;
@@ -191,15 +202,12 @@ export default function KanjiGrid() {
       filtered = [...filtered, ...additional];
     }
 
-    const initialFrequency = filtered.reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur.uid]?.rein === true) {
-          return [...acc, cur.uid];
-        }
-        return acc;
-      },
-      []
-    );
+    const initialFrequency = filtered.reduce<string[]>((acc, cur) => {
+      if (metadata.current[cur.uid]?.rein === true) {
+        return [...acc, cur.uid];
+      }
+      return acc;
+    }, []);
 
     setFrequency(initialFrequency);
 
@@ -277,14 +285,14 @@ export default function KanjiGrid() {
   const { blastEl, anchorElRef, text, setText } = useBlast();
 
   const addFrequencyTerm = useCallback(
-    ( uid:string) => {
+    (uid: string) => {
       setFrequency((p) => [...p, uid]);
       dispatch(addFrequencyKanji(uid));
     },
     [dispatch]
   );
   const removeFrequencyTerm = useCallback(
-    ( uid:string) => {
+    (uid: string) => {
       setFrequency((p) => p.filter((pUid) => pUid !== uid));
       dispatch(removeFrequencyKanji(uid));
     },
@@ -293,7 +301,7 @@ export default function KanjiGrid() {
 
   if (order.length === 0) return <NotReady addlStyle="main-panel" />;
 
-  const uid = reinforcedUID || getTermUID(selectedIndex, filteredTerms,order, );
+  const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
   const kanji = getTerm(uid, kanjiList);
 
   // console.log(
@@ -331,7 +339,7 @@ export default function KanjiGrid() {
     game,
     text,
     setText,
-    fadeTimerRef,
+    fadeTimerRef
   );
 
   const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
@@ -402,7 +410,12 @@ export default function KanjiGrid() {
 /**
  * Returns a list of choices which includes the right answer
  */
-function createChoices(n:number, compareOn:keyof RawKanji, answer:RawKanji, kanjiList:RawKanji[]) {
+function createChoices(
+  n: number,
+  compareOn: keyof RawKanji,
+  answer: RawKanji,
+  kanjiList: RawKanji[]
+) {
   let choices = [answer];
   while (choices.length < n) {
     const i = Math.floor(Math.random() * kanjiList.length);
@@ -420,7 +433,11 @@ function createChoices(n:number, compareOn:keyof RawKanji, answer:RawKanji, kanj
   return choices;
 }
 
-function getNextExample(kanji:RawKanji, currExmpl:string|null, setCurrExmpl:React.Dispatch<React.SetStateAction<string|null>>) {
+function getNextExample(
+  kanji: RawKanji,
+  currExmpl: string | null,
+  setCurrExmpl: React.Dispatch<React.SetStateAction<string | null>>
+) {
   function nextExample() {
     // console.log("hint?");
 
@@ -447,13 +464,12 @@ function getNextExample(kanji:RawKanji, currExmpl:string|null, setCurrExmpl:Reac
  */
 function buildIsCorrect(
   writePractice: boolean,
-  game: {answer:string, choices:GameChoice[]},
-  chosenAnswer:string,
-  setAnswered:React.Dispatch<React.SetStateAction<string>>,
-  fadeRef:React.MutableRefObject<number>,
+  game: { answer: string; choices: GameChoice[] },
+  chosenAnswer: string,
+  setAnswered: React.Dispatch<React.SetStateAction<string>>,
+  fadeRef: React.MutableRefObject<number>
 ) {
-
-  function isCorrect(answered:GameChoice):[boolean, number] {
+  function isCorrect(answered: GameChoice): [boolean, number] {
     const correct = answered.compare === game?.answer;
     const correctIdx =
       game?.choices.findIndex((c) => c.compare === game?.answer) || -1;

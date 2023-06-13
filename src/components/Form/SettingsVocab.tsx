@@ -7,18 +7,24 @@ import {
   XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
+
+import { NotReady } from "./NotReady";
+import SettingsSwitch from "./SettingsSwitch";
+import SimpleListMenu from "./SimpleListMenu";
+import VerbFormSlider from "./VerbFormSlider";
 import { getStaleGroups } from "../../helper/gameHelper";
 import { buildAction } from "../../hooks/helperHK";
-import { useSettingsVocabConnected } from "../../hooks/useConnectSettings";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import type { AppDispatch } from "../../slices";
 import {
   TermFilterBy,
   TermSortBy,
   TermSortByLabel,
 } from "../../slices/settingHelper";
 import {
-  initialState as VOCABULARY_INIT,
+  vocabularyInitState as VOCABULARY_INIT,
   getVocabulary,
   removeFrequencyWord,
   setMemorizedThreshold,
@@ -35,30 +41,32 @@ import {
 } from "../../slices/vocabularySlice";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { SetTermGList } from "../Pages/SetTermGList";
-import { NotReady } from "./NotReady";
-import SettingsSwitch from "./SettingsSwitch";
-import SimpleListMenu from "./SimpleListMenu";
-import VerbFormSlider from "./VerbFormSlider";
 
 export default function SettingsVocab() {
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useDispatch<AppDispatch>();
 
   const {
-    vocabulary,
+    vocabList: vocabulary,
     vocabGroups,
-    vocabOrder,
-    vocabRomaji,
-    showBareKanji,
-    vocabHint,
-    vocabActive,
+    sortMethod: vocabOrderRef,
+    romajiEnabled: vocabRomaji,
+    bareKanji: showBareKanji,
+    hintEnabled: vocabHintRef,
+    activeGroup: vocabActive,
     autoVerbView,
     verbColSplit,
-    vocabFilter,
-    memoThreshold,
-    vocabRep,
-    vocabReinforce,
+    filterType: vocabFilterRef,
+    memoThreshold: memoThresholdRef,
+    repetition: vocabRep,
+    reinforce: vocabReinforceRef,
     verbFormsOrder,
-  } = useSettingsVocabConnected();
+  } = useConnectVocabulary();
+
+  const vocabFilter = vocabFilterRef.current;
+  const memoThreshold = memoThresholdRef.current;
+  const vocabOrder = vocabOrderRef.current;
+  const vocabReinforce = vocabReinforceRef.current;
+  const vocabHint = vocabHintRef.current;
 
   const [initialMemoThreshold] = useState(Math.abs(memoThreshold));
 
@@ -81,7 +89,7 @@ export default function SettingsVocab() {
       return acc;
     }, []);
 
-    const hidden = allForms.reduce<string[]>(( acc, form) => {
+    const hidden = allForms.reduce<string[]>((acc, form) => {
       if (!shown.includes(form)) {
         acc = [...acc, form];
       }
@@ -223,7 +231,10 @@ export default function SettingsVocab() {
                 <div>
                   {[
                     shownForms.map((form, k) => (
-                      <div key={k} className="d-flex justify-content-between">
+                      <div
+                        key={form}
+                        className="d-flex justify-content-between"
+                      >
                         <div
                           className={classNames({
                             "me-3": true,
@@ -274,7 +285,7 @@ export default function SettingsVocab() {
                     )),
                     hiddenForms.map((form, k) => (
                       <div
-                        key={shownForms.length + k}
+                        key={form}
                         className="d-flex justify-content-between"
                       >
                         <div className="me-3 invisible">

@@ -18,6 +18,7 @@ import {
 } from "../../helper/gameHelper";
 import { buildAction } from "../../hooks/helperHK";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
+import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
   getMemoryStorageStatus,
@@ -63,13 +64,19 @@ import { SetTermGFList } from "./SetTermGFList";
 import { SetTermTagList } from "./SetTermTagList";
 import "./Settings.css";
 import "./spin.css";
-import type { RawVocabulary, GroupListMap,SpaceRepetitionMap } from "../../typings/raw";
+import type { RawVocabulary } from "../../typings/raw";
 import type { ConsoleMessage } from "../Form/Console";
 
-type Sections =  "sectionPhrase"|"sectionVocabulary"|"sectionKanji"|"sectionStaleSpaceRep"
+type Sections =
+  | "sectionPhrase"
+  | "sectionVocabulary"
+  | "sectionKanji"
+  | "sectionStaleSpaceRep";
 interface MemoryDataObject {
   // TODO: refactor into one
-  quota: number, usage: number, persistent: boolean
+  quota: number;
+  usage: number;
+  persistent: boolean;
 }
 
 const SettingsMeta = {
@@ -79,7 +86,7 @@ const SettingsMeta = {
 
 // FIXME: getDerivedStateFromError
 
-function /*static*/ getDerivedStateFromError(error:Error) {
+function /*static*/ getDerivedStateFromError(error: Error) {
   const causeMsg =
     // @ts-expect-error Error.cause
     (error.cause !== undefined && [
@@ -99,7 +106,7 @@ function /*static*/ getDerivedStateFromError(error:Error) {
   };
 }
 
-function componentDidCatch(dispatch:Function, error:Error) {
+function componentDidCatch(dispatch: Function, error: Error) {
   // @ts-expect-error Error.cause
   const cause = error.cause;
 
@@ -150,9 +157,9 @@ function componentDidCatch(dispatch:Function, error:Error) {
 /**
  * Build JSX element listing stale items
  */
-function staleSpaceRep(terms:{key:string, uid:string, english:string}[]) {
-  return terms.reduce<JSX.Element[]>((a, text, i) => {
-    const separator = <hr key={terms.length + i} />;
+function staleSpaceRep(terms: { key: string; uid: string; english: string }[]) {
+  return terms.reduce<React.JSX.Element[]>((a, text, i) => {
+    const separator = <hr key={`stale-meta-${text.uid}`} />;
 
     const row = (
       <div key={i} className="row">
@@ -170,38 +177,35 @@ function staleSpaceRep(terms:{key:string, uid:string, english:string}[]) {
   }, []);
 }
 
-
-function failedFuriganaList(terms:RawVocabulary[]) {
-  return terms.reduce<JSX.Element[]>((a, text, i) => {
+function failedFuriganaList(terms: RawVocabulary[]) {
+  return terms.reduce<React.JSX.Element[]>((a, text, i) => {
     const t = JapaneseText.parse(text);
     if (t.hasFurigana()) {
       try {
         furiganaParseRetry(t.getPronunciation(), t.getSpelling());
       } catch (e) {
-        if (
-          e instanceof Error &&
-          // @ts-expect-error Error.cause
-          (e.cause?.code === "ParseError" || e.cause?.code === "InputError")
-        ) {
-          const separator = <hr key={terms.length + i} />;
+        if (e instanceof Error && "cause" in e) {
+          const errData = e.cause as { code: string; info: unknown };
+          if (errData.code === "ParseError" || errData.code === "InputError") {
+            const separator = <hr key={`parse-err-sep-${text.uid}`} />;
 
-          const row = (
-            <div key={i} className="row">
-              <span className="col p-0">{t.toHTML({showError:false})}</span>
-              <span className="col p-0">{text.english}</span>
-              <span className="col p-0 app-sm-fs-xx-small">
-                <div>{e.message}</div>
-                <div>
-                  {/* @ts-expect-error Error.cause */}
-                  {e.cause?.info ? JSON.stringify(e.cause?.info) : ""}
-                </div>
-              </span>
-            </div>
-          );
+            const row = (
+              <div key={`parse-err-${text.uid}`} className="row">
+                <span className="col p-0">
+                  {t.toHTML({ showError: false })}
+                </span>
+                <span className="col p-0">{text.english}</span>
+                <span className="col p-0 app-sm-fs-xx-small">
+                  <div>{e.message}</div>
+                  <div>{errData.info ? JSON.stringify(errData.info) : ""}</div>
+                </span>
+              </div>
+            );
 
-          return a.length > 0 && i < terms.length - 1
-            ? [...a, separator, row]
-            : [...a, row];
+            return a.length > 0 && i < terms.length - 1
+              ? [...a, separator, row]
+              : [...a, row];
+          }
         }
       }
     }
@@ -209,11 +213,15 @@ function failedFuriganaList(terms:RawVocabulary[]) {
   }, []);
 }
 
-function buildMotionListener(dispatch:Function, motionThreshold:number, setShakeIntensity:Function) {
+function buildMotionListener(
+  dispatch: Function,
+  motionThreshold: number,
+  setShakeIntensity: Function
+) {
   /**
    * Handler for when device is shaken
    */
-  return function listener(event:DeviceMotionEvent) {
+  return function listener(event: DeviceMotionEvent) {
     try {
       motionThresholdCondition(event, motionThreshold, (value) => {
         setShakeIntensity(Number(value.toFixed(2)));
@@ -229,7 +237,10 @@ function buildMotionListener(dispatch:Function, motionThreshold:number, setShake
   };
 }
 
-function collapseExpandToggler(name:boolean, toggleSection:(arg0: (arg1:boolean)=>boolean) => void) {
+function collapseExpandToggler(
+  name: boolean,
+  toggleSection: (arg0: (arg1: boolean) => boolean) => void
+) {
   const icon = name ? (
     <XCircleIcon className="clickable" size="medium" aria-label="collapse" />
   ) : (
@@ -246,7 +257,9 @@ const pageClassName = classNames({ "mb-5": true });
 
 export default function Settings() {
   const dispatch = useDispatch<AppDispatch>();
-  const motionListener = useRef<ReturnType<typeof buildMotionListener> | undefined>(undefined  );
+  const motionListener = useRef<
+    ReturnType<typeof buildMotionListener> | undefined
+  >(undefined);
 
   const {
     darkMode,
@@ -290,7 +303,7 @@ export default function Settings() {
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
   const [hardRefreshUnavailable, setHardRefreshUnavailable] = useState(false);
-  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]  );
+  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [shakeIntensity, setShakeIntensity] = useState(0);
 
   useEffect(
@@ -347,7 +360,7 @@ export default function Settings() {
           if (motionListener.current)
             window.addEventListener("devicemotion", motionListener.current);
         },
-        (error:Error) => componentDidCatch(dispatch, error)
+        (error: Error) => componentDidCatch(dispatch, error)
       );
     } else if (motionThreshold === 0 && motionListener.current !== undefined) {
       window.removeEventListener("devicemotion", motionListener.current);
@@ -367,13 +380,13 @@ export default function Settings() {
           if (motionListener.current)
             window.addEventListener("devicemotion", motionListener.current);
         },
-        ( error:Error) => componentDidCatch(dispatch, error)
+        (error: Error) => componentDidCatch(dispatch, error)
       );
     }
   }, [dispatch, motionThreshold]);
 
   const swMessageEventListener = useCallback(
-    (event:MessageEvent) => {
+    (event: MessageEvent) => {
       if (event.data.type === "DO_HARD_REFRESH") {
         const { error } = event.data;
 
@@ -455,7 +468,7 @@ export default function Settings() {
     return <NotReady addlStyle="main-panel" />;
 
   const kanjiSelectedTags = Object.values(kanji).filter((k) =>
-    k.tag.some((aTag:string) => kanjiActive.includes(aTag))
+    k.tag.some((aTag: string) => kanjiActive.includes(aTag))
   );
   const kanjiSelectedUids = kanjiSelectedTags.map((k) => k.uid);
 

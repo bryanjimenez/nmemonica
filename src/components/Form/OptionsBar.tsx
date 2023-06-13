@@ -17,23 +17,23 @@ import {
   faRunning,
 } from "@fortawesome/free-solid-svg-icons";
 import { useForceRender } from "../../hooks/helperHK";
-import type { RawVocabulary } from "../../typings/raw"; 
+import type { RawVocabulary } from "../../typings/raw";
 
 interface MinimunRawItem {
-  uid:string, english:string, grp?:string
+  uid: string;
+  english: string;
+  grp?: string;
 }
 
-
-interface ToggleFuriganaBtnProps{
-  visible?:boolean;
-  active:boolean;
-  toggle:boolean;
-  toggleFurigana:(uid:string)=>void;
-  vocabulary:RawVocabulary;
-
+interface ToggleFuriganaBtnProps {
+  visible?: boolean;
+  active: boolean;
+  toggle: boolean;
+  toggleFurigana: (uid: string) => void;
+  vocabulary: RawVocabulary;
 }
 
-export function ToggleFuriganaBtn(props:ToggleFuriganaBtnProps) {
+export function ToggleFuriganaBtn(props: ToggleFuriganaBtnProps) {
   const { active, toggle, toggleFurigana, vocabulary } = props;
 
   return props.visible === false ? null : (
@@ -70,18 +70,16 @@ ToggleFuriganaBtn.propTypes = {
 };
 
 interface ToggleFrequencyTermBtnProps {
-  visible?:boolean;
-  active?:boolean;
-  addFrequencyTerm: (uid:string)=>void;
-  removeFrequencyTerm: (uid:string)=>void;
-  toggle:boolean;
+  visible?: boolean;
+  active?: boolean;
+  addFrequencyTerm: (uid: string) => void;
+  removeFrequencyTerm: (uid: string) => void;
+  toggle: boolean;
   term: MinimunRawItem;
-  count?: number
+  count?: number;
 }
 
-export function ToggleFrequencyTermBtn(
-  props:ToggleFrequencyTermBtnProps
-) {
+export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
   const prevCount = useRef(0);
 
   const {
@@ -98,7 +96,7 @@ export function ToggleFrequencyTermBtn(
   useEffect(() => {
     prevCount.current = count !== undefined ? count : 0;
 
-    if (fade === false) {
+    if (!fade) {
       // fade this time
       forceRender();
     }
@@ -144,12 +142,12 @@ ToggleFrequencyTermBtn.propTypes = {
 export const ToggleFrequencyTermBtnMemo = memo(ToggleFrequencyTermBtn);
 
 interface ShowHintBtnProps {
-  visible?:boolean;
-  active:boolean;
-  setShowHint: (showHintValue:boolean)=>void 
+  visible?: boolean;
+  active: boolean;
+  setShowHint: (showHintValue: boolean) => void;
 }
 
-export function ShowHintBtn(props:ShowHintBtnProps) {
+export function ShowHintBtn(props: ShowHintBtnProps) {
   const { active, setShowHint } = props;
 
   return !props.visible ? null : (
@@ -182,15 +180,14 @@ ShowHintBtn.propTypes = {
   setShowHint: PropTypes.func,
 };
 
-
 interface ToggleAutoVerbViewBtnProps {
-  visible?:boolean;
-  active?:boolean;
+  visible?: boolean;
+  active?: boolean;
   toggleAutoVerbView: Function;
-  autoVerbView:boolean;
+  autoVerbView: boolean;
 }
 
-export function ToggleAutoVerbViewBtn(props:ToggleAutoVerbViewBtnProps) {
+export function ToggleAutoVerbViewBtn(props: ToggleAutoVerbViewBtnProps) {
   const { toggleAutoVerbView, autoVerbView } = props;
 
   return !props.visible ? null : (
@@ -212,12 +209,12 @@ ToggleAutoVerbViewBtn.propTypes = {
 };
 
 interface ReCacheAudioBtnProps {
-  visible?:boolean;
-  active?:boolean;
+  visible?: boolean;
+  active?: boolean;
   action: Function;
 }
 
-export function ReCacheAudioBtn(props:ReCacheAudioBtnProps) {
+export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
   const { active, action } = props;
 
   return props.visible === false ? null : (
@@ -246,13 +243,13 @@ ReCacheAudioBtn.propTypes = {
 };
 
 interface TogglePracticeSideBtnProps {
-  visible?:boolean;
-  active?:boolean;
-  action: import("react").MouseEventHandler;
-  toggle:boolean;
+  visible?: boolean;
+  active?: boolean;
+  action: React.MouseEventHandler;
+  toggle: boolean;
 }
 
-export function TogglePracticeSideBtn(props:TogglePracticeSideBtnProps) {
+export function TogglePracticeSideBtn(props: TogglePracticeSideBtnProps) {
   const { action, toggle } = props;
 
   return props.visible === false ? null : (
@@ -277,13 +274,13 @@ TogglePracticeSideBtn.propTypes = {
 };
 
 interface ToggleLiteralPhraseBtnProps {
-  visible:boolean;
-  active?:boolean;
+  visible: boolean;
+  active?: boolean;
   action: Function;
-  toggle:boolean;
+  toggle: boolean;
 }
 
-export function ToggleLiteralPhraseBtn(props:ToggleLiteralPhraseBtnProps) {
+export function ToggleLiteralPhraseBtn(props: ToggleLiteralPhraseBtnProps) {
   const { action, toggle } = props;
 
   return !props.visible ? null : (
@@ -312,12 +309,11 @@ ToggleLiteralPhraseBtn.propTypes = {
   action: PropTypes.func,
 };
 
-
 interface FrequencyWordIconProps {
-  visible:boolean;
+  visible: boolean;
 }
 
-export function FrequencyTermIcon(props:FrequencyWordIconProps) {
+export function FrequencyTermIcon(props: FrequencyWordIconProps) {
   return !props.visible ? null : (
     <div>
       <FontAwesomeIcon icon={faDice} />
@@ -330,16 +326,16 @@ FrequencyTermIcon.propTypes = {
 };
 
 interface TimePlayVerifyBtnsProps {
-  visible:boolean;
-  hover?: "pronunciation" | "incorrect" | "reset" ;
+  visible: boolean;
+  hover?: "pronunciation" | "incorrect" | "reset";
   onClick?: Function;
   onPronunciation?: Function;
-  onIncorrect?: Function,
-  onReset?: Function,
-  prevMissPronu: boolean,
+  onIncorrect?: Function;
+  onReset?: Function;
+  prevMissPronu: boolean;
 }
 
-export function TimePlayVerifyBtns(props:TimePlayVerifyBtnsProps) {
+export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
   return !props.visible ? null : (
     <React.Fragment>
       <div
@@ -380,7 +376,7 @@ export function TimePlayVerifyBtns(props:TimePlayVerifyBtnsProps) {
           className={classNames({
             "border-bottom":
               props.hover === "pronunciation" ||
-              (props.hover !== "reset" && props.prevMissPronu === true),
+              (props.hover !== "reset" && props.prevMissPronu),
           })}
         >
           {"P"}

@@ -10,7 +10,8 @@ import React, {
   useState,
 } from "react";
 import { useDispatch } from "react-redux";
-import { JapaneseText } from "../../helper/JapaneseText";
+
+import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
@@ -19,7 +20,8 @@ import {
   randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
-import { setStateFunction } from "../../hooks/helperHK";
+import { JapaneseText } from "../../helper/JapaneseText";
+import { buildAction, setStateFunction } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import {
   addFrequencyKanji,
@@ -36,16 +38,9 @@ import {
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
 import "./Kanji.css";
-import { isGroupLevel } from "./SetTermTagList";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
-import { buildAction } from "../../hooks/helperHK";
 import type { RawVocabulary } from "../../typings/raw";
-
-/**
- * @typedef {import("react").TouchEventHandler} TouchEventHandler
- * @typedef {import("../../typings/raw").RawVocabulary} RawVocabulary
- * @typedef {import("../../typings/raw").RawKanji} RawKanji
- */
+import type { AppDispatch } from "../../slices";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -56,14 +51,14 @@ export default function Kanji() {
   const dispatch = useDispatch<AppDispatch>();
 
   const addFrequencyTerm = useCallback(
-    (uid:string) => {
+    (uid: string) => {
       setFrequency((f) => [...f, uid]);
       dispatch(addFrequencyKanji(uid));
     },
     [dispatch]
   );
   const removeFrequencyTerm = useCallback(
-    ( uid:string) => {
+    (uid: string) => {
       setFrequency((f) => f.filter((id) => id !== uid));
       dispatch(removeFrequencyKanji(uid));
     },
@@ -95,7 +90,9 @@ export default function Kanji() {
   metadata.current = repetition;
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string|undefined>(undefined );
+  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
+    undefined
+  );
 
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
@@ -110,7 +107,7 @@ export default function Kanji() {
 
     const allFrequency = Object.keys(metadata.current).reduce<string[]>(
       (acc, cur) => {
-        if (metadata.current[cur].rein === true) {
+        if (metadata.current[cur]?.rein === true) {
           acc = [...acc, cur];
         }
         return acc;
@@ -126,15 +123,12 @@ export default function Kanji() {
       buildAction(dispatch, toggleKanjiFilter)
     );
 
-    const frequency = filtered.reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur.uid]?.rein === true) {
-          acc = [...acc, cur.uid];
-        }
-        return acc;
-      },
-      []
-    );
+    const frequency = filtered.reduce<string[]>((acc, cur) => {
+      if (metadata.current[cur.uid]?.rein === true) {
+        acc = [...acc, cur.uid];
+      }
+      return acc;
+    }, []);
     setFrequency(frequency);
 
     return filtered;
@@ -164,7 +158,7 @@ export default function Kanji() {
     if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
       const allFrequency = Object.keys(repetition).reduce<string[]>(
         (acc, cur) => {
-          if (repetition[cur].rein === true) {
+          if (repetition[cur]?.rein === true) {
             acc = [...acc, cur];
           }
           return acc;
@@ -215,7 +209,7 @@ export default function Kanji() {
   }, [filteredTerms, selectedIndex]);
 
   const swipeActionHandler = useCallback(
-    (direction:string) => {
+    (direction: string) => {
       // this.props.logger("swiped " + direction, 3);
 
       if (direction === "left") {
@@ -239,7 +233,7 @@ export default function Kanji() {
 
   if (order.length < 1) return <NotReady addlStyle="main-panel" />;
 
-  const uid = reinforcedUID || getTermUID(selectedIndex, filteredTerms,order, );
+  const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
   const term = getTerm(uid, kanjiList);
 
   const match = vocabList.filter(
@@ -254,7 +248,7 @@ export default function Kanji() {
           term.english.toLowerCase().includes(v.english.toLowerCase())))
   );
 
-  let examples:RawVocabulary[] = [];
+  let examples: RawVocabulary[] = [];
   if (match.length > 0) {
     const [first, ...theRest] = orderBy(match, (ex) => ex.english.length);
     examples = [first, ...shuffleArray(theRest)];
@@ -274,6 +268,8 @@ export default function Kanji() {
   //   })
   // );
 
+
+  // TODO: does it need to be active?
   const aGroupLevel =
     term.tag
       .find((t) => activeTags.includes(t) && isGroupLevel(t))

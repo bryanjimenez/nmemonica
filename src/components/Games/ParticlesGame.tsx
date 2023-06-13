@@ -10,18 +10,36 @@ import "./ParticlesGame.css";
 import { getParticleGame } from "../../slices/particleSlice";
 import { JapaneseText } from "../../helper/JapaneseText";
 import type { GameQuestion } from "./XChoices";
-
+import type { RawPhrase } from "../../typings/raw";
+import type { RootState, AppDispatch } from "../../slices";
 
 export interface ParticleChoice {
-  japanese: string, romaji: string, start?:number, end?:number, toHTML: (correct:boolean)=>void , html?:JSX.Element
+  japanese: string;
+  romaji: string;
+  start?: number;
+  end?: number;
+  toHTML: (correct: boolean) => void;
+  html?: React.JSX.Element;
 }
 interface ParticleAnswer {
-  japanese: string, romaji: string, start:number, end:number, toHTML: (correct:boolean)=>void 
+  japanese: string;
+  romaji: string;
+  start: number;
+  end: number;
+  toHTML: (correct: boolean) => void;
 }
 export interface ParticleGamePhrase {
-  answer: {japanese:string, romaji:string, start:number, end:number, html:string}, question: import("../../typings/raw").RawPhrase, english:string, literal?:string
+  answer: {
+    japanese: string;
+    romaji: string;
+    start: number;
+    end: number;
+    html: string;
+  };
+  question: RawPhrase;
+  english: string;
+  literal?: string;
 }
-
 
 const ParticlesGameMeta = {
   location: "/particles/",
@@ -31,8 +49,8 @@ const ParticlesGameMeta = {
 /**
  * Returns a list of choices which includes the right answer
  */
-function createChoices(answer:ParticleAnswer, particleList:ParticleChoice[]) {
-  let choices:ParticleChoice[] = [answer];
+function createChoices(answer: ParticleAnswer, particleList: ParticleChoice[]) {
+  let choices: ParticleChoice[] = [answer];
   while (choices.length < 4) {
     const i = Math.floor(Math.random() * particleList.length);
 
@@ -50,14 +68,11 @@ function createChoices(answer:ParticleAnswer, particleList:ParticleChoice[]) {
 }
 
 export default function ParticlesGame() {
-  const dispatch =useDispatch<AppDispatch>();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const 
-  { phrases, particles }
-   = useSelector<RootState,{
-    phrases: ParticleGamePhrase[];
-    particles: ParticleChoice[];
-}>(({ particle }) => particle.particleGame);
+  const { phrases, particles } = useSelector(
+    ({ particle }: RootState) => particle.particleGame
+  );
 
   useEffect(() => {
     if (phrases.length === 0) {
@@ -68,7 +83,11 @@ export default function ParticlesGame() {
   const order = useRef<number[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  function prepareGame(selectedIndex:number, phrases:ParticleGamePhrase[], particles:ParticleChoice[]) {
+  function prepareGame(
+    selectedIndex: number,
+    phrases: ParticleGamePhrase[],
+    particles: ParticleChoice[]
+  ) {
     if (phrases.length === 0 || particles.length === 0) return;
 
     if (order.current.length === 0) {
@@ -82,16 +101,20 @@ export default function ParticlesGame() {
 
     const choices = createChoices(answer, particles);
 
-    const question:GameQuestion = {
+    const question: GameQuestion = {
       english: english,
-      toHTML: (correct:boolean) =>
+      toHTML: (correct: boolean) =>
         buildQuestionElement(JapaneseText.parse(q), answer, correct),
     };
 
     return { question, answer, choices, literal };
   }
 
-  const buildQuestionElement = (question:JapaneseText, { start, end }:{start:number, end:number}, correct:boolean) => {
+  const buildQuestionElement = (
+    question: JapaneseText,
+    { start, end }: { start: number; end: number },
+    correct: boolean
+  ) => {
     const hidden = correct ? "correct-color" : "transparent-font underline";
 
     return kanjiOkuriganaSpliceApplyCss(
@@ -115,8 +138,8 @@ export default function ParticlesGame() {
     setSelectedIndex(newSel);
   }
 
-  const aRomaji = useSelector<RootState,boolean>(
-    ({ particle }) => particle.setting.aRomaji
+  const aRomaji = useSelector(
+    ({ particle }: RootState) => particle.setting.aRomaji
   );
 
   const game = prepareGame(selectedIndex, phrases, particles);
@@ -131,7 +154,6 @@ export default function ParticlesGame() {
   return (
     <>
       <FourChoices
-        key={0}
         question={game.question}
         isCorrect={(answered) => answered.japanese === game.answer.japanese}
         hint={game.literal}
@@ -140,7 +162,7 @@ export default function ParticlesGame() {
         gotoPrev={gotoPrev}
         gotoNext={gotoNext}
       />
-      <div key={1} className="progress-line flex-shrink-1">
+      <div className="progress-line flex-shrink-1">
         <LinearProgress variant="determinate" value={progress} />
       </div>
     </>

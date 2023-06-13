@@ -1,18 +1,25 @@
-import PropTypes from "prop-types";
-import React, { useCallback, useMemo, useRef, useState } from "react";
 import classNames from "classnames";
+import PropTypes from "prop-types";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { shallowEqual, useSelector } from "react-redux";
+
+import type { RootState } from "../../slices";
 import { DebugLevel } from "../../slices/settingHelper";
 
 const MAX_CONSOLE_MESSAGES = 6;
 const COLLAPSE_T = 3000;
 const SCROLL_COLLAPSE_T = 10000;
 
-export interface ConsoleMessage {msg:string, lvl:number, css?: string}
+export interface ConsoleMessage {
+  msg: string;
+  lvl: number;
+  css?: string;
+  type?: string;
+}
 
 interface ConsoleProps {
   connected?: boolean;
-  messages?: ConsoleMessage[]
+  messages?: ConsoleMessage[];
 }
 
 /**
@@ -20,9 +27,8 @@ interface ConsoleProps {
  * incrementing a counter on the final message
  * @param {ConsoleMessage[]} messages
  */
-function squashSeqMsgs(messages:ConsoleMessage[]) {
-  
-  let squashed:ConsoleMessage[] = [];
+function squashSeqMsgs(messages: ConsoleMessage[]) {
+  let squashed: ConsoleMessage[] = [];
   let count = 0;
 
   messages.forEach((element, i) => {
@@ -55,7 +61,7 @@ function squashSeqMsgs(messages:ConsoleMessage[]) {
   return squashed;
 }
 
-export default function Console(props:ConsoleProps) {
+export default function Console(props: ConsoleProps) {
   const isConnected = props.connected === true;
 
   const debug = useSelector(({ global }: RootState) => {
@@ -78,9 +84,9 @@ export default function Console(props:ConsoleProps) {
   );
 
   const [window, setWindow] = useState(MAX_CONSOLE_MESSAGES); // Max number of messages to display
-  const [scroll, setScroll] = useState(0);                    // Number of lines to scroll up
+  const [scroll, setScroll] = useState(0); // Number of lines to scroll up
   const [messages, setMessages] = useState(squashSeqMsgs(pMessages));
-  const collapse = useRef<number|undefined>();
+  const collapse = useRef<number | undefined>();
 
   useMemo(() => {
     if (debug === DebugLevel.OFF) {
@@ -140,7 +146,7 @@ export default function Console(props:ConsoleProps) {
         "mw-50": props.connected === true,
       })}
     >
-      {m.map((e, i) => {
+      {m.map((e) => {
         const mClass = classNames({
           "app-sm-fs-xx-small": true,
           ...(e.css ? { [e.css]: true } : {}),

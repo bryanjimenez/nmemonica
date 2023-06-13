@@ -8,8 +8,8 @@ import React, {
   useState,
 } from "react";
 import { useDispatch } from "react-redux";
+
 import { pronounceEndoint } from "../../../environment.development";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import { logify, spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
 import {
@@ -26,14 +26,16 @@ import {
   randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
+import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { addParam } from "../../helper/urlHelper";
 import { buildAction, setStateFunction } from "../../hooks/helperHK";
+import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
-import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
+import type { AppDispatch } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyPhrase,
@@ -44,8 +46,10 @@ import {
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
+import type { RawPhrase } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
 import Console from "../Form/Console";
+import type { ConsoleMessage } from "../Form/Console";
 import { MinimalUI } from "../Form/MinimalUI";
 import { NotReady } from "../Form/NotReady";
 import {
@@ -57,9 +61,6 @@ import {
 } from "../Form/OptionsBar";
 import Sizable from "../Form/Sizable";
 import StackNavButton from "../Form/StackNavButton";
-import type { ConsoleMessage } from "../Form/Console";
-import type { RawPhrase } from "../../typings/raw";
-
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -67,21 +68,23 @@ const PhrasesMeta = {
 };
 
 export default function Phrases() {
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useDispatch<AppDispatch>();
 
-  const prevReinforcedUID = useRef<string | undefined>(undefined );
+  const prevReinforcedUID = useRef<string | undefined>(undefined);
   const prevSelectedIndex = useRef(0);
 
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(undefined );
-  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
+    undefined
+  );
+  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showMeaning, setShowMeaning] = useState<string|null>(null)
-  const [showRomaji, setShowRomaji] = useState<string|null>(null);
-  const [showLit, setShowLit] = useState<string|null>(null)
-  const [frequency, setFrequency] = useState<string[]>([]) //subset of frequency words within current active group
+  const [showMeaning, setShowMeaning] = useState<string | null>(null);
+  const [showRomaji, setShowRomaji] = useState<string | null>(null);
+  const [showLit, setShowLit] = useState<string | null>(null);
+  const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [recacheAudio, setRecacheAudio] = useState(false);
 
   const {
@@ -120,8 +123,8 @@ export default function Phrases() {
       return phraseList;
 
     const allFrequency = Object.keys(firstRepObject).reduce<string[]>(
-      ( acc, cur) => {
-        if (firstRepObject[cur].rein === true) {
+      (acc, cur) => {
+        if (firstRepObject[cur]?.rein === true) {
           acc = [...acc, cur];
         }
         return acc;
@@ -140,15 +143,12 @@ export default function Phrases() {
       buildAction(dispatch, togglePhrasesFilter)
     );
 
-    const frequency = filtered.reduce<string[]>(
-      (acc, cur) => {
-        if (firstRepObject[cur.uid]?.rein === true) {
-          acc = [...acc, cur.uid];
-        }
-        return acc;
-      },
-      []
-    );
+    const frequency = filtered.reduce<string[]>((acc, cur) => {
+      if (firstRepObject[cur.uid]?.rein === true) {
+        acc = [...acc, cur.uid];
+      }
+      return acc;
+    }, []);
     setFrequency(frequency);
 
     return filtered;
@@ -201,7 +201,7 @@ export default function Phrases() {
         prevReinforcedUID.current = reinforcedUID;
         setReinforcedUID(value);
       },
-      gotoNext,
+      gotoNext
     );
   }, [
     dispatch,
@@ -279,8 +279,8 @@ export default function Phrases() {
       selectedIndex !== prevState.selectedIndex
     ) {
       const uid =
-        prevState.reinforcedUID ||
-        getTermUID(prevState.selectedIndex,filteredPhrases, order, );
+        prevState.reinforcedUID ??
+        getTermUID(prevState.selectedIndex, filteredPhrases, order);
 
       // prevent updates when quick scrolling
       if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
@@ -293,12 +293,9 @@ export default function Phrases() {
           .then((payload) => {
             const { map, prevMap } = payload;
 
-            const prevDate = prevMap[uid] && prevMap[uid].d;
+            const prevDate = prevMap[uid] && prevMap[uid]?.d;
             const repStats = { [uid]: { ...map[uid], d: prevDate } };
-            const messageLog = (
-              m:string,
-              l:number
-            ) => dispatch(logger(m, l));
+            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
             const frequency = prevState.reinforcedUID !== undefined;
             if (tpAnsweredREF.current !== undefined) {
               timedPlayLog(messageLog, phrase, repStats, { frequency });
@@ -387,7 +384,7 @@ export default function Phrases() {
     return <NotReady addlStyle="main-panel" />;
 
   const uid =
-    reinforcedUID || getTermUID(selectedIndex,filteredPhrases, order, );
+    reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
 
   // console.log(
   //   JSON.stringify({
@@ -553,13 +550,19 @@ export default function Phrases() {
   );
 }
 
-function getJapanesePhrase(phrase:RawPhrase):[JapaneseText, JSX.Element] {
+function getJapanesePhrase(
+  phrase: RawPhrase
+): [JapaneseText, React.JSX.Element] {
   const jObj = JapaneseText.parse(phrase);
 
   return [jObj, jObj.toHTML()];
 }
 
-function englishPhraseSubComp(phrase:RawPhrase, showLit:string|null, setShowLit:React.Dispatch<React.SetStateAction<string|null>>) {
+function englishPhraseSubComp(
+  phrase: RawPhrase,
+  showLit: string | null,
+  setShowLit: React.Dispatch<React.SetStateAction<string | null>>
+) {
   return (
     <span
       // className={classNames({"info-color":this.state.showLit})}
@@ -576,7 +579,11 @@ function englishPhraseSubComp(phrase:RawPhrase, showLit:string|null, setShowLit:
   );
 }
 
-function getCssResizableSubComp(englishSideUp:boolean, shortJP:boolean, shortEN:boolean) {
+function getCssResizableSubComp(
+  englishSideUp: boolean,
+  shortJP: boolean,
+  shortEN: boolean
+) {
   const aboveLargeCss = { "fs-display-5": true };
 
   const aboveSmallCss = {
@@ -605,7 +612,13 @@ function getCssResizableSubComp(englishSideUp:boolean, shortJP:boolean, shortEN:
 const eLabelMemo = <span>{"[English]"}</span>;
 const jLabelMemo = <span>{"[Japanese]"}</span>;
 
-function getPlayBtn(swipeThreshold:number, englishSideUp:boolean, phrase:RawPhrase, recacheAudio:boolean, loop:number) {
+function getPlayBtn(
+  swipeThreshold: number,
+  englishSideUp: boolean,
+  phrase: RawPhrase,
+  recacheAudio: boolean,
+  loop: number
+) {
   const audioWords = englishSideUp
     ? { tl: "en", q: phrase.english, uid: phrase.uid + ".en" }
     : {
@@ -623,9 +636,12 @@ function getPlayBtn(swipeThreshold:number, englishSideUp:boolean, phrase:RawPhra
   );
 }
 
-function buildRecacheAudioHandler(recacheAudio:boolean, setRecacheAudio:React.Dispatch<React.SetStateAction<boolean>>) {
+function buildRecacheAudioHandler(
+  recacheAudio: boolean,
+  setRecacheAudio: React.Dispatch<React.SetStateAction<boolean>>
+) {
   return function recacheAudioHandler() {
-    if (recacheAudio === false) {
+    if (!recacheAudio) {
       const delayTime = 2000;
       setRecacheAudio(true);
 
@@ -639,17 +655,19 @@ function buildRecacheAudioHandler(recacheAudio:boolean, setRecacheAudio:React.Di
 }
 
 function buildGameActionsHandler(
-  gotoNextSlide:Function,
-  gotoPrev:Function,
-  reinforcedUID:string|undefined,
-  selectedIndex:number,
-  phrases:RawPhrase[],
-  order:number[],
-  filteredPhrases:RawPhrase[],
-  recacheAudio:boolean
+  gotoNextSlide: Function,
+  gotoPrev: Function,
+  reinforcedUID: string | undefined,
+  selectedIndex: number,
+  phrases: RawPhrase[],
+  order: number[],
+  filteredPhrases: RawPhrase[],
+  recacheAudio: boolean
 ) {
-
-  return function swipeActionHandler(direction:string, AbortController?:AbortController) {
+  return function swipeActionHandler(
+    direction: string,
+    AbortController?: AbortController
+  ) {
     // this.props.logger("swiped " + direction, DebugLevel.WARN);
     let swipePromise;
 
@@ -661,7 +679,7 @@ function buildGameActionsHandler(
       swipePromise = Promise.all([Promise.resolve()]);
     } else {
       const uid =
-        reinforcedUID || getTermUID(selectedIndex, filteredPhrases,order, );
+        reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
       const phrase = getTerm(uid, phrases);
       const override = recacheAudio ? "/override_cache" : "";
 

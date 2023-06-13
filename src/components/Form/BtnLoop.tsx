@@ -10,12 +10,12 @@ import {
 
 interface BtnLoopProps {
   visible?: boolean;
-  active?: boolean,
-  loop: number,
-  onClick?: Function,
+  active?: boolean;
+  loop: number;
+  onClick?: Function;
 }
 
-export function LoopSettingBtn(props:BtnLoopProps) {
+export function LoopSettingBtn(props: BtnLoopProps) {
   return props.visible ? null : (
     <div
       className="loop-btn loop-setting-btn clickable"
@@ -45,13 +45,13 @@ LoopSettingBtn.propTypes = {
 };
 
 interface LoopStartBtn {
-  visible?: boolean,
-  onClick?: Function,
-  className?: {[name:string]:boolean},
-  countDown?: number,
+  visible?: boolean;
+  onClick?: Function;
+  className?: { [name: string]: boolean };
+  countDown?: number;
 }
 
-export function LoopStartBtn(props:LoopStartBtn) {
+export function LoopStartBtn(props: LoopStartBtn) {
   const { className } = props;
   return props.visible ? null : (
     <div
@@ -84,12 +84,12 @@ LoopStartBtn.propTypes = {
 };
 
 interface LoopStopBtn {
-  visible?: boolean,
- onClick?: Function,
- className?: {[name:string]:boolean},
+  visible?: boolean;
+  onClick?: Function;
+  className?: { [name: string]: boolean };
 }
 
-export function LoopStopBtn(props:LoopStopBtn) {
+export function LoopStopBtn(props: LoopStopBtn) {
   const { className } = props;
   return props.visible ? null : (
     <div

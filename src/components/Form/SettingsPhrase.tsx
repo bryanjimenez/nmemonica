@@ -1,8 +1,11 @@
-import React from "react";
 import { useDispatch } from "react-redux";
+
+import { NotReady } from "./NotReady";
+import SettingsSwitch from "./SettingsSwitch";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { buildAction } from "../../hooks/helperHK";
-import { useSettingsPhraseConnected } from "../../hooks/useConnectSettings";
+import { useConnectPhrase } from "../../hooks/useConnectPhrase";
+import type { AppDispatch } from "../../slices";
 import {
   getPhrase,
   removeFrequencyPhrase,
@@ -19,22 +22,25 @@ import {
 } from "../../slices/settingHelper";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { SetTermGList } from "../Pages/SetTermGList";
-import { NotReady } from "./NotReady";
-import SettingsSwitch from "./SettingsSwitch";
 
 export default function SettingsPhrase() {
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useDispatch<AppDispatch>();
 
   const {
-    phrases,
+    phraseList: phrases,
     phraseGroups,
-    phraseOrder,
-    phraseRomaji,
-    phraseReinforce,
-    phraseActive,
-    phraseFilter,
-    phraseRep,
-  } = useSettingsPhraseConnected();
+    sortMethod: phraseOrderRef,
+    romajiActive: phraseRomajiRef,
+    activeGroup: phraseActive,
+    filterType: phraseFilterRef,
+    repetition: phraseRep,
+    reinforce: phraseReinforceRef,
+  } = useConnectPhrase();
+
+  const phraseFilter = phraseFilterRef.current;
+  const phraseOrder = phraseOrderRef.current;
+  const phraseRomaji = phraseRomajiRef.current;
+  const phraseReinforce = phraseReinforceRef.current;
 
   if (phrases.length === 0) {
     dispatch(getPhrase());

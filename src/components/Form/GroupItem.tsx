@@ -2,15 +2,16 @@ import classNames from "classnames";
 import PropTypes from "prop-types";
 import { PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
 import type { MouseEventHandler } from "react";
+import React from "react";
 
 interface GroupItemProps {
-  addlStyle?: string,
-  active: boolean,
-  onClick: MouseEventHandler,
-  children: JSX.Element|string
+  addlStyle?: string;
+  active: boolean;
+  onClick: MouseEventHandler;
+  children: React.JSX.Element | string;
 }
 
-export function GroupItem(props:GroupItemProps) {
+export function GroupItem(props: GroupItemProps) {
   const css = classNames({
     ["" + props.addlStyle]: props.addlStyle ? true : false,
     "p-0 px-2": true,

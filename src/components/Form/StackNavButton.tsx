@@ -1,17 +1,23 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Button } from "@mui/material";
-
 import "./StackNavButton.css";
 
 interface StackNavButtonProps {
   action: React.MouseEventHandler;
-  color?: "primary" | "secondary" | "success" | "info" | "warning" | "error" | "inherit";
+  color?:
+    | "primary"
+    | "secondary"
+    | "success"
+    | "info"
+    | "warning"
+    | "error"
+    | "inherit";
   ariaLabel: string;
-  children: JSX.Element;
+  children: React.JSX.Element;
 }
 
-export function StackNavButton(props:StackNavButtonProps) {
+export function StackNavButton(props: StackNavButtonProps) {
   return (
     <Button
       size="small"
