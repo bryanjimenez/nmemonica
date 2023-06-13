@@ -4,17 +4,9 @@
     "rootDir": ".",
     "outDir": "./.tsc-dist/",
 
-
-    // "strict": true,
-    // "esModuleInterop": true,
-    "skipLibCheck": true,
-    // "forceConsistentCasingInFileNames": true,
-    // "moduleResolution": "node"
+    "skipLibCheck": true
   },
-  "exclude": ["./node_modules", "./dist", "./pwa"],
-  "files":[],
-  "references": [
-    { "path": "./src" },
-    { "path": "./pwa" },
-  ],
+  "exclude": ["./node_modules", "./dist"],
+  "files": [],
+  "references": [{ "path": "./src" }, { "path": "./pwa" }]
 }
