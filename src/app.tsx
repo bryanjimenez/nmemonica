@@ -1,26 +1,29 @@
 import classNames from "classnames";
-import React, { Suspense, lazy, useEffect } from "react";
+import { Suspense /*, lazy*/, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Route, HashRouter as Router, Routes } from "react-router-dom";
-import type { RootState} from "./slices"
-
 import Console from "./components/Form/Console";
 import KanjiGame, { KanjiGameMeta } from "./components/Games/KanjiGame";
 import KanjiGrid, { KanjiGridMeta } from "./components/Games/KanjiGrid";
-import OppositesGame, { OppositesGameMeta } from "./components/Games/OppositesGame";
-import ParticlesGame, { ParticlesGameMeta } from "./components/Games/ParticlesGame";
+import OppositesGame, {
+  OppositesGameMeta,
+} from "./components/Games/OppositesGame";
+import ParticlesGame, {
+  ParticlesGameMeta,
+} from "./components/Games/ParticlesGame";
 import Navigation from "./components/Navigation/Navigation";
+import NotFound from "./components/Navigation/NotFound";
 import KanaGame, { KanaGameMeta } from "./components/Pages/KanaGame";
 import Kanji, { KanjiMeta } from "./components/Pages/Kanji";
 import Phrases, { PhrasesMeta } from "./components/Pages/Phrases";
 import Settings, { SettingsMeta } from "./components/Pages/Settings";
 import Vocabulary, { VocabularyMeta } from "./components/Pages/Vocabulary";
+import { SERVICE_WORKER_LOGGER_MSG } from "./constants/actionNames";
+import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { getVersions } from "./slices/versionSlice";
 import "./styles.css";
-import { SERVICE_WORKER_LOGGER_MSG } from "./constants/actionNames";
-import NotFound from "./components/Navigation/NotFound";
 // FIXME: lazy loading stuff
 // const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 // const Phrases = lazy(() => import("./components/Pages/Phrases"));
@@ -34,7 +37,7 @@ import NotFound from "./components/Navigation/NotFound";
 // const Settings = lazy(() => import("./components/Pages/Settings"));
 
 export default function App() {
-  const dispatch =useDispatch<AppDispatch>();
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     dispatch(getVersions());
@@ -57,7 +60,9 @@ export default function App() {
     });
   }, []);
 
-  const darkMode = useSelector<RootState, boolean>(({global}) => global.darkMode);
+  const darkMode = useSelector(
+    ({ global }:RootState) => global.darkMode
+  );
 
   const pClass = classNames({
     "d-flex flex-column": true,
@@ -68,7 +73,7 @@ export default function App() {
     <Router basename="/">
       <div id="page-content" className={pClass}>
         <Console connected={true} />
-        <Navigation /> 
+        <Navigation />
         <Suspense fallback={<div />}>
           <Routes>
             <Route path="/" element={<Vocabulary />} />
