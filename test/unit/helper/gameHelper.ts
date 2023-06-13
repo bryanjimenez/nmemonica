@@ -1,4 +1,3 @@
-// @ts-check
 import "jsdom-global/register";
 import { expect } from "chai";
 import { render, screen } from "@testing-library/react";
@@ -12,10 +11,10 @@ import {
   termFilterByType,
 } from "../../../src/helper/gameHelper";
 import { TermFilterBy } from "../../../src/slices/settingHelper";
+import { MetaDataObj, RawVocabulary } from "../../../src/typings/raw";
 
 describe("gameHelper", function () {
-  /** @type {import("../../../src/helper/consoleHelper").RawVocabulary[]} */
-  const terms = [
+  const terms: RawVocabulary[] = [
     {
       english: "blue",
       grp: "Noun",
@@ -122,15 +121,13 @@ describe("gameHelper", function () {
     },
   ];
   describe("spaceRepOrder", function () {
-    /**
-     * @typedef {import("../../../src/typings/raw").MetaDataObj} MetaDataObj
-     * @typedef {Record<string,Partial<MetaDataObj>>} SpaceRepetitionMap
-     * */
+    interface SpaceRepetitionMap {
+      [key: string]: Partial<MetaDataObj>;
+    }
 
     it("term order when undefined", function () {
       const expected = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0];
-      /** @type {SpaceRepetitionMap} */
-      const spaceRepObj = {
+      const spaceRepObj: SpaceRepetitionMap = {
         "00c102a7e10b45b19afbab71c030bf63": {
           vC: 1,
           d: "2021-09-28T17:38:09.319Z",
@@ -142,8 +139,8 @@ describe("gameHelper", function () {
     });
     it("date order oldest first", function () {
       const expected = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-      /** @type {SpaceRepetitionMap} */
-      const spaceRepObj = {
+
+      const spaceRepObj: SpaceRepetitionMap = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 1,
@@ -216,8 +213,7 @@ describe("gameHelper", function () {
     });
     it("view count order lowest first", function () {
       const expected = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-      /** @type {SpaceRepetitionMap} */
-      const spaceRepObj = {
+      const spaceRepObj: SpaceRepetitionMap = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 13,
@@ -290,8 +286,7 @@ describe("gameHelper", function () {
     });
     it("date order superseedes count order", function () {
       const expected = [11, 12, 10, 9, 8, 7, 6, 5, 4, 3, 0, 1, 2];
-      /** @type {SpaceRepetitionMap} */
-      const spaceRepObj = {
+      const spaceRepObj: SpaceRepetitionMap = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 1,
@@ -364,8 +359,7 @@ describe("gameHelper", function () {
     });
     it("timed play ", function () {
       const expected = [0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 12];
-      /** @type {SpaceRepetitionMap} */
-      const spaceRepObj = {
+      const spaceRepObj: SpaceRepetitionMap = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 13,
@@ -454,8 +448,7 @@ describe("gameHelper", function () {
         "12",
         "0",
       ];
-      /** @type {SpaceRepetitionMap} */
-      const spaceRepObj = {
+      const spaceRepObj: SpaceRepetitionMap = {
         "00c102a7e10b45b19afbab71c030bf63": {
           vC: 1,
           d: "2021-09-28T17:38:09.319Z",

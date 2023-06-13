@@ -9,7 +9,7 @@ import {
   setStateFunction,
   useWindowSize,
   useFade,
-} from "../../../src/hooks/helperHK.js";
+} from "../../../src/hooks/helperHK";
 
 describe("helperHK", function () {
   describe("useFade", function () {

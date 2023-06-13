@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { JapaneseVerb } from "../../../src/helper/JapaneseVerb";
-import {buildVocabularyObject}  from '../../../src/helper/reducerHelper.js'
+import {buildVocabularyObject}  from '../../../src/helper/reducerHelper'
 /* global describe it */
 
 const verbs = {

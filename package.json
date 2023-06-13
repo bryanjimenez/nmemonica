@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -r ./test/require.js ./test/unit/**/*.{js,ts}",
+    "test": "mocha -r ./test/require.js ./test/unit/**/*.ts",
     "type": "tsc -b --verbose",
     "coverage": "nyc -e .jsx npm run test > '/dev/null'; nyc report",
     "b:clean": "rm -rf ./dist/*",
