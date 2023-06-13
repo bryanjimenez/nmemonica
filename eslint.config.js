@@ -2,7 +2,6 @@ import globals from "globals";
 // import tsPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import eslintJsPlugin from "@eslint/js";
-import babelParser from "@babel/eslint-parser";
 import prettierPlugin from "eslint-plugin-prettier";
 import reactPlugin from "eslint-plugin-react";
 import reactHookPlugin from "eslint-plugin-react-hooks";
@@ -36,10 +35,10 @@ export default [
     },
   },
   {
-    files: ["src/**/*.js", "src/**/*.jsx"],
+    files: ["src/**/*.ts", "src/**/*.tsx"],
     languageOptions: {
-      // parser: tsParser,
-      parser: babelParser,
+      parser: tsParser,
+
       parserOptions: {
         // project: "./tsconfig.json", // for tsParser
         sourceType: "module",
@@ -77,27 +76,5 @@ export default [
       parser: tsParser,
       globals: { ...globals.mocha },
     },
-  },
-  {
-    files: ["**/*.js"],
-    languageOptions: {
-      // parser: tsParser,
-      parser: babelParser,
-      parserOptions: {
-        // project: "./tsconfig.json", // for tsParser
-        sourceType: "module",
-        ecmaVersion: "latest",
-      },
-      sourceType: "module",
-      globals: { ...globals.nodeBuiltin },
-    },
-    plugins: {
-      // "@typescript-eslint": tsPlugin,
-      // prettier: prettierPlugin,
-    },
-    rules: {
-      // "jsdoc/require-description": "error",
-      // "jsdoc/check-values": "error"
-    },
-  },
+  }
 ];
