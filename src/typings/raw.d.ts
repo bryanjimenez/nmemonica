@@ -59,8 +59,8 @@ export interface MetaDataObj {
      **/
     d: string;
     /** View count */ vC: number;
-    difficulty: number;
-    /** number of days to */ nextReview: number;
+    difficulty?: number;
+    /** number of days to */ nextReview?: number;
 
     /** Furigana shown (yes:undefined|true) */ f?: boolean;
     /** Reinforce */ rein?: boolean;
@@ -72,7 +72,7 @@ export interface MetaDataObj {
 }
 
 export interface SpaceRepetitionMap {
-  [uid: string]: MetaDataObj
+  [uid: string]: MetaDataObj | undefined
 }
 
 export interface FuriganaToggleMap {
