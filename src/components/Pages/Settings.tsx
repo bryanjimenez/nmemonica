@@ -1,6 +1,8 @@
 import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, {
+  Suspense,
+  lazy,
   useCallback,
   useEffect,
   useMemo,
@@ -9,7 +11,6 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
-import { logify } from "../../helper/consoleHelper";
 import {
   getDeviceMotionEventPermission,
   getStaleSpaceRepKeys,
@@ -54,18 +55,17 @@ import {
   getVocabulary,
   toggleVocabularyActiveGrp,
 } from "../../slices/vocabularySlice";
-import Console from "../Form/Console";
+import type { RawVocabulary } from "../../typings/raw";
+import type { ConsoleMessage } from "../Form/Console";
 import KanaOptionsSlider from "../Form/KanaOptionsSlider";
 import { NotReady } from "../Form/NotReady";
-import SettingsPhrase from "../Form/SettingsPhrase";
 import SettingsSwitch from "../Form/SettingsSwitch";
-import SettingsVocab from "../Form/SettingsVocab";
 import { SetTermGFList } from "./SetTermGFList";
 import { SetTermTagList } from "./SetTermTagList";
 import "./Settings.css";
 import "./spin.css";
-import type { RawVocabulary } from "../../typings/raw";
-import type { ConsoleMessage } from "../Form/Console";
+const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
+const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
 
 type Sections =
   | "sectionPhrase"
@@ -422,6 +422,7 @@ export default function Settings() {
     [kanji, kRepetition]
   );
 
+  // TODO: refactor out use lazy
   const failedFurigana = useMemo(
     () => failedFuriganaList([...phrases, ...vocabulary]),
     [vocabulary, phrases]
@@ -604,14 +605,30 @@ export default function Settings() {
             <h2>Phrases</h2>
             {collapseExpandToggler(sectionPhrase, setSectionPhrase)}
           </div>
-          {sectionPhrase && <SettingsPhrase />}
+          {sectionPhrase && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="phrases-settings" text="Loading..." />
+              }
+            >
+              <SettingsPhrase />
+            </Suspense>
+          )}
         </div>
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
             <h2>Vocabulary</h2>
             {collapseExpandToggler(sectionVocabulary, setSectionVocabulary)}
           </div>
-          {sectionVocabulary && <SettingsVocab />}
+          {sectionVocabulary && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="vocabulary-settings" text="Loading..." />
+              }
+            >
+              <SettingsVocab />
+            </Suspense>
+          )}
         </div>
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
@@ -891,18 +908,22 @@ export default function Settings() {
               </div>
 
               {sectionStaleSpaceRep && (
-                <div className="failed-spacerep-view container mt-2 p-0">
-                  {staleSpaceRepTerms}
-                </div>
+                <Suspense fallback={<NotReady addlStyle="failed-spacerep-view"/>}>
+                  <div className="failed-spacerep-view container mt-2 p-0">
+                    {staleSpaceRepTerms}
+                  </div>
+                </Suspense>
               )}
             </div>
           )}
           {failedFurigana.length > 0 && (
             <div className="mb-2">
               <h5>Failed Furigana Parse</h5>
-              <div className="failed-furigana-view container mt-2 p-0">
-                {failedFurigana}
+              <Suspense fallback={<NotReady addlStyle="failed-furigana-view"/>}>
+                <div className="failed-furigana-view container mt-2 p-0">
+                  {failedFurigana}
               </div>
+              </Suspense>
             </div>
           )}
         </div>

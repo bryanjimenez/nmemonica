@@ -1,40 +1,34 @@
 import classNames from "classnames";
-import { Suspense /*, lazy*/, useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Route, HashRouter as Router, Routes } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import Console from "./components/Form/Console";
-import KanjiGame, { KanjiGameMeta } from "./components/Games/KanjiGame";
-import KanjiGrid, { KanjiGridMeta } from "./components/Games/KanjiGrid";
-import OppositesGame, {
-  OppositesGameMeta,
-} from "./components/Games/OppositesGame";
-import ParticlesGame, {
-  ParticlesGameMeta,
-} from "./components/Games/ParticlesGame";
+import { KanjiGameMeta } from "./components/Games/KanjiGame";
+import { KanjiGridMeta } from "./components/Games/KanjiGrid";
+import { OppositesGameMeta } from "./components/Games/OppositesGame";
+import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import Navigation from "./components/Navigation/Navigation";
-import NotFound from "./components/Navigation/NotFound";
-import KanaGame, { KanaGameMeta } from "./components/Pages/KanaGame";
-import Kanji, { KanjiMeta } from "./components/Pages/Kanji";
-import Phrases, { PhrasesMeta } from "./components/Pages/Phrases";
-import Settings, { SettingsMeta } from "./components/Pages/Settings";
-import Vocabulary, { VocabularyMeta } from "./components/Pages/Vocabulary";
+import { KanaGameMeta } from "./components/Pages/KanaGame";
+import { KanjiMeta } from "./components/Pages/Kanji";
+import { PhrasesMeta } from "./components/Pages/Phrases";
+import { SettingsMeta } from "./components/Pages/Settings";
+import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import { SERVICE_WORKER_LOGGER_MSG } from "./constants/actionNames";
 import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { getVersions } from "./slices/versionSlice";
 import "./styles.css";
-// FIXME: lazy loading stuff
-// const NotFound = lazy(() => import("./components/Navigation/NotFound"));
-// const Phrases = lazy(() => import("./components/Pages/Phrases"));
-// const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
-// const OppositesGame = lazy(() => import("./components/Games/OppositesGame"));
-// const KanaGame = lazy(() => import("./components/Pages/KanaGame"));
-// const Kanji = lazy(() => import("./components/Pages/Kanji"));
-// const KanjiGame = lazy(() => import("./components/Games/KanjiGame"));
-// const KanjiGrid = lazy(() => import("./components/Games/KanjiGrid"));
-// const ParticlesGame = lazy(() => import("./components/Games/ParticlesGame"));
-// const Settings = lazy(() => import("./components/Pages/Settings"));
+const NotFound = lazy(() => import("./components/Navigation/NotFound"));
+const Phrases = lazy(() => import("./components/Pages/Phrases"));
+const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
+const OppositesGame = lazy(() => import("./components/Games/OppositesGame"));
+const KanaGame = lazy(() => import("./components/Pages/KanaGame"));
+const Kanji = lazy(() => import("./components/Pages/Kanji"));
+const KanjiGame = lazy(() => import("./components/Games/KanjiGame"));
+const KanjiGrid = lazy(() => import("./components/Games/KanjiGrid"));
+const ParticlesGame = lazy(() => import("./components/Games/ParticlesGame"));
+const Settings = lazy(() => import("./components/Pages/Settings"));
 
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -46,10 +40,14 @@ export default function App() {
       if ("serviceWorker" in navigator) {
         // set event listener
         navigator.serviceWorker.addEventListener("message", (event) => {
-          if (event.data.type === SERVICE_WORKER_LOGGER_MSG) {
-            dispatch(
-              logger(event.data.msg, event.data.lvl, SERVICE_WORKER_LOGGER_MSG)
-            );
+          interface SwMessage {
+            msg: string;
+            lvl: number;
+            type: string;
+          }
+          const data = event.data as SwMessage;
+          if (data.type === SERVICE_WORKER_LOGGER_MSG) {
+            dispatch(logger(data.msg, data.lvl, SERVICE_WORKER_LOGGER_MSG));
           }
           // TODO: SERVICE_WORKER_NEW_TERMS_ADDED removed on hook refactor
           // else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
@@ -70,7 +68,7 @@ export default function App() {
   });
 
   return (
-    <Router basename="/">
+    <HashRouter basename="/">
       <div id="page-content" className={pClass}>
         <Console connected={true} />
         <Navigation />
@@ -96,6 +94,6 @@ export default function App() {
           </Routes>
         </Suspense>
       </div>
-    </Router>
+    </HashRouter>
   );
 }
