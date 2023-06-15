@@ -18,6 +18,7 @@ export default function NotFound() {
   return (
     <div
       className={classNames({
+        "not-found": true,
         "position-relative": true,
         "notification-fade": !fadeIn,
         "notification-fade-in": fadeIn,
