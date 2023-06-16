@@ -105,7 +105,6 @@ export default function SettingsVocab() {
 
   const stale = getStaleGroups(vocabGroups, vocabActive);
   if (stale.length > 0) {
-    // @ts-expect-error Error.cause
     const error = new Error("Stale vocabulary active group", {
       cause: { code: "StaleVocabActiveGrp", value: stale },
     });

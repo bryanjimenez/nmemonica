@@ -10,7 +10,7 @@
     "target": "es6",
     // Specify what module code is generated.
     "module": "ES2022",
-    "lib": ["dom"],
+    "lib": ["dom", "ES2022.Error", "ES2021.String"],
 
     "moduleResolution": "node",
     "esModuleInterop": true,

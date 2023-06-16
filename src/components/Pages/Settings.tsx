@@ -88,9 +88,7 @@ const SettingsMeta = {
 
 function /*static*/ getDerivedStateFromError(error: Error) {
   const causeMsg =
-    // @ts-expect-error Error.cause
     (error.cause !== undefined && [
-      // @ts-expect-error Error.cause
       { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
     ]) ||
     [];
@@ -107,7 +105,6 @@ function /*static*/ getDerivedStateFromError(error: Error) {
 }
 
 function componentDidCatch(dispatch: Function, error: Error) {
-  // @ts-expect-error Error.cause
   const cause = error.cause;
 
   dispatch(debugToggled(DebugLevel.DEBUG));

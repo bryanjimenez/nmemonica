@@ -1,4 +1,3 @@
-// @ts-expect-error Error.cause
 const userAbortError = new Error("User interrupted audio playback.", {
   cause: { code: "UserAborted" },
 });

@@ -1016,7 +1016,7 @@ export function loopN<T>(
   const loopPromise = new Promise<void>((resolve, reject) => {
     const listener = () => {
       clearTimeout(timer);
-      // @ts-expect-error Error.cause
+
       const error = new Error("User interrupted loop.", {
         cause: { code: "UserAborted" },
       });
@@ -1066,7 +1066,6 @@ export function motionThresholdCondition(
   const y = event.acceleration?.y;
   const z = event.acceleration?.z;
   if (y === undefined || y === null || z === undefined || z === null) {
-    // @ts-expect-error Error.cause
     throw new Error("Device does not support DeviceMotionEvent", {
       cause: { code: "DeviceMotionEvent" },
     });

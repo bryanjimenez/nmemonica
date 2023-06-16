@@ -55,7 +55,6 @@ export default function SettingsPhrase() {
 
   const stale = getStaleGroups(phraseGroups, phraseActive);
   if (stale.length > 0) {
-    // @ts-expect-error Error.cause
     const error = new Error("Stale phrases active group", {
       cause: { code: "StalePhraseActiveGrp", value: stale },
     });

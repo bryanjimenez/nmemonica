@@ -358,7 +358,7 @@ export function furiganaParseRetry(
     ));
   } catch (e) {
     // don't retry unless parse error
-    // @ts-expect-error Error.cause
+
     if (e instanceof Error && e.cause?.code === "ParseError") {
       // reverse try
       try {
@@ -468,7 +468,6 @@ export function furiganaParse(
               "The two phrases do not match" +
               (hasWhiteSpace ? " (contains white space)" : "");
 
-            // @ts-expect-error Error.cause
             const e = new Error(eMsg, {
               cause: {
                 code: "InputError",
@@ -545,7 +544,7 @@ export function furiganaParse(
     const eMsg =
       "Failed to parse text to build furigana" +
       (hasWhiteSpace ? " (contains white space)" : "");
-    // @ts-expect-error Error.cause
+
     const e = new Error(eMsg, {
       cause: {
         code: "ParseError",
@@ -612,7 +611,6 @@ export function audioPronunciation(vocabulary: RawJapanese) {
     if (isAllKana) {
       q = vocabulary.pronounce;
     } else {
-      // @ts-expect-error Error.cause
       const error = new Error("No valid pronunciation", {
         cause: { code: "InvalidPronunciation", value: vocabulary },
       });

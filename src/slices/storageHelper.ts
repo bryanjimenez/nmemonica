@@ -15,7 +15,6 @@ export function memoryStorageStatus(): Promise<{
       }))
     );
   } else {
-    // @ts-expect-error Error.cause
     const e = new Error("Browser does not support persistent storage", {
       cause: { code: "PersistentStorageUnsupported" },
     });
@@ -28,7 +27,6 @@ export function memoryStorageStatus(): Promise<{
  * sets persistent storage bit (if browser supports it)
  */
 export function persistStorage() {
-  // @ts-expect-error Error.cause
   const e = new Error("Browser does not support persistent storage", {
     cause: { code: "PersistentStorageUnsupported" },
   });
@@ -86,7 +84,6 @@ export function getStorageUsage(): Promise<{ quota: number; usage: number }> {
     ) {
       navigator.storage.estimate().then(resolve).catch(reject);
     } else {
-      // @ts-expect-error Error.cause
       const e = new Error("Quota info unsupported", {
         cause: { code: "QuotaInfoUnsupported" },
       });
