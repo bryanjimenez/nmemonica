@@ -842,7 +842,7 @@ export function initServiceWorker({
             const allowedSets = ["vocabulary", "phrases"];
             for (let n in resNew) {
               if (allowedSets.includes(n)) {
-                if (resOld[n] !== resNew[n]) {
+                if (resOld?.[n] !== resNew[n]) {
                   versionChange[n] = { old: resOld[n], new: resNew[n] };
                   update = !update ? true : true;
                 }
