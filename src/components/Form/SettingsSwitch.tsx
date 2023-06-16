@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Switch } from "@mui/material";
 import classNames from "classnames";
-import "./SettingsSwitch.css";
+import "../../css/SettingsSwitch.css";
 
 interface SettingsSwitchProps {
   active: boolean;

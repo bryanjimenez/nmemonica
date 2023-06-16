@@ -6,7 +6,7 @@ import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { NotReady } from "../Form/NotReady";
 import FourChoices from "./FourChoices";
-import "./ParticlesGame.css";
+import "../../css/ParticlesGame.css";
 import { getParticleGame } from "../../slices/particleSlice";
 import { JapaneseText } from "../../helper/JapaneseText";
 import type { GameQuestion } from "./XChoices";

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./NotFound.css";
+import "../../css/NotFound.css";
 import classNames from "classnames";
 import background from "../../../image/notfound/background.jpeg";
 import bigHouse from "../../../image/notfound/bhouse.png";

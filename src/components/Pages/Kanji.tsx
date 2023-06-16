@@ -11,7 +11,6 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
-import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
@@ -37,7 +36,8 @@ import {
   ToggleFrequencyTermBtnMemo,
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
-import "./Kanji.css";
+import "../../css/Kanji.css";
+import { isGroupLevel } from "./SetTermTagList";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { RawVocabulary } from "../../typings/raw";
 import type { AppDispatch } from "../../slices";
@@ -267,7 +267,6 @@ export default function Kanji() {
   //     filt: filteredTerms.length,
   //   })
   // );
-
 
   // TODO: does it need to be active?
   const aGroupLevel =

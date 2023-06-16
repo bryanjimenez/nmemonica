@@ -1,7 +1,7 @@
 import { Slider } from "@mui/material";
 import PropTypes from "prop-types";
 import React, { useState } from "react";
-import "./VocabularyOrderSlider.css";
+import "../../css/VocabularyOrderSlider.css";
 
 export interface BareIdx {
   uid: string;

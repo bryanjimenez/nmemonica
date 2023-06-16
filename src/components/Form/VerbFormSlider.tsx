@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Slider, Typography } from "@mui/material";
-import "./VerbFormSlider.css";
+import "../../css/VerbFormSlider.css";
 
 interface Marks {
   value: number;
@@ -23,7 +23,7 @@ export default function VerbFormSlider(props: VerbFormSliderProps) {
   const min = 0;
 
   let marks: Marks[] = [];
-  let marksMap: { [key: string]: number } = {};
+  let marksMap: Record<string, number> = {};
 
   for (let x = min; x < max + 1; x++) {
     const slide = ((x - min) / (max - min)) * 100;

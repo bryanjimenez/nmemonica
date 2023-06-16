@@ -18,7 +18,7 @@ import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { getVersions } from "./slices/versionSlice";
-import "./styles.css";
+import "./css/styles.css";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
@@ -58,9 +58,7 @@ export default function App() {
     });
   }, []);
 
-  const darkMode = useSelector(
-    ({ global }:RootState) => global.darkMode
-  );
+  const darkMode = useSelector(({ global }: RootState) => global.darkMode);
 
   const pClass = classNames({
     "d-flex flex-column": true,

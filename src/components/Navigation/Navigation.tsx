@@ -27,7 +27,7 @@ import { KanjiMeta } from "../Pages/Kanji";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { SettingsMeta } from "../Pages/Settings";
 import { VocabularyMeta } from "../Pages/Vocabulary";
-import "./Navigation.css";
+import "../../css/Navigation.css";
 
 export default function Navigation() {
   const dispatch = useDispatch();

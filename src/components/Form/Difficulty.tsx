@@ -9,7 +9,7 @@ import { lerp } from "../../helper/arrayHelper";
 import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/gameHelper";
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
 import { useWindowSize } from "../../hooks/helperHK";
-import "./Difficulty.css";
+import "../../css/Difficulty.css";
 
 interface DifficultySliderProps {
   value: number; //difficulty value

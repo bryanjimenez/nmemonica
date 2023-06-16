@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Button } from "@mui/material";
-import "./StackNavButton.css";
+import "../../css/StackNavButton.css";
 
 interface StackNavButtonProps {
   action: React.MouseEventHandler;

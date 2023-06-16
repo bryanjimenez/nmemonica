@@ -62,8 +62,8 @@ import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import { SetTermGFList } from "./SetTermGFList";
 import { SetTermTagList } from "./SetTermTagList";
-import "./Settings.css";
-import "./spin.css";
+import "../../css/Settings.css";
+import "../../css/spin.css";
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
 
@@ -905,7 +905,9 @@ export default function Settings() {
               </div>
 
               {sectionStaleSpaceRep && (
-                <Suspense fallback={<NotReady addlStyle="failed-spacerep-view"/>}>
+                <Suspense
+                  fallback={<NotReady addlStyle="failed-spacerep-view" />}
+                >
                   <div className="failed-spacerep-view container mt-2 p-0">
                     {staleSpaceRepTerms}
                   </div>
@@ -916,10 +918,12 @@ export default function Settings() {
           {failedFurigana.length > 0 && (
             <div className="mb-2">
               <h5>Failed Furigana Parse</h5>
-              <Suspense fallback={<NotReady addlStyle="failed-furigana-view"/>}>
+              <Suspense
+                fallback={<NotReady addlStyle="failed-furigana-view" />}
+              >
                 <div className="failed-furigana-view container mt-2 p-0">
                   {failedFurigana}
-              </div>
+                </div>
               </Suspense>
             </div>
           )}
