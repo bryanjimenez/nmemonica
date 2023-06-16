@@ -12,7 +12,7 @@
 }
 
 .transparent-font {
-  color: rgba(0,0,0, 0);
+  color: rgba(0, 0, 0, 0);
 }
 
 .grp-info > div {
@@ -21,7 +21,7 @@
 
 .example-blk {
   height: 65px;
-}        
+}
 
 /* Small devices (landscape phones, 576px and up)*/
 @media (min-width: 576px) {
@@ -31,9 +31,11 @@
     max-width: unset;
   }
 }
+
 .kana-slider {
   width: 300px;
 }
+
 .settings-switch-root > p {
   display: inline;
   margin-bottom: 0;
@@ -65,30 +67,42 @@
   -ms-animation-duration: 4000ms;
   -ms-animation-iteration-count: infinite;
   -ms-animation-timing-function: linear;
-  
+
   animation-name: spin;
   animation-duration: 4000ms;
   animation-iteration-count: infinite;
   animation-timing-function: linear;
 }
 @-ms-keyframes spin {
-  from { -ms-transform: rotate(360deg); }
-  to { -ms-transform: rotate(0deg); }
+  from {
+    -ms-transform: rotate(360deg);
+  }
+  to {
+    -ms-transform: rotate(0deg);
+  }
 }
 @-moz-keyframes spin {
-  from { -moz-transform: rotate(360deg); }
-  to { -moz-transform: rotate(0deg); }
+  from {
+    -moz-transform: rotate(360deg);
+  }
+  to {
+    -moz-transform: rotate(0deg);
+  }
 }
 @-webkit-keyframes spin {
-  from { -webkit-transform: rotate(360deg); }
-  to { -webkit-transform: rotate(0deg); }
+  from {
+    -webkit-transform: rotate(360deg);
+  }
+  to {
+    -webkit-transform: rotate(0deg);
+  }
 }
 @keyframes spin {
   from {
-      transform:rotate(360deg);
+    transform: rotate(360deg);
   }
   to {
-      transform:rotate(0deg);
+    transform: rotate(0deg);
   }
 }
 
@@ -121,6 +135,7 @@
 .vocabulary-slider {
   max-height: 43px;
 }
+
 .my-navbar {
   height: 20px;
   margin-bottom: 20px;
@@ -157,7 +172,7 @@
 .desktop-link {
   display: block;
   text-decoration: none;
-  padding: 0 .5rem;
+  padding: 0 0.5rem;
 }
 
 .nav-menu-btn {
@@ -403,3 +418,4 @@ a {
   transition: opacity 5s;
   opacity: 100%;
 }
+
