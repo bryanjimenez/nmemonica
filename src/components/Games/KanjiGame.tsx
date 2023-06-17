@@ -3,6 +3,10 @@ import classNames from "classnames";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+
+import { FourChoicesWRef } from "./FourChoices";
+import { KanjiGridMeta } from "./KanjiGrid";
+import { GameQuestion } from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
@@ -11,30 +15,34 @@ import {
   randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
+import { JapaneseText } from "../../helper/JapaneseText";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
+import type { AppDispatch } from "../../slices";
 import {
   addFrequencyKanji,
   getKanji,
   removeFrequencyKanji,
 } from "../../slices/kanjiSlice";
+import { TermFilterBy } from "../../slices/settingHelper";
+import { getVocabulary } from "../../slices/vocabularySlice";
+import type { RawKanji, RawVocabulary } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
-import { FourChoicesWRef } from "./FourChoices";
-import { KanjiGridMeta } from "./KanjiGrid";
-import { TermFilterBy } from "../../slices/settingHelper";
-import type { RawKanji } from "../../typings/raw";
-import { GameQuestion } from "./XChoices";
-import type { AppDispatch } from "../../slices";
-import { useSwipeActions } from "../../hooks/useSwipeActions";
 
 const KanjiGameMeta = {
   location: "/kanji-game/",
   label: "Kanji Game",
 };
+
+function properCase(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}
 
 /**
  * Split comma separated string(list) and select one.
@@ -46,7 +54,9 @@ export function oneFromList(english: string) {
   if (engList.length > 1) {
     const i = Math.floor(Math.random() * engList.length);
     const e = engList[i].trim();
-    englishShortened = e.charAt(0).toUpperCase() + e.slice(1).toLowerCase();
+    englishShortened = properCase(e);
+  } else {
+    englishShortened = properCase(english);
   }
 
   return englishShortened;
@@ -85,7 +95,11 @@ function createEnglishChoices(answer: RawKanji, kanjiList: RawKanji[]) {
   return choices;
 }
 
-function prepareGame(kanji: RawKanji, kanjiList: RawKanji[]) {
+function prepareGame(
+  kanji: RawKanji,
+  kanjiList: RawKanji[],
+  exampleList: RawVocabulary[]
+) {
   const { uid, kanji: japanese, on, kun } = kanji;
 
   const choices = createEnglishChoices(kanji, kanjiList);
@@ -96,23 +110,81 @@ function prepareGame(kanji: RawKanji, kanjiList: RawKanji[]) {
       <div>
         <div
           className={classNames({
+            "pb-3": exampleList.length > 0 || on || kun,
             "correct-color": correct,
           })}
         >
           <span>{japanese}</span>
         </div>
-        {(on !== undefined || kun !== undefined) && (
-          <div
-            className={classNames({
-              "d-flex flex-column mt-3 h4": true,
-              invisible: !correct,
-              "correct-color": correct,
-            })}
-          >
-            <span>{on}</span>
-            <span>{kun}</span>
-          </div>
-        )}
+        <table className="w-100 fs-4">
+          <tbody>
+            {exampleList.reduce<React.JSX.Element[]>((acc, example, i) => {
+              const eEl = (
+                <tr
+                  key={example.uid}
+                  className={classNames({
+                    invisible: !correct,
+                  })}
+                >
+                  <td className="w-50">{oneFromList(example.english)}</td>
+                  <td className="pt-2">
+                    {JapaneseText.parse(example).toHTML()}
+                  </td>
+                </tr>
+              );
+
+              if (i === 0) {
+                acc = [...acc, eEl];
+              } else if (!on && i === 1) {
+                acc = [...acc, eEl];
+              } else if (!kun && (i === 1 || (on && i > 1))) {
+                acc = [...acc, eEl];
+              }
+
+              return acc;
+            }, [])}
+            {/* {exampleList.length > 0 && (
+              <tr
+                className={classNames({
+                  invisible: !correct,
+                })}
+              >
+                <td className="w-50">{oneFromList(exampleList[0].english)}</td>
+                <td className="pt-2">
+                  {JapaneseText.parse(exampleList[0]).toHTML()}
+                </td>
+              </tr>
+            )} */}
+            {on && (
+              <tr
+                className={classNames({
+                  invisible: !correct,
+                })}
+              >
+                <td className="w-50 fs-6">
+                  {JapaneseText.parse({
+                    japanese: "おんよみ\n音読み",
+                  }).toHTML()}
+                </td>
+                <td className="fs-5">{on}</td>
+              </tr>
+            )}
+            {kun && (
+              <tr
+                className={classNames({
+                  invisible: !correct,
+                })}
+              >
+                <td className="w-50 fs-6">
+                  {JapaneseText.parse({
+                    japanese: "くんよみ\n訓読み",
+                  }).toHTML()}
+                </td>
+                <td className="fs-5">{kun}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     ),
   };
@@ -138,9 +210,14 @@ export default function KanjiGame() {
     reinforce: reinforceRef,
   } = useConnectKanji();
 
+  const { vocabList } = useConnectVocabulary();
+
   useEffect(() => {
     if (kanjiList.length === 0) {
       dispatch(getKanji());
+    }
+    if (vocabList.length === 0) {
+      dispatch(getVocabulary());
     }
   }, []);
 
@@ -174,7 +251,7 @@ export default function KanjiGame() {
       kanjiList,
       allFrequency,
       filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
-      () => {} // Don't toggle filter if last freq is removed
+      undefined // Don't toggle filter if last freq is removed
     );
 
     if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
@@ -199,6 +276,32 @@ export default function KanjiGame() {
   }, [kanjiList, activeTags, reinforceRef, filterTypeRef]);
 
   const order = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
+
+  const exampleList = useMemo(
+    () =>
+      filteredTerms.map((kanji) => {
+        const isNotRadical =
+          kanji.grp?.toLowerCase() !== "radical" &&
+          kanji.tag.find((t) => t.toLowerCase() === "radical") === undefined;
+
+        const examples = vocabList.reduce<RawVocabulary[]>((acc, v) => {
+          const hasEnglish = v.english.includes(kanji.english);
+          const hasKanji = v.japanese.includes(kanji.kanji);
+
+          if (isNotRadical && hasKanji && hasEnglish) {
+            acc = [v, ...acc];
+          } else if (hasKanji) {
+            acc = [...acc, v];
+          }
+
+          return acc;
+        }, []); // exampleList
+
+        return examples;
+      }), //filteredTerms
+
+    [filteredTerms, vocabList]
+  );
 
   const gotoNext = useCallback(() => {
     const l = filteredTerms.length;
@@ -283,10 +386,19 @@ export default function KanjiGame() {
     const uid =
       reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
     const kanji = getTerm(uid, kanjiList);
-    const game = prepareGame(kanji, kanjiList);
+
+    const examples = exampleList[order[selectedIndex]];
+    const game = prepareGame(kanji, kanjiList, examples);
 
     return { kanji, game };
-  }, [reinforcedUID, kanjiList, filteredTerms, order, selectedIndex]);
+  }, [
+    reinforcedUID,
+    kanjiList,
+    filteredTerms,
+    order,
+    selectedIndex,
+    exampleList,
+  ]);
 
   const swipeHandler = useCallback(
     (direction: string) => {
@@ -313,7 +425,7 @@ export default function KanjiGame() {
   //   JSON.stringify({
   //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
   //     idx: selectedIndex,
-  //     uid: (uid && uid.slice(0, 6)) || "",
+  //     uid: (kanji.uid && kanji.uid.slice(0, 6)) || "",
   //     ord: order.length,
   //     rep: Object.keys(metadata.current).length,
   //     fre: frequency.length,
@@ -335,13 +447,15 @@ export default function KanjiGame() {
         choices={game.choices}
         gotoPrev={gotoPrev}
         gotoNext={gotoNextSlide}
+        correctPause={20000}
+        incorrectPause={3000}
       />
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
               <Link to={KanjiGridMeta.location}>
-                <TogglePracticeSideBtn toggle={true} action={() => {}} />
+                <TogglePracticeSideBtn toggle={true} action={null} />
               </Link>
             </div>
           </div>

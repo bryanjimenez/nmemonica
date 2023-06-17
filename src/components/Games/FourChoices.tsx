@@ -1,7 +1,8 @@
-import { forwardRef, useCallback, useEffect, useReducer } from "react";
-import type React from "react";
-import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import classNames from "classnames";
+import { forwardRef, useEffect, useReducer } from "react";
+import type React from "react";
+
 import StackNavButton from "../Form/StackNavButton";
 
 interface GameQuestion {
@@ -13,8 +14,9 @@ interface GameQuestion {
 interface GameChoice {
   compare: string;
   english?: string;
+  japanese?: string;
   romaji?: string;
-  toHTML: Function;
+  toHTML: (correct?: boolean) => React.JSX.Element;
 }
 
 interface FourChoicesProps {
@@ -25,14 +27,17 @@ interface FourChoicesProps {
   hint?: string;
   choices: GameChoice[];
   isCorrect: (answered: GameChoice) => boolean;
-  gotoPrev: Function;
-  gotoNext: Function;
+  gotoPrev: () => void;
+  gotoNext: () => void;
+
+  correctPause?: number;
+  incorrectPause?: number;
 }
 
 interface FourChoicesState {
-  showMeaning: boolean;
+  showMeaning: string;
   incorrect: number[];
-  correct: boolean;
+  correct: string;
 }
 
 export function FourChoices(
@@ -48,46 +53,35 @@ export function FourChoices(
       ...action,
     }),
     {
-      showMeaning: false,
+      showMeaning: "",
       incorrect: [],
-      correct: false,
+      correct: "",
     }
   );
 
-  const next = useCallback(
-    (event: React.MouseEvent) => {
-      props.gotoNext();
-    },
-    [props.gotoNext]
-  );
-  const prev = useCallback(
-    (event: React.MouseEvent) => {
-      props.gotoPrev();
-    },
-    [props.gotoPrev]
-  );
+  const { gotoNext, gotoPrev } = props;
 
   useEffect(() => {
-    dispatch({ showMeaning: false, correct: false, incorrect: [] });
+    dispatch({ showMeaning: "", correct: "", incorrect: [] });
   }, [props.uid]);
 
   const checkAnswer = (answered: GameChoice, i: number) => {
     if (props.isCorrect(answered)) {
       // console.log("RIGHT!");
-      dispatch({ correct: true, showMeaning: true });
-      setTimeout(() => {
-        props.gotoNext();
-      }, 1000);
+      dispatch({ correct: props.uid, showMeaning: props.uid });
+      // setTimeout(() => {
+      //   props.gotoNext();
+      // }, props.correctPause ?? 2000);
     } else if (state.incorrect.length === 2) {
       // console.log("WRONG");
       dispatch({
         incorrect: [...state.incorrect, i],
-        correct: true,
-        showMeaning: true,
+        correct: props.uid,
+        showMeaning: props.uid,
       });
-      setTimeout(() => {
-        props.gotoNext();
-      }, 1000);
+      // setTimeout(() => {
+      //   props.gotoNext();
+      // }, props.incorrectPause ?? 3000);
     } else {
       // console.log("WRONG");
       dispatch({ incorrect: [...state.incorrect, i] });
@@ -102,11 +96,11 @@ export function FourChoices(
 
   let meaning = question.english !== undefined ? "[English]" : "";
   if (props.hint === undefined) {
-    if (state.showMeaning && question.english) {
+    if (state.showMeaning === props.uid && question.english) {
       meaning = question.english;
     }
   } else {
-    if (state.showMeaning && question.english) {
+    if (state.showMeaning === props.uid && question.english) {
       meaning = question.english;
     } else {
       meaning = props.hint;
@@ -120,7 +114,7 @@ export function FourChoices(
   return (
     <div ref={optionalRef} className="pick4game main-panel h-100">
       <div className="d-flex justify-content-between h-100">
-        <StackNavButton ariaLabel="Previous" action={prev}>
+        <StackNavButton ariaLabel="Previous" action={gotoPrev}>
           <ChevronLeftIcon size={16} />
         </StackNavButton>
         <div
@@ -129,7 +123,7 @@ export function FourChoices(
               true,
           })}
         >
-          <h1>{question.toHTML(state.correct)}</h1>
+          <h1>{question.toHTML(state.correct === props.uid)}</h1>
           <span
             className={classNames({
               invisible: !props.qRomaji,
@@ -141,7 +135,9 @@ export function FourChoices(
             <span
               className="clickable"
               onClick={() => {
-                dispatch({ showMeaning: !state.showMeaning });
+                dispatch({
+                  showMeaning: state.showMeaning === props.uid ? "" : props.uid,
+                });
               }}
             >
               {meaning}
@@ -150,7 +146,8 @@ export function FourChoices(
         </div>
         <div className="choices d-flex justify-content-around flex-wrap w-50">
           {choices.map((c, i) => {
-            const isRight = props.isCorrect(choices[i]) && state.correct;
+            const isRight =
+              props.isCorrect(choices[i]) && state.correct === props.uid;
             const isWrong = state.incorrect.includes(i);
 
             const choiceCSS = classNames({
@@ -182,7 +179,7 @@ export function FourChoices(
             );
           })}
         </div>
-        <StackNavButton ariaLabel="Next" action={next}>
+        <StackNavButton ariaLabel="Next" action={gotoNext}>
           <ChevronRightIcon size={16} />
         </StackNavButton>
       </div>
