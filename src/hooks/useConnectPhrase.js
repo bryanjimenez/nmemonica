@@ -29,7 +29,7 @@ export function useConnectPhrase() {
   );
 
   const practiceSide = useSelector(
-    (/** @type {RootState}*/ { vocabulary: phrases }) => {
+    (/** @type {RootState}*/ { phrases }) => {
       const { practiceSide } = phrases.setting;
       return practiceSide;
     }
@@ -45,8 +45,8 @@ export function useConnectPhrase() {
     ]);
   }, shallowEqual);
 
-  const activeGroup = useSelector((/** @type {RootState}*/ { vocabulary }) => {
-    const { activeGroup } = vocabulary.setting;
+  const activeGroup = useSelector((/** @type {RootState}*/ { phrases }) => {
+    const { activeGroup } = phrases.setting;
 
     return activeGroup;
   }, shallowEqual);
