@@ -1,5 +1,5 @@
-import React, { useReducer } from "react";
-import PropTypes from "prop-types";
+import { forwardRef, useCallback, useEffect, useReducer } from "react";
+import type React from "react";
 import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import StackNavButton from "../Form/StackNavButton";
@@ -18,6 +18,7 @@ interface GameChoice {
 }
 
 interface FourChoicesProps {
+  uid: string;
   question: GameQuestion;
   qRomaji?: boolean;
   aRomaji?: boolean;
@@ -34,7 +35,10 @@ interface FourChoicesState {
   correct: boolean;
 }
 
-function FourChoices(props: FourChoicesProps) {
+export function FourChoices(
+  props: FourChoicesProps,
+  forParentRef: React.MutableRefObject<HTMLDivElement | null>
+) {
   const [state, dispatch]: [
     FourChoicesState,
     React.Dispatch<Partial<FourChoicesState>>
@@ -50,16 +54,28 @@ function FourChoices(props: FourChoicesProps) {
     }
   );
 
-  const clearAnswers = () => {
+  const next = useCallback(
+    (event: React.MouseEvent) => {
+      props.gotoNext();
+    },
+    [props.gotoNext]
+  );
+  const prev = useCallback(
+    (event: React.MouseEvent) => {
+      props.gotoPrev();
+    },
+    [props.gotoPrev]
+  );
+
+  useEffect(() => {
     dispatch({ showMeaning: false, correct: false, incorrect: [] });
-  };
+  }, [props.uid]);
 
   const checkAnswer = (answered: GameChoice, i: number) => {
     if (props.isCorrect(answered)) {
       // console.log("RIGHT!");
       dispatch({ correct: true, showMeaning: true });
       setTimeout(() => {
-        clearAnswers();
         props.gotoNext();
       }, 1000);
     } else if (state.incorrect.length === 2) {
@@ -70,7 +86,6 @@ function FourChoices(props: FourChoicesProps) {
         showMeaning: true,
       });
       setTimeout(() => {
-        clearAnswers();
         props.gotoNext();
       }, 1000);
     } else {
@@ -98,16 +113,14 @@ function FourChoices(props: FourChoicesProps) {
     }
   }
 
+  // optional forwardRef by default undefined
+  const optionalRef =
+    forParentRef.current === undefined ? undefined : forParentRef;
+
   return (
-    <div key={0} className="pick4game main-panel h-100">
+    <div ref={optionalRef} className="pick4game main-panel h-100">
       <div className="d-flex justify-content-between h-100">
-        <StackNavButton
-          ariaLabel="Previous"
-          action={() => {
-            clearAnswers();
-            props.gotoPrev();
-          }}
-        >
+        <StackNavButton ariaLabel="Previous" action={prev}>
           <ChevronLeftIcon size={16} />
         </StackNavButton>
         <div
@@ -146,10 +159,9 @@ function FourChoices(props: FourChoicesProps) {
               "correct-color": isRight,
               "incorrect-color": isWrong,
             });
-
             return (
               <div
-                key={`${c.english ?? "blank"}-${c.compare}`}
+                key={`${c.compare ?? ""}${c.english ?? ""}${c.japanese ?? ""}`}
                 className={choiceCSS}
                 onClick={() => {
                   checkAnswer(c, i);
@@ -170,13 +182,7 @@ function FourChoices(props: FourChoicesProps) {
             );
           })}
         </div>
-        <StackNavButton
-          ariaLabel="Next"
-          action={() => {
-            clearAnswers();
-            props.gotoNext();
-          }}
-        >
+        <StackNavButton ariaLabel="Next" action={next}>
           <ChevronRightIcon size={16} />
         </StackNavButton>
       </div>
@@ -184,17 +190,6 @@ function FourChoices(props: FourChoicesProps) {
   );
 }
 
-FourChoices.propTypes = {
-  question: PropTypes.object,
-  hint: PropTypes.string,
-  isCorrect: PropTypes.func.isRequired,
-  choices: PropTypes.array,
-
-  gotoNext: PropTypes.func.isRequired,
-  gotoPrev: PropTypes.func.isRequired,
-
-  qRomaji: PropTypes.bool,
-  aRomaji: PropTypes.bool,
-};
+export const FourChoicesWRef = forwardRef(FourChoices);
 
 export default FourChoices;

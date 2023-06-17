@@ -23,12 +23,13 @@ import {
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
-import FourChoices from "./FourChoices";
+import { FourChoicesWRef } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { TermFilterBy } from "../../slices/settingHelper";
 import type { RawKanji } from "../../typings/raw";
 import { GameQuestion } from "./XChoices";
 import type { AppDispatch } from "../../slices";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
 
 const KanjiGameMeta = {
   location: "/kanji-game/",
@@ -287,6 +288,25 @@ export default function KanjiGame() {
     return { kanji, game };
   }, [reinforcedUID, kanjiList, filteredTerms, order, selectedIndex]);
 
+  const swipeHandler = useCallback(
+    (direction: string) => {
+      switch (direction) {
+        case "right":
+          gotoPrev();
+          break;
+        case "left":
+          gotoNextSlide();
+          break;
+
+        default:
+          break;
+      }
+    },
+    [gotoPrev, gotoNextSlide]
+  );
+
+  const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
+
   if (!game) return <NotReady addlStyle="main-panel" />;
 
   // console.log(
@@ -307,7 +327,9 @@ export default function KanjiGame() {
 
   return (
     <>
-      <FourChoices
+      <FourChoicesWRef
+        ref={HTMLDivElementSwipeRef}
+        uid={kanji.uid}
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
