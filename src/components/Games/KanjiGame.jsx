@@ -291,10 +291,18 @@ export default function KanjiGame() {
     [dispatch]
   );
 
-  if (order.length === 0) return <NotReady addlStyle="main-panel" />;
+  const { kanji, game } = useMemo(() => {
+    if (order.length === 0) return {};
+    const uid =
+      reinforcedUID ?? getTermUID(selectedIndex, order, filteredTerms);
+    const kanji = getTerm(uid, kanjiList);
+    const game = prepareGame(kanji, kanjiList);
 
-  const uid = reinforcedUID || getTermUID(selectedIndex, order, filteredTerms);
-  const kanji = getTerm(uid, kanjiList);
+    return { kanji, game };
+  }, [reinforcedUID, kanjiList, filteredTerms, order, selectedIndex]);
+
+
+  if (!game) return <NotReady addlStyle="main-panel" />;
 
   // console.log(
   //   JSON.stringify({
@@ -309,9 +317,6 @@ export default function KanjiGame() {
   // );
 
   const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
-
-  const game = prepareGame(kanji, kanjiList);
-
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
 
