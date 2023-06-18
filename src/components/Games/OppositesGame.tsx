@@ -2,14 +2,15 @@ import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import React, { useEffect, useMemo, useState } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
-import { JapaneseText } from "../../helper/JapaneseText";
-import { shuffleArray } from "../../helper/arrayHelper";
-import { randomOrder } from "../../helper/gameHelper";
-import { getOpposite } from "../../slices/oppositeSlice";
-import { NotReady } from "../Form/NotReady";
+
 import FourChoices from "./FourChoices";
 import type { GameChoice } from "./XChoices";
-import type { RootState, AppDispatch } from "../../slices";
+import { shuffleArray } from "../../helper/arrayHelper";
+import { randomOrder } from "../../helper/gameHelper";
+import { JapaneseText } from "../../helper/JapaneseText";
+import type { AppDispatch, RootState } from "../../slices";
+import { getOpposite } from "../../slices/oppositeSlice";
+import { NotReady } from "../Form/NotReady";
 
 export interface RawOpposite {
   english: string;
@@ -74,7 +75,7 @@ export default function OppositesGame() {
   return (
     <>
       <FourChoices
-        key={0}
+        uid={String(selectedIndex)}
         question={game.question}
         isCorrect={(answered) => {
           const correct = answered.compare === game.answer.compare;

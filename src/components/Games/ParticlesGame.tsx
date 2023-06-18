@@ -1,17 +1,18 @@
+import { LinearProgress } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { LinearProgress } from "@mui/material";
-import { shuffleArray } from "../../helper/arrayHelper";
-import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
-import { randomOrder } from "../../helper/gameHelper";
-import { NotReady } from "../Form/NotReady";
+
 import FourChoices from "./FourChoices";
-import "../../css/ParticlesGame.css";
-import { getParticleGame } from "../../slices/particleSlice";
-import { JapaneseText } from "../../helper/JapaneseText";
 import type { GameQuestion } from "./XChoices";
+import { shuffleArray } from "../../helper/arrayHelper";
+import { randomOrder } from "../../helper/gameHelper";
+import { JapaneseText } from "../../helper/JapaneseText";
+import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
+import type { AppDispatch, RootState } from "../../slices";
+import { getParticleGame } from "../../slices/particleSlice";
 import type { RawPhrase } from "../../typings/raw";
-import type { RootState, AppDispatch } from "../../slices";
+import { NotReady } from "../Form/NotReady";
+import "../../css/ParticlesGame.css";
 
 export interface ParticleChoice {
   japanese: string;
@@ -154,6 +155,7 @@ export default function ParticlesGame() {
   return (
     <>
       <FourChoices
+        uid={String(selectedIndex)}
         question={game.question}
         isCorrect={(answered) => answered.japanese === game.answer.japanese}
         hint={game.literal}
