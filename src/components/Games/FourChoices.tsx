@@ -3,6 +3,7 @@ import classNames from "classnames";
 import { forwardRef, useEffect, useReducer } from "react";
 import type React from "react";
 
+import { useFade } from "../../hooks/helperHK";
 import StackNavButton from "../Form/StackNavButton";
 
 interface GameQuestion {
@@ -69,9 +70,6 @@ export function FourChoices(
     if (props.isCorrect(answered)) {
       // console.log("RIGHT!");
       dispatch({ correct: props.uid, showMeaning: props.uid });
-      // setTimeout(() => {
-      //   props.gotoNext();
-      // }, props.correctPause ?? 2000);
     } else if (state.incorrect.length === 2) {
       // console.log("WRONG");
       dispatch({
@@ -79,9 +77,6 @@ export function FourChoices(
         correct: props.uid,
         showMeaning: props.uid,
       });
-      // setTimeout(() => {
-      //   props.gotoNext();
-      // }, props.incorrectPause ?? 3000);
     } else {
       // console.log("WRONG");
       dispatch({ incorrect: [...state.incorrect, i] });
@@ -90,9 +85,6 @@ export function FourChoices(
 
   const question = props.question;
   const choices = props.choices;
-
-  // console.log(question);
-  // console.log(choices);
 
   let meaning = question.english !== undefined ? "[English]" : "";
   if (props.hint === undefined) {
@@ -150,38 +142,68 @@ export function FourChoices(
               props.isCorrect(choices[i]) && state.correct === props.uid;
             const isWrong = state.incorrect.includes(i);
 
-            const choiceCSS = classNames({
-              "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable":
-                true,
-              "correct-color": isRight,
-              "incorrect-color": isWrong,
-            });
             return (
-              <div
-                key={`${c.compare ?? ""}${c.english ?? ""}${c.japanese ?? ""}`}
-                className={choiceCSS}
-                onClick={() => {
-                  checkAnswer(c, i);
-                }}
-              >
-                <div>
-                  <h4>{c.toHTML()}</h4>
-                  {isRight && <div>{c.english}</div>}
-                  <span
-                    className={classNames({
-                      invisible: !props.aRomaji,
-                    })}
-                  >
-                    {c.romaji}
-                  </span>
-                </div>
-              </div>
+              <AChoice
+                key={c.compare}
+                c={c}
+                i={i}
+                isRight={isRight}
+                isWrong={isWrong}
+                checkAnswer={checkAnswer}
+                aRomaji={props.aRomaji}
+              />
             );
           })}
         </div>
         <StackNavButton ariaLabel="Next" action={gotoNext}>
           <ChevronRightIcon size={16} />
         </StackNavButton>
+      </div>
+    </div>
+  );
+}
+
+interface AChoiceProps {
+  c: GameChoice;
+  i: number;
+  isRight: boolean;
+  isWrong: boolean;
+  checkAnswer: (answered: GameChoice, i: number) => void;
+  aRomaji?: boolean;
+}
+
+function AChoice(props: AChoiceProps) {
+  const { c, i, isRight, isWrong, checkAnswer, aRomaji } = props;
+
+  const [invisible] = useFade((i + 1) * 1000);
+
+  const choiceCSS = classNames({
+    "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable":
+      true,
+    "notification-fade": !invisible,
+    "notification-fade-in": invisible,
+    "correct-color": isRight,
+    "incorrect-color": isWrong,
+  });
+
+  return (
+    <div
+      key={`${c.compare ?? ""}${c.english ?? ""}${c.japanese ?? ""}`}
+      className={choiceCSS}
+      onClick={() => {
+        checkAnswer(c, i);
+      }}
+    >
+      <div>
+        <h4>{c.toHTML()}</h4>
+        {isRight && <div>{c.english}</div>}
+        <span
+          className={classNames({
+            invisible: !aRomaji,
+          })}
+        >
+          {c.romaji}
+        </span>
       </div>
     </div>
   );
