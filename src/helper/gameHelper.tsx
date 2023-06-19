@@ -973,7 +973,7 @@ export function toggleFuriganaSettingHelper(
 export function pause(
   ms: number,
   { signal }: { signal: AbortSignal },
-  countDownFn?: () => void
+  countDownFn?: (p: number, w: number)  => void
 ) {
   return new Promise<void>((resolve, reject) => {
     const listener = () => {

@@ -172,7 +172,7 @@ interface AChoiceProps {
   isWrong: boolean;
   checkAnswer: (answered: GameChoice, i: number) => void;
   aRomaji?: boolean;
-  fade: boolean;
+  fade?: boolean;
 }
 
 function AChoice(props: AChoiceProps) {

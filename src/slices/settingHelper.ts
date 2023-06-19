@@ -136,9 +136,9 @@ export function updateSpaceRepTerm(
         let val;
         if (["f"].includes(attr)) {
           // this default is only for furigana so far
-          val = !(spaceRep[uid] && spaceRep[uid][attr] === false) || false;
+          val = !(spaceRep[uid]?.[attr] === false) || false;
         } else {
-          val = spaceRep[uid] && spaceRep[uid][attr];
+          val = spaceRep[uid]?.[attr];
         }
 
         return { ...acc, [attr]: !val };

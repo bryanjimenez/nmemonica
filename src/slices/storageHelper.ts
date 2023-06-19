@@ -2,10 +2,10 @@
  * gets persistent status and quota info
  */
 export function memoryStorageStatus(): Promise<{
-  quota: number;
-  usage: number;
+  quota?: number;
+  usage?: number;
   persistent: boolean;
-}> {
+}|Error> {
   if ("storage" in navigator && "persist" in navigator.storage) {
     return navigator.storage.persisted().then((persistent) =>
       getStorageUsage().then(({ quota, usage }) => ({
@@ -69,7 +69,7 @@ export function persistStorage() {
 /**
  * get temporary storage quota info
  */
-export function getStorageUsage(): Promise<{ quota: number; usage: number }> {
+export function getStorageUsage(): Promise<StorageEstimate> {
   return new Promise((resolve, reject) => {
     if ("webkitTemporaryStorage" in navigator) {
       navigator.webkitTemporaryStorage.queryUsageAndQuota(

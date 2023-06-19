@@ -99,7 +99,7 @@ function /*static*/ getDerivedStateFromError(error: Error) {
 }
 
 function componentDidCatch(dispatch: AppDispatch, error: Error) {
-  const cause = error.cause;
+  const cause = error.cause as {code: string, value: unknown};
 
   dispatch(debugToggled(DebugLevel.DEBUG));
 
