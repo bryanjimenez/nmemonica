@@ -205,6 +205,7 @@ export default function KanjiGame() {
     kanjiList,
     activeTags,
     repetition,
+    fadeInAnswers,
 
     filterType: filterTypeRef,
     reinforce: reinforceRef,
@@ -449,6 +450,7 @@ export default function KanjiGame() {
         gotoNext={gotoNextSlide}
         correctPause={20000}
         incorrectPause={3000}
+        fadeInAnswers={fadeInAnswers}
       />
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">

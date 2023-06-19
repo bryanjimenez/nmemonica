@@ -20,18 +20,19 @@ export function useConnectSetting() {
     (before, after) => before.usage === after.usage
   );
 
-  const [kanjiChoiceN, kanjiFilter, kanjiReinforce, kanjiActiveTags] =
+  const [kanjiChoiceN, kanjiFadeInAnswers, kanjiFilter, kanjiReinforce, kanjiActiveTags] =
     useSelector<
       RootState,
       [
         number,
+        boolean,
         (typeof TermFilterBy)[keyof typeof TermFilterBy],
         boolean,
         string[]
       ]
     >(({ kanji }: RootState) => {
-      const { choiceN, filter, reinforce, activeTags } = kanji.setting;
-      return [choiceN, filter, reinforce, activeTags];
+      const { choiceN, fadeInAnswers, filter, reinforce, activeTags } = kanji.setting;
+      return [choiceN, fadeInAnswers, filter, reinforce, activeTags];
     }, shallowEqual);
 
   const [oppositesQRomaji, oppositesARomaji] = useSelector<
@@ -98,6 +99,7 @@ export function useConnectSetting() {
     debug,
 
     kanjiChoiceN,
+    kanjiFadeInAnswers,
     kanjiFilter,
     kanjiReinforce,
     kanjiActiveTags,

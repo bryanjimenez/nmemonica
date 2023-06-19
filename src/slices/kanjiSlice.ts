@@ -18,13 +18,16 @@ export interface KanjiInitSlice {
   tagObj: string[];
 
   setting: {
-    choiceN: number;
     filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
     reinforce: boolean;
     repTID: number;
     repetition: SpaceRepetitionMap;
     activeGroup: string[];
     activeTags: string[];
+
+    // Game
+    choiceN: number;
+    fadeInAnswers: boolean;
   };
 }
 
@@ -34,13 +37,16 @@ export const kanjiInitState: KanjiInitSlice = {
   tagObj: [],
 
   setting: {
-    choiceN: 32,
     filter: 2,
     reinforce: false,
     repTID: -1,
     repetition: {},
     activeGroup: [],
     activeTags: [],
+
+    // Game
+    choiceN: 32,
+    fadeInAnswers: false,
   },
 };
 
@@ -176,6 +182,17 @@ const kanjiSlice = createSlice({
         number
       );
     },
+    toggleKanjiFadeInAnswers(state, action: { payload?: boolean }) {
+      const override = action.payload;
+
+      state.setting.fadeInAnswers = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "fadeInAnswers",
+        override
+      );
+    },
 
     toggleKanjiFilter(state, action: { payload?: number }) {
       const override = action.payload;
@@ -252,9 +269,11 @@ export const {
   toggleKanjiActiveGrp,
   addFrequencyKanji,
   removeFrequencyKanji,
-  setKanjiBtnN,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
+
+  setKanjiBtnN,
+  toggleKanjiFadeInAnswers
 } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;

@@ -39,6 +39,7 @@ import {
   getKanji,
   removeFrequencyKanji,
   setKanjiBtnN,
+  toggleKanjiFadeInAnswers,
   toggleKanjiActiveGrp,
   toggleKanjiActiveTag,
   toggleKanjiFilter,
@@ -265,10 +266,12 @@ export default function Settings() {
     memory,
     debug,
 
-    kanjiChoiceN,
     kanjiFilter,
     kanjiReinforce,
     kanjiActiveTags: kanjiActive,
+
+    kanjiChoiceN,
+    kanjiFadeInAnswers,
 
     oppositesQRomaji,
     oppositesARomaji,
@@ -715,7 +718,7 @@ export default function Settings() {
                 statusText="Question Romaji"
               />
             </div>
-            <div>
+            <div className="mb-2">
               <SettingsSwitch
                 active={oppositesARomaji}
                 action={buildAction(dispatch, setOppositesARomaji)}
@@ -770,6 +773,13 @@ export default function Settings() {
                 setChoiceN={buildAction(dispatch, setKanjiBtnN)}
               />
             </div>
+            <div className="mb-2">
+                  <SettingsSwitch
+                    active={kanjiFadeInAnswers}
+                    action={buildAction(dispatch, toggleKanjiFadeInAnswers)}
+                    statusText="Fade in answers"
+                  />
+                </div>
           </div>
         </div>
         <div className={pageClassName}>

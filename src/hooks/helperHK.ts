@@ -14,17 +14,22 @@ import type { AppDispatch } from "../slices";
 export function useFade(delay: number): [boolean, () => void] {
   const [fade, setFade] = useState(true);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (fade) {
-        setFade(false);
-      }
-    }, delay);
+  if(delay>0){
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        if (fade) {
+          setFade(false);
+        }
+      }, delay);
 
-    return () => clearTimeout(timeout);
-  });
+      return () => clearTimeout(timeout);
+    });
+   
+    return [!fade, () => setFade(true)];
+  } else {
 
-  return [!fade, () => setFade(true)];
+    return [fade, () => setFade(true)];
+  }
 }
 
 /**

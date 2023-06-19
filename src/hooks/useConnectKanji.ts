@@ -27,13 +27,13 @@ export function useConnectKanji() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const [r, ft, choiceN] = useSelector<
+  const [r, ft, choiceN, fadeInAnswers] = useSelector<
     RootState,
-    [boolean, (typeof TermFilterBy)[keyof typeof TermFilterBy], number]
+    [boolean, (typeof TermFilterBy)[keyof typeof TermFilterBy], number, boolean]
   >(({ kanji }: RootState) => {
-    const { reinforce, filter, choiceN } = kanji.setting;
+    const { reinforce, filter, choiceN, fadeInAnswers} = kanji.setting;
 
-    return [reinforce, filter, choiceN];
+    return [reinforce, filter, choiceN, fadeInAnswers];
   }, shallowEqual);
 
   const activeTags = useSelector<RootState, string[]>(
@@ -60,7 +60,9 @@ export function useConnectKanji() {
     kanjiList,
     vocabList,
     activeTags,
+    // Game
     choiceN,
+    fadeInAnswers,
 
     // Refs ()
     reinforce,

@@ -33,6 +33,7 @@ interface FourChoicesProps {
 
   correctPause?: number;
   incorrectPause?: number;
+  fadeInAnswers?: boolean,
 }
 
 interface FourChoicesState {
@@ -151,6 +152,7 @@ export function FourChoices(
                 isWrong={isWrong}
                 checkAnswer={checkAnswer}
                 aRomaji={props.aRomaji}
+                fade={props.fadeInAnswers}
               />
             );
           })}
@@ -170,12 +172,13 @@ interface AChoiceProps {
   isWrong: boolean;
   checkAnswer: (answered: GameChoice, i: number) => void;
   aRomaji?: boolean;
+  fade: boolean;
 }
 
 function AChoice(props: AChoiceProps) {
-  const { c, i, isRight, isWrong, checkAnswer, aRomaji } = props;
+  const { c, i, isRight, isWrong, checkAnswer, aRomaji,fade} = props;
 
-  const [invisible] = useFade((i + 1) * 1000);
+  const [invisible] = useFade(fade===false?0:(i + 1) * 1000);
 
   const choiceCSS = classNames({
     "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable":
