@@ -9,26 +9,36 @@ import type { AppDispatch } from "../slices";
 
 /**
  * For fading/transition
- * @param delay in ms
+ * @param delay in ms to toggle from false to true
+ * @return a tuple [state?:boolean, trigger:function] state and a trigger
  */
-export function useFade(delay: number): [boolean, () => void] {
+export function useFade(delay: number): [boolean | undefined, () => void] {
   const [fade, setFade] = useState(true);
 
-  if(delay>0){
-    useEffect(() => {
-      const timeout = setTimeout(() => {
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined = undefined;
+    if (delay > 0) {
+      timeout = setTimeout(() => {
         if (fade) {
           setFade(false);
         }
       }, delay);
+    }
 
-      return () => clearTimeout(timeout);
-    });
-   
+    return () => {
+      if (delay > 0) clearTimeout(timeout);
+    };
+  });
+
+  if (delay > 0) {
     return [!fade, () => setFade(true)];
   } else {
-
-    return [fade, () => setFade(true)];
+    return [
+      undefined,
+      () => {
+        /** Not needed, delay:0 */
+      },
+    ];
   }
 }
 

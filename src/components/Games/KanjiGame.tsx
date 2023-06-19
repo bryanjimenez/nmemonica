@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 
-import { FourChoicesWRef } from "./FourChoices";
+import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
-import { GameQuestion } from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
@@ -16,6 +15,7 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { isKatakana } from "../../helper/kanaHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -116,8 +116,37 @@ function prepareGame(
         >
           <span>{japanese}</span>
         </div>
-        <table className="w-100 fs-4">
+        <table className="w-100 fs-4 text-start">
           <tbody>
+            {on && (
+              <tr
+                className={classNames({
+                  invisible: !correct,
+                })}
+              >
+                <td className="w-50 fs-6 ps-2">
+                  {JapaneseText.parse({
+                    japanese: "おんよみ\n音読み",
+                  }).toHTML()}
+                </td>
+                <td className="fs-5 ps-2">{on}</td>
+              </tr>
+            )}
+            {kun && (
+              <tr
+                className={classNames({
+                  invisible: !correct,
+                })}
+              >
+                <td className="w-50 fs-6 ps-2">
+                  {JapaneseText.parse({
+                    japanese: "くんよみ\n訓読み",
+                  }).toHTML()}
+                </td>
+                <td className="fs-5 ps-2">{kun}</td>
+              </tr>
+            )}
+
             {exampleList.reduce<React.JSX.Element[]>((acc, example, i) => {
               const eEl = (
                 <tr
@@ -126,8 +155,8 @@ function prepareGame(
                     invisible: !correct,
                   })}
                 >
-                  <td className="w-50">{oneFromList(example.english)}</td>
-                  <td className="pt-2">
+                  <td className="w-50 ps-2">{oneFromList(example.english)}</td>
+                  <td className="pt-2 ps-2">
                     {JapaneseText.parse(example).toHTML()}
                   </td>
                 </tr>
@@ -143,46 +172,6 @@ function prepareGame(
 
               return acc;
             }, [])}
-            {/* {exampleList.length > 0 && (
-              <tr
-                className={classNames({
-                  invisible: !correct,
-                })}
-              >
-                <td className="w-50">{oneFromList(exampleList[0].english)}</td>
-                <td className="pt-2">
-                  {JapaneseText.parse(exampleList[0]).toHTML()}
-                </td>
-              </tr>
-            )} */}
-            {on && (
-              <tr
-                className={classNames({
-                  invisible: !correct,
-                })}
-              >
-                <td className="w-50 fs-6">
-                  {JapaneseText.parse({
-                    japanese: "おんよみ\n音読み",
-                  }).toHTML()}
-                </td>
-                <td className="fs-5">{on}</td>
-              </tr>
-            )}
-            {kun && (
-              <tr
-                className={classNames({
-                  invisible: !correct,
-                })}
-              >
-                <td className="w-50 fs-6">
-                  {JapaneseText.parse({
-                    japanese: "くんよみ\n訓読み",
-                  }).toHTML()}
-                </td>
-                <td className="fs-5">{kun}</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
@@ -194,7 +183,7 @@ function prepareGame(
     answer: uid,
     choices: choices.map((c) => ({
       compare: c.uid,
-      toHTML: () => c.english,
+      toHTML: () => <>{c.english}</>,
     })),
   };
 }
@@ -278,18 +267,26 @@ export default function KanjiGame() {
 
   const order = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
+  // TODO: can be cashed as uid table
   const exampleList = useMemo(
     () =>
       filteredTerms.map((kanji) => {
-        const isNotRadical =
-          kanji.grp?.toLowerCase() !== "radical" &&
-          kanji.tag.find((t) => t.toLowerCase() === "radical") === undefined;
+        const isRadical =
+          kanji.grp?.toLowerCase() === "radical" ||
+          kanji.tag.find((t) => t.toLowerCase() === "radical");
 
         const examples = vocabList.reduce<RawVocabulary[]>((acc, v) => {
           const hasEnglish = v.english.includes(kanji.english);
           const hasKanji = v.japanese.includes(kanji.kanji);
 
-          if (isNotRadical && hasKanji && hasEnglish) {
+          // radicals only
+          // example cannot be all katakana
+          if (isRadical && hasKanji && isKatakana(kanji.kanji)) {
+            return acc;
+          }
+
+          // non radicals
+          if (hasKanji && hasEnglish) {
             acc = [v, ...acc];
           } else if (hasKanji) {
             acc = [...acc, v];
@@ -442,14 +439,11 @@ export default function KanjiGame() {
     <>
       <FourChoicesWRef
         ref={HTMLDivElementSwipeRef}
-        uid={kanji.uid}
         question={game.question}
         isCorrect={(answered) => answered.compare === game.answer}
         choices={game.choices}
         gotoPrev={gotoPrev}
         gotoNext={gotoNextSlide}
-        correctPause={20000}
-        incorrectPause={3000}
         fadeInAnswers={fadeInAnswers}
       />
       <div className="options-bar mb-3 flex-shrink-1">

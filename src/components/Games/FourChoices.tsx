@@ -1,18 +1,18 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import { forwardRef, useEffect, useReducer } from "react";
+import { forwardRef, useLayoutEffect, useReducer, useRef } from "react";
 import type React from "react";
 
 import { useFade } from "../../hooks/helperHK";
 import StackNavButton from "../Form/StackNavButton";
 
-interface GameQuestion {
+export interface GameQuestion {
   english?: string;
   romaji?: string;
   toHTML: (correct: boolean) => React.JSX.Element;
 }
 
-interface GameChoice {
+export interface GameChoice {
   compare: string;
   english?: string;
   japanese?: string;
@@ -21,7 +21,6 @@ interface GameChoice {
 }
 
 interface FourChoicesProps {
-  uid: string;
   question: GameQuestion;
   qRomaji?: boolean;
   aRomaji?: boolean;
@@ -31,15 +30,14 @@ interface FourChoicesProps {
   gotoPrev: () => void;
   gotoNext: () => void;
 
-  correctPause?: number;
-  incorrectPause?: number;
-  fadeInAnswers?: boolean,
+  /** True by default: Fade in options? */
+  fadeInAnswers?: boolean;
 }
 
 interface FourChoicesState {
-  showMeaning: string;
+  showMeaning: boolean;
   incorrect: number[];
-  correct: string;
+  correct: boolean;
 }
 
 export function FourChoices(
@@ -55,31 +53,43 @@ export function FourChoices(
       ...action,
     }),
     {
-      showMeaning: "",
+      showMeaning: false,
       incorrect: [],
-      correct: "",
+      correct: false,
     }
   );
 
+  const timerStart = useRef(Date.now());
+  const timerStop = useRef<number | undefined>(undefined);
+
   const { gotoNext, gotoPrev } = props;
 
-  useEffect(() => {
-    dispatch({ showMeaning: "", correct: "", incorrect: [] });
-  }, [props.uid]);
+  useLayoutEffect(() => {
+    if (props.fadeInAnswers !== false) {
+      timerStart.current = Date.now();
+      timerStop.current = undefined;
+    }
+    dispatch({ showMeaning: false, correct: false, incorrect: [] });
+  }, [props.question]);
 
   const checkAnswer = (answered: GameChoice, i: number) => {
+    // Already correctly answered
+    if (state.correct) return;
+
     if (props.isCorrect(answered)) {
       // console.log("RIGHT!");
-      dispatch({ correct: props.uid, showMeaning: props.uid });
+      timerStop.current = Date.now();
+      dispatch({ correct: true, showMeaning: true });
     } else if (state.incorrect.length === 2) {
       // console.log("WRONG");
       dispatch({
         incorrect: [...state.incorrect, i],
-        correct: props.uid,
-        showMeaning: props.uid,
+        correct: true,
+        showMeaning: true,
       });
     } else {
       // console.log("WRONG");
+      // navigator.vibrate(30)
       dispatch({ incorrect: [...state.incorrect, i] });
     }
   };
@@ -89,11 +99,11 @@ export function FourChoices(
 
   let meaning = question.english !== undefined ? "[English]" : "";
   if (props.hint === undefined) {
-    if (state.showMeaning === props.uid && question.english) {
+    if (state.showMeaning && question.english) {
       meaning = question.english;
     }
   } else {
-    if (state.showMeaning === props.uid && question.english) {
+    if (state.showMeaning && question.english) {
       meaning = question.english;
     } else {
       meaning = props.hint;
@@ -116,7 +126,7 @@ export function FourChoices(
               true,
           })}
         >
-          <h1>{question.toHTML(state.correct === props.uid)}</h1>
+          <h1>{question.toHTML(state.correct)}</h1>
           <span
             className={classNames({
               invisible: !props.qRomaji,
@@ -129,7 +139,7 @@ export function FourChoices(
               className="clickable"
               onClick={() => {
                 dispatch({
-                  showMeaning: state.showMeaning === props.uid ? "" : props.uid,
+                  showMeaning: !state.showMeaning,
                 });
               }}
             >
@@ -139,22 +149,57 @@ export function FourChoices(
         </div>
         <div className="choices d-flex justify-content-around flex-wrap w-50">
           {choices.map((c, i) => {
-            const isRight =
-              props.isCorrect(choices[i]) && state.correct === props.uid;
+            const isRight = props.isCorrect(choices[i]) && state.correct;
             const isWrong = state.incorrect.includes(i);
 
-            return (
-              <AChoice
-                key={c.compare}
-                c={c}
-                i={i}
-                isRight={isRight}
-                isWrong={isWrong}
-                checkAnswer={checkAnswer}
-                aRomaji={props.aRomaji}
-                fade={props.fadeInAnswers}
-              />
-            );
+            let aChoice;
+
+            if (props.fadeInAnswers && state.correct) {
+              // Don't check any more answers
+              // Don't show remaining options
+
+              const elapsed = Math.abs(
+                (timerStop.current ?? Date.now()) - timerStart.current
+              );
+
+              if ((i + 1) * 1000 > elapsed) {
+                // Choice showed after picking answer
+                aChoice = (
+                  <div key={c.compare} className="invisible w-50 h-50">
+                    {c.english}
+                  </div>
+                );
+              } else {
+                // Choice showed before picking answer
+                aChoice = (
+                  <AChoice
+                    key={String(timerStart.current) + c.compare}
+                    css={!isRight ? "disabled-color" : undefined}
+                    fadeIn={false}
+                    c={c}
+                    i={i}
+                    isRight={isRight}
+                    isWrong={isWrong}
+                    aRomaji={props.aRomaji}
+                  />
+                );
+              }
+            } else {
+              aChoice = (
+                <AChoice
+                  key={String(timerStart.current) + c.compare}
+                  c={c}
+                  i={i}
+                  isRight={isRight}
+                  isWrong={isWrong}
+                  checkAnswer={checkAnswer}
+                  aRomaji={props.aRomaji}
+                  fadeIn={props.fadeInAnswers}
+                />
+              );
+            }
+
+            return aChoice;
           })}
         </div>
         <StackNavButton ariaLabel="Next" action={gotoNext}>
@@ -166,25 +211,33 @@ export function FourChoices(
 }
 
 interface AChoiceProps {
+  css?: string;
   c: GameChoice;
   i: number;
   isRight: boolean;
   isWrong: boolean;
-  checkAnswer: (answered: GameChoice, i: number) => void;
+  checkAnswer?: (answered: GameChoice, i: number) => void;
   aRomaji?: boolean;
-  fade?: boolean;
+  fadeIn?: boolean;
 }
 
 function AChoice(props: AChoiceProps) {
-  const { c, i, isRight, isWrong, checkAnswer, aRomaji,fade} = props;
+  const FADE_IN_MS = 1000;
+  const { c, i, isRight, isWrong, checkAnswer, aRomaji, fadeIn } = props;
 
-  const [invisible] = useFade(fade===false?0:(i + 1) * 1000);
+  const [shown] = useFade(fadeIn === false ? 0 : (i + 1) * FADE_IN_MS);
+  const fadeCss = {
+    "notification-fade": !shown,
+    "notification-fade-in": shown,
+  };
 
   const choiceCSS = classNames({
-    "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable":
-      true,
-    "notification-fade": !invisible,
-    "notification-fade-in": invisible,
+    "d-flex flex-column justify-content-evenly": true,
+    "w-50 h-50 pt-3 text-center clickable": true,
+
+    ...(!props.css ? {} : { [props.css]: true }),
+    ...(fadeIn === false ? {} : fadeCss),
+
     "correct-color": isRight,
     "incorrect-color": isWrong,
   });
@@ -194,7 +247,9 @@ function AChoice(props: AChoiceProps) {
       key={`${c.compare ?? ""}${c.english ?? ""}${c.japanese ?? ""}`}
       className={choiceCSS}
       onClick={() => {
-        checkAnswer(c, i);
+        if (typeof checkAnswer === "function") {
+          checkAnswer(c, i);
+        }
       }}
     >
       <div>
