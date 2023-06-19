@@ -10,13 +10,16 @@ import React, {
   useState,
 } from "react";
 import { useDispatch } from "react-redux";
-import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
+
+import { SetTermGFList } from "./SetTermGFList";
+import { SetTermTagList } from "./SetTermTagList";
 import {
   getDeviceMotionEventPermission,
   getStaleSpaceRepKeys,
   labelOptions,
   motionThresholdCondition,
 } from "../../helper/gameHelper";
+import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import { buildAction } from "../../hooks/helperHK";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import type { AppDispatch } from "../../slices";
@@ -39,17 +42,21 @@ import {
   getKanji,
   removeFrequencyKanji,
   setKanjiBtnN,
-  toggleKanjiFadeInAnswers,
   toggleKanjiActiveGrp,
   toggleKanjiActiveTag,
+  toggleKanjiFadeInAnswers,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
 } from "../../slices/kanjiSlice";
 import {
   setOppositesARomaji,
   setOppositesQRomaji,
+  toggleOppositeFadeInAnswers,
 } from "../../slices/oppositeSlice";
-import { setParticlesARomaji } from "../../slices/particleSlice";
+import {
+  setParticlesARomaji,
+  toggleParticleFadeInAnswers,
+} from "../../slices/particleSlice";
 import { getPhrase, togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { DebugLevel, KanaType, TermFilterBy } from "../../slices/settingHelper";
 import {
@@ -61,24 +68,10 @@ import type { ConsoleMessage } from "../Form/Console";
 import KanaOptionsSlider from "../Form/KanaOptionsSlider";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
-import { SetTermGFList } from "./SetTermGFList";
-import { SetTermTagList } from "./SetTermTagList";
 import "../../css/Settings.css";
 import "../../css/spin.css";
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
-
-type Sections =
-  | "sectionPhrase"
-  | "sectionVocabulary"
-  | "sectionKanji"
-  | "sectionStaleSpaceRep";
-interface MemoryDataObject {
-  // TODO: refactor into one
-  quota: number;
-  usage: number;
-  persistent: boolean;
-}
 
 const SettingsMeta = {
   location: "/settings/",
@@ -105,7 +98,7 @@ function /*static*/ getDerivedStateFromError(error: Error) {
   };
 }
 
-function componentDidCatch(dispatch: Function, error: Error) {
+function componentDidCatch(dispatch: AppDispatch, error: Error) {
   const cause = error.cause;
 
   dispatch(debugToggled(DebugLevel.DEBUG));
@@ -113,7 +106,7 @@ function componentDidCatch(dispatch: Function, error: Error) {
   switch (cause?.code) {
     case "StaleVocabActiveGrp":
       {
-        const stale = cause.value;
+        const stale = cause.value as string;
         dispatch(logger("Error: " + error.message, DebugLevel.ERROR));
         dispatch(
           logger(
@@ -129,7 +122,7 @@ function componentDidCatch(dispatch: Function, error: Error) {
       break;
     case "StalePhraseActiveGrp":
       {
-        const stale = cause.value;
+        const stale = cause.value as string;
         dispatch(logger("Error: " + error.message, DebugLevel.ERROR));
         dispatch(
           logger(
@@ -160,7 +153,7 @@ function staleSpaceRep(terms: { key: string; uid: string; english: string }[]) {
     const separator = <hr key={`stale-meta-${text.uid}`} />;
 
     const row = (
-      <div key={i} className="row">
+      <div key={text.uid} className="row">
         <span className="col p-0">{text.key}</span>
         <span className="col p-0">{text.english}</span>
         <span className="col p-0 app-sm-fs-xx-small">
@@ -212,9 +205,9 @@ function failedFuriganaList(terms: RawVocabulary[]) {
 }
 
 function buildMotionListener(
-  dispatch: Function,
+  dispatch: AppDispatch,
   motionThreshold: number,
-  setShakeIntensity: Function
+  setShakeIntensity: React.Dispatch<React.SetStateAction<number | undefined>>
 ) {
   /**
    * Handler for when device is shaken
@@ -275,6 +268,7 @@ export default function Settings() {
 
     oppositesQRomaji,
     oppositesARomaji,
+    oppositeFadeInAnswers,
 
     choiceN,
     wideMode,
@@ -282,6 +276,7 @@ export default function Settings() {
     charSet,
 
     particlesARomaji,
+    particleFadeInAnswer,
 
     vocabList: vocabulary,
     kanjiTagObj: kanjiTags,
@@ -388,7 +383,7 @@ export default function Settings() {
   const swMessageEventListener = useCallback(
     (event: MessageEvent) => {
       if (event.data.type === "DO_HARD_REFRESH") {
-        const { error } = event.data;
+        const { error } = event.data as { error: string };
 
         if (error) {
           dispatch(logger(error, DebugLevel.ERROR));
@@ -396,10 +391,16 @@ export default function Settings() {
 
         setTimeout(() => {
           setSpin(false);
-          setHardRefreshUnavailable(error);
+          setHardRefreshUnavailable(true);
         }, 2000);
       } else if (event.data.type === "SW_VERSION") {
-        const { swVersion, jsVersion, bundleVersion } = event.data;
+        interface VersionInfo {
+          swVersion: string;
+          jsVersion: string;
+          bundleVersion: string;
+        }
+        const { swVersion, jsVersion, bundleVersion } =
+          event.data as VersionInfo;
 
         setSwVersion(swVersion);
         setJsVersion(jsVersion);
@@ -697,7 +698,7 @@ export default function Settings() {
                     disabled={kanjiFilter === TermFilterBy.FREQUENCY}
                     statusText={
                       (kanjiReinforce
-                        ? "(+" + kFreqExcluTagSelected.length + ") "
+                        ? `(+${kFreqExcluTagSelected.length} ) `
                         : "") + "Reinforcement"
                     }
                   />
@@ -723,6 +724,13 @@ export default function Settings() {
                 active={oppositesARomaji}
                 action={buildAction(dispatch, setOppositesARomaji)}
                 statusText="Answer Romaji"
+              />
+            </div>
+            <div className="mb-2">
+              <SettingsSwitch
+                active={oppositeFadeInAnswers}
+                action={buildAction(dispatch, toggleOppositeFadeInAnswers)}
+                statusText="Fade in answers"
               />
             </div>
           </div>
@@ -774,12 +782,12 @@ export default function Settings() {
               />
             </div>
             <div className="mb-2">
-                  <SettingsSwitch
-                    active={kanjiFadeInAnswers}
-                    action={buildAction(dispatch, toggleKanjiFadeInAnswers)}
-                    statusText="Fade in answers"
-                  />
-                </div>
+              <SettingsSwitch
+                active={kanjiFadeInAnswers}
+                action={buildAction(dispatch, toggleKanjiFadeInAnswers)}
+                statusText="Fade in answers"
+              />
+            </div>
           </div>
         </div>
         <div className={pageClassName}>
@@ -792,6 +800,13 @@ export default function Settings() {
               action={buildAction(dispatch, setParticlesARomaji)}
               statusText="Answer Romaji"
             />
+            <div className="mb-2">
+              <SettingsSwitch
+                active={particleFadeInAnswer}
+                action={buildAction(dispatch, toggleParticleFadeInAnswers)}
+                statusText="Fade in answers"
+              />
+            </div>
           </div>
         </div>
         <div className={pageClassName}>
@@ -888,11 +903,10 @@ export default function Settings() {
                   color="default"
                   statusText={
                     memory.persistent
-                      ? "Persistent " +
-                        ~~(memory.usage / 1024 / 1024) +
-                        "/" +
-                        ~~(memory.quota / 1024 / 1024) +
-                        "MB"
+                      ? `Persistent ${~~(memory.usage / 1024 / 1024)}
+                        /
+                        ${~~(memory.quota / 1024 / 1024)}
+                        MB`
                       : "Persistent off"
                   }
                 />

@@ -20,9 +20,16 @@ import { vocabularyFromLocalStorage } from "./vocabularySlice";
 import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
 import type { ConsoleMessage } from "../components/Form/Console";
 
+export interface MemoryDataObject {
+  quota: number;
+  usage: number;
+  persistent: boolean;
+  warning?: string;
+}
+
 export interface GlobalInitSlice {
   darkMode: boolean;
-  memory: { quota: 0; usage: 0; persistent: boolean; warning?: string };
+  memory: MemoryDataObject;
   debug: number;
   console: ConsoleMessage[];
   swipeThreshold: number;

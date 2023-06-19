@@ -20,28 +20,32 @@ export function useConnectSetting() {
     (before, after) => before.usage === after.usage
   );
 
-  const [kanjiChoiceN, kanjiFadeInAnswers, kanjiFilter, kanjiReinforce, kanjiActiveTags] =
-    useSelector<
-      RootState,
-      [
-        number,
-        boolean,
-        (typeof TermFilterBy)[keyof typeof TermFilterBy],
-        boolean,
-        string[]
-      ]
-    >(({ kanji }: RootState) => {
-      const { choiceN, fadeInAnswers, filter, reinforce, activeTags } = kanji.setting;
-      return [choiceN, fadeInAnswers, filter, reinforce, activeTags];
-    }, shallowEqual);
-
-  const [oppositesQRomaji, oppositesARomaji] = useSelector<
+  const [
+    kanjiChoiceN,
+    kanjiFadeInAnswers,
+    kanjiFilter,
+    kanjiReinforce,
+    kanjiActiveTags,
+  ] = useSelector<
     RootState,
-    boolean[]
-  >(({ opposite }: RootState) => {
-    const { qRomaji, aRomaji } = opposite;
-    return [qRomaji, aRomaji];
+    [
+      number,
+      boolean,
+      (typeof TermFilterBy)[keyof typeof TermFilterBy],
+      boolean,
+      string[]
+    ]
+  >(({ kanji }: RootState) => {
+    const { choiceN, fadeInAnswers, filter, reinforce, activeTags } =
+      kanji.setting;
+    return [choiceN, fadeInAnswers, filter, reinforce, activeTags];
   }, shallowEqual);
+
+  const [oppositesQRomaji, oppositesARomaji, oppositeFadeInAnswers] =
+    useSelector<RootState, boolean[]>(({ opposite }: RootState) => {
+      const { qRomaji, aRomaji, fadeInAnswers } = opposite;
+      return [qRomaji, aRomaji, fadeInAnswers];
+    }, shallowEqual);
 
   const [choiceN, wideMode, easyMode, charSet] = useSelector<
     RootState,
@@ -52,9 +56,13 @@ export function useConnectSetting() {
     return [choiceN, wideMode, easyMode, charSet];
   }, shallowEqual);
 
-  const particlesARomaji = useSelector(
-    ({ particle }: RootState) => particle.setting.aRomaji
-  );
+  const [particlesARomaji, particleFadeInAnswer] = useSelector<
+    RootState,
+    boolean[]
+  >(({ particle }: RootState) => {
+    const { aRomaji, fadeInAnswers } = particle.setting;
+    return [aRomaji, fadeInAnswers];
+  }, shallowEqual);
 
   const { value: vocabList } = useSelector(
     ({ vocabulary }: RootState) => vocabulary,
@@ -106,6 +114,7 @@ export function useConnectSetting() {
 
     oppositesQRomaji,
     oppositesARomaji,
+    oppositeFadeInAnswers,
 
     choiceN,
     wideMode,
@@ -113,6 +122,7 @@ export function useConnectSetting() {
     charSet,
 
     particlesARomaji,
+    particleFadeInAnswer,
 
     vocabList,
     kanjiTagObj,

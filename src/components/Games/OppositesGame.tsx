@@ -1,13 +1,14 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
-import FourChoices from "./FourChoices";
+import FourChoices, { FourChoicesWRef } from "./FourChoices";
 import type { GameChoice } from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { getOpposite } from "../../slices/oppositeSlice";
 import { NotReady } from "../Form/NotReady";
@@ -66,6 +67,25 @@ export default function OppositesGame() {
     setSelectedIndex(newSel);
   }
 
+  const swipeHandler = useCallback(
+    (direction: string) => {
+      switch (direction) {
+        case "right":
+          gotoPrev();
+          break;
+        case "left":
+          gotoNext();
+          break;
+
+        default:
+          break;
+      }
+    },
+    [gotoPrev, gotoNext]
+  );
+
+  const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
+
   if (order.length === 0) return <NotReady addlStyle="main-panel" />;
 
   const game = prepareGame(oppositeList, order, selectedIndex);
@@ -74,7 +94,8 @@ export default function OppositesGame() {
 
   return (
     <>
-      <FourChoices
+      <FourChoicesWRef
+        ref={HTMLDivElementSwipeRef}
         uid={String(selectedIndex)}
         question={game.question}
         isCorrect={(answered) => {

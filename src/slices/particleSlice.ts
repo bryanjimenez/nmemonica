@@ -1,14 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import { romajiParticle } from "../helper/kanaHelper";
-import { JapaneseText } from "../helper/JapaneseText";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+
 import { buildPhraseArray, getPhrase } from "./phraseSlice";
-import type { RawPhrase } from "../typings/raw";
 import type {
   ParticleChoice,
   ParticleGamePhrase,
 } from "../components/Games/ParticlesGame";
+import { JapaneseText } from "../helper/JapaneseText";
+import { romajiParticle } from "../helper/kanaHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import type { RawPhrase } from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface ParticleInitSlice {
@@ -19,6 +21,7 @@ export interface ParticleInitSlice {
 
   setting: {
     aRomaji: boolean;
+    fadeInAnswers: boolean;
   };
 }
 
@@ -30,6 +33,7 @@ export const ParticleInitState: ParticleInitSlice = {
 
   setting: {
     aRomaji: false,
+    fadeInAnswers: false,
   },
 };
 
@@ -75,7 +79,10 @@ export const particleFromLocalStorage = createAsyncThunk(
  */
 export function buildParticleGame(rawPhrases: RawPhrase[]) {
   let particleList: ParticleChoice[] = [];
-  let multipleMatch: Record<string, {}> = {};
+  let multipleMatch: Record<
+    string,
+    { japanese: string; particle: string; times: number }
+  > = {};
 
   const wParticles = rawPhrases.reduce<ParticleGamePhrase[]>((acc, curr) => {
     if (curr.particles && curr.particles?.length > 0) {
@@ -148,6 +155,18 @@ const particleSlice = createSlice({
         "aRomaji"
       );
     },
+
+    toggleParticleFadeInAnswers(state, action: { payload?: boolean }) {
+      const override = action.payload;
+
+      state.setting.fadeInAnswers = localStoreAttrUpdate(
+        new Date(),
+        { particle: state.setting },
+        "/particle/",
+        "fadeInAnswers",
+        override
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -174,5 +193,6 @@ const particleSlice = createSlice({
   },
 });
 
-export const { setParticlesARomaji } = particleSlice.actions;
+export const { setParticlesARomaji, toggleParticleFadeInAnswers } =
+  particleSlice.actions;
 export default particleSlice.reducer;

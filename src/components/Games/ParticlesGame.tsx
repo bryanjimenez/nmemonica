@@ -1,13 +1,14 @@
 import { LinearProgress } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import FourChoices from "./FourChoices";
+import FourChoices, { FourChoicesWRef } from "./FourChoices";
 import type { GameQuestion } from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { getParticleGame } from "../../slices/particleSlice";
 import type { RawPhrase } from "../../typings/raw";
@@ -145,8 +146,24 @@ export default function ParticlesGame() {
 
   const game = prepareGame(selectedIndex, phrases, particles);
 
-  // console.log(selectedIndex)
-  // console.log("ParticleGame render");
+  const swipeHandler = useCallback(
+    (direction: string) => {
+      switch (direction) {
+        case "right":
+          gotoPrev();
+          break;
+        case "left":
+          gotoNext();
+          break;
+
+        default:
+          break;
+      }
+    },
+    [gotoPrev, gotoNext]
+  );
+
+  const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
 
   if (game === undefined) return <NotReady addlStyle="main-panel" />;
 
@@ -154,7 +171,8 @@ export default function ParticlesGame() {
 
   return (
     <>
-      <FourChoices
+      <FourChoicesWRef
+        ref={HTMLDivElementSwipeRef}
         uid={String(selectedIndex)}
         question={game.question}
         isCorrect={(answered) => answered.japanese === game.answer.japanese}

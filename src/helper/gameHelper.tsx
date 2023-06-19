@@ -1084,7 +1084,7 @@ export function motionThresholdCondition(
  */
 export function getDeviceMotionEventPermission(
   onGranted: () => void,
-  onError: () => void
+  onError: (error:Error) => void
 ) {
   // @ts-expect-error DeviceMotionEvent.requestPermission
   if (typeof DeviceMotionEvent.requestPermission === "function") {
