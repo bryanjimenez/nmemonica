@@ -3,7 +3,7 @@ import merge from "lodash/fp/merge";
 
 import { buildPhraseArray, getPhrase } from "./phraseSlice";
 import type {
-  ParticleChoice,
+  ChoiceParticle,
   ParticleGamePhrase,
 } from "../components/Games/ParticlesGame";
 import { JapaneseText } from "../helper/JapaneseText";
@@ -16,7 +16,7 @@ import type { RootState } from ".";
 export interface ParticleInitSlice {
   particleGame: {
     phrases: ParticleGamePhrase[];
-    particles: ParticleChoice[];
+    particles: ChoiceParticle[];
   };
 
   setting: {
@@ -78,7 +78,7 @@ export const particleFromLocalStorage = createAsyncThunk(
  * Filters RawPhrase to be used by PhrasesGame
  */
 export function buildParticleGame(rawPhrases: RawPhrase[]) {
-  let particleList: ParticleChoice[] = [];
+  let particleList: ChoiceParticle[] = [];
   let multipleMatch: Record<
     string,
     { japanese: string; particle: string; times: number }
@@ -94,13 +94,12 @@ export function buildParticleGame(rawPhrases: RawPhrase[]) {
           const romaji = romajiParticle(p);
           const start = spelling.indexOf(p);
           const end = start + p.length;
-          const particle = { japanese: p, romaji, html: p };
+          const particle = { japanese: p, romaji };
           const particleCopy = {
             japanese: p,
             romaji,
             start,
             end,
-            html: p,
           };
 
           particleList = [...particleList, particle];

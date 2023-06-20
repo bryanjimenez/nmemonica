@@ -3,8 +3,7 @@ import classNames from "classnames";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
-import FourChoices, { FourChoicesWRef } from "./FourChoices";
-import type { GameChoice } from "./XChoices";
+import { FourChoicesWRef, type GameChoice } from "./FourChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
@@ -31,11 +30,11 @@ export default function OppositesGame() {
     ({ opposite }: RootState) => opposite,
     (before, after) => before.version === after.version
   );
-  const [qRomaji, aRomaji] = useSelector<RootState, boolean[]>(
+  const [qRomaji, aRomaji, fadeInAnswers] = useSelector<RootState, boolean[]>(
     ({ opposite }: RootState) => {
-      const { qRomaji, aRomaji } = opposite;
+      const { qRomaji, aRomaji, fadeInAnswers } = opposite;
 
-      return [qRomaji, aRomaji];
+      return [qRomaji, aRomaji, fadeInAnswers];
     },
     shallowEqual
   );
@@ -54,18 +53,22 @@ export default function OppositesGame() {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  function gotoNext() {
+  const gotoNext = useCallback(() => {
+    // function gotoNext() {
     const l = oppositeList.length;
     const newSel = (selectedIndex + 1) % l;
     setSelectedIndex(newSel);
-  }
+    // }
+  }, [selectedIndex, oppositeList]);
 
-  function gotoPrev() {
+  const gotoPrev = useCallback(() => {
+    // function gotoPrev() {
     const l = oppositeList.length;
     const i = selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     setSelectedIndex(newSel);
-  }
+    // }
+  }, [selectedIndex, oppositeList]);
 
   const swipeHandler = useCallback(
     (direction: string) => {
@@ -96,7 +99,6 @@ export default function OppositesGame() {
     <>
       <FourChoicesWRef
         ref={HTMLDivElementSwipeRef}
-        uid={String(selectedIndex)}
         question={game.question}
         isCorrect={(answered) => {
           const correct = answered.compare === game.answer.compare;
@@ -111,6 +113,7 @@ export default function OppositesGame() {
         aRomaji={aRomaji}
         gotoPrev={gotoPrev}
         gotoNext={gotoNext}
+        fadeInAnswers={fadeInAnswers}
       />
       <div key={1} className="progress-line flex-shrink-1">
         <LinearProgress variant="determinate" value={progress} />
@@ -147,7 +150,7 @@ function prepareGame(
   };
 
   let choices: GameChoice[] = [answer];
-  let antiHomophones: string[] = [answer.romaji, question.romaji];
+  let antiHomophones: string[] = [answerObj.romaji, questionObj.romaji];
 
   while (choices.length < 4) {
     const idx = Math.floor(Math.random() * opposites.length);

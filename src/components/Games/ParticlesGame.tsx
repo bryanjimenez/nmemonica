@@ -2,8 +2,11 @@ import { LinearProgress } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import FourChoices, { FourChoicesWRef } from "./FourChoices";
-import type { GameQuestion } from "./XChoices";
+import {
+  FourChoicesWRef,
+  type GameChoice,
+  type GameQuestion,
+} from "./FourChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { randomOrder } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
@@ -15,29 +18,22 @@ import type { RawPhrase } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import "../../css/ParticlesGame.css";
 
-export interface ParticleChoice {
+export interface ChoiceParticle {
   japanese: string;
   romaji: string;
-  start?: number;
-  end?: number;
-  toHTML: (correct: boolean) => void;
-  html?: React.JSX.Element;
 }
-interface ParticleAnswer {
+
+export interface AnswerParticle {
   japanese: string;
   romaji: string;
+  /** Starting index of particle in phrase */
   start: number;
+  /** Ending index of particle in phrase */
   end: number;
-  toHTML: (correct: boolean) => void;
 }
+
 export interface ParticleGamePhrase {
-  answer: {
-    japanese: string;
-    romaji: string;
-    start: number;
-    end: number;
-    html: string;
-  };
+  answer: AnswerParticle;
   question: RawPhrase;
   english: string;
   literal?: string;
@@ -48,32 +44,18 @@ const ParticlesGameMeta = {
   label: "Particles Game",
 };
 
-/**
- * Returns a list of choices which includes the right answer
- */
-function createChoices(answer: ParticleAnswer, particleList: ParticleChoice[]) {
-  let choices: ParticleChoice[] = [answer];
-  while (choices.length < 4) {
-    const i = Math.floor(Math.random() * particleList.length);
-
-    const choice = particleList[i];
-
-    // should not be same choices or the right answer
-    if (choices.every((c) => c.japanese !== choice.japanese)) {
-      choices = [...choices, choice];
-    }
-  }
-
-  shuffleArray(choices);
-
-  return choices;
-}
-
 export default function ParticlesGame() {
   const dispatch = useDispatch<AppDispatch>();
 
   const { phrases, particles } = useSelector(
     ({ particle }: RootState) => particle.particleGame
+  );
+
+  const [aRomaji, fadeInAnswers] = useSelector<RootState, boolean[]>(
+    ({ particle }: RootState) => {
+      const { aRomaji, fadeInAnswers } = particle.setting;
+      return [aRomaji, fadeInAnswers];
+    }
   );
 
   useEffect(() => {
@@ -85,10 +67,11 @@ export default function ParticlesGame() {
   const order = useRef<number[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  // TODO: memoize?
   function prepareGame(
     selectedIndex: number,
     phrases: ParticleGamePhrase[],
-    particles: ParticleChoice[]
+    particles: ChoiceParticle[]
   ) {
     if (phrases.length === 0 || particles.length === 0) return;
 
@@ -98,8 +81,11 @@ export default function ParticlesGame() {
 
     const phrase = phrases[order.current[selectedIndex]];
     const { answer: a, question: q, english, literal } = phrase;
-    const answer = { ...a, toHTML: () => a.html };
-    particles = particles.map((p) => ({ ...p, toHTML: () => p.html }));
+    const answer = { ...a, toHTML: () => <>{a.japanese}</> };
+    particles = particles.map((p) => ({
+      ...p,
+      toHTML: () => <>{p.japanese}</>,
+    }));
 
     const choices = createChoices(answer, particles);
 
@@ -112,37 +98,22 @@ export default function ParticlesGame() {
     return { question, answer, choices, literal };
   }
 
-  const buildQuestionElement = (
-    question: JapaneseText,
-    { start, end }: { start: number; end: number },
-    correct: boolean
-  ) => {
-    const hidden = correct ? "correct-color" : "transparent-font underline";
-
-    return kanjiOkuriganaSpliceApplyCss(
-      question?.parseObj,
-      { hidden },
-      start,
-      end
-    );
-  };
-
-  function gotoNext() {
+  const gotoNext = useCallback(() => {
+    // function gotoNext() {
     const l = phrases.length;
     const newSel = (selectedIndex + 1) % l;
     setSelectedIndex(newSel);
-  }
+    // }
+  }, [selectedIndex, phrases]);
 
-  function gotoPrev() {
+  const gotoPrev = useCallback(() => {
+    // function gotoPrev() {
     const l = phrases.length;
     const i = selectedIndex - 1;
     const newSel = i < 0 ? (l + i) % l : i % l;
     setSelectedIndex(newSel);
-  }
-
-  const aRomaji = useSelector(
-    ({ particle }: RootState) => particle.setting.aRomaji
-  );
+    // }
+  }, [selectedIndex, phrases]);
 
   const game = prepareGame(selectedIndex, phrases, particles);
 
@@ -165,7 +136,7 @@ export default function ParticlesGame() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
 
-  if (game === undefined) return <NotReady addlStyle="main-panel" />;
+  if (!game) return <NotReady addlStyle="main-panel" />;
 
   const progress = ((selectedIndex + 1) / phrases.length) * 100;
 
@@ -173,7 +144,6 @@ export default function ParticlesGame() {
     <>
       <FourChoicesWRef
         ref={HTMLDivElementSwipeRef}
-        uid={String(selectedIndex)}
         question={game.question}
         isCorrect={(answered) => answered.japanese === game.answer.japanese}
         hint={game.literal}
@@ -181,6 +151,7 @@ export default function ParticlesGame() {
         aRomaji={aRomaji}
         gotoPrev={gotoPrev}
         gotoNext={gotoNext}
+        fadeInAnswers={fadeInAnswers}
       />
       <div className="progress-line flex-shrink-1">
         <LinearProgress variant="determinate" value={progress} />
@@ -188,5 +159,54 @@ export default function ParticlesGame() {
     </>
   );
 }
+
+/**
+ * Returns a list of choices which includes the right answer
+ */
+function createChoices(answer: AnswerParticle, particleList: ChoiceParticle[]) {
+  let choices: GameChoice[] = [
+    {
+      ...answer,
+      compare: answer.japanese,
+      toHTML: () => <>{answer.japanese}</>,
+    },
+  ];
+  while (choices.length < 4) {
+    const i = Math.floor(Math.random() * particleList.length);
+
+    const choice = particleList[i];
+
+    // should not be same choices or the right answer
+    if (choices.every((c) => c.compare !== choice.japanese)) {
+      choices = [
+        ...choices,
+        {
+          ...choice,
+          compare: choice.japanese,
+          toHTML: () => <>{choice.japanese}</>,
+        },
+      ];
+    }
+  }
+
+  shuffleArray(choices);
+
+  return choices;
+}
+
+const buildQuestionElement = (
+  question: JapaneseText,
+  { start, end }: { start: number; end: number },
+  correct: boolean
+) => {
+  const hidden = correct ? "correct-color" : "transparent-font underline";
+
+  return kanjiOkuriganaSpliceApplyCss(
+    question?.parseObj,
+    { hidden },
+    start,
+    end
+  );
+};
 
 export { ParticlesGameMeta };
