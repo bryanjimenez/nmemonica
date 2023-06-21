@@ -1,14 +1,15 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+
+import { shuffleArray } from "../../helper/arrayHelper";
 import { swapKana } from "../../helper/kanaHelper";
-import { setStateFunction } from "../../hooks/helperHK";
+import { setStateFunction, useWindowSize } from "../../hooks/helperHK";
+import { useConnectKana } from "../../hooks/useConnectKana";
+import { KanaType } from "../../slices/settingHelper";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
-import { useConnectKana } from "../../hooks/useConnectKana";
-import { shuffleArray } from "../../helper/arrayHelper";
-import { KanaType } from "../../slices/settingHelper";
 
 interface Choice {
   val: string;
@@ -115,6 +116,9 @@ export default function KanaGame() {
     reinforce,
   });
 
+  const { width, height } = useWindowSize();
+  const isLandscape = width && height ? width > height : true;
+
   const choiceButton = buildChoiceButton({
     checkAnswer,
 
@@ -126,6 +130,7 @@ export default function KanaGame() {
     answer,
     correct,
 
+    isLandscape,
     wideMode: wideMode.current,
     easyMode: easyMode.current,
     choiceN: choiceN.current,
@@ -148,36 +153,38 @@ export default function KanaGame() {
 
   const choiceAreaCSS = classNames({
     "choices-row d-flex justify-content-around": true,
-    "w-50": !wideMode.current,
-    "w-100": wideMode.current,
+    "w-100 w-sm-50": !wideMode.current,
+    "w-100 h-100": wideMode.current,
   });
 
   return (
     <React.Fragment>
       <div className={mainPanel}>
-        <div className="d-flex justify-content-between h-100">
+        <div className="d-flex justify-content-between w-100 h-100">
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          {!wideMode.current && (
-            <div
-              className={classNames({
-                "pt-3 d-flex flex-column justify-content-center text-center w-50":
-                  true,
-                "correct-color": correct,
-              })}
-            >
-              <h1 className="clickable">{question}</h1>
-              {easyMode.current && !practiceSide && (
-                <div className="d-flex justify-content-around">
-                  <h6>{swapKana(question)}</h6>
-                </div>
-              )}
-            </div>
-          )}
-          <div className={choiceAreaCSS}>
-            <div className="choices-column w-100 d-flex flex-wrap ">
-              {choices.map((c, i) => choiceButton(i))}
+          <div className="d-flex flex-column flex-sm-row justify-content-around">
+            {!wideMode.current && (
+              <div
+                className={classNames({
+                  "pt-3 d-flex flex-column justify-content-center text-center w-100 w-sm-50 h-100":
+                    true,
+                  "correct-color": correct,
+                })}
+              >
+                <h1 className="clickable">{question}</h1>
+                {easyMode.current && !practiceSide && (
+                  <div className="d-flex justify-content-around">
+                    <h6>{swapKana(question)}</h6>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className={choiceAreaCSS}>
+              <div className="choices-column w-100 d-flex flex-wrap ">
+                {choices.map((c, i) => choiceButton(i))}
+              </div>
             </div>
           </div>
           <StackNavButton ariaLabel="Next" action={gotoNext}>
@@ -232,10 +239,10 @@ function shuffleGameOrder(hiragana: string[][]) {
     for (let consonant = 0; consonant < yMax; consonant++) {
       // should not include yi, ye, wu, or empty row (except -n)
       if (
-        (vowel != 1 || consonant != 12) &&
-        (vowel != 3 || consonant != 12) &&
-        (vowel != 2 || consonant != 14) &&
-        (vowel === 0 || consonant != 15)
+        (vowel !== 1 || consonant !== 12) &&
+        (vowel !== 3 || consonant !== 12) &&
+        (vowel !== 2 || consonant !== 14) &&
+        (vowel === 0 || consonant !== 15)
       )
         gameOrder = [...gameOrder, { vowel, consonant }];
     }
@@ -292,8 +299,12 @@ function populateChoices(
     choiceN,
     practiceSide,
   }: {
-    getPronunciation: Function;
-    getKanaCharacter: Function;
+    getPronunciation: (consonant: number, vowel: number) => string;
+    getKanaCharacter: (
+      consonant: number,
+      vowel: number,
+      charset: number
+    ) => string;
     charSet: (typeof KanaType)[keyof typeof KanaType];
     choiceN: number;
     practiceSide: boolean;
@@ -315,12 +326,12 @@ function populateChoices(
     const cPronunciation = getPronunciation(
       gameOrder[idx].consonant,
       gameOrder[idx].vowel
-    ) as string;
+    );
     const cCharacter = getKanaCharacter(
       gameOrder[idx].consonant,
       gameOrder[idx].vowel,
       useChar
-    ) as string;
+    );
 
     let choice: Choice;
     if (difficult) {
@@ -508,10 +519,10 @@ function buildCheckAnswer({
   reinforce,
   practiceSide,
 }: {
-  setCorrect: Function;
-  setWrongs: Function;
-  setReinforce: Function;
-  gotoNext: Function;
+  setCorrect: React.Dispatch<React.SetStateAction<boolean>>;
+  setWrongs: React.Dispatch<React.SetStateAction<number[]>>;
+  setReinforce: React.Dispatch<React.SetStateAction<Choice[]>>;
+  gotoNext: () => void;
   answer: Choice;
   choices: Choice[];
   wrongs: number[];
@@ -535,6 +546,7 @@ function buildCheckAnswer({
 
 export function buildChoiceButton({
   checkAnswer,
+  isLandscape,
   wideMode,
   easyMode,
   charSet,
@@ -545,7 +557,8 @@ export function buildChoiceButton({
   correct,
   choiceN,
 }: {
-  checkAnswer: Function;
+  checkAnswer: (answered: Choice) => void;
+  isLandscape: boolean;
   wideMode: boolean;
   easyMode: boolean;
   charSet: (typeof KanaType)[keyof typeof KanaType];
@@ -580,7 +593,7 @@ export function buildChoiceButton({
       invisible: !isWrong,
     });
 
-    const wide = wideMode ? 3 / 4 : 1;
+    const wide = wideMode ? (isLandscape ? 3 / 4 : 4 / 3) : 1;
 
     const width = `${Math.trunc(
       (1 / Math.ceil(Math.sqrt(choiceN))) * wide * 100

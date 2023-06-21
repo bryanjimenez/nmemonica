@@ -70,7 +70,7 @@ export function FourChoices(
       timerStop.current = undefined;
     }
     dispatch({ showMeaning: false, correct: false, incorrect: [] });
-  }, [props.question]);
+  }, [props.question, props.fadeInAnswers]);
 
   const checkAnswer = (answered: GameChoice, i: number) => {
     // Already correctly answered
@@ -116,13 +116,13 @@ export function FourChoices(
 
   return (
     <div ref={optionalRef} className="pick4game main-panel h-100">
-      <div className="d-flex justify-content-between h-100">
+      <div className="d-flex flex-column flex-sm-row  justify-content-between h-100">
         <StackNavButton ariaLabel="Previous" action={gotoPrev}>
           <ChevronLeftIcon size={16} />
         </StackNavButton>
         <div
           className={classNames({
-            "question d-flex flex-column justify-content-center text-center w-50":
+            "question d-flex flex-column justify-content-center text-center w-100 w-sm-50":
               true,
           })}
         >
@@ -147,7 +147,7 @@ export function FourChoices(
             </span>
           )}
         </div>
-        <div className="choices d-flex justify-content-around flex-wrap w-50">
+        <div className="choices d-flex justify-content-around flex-wrap w-100 w-sm-50 h-100">
           {choices.map((c, i) => {
             const isRight = props.isCorrect(choices[i]) && state.correct;
             const isWrong = state.incorrect.includes(i);

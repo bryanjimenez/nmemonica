@@ -1,3 +1,4 @@
+import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -21,7 +22,11 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
-import { buildAction, setStateFunction } from "../../hooks/helperHK";
+import {
+  buildAction,
+  setStateFunction,
+  useWindowSize,
+} from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch } from "../../slices";
@@ -231,6 +236,23 @@ export default function Kanji() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
 
+  const w = useWindowSize();
+  const xPad = (w.width && w.height ? w.width > w.height : true) ? 0 : 70;
+  const halfWidth = w.width ? w.width / 2 : 0;
+
+  const yOffset = 0; // horizontal alignment spacing
+  const xOffset = 0 - halfWidth + xPad; // vertical spacing between tooltip and element
+  const { x, y, strategy, refs, update } = useFloating({
+    placement: "bottom",
+    middleware: [offset({ mainAxis: yOffset, crossAxis: xOffset }), shift()],
+  });
+
+  useEffect(() => {
+    // force a recalculate on
+    // window resize
+    update();
+  }, [update, w.height, w.width]);
+
   if (order.length < 1) return <NotReady addlStyle="main-panel" />;
 
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
@@ -295,6 +317,23 @@ export default function Kanji() {
   let page = (
     <React.Fragment>
       <div className="kanji main-panel h-100">
+        <div ref={refs.setReference} />
+        <div
+          ref={refs.setFloating}
+          style={{
+            //  height: "200px",
+            position: strategy,
+            top: y ?? 0,
+            left: x ?? 0,
+            width: "max-content",
+          }}
+          className="grp-info"
+        >
+          <div>
+            <div>{term.grp}</div>
+            <div>{aGroupLevel}</div>
+          </div>
+        </div>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -303,14 +342,7 @@ export default function Kanji() {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
 
-          <div className="grp-info">
-            <div>
-              <div>{term.grp}</div>
-              <div>{aGroupLevel}</div>
-            </div>
-          </div>
-
-          <div className="text-center">
+          <div className="d-flex flex-column justify-content-around text-center">
             <h1 className="pt-0">
               <span>{term.kanji}</span>
             </h1>
@@ -353,7 +385,7 @@ export default function Kanji() {
               </h4>
             </div>
           </div>
-          <div className="right-info"></div>
+          {/* <div className="right-info"></div> */}
 
           <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
             <ChevronRightIcon size={16} />

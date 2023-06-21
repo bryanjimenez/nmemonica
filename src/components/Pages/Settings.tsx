@@ -812,11 +812,11 @@ export default function Settings() {
           <div className="d-flex justify-content-between">
             <h2>Application</h2>
           </div>
-          <div className="d-flex flex-row justify-content-between">
+          <div className="d-flex flex-column flex-sm-row justify-content-between">
             <div className="column-1">
               <div className="setting-block mb-2 mt-2">
                 <div
-                  className="d-flex flex-row justify-content-between clickable"
+                  className="d-flex flex-row w-50 w-sm-100 justify-content-between clickable"
                   onClick={() => {
                     setSwVersion("");
                     setJsVersion("");

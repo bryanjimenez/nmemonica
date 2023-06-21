@@ -66,12 +66,16 @@ export function oneFromList(english: string) {
  * Returns a list of choices which includes the right answer
  */
 function createEnglishChoices(answer: RawKanji, kanjiList: RawKanji[]) {
+  const TOTAL_CHOICES = 4;
   const splitToArray = (term: string) => term.split(",").map((s) => s.trim());
-  let choices = [{ ...answer, english: oneFromList(answer.english) }];
 
   const aArr = splitToArray(answer.english);
 
-  while (choices.length < 4) {
+  const a = { ...answer, english: oneFromList(answer.english) };
+  const noDuplicateChoices = new Set([a.english]);
+
+  let choices: RawKanji[] = [a];
+  while (choices.length < TOTAL_CHOICES) {
     const i = Math.floor(Math.random() * kanjiList.length);
 
     const choice = kanjiList[i];
@@ -81,12 +85,11 @@ function createEnglishChoices(answer: RawKanji, kanjiList: RawKanji[]) {
     // should not match a previous choice
     if (
       cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
-      cArr.every((cCurr) => choices.every((cPrev) => cCurr !== cPrev.english))
+      cArr.every((cCurr) => !noDuplicateChoices.has(cCurr))
     ) {
-      choices = [
-        ...choices,
-        { ...choice, english: oneFromList(choice.english) },
-      ];
+      const english = oneFromList(choice.english);
+      noDuplicateChoices.add(english);
+      choices = [...choices, { ...choice, english }];
     }
   }
 
@@ -116,7 +119,7 @@ function prepareGame(
         >
           <span>{japanese}</span>
         </div>
-        <table className="w-100 fs-4 text-start">
+        <table className="w-100 fs-4 text-sm-start">
           <tbody>
             {on && (
               <tr
@@ -269,8 +272,10 @@ export default function KanjiGame() {
 
   // TODO: can be cashed as uid table
   const exampleList = useMemo(
-    () =>
-      filteredTerms.map((kanji) => {
+    () => {
+      if (filteredTerms.length === 0 || vocabList.length === 0) return [];
+
+      return filteredTerms.map((kanji) => {
         const examples = vocabList.reduce<RawVocabulary[]>((acc, v) => {
           const hasEnglish = v.english.includes(kanji.english);
           const hasKanji = v.japanese.includes(kanji.kanji);
@@ -306,7 +311,8 @@ export default function KanjiGame() {
         }, []); // exampleList
 
         return examples;
-      }), //filteredTerms
+      });
+    }, //filteredTerms
 
     [filteredTerms, vocabList]
   );
@@ -390,7 +396,7 @@ export default function KanjiGame() {
   );
 
   const { kanji, game } = useMemo(() => {
-    if (order.length === 0) return {};
+    if (order.length === 0 || exampleList.length === 0) return {};
     const uid =
       reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
     const kanji = getTerm(uid, kanjiList);
@@ -431,9 +437,9 @@ export default function KanjiGame() {
 
   // console.log(
   //   JSON.stringify({
-  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
+  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) ?? "",
   //     idx: selectedIndex,
-  //     uid: (kanji.uid && kanji.uid.slice(0, 6)) || "",
+  //     uid: (kanji.uid && kanji.uid.slice(0, 6)) ?? "",
   //     ord: order.length,
   //     rep: Object.keys(metadata.current).length,
   //     fre: frequency.length,
