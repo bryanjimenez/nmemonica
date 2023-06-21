@@ -110,7 +110,7 @@ function prepareGame(
       <div>
         <div
           className={classNames({
-            "pb-3": exampleList.length > 0 || on || kun,
+            "pb-3": (exampleList.length > 0 || on) ?? kun,
             "correct-color": correct,
           })}
         >
@@ -271,17 +271,27 @@ export default function KanjiGame() {
   const exampleList = useMemo(
     () =>
       filteredTerms.map((kanji) => {
-        const isRadical =
-          kanji.grp?.toLowerCase() === "radical" ||
-          kanji.tag.find((t) => t.toLowerCase() === "radical");
-
         const examples = vocabList.reduce<RawVocabulary[]>((acc, v) => {
           const hasEnglish = v.english.includes(kanji.english);
           const hasKanji = v.japanese.includes(kanji.kanji);
 
           // radicals only
           // example cannot be all katakana
-          if (isRadical && hasKanji && isKatakana(kanji.kanji)) {
+          if (kanji.radical && hasKanji && isKatakana(kanji.kanji)) {
+            return acc;
+          }
+
+          // Radical has an example Kanji
+          if (kanji.radical && kanji.radical?.example.length > 0) {
+            // console.log()
+            const match = kanji.radical?.example.filter((k) =>
+              v.japanese.includes(k)
+            );
+            if (match.length > 0) {
+              return [...acc, v];
+            }
+
+            // no matching vocab
             return acc;
           }
 

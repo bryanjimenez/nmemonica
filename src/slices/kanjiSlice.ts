@@ -1,15 +1,17 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import { firebaseConfig } from "../../environment.development";
-import { buildTagObject } from "../helper/reducerHelper";
+
 import {
   TermFilterBy,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
+import { firebaseConfig } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { buildTagObject } from "../helper/reducerHelper";
 import type { RawKanji, SpaceRepetitionMap } from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface KanjiInitSlice {
@@ -240,11 +242,20 @@ const kanjiSlice = createSlice({
         }
       ) => {
         const { value: v, version } = action.payload;
-        const value = Object.keys(v).map((k) => ({
-          ...v[k],
-          uid: k,
-          tag: v[k].tag === undefined ? [] : v[k].tag,
-        }));
+        const value = Object.keys(v).map((k) => {
+          const isRadical =
+            v[k].grp?.toLowerCase() === "radical" ||
+            v[k].tag?.find((t) => t.toLowerCase() === "radical");
+
+          return {
+            ...v[k],
+            uid: k,
+            tag: v[k].tag === undefined ? [] : v[k].tag,
+            radical: isRadical
+              ? { example: v[k].radex?.split("") ?? [] }
+              : undefined,
+          };
+        });
 
         state.tagObj = buildTagObject(v);
         state.value = value;
@@ -273,7 +284,7 @@ export const {
   toggleKanjiReinforcement,
 
   setKanjiBtnN,
-  toggleKanjiFadeInAnswers
+  toggleKanjiFadeInAnswers,
 } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;
