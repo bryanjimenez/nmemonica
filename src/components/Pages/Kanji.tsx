@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
@@ -22,6 +23,8 @@ import {
 import { JapaneseText } from "../../helper/JapaneseText";
 import { buildAction, setStateFunction } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
+import type { AppDispatch } from "../../slices";
 import {
   addFrequencyKanji,
   getKanji,
@@ -30,6 +33,7 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import type { RawVocabulary } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -37,10 +41,6 @@ import {
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
 import "../../css/Kanji.css";
-import { isGroupLevel } from "./SetTermTagList";
-import { useSwipeActions } from "../../hooks/useSwipeActions";
-import type { RawVocabulary } from "../../typings/raw";
-import type { AppDispatch } from "../../slices";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -271,9 +271,9 @@ export default function Kanji() {
   // TODO: does it need to be active?
   const aGroupLevel =
     term.tag
-      .find((t) => activeTags.includes(t) && isGroupLevel(t))
-      ?.replace("_", " ") ||
-    term.tag.find((t) => isGroupLevel(t))?.replace("_", " ") ||
+      ?.find((t) => activeTags.includes(t) && isGroupLevel(t))
+      ?.replace("_", " ") ??
+    term.tag?.find((t) => isGroupLevel(t))?.replace("_", " ") ??
     "";
 
   const term_reinforce = repetition[term.uid]?.rein === true;

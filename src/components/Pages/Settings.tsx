@@ -99,7 +99,7 @@ function /*static*/ getDerivedStateFromError(error: Error) {
 }
 
 function componentDidCatch(dispatch: AppDispatch, error: Error) {
-  const cause = error.cause as {code: string, value: unknown};
+  const cause = error.cause as { code: string; value: unknown };
 
   dispatch(debugToggled(DebugLevel.DEBUG));
 
@@ -382,9 +382,8 @@ export default function Settings() {
 
   const swMessageEventListener = useCallback(
     (event: MessageEvent) => {
-      if (event.data.type === "DO_HARD_REFRESH") {
-        const { error } = event.data as { error: string };
-
+      const { type, error } = event.data as { type: string; error: string };
+      if (type === "DO_HARD_REFRESH") {
         if (error) {
           dispatch(logger(error, DebugLevel.ERROR));
         }
@@ -393,7 +392,7 @@ export default function Settings() {
           setSpin(false);
           setHardRefreshUnavailable(true);
         }, 2000);
-      } else if (event.data.type === "SW_VERSION") {
+      } else if (type === "SW_VERSION") {
         interface VersionInfo {
           swVersion: string;
           jsVersion: string;
@@ -470,7 +469,7 @@ export default function Settings() {
     return <NotReady addlStyle="main-panel" />;
 
   const kanjiSelectedTags = Object.values(kanji).filter((k) =>
-    k.tag.some((aTag: string) => kanjiActive.includes(aTag))
+    k.tag?.some((aTag: string) => kanjiActive.includes(aTag))
   );
   const kanjiSelectedUids = kanjiSelectedTags.map((k) => k.uid);
 

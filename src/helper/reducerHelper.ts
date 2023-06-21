@@ -1,4 +1,4 @@
-import type { RawVocabulary, GroupListMap } from "../typings/raw";
+import type { GroupListMap, RawVocabulary } from "../typings/raw";
 
 /**
  * Adds intransitive transitive info to RawVocabulary
@@ -59,14 +59,14 @@ export function buildGroupObject(termObj: Record<string, RawVocabulary>) {
 /**
  * Creates a list of unique tags
  */
-export function buildTagObject<T extends { tag: string[] }>(
+export function buildTagObject<T extends { tag?: string[] }>(
   termObj: Record<string, T>
 ) {
   const tag: keyof RawVocabulary = "tag";
   let tags: string[] = [];
 
   Object.values(termObj).forEach((o) => {
-    if (o[tag] && o[tag].length > 0) {
+    if (o[tag] && o[tag]?.length > 0) {
       tags = [...tags, ...o[tag]];
     }
   });
