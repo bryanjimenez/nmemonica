@@ -19,6 +19,7 @@ import { isKatakana } from "../../helper/kanaHelper";
 import { buildAction } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch } from "../../slices";
 import {
@@ -448,6 +449,8 @@ export default function KanjiGame() {
   );
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
+
+  useKeyboardActions(swipeHandler);
 
   if (!game) return <NotReady addlStyle="main-panel" />;
 
