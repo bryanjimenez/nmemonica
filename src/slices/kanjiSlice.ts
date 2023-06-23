@@ -173,6 +173,34 @@ const kanjiSlice = createSlice({
         }
       }
     },
+
+    setKanjiDifficulty: {
+      reducer: (
+        state: KanjiInitSlice,
+        action: { payload: { uid: string; value: number } }
+      ) => {
+        const { uid, value } = action.payload;
+
+        const { value: newValue } = updateSpaceRepTerm(
+          uid,
+          state.setting.repetition,
+          { count: false, date: false },
+          {
+            set: { difficulty: value },
+          }
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid: string, value: number) => ({ payload: { uid, value } }),
+    },
     setKanjiBtnN(state, action: { payload: number }) {
       const number = action.payload;
 
@@ -280,6 +308,7 @@ export const {
   toggleKanjiActiveGrp,
   addFrequencyKanji,
   removeFrequencyKanji,
+  setKanjiDifficulty,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
 

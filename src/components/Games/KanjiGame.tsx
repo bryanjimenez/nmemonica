@@ -16,6 +16,7 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
+import { buildAction } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -24,10 +25,12 @@ import {
   addFrequencyKanji,
   getKanji,
   removeFrequencyKanji,
+  setKanjiDifficulty,
 } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawKanji, RawVocabulary } from "../../typings/raw";
+import { DifficultySlider } from "../Form/Difficulty";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -494,6 +497,14 @@ export default function KanjiGame() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
+              <DifficultySlider
+                value={metadata.current[kanji.uid]?.difficulty}
+                onChange={buildAction(dispatch, (value: number) =>
+                  setKanjiDifficulty(kanji.uid, value)
+                )}
+                manualUpdate={kanji.uid}
+              />
+
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
@@ -504,6 +515,7 @@ export default function KanjiGame() {
           </div>
         </div>
       </div>
+
       <div className="progress-line flex-shrink-1">
         <LinearProgress
           variant="determinate"
