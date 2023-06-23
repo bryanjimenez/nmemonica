@@ -131,54 +131,55 @@ function prepareGame(
         <div className="d-flex align-items-center position-relative">
           <div className="position-absolute w-100">
             {correct && (
-              <table className="w-100 fs-4">
-                <tbody>
-                  {on && (
-                    <tr
-                      key={on}
-                      className={classNames({
-                        invisible: !correct,
-                      })}
-                    >
-                      <td className="text-start fs-6">
-                        {JapaneseText.parse({
-                          japanese: "おんよみ\n音読み",
-                        }).toHTML()}
-                      </td>
-                      <td className="text-end fs-5">{on}</td>
-                    </tr>
-                  )}
-                  {kun && (
-                    <tr
-                      key={kun}
-                      className={classNames({
-                        invisible: !correct,
-                      })}
-                    >
-                      <td className="text-start fs-6">
-                        {JapaneseText.parse({
-                          japanese: "くんよみ\n訓読み",
-                        }).toHTML()}
-                      </td>
-                      <td className="text-end fs-5">{kun}</td>
-                    </tr>
-                  )}
+              <div className="d-flex flex-column fs-4">
+                {on && (
+                  <div
+                    key={on}
+                    className={classNames({
+                      "d-flex justify-content-between": true,
+                      invisible: !correct,
+                    })}
+                  >
+                    <div className="fs-6">
+                      {JapaneseText.parse({
+                        japanese: "おんよみ\n音読み",
+                      }).toHTML()}
+                    </div>
+                    <div className="fs-5">{on}</div>
+                  </div>
+                )}
+                {kun && (
+                  <div
+                    key={kun}
+                    className={classNames({
+                      "d-flex justify-content-between": true,
+                      invisible: !correct,
+                    })}
+                  >
+                    <div className="fs-6">
+                      {JapaneseText.parse({
+                        japanese: "くんよみ\n訓読み",
+                      }).toHTML()}
+                    </div>
+                    <div className="fs-5">{kun}</div>
+                  </div>
+                )}
 
-                  {exampleList.slice(0, exN).map((example) => (
-                    <tr
-                      key={example.uid}
-                      className={classNames({
-                        invisible: !correct,
-                      })}
-                    >
-                      <td className="text-start">{oneFromList(example.english)}</td>
-                      <td className="text-end">
-                        {JapaneseText.parse(example).toHTML()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                {exampleList.slice(0, exN).map((example) => (
+                  <div
+                    key={example.uid}
+                    className={classNames({
+                      "d-flex justify-content-between": true,
+                      invisible: !correct,
+                    })}
+                  >
+                    <div className="mw-50 text-break text-start">
+                      {oneFromList(example.english)}
+                    </div>
+                    <div>{JapaneseText.parse(example).toHTML()}</div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
@@ -233,7 +234,7 @@ export default function KanjiGame() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
-  const [frequency, setFrequency] = useState<string[]>([]);
+  const frequency = useRef<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
@@ -279,7 +280,7 @@ export default function KanjiGame() {
       return acc;
     }, []);
 
-    setFrequency(initialFrequency);
+    frequency.current = initialFrequency;
 
     return filtered;
   }, [kanjiList, activeTags, reinforceRef, filterTypeRef]);
@@ -352,7 +353,7 @@ export default function KanjiGame() {
     play(
       reinforceRef.current,
       filterTypeRef.current,
-      frequency,
+      frequency.current,
       filteredTerms,
       metadata.current,
       reinforcedUID,
@@ -398,14 +399,14 @@ export default function KanjiGame() {
 
   const addFrequencyTerm = useCallback(
     (uid: string) => {
-      setFrequency((p) => [...p, uid]);
+      frequency.current = [...frequency.current, uid];
       dispatch(addFrequencyKanji(uid));
     },
     [dispatch]
   );
   const removeFrequencyTerm = useCallback(
     (uid: string) => {
-      setFrequency((p) => p.filter((pUid) => pUid !== uid));
+      frequency.current = frequency.current.filter((pUid) => pUid !== uid);
       dispatch(removeFrequencyKanji(uid));
     },
     [dispatch]
@@ -449,12 +450,16 @@ export default function KanjiGame() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
 
-  useKeyboardActions(swipeHandler,()=>{
+  useKeyboardActions(swipeHandler, () => {
     // TODO: flip practice side
     // navigate to
     // <Link to={KanjiGridMeta.location}>
-
   });
+
+  const checkAnswer = useCallback(
+    (answered:{compare:string}) => answered.compare === game?.answer,
+    [game]
+  );
 
   if (!game) return <NotReady addlStyle="main-panel" />;
 
@@ -479,7 +484,7 @@ export default function KanjiGame() {
       <FourChoicesWRef
         ref={HTMLDivElementSwipeRef}
         question={game.question}
-        isCorrect={(answered) => answered.compare === game.answer}
+        isCorrect={checkAnswer}
         choices={game.choices}
         gotoPrev={gotoPrev}
         gotoNext={gotoNextSlide}

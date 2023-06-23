@@ -1,6 +1,6 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import { forwardRef, useLayoutEffect, useReducer, useRef } from "react";
+import { forwardRef, memo, useLayoutEffect, useReducer, useRef } from "react";
 import type React from "react";
 
 import { useFade } from "../../hooks/helperHK";
@@ -116,99 +116,99 @@ export function FourChoices(
 
   return (
     <div ref={optionalRef} className="pick4game main-panel h-100 d-flex">
-        <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-          <ChevronLeftIcon size={16} />
-        </StackNavButton>
-        <div className="container">
+      <StackNavButton ariaLabel="Previous" action={gotoPrev}>
+        <ChevronLeftIcon size={16} />
+      </StackNavButton>
+      <div className="container">
         <div className="row row-cols-1 row-cols-sm-2 h-100">
-        <div
-          className={classNames({
-            "col question d-flex flex-column justify-content-center text-center":
-              true,
-          })}
-        >
-          <div>{question.toHTML(state.correct)}</div>
-          <span
+          <div
             className={classNames({
-              invisible: !props.qRomaji,
+              "col question d-flex flex-column justify-content-center text-center":
+                true,
             })}
           >
-            {question.romaji}
-          </span>
-          {meaning !== undefined && (
+            <div>{question.toHTML(state.correct)}</div>
             <span
-              className="clickable"
-              onClick={() => {
-                dispatch({
-                  showMeaning: !state.showMeaning,
-                });
-              }}
+              className={classNames({
+                invisible: !props.qRomaji,
+              })}
             >
-              {meaning}
+              {question.romaji}
             </span>
-          )}
-        </div>
-        <div className="col choices d-flex justify-content-around flex-wrap">
-          {choices.map((c, i) => {
-            const isRight = props.isCorrect(choices[i]) && state.correct;
-            const isWrong = state.incorrect.includes(i);
+            {meaning !== undefined && (
+              <span
+                className="clickable"
+                onClick={() => {
+                  dispatch({
+                    showMeaning: !state.showMeaning,
+                  });
+                }}
+              >
+                {meaning}
+              </span>
+            )}
+          </div>
+          <div className="col choices d-flex justify-content-around flex-wrap">
+            {choices.map((c, i) => {
+              const isRight = props.isCorrect(choices[i]) && state.correct;
+              const isWrong = state.incorrect.includes(i);
 
-            let aChoice;
-
-            if (props.fadeInAnswers && state.correct) {
-              // Don't check any more answers
-              // Don't show remaining options
+              let aChoice;
 
               const elapsed = Math.abs(
                 (timerStop.current ?? Date.now()) - timerStart.current
               );
 
-              if ((i + 1) * 1000 > elapsed) {
-                // Choice showed after picking answer
-                aChoice = (
-                  <div key={c.compare} className="invisible w-50 h-50">
-                    {c.english}
-                  </div>
-                );
+              if (props.fadeInAnswers && state.correct) {
+                // Don't check any more answers
+                // Don't show remaining options
+
+                if ((i + 1) * 1000 > elapsed) {
+                  // Choice showed after picking answer
+                  aChoice = (
+                    <div key={c.compare} className="invisible w-50 h-50">
+                      {c.english}
+                    </div>
+                  );
+                } else {
+                  // Choice showed before picking answer
+                  aChoice = (
+                    <AChoice
+                      key={String(timerStart.current) + c.compare}
+                      css={!isRight ? "disabled-color" : undefined}
+                      fadeIn={false}
+                      c={c}
+                      i={i}
+                      isRight={isRight}
+                      isWrong={isWrong}
+                      aRomaji={props.aRomaji}
+                    />
+                  );
+                }
               } else {
-                // Choice showed before picking answer
                 aChoice = (
                   <AChoice
                     key={String(timerStart.current) + c.compare}
-                    css={!isRight ? "disabled-color" : undefined}
-                    fadeIn={false}
                     c={c}
                     i={i}
                     isRight={isRight}
                     isWrong={isWrong}
+                    checkAnswer={checkAnswer}
                     aRomaji={props.aRomaji}
+                    fadeIn={props.fadeInAnswers}
+                    elapsed={elapsed}
                   />
                 );
               }
-            } else {
-              aChoice = (
-                <AChoice
-                  key={String(timerStart.current) + c.compare}
-                  c={c}
-                  i={i}
-                  isRight={isRight}
-                  isWrong={isWrong}
-                  checkAnswer={checkAnswer}
-                  aRomaji={props.aRomaji}
-                  fadeIn={props.fadeInAnswers}
-                />
-              );
-            }
 
-            return aChoice;
-          })}
+              return aChoice;
+            })}
+          </div>
         </div>
-        </div>
-
       </div>
       <StackNavButton ariaLabel="Next" action={gotoNext}>
-          <ChevronRightIcon size={16} />
-        </StackNavButton>
+        <ChevronRightIcon size={16} />
+      </StackNavButton>
     </div>
   );
 }
@@ -222,13 +222,23 @@ interface AChoiceProps {
   checkAnswer?: (answered: GameChoice, i: number) => void;
   aRomaji?: boolean;
   fadeIn?: boolean;
+  elapsed?: number;
 }
 
 function AChoice(props: AChoiceProps) {
   const FADE_IN_MS = 1000;
-  const { c, i, isRight, isWrong, checkAnswer, aRomaji, fadeIn } = props;
+  const { c, i, isRight, isWrong, checkAnswer, aRomaji, fadeIn, elapsed } =
+    props;
 
-  const [shown] = useFade(fadeIn === false ? 0 : (i + 1) * FADE_IN_MS);
+  let delay = (i + 1) * FADE_IN_MS;
+  if (elapsed) {
+    // A rerender mid fading will interrupt
+    // Skip fade if interrupted
+    const interruptFix = (i + 1) * 1000 - elapsed;
+    delay = interruptFix < 0 ? 1 : interruptFix;
+  }
+
+  const [shown] = useFade(fadeIn === false ? 0 : delay);
   const fadeCss = {
     "notification-fade": !shown,
     "notification-fade-in": shown,
@@ -270,6 +280,6 @@ function AChoice(props: AChoiceProps) {
   );
 }
 
-export const FourChoicesWRef = forwardRef(FourChoices);
+export const FourChoicesWRef = memo(forwardRef(FourChoices));
 
-export default FourChoices;
+export default memo(FourChoices);
