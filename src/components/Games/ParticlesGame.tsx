@@ -91,8 +91,8 @@ export default function ParticlesGame() {
 
     const question: GameQuestion = {
       english: english,
-      toHTML: (correct: boolean) =>
-        buildQuestionElement(JapaneseText.parse(q), answer, correct),
+      toHTML: (correct: boolean) =>(<div className="fs-1">
+        {buildQuestionElement(JapaneseText.parse(q), answer, correct)}</div>),
     };
 
     return { question, answer, choices, literal };

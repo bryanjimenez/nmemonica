@@ -14,6 +14,14 @@ body {
   }
 }
 
+.z-index-n-1 {
+  z-index: -1;
+}
+
+.h-0 {
+  height: 0;
+}
+
 .w-40 {
   width: 40% !important;
 }
@@ -110,6 +118,9 @@ a {
   background-color: var(--bs-light);
 }
 
+.fs-display-huge {
+  font-size: 10rem;
+}
 /* .fs-display-1 {
   font-size: 5rem;
 }

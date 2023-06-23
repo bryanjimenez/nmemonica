@@ -65,14 +65,24 @@ export function oneFromList(english: string) {
 /**
  * Returns a list of choices which includes the right answer
  */
-function createEnglishChoices(answer: RawKanji, kanjiList: RawKanji[]) {
+function createEnglishChoices(
+  answer: RawKanji,
+  kanjiList: RawKanji[],
+  exampleList: RawVocabulary[]
+) {
   const TOTAL_CHOICES = 4;
   const splitToArray = (term: string) => term.split(",").map((s) => s.trim());
 
   const aArr = splitToArray(answer.english);
 
   const a = { ...answer, english: oneFromList(answer.english) };
-  const noDuplicateChoices = new Set([a.english]);
+  const examples = exampleList.reduce<string[]>((acc, e) => {
+    const list = e.english.split(",").map((e) => e.trim());
+
+    return [...acc, ...list];
+  }, []);
+
+  const noDuplicateChoices = new Set([a.english, ...examples]);
 
   let choices: RawKanji[] = [a];
   while (choices.length < TOTAL_CHOICES) {
@@ -105,80 +115,83 @@ function prepareGame(
 ) {
   const { uid, kanji: japanese, on, kun } = kanji;
 
-  const choices = createEnglishChoices(kanji, kanjiList);
+  const choices = createEnglishChoices(kanji, kanjiList, exampleList);
+
+  /** Number of examples to show */
+  const exN = on && kun ? 2 : on || kun ? 3 : 5;
 
   const q: GameQuestion = {
     // english, not needed, shown as a choice
-    toHTML: (correct: boolean) => (
-      <div>
-        <div
-          className={classNames({
-            "pb-3": (exampleList.length > 0 || on) ?? kun,
-            "correct-color": correct,
-          })}
-        >
-          <span>{japanese}</span>
+    toHTML: (correct: boolean) => {
+      return (
+        <div>
+          <div className="position-relative h-0">
+            {correct && (
+              <table className="w-100 fs-4 text-sm-start">
+                <tbody>
+                  {on && (
+                    <tr
+                      key={on}
+                      className={classNames({
+                        invisible: !correct,
+                      })}
+                    >
+                      <td className="fs-6 ps-2">
+                        {JapaneseText.parse({
+                          japanese: "おんよみ\n音読み",
+                        }).toHTML()}
+                      </td>
+                      <td className="fs-5 ps-2">{on}</td>
+                    </tr>
+                  )}
+                  {kun && (
+                    <tr
+                      key={kun}
+                      className={classNames({
+                        invisible: !correct,
+                      })}
+                    >
+                      <td className="fs-6 ps-2">
+                        {JapaneseText.parse({
+                          japanese: "くんよみ\n訓読み",
+                        }).toHTML()}
+                      </td>
+                      <td className="fs-5 ps-2">{kun}</td>
+                    </tr>
+                  )}
+
+                  {exampleList.slice(0, exN).map((example) => (
+                    <tr
+                      key={example.uid}
+                      className={classNames({
+                        invisible: !correct,
+                      })}
+                    >
+                      <td className="ps-2">{oneFromList(example.english)}</td>
+                      <td className="pt-2 ps-2">
+                        {JapaneseText.parse(example).toHTML()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div
+            className={classNames({
+              "fs-display-huge": true,
+              "position-relative": true,
+              "opacity-25": true,
+              "z-index-n-1": true,
+              "correct-color": correct,
+            })}
+          >
+            <span>{japanese}</span>
+          </div>
         </div>
-        <table className="w-100 fs-4 text-sm-start">
-          <tbody>
-            {on && (
-              <tr
-                className={classNames({
-                  invisible: !correct,
-                })}
-              >
-                <td className="w-50 fs-6 ps-2">
-                  {JapaneseText.parse({
-                    japanese: "おんよみ\n音読み",
-                  }).toHTML()}
-                </td>
-                <td className="fs-5 ps-2">{on}</td>
-              </tr>
-            )}
-            {kun && (
-              <tr
-                className={classNames({
-                  invisible: !correct,
-                })}
-              >
-                <td className="w-50 fs-6 ps-2">
-                  {JapaneseText.parse({
-                    japanese: "くんよみ\n訓読み",
-                  }).toHTML()}
-                </td>
-                <td className="fs-5 ps-2">{kun}</td>
-              </tr>
-            )}
-
-            {exampleList.reduce<React.JSX.Element[]>((acc, example, i) => {
-              const eEl = (
-                <tr
-                  key={example.uid}
-                  className={classNames({
-                    invisible: !correct,
-                  })}
-                >
-                  <td className="w-50 ps-2">{oneFromList(example.english)}</td>
-                  <td className="pt-2 ps-2">
-                    {JapaneseText.parse(example).toHTML()}
-                  </td>
-                </tr>
-              );
-
-              if (i === 0) {
-                acc = [...acc, eEl];
-              } else if (!on && i === 1) {
-                acc = [...acc, eEl];
-              } else if (!kun && (i === 1 || (on && i > 1))) {
-                acc = [...acc, eEl];
-              }
-
-              return acc;
-            }, [])}
-          </tbody>
-        </table>
-      </div>
-    ),
+      );
+    },
   };
 
   return {

@@ -136,6 +136,7 @@ function prepareGame(
     toHTML: (correct: boolean) => (
       <span
         className={classNames({
+          "fs-1": true,
           "correct-color": correct,
         })}
       >

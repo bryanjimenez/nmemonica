@@ -126,7 +126,7 @@ export function FourChoices(
               true,
           })}
         >
-          <h1>{question.toHTML(state.correct)}</h1>
+          <div>{question.toHTML(state.correct)}</div>
           <span
             className={classNames({
               invisible: !props.qRomaji,
