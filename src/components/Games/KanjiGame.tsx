@@ -128,10 +128,10 @@ function prepareGame(
     // english, not needed, shown as a choice
     toHTML: (correct: boolean) => {
       return (
-        <div>
-          <div className="position-relative h-0">
+        <div className="d-flex align-items-center position-relative">
+          <div className="position-absolute w-100">
             {correct && (
-              <table className="w-100 fs-4 text-sm-start">
+              <table className="w-100 fs-4">
                 <tbody>
                   {on && (
                     <tr
@@ -140,12 +140,12 @@ function prepareGame(
                         invisible: !correct,
                       })}
                     >
-                      <td className="fs-6 ps-2">
+                      <td className="text-start fs-6">
                         {JapaneseText.parse({
                           japanese: "おんよみ\n音読み",
                         }).toHTML()}
                       </td>
-                      <td className="fs-5 ps-2">{on}</td>
+                      <td className="text-end fs-5">{on}</td>
                     </tr>
                   )}
                   {kun && (
@@ -155,12 +155,12 @@ function prepareGame(
                         invisible: !correct,
                       })}
                     >
-                      <td className="fs-6 ps-2">
+                      <td className="text-start fs-6">
                         {JapaneseText.parse({
                           japanese: "くんよみ\n訓読み",
                         }).toHTML()}
                       </td>
-                      <td className="fs-5 ps-2">{kun}</td>
+                      <td className="text-end fs-5">{kun}</td>
                     </tr>
                   )}
 
@@ -171,8 +171,8 @@ function prepareGame(
                         invisible: !correct,
                       })}
                     >
-                      <td className="ps-2">{oneFromList(example.english)}</td>
-                      <td className="pt-2 ps-2">
+                      <td className="text-start">{oneFromList(example.english)}</td>
+                      <td className="text-end">
                         {JapaneseText.parse(example).toHTML()}
                       </td>
                     </tr>
@@ -184,10 +184,9 @@ function prepareGame(
 
           <div
             className={classNames({
-              "fs-display-huge": true,
-              "position-relative": true,
+              "fs-kanji-huge": true,
+              "position-absolute w-100": true,
               "opacity-25": true,
-              "z-index-n-1": true,
               "correct-color": correct,
             })}
           >
@@ -450,7 +449,12 @@ export default function KanjiGame() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
 
-  useKeyboardActions(swipeHandler);
+  useKeyboardActions(swipeHandler,()=>{
+    // TODO: flip practice side
+    // navigate to
+    // <Link to={KanjiGridMeta.location}>
+
+  });
 
   if (!game) return <NotReady addlStyle="main-panel" />;
 

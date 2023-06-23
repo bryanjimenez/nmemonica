@@ -115,14 +115,15 @@ export function FourChoices(
     forParentRef.current === undefined ? undefined : forParentRef;
 
   return (
-    <div ref={optionalRef} className="pick4game main-panel h-100">
-      <div className="d-flex flex-column flex-sm-row  justify-content-between h-100">
+    <div ref={optionalRef} className="pick4game main-panel h-100 d-flex">
         <StackNavButton ariaLabel="Previous" action={gotoPrev}>
           <ChevronLeftIcon size={16} />
         </StackNavButton>
+        <div className="container">
+        <div className="row row-cols-1 row-cols-sm-2 h-100">
         <div
           className={classNames({
-            "question d-flex flex-column justify-content-center text-center w-100 w-sm-50":
+            "col question d-flex flex-column justify-content-center text-center":
               true,
           })}
         >
@@ -147,7 +148,7 @@ export function FourChoices(
             </span>
           )}
         </div>
-        <div className="choices d-flex justify-content-around flex-wrap w-100 w-sm-50 h-100">
+        <div className="col choices d-flex justify-content-around flex-wrap">
           {choices.map((c, i) => {
             const isRight = props.isCorrect(choices[i]) && state.correct;
             const isWrong = state.incorrect.includes(i);
@@ -202,10 +203,12 @@ export function FourChoices(
             return aChoice;
           })}
         </div>
-        <StackNavButton ariaLabel="Next" action={gotoNext}>
+        </div>
+
+      </div>
+      <StackNavButton ariaLabel="Next" action={gotoNext}>
           <ChevronRightIcon size={16} />
         </StackNavButton>
-      </div>
     </div>
   );
 }
