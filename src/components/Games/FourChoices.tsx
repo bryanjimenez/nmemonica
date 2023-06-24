@@ -247,6 +247,7 @@ function AChoice(props: AChoiceProps) {
   const choiceCSS = classNames({
     "d-flex flex-column justify-content-evenly": true,
     "w-50 h-50 pt-3 text-center clickable": true,
+    "text-break": true,
 
     ...(!props.css ? {} : { [props.css]: true }),
     ...(fadeIn === false ? {} : fadeCss),

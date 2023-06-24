@@ -1,5 +1,6 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
+import orderBy from "lodash/orderBy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
@@ -121,8 +122,13 @@ function prepareGame(
 
   const choices = createEnglishChoices(kanji, kanjiList, exampleList);
 
-  /** Number of examples to show */
-  const exN = on && kun ? 2 : on || kun ? 3 : 5;
+  /** Max number of examples to show */
+  const exMax = on && kun ? 2 : on || kun ? 3 : 5;
+  /** Examples sorted and limited */
+  const displayEx = orderBy(
+    exampleList,
+    (ex) => JapaneseText.parse(ex).getSpelling().length
+  ).slice(0, exMax);
 
   const q: GameQuestion = {
     // english, not needed, shown as a choice
@@ -165,7 +171,7 @@ function prepareGame(
                   </div>
                 )}
 
-                {exampleList.slice(0, exN).map((example) => (
+                {displayEx.map((example) => (
                   <div
                     key={example.uid}
                     className={classNames({
@@ -173,7 +179,7 @@ function prepareGame(
                       invisible: !correct,
                     })}
                   >
-                    <div className="mw-50 text-break text-start">
+                    <div className="fs-5 mw-50 text-break text-start">
                       {oneFromList(example.english)}
                     </div>
                     <div>{JapaneseText.parse(example).toHTML()}</div>
@@ -457,7 +463,7 @@ export default function KanjiGame() {
   });
 
   const checkAnswer = useCallback(
-    (answered:{compare:string}) => answered.compare === game?.answer,
+    (answered: { compare: string }) => answered.compare === game?.answer,
     [game]
   );
 
