@@ -78,10 +78,25 @@ export const getKanji = createAsyncThunk(
 
 export const kanjiFromLocalStorage = createAsyncThunk(
   "kanji/kanjiFromLocalStorage",
-  async (arg: typeof kanjiInitState.setting) => {
+  (arg: typeof kanjiInitState.setting) => {
     const initValues = arg;
 
     return initValues;
+  }
+);
+
+export const updateSpaceRepKanji = createAsyncThunk(
+  "kanji/updateSpaceRepKanji",
+  (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = (thunkAPI.getState() as RootState).kanji;
+
+    const spaceRep = state.setting.repetition;
+
+    return updateSpaceRepTerm(uid, spaceRep, {
+      count: shouldIncrement,
+      date: true,
+    });
   }
 );
 
@@ -349,6 +364,19 @@ const kanjiSlice = createSlice({
         ...state,
         setting: { ...mergedSettings, repTID: Date.now() },
       };
+    });
+
+    builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
+      const { value: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "repetition",
+        newValue
+      );
     });
   },
 });

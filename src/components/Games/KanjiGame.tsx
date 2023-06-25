@@ -8,12 +8,14 @@ import { Link } from "react-router-dom";
 import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { spaceRepLog } from "../../helper/consoleHelper";
 import {
   dateViewOrder,
   difficultyOrder,
   difficultySubFilter,
   getTerm,
   getTermUID,
+  minimumTimeForSpaceRepUpdate,
   play,
   randomOrder,
   termFilterByType,
@@ -26,11 +28,13 @@ import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch } from "../../slices";
+import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyKanji,
   getKanji,
   removeFrequencyKanji,
   setKanjiDifficulty,
+  updateSpaceRepKanji,
 } from "../../slices/kanjiSlice";
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
@@ -236,15 +240,6 @@ export default function KanjiGame() {
 
   const { vocabList } = useConnectVocabulary();
 
-  useEffect(() => {
-    if (kanjiList.length === 0) {
-      void dispatch(getKanji());
-    }
-    if (vocabList.length === 0) {
-      void dispatch(getVocabulary());
-    }
-  }, []);
-
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
@@ -254,6 +249,15 @@ export default function KanjiGame() {
   const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
     undefined
   );
+
+  useEffect(() => {
+    if (kanjiList.length === 0) {
+      void dispatch(getKanji());
+    }
+    if (vocabList.length === 0) {
+      void dispatch(getVocabulary());
+    }
+  }, []);
 
   const filteredTerms: RawKanji[] = useMemo(() => {
     if (kanjiList.length === 0) return [];
@@ -340,6 +344,51 @@ export default function KanjiGame() {
     return newOrder;
   }, [filteredTerms]);
 
+  const prevReinforcedUID = useRef<string | undefined>(undefined);
+  const prevSelectedIndex = useRef(0);
+  const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
+  const prevLastNext = useRef<number>(Date.now());
+
+  useEffect(() => {
+    const prevState = {
+      selectedIndex: prevSelectedIndex.current,
+      reinforcedUID: prevReinforcedUID.current,
+      lastNext: prevLastNext.current,
+    };
+
+    if (
+      reinforcedUID !== prevState.reinforcedUID ||
+      selectedIndex !== prevState.selectedIndex
+    ) {
+      const prevUid =
+        prevState.reinforcedUID ??
+        getTermUID(prevState.selectedIndex, filteredTerms, order);
+
+      // prevent updates when quick scrolling
+      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+        const prevTerm = getTerm(prevUid, filteredTerms);
+
+        // don't increment reinforced terms
+        const shouldIncrement = prevUid !== prevState.reinforcedUID;
+
+        void dispatch(updateSpaceRepKanji({ uid: prevUid, shouldIncrement }))
+          .unwrap()
+          .then((payload) => {
+            const { map, prevMap } = payload;
+
+            const prevDate = prevMap[prevUid]?.d;
+            const repStats = { [prevUid]: { ...map[prevUid], d: prevDate } };
+            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
+
+            spaceRepLog(messageLog, prevTerm, repStats, { frequency });
+          });
+      }
+
+      prevSelectedIndex.current = selectedIndex;
+      prevReinforcedUID.current = reinforcedUID;
+    }
+  }, [dispatch, reinforcedUID, selectedIndex, filteredTerms, order]);
+
   // TODO: can be cashed as uid table
   const exampleList = useMemo(
     () => {
@@ -395,12 +444,12 @@ export default function KanjiGame() {
     //   newSel = (l + newSel + 1) % l;
     // }
 
-    // prevLastNext.current = lastNext;
-    // setLastNext(Date.now());
-    // prevSelectedIndex.current = selectedIndex;
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+    prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(undefined);
-  }, [filteredTerms, selectedIndex /* lastNext, errorSkipIndex*/]);
+  }, [filteredTerms, selectedIndex, lastNext /*, errorSkipIndex*/]);
 
   const gotoNextSlide = useCallback(() => {
     play(
@@ -439,15 +488,16 @@ export default function KanjiGame() {
     //   newSel = (l + newSel - 1) % l;
     // }
 
-    // prevLastNext.current = lastNext;
-    // setLastNext(Date.now());
-    // prevSelectedIndex.current = selectedIndex;
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+    prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(undefined);
   }, [
     filteredTerms,
     selectedIndex,
-    reinforcedUID /*lastNext, errorSkipIndex*/,
+    reinforcedUID,
+    lastNext /*, errorSkipIndex*/,
   ]);
 
   const addFrequencyTerm = useCallback(
