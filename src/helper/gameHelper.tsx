@@ -12,6 +12,7 @@ import { TermFilterBy } from "../slices/settingHelper";
 import type {
   FuriganaToggleMap,
   GroupListMap,
+  MetaDataObj,
   RawJapanese,
   RawKanji,
   RawPhrase,
@@ -434,7 +435,7 @@ export function getCorrectnessScore(count = 0, average = 0) {
  * @param spaceRepObj
  */
 export function dateViewOrder(
-  terms: RawVocabulary[],
+  terms: { uid: string }[],
   spaceRepObj: SpaceRepetitionMap
 ) {
   interface lastSeenSortable {
@@ -491,7 +492,7 @@ export const DIFFICULTY_THRLD = 30;
  * @returns an array containing the indexes of terms in difficulty order
  */
 export function difficultyOrder(
-  terms: RawVocabulary[],
+  terms: { uid: string }[],
   spaceRepObj: SpaceRepetitionMap
 ) {
   interface difficultySortable {
@@ -609,6 +610,34 @@ export function randomOrder<T>(terms: T[]) {
   shuffleArray(order);
 
   return order;
+}
+
+/**
+ * Applies a difficulty threshold filter on a list of terms
+ * @param threshold difficulty threshold (negative thresholds below, positive above)
+ * @param termList list of terms
+ * @param metadata record of term metadata
+ */
+export function difficultySubFilter<T extends { uid: string }>(
+  threshold: number,
+  termList: T[],
+  metadata: Record<string, MetaDataObj | undefined>
+) {
+  return termList.filter((v) => {
+    const dT = threshold;
+    const d = metadata[v.uid]?.difficulty;
+
+    let showUndefMemoV = false;
+    let showV = false;
+    if (d === undefined) {
+      showUndefMemoV =
+        dT < 0 ? -1 * dT > DIFFICULTY_THRLD : dT < DIFFICULTY_THRLD;
+    } else {
+      showV = dT < 0 ? d < -1 * dT : d > dT;
+    }
+
+    return showUndefMemoV || showV;
+  });
 }
 
 export function labelOptions(index: number, options: string[]) {
@@ -973,7 +1002,7 @@ export function toggleFuriganaSettingHelper(
 export function pause(
   ms: number,
   { signal }: { signal: AbortSignal },
-  countDownFn?: (p: number, w: number)  => void
+  countDownFn?: (p: number, w: number) => void
 ) {
   return new Promise<void>((resolve, reject) => {
     const listener = () => {
@@ -1084,7 +1113,7 @@ export function motionThresholdCondition(
  */
 export function getDeviceMotionEventPermission(
   onGranted: () => void,
-  onError: (error:Error) => void
+  onError: (error: Error) => void
 ) {
   // @ts-expect-error DeviceMotionEvent.requestPermission
   if (typeof DeviceMotionEvent.requestPermission === "function") {

@@ -28,6 +28,7 @@ import {
   useWindowSize,
 } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch } from "../../slices";
 import {
@@ -72,21 +73,22 @@ export default function Kanji() {
 
   const {
     kanjiList,
-    vocabList,
 
-    filterType: filterTypeRef,
-    reinforce: reinforceRef,
+    filterType: filterTypeREF,
+    reinforce: reinforceREF,
     activeTags,
     repetition,
   } = useConnectKanji();
 
+  const { vocabList } = useConnectVocabulary();
+
   // after initial render
   useEffect(() => {
     if (kanjiList.length === 0) {
-      dispatch(getKanji());
+      void dispatch(getKanji());
     }
     if (vocabList.length === 0) {
-      dispatch(getVocabulary());
+      void dispatch(getVocabulary());
     }
   }, []);
 
@@ -121,10 +123,10 @@ export default function Kanji() {
     );
 
     let filtered = termFilterByType(
-      filterTypeRef.current,
+      filterTypeREF.current,
       kanjiList,
       allFrequency,
-      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
+      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : [],
       buildAction(dispatch, toggleKanjiFilter)
     );
 
@@ -137,7 +139,7 @@ export default function Kanji() {
     setFrequency(frequency);
 
     return filtered;
-  }, [dispatch, kanjiList, filterTypeRef, activeTags]);
+  }, [dispatch, kanjiList, filterTypeREF, activeTags]);
 
   const order = useMemo(() => {
     if (filteredTerms.length === 0) return [];
@@ -160,7 +162,7 @@ export default function Kanji() {
   const gotoNextSlide = useCallback(() => {
     let filtered = filteredTerms;
     // include frequency terms outside of filtered set
-    if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
+    if (reinforceREF.current && filterTypeREF.current === TermFilterBy.TAGS) {
       const allFrequency = Object.keys(repetition).reduce<string[]>(
         (acc, cur) => {
           if (repetition[cur]?.rein === true) {
@@ -176,8 +178,8 @@ export default function Kanji() {
     }
 
     play(
-      reinforceRef.current,
-      filterTypeRef.current,
+      reinforceREF.current,
+      filterTypeREF.current,
       frequency,
       // filteredTerms,
       filtered,
@@ -195,8 +197,8 @@ export default function Kanji() {
     reinforcedUID,
     repetition,
 
-    reinforceRef,
-    filterTypeRef,
+    reinforceREF,
+    filterTypeREF,
   ]);
 
   const gotoPrev = useCallback(() => {

@@ -1,13 +1,15 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
 import {
   TermFilterBy,
+  TermSortBy,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
+import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { buildTagObject } from "../helper/reducerHelper";
 import type { RawKanji, SpaceRepetitionMap } from "../typings/raw";
@@ -21,7 +23,9 @@ export interface KanjiInitSlice {
 
   setting: {
     filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
     reinforce: boolean;
+    memoThreshold: number;
     repTID: number;
     repetition: SpaceRepetitionMap;
     activeGroup: string[];
@@ -40,7 +44,9 @@ export const kanjiInitState: KanjiInitSlice = {
 
   setting: {
     filter: 2,
+    ordered: 0,
     reinforce: false,
+    memoThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
     activeGroup: [],
@@ -120,6 +126,35 @@ const kanjiSlice = createSlice({
       );
     },
 
+    toggleKanjiOrdering(
+      state,
+      action: { payload: (typeof TermSortBy)[keyof typeof TermSortBy] }
+    ) {
+      const { ordered } = state.setting;
+      const override = action.payload;
+
+      const allowed = [
+        // TermSortBy.ALPHABETIC,
+        TermSortBy.DIFFICULTY,
+        // TermSortBy.GAME,
+        TermSortBy.RANDOM,
+        TermSortBy.VIEW_DATE,
+      ];
+      const newOrdered = toggleAFilter(
+        ordered + 1,
+        allowed,
+        override
+      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+
+      state.setting.ordered = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "ordered",
+        newOrdered
+      );
+    },
+
     addFrequencyKanji(state, action: { payload: string }) {
       const uid = action.payload;
 
@@ -172,6 +207,21 @@ const kanjiSlice = createSlice({
           state.setting.repetition = newValue;
         }
       }
+    },
+
+    /**
+     * Filter Kanji excluding terms with value above
+     */
+    setKanjiMemorizedThreshold(state, action: PayloadAction<number>) {
+      const threshold = action.payload;
+
+      state.setting.memoThreshold = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "memoThreshold",
+        threshold
+      );
     },
 
     setKanjiDifficulty: {
@@ -306,8 +356,10 @@ const kanjiSlice = createSlice({
 export const {
   toggleKanjiActiveTag,
   toggleKanjiActiveGrp,
+  toggleKanjiOrdering,
   addFrequencyKanji,
   removeFrequencyKanji,
+  setKanjiMemorizedThreshold,
   setKanjiDifficulty,
   toggleKanjiFilter,
   toggleKanjiReinforcement,

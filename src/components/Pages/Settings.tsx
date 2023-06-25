@@ -11,8 +11,6 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
-import { SetTermGFList } from "./SetTermGFList";
-import { SetTermTagList } from "./SetTermTagList";
 import {
   getDeviceMotionEventPermission,
   getStaleSpaceRepKeys,
@@ -21,7 +19,11 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import { buildAction } from "../../hooks/helperHK";
+import { useConnectKana } from "../../hooks/useConnectKana";
+import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
@@ -40,13 +42,10 @@ import {
 } from "../../slices/kanaSlice";
 import {
   getKanji,
-  removeFrequencyKanji,
   setKanjiBtnN,
-  toggleKanjiActiveGrp,
-  toggleKanjiActiveTag,
+  setKanjiMemorizedThreshold,
   toggleKanjiFadeInAnswers,
-  toggleKanjiFilter,
-  toggleKanjiReinforcement,
+  toggleKanjiOrdering,
 } from "../../slices/kanjiSlice";
 import {
   setOppositesARomaji,
@@ -58,18 +57,26 @@ import {
   toggleParticleFadeInAnswers,
 } from "../../slices/particleSlice";
 import { getPhrase, togglePhraseActiveGrp } from "../../slices/phraseSlice";
-import { DebugLevel, KanaType, TermFilterBy } from "../../slices/settingHelper";
+import {
+  DebugLevel,
+  KanaType,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import {
   getVocabulary,
   toggleVocabularyActiveGrp,
 } from "../../slices/vocabularySlice";
 import type { RawVocabulary } from "../../typings/raw";
 import type { ConsoleMessage } from "../Form/Console";
+import { DifficultySubFilter } from "../Form/DifficultySubFilter";
 import KanaOptionsSlider from "../Form/KanaOptionsSlider";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
+import SimpleListMenu from "../Form/SimpleListMenu";
+const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
 
@@ -259,34 +266,28 @@ export default function Settings() {
     memory,
     debug,
 
-    kanjiFilter,
-    kanjiReinforce,
-    kanjiActiveTags: kanjiActive,
-
-    kanjiChoiceN,
-    kanjiFadeInAnswers,
-
     oppositesQRomaji,
     oppositesARomaji,
     oppositeFadeInAnswers,
 
-    choiceN,
-    wideMode,
-    easyMode,
-    charSet,
-
     particlesARomaji,
     particleFadeInAnswer,
-
-    vocabList: vocabulary,
-    kanjiTagObj: kanjiTags,
-    phraseList: phrases,
-    KanjiList: kanji,
-
-    vocabMeta: vRepetition,
-    phraseMeta: pRepetition,
-    kanjiMeta: kRepetition,
   } = useConnectSetting();
+
+  const { vocabList: vocabulary, repetition: vRepetition } =
+    useConnectVocabulary();
+  const { phraseList: phrases, repetition: pRepetition } = useConnectPhrase();
+  const {
+    kanjiList: kanji,
+    orderType: kanjiOrder,
+    repetition: kRepetition,
+    kanjiTagObj: kanjiTags,
+    fadeInAnswers: kanjiFadeInAnswers,
+    choiceN: kanjiChoiceN,
+  } = useConnectKanji();
+  const { charSet, easyMode, wideMode, choiceN } = useConnectKana();
+
+  const { memoThreshold } = useConnectKanji();
 
   const [spin, setSpin] = useState(false);
 
@@ -303,18 +304,18 @@ export default function Settings() {
 
   useEffect(
     () => {
-      dispatch(getMemoryStorageStatus());
+      void dispatch(getMemoryStorageStatus());
 
       if (vocabulary.length === 0) {
-        dispatch(getVocabulary());
+        void dispatch(getVocabulary());
       }
 
       if (kanjiTags.length === 0) {
-        dispatch(getKanji());
+        void dispatch(getKanji());
       }
 
       if (phrases.length === 0) {
-        dispatch(getPhrase());
+        void dispatch(getPhrase());
       }
 
       navigator.serviceWorker.addEventListener(
@@ -467,20 +468,6 @@ export default function Settings() {
 
   if (vocabulary.length < 1 || phrases.length < 1 || kanjiTags.length < 1)
     return <NotReady addlStyle="main-panel" />;
-
-  const kanjiSelectedTags = Object.values(kanji).filter((k) =>
-    k.tag?.some((aTag: string) => kanjiActive.includes(aTag))
-  );
-  const kanjiSelectedUids = kanjiSelectedTags.map((k) => k.uid);
-
-  const kanjiFreq = Object.keys(kRepetition).filter(
-    (k) => kRepetition[k]?.rein === true
-  );
-
-  // kanjis in frequency list, but outside of current tag selection
-  const kFreqExcluTagSelected = kanjiFreq.filter(
-    (k) => !kanjiSelectedUids.includes(k)
-  );
 
   return (
     <div className="settings">
@@ -636,74 +623,13 @@ export default function Settings() {
             {collapseExpandToggler(sectionKanji, setSectionKanji)}
           </div>
           {sectionKanji && (
-            <div className="d-flex flex-row justify-content-between">
-              <div className="column-1">
-                <h4>
-                  {labelOptions(kanjiFilter, [
-                    "Kanji Group",
-                    "Frequency List",
-                    "Tags",
-                  ])}
-                </h4>
-                <div className="mb-2">
-                  <SettingsSwitch
-                    active={kanjiFilter % 2 === 0}
-                    action={buildAction(dispatch, toggleKanjiFilter)}
-                    color="default"
-                    statusText={"Filter by"}
-                  />
-                </div>
-                {kanjiFilter === TermFilterBy.FREQUENCY &&
-                  kanjiFreq.length === 0 && (
-                    <div className="fst-italic">No words have been chosen</div>
-                  )}
-                {kanjiFilter === TermFilterBy.TAGS && (
-                  <SetTermTagList
-                    selectedCount={
-                      kanjiSelectedTags.length === 0
-                        ? Object.values(kanji).length
-                        : kanjiSelectedTags.length
-                    }
-                    termsTags={kanjiTags}
-                    termsActive={kanjiActive}
-                    toggleTermActive={buildAction(
-                      dispatch,
-                      toggleKanjiActiveTag
-                    )}
-                  />
-                )}
-                {kanjiFilter === TermFilterBy.FREQUENCY &&
-                  kanjiFreq.length > 0 && (
-                    <SetTermGFList
-                      termsActive={kanjiActive}
-                      termsFreq={kanjiFreq}
-                      terms={kanji}
-                      removeFrequencyTerm={buildAction(
-                        dispatch,
-                        removeFrequencyKanji
-                      )}
-                      toggleTermActiveGrp={buildAction(
-                        dispatch,
-                        toggleKanjiActiveGrp
-                      )}
-                    />
-                  )}
-              </div>
-              <div className="column-2 setting-block">
-                <div className="mb-2">
-                  <SettingsSwitch
-                    active={kanjiReinforce}
-                    action={buildAction(dispatch, toggleKanjiReinforcement)}
-                    disabled={kanjiFilter === TermFilterBy.FREQUENCY}
-                    statusText={
-                      (kanjiReinforce
-                        ? `(+${kFreqExcluTagSelected.length} ) `
-                        : "") + "Reinforcement"
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+            <Suspense
+              fallback={
+                <NotReady addlStyle="kanji-settings" text="Loading..." />
+              }
+            >
+              <SettingsKanji />
+            </Suspense>
           )}
         </div>
         <div className={pageClassName}>
@@ -773,19 +699,45 @@ export default function Settings() {
             <h2>Kanji Game</h2>
           </div>
 
-          <div className="setting-block">
-            <div className="d-flex justify-content-end p-2">
-              <KanaOptionsSlider
-                initial={kanjiChoiceN}
-                setChoiceN={buildAction(dispatch, setKanjiBtnN)}
-              />
-            </div>
-            <div className="mb-2">
-              <SettingsSwitch
-                active={kanjiFadeInAnswers}
-                action={buildAction(dispatch, toggleKanjiFadeInAnswers)}
-                statusText="Fade in answers"
-              />
+          <div className="d-flex flex-row justify-content-between">
+            <div className="column-1" />
+            <div className="column-2">
+              <div className="mb-2">
+                <SimpleListMenu
+                  title={"Sort by:"}
+                  options={TermSortByLabel}
+                  allowed={[
+                    TermSortBy.DIFFICULTY,
+                    TermSortBy.RANDOM,
+                    TermSortBy.VIEW_DATE,
+                  ]}
+                  initial={kanjiOrder.current}
+                  onChange={buildAction(dispatch, toggleKanjiOrdering)}
+                />
+
+                {kanjiOrder.current === TermSortBy.DIFFICULTY && (
+                  <DifficultySubFilter
+                    memoThreshold={memoThreshold}
+                    setThreshold={buildAction(
+                      dispatch,
+                      setKanjiMemorizedThreshold
+                    )}
+                  />
+                )}
+              </div>
+              <div className="d-flex justify-content-end p-2 text-end">
+                <KanaOptionsSlider
+                  initial={kanjiChoiceN}
+                  setChoiceN={buildAction(dispatch, setKanjiBtnN)}
+                />
+              </div>
+              <div className="d-flex justify-content-end p-2">
+                <SettingsSwitch
+                  active={kanjiFadeInAnswers}
+                  action={buildAction(dispatch, toggleKanjiFadeInAnswers)}
+                  statusText="Fade in answers"
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { JapaneseText } from "../../../src/helper/JapaneseText";
 import {
   activeGroupIncludes,
   alphaOrder,
+  difficultySubFilter,
   getJapaneseHint,
   randomOrder,
   spaceRepOrder,
@@ -510,6 +511,82 @@ describe("gameHelper", function () {
       const actual = randomOrder(terms);
       expect(actual).to.not.deep.eq(expected); //should not be ordered
       expect(actual).to.include.members(expected); //should contain all originals
+    });
+  });
+  describe("difficultySubFilter", function () {
+    const terms = [{ uid: "a" }, { uid: "b" }, { uid: "c" }, { uid: "d" }];
+
+    it("below a value", function () {
+      const expected = [{ uid: "a" }];
+      const tMeta = {
+        a: { difficulty: 36 },
+        b: { difficulty: 90 },
+        c: { difficulty: 90 },
+        d: { difficulty: 90 },
+      };
+
+      const actual = difficultySubFilter(-50, terms, tMeta);
+      expect(actual).to.deep.eq(expected);
+    });
+    it("undefined is below", function () {
+      const expected = [{ uid: "a" }];
+      const tMeta = {
+        a: { difficulty: undefined },
+        b: { difficulty: 90 },
+        c: { difficulty: 90 },
+        d: { difficulty: 90 },
+      };
+
+      const actual = difficultySubFilter(-50, terms, tMeta);
+      expect(actual).to.deep.eq(expected);
+    });
+    it("above a value", function () {
+      const expected = [{ uid: "b" }, { uid: "c" }, { uid: "d" }];
+      const tMeta = {
+        a: { difficulty: 36 },
+        b: { difficulty: 90 },
+        c: { difficulty: 90 },
+        d: { difficulty: 90 },
+      };
+
+      const actual = difficultySubFilter(50, terms, tMeta);
+      expect(actual).to.deep.eq(expected);
+    });
+    it("undefined is above", function () {
+      const expected = [{ uid: "b" }, { uid: "c" }, { uid: "d" }];
+      const tMeta = {
+        a: { difficulty: 6 },
+        b: { difficulty: undefined },
+        c: { difficulty: undefined },
+        d: { difficulty: undefined },
+      };
+
+      const actual = difficultySubFilter(25, terms, tMeta);
+      expect(actual).to.deep.eq(expected);
+    });
+    it("mixed", function () {
+      const expected = [{ uid: "a" }, { uid: "b" }, { uid: "c" }];
+      const tMeta = {
+        a: { difficulty: 6 },
+        b: { difficulty: undefined },
+        c: { difficulty: 31 },
+        d: { difficulty: 80 },
+      };
+
+      const actual = difficultySubFilter(-35, terms, tMeta);
+      expect(actual).to.deep.eq(expected);
+    });
+    it("empty result", function () {
+      const expected = [];
+      const tMeta = {
+        a: { difficulty: 36 },
+        b: { difficulty: 90 },
+        c: { difficulty: 90 },
+        d: { difficulty: 90 },
+      };
+
+      const actual = difficultySubFilter(90, terms, tMeta);
+      expect(actual).to.deep.eq(expected);
     });
   });
   describe("termFilterByType", function () {

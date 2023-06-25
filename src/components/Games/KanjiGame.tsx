@@ -9,6 +9,9 @@ import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
+  dateViewOrder,
+  difficultyOrder,
+  difficultySubFilter,
   getTerm,
   getTermUID,
   play,
@@ -29,7 +32,7 @@ import {
   removeFrequencyKanji,
   setKanjiDifficulty,
 } from "../../slices/kanjiSlice";
-import { TermFilterBy } from "../../slices/settingHelper";
+import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawKanji, RawVocabulary } from "../../typings/raw";
 import { DifficultySlider } from "../Form/Difficulty";
@@ -221,19 +224,24 @@ export default function KanjiGame() {
     activeTags,
     repetition,
     fadeInAnswers,
+    memoThreshold,
 
     filterType: filterTypeRef,
+    orderType: orderTypeREF,
     reinforce: reinforceRef,
   } = useConnectKanji();
+
+  const memoThresholdRef = useRef(memoThreshold);
+  memoThresholdRef.current = memoThreshold;
 
   const { vocabList } = useConnectVocabulary();
 
   useEffect(() => {
     if (kanjiList.length === 0) {
-      dispatch(getKanji());
+      void dispatch(getKanji());
     }
     if (vocabList.length === 0) {
-      dispatch(getVocabulary());
+      void dispatch(getVocabulary());
     }
   }, []);
 
@@ -279,6 +287,27 @@ export default function KanjiGame() {
       filtered = [...filtered, ...additional];
     }
 
+    switch (orderTypeREF.current) {
+      case TermSortBy.DIFFICULTY: {
+        // exclude vocab with difficulty beyond memoThreshold
+
+        const subFilter = difficultySubFilter(
+          memoThresholdRef.current,
+          filtered,
+          metadata.current
+        );
+
+        if (subFilter.length > 0) {
+          filtered = subFilter;
+        } else {
+          console.warn(
+            "Excluded all terms. Discarding memorized subfiltering."
+          );
+        }
+        break;
+      }
+    }
+
     const initialFrequency = filtered.reduce<string[]>((acc, cur) => {
       if (metadata.current[cur.uid]?.rein === true) {
         return [...acc, cur.uid];
@@ -291,7 +320,25 @@ export default function KanjiGame() {
     return filtered;
   }, [kanjiList, activeTags, reinforceRef, filterTypeRef]);
 
-  const order = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
+  const order = useMemo(() => {
+    const repetition = metadata.current;
+    if (filteredTerms.length === 0) return [];
+
+    let newOrder;
+    switch (orderTypeREF.current) {
+      case TermSortBy.VIEW_DATE:
+        newOrder = dateViewOrder(filteredTerms, repetition);
+        break;
+      case TermSortBy.DIFFICULTY:
+        // exclude filteredTerms with difficulty beyond memoThreshold
+        newOrder = difficultyOrder(filteredTerms, metadata.current);
+        break;
+      default:
+        /** TermSortBy.RANDOM */ newOrder = randomOrder(filteredTerms);
+    }
+
+    return newOrder;
+  }, [filteredTerms]);
 
   // TODO: can be cashed as uid table
   const exampleList = useMemo(

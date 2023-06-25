@@ -173,7 +173,7 @@ export function buildAction(
       return;
     }
 
-    if (childValue) {
+    if (childValue !== undefined) {
       // childValue
       dispatch(action(childValue));
       return;
