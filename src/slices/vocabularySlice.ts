@@ -87,13 +87,14 @@ export const getVocabulary = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching vocabulary: 0");
     // }
-    return fetch(firebaseConfig.databaseURL + "/lambda/vocabulary.json", {
-      headers: { "Data-Version": version },
-    }).then((res) =>
-      res
-        .json()
-        .then((value: Record<string, RawVocabulary>) => ({ value, version }))
-    );
+    const value = (await fetch(
+      firebaseConfig.databaseURL + "/lambda/vocabulary.json",
+      {
+        headers: { "Data-Version": version },
+      }
+    ).then((res) => res.json())) as Record<string, RawVocabulary>;
+
+    return { value, version };
   }
 );
 

@@ -43,11 +43,10 @@ export function play<RawItem extends { uid: string }>(
     frequency.length > 0
   ) {
     const min = 0;
-    const staleFreq = frequency.filter(
-      (fUid) => {
-        const lastSeen = metadata[fUid]?.d! // frequency terms always have lastSeen
-        return minsSince(lastSeen) > frequency.length}
-    );
+    const staleFreq = frequency.filter((fUid) => {
+      const lastSeen = metadata[fUid]?.d!; // frequency terms always have lastSeen
+      return minsSince(lastSeen) > frequency.length;
+    });
     const max = staleFreq.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
     const vocabulary = filteredTerms.find((v) => staleFreq[idx] === v.uid);
@@ -738,9 +737,11 @@ export function japaneseLabel(
 
   if (isOnTop && (showIntr || pairUID)) {
     let viewMyPair = undefined;
-    if(pairUID !== undefined && typeof jumpToTerm === 'function'){
-      const p = pairUID
-      viewMyPair = () => {jumpToTerm(p);} 
+    if (pairUID !== undefined && typeof jumpToTerm === "function") {
+      const p = pairUID;
+      viewMyPair = () => {
+        jumpToTerm(p);
+      };
     }
 
     indicators = [
@@ -843,9 +844,11 @@ export function englishLabel(
 
   if (isOnTop && (showIntr || pairUID)) {
     let viewMyPair = undefined;
-    if(pairUID !== undefined && typeof jumpToTerm === 'function'){
-      const p = pairUID
-      viewMyPair = () => {jumpToTerm(p);} 
+    if (pairUID !== undefined && typeof jumpToTerm === "function") {
+      const p = pairUID;
+      viewMyPair = () => {
+        jumpToTerm(p);
+      };
     }
 
     indicators = [

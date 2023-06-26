@@ -238,7 +238,7 @@ export function useTimedGame(
             return looperSwipe("left");
           })
           .catch((error: Error) => {
-            const cause = error.cause as {code: string };
+            const cause = error.cause as { code: string };
 
             if (cause?.code === "UserAborted") {
               // user aborted
@@ -291,7 +291,7 @@ export function useTimedGame(
     if (loop > 0) {
       promise = gameActionHandler(direction, AbortController);
     }
-    return promise || Promise.reject("loop disabled");
+    return promise ?? Promise.reject("loop disabled");
   }
 
   /**

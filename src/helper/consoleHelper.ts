@@ -1,5 +1,6 @@
 import { DebugLevel } from "../slices/settingHelper";
 import {
+  MetaDataObj,
   RawPhrase,
   RawVocabulary,
   SpaceRepetitionMap,
@@ -93,7 +94,7 @@ export function spaceRepLog<T extends { uid: string; english: string }>(
 export function timedPlayLog(
   logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
   term: RawVocabulary | RawPhrase,
-  spaceRepMap: SpaceRepetitionMap,
+  spaceRepMap: Record<string, MetaDataObj | undefined>,
   options: { frequency: boolean }
 ) {
   const lastDate = spaceRepMap[term.uid]?.d;

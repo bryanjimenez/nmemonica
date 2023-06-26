@@ -13,7 +13,7 @@ import type { RootState } from "../slices";
 export type GameActionHandler = (
   direction: string,
   ab?: AbortController
-) => void;
+) => unknown;
 /**
  * @param gameActionHandler a function that takes a direction and does an action
  * @param timedPlayAnswerHandlerWrapper
