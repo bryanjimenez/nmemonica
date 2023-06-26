@@ -1,8 +1,6 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import { firebaseConfig } from "../../environment.development";
-import { buildGroupObject } from "../helper/reducerHelper";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+
 import {
   TermFilterBy,
   TermSortBy,
@@ -10,13 +8,21 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import type { RawPhrase, SpaceRepetitionMap } from "../typings/raw";
+import { firebaseConfig } from "../../environment.development";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { buildGroupObject } from "../helper/reducerHelper";
+import type {
+  GroupListMap,
+  RawPhrase,
+  SpaceRepetitionMap,
+} from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface PhraseInitSlice {
   value: RawPhrase[];
   version: string;
-  grpObj: {};
+  grpObj: GroupListMap;
 
   setting: {
     ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
@@ -68,15 +74,20 @@ export const getPhrase = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching phrase: 0");
     // }
-    return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
-      headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
+    const value = (await fetch(
+      firebaseConfig.databaseURL + "/lambda/phrases.json",
+      {
+        headers: { "Data-Version": version },
+      }
+    ).then((res) => res.json())) as Record<string, RawPhrase>;
+
+    return { value, version };
   }
 );
 
 export const phraseFromLocalStorage = createAsyncThunk(
   "phrase/phraseFromLocalStorage",
-  async (arg: typeof phraseInitState.setting) => {
+  (arg: typeof phraseInitState.setting) => {
     const initValues = arg;
 
     return initValues;
@@ -85,7 +96,7 @@ export const phraseFromLocalStorage = createAsyncThunk(
 
 export const updateSpaceRepPhrase = createAsyncThunk(
   "phrase/updateSpaceRepPhrase",
-  async (arg: { uid: string; shouldIncrement: boolean }, thunkAPI) => {
+  (arg: { uid: string; shouldIncrement: boolean }, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
     const state = (thunkAPI.getState() as RootState).phrases;
 
@@ -159,7 +170,7 @@ const phraseSlice = createSlice({
       );
     },
 
-    addFrequencyPhrase(state, action) {
+    addFrequencyPhrase(state, action: PayloadAction<string>) {
       const uid = action.payload;
       const { value: newValue } = updateSpaceRepTerm(
         uid,

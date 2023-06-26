@@ -16,10 +16,10 @@ import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
 import {
-  DIFFICULTY_THRLD,
   alphaOrder,
   dateViewOrder,
   difficultyOrder,
+  difficultySubFilter,
   getCacheUID,
   getTerm,
   getTermUID,
@@ -111,11 +111,11 @@ export default function Vocabulary() {
     vocabList,
 
     // Refs
-    memoThreshold,
-    reinforce,
-    filterType,
-    hintEnabled,
-    sortMethod,
+    memoThreshold: memoThresholdREF,
+    reinforce: reinforceREF,
+    filterType: filterTypeREF,
+    hintEnabled: hintEnabledREF,
+    sortMethod: sortMethodREF,
     activeGroup,
 
     // modifiable during game
@@ -131,7 +131,7 @@ export default function Vocabulary() {
 
   useEffect(() => {
     if (vocabList.length === 0) {
-      dispatch(getVocabulary());
+      void dispatch(getVocabulary());
     }
   }, []);
 
@@ -151,36 +151,21 @@ export default function Vocabulary() {
     );
 
     let filtered = termFilterByType(
-      filterType.current,
+      filterTypeREF.current,
       vocabList,
       allFrequency,
       activeGroup,
       buildAction(dispatch, toggleVocabularyFilter)
     );
 
-    switch (sortMethod.current) {
+    switch (sortMethodREF.current) {
       case TermSortBy.DIFFICULTY: {
         // exclude vocab with difficulty beyond memoThreshold
-        const subFilter = filtered.filter((v) => {
-          const dT = memoThreshold.current;
-          const d = metadata.current[v.uid]?.difficulty;
-
-          // TODO: extract to fn for tests?
-          // const showUndefMemoV =
-          //   d === undefined &&
-          //   (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
-          // const showV = dT < 0 ? d > -1 * dT : d < dT;
-
-          let showUndefMemoV = false;
-          let showV= false;
-          if(d===undefined){
-            showUndefMemoV = (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
-          }else{
-            showV = dT < 0 ? d > -1 * dT : d < dT;
-          }
-
-          return showUndefMemoV || showV;
-        });
+        const subFilter = difficultySubFilter(
+          memoThresholdREF.current,
+          filtered,
+          metadata.current
+        );
 
         if (subFilter.length > 0) {
           filtered = subFilter;
@@ -192,7 +177,7 @@ export default function Vocabulary() {
         break;
       }
       case TermSortBy.GAME:
-        if (reinforce.current) {
+        if (reinforceREF.current) {
           // if reinforce, place reinforced/frequency terms
           // at the end
           const [freqTerms, nonFreqTerms] = partition(
@@ -224,7 +209,7 @@ export default function Vocabulary() {
     if (filteredVocab.length === 0) return { newOrder: [] };
 
     let newOrder, jOrder, eOrder;
-    switch (sortMethod.current) {
+    switch (sortMethodREF.current) {
       case TermSortBy.RANDOM:
         newOrder = randomOrder(filteredVocab);
         break;
@@ -232,7 +217,7 @@ export default function Vocabulary() {
         newOrder = dateViewOrder(filteredVocab, metadata.current);
         break;
       case TermSortBy.GAME:
-        if (reinforce.current) {
+        if (reinforceREF.current) {
           // search backwards for splitIdx where [...nonFreqTerms, ...freqTerms]
           let splitIdx = -1;
           for (let idx = filteredVocab.length - 1; idx > -1; idx--) {
@@ -297,8 +282,8 @@ export default function Vocabulary() {
 
   const gotoNextSlide = useCallback(() => {
     play(
-      reinforce.current,
-      filterType.current,
+      reinforceREF.current,
+      filterTypeREF.current,
       frequency,
       filteredVocab,
       metadata.current,
@@ -362,7 +347,7 @@ export default function Vocabulary() {
     resetTimedPlay,
 
     loop,
-    tpAnswered,
+    tpAnswered: tpAnsweredREF,
     tpAnimation,
   } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
 
@@ -404,15 +389,15 @@ export default function Vocabulary() {
         const shouldIncrement = uid !== prevState.reinforcedUID;
         const frequency = prevState.reinforcedUID !== undefined;
 
-        dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
+        void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
             const { map, prevMap } = payload;
 
-            const prevDate = prevMap[uid]?.d;
+            const prevDate = prevMap[uid]?.d ?? map[uid].d;
             const repStats = { [uid]: { ...map[uid], d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
-            if (tpAnswered.current !== undefined) {
+            if (tpAnsweredREF.current !== undefined) {
               timedPlayLog(messageLog, vocabulary, repStats, { frequency });
             } else {
               spaceRepLog(messageLog, vocabulary, repStats, { frequency });
@@ -597,7 +582,7 @@ export default function Vocabulary() {
                   manualUpdate={uid}
                 />
                 <ShowHintBtn
-                  visible={hintEnabled.current}
+                  visible={hintEnabledREF.current}
                   active={isHintable}
                   setShowHint={setStateFunction(setShowHint, (prev) =>
                     prev ? undefined : uid
@@ -637,7 +622,7 @@ export default function Vocabulary() {
         <div
           className="progress-line flex-shrink-1"
           onClick={() => {
-            if (sortMethod.current === TermSortBy.ALPHABETIC) {
+            if (sortMethodREF.current === TermSortBy.ALPHABETIC) {
               const delayTime = 4000;
               setShowPageBar(true);
 

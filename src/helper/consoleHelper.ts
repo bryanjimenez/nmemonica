@@ -1,5 +1,10 @@
 import { DebugLevel } from "../slices/settingHelper";
-import { RawPhrase, RawVocabulary, SpaceRepetitionMap } from "../typings/raw";
+import {
+  RawPhrase,
+  RawVocabulary,
+  SpaceRepetitionMap,
+  ValuesOf,
+} from "../typings/raw";
 
 /**
  * Trims a string keeping the begining and end.
@@ -53,9 +58,9 @@ export function answerSeconds(tpElapsed: number) {
 /**
  * UI logger
  */
-export function spaceRepLog(
-  logger: Function,
-  term: RawVocabulary | RawPhrase,
+export function spaceRepLog<T extends { uid: string; english: string }>(
+  logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
+  term: T,
   spaceRepMap: SpaceRepetitionMap,
   options: { frequency: boolean }
 ) {
@@ -86,7 +91,7 @@ export function spaceRepLog(
  * instead of regular view count
  */
 export function timedPlayLog(
-  logger: Function,
+  logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
   term: RawVocabulary | RawPhrase,
   spaceRepMap: SpaceRepetitionMap,
   options: { frequency: boolean }

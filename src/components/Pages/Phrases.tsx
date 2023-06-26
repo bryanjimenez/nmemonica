@@ -11,7 +11,7 @@ import { useDispatch } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
-import { logify, spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -48,9 +48,7 @@ import {
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
 import type { RawPhrase } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
-import Console from "../Form/Console";
 import type { ConsoleMessage } from "../Form/Console";
-import { MinimalUI } from "../Form/MinimalUI";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -112,7 +110,7 @@ export default function Phrases() {
 
   useEffect(() => {
     if (phraseList.length === 0) {
-      dispatch(getPhrase());
+      void dispatch(getPhrase());
     }
   }, []);
 
@@ -204,7 +202,6 @@ export default function Phrases() {
       gotoNext
     );
   }, [
-    dispatch,
     reinforce,
     filterType,
     frequency,
@@ -258,7 +255,6 @@ export default function Phrases() {
     // timedPlayVerifyBtn, // not used
 
     timedPlayAnswerHandlerWrapper,
-    gradeTimedPlayEvent,
     resetTimedPlay,
 
     loop,
@@ -288,12 +284,12 @@ export default function Phrases() {
 
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
-        dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
+        void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
             const { map, prevMap } = payload;
 
-            const prevDate = prevMap[uid] && prevMap[uid]?.d;
+            const prevDate = prevMap?.[uid]?.d ?? map[uid].d;
             const repStats = { [uid]: { ...map[uid], d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
             const frequency = prevState.reinforcedUID !== undefined;
@@ -421,8 +417,8 @@ export default function Phrases() {
     jLabelMemo
   );
 
-  const shortEN = phrase && (phrase.lit?.length || phrase.english.length) < 55;
-  const shortJP = jObj && jObj.getSpelling().length < 55;
+  const shortEN = (phrase.lit?.length ?? phrase.english.length) < 55;
+  const shortJP = jObj?.getSpelling().length < 55;
 
   const {
     aboveSmallCss,
@@ -655,8 +651,8 @@ function buildRecacheAudioHandler(
 }
 
 function buildGameActionsHandler(
-  gotoNextSlide: Function,
-  gotoPrev: Function,
+  gotoNextSlide: () => void,
+  gotoPrev: () => void,
   reinforcedUID: string | undefined,
   selectedIndex: number,
   phrases: RawPhrase[],
@@ -704,7 +700,7 @@ function buildGameActionsHandler(
         swipePromise = fetchAudio(audioUrl, AbortController);
       }
     }
-    return swipePromise || Promise.reject();
+    return swipePromise ?? Promise.reject();
   };
 }
 

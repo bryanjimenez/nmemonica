@@ -1,12 +1,10 @@
-import { type PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import merge from "lodash/fp/merge";
-import { firebaseConfig } from "../../environment.development";
-import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
-  buildGroupObject,
-  buildVocabularyObject,
-} from "../helper/reducerHelper";
+  type PayloadAction,
+  createAsyncThunk,
+  createSlice,
+} from "@reduxjs/toolkit";
+import merge from "lodash/fp/merge";
+
 import {
   TermFilterBy,
   TermSortBy,
@@ -14,17 +12,26 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
+import { firebaseConfig } from "../../environment.development";
+import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  buildGroupObject,
+  buildVocabularyObject,
+} from "../helper/reducerHelper";
 import type {
+  GroupListMap,
   MetaDataObj,
   RawVocabulary,
   SpaceRepetitionMap,
 } from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface VocabularyInitSlice {
   value: RawVocabulary[];
   version: string;
-  grpObj: {};
+  grpObj: GroupListMap;
   verbForm: string;
 
   setting: {
@@ -82,13 +89,17 @@ export const getVocabulary = createAsyncThunk(
     // }
     return fetch(firebaseConfig.databaseURL + "/lambda/vocabulary.json", {
       headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
+    }).then((res) =>
+      res
+        .json()
+        .then((value: Record<string, RawVocabulary>) => ({ value, version }))
+    );
   }
 );
 
 export const updateSpaceRepWord = createAsyncThunk(
   "vocabulary/updateSpaceRepWord",
-  async (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
+  (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
     const state = (thunkAPI.getState() as RootState).vocabulary;
 
@@ -103,7 +114,7 @@ export const updateSpaceRepWord = createAsyncThunk(
 
 export const vocabularyFromLocalStorage = createAsyncThunk(
   "vocabulary/vocabularyFromLocalStorage",
-  async (arg: (typeof vocabularyInitState)["setting"]) => {
+  (arg: (typeof vocabularyInitState)["setting"]) => {
     const initValues = arg;
 
     return initValues;
@@ -389,9 +400,11 @@ const vocabularySlice = createSlice({
     setWordTPCorrect: {
       reducer: (
         state: VocabularyInitSlice,
-        action: {
-          payload: { uid: string; tpElapsed: number; pronunciation: boolean };
-        }
+        action: PayloadAction<{
+          uid: string;
+          tpElapsed: number;
+          pronunciation?: boolean;
+        }>
       ) => {
         const { uid, tpElapsed, pronunciation } = action.payload;
 
@@ -407,7 +420,7 @@ const vocabularySlice = createSlice({
           const accuracy = uidData.tpAcc;
           const correctAvg = uidData.tpCAvg ?? 0;
 
-          if (playCount !== undefined && accuracy != undefined) {
+          if (playCount !== undefined && accuracy !== undefined) {
             newPlayCount = playCount + 1;
 
             const scores = playCount * accuracy;
@@ -419,9 +432,9 @@ const vocabularySlice = createSlice({
           }
         }
 
-        const prevMisPron = pronunciation || (uidData?.pron ?? false);
+        const prevMisPron = pronunciation === true || (uidData?.pron ?? false);
         const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? {}),
+          ...(spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 }),
           pron: prevMisPron || undefined,
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
@@ -438,14 +451,19 @@ const vocabularySlice = createSlice({
           newValue
         );
       },
-      prepare: (uid: string, tpElapsed: number, { pronunciation } = {}) => ({
+      prepare: (
+        uid: string,
+        tpElapsed: number,
+        { pronunciation }: { pronunciation?: boolean } | undefined = {}
+      ) => ({
+        type: "string",
         payload: { uid, tpElapsed, pronunciation },
       }),
     },
     setWordTPIncorrect: {
       reducer: (
         state: VocabularyInitSlice,
-        action: PayloadAction<{ uid: string; pronunciation: boolean }>
+        action: PayloadAction<{ uid: string; pronunciation?: boolean }>
       ) => {
         const { uid, pronunciation } = action.payload;
 
@@ -459,7 +477,7 @@ const vocabularySlice = createSlice({
           const playCount = uidData.tpPc;
           const accuracy = uidData.tpAcc;
 
-          if (playCount !== undefined && accuracy != undefined) {
+          if (playCount !== undefined && accuracy !== undefined) {
             newPlayCount = playCount + 1;
 
             const scores = playCount * accuracy;
@@ -468,10 +486,10 @@ const vocabularySlice = createSlice({
         }
 
         const o = {
-          ...(spaceRep[uid] ?? {}),
+          ...(spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 }),
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
-          pron: pronunciation ? true : undefined,
+          pron: pronunciation === true ? true : undefined,
         };
 
         const newValue = { ...spaceRep, [uid]: o } as SpaceRepetitionMap;
@@ -484,7 +502,10 @@ const vocabularySlice = createSlice({
           newValue
         );
       },
-      prepare: (uid: string, { pronunciation } = {}) => ({
+      prepare: (
+        uid: string,
+        { pronunciation }: { pronunciation?: boolean } | undefined = {}
+      ) => ({
         payload: { uid, pronunciation },
       }),
     },

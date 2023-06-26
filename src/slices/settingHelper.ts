@@ -110,7 +110,7 @@ export function updateSpaceRepTerm(
   spaceRep: SpaceRepetitionMap,
   update: { count?: boolean; date?: boolean } = { count: true, date: true },
   options?: {
-    toggle?: FilterKeysOfType<SpaceRepetitionMap["uid"], boolean>[];
+    toggle?: FilterKeysOfType<MetaDataObj, boolean>[];
     set?: Record<string, unknown>;
   }
 ) {
@@ -149,7 +149,7 @@ export function updateSpaceRepTerm(
 
     if (options.set !== undefined) {
       const optSet = Object.keys(options.set).reduce((acc, k) => {
-        if (options.set !== undefined && options.set[k] !== undefined) {
+        if (options.set?.[k] !== undefined) {
           if (options.set[k] === null) {
             acc = { ...acc, [k]: undefined };
           } else {
@@ -167,7 +167,7 @@ export function updateSpaceRepTerm(
   const keepPrevDate = prevDate !== undefined && update.date === false;
   const now = keepPrevDate ? prevDate : new Date().toJSON();
   const o: MetaDataObj = {
-    ...(spaceRep[uid] || {}),
+    ...(spaceRep[uid] ?? {}),
     vC: count,
     d: now,
     ...uidChangedAttr,

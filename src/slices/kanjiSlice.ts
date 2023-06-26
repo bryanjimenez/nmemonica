@@ -72,7 +72,9 @@ export const getKanji = createAsyncThunk(
     // }
     return fetch(firebaseConfig.databaseURL + "/lambda/kanji.json", {
       headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
+    }).then((res) =>
+      res.json().then((value: Record<string, RawKanji>) => ({ value, version }))
+    );
   }
 );
 

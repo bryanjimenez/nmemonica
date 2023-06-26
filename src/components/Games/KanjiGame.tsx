@@ -370,13 +370,14 @@ export default function KanjiGame() {
 
         // don't increment reinforced terms
         const shouldIncrement = prevUid !== prevState.reinforcedUID;
+        const frequency = prevState.reinforcedUID !== undefined;
 
         void dispatch(updateSpaceRepKanji({ uid: prevUid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
             const { map, prevMap } = payload;
 
-            const prevDate = prevMap[prevUid]?.d;
+            const prevDate = prevMap[prevUid]?.d ?? map[prevUid].d;
             const repStats = { [prevUid]: { ...map[prevUid], d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
 

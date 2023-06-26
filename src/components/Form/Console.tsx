@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../../slices";
@@ -88,7 +88,7 @@ export default function Console(props: ConsoleProps) {
   const [messages, setMessages] = useState(squashSeqMsgs(pMessages));
   const collapse = useRef<number | undefined>();
 
-  useMemo(() => {
+  useEffect(() => {
     if (debug === DebugLevel.OFF) {
       setScroll(0);
       setMessages([]);

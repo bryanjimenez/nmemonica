@@ -44,7 +44,9 @@ export function play<RawItem extends { uid: string }>(
   ) {
     const min = 0;
     const staleFreq = frequency.filter(
-      (f) => minsSince(metadata[f]?.d) > frequency.length
+      (fUid) => {
+        const lastSeen = metadata[fUid]?.d! // frequency terms always have lastSeen
+        return minsSince(lastSeen) > frequency.length}
     );
     const max = staleFreq.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
@@ -735,6 +737,12 @@ export function japaneseLabel(
   const showKeigo = jObj.isKeigo();
 
   if (isOnTop && (showIntr || pairUID)) {
+    let viewMyPair = undefined;
+    if(pairUID !== undefined && typeof jumpToTerm === 'function'){
+      const p = pairUID
+      viewMyPair = () => {jumpToTerm(p);} 
+    }
+
     indicators = [
       ...indicators,
       <span
@@ -743,13 +751,7 @@ export function japaneseLabel(
           clickable: pairUID,
           "question-color": pairUID,
         })}
-        onClick={
-          pairUID && jumpToTerm
-            ? () => {
-                jumpToTerm(pairUID);
-              }
-            : undefined
-        }
+        onClick={viewMyPair}
       >
         {showIntr ? "intr" : "trans"}
       </span>,
@@ -840,6 +842,12 @@ export function englishLabel(
   const showKeigo = jObj.isKeigo();
 
   if (isOnTop && (showIntr || pairUID)) {
+    let viewMyPair = undefined;
+    if(pairUID !== undefined && typeof jumpToTerm === 'function'){
+      const p = pairUID
+      viewMyPair = () => {jumpToTerm(p);} 
+    }
+
     indicators = [
       ...indicators,
       <span
@@ -848,13 +856,7 @@ export function englishLabel(
           clickable: pairUID,
           "question-color": pairUID,
         })}
-        onClick={
-          pairUID && jumpToTerm
-            ? () => {
-                jumpToTerm(pairUID);
-              }
-            : undefined
-        }
+        onClick={viewMyPair}
       >
         {showIntr ? "intr" : "trans"}
       </span>,
@@ -966,9 +968,9 @@ export function getCacheUID(word: RawVocabulary) {
 /**
  * Creates the settings object for furigana toggling
  */
-export function toggleFuriganaSettingHelper(
+export function toggleFuriganaSettingHelper<T extends FuriganaToggleMap>(
   uid: string,
-  settings: FuriganaToggleMap,
+  settings: T,
   englishSideUp?: boolean,
   toggleFn?: (uid: string) => void
 ) {
@@ -1036,9 +1038,9 @@ export function pause(
  * @param waitBeforeEach ms to wait before triggering actions
  * @param AbortController signal
  */
-export function loopN<T>(
+export function loopN(
   n: number,
-  action: () => Promise<T>,
+  action: () => Promise<unknown>,
   waitBeforeEach: number,
   { signal }: { signal: AbortSignal }
 ) {
