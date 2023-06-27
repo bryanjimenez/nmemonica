@@ -83,6 +83,8 @@ export default function OppositesGame() {
         default:
           break;
       }
+
+      return Promise.resolve(/** interrupt, fetch */)
     },
     [gotoPrev, gotoNext]
   );

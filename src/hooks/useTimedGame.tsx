@@ -185,8 +185,8 @@ export function useTimedGame(
 
     loopAbortControllers.current = [ac1, ac2, ac3, ac4, ac5];
 
-    let gamePropmt: (ac: AbortController) => Promise<Awaited<void>[]>;
-    let gameResponse: (ac: AbortController) => Promise<void>;
+    let gamePropmt: (ac: AbortController) => Promise<unknown>;
+    let gameResponse: (ac: AbortController) => Promise<unknown>;
     if (englishSideUp) {
       gamePropmt = (ac) => looperSwipe("down", ac);
 
@@ -396,7 +396,7 @@ export function useTimedGame(
    */
   function timedPlayAnswerHandlerWrapper(
     direction: string,
-    handler: (direction: string) => void
+    handler: GameActionHandler
   ) {
     if (loop === 0) return handler;
 
@@ -463,9 +463,8 @@ function interruptTimedPlayToAnswer(
   tpElapsed: React.MutableRefObject<number | undefined>
 ) {
   let handler = answerHandler;
-  const noop = () => {
-    /** override handler with no-op */
-  };
+  const noop = () => Promise.resolve(/** override handler with no-op */);
+
   let userInterruptAnimation = () =>
     interruptTimedPlayAnimation(tpAnimation, setTpAnimation);
 

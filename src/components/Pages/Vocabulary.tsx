@@ -738,10 +738,10 @@ function buildGameActionsHandler(
 
     if (direction === "left") {
       gotoNextSlide();
-      actionPromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
     } else if (direction === "right") {
       gotoPrev();
-      actionPromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
     } else {
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);

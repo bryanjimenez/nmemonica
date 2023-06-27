@@ -133,6 +133,8 @@ export default function ParticlesGame() {
         default:
           break;
       }
+
+      return Promise.resolve(/** interrupt, fetch */)
     },
     [gotoPrev, gotoNext]
   );

@@ -229,6 +229,8 @@ export default function Kanji() {
           // on
         }
       }
+
+      return Promise.resolve(/** interrupt, fetch */)
     },
     [gotoNextSlide, gotoPrev]
   );

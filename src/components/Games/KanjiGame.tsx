@@ -548,6 +548,8 @@ export default function KanjiGame() {
         default:
           break;
       }
+
+      return Promise.resolve(/** interrupt, fetch */)
     },
     [gotoPrev, gotoNextSlide]
   );

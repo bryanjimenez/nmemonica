@@ -660,19 +660,18 @@ function buildGameActionsHandler(
   filteredPhrases: RawPhrase[],
   recacheAudio: boolean
 ) {
-  return function swipeActionHandler(
+  return function gameActionHandler(
     direction: string,
     AbortController?: AbortController
   ) {
-    // this.props.logger("swiped " + direction, DebugLevel.WARN);
-    let swipePromise;
+    let actionPromise;
 
     if (direction === "left") {
       gotoNextSlide();
-      swipePromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
     } else if (direction === "right") {
       gotoPrev();
-      swipePromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
     } else {
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
@@ -687,7 +686,7 @@ function buildGameActionsHandler(
           uid,
         });
 
-        swipePromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(audioUrl, AbortController);
       } else if (direction === "down") {
         const inEnglish = phrase.english;
 
@@ -697,10 +696,10 @@ function buildGameActionsHandler(
           uid: phrase.uid + ".en",
         });
 
-        swipePromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(audioUrl, AbortController);
       }
     }
-    return swipePromise ?? Promise.reject();
+    return actionPromise ?? Promise.reject();
   };
 }
 
