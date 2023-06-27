@@ -22,7 +22,7 @@ interface TouchObject {
 }
 
 function safePreventDefault(event: TouchEvent | MouseEvent) {
-  var passiveEvents = ["onTouchStart", "onTouchMove", "onWheel"];
+  const passiveEvents = ["onTouchStart", "onTouchMove", "onWheel"];
 
   // @ts-expect-error _reactName
   if (!passiveEvents.includes(event._reactName)) {
@@ -34,7 +34,7 @@ export function getSwipeDirection(
   touchObject: TouchObject,
   verticalSwiping = false
 ) {
-  var xDist, yDist, r, swipeAngle;
+  let xDist, yDist, r, swipeAngle;
   xDist = touchObject.startX - touchObject.curX;
   yDist = touchObject.startY - touchObject.curY;
   r = Math.atan2(yDist, xDist);
@@ -88,7 +88,7 @@ export function swipeStart(
 }
 
 export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
-  var verticalSwiping = spec.verticalSwiping,
+  const verticalSwiping = spec.verticalSwiping,
     touchThreshold = spec.touchThreshold,
     swiped = spec.swiped,
     swiping = spec.swiping,
@@ -98,7 +98,7 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
   touchObject.curX = "touches" in e ? e.touches[0].pageX : e.clientX;
   touchObject.curY = "touches" in e ? e.touches[0].pageY : e.clientY;
   touchObject.swipeLength = Math.abs(touchObject.curX - touchObject.startX);
-  var verticalSwipeLength = Math.abs(touchObject.curY - touchObject.startY);
+  const verticalSwipeLength = Math.abs(touchObject.curY - touchObject.startY);
 
   if (!verticalSwiping && !swiping && verticalSwipeLength > 10) {
     return {
@@ -115,9 +115,9 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
     );
   }
 
-  var swipeDirection = getSwipeDirection(spec.touchObject, verticalSwiping);
+  const swipeDirection = getSwipeDirection(spec.touchObject, verticalSwiping);
 
-  var state = {
+  let state = {
     touchObject,
     verticalSwiping,
     touchThreshold,
@@ -138,12 +138,12 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
 }
 
 export function swipeEnd(e: TouchEvent, spec: Spec) {
-  var touchObject = spec.touchObject,
+  let touchObject = spec.touchObject,
     touchThreshold = spec.touchThreshold,
     verticalSwiping = spec.verticalSwiping,
     onSwipe = spec.onSwipe;
 
-  var minSwipe = touchThreshold;
+  const minSwipe = touchThreshold;
 
   let swipeDirection;
   if (touchObject.swipeLength) {
