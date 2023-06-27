@@ -26,6 +26,7 @@ export interface RawPhrase {
 
   english: string;
   lit?: string; // literal translation
+  lesson?: string;
   romaji?: string;
 
   japanese: string;
@@ -89,11 +90,6 @@ export interface AudioQueryParams {
   /** Query */ q: string;
   /** Caching/indexedDB key */ uid: string;
 }
-
-export type VerbFormArray = {
-  /** Verb form (tense label) */ name: string;
-  /** inflected/conjugated verb */ value: JapaneseText;
-}[];
 
 /**
  * Parsing used for Ruby Element

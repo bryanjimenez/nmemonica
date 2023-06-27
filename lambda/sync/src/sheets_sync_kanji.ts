@@ -17,9 +17,9 @@ function setPropsFromTags(el: Kanji, tag: string) {
     }
 
     switch (t) {
-      case "slang":
-        el.slang = true;
-        break;
+      // case "slang":
+      //   el.slang = true;
+      //   break;
       default:
         if (!el.tag || el.tag.length === 0) {
           el.tag = [t];
@@ -75,7 +75,7 @@ export async function sheets_sync_kanji(
         if (el[TAG] && el[TAG] !== "") {
           kanji = setPropsFromTags(kanji, el[TAG]);
 
-          if (kanji.tag.length === 0) {
+          if (kanji.tag?.length === 0) {
             delete kanji.tag;
           }
         }

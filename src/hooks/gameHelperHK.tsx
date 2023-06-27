@@ -1,54 +1,19 @@
 import classNames from "classnames";
 import React, { useMemo } from "react";
+import { useDispatch } from "react-redux";
+
+import { getVerbFormsArray } from "../helper/gameHelper";
+import { JapaneseText } from "../helper/JapaneseText";
 import { JapaneseVerb } from "../helper/JapaneseVerb";
 import { furiganaToggled } from "../slices/vocabularySlice";
-import { useDispatch } from "react-redux";
-import type {
-  RawJapanese,
-  VerbFormArray,
-  FuriganaToggleMap,
-} from "../typings/raw";
-import { JapaneseText } from "../helper/JapaneseText";
+import type { FuriganaToggleMap, RawJapanese } from "../typings/raw";
 
 /**
  * Array containing the avaiable verb forms
  */
 export function useGetVerbFormsArray(rawVerb: RawJapanese, order?: string[]) {
   return useMemo(() => {
-    const verb = {
-      dictionary:
-        rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb),
-    };
-
-    const allAvailable = [
-      { name: "-masu", value: verb.dictionary?.masuForm() },
-      { name: "-mashou", value: verb.dictionary?.mashouForm() },
-      { name: "dictionary", value: verb.dictionary },
-      { name: "-nai", value: verb.dictionary?.naiForm() },
-      { name: "-saseru", value: verb.dictionary?.saseruForm() },
-      { name: "-te", value: verb.dictionary?.teForm() },
-      { name: "-ta", value: verb.dictionary?.taForm() },
-      ...(verb.dictionary?.chattaForm() !== null
-        ? [{ name: "-chatta", value: verb.dictionary?.chattaForm() }]
-        : []),
-      ...(verb.dictionary?.reruForm() !== null
-        ? [{ name: "-reru", value: verb.dictionary?.reruForm() }]
-        : []),
-    ];
-
-    let filtered;
-    if (order && order.length > 0) {
-      filtered = order.reduce<VerbFormArray>((acc, form) => {
-        const f = allAvailable.find((el) => el.name === form);
-        if (f !== undefined) {
-          acc = [...acc, f];
-        }
-
-        return acc;
-      }, []);
-    }
-
-    return filtered ?? allAvailable;
+    return getVerbFormsArray(rawVerb, order);
   }, [rawVerb, order]);
 }
 
@@ -59,7 +24,7 @@ export function useJapaneseLabel(
   isOnBottom: boolean,
   jObj: JapaneseText | JapaneseVerb,
   inJapanese: React.JSX.Element,
-  jumpToTerm?: Function
+  jumpToTerm?: (uid: string) => void
 ) {
   return useMemo(() => {
     const isOnTop = !isOnBottom;
@@ -82,6 +47,14 @@ export function useJapaneseLabel(
     const showKeigo = jObj.isKeigo();
 
     if (isOnTop && (showIntr || pairUID)) {
+      let viewMyPair = undefined;
+      if (pairUID !== undefined && typeof jumpToTerm === "function") {
+        const p = pairUID;
+        viewMyPair = () => {
+          jumpToTerm(p);
+        };
+      }
+
       indicators = [
         ...indicators,
         <span
@@ -90,13 +63,7 @@ export function useJapaneseLabel(
             clickable: pairUID,
             "question-color": pairUID,
           })}
-          onClick={
-            pairUID && jumpToTerm
-              ? () => {
-                  jumpToTerm(pairUID);
-                }
-              : undefined
-          }
+          onClick={viewMyPair}
         >
           {showIntr ? "intr" : "trans"}
         </span>,
@@ -165,7 +132,7 @@ export function useEnglishLabel(
   isOnTop: boolean,
   jObj: JapaneseText | JapaneseVerb,
   inEnglish: React.JSX.Element | string,
-  jumpToTerm?: Function
+  jumpToTerm?: (uid: string) => void
 ) {
   return useMemo(() => {
     let indicators: React.JSX.Element[] = [];
@@ -183,6 +150,14 @@ export function useEnglishLabel(
     const showKeigo = jObj.isKeigo();
 
     if (isOnTop && (showIntr || pairUID)) {
+      let viewMyPair = undefined;
+      if (pairUID !== undefined && typeof jumpToTerm === "function") {
+        const p = pairUID;
+        viewMyPair = () => {
+          jumpToTerm(p);
+        };
+      }
+
       indicators = [
         ...indicators,
         <span
@@ -191,13 +166,7 @@ export function useEnglishLabel(
             clickable: pairUID,
             "question-color": pairUID,
           })}
-          onClick={
-            pairUID && jumpToTerm
-              ? () => {
-                  jumpToTerm(pairUID);
-                }
-              : undefined
-          }
+          onClick={viewMyPair}
         >
           {showIntr ? "intr" : "trans"}
         </span>,

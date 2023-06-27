@@ -4,11 +4,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import {
+  type VerbFormArray,
   getCacheUID,
   getEnglishHint,
   getJapaneseHint,
 } from "../../helper/gameHelper";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+import { audioPronunciation } from "../../helper/JapaneseText";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
 import {
   useEnglishLabel,
@@ -20,7 +21,7 @@ import {
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { verbFormChanged } from "../../slices/vocabularySlice";
-import type { RawVocabulary, VerbFormArray } from "../../typings/raw";
+import type { RawVocabulary } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 
@@ -74,8 +75,7 @@ function getVerbLabelItems(
   const splitIdx = getSplitIdx(verbForms, verbColSplit);
 
   const formResult = verbForms.find((form) => form.name === theForm);
-  const japaneseObj = (formResult?.value ??
-    verbForms[splitIdx].value) as JapaneseText;
+  const japaneseObj = formResult?.value ?? verbForms[splitIdx].value;
 
   let inJapanese = japaneseObj.toHTML(furiganaToggable);
   let inEnglish = verb.english;
@@ -113,8 +113,10 @@ export default function VerbMain(props: VerbMainProps) {
 
   const buildTenseElement = (key: number, tense: VerbFormArray) => {
     const columnClass = classNames({
-      "pt-3 pe-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap":
+      "pt-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap":
         true,
+      "ps-sm-3": key === 0,
+      "pe-sm-3": key !== 0,
       "text-end": key !== 0,
     });
 

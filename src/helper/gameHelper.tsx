@@ -18,8 +18,12 @@ import type {
   RawPhrase,
   RawVocabulary,
   SpaceRepetitionMap,
-  VerbFormArray,
 } from "../typings/raw";
+
+export type VerbFormArray = {
+  /** Verb form (tense label) */ name: string;
+  /** inflected/conjugated verb */ value: JapaneseText;
+}[];
 
 /**
  * Goes to the next term or selects one from the frequency list
@@ -44,8 +48,9 @@ export function play<RawItem extends { uid: string }>(
   ) {
     const min = 0;
     const staleFreq = frequency.filter((fUid) => {
-      const lastSeen = metadata[fUid]?.d!; // frequency terms always have lastSeen
-      return minsSince(lastSeen) > frequency.length;
+      const lastSeen = metadata[fUid]?.d;
+
+      return lastSeen && minsSince(lastSeen) > frequency.length;
     });
     const max = staleFreq.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
@@ -234,24 +239,27 @@ export function getStaleSpaceRepKeys(
   let OldSpaceRepKeys = new Set<string>();
   let staleInfoList: { key: string; uid: string; english: string }[] = [];
   Object.keys(repetition).forEach((srepUid) => {
-    Object.keys(repetition[srepUid]).forEach((key) => {
-      let staleInfo;
-      if (!SpaceRepKeys.has(key)) {
-        let term;
-        try {
-          term = getTerm<(typeof termList)[0]>(srepUid, termList);
-        } catch (err) {
-          term = { english: staleLabel };
+    const o = repetition[srepUid];
+    if (o !== undefined) {
+      Object.keys(o).forEach((key) => {
+        let staleInfo;
+        if (!SpaceRepKeys.has(key)) {
+          let term;
+          try {
+            term = getTerm<(typeof termList)[0]>(srepUid, termList);
+          } catch (err) {
+            term = { english: staleLabel };
+          }
+
+          staleInfo = { key, uid: srepUid, english: term.english };
         }
 
-        staleInfo = { key, uid: srepUid, english: term.english };
-      }
-
-      if (staleInfo !== undefined) {
-        OldSpaceRepKeys.add(key);
-        staleInfoList = [...staleInfoList, staleInfo];
-      }
-    });
+        if (staleInfo !== undefined) {
+          OldSpaceRepKeys.add(key);
+          staleInfoList = [...staleInfoList, staleInfo];
+        }
+      });
+    }
   });
 
   return { keys: OldSpaceRepKeys, list: staleInfoList };
@@ -301,8 +309,8 @@ export function spaceRepOrder(
   let notTimedTemp: notTimedPlayedSortable[] = [];
   let timedTemp: timedPlayedSortable[] = [];
 
-  for (const tIdx in terms) {
-    const tUid = terms[tIdx].uid;
+  terms.forEach((term, tIdx) => {
+    const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
     if (termRep !== undefined) {
@@ -371,7 +379,7 @@ export function spaceRepOrder(
     } else {
       notPlayed = [...notPlayed, Number(tIdx)];
     }
-  }
+  });
 
   // prettier-ignore
   const failedSort = orderBy(failedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
@@ -448,8 +456,8 @@ export function dateViewOrder(
   let notPlayed: number[] = [];
   let prevPlayedTemp: lastSeenSortable[] = [];
 
-  for (const tIdx in terms) {
-    const tUid = terms[tIdx].uid;
+  terms.forEach((term, tIdx) => {
+    const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
     if (termRep?.d !== undefined) {
@@ -464,7 +472,7 @@ export function dateViewOrder(
     } else {
       notPlayed = [...notPlayed, Number(tIdx)];
     }
-  }
+  });
 
   // prettier-ignore
   const prevPlayedSort = orderBy(prevPlayedTemp, ["date", "uid"], ["asc", "asc"]);
@@ -506,8 +514,8 @@ export function difficultyOrder(
   let withDifficulty: difficultySortable[] = [];
   let noDifficulty: number[] = [];
 
-  for (const tIdx in terms) {
-    const tUid: string = terms[tIdx].uid;
+  terms.forEach((term, tIdx) => {
+    const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
     if (termRep?.difficulty !== undefined) {
@@ -535,7 +543,7 @@ export function difficultyOrder(
     } else {
       undefDifficulty = [...undefDifficulty, Number(tIdx)];
     }
-  }
+  });
 
   // prettier-ignore
   const withDifficultySort = orderBy(withDifficulty, ["difficulty", "uid"], ["asc", "asc"]);
@@ -652,14 +660,32 @@ export function toggleOptions<T>(index: number, options: T[]) {
 }
 
 /**
+ * @overload Return a list of verb forms names
+ * Form names only
+ */
+export function getVerbFormsArray(): { name: string }[];
+
+/**
+ * @overload Returns verb forms
+ * Form names and values
+ */
+export function getVerbFormsArray(
+  rawVerb: RawJapanese,
+  order?: string[]
+): VerbFormArray;
+
+/**
  * Array containing the avaiable verb forms
  */
-export function getVerbFormsArray(rawVerb?: RawJapanese, order?: string[]) {
+export function getVerbFormsArray(
+  rawVerb?: RawJapanese,
+  order?: string[]
+): VerbFormArray | { name: string }[] {
   const verb = {
     dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb),
   };
 
-  const allAvailable = [
+  const allForms = [
     { name: "-masu", value: verb.dictionary?.masuForm() },
     { name: "-mashou", value: verb.dictionary?.mashouForm() },
     { name: "dictionary", value: verb.dictionary },
@@ -667,27 +693,42 @@ export function getVerbFormsArray(rawVerb?: RawJapanese, order?: string[]) {
     { name: "-saseru", value: verb.dictionary?.saseruForm() },
     { name: "-te", value: verb.dictionary?.teForm() },
     { name: "-ta", value: verb.dictionary?.taForm() },
-    ...(verb.dictionary?.chattaForm() !== null
-      ? [{ name: "-chatta", value: verb.dictionary?.chattaForm() }]
-      : []),
-    ...(verb.dictionary?.reruForm() !== null
-      ? [{ name: "-reru", value: verb.dictionary?.reruForm() }]
-      : []),
+    { name: "-chatta", value: verb.dictionary?.chattaForm() },
+    { name: "-reru", value: verb.dictionary?.reruForm() },
   ];
 
-  let filtered;
-  if (order && order.length > 0) {
-    filtered = order.reduce<VerbFormArray>((acc, form) => {
-      const f = allAvailable.find((el) => el.name === form);
-      if (f !== undefined) {
-        acc = [...acc, f];
-      }
+  if (rawVerb === undefined) {
+    const verbNamesOnly = allForms.map((thing) => ({ name: thing.name }));
 
-      return acc;
-    }, []);
+    return verbNamesOnly;
+  } else {
+    // Some forms can be nulled, exclude those
+    const nonNull = allForms.filter(
+      (thing) => thing.value !== null
+    ) as VerbFormArray;
+
+    // Reorder and select based on order array
+    let filtered: VerbFormArray = [];
+    if (order && order.length > 0) {
+      filtered = order.reduce<{ name: string; value: JapaneseText }[]>(
+        (acc, form) => {
+          const f = nonNull.find((el) => el.name === form);
+          if (f !== undefined) {
+            acc = [...acc, f];
+          }
+
+          return acc;
+        },
+        []
+      );
+    }
+
+    if (filtered.length === 0) {
+      filtered = nonNull;
+    }
+
+    return filtered;
   }
-
-  return filtered ?? allAvailable;
 }
 
 /**

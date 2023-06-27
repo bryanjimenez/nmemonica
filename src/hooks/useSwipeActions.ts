@@ -46,7 +46,7 @@ export function useSwipeActions(
       timedPlayAnswerHandlerWrapper
     );
 
-    if (HTMLDivElementSwipeRef.current) {
+    if (HTMLDivElementSwipeRef.current && swipeThreshold > 0) {
       HTMLDivElementSwipeRef.current.addEventListener("touchstart", startMove);
       HTMLDivElementSwipeRef.current.addEventListener("touchmove", inMove);
       HTMLDivElementSwipeRef.current.addEventListener("touchend", endMove);
@@ -54,9 +54,11 @@ export function useSwipeActions(
 
     const cleanup = HTMLDivElementSwipeRef.current;
     return () => {
-      cleanup?.removeEventListener("touchstart", startMove);
-      cleanup?.removeEventListener("touchmove", inMove);
-      cleanup?.removeEventListener("touchend", endMove);
+      if (swipeThreshold > 0) {
+        cleanup?.removeEventListener("touchstart", startMove);
+        cleanup?.removeEventListener("touchmove", inMove);
+        cleanup?.removeEventListener("touchend", endMove);
+      }
     };
   }, [
     swiping,
