@@ -67,37 +67,46 @@ export const getMemoryStorageStatus = createAsyncThunk(
 export const setPersistentStorage = createAsyncThunk(
   "setting/setPersistentStorage",
   async (arg, thunkAPI) => {
-    return persistStorage().catch((e) => {
-      if (e instanceof Error) {
-        thunkAPI.dispatch(
-          logger("Could not set persistent storage", DebugLevel.WARN)
-        );
-        thunkAPI.dispatch(logger(e.message, DebugLevel.WARN));
-        throw e;
-      }
-    });
+    return persistStorage()
+      .then((resInfo) => {
+        const { warning } = resInfo;
+        if (warning) {
+          thunkAPI.dispatch(logger(warning, DebugLevel.WARN));
+        }
+
+        return resInfo;
+      })
+      .catch((e) => {
+        if (e instanceof Error) {
+          thunkAPI.dispatch(
+            logger("Could not set persistent storage", DebugLevel.WARN)
+          );
+          thunkAPI.dispatch(logger(e.message, DebugLevel.WARN));
+          throw e;
+        }
+      });
   }
 );
 
 export const localStorageSettingsInitialized = createAsyncThunk(
   "setting/localStorageSettingsInitialized",
-  async (arg, thunkAPI) => {
+  (arg, thunkAPI) => {
     let lsSettings = null;
     let mergedGlobalSettings = globalInitState;
 
     try {
       lsSettings = getLocalStorageSettings(localStorageKey);
     } catch (e) {
-      thunkAPI.dispatch(logger("localStorage not supported"));
+      void thunkAPI.dispatch(logger("localStorage not supported"));
     }
 
     if (lsSettings !== null) {
-      thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
-      thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
-      thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
-      thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
-      thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
-      thunkAPI.dispatch(vocabularyFromLocalStorage(lsSettings.vocabulary));
+      void thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
+      void thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
+      void thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
+      void thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
+      void thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
+      void thunkAPI.dispatch(vocabularyFromLocalStorage(lsSettings.vocabulary));
 
       // use merge to prevent losing defaults not found in localStorage
       mergedGlobalSettings = merge(globalInitState, {
