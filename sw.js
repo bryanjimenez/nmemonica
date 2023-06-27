@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "d5370d52",
-  initCacheVer: "12ddcfd0",
+  swVersion: "5bad10eb",
+  initCacheVer: "99272a3d",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   authenticationHeader: "X-API-KEY",
@@ -95,7 +95,7 @@ function initServiceWorker({
     swSelf.clients
       .matchAll({ includeUncontrolled: true })
       .then(function (clientList) {
-        var urls = clientList.map(function (client) {
+        const urls = clientList.map(function (client) {
           return client.url;
         });
         console.log("[ServiceWorker] Matching clients:", urls.join(", "));
@@ -404,8 +404,8 @@ function initServiceWorker({
    * objectStore.count()
    */
   function countIDBItem(db, store = indexedDBStore) {
-    var transaction = db.transaction([store]);
-    var request = transaction.objectStore(store).count();
+    const transaction = db.transaction([store]);
+    const request = transaction.objectStore(store).count();
     const requestP = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
         clientLogger("IDB.count X(", ERROR);
@@ -435,8 +435,8 @@ function initServiceWorker({
    * objectStore.get(key)
    */
   function getIDBItem({ db, store = indexedDBStore }, key) {
-    var transaction = db.transaction([store]);
-    var request = transaction.objectStore(store).get(key);
+    const transaction = db.transaction([store]);
+    const request = transaction.objectStore(store).get(key);
     const requestP = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
         clientLogger("IDB.get X(", ERROR);
@@ -514,7 +514,7 @@ function initServiceWorker({
    * objectStore.delete(key)
    */
   function deleteIDBItem(db, store, key) {
-    var transaction = db.transaction([store], "readwrite");
+    const transaction = db.transaction([store], "readwrite");
     let request = transaction.objectStore(store).delete(key);
     request.onsuccess = function (/*event*/) {};
     request.onerror = function () {
@@ -823,8 +823,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.3e6d26f1.js",
   "main.8c96b36a26920170b8c3.css",
+  "main.f9bc6682.js",
   "manifest.webmanifest",
   "maskable512.png",
   "npm.babel.40c54934.js",
