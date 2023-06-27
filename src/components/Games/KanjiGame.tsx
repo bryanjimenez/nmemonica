@@ -9,6 +9,7 @@ import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { spaceRepLog } from "../../helper/consoleHelper";
+import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   dateViewOrder,
   difficultyOrder,
@@ -22,7 +23,6 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
-import { buildAction } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";

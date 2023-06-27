@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getDeviceMotionEventPermission,
   getStaleSpaceRepKeys,
@@ -18,7 +19,6 @@ import {
   motionThresholdCondition,
 } from "../../helper/gameHelper";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
-import { buildAction } from "../../hooks/helperHK";
 import { useConnectKana } from "../../hooks/useConnectKana";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";

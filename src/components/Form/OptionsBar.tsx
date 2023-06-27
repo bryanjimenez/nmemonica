@@ -1,13 +1,3 @@
-import React, { memo, useEffect, useRef } from "react";
-import classNames from "classnames";
-import PropTypes from "prop-types";
-import {
-  GiftIcon,
-  PlusCircleIcon,
-  ProjectIcon,
-  XCircleIcon,
-} from "@primer/octicons-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBan,
   faDice,
@@ -16,7 +6,18 @@ import {
   faRecycle,
   faRunning,
 } from "@fortawesome/free-solid-svg-icons";
-import { useForceRender } from "../../hooks/helperHK";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  GiftIcon,
+  PlusCircleIcon,
+  ProjectIcon,
+  XCircleIcon,
+} from "@primer/octicons-react";
+import classNames from "classnames";
+import PropTypes from "prop-types";
+import React, { memo, useEffect, useRef } from "react";
+
+import { useForceRender } from "../../hooks/useFade";
 import type { RawVocabulary } from "../../typings/raw";
 
 interface MinimunRawItem {
@@ -183,7 +184,7 @@ ShowHintBtn.propTypes = {
 interface ToggleAutoVerbViewBtnProps {
   visible?: boolean;
   active?: boolean;
-  toggleAutoVerbView: Function;
+  toggleAutoVerbView: () => void;
   autoVerbView: boolean;
 }
 
@@ -211,7 +212,7 @@ ToggleAutoVerbViewBtn.propTypes = {
 interface ReCacheAudioBtnProps {
   visible?: boolean;
   active?: boolean;
-  action: Function;
+  action: () => void;
 }
 
 export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
@@ -276,7 +277,7 @@ TogglePracticeSideBtn.propTypes = {
 interface ToggleLiteralPhraseBtnProps {
   visible: boolean;
   active?: boolean;
-  action: Function;
+  action: () => void;
   toggle: boolean;
 }
 
@@ -328,10 +329,10 @@ FrequencyTermIcon.propTypes = {
 interface TimePlayVerifyBtnsProps {
   visible: boolean;
   hover?: "pronunciation" | "incorrect" | "reset";
-  onClick?: Function;
-  onPronunciation?: Function;
-  onIncorrect?: Function;
-  onReset?: Function;
+  onClick?: () => void;
+  onPronunciation?: () => void;
+  onIncorrect?: () => void;
+  onReset?: () => void;
   prevMissPronu: boolean;
 }
 

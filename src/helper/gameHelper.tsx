@@ -760,6 +760,7 @@ export function japaneseLabel(
 ) {
   const isOnTop = !isOnBottom;
   let indicators: React.JSX.Element[] = [];
+
   let showAsterix = false;
   let showIntr = false;
   let pairUID: string | undefined;
@@ -948,14 +949,15 @@ export function englishLabel(
  * Flips En > Jp or Jp > En
  */
 export function labelPlacementHelper(
-  practiceSide: boolean,
+  englishSideUp: boolean,
   inEnglish: React.JSX.Element,
   inJapanese: React.JSX.Element,
   eLabel: React.JSX.Element,
   jLabel: React.JSX.Element
 ) {
   let topValue, bottomValue, topLabel, bottomLabel;
-  if (practiceSide) {
+
+  if (englishSideUp) {
     topValue = inEnglish;
     bottomValue = inJapanese;
     topLabel = eLabel;
@@ -1016,22 +1018,21 @@ export function toggleFuriganaSettingHelper<T extends FuriganaToggleMap>(
   uid: string,
   settings: T,
   englishSideUp?: boolean,
-  toggleFn?: (uid: string) => void
+  toggleFn?: () => void
 ) {
-  let furiganaToggable;
-
   // show by default unless explicitly set to false
   const show = !(settings?.[uid]?.f === false);
-  furiganaToggable = {
+
+  // provide a toggle fn
+  const toggle =
+    englishSideUp === false && typeof toggleFn === "function"
+      ? toggleFn
+      : undefined;
+
+  const furiganaToggable = {
     furigana: {
       show,
-      toggle:
-        (englishSideUp === false &&
-          toggleFn &&
-          (() => {
-            toggleFn(uid);
-          })) ||
-        undefined,
+      toggle,
     },
   };
 

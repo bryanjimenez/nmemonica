@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -28,7 +29,6 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { addParam } from "../../helper/urlHelper";
-import { buildAction, setStateFunction } from "../../hooks/helperHK";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";

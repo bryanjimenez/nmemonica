@@ -15,8 +15,8 @@ import React, {
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
+import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
-import { buildAction, setStateFunction } from "../../hooks/helperHK";
 import type { RootState } from "../../slices";
 import { toggleKana } from "../../slices/kanaSlice";
 import { KanjiGameMeta } from "../Games/KanjiGame";

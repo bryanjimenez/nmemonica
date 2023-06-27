@@ -131,6 +131,8 @@ function prepareGame(
   const q = JapaneseText.parse(questionObj);
   const a = JapaneseText.parse(answerObj);
 
+  const choiceCss = "fs-2";
+
   const question = {
     ...questionObj,
     toHTML: (correct: boolean) => (
@@ -147,7 +149,7 @@ function prepareGame(
   const answer: GameChoice = {
     ...answerObj,
     compare: answerObj.japanese,
-    toHTML: () => a.toHTML(),
+    toHTML: () => <span className={choiceCss}>{a.toHTML()}</span>,
   };
 
   let choices: GameChoice[] = [answer];
@@ -171,7 +173,7 @@ function prepareGame(
           {
             ...wrongAnswer1,
             compare: wrongAnswer1.japanese,
-            toHTML: () => w1.toHTML(),
+            toHTML: () => <span className={choiceCss}>{w1.toHTML()}</span>,
           },
         ];
         antiHomophones = [...antiHomophones, wrongAnswer1.romaji];
@@ -182,7 +184,7 @@ function prepareGame(
           {
             ...wrongAnswer2,
             compare: wrongAnswer2.japanese,
-            toHTML: () => w2.toHTML(),
+            toHTML: () => <span className={choiceCss}>{w2.toHTML()}</span>,
           },
         ];
         antiHomophones = [...antiHomophones, wrongAnswer2.romaji];

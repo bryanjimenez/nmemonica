@@ -3,9 +3,10 @@ import classNames from "classnames";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { shuffleArray } from "../../helper/arrayHelper";
+import { setStateFunction } from "../../helper/eventHandlerHelper";
 import { swapKana } from "../../helper/kanaHelper";
-import { setStateFunction, useWindowSize } from "../../hooks/helperHK";
 import { useConnectKana } from "../../hooks/useConnectKana";
+import { useWindowSize } from "../../hooks/useWindowSize";
 import { KanaType } from "../../slices/settingHelper";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
@@ -59,7 +60,7 @@ export default function KanaGame() {
   const [practiceSide, setPracticeSide] = useState(false); //false=hiragana q shown (read), true=romaji q shown (write)
 
   const {
-    prepareGame,
+    prepareGame: prepareGameCB,
     setWrongs,
     setCorrect,
 
@@ -138,7 +139,7 @@ export default function KanaGame() {
 
   useEffect(() => {
     if (hiraganaR.current.length > 0) {
-      prepareGame();
+      prepareGameCB();
     }
   }, [selectedIndex, practiceSide, charSet]);
 

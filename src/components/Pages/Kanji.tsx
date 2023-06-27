@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
@@ -22,14 +23,10 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
-import {
-  buildAction,
-  setStateFunction,
-  useWindowSize,
-} from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
+import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch } from "../../slices";
 import {
   addFrequencyKanji,

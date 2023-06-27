@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { useForceRender } from "./helperHK";
 import type { useDeviceMotionActions } from "./useDeviceMotionActions";
+import { useForceRender } from "./useFade";
 import type { GameActionHandler } from "./useSwipeActions";
 import {
   LoopSettingBtn,

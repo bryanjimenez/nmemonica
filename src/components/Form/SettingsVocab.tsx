@@ -14,8 +14,8 @@ import { NotReady } from "./NotReady";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import VerbFormSlider from "./VerbFormSlider";
+import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
-import { buildAction } from "../../hooks/helperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
@@ -71,7 +71,7 @@ export default function SettingsVocab() {
   const [initialMemoThreshold] = useState(Math.abs(memoThreshold));
 
   if (Object.keys(vocabGroups).length === 0) {
-    dispatch(getVocabulary());
+    void dispatch(getVocabulary());
   }
 
   const vocabFreq = useMemo(

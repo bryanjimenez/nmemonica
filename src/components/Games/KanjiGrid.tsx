@@ -14,6 +14,7 @@ import type { GameChoice, GameQuestion } from "./FourChoices";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
@@ -21,7 +22,6 @@ import {
   randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
-import { setStateFunction } from "../../hooks/helperHK";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch } from "../../slices";

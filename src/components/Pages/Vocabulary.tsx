@@ -15,6 +15,7 @@ import VocabularyMain from "./VocabularyMain";
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -35,7 +36,6 @@ import {
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import { addParam } from "../../helper/urlHelper";
-import { buildAction, setStateFunction } from "../../hooks/helperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";

@@ -2,8 +2,8 @@ import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
 import SettingsSwitch from "./SettingsSwitch";
+import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
-import { buildAction } from "../../hooks/helperHK";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import type { AppDispatch } from "../../slices";
 import {
@@ -43,7 +43,7 @@ export default function SettingsPhrase() {
   const phraseReinforce = phraseReinforceRef.current;
 
   if (phrases.length === 0) {
-    dispatch(getPhrase());
+    void dispatch(getPhrase());
   }
 
   const phraseFreq = Object.keys(phraseRep).filter(

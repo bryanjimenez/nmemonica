@@ -1,7 +1,8 @@
 import PropTypes from "prop-types";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
+import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
   getCacheUID,
@@ -12,7 +13,6 @@ import {
   toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
-import { setStateFunction } from "../../hooks/helperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { furiganaToggled } from "../../slices/vocabularySlice";
@@ -31,8 +31,8 @@ export default function VocabularyMain(props: VocabularyMainProps) {
 
   const { vocabulary, reCache, showHint } = props;
 
-  const [showMeaning, setShowMeaning] = useState<string | undefined>(undefined);
-  const [showRomaji, setShowRomaji] = useState<string | undefined>(undefined);
+  const [showMeaning, setShowMeaning] = useState<boolean>(false);
+  const [showRomaji, setShowRomaji] = useState<boolean>(false);
   const [naFlip, setNaFlip] = useState<"-na" | undefined>(undefined);
 
   const {
@@ -44,18 +44,14 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     bareKanji: showBareKanjiSetting,
   } = useConnectVocabulary();
 
-  useEffect(() => {
-    // When scrolling back and forth
-    // reset last words shownMeaning (etc.)
-    // avoids re-showing when scrolling back
-    const currUid = vocabulary.uid;
-    setShowMeaning((prev) => (prev === currUid ? prev : undefined));
-    setShowRomaji((prev) => (prev === currUid ? prev : undefined));
+  useLayoutEffect(() => {
+    setShowMeaning(false);
+    setShowRomaji(false);
   }, [vocabulary]);
 
   const toggleFuriganaCB = useCallback(
-    (uid: string) => dispatch(furiganaToggled(uid)),
-    [dispatch]
+    () => dispatch(furiganaToggled(vocabulary.uid)),
+    [dispatch, vocabulary.uid]
   );
 
   const furiganaToggable = useMemo(
@@ -165,12 +161,10 @@ export default function VocabularyMain(props: VocabularyMainProps) {
       {romajiEnabled && romaji && (
         <h5>
           <span
-            onClick={setStateFunction(setShowRomaji, (r) =>
-              r === vocabulary.uid ? undefined : vocabulary.uid
-            )}
+            onClick={setStateFunction(setShowRomaji, (r) => !r)}
             className="clickable loop-no-interrupt"
           >
-            {showRomaji === vocabulary.uid ? romaji : "[Romaji]"}
+            {showRomaji ? romaji : "[Romaji]"}
           </span>
         </h5>
       )}
@@ -189,14 +183,10 @@ export default function VocabularyMain(props: VocabularyMainProps) {
         onClick={
           showBareKanji
             ? undefined
-            : setStateFunction(setShowMeaning, (m) =>
-                m === vocabulary.uid ? undefined : vocabulary.uid
-              )
+            : setStateFunction(setShowMeaning, (m) => !m)
         }
       >
-        {showMeaning === vocabulary.uid || showBareKanji
-          ? bottomValue
-          : bottomLabel}
+        {showMeaning || showBareKanji ? bottomValue : bottomLabel}
       </Sizable>
 
       <div className="d-flex justify-content-center">{playButton}</div>

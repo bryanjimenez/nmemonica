@@ -3,7 +3,7 @@ import classNames from "classnames";
 import { forwardRef, memo, useLayoutEffect, useReducer, useRef } from "react";
 import type React from "react";
 
-import { useFade } from "../../hooks/helperHK";
+import { useFade } from "../../hooks/useFade";
 import StackNavButton from "../Form/StackNavButton";
 
 export interface GameQuestion {
