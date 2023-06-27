@@ -1,3 +1,4 @@
+import { type ConsoleMessage } from "../components/Form/Console";
 import { DebugLevel } from "../slices/settingHelper";
 import {
   MetaDataObj,
@@ -157,4 +158,39 @@ export function logify(
   }, {});
 
   return JSON.stringify(bare).replaceAll(",", ", ");
+}
+
+/**
+ * Takes one or two messages and checks if they can be squashed
+ *
+ * Sequential messages that are the same can be squashed
+ * incrementing a counter on the final message
+ * @param messages one or two messages to be squashed
+ */
+export function squashSeqMsgs(messages: ConsoleMessage[]) {
+  let squashed: ConsoleMessage[] = [];
+
+  if (messages.length < 2) {
+    return messages as [ConsoleMessage];
+  }
+
+  const [last, incoming] = messages;
+
+  const zero = last.msg === incoming.msg;
+  const notZero = last.msg.endsWith('+') && last.msg.slice(0, -4) === incoming.msg;
+
+  if (zero || notZero) {
+    // squashable
+    if (zero) {
+      squashed = [{ ...incoming, msg: `${incoming.msg} ${1} +` }];
+    } else {
+      const c = Number(last.msg.slice(-3).slice(0, 1));
+      squashed = [{ ...incoming, msg: `${incoming.msg} ${c + 1} +` }];
+    }
+  } else {
+    // not squashable
+    squashed = messages;
+  }
+
+  return squashed;
 }

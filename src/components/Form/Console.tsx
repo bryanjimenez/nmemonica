@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { shallowEqual, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 import type { RootState } from "../../slices";
 import { DebugLevel } from "../../slices/settingHelper";
@@ -15,50 +15,12 @@ export interface ConsoleMessage {
   lvl: number;
   css?: string;
   type?: string;
+  time?: number;
 }
 
 interface ConsoleProps {
   connected?: boolean;
   messages?: ConsoleMessage[];
-}
-
-/**
- * squashes sequential messages that are the same
- * incrementing a counter on the final message
- * @param {ConsoleMessage[]} messages
- */
-function squashSeqMsgs(messages: ConsoleMessage[]) {
-  let squashed: ConsoleMessage[] = [];
-  let count = 0;
-
-  messages.forEach((element, i) => {
-    if (i > 0 && element.msg === messages[i - 1].msg) {
-      count++;
-    } else {
-      if (count > 0) {
-        const front = squashed.slice(0, -1);
-        const last = squashed.slice(-1)[0];
-
-        squashed = [
-          ...front,
-          { ...last, msg: `${last.msg} ${count + 1} +` },
-          element,
-        ];
-        count = 0;
-      } else {
-        squashed = [...squashed, element];
-      }
-    }
-  });
-
-  // update last line's count
-  // if(count>0 && squashed.length>0){
-  //   const front = squashed.slice(0,-1);
-  //   const last = squashed.slice(-1)[0];
-  //   squashed = [...front,{...last, msg:last.msg+" "+(count+1)+"+"}]
-  // }
-
-  return squashed;
 }
 
 export default function Console(props: ConsoleProps) {
@@ -72,30 +34,26 @@ export default function Console(props: ConsoleProps) {
     }
   });
 
-  const pMessages = useSelector<RootState, ConsoleMessage[]>(
+  const messages = useSelector<RootState, ConsoleMessage[]>(
     ({ global }: RootState) => {
       if (!isConnected && props.messages) {
         return props.messages;
       } else {
         return global.console;
       }
-    },
-    shallowEqual
+    }
+    // shallowEqual
   );
 
   const [window, setWindow] = useState(MAX_CONSOLE_MESSAGES); // Max number of messages to display
   const [scroll, setScroll] = useState(0); // Number of lines to scroll up
-  const [messages, setMessages] = useState(squashSeqMsgs(pMessages));
   const collapse = useRef<number | undefined>();
 
   useEffect(() => {
     if (debug === DebugLevel.OFF) {
       setScroll(0);
-      setMessages([]);
     } else {
-      const squashed = squashSeqMsgs(pMessages);
       setScroll(0);
-      setMessages(squashed);
       setWindow(MAX_CONSOLE_MESSAGES);
 
       if (collapse.current !== undefined) {
@@ -111,7 +69,7 @@ export default function Console(props: ConsoleProps) {
         collapse.current = Number(t);
       }
     }
-  }, [isConnected, debug, pMessages]);
+  }, [isConnected, debug, messages]);
 
   const start = -window - scroll;
   const end = scroll > 0 ? -1 * scroll : undefined;
@@ -146,7 +104,8 @@ export default function Console(props: ConsoleProps) {
         "mw-50": props.connected === true,
       })}
     >
-      {m.map((e) => {
+      {m.map((e: ConsoleMessage & { time: number }) => {
+        const key = `${e.time}+${e.msg}+${e.lvl}`;
         const mClass = classNames({
           "app-sm-fs-xx-small": true,
           ...(e.css ? { [e.css]: true } : {}),
@@ -156,7 +115,7 @@ export default function Console(props: ConsoleProps) {
         });
 
         return (
-          <div key={`${e.msg} ${e.lvl}`} className={mClass} onClick={scrollUp}>
+          <div key={key} className={mClass} onClick={scrollUp}>
             {e.msg}
           </div>
         );

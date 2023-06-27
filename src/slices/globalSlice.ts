@@ -4,21 +4,23 @@ import {
   createSlice,
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+
+import { kanaFromLocalStorage } from "./kanaSlice";
+import { kanjiFromLocalStorage } from "./kanjiSlice";
+import { oppositeFromLocalStorage } from "./oppositeSlice";
+import { particleFromLocalStorage } from "./particleSlice";
+import { phraseFromLocalStorage } from "./phraseSlice";
+import { DebugLevel, toggleAFilter } from "./settingHelper";
+import { memoryStorageStatus, persistStorage } from "./storageHelper";
+import { vocabularyFromLocalStorage } from "./vocabularySlice";
+import { type ConsoleMessage } from "../components/Form/Console";
+import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
 import { localStorageKey } from "../constants/paths";
+import { squashSeqMsgs } from "../helper/consoleHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
-import { DebugLevel, toggleAFilter } from "./settingHelper";
-import { memoryStorageStatus, persistStorage } from "./storageHelper";
-import { phraseFromLocalStorage } from "./phraseSlice";
-import { kanjiFromLocalStorage } from "./kanjiSlice";
-import { kanaFromLocalStorage } from "./kanaSlice";
-import { oppositeFromLocalStorage } from "./oppositeSlice";
-import { particleFromLocalStorage } from "./particleSlice";
-import { vocabularyFromLocalStorage } from "./vocabularySlice";
-import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
-import type { ConsoleMessage } from "../components/Form/Console";
 
 export interface MemoryDataObject {
   quota: number;
@@ -190,7 +192,21 @@ const globalSlice = createSlice({
           } else {
             m = `UI: ${msg}`;
           }
-          state.console = [...state.console, { msg: m, lvl }];
+
+          const begining = state.console.slice(0, -1);
+          const lastOne = state.console.slice(-1);
+          const incoming = { msg: m, lvl, time: Date.now() };
+
+          /** one to two messages */
+          const squashed = squashSeqMsgs([...lastOne, incoming]);
+
+          // Only keep a fixed number of lines
+          if (begining.length > 100) {
+            const maxed = begining.slice(-100);
+            state.console = [...maxed, ...squashed];
+          } else {
+            state.console = [...begining, ...squashed];
+          }
         }
       },
 
@@ -223,12 +239,8 @@ const globalSlice = createSlice({
     });
 
     builder.addCase(setPersistentStorage.fulfilled, (state, action) => {
-      const { quota, usage, persistent, warning } =
+      const { quota, usage, persistent } =
         action.payload as GlobalInitSlice["memory"];
-
-      if (warning) {
-        console.warn(warning);
-      }
 
       state.memory = { quota, usage, persistent };
     });
