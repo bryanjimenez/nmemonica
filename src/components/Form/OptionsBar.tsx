@@ -354,7 +354,7 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
       >
         <span
           className={classNames({
-            "border-bottom": props.hover === "incorrect",
+            "underline": props.hover === "incorrect",
           })}
         >
           {"-1"}
@@ -375,7 +375,7 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
       >
         <span
           className={classNames({
-            "border-bottom":
+            "underline":
               props.hover === "pronunciation" ||
               (props.hover !== "reset" && props.prevMissPronu),
           })}
@@ -397,7 +397,7 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
       >
         <span
           className={classNames({
-            "border-bottom": props.hover === "reset",
+            "underline": props.hover === "reset",
           })}
         >
           0
