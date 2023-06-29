@@ -5,12 +5,19 @@
 
 .dark-mode #tooltip {
   background: #424242;
+  border: unset;
+}
+
+.dark-mode #arrow {
+  border: unset;
 }
 
 #tooltip {
   background: #f5f5f5;
   border-radius: 8px;
   padding: 20px 0;
+
+  border: 1px solid var(--bs-dark);
 
   -webkit-transition: visibility 0.3s ease-in-out, opacity 0.3s ease-in-out;
   transition: visibility 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -27,6 +34,9 @@
 #arrow {
   background: inherit;
   transform: rotate(45deg);
+
+  border-bottom: 1px solid var(--bs-dark);
+  border-right: 1px solid var(--bs-dark);
 }
 
 .dark-mode .underline {
@@ -340,6 +350,14 @@ a {
 
 .dark-mode .nav-btn-line {
   background-color: var(--bs-light);
+}
+
+.underline {
+  border-bottom: 2px solid var(--bs-dark) !important;
+}
+
+.dark-mode .underline {
+  border-bottom: 2px solid var(--bs-light) !important;
 }
 
 .fs-kanji-huge {
