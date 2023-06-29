@@ -58,7 +58,22 @@ export default function KanaGame() {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforce, setReinforce] = useState<Choice[]>([]); // list of recently wrong chosen hiragana used to reinforce
-  const [practiceSide, setPracticeSide] = useState(false); //false=hiragana q shown (read), true=romaji q shown (write)
+  const sideFlipState = useState(false);
+  /**
+   * **true** (write practice)
+   *
+   * Question: romaji
+   *
+   * Choices: kana
+   *
+   * **false** (read practice)
+   *
+   * Question: kana
+   *
+   * Choices: romaji
+   */
+  const practiceSide = sideFlipState[0];
+  const setPracticeSide = sideFlipState[1];
 
   const {
     prepareGame: prepareGameCB,

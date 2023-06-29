@@ -27,7 +27,7 @@ export interface PhraseInitSlice {
 
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
-    practiceSide: boolean;
+    englishSideUp: boolean;
     romaji: boolean;
     reinforce: boolean;
     repTID: number;
@@ -45,7 +45,7 @@ export const phraseInitState: PhraseInitSlice = {
 
   setting: {
     ordered: 0,
-    practiceSide: false,
+    englishSideUp: false,
     romaji: false,
     reinforce: false,
     repTID: -1,
@@ -237,11 +237,11 @@ const phraseSlice = createSlice({
     },
 
     flipPhrasesPracticeSide(state) {
-      state.setting.practiceSide = localStoreAttrUpdate(
+      state.setting.englishSideUp = localStoreAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
-        "practiceSide"
+        "englishSideUp"
       );
     },
 

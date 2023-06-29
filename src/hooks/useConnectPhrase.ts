@@ -31,9 +31,9 @@ export function useConnectPhrase() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const practiceSide = useSelector(({ phrases }: RootState) => {
-    const { practiceSide } = phrases.setting;
-    return practiceSide;
+  const englishSideUp = useSelector(({ phrases }: RootState) => {
+    const { englishSideUp } = phrases.setting;
+    return englishSideUp;
   });
 
   const [r, ft, sm, rm] = useSelector<
@@ -68,7 +68,7 @@ export function useConnectPhrase() {
 
   return {
     // Changing during game
-    englishSideUp: practiceSide,
+    englishSideUp: englishSideUp,
     repetition,
 
     // Not changing during game

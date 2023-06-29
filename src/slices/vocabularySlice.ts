@@ -37,7 +37,7 @@ export interface VocabularyInitSlice {
 
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
-    practiceSide: boolean;
+    englishSideUp: boolean;
     romaji: boolean;
     bareKanji: boolean;
     hintEnabled: boolean;
@@ -60,7 +60,7 @@ export const vocabularyInitState: VocabularyInitSlice = {
 
   setting: {
     ordered: 0,
-    practiceSide: false,
+    englishSideUp: false,
     romaji: false,
     bareKanji: false,
     hintEnabled: false,
@@ -215,11 +215,11 @@ const vocabularySlice = createSlice({
     },
 
     flipVocabularyPracticeSide(state) {
-      state.setting.practiceSide = localStoreAttrUpdate(
+      state.setting.englishSideUp = localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
-        "practiceSide"
+        "englishSideUp"
       );
     },
 
