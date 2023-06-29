@@ -160,7 +160,7 @@ export default function KanjiGrid() {
 
   useEffect(() => {
     if (kanjiList.length === 0) {
-      dispatch(getKanji());
+      void dispatch(getKanji());
     }
   }, []);
 
@@ -170,9 +170,7 @@ export default function KanjiGrid() {
   const [frequency, setFrequency] = useState<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
   const prevUidRef = useRef<string | undefined>("");
   const [writePractice, setEnglishSide] = useState(false);
@@ -239,7 +237,7 @@ export default function KanjiGrid() {
     // setLastNext(Date.now());
     // prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setCurrExmpl(null);
   }, [filteredTerms, selectedIndex /* lastNext, errorSkipIndex*/]);
 
@@ -284,7 +282,7 @@ export default function KanjiGrid() {
     // setLastNext(Date.now());
     // prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setCurrExmpl(null);
   }, [
     filteredTerms,

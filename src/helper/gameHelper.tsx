@@ -34,7 +34,7 @@ export function play<RawItem extends { uid: string }>(
   frequency: string[],
   filteredTerms: RawItem[],
   metadata: SpaceRepetitionMap,
-  reinforcedUID: string | undefined,
+  reinforcedUID: string | null,
   updateReinforcedUID: (uid: string) => void,
   gotoNext: () => void
 ) {

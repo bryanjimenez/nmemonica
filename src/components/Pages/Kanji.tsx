@@ -94,9 +94,7 @@ export default function Kanji() {
   metadata.current = repetition;
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
@@ -149,7 +147,7 @@ export default function Kanji() {
     const newSel = (selectedIndex + 1) % l;
 
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
@@ -205,7 +203,7 @@ export default function Kanji() {
     let newSel = i < 0 ? (l + i) % l : i % l;
 
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
@@ -230,7 +228,7 @@ export default function Kanji() {
         }
       }
 
-      return Promise.resolve(/** interrupt, fetch */)
+      return Promise.resolve(/** interrupt, fetch */);
     },
     [gotoNextSlide, gotoPrev]
   );
@@ -400,7 +398,7 @@ export default function Kanji() {
           </div>
           <div className="col text-center">
             <FrequencyTermIcon
-              visible={reinforcedUID !== undefined && reinforcedUID !== ""}
+              visible={reinforcedUID !== null}
             />
           </div>
           <div className="col">

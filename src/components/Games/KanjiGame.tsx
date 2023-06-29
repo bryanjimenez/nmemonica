@@ -246,9 +246,7 @@ export default function KanjiGame() {
   const frequency = useRef<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
   useEffect(() => {
     if (kanjiList.length === 0) {
@@ -344,7 +342,7 @@ export default function KanjiGame() {
     return newOrder;
   }, [filteredTerms]);
 
-  const prevReinforcedUID = useRef<string | undefined>(undefined);
+  const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef<number>(Date.now());
@@ -370,7 +368,7 @@ export default function KanjiGame() {
 
         // don't increment reinforced terms
         const shouldIncrement = prevUid !== prevState.reinforcedUID;
-        const frequency = prevState.reinforcedUID !== undefined;
+        const frequency = prevState.reinforcedUID !== null;
 
         void dispatch(updateSpaceRepKanji({ uid: prevUid, shouldIncrement }))
           .unwrap()
@@ -449,7 +447,7 @@ export default function KanjiGame() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext /*, errorSkipIndex*/]);
 
   const gotoNextSlide = useCallback(() => {
@@ -493,7 +491,7 @@ export default function KanjiGame() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [
     filteredTerms,
     selectedIndex,
@@ -549,7 +547,7 @@ export default function KanjiGame() {
           break;
       }
 
-      return Promise.resolve(/** interrupt, fetch */)
+      return Promise.resolve(/** interrupt, fetch */);
     },
     [gotoPrev, gotoNextSlide]
   );

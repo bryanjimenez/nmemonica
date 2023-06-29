@@ -84,12 +84,10 @@ export default function Vocabulary() {
   /** Alphabetic order quick scroll in progress */
   const isAlphaSortScrolling = useRef(false);
 
-  const prevReinforcedUID = useRef<string | undefined>(undefined);
+  const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
 
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
   // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   // const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
@@ -277,7 +275,7 @@ export default function Vocabulary() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
@@ -315,7 +313,7 @@ export default function Vocabulary() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = buildGameActionsHandler(
@@ -387,7 +385,7 @@ export default function Vocabulary() {
 
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
-        const frequency = prevState.reinforcedUID !== undefined;
+        const frequency = prevState.reinforcedUID !== null;
 
         void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
           .unwrap()
@@ -568,7 +566,7 @@ export default function Vocabulary() {
             </div>
             <div className="col text-center">
               <FrequencyTermIcon
-                visible={reinforcedUID !== undefined && reinforcedUID !== ""}
+                visible={reinforcedUID !== null}
               />
             </div>
             <div className="col">
@@ -721,7 +719,7 @@ function buildRecacheAudioHandler(
 function buildGameActionsHandler(
   gotoNextSlide: () => void,
   gotoPrev: () => void,
-  reinforcedUID: string | undefined,
+  reinforcedUID: string | null,
   selectedIndex: number,
   vocab: RawVocabulary[],
   verbForm: string,
@@ -738,10 +736,16 @@ function buildGameActionsHandler(
 
     if (direction === "left") {
       gotoNextSlide();
-      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else if (direction === "right") {
       gotoPrev();
-      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else {
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
@@ -800,7 +804,10 @@ function buildGameActionsHandler(
         actionPromise = fetchAudio(audioUrl, AbortController);
       }
     }
-    return actionPromise ?? Promise.reject();
+    return (
+      actionPromise ??
+      Promise.reject(/** TODO: give direction a type to remove this */)
+    );
   };
 }
 

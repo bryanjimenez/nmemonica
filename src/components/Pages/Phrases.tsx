@@ -68,12 +68,10 @@ const PhrasesMeta = {
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const prevReinforcedUID = useRef<string | undefined>(undefined);
+  const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
 
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
   const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
@@ -184,7 +182,7 @@ export default function Phrases() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, lastNext, errorSkipIndex]);
 
   const gotoNextSlide = useCallback(() => {
@@ -229,7 +227,7 @@ export default function Phrases() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext, errorSkipIndex]);
 
   const gameActionHandler = buildGameActionsHandler(
@@ -292,7 +290,7 @@ export default function Phrases() {
             const prevDate = prevMap?.[uid]?.d ?? map[uid].d;
             const repStats = { [uid]: { ...map[uid], d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
-            const frequency = prevState.reinforcedUID !== undefined;
+            const frequency = prevState.reinforcedUID !== null;
             if (tpAnsweredREF.current !== undefined) {
               timedPlayLog(messageLog, phrase, repStats, { frequency });
             } else {
@@ -500,7 +498,7 @@ export default function Phrases() {
           </div>
           <div className="col text-center">
             <FrequencyTermIcon
-              visible={reinforcedUID !== undefined && reinforcedUID !== ""}
+              visible={reinforcedUID !== null}
             />
           </div>
           <div className="col">
@@ -653,7 +651,7 @@ function buildRecacheAudioHandler(
 function buildGameActionsHandler(
   gotoNextSlide: () => void,
   gotoPrev: () => void,
-  reinforcedUID: string | undefined,
+  reinforcedUID: string | null,
   selectedIndex: number,
   phrases: RawPhrase[],
   order: number[],
@@ -668,10 +666,16 @@ function buildGameActionsHandler(
 
     if (direction === "left") {
       gotoNextSlide();
-      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else if (direction === "right") {
       gotoPrev();
-      actionPromise = Promise.all([Promise.resolve(/** Interrupt */), Promise.resolve(/** Fetch */)]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else {
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
@@ -699,7 +703,10 @@ function buildGameActionsHandler(
         actionPromise = fetchAudio(audioUrl, AbortController);
       }
     }
-    return actionPromise ?? Promise.reject();
+    return (
+      actionPromise ??
+      Promise.reject(/** TODO: give direction a type to remove this */)
+    );
   };
 }
 
