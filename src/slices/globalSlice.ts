@@ -21,6 +21,7 @@ import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
+import type { ValuesOf } from "../typings/raw";
 
 export interface MemoryDataObject {
   quota: number;
@@ -165,10 +166,7 @@ const globalSlice = createSlice({
     },
 
     debugToggled: {
-      reducer: (
-        state,
-        action: PayloadAction<(typeof DebugLevel)[keyof typeof DebugLevel]>
-      ) => {
+      reducer: (state, action: PayloadAction<ValuesOf<typeof DebugLevel>>) => {
         const override = action.payload;
         const newDebug: number = toggleAFilter(
           state.debug + 1,
@@ -185,7 +183,7 @@ const globalSlice = createSlice({
         );
       },
 
-      prepare: (override: (typeof DebugLevel)[keyof typeof DebugLevel]) => ({
+      prepare: (override: ValuesOf<typeof DebugLevel>) => ({
         payload: override,
       }),
     },

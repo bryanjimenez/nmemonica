@@ -8,6 +8,7 @@ import { swapKana } from "../../helper/kanaHelper";
 import { useConnectKana } from "../../hooks/useConnectKana";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { KanaType } from "../../slices/settingHelper";
+import type { ValuesOf } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
@@ -216,7 +217,7 @@ export default function KanaGame() {
  *
  * 2 = randomize 0 or 1
  */
-function kanaTypeLogic(charSet: (typeof KanaType)[keyof typeof KanaType]) {
+function kanaTypeLogic(charSet: ValuesOf<typeof KanaType>) {
   let useCharSet;
   if (charSet === KanaType.MIXED) {
     useCharSet = Math.floor(Math.random() * 2) as 0 | 1;
@@ -306,7 +307,7 @@ function populateChoices(
       vowel: number,
       charset: number
     ) => string;
-    charSet: (typeof KanaType)[keyof typeof KanaType];
+    charSet: ValuesOf<typeof KanaType>;
     choiceN: number;
     practiceSide: boolean;
   },
@@ -377,7 +378,7 @@ export function usePrepareGame({
   reinforce,
   selectedIndex,
 }: {
-  charSet: (typeof KanaType)[keyof typeof KanaType];
+  charSet: ValuesOf<typeof KanaType>;
   choiceN: number;
   wideMode: boolean;
   vowelsR: React.MutableRefObject<string[]>;
@@ -562,7 +563,7 @@ export function buildChoiceButton({
   isLandscape: boolean;
   wideMode: boolean;
   easyMode: boolean;
-  charSet: (typeof KanaType)[keyof typeof KanaType];
+  charSet: ValuesOf<typeof KanaType>;
   practiceSide: boolean;
   wrongs: number[];
   choices: Choice[];

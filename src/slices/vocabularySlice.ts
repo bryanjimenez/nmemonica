@@ -24,6 +24,7 @@ import type {
   MetaDataObj,
   RawVocabulary,
   SpaceRepetitionMap,
+  ValuesOf,
 } from "../typings/raw";
 
 import type { RootState } from ".";
@@ -35,12 +36,12 @@ export interface VocabularyInitSlice {
   verbForm: string;
 
   setting: {
-    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
+    ordered: ValuesOf<typeof TermSortBy>;
     practiceSide: boolean;
     romaji: boolean;
     bareKanji: boolean;
     hintEnabled: boolean;
-    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+    filter: ValuesOf<typeof TermFilterBy>;
     memoThreshold: number;
     reinforce: boolean;
     repTID: number;
@@ -186,7 +187,7 @@ const vocabularySlice = createSlice({
 
     toggleVocabularyOrdering(
       state,
-      action: { payload: (typeof TermSortBy)[keyof typeof TermSortBy] }
+      action: { payload: ValuesOf<typeof TermSortBy> }
     ) {
       const { ordered } = state.setting;
       const override = action.payload;
@@ -202,7 +203,7 @@ const vocabularySlice = createSlice({
         ordered + 1,
         allowed,
         override
-      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+      ) as ValuesOf<typeof TermSortBy>;
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -251,7 +252,7 @@ const vocabularySlice = createSlice({
 
     toggleVocabularyFilter(
       state,
-      action: { payload: (typeof TermFilterBy)[keyof typeof TermFilterBy] }
+      action: { payload: ValuesOf<typeof TermFilterBy> }
     ) {
       const allowed: number[] = [TermFilterBy.FREQUENCY, TermFilterBy.GROUP];
 
@@ -262,7 +263,7 @@ const vocabularySlice = createSlice({
         filter + 1,
         allowed,
         override
-      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
+      ) as ValuesOf<typeof TermFilterBy>;
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),

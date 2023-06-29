@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
 import { TermFilterBy } from "../slices/settingHelper";
+import type { ValuesOf } from "../typings/raw";
 
 /**
  * Phrase app-state props
@@ -37,7 +38,7 @@ export function useConnectPhrase() {
 
   const [r, ft, sm, rm] = useSelector<
     RootState,
-    [boolean, (typeof TermFilterBy)[keyof typeof TermFilterBy], number, boolean]
+    [boolean, ValuesOf<typeof TermFilterBy>, number, boolean]
   >(({ phrases }: RootState) => {
     const { reinforce, filter, ordered, romaji } = phrases.setting;
     return [reinforce, filter, ordered, romaji];

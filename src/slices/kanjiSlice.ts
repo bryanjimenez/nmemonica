@@ -12,7 +12,7 @@ import { firebaseConfig } from "../../environment.development";
 import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { buildTagObject } from "../helper/reducerHelper";
-import type { RawKanji, SpaceRepetitionMap } from "../typings/raw";
+import type { RawKanji, SpaceRepetitionMap, ValuesOf } from "../typings/raw";
 
 import type { RootState } from ".";
 
@@ -22,8 +22,8 @@ export interface KanjiInitSlice {
   tagObj: string[];
 
   setting: {
-    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
-    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
+    filter: ValuesOf<typeof TermFilterBy>;
+    ordered: ValuesOf<typeof TermSortBy>;
     reinforce: boolean;
     memoThreshold: number;
     repTID: number;
@@ -148,7 +148,7 @@ const kanjiSlice = createSlice({
 
     toggleKanjiOrdering(
       state,
-      action: { payload: (typeof TermSortBy)[keyof typeof TermSortBy] }
+      action: { payload: ValuesOf<typeof TermSortBy> }
     ) {
       const { ordered } = state.setting;
       const override = action.payload;
@@ -164,7 +164,7 @@ const kanjiSlice = createSlice({
         ordered + 1,
         allowed,
         override
-      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+      ) as ValuesOf<typeof TermSortBy>;
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -302,7 +302,7 @@ const kanjiSlice = createSlice({
         filter + 1,
         [TermFilterBy.FREQUENCY, TermFilterBy.TAGS],
         override
-      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
+      ) as ValuesOf<typeof TermFilterBy>;
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),

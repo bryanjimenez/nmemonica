@@ -18,6 +18,7 @@ import type {
   RawPhrase,
   RawVocabulary,
   SpaceRepetitionMap,
+  ValuesOf,
 } from "../typings/raw";
 
 export type VerbFormArray = {
@@ -30,7 +31,7 @@ export type VerbFormArray = {
  */
 export function play<RawItem extends { uid: string }>(
   reinforce: boolean,
-  freqFilter: (typeof TermFilterBy)[keyof typeof TermFilterBy],
+  freqFilter: ValuesOf<typeof TermFilterBy>,
   frequency: string[],
   filteredTerms: RawItem[],
   metadata: SpaceRepetitionMap,
@@ -120,7 +121,7 @@ export function getTerm<Term extends { uid: string }>(
 export function termFilterByType<
   Term extends { uid: string; grp?: string; subGrp?: string; tag?: string[] }
 >(
-  filterType: (typeof TermFilterBy)[keyof typeof TermFilterBy],
+  filterType: ValuesOf<typeof TermFilterBy>,
   termList: Term[],
   frequencyList: string[] = [],
   activeGrpList: string[],

@@ -15,6 +15,7 @@ import type {
   GroupListMap,
   RawPhrase,
   SpaceRepetitionMap,
+  ValuesOf,
 } from "../typings/raw";
 
 import type { RootState } from ".";
@@ -25,7 +26,7 @@ export interface PhraseInitSlice {
   grpObj: GroupListMap;
 
   setting: {
-    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
+    ordered: ValuesOf<typeof TermSortBy>;
     practiceSide: boolean;
     romaji: boolean;
     reinforce: boolean;
@@ -33,7 +34,7 @@ export interface PhraseInitSlice {
     repetition: SpaceRepetitionMap;
     frequency: { uid?: string; count: number };
     activeGroup: string[];
-    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+    filter: ValuesOf<typeof TermFilterBy>;
   };
 }
 
@@ -118,7 +119,7 @@ const phraseSlice = createSlice({
      */
     togglePhrasesFilter(
       state,
-      action: { payload?: (typeof TermFilterBy)[keyof typeof TermFilterBy] }
+      action: { payload?: ValuesOf<typeof TermFilterBy> }
     ) {
       const override = action.payload;
 
@@ -130,7 +131,7 @@ const phraseSlice = createSlice({
         filter + 1,
         allowed,
         override
-      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
+      ) as ValuesOf<typeof TermFilterBy>;
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),
@@ -258,10 +259,9 @@ const phraseSlice = createSlice({
 
       const { ordered } = state.setting;
 
-      let newOrdered = toggleAFilter(
-        ordered + 1,
-        allowed
-      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+      let newOrdered = toggleAFilter(ordered + 1, allowed) as ValuesOf<
+        typeof TermSortBy
+      >;
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),

@@ -1,6 +1,6 @@
 import { type ConsoleMessage } from "../components/Form/Console";
 import { DebugLevel } from "../slices/settingHelper";
-import {
+import type {
   MetaDataObj,
   RawPhrase,
   RawVocabulary,
@@ -177,7 +177,8 @@ export function squashSeqMsgs(messages: ConsoleMessage[]) {
   const [last, incoming] = messages;
 
   const zero = last.msg === incoming.msg;
-  const notZero = last.msg.endsWith('+') && last.msg.slice(0, -4) === incoming.msg;
+  const notZero =
+    last.msg.endsWith("+") && last.msg.slice(0, -4) === incoming.msg;
 
   if (zero || notZero) {
     // squashable

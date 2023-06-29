@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 import data from "../../data/kana.json";
 import type { RootState } from "../slices";
 import { KanaType } from "../slices/settingHelper";
+import type { ValuesOf } from "../typings/raw";
 
 /**
  * KanaGame app-state props
@@ -27,7 +28,7 @@ export function useConnectKana() {
 
   const [wideMode, easyMode, charSet, choiceN] = useSelector<
     RootState,
-    [boolean, boolean, (typeof KanaType)[keyof typeof KanaType], number]
+    [boolean, boolean, ValuesOf<typeof KanaType>, number]
   >(({ kana }: RootState) => {
     const { wideMode, easyMode, charSet, choiceN } = kana.setting;
     return [wideMode, easyMode, charSet, choiceN];

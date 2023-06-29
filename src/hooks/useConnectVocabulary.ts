@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
 import { TermFilterBy, TermSortBy } from "../slices/settingHelper";
+import type { ValuesOf } from "../typings/raw";
 
 /**
  * Vocabulary app-state props
@@ -48,12 +49,12 @@ export function useConnectVocabulary() {
       [
         number,
         boolean,
-        (typeof TermFilterBy)[keyof typeof TermFilterBy],
+        ValuesOf<typeof TermFilterBy>,
         boolean,
         boolean,
         boolean,
         number,
-        (typeof TermSortBy)[keyof typeof TermSortBy]
+        ValuesOf<typeof TermSortBy>
       ]
     >(({ vocabulary }: RootState) => {
       const {
