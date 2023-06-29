@@ -285,10 +285,10 @@ export default function Phrases() {
         void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
-            const { map, prevMap } = payload;
+            const { value, prevVal } = payload;
 
-            const prevDate = prevMap?.[uid]?.d ?? map[uid].d;
-            const repStats = { [uid]: { ...map[uid], d: prevDate } };
+            const prevDate = prevVal.d ?? value.d;
+            const repStats = { [uid]: { ...value, d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
             const frequency = prevState.reinforcedUID !== null;
             if (tpAnsweredREF.current !== undefined) {

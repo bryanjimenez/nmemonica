@@ -4,7 +4,6 @@ import type {
   MetaDataObj,
   RawPhrase,
   RawVocabulary,
-  SpaceRepetitionMap,
   ValuesOf,
 } from "../typings/raw";
 
@@ -63,7 +62,7 @@ export function answerSeconds(tpElapsed: number) {
 export function spaceRepLog<T extends { uid: string; english: string }>(
   logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
   term: T,
-  spaceRepMap: SpaceRepetitionMap,
+  spaceRepMap: Record<string, MetaDataObj | undefined>,
   options: { frequency: boolean }
 ) {
   const lastDate = spaceRepMap[term.uid]?.d;

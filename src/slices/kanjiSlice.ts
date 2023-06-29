@@ -12,7 +12,7 @@ import { firebaseConfig } from "../../environment.development";
 import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { buildTagObject } from "../helper/reducerHelper";
-import type { RawKanji, SpaceRepetitionMap, ValuesOf } from "../typings/raw";
+import type { MetaDataObj, RawKanji, ValuesOf } from "../typings/raw";
 
 import type { RootState } from ".";
 
@@ -27,7 +27,7 @@ export interface KanjiInitSlice {
     reinforce: boolean;
     memoThreshold: number;
     repTID: number;
-    repetition: SpaceRepetitionMap;
+    repetition: Record<string, MetaDataObj | undefined>;
     activeGroup: string[];
     activeTags: string[];
 
@@ -178,7 +178,7 @@ const kanjiSlice = createSlice({
     addFrequencyKanji(state, action: { payload: string }) {
       const uid = action.payload;
 
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -205,7 +205,7 @@ const kanjiSlice = createSlice({
 
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           spaceRep,
           { count: false, date: false },
@@ -251,7 +251,7 @@ const kanjiSlice = createSlice({
       ) => {
         const { uid, value } = action.payload;
 
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           state.setting.repetition,
           { count: false, date: false },
@@ -372,7 +372,7 @@ const kanjiSlice = createSlice({
     });
 
     builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
-      const { value: newValue } = action.payload;
+      const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(

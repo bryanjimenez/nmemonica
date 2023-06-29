@@ -23,7 +23,6 @@ import type {
   GroupListMap,
   MetaDataObj,
   RawVocabulary,
-  SpaceRepetitionMap,
   ValuesOf,
 } from "../typings/raw";
 
@@ -45,7 +44,7 @@ export interface VocabularyInitSlice {
     memoThreshold: number;
     reinforce: boolean;
     repTID: number;
-    repetition: SpaceRepetitionMap;
+    repetition: Record<string, MetaDataObj | undefined>;
     activeGroup: string[];
     autoVerbView: boolean;
     verbColSplit: number;
@@ -157,7 +156,7 @@ const vocabularySlice = createSlice({
     furiganaToggled(state, action: { payload: string }) {
       const uid = action.payload;
 
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -312,7 +311,7 @@ const vocabularySlice = createSlice({
     addFrequencyWord(state, action: { payload: string }) {
       const uid = action.payload;
 
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -337,7 +336,7 @@ const vocabularySlice = createSlice({
 
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           spaceRep,
           { count: false, date: false },
@@ -379,7 +378,7 @@ const vocabularySlice = createSlice({
       ) => {
         const { uid, value } = action.payload;
 
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           state.setting.repetition,
           { count: false, date: false },
@@ -487,14 +486,14 @@ const vocabularySlice = createSlice({
           }
         }
 
-        const o = {
+        const o: MetaDataObj = {
           ...(spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 }),
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
           pron: pronunciation === true ? true : undefined,
         };
 
-        const newValue = { ...spaceRep, [uid]: o } as SpaceRepetitionMap;
+        const newValue = { ...spaceRep, [uid]: o };
         state.setting.repTID = Date.now();
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
@@ -535,7 +534,7 @@ const vocabularySlice = createSlice({
     });
 
     builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
-      const { value: newValue } = action.payload;
+      const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(

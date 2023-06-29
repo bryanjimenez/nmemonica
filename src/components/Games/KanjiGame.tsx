@@ -373,10 +373,10 @@ export default function KanjiGame() {
         void dispatch(updateSpaceRepKanji({ uid: prevUid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
-            const { map, prevMap } = payload;
+            const { value, prevVal } = payload;
 
-            const prevDate = prevMap[prevUid]?.d ?? map[prevUid].d;
-            const repStats = { [prevUid]: { ...map[prevUid], d: prevDate } };
+            const prevDate = prevVal.d ?? value.d;
+            const repStats = { [prevUid]: { ...value, d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
 
             spaceRepLog(messageLog, prevTerm, repStats, { frequency });

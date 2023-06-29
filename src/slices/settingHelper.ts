@@ -1,8 +1,4 @@
-import type {
-  FilterKeysOfType,
-  MetaDataObj,
-  SpaceRepetitionMap,
-} from "../typings/raw";
+import type { FilterKeysOfType, MetaDataObj } from "../typings/raw";
 
 // enum
 export const DebugLevel = Object.freeze({
@@ -107,16 +103,15 @@ export function grpParse(grpNames: string[], activeGroup: string[]) {
  */
 export function updateSpaceRepTerm(
   uid: string,
-  spaceRep: SpaceRepetitionMap,
+  spaceRep: Record<string, MetaDataObj | undefined>,
   update: { count?: boolean; date?: boolean } = { count: true, date: true },
   options?: {
     toggle?: FilterKeysOfType<MetaDataObj, boolean>[];
     set?: Record<string, unknown>;
   }
 ) {
-  // TODO: create test updateSpaceRepTerm
   const uidData = spaceRep[uid];
-  let prevMap = uidData === undefined ? undefined : { [uid]: spaceRep[uid] };
+  const prevVal = spaceRep[uid] ? { ...spaceRep[uid] } : undefined;
 
   const views = uidData?.vC ?? -1;
 
@@ -166,18 +161,14 @@ export function updateSpaceRepTerm(
   const prevDate = uidData?.d;
   const keepPrevDate = prevDate !== undefined && update.date === false;
   const now = keepPrevDate ? prevDate : new Date().toJSON();
-  const o: MetaDataObj = {
+  const newVal: MetaDataObj = {
     ...(spaceRep[uid] ?? {}),
     vC: count,
     d: now,
     ...uidChangedAttr,
   };
 
-  const map = { [uid]: o };
-  prevMap = prevMap === undefined ? { ...map } : prevMap;
+  const newRecord = { ...spaceRep, [uid]: newVal };
 
-  const newValue: SpaceRepetitionMap = { ...spaceRep, ...map };
-
-  // TODO: rename this to value-> record, map->value, prevMap -> prevValue
-  return { map, prevMap, value: newValue };
+  return { record: newRecord, value: newVal, prevVal: prevVal ?? newVal };
 }

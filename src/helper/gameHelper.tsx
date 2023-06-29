@@ -17,7 +17,6 @@ import type {
   RawKanji,
   RawPhrase,
   RawVocabulary,
-  SpaceRepetitionMap,
   ValuesOf,
 } from "../typings/raw";
 
@@ -34,7 +33,7 @@ export function play<RawItem extends { uid: string }>(
   freqFilter: ValuesOf<typeof TermFilterBy>,
   frequency: string[],
   filteredTerms: RawItem[],
-  metadata: SpaceRepetitionMap,
+  metadata: Record<string, MetaDataObj | undefined>,
   reinforcedUID: string | null,
   updateReinforcedUID: (uid: string) => void,
   gotoNext: () => void
@@ -212,17 +211,17 @@ export function getStaleGroups(termGroups: GroupListMap, termActive: string[]) {
 }
 
 /**
- * Given a SpaceRepetitionMap and a term list
- * finds stale keys, and uids in the SpaceRepetitionMap
+ * Given a Record of MetadataObj and a term list
+ * finds stale keys, and uids in the MetadataObj
  * returns a set of stale keys and a list of which uid the key belonged to
  */
 export function getStaleSpaceRepKeys(
-  repetition: SpaceRepetitionMap,
+  repetition: Record<string, MetaDataObj | undefined>,
   termList: RawVocabulary[] | RawPhrase[] | RawKanji[],
   staleLabel: string
 ) {
-  const SpaceRepetitionMapKeys: {
-    [key in keyof SpaceRepetitionMap["uid"]]: null;
+  const MetadataObjKeys: {
+    [key in keyof MetaDataObj]: null;
   } = {
     d: null,
     difficulty: null,
@@ -235,7 +234,7 @@ export function getStaleSpaceRepKeys(
     tpAcc: null,
     tpCAvg: null,
   };
-  const SpaceRepKeys = new Set(Object.keys(SpaceRepetitionMapKeys));
+  const SpaceRepKeys = new Set(Object.keys(MetadataObjKeys));
 
   let OldSpaceRepKeys = new Set<string>();
   let staleInfoList: { key: string; uid: string; english: string }[] = [];
@@ -289,7 +288,7 @@ export function minimumTimeForTimedPlay(prevTime: number) {
  */
 export function spaceRepOrder(
   terms: RawVocabulary[],
-  spaceRepObj: SpaceRepetitionMap
+  spaceRepObj: Record<string, MetaDataObj | undefined>
 ) {
   interface timedPlayedSortable {
     staleness: number;
@@ -446,7 +445,7 @@ export function getCorrectnessScore(count = 0, average = 0) {
  */
 export function dateViewOrder(
   terms: { uid: string }[],
-  spaceRepObj: SpaceRepetitionMap
+  spaceRepObj: Record<string, MetaDataObj | undefined>
 ) {
   interface lastSeenSortable {
     date: string;
@@ -503,7 +502,7 @@ export const DIFFICULTY_THRLD = 30;
  */
 export function difficultyOrder(
   terms: { uid: string }[],
-  spaceRepObj: SpaceRepetitionMap
+  spaceRepObj: Record<string, MetaDataObj | undefined>
 ) {
   interface difficultySortable {
     difficulty: number;

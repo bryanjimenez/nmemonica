@@ -13,8 +13,8 @@ import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { buildGroupObject } from "../helper/reducerHelper";
 import type {
   GroupListMap,
+  MetaDataObj,
   RawPhrase,
-  SpaceRepetitionMap,
   ValuesOf,
 } from "../typings/raw";
 
@@ -31,7 +31,7 @@ export interface PhraseInitSlice {
     romaji: boolean;
     reinforce: boolean;
     repTID: number;
-    repetition: SpaceRepetitionMap;
+    repetition: Record<string, MetaDataObj | undefined>;
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
@@ -173,7 +173,7 @@ const phraseSlice = createSlice({
 
     addFrequencyPhrase(state, action: PayloadAction<string>) {
       const uid = action.payload;
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -207,7 +207,7 @@ const phraseSlice = createSlice({
       const spaceRep = state.setting.repetition;
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           spaceRep,
           { count: false, date: false },
@@ -299,7 +299,7 @@ const phraseSlice = createSlice({
       };
     });
     builder.addCase(updateSpaceRepPhrase.fulfilled, (state, action) => {
-      const { value: newValue } = action.payload;
+      const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(

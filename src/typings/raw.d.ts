@@ -75,8 +75,6 @@ export interface MetaDataObj {
   /** Timed play correct avg (ms) */ tpCAvg?: number;
 }
 
-export type SpaceRepetitionMap = Record<string, MetaDataObj | undefined>;
-
 export type FuriganaToggleMap = Record<
   string,
   | {
