@@ -1,4 +1,5 @@
 import React from "react";
+
 import data from "../../data/kana.json";
 
 /**
@@ -152,9 +153,8 @@ export function toEnglishNumber(char: string) {
  * @param character
  */
 export function getConsonantVowel(character: string) {
-  const hiragana = data.hiragana;
-  const xMax = hiragana[0].length;
-  const yMax = hiragana.length;
+  const hiraganaTable = data.hiragana;
+
   let iConsonant = -1;
   let iVowel = -1;
 
@@ -164,19 +164,16 @@ export function getConsonantVowel(character: string) {
     return { iConsonant: 15, iVowel };
   }
 
-  for (let vowel = 0; vowel < xMax; vowel++) {
-    if (iConsonant < 0) {
-      for (let consonant = 0; consonant < yMax; consonant++) {
-        if (hiragana[consonant][vowel] === character) {
-          iConsonant = consonant;
-          iVowel = vowel;
-          break;
-        }
+  hiraganaTable.some((consonants, yConsonant) => {
+    return consonants.some((tableChar, xVowel) => {
+      if (tableChar === character) {
+        iConsonant = yConsonant;
+        iVowel = xVowel;
       }
-    } else {
-      break;
-    }
-  }
+
+      return tableChar === character;
+    });
+  });
 
   return { iConsonant, iVowel };
 }
