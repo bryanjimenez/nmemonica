@@ -52,7 +52,6 @@ import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ReCacheAudioBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
@@ -493,11 +492,6 @@ export default function Phrases() {
               <div className="sm-icon-grp">{loopActionBtn}</div>
             </div>
           </div>
-          <div className="col text-center">
-            <FrequencyTermIcon
-              visible={reinforcedUID !== null}
-            />
-          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <ToggleLiteralPhraseBtn
@@ -519,7 +513,8 @@ export default function Phrases() {
                   setFrequency((f) => f.filter((id) => id !== uid));
                   buildAction(dispatch, removeFrequencyPhrase)(uid);
                 }}
-                toggle={phrase_reinforce}
+                hasReinforce={phrase_reinforce}
+                isReinforced={reinforcedUID !== null}
                 term={phrase}
                 count={frequency.length}
               />

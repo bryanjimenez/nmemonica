@@ -39,7 +39,6 @@ import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawVocabulary } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
@@ -396,19 +395,15 @@ export default function Kanji() {
           <div className="col">
             <div className="d-flex justify-content-start"></div>
           </div>
-          <div className="col text-center">
-            <FrequencyTermIcon
-              visible={reinforcedUID !== null}
-            />
-          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
-                toggle={term_reinforce}
+                hasReinforce={term_reinforce}
                 term={term}
                 count={frequency.length}
+                isReinforced={reinforcedUID !== null}
               />
             </div>
           </div>

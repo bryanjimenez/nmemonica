@@ -34,7 +34,6 @@ import { TermFilterBy } from "../../slices/settingHelper";
 import type { RawKanji } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -384,22 +383,15 @@ export default function KanjiGrid() {
               </Link>
             </div>
           </div>
-          <div className="col text-center">
-            <FrequencyTermIcon
-              visible={
-                term_reinforce &&
-                kanji.uid !== filteredTerms[order[selectedIndex]].uid
-              }
-            />
-          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <span>{game.question.toHTML(false)}</span>
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
-                toggle={term_reinforce}
+                hasReinforce={term_reinforce}
                 term={kanji}
+                isReinforced={reinforcedUID!==null}
               />
             </div>
           </div>

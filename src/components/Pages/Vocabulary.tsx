@@ -60,7 +60,6 @@ import type { RawVocabulary } from "../../typings/raw";
 import { DifficultySlider } from "../Form/Difficulty";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ReCacheAudioBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
@@ -564,11 +563,6 @@ export default function Vocabulary() {
                 <div className="sm-icon-grp">{loopActionBtn}</div>
               </div>
             </div>
-            <div className="col text-center">
-              <FrequencyTermIcon
-                visible={reinforcedUID !== null}
-              />
-            </div>
             <div className="col">
               <div className="d-flex justify-content-end">
                 {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
@@ -598,6 +592,10 @@ export default function Vocabulary() {
                   vocabulary={vocabulary}
                 />
                 <ToggleFrequencyTermBtnMemo
+                  term={vocabulary}
+                  count={frequency.length}
+                  isReinforced={reinforcedUID !== null}
+                  hasReinforce={vocabulary_reinforce}
                   addFrequencyTerm={
                     // TODO: memoize me ?
                     (uid) => {
@@ -609,9 +607,6 @@ export default function Vocabulary() {
                     setFrequency((f) => f.filter((id) => id !== uid));
                     buildAction(dispatch, removeFrequencyWord)(uid);
                   }}
-                  toggle={vocabulary_reinforce}
-                  term={vocabulary}
-                  count={frequency.length}
                 />
               </div>
             </div>
