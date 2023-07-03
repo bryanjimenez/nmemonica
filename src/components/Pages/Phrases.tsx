@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -77,9 +78,9 @@ export default function Phrases() {
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showMeaning, setShowMeaning] = useState<string | null>(null);
-  const [showRomaji, setShowRomaji] = useState<string | null>(null);
-  const [showLit, setShowLit] = useState<string | null>(null);
+  const [showMeaning, setShowMeaning] = useState<boolean>(false);
+  const [showRomaji, setShowRomaji] = useState<boolean>(false);
+  const [showLit, setShowLit] = useState<boolean>(false);
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [recacheAudio, setRecacheAudio] = useState(false);
 
@@ -261,7 +262,7 @@ export default function Phrases() {
   } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
   // TODO: variable countdown time
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
       reinforcedUID: prevReinforcedUID.current,
@@ -306,9 +307,9 @@ export default function Phrases() {
         }
       }
 
-      setShowMeaning(null);
-      setShowRomaji(null);
-      setShowLit(null);
+      setShowMeaning(false);
+      setShowRomaji(false);
+      setShowLit(false);
       setErrorMsgs([]);
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
@@ -453,25 +454,21 @@ export default function Phrases() {
             {romajiActive.current && romaji && (
               <h5>
                 <span
-                  onClick={setStateFunction(setShowRomaji, (romaji) =>
-                    romaji ? null : uid
-                  )}
+                  onClick={setStateFunction(setShowRomaji, (romaji) => !romaji)}
                   className="clickable loop-no-interrupt"
                 >
-                  {showRomaji === uid ? romaji : "[Romaji]"}
+                  {showRomaji ? romaji : "[Romaji]"}
                 </span>
               </h5>
             )}
             <Sizable
               className={belowNoInterruptCss}
               breakPoint="md"
-              onClick={setStateFunction(setShowMeaning, (meaning) =>
-                meaning ? null : uid
-              )}
+              onClick={setStateFunction(setShowMeaning, (meaning) => !meaning)}
               largeClassName={belowLargeCss}
               smallClassName={belowSmallCss}
             >
-              {showMeaning === uid ? bottomValue : bottomLabel}
+              {showMeaning ? bottomValue : bottomLabel}
             </Sizable>
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>
@@ -507,10 +504,8 @@ export default function Phrases() {
                 visible={
                   englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
                 }
-                toggle={showLit === uid}
-                action={setStateFunction(setShowLit, (lit) =>
-                  lit ? null : uid
-                )}
+                toggle={showLit}
+                action={setStateFunction(setShowLit, (lit) => !lit)}
               />
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={
@@ -554,8 +549,8 @@ function getJapanesePhrase(
 
 function englishPhraseSubComp(
   phrase: RawPhrase,
-  showLit: string | null,
-  setShowLit: React.Dispatch<React.SetStateAction<string | null>>
+  showLit: boolean,
+  setShowLit: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   return (
     <span
@@ -563,7 +558,7 @@ function englishPhraseSubComp(
       onClick={
         phrase.lit
           ? () => {
-              setShowLit((lit) => (lit ? null : phrase.uid));
+              setShowLit((lit) => !lit);
             }
           : undefined
       }
