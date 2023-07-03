@@ -106,7 +106,7 @@ function prepareGame(
       compare: c.uid,
       toString: (side: boolean) =>
         side ?? writePractice ? c.english : c.kanji,
-      toHTML: (side: boolean) => (
+      toHTML: ({ side }: { side?: boolean } = {}) => (
         <>{side ?? writePractice ? c.english : c.kanji}</>
       ),
     })),
@@ -391,7 +391,7 @@ export default function KanjiGrid() {
                 removeFrequencyTerm={removeFrequencyTerm}
                 hasReinforce={term_reinforce}
                 term={kanji}
-                isReinforced={reinforcedUID!==null}
+                isReinforced={reinforcedUID !== null}
               />
             </div>
           </div>

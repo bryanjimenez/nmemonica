@@ -17,7 +17,11 @@ export interface GameChoice {
   english?: string;
   japanese?: string;
   romaji?: string;
-  toHTML: (correct?: boolean) => React.JSX.Element;
+  toHTML: (options?: {
+    side?: boolean;
+    correct?: boolean;
+    fadeIn?: boolean;
+  }) => React.JSX.Element;
 }
 
 interface FourChoicesProps {
@@ -163,14 +167,8 @@ export function FourChoices(
                 // Don't check any more answers
                 // Don't show remaining options
 
-                if ((i + 1) * 1000 > elapsed) {
-                  // Choice showed after picking answer
-                  aChoice = (
-                    <div key={c.compare} className="invisible w-50 h-50">
-                      {c.english}
-                    </div>
-                  );
-                } else {
+                if (isRight || isWrong || (i + 1) * 1000 < elapsed) {
+                  // Right or wrong or
                   // Choice showed before picking answer
                   aChoice = (
                     <AChoice
@@ -183,6 +181,13 @@ export function FourChoices(
                       isWrong={isWrong}
                       aRomaji={props.aRomaji}
                     />
+                  );
+                } else {
+                  // Choice showed after picking answer
+                  aChoice = (
+                    <div key={c.compare} className="invisible w-50 h-50 pt-3">
+                      {c.toHTML()}
+                    </div>
                   );
                 }
               } else {
@@ -239,10 +244,6 @@ function AChoice(props: AChoiceProps) {
   }
 
   const [shown] = useFade(fadeIn === false ? 0 : delay);
-  const fadeCss = {
-    "notification-fade": !shown,
-    "notification-fade-in": shown,
-  };
 
   const choiceCSS = classNames({
     "d-flex flex-column justify-content-evenly": true,
@@ -250,7 +251,6 @@ function AChoice(props: AChoiceProps) {
     "text-break": true,
 
     ...(!props.css ? {} : { [props.css]: true }),
-    ...(fadeIn === false ? {} : fadeCss),
 
     "correct-color": isRight,
     "incorrect-color": isWrong,
@@ -266,8 +266,8 @@ function AChoice(props: AChoiceProps) {
         }
       }}
     >
-      <div>
-        <h4>{c.toHTML()}</h4>
+      <div className="d-flex flex-column">
+        <div>{c.toHTML({ fadeIn: shown })}</div>
         {isRight && <div>{c.english}</div>}
         <span
           className={classNames({
