@@ -112,22 +112,40 @@ export function getPropsFromTags(tag: string | undefined) {
 }
 
 /**
- * Adds intransitive transitive info to RawVocabulary
+ * Parses tag info to RawVocabulary
  */
 export function buildVocabularyObject(original: Record<string, RawVocabulary>) {
   let transitivity: Record<string, { trans?: string; intr: string }> = {};
   let value: RawVocabulary[] = Object.keys(original).map((k) => {
-    const uid = original[k].trans;
-    if (uid) {
+
+    const { tags, slang, keigo, exv, intr, trans, adj } = getPropsFromTags(
+      original[k].tag
+    );
+
+    if (trans) {
+      const uid = trans;
       transitivity[uid] = {
         intr: k,
-        trans: original[k].trans,
+        trans: uid,
       };
     }
 
     return {
       ...original[k],
       uid: k,
+
+      // Not used after parsing
+      tag: undefined,
+
+      // Derived from tag
+      tags,
+      slang,
+      keigo,
+      adj,
+      exv,
+      // TODO: these need type fix, don't reuse intr and trans
+      intr,
+      trans,
     };
   });
 

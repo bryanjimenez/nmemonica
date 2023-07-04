@@ -5,7 +5,9 @@ export interface RawJapanese {
   slang?: boolean;
   keigo?: boolean;
   adj?: string;
+  /** uid of intransitive pair */
   intr?: true | string;
+  /** uid of transitive pair */
   trans?: string;
   exv?: 1 | 2 | 3;
 }
@@ -18,7 +20,9 @@ export interface RawVocabulary extends RawJapanese {
 
   grp?: string;
   subGrp?: string;
-  tag?: string[];
+  tag?: string;
+
+  tags: string[];
 }
 
 export interface RawPhrase {

@@ -6,42 +6,7 @@ import * as md5 from "md5";
 import type { RawVocabulary } from "../../../src/typings/raw";
 import { fetchGSheetsData } from "./sheets";
 
-type Vocabulary = Omit<RawVocabulary, "uid">;
-
-function setPropsFromTags(vocabulary: Vocabulary, tag: string) {
-  const tags = tag.split(/[\n\s, ]+/);
-
-  tags.forEach((t) => {
-    switch (t) {
-      case "slang":
-        vocabulary.slang = true;
-        break;
-      case "keigo":
-        vocabulary.keigo = true;
-        break;
-      case "EV1":
-        vocabulary.exv = 1;
-        break;
-      case "intr":
-        vocabulary.intr = true;
-        break;
-      case new RegExp("intr:[a-z0-9]{32}").test(t) && t:
-        vocabulary.trans = t.split(":")[1];
-        break;
-      case new RegExp("(i|na)-adj").test(t) && t:
-        vocabulary.adj = t.split("-")[0];
-        break;
-      default:
-        if (!vocabulary.tag || vocabulary.tag.length === 0) {
-          vocabulary.tag = [t];
-        } else {
-          vocabulary.tag = [...vocabulary.tag, t];
-        }
-    }
-  });
-
-  return vocabulary;
-}
+type Vocabulary = Omit<RawVocabulary, "uid" | "tags"> & { tag?: string };
 
 export async function sheets_sync_vocabulary(
   req: express.Request,
@@ -95,16 +60,12 @@ export async function sheets_sync_vocabulary(
           }
 
           if (el[TAG] && el[TAG] !== "") {
-            vocabulary = setPropsFromTags(vocabulary, el[TAG]);
+            vocabulary.tag = el[TAG];
           }
 
           if (el[RM] && el[RM] !== "") {
             vocabulary.romaji = el[RM];
-          } else if (
-            vocabularyBefore &&
-            vocabularyBefore[key] &&
-            vocabularyBefore[key].romaji
-          ) {
+          } else if (vocabularyBefore?.[key]?.romaji) {
             vocabulary.romaji = vocabularyBefore[key].romaji;
           }
 

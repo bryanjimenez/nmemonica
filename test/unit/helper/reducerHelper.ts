@@ -2,6 +2,7 @@ import { expect } from "chai";
 import {
   buildGroupObject,
   buildTagObject,
+  getPropsFromTags,
 } from "../../../src/helper/reducerHelper";
 
 describe("reducerHelper", function () {
@@ -48,6 +49,54 @@ describe("reducerHelper", function () {
 
       const actual = buildTagObject(terms);
       expect(actual).to.deep.eq(expected);
+    });
+  });
+
+  describe("getPropsFromTags", function () {
+    it("empty", function () {
+      const initialTags = "";
+
+      const { tags, particles } = getPropsFromTags(initialTags);
+
+      expect(tags).to.deep.equal([]);
+      expect(particles).to.deep.equal([]);
+    });
+
+    it("keigo", function () {
+      const initialTags = "casual negative\nkeigo";
+
+      const { tags, keigo } = getPropsFromTags(initialTags);
+
+      expect(tags).to.deep.equal(["casual", "negative"]);
+      expect(keigo).to.be.true;
+    });
+
+    it("EV1", function () {
+      const initialTags = "casual negative\nkeigo EV1";
+
+      const { tags, exv } = getPropsFromTags(initialTags);
+
+      expect(tags).to.deep.equal(["casual", "negative"]);
+      expect(exv).to.eq(1);
+    });
+
+    it("intransitive", function () {
+      const initialTags = "casual negative\nkeigo EV1 intr";
+
+      const { tags, intr } = getPropsFromTags(initialTags);
+
+      expect(tags).to.deep.equal(["casual", "negative"]);
+      expect(intr).to.be.true;
+    });
+
+    it("transitive (w/ intransitive pair)", function () {
+      const expected = "00000000000000000000000000000000";
+      const initialTags = `casual negative\nkeigo EV1 intr:${expected}`;
+
+      const { tags, trans } = getPropsFromTags(initialTags);
+
+      expect(tags).to.deep.equal(["casual", "negative"]);
+      expect(trans).to.equal(expected);
     });
   });
 });
