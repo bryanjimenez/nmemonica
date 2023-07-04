@@ -33,8 +33,11 @@ export interface RawPhrase {
 
   grp?: string;
   subGrp?: string;
-  tag?: string[];
+  tag?: string;
+
+  tags: string[];
   particles?: string[];
+  antonymn?: string;
 }
 
 export interface RawKanji {

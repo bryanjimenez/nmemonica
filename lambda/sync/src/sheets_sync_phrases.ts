@@ -5,35 +5,9 @@ import type { RawPhrase } from "../../../src/typings/raw";
 import { googleSheetId } from "./constants";
 import { fetchGSheetsData } from "./sheets";
 
-type Phrase = Omit<RawPhrase, "uid">;
-
-export function getParticles(tag: string) {
-  const tagList = tag.split(/[\n\s ]+/);
-  const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
-  const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
-  const nonWhiteSpace = new RegExp(/\S/);
-
-  let remainingTags: string[] = [];
-  let particles: string[] = [];
-  tagList.forEach((t: string) => {
-    switch (t) {
-      case hasParticle.test(t) && t:
-        particles = t.split(":")[1].split(",");
-        break;
-      default:
-        if (t && nonWhiteSpace.test(t)) {
-          // don't add empty whitespace
-          if (remainingTags.length === 0) {
-            remainingTags = [t];
-          } else {
-            remainingTags = [...remainingTags, t];
-          }
-        }
-    }
-  });
-
-  return { tags: remainingTags, particles };
-}
+type Phrase = Omit<RawPhrase, "uid" | "tags" | "particles" | "antonymn"> & {
+  tag?: string;
+};
 
 export async function sheets_sync_phrases(
   req: express.Request,
@@ -87,11 +61,7 @@ export async function sheets_sync_phrases(
 
           if (el[RM] && el[RM] !== "") {
             phrase.romaji = el[1];
-          } else if (
-            phrasesBefore &&
-            phrasesBefore[key] &&
-            phrasesBefore[key].romaji
-          ) {
+          } else if (phrasesBefore?.[key]?.romaji) {
             phrase.romaji = phrasesBefore[key].romaji;
           }
 
@@ -100,15 +70,7 @@ export async function sheets_sync_phrases(
           }
 
           if (el[TAG] && el[TAG] !== "") {
-            const { tags, particles } = getParticles(el[TAG]);
-
-            if (tags.length > 0) {
-              phrase.tag = tags;
-            }
-
-            if (particles.length > 0) {
-              phrase.particles = particles;
-            }
+            phrase.tag = el[TAG];
           }
 
           acc[key] = phrase;

@@ -56,11 +56,59 @@ export const phraseInitState: PhraseInitSlice = {
   },
 };
 
+export function getPropsFromTags(tag: string | undefined) {
+  if (tag === undefined) return { tags: [] };
+
+  const tagList = tag.split(/[\n\s; ]+/);
+  const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
+  const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
+  const hasAnt = new RegExp("ant:[a-z0-9]{32}");
+  const nonWhiteSpace = new RegExp(/\S/);
+
+  let remainingTags: string[] = [];
+  let particles: string[] = [];
+  let antonymn: string | undefined;
+
+  tagList.forEach((t: string) => {
+    switch (t) {
+      case hasParticle.test(t) && t:
+        particles = t.split(":")[1].split(",");
+        break;
+      case hasAnt.test(t) && t:
+        antonymn = t.split(":")[1];
+        break;
+      default:
+        if (t && nonWhiteSpace.test(t)) {
+          // don't add empty whitespace
+          if (remainingTags.length === 0) {
+            remainingTags = [t];
+          } else {
+            remainingTags = [...remainingTags, t];
+          }
+        }
+    }
+  });
+
+  return { tags: remainingTags, particles, antonymn };
+}
+
 export const buildPhraseArray = (object: Record<string, RawPhrase>) =>
-  Object.keys(object).map((k) => ({
-    ...object[k],
-    uid: k,
-  }));
+  Object.keys(object).map((k) => {
+    const { tags, particles, antonymn } = getPropsFromTags(object[k].tag);
+
+    return {
+      ...object[k],
+      uid: k,
+
+      // Not used after parsing
+      tag: undefined,
+
+      // Derived from tag
+      tags,
+      particles,
+      antonymn,
+    };
+  });
 
 /**
  * Fetch phrases
