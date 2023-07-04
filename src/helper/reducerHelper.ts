@@ -114,7 +114,10 @@ export function getPropsFromTags(tag: string | undefined) {
 /**
  * Parses tag info to RawVocabulary
  */
-export function buildVocabularyObject(original: Record<string, RawVocabulary>) {
+export function buildVocabularyObject<T extends { english: string;
+  japanese:string;
+  tag?:string;
+}>(original: Record<string, T>) {
   let transitivity: Record<string, { trans?: string; intr: string }> = {};
   let value: RawVocabulary[] = Object.keys(original).map((k) => {
 

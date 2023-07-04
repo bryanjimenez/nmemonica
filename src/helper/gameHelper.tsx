@@ -118,7 +118,7 @@ export function getTerm<Term extends { uid: string }>(
  * @returns filteredPhrases
  */
 export function termFilterByType<
-  Term extends { uid: string; grp?: string; subGrp?: string; tag?: string[] }
+  Term extends { uid: string; grp?: string; subGrp?: string; tags: string[] }
 >(
   filterType: ValuesOf<typeof TermFilterBy>,
   termList: Term[],
@@ -156,7 +156,7 @@ export function termFilterByType<
   } else if (filterType === TermFilterBy.TAGS) {
     if (activeGrpList.length > 0) {
       filteredTerms = termList.filter((term) =>
-        term.tag?.some((aTag) => activeGrpList.includes(aTag))
+        term.tags.some((aTag) => activeGrpList.includes(aTag))
       );
     }
   } else {

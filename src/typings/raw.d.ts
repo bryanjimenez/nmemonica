@@ -20,7 +20,6 @@ export interface RawVocabulary extends RawJapanese {
 
   grp?: string;
   subGrp?: string;
-  tag?: string;
 
   tags: string[];
 }
@@ -37,7 +36,6 @@ export interface RawPhrase {
 
   grp?: string;
   subGrp?: string;
-  tag?: string;
 
   tags: string[];
   particles?: string[];
