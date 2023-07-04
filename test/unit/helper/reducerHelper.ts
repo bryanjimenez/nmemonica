@@ -13,6 +13,7 @@ describe("reducerHelper", function () {
       japanese: "バイオレット",
       romaji: "Baioretto",
       subGrp: "Name",
+      tags: [],
       uid: "12e960a0d8ae82cf5804a8e9f192d661",
     },
 
@@ -22,7 +23,7 @@ describe("reducerHelper", function () {
       japanese: "あお\n青",
       romaji: "ao",
       subGrp: "Colors",
-      tag: ["Primary"],
+      tags: ["Primary"],
       uid: "00c102a7e10b45b19afbab71c030bf63",
     },
     "12e960a0d8ae82cf5804a8e9f192d664": {
@@ -31,7 +32,7 @@ describe("reducerHelper", function () {
       japanese: "むらさき\n紫",
       romaji: "murasaki, murasakiiro",
       subGrp: "Colors",
-      tag: ["Secondary"],
+      tags: ["Secondary"],
       uid: "12e960a0d8ae82cf5804a8e9f192d664",
     },
   };
@@ -47,7 +48,9 @@ describe("reducerHelper", function () {
     it("aggregate tags", function () {
       const expected = ["Primary", "Secondary"];
 
-      const actual = buildTagObject(terms);
+      const termsArray = Object.keys(terms).map((k) => terms[k]);
+
+      const actual = buildTagObject(termsArray);
       expect(actual).to.deep.eq(expected);
     });
   });

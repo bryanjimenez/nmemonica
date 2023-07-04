@@ -114,13 +114,11 @@ export function getPropsFromTags(tag: string | undefined) {
 /**
  * Parses tag info to RawVocabulary
  */
-export function buildVocabularyObject<T extends { english: string;
-  japanese:string;
-  tag?:string;
-}>(original: Record<string, T>) {
+export function buildVocabularyObject<
+  T extends { english: string; japanese: string; tag?: string }
+>(original: Record<string, T>) {
   let transitivity: Record<string, { trans?: string; intr: string }> = {};
   let value: RawVocabulary[] = Object.keys(original).map((k) => {
-
     const { tags, slang, keigo, exv, intr, trans, adj } = getPropsFromTags(
       original[k].tag
     );
@@ -191,15 +189,13 @@ export function buildGroupObject(termObj: Record<string, RawVocabulary>) {
 /**
  * Creates a list of unique tags
  */
-export function buildTagObject<T extends { tag?: string[] }>(
-  termObj: Record<string, T>
-) {
-  const tag: keyof RawVocabulary = "tag";
+export function buildTagObject<T extends { tags: string[] }>(termObj: T[]) {
+  const tagK: keyof RawVocabulary = "tags";
   let tags: string[] = [];
 
-  Object.values(termObj).forEach((o) => {
-    if (o[tag] && o[tag]?.length > 0) {
-      tags = [...tags, ...o[tag]];
+  termObj.forEach((o) => {
+    if (o[tagK] && o[tagK]?.length > 0) {
+      tags = [...tags, ...o[tagK]];
     }
   });
 

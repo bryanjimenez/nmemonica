@@ -51,7 +51,7 @@ export interface RawKanji {
   english: string;
 
   grp?: string;
-  tag?: string[];
+  tags: string[];
   /** Radical shown in an example Kanji */
   radex?: string;
 

@@ -38,9 +38,7 @@ import { TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawVocabulary } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
-import {
-  ToggleFrequencyTermBtnMemo,
-} from "../Form/OptionsBar";
+import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
 import "../../css/Kanji.css";
 
@@ -290,10 +288,10 @@ export default function Kanji() {
 
   // TODO: does it need to be active?
   const aGroupLevel =
-    term.tag
-      ?.find((t) => activeTags.includes(t) && isGroupLevel(t))
+    term.tags
+      .find((t) => activeTags.includes(t) && isGroupLevel(t))
       ?.replace("_", " ") ??
-    term.tag?.find((t) => isGroupLevel(t))?.replace("_", " ") ??
+    term.tags.find((t) => isGroupLevel(t))?.replace("_", " ") ??
     "";
 
   const term_reinforce = repetition[term.uid]?.rein === true;
