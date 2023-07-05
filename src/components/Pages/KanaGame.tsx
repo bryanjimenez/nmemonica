@@ -181,7 +181,7 @@ export default function KanaGame() {
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          <div className="d-flex flex-column flex-sm-row justify-content-around">
+          <div className="d-flex flex-column flex-sm-row justify-content-around w-100">
             {!wideMode.current && (
               <div
                 className={classNames({
