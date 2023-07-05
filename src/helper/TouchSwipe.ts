@@ -22,12 +22,13 @@ interface TouchObject {
 }
 
 function safePreventDefault(event: TouchEvent | MouseEvent) {
-  const passiveEvents = ["onTouchStart", "onTouchMove", "onWheel"];
+  // TODO: safePreventDefault option
+  // const passiveEvents = ["onTouchStart", "onTouchMove", "onWheel"];
 
-  // @ts-expect-error _reactName
-  if (!passiveEvents.includes(event._reactName)) {
-    event.preventDefault();
-  }
+  // // @ts-expect-error _reactName
+  // if (!passiveEvents.includes(event._reactName)) {
+  //   event.preventDefault();
+  // }
 }
 
 export function getSwipeDirection(
