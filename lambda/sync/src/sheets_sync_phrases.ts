@@ -5,7 +5,7 @@ import type { RawPhrase } from "../../../src/typings/raw";
 import { googleSheetId } from "./constants";
 import { fetchGSheetsData } from "./sheets";
 
-type Phrase = Omit<RawPhrase, "uid" | "tags" | "particles" | "antonymn"> & {
+type Phrase = Omit<RawPhrase, "uid" | "tags" | "particles" | "inverse"> & {
   tag?: string;
 };
 

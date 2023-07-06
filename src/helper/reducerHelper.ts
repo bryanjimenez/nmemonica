@@ -1,5 +1,116 @@
 import type { GroupListMap, RawVocabulary } from "../typings/raw";
 
+// FIXME: kanji tag splitting is different from vocab
+export function getPropsFromTagsKanji(tag: string | undefined) {
+  if (tag === undefined) return { tags: [] };
+
+  const tags = tag.split(/[,]+/);
+
+  let remainingTags: string[] = [];
+
+  tags.forEach((t) => {
+    t = t.trim();
+    if (t.endsWith(",")) {
+      t = t.slice(0, -1);
+    }
+
+    switch (t) {
+      // case "slang":
+      //   el.slang = true;
+      //   break;
+      default:
+        if (remainingTags.length === 0) {
+          remainingTags = [t];
+        } else {
+          remainingTags = [...remainingTags, t];
+        }
+    }
+  });
+
+  return {
+    tags: remainingTags,
+  };
+}
+
+export function getPropsFromTags(tag: string | undefined) {
+  if (tag === undefined) return { tags: [] };
+
+  const tagList = tag.split(/[\n\s, ]+/);
+  const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
+  const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
+  const hasInverse = new RegExp("inv:[a-z0-9]{32}");
+  const isIntransitive = new RegExp("intr:[a-z0-9]{32}");
+  const isAdjective = new RegExp("(i|na)-adj");
+  const nonWhiteSpace = new RegExp(/\S/);
+
+  let remainingTags: string[] = [];
+  let particles: string[] = [];
+  let inverse: string | undefined;
+  let slang: boolean | undefined;
+  let keigo: boolean | undefined;
+  let exv: 1 | 2 | 3 | undefined;
+  let intr: true | undefined;
+  let trans: string | undefined;
+  let adj: string | undefined;
+
+  tagList.forEach((t: string) => {
+    switch (t) {
+      // Vocabulary
+      case "slang":
+        slang = true;
+        break;
+      case "keigo":
+        keigo = true;
+        break;
+      case "EV1":
+        exv = 1;
+        break;
+      case "intr":
+        intr = true;
+        break;
+      case isIntransitive.test(t) && t:
+        trans = t.split(":")[1];
+        break;
+      case isAdjective.test(t) && t:
+        adj = t.split("-")[0];
+        break;
+
+      // Phrases
+      case hasParticle.test(t) && t:
+        particles = t.split(":")[1].split(",");
+        break;
+      case hasInverse.test(t) && t:
+        inverse = t.split(":")[1];
+        break;
+
+      default:
+        if (t && nonWhiteSpace.test(t)) {
+          // don't add empty whitespace
+          if (remainingTags.length === 0) {
+            remainingTags = [t];
+          } else {
+            remainingTags = [...remainingTags, t];
+          }
+        }
+    }
+  });
+
+  return {
+    tags: remainingTags,
+    // Vocabulary
+    slang,
+    keigo,
+    exv,
+    intr,
+    trans,
+    adj,
+
+    // Phrases
+    inverse,
+    particles,
+  };
+}
+
 /**
  * Adds intransitive transitive info to RawVocabulary
  */

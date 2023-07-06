@@ -37,7 +37,7 @@ export interface RawPhrase {
 
   tags: string[];
   particles?: string[];
-  antonymn?: string;
+  inverse?: string;
 }
 
 export interface RawKanji {

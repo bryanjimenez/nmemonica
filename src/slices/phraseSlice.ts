@@ -10,7 +10,7 @@ import {
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { buildGroupObject } from "../helper/reducerHelper";
+import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import type {
   GroupListMap,
   MetaDataObj,
@@ -56,45 +56,23 @@ export const phraseInitState: PhraseInitSlice = {
   },
 };
 
-export function getPropsFromTags(tag: string | undefined) {
-  if (tag === undefined) return { tags: [] };
+export function buildPhraseArray<T extends RawPhrase & { tag?: string }>(
+  object: Record<string, T>
+): RawPhrase[] {
+  return Object.keys(object).map((k) => {
+    let { tags, particles, inverse } = getPropsFromTags(object[k].tag);
 
-  const tagList = tag.split(/[\n\s; ]+/);
-  const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
-  const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
-  const hasAnt = new RegExp("ant:[a-z0-9]{32}");
-  const nonWhiteSpace = new RegExp(/\S/);
-
-  let remainingTags: string[] = [];
-  let particles: string[] = [];
-  let antonymn: string | undefined;
-
-  tagList.forEach((t: string) => {
-    switch (t) {
-      case hasParticle.test(t) && t:
-        particles = t.split(":")[1].split(",");
-        break;
-      case hasAnt.test(t) && t:
-        antonymn = t.split(":")[1];
-        break;
-      default:
-        if (t && nonWhiteSpace.test(t)) {
-          // don't add empty whitespace
-          if (remainingTags.length === 0) {
-            remainingTags = [t];
-          } else {
-            remainingTags = [...remainingTags, t];
-          }
-        }
+    if (inverse && object[inverse]?.tag) {
+      // check pair exists
+      const { inverse: inversePair } = getPropsFromTags(object[inverse].tag);
+      if (inversePair !== k) {
+        // match failed
+        inverse = undefined;
+        console.error(
+          `buildPhraseArray getPropsFromTags inverse pair for ${object[k].japanese} not found`
+        );
+      }
     }
-  });
-
-  return { tags: remainingTags, particles, antonymn };
-}
-
-export const buildPhraseArray = (object: Record<string, RawPhrase>) =>
-  Object.keys(object).map((k) => {
-    const { tags, particles, antonymn } = getPropsFromTags(object[k].tag);
 
     return {
       ...object[k],
@@ -106,9 +84,10 @@ export const buildPhraseArray = (object: Record<string, RawPhrase>) =>
       // Derived from tag
       tags,
       particles,
-      antonymn,
+      inverse,
     };
   });
+}
 
 /**
  * Fetch phrases
