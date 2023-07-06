@@ -59,47 +59,135 @@ describe("reducerHelper", function () {
     it("empty", function () {
       const initialTags = "";
 
-      const { tags, particles } = getPropsFromTags(initialTags);
+      const { tags } = getPropsFromTags(initialTags);
 
-      expect(tags).to.deep.equal([]);
-      expect(particles).to.deep.equal([]);
+      expect(tags).to.be.an("Array").of.length(0);
     });
+    it("space", function () {
+      const initialTags = " \t \t";
 
-    it("keigo", function () {
-      const initialTags = "casual negative\nkeigo";
+      const { tags } = getPropsFromTags(initialTags);
+
+      expect(tags).to.be.an("Array").of.length(0);
+    });
+    it("tags multiple", function () {
+      const expected = ["casual", "onomatopoetic", "negative"];
+      const initialTags = "onomatopoetic\ncasual; negative\nkeigo";
 
       const { tags, keigo } = getPropsFromTags(initialTags);
 
-      expect(tags).to.deep.equal(["casual", "negative"]);
+      expect(tags).to.be.length(expected.length).and.include.members(expected);
       expect(keigo).to.be.true;
     });
+    describe("vocabulary", function () {
+      it("na-adj", function () {
+        const initialTags = "na-adj; onomatopoetic; Adjective; ";
+        const { tags, adj } = getPropsFromTags(initialTags);
 
-    it("EV1", function () {
-      const initialTags = "casual negative\nkeigo EV1";
+        expect(adj).to.equal("na");
+        expect(tags)
+          .to.be.length(2)
+          .and.include.members(["Adjective", "onomatopoetic"]);
+      });
+      it("i-adj", function () {
+        const initialTags = "i-adj; onomatopoetic; Adjective; ";
+        const { tags, adj } = getPropsFromTags(initialTags);
 
-      const { tags, exv } = getPropsFromTags(initialTags);
+        expect(adj).to.equal("i");
+        expect(tags)
+          .to.be.length(2)
+          .and.include.members(["Adjective", "onomatopoetic"]);
+      });
+      it("keigo", function () {
+        const expected = ["casual", "negative"];
+        const initialTags = "casual; negative\nkeigo";
 
-      expect(tags).to.deep.equal(["casual", "negative"]);
-      expect(exv).to.eq(1);
+        const { tags, keigo } = getPropsFromTags(initialTags);
+
+        expect(tags)
+          .to.be.length(expected.length)
+          .and.include.members(expected);
+        expect(keigo).to.be.true;
+      });
+
+      it("EV1", function () {
+        const expected = ["casual", "negative"];
+        const initialTags = "casual;negative\nkeigo; \n EV1";
+
+        const { tags, exv } = getPropsFromTags(initialTags);
+
+        expect(tags)
+          .to.be.length(expected.length)
+          .and.include.members(expected);
+        expect(exv).to.eq(1);
+      });
+
+      it("intransitive", function () {
+        const expected = ["casual", "negative"];
+        const initialTags = "casual\nnegative\nkeigo; EV1; intr";
+
+        const { tags, intr } = getPropsFromTags(initialTags);
+
+        expect(tags, "tags")
+          .to.be.length(expected.length)
+          .and.include.members(expected);
+        expect(intr, "intr").to.be.true;
+      });
+
+      it("transitive (w/ intransitive pair)", function () {
+        const expected = ["casual", "negative"];
+        const expectedUid = "00000000000000000000000000000000";
+        const initialTags = `casual; negative\nkeigo EV1 intr:${expectedUid}`;
+
+        const { tags, trans } = getPropsFromTags(initialTags);
+
+        expect(tags)
+          .to.be.length(expected.length)
+          .and.include.members(expected);
+        expect(trans).to.equal(expectedUid);
+      });
     });
+    describe("phrases", function () {
+      it("particles", function () {
+        const initialTags = "p:は,から,を";
 
-    it("intransitive", function () {
-      const initialTags = "casual negative\nkeigo EV1 intr";
+        const { tags, particles } = getPropsFromTags(initialTags);
 
-      const { tags, intr } = getPropsFromTags(initialTags);
+        expect(tags, "tags").to.be.an("Array").of.length(0);
+        expect(particles, "particles")
+          .to.be.length(3)
+          .and.include.members(["は", "から", "を"]);
+      });
 
-      expect(tags).to.deep.equal(["casual", "negative"]);
-      expect(intr).to.be.true;
-    });
+      it("particles and tags", function () {
+        const expected = ["casual", "negative"];
+        const initialTags = "casual\n negative\np:は,から,を";
 
-    it("transitive (w/ intransitive pair)", function () {
-      const expected = "00000000000000000000000000000000";
-      const initialTags = `casual negative\nkeigo EV1 intr:${expected}`;
+        const { tags, particles } = getPropsFromTags(initialTags);
 
-      const { tags, trans } = getPropsFromTags(initialTags);
+        expect(tags, "tags")
+          .to.be.length(expected.length)
+          .and.include.members(expected);
+        expect(particles, "particles")
+          .to.be.length(3)
+          .and.include.members(["は", "から", "を"]);
+      });
 
-      expect(tags).to.deep.equal(["casual", "negative"]);
-      expect(trans).to.equal(expected);
+      it("inverse", function () {
+        const expected = ["casual", "negative"];
+        const expectedUid = "4f3b0dffa85324487e7130022fa2a87c";
+        const initialTags = `casual; negative\np:は,から,を; inv:${expectedUid}`;
+
+        const { tags, particles, inverse } = getPropsFromTags(initialTags);
+
+        expect(tags, "tags")
+          .to.be.length(expected.length)
+          .and.include.members(expected);
+        expect(particles, "particles")
+          .to.be.length(3)
+          .and.include.members(["は", "から", "を"]);
+        expect(inverse, "inverse").to.equal(expectedUid);
+      });
     });
   });
 });

@@ -1,41 +1,9 @@
-import type { GroupListMap, RawVocabulary } from "../typings/raw";
-
-// FIXME: kanji tag splitting is different from vocab
-export function getPropsFromTagsKanji(tag: string | undefined) {
-  if (tag === undefined) return { tags: [] };
-
-  const tags = tag.split(/[,]+/);
-
-  let remainingTags: string[] = [];
-
-  tags.forEach((t) => {
-    t = t.trim();
-    if (t.endsWith(",")) {
-      t = t.slice(0, -1);
-    }
-
-    switch (t) {
-      // case "slang":
-      //   el.slang = true;
-      //   break;
-      default:
-        if (remainingTags.length === 0) {
-          remainingTags = [t];
-        } else {
-          remainingTags = [...remainingTags, t];
-        }
-    }
-  });
-
-  return {
-    tags: remainingTags,
-  };
-}
+import type { GroupListMap, RawVocabulary, SourceVocabulary } from "../typings/raw";
 
 export function getPropsFromTags(tag: string | undefined) {
   if (tag === undefined) return { tags: [] };
 
-  const tagList = tag.split(/[\n\s, ]+/);
+  const tagList = tag.split(/[\n;]+/);
   const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
   const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
   const hasInverse = new RegExp("inv:[a-z0-9]{32}");
@@ -53,7 +21,9 @@ export function getPropsFromTags(tag: string | undefined) {
   let trans: string | undefined;
   let adj: string | undefined;
 
-  tagList.forEach((t: string) => {
+  tagList.forEach((tagWSpace: string) => {
+    const t = tagWSpace.trim();
+
     switch (t) {
       // Vocabulary
       case "slang":
@@ -114,8 +84,8 @@ export function getPropsFromTags(tag: string | undefined) {
 /**
  * Parses tag info to RawVocabulary
  */
-export function buildVocabularyObject<
-  T extends { english: string; japanese: string; tag?: string }
+export function buildVocabularyArray<
+  T extends SourceVocabulary
 >(original: Record<string, T>) {
   let transitivity: Record<string, { trans?: string; intr: string }> = {};
   let value: RawVocabulary[] = Object.keys(original).map((k) => {
@@ -161,7 +131,7 @@ export function buildVocabularyObject<
  * Builds group info object. Keys are mainGrp.
  * For each mainGrp aggregates all subGrp of a mainGrp
  */
-export function buildGroupObject(termObj: Record<string, RawVocabulary>) {
+export function buildGroupObject<T extends {grp?: string, subGrp?:string}>(termObj: Record<string, T>) {
   const mainGrp: keyof RawVocabulary = "grp";
   const subGrp: keyof RawVocabulary = "subGrp";
 

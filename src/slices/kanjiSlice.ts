@@ -11,8 +11,8 @@ import {
 import { firebaseConfig } from "../../environment.development";
 import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { buildTagObject, getPropsFromTagsKanji } from "../helper/reducerHelper";
-import type { MetaDataObj, RawKanji, ValuesOf } from "../typings/raw";
+import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
+import type { MetaDataObj, RawKanji, SourceKanji, ValuesOf } from "../typings/raw";
 
 import type { RootState } from ".";
 
@@ -77,7 +77,7 @@ export const getKanji = createAsyncThunk(
       }
     ).then((res) => res.json())) as Record<
       string,
-      RawKanji & { tag: string | undefined }
+      SourceKanji
     >;
 
     return { value, version };
@@ -333,8 +333,8 @@ const kanjiSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(getKanji.fulfilled, (state, action) => {
       const { value: v, version } = action.payload;
-      const kanjiArr = Object.keys(v).map((k) => {
-        const { tags } = getPropsFromTagsKanji(v[k].tag) as { tags: string[] };
+      const kanjiArr: RawKanji[] = Object.keys(v).map((k) => {
+        const { tags } = getPropsFromTags(v[k].tag) as { tags: string[] };
 
         const isRadical =
           v[k].grp?.toLowerCase() === "radical" ||

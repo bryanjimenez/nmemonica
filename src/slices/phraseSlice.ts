@@ -56,7 +56,8 @@ export const phraseInitState: PhraseInitSlice = {
   },
 };
 
-export function buildPhraseArray<T extends RawPhrase & { tag?: string }>(
+type SourcePhrase = Omit<RawPhrase,"uid"|"tags"> & { tag?: string };
+export function buildPhraseArray<T extends SourcePhrase>(
   object: Record<string, T>
 ): RawPhrase[] {
   return Object.keys(object).map((k) => {
@@ -107,7 +108,7 @@ export const getPhrase = createAsyncThunk(
       {
         headers: { "Data-Version": version },
       }
-    ).then((res) => res.json())) as Record<string, RawPhrase>;
+    ).then((res) => res.json())) as Record<string, SourcePhrase>;
 
     return { value, version };
   }

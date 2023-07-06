@@ -12,6 +12,8 @@ export interface RawJapanese {
   exv?: 1 | 2 | 3;
 }
 
+export type SourceVocabulary = Omit<RawVocabulary,"uid"|"tags"> & {tag?:string}
+
 export interface RawVocabulary extends RawJapanese {
   uid: string;
 
@@ -24,6 +26,7 @@ export interface RawVocabulary extends RawJapanese {
   tags: string[];
 }
 
+export type SourcePhrase = Omit<RawPhrase,"uid"|"tags"|"particles"|"inverse"> & {tag?:string}
 export interface RawPhrase {
   uid: string;
 
@@ -42,6 +45,7 @@ export interface RawPhrase {
   inverse?: string;
 }
 
+export type SourceKanji = Omit<RawKanji,"uid"|"tags"|"radical"> & {tag?:string}
 export interface RawKanji {
   uid: string;
 
