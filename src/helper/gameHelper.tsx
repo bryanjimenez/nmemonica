@@ -760,6 +760,7 @@ export function japaneseLabel(
   jumpToTerm?: (uid: string) => void,
   rawObj?: RawPhrase
 ) {
+  const indicatorsCss = "fs-5";
   const isOnTop = !isOnBottom;
   let indicators: React.JSX.Element[] = [];
 
@@ -847,7 +848,7 @@ export function japaneseLabel(
       <span>
         {inJapanese}
         {showNaAdj && <span className="opacity-25"> {"な"}</span>}
-        <span className="fs-5">
+        <span className={indicatorsCss}>
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
@@ -892,6 +893,7 @@ export function englishLabel(
   jumpToTerm?: (uid: string) => void,
   rawObj?: RawPhrase
 ) {
+  const indicatorsCss = "fs-5";
   let indicators: React.JSX.Element[] = [];
   let showIntr = false;
   let pairUID: string | undefined;
@@ -905,7 +907,6 @@ export function englishLabel(
 
   const showSlang = jObj.isSlang();
   const showKeigo = jObj.isKeigo();
-  const showInverse = rawObj?.inverse;
 
   if (isOnTop && (showIntr || pairUID)) {
     let viewMyPair = undefined;
@@ -942,6 +943,10 @@ export function englishLabel(
       <span key={indicators.length + 1}>keigo</span>,
     ];
   }
+
+  // rawObj only for phrases
+  const showInverse = rawObj?.inverse;
+  const showPolite = rawObj?.japanese.endsWith("。");
   if (isOnTop && showInverse !== undefined) {
     let viewMyInverse = undefined;
     if (typeof jumpToTerm === "function") {
@@ -964,13 +969,19 @@ export function englishLabel(
       </span>,
     ];
   }
+  if (isOnTop && showPolite) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>polite</span>,
+    ];
+  }
 
   let inEnglishLbl;
   if (indicators.length > 0) {
     inEnglishLbl = (
       <span>
         {inEnglish}
-        <span>
+        <span className={indicatorsCss}>
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
