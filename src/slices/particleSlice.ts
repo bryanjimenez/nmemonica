@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
+import { logger } from "./globalSlice";
 import { getPhrase } from "./phraseSlice";
+import { DebugLevel } from "./settingHelper";
 import type {
   ChoiceParticle,
   ParticleGamePhrase,
@@ -45,24 +47,59 @@ export const getParticleGame = createAsyncThunk(
 
     if (phrases.length > 0) {
       const needGame = state.particleGame.phrases.length === 0;
-      let game = undefined;
+      let game: undefined | ReturnType<typeof buildParticleGame> = undefined;
       if (needGame) {
         game = buildParticleGame(phrases);
+
+        const { errors } = game;
+        if (errors) {
+          Object.keys(errors).forEach((k) => {
+            thunkAPI.dispatch(
+              logger(`Multiple match ${errors[k].japanese}`, DebugLevel.WARN)
+            );
+            thunkAPI.dispatch(
+              logger(
+                `Particle ${errors[k].particle}: ${errors[k].times}`,
+                DebugLevel.WARN
+              )
+            );
+          });
+        }
       }
+
       return { game };
     } else {
-      return thunkAPI.dispatch(getPhrase()).unwrap().then((res) => {
+      return thunkAPI
+        .dispatch(getPhrase())
+        .unwrap()
+        .then((res) => {
+          const { values: phraseArray } = res;
+          const game = buildParticleGame(phraseArray);
 
-        const {values: phraseArray} = res;
-        return { phrase: phraseArray, game: buildParticleGame(phraseArray) };
-      });
+          const { errors } = game;
+          if (errors) {
+            Object.keys(errors).forEach((k) => {
+              thunkAPI.dispatch(
+                logger(`Multiple match ${errors[k].japanese}`, DebugLevel.WARN)
+              );
+              thunkAPI.dispatch(
+                logger(
+                  `Particle ${errors[k].particle}: ${errors[k].times}`,
+                  DebugLevel.WARN
+                )
+              );
+            });
+          }
+
+          return { phrase: phraseArray, game };
+        });
     }
   }
 );
 
 export const particleFromLocalStorage = createAsyncThunk(
   "particleGame/particleFromLocalStorage",
-  async (arg: typeof ParticleInitState.setting) => {
+  (arg: typeof ParticleInitState.setting) => {
     const initValues = arg;
 
     return initValues;
@@ -74,10 +111,9 @@ export const particleFromLocalStorage = createAsyncThunk(
  */
 export function buildParticleGame(rawPhrases: RawPhrase[]) {
   let particleList: ChoiceParticle[] = [];
-  let multipleMatch: Record<
-    string,
-    { japanese: string; particle: string; times: number }
-  > = {};
+  let multipleMatch:
+    | undefined
+    | Record<string, { japanese: string; particle: string; times: number }>;
 
   const wParticles = rawPhrases.reduce<ParticleGamePhrase[]>((acc, curr) => {
     if (curr.particles && curr.particles?.length > 0) {
@@ -118,7 +154,7 @@ export function buildParticleGame(rawPhrases: RawPhrase[]) {
 
           // haha deaab959582cef2051b908d4d6421e00
           multipleMatch = {
-            ...multipleMatch,
+            ...(multipleMatch ?? {}),
             [curr.english]: {
               japanese: spelling,
               particle: p,
@@ -131,10 +167,12 @@ export function buildParticleGame(rawPhrases: RawPhrase[]) {
 
     return acc;
   }, []);
-  console.error(`More than one match ${Object.keys(multipleMatch).length}`);
-  console.table(multipleMatch);
 
-  return { phrases: wParticles, particles: particleList };
+  return {
+    phrases: wParticles,
+    particles: particleList,
+    errors: multipleMatch,
+  };
 }
 
 const particleSlice = createSlice({
