@@ -1,7 +1,9 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   grpParse,
@@ -15,6 +17,7 @@ import type {
   GroupListMap,
   MetaDataObj,
   RawPhrase,
+  SourcePhrase,
   ValuesOf,
 } from "../typings/raw";
 
@@ -56,11 +59,11 @@ export const phraseInitState: PhraseInitSlice = {
   },
 };
 
-type SourcePhrase = Omit<RawPhrase,"uid"|"tags"> & { tag?: string };
 export function buildPhraseArray<T extends SourcePhrase>(
   object: Record<string, T>
-): RawPhrase[] {
-  return Object.keys(object).map((k) => {
+): { values: RawPhrase[]; errors?: string[] } {
+  let errors: undefined | string[];
+  const values = Object.keys(object).map((k) => {
     let { tags, particles, inverse } = getPropsFromTags(object[k].tag);
 
     if (inverse && object[inverse]?.tag) {
@@ -69,10 +72,25 @@ export function buildPhraseArray<T extends SourcePhrase>(
       if (inversePair !== k) {
         // match failed
         inverse = undefined;
-        console.error(
-          `buildPhraseArray getPropsFromTags inverse pair for ${object[k].japanese} not found`
-        );
+        errors = [
+          ...(errors ?? []),
+          `Missing inverse pair for ${object[k].japanese}`,
+        ];
       }
+    }
+
+    let polite: { japanese?: string; polite: boolean } = { polite: false };
+    if (object[k].japanese.endsWith("。")) {
+      const [furigana, phrase] = object[k].japanese.split("\n");
+
+      let withoutDot;
+      if (phrase?.endsWith("。") && furigana.endsWith("。")) {
+        withoutDot = `${furigana.slice(0, -1)}\n${phrase.slice(0, -1)}`;
+      } else {
+        withoutDot = object[k].japanese.slice(0, -1);
+      }
+
+      polite = { japanese: withoutDot, polite: true };
     }
 
     return {
@@ -86,8 +104,11 @@ export function buildPhraseArray<T extends SourcePhrase>(
       tags,
       particles,
       inverse,
+      ...polite,
     };
   });
+
+  return { values, errors };
 }
 
 /**
@@ -103,14 +124,22 @@ export const getPhrase = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching phrase: 0");
     // }
-    const value = (await fetch(
+    const jsonValue = (await fetch(
       firebaseConfig.databaseURL + "/lambda/phrases.json",
       {
         headers: { "Data-Version": version },
       }
     ).then((res) => res.json())) as Record<string, SourcePhrase>;
 
-    return { value, version };
+    const groups = buildGroupObject(jsonValue);
+    const { values, errors } = buildPhraseArray(jsonValue);
+    if (errors) {
+      errors.forEach((e) => {
+        thunkAPI.dispatch(logger(e, DebugLevel.WARN));
+      });
+    }
+
+    return { version, values, groups };
   }
 );
 
@@ -303,9 +332,9 @@ const phraseSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(getPhrase.fulfilled, (state, action) => {
-      const { value, version } = action.payload;
-      state.grpObj = buildGroupObject(value);
-      state.value = buildPhraseArray(value);
+      const { version, values, groups } = action.payload;
+      state.grpObj = groups;
+      state.value = values;
       state.version = version;
     });
 

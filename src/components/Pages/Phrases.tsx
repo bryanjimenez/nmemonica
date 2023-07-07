@@ -408,7 +408,7 @@ export default function Phrases() {
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
   const englishPhrase = englishPhraseSubComp(phrase, showLit, setShowLit);
 
-  /** Display inverse links when available */
+  /** Display inverse links and polite when available */
   const enDecorated = englishLabel(
     englishSideUp,
     jObj,

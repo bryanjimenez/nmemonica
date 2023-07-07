@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
-import { buildPhraseArray, getPhrase } from "./phraseSlice";
+import { getPhrase } from "./phraseSlice";
 import type {
   ChoiceParticle,
   ParticleGamePhrase,
@@ -51,14 +51,9 @@ export const getParticleGame = createAsyncThunk(
       }
       return { game };
     } else {
-      return thunkAPI.dispatch(getPhrase()).then((res) => {
-        interface FetchObj {
-          value: Record<string, RawPhrase>;
-          version: string;
-        }
-        const rawObject = res.payload as FetchObj;
-        const phraseObject = rawObject.value;
-        const phraseArray = buildPhraseArray(phraseObject);
+      return thunkAPI.dispatch(getPhrase()).unwrap().then((res) => {
+
+        const {values: phraseArray} = res;
         return { phrase: phraseArray, game: buildParticleGame(phraseArray) };
       });
     }

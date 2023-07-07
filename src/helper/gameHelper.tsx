@@ -946,7 +946,7 @@ export function englishLabel(
 
   // rawObj only for phrases
   const showInverse = rawObj?.inverse;
-  const showPolite = rawObj?.japanese.endsWith("。");
+  const showPolite = rawObj?.polite;
   if (isOnTop && showInverse !== undefined) {
     let viewMyInverse = undefined;
     if (typeof jumpToTerm === "function") {
