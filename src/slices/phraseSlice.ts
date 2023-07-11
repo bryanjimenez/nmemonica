@@ -59,6 +59,37 @@ export const phraseInitState: PhraseInitSlice = {
   },
 };
 
+/**
+ * For inverse tagged phrases
+ * Checks that an initial uid has atleast one pair
+ */
+function inversePairCheck<T extends SourcePhrase>(
+  initial: string,
+  object: Record<string, T>
+) {
+  let errors;
+
+  let { inverse } = getPropsFromTags(object[initial].tag);
+  let inversePair = inverse;
+
+  while (inversePair && inversePair !== initial) {
+    const { inverse } = getPropsFromTags(object[inversePair]?.tag);
+
+    if (inverse) {
+      inversePair = inverse;
+    } else {
+      // match failed
+      inversePair = undefined;
+      errors = [
+        ...(errors ?? []),
+        `Missing inverse pair for ${object[initial].japanese}`,
+      ];
+    }
+  }
+
+  return errors;
+}
+
 export function buildPhraseArray<T extends SourcePhrase>(
   object: Record<string, T>
 ): { values: RawPhrase[]; errors?: string[] } {
@@ -66,18 +97,7 @@ export function buildPhraseArray<T extends SourcePhrase>(
   const values = Object.keys(object).map((k) => {
     let { tags, particles, inverse } = getPropsFromTags(object[k].tag);
 
-    if (inverse && object[inverse]?.tag) {
-      // check pair exists
-      const { inverse: inversePair } = getPropsFromTags(object[inverse].tag);
-      if (inversePair !== k) {
-        // match failed
-        inverse = undefined;
-        errors = [
-          ...(errors ?? []),
-          `Missing inverse pair for ${object[k].japanese}`,
-        ];
-      }
-    }
+    errors = inversePairCheck(k, object);
 
     let polite: { japanese?: string; polite: boolean } = { polite: false };
     if (object[k].japanese.endsWith("。")) {
