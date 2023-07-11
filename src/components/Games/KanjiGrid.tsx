@@ -290,7 +290,7 @@ export default function KanjiGrid() {
   ]);
 
   const fadeTimerRef = useRef(-1);
-  const { blastEl, anchorElRef, text, setText } = useBlast();
+  const { blastElRef, anchorElRef, text, setText } = useBlast();
 
   const addFrequencyTerm = useCallback(
     (uid: string) => {
@@ -357,7 +357,7 @@ export default function KanjiGrid() {
   return (
     <>
       <div className="tooltip-anchor" ref={anchorElRef}></div>
-      {blastEl}
+      <div ref={blastElRef}>{text}</div>
       <XChoices
         question={game.question}
         isCorrect={isCorrect}
