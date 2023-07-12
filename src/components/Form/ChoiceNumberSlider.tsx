@@ -1,26 +1,28 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
 import { Slider, Typography } from "@mui/material";
-import "../../css/KanaOptionsSlider.css";
+import PropTypes from "prop-types";
+import React, { useState } from "react";
+import "../../css/ChoiceNumberSlider.css";
 
 interface Marks {
   value: number;
   raw: number;
 }
 
-interface KanaOptionsSliderProps {
+interface ChoiceNumberSliderProps {
   initial: number;
   setChoiceN: (n: number) => void;
+  /** Override choice size in wideMode */
+  wideN?: number;
   wideMode?: boolean;
-  toggleWide?: Function;
+  toggleWide?: () => void;
 }
 
-export default function KanaOptionsSlider(props: KanaOptionsSliderProps) {
+export default function ChoiceNumberSlider(props: ChoiceNumberSliderProps) {
   const [initVal] = useState(props.initial);
 
   const min = 4;
   const max = 16;
-  const wide = 31;
+  const wide = props.wideN ?? 32;
 
   let marks: Marks[] = [];
   let marksMap: Record<string, number> = {};
@@ -28,23 +30,23 @@ export default function KanaOptionsSlider(props: KanaOptionsSliderProps) {
   for (let x = min; x < max + 1; x++) {
     const slide = ((x - min) / (max + 1 - min)) * 75;
     marks = [...marks, { value: slide, raw: x }];
-    marksMap["r" + slide] = x;
-    marksMap["s" + x] = slide;
+    marksMap[`r ${slide}`] = x;
+    marksMap[`s ${x}`] = slide;
   }
   marks = [...marks, { value: 100, raw: wide }];
-  marksMap["r" + 100] = wide;
-  marksMap["s" + wide] = 100;
+  marksMap[`r 100`] = wide;
+  marksMap[`s ${wide}`] = 100;
 
   const slideToRaw = (slide: number) => {
-    return marksMap["r" + slide];
+    return marksMap[`r ${slide}`];
   };
 
   const slideToRawString = (slide: number) => {
-    return "" + slideToRaw(slide);
+    return String(slideToRaw(slide));
   };
 
   const rawToSlide = (raw: number) => {
-    return marksMap["s" + raw];
+    return marksMap[`s ${raw}`];
   };
 
   const handleChange = (newValue: number) => {
@@ -92,7 +94,7 @@ export default function KanaOptionsSlider(props: KanaOptionsSliderProps) {
   );
 }
 
-KanaOptionsSlider.propTypes = {
+ChoiceNumberSlider.propTypes = {
   initial: PropTypes.number,
   wideMode: PropTypes.bool,
   setChoiceN: PropTypes.func,

@@ -68,9 +68,9 @@ import {
   toggleVocabularyActiveGrp,
 } from "../../slices/vocabularySlice";
 import type { RawVocabulary } from "../../typings/raw";
+import ChoiceNumberSlider from "../Form/ChoiceNumberSlider";
 import type { ConsoleMessage } from "../Form/Console";
 import { DifficultySubFilter } from "../Form/DifficultySubFilter";
-import KanaOptionsSlider from "../Form/KanaOptionsSlider";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
@@ -678,10 +678,11 @@ export default function Settings() {
               />
             </div>
             <div className="d-flex justify-content-end p-2">
-              <KanaOptionsSlider
+              <ChoiceNumberSlider
                 initial={choiceN}
-                wideMode={wideMode}
                 setChoiceN={buildAction(dispatch, setKanaBtnN)}
+                wideMode={wideMode}
+                wideN={31}
                 toggleWide={buildAction(dispatch, toggleKanaGameWideMode)}
               />
             </div>
@@ -726,7 +727,7 @@ export default function Settings() {
                 )}
               </div>
               <div className="d-flex justify-content-end p-2 text-end">
-                <KanaOptionsSlider
+                <ChoiceNumberSlider
                   initial={kanjiChoiceN}
                   setChoiceN={buildAction(dispatch, setKanjiBtnN)}
                 />
