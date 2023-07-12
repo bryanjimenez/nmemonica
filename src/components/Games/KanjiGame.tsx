@@ -573,6 +573,7 @@ export function properCase(text: string) {
 
 /**
  * Split comma separated string(list) and select one.
+ *
  * Apply ProperCase
  */
 export function oneFromList(english: string) {
@@ -592,10 +593,10 @@ export function oneFromList(english: string) {
 /**
  * Returns a list of choices which includes the right answer
  */
-export function createEnglishChoices(
+export function createEnglishChoices<T extends { english: string }>(
   answer: RawKanji,
   kanjiList: RawKanji[],
-  exampleList: RawVocabulary[]
+  exampleList: T[]
 ) {
   const TOTAL_CHOICES = 4;
   const splitToArray = (term: string) => term.split(",").map((s) => s.trim());
@@ -611,13 +612,16 @@ export function createEnglishChoices(
 
   const { firstLetter: ansFirstLetter } = choiceFadePrefix(a.english);
   const noDuplicateChoices = new Set([
-    a.english, // the answer
+    ...aArr, // all posible answers
+    // a.english, // the answer
     ...(ansFirstLetter ? [ansFirstLetter] : []), // the answer's first letter
     ...examples,
   ]);
 
   let choices: RawKanji[] = [a];
-  while (choices.length < TOTAL_CHOICES) {
+  const consumed = new Set([answer.uid]);
+
+  while (choices.length < TOTAL_CHOICES && kanjiList.length !== consumed.size) {
     const i = Math.floor(Math.random() * kanjiList.length);
 
     const choice = kanjiList[i];
@@ -638,7 +642,7 @@ export function createEnglishChoices(
     // should not match a previous choice
     // should not match a previous firstLetter fade hint
     if (
-      cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
+      // cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
       cArr.every((cCurr) => !noDuplicateChoices.has(cCurr)) &&
       (flArr.length === 0 ||
         flArr.every((firstLetter) => !noDuplicateChoices.has(firstLetter)))
@@ -651,6 +655,8 @@ export function createEnglishChoices(
       }
       choices = [...choices, { ...choice, english }];
     }
+
+    consumed.add(choice.uid);
   }
 
   shuffleArray(choices);
