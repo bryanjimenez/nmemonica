@@ -90,6 +90,44 @@ function inversePairCheck<T extends SourcePhrase>(
   return errors;
 }
 
+/**
+ * Determine if a phrase is polite.
+ *
+ * **When** they contain multiple periods or commas; polite phrases are left **unedited**.
+ *
+ * *Otherwise* the period is *removed*.
+ *
+ * @param o
+ * @returns
+ */
+export function isPolitePhrase<T extends { japanese: string }>(o: T) {
+  let polite: { japanese?: string; polite: boolean } = { polite: false };
+  if (o.japanese.endsWith("。")) {
+    const [furigana, phrase] = o.japanese.split("\n");
+
+    let withoutDot;
+    if (
+      furigana.indexOf("。") !== furigana.lastIndexOf("。") ||
+      furigana.includes("、")
+    ) {
+      // multiple 。or 、
+      // japanese is not defined. withoutDot is not used.
+      polite = { polite: true };
+    } else {
+      if (phrase?.endsWith("。") && furigana.endsWith("。")) {
+        withoutDot = `${furigana.slice(0, -1)}\n${phrase.slice(0, -1)}`;
+      } else {
+        withoutDot = o.japanese.slice(0, -1);
+      }
+
+      polite = { japanese: withoutDot, polite: true };
+    }
+
+  }
+
+  return polite;
+}
+
 export function buildPhraseArray<T extends SourcePhrase>(
   object: Record<string, T>
 ): { values: RawPhrase[]; errors?: string[] } {
@@ -99,19 +137,8 @@ export function buildPhraseArray<T extends SourcePhrase>(
 
     errors = inversePairCheck(k, object);
 
-    let polite: { japanese?: string; polite: boolean } = { polite: false };
-    if (object[k].japanese.endsWith("。")) {
-      const [furigana, phrase] = object[k].japanese.split("\n");
-
-      let withoutDot;
-      if (phrase?.endsWith("。") && furigana.endsWith("。")) {
-        withoutDot = `${furigana.slice(0, -1)}\n${phrase.slice(0, -1)}`;
-      } else {
-        withoutDot = object[k].japanese.slice(0, -1);
-      }
-
-      polite = { japanese: withoutDot, polite: true };
-    }
+    const o = object[k];
+    const polite = isPolitePhrase(o);
 
     return {
       ...object[k],
