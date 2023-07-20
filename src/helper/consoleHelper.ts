@@ -28,7 +28,7 @@ export function daysSince(rawDateString: string) {
   const [date] = rawDateString.split("T");
   const dateThen = Date.parse(date);
   const diffTime = Math.abs(Date.now() - dateThen);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   return diffDays;
 }
@@ -72,7 +72,7 @@ export function spaceRepLog<T extends { uid: string; english: string }>(
     const freqStr = options?.frequency ? " F[w]" : "";
 
     const diffDays = daysSince(lastDate);
-    const dayStr = ` ${diffDays - 1}d`;
+    const dayStr = ` ${diffDays}d`;
 
     const views = spaceRepMap[term.uid]?.vC;
     const viewStr = ` ${views ?? 0}v`;
@@ -104,7 +104,7 @@ export function timedPlayLog(
     const freqStr = options?.frequency ? " F[w]" : "";
 
     const diffDays = daysSince(lastDate);
-    const dayStr = ` ${diffDays - 1}d`;
+    const dayStr = ` ${diffDays}d`;
 
     const views = spaceRepMap[term.uid]?.tpPc;
     const viewStr = views !== undefined ? ` ${views}v` : "";

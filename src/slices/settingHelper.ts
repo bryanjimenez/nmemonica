@@ -22,6 +22,7 @@ export const TermSortBy = Object.freeze({
   VIEW_DATE: 2,
   GAME: 3,
   DIFFICULTY: 4,
+  RECALL: 5,
 });
 
 // enum
@@ -37,6 +38,7 @@ export const TermSortByLabel = [
   "Staleness",
   "Space Rep",
   "Difficulty",
+  "Recall",
 ];
 
 /**

@@ -13,8 +13,14 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
+import { daysSince } from "../helper/consoleHelper";
 import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  SR_CORRECT_TRESHHOLD,
+  SR_MIN_REV_ITEMS,
+  gradeSpaceRepetition,
+} from "../helper/recallHelper";
 import {
   buildGroupObject,
   buildVocabularyArray,
@@ -46,6 +52,7 @@ export interface VocabularyInitSlice {
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
+    spaRepMaxReviewItem: number;
     activeGroup: string[];
     autoVerbView: boolean;
     verbColSplit: number;
@@ -69,6 +76,7 @@ export const vocabularyInitState: VocabularyInitSlice = {
     reinforce: false,
     repTID: -1,
     repetition: {},
+    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
     activeGroup: [],
     autoVerbView: false,
     verbColSplit: 0,
@@ -111,6 +119,83 @@ export const updateSpaceRepWord = createAsyncThunk(
       count: shouldIncrement,
       date: true,
     });
+  }
+);
+
+export const removeFromSpaceRepetition = createAsyncThunk(
+  "vocabulary/removeFromSpaceRepetition",
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState).vocabulary;
+
+    const spaceRep = state.setting.repetition;
+    const metadata = spaceRep[uid];
+    if (!metadata) {
+      return undefined;
+    }
+
+    const o: MetaDataObj = {
+      ...metadata,
+
+      daysBetweenReviews: undefined,
+      percentOverdue: undefined,
+      consecutiveRight: undefined,
+
+      lastReview: undefined,
+    };
+
+    const newValue = { ...spaceRep, [uid]: o };
+    return newValue;
+  }
+);
+
+export const setSpaceRepetitionMetadata = createAsyncThunk(
+  "vocabulary/setSpaceRepetitionMetadata",
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState).vocabulary;
+
+    const spaceRep = state.setting.repetition;
+    const metadata = spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 };
+
+    const { difficulty, accuracy, daysBetweenReviews } = metadata;
+    if (difficulty === undefined || accuracy === undefined) {
+      return undefined;
+    }
+
+    const difficultyP = difficulty / 100;
+    const accuracyP = accuracy / 100;
+
+    const lastReview =
+      metadata.lastReview ?? spaceRep[uid]?.d ?? new Date().toJSON();
+
+    const daysSinceReview = daysSince(lastReview);
+
+    const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
+      difficulty: difficultyP,
+      accuracy: accuracyP,
+      daysSinceReview,
+      daysBetweenReviews,
+    });
+
+    const consecutiveRight =
+      accuracyP >= SR_CORRECT_TRESHHOLD
+        ? (metadata.consecutiveRight ?? 0) + 1
+        : 0;
+
+    const now = new Date().toJSON();
+    const o: MetaDataObj = {
+      ...metadata,
+      daysBetweenReviews: calcDaysBetweenReviews,
+      percentOverdue: calcPercentOverdue,
+
+      consecutiveRight,
+      d: now,
+      lastReview: now,
+    };
+
+    const newValue = { ...spaceRep, [uid]: o };
+    return newValue;
   }
 );
 
@@ -198,6 +283,7 @@ const vocabularySlice = createSlice({
         TermSortBy.GAME,
         TermSortBy.RANDOM,
         TermSortBy.VIEW_DATE,
+        TermSortBy.RECALL,
       ];
       const newOrdered = toggleAFilter(
         ordered + 1,
@@ -375,7 +461,7 @@ const vocabularySlice = createSlice({
     setWordDifficulty: {
       reducer: (
         state: VocabularyInitSlice,
-        action: { payload: { uid: string; value: number } }
+        action: PayloadAction<{ uid: string; value: null | number }>
       ) => {
         const { uid, value } = action.payload;
 
@@ -397,7 +483,9 @@ const vocabularySlice = createSlice({
           newValue
         );
       },
-      prepare: (uid: string, value: number) => ({ payload: { uid, value } }),
+      prepare: (uid: string, value: null | number) => ({
+        payload: { uid, value },
+      }),
     },
     setWordTPCorrect: {
       reducer: (
@@ -511,6 +599,50 @@ const vocabularySlice = createSlice({
         payload: { uid, pronunciation },
       }),
     },
+    /**
+     * Space Repetition maximum item review
+     * per session
+     */
+    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
+      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+
+      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "spaRepMaxReviewItem",
+        value
+      );
+    },
+    setWordAccuracy: {
+      reducer: (
+        state: VocabularyInitSlice,
+        action: PayloadAction<{ uid: string; value: null | number }>
+      ) => {
+        const { uid, value } = action.payload;
+
+        const { record: newValue } = updateSpaceRepTerm(
+          uid,
+          state.setting.repetition,
+          { count: false, date: false },
+          {
+            set: { accuracy: value },
+          }
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid: string, value: null | number) => ({
+        payload: { uid, value },
+      }),
+    },
   },
 
   extraReducers: (builder) => {
@@ -546,6 +678,33 @@ const vocabularySlice = createSlice({
         newValue
       );
     });
+
+    builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "repetition",
+        newValue
+      );
+    });
+    builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      if (newValue) {
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "repetition",
+          newValue
+        );
+      }
+    });
   },
 });
 
@@ -570,5 +729,7 @@ export const {
   setMemorizedThreshold,
   setWordTPCorrect,
   setWordTPIncorrect,
+  setSpaRepMaxItemReview,
+  setWordAccuracy,
 } = vocabularySlice.actions;
 export default vocabularySlice.reducer;

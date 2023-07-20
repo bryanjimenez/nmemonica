@@ -1,5 +1,7 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import { PayloadAction } from "@reduxjs/toolkit";
+import classNames from "classnames";
 import partition from "lodash/partition";
 import React, {
   useCallback,
@@ -14,7 +16,12 @@ import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
-import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import {
+  daysSince,
+  msgInnerTrim,
+  spaceRepLog,
+  timedPlayLog,
+} from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   alphaOrder,
@@ -35,6 +42,7 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
+import { spaceRepetitionOrder } from "../../helper/recallHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
@@ -44,20 +52,25 @@ import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch } from "../../slices";
 import { logger } from "../../slices/globalSlice";
-import { TermSortBy } from "../../slices/settingHelper";
+import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
 import {
   addFrequencyWord,
   flipVocabularyPracticeSide,
   furiganaToggled,
   getVocabulary,
   removeFrequencyWord,
+  removeFromSpaceRepetition,
+  setSpaceRepetitionMetadata,
+  setWordAccuracy,
   setWordDifficulty,
   toggleAutoVerbView,
   toggleVocabularyFilter,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
-import type { RawVocabulary } from "../../typings/raw";
-import { DifficultySlider } from "../Form/Difficulty";
+import type { MetaDataObj, RawVocabulary } from "../../typings/raw";
+import { AccuracySlider } from "../Form/AccuracySlider";
+import { ConsoleMessage } from "../Form/Console";
+import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -68,6 +81,7 @@ import {
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
+import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import type { BareIdx } from "../Form/VocabularyOrderSlider";
 
@@ -101,6 +115,9 @@ export default function Vocabulary() {
   const naFlip = useRef();
 
   const [scrollJOrder, setScrollJOrder] = useState(false);
+  const [log, setLog] = useState<ConsoleMessage[]>([]);
+  /** Is not undefined after user modifies accuracy value */
+  const accuracyModifiedRef = useRef<undefined | null | number>();
 
   const {
     motionThreshold,
@@ -120,7 +137,10 @@ export default function Vocabulary() {
     englishSideUp,
     verbForm,
     repetition,
+    spaRepMaxReviewItem,
   } = useConnectVocabulary();
+
+  const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
 
   /** metadata table ref */
   const metadata = useRef(repetition);
@@ -132,10 +152,10 @@ export default function Vocabulary() {
     }
   }, []);
 
-  const filteredVocab = useMemo(() => {
-    if (vocabList.length === 0) return [];
+  const { filteredVocab } = useMemo(() => {
+    if (vocabList.length === 0) return { filteredVocab: [] };
     if (Object.keys(metadata.current).length === 0 && activeGroup.length === 0)
-      return vocabList;
+      return { filteredVocab: vocabList };
 
     const allFrequency = Object.keys(metadata.current).reduce<string[]>(
       (acc, cur) => {
@@ -167,9 +187,13 @@ export default function Vocabulary() {
         if (subFilter.length > 0) {
           filtered = subFilter;
         } else {
-          console.warn(
-            "Excluded all terms. Discarding memorized subfiltering."
-          );
+          setLog((l) => [
+            ...l,
+            {
+              msg: "Excluded all terms. Discarding memorized subfiltering.",
+              lvl: DebugLevel.WARN,
+            },
+          ]);
         }
         break;
       }
@@ -185,6 +209,20 @@ export default function Vocabulary() {
           filtered = [...nonFreqTerms, ...freqTerms];
         }
         break;
+      case TermSortBy.RECALL:
+        // discard the nonPending terms
+        const { failed, overdue } = spaceRepetitionOrder(
+          filtered,
+          metadata.current,
+          repMinItemReviewREF.current
+        );
+        const pending = [...failed, ...overdue];
+
+        if (pending.length > 0) {
+          filtered = pending.map((p) => filtered[p]);
+        }
+
+        break;
     }
 
     const frequency = filtered.reduce<string[]>((acc, cur) => {
@@ -195,23 +233,41 @@ export default function Vocabulary() {
     }, []);
     setFrequency(frequency);
 
-    return filtered;
+    return { filteredVocab: filtered };
   }, [dispatch, vocabList, activeGroup]);
 
   const {
     newOrder: order,
     ebare,
     jbare,
+    recallGame,
   } = useMemo(() => {
     if (filteredVocab.length === 0) return { newOrder: [] };
 
-    let newOrder, jOrder, eOrder;
+    let log: undefined | ConsoleMessage[];
+    let newOrder: undefined | number[];
+    let jOrder: undefined | { uid: string; label: string; idx: number }[];
+    let eOrder: undefined | { uid: string; label: string; idx: number }[];
+    let recallGame: number | undefined;
     switch (sortMethodREF.current) {
       case TermSortBy.RANDOM:
         newOrder = randomOrder(filteredVocab);
+        setLog((l) => [
+          ...l,
+          { msg: `Random [${newOrder?.length ?? 0}]`, lvl: DebugLevel.DEBUG },
+        ]);
+
         break;
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredVocab, metadata.current);
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Date Viewed [${newOrder?.length ?? 0}]`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
       case TermSortBy.GAME:
         if (reinforceREF.current) {
@@ -241,16 +297,70 @@ export default function Vocabulary() {
         if (newOrder === undefined) {
           newOrder = spaceRepOrder(filteredVocab, metadata.current);
         }
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 1 [${newOrder?.length ?? 0}]`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
         break;
 
       case TermSortBy.DIFFICULTY:
         // exclude vocab with difficulty beyond memoThreshold
 
         newOrder = difficultyOrder(filteredVocab, metadata.current);
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Difficulty [${newOrder?.length ?? 0}]`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
+        break;
+
+      case TermSortBy.RECALL:
+        const {
+          failed,
+          overdue,
+          notPlayed: nonPending,
+          todayDone,
+        } = spaceRepetitionOrder(
+          filteredVocab,
+          metadata.current,
+          repMinItemReviewREF.current
+        );
+        const pending = [...failed, ...overdue];
+
+        if (pending.length > 0) {
+          newOrder = pending;
+        } else {
+          newOrder = [...nonPending, ...todayDone];
+        }
+        recallGame = pending.length;
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 2 [${pending.length}]`,
+            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
 
       default: //TermSortBy.ALPHABETIC:
         ({ order: newOrder, jOrder, eOrder } = alphaOrder(filteredVocab));
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Alphabetic [${newOrder?.length ?? 0}]`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
         break;
     }
 
@@ -259,8 +369,15 @@ export default function Vocabulary() {
 
     setScrollJOrder(true);
 
-    return { newOrder, jbare: jOrder, ebare: eOrder };
+    return { newOrder, jbare: jOrder, ebare: eOrder, log, recallGame };
   }, [filteredVocab]);
+
+  // Logger messages
+  useEffect(() => {
+    log.forEach((message) => {
+      dispatch(logger(message.msg, message.lvl));
+    });
+  }, [dispatch, log]);
 
   const gotoNext = useCallback(() => {
     const l = filteredVocab.length;
@@ -376,31 +493,76 @@ export default function Vocabulary() {
         prevState.reinforcedUID ??
         getTermUID(prevState.selectedIndex, filteredVocab, order);
 
+      const vocabulary = getTerm(uid, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
-      // prevent updates when quick scrolling
-      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const vocabulary = getTerm(uid, vocabList);
-
-        // don't increment reinforced terms
-        const shouldIncrement = uid !== prevState.reinforcedUID;
-        const frequency = prevState.reinforcedUID !== null;
-
-        void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
-          .unwrap()
-          .then((payload) => {
-            const { value, prevVal } = payload;
-
-            const prevDate = prevVal.d ?? value.d;
-            const repStats = { [uid]: { ...value, d: prevDate } };
-            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
-            if (tpAnsweredREF.current !== undefined) {
-              timedPlayLog(messageLog, vocabulary, repStats, { frequency });
-            } else {
-              spaceRepLog(messageLog, vocabulary, repStats, { frequency });
-            }
-          });
+      let spaceRepUpdated: Promise<unknown> = Promise.resolve();
+      if (
+        metadata.current[uid]?.difficulty &&
+        accuracyModifiedRef.current
+        // typeof accuracyModifiedRef.current === 'number' &&
+        // accuracyModifiedRef.current > 0
+      ) {
+        // when difficulty exists and accuracy has been set
+        spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
+      } else if (accuracyModifiedRef.current === null) {
+        // when accuracy is nulled
+        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
       }
+
+      if (recallGame && recallGame > 0 && selectedIndex === recallGame + 1) {
+        // just finished recall game
+        dispatch(logger("No more pending items", DebugLevel.DEBUG));
+      }
+
+      void spaceRepUpdated.then(
+        (action: PayloadAction<Record<string, MetaDataObj>>) => {
+          if (action && "payload" in action) {
+            const meta = action.payload;
+
+            const overDue = meta[uid].percentOverdue;
+            const w = msgInnerTrim(vocabulary.english, 30);
+            const msg =
+              overDue === undefined
+                ? `Space Rep [${w}] removed`
+                : `Space Rep [${w}] updated ${overDue}`;
+
+            dispatch(logger(msg, DebugLevel.WARN));
+          }
+
+          // after space rep updates
+
+          // prevent updates when quick scrolling
+          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+            // don't increment reinforced terms
+            const shouldIncrement = uid !== prevState.reinforcedUID;
+            const frequency = prevState.reinforcedUID !== null;
+
+            void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
+              .unwrap()
+              .then((payload) => {
+                const { value, prevVal } = payload;
+
+                let prevDate;
+                if (accuracyModifiedRef.current && prevVal.lastReview) {
+                  // if term was reviewed
+                  prevDate = prevVal.lastReview;
+                } else {
+                  prevDate = prevVal.d ?? value.d;
+                }
+
+                const repStats = { [uid]: { ...value, d: prevDate } };
+                const messageLog = (m: string, l: number) =>
+                  dispatch(logger(m, l));
+                if (tpAnsweredREF.current !== undefined) {
+                  timedPlayLog(messageLog, vocabulary, repStats, { frequency });
+                } else {
+                  spaceRepLog(messageLog, vocabulary, repStats, { frequency });
+                }
+              });
+          }
+        }
+      );
 
       const wasReset = resetTimedPlay();
       if (wasReset) {
@@ -413,6 +575,7 @@ export default function Vocabulary() {
       // setErrorMsgs([]);
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
+      accuracyModifiedRef.current = undefined;
     }
   }, [
     dispatch,
@@ -424,6 +587,7 @@ export default function Vocabulary() {
     selectedIndex,
     filteredVocab,
     order,
+    recallGame,
   ]);
 
   // FIXME: implement error handling
@@ -448,6 +612,8 @@ export default function Vocabulary() {
   //   );
   // }
 
+  if (recallGame === 0)
+    return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (filteredVocab.length < 1 || order.length < 1)
     return <NotReady addlStyle="main-panel" />;
 
@@ -530,6 +696,10 @@ export default function Vocabulary() {
     </React.Fragment>
   );
 
+  const wasReviewed = metadata.current[uid]?.lastReview;
+  const reviewedToday =
+    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+
   if (!showPageBar) {
     page = (
       <React.Fragment>
@@ -566,13 +736,34 @@ export default function Vocabulary() {
             <div className="col">
               <div className="d-flex justify-content-end">
                 {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
-                <DifficultySlider
-                  value={metadata.current[uid]?.difficulty}
-                  onChange={buildAction(dispatch, (value: number) =>
-                    setWordDifficulty(uid, value)
-                  )}
-                  manualUpdate={uid}
-                />
+                <Tooltip
+                  className={classNames({
+                    "question-color opacity-50":
+                      sortMethodREF.current === TermSortBy.RECALL &&
+                      !reviewedToday,
+                    "done-color opacity-50": reviewedToday,
+                  })}
+                >
+                    <DifficultySlider
+                      difficulty={metadata.current[uid]?.difficulty}
+                      resetOn={uid}
+                      onChange={(difficulty: number | null) => {
+                        if (difficulty !== undefined) {
+                          dispatch(setWordDifficulty(uid, difficulty));
+                        }
+                      }}
+                    />
+                    <AccuracySlider
+                      accuracy={metadata.current[uid]?.accuracy}
+                      resetOn={uid}
+                      onChange={(accuracy: number | null) => {
+                        if (accuracy !== undefined) {
+                          dispatch(setWordAccuracy(uid, accuracy));
+                          accuracyModifiedRef.current = accuracy;
+                        }
+                      }}
+                    />
+                </Tooltip>
                 <ShowHintBtn
                   visible={hintEnabledREF.current}
                   active={isHintable}

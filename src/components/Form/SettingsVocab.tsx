@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
+import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import VerbFormSlider from "./VerbFormSlider";
@@ -28,6 +29,7 @@ import {
   getVocabulary,
   removeFrequencyWord,
   setMemorizedThreshold,
+  setSpaRepMaxItemReview,
   setVerbFormsOrder,
   toggleAutoVerbView,
   toggleVocabularyActiveGrp,
@@ -58,6 +60,7 @@ export default function SettingsVocab() {
     filterType: vocabFilterRef,
     memoThreshold: memoThresholdRef,
     repetition: vocabRep,
+    spaRepMaxReviewItem,
     reinforce: vocabReinforceRef,
     verbFormsOrder,
   } = useConnectVocabulary();
@@ -186,6 +189,15 @@ export default function SettingsVocab() {
                 {memoThreshold < 0 ? <SortDescIcon /> : <SortAscIcon />}
               </div>
             </div>
+          )}
+          {vocabOrder === TermSortBy.RECALL && (
+            <PlusMinus
+              label="Max review items "
+              value={spaRepMaxReviewItem}
+              onChange={(value: number) => {
+                dispatch(setSpaRepMaxItemReview(value));
+              }}
+            />
           )}
 
           <div className="mb-2">

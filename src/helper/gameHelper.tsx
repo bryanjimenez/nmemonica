@@ -224,8 +224,6 @@ export function getStaleSpaceRepKeys(
     [key in keyof MetaDataObj]: null;
   } = {
     d: null,
-    difficulty: null,
-    nextReview: null,
     vC: null,
     f: null,
     rein: null,
@@ -233,6 +231,14 @@ export function getStaleSpaceRepKeys(
     tpPc: null,
     tpAcc: null,
     tpCAvg: null,
+
+    // Space Repetition
+    lastReview:null,
+    consecutiveRight:null,
+    difficulty:null,
+    accuracy:null,
+    daysBetweenReviews:null,
+    percentOverdue:null,
   };
   const SpaceRepKeys = new Set(Object.keys(MetadataObjKeys));
 
@@ -490,7 +496,7 @@ export function dateViewOrder(
  */
 export const MEMORIZED_THRLD = 80;
 /**
- * At or below this threshold considered incorrect
+ * At or below this threshold considred very difficult
  */
 export const DIFFICULTY_THRLD = 30;
 /**

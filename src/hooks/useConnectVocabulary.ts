@@ -31,17 +31,19 @@ export function useConnectVocabulary() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const [englishSideUp, autoVerbView, verbForm] = useSelector<
-    RootState,
-    [boolean, boolean, string]
-  >(({ vocabulary }: RootState) => {
-    const { englishSideUp, autoVerbView } = vocabulary.setting;
+  const [englishSideUp, autoVerbView, verbForm, spaRepMaxReviewItem] =
+    useSelector<RootState, [boolean, boolean, string, number]>(
+      ({ vocabulary }: RootState) => {
+        const { englishSideUp, autoVerbView, spaRepMaxReviewItem } =
+          vocabulary.setting;
 
-    const { verbForm } = vocabulary;
+        const { verbForm } = vocabulary;
 
-    // TODO: https://github.com/reduxjs/reselect#basic-usage
-    return [englishSideUp, autoVerbView, verbForm];
-  }, shallowEqual);
+        // TODO: https://github.com/reduxjs/reselect#basic-usage
+        return [englishSideUp, autoVerbView, verbForm, spaRepMaxReviewItem];
+      },
+      shallowEqual
+    );
 
   const [mt, r, ft, he, romajiEnabled, bareKanji, verbColSplit, sm] =
     useSelector<
@@ -129,6 +131,7 @@ export function useConnectVocabulary() {
     verbFormsOrder,
     verbColSplit,
     activeGroup,
+    spaRepMaxReviewItem,
 
     // Refs ()
     reinforce,
