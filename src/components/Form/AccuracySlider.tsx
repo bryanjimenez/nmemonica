@@ -31,10 +31,18 @@ export function AccuracySlider(props: AccuracySliderProps) {
     },
   ];
 
+  // right/wrong -> blue/red
+  const [r, g, b] =
+    accuracy >= SR_CORRECT_TRESHHOLD * 100 ? [13, 110, 256] : [255, 0, 0];
+  const c = `rgb(${r},${g},${b},${0.25})`;
+
+  // not touched
+  const gray = `rgb(${189},${189},${189},${0.25})`; //"#bdbdbd"
+
   return (
     <Slider
       orientation="vertical"
-      sx={{ color: accuracy === 0 || !touched.current ? "#bdbdbd" : undefined }}
+      sx={{ color: accuracy === 0 || !touched.current ? gray : c }}
       value={accuracy}
       disabled={accuracy < 0}
       onChange={(e, newValue) => {

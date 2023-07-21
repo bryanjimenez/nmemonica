@@ -2,6 +2,7 @@ import { Slider } from "@mui/material";
 import PropTypes from "prop-types";
 import { useEffect, useRef, useState } from "react";
 
+import { heatMap } from "../../helper/colorHelper";
 import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/gameHelper";
 
 interface DifficultySliderProps {
@@ -24,6 +25,10 @@ export function DifficultySlider(props: DifficultySliderProps) {
     setDifficulty(difficultyREF.current);
   }, [resetOn]);
 
+  const c = heatMap(difficulty);
+  const gray = `rgb(${189},${189},${189},${0.25})`; //"#bdbdbd"
+
+
   const difficultyMarks = [
     {
       value: MEMORIZED_THRLD,
@@ -38,7 +43,7 @@ export function DifficultySlider(props: DifficultySliderProps) {
   return (
     <Slider
       orientation="vertical"
-      sx={{ color: !touched.current ? "#bdbdbd" : undefined }}
+      sx={{ color: difficulty === 0 || !touched.current ? gray : c }}
       value={difficulty}
       onChange={(e, newValue) => {
         if (typeof newValue === "number") {
