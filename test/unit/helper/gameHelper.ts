@@ -534,7 +534,7 @@ describe("gameHelper", function () {
         d: { difficulty: 90 },
       };
 
-      const actual = difficultySubFilter(-50, terms, tMeta);
+      const actual = difficultySubFilter(-80, terms, tMeta);
       expect(actual).to.deep.eq(expected);
     });
     it("above a value", function () {
@@ -570,7 +570,7 @@ describe("gameHelper", function () {
         d: { difficulty: 80 },
       };
 
-      const actual = difficultySubFilter(-35, terms, tMeta);
+      const actual = difficultySubFilter(-75, terms, tMeta);
       expect(actual).to.deep.eq(expected);
     });
     it("empty result", function () {

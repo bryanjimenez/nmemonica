@@ -492,13 +492,13 @@ export function dateViewOrder(
 }
 
 /**
- * Below this threshold considered not memorized
+ * Below this threshold considered memorized
  */
-export const MEMORIZED_THRLD = 80;
+export const MEMORIZED_THRLD = 20;
 /**
- * At or below this threshold considred very difficult
+ * Above this threshold considred very difficult
  */
-export const DIFFICULTY_THRLD = 30;
+export const DIFFICULTY_THRLD = 70;
 /**
  * Difficulty order
  * [DecreasingDifficulty, UndefinedDifficulty, KnownTerms]

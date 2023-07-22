@@ -194,6 +194,12 @@ a {
   transform: rotate(90deg);
 }
 
+.rotate-270 {
+  -webkit-transform: rotate(270deg);
+  -ms-transform: rotate(270deg);
+  transform: rotate(270deg);
+}
+
 .rotate-45 {
   -webkit-transform: rotate(45deg);
   -ms-transform: rotate(45deg);
