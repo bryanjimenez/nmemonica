@@ -183,3 +183,28 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
 
   return { failed, overdue, notPlayed, todayDone };
 }
+
+/**
+ * Console.table friendly output
+ * @param filteredVocab List of items
+ * @param metadata  Metadata Record
+ */
+export function recallInfoTable<T extends {uid:string, english:string}>(filteredVocab:T[], metadata:Record<string,MetaDataObj>){
+  return filteredVocab.reduce((acc,item)=>{
+    const {percentOverdue, d, lastReview, daysBetweenReviews} = metadata[item.uid];
+
+    if(!lastReview || !percentOverdue || !daysBetweenReviews)
+      return acc;
+
+
+    return {
+      ...acc,
+      [item.english]:{
+      ["viewed(d)"]: daysSince(d),
+      ["reviewed(d)"]: daysSince(lastReview),
+      ["overdue(%)"]: percentOverdue.toFixed(2),
+      ["daysBetweenReviews(d)"]: daysBetweenReviews.toFixed(2),
+      }
+    }
+  },{})
+}

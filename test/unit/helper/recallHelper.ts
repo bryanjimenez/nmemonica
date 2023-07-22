@@ -5,7 +5,7 @@ import {
   spaceRepetitionOrder,
 } from "../../../src/helper/recallHelper";
 
-function xAgoDate(days){
+function xAgoDate(days) {
   const t = new Date();
   const xAgoDate = new Date(t.setDate(t.getDate() - days)).toJSON();
   return xAgoDate;
@@ -18,12 +18,13 @@ describe("recallHelper", function () {
         const difficulty = 0.7;
         const accuracy = SR_CORRECT_TRESHHOLD;
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
-          difficulty,
-          accuracy,
-          daysSinceReview: undefined,
-          daysBetweenReviews: undefined,
-        });
+        const { calcDaysBetweenReviews, calcPercentOverdue } =
+          gradeSpaceRepetition({
+            difficulty,
+            accuracy,
+            daysSinceReview: undefined,
+            daysBetweenReviews: undefined,
+          });
 
         expect(calcPercentOverdue).to.equal(2);
       });
@@ -31,12 +32,13 @@ describe("recallHelper", function () {
         const difficulty = 0.7;
         const accuracy = SR_CORRECT_TRESHHOLD - 0.1;
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
-          difficulty,
-          accuracy,
-          daysSinceReview: undefined,
-          daysBetweenReviews: undefined,
-        });
+        const { calcDaysBetweenReviews, calcPercentOverdue } =
+          gradeSpaceRepetition({
+            difficulty,
+            accuracy,
+            daysSinceReview: undefined,
+            daysBetweenReviews: undefined,
+          });
 
         expect(calcPercentOverdue).to.equal(1);
       });
@@ -50,14 +52,41 @@ describe("recallHelper", function () {
         const daysSinceReview = xDaysAgo;
         const daysBetweenReviews = 2;
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
-          difficulty,
-          accuracy,
-          daysSinceReview,
-          daysBetweenReviews,
-        });
+        let actuals = [
+          {
+            days: daysSinceReview,
+            betweenRev: daysBetweenReviews,
+            overduePerC: NaN,
+          },
+        ];
 
-        expect(calcPercentOverdue).to.equal(1);
+        for (let i = 1; i < 5; ++i) {
+          const {
+            calcDaysBetweenReviews: betweenRev,
+            calcPercentOverdue: overduePerC,
+          } = gradeSpaceRepetition({
+            difficulty,
+            accuracy,
+            daysSinceReview: actuals[i - 1].days,
+            daysBetweenReviews: actuals[i - 1].betweenRev,
+          });
+
+          const nextRev = actuals[i - 1].days + Math.trunc(betweenRev);
+
+          actuals = [
+            ...actuals,
+            {
+              days: nextRev,
+              betweenRev,
+              overduePerC,
+            },
+          ];
+        }
+
+        // console.table(results);
+        expect(actuals[0].overduePerC).is.NaN; // seed value
+        expect(actuals[1].overduePerC).to.equal(1);
+        expect(actuals[4].overduePerC).to.equal(2);
       });
 
       it("incorrect", function () {
@@ -68,12 +97,13 @@ describe("recallHelper", function () {
         const daysSinceReview = xDaysAgo;
         const daysBetweenReviews = 2;
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
-          difficulty,
-          accuracy,
-          daysSinceReview,
-          daysBetweenReviews,
-        });
+        const { calcDaysBetweenReviews, calcPercentOverdue } =
+          gradeSpaceRepetition({
+            difficulty,
+            accuracy,
+            daysSinceReview,
+            daysBetweenReviews,
+          });
 
         expect(calcPercentOverdue).to.equal(1);
       });
@@ -117,7 +147,7 @@ describe("recallHelper", function () {
     const spaRepMaxReviewItem = 20;
 
     it("incorrect", function () {
-      const {failed} = spaceRepetitionOrder(
+      const { failed } = spaceRepetitionOrder(
         terms,
         metaRecord,
         spaRepMaxReviewItem
@@ -126,22 +156,25 @@ describe("recallHelper", function () {
       expect(failed).to.contain.members([7, 8, 9]);
     });
     it("pending", function () {
-      const {failed, overdue: pending, notPlayed, todayDone} = spaceRepetitionOrder(
-        terms,
-        metaRecord,
-        spaRepMaxReviewItem
-      );
+      const {
+        failed,
+        overdue: pending,
+        notPlayed,
+        todayDone,
+      } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
 
-      expect(pending).to.contain.members([3, 4, 5, 6]);
+      expect(pending, 'Categorized as overdue').to.contain.members([3, 4, 5, 6]);
+      expect(pending, 'Descending percentOverdue order').to.deep.equal([3, 4, 5, 6]);
       // pending, but not played because date = today
       expect(notPlayed).to.contain.members([2]);
     });
     it("not played", function () {
-      const {failed, overdue: pending, notPlayed, todayDone} = spaceRepetitionOrder(
-        terms,
-        metaRecord,
-        spaRepMaxReviewItem
-      );
+      const {
+        failed,
+        overdue: pending,
+        notPlayed,
+        todayDone,
+      } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
 
       // pending, but not played because date = today
       expect(notPlayed).to.contain.members([2]);
@@ -151,25 +184,26 @@ describe("recallHelper", function () {
     it("max", function () {
       const spaRepMaxReviewItem = 2;
 
-      const {failed, overdue: pending, notPlayed, todayDone} = spaceRepetitionOrder(
-        terms,
-        metaRecord,
-        spaRepMaxReviewItem
-      );
+      const {
+        failed,
+        overdue: pending,
+        notPlayed,
+        todayDone,
+      } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
 
-      expect([...failed, ...pending]).to.have.length(spaRepMaxReviewItem).and.be.an("Array");
+      expect([...failed, ...pending])
+        .to.have.length(spaRepMaxReviewItem)
+        .and.be.an("Array");
       expect(notPlayed)
         .to.have.length(terms.length - spaRepMaxReviewItem)
         .and.be.an("Array");
     });
 
-    describe("date view exclusion", function(){
+    describe("date view exclusion", function () {
       // metadata.d: last viewed
       // metadata.lastReview: last reviewed
 
-      const terms = [
-        { uid: "0023e81f458ea75aaa9a89031105bf63" },
-      ];
+      const terms = [{ uid: "0023e81f458ea75aaa9a89031105bf63" }];
 
       it("yesterday included", function () {
         const today = new Date().toJSON();
@@ -178,18 +212,28 @@ describe("recallHelper", function () {
         const xDaysAgo = 3;
         const t = new Date();
         const xAgoDate = new Date(t.setDate(t.getDate() - xDaysAgo)).toJSON();
-        
+
         const metaRecord = {
           // pending review
-          [terms[0].uid]: { percentOverdue: 2, vC: 2, d: xAgoDate, lastReview: xAgoDate, difficulty: 90, accuracy: 67, daysBetweenReviews: 1, consecutiveRight: 1,},
-        }
+          [terms[0].uid]: {
+            percentOverdue: 2,
+            vC: 2,
+            d: xAgoDate,
+            lastReview: xAgoDate,
+            difficulty: 90,
+            accuracy: 67,
+            daysBetweenReviews: 1,
+            consecutiveRight: 1,
+          },
+        };
 
-        const {failed, overdue: pending, notPlayed, todayDone} = spaceRepetitionOrder(
-          terms,
-          metaRecord,
-          10
-        );
-  
+        const {
+          failed,
+          overdue: pending,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, 10);
+
         expect(notPlayed).to.not.contain.members([0]);
       });
       it("today excluded", function () {
@@ -199,48 +243,68 @@ describe("recallHelper", function () {
         const xDaysAgo = 3;
         const t = new Date();
         const xAgoDate = new Date(t.setDate(t.getDate() - xDaysAgo)).toJSON();
-        
+
         const metaRecord = {
           // pending review
-          [terms[0].uid]: { percentOverdue: 2, vC: 2, d: today, lastReview: xAgoDate, difficulty: 90, accuracy: 67, daysBetweenReviews: 1, consecutiveRight: 1,},
-        }
+          [terms[0].uid]: {
+            percentOverdue: 2,
+            vC: 2,
+            d: today,
+            lastReview: xAgoDate,
+            difficulty: 90,
+            accuracy: 67,
+            daysBetweenReviews: 1,
+            consecutiveRight: 1,
+          },
+        };
 
-        const {failed, overdue: pending, notPlayed, todayDone} = spaceRepetitionOrder(
-          terms,
-          metaRecord,
-          spaRepMaxReviewItem
-        );
+        const {
+          failed,
+          overdue: pending,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
 
         // pending, but not played because date = today
         expect([...failed, ...pending]).to.not.contain.members([0]);
         expect(notPlayed).to.contain.members([0]);
       });
-    })
-    describe("today review",function(){
-      it("inclusion",function(){
+    });
+    describe("today review", function () {
+      it("inclusion", function () {
         const today = new Date().toJSON();
         const yesterday = new Date().toJSON();
 
         const xDaysAgo = 3;
         const t = new Date();
         const xAgoDate = new Date(t.setDate(t.getDate() - xDaysAgo)).toJSON();
-        
+
         const metaRecord = {
           // lastReview today
-          [terms[0].uid]: { percentOverdue: 2, vC: 2, d: today, lastReview: today, difficulty: 90, accuracy: 67, daysBetweenReviews: 1, consecutiveRight: 1,},
-        }
+          [terms[0].uid]: {
+            percentOverdue: 2,
+            vC: 2,
+            d: today,
+            lastReview: today,
+            difficulty: 90,
+            accuracy: 67,
+            daysBetweenReviews: 1,
+            consecutiveRight: 1,
+          },
+        };
 
-        const {failed, overdue: pending, notPlayed, todayDone} = spaceRepetitionOrder(
-          terms,
-          metaRecord,
-          spaRepMaxReviewItem
-        );
+        const {
+          failed,
+          overdue: pending,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
 
         // pending, but not played because date = today
         expect([...failed, ...pending]).to.not.contain.members([0]);
         expect(notPlayed).to.not.contain.members([0]);
         expect(todayDone).to.contain.members([0]);
-      })
-    })
+      });
+    });
   });
 });
