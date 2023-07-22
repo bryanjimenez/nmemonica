@@ -437,6 +437,10 @@ a {
   font-size: 2.5rem;
 }
 
+.fs-xx-small {
+  font-size: xx-small;
+}
+
 .app-sm-fs-xx-small {
   font-size: xx-small;
 }
@@ -464,6 +468,12 @@ a {
   -webkit-transform: rotate(90deg);
   -ms-transform: rotate(90deg);
   transform: rotate(90deg);
+}
+
+.rotate-270 {
+  -webkit-transform: rotate(270deg);
+  -ms-transform: rotate(270deg);
+  transform: rotate(270deg);
 }
 
 .rotate-135 {
