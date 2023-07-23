@@ -93,7 +93,8 @@ const VocabularyMeta = {
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const [showPageBar, setShowPageBar] = useState(false);
+  const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
+    useState(false);
   /** Alphabetic order quick scroll in progress */
   const isAlphaSortScrolling = useRef(false);
 
@@ -408,7 +409,7 @@ export default function Vocabulary() {
       },
       gotoNext
     );
-  }, [dispatch, frequency, filteredVocab, reinforcedUID, gotoNext]);
+  }, [frequency, filteredVocab, reinforcedUID, gotoNext]);
 
   const gotoPrev = useCallback(() => {
     const l = filteredVocab.length;
@@ -612,58 +613,8 @@ export default function Vocabulary() {
   //   );
   // }
 
-  if (recallGame === 0)
-    return <NotReady addlStyle="main-panel" text="No pending items" />;
-  if (filteredVocab.length < 1 || order.length < 1)
-    return <NotReady addlStyle="main-panel" />;
-
-  const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
-
-  // console.log(
-  //   JSON.stringify({
-  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
-  //     idx: selectedIndex,
-  //     uid: (uid && uid.slice(0, 6)) || "",
-  //     v: vocabList.length,
-  //     ord: order.length,
-  //     rep: Object.keys(metadata.current).length,
-  //     fre: frequency.length,
-  //     filt: filteredVocab.length,
-  //   })
-  // );
-
-  const vocabulary = getTerm(uid, vocabList);
-  const vocabulary_reinforce = metadata.current[vocabulary.uid]?.rein === true;
-
-  const isVerb = vocabulary.grp === "Verb";
-
-  const jText = JapaneseText.parse(vocabulary);
-  const hasFurigana = jText.hasFurigana();
-  const hasJHint = jText.isHintable(3);
-  const hasEHint = vocabulary.grp !== undefined && vocabulary.grp !== "";
-
-  const isHintable = showHint !== uid && englishSideUp ? hasJHint : hasEHint;
-
-  let pIdx = selectedIndex;
-  let pList: BareIdx[] = [];
-
-  if (scrollJOrder) {
-    if (jbare) {
-      pList = jbare;
-    }
-  } else {
-    if (jbare) {
-      pIdx = jbare[selectedIndex].idx;
-    }
-    if (ebare) {
-      pList = ebare;
-    }
-  }
-
-  const progress = ((selectedIndex + 1) / filteredVocab.length) * 100;
-
-  let page = (
-    <React.Fragment>
+  const getInnerPage = useCallback(
+    (uid: string, vocabulary: RawVocabulary, isVerb: boolean) => (
       <div className="vocabulary main-panel h-100">
         <div
           ref={HTMLDivElementSwipeRef}
@@ -693,149 +644,159 @@ export default function Vocabulary() {
           </StackNavButton>
         </div>
       </div>
-    </React.Fragment>
+    ),
+    [
+      gotoNextSlide,
+      gotoPrev,
+      HTMLDivElementSwipeRef,
+      autoVerbView,
+      recacheAudio,
+      showHint,
+    ]
   );
 
-  const wasReviewed = metadata.current[uid]?.lastReview;
-  const reviewedToday =
-    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
-
-  if (!showPageBar) {
-    page = (
-      <React.Fragment>
-        {page}
-        <div className="options-bar mb-3 flex-shrink-1">
-          <div className="row opts-max-h">
-            <div className="col">
-              <div className="d-flex justify-content-start">
-                <TogglePracticeSideBtn
-                  toggle={englishSideUp}
-                  action={() => {
-                    if (abortLoop()) {
-                      resetTimedPlay();
-                    }
-                    dispatch(flipVocabularyPracticeSide());
-                  }}
-                />
-                <ReCacheAudioBtn
-                  active={recacheAudio}
-                  action={buildRecacheAudioHandler(
-                    recacheAudio,
-                    setRecacheAudio
-                  )}
-                />
-                <ToggleAutoVerbViewBtn
-                  visible={isVerb}
-                  toggleAutoVerbView={buildAction(dispatch, toggleAutoVerbView)}
-                  autoVerbView={autoVerbView}
-                />
-                <div className="sm-icon-grp">{loopSettingBtn}</div>
-                <div className="sm-icon-grp">{loopActionBtn}</div>
-              </div>
+  const pageOptionBar = useCallback(
+    (
+      uid: string,
+      vocabulary: RawVocabulary,
+      isVerb: boolean,
+      hasFurigana: boolean,
+      isHintable: boolean,
+      vocabulary_reinforce: boolean,
+      reviewedToday: boolean
+    ) => (
+      <div className="options-bar mb-3 flex-shrink-1">
+        <div className="row opts-max-h">
+          <div className="col">
+            <div className="d-flex justify-content-start">
+              <TogglePracticeSideBtn
+                toggle={englishSideUp}
+                action={() => {
+                  if (abortLoop()) {
+                    resetTimedPlay();
+                  }
+                  dispatch(flipVocabularyPracticeSide());
+                }}
+              />
+              <ReCacheAudioBtn
+                active={recacheAudio}
+                action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
+              />
+              <ToggleAutoVerbViewBtn
+                visible={isVerb}
+                toggleAutoVerbView={buildAction(dispatch, toggleAutoVerbView)}
+                autoVerbView={autoVerbView}
+              />
+              <div className="sm-icon-grp">{loopSettingBtn}</div>
+              <div className="sm-icon-grp">{loopActionBtn}</div>
             </div>
-            <div className="col">
-              <div className="d-flex justify-content-end">
-                {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
-                <Tooltip
-                  className={classNames({
-                    "question-color opacity-50":
-                      sortMethodREF.current === TermSortBy.RECALL &&
-                      !reviewedToday,
-                    "done-color opacity-50": reviewedToday,
-                  })}
-                >
-                    <DifficultySlider
-                      difficulty={metadata.current[uid]?.difficulty}
-                      resetOn={uid}
-                      onChange={(difficulty: number | null) => {
-                        if (difficulty !== undefined) {
-                          dispatch(setWordDifficulty(uid, difficulty));
-                        }
-                      }}
-                    />
-                    <AccuracySlider
-                      accuracy={metadata.current[uid]?.accuracy}
-                      resetOn={uid}
-                      onChange={(accuracy: number | null) => {
-                        if (accuracy !== undefined) {
-                          dispatch(setWordAccuracy(uid, accuracy));
-                          accuracyModifiedRef.current = accuracy;
-                        }
-                      }}
-                    />
-                </Tooltip>
-                <ShowHintBtn
-                  visible={hintEnabledREF.current}
-                  active={isHintable}
-                  setShowHint={setStateFunction(setShowHint, (prev) =>
-                    prev ? undefined : uid
-                  )}
-                />
-                <ToggleFuriganaBtn
-                  active={hasFurigana}
-                  toggle={
-                    toggleFuriganaSettingHelper(
-                      vocabulary.uid,
-                      metadata.current
-                    ).furigana.show
-                  }
-                  toggleFurigana={buildAction(dispatch, furiganaToggled)}
-                  vocabulary={vocabulary}
-                />
-                <ToggleFrequencyTermBtnMemo
-                  term={vocabulary}
-                  count={frequency.length}
-                  isReinforced={reinforcedUID !== null}
-                  hasReinforce={vocabulary_reinforce}
-                  addFrequencyTerm={
-                    // TODO: memoize me ?
-                    (uid) => {
-                      setFrequency((f) => [...f, uid]);
-                      buildAction(dispatch, addFrequencyWord)(uid);
+          </div>
+          <div className="col">
+            <div className="d-flex justify-content-end">
+              {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
+              <Tooltip
+                className={classNames({
+                  "question-color opacity-50":
+                    sortMethodREF.current === TermSortBy.RECALL &&
+                    !reviewedToday,
+                  "done-color opacity-50": reviewedToday,
+                })}
+              >
+                <DifficultySlider
+                  difficulty={metadata.current[uid]?.difficulty}
+                  resetOn={uid}
+                  onChange={(difficulty: number | null) => {
+                    if (difficulty !== undefined) {
+                      dispatch(setWordDifficulty(uid, difficulty));
                     }
-                  }
-                  removeFrequencyTerm={(uid) => {
-                    setFrequency((f) => f.filter((id) => id !== uid));
-                    buildAction(dispatch, removeFrequencyWord)(uid);
                   }}
                 />
-              </div>
+                <AccuracySlider
+                  accuracy={metadata.current[uid]?.accuracy}
+                  resetOn={uid}
+                  onChange={(accuracy: number | null) => {
+                    if (accuracy !== undefined) {
+                      dispatch(setWordAccuracy(uid, accuracy));
+                      accuracyModifiedRef.current = accuracy;
+                    }
+                  }}
+                />
+              </Tooltip>
+              <ShowHintBtn
+                visible={hintEnabledREF.current}
+                active={isHintable}
+                setShowHint={setStateFunction(setShowHint, (prev) =>
+                  prev ? undefined : uid
+                )}
+              />
+              <ToggleFuriganaBtn
+                active={hasFurigana}
+                toggle={
+                  toggleFuriganaSettingHelper(vocabulary.uid, metadata.current)
+                    .furigana.show
+                }
+                toggleFurigana={buildAction(dispatch, furiganaToggled)}
+                vocabulary={vocabulary}
+              />
+              <ToggleFrequencyTermBtnMemo
+                term={vocabulary}
+                count={frequency.length}
+                isReinforced={reinforcedUID !== null}
+                hasReinforce={vocabulary_reinforce}
+                addFrequencyTerm={(uid) => {
+                  setFrequency((f) => [...f, uid]);
+                  buildAction(dispatch, addFrequencyWord)(uid);
+                }}
+                removeFrequencyTerm={(uid) => {
+                  setFrequency((f) => f.filter((id) => id !== uid));
+                  buildAction(dispatch, removeFrequencyWord)(uid);
+                }}
+              />
             </div>
           </div>
         </div>
-        <div
-          className="progress-line flex-shrink-1"
-          onClick={() => {
-            if (sortMethodREF.current === TermSortBy.ALPHABETIC) {
-              const delayTime = 4000;
-              setShowPageBar(true);
+      </div>
+    ),
+    [
+      abortLoop,
+      autoVerbView,
+      dispatch,
+      englishSideUp,
+      frequency.length,
+      hintEnabledREF,
+      loopActionBtn,
+      loopSettingBtn,
+      recacheAudio,
+      reinforcedUID,
+      resetTimedPlay,
+      sortMethodREF,
+      timedPlayVerifyBtn,
+    ]
+  );
 
-              const delay = () => {
-                if (!isAlphaSortScrolling.current) {
-                  setShowPageBar(false);
-                } else {
-                  setTimeout(delay, delayTime);
-                }
-              };
+  const { pList, pIdx } = useMemo(() => {
+    let list: BareIdx[] = [];
+    let idx = selectedIndex;
+    if (scrollJOrder) {
+      if (jbare) {
+        list = jbare;
+      }
+    } else {
+      if (jbare) {
+        idx = jbare[selectedIndex].idx;
+      }
+      if (ebare) {
+        list = ebare;
+      }
+    }
 
-              setTimeout(delay, delayTime);
-            }
-          }}
-        >
-          <LinearProgress
-            variant={tpAnimation === null ? "determinate" : "buffer"}
-            value={tpAnimation === null ? progress : 0}
-            valueBuffer={tpAnimation ?? undefined}
-            color={vocabulary_reinforce ? "secondary" : "primary"}
-          />
-        </div>
-      </React.Fragment>
-    );
-  } else {
-    page = (
-      <React.Fragment>
-        {page}
-        <Grow in={showPageBar} timeout={500}>
+    return { pList: list, pIdx: idx };
+  }, [selectedIndex, scrollJOrder, jbare, ebare]);
+
+  const pageMultiOrderScroller = useMemo(
+    () => (
+      <>
+        <Grow in={showPageMultiOrderScroller} timeout={500}>
           <Avatar
             style={{
               position: "absolute",
@@ -877,6 +838,99 @@ export default function Vocabulary() {
             }}
           />
         </div>
+      </>
+    ),
+    [ebare, pIdx, pList, scrollJOrder, showPageMultiOrderScroller]
+  );
+
+  if (recallGame === 0)
+    return <NotReady addlStyle="main-panel" text="No pending items" />;
+  if (filteredVocab.length < 1 || order.length < 1)
+    return <NotReady addlStyle="main-panel" />;
+
+  const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
+
+  // console.log(
+  //   JSON.stringify({
+  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
+  //     idx: selectedIndex,
+  //     uid: (uid && uid.slice(0, 6)) || "",
+  //     v: vocabList.length,
+  //     ord: order.length,
+  //     rep: Object.keys(metadata.current).length,
+  //     fre: frequency.length,
+  //     filt: filteredVocab.length,
+  //   })
+  // );
+
+  const vocabulary = getTerm(uid, vocabList);
+  const vocabulary_reinforce = metadata.current[vocabulary.uid]?.rein === true;
+
+  const isVerb = vocabulary.grp === "Verb";
+
+  const jText = JapaneseText.parse(vocabulary);
+  const hasFurigana = jText.hasFurigana();
+  const hasJHint = jText.isHintable(3);
+  const hasEHint = vocabulary.grp !== undefined && vocabulary.grp !== "";
+
+  const isHintable = showHint !== uid && englishSideUp ? hasJHint : hasEHint;
+
+  const progress = ((selectedIndex + 1) / filteredVocab.length) * 100;
+  const wasReviewed = metadata.current[uid]?.lastReview;
+  const reviewedToday =
+    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+
+  const pageLinearProgress = (
+    <div
+      className="progress-line flex-shrink-1"
+      onClick={() => {
+        if (sortMethodREF.current === TermSortBy.ALPHABETIC) {
+          const delayTime = 4000;
+          setShowPageMultiOrderScroller(true);
+
+          const delay = () => {
+            if (!isAlphaSortScrolling.current) {
+              setShowPageMultiOrderScroller(false);
+            } else {
+              setTimeout(delay, delayTime);
+            }
+          };
+
+          setTimeout(delay, delayTime);
+        }
+      }}
+    >
+      <LinearProgress
+        variant={tpAnimation === null ? "determinate" : "buffer"}
+        value={tpAnimation === null ? progress : 0}
+        valueBuffer={tpAnimation ?? undefined}
+        color={vocabulary_reinforce ? "secondary" : "primary"}
+      />
+    </div>
+  );
+
+  let page;
+  if (!showPageMultiOrderScroller) {
+    page = (
+      <React.Fragment>
+        {getInnerPage(uid, vocabulary, isVerb)}
+        {pageOptionBar(
+          uid,
+          vocabulary,
+          isVerb,
+          hasFurigana,
+          isHintable,
+          vocabulary_reinforce,
+          reviewedToday
+        )}
+        {pageLinearProgress}
+      </React.Fragment>
+    );
+  } else {
+    page = (
+      <React.Fragment>
+        {getInnerPage(uid, vocabulary, isVerb)}
+        {pageMultiOrderScroller}
       </React.Fragment>
     );
   }
