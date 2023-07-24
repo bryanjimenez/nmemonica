@@ -57,11 +57,8 @@ export function gradeSpaceRepetition({
     percentOverdue = SR_FAIL_REV_INTERVAL;
   }
 
-  const nextDifficulty = difficulty + clamp(
-    (percentOverdue / 17) * (8 - 9 * accuracy),
-    0,
-    1
-  );
+  const nextDifficulty =
+    difficulty + clamp((percentOverdue / 17) * (8 - 9 * accuracy), 0, 1);
 
   const difficultyW = 3 - 1.7 * nextDifficulty;
 
@@ -70,10 +67,11 @@ export function gradeSpaceRepetition({
     typeof daysBetweenReviews === "number" &&
     daysBetweenReviews > 0 &&
     accuracy >= SR_CORRECT_TRESHHOLD
-    ) {
+  ) {
     const fuzz = Math.random() < 0.5 ? 0.95 : 1.05;
 
-    daysBetweenCalc = daysBetweenReviews * (1 + (difficultyW - 1) * (percentOverdue * fuzz));
+    daysBetweenCalc =
+      daysBetweenReviews * (1 + (difficultyW - 1) * (percentOverdue * fuzz));
   } else {
     daysBetweenCalc = 1 / (1 + 3 * nextDifficulty);
   }
@@ -196,22 +194,109 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
  * @param filteredVocab List of items
  * @param metadata  Metadata Record
  */
-export function recallInfoTable<T extends {uid:string, english:string}>(filteredVocab:T[], metadata:Record<string,MetaDataObj>){
-  return filteredVocab.reduce((acc,item)=>{
-    const {percentOverdue, lastView, lastReview, daysBetweenReviews} = metadata[item.uid];
+export function recallInfoTable<T extends { uid: string; english: string }>(
+  filteredVocab: T[],
+  metadata: Record<string, MetaDataObj>
+) {
+  return filteredVocab.reduce((acc, item) => {
+    const { percentOverdue, lastView, lastReview, daysBetweenReviews } =
+      metadata[item.uid];
 
-    if(!lastReview || !percentOverdue || !daysBetweenReviews)
-      return acc;
-
+    if (!lastReview || !percentOverdue || !daysBetweenReviews) return acc;
 
     return {
       ...acc,
-      [item.english]:{
-      ["viewed(d)"]: daysSince(lastView),
-      ["reviewed(d)"]: daysSince(lastReview),
-      ["overdue(%)"]: percentOverdue.toFixed(2),
-      ["daysBetweenReviews(d)"]: daysBetweenReviews.toFixed(2),
-      }
-    }
-  },{})
+      [item.english]: {
+        ["viewed(d)"]: daysSince(lastView),
+        ["reviewed(d)"]: daysSince(lastReview),
+        ["overdue(%)"]: percentOverdue.toFixed(2),
+        ["daysBetweenReviews(d)"]: daysBetweenReviews.toFixed(2),
+      },
+    };
+  }, {});
+}
+
+/**
+ * Space Repetition
+ *
+ * Logic to update the MetaDataObj when item is removed
+ * @param uid
+ * @param spaceRep
+ */
+export function removeAction(
+  uid: string,
+  spaceRep: Record<string, MetaDataObj | undefined>
+) {
+  const metadata = spaceRep[uid];
+  if (!metadata) {
+    return undefined;
+  }
+
+  const o: MetaDataObj = {
+    ...metadata,
+
+    daysBetweenReviews: undefined,
+    percentOverdue: undefined,
+    consecutiveRight: undefined,
+
+    lastReview: undefined,
+  };
+
+  const newValue = { ...spaceRep, [uid]: o };
+  return newValue;
+}
+
+/**
+ * Space Repetition
+ *
+ * Logic to update the MetaDataObj
+ * @param uid
+ * @param spaceRep
+ */
+export function updateAction(
+  uid: string,
+  spaceRep: Record<string, MetaDataObj | undefined>
+) {
+  const metadata = spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 };
+
+  const { difficulty, accuracy, daysBetweenReviews } = metadata;
+  if (difficulty === undefined || accuracy === undefined) {
+    return undefined;
+  }
+
+  /** difficultyP [easy:0, hard:1] */
+  const difficultyP = difficulty / 100;
+  /** accuracyP [wrong:0, right:1] */
+  const accuracyP = accuracy / 100;
+
+  const lastReview =
+    metadata.lastReview ?? spaceRep[uid]?.lastView ?? new Date().toJSON();
+
+  const daysSinceReview = daysSince(lastReview);
+
+  const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
+    difficulty: difficultyP,
+    accuracy: accuracyP,
+    daysSinceReview,
+    daysBetweenReviews,
+  });
+
+  const consecutiveRight =
+    accuracyP >= SR_CORRECT_TRESHHOLD
+      ? (metadata.consecutiveRight ?? 0) + 1
+      : 0;
+
+  const now = new Date().toJSON();
+  const o: MetaDataObj = {
+    ...metadata,
+    daysBetweenReviews: calcDaysBetweenReviews,
+    percentOverdue: calcPercentOverdue,
+
+    consecutiveRight,
+    lastView: now,
+    lastReview: now,
+  };
+
+  const newValue = { ...spaceRep, [uid]: o };
+  return newValue;
 }

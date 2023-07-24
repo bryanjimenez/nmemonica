@@ -20,6 +20,8 @@ import {
   SR_CORRECT_TRESHHOLD,
   SR_MIN_REV_ITEMS,
   gradeSpaceRepetition,
+  removeAction,
+  updateAction,
 } from "../helper/recallHelper";
 import {
   buildGroupObject,
@@ -129,23 +131,7 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const state = (thunkAPI.getState() as RootState).vocabulary;
 
     const spaceRep = state.setting.repetition;
-    const metadata = spaceRep[uid];
-    if (!metadata) {
-      return undefined;
-    }
-
-    const o: MetaDataObj = {
-      ...metadata,
-
-      daysBetweenReviews: undefined,
-      percentOverdue: undefined,
-      consecutiveRight: undefined,
-
-      lastReview: undefined,
-    };
-
-    const newValue = { ...spaceRep, [uid]: o };
-    return newValue;
+    return removeAction(uid, spaceRep);
   }
 );
 
@@ -156,48 +142,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const state = (thunkAPI.getState() as RootState).vocabulary;
 
     const spaceRep = state.setting.repetition;
-    const metadata = spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 };
-
-    const { difficulty, accuracy, daysBetweenReviews } = metadata;
-    if (difficulty === undefined || accuracy === undefined) {
-      return undefined;
-    }
-
-    /** difficultyP [easy:0, hard:1] */
-    const difficultyP = difficulty / 100;
-    /** accuracyP [wrong:0, right:1] */
-    const accuracyP = accuracy / 100;
-
-    const lastReview =
-      metadata.lastReview ?? spaceRep[uid]?.lastView ?? new Date().toJSON();
-
-    const daysSinceReview = daysSince(lastReview);
-
-    const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
-      difficulty: difficultyP,
-      accuracy: accuracyP,
-      daysSinceReview,
-      daysBetweenReviews,
-    });
-
-    const consecutiveRight =
-      accuracyP >= SR_CORRECT_TRESHHOLD
-        ? (metadata.consecutiveRight ?? 0) + 1
-        : 0;
-
-    const now = new Date().toJSON();
-    const o: MetaDataObj = {
-      ...metadata,
-      daysBetweenReviews: calcDaysBetweenReviews,
-      percentOverdue: calcPercentOverdue,
-
-      consecutiveRight,
-      lastView: now,
-      lastReview: now,
-    };
-
-    const newValue = { ...spaceRep, [uid]: o };
-    return newValue;
+    return updateAction(uid, spaceRep);
   }
 );
 

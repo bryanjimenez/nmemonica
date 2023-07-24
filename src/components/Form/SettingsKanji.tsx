@@ -2,6 +2,7 @@ import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
 import SettingsSwitch from "./SettingsSwitch";
+import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
@@ -13,9 +14,14 @@ import {
   toggleKanjiActiveGrp,
   toggleKanjiActiveTag,
   toggleKanjiFilter,
+  toggleKanjiOrdering,
   toggleKanjiReinforcement,
 } from "../../slices/kanjiSlice";
-import { TermFilterBy } from "../../slices/settingHelper";
+import {
+  TermFilterBy,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { SetTermTagList } from "../Pages/SetTermTagList";
@@ -25,7 +31,8 @@ export default function SettingsKanji() {
 
   const { vocabList: vocabulary } = useConnectVocabulary();
   const {
-    filterType: kanjiFilterRef,
+    filterType: kanjiFilterREF,
+    orderType: kanjiOrderREF,
     reinforce: kanjiReinforce,
     activeTags: kanjiActive,
     kanjiList: kanji,
@@ -33,7 +40,8 @@ export default function SettingsKanji() {
     kanjiTagObj: kanjiTags,
   } = useConnectKanji();
 
-  const kanjiFilter = kanjiFilterRef.current;
+  const kanjiFilter = kanjiFilterREF.current;
+  const kanjiOrder = kanjiOrderREF.current;
 
   if (vocabulary.length === 0) {
     void dispatch(getVocabulary());
@@ -105,6 +113,20 @@ export default function SettingsKanji() {
           )}
         </div>
         <div className="column-2 setting-block">
+          <div className="mb-2">
+            <SimpleListMenu
+              title={"Sort by:"}
+              options={TermSortByLabel}
+              allowed={[
+                TermSortBy.DIFFICULTY,
+                TermSortBy.RANDOM,
+                TermSortBy.VIEW_DATE,
+                TermSortBy.RECALL,
+              ]}
+              initial={kanjiOrder}
+              onChange={buildAction(dispatch, toggleKanjiOrdering)}
+            />
+          </div>
           <div className="mb-2">
             <SettingsSwitch
               active={kanjiReinforce.current}
