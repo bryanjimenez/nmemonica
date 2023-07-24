@@ -210,7 +210,7 @@ describe("settingHelper", function () {
   describe("updateSpaceRepTerm", function () {
     const metaData = {
       uid0: {
-        d: new Date().toJSON(),
+        lastView: new Date().toJSON(),
         difficulty: 40,
         f: true,
         rein: false,

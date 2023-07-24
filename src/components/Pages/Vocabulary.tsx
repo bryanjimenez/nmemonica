@@ -551,10 +551,10 @@ export default function Vocabulary() {
                   // if term was reviewed
                   prevDate = prevVal.lastReview;
                 } else {
-                  prevDate = prevVal.d ?? value.d;
+                  prevDate = prevVal.lastView ?? value.lastView;
                 }
 
-                const repStats = { [uid]: { ...value, d: prevDate } };
+                const repStats = { [uid]: { ...value, lastView: prevDate } };
                 const messageLog = (m: string, l: number) =>
                   dispatch(logger(m, l));
                 if (tpAnsweredREF.current !== undefined) {

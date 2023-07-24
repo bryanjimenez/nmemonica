@@ -130,18 +130,18 @@ describe("recallHelper", function () {
 
     const metaRecord = {
       // not yet played
-      [terms[0].uid]: { vC: 1, d: today },
-      [terms[1].uid]: { vC: 1, d: today },
+      [terms[0].uid]: { vC: 1, lastView: today },
+      [terms[1].uid]: { vC: 1, lastView: today },
       // pending review
-      [terms[2].uid]: { percentOverdue: 2, vC: 2, d: today, lastReview: xAgoDated, difficulty: 90, accuracy: 67, daysBetweenReviews: 1, consecutiveRight: 1,},
-      [terms[3].uid]: { percentOverdue: 1.4, vC: 2, d: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 71, daysBetweenReviews: 1, consecutiveRight: 1,},
-      [terms[4].uid]: { percentOverdue: 1.3, vC: 2, d: xAgoDated, lastReview: xAgoDated, difficulty: 20, accuracy: 31, daysBetweenReviews: 0.39691804809712816, consecutiveRight: 0,},
-      [terms[5].uid]: { percentOverdue: 1.2, vC: 2, d: yesterday, lastReview: xAgoDated, difficulty: 30, accuracy: 23, daysBetweenReviews: 0.3393890996206828, consecutiveRight: 0,},
-      [terms[6].uid]: { percentOverdue: 1.1, vC: 2, d: yesterday, lastReview: xAgoDated, difficulty: 90, accuracy: 73, daysBetweenReviews: 1, consecutiveRight: 1,},
+      [terms[2].uid]: { percentOverdue: 2, vC: 2, lastView: today, lastReview: xAgoDated, difficulty: 90, accuracy: 67, daysBetweenReviews: 1, consecutiveRight: 1,},
+      [terms[3].uid]: { percentOverdue: 1.4, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 71, daysBetweenReviews: 1, consecutiveRight: 1,},
+      [terms[4].uid]: { percentOverdue: 1.3, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 20, accuracy: 31, daysBetweenReviews: 0.39691804809712816, consecutiveRight: 0,},
+      [terms[5].uid]: { percentOverdue: 1.2, vC: 2, lastView: yesterday, lastReview: xAgoDated, difficulty: 30, accuracy: 23, daysBetweenReviews: 0.3393890996206828, consecutiveRight: 0,},
+      [terms[6].uid]: { percentOverdue: 1.1, vC: 2, lastView: yesterday, lastReview: xAgoDated, difficulty: 90, accuracy: 73, daysBetweenReviews: 1, consecutiveRight: 1,},
       // previously incorrect
-      [terms[7].uid]: { percentOverdue: 1, vC: 2, d: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 13, daysBetweenReviews: 0.25, consecutiveRight: 0,},
-      [terms[8].uid]: { percentOverdue: 1, vC: 2, d: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 17, daysBetweenReviews: 0.25, consecutiveRight: 0,},
-      [terms[9].uid]: { percentOverdue: 1, vC: 2, d: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 75, daysBetweenReviews: 1, consecutiveRight: 1,},
+      [terms[7].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 13, daysBetweenReviews: 0.25, consecutiveRight: 0,},
+      [terms[8].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 17, daysBetweenReviews: 0.25, consecutiveRight: 0,},
+      [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 75, daysBetweenReviews: 1, consecutiveRight: 1,},
     };
 
     const spaRepMaxReviewItem = 20;
@@ -200,7 +200,7 @@ describe("recallHelper", function () {
     });
 
     describe("date view exclusion", function () {
-      // metadata.d: last viewed
+      // metadata.lastView: last viewed
       // metadata.lastReview: last reviewed
 
       const terms = [{ uid: "0023e81f458ea75aaa9a89031105bf63" }];
@@ -218,7 +218,7 @@ describe("recallHelper", function () {
           [terms[0].uid]: {
             percentOverdue: 2,
             vC: 2,
-            d: xAgoDate,
+            lastView: xAgoDate,
             lastReview: xAgoDate,
             difficulty: 90,
             accuracy: 67,
@@ -249,7 +249,7 @@ describe("recallHelper", function () {
           [terms[0].uid]: {
             percentOverdue: 2,
             vC: 2,
-            d: today,
+            lastView: today,
             lastReview: xAgoDate,
             difficulty: 90,
             accuracy: 67,
@@ -284,7 +284,7 @@ describe("recallHelper", function () {
           [terms[0].uid]: {
             percentOverdue: 2,
             vC: 2,
-            d: today,
+            lastView: today,
             lastReview: today,
             difficulty: 90,
             accuracy: 67,

@@ -156,7 +156,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const state = (thunkAPI.getState() as RootState).vocabulary;
 
     const spaceRep = state.setting.repetition;
-    const metadata = spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 };
+    const metadata = spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 };
 
     const { difficulty, accuracy, daysBetweenReviews } = metadata;
     if (difficulty === undefined || accuracy === undefined) {
@@ -169,7 +169,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const accuracyP = accuracy / 100;
 
     const lastReview =
-      metadata.lastReview ?? spaceRep[uid]?.d ?? new Date().toJSON();
+      metadata.lastReview ?? spaceRep[uid]?.lastView ?? new Date().toJSON();
 
     const daysSinceReview = daysSince(lastReview);
 
@@ -192,7 +192,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
       percentOverdue: calcPercentOverdue,
 
       consecutiveRight,
-      d: now,
+      lastView: now,
       lastReview: now,
     };
 
@@ -526,7 +526,7 @@ const vocabularySlice = createSlice({
 
         const prevMisPron = pronunciation === true || (uidData?.pron ?? false);
         const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 }),
+          ...(spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 }),
           pron: prevMisPron || undefined,
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
@@ -578,7 +578,7 @@ const vocabularySlice = createSlice({
         }
 
         const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 }),
+          ...(spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 }),
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
           pron: pronunciation === true ? true : undefined,

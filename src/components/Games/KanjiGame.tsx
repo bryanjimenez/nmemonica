@@ -306,8 +306,8 @@ export default function KanjiGame() {
           .then((payload) => {
             const { value, prevVal } = payload;
 
-            const prevDate = prevVal.d ?? value.d;
-            const repStats = { [prevUid]: { ...value, d: prevDate } };
+            const prevDate = prevVal.lastView ?? value.lastView;
+            const repStats = { [prevUid]: { ...value, lastView: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
 
             spaceRepLog(messageLog, prevTerm, repStats, { frequency });

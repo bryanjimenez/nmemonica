@@ -65,7 +65,7 @@ export function spaceRepLog<T extends { uid: string; english: string }>(
   spaceRepMap: Record<string, MetaDataObj | undefined>,
   options: { frequency: boolean }
 ) {
-  const lastDate = spaceRepMap[term.uid]?.d;
+  const lastDate = spaceRepMap[term.uid]?.lastView;
   if (lastDate) {
     const msg = msgInnerTrim(term.english, 30);
 
@@ -97,7 +97,7 @@ export function timedPlayLog(
   spaceRepMap: Record<string, MetaDataObj | undefined>,
   options: { frequency: boolean }
 ) {
-  const lastDate = spaceRepMap[term.uid]?.d;
+  const lastDate = spaceRepMap[term.uid]?.lastView;
   if (lastDate) {
     const msg = msgInnerTrim(term.english, 30);
 

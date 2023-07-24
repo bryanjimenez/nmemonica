@@ -289,8 +289,8 @@ export default function Phrases() {
           .then((payload) => {
             const { value, prevVal } = payload;
 
-            const prevDate = prevVal.d ?? value.d;
-            const repStats = { [uid]: { ...value, d: prevDate } };
+            const prevDate = prevVal.lastView ?? value.lastView;
+            const repStats = { [uid]: { ...value, lastView: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
             const frequency = prevState.reinforcedUID !== null;
             if (tpAnsweredREF.current !== undefined) {

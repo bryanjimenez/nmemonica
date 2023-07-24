@@ -129,7 +129,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
     const oMeta = metaRecord[tUid];
 
     /** Don't review items seen today  */
-    const dueTodayNotYetSeen = oMeta && daysSince(oMeta.d) > 0;
+    const dueTodayNotYetSeen = oMeta && daysSince(oMeta.lastView) > 0;
 
     if (
       spaRepMaxReviewItem > 0 &&
@@ -141,7 +141,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
       failedTemp = [
         ...failedTemp,
         {
-          date: oMeta.d,
+          date: oMeta.lastView,
           views: oMeta.vC,
           uid: tUid,
           index: Number(tIdx),
@@ -167,7 +167,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
       todayTemp = [
         ...todayTemp,
         {
-          date: oMeta.d,
+          date: oMeta.lastView,
           views: oMeta.vC,
           uid: tUid,
           index: Number(tIdx),
@@ -198,7 +198,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
  */
 export function recallInfoTable<T extends {uid:string, english:string}>(filteredVocab:T[], metadata:Record<string,MetaDataObj>){
   return filteredVocab.reduce((acc,item)=>{
-    const {percentOverdue, d, lastReview, daysBetweenReviews} = metadata[item.uid];
+    const {percentOverdue, lastView, lastReview, daysBetweenReviews} = metadata[item.uid];
 
     if(!lastReview || !percentOverdue || !daysBetweenReviews)
       return acc;
@@ -207,7 +207,7 @@ export function recallInfoTable<T extends {uid:string, english:string}>(filtered
     return {
       ...acc,
       [item.english]:{
-      ["viewed(d)"]: daysSince(d),
+      ["viewed(d)"]: daysSince(lastView),
       ["reviewed(d)"]: daysSince(lastReview),
       ["overdue(%)"]: percentOverdue.toFixed(2),
       ["daysBetweenReviews(d)"]: daysBetweenReviews.toFixed(2),

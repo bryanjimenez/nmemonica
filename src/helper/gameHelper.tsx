@@ -48,7 +48,7 @@ export function play<RawItem extends { uid: string }>(
   ) {
     const min = 0;
     const staleFreq = frequency.filter((fUid) => {
-      const lastSeen = metadata[fUid]?.d;
+      const lastSeen = metadata[fUid]?.lastView;
 
       return lastSeen && minsSince(lastSeen) > frequency.length;
     });
@@ -223,7 +223,7 @@ export function getStaleSpaceRepKeys(
   const MetadataObjKeys: {
     [key in keyof MetaDataObj]: null;
   } = {
-    d: null,
+    lastView: null,
     vC: null,
     f: null,
     rein: null,
@@ -324,7 +324,7 @@ export function spaceRepOrder(
         notTimedTemp = [
           ...notTimedTemp,
           {
-            date: termRep.d,
+            date: termRep.lastView,
             views: termRep.vC,
             uid: tUid,
             index: Number(tIdx),
@@ -332,7 +332,7 @@ export function spaceRepOrder(
         ];
       } else if (termRep.pron === true) {
         const staleness = getStalenessScore(
-          termRep.d,
+          termRep.lastView,
           termRep.tpAcc,
           termRep.vC
         );
@@ -349,7 +349,7 @@ export function spaceRepOrder(
         ];
       } else if (termRep.tpAcc >= 0.65) {
         const staleness = getStalenessScore(
-          termRep.d,
+          termRep.lastView,
           termRep.tpAcc,
           termRep.vC
         );
@@ -366,7 +366,7 @@ export function spaceRepOrder(
         ];
       } else if (termRep.tpAcc < 0.65) {
         const staleness = getStalenessScore(
-          termRep.d,
+          termRep.lastView,
           termRep.tpAcc,
           termRep.vC
         );
@@ -466,11 +466,11 @@ export function dateViewOrder(
     const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
-    if (termRep?.d !== undefined) {
+    if (termRep?.lastView !== undefined) {
       prevPlayedTemp = [
         ...prevPlayedTemp,
         {
-          date: termRep.d,
+          date: termRep.lastView,
           uid: tUid,
           index: Number(tIdx),
         },

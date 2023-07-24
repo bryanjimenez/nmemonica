@@ -78,7 +78,7 @@ export interface MetaDataObj {
    * Last view
    * (Date.toJSON '2020-01-01T01:01:01.001Z')
    **/
-  d: string;
+  lastView: string;
   /** View count */ vC: number;
 
   /** Furigana shown (yes:undefined|true) */ f?: boolean;

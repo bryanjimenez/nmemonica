@@ -160,13 +160,13 @@ export function updateSpaceRepTerm(
     }
   }
 
-  const prevDate = uidData?.d;
+  const prevDate = uidData?.lastView;
   const keepPrevDate = prevDate !== undefined && update.date === false;
   const now = keepPrevDate ? prevDate : new Date().toJSON();
   const newVal: MetaDataObj = {
     ...(spaceRep[uid] ?? {}),
     vC: count,
-    d: now,
+    lastView: now,
     ...uidChangedAttr,
   };
 
