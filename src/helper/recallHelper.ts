@@ -4,12 +4,16 @@ import orderBy from "lodash/orderBy";
 import { daysSince } from "./consoleHelper";
 import type { MetaDataObj } from "../typings/raw";
 
+/** Cutoff value between right/wrong */
 export const SR_CORRECT_TRESHHOLD = 0.6;
+/** Interval value for item not recalled */
 export const SR_FAIL_REV_INTERVAL = 1;
-export const SR_PASS_REV_INTERVAL_MIN = 2;
+/** Maximum interval for any item */
+export const SR_PASS_REV_INTERVAL_MAX = 2;
+/** Minimum items to review at once */
 export const SR_MIN_REV_ITEMS = 5;
 
-interface SRGradeParams {
+interface ItemGradeParams {
   /** number between [0,1] */
   difficulty: number;
   /** number between [0,1] */
@@ -20,13 +24,17 @@ interface SRGradeParams {
 }
 /**
  * Space repetition grader
+ * @param item.difficulty [0, 1]:[easy, hard]
+ * @param item.accuracy [0, 1]:[wrong, right]
+ * @param item.daysSinceReview number of days since last review
+ * @param item.daysBetweenReviews number of days between scheduled reviews (recalculated after a review)
  */
 export function gradeSpaceRepetition({
   difficulty,
   accuracy,
   daysSinceReview,
   daysBetweenReviews,
-}: SRGradeParams) {
+}: ItemGradeParams) {
   let percentOverdue;
 
   if (
@@ -38,13 +46,13 @@ export function gradeSpaceRepetition({
   ) {
     // normal
     percentOverdue = Math.min(
-      SR_PASS_REV_INTERVAL_MIN,
+      SR_PASS_REV_INTERVAL_MAX,
       daysSinceReview / daysBetweenReviews
     );
   } else if (accuracy >= SR_CORRECT_TRESHHOLD) {
     // first time seeing or
     // abnomal
-    percentOverdue = SR_PASS_REV_INTERVAL_MIN;
+    percentOverdue = SR_PASS_REV_INTERVAL_MAX;
   } /** accuracy < SR_CORRECT_THRESHOLD */ else {
     percentOverdue = SR_FAIL_REV_INTERVAL;
   }
@@ -82,7 +90,6 @@ export function gradeSpaceRepetition({
  * Space repetition order
  *
  * First two arrays are items being rotated
- * Third array is everything else
  *
  * First contains previously failed items
  * Second overdue items (percentOverdue in desc order)

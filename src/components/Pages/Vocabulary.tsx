@@ -245,7 +245,6 @@ export default function Vocabulary() {
   } = useMemo(() => {
     if (filteredVocab.length === 0) return { newOrder: [] };
 
-    let log: undefined | ConsoleMessage[];
     let newOrder: undefined | number[];
     let jOrder: undefined | { uid: string; label: string; idx: number }[];
     let eOrder: undefined | { uid: string; label: string; idx: number }[];
@@ -342,10 +341,18 @@ export default function Vocabulary() {
         }
         recallGame = pending.length;
 
+        const overdueVals = pending.map(i=>{
+          const p = metadata.current[filteredVocab[i].uid]?.percentOverdue ?? 0;
+          return p.toFixed(2).replace(".00","").replace("0.",".");
+        })
+        // console.table(recallInfoTable(pending.map(i=>filteredVocab[i]) ,metadata.current));
+
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 2 [${pending.length}]`,
+            msg: `Space Rep 2 (${
+              overdueVals.length
+            }) [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
           },
         ]);
@@ -370,7 +377,7 @@ export default function Vocabulary() {
 
     setScrollJOrder(true);
 
-    return { newOrder, jbare: jOrder, ebare: eOrder, log, recallGame };
+    return { newOrder, jbare: jOrder, ebare: eOrder, recallGame };
   }, [filteredVocab]);
 
   // Logger messages
@@ -511,22 +518,17 @@ export default function Vocabulary() {
         spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
       }
 
-      if (recallGame && recallGame > 0 && selectedIndex === recallGame + 1) {
-        // just finished recall game
-        dispatch(logger("No more pending items", DebugLevel.DEBUG));
-      }
-
       void spaceRepUpdated.then(
         (action: PayloadAction<Record<string, MetaDataObj>>) => {
           if (action && "payload" in action) {
             const meta = action.payload;
 
-            const overDue = meta[uid].percentOverdue;
+            const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(2);
             const w = msgInnerTrim(vocabulary.english, 30);
             const msg =
-              overDue === undefined
+              reviewEvery === undefined
                 ? `Space Rep [${w}] removed`
-                : `Space Rep [${w}] updated ${overDue}`;
+                : `Space Rep [${w}] updated ${reviewEvery}d`;
 
             dispatch(logger(msg, DebugLevel.WARN));
           }

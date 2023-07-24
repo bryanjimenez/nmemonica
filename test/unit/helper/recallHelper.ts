@@ -83,7 +83,7 @@ describe("recallHelper", function () {
           ];
         }
 
-        // console.table(results);
+        // console.table(actuals);
         expect(actuals[0].overduePerC).is.NaN; // seed value
         expect(actuals[1].overduePerC).to.equal(1);
         expect(actuals[4].overduePerC).to.equal(2);

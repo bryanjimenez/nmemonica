@@ -163,7 +163,9 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
       return undefined;
     }
 
+    /** difficultyP [easy:0, hard:1] */
     const difficultyP = difficulty / 100;
+    /** accuracyP [wrong:0, right:1] */
     const accuracyP = accuracy / 100;
 
     const lastReview =
