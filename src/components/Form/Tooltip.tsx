@@ -11,7 +11,7 @@ import "../../css/Tooltip.css";
 import { useWindowSize } from "../../hooks/useWindowSize";
 
 interface TooltipProps {
-  className: string;
+  className?: string;
 }
 
 export function Tooltip(props: PropsWithChildren<TooltipProps>) {
@@ -51,7 +51,7 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
           ...(props.className ? { [props.className]: true } : {}),
         })}
         aria-label="Set difficulty"
-        onClick={() => setShowSlider(s=>!s)}
+        onClick={() => setShowSlider((s) => !s)}
       >
         <FontAwesomeIcon icon={faBullseye} />
       </div>

@@ -39,12 +39,13 @@ import {
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawKanji, RawVocabulary } from "../../typings/raw";
-import { DifficultySlider } from "../Form/Difficulty";
+import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import {
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import { Tooltip } from "../Form/Tooltip";
 
 const KanjiGameMeta = {
   location: "/kanji-game/",
@@ -536,14 +537,15 @@ export default function KanjiGame() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
-              <DifficultySlider
-                value={metadata.current[kanji.uid]?.difficulty}
-                onChange={buildAction(dispatch, (value: number) =>
-                  setKanjiDifficulty(kanji.uid, value)
-                )}
-                manualUpdate={kanji.uid}
-              />
-
+              <Tooltip>
+                <DifficultySlider
+                  difficulty={metadata.current[kanji.uid]?.difficulty}
+                  onChange={buildAction(dispatch, (value: number) =>
+                    setKanjiDifficulty(kanji.uid, value)
+                  )}
+                  resetOn={kanji.uid}
+                />
+              </Tooltip>
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
