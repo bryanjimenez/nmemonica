@@ -18,16 +18,18 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { daysSince, msgInnerTrim } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
-  dateViewOrder,
-  difficultyOrder,
   getTerm,
   getTermUID,
   play,
-  randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { spaceRepetitionOrder } from "../../helper/recallHelper";
+import {
+  dateViewOrder,
+  difficultyOrder,
+  randomOrder,
+} from "../../helper/sortHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";

@@ -15,8 +15,6 @@ import { fetchAudio } from "../../helper/audioHelper.development";
 import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
-  alphaOrder,
-  dateViewOrder,
   englishLabel,
   getCacheUID,
   getTerm,
@@ -27,10 +25,14 @@ import {
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
   play,
-  randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+import {
+  alphaOrder,
+  dateViewOrder,
+  randomOrder,
+} from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";

@@ -24,18 +24,12 @@ import {
 } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
-  alphaOrder,
-  dateViewOrder,
-  difficultyOrder,
-  difficultySubFilter,
   getCacheUID,
   getTerm,
   getTermUID,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
   play,
-  randomOrder,
-  spaceRepOrder,
   termFilterByType,
   toggleFuriganaSettingHelper,
   verbToTargetForm,
@@ -43,6 +37,14 @@ import {
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import { spaceRepetitionOrder } from "../../helper/recallHelper";
+import {
+  alphaOrder,
+  dateViewOrder,
+  difficultyOrder,
+  difficultySubFilter,
+  randomOrder,
+  spaceRepOrder,
+} from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
@@ -341,10 +343,10 @@ export default function Vocabulary() {
         }
         recallGame = pending.length;
 
-        const overdueVals = pending.map(i=>{
+        const overdueVals = pending.map((i) => {
           const p = metadata.current[filteredVocab[i].uid]?.percentOverdue ?? 0;
-          return p.toFixed(2).replace(".00","").replace("0.",".");
-        })
+          return p.toFixed(2).replace(".00", "").replace("0.", ".");
+        });
         // console.table(recallInfoTable(pending.map(i=>filteredVocab[i]) ,metadata.current));
 
         setLog((l) => [

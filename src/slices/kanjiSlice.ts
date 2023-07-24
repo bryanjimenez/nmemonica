@@ -9,10 +9,10 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
-import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { removeAction, updateAction } from "../helper/recallHelper";
 import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
+import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type {
   MetaDataObj,
   RawKanji,

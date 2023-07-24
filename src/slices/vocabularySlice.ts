@@ -13,13 +13,10 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
-import { daysSince } from "../helper/consoleHelper";
-import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
+import { getVerbFormsArray } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
-  SR_CORRECT_TRESHHOLD,
   SR_MIN_REV_ITEMS,
-  gradeSpaceRepetition,
   removeAction,
   updateAction,
 } from "../helper/recallHelper";
@@ -27,6 +24,7 @@ import {
   buildGroupObject,
   buildVocabularyArray,
 } from "../helper/reducerHelper";
+import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type {
   GroupListMap,
   MetaDataObj,

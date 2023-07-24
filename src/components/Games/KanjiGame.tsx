@@ -11,18 +11,20 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { spaceRepLog } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
-  dateViewOrder,
-  difficultyOrder,
-  difficultySubFilter,
   getTerm,
   getTermUID,
   minimumTimeForSpaceRepUpdate,
   play,
-  randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
+import {
+  dateViewOrder,
+  difficultyOrder,
+  difficultySubFilter,
+  randomOrder,
+} from "../../helper/sortHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useEffect, useRef, useState } from "react";
 
 import { heatMap } from "../../helper/colorHelper";
-import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/gameHelper";
+import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/sortHelper";
 
 interface DifficultySliderProps {
   difficulty?: number;

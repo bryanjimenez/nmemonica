@@ -19,9 +19,9 @@ import {
   getTerm,
   getTermUID,
   play,
-  randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
+import { randomOrder } from "../../helper/sortHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch } from "../../slices";

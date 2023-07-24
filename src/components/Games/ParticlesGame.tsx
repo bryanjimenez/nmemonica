@@ -8,9 +8,9 @@ import {
   type GameQuestion,
 } from "./FourChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { randomOrder } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
+import { randomOrder } from "../../helper/sortHelper";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { getParticleGame } from "../../slices/particleSlice";
@@ -134,7 +134,7 @@ export default function ParticlesGame() {
           break;
       }
 
-      return Promise.resolve(/** interrupt, fetch */)
+      return Promise.resolve(/** interrupt, fetch */);
     },
     [gotoPrev, gotoNext]
   );

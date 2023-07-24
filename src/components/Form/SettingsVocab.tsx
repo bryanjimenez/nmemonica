@@ -15,8 +15,10 @@ import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import VerbFormSlider from "./VerbFormSlider";
+import { heatMap } from "../../helper/colorHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
-import { DIFFICULTY_THRLD, MEMORIZED_THRLD, getStaleGroups } from "../../helper/gameHelper";
+import { getStaleGroups } from "../../helper/gameHelper";
+import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/sortHelper";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
@@ -43,7 +45,6 @@ import {
 } from "../../slices/vocabularySlice";
 import { SetTermGFList } from "../Pages/SetTermGFList";
 import { SetTermGList } from "../Pages/SetTermGList";
-import { heatMap } from "../../helper/colorHelper";
 
 export default function SettingsVocab() {
   const dispatch = useDispatch<AppDispatch>();
@@ -115,8 +116,7 @@ export default function SettingsVocab() {
     throw error;
   }
 
-
-  const c = heatMap(Math.abs(memoThreshold) / 100, .75);
+  const c = heatMap(Math.abs(memoThreshold) / 100, 0.75);
   const difficultyMarks = [
     {
       value: MEMORIZED_THRLD,
@@ -181,16 +181,15 @@ export default function SettingsVocab() {
           {vocabOrder === TermSortBy.DIFFICULTY && (
             <div className="d-flex justify-content-end">
               <Slider
-                sx={{color:c}}
+                sx={{ color: c }}
                 defaultValue={initialMemoThreshold}
                 marks={difficultyMarks}
-                track={memoThreshold < 0 ? undefined:"inverted"}
+                track={memoThreshold < 0 ? undefined : "inverted"}
                 onChangeCommitted={(e, newValue) => {
                   const sign = memoThreshold < 0 ? -1 : 1;
                   if (typeof newValue === "number") {
-
-                    if(newValue===0){
-                      dispatch(setMemorizedThreshold(sign * 1));
+                    if (newValue === 0) {
+                      dispatch(setMemorizedThreshold(Number(sign)));
                     } else {
                       dispatch(setMemorizedThreshold(sign * newValue));
                     }
@@ -207,7 +206,7 @@ export default function SettingsVocab() {
                   -1 * memoThreshold
                 )}
               >
-                {memoThreshold < 0 ? <SortAscIcon /> : <SortDescIcon /> }
+                {memoThreshold < 0 ? <SortAscIcon /> : <SortDescIcon />}
               </div>
             </div>
           )}
