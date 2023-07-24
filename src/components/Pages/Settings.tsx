@@ -300,7 +300,7 @@ export default function Settings() {
   const [bundleVersion, setBundleVersion] = useState("");
   const [hardRefreshUnavailable, setHardRefreshUnavailable] = useState(false);
   const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
-  const [shakeIntensity, setShakeIntensity] = useState(0);
+  const [shakeIntensity, setShakeIntensity] = useState<number|undefined>(0);
 
   useEffect(
     () => {
@@ -531,12 +531,14 @@ export default function Settings() {
                     className={classNames({
                       "px-2": true,
                       "correct-color":
+                        shakeIntensity && (
                         shakeIntensity > motionThreshold &&
-                        shakeIntensity <= motionThreshold + 1,
+                        shakeIntensity <= motionThreshold + 1),
                       "question-color":
+                        shakeIntensity && (
                         shakeIntensity > motionThreshold + 1 &&
-                        shakeIntensity <= motionThreshold + 2,
-                      "incorrect-color": shakeIntensity > motionThreshold + 2,
+                        shakeIntensity <= motionThreshold + 2),
+                      "incorrect-color": shakeIntensity && shakeIntensity > motionThreshold + 2,
                     })}
                   >
                     {shakeIntensity ?? motionThreshold}

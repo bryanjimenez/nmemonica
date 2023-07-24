@@ -18,8 +18,7 @@
 
     "allowJs": true,
     "checkJs": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
+    "strict": true,
     "sourceMap": true,
     "jsx": "react-jsx" // missing import React
   },
