@@ -247,7 +247,7 @@ export default function Vocabulary() {
   } = useMemo(() => {
     if (filteredVocab.length === 0) return { newOrder: [] };
 
-    let newOrder: undefined | number[];
+    let newOrder: number[] = [];
     let jOrder: undefined | { uid: string; label: string; idx: number }[];
     let eOrder: undefined | { uid: string; label: string; idx: number }[];
     let recallGame: number | undefined;
@@ -256,16 +256,26 @@ export default function Vocabulary() {
         newOrder = randomOrder(filteredVocab);
         setLog((l) => [
           ...l,
-          { msg: `Random [${newOrder?.length ?? 0}]`, lvl: DebugLevel.DEBUG },
+          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
         ]);
 
         break;
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredVocab, metadata.current);
+
+        let newN = 0;
+        let oldDt = NaN;
+        const views = newOrder.map((i) => {
+          const d = metadata.current[filteredVocab[i].uid]?.lastView;
+          newN = !d ? newN + 1 : newN;
+          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d ? daysSince(d) : 0;
+        });
+
         setLog((l) => [
           ...l,
           {
-            msg: `Date Viewed [${newOrder?.length ?? 0}]`,
+            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -296,14 +306,14 @@ export default function Vocabulary() {
         }
 
         // not reinforced or no reinforcement terms
-        if (newOrder === undefined) {
+        if (newOrder.length === 0) {
           newOrder = spaceRepOrder(filteredVocab, metadata.current);
         }
 
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 1 [${newOrder?.length ?? 0}]`,
+            msg: `Space Rep 1 (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -316,7 +326,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Difficulty [${newOrder?.length ?? 0}]`,
+            msg: `Difficulty (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -367,7 +377,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Alphabetic [${newOrder?.length ?? 0}]`,
+            msg: `Alphabetic (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
