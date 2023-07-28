@@ -2,6 +2,7 @@ import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
 import SettingsSwitch from "./SettingsSwitch";
+import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
@@ -107,31 +108,34 @@ export default function SettingsPhrase() {
             />
           )}
         </div>
-        <div className="column-2">
-          <div className="setting-block">
-            <div className="mb-2">
-              <SettingsSwitch
-                active={phraseOrder === TermSortBy.RANDOM}
-                action={buildAction(dispatch, togglePhrasesOrdering)}
-                color="default"
-                statusText={labelOptions(phraseOrder, TermSortByLabel)}
-              />
-            </div>
-            <div className="mb-2">
-              <SettingsSwitch
-                active={phraseReinforce}
-                action={buildAction(dispatch, togglePhrasesReinforcement)}
-                disabled={phraseFilter === TermFilterBy.FREQUENCY}
-                statusText="Reinforcement"
-              />
-            </div>
-            <div className="mb-2">
-              <SettingsSwitch
-                active={phraseRomaji}
-                action={buildAction(dispatch, togglePhrasesRomaji)}
-                statusText="Romaji"
-              />
-            </div>
+        <div className="column-2 setting-block">
+          <div className="mb-2">
+            <SimpleListMenu
+              title={"Sort by:"}
+              options={TermSortByLabel}
+              initial={phraseOrder}
+              allowed={[
+                TermSortBy.RANDOM,
+                TermSortBy.VIEW_DATE,
+                TermSortBy.RECALL,
+              ]}
+              onChange={buildAction(dispatch, togglePhrasesOrdering)}
+            />
+          </div>
+          <div className="mb-2">
+            <SettingsSwitch
+              active={phraseReinforce}
+              action={buildAction(dispatch, togglePhrasesReinforcement)}
+              disabled={phraseFilter === TermFilterBy.FREQUENCY}
+              statusText="Reinforcement"
+            />
+          </div>
+          <div className="mb-2">
+            <SettingsSwitch
+              active={phraseRomaji}
+              action={buildAction(dispatch, togglePhrasesRomaji)}
+              statusText="Romaji"
+            />
           </div>
         </div>
       </div>

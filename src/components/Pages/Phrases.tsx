@@ -1,5 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import { PayloadAction } from "@reduxjs/toolkit";
+import classNames from "classnames";
 import React, {
   useCallback,
   useEffect,
@@ -12,7 +14,12 @@ import { useDispatch } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
-import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import {
+  daysSince,
+  msgInnerTrim,
+  spaceRepLog,
+  timedPlayLog,
+} from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
@@ -20,7 +27,6 @@ import {
   getTerm,
   getTermUID,
   japaneseLabel,
-  labelOptions,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
@@ -28,11 +34,8 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
-import {
-  alphaOrder,
-  dateViewOrder,
-  randomOrder,
-} from "../../helper/sortHelper";
+import { spaceRepetitionOrder } from "../../helper/recallHelper";
+import { dateViewOrder, randomOrder } from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
@@ -47,13 +50,19 @@ import {
   flipPhrasesPracticeSide,
   getPhrase,
   removeFrequencyPhrase,
+  removeFromSpaceRepetition,
+  setPhraseAccuracy,
+  setPhraseDifficulty,
+  setSpaceRepetitionMetadata,
   togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
-import type { RawPhrase } from "../../typings/raw";
+import type { MetaDataObj, RawPhrase } from "../../typings/raw";
+import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
+import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -63,6 +72,7 @@ import {
 } from "../Form/OptionsBar";
 import Sizable from "../Form/Sizable";
 import StackNavButton from "../Form/StackNavButton";
+import { Tooltip } from "../Form/Tooltip";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -86,6 +96,9 @@ export default function Phrases() {
   const [showLit, setShowLit] = useState<boolean>(false);
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [recacheAudio, setRecacheAudio] = useState(false);
+  const [log, setLog] = useState<ConsoleMessage[]>([]);
+  /** Is not undefined after user modifies accuracy value */
+  const accuracyModifiedRef = useRef<undefined | null | number>();
 
   const {
     // Changing during game
@@ -99,9 +112,9 @@ export default function Phrases() {
     activeGroup,
 
     // Refs ()
-    reinforce,
+    reinforce: reinforceREF,
     romajiActive,
-    filterType,
+    filterType: filterTypeREF,
     sortMethod: sortMethodREF,
   } = useConnectPhrase();
 
@@ -135,13 +148,31 @@ export default function Phrases() {
     // TODO: Do we want this?
     // const lastRemoved = filterType === TermFilterBy.FREQUENCY && frequencyInfo.count === 0? []: false;
 
-    const filtered = termFilterByType(
-      filterType.current,
+    let filtered = termFilterByType(
+      filterTypeREF.current,
       phraseList,
       allFrequency,
       activeGroup,
       buildAction(dispatch, togglePhrasesFilter)
     );
+
+    switch (sortMethodREF.current) {
+      case TermSortBy.RECALL:
+        // discard the nonPending terms
+        const { failed, overdue } = spaceRepetitionOrder(
+          filtered,
+          metadata.current,
+          20 // FIXME: hardcoded
+        );
+        const pending = [...failed, ...overdue];
+
+        if (pending.length > 0) {
+          filtered = pending.map((p) => filtered[p]);
+        }
+        break;
+      default:
+        break;
+    }
 
     const frequency = filtered.reduce<string[]>((acc, cur) => {
       if (firstRepObject[cur.uid]?.rein === true) {
@@ -152,27 +183,86 @@ export default function Phrases() {
     setFrequency(frequency);
 
     return filtered;
-  }, [dispatch, phraseList, filterType, activeGroup]);
+  }, [filterTypeREF, sortMethodREF, dispatch, phraseList, activeGroup]);
 
-  const order = useMemo(() => {
+  const { order, recallGame } = useMemo(() => {
     const repetition = metadata.current;
-    if (filteredPhrases.length === 0) return [];
+    if (filteredPhrases.length === 0) return { order: [] };
 
-    let newOrder;
+    let newOrder: number[];
+    let recallGame: number | undefined;
     switch (sortMethodREF.current) {
-      case TermSortBy.RANDOM:
-        newOrder = randomOrder(filteredPhrases);
-        break;
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredPhrases, repetition);
+
+        let newN = 0;
+        let oldDt = NaN;
+        const views = newOrder.map((i) => {
+          const d = metadata.current[filteredPhrases[i].uid]?.lastView;
+          newN = !d ? newN + 1 : newN;
+          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d ? daysSince(d) : 0;
+        });
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
-      default: //TermSortBy.ALPHABETIC:
-        ({ order: newOrder } = alphaOrder(filteredPhrases));
+
+      case TermSortBy.RECALL:
+        const {
+          failed,
+          overdue,
+          notPlayed: nonPending,
+          todayDone,
+        } = spaceRepetitionOrder(
+          filteredPhrases,
+          metadata.current,
+          20 // TODO: add btns
+        );
+        const pending = [...failed, ...overdue];
+
+        if (pending.length > 0) {
+          newOrder = pending;
+        } else {
+          newOrder = [...nonPending, ...todayDone];
+        }
+        recallGame = pending.length;
+
+        const overdueVals = pending.map((i) => {
+          const p =
+            metadata.current[filteredPhrases[i].uid]?.percentOverdue ?? 0;
+          return p.toFixed(2).replace(".00", "").replace("0.", ".");
+        });
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 2 (${
+              overdueVals.length
+            }) [${overdueVals.toString()}]`,
+            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+          },
+        ]);
+
+        break;
+
+      default: //TermSortBy.RANDOM:
+        newOrder = randomOrder(filteredPhrases);
+        setLog((l) => [
+          ...l,
+          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+        ]);
         break;
     }
 
-    return newOrder;
-  }, [filteredPhrases]);
+    return { order: newOrder, recallGame };
+  }, [sortMethodREF, filteredPhrases]);
 
   const gotoNext = useCallback(() => {
     const l = filteredPhrases.length;
@@ -191,8 +281,8 @@ export default function Phrases() {
 
   const gotoNextSlide = useCallback(() => {
     play(
-      reinforce.current,
-      filterType.current,
+      reinforceREF.current,
+      filterTypeREF.current,
       frequency,
       filteredPhrases,
       metadata.current,
@@ -204,8 +294,8 @@ export default function Phrases() {
       gotoNext
     );
   }, [
-    reinforce,
-    filterType,
+    filterTypeREF,
+    reinforceREF,
     frequency,
     filteredPhrases,
     reinforcedUID,
@@ -329,19 +419,100 @@ export default function Phrases() {
     loop,
   ]);
 
-  // TODO: probably append to array then update the Console?
+  // next or prev
   useEffect(() => {
-    dispatch(
-      logger(
-        labelOptions(sortMethodREF.current, [
-          "Random",
-          "Alphhabetic",
-          "View Date",
-        ]),
-        DebugLevel.DEBUG
-      )
-    );
-  }, [dispatch]);
+    const prevState = {
+      selectedIndex: prevSelectedIndex.current,
+      reinforcedUID: prevReinforcedUID.current,
+      lastNext: prevLastNext.current,
+    };
+
+    if (
+      reinforcedUID !== prevState.reinforcedUID ||
+      selectedIndex !== prevState.selectedIndex
+    ) {
+      const uid =
+        prevState.reinforcedUID ??
+        getTermUID(prevState.selectedIndex, filteredPhrases, order);
+
+      const p = getTerm<RawPhrase>(uid, filteredPhrases);
+
+      let spaceRepUpdated: Promise<unknown> = Promise.resolve();
+      if (metadata.current[uid]?.difficulty && accuracyModifiedRef.current) {
+        // when difficulty exists and accuracy has been set
+        spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
+      } else if (accuracyModifiedRef.current === null) {
+        // when accuracy is nulled
+        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
+      }
+
+      void spaceRepUpdated.then(
+        (action: PayloadAction<Record<string, MetaDataObj>>) => {
+          if (action && "payload" in action) {
+            const meta = action.payload;
+
+            const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(2);
+            const w = msgInnerTrim(p.english, 30);
+            const msg =
+              reviewEvery === undefined
+                ? `Space Rep [${w}] removed`
+                : `Space Rep [${w}] updated ${reviewEvery}d`;
+
+            dispatch(logger(msg, DebugLevel.WARN));
+          }
+
+          // prevent updates when quick scrolling
+          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+            // don't increment reinforced terms
+            const shouldIncrement = uid !== prevState.reinforcedUID;
+            const frequency = prevState.reinforcedUID !== null;
+
+            void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
+              .unwrap()
+              .then((payload) => {
+                const { value, prevVal } = payload;
+
+                let prevDate;
+                if (accuracyModifiedRef.current && prevVal.lastReview) {
+                  // if term was reviewed
+                  prevDate = prevVal.lastReview;
+                } else {
+                  prevDate = prevVal.lastView ?? value.lastView;
+                }
+
+                const repStats = { [uid]: { ...value, lastView: prevDate } };
+                const messageLog = (m: string, l: number) =>
+                  dispatch(logger(m, l));
+                if (tpAnsweredREF.current !== undefined) {
+                  timedPlayLog(messageLog, p, repStats, { frequency });
+                } else {
+                  spaceRepLog(messageLog, p, repStats, { frequency });
+                }
+              });
+          }
+        }
+      );
+
+      prevSelectedIndex.current = selectedIndex;
+      prevReinforcedUID.current = reinforcedUID;
+      accuracyModifiedRef.current = undefined;
+    }
+  }, [
+    dispatch,
+    phraseList,
+    reinforcedUID,
+    selectedIndex,
+    filteredPhrases,
+    order,
+    recallGame,
+  ]);
+
+  // Logger messages
+  useEffect(() => {
+    log.forEach((message) => {
+      dispatch(logger(message.msg, message.lvl));
+    });
+  }, [dispatch, log]);
 
   useKeyboardActions(
     gameActionHandler,
@@ -378,6 +549,8 @@ export default function Phrases() {
   //   );
   // }
 
+  if (recallGame === 0)
+    return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (filteredPhrases.length < 1 || order.length < 1)
     return <NotReady addlStyle="main-panel" />;
 
@@ -450,6 +623,9 @@ export default function Phrases() {
   const romaji = phrase.romaji;
 
   const progress = ((selectedIndex + 1) / filteredPhrases.length) * 100;
+  const wasReviewed = metadata.current[uid]?.lastReview;
+  const reviewedToday =
+    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
 
   return (
     <React.Fragment>
@@ -513,6 +689,34 @@ export default function Phrases() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
+              <Tooltip
+                className={classNames({
+                  "question-color opacity-50":
+                    sortMethodREF.current === TermSortBy.RECALL &&
+                    !reviewedToday,
+                  "done-color opacity-50": reviewedToday,
+                })}
+              >
+                <DifficultySlider
+                  difficulty={metadata.current[uid]?.difficulty}
+                  resetOn={uid}
+                  onChange={(difficulty: number | null) => {
+                    if (difficulty !== undefined) {
+                      dispatch(setPhraseDifficulty(uid, difficulty));
+                    }
+                  }}
+                />
+                <AccuracySlider
+                  accuracy={metadata.current[uid]?.accuracy}
+                  resetOn={uid}
+                  onChange={(accuracy: number | null) => {
+                    if (accuracy !== undefined) {
+                      dispatch(setPhraseAccuracy(uid, accuracy));
+                      accuracyModifiedRef.current = accuracy;
+                    }
+                  }}
+                />
+              </Tooltip>
               <ToggleLiteralPhraseBtn
                 visible={
                   englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
