@@ -18,7 +18,7 @@ import {
   daysSince,
   msgInnerTrim,
   spaceRepLog,
-  timedPlayLog,
+  // timedPlayLog,
 } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
@@ -29,7 +29,7 @@ import {
   japaneseLabel,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
-  minimumTimeForTimedPlay,
+  // minimumTimeForTimedPlay,
   play,
   termFilterByType,
 } from "../../helper/gameHelper";
@@ -38,11 +38,11 @@ import { spaceRepetitionOrder } from "../../helper/recallHelper";
 import { dateViewOrder, randomOrder } from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
-import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
+// import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
-import { useMediaSession } from "../../hooks/useMediaSession";
+// import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
-import { useTimedGame } from "../../hooks/useTimedGame";
+// import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
@@ -86,8 +86,8 @@ export default function Phrases() {
   const prevSelectedIndex = useRef(0);
 
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
-  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
-  const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
+  // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
+  // const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -106,7 +106,7 @@ export default function Phrases() {
     repetition,
 
     // Not changing during game
-    motionThreshold,
+    // motionThreshold,
     swipeThreshold,
     phraseList,
     activeGroup,
@@ -268,16 +268,16 @@ export default function Phrases() {
     const l = filteredPhrases.length;
     let newSel = (selectedIndex + 1) % l;
 
-    if (newSel === errorSkipIndex) {
-      newSel = (l + newSel + 1) % l;
-    }
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel + 1) % l;
+    // }
 
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(null);
-  }, [filteredPhrases, selectedIndex, lastNext, errorSkipIndex]);
+  }, [filteredPhrases, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
     play(
@@ -313,16 +313,16 @@ export default function Phrases() {
       newSel = (l + i) % l;
     }
 
-    if (newSel === errorSkipIndex) {
-      newSel = (l + newSel - 1) % l;
-    }
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel - 1) % l;
+    // }
 
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(null);
-  }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext, errorSkipIndex]);
+  }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
@@ -335,92 +335,27 @@ export default function Phrases() {
     recacheAudio
   );
 
-  const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
+  // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
 
-  const {
-    beginLoop,
-    abortLoop,
-    looperSwipe,
+  // const {
+  //   beginLoop,
+  //   abortLoop,
+  //   looperSwipe,
 
-    loopSettingBtn,
-    loopActionBtn,
-    // timedPlayVerifyBtn, // not used
+  //   loopSettingBtn,
+  //   loopActionBtn,
+  //   // timedPlayVerifyBtn, // not used
 
-    timedPlayAnswerHandlerWrapper,
-    resetTimedPlay,
+  //   timedPlayAnswerHandlerWrapper,
+  //   resetTimedPlay,
 
-    loop,
-    tpAnswered: tpAnsweredREF,
-    tpAnimation,
-  } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
-  // TODO: variable countdown time
-
-  useLayoutEffect(() => {
-    const prevState = {
-      selectedIndex: prevSelectedIndex.current,
-      reinforcedUID: prevReinforcedUID.current,
-      lastNext: prevLastNext.current,
-    };
-
-    if (
-      reinforcedUID !== prevState.reinforcedUID ||
-      selectedIndex !== prevState.selectedIndex
-    ) {
-      const uid =
-        prevState.reinforcedUID ??
-        getTermUID(prevState.selectedIndex, filteredPhrases, order);
-
-      // prevent updates when quick scrolling
-      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const phrase = getTerm(uid, phraseList);
-
-        // don't increment reinforced terms
-        const shouldIncrement = uid !== prevState.reinforcedUID;
-        void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
-          .unwrap()
-          .then((payload) => {
-            const { value, prevVal } = payload;
-
-            const prevDate = prevVal.lastView ?? value.lastView;
-            const repStats = { [uid]: { ...value, lastView: prevDate } };
-            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
-            const frequency = prevState.reinforcedUID !== null;
-            if (tpAnsweredREF.current !== undefined) {
-              timedPlayLog(messageLog, phrase, repStats, { frequency });
-            } else {
-              spaceRepLog(messageLog, phrase, repStats, { frequency });
-            }
-          });
-      }
-
-      const wasReset = resetTimedPlay();
-      if (wasReset) {
-        if (minimumTimeForTimedPlay(prevState.lastNext)) {
-          beginLoop();
-        }
-      }
-
-      setShowMeaning(false);
-      setShowRomaji(false);
-      setShowLit(false);
-      setErrorMsgs([]);
-      prevSelectedIndex.current = selectedIndex;
-      prevReinforcedUID.current = reinforcedUID;
-    }
-  }, [
-    dispatch,
-    beginLoop,
-    resetTimedPlay,
-    reinforcedUID,
-    selectedIndex,
-    phraseList,
-    filteredPhrases,
-    order,
-    loop,
-  ]);
+  //   loop,
+  //   tpAnswered: tpAnsweredREF,
+  //   tpAnimation,
+  // } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
 
   // next or prev
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
       reinforcedUID: prevReinforcedUID.current,
@@ -483,15 +418,27 @@ export default function Phrases() {
                 const repStats = { [uid]: { ...value, lastView: prevDate } };
                 const messageLog = (m: string, l: number) =>
                   dispatch(logger(m, l));
-                if (tpAnsweredREF.current !== undefined) {
-                  timedPlayLog(messageLog, p, repStats, { frequency });
-                } else {
-                  spaceRepLog(messageLog, p, repStats, { frequency });
-                }
+                // if (tpAnsweredREF.current !== undefined) {
+                //   timedPlayLog(messageLog, p, repStats, { frequency });
+                // } else {
+                spaceRepLog(messageLog, p, repStats, { frequency });
+                // }
               });
           }
         }
       );
+
+      // const wasReset = resetTimedPlay();
+      // if (wasReset) {
+      //   if (minimumTimeForTimedPlay(prevState.lastNext)) {
+      //     beginLoop();
+      //   }
+      // }
+
+      setShowMeaning(false);
+      setShowRomaji(false);
+      setShowLit(false);
+      // setErrorMsgs([]);
 
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
@@ -516,15 +463,15 @@ export default function Phrases() {
 
   useKeyboardActions(
     gameActionHandler,
-    buildAction(dispatch, flipPhrasesPracticeSide),
-    timedPlayAnswerHandlerWrapper
+    buildAction(dispatch, flipPhrasesPracticeSide)
+    // timedPlayAnswerHandlerWrapper
   );
 
-  useMediaSession("Phrases Loop", loop, beginLoop, abortLoop, looperSwipe);
+  // useMediaSession("Phrases Loop", loop, beginLoop, abortLoop, looperSwipe);
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(
-    gameActionHandler,
-    timedPlayAnswerHandlerWrapper
+    gameActionHandler
+    // timedPlayAnswerHandlerWrapper
   );
 
   // FIXME: implement this
@@ -577,7 +524,8 @@ export default function Phrases() {
     englishSideUp,
     phrase,
     recacheAudio,
-    loop
+    // loop
+    0
   );
 
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
@@ -683,8 +631,6 @@ export default function Phrases() {
                 active={recacheAudio}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
-              <div className="sm-icon-grp">{loopSettingBtn}</div>
-              <div className="sm-icon-grp">{loopActionBtn}</div>
             </div>
           </div>
           <div className="col">
@@ -747,9 +693,11 @@ export default function Phrases() {
       </div>
       <div className="progress-line flex-shrink-1">
         <LinearProgress
-          variant={tpAnimation === null ? "determinate" : "buffer"}
-          value={tpAnimation === null ? progress : 0}
-          valueBuffer={tpAnimation ?? undefined}
+          variant="determinate"
+          // variant={tpAnimation === null ? "determinate" : "buffer"}
+          // value={tpAnimation === null ? progress : 0}
+          // valueBuffer={tpAnimation ?? undefined}
+          value={progress}
           color={phrase_reinforce ? "secondary" : "primary"}
         />
       </div>
