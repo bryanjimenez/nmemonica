@@ -261,7 +261,7 @@ export function updateAction(
 
   const { difficulty, accuracy, daysBetweenReviews } = metadata;
   if (difficulty === undefined || accuracy === undefined) {
-    return undefined;
+    return { newValue: spaceRep, oldValue: spaceRep };
   }
 
   /** difficultyP [easy:0, hard:1] */
@@ -298,5 +298,5 @@ export function updateAction(
   };
 
   const newValue = { ...spaceRep, [uid]: o };
-  return newValue;
+  return { newValue, oldValue: { ...spaceRep } };
 }

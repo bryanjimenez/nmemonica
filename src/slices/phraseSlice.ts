@@ -506,7 +506,7 @@ const phraseSlice = createSlice({
       );
     });
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
-      const newValue = action.payload;
+      const { newValue } = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(

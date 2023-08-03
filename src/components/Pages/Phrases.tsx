@@ -382,16 +382,26 @@ export default function Phrases() {
       }
 
       void spaceRepUpdated.then(
-        (action: PayloadAction<Record<string, MetaDataObj>>) => {
+        (
+          action: PayloadAction<{
+            newValue: Record<string, MetaDataObj>;
+            oldValue: Record<string, MetaDataObj>;
+          }>
+        ) => {
           if (action && "payload" in action) {
-            const meta = action.payload;
+            const { newValue: meta, oldValue } = action.payload;
+
+            const lastReviewDate = oldValue[uid]?.lastReview;
+            const lastReview = lastReviewDate
+              ? `${daysSince(lastReviewDate)}d -> `
+              : "";
 
             const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(2);
             const w = msgInnerTrim(p.english, 30);
             const msg =
               reviewEvery === undefined
                 ? `Space Rep [${w}] removed`
-                : `Space Rep [${w}] updated ${reviewEvery}d`;
+                : `Space Rep [${w}] updated ${lastReview}${reviewEvery}d`;
 
             dispatch(logger(msg, DebugLevel.WARN));
           }

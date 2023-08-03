@@ -513,7 +513,7 @@ export default function Vocabulary() {
         prevState.reinforcedUID ??
         getTermUID(prevState.selectedIndex, filteredVocab, order);
 
-      const vocabulary = getTerm(uid, vocabList);
+      const vocabulary = getTerm<RawVocabulary>(uid, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
       let spaceRepUpdated: Promise<unknown> = Promise.resolve();
@@ -531,16 +531,26 @@ export default function Vocabulary() {
       }
 
       void spaceRepUpdated.then(
-        (action: PayloadAction<Record<string, MetaDataObj>>) => {
+        (
+          action: PayloadAction<{
+            newValue: Record<string, MetaDataObj>;
+            oldValue: Record<string, MetaDataObj>;
+          }>
+        ) => {
           if (action && "payload" in action) {
-            const meta = action.payload;
+            const { newValue: meta, oldValue } = action.payload;
+
+            const lastReviewDate = oldValue[uid]?.lastReview;
+            const lastReview = lastReviewDate
+              ? `${daysSince(lastReviewDate)}d -> `
+              : "";
 
             const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(2);
             const w = msgInnerTrim(vocabulary.english, 30);
             const msg =
               reviewEvery === undefined
                 ? `Space Rep [${w}] removed`
-                : `Space Rep [${w}] updated ${reviewEvery}d`;
+                : `Space Rep [${w}] updated ${lastReview}${reviewEvery}d`;
 
             dispatch(logger(msg, DebugLevel.WARN));
           }
