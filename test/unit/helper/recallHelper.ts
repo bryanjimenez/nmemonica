@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import {
   SR_CORRECT_TRESHHOLD,
+  SR_REVIEW_DUE_PERCENT,
+  SR_REVIEW_OVERDUE_PERCENT,
   gradeSpaceRepetition,
   spaceRepetitionOrder,
 } from "../../../src/helper/recallHelper";
@@ -26,7 +28,7 @@ describe("recallHelper", function () {
             daysBetweenReviews: undefined,
           });
 
-        expect(calcPercentOverdue).to.equal(2);
+        expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
       });
       it("incorrect", function () {
         const difficulty = 0.7;
@@ -40,7 +42,7 @@ describe("recallHelper", function () {
             daysBetweenReviews: undefined,
           });
 
-        expect(calcPercentOverdue).to.equal(1);
+        expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
       });
     });
     describe("previously graded", function () {
@@ -85,8 +87,8 @@ describe("recallHelper", function () {
 
         // console.table(actuals);
         expect(actuals[0].overduePerC).is.NaN; // seed value
-        expect(actuals[1].overduePerC).to.equal(1);
-        expect(actuals[4].overduePerC).to.equal(2);
+        expect(actuals[1].overduePerC).to.equal(SR_REVIEW_DUE_PERCENT);
+        expect(actuals[4].overduePerC).to.equal(SR_REVIEW_OVERDUE_PERCENT);
       });
 
       it("incorrect", function () {
@@ -105,7 +107,7 @@ describe("recallHelper", function () {
             daysBetweenReviews,
           });
 
-        expect(calcPercentOverdue).to.equal(1);
+        expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
       });
     });
   });
@@ -153,7 +155,7 @@ describe("recallHelper", function () {
         spaRepMaxReviewItem
       );
 
-      expect(failed).to.contain.members([7, 8, 9]);
+      expect(failed).to.contain.members([4, 5, 7, 8]);
     });
     it("pending", function () {
       const {
@@ -163,8 +165,8 @@ describe("recallHelper", function () {
         todayDone,
       } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
 
-      expect(pending, 'Categorized as overdue').to.contain.members([3, 4, 5, 6]);
-      expect(pending, 'Descending percentOverdue order').to.deep.equal([3, 4, 5, 6]);
+      expect(pending, 'Categorized as overdue').to.contain.members([3, 6, 9]);
+      expect(pending, 'Descending percentOverdue order').to.deep.equal([3, 6, 9]);
       // pending, but not played because date = today
       expect(notPlayed).to.contain.members([2]);
     });
