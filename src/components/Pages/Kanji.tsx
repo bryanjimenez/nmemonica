@@ -15,11 +15,16 @@ import { useDispatch } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { daysSince, msgInnerTrim } from "../../helper/consoleHelper";
+import {
+  daysSince,
+  msgInnerTrim,
+  spaceRepLog,
+} from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
+  minimumTimeForSpaceRepUpdate,
   play,
   termFilterByType,
 } from "../../helper/gameHelper";
@@ -45,6 +50,7 @@ import {
   setKanjiDifficulty,
   setSpaceRepetitionMetadata,
   toggleKanjiFilter,
+  updateSpaceRepKanji,
 } from "../../slices/kanjiSlice";
 import {
   DebugLevel,
@@ -113,6 +119,9 @@ export default function Kanji() {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
+  const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
+  const prevLastNext = useRef<number>(Date.now());
+
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
 
@@ -184,9 +193,35 @@ export default function Kanji() {
     switch (sortMethodREF.current) {
       case TermSortBy.DIFFICULTY:
         newOrder = difficultyOrder(filteredTerms, metadata.current);
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Difficulty (${newOrder.length})`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredTerms, metadata.current);
+
+        let newN = 0;
+        let oldDt = NaN;
+        const views = newOrder.map((i) => {
+          const d = metadata.current[filteredTerms[i].uid]?.lastView;
+          newN = !d ? newN + 1 : newN;
+          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d ? daysSince(d) : 0;
+        });
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
       case TermSortBy.RECALL:
         const {
@@ -212,7 +247,6 @@ export default function Kanji() {
           const p = metadata.current[filteredTerms[i].uid]?.percentOverdue ?? 0;
           return p.toFixed(2).replace(".00", "").replace("0.", ".");
         });
-        // console.table(recallInfoTable(pending.map(i=>filteredVocab[i]) ,metadata.current));
 
         setLog((l) => [
           ...l,
@@ -228,6 +262,11 @@ export default function Kanji() {
 
       default:
         /*TermSortBy.RANDOM*/ newOrder = randomOrder(filteredTerms);
+        setLog((l) => [
+          ...l,
+          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+        ]);
+
         break;
     }
 
@@ -240,12 +279,15 @@ export default function Kanji() {
 
     setSelectedIndex(newSel);
     prevSelectedIndex.current = selectedIndex;
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+
     setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
     setShowMeaning(false);
-  }, [filteredTerms, selectedIndex]);
+  }, [filteredTerms, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
     let filtered = filteredTerms;
@@ -300,12 +342,15 @@ export default function Kanji() {
 
     setSelectedIndex(newSel);
     prevSelectedIndex.current = selectedIndex;
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+
     setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
     setShowMeaning(false);
-  }, [filteredTerms, selectedIndex]);
+  }, [filteredTerms, selectedIndex, lastNext]);
 
   const swipeActionHandler = useCallback(
     (direction: string) => {
@@ -353,6 +398,7 @@ export default function Kanji() {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
       reinforcedUID: prevReinforcedUID.current,
+      lastNext: prevLastNext.current,
     };
 
     if (
@@ -407,6 +453,35 @@ export default function Kanji() {
                 : `Space Rep [${w}] updated ${lastReview}${reviewEvery}d`;
 
             dispatch(logger(msg, DebugLevel.WARN));
+          }
+
+          // after space rep updates
+
+          // prevent updates when quick scrolling
+          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+            // don't increment reinforced terms
+            const shouldIncrement = uid !== prevState.reinforcedUID;
+            const frequency = prevState.reinforcedUID !== null;
+
+            void dispatch(updateSpaceRepKanji({ uid, shouldIncrement }))
+              .unwrap()
+              .then((payload) => {
+                const { value, prevVal } = payload;
+
+                let prevDate;
+                if (accuracyModifiedRef.current && prevVal.lastReview) {
+                  // if term was reviewed
+                  prevDate = prevVal.lastReview;
+                } else {
+                  prevDate = prevVal.lastView ?? value.lastView;
+                }
+
+                const repStats = { [uid]: { ...value, lastView: prevDate } };
+                const messageLog = (m: string, l: number) =>
+                  dispatch(logger(m, l));
+
+                spaceRepLog(messageLog, k, repStats, { frequency });
+              });
           }
         }
       );
