@@ -183,7 +183,7 @@ describe("recallHelper", function () {
       // no percentOverdue value
       expect(notPlayed).to.contain.members([0, 1]);
     });
-    it("max", function () {
+    it("max limit", function () {
       const spaRepMaxReviewItem = 2;
 
       const {
@@ -207,38 +207,7 @@ describe("recallHelper", function () {
 
       const terms = [{ uid: "0023e81f458ea75aaa9a89031105bf63" }];
 
-      it("yesterday included", function () {
-        const today = new Date().toJSON();
-        const yesterday = new Date().toJSON();
-
-        const xDaysAgo = 3;
-        const t = new Date();
-        const xAgoDate = new Date(t.setDate(t.getDate() - xDaysAgo)).toJSON();
-
-        const metaRecord = {
-          // pending review
-          [terms[0].uid]: {
-            percentOverdue: 2,
-            vC: 2,
-            lastView: xAgoDate,
-            lastReview: xAgoDate,
-            difficulty: 90,
-            accuracy: 67,
-            daysBetweenReviews: 1,
-            consecutiveRight: 1,
-          },
-        };
-
-        const {
-          failed,
-          overdue: pending,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, 10);
-
-        expect(notPlayed).to.not.contain.members([0]);
-      });
-      it("today excluded", function () {
+      it("exclude viewed today", function () {
         const today = new Date().toJSON();
         const yesterday = new Date().toJSON();
 
@@ -271,9 +240,40 @@ describe("recallHelper", function () {
         expect([...failed, ...pending]).to.not.contain.members([0]);
         expect(notPlayed).to.contain.members([0]);
       });
+      it("include viewed yesterday", function () {
+        const today = new Date().toJSON();
+        const yesterday = new Date().toJSON();
+
+        const xDaysAgo = 3;
+        const t = new Date();
+        const xAgoDate = new Date(t.setDate(t.getDate() - xDaysAgo)).toJSON();
+
+        const metaRecord = {
+          // pending review
+          [terms[0].uid]: {
+            percentOverdue: 2,
+            vC: 2,
+            lastView: xAgoDate,
+            lastReview: xAgoDate,
+            difficulty: 90,
+            accuracy: 67,
+            daysBetweenReviews: 1,
+            consecutiveRight: 1,
+          },
+        };
+
+        const {
+          failed,
+          overdue: pending,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, 10);
+
+        expect(notPlayed).to.not.contain.members([0]);
+      });
     });
-    describe("today review", function () {
-      it("inclusion", function () {
+    describe("date review inclusion", function () {
+      it("include reviewed today", function () {
         const today = new Date().toJSON();
         const yesterday = new Date().toJSON();
 
@@ -308,5 +308,34 @@ describe("recallHelper", function () {
         expect(todayDone).to.contain.members([0]);
       });
     });
+    describe("overdue sorted by lastView", function () {
+      // overdue: percentOverdue = 2
+
+      const metaRecord = {
+        // not yet played
+        [terms[0].uid]: { vC: 1, lastView: today },
+        [terms[1].uid]: { vC: 1, lastView: today },
+        // overdue
+        [terms[2].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(100), lastReview: xAgoDate(2), difficulty: 90, accuracy: 100, daysBetweenReviews: 1, consecutiveRight: 1,},
+        [terms[3].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(5), lastReview: xAgoDate(3), difficulty: 90, accuracy: 71, daysBetweenReviews: 1, consecutiveRight: 1,},
+        [terms[4].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(4), lastReview: xAgoDate(4), difficulty: 20, accuracy: 100, daysBetweenReviews: 0.39691804809712816, consecutiveRight: 0,},
+        [terms[5].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(3), lastReview: xAgoDate(5), difficulty: 30, accuracy: 100, daysBetweenReviews: 0.3393890996206828, consecutiveRight: 0,},
+        [terms[6].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(2), lastReview: xAgoDate(100), difficulty: 90, accuracy: 100, daysBetweenReviews: 1, consecutiveRight: 1,},
+        // previously incorrect
+        [terms[7].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 13, daysBetweenReviews: 0.25, consecutiveRight: 0,},
+        [terms[8].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 17, daysBetweenReviews: 0.25, consecutiveRight: 0,},
+        [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 57, daysBetweenReviews: 1, consecutiveRight: 1,},
+      };
+      it("oldest first", function(){
+        const {
+          failed,
+          overdue: pending,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
+
+        expect(pending, 'lastView oldest first').to.deep.equal([2, 3, 4, 5, 6]);
+      })
+    })
   });
 });

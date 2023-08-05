@@ -111,11 +111,12 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
 } {
   interface timedPlayedSortable {
     percentOverdue: number;
+    lastView: string;
     uid: string;
     index: number;
   }
   interface notTimedPlayedSortable {
-    date: string;
+    lastView: string;
     views: number;
     uid: string;
     index: number;
@@ -132,12 +133,14 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
 
     /** Don't review items seen today  */
     const dueTodayNotYetSeen = oMeta && daysSince(oMeta.lastView) > 0;
+    const reviewedToday =
+      oMeta?.lastReview && daysSince(oMeta.lastReview) === 0;
 
     if (
       spaRepMaxReviewItem > 0 &&
       dueTodayNotYetSeen &&
       oMeta.percentOverdue &&
-      typeof oMeta.accuracy === 'number' &&
+      typeof oMeta.accuracy === "number" &&
       oMeta.accuracy < SR_CORRECT_TRESHHOLD * 100
     ) {
       // previously incorrect
@@ -145,7 +148,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
       failedTemp = [
         ...failedTemp,
         {
-          date: oMeta.lastView,
+          lastView: oMeta.lastView,
           views: oMeta.vC,
           uid: tUid,
           index: Number(tIdx),
@@ -162,16 +165,17 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
         ...overdueTemp,
         {
           percentOverdue: oMeta.percentOverdue,
+          lastView: oMeta.lastView,
           uid: tUid,
           index: Number(tIdx),
         },
       ];
-    } else if (oMeta?.lastReview && daysSince(oMeta.lastReview) === 0) {
+    } else if (reviewedToday) {
       // reivewed today
       todayTemp = [
         ...todayTemp,
         {
-          date: oMeta.lastView,
+          lastView: oMeta.lastView,
           views: oMeta.vC,
           uid: tUid,
           index: Number(tIdx),
@@ -183,9 +187,9 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
   });
 
   // prettier-ignore
-  const failedSort = orderBy(failedTemp, ["uid"], ["asc"]);
+  const failedSort = orderBy(failedTemp, ["lastView", "uid"], ["asc", "asc"]);
   // prettier-ignore
-  const overdueSort = orderBy(overdueTemp, ["percentOverdue", "uid"], ["desc", "asc"]);
+  const overdueSort = orderBy(overdueTemp, ["percentOverdue", "lastView", "uid"], ["desc", "asc", "asc"]);
 
   const failed = failedSort.map((el) => el.index);
   const overdue = overdueSort.map((el) => el.index);
