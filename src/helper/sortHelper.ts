@@ -3,7 +3,7 @@ import orderBy from "lodash/orderBy";
 import { shuffleArray } from "./arrayHelper";
 import { daysSince } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
-import { MetaDataObj, RawVocabulary } from "../typings/raw";
+import { MetaDataObj } from "../typings/raw";
 
 /**
  * Below this threshold considered memorized
@@ -100,7 +100,9 @@ export function difficultySubFilter<T extends { uid: string }>(
 /**
  * @returns an array containing the indexes of terms in alphabetic order
  */
-export function alphaOrder<T extends {uid: string, english: string, japanese: string}>(terms: T[]) {
+export function alphaOrder<
+  T extends { uid: string; english: string; japanese: string }
+>(terms: T[]) {
   // preserve terms unmodified
 
   let originalIndex: Record<string, number> = {};
@@ -168,48 +170,67 @@ export function randomOrder<T>(terms: T[]) {
 /**
  * Terms in last viewed descending order
  * @param terms
- * @param spaceRepObj
+ * @param metaRecord
  */
 export function dateViewOrder(
   terms: { uid: string }[],
-  spaceRepObj: Record<string, MetaDataObj | undefined>
+  metaRecord: Record<string, MetaDataObj | undefined>
 ) {
   interface lastSeenSortable {
-    date: string;
+    lastView: string;
     uid: string;
     index: number;
   }
 
-  let notPlayed: number[] = [];
-  let prevPlayedTemp: lastSeenSortable[] = [];
+  interface recallSortable {
+    percentOverdue: number;
+    uid: string;
+    index: number;
+  }
+
+  let notViewed: number[] = [];
+  let prevViewedTemp: lastSeenSortable[] = [];
+  let spaceRepTemp: recallSortable[] = [];
 
   terms.forEach((term, tIdx) => {
     const tUid = term.uid;
-    const termRep = spaceRepObj[tUid];
+    const oMeta = metaRecord[tUid];
 
-    if (termRep?.lastView !== undefined) {
-      prevPlayedTemp = [
-        ...prevPlayedTemp,
+    if (oMeta?.lastReview && oMeta.percentOverdue) {
+      // a space repetition item
+      // won't be sorted by lastView
+      spaceRepTemp = [
+        ...spaceRepTemp,
         {
-          date: termRep.lastView,
+          percentOverdue: oMeta.percentOverdue,
+          uid: tUid,
+          index: Number(tIdx),
+        },
+      ];
+    } else if (oMeta?.lastView !== undefined) {
+      // regular non-space-rep items
+      prevViewedTemp = [
+        ...prevViewedTemp,
+        {
+          lastView: oMeta.lastView,
           uid: tUid,
           index: Number(tIdx),
         },
       ];
     } else {
-      notPlayed = [...notPlayed, Number(tIdx)];
+      notViewed = [...notViewed, Number(tIdx)];
     }
   });
 
   // prettier-ignore
-  const prevPlayedSort = orderBy(prevPlayedTemp, ["date", "uid"], ["asc", "asc"]);
+  const prevViewedSort = orderBy(prevViewedTemp, ["lastView", "uid"], ["asc", "asc"]);
+  // prettier-ignore
+  const prevSpaceRepSort = orderBy(spaceRepTemp, ["percentOverdue", "uid"], ["desc", "asc"]);
 
-  // console.log('unPlayed');
-  // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
+  const prevViewed = prevViewedSort.map((el) => el.index);
+  const prevSpaceRepd = prevSpaceRepSort.map((el) => el.index);
 
-  const prevPlayed = prevPlayedSort.map((el) => el.index);
-
-  return [...notPlayed, ...prevPlayed];
+  return [...notViewed, ...prevViewed, ...prevSpaceRepd];
 }
 
 /**
@@ -217,7 +238,7 @@ export function dateViewOrder(
  * [timedPlayFailed, timedPlayMispronounced, newTerms, notTimedPlayed, timedPlayedCorrect]
  * @returns an array containing the indexes of terms in space repetition order
  */
-export function spaceRepOrder<T extends {uid: string}>(
+export function spaceRepOrder<T extends { uid: string }>(
   terms: T[],
   spaceRepObj: Record<string, MetaDataObj | undefined>
 ) {

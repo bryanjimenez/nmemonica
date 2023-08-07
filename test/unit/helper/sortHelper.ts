@@ -504,7 +504,59 @@ describe("gameHelper", function () {
       expect(actual).to.include.members(expected); //should contain all originals
     });
   });
-  describe("dateViewOrder", function(){
+  describe("dateViewOrder", function () {
+    it("separate Space Repetition items to the end", function(){
+      const expected = [4, 5, 3, 0, 2, 1];
+      const termsWSpaceRepMixed = [
+        { uid: "00c102a7e10b45b19afbab71c030bf63" }, // newest
+        { uid: "6fca55dd4a82b78256cc9c22e2934938" }, // Space Repetition item
+        { uid: "729307b04a77bccc5db86d6b49f55f2f" }, // Space Repetition item
+        { uid: "e5d47019e1b948c2445b6c1ea3850c2b" }, // oldest
+        { uid: "e86638b52f2028b1ff3685e13bfd71ac" }, // not viewed
+        { uid: "ee5b790c89a6e8811e7b3c97ee79534c" }, // not viewed
+      ];
+      const spaceRepObj = {
+        "00c102a7e10b45b19afbab71c030bf63": {
+          // english: 'blue',
+          vC: 13,
+          lastView: "2020-01-01T01:10:00.000Z",     // newest
+        },
+        "6fca55dd4a82b78256cc9c22e2934938": {
+          // english: 'green',
+          vC: 9,
+          lastView: "2020-01-01T01:06:00.000Z",
+          lastReview: "2020-01-01T01:06:00.000Z",   // Space Repetition item
+          percentOverdue: 1.9,
+        },
+        "729307b04a77bccc5db86d6b49f55f2f": {
+          // english: 'grey',
+          vC: 8,
+          lastView: "2020-01-01T01:05:00.000Z",
+          lastReview: "2020-01-01T01:05:00.000Z",   // Space Repetition item
+          percentOverdue: 2,
+        },
+        "e5d47019e1b948c2445b6c1ea3850c2b": {
+          // english: 'red',
+          vC: 3,
+          lastView: "2020-01-01T01:00:00.000Z",     // oldest
+        },
+        "e86638b52f2028b1ff3685e13bfd71ac": {
+          // english: 'orange',
+          // vC: 2,
+          // lastView: "2020-01-01T01:00:00.000Z",  // not viewed
+        },
+        "ee5b790c89a6e8811e7b3c97ee79534c": {
+          // english: 'pink',
+          vC: 0,
+          // lastView: "2020-01-01T01:00:00.000Z",  // not viewed
+          lastView: undefined,
+        },
+      };
+
+      const actual = dateViewOrder(termsWSpaceRepMixed, spaceRepObj);
+      expect(actual).to.deep.eq(expected);
+    });
+
     it("not viewed first, then oldest to newest",function(){
       const expected = [11, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
       const spaceRepObj = {
