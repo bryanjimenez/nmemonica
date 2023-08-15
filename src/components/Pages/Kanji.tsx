@@ -161,7 +161,7 @@ export default function Kanji() {
     switch (sortMethodREF.current) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
-        const { failed, overdue } = spaceRepetitionOrder(
+        const { failed, overdue, overLimit } = spaceRepetitionOrder(
           filtered,
           metadata.current,
           20 // FIXME: hardcoded
@@ -171,6 +171,24 @@ export default function Kanji() {
         if (pending.length > 0) {
           filtered = pending.map((p) => filtered[p]);
         }
+
+        const overdueVals = pending.map((item, i) => {
+          const p = metadata.current[filtered[i].uid]?.percentOverdue ?? 0;
+          return p.toFixed(2).replace(".00", "").replace("0.", ".");
+        });
+
+        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 2 (${
+              overdueVals.length
+            })${more} [${overdueVals.toString()}]`,
+            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
     }
 
@@ -229,11 +247,7 @@ export default function Kanji() {
           overdue,
           notPlayed: nonPending,
           todayDone,
-        } = spaceRepetitionOrder(
-          filteredTerms,
-          metadata.current,
-          20 /** FIXME: hardcoded */
-        );
+        } = spaceRepetitionOrder(filteredTerms, metadata.current);
 
         const pending = [...failed, ...overdue];
         if (pending.length > 0) {
@@ -242,21 +256,6 @@ export default function Kanji() {
           newOrder = [...nonPending, ...todayDone];
         }
         recallGame = pending.length;
-
-        const overdueVals = pending.map((i) => {
-          const p = metadata.current[filteredTerms[i].uid]?.percentOverdue ?? 0;
-          return p.toFixed(2).replace(".00", "").replace("0.", ".");
-        });
-
-        setLog((l) => [
-          ...l,
-          {
-            msg: `Space Rep 2 (${
-              overdueVals.length
-            }) [${overdueVals.toString()}]`,
-            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
-          },
-        ]);
 
         break;
 

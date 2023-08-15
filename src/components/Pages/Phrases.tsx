@@ -159,7 +159,7 @@ export default function Phrases() {
     switch (sortMethodREF.current) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
-        const { failed, overdue } = spaceRepetitionOrder(
+        const { failed, overdue, overLimit } = spaceRepetitionOrder(
           filtered,
           metadata.current,
           20 // FIXME: hardcoded
@@ -169,6 +169,24 @@ export default function Phrases() {
         if (pending.length > 0) {
           filtered = pending.map((p) => filtered[p]);
         }
+
+        const overdueVals = pending.map((item, i) => {
+          const p = metadata.current[filtered[i].uid]?.percentOverdue ?? 0;
+          return p.toFixed(2).replace(".00", "").replace("0.", ".");
+        });
+
+        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 2 (${
+              overdueVals.length
+            })${more} [${overdueVals.toString()}]`,
+            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
       default:
         break;
@@ -220,11 +238,7 @@ export default function Phrases() {
           overdue,
           notPlayed: nonPending,
           todayDone,
-        } = spaceRepetitionOrder(
-          filteredPhrases,
-          metadata.current,
-          20 // TODO: add btns
-        );
+        } = spaceRepetitionOrder(filteredPhrases, metadata.current);
         const pending = [...failed, ...overdue];
 
         if (pending.length > 0) {
@@ -233,22 +247,6 @@ export default function Phrases() {
           newOrder = [...nonPending, ...todayDone];
         }
         recallGame = pending.length;
-
-        const overdueVals = pending.map((i) => {
-          const p =
-            metadata.current[filteredPhrases[i].uid]?.percentOverdue ?? 0;
-          return p.toFixed(2).replace(".00", "").replace("0.", ".");
-        });
-
-        setLog((l) => [
-          ...l,
-          {
-            msg: `Space Rep 2 (${
-              overdueVals.length
-            }) [${overdueVals.toString()}]`,
-            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
-          },
-        ]);
 
         break;
 

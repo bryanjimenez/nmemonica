@@ -214,7 +214,7 @@ export default function Vocabulary() {
         break;
       case TermSortBy.RECALL:
         // discard the nonPending terms
-        const { failed, overdue } = spaceRepetitionOrder(
+        const { failed, overdue, overLimit } = spaceRepetitionOrder(
           filtered,
           metadata.current,
           repMinItemReviewREF.current
@@ -224,6 +224,24 @@ export default function Vocabulary() {
         if (pending.length > 0) {
           filtered = pending.map((p) => filtered[p]);
         }
+
+        const overdueVals = pending.map((item, i) => {
+          const p = metadata.current[filtered[i].uid]?.percentOverdue ?? 0;
+          return p.toFixed(2).replace(".00", "").replace("0.", ".");
+        });
+        // console.table(recallInfoTable(pending.map(i=>filteredVocab[i]) ,metadata.current));
+
+        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 2 (${
+              overdueVals.length
+            })${more} [${overdueVals.toString()}]`,
+            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+          },
+        ]);
 
         break;
     }
@@ -339,11 +357,7 @@ export default function Vocabulary() {
           overdue,
           notPlayed: nonPending,
           todayDone,
-        } = spaceRepetitionOrder(
-          filteredVocab,
-          metadata.current,
-          repMinItemReviewREF.current
-        );
+        } = spaceRepetitionOrder(filteredVocab, metadata.current);
         const pending = [...failed, ...overdue];
 
         if (pending.length > 0) {
@@ -352,22 +366,6 @@ export default function Vocabulary() {
           newOrder = [...nonPending, ...todayDone];
         }
         recallGame = pending.length;
-
-        const overdueVals = pending.map((i) => {
-          const p = metadata.current[filteredVocab[i].uid]?.percentOverdue ?? 0;
-          return p.toFixed(2).replace(".00", "").replace("0.", ".");
-        });
-        // console.table(recallInfoTable(pending.map(i=>filteredVocab[i]) ,metadata.current));
-
-        setLog((l) => [
-          ...l,
-          {
-            msg: `Space Rep 2 (${
-              overdueVals.length
-            }) [${overdueVals.toString()}]`,
-            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
-          },
-        ]);
 
         break;
 
@@ -545,7 +543,7 @@ export default function Vocabulary() {
               ? `${daysSince(lastReviewDate)}d -> `
               : "";
 
-            const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(2);
+            const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(0);
             const w = msgInnerTrim(vocabulary.english, 30);
             const msg =
               reviewEvery === undefined

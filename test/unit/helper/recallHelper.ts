@@ -140,33 +140,35 @@ describe("recallHelper", function () {
       [terms[4].uid]: { percentOverdue: 1.3, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 20, accuracy: 31, daysBetweenReviews: 0.39691804809712816, consecutiveRight: 0,},
       [terms[5].uid]: { percentOverdue: 1.2, vC: 2, lastView: yesterday, lastReview: xAgoDated, difficulty: 30, accuracy: 23, daysBetweenReviews: 0.3393890996206828, consecutiveRight: 0,},
       [terms[6].uid]: { percentOverdue: 1.1, vC: 2, lastView: yesterday, lastReview: xAgoDated, difficulty: 90, accuracy: 73, daysBetweenReviews: 1, consecutiveRight: 1,},
+      [terms[7].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 75, daysBetweenReviews: 0.25, consecutiveRight: 0,},
       // previously incorrect
-      [terms[7].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 13, daysBetweenReviews: 0.25, consecutiveRight: 0,},
       [terms[8].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 17, daysBetweenReviews: 0.25, consecutiveRight: 0,},
-      [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 75, daysBetweenReviews: 1, consecutiveRight: 1,},
+      [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 19, daysBetweenReviews: 1, consecutiveRight: 1,},
     };
 
-    const spaRepMaxReviewItem = 20;
+    const maxReviews = 20;
 
     it("incorrect", function () {
+      const expected = [4, 5, 8, 9];
+
       const { failed } = spaceRepetitionOrder(
         terms,
         metaRecord,
-        spaRepMaxReviewItem
+        maxReviews
       );
-
-      expect(failed).to.contain.members([4, 5, 7, 8]);
+      expect(failed).to.have.length(expected.length).and.to.contain.members(expected);
     });
     it("pending", function () {
+      const expected = [3, 6, 7];
       const {
         failed,
         overdue: pending,
         notPlayed,
         todayDone,
-      } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
+      } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
-      expect(pending, 'Categorized as overdue').to.contain.members([3, 6, 9]);
-      expect(pending, 'Descending percentOverdue order').to.deep.equal([3, 6, 9]);
+      expect(pending, 'Categorized as overdue').to.have.length(expected.length).and.to.contain.members(expected);
+      expect(pending, 'Descending percentOverdue order').to.deep.equal(expected);
       // pending, but not played because date = today
       expect(notPlayed).to.contain.members([2]);
     });
@@ -176,7 +178,7 @@ describe("recallHelper", function () {
         overdue: pending,
         notPlayed,
         todayDone,
-      } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
+      } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
       // pending, but not played because date = today
       expect(notPlayed).to.contain.members([2]);
@@ -184,20 +186,21 @@ describe("recallHelper", function () {
       expect(notPlayed).to.contain.members([0, 1]);
     });
     it("max limit", function () {
-      const spaRepMaxReviewItem = 2;
+      const maxReviews = 2;
 
       const {
         failed,
         overdue: pending,
+        overLimit,
         notPlayed,
         todayDone,
-      } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
+      } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
-      expect([...failed, ...pending])
-        .to.have.length(spaRepMaxReviewItem)
+      expect([...failed, ...pending], "limited")
+        .to.have.length(maxReviews)
         .and.be.an("Array");
-      expect(notPlayed)
-        .to.have.length(terms.length - spaRepMaxReviewItem)
+      expect([...overLimit,...notPlayed,...todayDone], "remainder")
+        .to.have.length(terms.length - maxReviews)
         .and.be.an("Array");
     });
 
@@ -234,7 +237,7 @@ describe("recallHelper", function () {
           overdue: pending,
           notPlayed,
           todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
+        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
         // pending, but not played because date = today
         expect([...failed, ...pending]).to.not.contain.members([0]);
@@ -300,7 +303,7 @@ describe("recallHelper", function () {
           overdue: pending,
           notPlayed,
           todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
+        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
         // pending, but not played because date = today
         expect([...failed, ...pending]).to.not.contain.members([0]);
@@ -327,14 +330,15 @@ describe("recallHelper", function () {
         [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 57, daysBetweenReviews: 1, consecutiveRight: 1,},
       };
       it("oldest first", function(){
+        const expected = [2, 3, 4, 5, 6];
         const {
           failed,
           overdue: pending,
           notPlayed,
           todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, spaRepMaxReviewItem);
+        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
-        expect(pending, 'lastView oldest first').to.deep.equal([2, 3, 4, 5, 6]);
+        expect(pending, 'lastView oldest first').to.deep.equal(expected);
       })
     })
   });

@@ -77,7 +77,12 @@ export function gradeSpaceRepetition({
       daysBetweenReviews * (1 + (difficultyW - 1) * (percentOverdue * fuzz));
   } else {
     // previously incorrect
-    daysBetweenCalc = 1 / (1 + 3 * nextDifficulty);
+    const days =
+      typeof daysBetweenReviews === "number" && daysBetweenReviews > 0
+        ? daysBetweenReviews
+        : 1;
+
+    daysBetweenCalc = Number(days) / (1 + 3 * nextDifficulty);
   }
 
   return {
@@ -91,21 +96,26 @@ export function gradeSpaceRepetition({
 /**
  * Space repetition order
  *
- * First two arrays are items being rotated
+ * @returns arrays containing **indexes** of:
  *
- * First contains previously failed items
- * Second overdue items (percentOverdue in desc order)
- * Third everyting else
- * Fourth items reviewed today
- * @returns arrays containing **indexes**
+ * ```failed``` — previously failed items
+ *
+ * ```overdue``` — overdue items (percentOverdue in desc order)
+ *
+ * ```overLimit``` — items beyond ```maxReviews``` limit (unordered)
+ *
+ * ```notPlayed```
+ *
+ * ```todayDone``` — items reviewed today
  */
 export function spaceRepetitionOrder<T extends { uid: string }>(
   terms: T[],
   metaRecord: Record<string, MetaDataObj | undefined>,
-  spaRepMaxReviewItem: number
+  maxReviews?: number
 ): {
   failed: number[];
   overdue: number[];
+  overLimit: number[];
   notPlayed: number[];
   todayDone: number[];
 } {
@@ -137,14 +147,12 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
       oMeta?.lastReview && daysSince(oMeta.lastReview) === 0;
 
     if (
-      spaRepMaxReviewItem > 0 &&
       dueTodayNotYetSeen &&
       oMeta.percentOverdue &&
       typeof oMeta.accuracy === "number" &&
       oMeta.accuracy < SR_CORRECT_TRESHHOLD * 100
     ) {
       // previously incorrect
-      spaRepMaxReviewItem -= 1;
       failedTemp = [
         ...failedTemp,
         {
@@ -154,13 +162,8 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
           index: Number(tIdx),
         },
       ];
-    } else if (
-      spaRepMaxReviewItem > 0 &&
-      dueTodayNotYetSeen &&
-      oMeta?.percentOverdue
-    ) {
+    } else if (dueTodayNotYetSeen && oMeta?.percentOverdue) {
       // pending
-      spaRepMaxReviewItem -= 1;
       overdueTemp = [
         ...overdueTemp,
         {
@@ -191,12 +194,26 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
   // prettier-ignore
   const overdueSort = orderBy(overdueTemp, ["percentOverdue", "lastView", "uid"], ["desc", "asc", "asc"]);
 
-  const failed = failedSort.map((el) => el.index);
-  const overdue = overdueSort.map((el) => el.index);
+  const f = failedSort.map((el) => el.index);
+  const o = overdueSort.map((el) => el.index);
 
   const todayDone = todayTemp.map((el) => el.index);
 
-  return { failed, overdue, notPlayed, todayDone };
+  // maxReviews limit
+  let failed = f;
+  let overdue = o;
+  let overLimit: number[] = [];
+  if (maxReviews && maxReviews > 0) {
+    const idxEnd = Math.max(0, maxReviews - f.length);
+    failed = f.slice(0, Math.max(idxEnd, maxReviews));
+    overdue = o.slice(0, Math.min(o.length, idxEnd));
+    overLimit = [
+      ...f.slice(Math.max(idxEnd, maxReviews)),
+      ...o.slice(Math.min(o.length, idxEnd)),
+    ];
+  }
+
+  return { failed, overdue, overLimit, notPlayed, todayDone };
 }
 
 /**
