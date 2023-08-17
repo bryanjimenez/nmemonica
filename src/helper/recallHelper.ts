@@ -64,7 +64,7 @@ export function gradeSpaceRepetition({
 
   const difficultyW = 3 - 1.7 * nextDifficulty;
 
-  let daysBetweenCalc;
+  let daysBetweenCalc: number;
   if (
     typeof daysBetweenReviews === "number" &&
     daysBetweenReviews > 0 &&
@@ -82,7 +82,7 @@ export function gradeSpaceRepetition({
         ? daysBetweenReviews
         : 1;
 
-    daysBetweenCalc = Number(days) / (1 + 3 * nextDifficulty);
+    daysBetweenCalc = Math.min(1, days / (1 + 3 * nextDifficulty));
   }
 
   return {

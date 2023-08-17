@@ -43,6 +43,7 @@ describe("recallHelper", function () {
           });
 
         expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
+        expect(calcDaysBetweenReviews).to.be.lessThanOrEqual(1);
       });
     });
     describe("previously graded", function () {
@@ -92,12 +93,12 @@ describe("recallHelper", function () {
       });
 
       it("incorrect", function () {
-        const xDaysAgo = 3;
+        const xDaysAgo = 4;
 
         const difficulty = 0.7;
         const accuracy = SR_CORRECT_TRESHHOLD - 0.1;
         const daysSinceReview = xDaysAgo;
-        const daysBetweenReviews = 2;
+        const daysBetweenReviews = 4;
 
         const { calcDaysBetweenReviews, calcPercentOverdue } =
           gradeSpaceRepetition({
@@ -108,6 +109,7 @@ describe("recallHelper", function () {
           });
 
         expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
+        expect(calcDaysBetweenReviews).to.be.lessThanOrEqual(1);
       });
     });
   });
