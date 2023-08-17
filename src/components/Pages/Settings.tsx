@@ -5,7 +5,6 @@ import React, {
   lazy,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -14,16 +13,10 @@ import { useDispatch } from "react-redux";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getDeviceMotionEventPermission,
-  getStaleSpaceRepKeys,
   labelOptions,
   motionThresholdCondition,
 } from "../../helper/gameHelper";
-import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
-import { useConnectKana } from "../../hooks/useConnectKana";
-import { useConnectKanji } from "../../hooks/useConnectKanji";
-import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
@@ -34,51 +27,25 @@ import {
   setSwipeThreshold,
   toggleDarkMode,
 } from "../../slices/globalSlice";
-import {
-  setKanaBtnN,
-  toggleKana,
-  toggleKanaEasyMode,
-  toggleKanaGameWideMode,
-} from "../../slices/kanaSlice";
-import {
-  getKanji,
-  setKanjiBtnN,
-  setKanjiMemorizedThreshold,
-  toggleKanjiFadeInAnswers,
-  toggleKanjiOrdering,
-} from "../../slices/kanjiSlice";
-import {
-  setOppositesARomaji,
-  setOppositesQRomaji,
-  toggleOppositeFadeInAnswers,
-} from "../../slices/oppositeSlice";
-import {
-  setParticlesARomaji,
-  toggleParticleFadeInAnswers,
-} from "../../slices/particleSlice";
-import { getPhrase, togglePhraseActiveGrp } from "../../slices/phraseSlice";
-import {
-  DebugLevel,
-  KanaType,
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
-import {
-  getVocabulary,
-  toggleVocabularyActiveGrp,
-} from "../../slices/vocabularySlice";
-import type { RawVocabulary } from "../../typings/raw";
-import ChoiceNumberSlider from "../Form/ChoiceNumberSlider";
+import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
+import { DebugLevel } from "../../slices/settingHelper";
+import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
 import type { ConsoleMessage } from "../Form/Console";
-import { DifficultySubFilter } from "../Form/DifficultySubFilter";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
-import SimpleListMenu from "../Form/SimpleListMenu";
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
+const SettingsOppositeGame = lazy(() => import("../Form/SettingsGOpposite"));
+const SettingsKanaGame = lazy(() => import("../Form/SettingsGKana"));
+const SettingsKanjiGame = lazy(() => import("../Form/SettingsGKanji"));
+const SettingsParticleGame = lazy(() => import("../Form/SettingsGParticle"));
+const SettingsStale = lazy(() => import("../Form/SettingsStale"));
+const SettingsFailedFurigana = lazy(
+  () => import("../Form/SettingsFailedFurigana")
+);
 
 const SettingsMeta = {
   location: "/settings/",
@@ -152,65 +119,6 @@ function componentDidCatch(dispatch: AppDispatch, error: Error) {
   }
 }
 
-/**
- * Build JSX element listing stale items
- */
-function staleSpaceRep(terms: { key: string; uid: string; english: string }[]) {
-  return terms.reduce<React.JSX.Element[]>((a, text, i) => {
-    const separator = <hr key={`stale-meta-${text.uid}`} />;
-
-    const row = (
-      <div key={text.uid} className="row">
-        <span className="col p-0">{text.key}</span>
-        <span className="col p-0">{text.english}</span>
-        <span className="col p-0 app-sm-fs-xx-small">
-          <div>{text.uid}</div>
-        </span>
-      </div>
-    );
-
-    return a.length > 0 && i < terms.length
-      ? [...a, separator, row]
-      : [...a, row];
-  }, []);
-}
-
-function failedFuriganaList(terms: RawVocabulary[]) {
-  return terms.reduce<React.JSX.Element[]>((a, text, i) => {
-    const t = JapaneseText.parse(text);
-    if (t.hasFurigana()) {
-      try {
-        furiganaParseRetry(t.getPronunciation(), t.getSpelling());
-      } catch (e) {
-        if (e instanceof Error && "cause" in e) {
-          const errData = e.cause as { code: string; info: unknown };
-          if (errData.code === "ParseError" || errData.code === "InputError") {
-            const separator = <hr key={`parse-err-sep-${text.uid}`} />;
-
-            const row = (
-              <div key={`parse-err-${text.uid}`} className="row">
-                <span className="col p-0">
-                  {t.toHTML({ showError: false })}
-                </span>
-                <span className="col p-0">{text.english}</span>
-                <span className="col p-0 app-sm-fs-xx-small">
-                  <div>{e.message}</div>
-                  <div>{errData.info ? JSON.stringify(errData.info) : ""}</div>
-                </span>
-              </div>
-            );
-
-            return a.length > 0 && i < terms.length - 1
-              ? [...a, separator, row]
-              : [...a, row];
-          }
-        }
-      }
-    }
-    return a;
-  }, []);
-}
-
 function buildMotionListener(
   dispatch: AppDispatch,
   motionThreshold: number,
@@ -235,7 +143,7 @@ function buildMotionListener(
   };
 }
 
-function collapseExpandToggler(
+export function collapseExpandToggler(
   name: boolean,
   toggleSection: (arg0: (arg1: boolean) => boolean) => void
 ) {
@@ -259,64 +167,28 @@ export default function Settings() {
     ReturnType<typeof buildMotionListener> | undefined
   >(undefined);
 
-  const {
-    darkMode,
-    swipeThreshold,
-    motionThreshold,
-    memory,
-    debug,
-
-    oppositesQRomaji,
-    oppositesARomaji,
-    oppositeFadeInAnswers,
-
-    particlesARomaji,
-    particleFadeInAnswer,
-  } = useConnectSetting();
-
-  const { vocabList: vocabulary, repetition: vRepetition } =
-    useConnectVocabulary();
-  const { phraseList: phrases, repetition: pRepetition } = useConnectPhrase();
-  const {
-    kanjiList: kanji,
-    orderType: kanjiOrder,
-    repetition: kRepetition,
-    kanjiTagObj: kanjiTags,
-    fadeInAnswers: kanjiFadeInAnswers,
-    choiceN: kanjiChoiceN,
-  } = useConnectKanji();
-  const { charSet, easyMode, wideMode, choiceN } = useConnectKana();
-
-  const { memoThreshold } = useConnectKanji();
+  const { darkMode, swipeThreshold, motionThreshold, memory, debug } =
+    useConnectSetting();
 
   const [spin, setSpin] = useState(false);
 
   const [sectionKanji, setSectionKanji] = useState(false);
   const [sectionVocabulary, setSectionVocabulary] = useState(false);
   const [sectionPhrase, setSectionPhrase] = useState(false);
-  const [sectionStaleSpaceRep, setSectionStaleSpaceRep] = useState(false);
+  const [sectionOpposites, setSectionOpposites] = useState(false);
+  const [sectionKana, setSectionKana] = useState(false);
+  const [sectionKanjiGame, setSectionKanjiGame] = useState(false);
+  const [sectionParticle, setSectionParticle] = useState(false);
   const [swVersion, setSwVersion] = useState("");
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
   const [hardRefreshUnavailable, setHardRefreshUnavailable] = useState(false);
   const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
-  const [shakeIntensity, setShakeIntensity] = useState<number|undefined>(0);
+  const [shakeIntensity, setShakeIntensity] = useState<number | undefined>(0);
 
   useEffect(
     () => {
       void dispatch(getMemoryStorageStatus());
-
-      if (vocabulary.length === 0) {
-        void dispatch(getVocabulary());
-      }
-
-      if (kanjiTags.length === 0) {
-        void dispatch(getKanji());
-      }
-
-      if (phrases.length === 0) {
-        void dispatch(getPhrase());
-      }
 
       navigator.serviceWorker.addEventListener(
         "message",
@@ -410,40 +282,6 @@ export default function Settings() {
     [dispatch]
   );
 
-  const { keys: vKeys, list: vocabuStaleInfo } = useMemo(
-    () => getStaleSpaceRepKeys(vRepetition, vocabulary, "[Stale Vocabulary]"),
-    [vocabulary, vRepetition]
-  );
-  const { keys: pKeys, list: phraseStaleInfo } = useMemo(
-    () => getStaleSpaceRepKeys(pRepetition, phrases, "[Stale Phrase]"),
-    [phrases, pRepetition]
-  );
-  const { keys: kKeys, list: kanjiStaleInfo } = useMemo(
-    () => getStaleSpaceRepKeys(kRepetition, kanji, "[Stale Kanji]"),
-    [kanji, kRepetition]
-  );
-
-  // TODO: refactor out use lazy
-  const failedFurigana = useMemo(
-    () => failedFuriganaList([...phrases, ...vocabulary]),
-    [vocabulary, phrases]
-  );
-
-  const staleSpaceRepKeys = useMemo(
-    () => new Set([...vKeys, ...pKeys, ...kKeys]),
-    [vKeys, pKeys, kKeys]
-  );
-
-  const staleSpaceRepTerms = useMemo(
-    () =>
-      staleSpaceRep([
-        ...vocabuStaleInfo,
-        ...phraseStaleInfo,
-        ...kanjiStaleInfo,
-      ]),
-    [vocabuStaleInfo, phraseStaleInfo, kanjiStaleInfo]
-  );
-
   // FIXME: errorMsgs component
   // if (errorMsgs.length > 0) {
   //   const minState = logify(this.state);
@@ -465,9 +303,6 @@ export default function Settings() {
   //     </div>
   //   );
   // }
-
-  if (vocabulary.length < 1 || phrases.length < 1 || kanjiTags.length < 1)
-    return <NotReady addlStyle="main-panel" />;
 
   return (
     <div className="settings">
@@ -531,14 +366,15 @@ export default function Settings() {
                     className={classNames({
                       "px-2": true,
                       "correct-color":
-                        shakeIntensity && (
+                        shakeIntensity &&
                         shakeIntensity > motionThreshold &&
-                        shakeIntensity <= motionThreshold + 1),
+                        shakeIntensity <= motionThreshold + 1,
                       "question-color":
-                        shakeIntensity && (
+                        shakeIntensity &&
                         shakeIntensity > motionThreshold + 1 &&
-                        shakeIntensity <= motionThreshold + 2),
-                      "incorrect-color": shakeIntensity && shakeIntensity > motionThreshold + 2,
+                        shakeIntensity <= motionThreshold + 2,
+                      "incorrect-color":
+                        shakeIntensity && shakeIntensity > motionThreshold + 2,
                     })}
                   >
                     {shakeIntensity ?? motionThreshold}
@@ -637,132 +473,66 @@ export default function Settings() {
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
             <h2>Opposites Game</h2>
+            {collapseExpandToggler(sectionOpposites, setSectionOpposites)}
           </div>
-          <div className="setting-block">
-            <div className="mb-2">
-              <SettingsSwitch
-                active={oppositesQRomaji}
-                action={buildAction(dispatch, setOppositesQRomaji)}
-                statusText="Question Romaji"
-              />
-            </div>
-            <div className="mb-2">
-              <SettingsSwitch
-                active={oppositesARomaji}
-                action={buildAction(dispatch, setOppositesARomaji)}
-                statusText="Answer Romaji"
-              />
-            </div>
-            <div className="mb-2">
-              <SettingsSwitch
-                active={oppositeFadeInAnswers}
-                action={buildAction(dispatch, toggleOppositeFadeInAnswers)}
-                statusText="Fade in answers"
-              />
-            </div>
-          </div>
+          {sectionOpposites && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="opposites-settings" text="Loading..." />
+              }
+            >
+              <SettingsOppositeGame />
+            </Suspense>
+          )}
         </div>
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
             <h2>Kana Game</h2>
+            {collapseExpandToggler(sectionKana, setSectionKana)}
           </div>
-
-          <div className="setting-block">
-            <div>
-              <SettingsSwitch
-                active={charSet === KanaType.HIRAGANA}
-                action={buildAction(dispatch, toggleKana)}
-                statusText={labelOptions(charSet, [
-                  "Hiragana",
-                  "Katakana",
-                  "Mixed",
-                ])}
-              />
-            </div>
-            <div className="d-flex justify-content-end p-2">
-              <ChoiceNumberSlider
-                initial={choiceN}
-                setChoiceN={buildAction(dispatch, setKanaBtnN)}
-                wideMode={wideMode}
-                wideN={31}
-                toggleWide={buildAction(dispatch, toggleKanaGameWideMode)}
-              />
-            </div>
-            <div>
-              <SettingsSwitch
-                active={easyMode}
-                action={buildAction(dispatch, toggleKanaEasyMode)}
-                statusText="Kana Hints"
-              />
-            </div>
-          </div>
+          {sectionKana && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="kana-settings" text="Loading..." />
+              }
+            >
+              <SettingsKanaGame />
+            </Suspense>
+          )}
         </div>
+
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
             <h2>Kanji Game</h2>
+            {collapseExpandToggler(sectionKanjiGame, setSectionKanjiGame)}
           </div>
-
-          <div className="d-flex flex-row justify-content-between">
-            <div className="column-1" />
-            <div className="column-2">
-              <div className="mb-2">
-                <SimpleListMenu
-                  title={"Sort by:"}
-                  options={TermSortByLabel}
-                  allowed={[
-                    TermSortBy.DIFFICULTY,
-                    TermSortBy.RANDOM,
-                    TermSortBy.VIEW_DATE,
-                  ]}
-                  initial={kanjiOrder.current}
-                  onChange={buildAction(dispatch, toggleKanjiOrdering)}
-                />
-
-                {kanjiOrder.current === TermSortBy.DIFFICULTY && (
-                  <DifficultySubFilter
-                    memoThreshold={memoThreshold}
-                    setThreshold={buildAction(
-                      dispatch,
-                      setKanjiMemorizedThreshold
-                    )}
-                  />
-                )}
-              </div>
-              <div className="d-flex justify-content-end p-2 text-end">
-                <ChoiceNumberSlider
-                  initial={kanjiChoiceN}
-                  setChoiceN={buildAction(dispatch, setKanjiBtnN)}
-                />
-              </div>
-              <div className="d-flex justify-content-end p-2">
-                <SettingsSwitch
-                  active={kanjiFadeInAnswers}
-                  action={buildAction(dispatch, toggleKanjiFadeInAnswers)}
-                  statusText="Fade in answers"
-                />
-              </div>
-            </div>
-          </div>
+          {sectionKanjiGame && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="kanji-game-settings" text="Loading..." />
+              }
+            >
+              <SettingsKanjiGame />
+            </Suspense>
+          )}
         </div>
+
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
             <h2>Particles Game</h2>
+            {collapseExpandToggler(sectionParticle, setSectionParticle)}
           </div>
-          <div className="setting-block">
-            <SettingsSwitch
-              active={particlesARomaji}
-              action={buildAction(dispatch, setParticlesARomaji)}
-              statusText="Answer Romaji"
-            />
-            <div className="mb-2">
-              <SettingsSwitch
-                active={particleFadeInAnswer}
-                action={buildAction(dispatch, toggleParticleFadeInAnswers)}
-                statusText="Fade in answers"
-              />
-            </div>
-          </div>
+          {sectionParticle && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="particle-settings" text="Loading..." />
+              }
+            >
+              <SettingsParticleGame />
+            </Suspense>
+          )}
         </div>
+
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
             <h2>Application</h2>
@@ -867,44 +637,12 @@ export default function Settings() {
               </div>
             </div>
           </div>
-          {staleSpaceRepTerms.length > 0 && (
-            <div className="mb-2">
-              <div className="d-flex justify-content-between">
-                <h5>Stale Space Repetition</h5>
-                {collapseExpandToggler(
-                  sectionStaleSpaceRep,
-                  setSectionStaleSpaceRep
-                )}
-              </div>
-              <div className="px-4">
-                <span>
-                  {"keys: " + JSON.stringify(Array.from(staleSpaceRepKeys))}
-                </span>
-              </div>
-
-              {sectionStaleSpaceRep && (
-                <Suspense
-                  fallback={<NotReady addlStyle="failed-spacerep-view" />}
-                >
-                  <div className="failed-spacerep-view container mt-2 p-0">
-                    {staleSpaceRepTerms}
-                  </div>
-                </Suspense>
-              )}
-            </div>
-          )}
-          {failedFurigana.length > 0 && (
-            <div className="mb-2">
-              <h5>Failed Furigana Parse</h5>
-              <Suspense
-                fallback={<NotReady addlStyle="failed-furigana-view" />}
-              >
-                <div className="failed-furigana-view container mt-2 p-0">
-                  {failedFurigana}
-                </div>
-              </Suspense>
-            </div>
-          )}
+          <Suspense fallback={<NotReady addlStyle="failed-spacerep-view" />}>
+            <SettingsStale />
+          </Suspense>
+          <Suspense fallback={<NotReady addlStyle="failed-furigana-view" />}>
+            <SettingsFailedFurigana />
+          </Suspense>
         </div>
       </div>
     </div>
