@@ -16,7 +16,6 @@ import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import {
   daysSince,
-  msgInnerTrim,
   spaceRepLog,
   // timedPlayLog,
 } from "../../helper/consoleHelper";
@@ -34,7 +33,10 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
-import { spaceRepetitionOrder } from "../../helper/recallHelper";
+import {
+  recallDebugLogHelper,
+  spaceRepetitionOrder,
+} from "../../helper/recallHelper";
 import { dateViewOrder, randomOrder } from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
@@ -387,21 +389,9 @@ export default function Phrases() {
           }>
         ) => {
           if (action && "payload" in action) {
-            const { newValue: meta, oldValue } = action.payload;
+            const { newValue: meta, oldValue: oldMeta } = action.payload;
 
-            const lastReviewDate = oldValue[uid]?.lastReview;
-            const lastReview = lastReviewDate
-              ? `${daysSince(lastReviewDate)}d -> `
-              : "";
-
-            const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(2);
-            const w = msgInnerTrim(p.english, 30);
-            const msg =
-              reviewEvery === undefined
-                ? `Space Rep [${w}] removed`
-                : `Space Rep [${w}] updated ${lastReview}${reviewEvery}d`;
-
-            dispatch(logger(msg, DebugLevel.WARN));
+            recallDebugLogHelper(dispatch, uid, meta, oldMeta, p.english);
           }
 
           // prevent updates when quick scrolling

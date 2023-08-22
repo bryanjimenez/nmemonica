@@ -1,7 +1,10 @@
 import clamp from "lodash/clamp";
 import orderBy from "lodash/orderBy";
 
-import { daysSince } from "./consoleHelper";
+import { daysSince, msgInnerTrim } from "./consoleHelper";
+import { AppDispatch } from "../slices";
+import { logger } from "../slices/globalSlice";
+import { DebugLevel } from "../slices/settingHelper";
 import type { MetaDataObj } from "../typings/raw";
 
 /** Cutoff value between right/wrong
@@ -326,4 +329,37 @@ export function updateAction(
 
   const newValue = { ...spaceRep, [uid]: o };
   return { newValue, oldValue: { ...spaceRep } };
+}
+
+/**
+ * Logic to log debug message
+ * @param dispatch
+ * @param uid
+ * @param meta
+ * @param oldMeta
+ * @param term
+ */
+export function recallDebugLogHelper(
+  dispatch: AppDispatch,
+  uid: string,
+  meta: Record<string, MetaDataObj>,
+  oldMeta: Record<string, MetaDataObj>,
+  english: string
+) {
+  const lastReviewDate = oldMeta[uid]?.lastReview;
+  const lastReview = lastReviewDate ? `${daysSince(lastReviewDate)}d` : "";
+
+  const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(0);
+  const w = msgInnerTrim(english, 30);
+
+  // FIXME: testing
+  const oReviewEvery = oldMeta[uid].daysBetweenReviews?.toFixed(0) ?? "";
+  const consec = oldMeta[uid].consecutiveRight ?? "0";
+
+  const msg =
+    reviewEvery === undefined
+      ? `Space Rep [${w}] removed`
+      : `Space Rep [${w}] updated ${lastReview} f:${oReviewEvery}d #${consec} -> f:${reviewEvery}d`;
+
+  dispatch(logger(msg, DebugLevel.WARN));
 }

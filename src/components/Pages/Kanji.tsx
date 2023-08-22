@@ -17,7 +17,6 @@ import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   daysSince,
-  msgInnerTrim,
   spaceRepLog,
 } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
@@ -29,7 +28,10 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
-import { spaceRepetitionOrder } from "../../helper/recallHelper";
+import {
+  recallDebugLogHelper,
+  spaceRepetitionOrder,
+} from "../../helper/recallHelper";
 import {
   dateViewOrder,
   difficultyOrder,
@@ -437,21 +439,9 @@ export default function Kanji() {
           }>
         ) => {
           if (action && "payload" in action) {
-            const { newValue: meta, oldValue } = action.payload;
+            const { newValue: meta, oldValue: oldMeta } = action.payload;
 
-            const lastReviewDate = oldValue[uid]?.lastReview;
-            const lastReview = lastReviewDate
-              ? `${daysSince(lastReviewDate)}d -> `
-              : "";
-
-            const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(2);
-            const w = msgInnerTrim(k.english, 30);
-            const msg =
-              reviewEvery === undefined
-                ? `Space Rep [${w}] removed`
-                : `Space Rep [${w}] updated ${lastReview}${reviewEvery}d`;
-
-            dispatch(logger(msg, DebugLevel.WARN));
+            recallDebugLogHelper(dispatch, uid, meta, oldMeta, k.english);
           }
 
           // after space rep updates

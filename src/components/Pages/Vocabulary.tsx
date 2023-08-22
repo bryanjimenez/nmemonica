@@ -18,7 +18,6 @@ import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import {
   daysSince,
-  msgInnerTrim,
   spaceRepLog,
   timedPlayLog,
 } from "../../helper/consoleHelper";
@@ -36,7 +35,10 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
-import { spaceRepetitionOrder } from "../../helper/recallHelper";
+import {
+  recallDebugLogHelper,
+  spaceRepetitionOrder,
+} from "../../helper/recallHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -536,21 +538,15 @@ export default function Vocabulary() {
           }>
         ) => {
           if (action && "payload" in action) {
-            const { newValue: meta, oldValue } = action.payload;
+            const { newValue: meta, oldValue: oldMeta } = action.payload;
 
-            const lastReviewDate = oldValue[uid]?.lastReview;
-            const lastReview = lastReviewDate
-              ? `${daysSince(lastReviewDate)}d -> `
-              : "";
-
-            const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(0);
-            const w = msgInnerTrim(vocabulary.english, 30);
-            const msg =
-              reviewEvery === undefined
-                ? `Space Rep [${w}] removed`
-                : `Space Rep [${w}] updated ${lastReview}${reviewEvery}d`;
-
-            dispatch(logger(msg, DebugLevel.WARN));
+            recallDebugLogHelper(
+              dispatch,
+              uid,
+              meta,
+              oldMeta,
+              vocabulary.english
+            );
           }
 
           // after space rep updates
