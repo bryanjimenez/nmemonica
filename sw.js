@@ -1,6 +1,6 @@
 const buildConstants = {
   swVersion: "5bad10eb",
-  initCacheVer: "7b077187",
+  initCacheVer: "9173e51f",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   authenticationHeader: "X-API-KEY",
@@ -832,8 +832,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.1c758fed.js",
   "main.2686179212fa477cc0a8.css",
+  "main.e70b3d87.js",
   "manifest.webmanifest",
   "maskable512.png",
   "npm.babel.40c54934.js",
