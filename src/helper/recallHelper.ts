@@ -65,16 +65,16 @@ export function gradeSpaceRepetition({
   const difficultyW = 3 - 1.7 * nextDifficulty;
 
   let daysBetweenCalc: number;
-  if (
-    typeof daysBetweenReviews === "number" &&
-    daysBetweenReviews > 0 &&
-    accuracy >= SR_CORRECT_TRESHHOLD
-  ) {
+  if (accuracy >= SR_CORRECT_TRESHHOLD) {
     // previously correct
     const fuzz = Math.random() < 0.5 ? 0.95 : 1.05;
 
-    daysBetweenCalc =
-      daysBetweenReviews * (1 + (difficultyW - 1) * (percentOverdue * fuzz));
+    const days =
+      typeof daysBetweenReviews === "number" && daysBetweenReviews > 1
+        ? daysBetweenReviews
+        : 1;
+
+    daysBetweenCalc = days * (1 + (difficultyW - 1) * (percentOverdue * fuzz));
   } else {
     // previously incorrect
     const days =

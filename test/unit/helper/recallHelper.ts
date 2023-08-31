@@ -15,7 +15,7 @@ function xAgoDate(days) {
 
 describe("recallHelper", function () {
   describe("gradeSpaceRepetition", function () {
-    describe("previously ungraded", function () {
+    describe("previously ungraded, then", function () {
       it("correct", function () {
         const difficulty = 0.7;
         const accuracy = SR_CORRECT_TRESHHOLD;
@@ -46,7 +46,7 @@ describe("recallHelper", function () {
         expect(calcDaysBetweenReviews).to.be.lessThanOrEqual(1);
       });
     });
-    describe("previously graded", function () {
+    describe("previously graded, then", function () {
       it("correct", function () {
         const xDaysAgo = 2;
 
@@ -112,6 +112,32 @@ describe("recallHelper", function () {
         expect(calcDaysBetweenReviews).to.be.lessThanOrEqual(1);
       });
     });
+    describe("previously incorrect, then", function () {
+      /**
+       *  When previously incorrect then correct
+       *  daysBetween should not be below 1
+       *  to avoid a no increment scenario
+       */
+      it("correct", function () {
+        const xDaysAgo = 4;
+
+        const difficulty = 0.7;
+        const accuracy = SR_CORRECT_TRESHHOLD;
+        const daysSinceReview = xDaysAgo;
+        const daysBetweenReviews = 0.5; // previously wrong
+
+        const { calcDaysBetweenReviews, calcPercentOverdue } =
+          gradeSpaceRepetition({
+            difficulty,
+            accuracy,
+            daysSinceReview,
+            daysBetweenReviews,
+          });
+
+        expect(calcPercentOverdue).to.equal(SR_REVIEW_OVERDUE_PERCENT);
+        expect(calcDaysBetweenReviews).to.be.greaterThanOrEqual(1);
+      });
+    });
   });
 
   describe("spaceRepetitionOrder", function () {
@@ -153,12 +179,10 @@ describe("recallHelper", function () {
     it("incorrect", function () {
       const expected = [4, 5, 8, 9];
 
-      const { failed } = spaceRepetitionOrder(
-        terms,
-        metaRecord,
-        maxReviews
-      );
-      expect(failed).to.have.length(expected.length).and.to.contain.members(expected);
+      const { failed } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+      expect(failed)
+        .to.have.length(expected.length)
+        .and.to.contain.members(expected);
     });
     it("pending", function () {
       const expected = [3, 6, 7];
@@ -169,8 +193,12 @@ describe("recallHelper", function () {
         todayDone,
       } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
-      expect(pending, 'Categorized as overdue').to.have.length(expected.length).and.to.contain.members(expected);
-      expect(pending, 'Descending percentOverdue order').to.deep.equal(expected);
+      expect(pending, "Categorized as overdue")
+        .to.have.length(expected.length)
+        .and.to.contain.members(expected);
+      expect(pending, "Descending percentOverdue order").to.deep.equal(
+        expected
+      );
       // pending, but not played because date = today
       expect(notPlayed).to.contain.members([2]);
     });
@@ -201,7 +229,7 @@ describe("recallHelper", function () {
       expect([...failed, ...pending], "limited")
         .to.have.length(maxReviews)
         .and.be.an("Array");
-      expect([...overLimit,...notPlayed,...todayDone], "remainder")
+      expect([...overLimit, ...notPlayed, ...todayDone], "remainder")
         .to.have.length(terms.length - maxReviews)
         .and.be.an("Array");
     });
@@ -331,7 +359,7 @@ describe("recallHelper", function () {
         [terms[8].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 17, daysBetweenReviews: 0.25, consecutiveRight: 0,},
         [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 57, daysBetweenReviews: 1, consecutiveRight: 1,},
       };
-      it("oldest first", function(){
+      it("oldest first", function () {
         const expected = [2, 3, 4, 5, 6];
         const {
           failed,
@@ -340,8 +368,8 @@ describe("recallHelper", function () {
           todayDone,
         } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
 
-        expect(pending, 'lastView oldest first').to.deep.equal(expected);
-      })
-    })
+        expect(pending, "lastView oldest first").to.deep.equal(expected);
+      });
+    });
   });
 });
