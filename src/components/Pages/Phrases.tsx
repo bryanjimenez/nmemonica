@@ -389,7 +389,7 @@ export default function Phrases() {
         prevState.reinforcedUID ??
         getTermUID(prevState.selectedIndex, filteredPhrases, order);
 
-      const p = getTerm<RawPhrase>(uid, filteredPhrases);
+      const p = getTerm(uid, filteredPhrases, phraseList);
 
       let spaceRepUpdated: Promise<unknown> = Promise.resolve();
       if (metadata.current[uid]?.difficulty && accuracyModifiedRef.current) {
@@ -534,7 +534,7 @@ export default function Phrases() {
   //   })
   // );
 
-  const phrase = getTerm(uid, phraseList);
+  const phrase = getTerm(uid, filteredPhrases, phraseList);
 
   const playButton = getPlayBtn(
     swipeThreshold,

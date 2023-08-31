@@ -529,7 +529,7 @@ export default function Vocabulary() {
         prevState.reinforcedUID ??
         getTermUID(prevState.selectedIndex, filteredVocab, order);
 
-      const vocabulary = getTerm<RawVocabulary>(uid, vocabList);
+      const vocabulary = getTerm(uid, filteredVocab, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
       let spaceRepUpdated: Promise<unknown> = Promise.resolve();
@@ -899,7 +899,7 @@ export default function Vocabulary() {
   //   })
   // );
 
-  const vocabulary = getTerm(uid, vocabList);
+  const vocabulary = getTerm(uid, filteredVocab, vocabList);
   const vocabulary_reinforce = metadata.current[vocabulary.uid]?.rein === true;
 
   const isVerb = vocabulary.grp === "Verb";

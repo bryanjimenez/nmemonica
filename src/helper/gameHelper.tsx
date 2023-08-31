@@ -90,13 +90,21 @@ export function getTermUID<Term extends { uid: string }>(
 /**
  * @returns the term in the list matching the uid
  * @param uid
- * @param list of terms
+ * @param filteredList list of terms (subset)
+ * @param completeList list ot terms
  */
 export function getTerm<Term extends { uid: string }>(
   uid: string,
-  list: Term[]
+  filteredList: Term[],
+  completeList?: Term[]
 ) {
-  const term = list.find((v) => uid === v.uid);
+  let term = filteredList.find((v) => uid === v.uid);
+
+  if (!term && completeList) {
+    // previous term was outside of filteredList
+    // a jumpToTerm
+    term = completeList.find((v) => uid === v.uid);
+  }
 
   if (!term) {
     throw new Error("No term found");
