@@ -29,6 +29,7 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import {
+  getPercentOverdue,
   recallDebugLogHelper,
   recallNotificationHelper,
   spaceRepetitionOrder,
@@ -176,7 +177,20 @@ export default function Kanji() {
         }
 
         const overdueVals = pending.map((item, i) => {
-          const p = metadata.current[filtered[i].uid]?.percentOverdue ?? 0;
+          const {
+            accuracy = 0,
+            lastReview,
+            daysBetweenReviews,
+          } = metadata.current[filtered[i].uid]!;
+          const daysSinceReview = lastReview
+            ? daysSince(lastReview)
+            : undefined;
+          const p = getPercentOverdue({
+            accuracy,
+            daysSinceReview,
+            daysBetweenReviews,
+          });
+
           return p.toFixed(2).replace(".00", "").replace("0.", ".");
         });
 

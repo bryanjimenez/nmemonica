@@ -36,6 +36,7 @@ import {
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import {
+  getPercentOverdue,
   recallDebugLogHelper,
   recallNotificationHelper,
   spaceRepetitionOrder,
@@ -229,7 +230,20 @@ export default function Vocabulary() {
         }
 
         const overdueVals = pending.map((item, i) => {
-          const p = metadata.current[filtered[i].uid]?.percentOverdue ?? 0;
+          const {
+            accuracy = 0,
+            lastReview,
+            daysBetweenReviews,
+          } = metadata.current[filtered[i].uid]!;
+          const daysSinceReview = lastReview
+            ? daysSince(lastReview)
+            : undefined;
+          const p = getPercentOverdue({
+            accuracy,
+            daysSinceReview,
+            daysBetweenReviews,
+          });
+
           return p.toFixed(2).replace(".00", "").replace("0.", ".");
         });
         // console.table(recallInfoTable(pending.map(i=>filteredVocab[i]) ,metadata.current));

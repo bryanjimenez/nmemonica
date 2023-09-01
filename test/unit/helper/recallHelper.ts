@@ -3,7 +3,8 @@ import {
   SR_CORRECT_TRESHHOLD,
   SR_REVIEW_DUE_PERCENT,
   SR_REVIEW_OVERDUE_PERCENT,
-  gradeSpaceRepetition,
+  getPercentOverdue,
+  calculateDaysBetweenReviews,
   spaceRepetitionOrder,
 } from "../../../src/helper/recallHelper";
 
@@ -14,127 +15,150 @@ function xAgoDate(days) {
 }
 
 describe("recallHelper", function () {
-  describe("gradeSpaceRepetition", function () {
-    describe("previously ungraded, then", function () {
-      it("correct", function () {
-        const difficulty = 0.7;
+  describe("previously ungraded, then", function () {
+    describe("correct", function () {
+      it("getPercentOverdue == 1", function () {
         const accuracy = SR_CORRECT_TRESHHOLD;
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } =
-          gradeSpaceRepetition({
-            difficulty,
-            accuracy,
-            daysSinceReview: undefined,
-            daysBetweenReviews: undefined,
-          });
+        const calcPercentOverdue = getPercentOverdue({
+          accuracy,
+          daysSinceReview: undefined,
+          daysBetweenReviews: undefined,
+        });
 
         expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
       });
-      it("incorrect", function () {
-        const difficulty = 0.7;
-        const accuracy = SR_CORRECT_TRESHHOLD - 0.1;
+    });
+    describe("incorrect", function () {
+      const difficulty = 0.7;
+      const accuracy = SR_CORRECT_TRESHHOLD - 0.1;
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } =
-          gradeSpaceRepetition({
-            difficulty,
-            accuracy,
-            daysSinceReview: undefined,
-            daysBetweenReviews: undefined,
-          });
+      const calcPercentOverdue = getPercentOverdue({
+        accuracy,
+        daysSinceReview: undefined,
+        daysBetweenReviews: undefined,
+      });
+      const calcDaysBetweenReviews = calculateDaysBetweenReviews({
+        difficulty,
+        accuracy,
+        daysSinceReview: undefined,
+        daysBetweenReviews: undefined,
+      });
 
+      it("getPercentOverdue == 1", function () {
         expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
+      });
+      it("daysBetweenReviews <= 1", function () {
         expect(calcDaysBetweenReviews).to.be.lessThanOrEqual(1);
       });
     });
-    describe("previously graded, then", function () {
-      it("correct", function () {
-        const xDaysAgo = 2;
+  });
+  describe("previously graded, then", function () {
+    describe("correct", function () {
+      const xDaysAgo = 2;
 
-        const difficulty = 0.7;
-        const accuracy = SR_CORRECT_TRESHHOLD;
-        const daysSinceReview = xDaysAgo;
-        const daysBetweenReviews = 2;
+      const difficulty = 0.7;
+      const accuracy = SR_CORRECT_TRESHHOLD;
+      const daysSinceReview = xDaysAgo;
+      const daysBetweenReviews = 2;
 
-        let actuals = [
+      let actuals = [
+        {
+          days: daysSinceReview,
+          betweenRev: daysBetweenReviews,
+          overduePerC: NaN,
+        },
+      ];
+
+      for (let i = 1; i < 5; ++i) {
+        const overduePerC = getPercentOverdue({
+          accuracy,
+          daysSinceReview: actuals[i - 1].days,
+          daysBetweenReviews: actuals[i - 1].betweenRev,
+        });
+        const betweenRev = calculateDaysBetweenReviews({
+          difficulty,
+          accuracy,
+          daysSinceReview: actuals[i - 1].days,
+          daysBetweenReviews: actuals[i - 1].betweenRev,
+        });
+
+        const nextRev = actuals[i - 1].days + Math.trunc(betweenRev);
+
+        actuals = [
+          ...actuals,
           {
-            days: daysSinceReview,
-            betweenRev: daysBetweenReviews,
-            overduePerC: NaN,
+            days: nextRev,
+            betweenRev,
+            overduePerC,
           },
         ];
+      }
 
-        for (let i = 1; i < 5; ++i) {
-          const {
-            calcDaysBetweenReviews: betweenRev,
-            calcPercentOverdue: overduePerC,
-          } = gradeSpaceRepetition({
-            difficulty,
-            accuracy,
-            daysSinceReview: actuals[i - 1].days,
-            daysBetweenReviews: actuals[i - 1].betweenRev,
-          });
+      // console.table(actuals);
 
-          const nextRev = actuals[i - 1].days + Math.trunc(betweenRev);
-
-          actuals = [
-            ...actuals,
-            {
-              days: nextRev,
-              betweenRev,
-              overduePerC,
-            },
-          ];
-        }
-
-        // console.table(actuals);
+      it("overduePercent starts with NaN", function () {
         expect(actuals[0].overduePerC).is.NaN; // seed value
+      });
+      it("overduePercent reaches due value", function () {
         expect(actuals[1].overduePerC).to.equal(SR_REVIEW_DUE_PERCENT);
+      });
+      it("overduePercent ends with overdue overdue", function () {
         expect(actuals[4].overduePerC).to.equal(SR_REVIEW_OVERDUE_PERCENT);
       });
+    });
+    describe("incorrect", function () {
+      const xDaysAgo = 4;
 
-      it("incorrect", function () {
-        const xDaysAgo = 4;
+      const difficulty = 0.7;
+      const accuracy = SR_CORRECT_TRESHHOLD - 0.1;
+      const daysSinceReview = xDaysAgo;
+      const daysBetweenReviews = 4;
 
-        const difficulty = 0.7;
-        const accuracy = SR_CORRECT_TRESHHOLD - 0.1;
-        const daysSinceReview = xDaysAgo;
-        const daysBetweenReviews = 4;
+      const calcPercentOverdue = getPercentOverdue({
+        accuracy,
+        daysSinceReview,
+        daysBetweenReviews,
+      });
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } =
-          gradeSpaceRepetition({
-            difficulty,
-            accuracy,
-            daysSinceReview,
-            daysBetweenReviews,
-          });
+      const calcDaysBetweenReviews = calculateDaysBetweenReviews({
+        difficulty,
+        accuracy,
+        daysSinceReview,
+        daysBetweenReviews,
+      });
 
+      it("getPercentOverdue == 1", function () {
         expect(calcPercentOverdue).to.equal(SR_REVIEW_DUE_PERCENT);
+      });
+      it("daysBetweenReviews <= 1", function () {
         expect(calcDaysBetweenReviews).to.be.lessThanOrEqual(1);
       });
     });
-    describe("previously incorrect, then", function () {
+  });
+
+  describe("previously incorrect, then", function () {
+    describe("correct", function () {
       /**
        *  When previously incorrect then correct
        *  daysBetween should not be below 1
        *  to avoid a no increment scenario
        */
-      it("correct", function () {
-        const xDaysAgo = 4;
+      const xDaysAgo = 4;
 
-        const difficulty = 0.7;
-        const accuracy = SR_CORRECT_TRESHHOLD;
-        const daysSinceReview = xDaysAgo;
-        const daysBetweenReviews = 0.5; // previously wrong
+      const difficulty = 0.7;
+      const accuracy = SR_CORRECT_TRESHHOLD;
+      const daysSinceReview = xDaysAgo;
+      const daysBetweenReviews = 0.5; // previously wrong
 
-        const { calcDaysBetweenReviews, calcPercentOverdue } =
-          gradeSpaceRepetition({
-            difficulty,
-            accuracy,
-            daysSinceReview,
-            daysBetweenReviews,
-          });
+      const calcDaysBetweenReviews = calculateDaysBetweenReviews({
+        difficulty,
+        accuracy,
+        daysSinceReview,
+        daysBetweenReviews,
+      });
 
-        expect(calcPercentOverdue).to.equal(SR_REVIEW_OVERDUE_PERCENT);
+      it("daysBetweenReview >= 1", function () {
         expect(calcDaysBetweenReviews).to.be.greaterThanOrEqual(1);
       });
     });
@@ -163,77 +187,141 @@ describe("recallHelper", function () {
       [terms[0].uid]: { vC: 1, lastView: today },
       [terms[1].uid]: { vC: 1, lastView: today },
       // pending review
-      [terms[2].uid]: { percentOverdue: 2, vC: 2, lastView: today, lastReview: xAgoDated, difficulty: 90, accuracy: 67, daysBetweenReviews: 1, consecutiveRight: 1,},
-      [terms[3].uid]: { percentOverdue: 1.4, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 71, daysBetweenReviews: 1, consecutiveRight: 1,},
-      [terms[4].uid]: { percentOverdue: 1.3, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 20, accuracy: 31, daysBetweenReviews: 0.39691804809712816, consecutiveRight: 0,},
-      [terms[5].uid]: { percentOverdue: 1.2, vC: 2, lastView: yesterday, lastReview: xAgoDated, difficulty: 30, accuracy: 23, daysBetweenReviews: 0.3393890996206828, consecutiveRight: 0,},
-      [terms[6].uid]: { percentOverdue: 1.1, vC: 2, lastView: yesterday, lastReview: xAgoDated, difficulty: 90, accuracy: 73, daysBetweenReviews: 1, consecutiveRight: 1,},
-      [terms[7].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 75, daysBetweenReviews: 0.25, consecutiveRight: 0,},
+      [terms[2].uid]: {
+        vC: 2,
+        lastView: today,
+        lastReview: xAgoDated,
+        difficulty: 90,
+        accuracy: 67,
+        daysBetweenReviews: 1,
+        consecutiveRight: 1,
+      },
+      [terms[3].uid]: {
+        vC: 2,
+        lastView: xAgoDated,
+        lastReview: xAgoDated,
+        difficulty: 90,
+        accuracy: 71,
+        daysBetweenReviews: 1,
+        consecutiveRight: 1,
+      },
+      [terms[4].uid]: {
+        vC: 2,
+        lastView: xAgoDated,
+        lastReview: xAgoDated,
+        difficulty: 20,
+        accuracy: 31,
+        daysBetweenReviews: 0.39691804809712816,
+        consecutiveRight: 0,
+      },
+      [terms[5].uid]: {
+        vC: 2,
+        lastView: yesterday,
+        lastReview: xAgoDated,
+        difficulty: 30,
+        accuracy: 23,
+        daysBetweenReviews: 0.3393890996206828,
+        consecutiveRight: 0,
+      },
+      [terms[6].uid]: {
+        vC: 2,
+        lastView: yesterday,
+        lastReview: xAgoDated,
+        difficulty: 90,
+        accuracy: 73,
+        daysBetweenReviews: 1,
+        consecutiveRight: 1,
+      },
+      [terms[7].uid]: {
+        vC: 2,
+        lastView: xAgoDated,
+        lastReview: xAgoDated,
+        difficulty: 90,
+        accuracy: 75,
+        daysBetweenReviews: 0.25,
+        consecutiveRight: 0,
+      },
       // previously incorrect
-      [terms[8].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 17, daysBetweenReviews: 0.25, consecutiveRight: 0,},
-      [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 19, daysBetweenReviews: 1, consecutiveRight: 1,},
+      [terms[8].uid]: {
+        vC: 2,
+        lastView: xAgoDated,
+        lastReview: xAgoDated,
+        difficulty: 90,
+        accuracy: 17,
+        daysBetweenReviews: 0.25,
+        consecutiveRight: 0,
+      },
+      [terms[9].uid]: {
+        vC: 2,
+        lastView: xAgoDated,
+        lastReview: xAgoDated,
+        difficulty: 90,
+        accuracy: 19,
+        daysBetweenReviews: 1,
+        consecutiveRight: 1,
+      },
     };
 
     const maxReviews = 20;
-
-    it("incorrect", function () {
-      const expected = [4, 5, 8, 9];
-
-      const { failed } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
-      expect(failed)
-        .to.have.length(expected.length)
-        .and.to.contain.members(expected);
-    });
-    it("pending", function () {
-      const expected = [3, 6, 7];
-      const {
-        failed,
-        overdue: pending,
-        notPlayed,
-        todayDone,
-      } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
-
-      expect(pending, "Categorized as overdue")
-        .to.have.length(expected.length)
-        .and.to.contain.members(expected);
-      expect(pending, "Descending percentOverdue order").to.deep.equal(
-        expected
-      );
-      // pending, but not played because date = today
-      expect(notPlayed).to.contain.members([2]);
-    });
-    it("not played", function () {
-      const {
-        failed,
-        overdue: pending,
-        notPlayed,
-        todayDone,
-      } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
-
-      // pending, but not played because date = today
-      expect(notPlayed).to.contain.members([2]);
-      // no percentOverdue value
-      expect(notPlayed).to.contain.members([0, 1]);
-    });
-    it("max limit", function () {
-      const maxReviews = 2;
-
-      const {
-        failed,
-        overdue: pending,
-        overLimit,
-        notPlayed,
-        todayDone,
-      } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
-
-      expect([...failed, ...pending], "limited")
-        .to.have.length(maxReviews)
-        .and.be.an("Array");
-      expect([...overLimit, ...notPlayed, ...todayDone], "remainder")
-        .to.have.length(terms.length - maxReviews)
-        .and.be.an("Array");
-    });
-
+    describe("return params", function(){
+      it("incorrect", function () {
+        const expected = [4, 5, 8, 9];
+  
+        const { failed } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+        expect(failed)
+          .to.have.length(expected.length)
+          .and.to.contain.members(expected);
+      });
+      it("pending", function () {
+        const expected = [3, 7, 6];
+        const {
+          failed,
+          overdue: pending,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+  
+        expect(pending, "Categorized as overdue")
+          .to.have.length(expected.length)
+          .and.to.contain.members(expected);
+        expect(pending, "Descending percentage overdue order").to.deep.equal(
+          expected
+        );
+        // pending, but not played because date = today
+        expect(notPlayed).to.contain.members([2]);
+      });
+      it("not played", function () {
+        const {
+          failed,
+          overdue: pending,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+  
+        // pending, but not played because date = today
+        expect(notPlayed).to.contain.members([2]);
+        // no lastReview value
+        expect(notPlayed).to.contain.members([0, 1]);
+      });
+      it("max limit", function () {
+        const maxReviews = 2;
+  
+        const {
+          failed,
+          overdue: pending,
+          overLimit,
+          notPlayed,
+          todayDone,
+        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+  
+        expect([...failed, ...pending], "limited")
+          .to.have.length(maxReviews)
+          .and.be.an("Array");
+        expect([...overLimit, ...notPlayed, ...todayDone], "remainder")
+          .to.have.length(terms.length - maxReviews)
+          .and.be.an("Array");
+      });  
+    })
     describe("date view exclusion", function () {
       // metadata.lastView: last viewed
       // metadata.lastReview: last reviewed
@@ -251,7 +339,6 @@ describe("recallHelper", function () {
         const metaRecord = {
           // pending review
           [terms[0].uid]: {
-            percentOverdue: 2,
             vC: 2,
             lastView: today,
             lastReview: xAgoDate,
@@ -284,7 +371,6 @@ describe("recallHelper", function () {
         const metaRecord = {
           // pending review
           [terms[0].uid]: {
-            percentOverdue: 2,
             vC: 2,
             lastView: xAgoDate,
             lastReview: xAgoDate,
@@ -317,7 +403,6 @@ describe("recallHelper", function () {
         const metaRecord = {
           // lastReview today
           [terms[0].uid]: {
-            percentOverdue: 2,
             vC: 2,
             lastView: today,
             lastReview: today,
@@ -342,22 +427,84 @@ describe("recallHelper", function () {
       });
     });
     describe("overdue sorted by lastView", function () {
-      // overdue: percentOverdue = 2
-
       const metaRecord = {
         // not yet played
         [terms[0].uid]: { vC: 1, lastView: today },
         [terms[1].uid]: { vC: 1, lastView: today },
         // overdue
-        [terms[2].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(100), lastReview: xAgoDate(2), difficulty: 90, accuracy: 100, daysBetweenReviews: 1, consecutiveRight: 1,},
-        [terms[3].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(5), lastReview: xAgoDate(3), difficulty: 90, accuracy: 71, daysBetweenReviews: 1, consecutiveRight: 1,},
-        [terms[4].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(4), lastReview: xAgoDate(4), difficulty: 20, accuracy: 100, daysBetweenReviews: 0.39691804809712816, consecutiveRight: 0,},
-        [terms[5].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(3), lastReview: xAgoDate(5), difficulty: 30, accuracy: 100, daysBetweenReviews: 0.3393890996206828, consecutiveRight: 0,},
-        [terms[6].uid]: { percentOverdue: 2, vC: 2, lastView: xAgoDate(2), lastReview: xAgoDate(100), difficulty: 90, accuracy: 100, daysBetweenReviews: 1, consecutiveRight: 1,},
+        [terms[2].uid]: {
+          vC: 2,
+          lastView: xAgoDate(100),
+          lastReview: xAgoDate(2),
+          difficulty: 90,
+          accuracy: 100,
+          daysBetweenReviews: 1,
+          consecutiveRight: 1,
+        },
+        [terms[3].uid]: {
+          vC: 2,
+          lastView: xAgoDate(5),
+          lastReview: xAgoDate(3),
+          difficulty: 90,
+          accuracy: 71,
+          daysBetweenReviews: 1,
+          consecutiveRight: 1,
+        },
+        [terms[4].uid]: {
+          vC: 2,
+          lastView: xAgoDate(4),
+          lastReview: xAgoDate(4),
+          difficulty: 20,
+          accuracy: 100,
+          daysBetweenReviews: 0.39691804809712816,
+          consecutiveRight: 0,
+        },
+        [terms[5].uid]: {
+          vC: 2,
+          lastView: xAgoDate(3),
+          lastReview: xAgoDate(5),
+          difficulty: 30,
+          accuracy: 100,
+          daysBetweenReviews: 0.3393890996206828,
+          consecutiveRight: 0,
+        },
+        [terms[6].uid]: {
+          vC: 2,
+          lastView: xAgoDate(2),
+          lastReview: xAgoDate(100),
+          difficulty: 90,
+          accuracy: 100,
+          daysBetweenReviews: 1,
+          consecutiveRight: 1,
+        },
         // previously incorrect
-        [terms[7].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 13, daysBetweenReviews: 0.25, consecutiveRight: 0,},
-        [terms[8].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 17, daysBetweenReviews: 0.25, consecutiveRight: 0,},
-        [terms[9].uid]: { percentOverdue: 1, vC: 2, lastView: xAgoDated, lastReview: xAgoDated, difficulty: 90, accuracy: 57, daysBetweenReviews: 1, consecutiveRight: 1,},
+        [terms[7].uid]: {
+          vC: 2,
+          lastView: xAgoDated,
+          lastReview: xAgoDated,
+          difficulty: 90,
+          accuracy: 13,
+          daysBetweenReviews: 0.25,
+          consecutiveRight: 0,
+        },
+        [terms[8].uid]: {
+          vC: 2,
+          lastView: xAgoDated,
+          lastReview: xAgoDated,
+          difficulty: 90,
+          accuracy: 17,
+          daysBetweenReviews: 0.25,
+          consecutiveRight: 0,
+        },
+        [terms[9].uid]: {
+          vC: 2,
+          lastView: xAgoDated,
+          lastReview: xAgoDated,
+          difficulty: 90,
+          accuracy: 57,
+          daysBetweenReviews: 1,
+          consecutiveRight: 1,
+        },
       };
       it("oldest first", function () {
         const expected = [2, 3, 4, 5, 6];

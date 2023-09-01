@@ -9,7 +9,7 @@ import {
 } from "../../../src/helper/sortHelper";
 import type { Optional, RawVocabulary } from "../../../src/typings/raw";
 
-describe("gameHelper", function () {
+describe("sortHelper", function () {
   const terms: Optional<RawVocabulary,'tags'>[] = [
     {
       english: "blue",
@@ -506,7 +506,7 @@ describe("gameHelper", function () {
   });
   describe("dateViewOrder", function () {
     it("separate Space Repetition items to the end", function(){
-      const expected = [4, 5, 3, 0, 2, 1];
+      const expected = [4, 5, 3, 0, 1, 2];
       const termsWSpaceRepMixed = [
         { uid: "00c102a7e10b45b19afbab71c030bf63" }, // newest
         { uid: "6fca55dd4a82b78256cc9c22e2934938" }, // Space Repetition item
@@ -526,14 +526,16 @@ describe("gameHelper", function () {
           vC: 9,
           lastView: "2020-01-01T01:06:00.000Z",
           lastReview: "2020-01-01T01:06:00.000Z",   // Space Repetition item
-          percentOverdue: 1.9,
+          daysBetweenReviews: 2,
+          accuracy: 99
         },
         "729307b04a77bccc5db86d6b49f55f2f": {
           // english: 'grey',
           vC: 8,
           lastView: "2020-01-01T01:05:00.000Z",
           lastReview: "2020-01-01T01:05:00.000Z",   // Space Repetition item
-          percentOverdue: 2,
+          daysBetweenReviews: 2,
+          accuracy: 99
         },
         "e5d47019e1b948c2445b6c1ea3850c2b": {
           // english: 'red',

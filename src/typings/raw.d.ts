@@ -104,8 +104,6 @@ export interface MetaDataObj {
 
   /** Calculated review value */
   daysBetweenReviews?: number;
-  /** Calculated review value. The sort value.*/
-  percentOverdue?: number;
 }
 
 export type FuriganaToggleMap = Record<

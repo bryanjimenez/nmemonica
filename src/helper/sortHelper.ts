@@ -3,6 +3,7 @@ import orderBy from "lodash/orderBy";
 import { shuffleArray } from "./arrayHelper";
 import { daysSince } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
+import { getPercentOverdue } from "./recallHelper";
 import { MetaDataObj } from "../typings/raw";
 
 /**
@@ -183,7 +184,7 @@ export function dateViewOrder(
   }
 
   interface recallSortable {
-    percentOverdue: number;
+    percentOverdueCalc: number;
     uid: string;
     index: number;
   }
@@ -196,13 +197,20 @@ export function dateViewOrder(
     const tUid = term.uid;
     const oMeta = metaRecord[tUid];
 
-    if (oMeta?.lastReview && oMeta.percentOverdue) {
+    if (oMeta?.lastReview && oMeta.daysBetweenReviews && oMeta.accuracy) {
       // a space repetition item
       // won't be sorted by lastView
+      const daysSinceReview = daysSince(oMeta.lastReview);
+      const percentOverdueCalc = getPercentOverdue({
+        accuracy: oMeta.accuracy,
+        daysSinceReview,
+        daysBetweenReviews: oMeta.daysBetweenReviews,
+      });
+
       spaceRepTemp = [
         ...spaceRepTemp,
         {
-          percentOverdue: oMeta.percentOverdue,
+          percentOverdueCalc,
           uid: tUid,
           index: Number(tIdx),
         },
@@ -225,7 +233,7 @@ export function dateViewOrder(
   // prettier-ignore
   const prevViewedSort = orderBy(prevViewedTemp, ["lastView", "uid"], ["asc", "asc"]);
   // prettier-ignore
-  const prevSpaceRepSort = orderBy(spaceRepTemp, ["percentOverdue", "uid"], ["desc", "asc"]);
+  const prevSpaceRepSort = orderBy(spaceRepTemp, ["percentOverdueCalc", "uid"], ["desc", "asc"]);
 
   const prevViewed = prevViewedSort.map((el) => el.index);
   const prevSpaceRepd = prevSpaceRepSort.map((el) => el.index);

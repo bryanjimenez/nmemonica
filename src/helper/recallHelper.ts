@@ -19,51 +19,32 @@ export const SR_REVIEW_OVERDUE_PERCENT = 2;
 /** Minimum items to review at once */
 export const SR_MIN_REV_ITEMS = 5;
 
-interface ItemGradeParams {
-  /** number between [0, 1] */
-  difficulty: number;
-  /** number between [0, 1] */
-  accuracy: number;
-  /** number of days */
-  daysSinceReview?: number;
-  daysBetweenReviews?: number;
-}
 /**
- * Space repetition grader
+ * Calculate interval between reviews
  * @param item.difficulty [0, 1]:[easy, hard]
  * @param item.accuracy [0, 1]:[wrong, right]
  * @param item.daysSinceReview number of days since last review
- * @param item.daysBetweenReviews number of days between scheduled reviews (recalculated after a review)
+ * @param item.daysBetweenReviews number of days between scheduled reviews
  */
-export function gradeSpaceRepetition({
+export function calculateDaysBetweenReviews({
   difficulty,
   accuracy,
   daysSinceReview,
   daysBetweenReviews,
-}: ItemGradeParams) {
-  let percentOverdue;
-
-  if (
-    typeof daysSinceReview === "number" &&
-    daysSinceReview > 0 &&
-    typeof daysBetweenReviews === "number" &&
-    daysBetweenReviews > 0 &&
-    accuracy >= SR_CORRECT_TRESHHOLD
-  ) {
-    // subsequent grading
-    percentOverdue = Math.min(
-      SR_REVIEW_OVERDUE_PERCENT,
-      daysSinceReview / daysBetweenReviews
-    );
-  } else if (accuracy >= SR_CORRECT_TRESHHOLD) {
-    // initial grading
-    percentOverdue = SR_REVIEW_DUE_PERCENT;
-  } /** accuracy < SR_CORRECT_THRESHOLD */ else {
-    percentOverdue = SR_REVIEW_DUE_PERCENT;
-  }
+}: {
+  difficulty: number;
+  accuracy: number;
+  daysSinceReview?: number;
+  daysBetweenReviews?: number;
+}) {
+  const percentOverdueCalc = getPercentOverdue({
+    accuracy,
+    daysSinceReview,
+    daysBetweenReviews,
+  });
 
   const nextDifficulty =
-    difficulty + clamp((percentOverdue / 17) * (8 - 9 * accuracy), 0, 1);
+    difficulty + clamp((percentOverdueCalc / 17) * (8 - 9 * accuracy), 0, 1);
 
   const difficultyW = 3 - 1.7 * nextDifficulty;
 
@@ -77,7 +58,8 @@ export function gradeSpaceRepetition({
         ? daysBetweenReviews
         : 1;
 
-    daysBetweenCalc = days * (1 + (difficultyW - 1) * (percentOverdue * fuzz));
+    daysBetweenCalc =
+      days * (1 + (difficultyW - 1) * (percentOverdueCalc * fuzz));
   } else {
     // previously incorrect
     const days =
@@ -88,12 +70,52 @@ export function gradeSpaceRepetition({
     daysBetweenCalc = Math.min(1, days / (1 + 3 * nextDifficulty));
   }
 
-  return {
-    /** Calculated review value */
-    calcDaysBetweenReviews: daysBetweenCalc,
-    /** Calculated review value. The sort value.*/
-    calcPercentOverdue: percentOverdue,
-  };
+  return daysBetweenCalc;
+}
+
+/**
+ * Calculated percentage overdue. Value to sort by.
+ *
+ * overdue: (1, 2]
+ *
+ * due: 1
+ *
+ * pending: (0, 1)
+ * @param item.accuracy [0, 1]:[wrong, right]
+ * @param item.daysSinceReview number of days since last review
+ * @param item.daysBetweenReviews number of days between scheduled reviews
+ */
+export function getPercentOverdue({
+  accuracy,
+  daysSinceReview,
+  daysBetweenReviews,
+}: {
+  accuracy: number;
+  daysSinceReview?: number;
+  daysBetweenReviews?: number;
+}) {
+  let percentOverdueCalc;
+
+  if (
+    typeof daysSinceReview === "number" &&
+    daysSinceReview > 0 &&
+    typeof daysBetweenReviews === "number" &&
+    daysBetweenReviews > 0 &&
+    accuracy >= SR_CORRECT_TRESHHOLD
+  ) {
+    // subsequent grading
+    percentOverdueCalc = Math.min(
+      SR_REVIEW_OVERDUE_PERCENT,
+      daysSinceReview / daysBetweenReviews
+    );
+  } else if (accuracy >= SR_CORRECT_TRESHHOLD) {
+    // initial grading
+    percentOverdueCalc = SR_REVIEW_DUE_PERCENT;
+  } /** accuracy < SR_CORRECT_THRESHOLD */ else {
+    percentOverdueCalc = SR_REVIEW_DUE_PERCENT;
+  }
+
+  return percentOverdueCalc;
 }
 
 /**
@@ -103,7 +125,7 @@ export function gradeSpaceRepetition({
  *
  * ```failed``` — previously failed items
  *
- * ```overdue``` — overdue items (percentOverdue in desc order)
+ * ```overdue``` — overdue items (percentage overdue in desc order)
  *
  * ```overLimit``` — items beyond ```maxReviews``` limit (unordered)
  *
@@ -123,7 +145,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
   todayDone: number[];
 } {
   interface timedPlayedSortable {
-    percentOverdue: number;
+    percentOverdueCalc: number;
     lastView: string;
     uid: string;
     index: number;
@@ -145,38 +167,49 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
     const oMeta = metaRecord[tUid];
 
     /** Don't review items seen today  */
-    const dueTodayNotYetSeen = oMeta && daysSince(oMeta.lastView) > 0;
+    const viewedToday =
+      oMeta?.lastView && daysSince(oMeta.lastView) === 0 ? true : false;
     const reviewedToday =
-      oMeta?.lastReview && daysSince(oMeta.lastReview) === 0;
+      oMeta?.lastReview && daysSince(oMeta.lastReview) === 0 ? true : false;
 
     if (
-      dueTodayNotYetSeen &&
-      oMeta.percentOverdue &&
-      typeof oMeta.accuracy === "number" &&
-      oMeta.accuracy < SR_CORRECT_TRESHHOLD * 100
+      oMeta?.lastReview &&
+      !reviewedToday &&
+      !viewedToday &&
+      typeof oMeta.accuracy === "number"
     ) {
-      // previously incorrect
-      failedTemp = [
-        ...failedTemp,
-        {
-          lastView: oMeta.lastView,
-          views: oMeta.vC,
-          uid: tUid,
-          index: Number(tIdx),
-        },
-      ];
-    } else if (dueTodayNotYetSeen && oMeta?.percentOverdue) {
-      // pending
-      overdueTemp = [
-        ...overdueTemp,
-        {
-          percentOverdue: oMeta.percentOverdue,
-          lastView: oMeta.lastView,
-          uid: tUid,
-          index: Number(tIdx),
-        },
-      ];
-    } else if (reviewedToday) {
+      if (oMeta.accuracy < SR_CORRECT_TRESHHOLD * 100) {
+        // previously incorrect
+        failedTemp = [
+          ...failedTemp,
+          {
+            lastView: oMeta.lastView,
+            views: oMeta.vC,
+            uid: tUid,
+            index: Number(tIdx),
+          },
+        ];
+      } else {
+        // pending
+
+        const daysSinceReview = daysSince(oMeta.lastReview);
+        const percentOverdueCalc = getPercentOverdue({
+          accuracy: oMeta.accuracy,
+          daysSinceReview,
+          daysBetweenReviews: oMeta.daysBetweenReviews,
+        });
+
+        overdueTemp = [
+          ...overdueTemp,
+          {
+            percentOverdueCalc,
+            lastView: oMeta.lastView,
+            uid: tUid,
+            index: Number(tIdx),
+          },
+        ];
+      }
+    } else if (oMeta && reviewedToday) {
       // reivewed today
       todayTemp = [
         ...todayTemp,
@@ -195,7 +228,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
   // prettier-ignore
   const failedSort = orderBy(failedTemp, ["lastView", "uid"], ["asc", "asc"]);
   // prettier-ignore
-  const overdueSort = orderBy(overdueTemp, ["percentOverdue", "lastView", "uid"], ["desc", "asc", "asc"]);
+  const overdueSort = orderBy(overdueTemp, ["percentOverdueCalc", "lastView", "uid"], ["desc", "asc", "asc"]);
 
   const f = failedSort.map((el) => el.index);
   const o = overdueSort.map((el) => el.index);
@@ -203,20 +236,29 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
   const todayDone = todayTemp.map((el) => el.index);
 
   // maxReviews limit
-  let failed = f;
-  let overdue = o;
-  let overLimit: number[] = [];
-  if (maxReviews && maxReviews > 0) {
-    const idxEnd = Math.max(0, maxReviews - f.length);
-    failed = f.slice(0, Math.max(idxEnd, maxReviews));
-    overdue = o.slice(0, Math.min(o.length, idxEnd));
-    overLimit = [
-      ...f.slice(Math.max(idxEnd, maxReviews)),
-      ...o.slice(Math.min(o.length, idxEnd)),
-    ];
-  }
+  const { failed, overdue, overLimit } = overLimitSlice(f, o, maxReviews);
 
   return { failed, overdue, overLimit, notPlayed, todayDone };
+}
+
+/**
+ * maxReview Limiter
+ * @param f failed list
+ * @param o overdue list
+ * @param maxReviews number of maximum items to review
+ */
+export function overLimitSlice(f: number[], o: number[], maxReviews?: number) {
+  if (!maxReviews) return { failed: f, overdue: o, overLimit: [] };
+
+  const idxEnd = Math.max(0, maxReviews - f.length);
+  const failed = f.slice(0, Math.max(idxEnd, maxReviews));
+  const overdue = o.slice(0, Math.min(o.length, idxEnd));
+  const overLimit = [
+    ...f.slice(Math.max(idxEnd, maxReviews)),
+    ...o.slice(Math.min(o.length, idxEnd)),
+  ];
+
+  return { failed, overdue, overLimit };
 }
 
 /**
@@ -229,17 +271,28 @@ export function recallInfoTable<T extends { uid: string; english: string }>(
   metadata: Record<string, MetaDataObj>
 ) {
   return filteredVocab.reduce((acc, item) => {
-    const { percentOverdue, lastView, lastReview, daysBetweenReviews } =
-      metadata[item.uid];
+    const {
+      lastView,
+      lastReview,
+      daysBetweenReviews,
+      accuracy = 0,
+    } = metadata[item.uid];
 
-    if (!lastReview || !percentOverdue || !daysBetweenReviews) return acc;
+    if (!lastReview || !daysBetweenReviews) return acc;
+
+    const daysSinceReview = daysSince(lastReview);
+    const percentOverdueCalc = getPercentOverdue({
+      accuracy,
+      daysSinceReview,
+      daysBetweenReviews,
+    });
 
     return {
       ...acc,
       [item.english]: {
         ["viewed(d)"]: daysSince(lastView),
         ["reviewed(d)"]: daysSince(lastReview),
-        ["overdue(%)"]: percentOverdue.toFixed(2),
+        ["overdue(%)"]: percentOverdueCalc.toFixed(2),
         ["daysBetweenReviews(d)"]: daysBetweenReviews.toFixed(2),
       },
     };
@@ -266,7 +319,6 @@ export function removeAction(
     ...metadata,
 
     daysBetweenReviews: undefined,
-    percentOverdue: undefined,
     consecutiveRight: undefined,
 
     lastReview: undefined,
@@ -304,7 +356,7 @@ export function updateAction(
 
   const daysSinceReview = daysSince(lastReview);
 
-  const { calcDaysBetweenReviews, calcPercentOverdue } = gradeSpaceRepetition({
+  const calcDaysBetweenReviews = calculateDaysBetweenReviews({
     difficulty: difficultyP,
     accuracy: accuracyP,
     daysSinceReview,
@@ -320,7 +372,6 @@ export function updateAction(
   const o: MetaDataObj = {
     ...metadata,
     daysBetweenReviews: calcDaysBetweenReviews,
-    percentOverdue: calcPercentOverdue,
 
     consecutiveRight,
     lastView: now,
@@ -375,15 +426,18 @@ export function recallDebugLogHelper(
  * @param daysBetweenReviews
  * @param lastReview
  */
-export function recallNotificationHelper(daysBetweenReviews?:number, lastReview?:string ){
-
-  if(daysBetweenReviews === undefined || lastReview === undefined)
+export function recallNotificationHelper(
+  daysBetweenReviews?: number,
+  lastReview?: string
+) {
+  if (daysBetweenReviews === undefined || lastReview === undefined)
     return undefined;
 
-  const revSince = lastReview !== undefined ? daysSince(lastReview): 0;
+  const revSince = lastReview !== undefined ? daysSince(lastReview) : 0;
   const revInterval = daysBetweenReviews ?? 0;
   const revDiff = (revInterval - revSince).toFixed(0);
-  const revNotification = lastReview !== undefined ? revDiff.toString(): undefined;
+  const revNotification =
+    lastReview !== undefined ? revDiff.toString() : undefined;
 
   return revNotification;
 }

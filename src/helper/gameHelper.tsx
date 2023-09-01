@@ -236,7 +236,6 @@ export function getStaleSpaceRepKeys(
     difficulty: null,
     accuracy: null,
     daysBetweenReviews: null,
-    percentOverdue: null,
   };
   const SpaceRepKeys = new Set(Object.keys(MetadataObjKeys));
 
