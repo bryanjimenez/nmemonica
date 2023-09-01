@@ -363,3 +363,27 @@ export function recallDebugLogHelper(
 
   dispatch(logger(msg, DebugLevel.WARN));
 }
+
+/**
+ * Calculate how many days
+ *
+ * overdue (negative values)
+ *
+ * or
+ *
+ * pending until the due date (positive values)
+ * @param daysBetweenReviews
+ * @param lastReview
+ */
+export function recallNotificationHelper(daysBetweenReviews?:number, lastReview?:string ){
+
+  if(daysBetweenReviews === undefined || lastReview === undefined)
+    return undefined;
+
+  const revSince = lastReview !== undefined ? daysSince(lastReview): 0;
+  const revInterval = daysBetweenReviews ?? 0;
+  const revDiff = (revInterval - revSince).toFixed(0);
+  const revNotification = lastReview !== undefined ? revDiff.toString(): undefined;
+
+  return revNotification;
+}

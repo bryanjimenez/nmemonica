@@ -37,6 +37,7 @@ import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import {
   recallDebugLogHelper,
+  recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
 import {
@@ -681,7 +682,8 @@ export default function Vocabulary() {
       hasFurigana: boolean,
       isHintable: boolean,
       vocabulary_reinforce: boolean,
-      reviewedToday: boolean
+      reviewedToday: boolean,
+      revNotification?: string
     ) => (
       <div className="options-bar mb-3 flex-shrink-1">
         <div className="row opts-max-h">
@@ -719,6 +721,7 @@ export default function Vocabulary() {
                     !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
+                notification={revNotification}
               >
                 <DifficultySlider
                   difficulty={metadata.current[uid]?.difficulty}
@@ -898,6 +901,8 @@ export default function Vocabulary() {
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
 
+  const revNotification = recallNotificationHelper(metadata.current[uid]?.daysBetweenReviews, metadata.current[uid]?.lastReview)
+
   const pageLinearProgress = (
     <div
       className="progress-line flex-shrink-1"
@@ -939,7 +944,8 @@ export default function Vocabulary() {
           hasFurigana,
           isHintable,
           vocabulary_reinforce,
-          reviewedToday
+          reviewedToday,
+          revNotification
         )}
         {pageLinearProgress}
       </React.Fragment>

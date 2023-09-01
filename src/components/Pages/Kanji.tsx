@@ -30,6 +30,7 @@ import {
 import { JapaneseText } from "../../helper/JapaneseText";
 import {
   recallDebugLogHelper,
+  recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
 import {
@@ -562,6 +563,8 @@ export default function Kanji() {
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
 
+  const revNotification = recallNotificationHelper(metadata.current[uid]?.daysBetweenReviews, metadata.current[uid]?.lastReview)
+
   let page = (
     <React.Fragment>
       <div className="kanji main-panel h-100">
@@ -654,6 +657,7 @@ export default function Kanji() {
                     !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
+                notification={revNotification}
               >
                 <DifficultySlider
                   difficulty={metadata.current[uid]?.difficulty}

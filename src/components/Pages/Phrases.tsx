@@ -35,6 +35,7 @@ import {
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
   recallDebugLogHelper,
+  recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
 import { dateViewOrder, randomOrder } from "../../helper/sortHelper";
@@ -573,6 +574,8 @@ export default function Phrases() {
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
 
+  const revNotification = recallNotificationHelper(metadata.current[uid]?.daysBetweenReviews, metadata.current[uid]?.lastReview)
+
   return (
     <React.Fragment>
       <div className="phrases main-panel h-100">
@@ -640,6 +643,7 @@ export default function Phrases() {
                     !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
+                notification={revNotification}
               >
                 <DifficultySlider
                   difficulty={metadata.current[uid]?.difficulty}

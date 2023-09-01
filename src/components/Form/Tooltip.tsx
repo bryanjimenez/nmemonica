@@ -12,6 +12,7 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 
 interface TooltipProps {
   className?: string;
+  notification?: string;
 }
 
 export function Tooltip(props: PropsWithChildren<TooltipProps>) {
@@ -47,13 +48,21 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
       <div
         ref={refs.setReference}
         className={classNames({
-          "sm-icon-grp clickable": true,
-          ...(props.className ? { [props.className]: true } : {}),
+          "sm-icon-grp": true,
         })}
         aria-label="Set difficulty"
-        onClick={() => setShowSlider((s) => !s)}
       >
-        <FontAwesomeIcon icon={faBullseye} />
+        <div
+          className={classNames({
+            "d-inline": true,
+            "clickable": true,
+            ...(props.className ? { [props.className]: true } : {}),
+          })}
+          onClick={() => setShowSlider((s) => !s)}
+          >
+          <FontAwesomeIcon icon={faBullseye} />
+        </div>
+        {props.notification && (<span className="notification">{props.notification}</span>)}
       </div>
       <div
         id="tooltip"
