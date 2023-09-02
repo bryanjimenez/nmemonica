@@ -288,12 +288,18 @@ const phraseSlice = createSlice({
         newValue
       );
     },
-    togglePhrasesReinforcement(state) {
+    togglePhrasesReinforcement(
+      state,
+      action: { payload: boolean | undefined }
+    ) {
+      const newValue = action.payload;
+
       state.setting.reinforce = localStoreAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
-        "reinforce"
+        "reinforce",
+        newValue
       );
     },
 

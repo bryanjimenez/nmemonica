@@ -119,14 +119,22 @@ export default function SettingsPhrase() {
                 TermSortBy.VIEW_DATE,
                 TermSortBy.RECALL,
               ]}
-              onChange={buildAction(dispatch, togglePhrasesOrdering)}
+              onChange={(index) => {
+                if (TermSortBy.RECALL === index) {
+                  dispatch(togglePhrasesReinforcement(false));
+                }
+                return buildAction(dispatch, togglePhrasesOrdering)(index);
+              }}
             />
           </div>
           <div className="mb-2">
             <SettingsSwitch
               active={phraseReinforce}
               action={buildAction(dispatch, togglePhrasesReinforcement)}
-              disabled={phraseFilter === TermFilterBy.FREQUENCY}
+              disabled={
+                phraseFilter === TermFilterBy.FREQUENCY ||
+                phraseOrder === TermSortBy.RECALL
+              }
               statusText="Reinforcement"
             />
           </div>

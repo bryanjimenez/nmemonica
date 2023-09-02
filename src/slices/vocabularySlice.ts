@@ -206,12 +206,18 @@ const vocabularySlice = createSlice({
       );
     },
 
-    toggleVocabularyReinforcement(state) {
+    toggleVocabularyReinforcement(
+      state,
+      action: { payload: boolean | undefined }
+    ) {
+      const newValue = action.payload;
+
       state.setting.reinforce = localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
-        "reinforce"
+        "reinforce",
+        newValue
       );
     },
 

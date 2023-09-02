@@ -124,14 +124,22 @@ export default function SettingsKanji() {
                 TermSortBy.RECALL,
               ]}
               initial={kanjiOrder}
-              onChange={buildAction(dispatch, toggleKanjiOrdering)}
+              onChange={(index) => {
+                if (TermSortBy.RECALL === index) {
+                  dispatch(toggleKanjiReinforcement(false));
+                }
+                return buildAction(dispatch, toggleKanjiOrdering)(index);
+              }}
             />
           </div>
           <div className="mb-2">
             <SettingsSwitch
               active={kanjiReinforce.current}
               action={buildAction(dispatch, toggleKanjiReinforcement)}
-              disabled={kanjiFilter === TermFilterBy.FREQUENCY}
+              disabled={
+                kanjiFilter === TermFilterBy.FREQUENCY ||
+                kanjiOrder === TermSortBy.RECALL
+              }
               statusText={
                 (kanjiReinforce ? `(+${kFreqExcluTagSelected.length} ) ` : "") +
                 "Reinforcement"

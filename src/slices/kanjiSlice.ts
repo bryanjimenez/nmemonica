@@ -377,12 +377,15 @@ const kanjiSlice = createSlice({
       }
     },
 
-    toggleKanjiReinforcement(state) {
+    toggleKanjiReinforcement(state, action: { payload: boolean | undefined }) {
+      const newValue = action.payload;
+
       state.setting.reinforce = localStoreAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
-        "reinforce"
+        "reinforce",
+        newValue
       );
     },
   },

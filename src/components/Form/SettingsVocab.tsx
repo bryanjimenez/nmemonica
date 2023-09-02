@@ -175,7 +175,12 @@ export default function SettingsVocab() {
             title={"Sort by:"}
             options={TermSortByLabel}
             initial={vocabOrder}
-            onChange={buildAction(dispatch, toggleVocabularyOrdering)}
+            onChange={(index) => {
+              if (TermSortBy.RECALL === index) {
+                dispatch(toggleVocabularyReinforcement(false));
+              }
+              return buildAction(dispatch, toggleVocabularyOrdering)(index);
+            }}
           />
 
           {vocabOrder === TermSortBy.DIFFICULTY && (
@@ -224,7 +229,10 @@ export default function SettingsVocab() {
             <SettingsSwitch
               active={vocabReinforce}
               action={buildAction(dispatch, toggleVocabularyReinforcement)}
-              disabled={vocabFilter === TermFilterBy.FREQUENCY}
+              disabled={
+                vocabFilter === TermFilterBy.FREQUENCY ||
+                vocabOrder === TermSortBy.RECALL
+              }
               statusText="Reinforcement"
             />
           </div>
