@@ -131,6 +131,7 @@ export function useConnectVocabulary() {
     verbFormsOrder,
     verbColSplit,
     activeGroup,
+    /** Maximum number of space repetition items to review at once */
     spaRepMaxReviewItem,
 
     // Refs ()

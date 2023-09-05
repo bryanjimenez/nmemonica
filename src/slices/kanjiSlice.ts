@@ -10,7 +10,11 @@ import {
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { removeAction, updateAction } from "../helper/recallHelper";
+import {
+  SR_MIN_REV_ITEMS,
+  removeAction,
+  updateAction,
+} from "../helper/recallHelper";
 import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type {
@@ -34,6 +38,7 @@ export interface KanjiInitSlice {
     memoThreshold: number;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
+    spaRepMaxReviewItem: number;
     activeGroup: string[];
     activeTags: string[];
 
@@ -55,6 +60,7 @@ export const kanjiInitState: KanjiInitSlice = {
     memoThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
+    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
     activeGroup: [],
     activeTags: [],
 
@@ -331,6 +337,21 @@ const kanjiSlice = createSlice({
         payload: { uid, value },
       }),
     },
+    /**
+     * Space Repetition maximum item review
+     * per session
+     */
+    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
+      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+
+      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "spaRepMaxReviewItem",
+        value
+      );
+    },
     setKanjiBtnN(state, action: { payload: number }) {
       const number = action.payload;
 
@@ -481,6 +502,7 @@ export const {
   setKanjiMemorizedThreshold,
   setKanjiDifficulty,
   setKanjiAccuracy,
+  setSpaRepMaxItemReview,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
 

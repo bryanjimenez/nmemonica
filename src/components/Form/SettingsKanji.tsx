@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
+import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
@@ -11,6 +12,7 @@ import type { AppDispatch } from "../../slices";
 import {
   getKanji,
   removeFrequencyKanji,
+  setSpaRepMaxItemReview,
   toggleKanjiActiveGrp,
   toggleKanjiActiveTag,
   toggleKanjiFilter,
@@ -38,6 +40,7 @@ export default function SettingsKanji() {
     kanjiList: kanji,
     repetition: kRepetition,
     kanjiTagObj: kanjiTags,
+    spaRepMaxReviewItem,
   } = useConnectKanji();
 
   const kanjiFilter = kanjiFilterREF.current;
@@ -132,6 +135,15 @@ export default function SettingsKanji() {
               }}
             />
           </div>
+          {kanjiOrder === TermSortBy.RECALL && (
+            <PlusMinus
+              label="Max review items "
+              value={spaRepMaxReviewItem}
+              onChange={(value: number) => {
+                dispatch(setSpaRepMaxItemReview(value));
+              }}
+            />
+          )}
           <div className="mb-2">
             <SettingsSwitch
               active={kanjiReinforce.current}

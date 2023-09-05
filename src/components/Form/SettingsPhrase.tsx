@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
+import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
@@ -10,6 +11,7 @@ import type { AppDispatch } from "../../slices";
 import {
   getPhrase,
   removeFrequencyPhrase,
+  setSpaRepMaxItemReview,
   togglePhraseActiveGrp,
   togglePhrasesFilter,
   togglePhrasesOrdering,
@@ -36,6 +38,7 @@ export default function SettingsPhrase() {
     filterType: phraseFilterRef,
     repetition: phraseRep,
     reinforce: phraseReinforceRef,
+    spaRepMaxReviewItem,
   } = useConnectPhrase();
 
   const phraseFilter = phraseFilterRef.current;
@@ -127,6 +130,15 @@ export default function SettingsPhrase() {
               }}
             />
           </div>
+          {phraseOrder === TermSortBy.RECALL && (
+            <PlusMinus
+              label="Max review items "
+              value={spaRepMaxReviewItem}
+              onChange={(value: number) => {
+                dispatch(setSpaRepMaxItemReview(value));
+              }}
+            />
+          )}
           <div className="mb-2">
             <SettingsSwitch
               active={phraseReinforce}

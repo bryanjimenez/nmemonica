@@ -114,6 +114,7 @@ export default function Phrases() {
     swipeThreshold,
     phraseList,
     activeGroup,
+    spaRepMaxReviewItem,
 
     // Refs ()
     reinforce: reinforceREF,
@@ -121,6 +122,8 @@ export default function Phrases() {
     filterType: filterTypeREF,
     sortMethod: sortMethodREF,
   } = useConnectPhrase();
+
+  const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
 
   // repetitionOnce is only updated the first time
   /** metadata table ref */
@@ -166,7 +169,7 @@ export default function Phrases() {
         const { failed, overdue, overLimit } = spaceRepetitionOrder(
           filtered,
           metadata.current,
-          20 // FIXME: hardcoded
+          repMinItemReviewREF.current
         );
         const pending = [...failed, ...overdue];
 
@@ -588,7 +591,10 @@ export default function Phrases() {
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
 
-  const revNotification = recallNotificationHelper(metadata.current[uid]?.daysBetweenReviews, metadata.current[uid]?.lastReview)
+  const revNotification = recallNotificationHelper(
+    metadata.current[uid]?.daysBetweenReviews,
+    metadata.current[uid]?.lastReview
+  );
 
   return (
     <React.Fragment>

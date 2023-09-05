@@ -12,7 +12,11 @@ import {
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { removeAction, updateAction } from "../helper/recallHelper";
+import {
+  SR_MIN_REV_ITEMS,
+  removeAction,
+  updateAction,
+} from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import type {
   GroupListMap,
@@ -36,6 +40,7 @@ export interface PhraseInitSlice {
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
+    spaRepMaxReviewItem: number;
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
@@ -54,6 +59,7 @@ export const phraseInitState: PhraseInitSlice = {
     reinforce: false,
     repTID: -1,
     repetition: {},
+    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
@@ -332,6 +338,21 @@ const phraseSlice = createSlice({
         payload: { uid, value },
       }),
     },
+    /**
+     * Space Repetition maximum item review
+     * per session
+     */
+    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
+      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+
+      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "spaRepMaxReviewItem",
+        value
+      );
+    },
     setPhraseAccuracy: {
       reducer: (
         state: PhraseInitSlice,
@@ -549,6 +570,7 @@ export const {
   addFrequencyPhrase,
   setPhraseDifficulty,
   setPhraseAccuracy,
+  setSpaRepMaxItemReview,
 
   removeFrequencyPhrase,
   togglePhrasesOrdering,

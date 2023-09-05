@@ -28,7 +28,15 @@ export function useConnectKanji() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const [r, ft, or, memoThreshold, choiceN, fadeInAnswers] = useSelector<
+  const [
+    r,
+    ft,
+    or,
+    memoThreshold,
+    choiceN,
+    fadeInAnswers,
+    spaRepMaxReviewItem,
+  ] = useSelector<
     RootState,
     [
       boolean,
@@ -36,7 +44,8 @@ export function useConnectKanji() {
       ValuesOf<typeof TermSortBy>,
       number,
       number,
-      boolean
+      boolean,
+      number
     ]
   >(({ kanji }: RootState) => {
     const {
@@ -46,9 +55,18 @@ export function useConnectKanji() {
       memoThreshold,
       choiceN,
       fadeInAnswers,
+      spaRepMaxReviewItem,
     } = kanji.setting;
 
-    return [reinforce, filter, ordered, memoThreshold, choiceN, fadeInAnswers];
+    return [
+      reinforce,
+      filter,
+      ordered,
+      memoThreshold,
+      choiceN,
+      fadeInAnswers,
+      spaRepMaxReviewItem,
+    ];
   }, shallowEqual);
 
   const activeTags = useSelector<RootState, string[]>(
@@ -83,6 +101,8 @@ export function useConnectKanji() {
     // Game
     choiceN,
     fadeInAnswers,
+    /** Maximum number of space repetition items to review at once */
+    spaRepMaxReviewItem,
 
     // Refs ()
     reinforce,

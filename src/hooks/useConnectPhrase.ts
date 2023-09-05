@@ -36,12 +36,13 @@ export function useConnectPhrase() {
     return englishSideUp;
   });
 
-  const [r, ft, sm, rm] = useSelector<
+  const [r, ft, sm, rm, spaRepMaxReviewItem] = useSelector<
     RootState,
-    [boolean, ValuesOf<typeof TermFilterBy>, number, boolean]
+    [boolean, ValuesOf<typeof TermFilterBy>, number, boolean, number]
   >(({ phrases }: RootState) => {
-    const { reinforce, filter, ordered, romaji } = phrases.setting;
-    return [reinforce, filter, ordered, romaji];
+    const { reinforce, filter, ordered, romaji, spaRepMaxReviewItem } =
+      phrases.setting;
+    return [reinforce, filter, ordered, romaji, spaRepMaxReviewItem];
   }, shallowEqual);
 
   const activeGroup = useSelector<RootState, string[]>(
@@ -78,6 +79,8 @@ export function useConnectPhrase() {
     phraseList,
     phraseGroups,
     activeGroup,
+    /** Maximum number of space repetition items to review at once */
+    spaRepMaxReviewItem,
 
     // Refs ()
     reinforce,

@@ -15,10 +15,7 @@ import { useDispatch } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
-import {
-  daysSince,
-  spaceRepLog,
-} from "../../helper/consoleHelper";
+import { daysSince, spaceRepLog } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
@@ -101,9 +98,13 @@ export default function Kanji() {
     filterType: filterTypeREF,
     reinforce: reinforceREF,
     activeTags,
-    repetition,
     orderType: sortMethodREF,
+    spaRepMaxReviewItem,
+
+    repetition,
   } = useConnectKanji();
+
+  const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
 
   const { vocabList } = useConnectVocabulary();
 
@@ -168,7 +169,7 @@ export default function Kanji() {
         const { failed, overdue, overLimit } = spaceRepetitionOrder(
           filtered,
           metadata.current,
-          20 // FIXME: hardcoded
+          repMinItemReviewREF.current
         );
         const pending = [...failed, ...overdue];
 
@@ -577,7 +578,10 @@ export default function Kanji() {
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
 
-  const revNotification = recallNotificationHelper(metadata.current[uid]?.daysBetweenReviews, metadata.current[uid]?.lastReview)
+  const revNotification = recallNotificationHelper(
+    metadata.current[uid]?.daysBetweenReviews,
+    metadata.current[uid]?.lastReview
+  );
 
   let page = (
     <React.Fragment>
