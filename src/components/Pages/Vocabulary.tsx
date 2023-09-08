@@ -225,7 +225,8 @@ export default function Vocabulary() {
         );
         const pending = [...failed, ...overdue];
 
-        if (pending.length > 0) {
+        if (pending.length > 0 && filtered.length !== pending.length) {
+          // reduce filtered
           filtered = pending.map((p) => filtered[p]);
         }
 
@@ -915,7 +916,10 @@ export default function Vocabulary() {
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
 
-  const revNotification = recallNotificationHelper(metadata.current[uid]?.daysBetweenReviews, metadata.current[uid]?.lastReview)
+  const revNotification = recallNotificationHelper(
+    metadata.current[uid]?.daysBetweenReviews,
+    metadata.current[uid]?.lastReview
+  );
 
   const pageLinearProgress = (
     <div

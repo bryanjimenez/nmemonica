@@ -7,12 +7,13 @@ import {
   calculateDaysBetweenReviews,
   spaceRepetitionOrder,
 } from "../../../src/helper/recallHelper";
-
-function xAgoDate(days) {
-  const t = new Date();
-  const xAgoDate = new Date(t.setDate(t.getDate() - days)).toJSON();
-  return xAgoDate;
-}
+import {
+  xAgoDate,
+  mockNotPlayed,
+  mockPending,
+  terms,
+  mockNotPending,
+} from "./recallHelper.data";
 
 describe("recallHelper", function () {
   describe("previously ungraded, then", function () {
@@ -165,163 +166,134 @@ describe("recallHelper", function () {
   });
 
   describe("spaceRepetitionOrder", function () {
-    const today = xAgoDate(0);
-    const yesterday = xAgoDate(1);
-    const xAgoDated = xAgoDate(2);
-
-    const terms = [
-      { uid: "0012bc7dc3968737a80c83248f63d3b1" },
-      { uid: "00e6781c76052848bdaa6b1b0496ff8e" },
-      { uid: "0023e81f458ea75aaa9a89031105bf63" },
-      { uid: "003e992bdd7aae7c15c646a444fae08d" },
-      { uid: "00b29c945e41cc7e9284873f94e3a14d" },
-      { uid: "00b32d657e191efb3866ebf080dc3c2a" },
-      { uid: "00c102a7e10b45b19afbab71c030bf63" },
-      { uid: "02fd75474e4cc84574b1ad8b3211edbb" },
-      { uid: "0332d7f79143b03a4b9497100beafb92" },
-      { uid: "036265f163ca6f25f5a611a33ac3d98f" },
-    ];
-
-    const metaRecord = {
-      // not yet played
-      [terms[0].uid]: { vC: 1, lastView: today },
-      [terms[1].uid]: { vC: 1, lastView: today },
-      // pending review
-      [terms[2].uid]: {
-        vC: 2,
-        lastView: today,
-        lastReview: xAgoDated,
-        difficulty: 90,
-        accuracy: 67,
-        daysBetweenReviews: 1,
-        consecutiveRight: 1,
-      },
-      [terms[3].uid]: {
-        vC: 2,
-        lastView: xAgoDated,
-        lastReview: xAgoDated,
-        difficulty: 90,
-        accuracy: 71,
-        daysBetweenReviews: 1,
-        consecutiveRight: 1,
-      },
-      [terms[4].uid]: {
-        vC: 2,
-        lastView: xAgoDated,
-        lastReview: xAgoDated,
-        difficulty: 20,
-        accuracy: 31,
-        daysBetweenReviews: 0.39691804809712816,
-        consecutiveRight: 0,
-      },
-      [terms[5].uid]: {
-        vC: 2,
-        lastView: yesterday,
-        lastReview: xAgoDated,
-        difficulty: 30,
-        accuracy: 23,
-        daysBetweenReviews: 0.3393890996206828,
-        consecutiveRight: 0,
-      },
-      [terms[6].uid]: {
-        vC: 2,
-        lastView: yesterday,
-        lastReview: xAgoDated,
-        difficulty: 90,
-        accuracy: 73,
-        daysBetweenReviews: 1,
-        consecutiveRight: 1,
-      },
-      [terms[7].uid]: {
-        vC: 2,
-        lastView: xAgoDated,
-        lastReview: xAgoDated,
-        difficulty: 90,
-        accuracy: 75,
-        daysBetweenReviews: 0.25,
-        consecutiveRight: 0,
-      },
-      // previously incorrect
-      [terms[8].uid]: {
-        vC: 2,
-        lastView: xAgoDated,
-        lastReview: xAgoDated,
-        difficulty: 90,
-        accuracy: 17,
-        daysBetweenReviews: 0.25,
-        consecutiveRight: 0,
-      },
-      [terms[9].uid]: {
-        vC: 2,
-        lastView: xAgoDated,
-        lastReview: xAgoDated,
-        difficulty: 90,
-        accuracy: 19,
-        daysBetweenReviews: 1,
-        consecutiveRight: 1,
-      },
-    };
-
     const maxReviews = 20;
-    describe("return params", function(){
-      it("incorrect", function () {
+    describe("return params", function () {
+      it("failed", function () {
+        const metaRecord = {
+          [terms[0].uid]: mockNotPlayed.one,
+          [terms[1].uid]: mockNotPlayed.two,
+          [terms[2].uid]: mockPending.pass.one,
+          [terms[3].uid]: mockPending.pass.two,
+          [terms[4].uid]: mockPending.fail.one,
+          [terms[5].uid]: mockPending.fail.two,
+          [terms[6].uid]: mockPending.pass.three,
+          [terms[7].uid]: mockPending.pass.four,
+          [terms[8].uid]: mockPending.fail.three,
+          [terms[9].uid]: mockPending.fail.four,
+        };
+
         const expected = [4, 5, 8, 9];
-  
+
         const { failed } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
         expect(failed)
           .to.have.length(expected.length)
           .and.to.contain.members(expected);
       });
-      it("pending", function () {
+      it("overDue", function () {
+        const metaRecord = {
+          [terms[0].uid]: mockNotPlayed.one,
+          [terms[1].uid]: mockNotPlayed.two,
+          [terms[2].uid]: mockPending.excluded.one,
+          [terms[3].uid]: mockPending.pass.two,
+          [terms[4].uid]: mockPending.fail.one,
+          [terms[5].uid]: mockPending.fail.two,
+          [terms[6].uid]: mockPending.pass.three,
+          [terms[7].uid]: mockPending.pass.four,
+          [terms[8].uid]: mockPending.fail.three,
+          [terms[9].uid]: mockPending.fail.four,
+        };
+
         const expected = [3, 7, 6];
-        const {
-          failed,
-          overdue: pending,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
-  
-        expect(pending, "Categorized as overdue")
+        const { overdue, notPlayed } = spaceRepetitionOrder(
+          terms,
+          metaRecord,
+          maxReviews
+        );
+
+        expect(overdue, "Categorized as overdue")
           .to.have.length(expected.length)
           .and.to.contain.members(expected);
-        expect(pending, "Descending percentage overdue order").to.deep.equal(
+        expect(overdue, "Descending percentage overdue order").to.deep.equal(
           expected
         );
         // pending, but not played because date = today
         expect(notPlayed).to.contain.members([2]);
       });
-      it("not played", function () {
-        const {
-          failed,
-          overdue: pending,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
-  
+      it("notDue", function () {
+        const expected = [3];
+
+        const metaRecordEx = {
+          // not yet played
+          [terms[0].uid]: mockNotPlayed.one,
+          [terms[1].uid]: mockNotPlayed.two,
+          // pending review
+          [terms[2].uid]: mockPending.pass.one,
+          // not pending
+          [terms[3].uid]: mockNotPending.one,
+        };
+
+        const { notDue } = spaceRepetitionOrder(
+          terms,
+          metaRecordEx,
+          maxReviews
+        );
+
+        expect(notDue, "Categorized as notDue")
+          .to.have.length(expected.length)
+          .and.to.contain.members(expected);
+      });
+      it("notPlayed", function () {
+        const metaRecord = {
+          [terms[0].uid]: mockNotPlayed.one,
+          [terms[1].uid]: mockNotPlayed.two,
+          [terms[2].uid]: mockPending.excluded.one,
+          [terms[3].uid]: mockPending.pass.two,
+          [terms[4].uid]: mockPending.fail.one,
+          [terms[5].uid]: mockPending.fail.two,
+          [terms[6].uid]: mockPending.pass.three,
+          [terms[7].uid]: mockPending.pass.four,
+          [terms[8].uid]: mockPending.fail.three,
+          [terms[9].uid]: mockPending.fail.four,
+        };
+
+        const { notPlayed } = spaceRepetitionOrder(
+          terms,
+          metaRecord,
+          maxReviews
+        );
+
         // pending, but not played because date = today
         expect(notPlayed).to.contain.members([2]);
         // no lastReview value
         expect(notPlayed).to.contain.members([0, 1]);
       });
-      it("max limit", function () {
+      it("overLimit", function () {
         const maxReviews = 2;
-  
-        const {
-          failed,
-          overdue: pending,
-          overLimit,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
-  
-        expect([...failed, ...pending], "limited")
+
+        const metaRecord = {
+          [terms[0].uid]: mockNotPlayed.one,
+          [terms[1].uid]: mockNotPlayed.two,
+          [terms[2].uid]: mockPending.pass.one,
+          [terms[3].uid]: mockPending.pass.two,
+          [terms[4].uid]: mockPending.fail.one,
+          [terms[5].uid]: mockPending.fail.two,
+          [terms[6].uid]: mockPending.pass.three,
+          [terms[7].uid]: mockPending.pass.four,
+          [terms[8].uid]: mockPending.fail.three,
+          [terms[9].uid]: mockPending.fail.four,
+        };
+
+        const { failed, overdue, overLimit, notPlayed, todayDone } =
+          spaceRepetitionOrder(terms, metaRecord, maxReviews);
+
+        expect([...failed, ...overdue], "limited")
           .to.have.length(maxReviews)
           .and.be.an("Array");
         expect([...overLimit, ...notPlayed, ...todayDone], "remainder")
           .to.have.length(terms.length - maxReviews)
           .and.be.an("Array");
-      });  
-    })
+      });
+    });
     describe("date view exclusion", function () {
       // metadata.lastView: last viewed
       // metadata.lastReview: last reviewed
@@ -330,7 +302,6 @@ describe("recallHelper", function () {
 
       it("exclude viewed today", function () {
         const today = new Date().toJSON();
-        const yesterday = new Date().toJSON();
 
         const xDaysAgo = 3;
         const t = new Date();
@@ -349,21 +320,17 @@ describe("recallHelper", function () {
           },
         };
 
-        const {
-          failed,
-          overdue: pending,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+        const { failed, overdue, notPlayed } = spaceRepetitionOrder(
+          terms,
+          metaRecord,
+          maxReviews
+        );
 
         // pending, but not played because date = today
-        expect([...failed, ...pending]).to.not.contain.members([0]);
+        expect([...failed, ...overdue]).to.not.contain.members([0]);
         expect(notPlayed).to.contain.members([0]);
       });
       it("include viewed yesterday", function () {
-        const today = new Date().toJSON();
-        const yesterday = new Date().toJSON();
-
         const xDaysAgo = 3;
         const t = new Date();
         const xAgoDate = new Date(t.setDate(t.getDate() - xDaysAgo)).toJSON();
@@ -381,12 +348,7 @@ describe("recallHelper", function () {
           },
         };
 
-        const {
-          failed,
-          overdue: pending,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, 10);
+        const { notPlayed } = spaceRepetitionOrder(terms, metaRecord, 10);
 
         expect(notPlayed).to.not.contain.members([0]);
       });
@@ -394,11 +356,6 @@ describe("recallHelper", function () {
     describe("date review inclusion", function () {
       it("include reviewed today", function () {
         const today = new Date().toJSON();
-        const yesterday = new Date().toJSON();
-
-        const xDaysAgo = 3;
-        const t = new Date();
-        const xAgoDate = new Date(t.setDate(t.getDate() - xDaysAgo)).toJSON();
 
         const metaRecord = {
           // lastReview today
@@ -413,109 +370,53 @@ describe("recallHelper", function () {
           },
         };
 
-        const {
-          failed,
-          overdue: pending,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+        const { failed, overdue, notPlayed, todayDone } = spaceRepetitionOrder(
+          terms,
+          metaRecord,
+          maxReviews
+        );
 
         // pending, but not played because date = today
-        expect([...failed, ...pending]).to.not.contain.members([0]);
+        expect([...failed, ...overdue]).to.not.contain.members([0]);
         expect(notPlayed).to.not.contain.members([0]);
         expect(todayDone).to.contain.members([0]);
       });
     });
     describe("overdue sorted by lastView", function () {
-      const metaRecord = {
-        // not yet played
-        [terms[0].uid]: { vC: 1, lastView: today },
-        [terms[1].uid]: { vC: 1, lastView: today },
-        // overdue
-        [terms[2].uid]: {
-          vC: 2,
-          lastView: xAgoDate(100),
-          lastReview: xAgoDate(2),
-          difficulty: 90,
-          accuracy: 100,
-          daysBetweenReviews: 1,
-          consecutiveRight: 1,
-        },
-        [terms[3].uid]: {
-          vC: 2,
-          lastView: xAgoDate(5),
-          lastReview: xAgoDate(3),
-          difficulty: 90,
-          accuracy: 71,
-          daysBetweenReviews: 1,
-          consecutiveRight: 1,
-        },
-        [terms[4].uid]: {
-          vC: 2,
-          lastView: xAgoDate(4),
-          lastReview: xAgoDate(4),
-          difficulty: 20,
-          accuracy: 100,
-          daysBetweenReviews: 0.39691804809712816,
-          consecutiveRight: 0,
-        },
-        [terms[5].uid]: {
-          vC: 2,
-          lastView: xAgoDate(3),
-          lastReview: xAgoDate(5),
-          difficulty: 30,
-          accuracy: 100,
-          daysBetweenReviews: 0.3393890996206828,
-          consecutiveRight: 0,
-        },
-        [terms[6].uid]: {
-          vC: 2,
-          lastView: xAgoDate(2),
-          lastReview: xAgoDate(100),
-          difficulty: 90,
-          accuracy: 100,
-          daysBetweenReviews: 1,
-          consecutiveRight: 1,
-        },
-        // previously incorrect
-        [terms[7].uid]: {
-          vC: 2,
-          lastView: xAgoDated,
-          lastReview: xAgoDated,
-          difficulty: 90,
-          accuracy: 13,
-          daysBetweenReviews: 0.25,
-          consecutiveRight: 0,
-        },
-        [terms[8].uid]: {
-          vC: 2,
-          lastView: xAgoDated,
-          lastReview: xAgoDated,
-          difficulty: 90,
-          accuracy: 17,
-          daysBetweenReviews: 0.25,
-          consecutiveRight: 0,
-        },
-        [terms[9].uid]: {
-          vC: 2,
-          lastView: xAgoDated,
-          lastReview: xAgoDated,
-          difficulty: 90,
-          accuracy: 57,
-          daysBetweenReviews: 1,
-          consecutiveRight: 1,
-        },
-      };
       it("oldest first", function () {
-        const expected = [2, 3, 4, 5, 6];
-        const {
-          failed,
-          overdue: pending,
-          notPlayed,
-          todayDone,
-        } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+        const metaRecord = {
+          [terms[0].uid]: mockNotPlayed.one,
+          [terms[1].uid]: mockNotPlayed.two,
+          [terms[2].uid]: {
+            vC: 2,
+            lastView: xAgoDate(100),
+            lastReview: xAgoDate(2),
+            difficulty: 90,
+            accuracy: 100,
+            daysBetweenReviews: 1,
+            consecutiveRight: 1,
+          },
+          [terms[3].uid]: {
+            vC: 2,
+            lastView: xAgoDate(5),
+            lastReview: xAgoDate(3),
+            difficulty: 90,
+            accuracy: 71,
+            daysBetweenReviews: 1,
+            consecutiveRight: 1,
+          },
+          [terms[4].uid]: mockNotPlayed.one,
+          [terms[5].uid]: mockNotPlayed.one,
+          [terms[6].uid]: mockNotPlayed.one,
+          [terms[7].uid]: mockNotPlayed.one,
+          [terms[8].uid]: mockPending.fail.one,
+          [terms[9].uid]: mockPending.fail.two,
+        };
 
-        expect(pending, "lastView oldest first").to.deep.equal(expected);
+        const expected = [2, 3];
+        const { overdue } = spaceRepetitionOrder(terms, metaRecord, maxReviews);
+
+        expect(overdue, "lastView oldest first").to.deep.equal(expected);
       });
     });
   });

@@ -125,7 +125,9 @@ export function getPercentOverdue({
  *
  * ```failed``` — previously failed items
  *
- * ```overdue``` — overdue items (percentage overdue in desc order)
+ * ```overdue``` — overdue items (percentOverdueCalc in desc order >= 1)
+ *
+ * ```notDue``` — not yet due (percentOverdueCalc < 1)
  *
  * ```overLimit``` — items beyond ```maxReviews``` limit (unordered)
  *
@@ -140,6 +142,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
 ): {
   failed: number[];
   overdue: number[];
+  notDue: number[];
   overLimit: number[];
   notPlayed: number[];
   todayDone: number[];
@@ -230,15 +233,31 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
   // prettier-ignore
   const overdueSort = orderBy(overdueTemp, ["percentOverdueCalc", "lastView", "uid"], ["desc", "asc", "asc"]);
 
-  const f = failedSort.map((el) => el.index);
-  const o = overdueSort.map((el) => el.index);
+  const fail = failedSort.map((el) => el.index);
+
+  // separate due from not due (using percentOverdueCalc threshold)
+  const { due, notDue } = overdueSort.reduce<{
+    due: number[];
+    notDue: number[];
+  }>(
+    (acc, el) => {
+      if (el.percentOverdueCalc < 1) {
+        acc.notDue = [...acc.notDue, el.index];
+      } else {
+        acc.due = [...acc.due, el.index];
+      }
+
+      return acc;
+    },
+    { due: [], notDue: [] }
+  );
 
   const todayDone = todayTemp.map((el) => el.index);
 
   // maxReviews limit
-  const { failed, overdue, overLimit } = overLimitSlice(f, o, maxReviews);
+  const { failed, overdue, overLimit } = overLimitSlice(fail, due, maxReviews);
 
-  return { failed, overdue, overLimit, notPlayed, todayDone };
+  return { failed, overdue, notDue, overLimit, notPlayed, todayDone };
 }
 
 /**

@@ -173,7 +173,8 @@ export default function Phrases() {
         );
         const pending = [...failed, ...overdue];
 
-        if (pending.length > 0) {
+        if (pending.length > 0 && filtered.length !== pending.length) {
+          // reduce filtered
           filtered = pending.map((p) => filtered[p]);
         }
 
