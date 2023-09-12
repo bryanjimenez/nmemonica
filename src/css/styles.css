@@ -18,6 +18,10 @@ body {
   height: 0;
 }
 
+.w-0 {
+  width: 0;
+}
+
 .w-40 {
   width: 40% !important;
 }

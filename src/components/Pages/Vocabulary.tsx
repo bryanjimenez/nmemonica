@@ -86,6 +86,7 @@ import {
   ToggleFuriganaBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
@@ -757,6 +758,9 @@ export default function Vocabulary() {
                     }
                   }}
                 />
+                <div className="fs-xx-small me-2">
+                  <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
               </Tooltip>
               <ShowHintBtn
                 visible={hintEnabledREF.current}

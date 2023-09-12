@@ -74,6 +74,7 @@ import {
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
@@ -685,6 +686,9 @@ export default function Phrases() {
                     }
                   }}
                 />
+                <div className="fs-xx-small me-2">
+                  <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
               </Tooltip>
               <ToggleLiteralPhraseBtn
                 visible={

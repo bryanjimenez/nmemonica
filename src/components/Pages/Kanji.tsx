@@ -68,6 +68,7 @@ import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import "../../css/Kanji.css";
+import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -697,6 +698,9 @@ export default function Kanji() {
                     }
                   }}
                 />
+                <div className="fs-xx-small me-2">
+                  <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
               </Tooltip>
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}

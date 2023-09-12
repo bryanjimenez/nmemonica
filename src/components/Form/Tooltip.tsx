@@ -55,14 +55,16 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
         <div
           className={classNames({
             "d-inline": true,
-            "clickable": true,
+            clickable: true,
             ...(props.className ? { [props.className]: true } : {}),
           })}
           onClick={() => setShowSlider((s) => !s)}
-          >
+        >
           <FontAwesomeIcon icon={faBullseye} />
         </div>
-        {props.notification && (<span className="notification">{props.notification}</span>)}
+        {props.notification && (
+          <span className="notification">{props.notification}</span>
+        )}
       </div>
       <div
         id="tooltip"
@@ -83,7 +85,7 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
       >
         {props.children}
         <div className="x-button" onClick={() => setShowSlider(false)}>
-          <XIcon className="clickable" size="small" aria-label="remove" />
+          <XIcon className="clickable" size="small" aria-label="close" />
         </div>
 
         <div
