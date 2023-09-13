@@ -266,18 +266,6 @@ body {
   }
 }
 
-.h-0 {
-  height: 0;
-}
-
-.w-40 {
-  width: 40% !important;
-}
-
-.w-60 {
-  width: 60% !important;
-}
-
 .mw-50 {
   max-width: 50% !important;
 }
@@ -339,10 +327,6 @@ a {
 
 .opacity-50 {
   opacity: 50%;
-}
-
-.opacity-75 {
-  opacity: 75%;
 }
 
 .opts-max-h {
@@ -450,12 +434,6 @@ a {
   -webkit-transform: rotate(270deg);
   -ms-transform: rotate(270deg);
   transform: rotate(270deg);
-}
-
-.rotate-45 {
-  -webkit-transform: rotate(45deg);
-  -ms-transform: rotate(45deg);
-  transform: rotate(45deg);
 }
 
 .rotate-135 {
