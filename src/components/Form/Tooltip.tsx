@@ -4,23 +4,34 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { XIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import { PropsWithChildren, useEffect, useRef, useState } from "react";
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
 import "../../css/Tooltip.css";
 import { useWindowSize } from "../../hooks/useWindowSize";
 
 interface TooltipProps {
+  idKey: string;
   className?: string;
   notification?: string;
 }
 
+const READY = -1;
+
 export function Tooltip(props: PropsWithChildren<TooltipProps>) {
-  const { children } = props;
+  const { children, idKey } = props;
   const w = useWindowSize();
 
   const [showSlider, setShowSlider] = useState(false);
   const arrowRef = useRef(null);
+  const oldKey = useRef(idKey);
+  const hiding = useRef<NodeJS.Timeout | typeof READY | undefined>();
 
   // https://floating-ui.com/docs/react
   const xOffset = 8; // horizontal alignment spacing
@@ -40,8 +51,39 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
     // window resize
     // term navigation (term properties change)
     update();
+    if (idKey !== oldKey.current) {
+      oldKey.current = idKey;
+      setShowSlider(false);
+      clearTimeout(hiding.current);
+      hiding.current = undefined;
+    } else {
+      if (hiding.current === READY) {
+        hiding.current = setTimeout(() => {
+          setShowSlider(false);
+          hiding.current = undefined;
+        }, 2000);
+      } else if (hiding.current !== undefined) {
+        clearTimeout(hiding.current);
+        hiding.current = setTimeout(() => {
+          setShowSlider(false);
+          hiding.current = undefined;
+        }, 2000);
+      }
+    }
+  }, [update, w.height, w.width, children, idKey]);
+
+  const onCloseCB = useCallback(() => {
     setShowSlider(false);
-  }, [update, w.height, w.width, children]);
+    if (hiding.current !== undefined) {
+      clearTimeout(hiding.current);
+      hiding.current = undefined;
+    }
+  }, []);
+
+  const onTooltipToggleCB = useCallback(() => {
+    setShowSlider((s) => !s);
+    hiding.current = READY;
+  }, []);
 
   return (
     <>
@@ -58,7 +100,7 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
             clickable: true,
             ...(props.className ? { [props.className]: true } : {}),
           })}
-          onClick={() => setShowSlider((s) => !s)}
+          onClick={onTooltipToggleCB}
         >
           <FontAwesomeIcon icon={faBullseye} />
         </div>
@@ -84,7 +126,7 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
         })}
       >
         {props.children}
-        <div className="x-button" onClick={() => setShowSlider(false)}>
+        <div className="x-button" onClick={onCloseCB}>
           <XIcon className="clickable" size="small" aria-label="close" />
         </div>
 

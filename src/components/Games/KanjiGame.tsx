@@ -539,7 +539,7 @@ export default function KanjiGame() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
-              <Tooltip>
+              <Tooltip idKey={kanji.uid}>
                 <DifficultySlider
                   difficulty={metadata.current[kanji.uid]?.difficulty}
                   onChange={buildAction(dispatch, (value: number) =>

@@ -737,6 +737,7 @@ export default function Vocabulary() {
                     !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
+                idKey={uid}
                 notification={revNotification}
               >
                 <DifficultySlider

@@ -665,6 +665,7 @@ export default function Phrases() {
                     !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
+                idKey={uid}
                 notification={revNotification}
               >
                 <DifficultySlider

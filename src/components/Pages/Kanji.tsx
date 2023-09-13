@@ -65,10 +65,10 @@ import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
+import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import "../../css/Kanji.css";
-import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -677,6 +677,7 @@ export default function Kanji() {
                     !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
+                idKey={uid}
                 notification={revNotification}
               >
                 <DifficultySlider
