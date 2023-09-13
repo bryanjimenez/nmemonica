@@ -266,6 +266,10 @@ body {
   }
 }
 
+.w-0 {
+  width: 0;
+}
+
 .mw-50 {
   max-width: 50% !important;
 }
