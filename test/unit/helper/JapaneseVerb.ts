@@ -136,21 +136,15 @@ describe("JapaneseVerb", function () {
     };
 
     it("irr", function () {
-      testMasuForm(() => {
-        this.skip();
-      }, verbs.irr);
+      testMasuForm(this.skip, verbs.irr);
     });
 
     it("ru-verb", function () {
-      testMasuForm(() => {
-        this.skip();
-      }, verbs.ru);
+      testMasuForm(this.skip, verbs.ru);
     });
 
     it("u-verb", function () {
-      testMasuForm(() => {
-        this.skip();
-      }, verbs.u);
+      testMasuForm(this.skip, verbs.u);
     });
   });
 
@@ -170,21 +164,15 @@ describe("JapaneseVerb", function () {
     };
 
     it("irr", function () {
-      testMashouForm(() => {
-        this.skip();
-      }, verbs.irr);
+      testMashouForm(this.skip, verbs.irr);
     });
 
     it("ru-verb", function () {
-      testMashouForm(() => {
-        this.skip();
-      }, verbs.ru);
+      testMashouForm(this.skip, verbs.ru);
     });
 
     it("u-verb", function () {
-      testMashouForm(() => {
-        this.skip();
-      }, verbs.u);
+      testMashouForm(this.skip, verbs.u);
     });
   });
 
@@ -204,21 +192,15 @@ describe("JapaneseVerb", function () {
     };
 
     it("irr", function () {
-      testTeForm(() => {
-        this.skip();
-      }, verbs.irr);
+      testTeForm(this.skip, verbs.irr);
     });
 
     it("ichidan", function () {
-      testTeForm(() => {
-        this.skip();
-      }, verbs.ru);
+      testTeForm(this.skip, verbs.ru);
     });
 
     it("godan", function () {
-      testTeForm(() => {
-        this.skip();
-      }, verbs.u);
+      testTeForm(this.skip, verbs.u);
     });
   });
 
@@ -238,21 +220,15 @@ describe("JapaneseVerb", function () {
     };
 
     it("irr", function () {
-      testTaForm(() => {
-        this.skip();
-      }, verbs.irr);
+      testTaForm(this.skip, verbs.irr);
     });
 
     it("ichidan", function () {
-      testTaForm(() => {
-        this.skip();
-      }, verbs.ru);
+      testTaForm(this.skip, verbs.ru);
     });
 
     it("godan", function () {
-      testTaForm(() => {
-        this.skip();
-      }, verbs.u);
+      testTaForm(this.skip, verbs.u);
     });
   });
 
@@ -315,21 +291,15 @@ describe("JapaneseVerb", function () {
     };
 
     it("irr", function () {
-      testSaseruForm(() => {
-        this.skip();
-      }, verbs.irr);
+      testSaseruForm(this.skip, verbs.irr);
     });
 
     it("ichidan", function () {
-      testSaseruForm(() => {
-        this.skip();
-      }, verbs.ru);
+      testSaseruForm(this.skip, verbs.ru);
     });
 
     it("godan", function () {
-      testSaseruForm(() => {
-        this.skip();
-      }, verbs.u);
+      testSaseruForm(this.skip, verbs.u);
     });
   });
 
@@ -349,21 +319,15 @@ describe("JapaneseVerb", function () {
     };
 
     it("irr", function () {
-      testReruForm(() => {
-        this.skip();
-      }, verbs.irr);
+      testReruForm(this.skip, verbs.irr);
     });
 
     it("ichidan", function () {
-      testReruForm(() => {
-        this.skip();
-      }, verbs.ru);
+      testReruForm(this.skip, verbs.ru);
     });
 
     it("godan", function () {
-      testReruForm(() => {
-        this.skip();
-      }, verbs.u);
+      testReruForm(this.skip, verbs.u);
     });
     it("intransitive return null");
     it("throw on exception verbs");
