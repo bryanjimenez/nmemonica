@@ -120,7 +120,7 @@ describe("JapaneseVerb", function () {
       });
     });
   });
-  describe("masuForm", function () {
+  describe("masuForm (Present Polite)", function () {
     const testMasuForm = (skip, verbClass) => {
       if (verbClass.some((el) => el.masu)) {
         verbClass.forEach((v) => {
@@ -148,7 +148,7 @@ describe("JapaneseVerb", function () {
     });
   });
 
-  describe("mashouForm", function () {
+  describe("mashouForm (Volitional Polite)", function () {
     const testMashouForm = (skip, verbClass) => {
       if (verbClass.some((el) => el.mashou)) {
         verbClass.forEach((v) => {
@@ -204,7 +204,7 @@ describe("JapaneseVerb", function () {
     });
   });
 
-  describe("taForm", function () {
+  describe("taForm (Past)", function () {
     const testTaForm = (skip, verbClass) => {
       if (verbClass.some((el) => el.ta)) {
         verbClass.forEach((v) => {
@@ -232,7 +232,7 @@ describe("JapaneseVerb", function () {
     });
   });
 
-  describe("chattaForm", function () {
+  describe("chattaForm (Casual Past)", function () {
     const chattaAble = (v) => {
       const actual = JapaneseVerb.parse(v.dic).chattaForm();
       expect(actual, actual?.toString()).to.be.a("JapaneseText");
@@ -275,7 +275,7 @@ describe("JapaneseVerb", function () {
     });
   });
 
-  describe("saseruForm", function () {
+  describe("saseruForm (Causative)", function () {
     const testSaseruForm = (skip, verbClass) => {
       if (verbClass.some((el) => el.saseru)) {
         verbClass.forEach((v) => {
@@ -303,7 +303,7 @@ describe("JapaneseVerb", function () {
     });
   });
 
-  describe("reruForm", function () {
+  describe("reruForm (Potential)", function () {
     const testReruForm = (skip, verbClass) => {
       if (verbClass.some((el) => el.reru)) {
         verbClass.forEach((v) => {
@@ -460,6 +460,7 @@ describe("JapaneseVerb", function () {
       actual.forEach((el) => {
         expect(el).to.have.key("name");
         expect(el).to.not.have.key("value");
+        expect(el).to.not.have.key("description");
       });
     });
 
@@ -468,7 +469,7 @@ describe("JapaneseVerb", function () {
 
       expect(actual).to.have.lengthOf(VERB_FORMS_COUNT);
       actual.forEach((el) => {
-        expect(el).to.have.all.keys("name", "value");
+        expect(el).to.have.all.keys("name", "value", "description");
       });
     });
     it("exception verb forms", function () {
@@ -478,7 +479,7 @@ describe("JapaneseVerb", function () {
 
       expect(actual).to.have.lengthOf.lessThan(regular.length);
       actual.forEach((el) => {
-        expect(el).to.have.all.keys("name", "value");
+        expect(el).to.have.all.keys("name", "value", "description");
       });
     });
     it("filtered verb form", function () {
@@ -487,7 +488,7 @@ describe("JapaneseVerb", function () {
 
       expect(actual).to.have.lengthOf(filter.length);
       actual.forEach((el) => {
-        expect(el).to.have.all.keys("name", "value");
+        expect(el).to.have.all.keys("name", "value", "description");
       });
     });
     it("ordered verb form", function () {
@@ -496,7 +497,7 @@ describe("JapaneseVerb", function () {
 
       expect(actual).to.have.lengthOf(filter.length);
       actual.forEach((el, i) => {
-        expect(el).to.have.all.keys("name", "value");
+        expect(el).to.have.all.keys("name", "value", "description");
         expect(el.name).to.eq(filter[i]);
       });
     });

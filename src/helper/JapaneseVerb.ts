@@ -6,6 +6,7 @@ import type { RawJapanese } from "../typings/raw";
 export type VerbFormArray = {
   /** Verb form (tense label) */ name: string;
   /** inflected/conjugated verb */ value: JapaneseText;
+  /** Verb form description */ description: string;
 }[];
 
 /**
@@ -35,16 +36,16 @@ export function getVerbFormsArray(
   };
 
   const allForms = [
-    { name: "-masu", value: verb.dictionary?.masuForm() },
-    { name: "-mashou", value: verb.dictionary?.mashouForm() },
-    { name: "dictionary", value: verb.dictionary },
-    { name: "-nai", value: verb.dictionary?.naiForm() },
-    { name: "-saseru", value: verb.dictionary?.saseruForm() },
-    { name: "-te", value: verb.dictionary?.teForm() },
-    { name: "-ta", value: verb.dictionary?.taForm() },
-    { name: "-chatta", value: verb.dictionary?.chattaForm() },
-    { name: "-reru", value: verb.dictionary?.reruForm() },
-    { name: "-rareru", value: verb.dictionary?.rareruForm() },
+    { name: "-masu", value: verb.dictionary?.masuForm(), description: "Polite Present" },
+    { name: "-mashou", value: verb.dictionary?.mashouForm(), description: "Polite Volitional" },
+    { name: "dictionary", value: verb.dictionary, description: "Dictionary" },
+    { name: "-nai", value: verb.dictionary?.naiForm(), description: "Negative" },
+    { name: "-saseru", value: verb.dictionary?.saseruForm(), description: "Causative" },
+    { name: "-te", value: verb.dictionary?.teForm(), description: "Te form" },
+    { name: "-ta", value: verb.dictionary?.taForm(), description: "Past" },
+    { name: "-chatta", value: verb.dictionary?.chattaForm(), description: "Casual Past" },
+    { name: "-reru", value: verb.dictionary?.reruForm(), description: "Potential" },
+    { name: "-rareru", value: verb.dictionary?.rareruForm(), description: "Passive" },
   ];
 
   if (rawVerb === undefined) {
@@ -60,7 +61,7 @@ export function getVerbFormsArray(
     // Reorder and select based on order array
     let filtered: VerbFormArray = [];
     if (order && order.length > 0) {
-      filtered = order.reduce<{ name: string; value: JapaneseText }[]>(
+      filtered = order.reduce<VerbFormArray>(
         (acc, form) => {
           const f = nonNull.find((el) => el.name === form);
           if (f !== undefined) {
