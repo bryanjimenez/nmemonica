@@ -6,14 +6,14 @@ import { buildVocabularyArray } from "../../../src/helper/reducerHelper";
 const verbs = {
   irr: [
     { dic: { japanese: 'だ' }, class: 3, masu: 'です', mashou: 'でしょう', te: 'で', ta: 'だった', chatta: null },
-    { dic: { japanese: 'する' }, class: 3, masu: 'します', mashou: 'しましょう', te: 'して', ta: 'した', saseru: 'させる', reru: "できる" },
-    { dic: { japanese: 'くる\n来る' }, class: 3, masu: 'きます\n来ます', mashou: 'きましょう\n来ましょう', te: 'きて\n来て', ta: 'きた\n来た', saseru: 'こさせる\n来させる', reru: "こられる\n来られる" },
+    { dic: { japanese: 'する' }, class: 3, masu: 'します', mashou: 'しましょう', te: 'して', ta: 'した', saseru: 'させる', reru: "できる", rareru: "される" },
+    { dic: { japanese: 'くる\n来る' }, class: 3, masu: 'きます\n来ます', mashou: 'きましょう\n来ましょう', te: 'きて\n来て', ta: 'きた\n来た', saseru: 'こさせる\n来させる', reru: "こられる\n来られる", rareru: "こられる\n来られる" },
     { dic: { japanese: 'あいする\n愛する' }, class: 3, masu: 'あいします\n愛します', mashou: 'あいしましょう\n愛しましょう', te: 'あいして\n愛して', ta: 'あいした\n愛した' },
     { dic: { japanese: 'ある' }, class: 3, masu: 'あります', mashou: 'ありましょう', te: 'あって', ta: 'あった' }
   ],
 
   ru: [
-    { dic: { japanese: 'たべる\n食べる'}, class:2,  reru: 'たべられる\n食べられる'},
+    { dic: { japanese: 'たべる\n食べる'}, class:2,  reru: 'たべられる\n食べられる', rareru: "たべられる\n食べられる"},
     { dic: { japanese: 'くれる\n呉れる' }, class: 2, masu: 'くれます\n呉れます', mashou: 'くれましょう\n呉れましょう', te: 'くれて\n呉れて', ta: 'くれた\n呉れた' },
     { dic: { japanese: 'みる\n見る' }, class: 2, masu: 'みます\n見ます', mashou: 'みましょう\n見ましょう', te: 'みて\n見て', ta: 'みた\n見た', chatta:"みちゃった\n見ちゃった", saseru: 'みさせる\n見させる' },
     { dic: { japanese: 'わすれる\n忘れる' }, class: 2, masu: 'わすれます\n忘れます', mashou: 'わすれましょう\n忘れましょう', te: 'わすれて\n忘れて', ta: 'わすれた\n忘れた' },
@@ -23,13 +23,14 @@ const verbs = {
   ],
 
   u: [
+    { dic: { japanese: "あう\n会う"}, class: 1, reru: "あえる\n会える", rareru:"あわれる\n会われる" },
     { dic: { japanese: 'いく\n行く', exv: 1 }, class: 1, masu: 'いきます\n行きます', mashou: 'いきましょう\n行きましょう', te: 'いって\n行って', ta: 'いった\n行った', chatta:"いっちゃった\n行っちゃった", saseru: 'いかせる\n行かせる' },
     { dic: { japanese: 'つくる\n作る' }, class: 1, masu: 'つくります\n作ります', mashou: 'つくりましょう\n作りましょう', te: 'つくって\n作って', ta: 'つくった\n作った', saseru: 'つくらせる\n作らせる' },
     { dic: { japanese: '読む' }, class: 1, masu: '読みます', mashou: '読みましょう', te: '読んで', ta: '読んだ' },
     { dic: { japanese: 'きく\n聞く' }, class: 1, masu: 'ききます\n聞きます', mashou: 'ききましょう\n聞きましょう', te: 'きいて\n聞いて', ta: 'きいた\n聞いた' },
     { dic: { japanese: '遊ぶ' }, class: 1, masu: '遊びます', mashou: '遊びましょう', te: '遊んで', ta: '遊んだ' },
     { dic: { japanese: 'いそぐ\n急ぐ' }, class: 1, masu: 'いそぎます\n急ぎます', mashou: 'いそぎましょう\n急ぎましょう', te: 'いそいで\n急いで', ta: 'いそいだ\n急いだ',chatta:"いそいじゃった\n急いじゃった" },
-    { dic: { japanese: 'しめす\n示す' }, class: 1, masu: 'しめします\n示します', mashou: 'しめしましょう\n示しましょう', te: 'しめして\n示して', ta: 'しめした\n示した' },
+    { dic: { japanese: 'しめす\n示す' }, class: 1, masu: 'しめします\n示します', mashou: 'しめしましょう\n示しましょう', te: 'しめして\n示して', ta: 'しめした\n示した', rareru: "しめされる\n示される" },
     { dic: { japanese: 'よろこぶ\n喜ぶ' }, class: 1, masu: 'よろこびます\n喜びます', mashou: 'よろこびましょう\n喜びましょう', te: 'よろこんで\n喜んで', ta: 'よろこんだ\n喜んだ' },
     { dic: { japanese: 'もらう\n貰う' }, class: 1, masu: 'もらいます\n貰います', mashou: 'もらいましょう\n貰いましょう', te: 'もらって\n貰って', ta: 'もらった\n貰った' },
     { dic: { japanese: 'はしる\n走る', exv: 1 }, class: 1, masu: 'はしります\n走ります', mashou: 'はしりましょう\n走りましょう', te: 'はしって\n走って', ta: 'はしった\n走った' },
@@ -40,7 +41,7 @@ const verbs = {
     { dic: { japanese: 'へる\n減る', exv: 1 }, class: 1, masu: 'へります\n減ります', mashou: 'へりましょう\n減りましょう', te: 'へって\n減って', ta: 'へった\n減った' },
     { dic: { japanese: 'すべる\n滑る', exv: 1 }, class: 1, masu: 'すべります\n滑ります', mashou: 'すべりましょう\n滑りましょう', te: 'すべって\n滑って', ta: 'すべった\n滑った'},
     { dic: { japanese: 'いじる\n弄る', exv: 1 }, class: 1, masu: 'いじります\n弄ります', mashou: 'いじりましょう\n弄りましょう', te: 'いじって\n弄って', ta: 'いじった\n弄った'},
-    { dic: { japanese: 'たつ\n立つ'}, class: 1, reru: 'たてる\n立てる'},
+    { dic: { japanese: 'たつ\n立つ'}, class: 1, reru: 'たてる\n立てる', rareru: "たたれる\n立たれる"},
   ]
 };
 
@@ -368,6 +369,35 @@ describe("JapaneseVerb", function () {
     it("throw on exception verbs");
   });
 
+
+  describe("rareruForm (Passive)", function () {
+    const testRareruForm = (skip, verbClass) => {
+      if (verbClass.some((el) => el.rareru)) {
+        verbClass.forEach((v) => {
+          if (v.rareru) {
+            const actual = JapaneseVerb.parse(v.dic).rareruForm();
+            expect(actual, actual?.toString()).to.be.a("JapaneseText");
+            expect(actual?.toString(), v.dic).to.eq(v.rareru);
+          }
+        });
+      } else {
+        skip();
+      }
+    };
+
+    it("irr", function () {
+      testRareruForm(this.skip, verbs.irr);
+    });
+
+    it("ichidan", function () {
+      testRareruForm(this.skip, verbs.ru);
+    });
+
+    it("godan", function () {
+      testRareruForm(this.skip, verbs.u);
+    });
+  });
+
   describe("isExceptionVerb", function () {
     it("exception verb", function () {
       const excVer = vocabulary.value.find(
@@ -458,10 +488,11 @@ describe("JapaneseVerb", function () {
   });
 
   describe("getVerbFormsArray", function () {
+    const VERB_FORMS_COUNT = 10;
     it("verb form names only", function () {
       const actual = getVerbFormsArray();
 
-      expect(actual).to.have.lengthOf(9);
+      expect(actual).to.have.lengthOf(VERB_FORMS_COUNT);
       actual.forEach((el) => {
         expect(el).to.have.key("name");
         expect(el).to.not.have.key("value");
@@ -471,7 +502,7 @@ describe("JapaneseVerb", function () {
     it("verb form", function () {
       const actual = getVerbFormsArray({ japanese: "いく\n行く", exv: 1 });
 
-      expect(actual).to.have.lengthOf(9);
+      expect(actual).to.have.lengthOf(VERB_FORMS_COUNT);
       actual.forEach((el) => {
         expect(el).to.have.all.keys("name", "value");
       });

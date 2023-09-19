@@ -44,6 +44,7 @@ export function getVerbFormsArray(
     { name: "-ta", value: verb.dictionary?.taForm() },
     { name: "-chatta", value: verb.dictionary?.chattaForm() },
     { name: "-reru", value: verb.dictionary?.reruForm() },
+    { name: "-rareru", value: verb.dictionary?.rareruForm() },
   ];
 
   if (rawVerb === undefined) {
@@ -434,9 +435,7 @@ export class JapaneseVerb extends JapaneseText {
     } /*if (type === 3)*/ else {
       if (verb === "来る" || verb === "くる") {
         reru = new JapaneseText("こられる", "来られる");
-      } else if (verb === "する") {
-        reru = new JapaneseText("できる");
-      } else if ("する" === verb.slice(-2)) {
+      } else if (verb.endsWith("する")) {
         const kStem = super.getSpelling().slice(0, -2);
 
         if (hasKanji) {
@@ -453,6 +452,73 @@ export class JapaneseVerb extends JapaneseText {
     }
 
     return reru;
+  }
+
+  /**
+   * Passive form (~rareru)
+   */
+  rareruForm() {
+    let rareru: JapaneseText | null;
+    const type = this.getVerbClass();
+    let verb = super.getSpelling();
+    let hasKanji = super.hasFurigana();
+
+    if (this.isIntransitive() || this.getIntransitivePair() !== undefined) {
+      return null;
+    }
+
+    if (type === 1) {
+      // u Godan
+      const lastChar = verb[verb.length - 1];
+
+      const hiragana = data.hiragana;
+      const eVowel = data.vowels.indexOf("a");
+      const { iConsonant } = getConsonantVowel(lastChar);
+      // u -> wa
+      const consonant = iConsonant === 0 ? 14 : iConsonant;
+      const consonantEnding = hiragana[consonant][eVowel] + "れる";
+
+      const kStem = super.getSpelling().slice(0, -1);
+      if (hasKanji) {
+        const fStem = super.getPronunciation().slice(0, -1);
+
+        rareru = new JapaneseText(
+          fStem + consonantEnding,
+          kStem + consonantEnding
+        );
+      } else {
+        rareru = new JapaneseText(kStem + consonantEnding);
+      }
+    } else if (type === 2) {
+      // ru Ichidan
+
+      const [fStem, kStem] = this.getStem();
+
+      if (hasKanji) {
+        rareru = new JapaneseText(fStem + "られる", kStem + "られる");
+      } else {
+        rareru = new JapaneseText(fStem + "られる");
+      }
+    } /*if (type === 3)*/ else {
+      if (verb === "来る" || verb === "くる") {
+        rareru = new JapaneseText("こられる", "来られる");
+      } else if (verb.endsWith("する")) {
+        const kStem = super.getSpelling().slice(0, -2);
+
+        if (hasKanji) {
+          const fStem = super.getPronunciation().slice(0, -2);
+          rareru = new JapaneseText(fStem + "される", kStem + "される");
+        } else {
+          rareru = new JapaneseText(kStem + "される");
+        }
+      } else if (verb === "ある" || verb === "いる") {
+        rareru = null;
+      } else {
+        throw new Error("Unknown exception verb type");
+      }
+    }
+
+    return rareru;
   }
 
   /**
