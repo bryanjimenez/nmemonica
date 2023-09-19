@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { JapaneseVerb } from "../../../src/helper/JapaneseVerb";
+import { JapaneseVerb, getVerbFormsArray } from "../../../src/helper/JapaneseVerb";
 import { buildVocabularyArray } from "../../../src/helper/reducerHelper";
 /* global describe it */
 
@@ -454,6 +454,56 @@ describe("JapaneseVerb", function () {
         "4f3b0dffa85324487e7130022fa2a87c"
       );
       expect(actual.isExceptionVerb()).to.be.false;
+    });
+  });
+
+  describe("getVerbFormsArray", function () {
+    it("verb form names only", function () {
+      const actual = getVerbFormsArray();
+
+      expect(actual).to.have.lengthOf(9);
+      actual.forEach((el) => {
+        expect(el).to.have.key("name");
+        expect(el).to.not.have.key("value");
+      });
+    });
+
+    it("verb form", function () {
+      const actual = getVerbFormsArray({ japanese: "いく\n行く", exv: 1 });
+
+      expect(actual).to.have.lengthOf(9);
+      actual.forEach((el) => {
+        expect(el).to.have.all.keys("name", "value");
+      });
+    });
+    it("exception verb forms", function () {
+      const regular = getVerbFormsArray({ japanese: "たべる\n食べる" });
+      // exception verbs don't have all forms
+      const actual = getVerbFormsArray({ japanese: "ある" });
+
+      expect(actual).to.have.lengthOf.lessThan(regular.length);
+      actual.forEach((el) => {
+        expect(el).to.have.all.keys("name", "value");
+      });
+    });
+    it("filtered verb form", function () {
+      const filter = ["-ta"];
+      const actual = getVerbFormsArray({ japanese: "読む" }, filter);
+
+      expect(actual).to.have.lengthOf(filter.length);
+      actual.forEach((el) => {
+        expect(el).to.have.all.keys("name", "value");
+      });
+    });
+    it("ordered verb form", function () {
+      const filter = ["-ta", "-te"];
+      const actual = getVerbFormsArray({ japanese: "読む" }, filter);
+
+      expect(actual).to.have.lengthOf(filter.length);
+      actual.forEach((el, i) => {
+        expect(el).to.have.all.keys("name", "value");
+        expect(el.name).to.eq(filter[i]);
+      });
     });
   });
 });

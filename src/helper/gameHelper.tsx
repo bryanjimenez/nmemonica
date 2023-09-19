@@ -11,17 +11,11 @@ import type {
   FuriganaToggleMap,
   GroupListMap,
   MetaDataObj,
-  RawJapanese,
   RawKanji,
   RawPhrase,
   RawVocabulary,
   ValuesOf,
 } from "../typings/raw";
-
-export type VerbFormArray = {
-  /** Verb form (tense label) */ name: string;
-  /** inflected/conjugated verb */ value: JapaneseText;
-}[];
 
 /**
  * Goes to the next term or selects one from the frequency list
@@ -300,96 +294,6 @@ export function toggleOptions<T>(index: number, options: T[]) {
   const len = options.length;
 
   return index + 1 < len ? index + 1 : 0;
-}
-
-/**
- * @overload Return a list of verb forms names
- * Form names only
- */
-export function getVerbFormsArray(): { name: string }[];
-
-/**
- * @overload Returns verb forms
- * Form names and values
- */
-export function getVerbFormsArray(
-  rawVerb: RawJapanese,
-  order?: string[]
-): VerbFormArray;
-
-/**
- * Array containing the avaiable verb forms
- */
-export function getVerbFormsArray(
-  rawVerb?: RawJapanese,
-  order?: string[]
-): VerbFormArray | { name: string }[] {
-  const verb = {
-    dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb),
-  };
-
-  const allForms = [
-    { name: "-masu", value: verb.dictionary?.masuForm() },
-    { name: "-mashou", value: verb.dictionary?.mashouForm() },
-    { name: "dictionary", value: verb.dictionary },
-    { name: "-nai", value: verb.dictionary?.naiForm() },
-    { name: "-saseru", value: verb.dictionary?.saseruForm() },
-    { name: "-te", value: verb.dictionary?.teForm() },
-    { name: "-ta", value: verb.dictionary?.taForm() },
-    { name: "-chatta", value: verb.dictionary?.chattaForm() },
-    { name: "-reru", value: verb.dictionary?.reruForm() },
-  ];
-
-  if (rawVerb === undefined) {
-    const verbNamesOnly = allForms.map((thing) => ({ name: thing.name }));
-
-    return verbNamesOnly;
-  } else {
-    // Some forms can be nulled, exclude those
-    const nonNull = allForms.filter(
-      (thing) => thing.value !== null
-    ) as VerbFormArray;
-
-    // Reorder and select based on order array
-    let filtered: VerbFormArray = [];
-    if (order && order.length > 0) {
-      filtered = order.reduce<{ name: string; value: JapaneseText }[]>(
-        (acc, form) => {
-          const f = nonNull.find((el) => el.name === form);
-          if (f !== undefined) {
-            acc = [...acc, f];
-          }
-
-          return acc;
-        },
-        []
-      );
-    }
-
-    if (filtered.length === 0) {
-      filtered = nonNull;
-    }
-
-    return filtered;
-  }
-}
-
-/**
- * @throws {Error} if the target form is not valid
- */
-export function verbToTargetForm(
-  rawVerb: RawJapanese,
-  targetForm: string
-): JapaneseText {
-  const theForm = getVerbFormsArray(rawVerb).find(
-    (form) => form.name === targetForm
-  );
-
-  if (!theForm) {
-    throw new Error("Invalid targetForm");
-  }
-
-  return theForm.value;
 }
 
 /**

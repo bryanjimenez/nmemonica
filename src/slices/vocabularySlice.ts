@@ -13,7 +13,7 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
-import { getVerbFormsArray } from "../helper/gameHelper";
+import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,

@@ -1,7 +1,102 @@
-import data from "../../data/kana.json";
-import { getConsonantVowel } from "./kanaHelper";
 import { JapaneseText } from "./JapaneseText";
+import { getConsonantVowel } from "./kanaHelper";
+import data from "../../data/kana.json";
 import type { RawJapanese } from "../typings/raw";
+
+export type VerbFormArray = {
+  /** Verb form (tense label) */ name: string;
+  /** inflected/conjugated verb */ value: JapaneseText;
+}[];
+
+/**
+ * @overload Return a list of verb forms names
+ * Form names only
+ */
+export function getVerbFormsArray(): { name: string }[];
+
+/**
+ * @overload Returns verb forms
+ * Form names and values
+ */
+export function getVerbFormsArray(
+  rawVerb: RawJapanese,
+  order?: string[]
+): VerbFormArray;
+
+/**
+ * Array containing the avaiable verb forms
+ */
+export function getVerbFormsArray(
+  rawVerb?: RawJapanese,
+  order?: string[]
+): VerbFormArray | { name: string }[] {
+  const verb = {
+    dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb),
+  };
+
+  const allForms = [
+    { name: "-masu", value: verb.dictionary?.masuForm() },
+    { name: "-mashou", value: verb.dictionary?.mashouForm() },
+    { name: "dictionary", value: verb.dictionary },
+    { name: "-nai", value: verb.dictionary?.naiForm() },
+    { name: "-saseru", value: verb.dictionary?.saseruForm() },
+    { name: "-te", value: verb.dictionary?.teForm() },
+    { name: "-ta", value: verb.dictionary?.taForm() },
+    { name: "-chatta", value: verb.dictionary?.chattaForm() },
+    { name: "-reru", value: verb.dictionary?.reruForm() },
+  ];
+
+  if (rawVerb === undefined) {
+    const verbNamesOnly = allForms.map((form) => ({ name: form.name }));
+
+    return verbNamesOnly;
+  } else {
+    // Some forms can be nulled, exclude those
+    const nonNull = allForms.filter(
+      (thing) => thing.value !== null
+    ) as VerbFormArray;
+
+    // Reorder and select based on order array
+    let filtered: VerbFormArray = [];
+    if (order && order.length > 0) {
+      filtered = order.reduce<{ name: string; value: JapaneseText }[]>(
+        (acc, form) => {
+          const f = nonNull.find((el) => el.name === form);
+          if (f !== undefined) {
+            acc = [...acc, f];
+          }
+
+          return acc;
+        },
+        []
+      );
+    }
+
+    if (filtered.length === 0) {
+      filtered = nonNull;
+    }
+
+    return filtered;
+  }
+}
+
+/**
+ * @throws {Error} if the target form is not valid
+ */
+export function verbToTargetForm(
+  rawVerb: RawJapanese,
+  targetForm: string
+): JapaneseText {
+  const theForm = getVerbFormsArray(rawVerb).find(
+    (form) => form.name === targetForm
+  );
+
+  if (!theForm) {
+    throw new Error("Invalid targetForm");
+  }
+
+  return theForm.value;
+}
 
 export class JapaneseVerb extends JapaneseText {
   trans?: string;
@@ -83,7 +178,7 @@ export class JapaneseVerb extends JapaneseText {
       getConsonantVowel(beforeLastChar);
 
     if (
-      spelling.slice(-2) === "する" ||
+      spelling.endsWith("する") ||
       pronunciation === "くる" ||
       pronunciation === "だ" ||
       pronunciation === "ある"
@@ -541,11 +636,11 @@ export class JapaneseVerb extends JapaneseText {
 
         if (hiragana) {
           t_Con = new JapaneseText(
-            hiragana.slice(0, -1) + ending,
-            verb.slice(0, -1) + ending
+            `${hiragana.slice(0, -1)}${ending ?? ""}`,
+            `${verb.slice(0, -1)}${ending ?? ""}`
           );
         } else {
-          t_Con = new JapaneseText(verb.slice(0, -1) + ending);
+          t_Con = new JapaneseText(`${verb.slice(0, -1)}${ending ?? ""}`);
         }
       }
     } else if (type === 2) {
