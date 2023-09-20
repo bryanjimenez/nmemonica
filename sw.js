@@ -1,6 +1,6 @@
 const buildConstants = {
   swVersion: "5bad10eb",
-  initCacheVer: "96e1d218",
+  initCacheVer: "c9f3f3dc",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   authenticationHeader: "X-API-KEY",
@@ -813,7 +813,7 @@ const cacheFiles = [
   "237.1eae072b31b040111f8a.css",
   "237.3a64cd45.js",
   "251.d44bd4cd.js",
-  "323.893fc40681c60ce3cb72.css",
+  "323.b736eac4646dd3045ac6.css",
   "35872f035bddb00bb6bed6802ee78d72.png",
   "388582fe2fdbf34450b199396860911c.png",
   "392.4903c715.js",
@@ -826,14 +826,15 @@ const cacheFiles = [
   "731.03b44a10.js",
   "731.bd91d005d8a3b29fe960.css",
   "893.f08dd52a.js",
+  "91.0b22cc56.js",
   "edb1f64724de9f6f175c1efab91a9473.png",
   "favicon.ico",
   "fb3f97e84cbbbf0c3fdedec024222e88.png",
   "icon192.png",
   "icon512.png",
   "index.html",
+  "main.10de16ac.js",
   "main.4ad9d18a448055fc4115.css",
-  "main.4c285994.js",
   "manifest.webmanifest",
   "maskable512.png",
   "npm.babel.40c54934.js",
@@ -862,7 +863,7 @@ const cacheFiles = [
   "npm.scheduler.7afb3de9.js",
   "npm.stylis.cd8656fe.js",
   "npm.use-sync-external-store.5abdc3a4.js",
-  "runtime.5e13efc5.js",
+  "runtime.d30567d0.js",
 ];
 
 initServiceWorker({ ...buildConstants, getParam, removeParam, cacheFiles });
