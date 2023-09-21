@@ -124,7 +124,7 @@ export default function Vocabulary() {
 
   const [scrollJOrder, setScrollJOrder] = useState(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
-  /** Is not undefined after user modifies accuracy value */
+  /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
 
   const {
@@ -233,7 +233,7 @@ export default function Vocabulary() {
 
         const overdueVals = pending.map((item, i) => {
           const {
-            accuracy = 0,
+            accuracyP = 0,
             lastReview,
             daysBetweenReviews,
           } = metadata.current[filtered[i].uid]!;
@@ -241,7 +241,7 @@ export default function Vocabulary() {
             ? daysSince(lastReview)
             : undefined;
           const p = getPercentOverdue({
-            accuracy,
+            accuracy: accuracyP,
             daysSinceReview,
             daysBetweenReviews,
           });
@@ -535,15 +535,15 @@ export default function Vocabulary() {
 
       let spaceRepUpdated: Promise<unknown> = Promise.resolve();
       if (
-        metadata.current[uid]?.difficulty &&
+        metadata.current[uid]?.difficultyP &&
         accuracyModifiedRef.current
         // typeof accuracyModifiedRef.current === 'number' &&
         // accuracyModifiedRef.current > 0
       ) {
-        // when difficulty exists and accuracy has been set
+        // when difficulty exists and accuracyP has been set
         spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
       } else if (accuracyModifiedRef.current === null) {
-        // when accuracy is nulled
+        // when accuracyP is nulled
         spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
       }
 
@@ -741,7 +741,7 @@ export default function Vocabulary() {
                 notification={revNotification}
               >
                 <DifficultySlider
-                  difficulty={metadata.current[uid]?.difficulty}
+                  difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
                     if (difficulty !== undefined) {
@@ -750,7 +750,7 @@ export default function Vocabulary() {
                   }}
                 />
                 <AccuracySlider
-                  accuracy={metadata.current[uid]?.accuracy}
+                  accuracy={metadata.current[uid]?.accuracyP}
                   resetOn={uid}
                   onChange={(accuracy: number | null) => {
                     if (accuracy !== undefined) {

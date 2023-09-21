@@ -179,9 +179,9 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
       oMeta?.lastReview &&
       !reviewedToday &&
       !viewedToday &&
-      typeof oMeta.accuracy === "number"
+      typeof oMeta.accuracyP === "number"
     ) {
-      if (oMeta.accuracy < SR_CORRECT_TRESHHOLD * 100) {
+      if (oMeta.accuracyP < SR_CORRECT_TRESHHOLD * 100) {
         // previously incorrect
         failedTemp = [
           ...failedTemp,
@@ -197,7 +197,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
 
         const daysSinceReview = daysSince(oMeta.lastReview);
         const percentOverdueCalc = getPercentOverdue({
-          accuracy: oMeta.accuracy,
+          accuracy: oMeta.accuracyP/100,
           daysSinceReview,
           daysBetweenReviews: oMeta.daysBetweenReviews,
         });
@@ -294,14 +294,14 @@ export function recallInfoTable<T extends { uid: string; english: string }>(
       lastView,
       lastReview,
       daysBetweenReviews,
-      accuracy = 0,
+      accuracyP = 0,
     } = metadata[item.uid];
 
     if (!lastReview || !daysBetweenReviews) return acc;
 
     const daysSinceReview = daysSince(lastReview);
     const percentOverdueCalc = getPercentOverdue({
-      accuracy,
+      accuracy: accuracyP/100,
       daysSinceReview,
       daysBetweenReviews,
     });
@@ -360,15 +360,15 @@ export function updateAction(
 ) {
   const metadata = spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 };
 
-  const { difficulty, accuracy, daysBetweenReviews } = metadata;
-  if (difficulty === undefined || accuracy === undefined) {
+  const { difficultyP, accuracyP, daysBetweenReviews } = metadata;
+  if (difficultyP === undefined || accuracyP === undefined) {
     return { newValue: spaceRep, oldValue: spaceRep };
   }
 
   /** difficultyP [easy:0, hard:1] */
-  const difficultyP = difficulty / 100;
+  const difficulty = difficultyP / 100;
   /** accuracyP [wrong:0, right:1] */
-  const accuracyP = accuracy / 100;
+  const accuracy = accuracyP / 100;
 
   const lastReview =
     metadata.lastReview ?? spaceRep[uid]?.lastView ?? new Date().toJSON();
@@ -376,8 +376,8 @@ export function updateAction(
   const daysSinceReview = daysSince(lastReview);
 
   const calcDaysBetweenReviews = calculateDaysBetweenReviews({
-    difficulty: difficultyP,
-    accuracy: accuracyP,
+    difficulty,
+    accuracy,
     daysSinceReview,
     daysBetweenReviews,
   });

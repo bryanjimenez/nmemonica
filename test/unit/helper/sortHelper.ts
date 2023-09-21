@@ -527,7 +527,7 @@ describe("sortHelper", function () {
           lastView: "2020-01-01T01:06:00.000Z",
           lastReview: "2020-01-01T01:06:00.000Z",   // Space Repetition item
           daysBetweenReviews: 2,
-          accuracy: 99
+          accuracyP: 99
         },
         "729307b04a77bccc5db86d6b49f55f2f": {
           // english: 'grey',
@@ -535,7 +535,7 @@ describe("sortHelper", function () {
           lastView: "2020-01-01T01:05:00.000Z",
           lastReview: "2020-01-01T01:05:00.000Z",   // Space Repetition item
           daysBetweenReviews: 2,
-          accuracy: 99
+          accuracyP: 99
         },
         "e5d47019e1b948c2445b6c1ea3850c2b": {
           // english: 'red',
@@ -640,10 +640,10 @@ describe("sortHelper", function () {
     it("below a value", function () {
       const expected = [{ uid: "uidA" }];
       const tMeta = {
-        uidA: { difficulty: 36 },
-        uidB: { difficulty: 90 },
-        uidC: { difficulty: 90 },
-        uidD: { difficulty: 90 },
+        uidA: { difficultyP: 36 },
+        uidB: { difficultyP: 90 },
+        uidC: { difficultyP: 90 },
+        uidD: { difficultyP: 90 },
       };
 
       const actual = difficultySubFilter(-50, terms, tMeta);
@@ -652,10 +652,10 @@ describe("sortHelper", function () {
     it("undefined is below", function () {
       const expected = [{ uid: "uidA" }];
       const tMeta = {
-        uidA: { difficulty: undefined },
-        uidB: { difficulty: 90 },
-        uidC: { difficulty: 90 },
-        uidD: { difficulty: 90 },
+        uidA: { difficultyP: undefined },
+        uidB: { difficultyP: 90 },
+        uidC: { difficultyP: 90 },
+        uidD: { difficultyP: 90 },
       };
 
       const actual = difficultySubFilter(-80, terms, tMeta);
@@ -664,10 +664,10 @@ describe("sortHelper", function () {
     it("above a value", function () {
       const expected = [{ uid: "uidB" }, { uid: "uidC" }, { uid: "uidD" }];
       const tMeta = {
-        uidA: { difficulty: 36 },
-        uidB: { difficulty: 90 },
-        uidC: { difficulty: 90 },
-        uidD: { difficulty: 90 },
+        uidA: { difficultyP: 36 },
+        uidB: { difficultyP: 90 },
+        uidC: { difficultyP: 90 },
+        uidD: { difficultyP: 90 },
       };
 
       const actual = difficultySubFilter(50, terms, tMeta);
@@ -676,10 +676,10 @@ describe("sortHelper", function () {
     it("undefined is above", function () {
       const expected = [{ uid: "uidB" }, { uid: "uidC" }, { uid: "uidD" }];
       const tMeta = {
-        uidA: { difficulty: 6 },
-        uidB: { difficulty: undefined },
-        uidC: { difficulty: undefined },
-        uidD: { difficulty: undefined },
+        uidA: { difficultyP: 6 },
+        uidB: { difficultyP: undefined },
+        uidC: { difficultyP: undefined },
+        uidD: { difficultyP: undefined },
       };
 
       const actual = difficultySubFilter(25, terms, tMeta);
@@ -688,10 +688,10 @@ describe("sortHelper", function () {
     it("mixed", function () {
       const expected = [{ uid: "uidA" }, { uid: "uidB" }, { uid: "uidC" }];
       const tMeta = {
-        uidA: { difficulty: 6 },
-        uidB: { difficulty: undefined },
-        uidC: { difficulty: 31 },
-        uidD: { difficulty: 80 },
+        uidA: { difficultyP: 6 },
+        uidB: { difficultyP: undefined },
+        uidC: { difficultyP: 31 },
+        uidD: { difficultyP: 80 },
       };
 
       const actual = difficultySubFilter(-75, terms, tMeta);
@@ -700,10 +700,10 @@ describe("sortHelper", function () {
     it("empty result", function () {
       const expected = [];
       const tMeta = {
-        uidA: { difficulty: 36 },
-        uidB: { difficulty: 90 },
-        uidC: { difficulty: 90 },
-        uidD: { difficulty: 90 },
+        uidA: { difficultyP: 36 },
+        uidB: { difficultyP: 90 },
+        uidC: { difficultyP: 90 },
+        uidD: { difficultyP: 90 },
       };
 
       const actual = difficultySubFilter(90, terms, tMeta);

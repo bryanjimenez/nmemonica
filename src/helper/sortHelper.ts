@@ -33,8 +33,8 @@ export function difficultyOrder(
     const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
-    if (termRep?.difficulty !== undefined) {
-      const difficulty = Number(termRep.difficulty);
+    if (termRep?.difficultyP !== undefined) {
+      const difficulty = Number(termRep.difficultyP);
       if (difficulty < MEMORIZED_THRLD) {
         withDifficulty = [
           ...withDifficulty,
@@ -83,7 +83,7 @@ export function difficultySubFilter<T extends { uid: string }>(
 ) {
   return termList.filter((v) => {
     const dT = threshold;
-    const d = metadata[v.uid]?.difficulty;
+    const d = metadata[v.uid]?.difficultyP;
 
     let showUndefMemoV = false;
     let showV = false;
@@ -197,12 +197,12 @@ export function dateViewOrder(
     const tUid = term.uid;
     const oMeta = metaRecord[tUid];
 
-    if (oMeta?.lastReview && oMeta.daysBetweenReviews && oMeta.accuracy) {
+    if (oMeta?.lastReview && oMeta.daysBetweenReviews && oMeta.accuracyP) {
       // a space repetition item
       // won't be sorted by lastView
       const daysSinceReview = daysSince(oMeta.lastReview);
       const percentOverdueCalc = getPercentOverdue({
-        accuracy: oMeta.accuracy,
+        accuracy: oMeta.accuracyP/100,
         daysSinceReview,
         daysBetweenReviews: oMeta.daysBetweenReviews,
       });

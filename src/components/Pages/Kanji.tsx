@@ -138,7 +138,7 @@ export default function Kanji() {
   const [showMeaning, setShowMeaning] = useState(false);
 
   const [log, setLog] = useState<ConsoleMessage[]>([]);
-  /** Is not undefined after user modifies accuracy value */
+  /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
 
   const filteredTerms = useMemo(() => {
@@ -181,7 +181,7 @@ export default function Kanji() {
 
         const overdueVals = pending.map((item, i) => {
           const {
-            accuracy = 0,
+            accuracyP = 0,
             lastReview,
             daysBetweenReviews,
           } = metadata.current[filtered[i].uid]!;
@@ -189,7 +189,7 @@ export default function Kanji() {
             ? daysSince(lastReview)
             : undefined;
           const p = getPercentOverdue({
-            accuracy,
+            accuracy: accuracyP,
             daysSinceReview,
             daysBetweenReviews,
           });
@@ -432,15 +432,15 @@ export default function Kanji() {
 
       let spaceRepUpdated: Promise<unknown> = Promise.resolve();
       if (
-        metadata.current[uid]?.difficulty &&
+        metadata.current[uid]?.difficultyP &&
         accuracyModifiedRef.current
         // typeof accuracyModifiedRef.current === 'number' &&
         // accuracyModifiedRef.current > 0
       ) {
-        // when difficulty exists and accuracy has been set
+        // when difficulty exists and accuracyP has been set
         spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
       } else if (accuracyModifiedRef.current === null) {
-        // when accuracy is nulled
+        // when accuracyP is nulled
         spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
       }
 
@@ -681,7 +681,7 @@ export default function Kanji() {
                 notification={revNotification}
               >
                 <DifficultySlider
-                  difficulty={metadata.current[uid]?.difficulty}
+                  difficulty={metadata.current[uid]?.difficultyP}
                   onChange={(difficulty: number | null) => {
                     if (difficulty !== undefined) {
                       dispatch(setKanjiDifficulty(uid, difficulty));
@@ -690,7 +690,7 @@ export default function Kanji() {
                   resetOn={uid}
                 />
                 <AccuracySlider
-                  accuracy={metadata.current[uid]?.accuracy}
+                  accuracy={metadata.current[uid]?.accuracyP}
                   resetOn={uid}
                   onChange={(accuracy: number | null) => {
                     if (accuracy !== undefined) {

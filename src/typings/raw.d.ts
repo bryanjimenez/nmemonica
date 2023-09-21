@@ -97,10 +97,10 @@ export interface MetaDataObj {
   lastReview?: string;
   consecutiveRight?: number;
 
-  /** Item difficulty */
-  difficulty?: number;
-  /** Recall accuracy */
-  accuracy?: number;
+  /** Item difficulty percentage [0,100]*/
+  difficultyP?: number;
+  /** Recall accuracy percentage [0,100]*/
+  accuracyP?: number;
 
   /** Calculated review value */
   daysBetweenReviews?: number;

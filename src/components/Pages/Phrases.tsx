@@ -102,7 +102,7 @@ export default function Phrases() {
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [recacheAudio, setRecacheAudio] = useState(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
-  /** Is not undefined after user modifies accuracy value */
+  /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
 
   const {
@@ -181,7 +181,7 @@ export default function Phrases() {
 
         const overdueVals = pending.map((item, i) => {
           const {
-            accuracy = 0,
+            accuracyP = 0,
             lastReview,
             daysBetweenReviews,
           } = metadata.current[filtered[i].uid]!;
@@ -189,7 +189,7 @@ export default function Phrases() {
             ? daysSince(lastReview)
             : undefined;
           const p = getPercentOverdue({
-            accuracy,
+            accuracy: accuracyP/100,
             daysSinceReview,
             daysBetweenReviews,
           });
@@ -393,11 +393,11 @@ export default function Phrases() {
       const p = getTerm(uid, filteredPhrases, phraseList);
 
       let spaceRepUpdated: Promise<unknown> = Promise.resolve();
-      if (metadata.current[uid]?.difficulty && accuracyModifiedRef.current) {
-        // when difficulty exists and accuracy has been set
+      if (metadata.current[uid]?.difficultyP && accuracyModifiedRef.current) {
+        // when difficulty exists and accuracyP has been set
         spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
       } else if (accuracyModifiedRef.current === null) {
-        // when accuracy is nulled
+        // when accuracyP is nulled
         spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
       }
 
@@ -669,7 +669,7 @@ export default function Phrases() {
                 notification={revNotification}
               >
                 <DifficultySlider
-                  difficulty={metadata.current[uid]?.difficulty}
+                  difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
                     if (difficulty !== undefined) {
@@ -678,7 +678,7 @@ export default function Phrases() {
                   }}
                 />
                 <AccuracySlider
-                  accuracy={metadata.current[uid]?.accuracy}
+                  accuracy={metadata.current[uid]?.accuracyP}
                   resetOn={uid}
                   onChange={(accuracy: number | null) => {
                     if (accuracy !== undefined) {

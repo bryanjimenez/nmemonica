@@ -421,7 +421,7 @@ const vocabularySlice = createSlice({
           state.setting.repetition,
           { count: false, date: false },
           {
-            set: { difficulty: value },
+            set: { difficultyP: value },
           }
         );
 
@@ -577,7 +577,7 @@ const vocabularySlice = createSlice({
           state.setting.repetition,
           { count: false, date: false },
           {
-            set: { accuracy: value },
+            set: { accuracyP: value },
           }
         );
 

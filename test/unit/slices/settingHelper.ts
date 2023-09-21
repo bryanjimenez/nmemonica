@@ -211,7 +211,7 @@ describe("settingHelper", function () {
     const metaData = {
       uid0: {
         lastView: new Date().toJSON(),
-        difficulty: 40,
+        difficultyP: 40,
         f: true,
         rein: false,
         vC: 1,

@@ -241,8 +241,8 @@ export function getStaleSpaceRepKeys(
     // Space Repetition
     lastReview: null,
     consecutiveRight: null,
-    difficulty: null,
-    accuracy: null,
+    difficultyP: null,
+    accuracyP: null,
     daysBetweenReviews: null,
   };
   const SpaceRepKeys = new Set(Object.keys(MetadataObjKeys));

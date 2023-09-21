@@ -15,19 +15,19 @@ interface RecallIntervalPreviewInfoProps {
 export function RecallIntervalPreviewInfo(
   props: RecallIntervalPreviewInfoProps
 ) {
-  const { accuracy, difficulty, daysBetweenReviews, lastReview } =
+  const { accuracyP, difficultyP, daysBetweenReviews, lastReview } =
     props.metadata ?? {};
 
   let prevInterval = null;
   let nextIntervalText = null;
   let icon = null;
   let prevIntervalText = null;
-  if (accuracy && difficulty) {
+  if (accuracyP && difficultyP) {
     const daysSinceReview =
       lastReview !== undefined ? daysSince(lastReview) : undefined;
     const next = calculateDaysBetweenReviews({
-      accuracy: accuracy / 100,
-      difficulty: difficulty / 100,
+      accuracy: accuracyP / 100,
+      difficulty: difficultyP / 100,
       daysBetweenReviews,
       daysSinceReview,
     });

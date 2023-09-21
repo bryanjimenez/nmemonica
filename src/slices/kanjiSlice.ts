@@ -291,7 +291,7 @@ const kanjiSlice = createSlice({
           state.setting.repetition,
           { count: false, date: false },
           {
-            set: { difficulty: value },
+            set: { difficultyP: value },
           }
         );
 
@@ -320,7 +320,7 @@ const kanjiSlice = createSlice({
           state.setting.repetition,
           { count: false, date: false },
           {
-            set: { accuracy: value },
+            set: { accuracyP: value },
           }
         );
 
