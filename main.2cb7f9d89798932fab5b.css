@@ -360,6 +360,7 @@ a {
 /* xx small devices (576px and down)*/
 @media (max-width: 576px) {
   .options-bar .col {
+    /* split-width-view avoid options-bar break */
     width: unset;
     flex: unset;
     padding: 0;
