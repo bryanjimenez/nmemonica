@@ -357,6 +357,15 @@ a {
   padding-left: 20px;
 }
 
+/* xx small devices (576px and down)*/
+@media (max-width: 576px) {
+  .options-bar .col {
+    width: unset;
+    flex: unset;
+    padding: 0;
+  }
+}
+
 .dark-mode {
   background-color: var(--bs-dark);
   color: var(--bs-light);
