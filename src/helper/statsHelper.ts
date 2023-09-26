@@ -4,7 +4,7 @@ import type { MetaDataObj } from "../typings/raw";
 
 /**
  * For every available metadata item a
- * lastView number of days is calculated
+ * number of days since lastView is calculated
  * @param metaData
  * @param days Number of days from today to include
  */
@@ -35,7 +35,7 @@ export function getLastViewCounts(
 /**
  * For every available metadata item a
  * count of wrong, overdue, due, pending, and unPlayed
- * is calculated for items reviewed
+ * is calculated. These are Recall game stats.
  * @param metaData 
  */
 export function getRecallCounts(
