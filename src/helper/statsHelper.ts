@@ -36,7 +36,7 @@ export function getLastViewCounts(
  * For every available metadata item a
  * count of wrong, overdue, due, pending, and unPlayed
  * is calculated. These are Recall game stats.
- * @param metaData 
+ * @param metaData
  */
 export function getRecallCounts(
   metaData: Record<string, MetaDataObj | undefined>
@@ -92,4 +92,54 @@ export function getRecallCounts(
   });
 
   return counts;
+}
+
+/**
+ * Get basic stats about lastView
+ * @param metaData
+ */
+export function getStalenessCounts(
+  metaData: Record<string, MetaDataObj | undefined>
+) {
+  const numbers = {
+    range: 0,
+    unPlayed: 0,
+    min: Number.MAX_SAFE_INTEGER,
+    max: -1,
+    mean: Number.NaN,
+    q1: Number.NaN,
+    q2: Number.NaN,
+    q3: Number.NaN,
+  };
+  let sum = 0;
+  const valueList = Object.keys(metaData).reduce<number[]>((acc, el) => {
+    const lastView = metaData[el]?.lastView;
+    if (lastView === undefined) {
+      numbers.unPlayed += 1;
+    } else {
+      const n = daysSince(lastView);
+      numbers.min = numbers.min > n ? n : numbers.min;
+      numbers.max = numbers.max < n ? n : numbers.max;
+      sum += n;
+
+      return [...acc, n];
+    }
+
+    return acc;
+  }, []);
+
+  numbers.range = valueList.length;
+  numbers.mean = sum / valueList.length;
+  numbers.q1 = valueList[Math.round(valueList.length * 0.25) - 1];
+  numbers.q3 = valueList[Math.round(valueList.length * 0.75) - 1];
+  if (valueList.length % 2 === 0) {
+    numbers.q2 =
+      (valueList[Math.round(valueList.length * 0.5) - 1] +
+        valueList[Math.round(valueList.length * 0.5)]) /
+      2;
+  } else {
+    numbers.q2 = valueList[Math.round(valueList.length * 0.5) - 1];
+  }
+
+  return numbers;
 }
