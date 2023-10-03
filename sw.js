@@ -1,6 +1,6 @@
 const buildConstants = {
   swVersion: "5bad10eb",
-  initCacheVer: "07143e79",
+  initCacheVer: "2be73041",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   authenticationHeader: "X-API-KEY",
@@ -821,7 +821,7 @@ const cacheFiles = [
   "424.58c15394.js",
   "457.6d27ea9c.js",
   "52.c79abb38.js",
-  "546.924b941a.js",
+  "546.518b2803.js",
   "557.ad5381ec.js",
   "637.67449247.js",
   "731.03b44a10.js",
@@ -863,7 +863,7 @@ const cacheFiles = [
   "npm.scheduler.7afb3de9.js",
   "npm.stylis.cd8656fe.js",
   "npm.use-sync-external-store.5abdc3a4.js",
-  "runtime.3978b759.js",
+  "runtime.af1ccef9.js",
 ];
 
 initServiceWorker({ ...buildConstants, getParam, removeParam, cacheFiles });
