@@ -128,18 +128,57 @@ export function getStalenessCounts(
     return acc;
   }, []);
 
+  const sorted = [...valueList].sort((a, b) => a - b);
   numbers.range = valueList.length;
   numbers.mean = sum / valueList.length;
-  numbers.q1 = valueList[Math.round(valueList.length * 0.25) - 1];
-  numbers.q3 = valueList[Math.round(valueList.length * 0.75) - 1];
+  numbers.q1 = sorted[Math.round(valueList.length * 0.25) - 1];
+  numbers.q3 = sorted[Math.round(valueList.length * 0.75) - 1];
   if (valueList.length % 2 === 0) {
     numbers.q2 =
-      (valueList[Math.round(valueList.length * 0.5) - 1] +
-        valueList[Math.round(valueList.length * 0.5)]) /
+      (sorted[Math.round(valueList.length * 0.5) - 1] +
+        sorted[Math.round(valueList.length * 0.5)]) /
       2;
   } else {
-    numbers.q2 = valueList[Math.round(valueList.length * 0.5) - 1];
+    numbers.q2 = sorted[Math.round(valueList.length * 0.5) - 1];
   }
 
   return numbers;
+}
+
+export function getStats(n: number[]) {
+  const stats = {
+    range: 0,
+    min: Number.MAX_SAFE_INTEGER,
+    max: -1,
+    mean: Number.NaN,
+    q0: Number.MAX_SAFE_INTEGER,
+    q1: Number.NaN,
+    q2: Number.NaN,
+    q3: Number.NaN,
+    q4: Number.MIN_SAFE_INTEGER,
+  };
+
+  const sorted = [...n].sort((a, b) => a - b);
+  const sum = n.reduce((tot, val) => tot + val, 0);
+  const max = Math.max(...n);
+  const min = Math.min(...n);
+
+  stats.range = n.length;
+  stats.mean = sum / n.length;
+  stats.min = min;
+  stats.q0 = min;
+  stats.q1 = sorted[Math.round(n.length * 0.25) - 1];
+  stats.q3 = sorted[Math.round(n.length * 0.75) - 1];
+  stats.q4 = max;
+  stats.max = max;
+  if (n.length % 2 === 0) {
+    stats.q2 =
+      (sorted[Math.round(n.length * 0.5) - 1] +
+        sorted[Math.round(n.length * 0.5)]) /
+      2;
+  } else {
+    stats.q2 = sorted[Math.round(n.length * 0.5) - 1];
+  }
+
+  return stats;
 }

@@ -4,6 +4,7 @@ import { xAgoDate } from "./recallHelper.data";
 import {
   getRecallCounts,
   getStalenessCounts,
+  getStats,
 } from "../.././../src/helper/statsHelper";
 import { SR_CORRECT_TRESHHOLD } from "../../../src/helper/recallHelper";
 
@@ -106,4 +107,30 @@ describe("statsHelper", function () {
       expect(max).to.equal(20);
     });
   }); //getStalenessCounts
+  describe("getStats", function () {
+    const numbers = [3, 6, 7, 8, 8, 10, 13, 15, 16, 20];
+    it("sorted", function () {
+      const { min, max, mean, q1, q2, q3 } = getStats(numbers);
+
+      expect(min, "Min").to.equal(3);
+      expect(max, "Max").to.equal(20);
+      expect(q1, "q1").to.equal(7);
+      expect(q2, "q2").to.equal(9);
+      expect(q3, "q3").to.equal(15);
+      expect(mean, "Mean").to.equal(10.6);
+    });
+
+    it("unsorted", function () {
+      const unsorted = [20, 8, 3, 6, 7, 8, 10, 13, 15, 16];
+
+      const { min, max, mean, q1, q2, q3 } = getStats(unsorted);
+
+      expect(min, "Min").to.equal(3);
+      expect(max, "Max").to.equal(20);
+      expect(q1, "q1").to.equal(7);
+      expect(q2, "q2").to.equal(9);
+      expect(q3, "q3").to.equal(15);
+      expect(mean, "Mean").to.equal(10.6);
+    });
+  });
 });
