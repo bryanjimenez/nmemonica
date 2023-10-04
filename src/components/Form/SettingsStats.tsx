@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import {
+  getDifficultyCounts,
   getLastViewCounts,
   getRecallCounts,
   getStalenessCounts,
@@ -25,6 +26,9 @@ export default function SettingsStats() {
     phraseQ,
     vocabQ,
     kanjiQ,
+    phraseD,
+    vocabD,
+    kanjiD,
   } = useMemo(() => {
     return {
       phraseC: getLastViewCounts(phraseRep, numberOfDays),
@@ -38,6 +42,10 @@ export default function SettingsStats() {
       phraseQ: getStalenessCounts(phraseRep),
       vocabQ: getStalenessCounts(vocabRep),
       kanjiQ: getStalenessCounts(kanjiRep),
+
+      phraseD: getDifficultyCounts(phraseRep),
+      vocabD: getDifficultyCounts(vocabRep),
+      kanjiD: getDifficultyCounts(kanjiRep),
     };
   }, [phraseRep, vocabRep, kanjiRep]);
 
@@ -143,7 +151,7 @@ export default function SettingsStats() {
           </div>
         </div>
       </div>
-      <div className="d-flex flex-column flex-sm-row justify-content-between">
+      <div className="d-flex flex-column flex-sm-row justify-content-between mb-2">
         <div className="column-1 text-end">
           <table className="w-50">
             <thead>
@@ -194,9 +202,49 @@ export default function SettingsStats() {
             )}
           </table>
         </div>
-        <div className="column-2 setting-block">
-          <div className="mb-2"></div>
+        <div className="column-2 setting-block"></div>
+      </div>
+      <div className="d-flex flex-column flex-sm-row justify-content-between">
+        <div className="column-1 text-end">
+        <table className="w-50">
+            <thead>
+              <tr>
+                <th>difficultyP</th>
+                <td className="p-1">0</td>
+                <td className="p-1">11</td>
+                <td className="p-1">21</td>
+                <td className="p-1">31</td>
+                <td className="p-1">41</td>
+                <td className="p-1">51</td>
+                <td className="p-1">61</td>
+                <td className="p-1">71</td>
+                <td className="p-1">81</td>
+                <td className="p-1">91</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Phrases:</td>
+                {phraseD.map((count, i) => (
+                  <td key={`${i} ${count}`}>{count}</td>
+                ))}
+              </tr>
+              <tr>
+                <td>Vocabulary:</td>
+                {vocabD.map((count, i) => (
+                  <td key={`${i} ${count}`}>{count}</td>
+                ))}
+              </tr>
+              <tr>
+                <td>Kanji:</td>
+                {kanjiD.map((count, i) => (
+                  <td key={`${i} ${count}`}>{count}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
+        <div className="column-2 setting-block"></div>
       </div>
     </div>
   );

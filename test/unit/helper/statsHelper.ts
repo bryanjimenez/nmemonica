@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { MetaDataObj } from "../../../src/typings/raw";
 import { xAgoDate } from "./recallHelper.data";
 import {
+  getDifficultyCounts,
   getRecallCounts,
   getStalenessCounts,
   getStats,
@@ -131,6 +132,38 @@ describe("statsHelper", function () {
       expect(q2, "q2").to.equal(9);
       expect(q3, "q3").to.equal(15);
       expect(mean, "Mean").to.equal(10.6);
+    });
+  });
+  describe("getDifficultyCounts", function () {
+    /* eslint-disable */
+    const metadata:Record<string, MetaDataObj | undefined> = {
+      'uid0': {difficultyP: 100, lastView: xAgoDate(1), vC:1},
+      'uid1': {difficultyP: 100, lastView: xAgoDate(1), vC:1},
+      'uid2': {difficultyP: 100, lastView: xAgoDate(1), vC:1},
+      'uid3': {difficultyP: 50, lastView: xAgoDate(1), vC:1},
+      'uid4': {difficultyP: 50, lastView: xAgoDate(1), vC:1},
+      'uid_unPlayed0': undefined,
+      'uid_unPlayed1': {vC:1},
+      'uid5': {difficultyP: 20, lastView: xAgoDate(1), vC:1},
+      'uid6': {difficultyP: 20, lastView: xAgoDate(1), vC:1},
+      'uid7': {difficultyP: 20, lastView: xAgoDate(1), vC:1},
+    }
+    /* eslint-enable */
+
+    it("ranges", function () {
+      const difficulty = getDifficultyCounts(metadata);
+
+      expect(difficulty).to.be.an("Array").and.have.lengthOf(10);
+      expect(difficulty[0], "0-10").to.equal(0);
+      expect(difficulty[1], "11-20").to.equal(3);
+      expect(difficulty[2], "21-30").to.equal(0);
+      expect(difficulty[3], "31-40").to.equal(0);
+      expect(difficulty[4], "41-50").to.equal(2);
+      expect(difficulty[5], "51-60").to.equal(0);
+      expect(difficulty[6], "61-70").to.equal(0);
+      expect(difficulty[7], "71-80").to.equal(0);
+      expect(difficulty[8], "81-90").to.equal(0);
+      expect(difficulty[9], "91-100").to.equal(3);
     });
   });
 });

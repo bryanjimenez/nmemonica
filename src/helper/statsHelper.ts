@@ -182,3 +182,31 @@ export function getStats(n: number[]) {
 
   return stats;
 }
+
+/**
+ * For every available metadata item a
+ * difficulty range counts are calculated
+ * @param metaData
+ */
+export function getDifficultyCounts(
+  metaData: Record<string, MetaDataObj | undefined>
+) {
+  let unPlayed = 0;
+  let difficultyRange: number[] = new Array(10) as number[];
+  difficultyRange.fill(0);
+
+  const valueList = Object.keys(metaData).map((el) => {
+    const difficulty = metaData[el]?.difficultyP;
+    if (difficulty === undefined) {
+      unPlayed += 1;
+      return -1;
+    } else {
+      const index = difficulty / 10 - 1;
+      difficultyRange[index] = difficultyRange[index] + 1;
+
+      return difficulty;
+    }
+  });
+
+  return difficultyRange;
+}
