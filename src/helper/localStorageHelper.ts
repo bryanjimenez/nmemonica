@@ -65,15 +65,16 @@ export function localStoreAttrUpdate<T>(
     attr,
   ] as (keyof LocalStorageState)[];
 
+  let boolValue: boolean | undefined;
   if (value === undefined) {
     // toggle
-    value = !usingPathRead<boolean>(state, cleanPath);
+    boolValue = !usingPathRead<boolean>(state, cleanPath);
   }
 
   const modifiedLocalStorage = usingPathWrite(
     { ...locStoSettings },
     cleanPath,
-    value
+    boolValue ?? value
   );
   const modifiedValue = usingPathRead<T>(modifiedLocalStorage, cleanPath);
 

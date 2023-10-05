@@ -533,7 +533,7 @@ export default function KanjiGame() {
           <div className="col">
             <div className="d-flex justify-content-start">
               <Link to={KanjiGridMeta.location}>
-                <TogglePracticeSideBtn toggle={true} action={null} />
+                <TogglePracticeSideBtn toggle={true} />
               </Link>
             </div>
           </div>
