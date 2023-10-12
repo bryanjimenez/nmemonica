@@ -744,9 +744,7 @@ export default function Vocabulary() {
                   difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
-                    if (difficulty !== undefined) {
                       dispatch(setWordDifficulty(uid, difficulty));
-                    }
                   }}
                 />
                 <AccuracySlider

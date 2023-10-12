@@ -683,9 +683,7 @@ export default function Kanji() {
                 <DifficultySlider
                   difficulty={metadata.current[uid]?.difficultyP}
                   onChange={(difficulty: number | null) => {
-                    if (difficulty !== undefined) {
                       dispatch(setKanjiDifficulty(uid, difficulty));
-                    }
                   }}
                   resetOn={uid}
                 />

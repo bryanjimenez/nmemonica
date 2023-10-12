@@ -672,9 +672,7 @@ export default function Phrases() {
                   difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
-                    if (difficulty !== undefined) {
                       dispatch(setPhraseDifficulty(uid, difficulty));
-                    }
                   }}
                 />
                 <AccuracySlider
