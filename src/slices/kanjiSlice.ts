@@ -41,6 +41,8 @@ export interface KanjiInitSlice {
     spaRepMaxReviewItem: number;
     activeGroup: string[];
     activeTags: string[];
+    includeNew: boolean;
+    includeReviewed: boolean;
 
     // Game
     choiceN: number;
@@ -63,6 +65,8 @@ export const kanjiInitState: KanjiInitSlice = {
     spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
     activeGroup: [],
     activeTags: [],
+    includeNew: true,
+    includeReviewed: true,
 
     // Game
     choiceN: 32,
@@ -409,6 +413,22 @@ const kanjiSlice = createSlice({
         newValue
       );
     },
+    toggleIncludeNew(state) {
+      state.setting.includeNew = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "includeNew"
+      );
+    },
+    toggleIncludeReviewed(state) {
+      state.setting.includeReviewed = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "includeReviewed"
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -505,6 +525,8 @@ export const {
   setSpaRepMaxItemReview,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
 
   setKanjiBtnN,
   toggleKanjiFadeInAnswers,

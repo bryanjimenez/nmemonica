@@ -44,6 +44,8 @@ export interface PhraseInitSlice {
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
+    includeNew: boolean;
+    includeReviewed: boolean;
   };
 }
 
@@ -63,6 +65,8 @@ export const phraseInitState: PhraseInitSlice = {
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
+    includeNew: true,
+    includeReviewed: true,
   },
 };
 
@@ -493,6 +497,22 @@ const phraseSlice = createSlice({
         newOrdered
       );
     },
+    toggleIncludeNew(state) {
+      state.setting.includeNew = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "includeNew"
+      );
+    },
+    toggleIncludeReviewed(state) {
+      state.setting.includeReviewed = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "includeReviewed"
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -567,6 +587,8 @@ export const {
   togglePhrasesFilter,
   togglePhraseActiveGrp,
   togglePhrasesReinforcement,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
   addFrequencyPhrase,
   setPhraseDifficulty,
   setPhraseAccuracy,

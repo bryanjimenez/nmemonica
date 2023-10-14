@@ -101,6 +101,8 @@ export default function Kanji() {
     activeTags,
     orderType: sortMethodREF,
     spaRepMaxReviewItem,
+    includeNew,
+    includeReviewed,
 
     repetition,
   } = useConnectKanji();
@@ -210,6 +212,20 @@ export default function Kanji() {
         ]);
 
         break;
+      case TermSortBy.VIEW_DATE:
+        if (!includeNew) {
+          filtered = filtered.filter(
+            (el) => metadata.current[el.uid]?.lastView !== undefined
+          );
+        }
+
+        if (!includeReviewed) {
+          filtered = filtered.filter(
+            (el) => metadata.current[el.uid]?.lastReview === undefined
+          );
+        }
+
+        break;
     }
 
     const frequency = filtered.reduce<string[]>((acc, cur) => {
@@ -221,7 +237,14 @@ export default function Kanji() {
     setFrequency(frequency);
 
     return filtered;
-  }, [dispatch, kanjiList, filterTypeREF, activeTags]);
+  }, [
+    dispatch,
+    kanjiList,
+    filterTypeREF,
+    activeTags,
+    includeNew,
+    includeReviewed,
+  ]);
 
   const { order, recallGame } = useMemo(() => {
     if (filteredTerms.length === 0) return { order: [] };
@@ -683,7 +706,7 @@ export default function Kanji() {
                 <DifficultySlider
                   difficulty={metadata.current[uid]?.difficultyP}
                   onChange={(difficulty: number | null) => {
-                      dispatch(setKanjiDifficulty(uid, difficulty));
+                    dispatch(setKanjiDifficulty(uid, difficulty));
                   }}
                   resetOn={uid}
                 />

@@ -34,6 +34,8 @@ import {
   setSpaRepMaxItemReview,
   setVerbFormsOrder,
   toggleAutoVerbView,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
   toggleVocabularyActiveGrp,
   toggleVocabularyBareKanji,
   toggleVocabularyFilter,
@@ -65,6 +67,8 @@ export default function SettingsVocab() {
     spaRepMaxReviewItem,
     reinforce: vocabReinforceRef,
     verbFormsOrder,
+    includeNew,
+    includeReviewed,
   } = useConnectVocabulary();
 
   const vocabFilter = vocabFilterRef.current;
@@ -224,7 +228,24 @@ export default function SettingsVocab() {
               }}
             />
           )}
-
+          {vocabOrder === TermSortBy.VIEW_DATE && (
+            <>
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={includeNew}
+                  action={buildAction(dispatch, toggleIncludeNew)}
+                  statusText="Staleness +New"
+                />
+              </div>
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={includeReviewed}
+                  action={buildAction(dispatch, toggleIncludeReviewed)}
+                  statusText="Staleness +Reviewed"
+                />
+              </div>
+            </>
+          )}
           <div className="mb-2">
             <SettingsSwitch
               active={vocabReinforce}

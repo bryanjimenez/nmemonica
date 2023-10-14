@@ -57,6 +57,8 @@ export interface VocabularyInitSlice {
     autoVerbView: boolean;
     verbColSplit: number;
     verbFormsOrder: string[];
+    includeNew: boolean;
+    includeReviewed: boolean;
   };
 }
 export const vocabularyInitState: VocabularyInitSlice = {
@@ -81,6 +83,8 @@ export const vocabularyInitState: VocabularyInitSlice = {
     autoVerbView: false,
     verbColSplit: 0,
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
+    includeNew: true,
+    includeReviewed: true,
   },
 };
 
@@ -594,6 +598,22 @@ const vocabularySlice = createSlice({
         payload: { uid, value },
       }),
     },
+    toggleIncludeNew(state) {
+      state.setting.includeNew = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "includeNew"
+      );
+    },
+    toggleIncludeReviewed(state) {
+      state.setting.includeReviewed = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "includeReviewed"
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -671,6 +691,8 @@ export const {
   toggleVocabularyHint,
   toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
   updateVerbColSplit,
   toggleVocabularyBareKanji,
   flipVocabularyPracticeSide,
