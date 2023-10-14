@@ -4,8 +4,8 @@ import { expect } from "chai";
 import {
   furiganaParseRetry,
   JapaneseText,
+  furiganaParse,
 } from "../../../src/helper/JapaneseText";
-import { furiganaParse } from "../../../src/helper/JapaneseText";
 
 describe("JapanseText", function () {
   describe("toString", function () {
@@ -319,6 +319,25 @@ describe("JapanseText", function () {
         furiganas: ["いっかい", "ばしょ", "い"],
         okuriganas: ["だけその", "に", "ったことがあるよ"],
         startsWKana: false,
+      };
+
+      const actual = () => furiganaParseRetry(said, written);
+
+      expect(actual).to.not.throw(
+        Error,
+        "Failed to parse text to build furigana"
+      );
+      expect(actual()).to.deep.equal(expected);
+    });
+    it("arabic number wo/ furigana", function () {
+      const said = "１０から２をひくと、８のこる";
+      const written = "１０から２を引くと、８残る";
+
+      const expected = {
+        kanjis: ["引", "残"],
+        furiganas: ["ひ", "のこ"],
+        okuriganas: ["１０から２を", "くと、８", "る"],
+        startsWKana: true,
       };
 
       const actual = () => furiganaParseRetry(said, written);

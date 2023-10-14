@@ -6,6 +6,7 @@ import {
   isKatakana,
   isPunctuation,
   swapKana,
+  toEnglishNumber,
 } from "../../../src/helper/kanaHelper";
 
 /* global describe it */
@@ -328,5 +329,19 @@ describe("kanaHelper", function () {
       expect(iConsonant).to.equal(-1);
       expect(iVowel).to.equal(-1);
     });
+  });
+  describe("toEnglishNumber", function(){
+    it("is a digit", function(){
+      //０１２３４５６７８９
+
+      const zero = toEnglishNumber("０");
+      expect(zero).to.eq(0);
+
+      const one = toEnglishNumber("１");
+      expect(one).to.eq(1);
+
+      const two = toEnglishNumber("２");
+      expect(two).to.eq(2);
+    })
   });
 });

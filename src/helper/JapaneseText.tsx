@@ -265,7 +265,7 @@ export class JapaneseText {
         const mask = getParseObjectMask(this.parseObj);
 
         const clickableCss =
-          classNames({ clickable: !!furiganaToggle }) || undefined;
+          classNames({ clickable: Boolean(furiganaToggle) }) || undefined;
         const toggleHandler = furiganaToggle
           ? (furiganaToggle as React.MouseEventHandler)
           : undefined;
@@ -358,8 +358,8 @@ export function furiganaParseRetry(
     ));
   } catch (e) {
     // don't retry unless parse error
-    if(e instanceof Error){
-      const cause = e.cause as {code: string};
+    if (e instanceof Error) {
+      const cause = e.cause as { code: string };
 
       if (cause?.code === "ParseError") {
         // reverse try
@@ -405,13 +405,13 @@ export function isNumericCounter(
   const char = orthography.charAt(pos);
 
   return (
-    Number.isInteger(toEnglishNumber(char)) || // is Japanese arabic number char
-    (Number.isInteger(Number.parseInt(char)) && // is a number
-      !pronunciation.includes(char) && // the number has furigana
-      !isKanji(char) &&
-      !isHiragana(char) &&
-      !isKatakana(char) &&
-      pos < orthography.length - 1) // cannot be the last character
+    (Number.isInteger(toEnglishNumber(char)) || // is Japanese arabic number char
+      Number.isInteger(Number.parseInt(char))) && // is a number
+    !pronunciation.includes(char) && // the number has furigana
+    !isKanji(char) &&
+    !isHiragana(char) &&
+    !isKatakana(char) &&
+    pos < orthography.length - 1 // cannot be the last character
   );
 }
 /**
@@ -460,7 +460,7 @@ export function furiganaParse(
     ) {
       //kana
       if (prevWasKanji) {
-        while (pronunciation.charAt(start) != thisChar) {
+        while (pronunciation.charAt(start) !== thisChar) {
           if (pronunciation.charAt(start) !== " ") {
             fword += pronunciation.charAt(start);
           }

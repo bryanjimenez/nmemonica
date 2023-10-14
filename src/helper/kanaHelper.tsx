@@ -140,7 +140,7 @@ export function toEnglishNumber(char: string) {
   if (isFullWNumber(char)) {
     const cpv = char.codePointAt(0);
     if (cpv) {
-      const katakana = cpv - 65249;
+      const katakana = cpv - 65248;
       swap = Number.parseInt(String.fromCharCode(katakana));
     }
   }
