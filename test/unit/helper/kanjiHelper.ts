@@ -1089,7 +1089,7 @@ describe("kanjiHelper", function () {
     });
     describe("contains space as workaround", function(){
       describe("starts w/ kanji", function(){
-        it("behaves?", function(){
+        it("workaround space is omitted", function(){
 
           const particle = "を";
           

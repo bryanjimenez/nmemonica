@@ -52,7 +52,7 @@ function failedFuriganaList(terms: RawVocabulary[]) {
     const t = JapaneseText.parse(text);
     if (t.hasFurigana()) {
       try {
-        furiganaParseRetry(t.getPronunciation(), t.getSpelling());
+        furiganaParseRetry(t.getPronunciation(), t.getSpellingRAW());
       } catch (e) {
         if (e instanceof Error && "cause" in e) {
           const errData = e.cause as { code: string; info: unknown };

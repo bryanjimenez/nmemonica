@@ -118,6 +118,7 @@ export function buildParticleGame(rawPhrases: RawPhrase[]) {
   const wParticles = rawPhrases.reduce<ParticleGamePhrase[]>((acc, curr) => {
     if (curr.particles && curr.particles?.length > 0) {
       const phrase = JapaneseText.parse(curr);
+      // remove workaround space for calculations
       const spelling = phrase.getSpelling();
 
       curr.particles.forEach((p) => {

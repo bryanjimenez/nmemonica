@@ -69,11 +69,11 @@ export class JapaneseText {
       if (this.hasFurigana()) {
         this._parseObj = furiganaParseRetry(
           this.getPronunciation(),
-          this.getSpelling()
+          this.getSpellingRAW()
         );
       } else {
         this._parseObj = {
-          okuriganas: [this.getSpelling()],
+          okuriganas: [this.getSpellingRAW()],
           startsWKana: true,
           kanjis: [],
           furiganas: [],
@@ -89,13 +89,26 @@ export class JapaneseText {
   }
 
   /**
+   * may contain workaround space
    * @returns {string} spelling may contain kanji
    */
-  getSpelling() {
+  getSpellingRAW() {
     if (this._kanji) {
       return this._kanji;
     } else {
       return this._furigana;
+    }
+  }
+
+  /**
+   * removes workaround space
+   * @returns {string} spelling may contain kanji
+   */
+  getSpelling() {
+    if (this._kanji) {
+      return this._kanji.replaceAll(" ", "");
+    } else {
+      return this._furigana.replaceAll(" ", "");
     }
   }
 
@@ -165,7 +178,7 @@ export class JapaneseText {
 
     if (this.hasFurigana()) {
       const pronunciation = this.getPronunciation();
-      const orthography = this.getSpelling();
+      const orthography = this.getSpellingRAW();
 
       if (pronunciation.length < minimumMora) {
         hint = false;
@@ -213,7 +226,7 @@ export class JapaneseText {
     } else {
       if (this.hasFurigana()) {
         const pronunciation = this.getPronunciation();
-        const orthography = this.getSpelling();
+        const orthography = this.getSpellingRAW();
 
         const { kanjis, furiganas, okuriganas, startsWKana } =
           furiganaParseRetry(pronunciation, orthography);
