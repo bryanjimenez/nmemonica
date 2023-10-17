@@ -7,6 +7,7 @@ import orderBy from "lodash/orderBy";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -325,10 +326,6 @@ export default function Kanji() {
     setLastNext(Date.now());
 
     setReinforcedUID(null);
-    setShowOn(false);
-    setShowKun(false);
-    setShowEx(false);
-    setShowMeaning(false);
   }, [filteredTerms, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
@@ -386,12 +383,7 @@ export default function Kanji() {
     prevSelectedIndex.current = selectedIndex;
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
-
     setReinforcedUID(null);
-    setShowOn(false);
-    setShowKun(false);
-    setShowEx(false);
-    setShowMeaning(false);
   }, [filteredTerms, selectedIndex, lastNext]);
 
   const swipeActionHandler = useCallback(
@@ -441,7 +433,7 @@ export default function Kanji() {
     update();
   }, [update, w.height, w.width]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
       reinforcedUID: prevReinforcedUID.current,
@@ -524,6 +516,11 @@ export default function Kanji() {
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
       accuracyModifiedRef.current = undefined;
+
+      setShowOn(false);
+      setShowKun(false);
+      setShowEx(false);
+      setShowMeaning(false);
     }
   }, [
     dispatch,
