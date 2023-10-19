@@ -1,7 +1,14 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 
@@ -281,7 +288,7 @@ export default function KanjiGame() {
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef<number>(Date.now());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
       reinforcedUID: prevReinforcedUID.current,
@@ -454,7 +461,21 @@ export default function KanjiGame() {
       reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
     const kanji = getTerm(uid, kanjiList);
 
-    const examples = exampleList[order[selectedIndex]];
+    let examples: RawVocabulary[];
+    if (reinforcedUID !== null) {
+      const reinforcedIdx = filteredTerms.findIndex(
+        (k) => k.uid === reinforcedUID
+      );
+
+      if (reinforcedIdx === -1) {
+        examples = [];
+      } else {
+        examples = exampleList[reinforcedIdx];
+      }
+    } else {
+      examples = exampleList[order[selectedIndex]];
+    }
+
     const game = prepareGame(kanji, kanjiList, examples);
 
     return { kanji, game };
