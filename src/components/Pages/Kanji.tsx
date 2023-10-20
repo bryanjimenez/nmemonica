@@ -403,6 +403,11 @@ export default function Kanji() {
       } else if (direction === "right") {
         gotoPrev();
       } else {
+        setShowOn(true);
+        setShowKun(true);
+        setShowEx(true);
+        setShowMeaning(true);
+
         if (direction === "up") {
           // up
           // kun
