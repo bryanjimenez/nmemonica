@@ -1,8 +1,11 @@
-import { IconButton, ListItemButton } from "@mui/material";
-import List from "@mui/material/List";
-import ListItemText from "@mui/material/ListItemText";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
+import {
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  Menu,
+  MenuItem,
+} from "@mui/material";
 import { KebabHorizontalIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
