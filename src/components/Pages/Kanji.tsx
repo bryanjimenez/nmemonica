@@ -35,6 +35,7 @@ import {
 import {
   dateViewOrder,
   difficultyOrder,
+  difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
@@ -62,7 +63,7 @@ import {
 import { getVocabulary } from "../../slices/vocabularySlice";
 import type { MetaDataObj, RawVocabulary } from "../../typings/raw";
 import { AccuracySlider } from "../Form/AccuracySlider";
-import { ConsoleMessage } from "../Form/Console";
+import { type ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
@@ -99,6 +100,7 @@ export default function Kanji() {
 
     filterType: filterTypeREF,
     reinforce: reinforceREF,
+    difficultyThreshold,
     activeTags,
     orderType: sortMethodREF,
     spaRepMaxReviewItem,
@@ -109,6 +111,7 @@ export default function Kanji() {
   } = useConnectKanji();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
+  const difficultyThresholdREF = useRef(difficultyThreshold);
 
   const { vocabList } = useConnectVocabulary();
 
@@ -166,6 +169,25 @@ export default function Kanji() {
       filterTypeREF.current === TermFilterBy.TAGS ? activeTags : [],
       buildAction(dispatch, toggleKanjiFilter)
     );
+
+    // exclude terms with difficulty beyond difficultyThreshold
+    const subFilter = difficultySubFilter(
+      difficultyThresholdREF.current,
+      filtered,
+      metadata.current
+    );
+
+    if (subFilter.length > 0) {
+      filtered = subFilter;
+    } else {
+      setLog((l) => [
+        ...l,
+        {
+          msg: "Excluded all terms. Discarding memorized subfiltering.",
+          lvl: DebugLevel.WARN,
+        },
+      ]);
+    }
 
     switch (sortMethodREF.current) {
       case TermSortBy.RECALL:
@@ -240,8 +262,10 @@ export default function Kanji() {
     return filtered;
   }, [
     dispatch,
-    kanjiList,
     filterTypeREF,
+    difficultyThresholdREF,
+    sortMethodREF,
+    kanjiList,
     activeTags,
     includeNew,
     includeReviewed,
@@ -314,7 +338,7 @@ export default function Kanji() {
     }
 
     return { order: newOrder, recallGame };
-  }, [filteredTerms]);
+  }, [sortMethodREF, filteredTerms]);
 
   const gotoNext = useCallback(() => {
     const l = filteredTerms.length;

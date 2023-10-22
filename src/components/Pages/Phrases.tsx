@@ -39,7 +39,11 @@ import {
   recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
-import { dateViewOrder, randomOrder } from "../../helper/sortHelper";
+import {
+  dateViewOrder,
+  difficultySubFilter,
+  randomOrder,
+} from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
@@ -110,6 +114,8 @@ export default function Phrases() {
     englishSideUp,
     repetition,
 
+    difficultyThreshold,
+
     // Not changing during game
     // motionThreshold,
     swipeThreshold,
@@ -127,6 +133,7 @@ export default function Phrases() {
   } = useConnectPhrase();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
+  const difficultyThresholdREF = useRef(difficultyThreshold);
 
   // repetitionOnce is only updated the first time
   /** metadata table ref */
@@ -165,6 +172,25 @@ export default function Phrases() {
       activeGroup,
       buildAction(dispatch, togglePhrasesFilter)
     );
+
+    // exclude terms with difficulty beyond difficultyThreshold
+    const subFilter = difficultySubFilter(
+      difficultyThresholdREF.current,
+      filtered,
+      metadata.current
+    );
+
+    if (subFilter.length > 0) {
+      filtered = subFilter;
+    } else {
+      setLog((l) => [
+        ...l,
+        {
+          msg: "Excluded all terms. Discarding memorized subfiltering.",
+          lvl: DebugLevel.WARN,
+        },
+      ]);
+    }
 
     switch (sortMethodREF.current) {
       case TermSortBy.RECALL:
@@ -242,6 +268,7 @@ export default function Phrases() {
   }, [
     filterTypeREF,
     sortMethodREF,
+    difficultyThresholdREF,
     dispatch,
     phraseList,
     activeGroup,

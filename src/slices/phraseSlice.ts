@@ -19,6 +19,7 @@ import {
   updateAction,
 } from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
+import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type {
   GroupListMap,
   MetaDataObj,
@@ -45,6 +46,7 @@ export interface PhraseInitSlice {
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
+    difficultyThreshold: number;
     includeNew: boolean;
     includeReviewed: boolean;
   };
@@ -66,6 +68,7 @@ export const phraseInitState: PhraseInitSlice = {
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
+    difficultyThreshold: MEMORIZED_THRLD,
     includeNew: true,
     includeReviewed: true,
   },
@@ -321,6 +324,18 @@ const phraseSlice = createSlice({
         "/phrases/",
         "reinforce",
         newValue
+      );
+    },
+
+    setMemorizedThreshold(state, action: { payload: number }) {
+      const threshold = action.payload;
+
+      state.setting.difficultyThreshold = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "difficultyThreshold",
+        threshold
       );
     },
 
@@ -616,6 +631,7 @@ export const {
   addFrequencyPhrase,
   setPhraseDifficulty,
   setPhraseAccuracy,
+  setMemorizedThreshold,
   setSpaRepMaxItemReview,
 
   removeFrequencyPhrase,

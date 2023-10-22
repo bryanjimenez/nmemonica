@@ -39,13 +39,26 @@ export function useConnectPhrase() {
     shallowEqual
   );
 
-  const [r, ft, sm, rm, spaRepMaxReviewItem] = useSelector<
+  const [r, ft, sm, rm, difficultyThreshold, spaRepMaxReviewItem] = useSelector<
     RootState,
-    [boolean, ValuesOf<typeof TermFilterBy>, number, boolean, number]
+    [boolean, ValuesOf<typeof TermFilterBy>, number, boolean, number, number]
   >(({ phrases }: RootState) => {
-    const { reinforce, filter, ordered, romaji, spaRepMaxReviewItem } =
-      phrases.setting;
-    return [reinforce, filter, ordered, romaji, spaRepMaxReviewItem];
+    const {
+      reinforce,
+      filter,
+      ordered,
+      romaji,
+      difficultyThreshold,
+      spaRepMaxReviewItem,
+    } = phrases.setting;
+    return [
+      reinforce,
+      filter,
+      ordered,
+      romaji,
+      difficultyThreshold,
+      spaRepMaxReviewItem,
+    ];
   }, shallowEqual);
 
   const activeGroup = useSelector<RootState, string[]>(
@@ -74,6 +87,9 @@ export function useConnectPhrase() {
     // Changing during game
     englishSideUp: englishSideUp,
     repetition,
+
+    /** Threshold to filter terms difficulty */
+    difficultyThreshold,
 
     // Not changing during game
     debugLevel: debug,

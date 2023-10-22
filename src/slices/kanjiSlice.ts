@@ -36,7 +36,7 @@ export interface KanjiInitSlice {
     filter: ValuesOf<typeof TermFilterBy>;
     ordered: ValuesOf<typeof TermSortBy>;
     reinforce: boolean;
-    memoThreshold: number;
+    difficultyThreshold: number;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem: number;
@@ -60,7 +60,7 @@ export const kanjiInitState: KanjiInitSlice = {
     filter: 2,
     ordered: 0,
     reinforce: false,
-    memoThreshold: MEMORIZED_THRLD,
+    difficultyThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
     spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
@@ -279,17 +279,14 @@ const kanjiSlice = createSlice({
       }
     },
 
-    /**
-     * Filter Kanji excluding terms with value above
-     */
-    setKanjiMemorizedThreshold(state, action: PayloadAction<number>) {
+    setMemorizedThreshold(state, action: PayloadAction<number>) {
       const threshold = action.payload;
 
-      state.setting.memoThreshold = localStoreAttrUpdate(
+      state.setting.difficultyThreshold = localStoreAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
-        "memoThreshold",
+        "difficultyThreshold",
         threshold
       );
     },
@@ -542,7 +539,7 @@ export const {
   toggleKanjiOrdering,
   addFrequencyKanji,
   removeFrequencyKanji,
-  setKanjiMemorizedThreshold,
+  setMemorizedThreshold,
   setKanjiDifficulty,
   setKanjiAccuracy,
   setSpaRepMaxItemReview,

@@ -63,42 +63,50 @@ export function useConnectVocabulary() {
     ];
   }, shallowEqual);
 
-  const [mt, r, ft, he, romajiEnabled, bareKanji, verbColSplit, sm] =
-    useSelector<
-      RootState,
-      [
-        number,
-        boolean,
-        ValuesOf<typeof TermFilterBy>,
-        boolean,
-        boolean,
-        boolean,
-        number,
-        ValuesOf<typeof TermSortBy>
-      ]
-    >(({ vocabulary }: RootState) => {
-      const {
-        memoThreshold,
-        reinforce,
-        filter,
-        hintEnabled,
-        romaji,
-        bareKanji,
-        verbColSplit,
-        ordered,
-      } = vocabulary.setting;
+  const [
+    difficultyThreshold,
+    r,
+    ft,
+    he,
+    romajiEnabled,
+    bareKanji,
+    verbColSplit,
+    sm,
+  ] = useSelector<
+    RootState,
+    [
+      number,
+      boolean,
+      ValuesOf<typeof TermFilterBy>,
+      boolean,
+      boolean,
+      boolean,
+      number,
+      ValuesOf<typeof TermSortBy>
+    ]
+  >(({ vocabulary }: RootState) => {
+    const {
+      difficultyThreshold,
+      reinforce,
+      filter,
+      hintEnabled,
+      romaji,
+      bareKanji,
+      verbColSplit,
+      ordered,
+    } = vocabulary.setting;
 
-      return [
-        memoThreshold,
-        reinforce,
-        filter,
-        hintEnabled,
-        romaji,
-        bareKanji,
-        verbColSplit,
-        ordered,
-      ];
-    }, shallowEqual);
+    return [
+      difficultyThreshold,
+      reinforce,
+      filter,
+      hintEnabled,
+      romaji,
+      bareKanji,
+      verbColSplit,
+      ordered,
+    ];
+  }, shallowEqual);
 
   const verbFormsOrder = useSelector<RootState, string[]>(
     ({ vocabulary }: RootState) => {
@@ -116,9 +124,6 @@ export function useConnectVocabulary() {
     shallowEqual
   );
 
-  /** Threshold describing how far memorized a word is */
-  const memoThreshold = useRef(mt);
-  memoThreshold.current = mt;
   /** setting to randomly re-quiz marked terms */
   const reinforce = useRef(r);
   reinforce.current = r;
@@ -137,6 +142,9 @@ export function useConnectVocabulary() {
     autoVerbView,
     verbForm,
     repetition,
+
+    /** Threshold to filter terms difficulty */
+    difficultyThreshold,
 
     // Not changing during game
     debugLevel: debug,
@@ -161,6 +169,5 @@ export function useConnectVocabulary() {
     hintEnabled,
     filterType,
     sortMethod,
-    memoThreshold,
   };
 }

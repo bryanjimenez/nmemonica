@@ -133,10 +133,11 @@ export default function Vocabulary() {
   const {
     motionThreshold,
 
+    difficultyThreshold,
+
     vocabList,
 
     // Refs
-    memoThreshold: memoThresholdREF,
     reinforce: reinforceREF,
     filterType: filterTypeREF,
     hintEnabled: hintEnabledREF,
@@ -154,6 +155,7 @@ export default function Vocabulary() {
   } = useConnectVocabulary();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
+  const difficultyThresholdREF = useRef(difficultyThreshold);
 
   /** metadata table ref */
   const metadata = useRef(repetition);
@@ -188,28 +190,26 @@ export default function Vocabulary() {
       buildAction(dispatch, toggleVocabularyFilter)
     );
 
-    switch (sortMethodREF.current) {
-      case TermSortBy.DIFFICULTY: {
-        // exclude vocab with difficulty beyond memoThreshold
-        const subFilter = difficultySubFilter(
-          memoThresholdREF.current,
-          filtered,
-          metadata.current
-        );
+    // exclude terms with difficulty beyond difficultyThreshold
+    const subFilter = difficultySubFilter(
+      difficultyThresholdREF.current,
+      filtered,
+      metadata.current
+    );
 
-        if (subFilter.length > 0) {
-          filtered = subFilter;
-        } else {
-          setLog((l) => [
-            ...l,
-            {
-              msg: "Excluded all terms. Discarding memorized subfiltering.",
-              lvl: DebugLevel.WARN,
-            },
-          ]);
-        }
-        break;
-      }
+    if (subFilter.length > 0) {
+      filtered = subFilter;
+    } else {
+      setLog((l) => [
+        ...l,
+        {
+          msg: "Excluded all terms. Discarding memorized subfiltering.",
+          lvl: DebugLevel.WARN,
+        },
+      ]);
+    }
+
+    switch (sortMethodREF.current) {
       case TermSortBy.GAME:
         if (reinforceREF.current) {
           // if reinforce, place reinforced/frequency terms
@@ -293,7 +293,17 @@ export default function Vocabulary() {
     setFrequency(frequency);
 
     return { filteredVocab: filtered };
-  }, [dispatch, vocabList, activeGroup, includeNew, includeReviewed]);
+  }, [
+    dispatch,
+    filterTypeREF,
+    sortMethodREF,
+    difficultyThresholdREF,
+    reinforceREF,
+    vocabList,
+    activeGroup,
+    includeNew,
+    includeReviewed,
+  ]);
 
   const {
     newOrder: order,
@@ -376,7 +386,7 @@ export default function Vocabulary() {
         break;
 
       case TermSortBy.DIFFICULTY:
-        // exclude vocab with difficulty beyond memoThreshold
+        // exclude vocab with difficulty beyond difficultyThreshold
 
         newOrder = difficultyOrder(filteredVocab, metadata.current);
         setLog((l) => [
@@ -426,7 +436,7 @@ export default function Vocabulary() {
     setScrollJOrder(true);
 
     return { newOrder, jbare: jOrder, ebare: eOrder, recallGame };
-  }, [filteredVocab]);
+  }, [reinforceREF, sortMethodREF, filteredVocab]);
 
   // Logger messages
   useEffect(() => {
@@ -464,7 +474,14 @@ export default function Vocabulary() {
       },
       gotoNext
     );
-  }, [frequency, filteredVocab, reinforcedUID, gotoNext]);
+  }, [
+    filterTypeREF,
+    reinforceREF,
+    frequency,
+    filteredVocab,
+    reinforcedUID,
+    gotoNext,
+  ]);
 
   const gotoPrev = useCallback(() => {
     const l = filteredVocab.length;
@@ -637,6 +654,7 @@ export default function Vocabulary() {
     }
   }, [
     dispatch,
+    tpAnsweredREF,
     beginLoop,
     gradeTimedPlayEvent,
     resetTimedPlay,

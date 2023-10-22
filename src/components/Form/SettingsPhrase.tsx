@@ -4,6 +4,7 @@ import { NotReady } from "./NotReady";
 import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
+import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
@@ -11,6 +12,7 @@ import type { AppDispatch } from "../../slices";
 import {
   getPhrase,
   removeFrequencyPhrase,
+  setMemorizedThreshold,
   setSpaRepMaxItemReview,
   toggleIncludeNew,
   toggleIncludeReviewed,
@@ -36,6 +38,7 @@ export default function SettingsPhrase() {
     phraseGroups,
     sortMethod: phraseOrderRef,
     romajiActive: phraseRomajiRef,
+    difficultyThreshold,
     activeGroup: phraseActive,
     filterType: phraseFilterRef,
     repetition: phraseRep,
@@ -143,6 +146,12 @@ export default function SettingsPhrase() {
               }}
             />
           )}
+          <div className="d-flex justify-content-end">
+            <ThresholdFilterSlider
+              threshold={difficultyThreshold}
+              setThreshold={buildAction(dispatch, setMemorizedThreshold)}
+            />
+          </div>
           {phraseOrder === TermSortBy.VIEW_DATE && (
             <>
               <div className="mb-2">

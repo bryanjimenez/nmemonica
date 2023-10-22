@@ -1,24 +1,20 @@
-import { Slider } from "@mui/material";
 import {
   ChevronUpIcon,
   PlusCircleIcon,
-  SortAscIcon,
-  SortDescIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
 import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
+import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
 import VerbFormSlider from "./VerbFormSlider";
-import { heatMap } from "../../helper/colorHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
-import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/sortHelper";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
@@ -62,7 +58,7 @@ export default function SettingsVocab() {
     autoVerbView,
     verbColSplit,
     filterType: vocabFilterRef,
-    memoThreshold: memoThresholdRef,
+    difficultyThreshold,
     repetition: vocabRep,
     spaRepMaxReviewItem,
     reinforce: vocabReinforceRef,
@@ -72,12 +68,9 @@ export default function SettingsVocab() {
   } = useConnectVocabulary();
 
   const vocabFilter = vocabFilterRef.current;
-  const memoThreshold = memoThresholdRef.current;
   const vocabOrder = vocabOrderRef.current;
   const vocabReinforce = vocabReinforceRef.current;
   const vocabHint = vocabHintRef.current;
-
-  const [initialMemoThreshold] = useState(Math.abs(memoThreshold));
 
   if (Object.keys(vocabGroups).length === 0) {
     void dispatch(getVocabulary());
@@ -119,18 +112,6 @@ export default function SettingsVocab() {
     });
     throw error;
   }
-
-  const c = heatMap(Math.abs(memoThreshold) / 100, 0.75);
-  const difficultyMarks = [
-    {
-      value: MEMORIZED_THRLD,
-      // label: "memorized"
-    },
-    {
-      value: DIFFICULTY_THRLD,
-      // label: "difficult",
-    },
-  ];
 
   const el = (
     <div className="outer">
@@ -187,38 +168,12 @@ export default function SettingsVocab() {
             }}
           />
 
-          {vocabOrder === TermSortBy.DIFFICULTY && (
-            <div className="d-flex justify-content-end">
-              <Slider
-                sx={{ color: c }}
-                defaultValue={initialMemoThreshold}
-                marks={difficultyMarks}
-                track={memoThreshold < 0 ? undefined : "inverted"}
-                onChangeCommitted={(e, newValue) => {
-                  const sign = memoThreshold < 0 ? -1 : 1;
-                  if (typeof newValue === "number") {
-                    if (newValue === 0) {
-                      dispatch(setMemorizedThreshold(Number(sign)));
-                    } else {
-                      dispatch(setMemorizedThreshold(sign * newValue));
-                    }
-                  }
-                }}
-                valueLabelDisplay="auto"
-              />
-
-              <div
-                className="mt-2 ms-3 "
-                onClick={buildAction(
-                  dispatch,
-                  setMemorizedThreshold,
-                  -1 * memoThreshold
-                )}
-              >
-                {memoThreshold < 0 ? <SortAscIcon /> : <SortDescIcon />}
-              </div>
-            </div>
-          )}
+          <div className="d-flex justify-content-end">
+            <ThresholdFilterSlider
+              threshold={difficultyThreshold}
+              setThreshold={buildAction(dispatch, setMemorizedThreshold)}
+            />
+          </div>
           {vocabOrder === TermSortBy.RECALL && (
             <PlusMinus
               label="Max review items "
