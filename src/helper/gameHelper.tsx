@@ -406,7 +406,7 @@ export function japaneseLabel(
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
-              const separator = <span key={indicators.length + i}> , </span>;
+              const separator = <span key={indicators.length + i}>, </span>;
               return [...a, separator, c];
             } else {
               return [...a, c];
@@ -539,7 +539,7 @@ export function englishLabel(
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
-              const separator = <span key={indicators.length + i}> , </span>;
+              const separator = <span key={indicators.length + i}>, </span>;
               return [...a, separator, c];
             } else {
               return [...a, c];
