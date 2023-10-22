@@ -64,40 +64,40 @@ export default function SettingsStats() {
             <thead>
               <tr>
                 <th>Recall</th>
-                <td className="p-1">-1</td>
-                <td className="p-1">2.0</td>
-                <td className="p-1">{"[1,2)"}</td>
                 <td className="p-1">{"(0,1)"}</td>
+                <td className="p-1">{"[1,2)"}</td>
+                <td className="p-1">2.0</td>
+                <td className="p-1">-1</td>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>Phrases:</td>
-                <td>{phraseR.wrong}</td>
-                <td>{phraseR.overdue}</td>
-                <td>{phraseR.due}</td>
                 <td>{phraseR.pending}</td>
+                <td>{phraseR.due}</td>
+                <td>{phraseR.overdue}</td>
+                <td>{phraseR.wrong}</td>
               </tr>
               <tr>
                 <td>Vocabulary:</td>
-                <td>{vocabR.wrong}</td>
-                <td>{vocabR.overdue}</td>
-                <td>{vocabR.due}</td>
                 <td>{vocabR.pending}</td>
+                <td>{vocabR.due}</td>
+                <td>{vocabR.overdue}</td>
+                <td>{vocabR.wrong}</td>
               </tr>
               <tr>
                 <td>Kanji:</td>
-                <td>{kanjiR.wrong}</td>
-                <td>{kanjiR.overdue}</td>
-                <td>{kanjiR.due}</td>
                 <td>{kanjiR.pending}</td>
+                <td>{kanjiR.due}</td>
+                <td>{kanjiR.overdue}</td>
+                <td>{kanjiR.wrong}</td>
               </tr>
               <tr>
                 <td>{/** Totals */}</td>
-                <td>{phraseR.wrong + vocabR.wrong + kanjiR.wrong}</td>
-                <td>{phraseR.overdue + vocabR.overdue + kanjiR.overdue}</td>
-                <td>{phraseR.due + vocabR.due + kanjiR.due}</td>
                 <td>{phraseR.pending + vocabR.pending + kanjiR.pending}</td>
+                <td>{phraseR.due + vocabR.due + kanjiR.due}</td>
+                <td>{phraseR.overdue + vocabR.overdue + kanjiR.overdue}</td>
+                <td>{phraseR.wrong + vocabR.wrong + kanjiR.wrong}</td>
               </tr>
             </tbody>
           </table>
