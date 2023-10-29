@@ -6,6 +6,7 @@ import {
   DebugLevel,
   TermFilterBy,
   TermSortBy,
+  deleteMetadata,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
@@ -206,6 +207,16 @@ export const phraseFromLocalStorage = createAsyncThunk(
     const initValues = arg;
 
     return initValues;
+  }
+);
+
+export const deleteMetaPhrase = createAsyncThunk(
+  "phrase/deleteMetaPhrase",
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).phrases;
+    const spaceRep = state.setting.repetition;
+
+    return deleteMetadata(uidList, spaceRep);
   }
 );
 
@@ -577,6 +588,19 @@ const phraseSlice = createSlice({
           newValue
         );
       }
+    });
+
+    builder.addCase(deleteMetaPhrase.fulfilled, (state, action) => {
+      const { record: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "repetition",
+        newValue
+      );
     });
   },
 });

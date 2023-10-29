@@ -174,3 +174,26 @@ export function updateSpaceRepTerm(
 
   return { record: newRecord, value: newVal, prevVal: prevVal ?? newVal };
 }
+
+/**
+ * Returns a new metadata record without the uid specified
+ * @param uidList List of uids to remove from metadata
+ * @param metadata
+ */
+export function deleteMetadata(
+  uidList: string[],
+  metadata: Record<string, MetaDataObj | undefined>
+) {
+  const newRecord = uidList.reduce(
+    (acc, uid) => {
+      const r = { ...acc, [uid]: undefined };
+      /* eslint-disable-next-line @typescript-eslint/no-dynamic-delete */
+      delete r[uid];
+
+      return r;
+    },
+    { ...metadata }
+  );
+
+  return { record: newRecord };
+}

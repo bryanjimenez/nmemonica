@@ -8,6 +8,7 @@ import merge from "lodash/fp/merge";
 import {
   TermFilterBy,
   TermSortBy,
+  deleteMetadata,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
@@ -111,6 +112,25 @@ export const getVocabulary = createAsyncThunk(
   }
 );
 
+export const vocabularyFromLocalStorage = createAsyncThunk(
+  "vocabulary/vocabularyFromLocalStorage",
+  (arg: (typeof vocabularyInitState)["setting"]) => {
+    const initValues = arg;
+
+    return initValues;
+  }
+);
+
+export const deleteMetaVocab = createAsyncThunk(
+  "vocabulary/deleteMetaVocab",
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).vocabulary;
+    const spaceRep = state.setting.repetition;
+
+    return deleteMetadata(uidList, spaceRep);
+  }
+);
+
 export const updateSpaceRepWord = createAsyncThunk(
   "vocabulary/updateSpaceRepWord",
   (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
@@ -145,15 +165,6 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
     return updateAction(uid, spaceRep);
-  }
-);
-
-export const vocabularyFromLocalStorage = createAsyncThunk(
-  "vocabulary/vocabularyFromLocalStorage",
-  (arg: (typeof vocabularyInitState)["setting"]) => {
-    const initValues = arg;
-
-    return initValues;
   }
 );
 
@@ -675,6 +686,19 @@ const vocabularySlice = createSlice({
           newValue
         );
       }
+    });
+
+    builder.addCase(deleteMetaVocab.fulfilled, (state, action) => {
+      const { record: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "repetition",
+        newValue
+      );
     });
   },
 });

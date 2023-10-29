@@ -11,7 +11,6 @@ import type {
   FuriganaToggleMap,
   GroupListMap,
   MetaDataObj,
-  RawKanji,
   RawPhrase,
   RawVocabulary,
   ValuesOf,
@@ -215,11 +214,17 @@ export function getStaleGroups(termGroups: GroupListMap, termActive: string[]) {
  * finds stale keys, and uids in the MetadataObj
  * returns a set of stale keys and a list of which uid the key belonged to
  */
-export function getStaleSpaceRepKeys(
+export function getStaleSpaceRepKeys<
+  T extends { uid: string; english: string }
+>(
   repetition: Record<string, MetaDataObj | undefined>,
-  termList: RawVocabulary[] | RawPhrase[] | RawKanji[],
+  termList: T[],
   staleLabel: string
 ) {
+  if (termList.length === 0 || Object.keys(repetition).length === 0) {
+    return { keys: new Set<string>(), list: [] };
+  }
+
   const MetadataObjKeys: {
     [key in keyof MetaDataObj]: null;
   } = {
@@ -245,25 +250,28 @@ export function getStaleSpaceRepKeys(
   let staleInfoList: { key: string; uid: string; english: string }[] = [];
   Object.keys(repetition).forEach((srepUid) => {
     const o = repetition[srepUid];
-    if (o !== undefined) {
-      Object.keys(o).forEach((key) => {
-        let staleInfo;
-        if (!SpaceRepKeys.has(key)) {
-          let term;
-          try {
-            term = getTerm<(typeof termList)[0]>(srepUid, termList);
-          } catch (err) {
-            term = { english: staleLabel };
+    let term: { english: string };
+
+    try {
+      term = getTerm<(typeof termList)[0]>(srepUid, termList);
+
+      if (o !== undefined) {
+        Object.keys(o).forEach((key) => {
+          let staleInfo;
+          if (!SpaceRepKeys.has(key)) {
+            staleInfo = { key, uid: srepUid, english: term.english };
           }
 
-          staleInfo = { key, uid: srepUid, english: term.english };
-        }
-
-        if (staleInfo !== undefined) {
-          OldSpaceRepKeys.add(key);
-          staleInfoList = [...staleInfoList, staleInfo];
-        }
-      });
+          if (staleInfo !== undefined) {
+            OldSpaceRepKeys.add(key);
+            staleInfoList = [...staleInfoList, staleInfo];
+          }
+        });
+      }
+    } catch (err) {
+      term = { english: staleLabel };
+      let staleInfo = { key: "uid", uid: srepUid, english: term.english };
+      staleInfoList = [...staleInfoList, staleInfo];
     }
   });
 

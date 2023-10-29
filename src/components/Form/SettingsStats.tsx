@@ -109,7 +109,7 @@ export default function SettingsStats() {
                 <tr>
                   <th>Viewed</th>
                   {daysOW.map((dayOfTheWeek, i) => (
-                    <td key={`${i} ${dayOfTheWeek}`} className="p-1">
+                    <td key={`${i.toString()} ${dayOfTheWeek}`} className="p-1">
                       {i === 0 ? "Today" : dayOfTheWeek}
                     </td>
                   ))}
@@ -119,26 +119,26 @@ export default function SettingsStats() {
                 <tr>
                   <td>Phrases:</td>
                   {phraseC.map((count, i) => (
-                    <td key={`${i} ${count}`}>{count}</td>
+                    <td key={`${i.toString()} ${count}`}>{count}</td>
                   ))}
                 </tr>
                 <tr>
                   <td>Vocabulary:</td>
                   {vocabC.map((count, i) => (
-                    <td key={`${i} ${count}`}>{count}</td>
+                    <td key={`${i.toString()} ${count}`}>{count}</td>
                   ))}
                 </tr>
                 <tr>
                   <td>Kanji:</td>
                   {kanjiC.map((count, i) => (
-                    <td key={`${i} ${count}`}>{count}</td>
+                    <td key={`${i.toString()} ${count}`}>{count}</td>
                   ))}
                 </tr>
                 <tr>
                   <td>{/** Totals */}</td>
                   {phraseC.map((el, i) => {
                     return (
-                      <td key={`total-${daysOW[i]}-${i}`}>
+                      <td key={`total-${daysOW[i]}-${i.toString()}`}>
                         {(phraseC[i] ?? 0) +
                           (vocabC[i] ?? 0) +
                           (kanjiC[i] ?? 0)}
@@ -166,8 +166,8 @@ export default function SettingsStats() {
                 <td className="p-1">q4</td>
               </tr>
             </thead>
-            {phraseQ.range > 0 && (
-              <tbody>
+            <tbody>
+              {phraseQ.range > 0 && (
                 <tr>
                   <td>Phrases:</td>
                   <td>{phraseQ.unPlayed}</td>
@@ -178,6 +178,8 @@ export default function SettingsStats() {
                   <td>{phraseQ.q3}</td>
                   <td>{phraseQ.max}</td>
                 </tr>
+              )}
+              {vocabQ.range > 0 && (
                 <tr>
                   <td>Vocabulary:</td>
                   <td>{vocabQ.unPlayed}</td>
@@ -188,6 +190,8 @@ export default function SettingsStats() {
                   <td>{vocabQ.q3}</td>
                   <td>{vocabQ.max}</td>
                 </tr>
+              )}
+              {kanjiQ.range > 0 && (
                 <tr>
                   <td>Kanji:</td>
                   <td>{kanjiQ.unPlayed}</td>
@@ -198,15 +202,15 @@ export default function SettingsStats() {
                   <td>{kanjiQ.q3}</td>
                   <td>{kanjiQ.max}</td>
                 </tr>
-              </tbody>
-            )}
+              )}
+            </tbody>
           </table>
         </div>
         <div className="column-2 setting-block"></div>
       </div>
       <div className="d-flex flex-column flex-sm-row justify-content-between">
         <div className="column-1 text-end">
-        <table className="w-50">
+          <table className="w-50">
             <thead>
               <tr>
                 <th>difficultyP</th>
@@ -226,19 +230,19 @@ export default function SettingsStats() {
               <tr>
                 <td>Phrases:</td>
                 {phraseD.map((count, i) => (
-                  <td key={`${i} ${count}`}>{count}</td>
+                  <td key={`${i.toString()} ${count}`}>{count}</td>
                 ))}
               </tr>
               <tr>
                 <td>Vocabulary:</td>
                 {vocabD.map((count, i) => (
-                  <td key={`${i} ${count}`}>{count}</td>
+                  <td key={`${i.toString()} ${count}`}>{count}</td>
                 ))}
               </tr>
               <tr>
                 <td>Kanji:</td>
                 {kanjiD.map((count, i) => (
-                  <td key={`${i} ${count}`}>{count}</td>
+                  <td key={`${i.toString()} ${count}`}>{count}</td>
                 ))}
               </tr>
             </tbody>

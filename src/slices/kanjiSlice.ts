@@ -4,6 +4,7 @@ import merge from "lodash/fp/merge";
 import {
   TermFilterBy,
   TermSortBy,
+  deleteMetadata,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
@@ -103,6 +104,16 @@ export const kanjiFromLocalStorage = createAsyncThunk(
     const initValues = arg;
 
     return initValues;
+  }
+);
+
+export const deleteMetaKanji = createAsyncThunk(
+  "kanji/deleteMetaKanji",
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).kanji;
+    const spaceRep = state.setting.repetition;
+
+    return deleteMetadata(uidList, spaceRep);
   }
 );
 
@@ -509,6 +520,18 @@ const kanjiSlice = createSlice({
           newValue
         );
       }
+    });
+    builder.addCase(deleteMetaKanji.fulfilled, (state, action) => {
+      const { record: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "repetition",
+        newValue
+      );
     });
   },
 });
