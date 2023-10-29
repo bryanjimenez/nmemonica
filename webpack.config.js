@@ -23,12 +23,12 @@ export default function (webpackEnv, argv) {
           include: path.resolve(__dirname, "src"),
           use: {
             loader: "ts-loader",
-            options:{
+            options: {
               // webpack build with tsc errors
               transpileOnly: true,
             },
           },
-      
+
           // because package.json type: "module"
           // and imports don't have extensions
           // https://github.com/webpack/webpack/issues/11467#issuecomment-691873586
@@ -115,6 +115,7 @@ export default function (webpackEnv, argv) {
           standard: [
             /\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/,
           ],
+          deep: [/fade-menu/], // prevent purge #fade-menu .MuiPaper-root
         },
       }),
     ],

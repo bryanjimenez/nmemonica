@@ -1,7 +1,6 @@
 import { arrow, offset, shift, useFloating } from "@floating-ui/react-dom";
 import { faBullseye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { XIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import {
@@ -16,22 +15,27 @@ import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
 import "../../css/Tooltip.css";
 import { useWindowSize } from "../../hooks/useWindowSize";
 
+import { Box, ClickAwayListener } from "@mui/material";
+
 interface TooltipProps {
   idKey: string;
   className?: string;
   notification?: string;
+  /** Optional timeout to close tooltip after a value change */
+  timeout?: number;
 }
 
 const READY = -1;
 
 export function Tooltip(props: PropsWithChildren<TooltipProps>) {
-  const { children, idKey } = props;
+  const { children, idKey, timeout } = props;
   const w = useWindowSize();
 
   const [showSlider, setShowSlider] = useState(false);
   const arrowRef = useRef(null);
   const oldKey = useRef(idKey);
   const hiding = useRef<NodeJS.Timeout | typeof READY | undefined>();
+  const fadeTimeout = useRef(timeout);
 
   // https://floating-ui.com/docs/react
   const xOffset = 8; // horizontal alignment spacing
@@ -54,20 +58,24 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
     if (idKey !== oldKey.current) {
       oldKey.current = idKey;
       setShowSlider(false);
-      clearTimeout(hiding.current);
-      hiding.current = undefined;
-    } else {
-      if (hiding.current === READY) {
-        hiding.current = setTimeout(() => {
-          setShowSlider(false);
-          hiding.current = undefined;
-        }, 2000);
-      } else if (hiding.current !== undefined) {
+      if (fadeTimeout.current !== undefined) {
         clearTimeout(hiding.current);
-        hiding.current = setTimeout(() => {
-          setShowSlider(false);
-          hiding.current = undefined;
-        }, 2000);
+        hiding.current = undefined;
+      }
+    } else {
+      if (fadeTimeout.current !== undefined) {
+        if (hiding.current === READY) {
+          hiding.current = setTimeout(() => {
+            setShowSlider(false);
+            hiding.current = undefined;
+          }, fadeTimeout.current);
+        } else if (hiding.current !== undefined) {
+          clearTimeout(hiding.current);
+          hiding.current = setTimeout(() => {
+            setShowSlider(false);
+            hiding.current = undefined;
+          }, fadeTimeout.current);
+        }
       }
     }
   }, [update, w.height, w.width, children, idKey]);
@@ -108,40 +116,48 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
           <span className="notification">{props.notification}</span>
         )}
       </div>
-      <div
-        id="tooltip"
-        ref={refs.setFloating}
-        style={{
-          height: "200px",
-          position: strategy,
-          top: y ?? 0,
-          left: x ?? 0,
-          width: "max-content",
-        }}
-        className={classNames({
-          invisible: !showSlider,
-          "tooltip-fade": !showSlider,
-          [TouchSwipeIgnoreCss]: true,
-          "d-flex": true,
-        })}
+      <ClickAwayListener
+        onClickAway={onCloseCB}
+        mouseEvent={showSlider ? "onMouseUp" : false}
+        touchEvent={showSlider ? "onTouchEnd" : false}
       >
-        {props.children}
-        <div className="x-button" onClick={onCloseCB}>
-          <XIcon className="clickable" size="small" aria-label="close" />
-        </div>
-
-        <div
-          ref={arrowRef}
-          id="arrow"
+        {/* <Box component={Grid} boxShadow={3}> */}
+        <Box
+          // component={Grid}
+          id="tooltip"
+          ref={refs.setFloating}
           style={{
+            height: "200px",
             position: strategy,
-            height: arrowW,
-            width: arrowW,
-            bottom: -arrowW / 2,
-            left: xOffset + (middlewareData.arrow?.x ?? 0),
+            top: y ?? 0,
+            left: x ?? 0,
+            width: "max-content",
           }}
-        />
-      </div>
+          className={classNames({
+            invisible: !showSlider,
+            "tooltip-fade": !showSlider,
+            [TouchSwipeIgnoreCss]: true,
+            "d-flex": true,
+          })}
+          boxShadow={3}
+        >
+          {props.children}
+          {/* <div className="x-button" onClick={onCloseCB}>
+          <XIcon className="clickable" size="small" aria-label="close" />
+        </div> */}
+          <div
+            ref={arrowRef}
+            id="arrow"
+            style={{
+              position: strategy,
+              height: arrowW,
+              width: arrowW,
+              bottom: -arrowW / 2,
+              left: xOffset + (middlewareData.arrow?.x ?? 0),
+            }}
+          />
+        </Box>
+      </ClickAwayListener>
     </>
   );
 }

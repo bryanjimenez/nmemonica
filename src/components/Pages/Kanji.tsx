@@ -69,8 +69,8 @@ import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
-import { Tooltip } from "../Form/Tooltip";
 import "../../css/Kanji.css";
+import { Tooltip } from "../Form/Tooltip";
 
 const KanjiMeta = {
   location: "/kanji/",
