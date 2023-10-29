@@ -74,7 +74,7 @@
   }
 }
 
-#tooltip2.dark-mode  {
+#tooltip2.dark-mode {
   background: #424242;
 }
 
@@ -86,6 +86,7 @@
 #fade-menu .MuiPaper-root {
   background-color: transparent;
 }
+
 .settings-switch-root > p {
   display: inline;
   margin-bottom: 0;
