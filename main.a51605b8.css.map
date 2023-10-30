@@ -1,0 +1,1 @@
+{"version":3,"file":"main.a51605b8.css","sources":["./src/css/StackNavButton.css"],"sourcesContent":[".main-panel .MuiButton {\n  width: 40px;\n  min-width: unset;\n}\n"],"names":[],"mappings":"AAAA"}
