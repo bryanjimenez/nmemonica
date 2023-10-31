@@ -1,4 +1,4 @@
-// import path from "path";
+const rspack = require("@rspack/core");
 const path = require("path");
 // import { fileURLToPath } from "url";
 // const fileURLToPath = require("url").fileURLToPath;
@@ -29,6 +29,9 @@ module.exports = function (env, argv) {
     builtins: {
       html: [{ template: `index${isProduction ? ".production" : ""}.html` }],
     },
+
+    // copy static site files to dist
+    plugins: [new rspack.CopyRspackPlugin({ patterns: [{ from: "./site" }] })],
 
     module: {
       rules: [

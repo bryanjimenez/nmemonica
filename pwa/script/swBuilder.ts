@@ -85,7 +85,7 @@ stream.end(
 // TODO: prettifyOutput reopens file
 function prettifyOutput(path: string) {
   const swPartialCodeBuff = fs.readFileSync(path);
-  const pretty = prettier.format(swPartialCodeBuff.toString(), {
+  const prettyP = prettier.format(swPartialCodeBuff.toString(), {
     filepath: path,
   });
 
@@ -93,6 +93,8 @@ function prettifyOutput(path: string) {
     flags: "w",
   });
 
-  stream.write(pretty);
-  stream.end();
+  prettyP.then(code=>{
+    stream.write(code);
+    stream.end();
+  });
 }
