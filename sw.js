@@ -1,6 +1,6 @@
 const buildConstants = {
   swVersion: "5bad10eb",
-  initCacheVer: "c9207a68",
+  initCacheVer: "61c07d6b",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   authenticationHeader: "X-API-KEY",
@@ -74,9 +74,9 @@ function initServiceWorker({
         Promise.all(
           dataURL.map((url) => {
             return getVersionForData(url).then((v) => cacheVerData(url, v));
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
     const a = ghURL;
     const b = ghURL + "/";
@@ -88,7 +88,9 @@ function initServiceWorker({
         console.log(JSON.stringify(e));
       });
     e.waitUntil(
-      caches.open(appStaticCache).then((cache) => cache.addAll([...cacheFiles]))
+      caches
+        .open(appStaticCache)
+        .then((cache) => cache.addAll([...cacheFiles])),
     );
   });
   swSelf.addEventListener("activate", (e) => {
@@ -108,7 +110,7 @@ function initServiceWorker({
           console.log("[ServiceWorker] Claiming clients");
           clientLogger("Claiming clients", DEBUG);
           return swSelf.clients.claim();
-        })
+        }),
     );
   });
   swSelf.addEventListener("message", (event) => {
@@ -173,7 +175,7 @@ function initServiceWorker({
                 clientLogger("fetch", ERROR);
                 throw new Error(
                   "Network response was not OK" +
-                    (res.status ? " (" + res.status + ")" : "")
+                    (res.status ? " (" + res.status + ")" : ""),
                 );
               }
               return res.blob();
@@ -184,8 +186,8 @@ function initServiceWorker({
                 {
                   uid,
                   blob,
-                }
-              ).then((dataO) => toResponse(dataO))
+                },
+              ).then((dataO) => toResponse(dataO)),
             );
         });
         e.respondWith(dbResults);
@@ -210,7 +212,7 @@ function initServiceWorker({
           return getIDBItem({ db }, uid)
             .then((dataO) =>
               //found
-              toResponse(dataO)
+              toResponse(dataO),
             )
             .catch(() => {
               //not found
@@ -221,15 +223,15 @@ function initServiceWorker({
                     clientLogger("fetch", ERROR);
                     throw new Error(
                       "Network response was not OK" +
-                        (res.status ? " (" + res.status + ")" : "")
+                        (res.status ? " (" + res.status + ")" : ""),
                     );
                   }
                   return res.blob();
                 })
                 .then((blob) =>
                   addIDBItem({ db }, { uid, blob }).then((dataO) =>
-                    toResponse(dataO)
-                  )
+                    toResponse(dataO),
+                  ),
                 );
             });
         });
@@ -272,7 +274,7 @@ function initServiceWorker({
   function openIDB(
     version = indexedDBVersion,
     objStoreToCreate = indexedDBStore,
-    objStoreToDelete
+    objStoreToDelete,
   ) {
     let openRequest = indexedDB.open(appMediaCache, version);
     const dbUpgradeP = new Promise((resolve /*reject*/) => {
@@ -557,7 +559,7 @@ function initServiceWorker({
         } else {
           return recache(appDataCache, dataVerURL);
         }
-      })
+      }),
     );
   }
   /**
@@ -604,7 +606,7 @@ function initServiceWorker({
             return fetchRes;
           })
         );
-      })
+      }),
     );
   }
   /**
@@ -642,7 +644,7 @@ function initServiceWorker({
         .catch(() => {
           console.log("[ServiceWorker] Network unavailable");
           return Promise.reject();
-        })
+        }),
     );
   }
   /**
@@ -659,8 +661,8 @@ function initServiceWorker({
             return [...acc, caches.delete(cacheName)];
           }
           return acc;
-        }, [])
-      )
+        }, []),
+      ),
     );
   }
   /**
@@ -679,9 +681,9 @@ function initServiceWorker({
               return [...acc, cache.delete(req.url)];
             }
             return acc;
-          }, [])
-        )
-      )
+          }, []),
+        ),
+      ),
     );
   }
   /**
@@ -693,7 +695,7 @@ function initServiceWorker({
     jsonObj,
     type = "application/json",
     status = 200,
-    statusText = "OK"
+    statusText = "OK",
   ) {
     // update cache with fetched version results
     const blob = new Blob([JSON.stringify(jsonObj)], {
@@ -742,7 +744,7 @@ function initServiceWorker({
             const fetchRes = updateCacheWithJSON(
               appDataCache,
               dataVerURL,
-              resNew
+              resNew,
             );
             // look for changes in terms with new & old hashes values
             if (update) {
@@ -773,8 +775,8 @@ function initServiceWorker({
                             };
                           }
                           return Promise.resolve(undefined);
-                        })
-                    )
+                        }),
+                    ),
                 );
               }
               // message results to client
@@ -796,52 +798,43 @@ function initServiceWorker({
               });
             }
             return Promise.all([fetchRes, newTermsMsgPromise]).then(
-              (allPromises) => allPromises[0]
+              (allPromises) => allPromises[0],
             );
-          })
+          }),
       );
   }
 }
 
 const cacheFiles = [
   "11f4a4136ea351b3efb4.png",
-  "131.69b72f60.css",
-  "131.69b72f60.js",
-  "142.120efa74.css",
-  "142.120efa74.js",
-  "203.aeb08361.js",
-  "293.1410a985.js",
-  "317.d5dd948a.js",
+  "125.0a6e2583.js",
+  "192.7a53d2a1.css",
+  "192.7a53d2a1.js",
+  "23.caccab30.js",
+  "232.23d5d24d.css",
+  "232.23d5d24d.js",
   "331225628f00d1a9fb35.jpeg",
-  "373.3b4f8101.css",
-  "373.3b4f8101.js",
-  "386.43221c4a.js",
-  "405.d9a11a7e.js",
+  "352.a79a399c.js",
   "4156f5574d12ea2e130b.png",
-  "418.4b8102c0.js",
-  "432.8b3c7fec.js",
-  "476.8531109d.js",
+  "463.80a7f24a.css",
+  "463.80a7f24a.js",
+  "657.2788abca.js",
+  "69.e91ce05e.js",
   "71565d048a3f03f60ac5.png",
-  "724.046c407f.js",
-  "748.8e84adb1.js",
-  "802.a040293b.js",
-  "819.d6114f27.js",
-  "834.873e3aab.js",
-  "869.779cf583.css",
-  "869.779cf583.js",
-  "872.d8ead077.css",
-  "872.d8ead077.js",
-  "908.b0dcffbe.js",
-  "988.1ac01ed8.js",
-  "997.01de530b.js",
+  "802.0412e3bc.css",
+  "802.0412e3bc.js",
+  "832.d0458d95.css",
+  "832.d0458d95.js",
+  "856.def865f2.js",
+  "927.02e984c3.js",
   "dc7b0140cb7644f73ef2.png",
   "ee636d032d073f55d622.png",
   "favicon.ico",
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.a51605b8.css",
-  "main.a51605b8.js",
+  "main.1aaa0da5.css",
+  "main.1aaa0da5.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
