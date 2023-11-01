@@ -1,0 +1,1 @@
+{"version":3,"file":"232.b7bcc528.css","sources":["./src/css/SettingsSwitch.css"],"sourcesContent":[".settings-switch-root > p {\n  display: inline;\n  margin-bottom: 0;\n}\n\n.settings-switch-root > span {\n  margin-right: -11px;\n}\n"],"names":[],"mappings":"AAAA"}
