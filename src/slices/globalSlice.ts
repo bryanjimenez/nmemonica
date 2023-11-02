@@ -175,7 +175,10 @@ const globalSlice = createSlice({
     },
 
     debugToggled: {
-      reducer: (state, action: PayloadAction<ValuesOf<typeof DebugLevel>>) => {
+      reducer: (
+        state,
+        action: PayloadAction<ValuesOf<typeof DebugLevel> | undefined>
+      ) => {
         const override = action.payload;
         const newDebug: number = toggleAFilter(
           state.debug + 1,

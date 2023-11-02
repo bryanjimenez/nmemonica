@@ -1,5 +1,5 @@
-import { localStorageKey } from "../constants/paths";
 import { getWindow } from "./browserGlobal";
+import { localStorageKey } from "../constants/paths";
 import type { LocalStorageState } from "../slices";
 
 /**

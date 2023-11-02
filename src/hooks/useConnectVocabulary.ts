@@ -82,7 +82,7 @@ export function useConnectVocabulary() {
       boolean,
       boolean,
       number,
-      ValuesOf<typeof TermSortBy>
+      ValuesOf<typeof TermSortBy>,
     ]
   >(({ vocabulary }: RootState) => {
     const {

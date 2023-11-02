@@ -1,15 +1,16 @@
-import React from "react";
-import PropTypes from "prop-types";
 import { UnmuteIcon } from "@primer/octicons-react";
+import PropTypes from "prop-types";
+import React from "react";
+
 import { pronounceEndoint } from "../../../environment.development";
-import { addParam } from "../../helper/urlHelper";
 import { fetchAudio } from "../../helper/audioHelper.development";
+import { addParam } from "../../helper/urlHelper";
 
 interface AudioItemProps {
   visible: boolean;
   reCache?: boolean;
   word: { tl: string; q: string; uid: string };
-  onPushedPlay?: Function;
+  onPushedPlay?: () => void;
 }
 
 export default function AudioItem(props: AudioItemProps) {
@@ -35,7 +36,7 @@ export default function AudioItem(props: AudioItemProps) {
     const override = time < 500 && !props.reCache ? "" : "/override_cache";
 
     const url = addParam(pronounceEndoint + override, touchPlayParam);
-    fetchAudio(url);
+    void fetchAudio(url);
   };
 
   return (

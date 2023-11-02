@@ -3,7 +3,6 @@ import orderBy from "lodash/orderBy";
 import { shuffleArray } from "./arrayHelper";
 import { daysSince } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
-import { getPercentOverdue } from "./recallHelper";
 import { MetaDataObj } from "../typings/raw";
 
 /**
@@ -102,7 +101,7 @@ export function difficultySubFilter<T extends { uid: string }>(
  * @returns an array containing the indexes of terms in alphabetic order
  */
 export function alphaOrder<
-  T extends { uid: string; english: string; japanese: string }
+  T extends { uid: string; english: string; japanese: string },
 >(terms: T[]) {
   // preserve terms unmodified
 
@@ -239,7 +238,7 @@ export function dateViewOrder(
   const prevViewed = prevViewedSort.map((el) => el.index);
   // const prevSpaceRepd = prevSpaceRepSort.map((el) => el.index);
 
-  return [...notViewed, ...prevViewed/*, ...prevSpaceRepd*/];
+  return [...notViewed, ...prevViewed /*, ...prevSpaceRepd*/];
 }
 
 /**

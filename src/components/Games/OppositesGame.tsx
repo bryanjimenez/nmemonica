@@ -41,7 +41,7 @@ export default function OppositesGame() {
 
   useEffect(() => {
     if (oppositeList.length === 0) {
-      dispatch(getOpposite());
+      void dispatch(getOpposite());
     }
   }, []);
 
@@ -117,7 +117,7 @@ export default function OppositesGame() {
         gotoNext={gotoNext}
         fadeInAnswers={fadeInAnswers}
       />
-      <div key={1} className="progress-line flex-shrink-1">
+      <div className="progress-line flex-shrink-1">
         <LinearProgress variant="determinate" value={progress} />
       </div>
     </>

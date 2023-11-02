@@ -16,7 +16,7 @@ export function useConnectKana() {
     string[][],
     string[],
     string[],
-    typeof data.sounds
+    typeof data.sounds,
   ] = useSelector(
     ({ kana }: RootState) => {
       const { hiragana, katakana, vowels, consonants, sounds } = kana;

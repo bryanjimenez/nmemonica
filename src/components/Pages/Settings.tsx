@@ -49,8 +49,8 @@ const SettingsMeta = {
 };
 
 // FIXME: getDerivedStateFromError
-
-function /*static*/ getDerivedStateFromError(error: Error) {
+/*
+function /*static getDerivedStateFromError(error: Error) {
   const causeMsg =
     (error.cause !== undefined && [
       { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
@@ -67,7 +67,7 @@ function /*static*/ getDerivedStateFromError(error: Error) {
     errorMsgs,
   };
 }
-
+*/
 function componentDidCatch(dispatch: AppDispatch, error: Error) {
   const cause = error.cause as { code: string; value: unknown };
 

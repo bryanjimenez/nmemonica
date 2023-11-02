@@ -197,7 +197,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
 
         const daysSinceReview = daysSince(oMeta.lastReview);
         const percentOverdueCalc = getPercentOverdue({
-          accuracy: oMeta.accuracyP/100,
+          accuracy: oMeta.accuracyP / 100,
           daysSinceReview,
           daysBetweenReviews: oMeta.daysBetweenReviews,
         });
@@ -301,7 +301,7 @@ export function recallInfoTable<T extends { uid: string; english: string }>(
 
     const daysSinceReview = daysSince(lastReview);
     const percentOverdueCalc = getPercentOverdue({
-      accuracy: accuracyP/100,
+      accuracy: accuracyP / 100,
       daysSinceReview,
       daysBetweenReviews,
     });

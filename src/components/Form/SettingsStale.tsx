@@ -162,10 +162,14 @@ export default function SettingsStale() {
             </div>
           )}
           {oldUidVocab.length > 0 && (
-            <div onClick={vocabDelMetaCB}>Stale Vocab Metadata: {oldUidVocab.length}</div>
+            <div onClick={vocabDelMetaCB}>
+              Stale Vocab Metadata: {oldUidVocab.length}
+            </div>
           )}
           {oldUidKanji.length > 0 && (
-            <div onClick={kanjiDelMetaCB}>Stale Kanji Metadata: {oldUidKanji.length}</div>
+            <div onClick={kanjiDelMetaCB}>
+              Stale Kanji Metadata: {oldUidKanji.length}
+            </div>
           )}
         </div>
         <div className="px-4">

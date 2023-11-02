@@ -41,7 +41,14 @@ export function getLastViewCounts(
 export function getRecallCounts(
   metaData: Record<string, MetaDataObj | undefined>
 ) {
-  let counts = { wrong: 0, overdue: 0, due: 0, pending: 0, unPlayed: 0 };
+  let counts = {
+    wrong: 0,
+    overdue: 0,
+    due: 0,
+    pending: 0,
+    unPlayed: 0,
+    values: [],
+  };
 
   const valueList = Object.keys(metaData).map((el) => {
     const { lastView, lastReview, accuracyP, daysBetweenReviews } =
@@ -91,7 +98,7 @@ export function getRecallCounts(
     }
   });
 
-  return counts;
+  return { ...counts, value: valueList };
 }
 
 /**
@@ -191,14 +198,14 @@ export function getStats(n: number[]) {
 export function getDifficultyCounts(
   metaData: Record<string, MetaDataObj | undefined>
 ) {
-  let unPlayed = 0;
+  // let unPlayed = 0;
   let difficultyRange: number[] = new Array(10) as number[];
   difficultyRange.fill(0);
 
-  const valueList = Object.keys(metaData).map((el) => {
+  Object.keys(metaData).map((el) => {
     const difficulty = metaData[el]?.difficultyP;
     if (difficulty === undefined) {
-      unPlayed += 1;
+      // unPlayed += 1;
       return -1;
     } else {
       const index = difficulty / 10 - 1;

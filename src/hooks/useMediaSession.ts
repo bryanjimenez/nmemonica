@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import {
   mediaSessionAttach,
   mediaSessionDetachAll,
@@ -13,9 +14,9 @@ import type { ActionHandlerTuple } from "../typings/raw";
 export function useMediaSession(
   name: string,
   loop: number,
-  beginLoop: Function,
-  abortLoop: Function,
-  looperSwipe: Function
+  beginLoop: () => void,
+  abortLoop: () => boolean,
+  looperSwipe: (direction: string) => Promise<unknown>
 ) {
   useEffect(() => {
     setMediaSessionMetadata(name);
@@ -54,7 +55,7 @@ export function useMediaSession(
         () => {
           if (loop) {
             abortLoop();
-            looperSwipe("right");
+            void looperSwipe("right");
           }
         },
       ],
@@ -63,7 +64,7 @@ export function useMediaSession(
         () => {
           if (loop) {
             abortLoop();
-            looperSwipe("left");
+            void looperSwipe("left");
           }
         },
       ],

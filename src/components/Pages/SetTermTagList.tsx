@@ -2,6 +2,7 @@ import orderBy from "lodash/orderBy";
 import partition from "lodash/partition";
 import PropTypes from "prop-types";
 import React, { useEffect } from "react";
+
 import { GroupItem } from "../Form/GroupItem";
 
 interface SetTermTagListProps {
@@ -73,19 +74,17 @@ export function SetTermTagList(props: SetTermTagListProps) {
 
   return (
     <div>
-      <h5 key={0}>Tag List {count}</h5>
-      {sorted.map((g, i) => (
-        <div key={i + 1}>
-          <GroupItem
-            key={i}
-            active={termsActive.includes(g)}
-            onClick={() => {
-              toggleTermActive(g);
-            }}
-          >
-            {g}
-          </GroupItem>
-        </div>
+      <h5>Tag List {count}</h5>
+      {sorted.map((g) => (
+        <GroupItem
+          key={g}
+          active={termsActive.includes(g)}
+          onClick={() => {
+            toggleTermActive(g);
+          }}
+        >
+          {g}
+        </GroupItem>
       ))}
     </div>
   );
