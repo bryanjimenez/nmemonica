@@ -2,7 +2,7 @@ import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
 import { KanaType } from "./settingHelper";
-import data from "../../data/kana.json";
+import data from "../../data/json/kana.json";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import type { ValuesOf } from "../typings/raw";
 

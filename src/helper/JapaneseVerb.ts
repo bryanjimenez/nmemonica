@@ -1,6 +1,6 @@
 import { JapaneseText } from "./JapaneseText";
 import { getConsonantVowel } from "./kanaHelper";
-import data from "../../data/kana.json";
+import data from "../../data/json/kana.json";
 import type { RawJapanese } from "../typings/raw";
 
 export type VerbFormArray = {
