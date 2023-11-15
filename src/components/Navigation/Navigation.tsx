@@ -28,6 +28,8 @@ import { PhrasesMeta } from "../Pages/Phrases";
 import { SettingsMeta } from "../Pages/Settings";
 import { VocabularyMeta } from "../Pages/Vocabulary";
 import "../../css/Navigation.css";
+import { TableIcon } from "@primer/octicons-react";
+import { SheetMeta } from "../Pages/Sheet";
 
 export default function Navigation() {
   const dispatch = useDispatch();
@@ -153,6 +155,10 @@ export default function Navigation() {
         meta: SettingsMeta,
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
       },
+      {
+        meta: {location: SheetMeta.location, label:"Edit"},
+        icon: <TableIcon size="medium"/>
+      }
     ],
     [dispatch, charSet, kanjiType, vocabType]
   );

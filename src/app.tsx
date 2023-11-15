@@ -1,7 +1,8 @@
 import classNames from "classnames";
 import { Suspense, lazy, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";
+
 import Console from "./components/Form/Console";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
@@ -12,6 +13,7 @@ import { KanaGameMeta } from "./components/Pages/KanaGame";
 import { KanjiMeta } from "./components/Pages/Kanji";
 import { PhrasesMeta } from "./components/Pages/Phrases";
 import { SettingsMeta } from "./components/Pages/Settings";
+import { SheetMeta } from "./components/Pages/Sheet";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import { SERVICE_WORKER_LOGGER_MSG } from "./constants/actionNames";
 import type { AppDispatch, RootState } from "./slices";
@@ -28,15 +30,16 @@ const Kanji = lazy(() => import("./components/Pages/Kanji"));
 const KanjiGame = lazy(() => import("./components/Games/KanjiGame"));
 const KanjiGrid = lazy(() => import("./components/Games/KanjiGrid"));
 const ParticlesGame = lazy(() => import("./components/Games/ParticlesGame"));
+const Sheet = lazy(() => import("./components/Pages/Sheet"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
 
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    dispatch(getVersions());
-    dispatch(localStorageSettingsInitialized());
-    dispatch(serviceWorkerRegistered()).then(() => {
+    void dispatch(getVersions());
+    void dispatch(localStorageSettingsInitialized());
+    void dispatch(serviceWorkerRegistered()).then(() => {
       if ("serviceWorker" in navigator) {
         // set event listener
         navigator.serviceWorker.addEventListener("message", (event) => {
@@ -87,6 +90,7 @@ export default function App() {
               path={ParticlesGameMeta.location}
               element={<ParticlesGame />}
             />
+            <Route path={SheetMeta.location} element={<Sheet />} />
             <Route path={SettingsMeta.location} element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
