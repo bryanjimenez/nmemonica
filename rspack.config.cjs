@@ -1,5 +1,6 @@
 const rspack = require("@rspack/core");
 const path = require("path");
+const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
 // import { fileURLToPath } from "url";
 // const fileURLToPath = require("url").fileURLToPath;
 
@@ -26,12 +27,18 @@ module.exports = function (env, argv) {
       ? "cheap-module-source-map"
       : "eval-cheap-module-source-map",
 
-    builtins: {
-      html: [{ template: `index${isProduction ? ".production" : ""}.html` }],
-    },
-
-    // copy static site files to dist
-    plugins: [new rspack.CopyRspackPlugin({ patterns: [{ from: "./site" }] })],
+    plugins: [
+      // copy static site files to dist
+      ...(isProduction
+        ? [new rspack.CopyRspackPlugin({ patterns: [{ from: "./site" }] })]
+        : []),
+      // output license info
+      ...(isProduction
+        ? [new LicenseCheckerWebpackPlugin()]
+        : []),
+      // index.html template
+      new rspack.HtmlRspackPlugin({ template: `index${isProduction ? ".production" : ""}.html`})
+    ],
 
     module: {
       rules: [

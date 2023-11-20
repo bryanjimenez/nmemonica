@@ -1,9 +1,13 @@
 {
+  "private": true,
   "name": "nmemonica",
   "version": "1.0.0",
-  "description": "Japanese/English Flash Cards",
+  "description": "English - Japanese language learning app",
   "type": "module",
   "main": "index.js",
+  "files":[
+    "dist"
+  ],
   "scripts": {
     "test": "mocha -r ./test/require.js ./test/unit/**/*.ts",
     "type": "tsc -b --verbose",
@@ -22,9 +26,9 @@
     "lint:all": "DEBUG=*,-@hwc*,-eslint:code-path eslint .",
     "pretty": "npm run -s staged | xargs prettier --write"
   },
-  "author": "Bryan",
+  "author": "Bryan Jimenez",
   "license": "",
-  "homepage": "https://bryanjimenez.github.io/nmemonica",
+  "homepage": "https://github.com/bryanjimenez/nmemonica",
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
@@ -87,6 +91,7 @@
     "globals": "^13.20.0",
     "jsdom": "22.1.0",
     "jsdom-global": "3.0.2",
+    "license-checker-webpack-plugin": "^0.2.1",
     "md5": "^2.3.0",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
