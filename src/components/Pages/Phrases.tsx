@@ -13,7 +13,7 @@ import React, {
 import { useDispatch } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
-import { fetchAudio } from "../../helper/audioHelper.development";
+import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,
   spaceRepLog,

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import React from "react";
 
 import { pronounceEndoint } from "../../../environment.development";
-import { fetchAudio } from "../../helper/audioHelper.development";
+import { fetchAudio } from "../../helper/audioHelper.production";
 import { addParam } from "../../helper/urlHelper";
 
 interface AudioItemProps {
