@@ -22,7 +22,6 @@
     "sourceMap": true,
     "jsx": "react-jsx" // missing import React
   },
-  "exclude": ["../lambda"],
   "include": [
     ".",
     "../data/json/kana.json",

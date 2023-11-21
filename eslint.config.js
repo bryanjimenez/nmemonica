@@ -6,8 +6,8 @@ import reactPlugin from "eslint-plugin-react";
 import reactHookPlugin from "eslint-plugin-react-hooks";
 import importPlugin from "eslint-plugin-import";
 // importPlugin uses 'eslint-import-resolver-typescript'
-import googlePlugin from "eslint-config-google";
-import lambdaEslintConf from "./lambda/eslint.config.mjs";
+// import googlePlugin from "eslint-config-google";
+// import lambdaEslintConf from "./lambda/eslint.config.mjs";
 import fs from "fs";
 import globals from "globals";
 import prettier from "prettier";
