@@ -187,20 +187,24 @@ export default function Settings() {
     () => {
       void dispatch(getMemoryStorageStatus());
 
-      navigator.serviceWorker.addEventListener(
-        "message",
-        swMessageEventListener
-      );
-
-      navigator.serviceWorker.controller?.postMessage({
-        type: "SW_VERSION",
-      });
-
-      return () => {
-        navigator.serviceWorker.removeEventListener(
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener(
           "message",
           swMessageEventListener
         );
+
+        navigator.serviceWorker.controller?.postMessage({
+          type: "SW_VERSION",
+        });
+      }
+
+      return () => {
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.removeEventListener(
+            "message",
+            swMessageEventListener
+          );
+        }
 
         if (motionListener.current) {
           window.removeEventListener("devicemotion", motionListener.current);

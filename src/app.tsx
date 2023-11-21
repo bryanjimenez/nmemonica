@@ -21,6 +21,7 @@ import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { getVersions } from "./slices/versionSlice";
 import "./css/styles.css";
+import { DebugLevel } from "./slices/settingHelper";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
@@ -39,26 +40,34 @@ export default function App() {
   useEffect(() => {
     void dispatch(getVersions());
     void dispatch(localStorageSettingsInitialized());
-    void dispatch(serviceWorkerRegistered()).then(() => {
-      if ("serviceWorker" in navigator) {
-        // set event listener
-        navigator.serviceWorker.addEventListener("message", (event) => {
-          interface SwMessage {
-            msg: string;
-            lvl: number;
-            type: string;
-          }
-          const data = event.data as SwMessage;
-          if (data.type === SERVICE_WORKER_LOGGER_MSG) {
-            dispatch(logger(data.msg, data.lvl, SERVICE_WORKER_LOGGER_MSG));
-          }
-          // TODO: SERVICE_WORKER_NEW_TERMS_ADDED removed on hook refactor
-          // else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
-          //   dispatch(serviceWorkerNewTermsAdded(event.data.msg));
-          // }
-        });
-      }
-    });
+    void dispatch(serviceWorkerRegistered())
+      .then(() => {
+        if ("serviceWorker" in navigator) {
+          // set event listener
+          navigator.serviceWorker.addEventListener("message", (event) => {
+            interface SwMessage {
+              msg: string;
+              lvl: number;
+              type: string;
+            }
+            const data = event.data as SwMessage;
+            if (data.type === SERVICE_WORKER_LOGGER_MSG) {
+              dispatch(logger(data.msg, data.lvl, SERVICE_WORKER_LOGGER_MSG));
+            }
+            // TODO: SERVICE_WORKER_NEW_TERMS_ADDED removed on hook refactor
+            // else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
+            //   dispatch(serviceWorkerNewTermsAdded(event.data.msg));
+            // }
+          });
+        }
+      })
+      .catch((e) => {
+        dispatch(logger(e.message, DebugLevel.ERROR));
+
+        // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
+        // TODO: when service worker fails
+        const request = window.indexedDB.open("MyTestDatabase", 1);
+      });
   }, []);
 
   const darkMode = useSelector(({ global }: RootState) => global.darkMode);
