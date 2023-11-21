@@ -13,7 +13,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.development";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
@@ -102,7 +102,7 @@ export const getVocabulary = createAsyncThunk(
     //   console.error("fetching vocabulary: 0");
     // }
     const value = (await fetch(
-      firebaseConfig.databaseURL + "/lambda/vocabulary.json",
+      dataServiceEndpoint + "/vocabulary.json",
       {
         headers: { "Data-Version": version },
       }

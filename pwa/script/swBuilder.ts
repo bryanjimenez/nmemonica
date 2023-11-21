@@ -3,12 +3,9 @@ import glob from "glob";
 import md5 from "md5";
 import path from "path";
 import prettier from "prettier";
-import { authenticationHeader } from "../../environment.development.js";
-import {
-  appUIEndpoint,
-  firebaseConfig,
-  pronounceEndoint,
-} from "../../environment.production.js";
+import { dataServiceEndpoint,   appUIEndpoint,
+  pronounceEndoint, } from "../../environment.development.js";
+
 import {
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
@@ -64,9 +61,8 @@ const buildConstants = {
   initCacheVer,
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
-  authenticationHeader,
   ghURL: appUIEndpoint,
-  fbURL: firebaseConfig.databaseURL,
+  fbURL: dataServiceEndpoint,
   gCloudFnPronounce: pronounceEndoint,
 };
 

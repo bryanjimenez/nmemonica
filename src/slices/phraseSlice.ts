@@ -11,7 +11,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
@@ -186,7 +186,7 @@ export const getPhrase = createAsyncThunk(
     //   console.error("fetching phrase: 0");
     // }
     const jsonValue = (await fetch(
-      firebaseConfig.databaseURL + "/lambda/phrases.json",
+      dataServiceEndpoint + "/phrases.json",
       {
         headers: { "Data-Version": version },
       }

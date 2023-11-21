@@ -9,7 +9,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
@@ -88,7 +88,7 @@ export const getKanji = createAsyncThunk(
     //   console.error("fetching kanji: 0");
     // }
     const value = (await fetch(
-      firebaseConfig.databaseURL + "/lambda/kanji.json",
+      dataServiceEndpoint + "/kanji.json",
       {
         headers: { "Data-Version": version },
       }

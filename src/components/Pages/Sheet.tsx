@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import Spreadsheet from "x-data-spreadsheet";
 import "x-data-spreadsheet/dist/xspreadsheet.css";
 
-import { workbookEndPoint } from "../../../environment.development";
+import { sheetServiceEndPoint } from "../../../environment.development";
 
 import md5 from "md5";
 
@@ -52,7 +52,7 @@ function saveSheet(workbook: Spreadsheet | null) {
   container.append("sheetName", activeSheetName);
   container.append("sheetData", data);
 
-  void fetch(workbookEndPoint, {
+  void fetch(sheetServiceEndPoint, {
     method: "PUT",
     body: container,
   });
@@ -65,7 +65,7 @@ export default function Sheet() {
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void fetch(workbookEndPoint, { method: "GET" }).then((res) =>
+    void fetch(sheetServiceEndPoint, { method: "GET" }).then((res) =>
       res
         .json()
         .then(({ xSheetObj }: { xSheetObj: Record<string, unknown> }) => {

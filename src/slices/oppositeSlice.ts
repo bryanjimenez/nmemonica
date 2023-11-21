@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.development";
 import type { RawOpposite } from "../components/Games/OppositesGame";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 
@@ -33,7 +33,7 @@ export const getOpposite = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching opposite: 0");
     // }
-    return fetch(firebaseConfig.databaseURL + "/lambda/opposites.json", {
+    return fetch(dataServiceEndpoint + "/opposites.json", {
       headers: { "Data-Version": version },
     }).then((res) =>
       res

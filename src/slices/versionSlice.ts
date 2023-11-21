@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.development";
 
 export interface VersionInitSlice {
   vocabulary?: string;
@@ -24,7 +24,7 @@ const initialState: VersionInitSlice = {
  * Get app data versions file
  */
 export const getVersions = createAsyncThunk("version/getVersions", async () =>
-  fetch(firebaseConfig.databaseURL + "/lambda/cache.json").then((res) =>
+  fetch(dataServiceEndpoint + "/cache.json").then((res) =>
     res.json()
   )
 );

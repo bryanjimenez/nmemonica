@@ -10,7 +10,6 @@ interface SwFnParams {
 
   getParam: Function;
   removeParam: Function;
-  authenticationHeader: string;
 }
 
 interface CacheDataObj {
@@ -30,7 +29,6 @@ export function initServiceWorker({
 
   getParam,
   removeParam,
-  authenticationHeader,
 }: SwFnParams) {
   //@ts-expect-error FIXME: ServiceWorkerGlobalScope
   const swSelf = globalThis.self as ServiceWorkerGlobalScope;
@@ -43,12 +41,12 @@ export function initServiceWorker({
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
 
-  const dataVerURL = fbURL + "/lambda/cache.json";
+  const dataVerURL = fbURL + "/cache.json";
   const dataURL = [
-    fbURL + "/lambda/phrases.json",
-    fbURL + "/lambda/vocabulary.json",
-    fbURL + "/lambda/opposites.json",
-    fbURL + "/lambda/kanji.json",
+    fbURL + "/phrases.json",
+    fbURL + "/vocabulary.json",
+    fbURL + "/opposites.json",
+    fbURL + "/kanji.json",
   ];
 
   let ERROR = 1,
@@ -162,8 +160,7 @@ export function initServiceWorker({
       console.log("[ServiceWorker] Overriding Asset in Cache");
       const uid = getParam(url, "uid");
       const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
-      const dev_env_auth = req.headers.get(authenticationHeader);
-      const myRequest = toRequest(cleanUrl, dev_env_auth);
+      const myRequest = toRequest(cleanUrl);
 
       if (!swSelf.indexedDB) {
         // use cache
@@ -211,8 +208,7 @@ export function initServiceWorker({
       const word = decodeURI(getParam(url, "q"));
 
       const cleanUrl = removeParam(url, "uid");
-      const dev_env_auth = req.headers.get(authenticationHeader);
-      const myRequest = toRequest(cleanUrl, dev_env_auth);
+      const myRequest = toRequest(cleanUrl);
 
       if (!swSelf.indexedDB) {
         // use cache
@@ -265,12 +261,9 @@ export function initServiceWorker({
    *
    * Adds authentication in development env
    */
-  function toRequest(url: string, auth: string | null) {
-    const devAuth =
-      auth === null ? undefined : new Headers({ [authenticationHeader]: auth });
+  function toRequest(url: string) {
     const myInit = {
       method: "GET",
-      headers: devAuth,
     };
 
     return new Request(url, myInit);
@@ -865,7 +858,7 @@ export function initServiceWorker({
                 {};
               let ps: Promise<void>[] = [];
               for (let setName in versionChange) {
-                const theUrl = fbURL + "/lambda/" + setName + ".json";
+                const theUrl = fbURL + "/" + setName + ".json";
 
                 ps.push(
                   cacheVerData(theUrl, versionChange[setName].new)
