@@ -1,13 +1,11 @@
 const buildConstants = {
-  swVersion: "5bad10eb",
-  initCacheVer: "7c444514",
+  swVersion: "61428a9a",
+  initCacheVer: "d396ea26",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
-  authenticationHeader: "X-API-KEY",
   ghURL: "https://bryanjimenez.github.io/nmemonica",
-  fbURL: "https://nmemonica-9d977.firebaseio.com",
-  gCloudFnPronounce:
-    "https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce",
+  fbURL: "http://192.168.4.66:8000/lambda",
+  gCloudFnPronounce: "http://192.168.4.66:8000/g_translate_pronounce",
 };
 
 function getParam(baseUrl, param) {
@@ -37,7 +35,6 @@ function initServiceWorker({
   SERVICE_WORKER_NEW_TERMS_ADDED,
   getParam,
   removeParam,
-  authenticationHeader,
 }) {
   //@ts-expect-error FIXME: ServiceWorkerGlobalScope
   const swSelf = globalThis.self;
@@ -48,12 +45,12 @@ function initServiceWorker({
   const indexedDBStore = "media";
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
-  const dataVerURL = fbURL + "/lambda/cache.json";
+  const dataVerURL = fbURL + "/cache.json";
   const dataURL = [
-    fbURL + "/lambda/phrases.json",
-    fbURL + "/lambda/vocabulary.json",
-    fbURL + "/lambda/opposites.json",
-    fbURL + "/lambda/kanji.json",
+    fbURL + "/phrases.json",
+    fbURL + "/vocabulary.json",
+    fbURL + "/opposites.json",
+    fbURL + "/kanji.json",
   ];
   let ERROR = 1,
     WARN = 2,
@@ -155,8 +152,7 @@ function initServiceWorker({
       console.log("[ServiceWorker] Overriding Asset in Cache");
       const uid = getParam(url, "uid");
       const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
-      const dev_env_auth = req.headers.get(authenticationHeader);
-      const myRequest = toRequest(cleanUrl, dev_env_auth);
+      const myRequest = toRequest(cleanUrl);
       if (!swSelf.indexedDB) {
         // use cache
         console.log(NO_INDEXEDDB_SUPPORT);
@@ -197,8 +193,7 @@ function initServiceWorker({
       const uid = getParam(url, "uid");
       const word = decodeURI(getParam(url, "q"));
       const cleanUrl = removeParam(url, "uid");
-      const dev_env_auth = req.headers.get(authenticationHeader);
-      const myRequest = toRequest(cleanUrl, dev_env_auth);
+      const myRequest = toRequest(cleanUrl);
       if (!swSelf.indexedDB) {
         // use cache
         console.log(NO_INDEXEDDB_SUPPORT);
@@ -247,12 +242,9 @@ function initServiceWorker({
    *
    * Adds authentication in development env
    */
-  function toRequest(url, auth) {
-    const devAuth =
-      auth === null ? undefined : new Headers({ [authenticationHeader]: auth });
+  function toRequest(url) {
     const myInit = {
       method: "GET",
-      headers: devAuth,
     };
     return new Request(url, myInit);
   }
@@ -753,7 +745,7 @@ function initServiceWorker({
               let newlyAdded = {};
               let ps = [];
               for (let setName in versionChange) {
-                const theUrl = fbURL + "/lambda/" + setName + ".json";
+                const theUrl = fbURL + "/" + setName + ".json";
                 ps.push(
                   cacheVerData(theUrl, versionChange[setName].new)
                     .then((d) => d.json())
@@ -807,35 +799,38 @@ function initServiceWorker({
 
 const cacheFiles = [
   "11f4a4136ea351b3efb4.png",
-  "125.b824cc3a.js",
-  "192.20041a9f.css",
-  "192.20041a9f.js",
-  "23.1128ace5.js",
-  "232.b7bcc528.css",
-  "232.b7bcc528.js",
+  "125.d2328cac.js",
+  "192.292c7b53.css",
+  "192.292c7b53.js",
+  "23.ea41153a.js",
+  "232.73ff42a0.css",
+  "232.73ff42a0.js",
   "331225628f00d1a9fb35.jpeg",
-  "352.a79a399c.js",
+  "352.fc99c433.js",
   "4156f5574d12ea2e130b.png",
-  "463.46221341.css",
-  "463.46221341.js",
-  "657.744d23ee.js",
-  "69.e91ce05e.js",
+  "463.1b124fef.css",
+  "463.1b124fef.js",
+  "657.dee7b86d.js",
+  "69.0725e2d3.js",
   "71565d048a3f03f60ac5.png",
-  "802.8cb89c78.css",
-  "802.8cb89c78.js",
-  "832.cafa7993.css",
-  "832.cafa7993.js",
-  "856.def865f2.js",
-  "927.02e984c3.js",
+  "802.b60e6e64.css",
+  "802.b60e6e64.js",
+  "832.51c16285.css",
+  "832.51c16285.js",
+  "856.6ebf128e.js",
+  "927.65bb62a1.js",
   "dc7b0140cb7644f73ef2.png",
   "ee636d032d073f55d622.png",
   "favicon.ico",
+  "icon192_prod.png",
   "icon192.png",
+  "icon512_prod.png",
   "icon512.png",
   "index.html",
-  "main.a47a2324.css",
-  "main.a47a2324.js",
+  "main.c1bf12e5.css",
+  "main.c1bf12e5.js",
   "manifest.webmanifest",
+  "maskable512_prod.png",
   "maskable512.png",
 ];
 
