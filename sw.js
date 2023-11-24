@@ -1,11 +1,12 @@
 const buildConstants = {
   swVersion: "61428a9a",
-  initCacheVer: "d396ea26",
+  initCacheVer: "76bc5294",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   ghURL: "https://bryanjimenez.github.io/nmemonica",
-  fbURL: "http://192.168.4.66:8000/lambda",
-  gCloudFnPronounce: "http://192.168.4.66:8000/g_translate_pronounce",
+  fbURL: "https://us-east1-nmemonica-9d977.cloudfunctions.net/lambda",
+  gCloudFnPronounce:
+    "https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce",
 };
 
 function getParam(baseUrl, param) {
@@ -141,16 +142,13 @@ function initServiceWorker({
       return;
     }
     if (url === dataVerURL) {
-      return
-      // e.respondWith(appVersionReq());
+      e.respondWith(appVersionReq());
     } else if (req.headers.get("Data-Version")) {
-      return;
-      // e.respondWith(appDataReq(e.request));
+      e.respondWith(appDataReq(e.request));
     } else if (url.startsWith(ghURL)) {
       // site asset
       e.respondWith(appAssetReq(url));
     } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
-      return;
       // override cache site media asset
       console.log("[ServiceWorker] Overriding Asset in Cache");
       const uid = getParam(url, "uid");
@@ -192,7 +190,6 @@ function initServiceWorker({
         e.respondWith(dbResults);
       }
     } else if (url.startsWith(gCloudFnPronounce)) {
-      return;
       // site media asset
       const uid = getParam(url, "uid");
       const word = decodeURI(getParam(url, "q"));
@@ -803,26 +800,26 @@ function initServiceWorker({
 
 const cacheFiles = [
   "11f4a4136ea351b3efb4.png",
-  "125.d2328cac.js",
-  "192.292c7b53.css",
-  "192.292c7b53.js",
-  "23.ea41153a.js",
-  "232.73ff42a0.css",
-  "232.73ff42a0.js",
+  "125.5d152486.js",
+  "192.4333daee.css",
+  "192.4333daee.js",
+  "23.6af8dc54.js",
+  "232.e5cf75da.css",
+  "232.e5cf75da.js",
   "331225628f00d1a9fb35.jpeg",
-  "352.fc99c433.js",
+  "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
-  "463.1b124fef.css",
-  "463.1b124fef.js",
-  "657.dee7b86d.js",
-  "69.0725e2d3.js",
+  "463.dd239938.css",
+  "463.dd239938.js",
+  "657.a73fb00d.js",
+  "69.082fbe44.js",
   "71565d048a3f03f60ac5.png",
-  "802.b60e6e64.css",
-  "802.b60e6e64.js",
-  "832.51c16285.css",
-  "832.51c16285.js",
-  "856.6ebf128e.js",
-  "927.65bb62a1.js",
+  "802.65d665ab.css",
+  "802.65d665ab.js",
+  "832.c1a7f121.css",
+  "832.c1a7f121.js",
+  "856.f9bd9358.js",
+  "927.bfc4db9c.js",
   "dc7b0140cb7644f73ef2.png",
   "ee636d032d073f55d622.png",
   "favicon.ico",
@@ -831,8 +828,8 @@ const cacheFiles = [
   "icon512_prod.png",
   "icon512.png",
   "index.html",
-  "main.c1bf12e5.css",
-  "main.c1bf12e5.js",
+  "main.1d25c9d9.css",
+  "main.1d25c9d9.js",
   "manifest.webmanifest",
   "maskable512_prod.png",
   "maskable512.png",
