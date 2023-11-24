@@ -1,10 +1,10 @@
 const buildConstants = {
   swVersion: "61428a9a",
-  initCacheVer: "76bc5294",
+  initCacheVer: "89fda8be",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
   ghURL: "https://bryanjimenez.github.io/nmemonica",
-  fbURL: "https://us-east1-nmemonica-9d977.cloudfunctions.net/lambda",
+  fbURL: "https://nmemonica-9d977.firebaseio.com/lambda",
   gCloudFnPronounce:
     "https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce",
 };
@@ -828,8 +828,8 @@ const cacheFiles = [
   "icon512_prod.png",
   "icon512.png",
   "index.html",
-  "main.1d25c9d9.css",
-  "main.1d25c9d9.js",
+  "main.c0922332.css",
+  "main.c0922332.js",
   "manifest.webmanifest",
   "maskable512_prod.png",
   "maskable512.png",
