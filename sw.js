@@ -141,13 +141,16 @@ function initServiceWorker({
       return;
     }
     if (url === dataVerURL) {
-      e.respondWith(appVersionReq());
+      return
+      // e.respondWith(appVersionReq());
     } else if (req.headers.get("Data-Version")) {
-      e.respondWith(appDataReq(e.request));
+      return;
+      // e.respondWith(appDataReq(e.request));
     } else if (url.startsWith(ghURL)) {
       // site asset
       e.respondWith(appAssetReq(url));
     } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
+      return;
       // override cache site media asset
       console.log("[ServiceWorker] Overriding Asset in Cache");
       const uid = getParam(url, "uid");
@@ -189,6 +192,7 @@ function initServiceWorker({
         e.respondWith(dbResults);
       }
     } else if (url.startsWith(gCloudFnPronounce)) {
+      return;
       // site media asset
       const uid = getParam(url, "uid");
       const word = decodeURI(getParam(url, "q"));
