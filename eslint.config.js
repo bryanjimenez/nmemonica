@@ -240,7 +240,7 @@ export default [
         project: "./pwa/tsconfig.json",
       },
 
-      globals: { ...globals.browser /** only sw.js needs this */ },
+      globals: { ...globals.browser, process: false /** only sw.js needs this */ },
     },
     plugins: {
       "@typescript-eslint": tsPlugin,

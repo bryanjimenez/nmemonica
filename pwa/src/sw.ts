@@ -2,9 +2,9 @@ interface SwFnParams {
   swVersion: string;
   initCacheVer: string;
   cacheFiles: string[];
-  ghURL: string;
-  fbURL: string;
-  gCloudFnPronounce: string;
+  appUIURL: string;
+  dataServiceURL: string;
+  pronounceServiceURL: string;
   SERVICE_WORKER_LOGGER_MSG: string;
   SERVICE_WORKER_NEW_TERMS_ADDED: string;
 
@@ -21,9 +21,9 @@ export function initServiceWorker({
   swVersion,
   initCacheVer,
   cacheFiles,
-  ghURL,
-  fbURL,
-  gCloudFnPronounce,
+  appUIURL,
+  dataServiceURL,
+  pronounceServiceURL,
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
 
@@ -41,12 +41,12 @@ export function initServiceWorker({
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
 
-  const dataVerURL = fbURL + "/cache.json";
+  const dataVerURL = dataServiceURL + "/cache.json";
   const dataURL = [
-    fbURL + "/phrases.json",
-    fbURL + "/vocabulary.json",
-    fbURL + "/opposites.json",
-    fbURL + "/kanji.json",
+    dataServiceURL + "/phrases.json",
+    dataServiceURL + "/vocabulary.json",
+    dataServiceURL + "/opposites.json",
+    dataServiceURL + "/kanji.json",
   ];
 
   let ERROR = 1,
@@ -62,12 +62,12 @@ export function initServiceWorker({
   }
 
   swSelf.addEventListener("install", (e) => {
-    swSelf.skipWaiting();
+    void swSelf.skipWaiting();
 
     const versions = getVersions();
-    clientMsg("SW_VERSION", versions);
+    void clientMsg("SW_VERSION", versions);
 
-    caches.open(appDataCache).then((cache) =>
+    void caches.open(appDataCache).then((cache) =>
       cache.add(dataVerURL).then(() =>
         Promise.all(
           dataURL.map((url) => {
@@ -77,8 +77,8 @@ export function initServiceWorker({
       )
     );
 
-    const a = ghURL;
-    const b = ghURL + "/";
+    const a = appUIURL;
+    const b = appUIURL + "/";
     caches
       .open(appStaticCache)
       .then((cache) => cache.addAll([a, b]))
@@ -93,14 +93,14 @@ export function initServiceWorker({
   });
 
   swSelf.addEventListener("activate", (e) => {
-    swSelf.clients
+    void swSelf.clients
       .matchAll({ includeUncontrolled: true })
       .then(function (clientList) {
         const urls = clientList.map(function (client) {
           return client.url;
         });
         console.log("[ServiceWorker] Matching clients:", urls.join(", "));
-        clientLogger("Matching clients:" + urls.join(", "), DEBUG);
+        void clientLogger("Matching clients:" + urls.join(", "), DEBUG);
       });
 
     e.waitUntil(
@@ -109,7 +109,7 @@ export function initServiceWorker({
         // claim the client
         .then(function () {
           console.log("[ServiceWorker] Claiming clients");
-          clientLogger("Claiming clients", DEBUG);
+          void clientLogger("Claiming clients", DEBUG);
           return swSelf.clients.claim();
         })
     );
@@ -121,8 +121,8 @@ export function initServiceWorker({
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
-              swSelf.registration.unregister();
-              clientMsg("DO_HARD_REFRESH", {
+              void swSelf.registration.unregister();
+              void clientMsg("DO_HARD_REFRESH", {
                 msg: "Hard Refresh",
                 status: res.status,
               });
@@ -132,11 +132,11 @@ export function initServiceWorker({
           }
         })
         .catch((error) => {
-          clientMsg("DO_HARD_REFRESH", { msg: "Hard Refresh", error });
+          void clientMsg("DO_HARD_REFRESH", { msg: "Hard Refresh", error });
         });
     } else if (event.data && event.data.type === "SW_VERSION") {
       const versions = getVersions();
-      clientMsg("SW_VERSION", versions);
+      void clientMsg("SW_VERSION", versions);
     }
   });
 
@@ -152,10 +152,10 @@ export function initServiceWorker({
       e.respondWith(appVersionReq());
     } else if (req.headers.get("Data-Version")) {
       e.respondWith(appDataReq(e.request));
-    } else if (url.startsWith(ghURL)) {
+    } else if (url.startsWith(appUIURL)) {
       // site asset
       e.respondWith(appAssetReq(url));
-    } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
+    } else if (url.startsWith(pronounceServiceURL + "/override_cache")) {
       // override cache site media asset
       console.log("[ServiceWorker] Overriding Asset in Cache");
       const uid = getParam(url, "uid");
@@ -165,22 +165,22 @@ export function initServiceWorker({
       if (!swSelf.indexedDB) {
         // use cache
         console.log(NO_INDEXEDDB_SUPPORT);
-        clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
+        void clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
         e.respondWith(recache(appMediaCache, myRequest));
       } else {
         // use indexedDB
-        clientLogger("IDB.override", WARN);
+        void clientLogger("IDB.override", WARN);
 
         const fetchP = fetch(myRequest);
         const dbOpenPromise = openIDB();
 
         const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-          countIDBItem(db);
+          void countIDBItem(db);
 
           return fetchP
             .then((res) => {
               if (!res.ok) {
-                clientLogger("fetch", ERROR);
+                void clientLogger("fetch", ERROR);
                 throw new Error(
                   "Network response was not OK" +
                     (res.status ? " (" + res.status + ")" : "")
@@ -201,7 +201,7 @@ export function initServiceWorker({
 
         e.respondWith(dbResults);
       }
-    } else if (url.startsWith(gCloudFnPronounce)) {
+    } else if (url.startsWith(pronounceServiceURL)) {
       // site media asset
 
       const uid = getParam(url, "uid");
@@ -213,7 +213,7 @@ export function initServiceWorker({
       if (!swSelf.indexedDB) {
         // use cache
         console.log(NO_INDEXEDDB_SUPPORT);
-        clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
+        void clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
         //@ts-expect-error FIXME: appMediaReq
         e.respondWith(appMediaReq(myRequest));
       } else {
@@ -228,12 +228,12 @@ export function initServiceWorker({
             )
             .catch(() => {
               //not found
-              clientLogger("IDB.get [] " + word, WARN);
+              void clientLogger("IDB.get [] " + word, WARN);
 
               return fetch(myRequest)
                 .then((res) => {
                   if (!res.ok) {
-                    clientLogger("fetch", ERROR);
+                    void clientLogger("fetch", ERROR);
                     throw new Error(
                       "Network response was not OK" +
                         (res.status ? " (" + res.status + ")" : "")
@@ -324,7 +324,7 @@ export function initServiceWorker({
     const dbOpenP: Promise<{ type: string; val: IDBDatabase }> = new Promise(
       (resolve, reject) => {
         openRequest.onerror = function (/*event*/) {
-          clientLogger("IDB.open X(", ERROR);
+          void clientLogger("IDB.open X(", ERROR);
           reject();
         };
         openRequest.onsuccess = function (event) {
@@ -336,8 +336,8 @@ export function initServiceWorker({
             // Generic error handler for all errors targeted at this database's
             // requests!
             if (event.target && "errorCode" in event.target) {
-              clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
-              console.error("Database error: " + event.target.errorCode);
+              void clientLogger(`IDB ${event.target.errorCode} X(`, ERROR);
+              console.error(`Database error: ${event.target.errorCode}`);
             }
           };
 
@@ -369,7 +369,7 @@ export function initServiceWorker({
     const dbOpenPromise: Promise<IDBDatabase> = new Promise(
       (resolve, reject) => {
         openRequest.onerror = function (/*event*/) {
-          clientLogger("IDB.open X(", ERROR);
+          void clientLogger("IDB.open X(", ERROR);
           reject();
         };
         openRequest.onsuccess = function (event) {
@@ -381,8 +381,8 @@ export function initServiceWorker({
             // Generic error handler for all errors targeted at this database's
             // requests!
             if (event.target && "errorCode" in event.target) {
-              clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
-              console.error("Database error: " + event.target.errorCode);
+              void clientLogger(`IDB ${event.target.errorCode} X(`, ERROR);
+              console.error(`Database error: ${event.target.errorCode}`);
             }
           };
 
@@ -399,7 +399,7 @@ export function initServiceWorker({
       const getAllP: Promise<IDBDatabase> = new Promise((resolve, reject) => {
         const request = objectStore.getAll();
         request.onerror = () => {
-          clientLogger("IDB.getAll X(", ERROR);
+          void clientLogger("IDB.getAll X(", ERROR);
           reject();
         };
         request.onsuccess = (event) => {
@@ -421,7 +421,7 @@ export function initServiceWorker({
   /**
    * Post message to client
    */
-  function clientMsg(type: string, msg: Object) {
+  function clientMsg(type: string, msg: Record<string, unknown>) {
     return swSelf.clients
       .matchAll({ includeUncontrolled: true, type: "window" })
       .then((client) => {
@@ -460,15 +460,15 @@ export function initServiceWorker({
 
     const requestP: Promise<number> = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
-        clientLogger("IDB.count X(", ERROR);
+        void clientLogger("IDB.count X(", ERROR);
         reject();
       };
       request.onsuccess = function () {
         if (request.result) {
-          clientLogger("IDB [" + request.result + "]", DEBUG);
+          void clientLogger("IDB [" + request.result + "]", DEBUG);
           resolve(request.result);
         } else {
-          clientLogger("IDB []", WARN);
+          void clientLogger("IDB []", WARN);
           resolve(-1);
         }
       };
@@ -498,7 +498,7 @@ export function initServiceWorker({
 
     const requestP: Promise<CacheDataObj> = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
-        clientLogger("IDB.get X(", ERROR);
+        void clientLogger("IDB.get X(", ERROR);
         reject();
       };
       request.onsuccess = function () {
@@ -538,7 +538,7 @@ export function initServiceWorker({
         resolve(undefined);
       };
       request.onerror = function () {
-        clientLogger("IDB.add X(", ERROR);
+        void clientLogger("IDB.add X(", ERROR);
         reject();
       };
     });
@@ -573,7 +573,7 @@ export function initServiceWorker({
         resolve(undefined);
       };
       request.onerror = function () {
-        clientLogger("IDB.put X(", ERROR);
+        void clientLogger("IDB.put X(", ERROR);
         reject();
       };
     });
@@ -602,7 +602,7 @@ export function initServiceWorker({
 
     request.onsuccess = function (/*event*/) {};
     request.onerror = function () {
-      clientLogger("IDB.delete X(", ERROR);
+      void clientLogger("IDB.delete X(", ERROR);
     };
 
     const transactionP = new Promise((resolve, reject) => {
@@ -629,9 +629,9 @@ export function initServiceWorker({
       .then((cache) => cache.match(dataVerURL));
 
     // fetch, compare, update
-    const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
+    // const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
 
-    return cacheRes || fetchAndUpdateRes;
+    return cacheRes; // || fetchAndUpdateRes;
   }
 
   /**
@@ -696,7 +696,7 @@ export function initServiceWorker({
           cacheRes ||
           fetch(url).then((fetchRes) => {
             if (fetchRes.status < 400) {
-              cache.put(urlVersion, fetchRes.clone());
+              void cache.put(urlVersion, fetchRes.clone());
             }
             return fetchRes;
           })
@@ -794,7 +794,7 @@ export function initServiceWorker({
   function updateCacheWithJSON(
     cacheName: string,
     url: string,
-    jsonObj: Object,
+    jsonObj: Record<string, unknown>,
     type = "application/json",
     status = 200,
     statusText = "OK"
@@ -854,20 +854,22 @@ export function initServiceWorker({
               update = false;
               // console.log("v: " + JSON.stringify(versionChange));
 
-              let newlyAdded: Record<string, { freq: Object[]; dic: Object }> =
-                {};
+              let newlyAdded: Record<
+                string,
+                { freq: string[]; dic: Record<string, unknown> }
+              > = {};
               let ps: Promise<void>[] = [];
               for (let setName in versionChange) {
-                const theUrl = fbURL + "/" + setName + ".json";
+                const theUrl = dataServiceURL + "/" + setName + ".json";
 
                 ps.push(
                   cacheVerData(theUrl, versionChange[setName].new)
                     .then((d) => d.json())
-                    .then((newData: Object) =>
+                    .then((newData: Record<string, unknown>) =>
                       cacheVerData(theUrl, versionChange[setName].old)
                         .then((d2) => d2.json())
                         .then((oldData) => {
-                          let arr: Object[] = [];
+                          let arr: string[] = [];
                           for (let j in newData) {
                             if (oldData[j] === undefined) {
                               arr = [...arr, j];

@@ -1,3 +1,4 @@
+//@ts-check
 // https://rspack.org/api/loader-api.html
 /**
  * When in PRODUCTION

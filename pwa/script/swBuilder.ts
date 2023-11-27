@@ -3,9 +3,6 @@ import glob from "glob";
 import md5 from "md5";
 import path from "path";
 import prettier from "prettier";
-import { dataServiceEndpoint,   appUIEndpoint,
-  pronounceEndoint, } from "../../environment.development.js";
-
 import {
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
@@ -13,6 +10,26 @@ import {
 import { getParam, removeParam } from "../../src/helper/urlHelper.js";
 import { green } from "./consoleColor.js";
 import { initServiceWorker } from "../src/sw.js"; // TODO: why? sw.ts?
+import os from "os";
+import "dotenv/config";
+
+// Get OS's external facing ip
+const n = os.networkInterfaces();
+const ip = Object.values(n)
+  .flat()
+  .find(({ family, internal }) => family === "IPv4" && !internal);
+
+const uiPort = process.env.UI_PORT;
+// @ts-expect-error SERVICE_PORT is number not string
+const servicePort: number = process.env.SERVICE_PORT;
+const audioPath = process.env.AUDIO_PATH;
+const dataPath = process.env.DATA_PATH;
+
+const appUIEndpoint = "https://" + ip.address + ":" + uiPort;
+const dataServiceEndpoint =
+  "https://" + ip.address + ":" + servicePort + dataPath;
+const pronounceEndoint =
+  "https://" + ip.address + ":" + servicePort + audioPath;
 
 /**
  * After app is built
@@ -61,17 +78,17 @@ const buildConstants = {
   initCacheVer,
   SERVICE_WORKER_LOGGER_MSG,
   SERVICE_WORKER_NEW_TERMS_ADDED,
-  ghURL: appUIEndpoint,
-  fbURL: dataServiceEndpoint,
-  gCloudFnPronounce: pronounceEndoint,
+  appUIURL: appUIEndpoint,
+  dataServiceURL: dataServiceEndpoint,
+  pronounceServiceURL: pronounceEndoint,
 };
 
 stream.write(
   "const buildConstants = " + JSON.stringify(buildConstants) + "\n\n"
 );
-stream.write(getParam + "\n\n");
-stream.write(removeParam + "\n\n");
-stream.write(initServiceWorker + "\n\n");
+stream.write(getParam.toString() + "\n\n");
+stream.write(removeParam.toString() + "\n\n");
+stream.write(initServiceWorker.toString() + "\n\n");
 
 stream.write("const cacheFiles = " + JSON.stringify(filesToCache) + "\n\n");
 stream.end(
@@ -89,7 +106,7 @@ function prettifyOutput(path: string) {
     flags: "w",
   });
 
-  prettyP.then(code=>{
+  void prettyP.then((code) => {
     stream.write(code);
     stream.end();
   });

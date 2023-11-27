@@ -63,10 +63,8 @@ export default function App() {
       })
       .catch((e) => {
         dispatch(logger(e.message, DebugLevel.ERROR));
-
-        // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
-        // TODO: when service worker fails
-        const request = window.indexedDB.open("MyTestDatabase", 1);
+        console.log("service worker not running")
+        console.log(e.message)
       });
   }, []);
 
