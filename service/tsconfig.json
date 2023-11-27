@@ -1,0 +1,16 @@
+{
+  // Data Service
+  "compilerOptions": {
+    "strict": true,
+    "outDir": "../dist-service",
+    "module": "NodeNext",
+    "target": "ES2020",
+    "moduleResolution": "NodeNext",
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["./node_modules"],
+  "include": ["."]
+}

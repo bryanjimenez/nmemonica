@@ -212,6 +212,27 @@ export default [
     },
   },
   {
+    files: ["service/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: "./service/tsconfig.json",
+      },
+
+      globals: { console: false },
+    },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
+    rules: {
+      ...eslintJsPlugin.configs.recommended.rules,
+
+      ...tsPlugin.configs.strict.rules,
+      ...tsPlugin.configs["eslint-recommended"].rules,
+      ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
+    },
+  },
+  {
     files: ["pwa/**/*.{js,ts}"],
     languageOptions: {
       parser: tsParser,

@@ -15,8 +15,11 @@ English - Japanese language learning app
 1. `cd ./nmemonica`
 1. `npm install`
 
+### Development Service
+[build app service](../service/README.md)
+
 ### Running locally
-1. `npm run local`
+1. `npm run service`
 1. `npm run start`
 1. Open a browser to http://localhost:8080
 
