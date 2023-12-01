@@ -1,6 +1,7 @@
+//@ts-check
 const rspack = require("@rspack/core");
 const path = require("path");
-const os = require("os");
+const host = require("./environment-host.cjs")
 const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
 require("dotenv").config();
 // import { fileURLToPath } from "url";
@@ -13,14 +14,12 @@ require("dotenv").config();
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
 
-// Get OS's external facing ip
-const n = os.networkInterfaces();
-const ip = Object.values(n)
-  .flat()
-  .find(({ family, internal }) => family === "IPv4" && !internal);
-
 module.exports = function (env, argv) {
   const isProduction = process.env.NODE_ENV === "production";
+
+  if(!host.lanIP){
+    throw new Error("Couldn't get host IP")
+  }
 
   return {
     entry: {
@@ -47,11 +46,21 @@ module.exports = function (env, argv) {
 
       // Replace dotenv variables here
       new rspack.DefinePlugin({
-        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${ip.address}"`,
-        "process.env.SERVICE_PORT": process.env.SERVICE_PORT,
+        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${host.lanIP.address}"`,
+        "process.env.isSelfSignedCA": `${host.isSelfSignedCA}`,
+        "process.env.SERVICE_PORT": host.isSelfSignedCA
+          ? process.env.SERVICE_HTTPS_PORT
+          : process.env.SERVICE_PORT, 
         "process.env.UI_PORT": process.env.UI_PORT,
       }),
     ],
+
+    // solution for
+    // 'npm link ../child-module'
+    // with peerDependency
+    resolve: {
+      modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
+    },
 
     module: {
       rules: [
@@ -66,6 +75,7 @@ module.exports = function (env, argv) {
         ...(isProduction
           ? [
               {
+                // https://rspack.org/guide/loader.html#using-a-custom-loader
                 test: /\.(jsx?|tsx?)$/i,
                 // loader: require.resolve('./normal-module-replacement.cjs'),
                 use: (info) => ({
@@ -85,7 +95,7 @@ module.exports = function (env, argv) {
     },
 
     devServer: {
-      server: {
+      server: host.isSelfSignedCA?{
         // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
         // https://webpack.js.org/configuration/dev-server/#devserverhttps
         type: "https",
@@ -93,7 +103,8 @@ module.exports = function (env, argv) {
           key: "./" + process.env.PATH_KEY,
           cert: "./" + process.env.PATH_CRT,
         },
-      },
+      }
+      : {},
 
       port: process.env.UI_PORT || 8080, // Port Number
       host: "0.0.0.0", // external facing server

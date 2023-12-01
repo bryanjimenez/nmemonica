@@ -10,26 +10,21 @@ import {
 import { getParam, removeParam } from "../../src/helper/urlHelper.js";
 import { green } from "./consoleColor.js";
 import { initServiceWorker } from "../src/sw.js"; // TODO: why? sw.ts?
-import os from "os";
 import "dotenv/config";
-
-// Get OS's external facing ip
-const n = os.networkInterfaces();
-const ip = Object.values(n)
-  .flat()
-  .find(({ family, internal }) => family === "IPv4" && !internal);
+import { isSelfSignedCA, lanIP } from "../../environment-host.cjs";
 
 const uiPort = process.env.UI_PORT;
-// @ts-expect-error SERVICE_PORT is number not string
-const servicePort: number = process.env.SERVICE_PORT;
+
+const servicePort = Number(isSelfSignedCA ? process.env.SERVICE_HTTPS_PORT : process.env.SERVICE_PORT);
 const audioPath = process.env.AUDIO_PATH;
 const dataPath = process.env.DATA_PATH;
 
-const appUIEndpoint = "https://" + ip.address + ":" + uiPort;
+const scheme = isSelfSignedCA ? "https://" : "http://";
+
+const appUIEndpoint = scheme + lanIP.address + ":" + uiPort;
 const dataServiceEndpoint =
-  "https://" + ip.address + ":" + servicePort + dataPath;
-const pronounceEndoint =
-  "https://" + ip.address + ":" + servicePort + audioPath;
+  scheme + lanIP.address + ":" + servicePort + dataPath;
+const pronounceEndoint = scheme + lanIP.address + ":" + servicePort + audioPath;
 
 /**
  * After app is built
