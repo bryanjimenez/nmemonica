@@ -8,5 +8,5 @@
   },
   "exclude": ["./node_modules", "./dist"],
   "files": [],
-  "references": [{ "path": "./src" }, { "path": "./pwa" }]
+  "references": [{ "path": "./src" }, { "path": "./pwa" }, { "path": "./service" }]
 }

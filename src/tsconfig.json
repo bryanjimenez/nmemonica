@@ -10,7 +10,7 @@
     "target": "es6",
     // Specify what module code is generated.
     "module": "ES2022",
-    "lib": ["dom", "ES2022.Error", "ES2021.String"],
+    "lib": ["dom", "ES2022.Error", "ES2021.String", "ES2021.Promise"],
 
     "moduleResolution": "node",
     "esModuleInterop": true,
@@ -20,7 +20,8 @@
     "checkJs": true,
     "strict": true,
     "sourceMap": true,
-    "jsx": "react-jsx" // missing import React
+    "jsx": "react-jsx", // missing import React
+    "removeComments": true
   },
   "include": [
     ".",

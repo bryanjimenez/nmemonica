@@ -20,6 +20,8 @@
     "build": "npm run b:rspack",
     "postbuild": "npm run b:sw && rm index.production.html",
     "deploy": "gh-pages -d dist -r git@github.com:bryanjimenez/nmemonica -b gh-pages",
+    "service:b": "tsc -b ./service/tsconfig.json",
+    "service": "node ./.tsc-dist/service/index.js ",
     "start": "rspack serve",
     "staged": "git diff --staged --diff-filter=d --name-only",
     "lint": "npm run -s staged | xargs eslint --fix",
