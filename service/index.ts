@@ -4,21 +4,44 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import { getData } from "./data.js";
-import { getWorkbookXS, putWorkbookXS } from "./workbook.js";
-import { getAudio } from "./audio.js";
+import { getWorkbookXS, putWorkbookXSAsync } from "./workbook.js";
+import { getAudioAsync } from "./audio.js";
 import "dotenv/config";
 import { isSelfSignedCA, host } from "../environment-host.cjs";
 import { requestUserPermission } from "./helper/userPermission.js";
+import { getPublicKey, pushSheetDataAsync, registerClient } from "./push.js";
+import { checkAllOrigin, custom404, customError } from "./helper/utils.js";
 
 const uiPort = process.env.UI_PORT;
 const httpPort = Number(process.env.SERVICE_PORT);
-const httpsPort = Number(process.env.SERVICE_HTTPS_PORT);
+export const httpsPort = Number(process.env.SERVICE_HTTPS_PORT);
 const audioPath = process.env.AUDIO_PATH;
-const dataPath = process.env.DATA_PATH;
+export const dataPath = process.env.DATA_PATH;
 const sheetPath = process.env.SHEET_PATH;
 
+const pathPushGetPubKey = process.env.PATH_PUSH_GET_PUB_KEY;
+const pathPushRegister = process.env.PATH_PUSH_REGISTER;
+const pushSheetData = process.env.PATH_PUSH_SHEET_DATA;
 
-if (!(uiPort && httpsPort && audioPath && dataPath && sheetPath)) {
+const projectRoot = path.resolve();
+export const CSV_DIR = path.normalize(`${projectRoot}/data/csv`);
+export const JSON_DIR = path.normalize(`${projectRoot}/data/json`);
+export const subscriptionFile = path.normalize(
+  `${JSON_DIR}/subscriptions.json`
+);
+
+if (
+  !(
+    uiPort &&
+    httpsPort &&
+    audioPath &&
+    dataPath &&
+    sheetPath &&
+    pathPushGetPubKey &&
+    pathPushRegister &&
+    pushSheetData
+  )
+) {
   throw new Error("dotenv missing");
 }
 
@@ -28,10 +51,6 @@ if (serviceIP === undefined) {
   throw new Error("Could not get host IP");
 }
 
-const projectRoot = path.resolve();
-export const CSV_DIR = path.normalize(`${projectRoot}/data/csv`);
-export const JSON_DIR = path.normalize(`${projectRoot}/data/json`);
-
 await requestUserPermission(
   isSelfSignedCA,
   serviceIP,
@@ -39,7 +58,7 @@ await requestUserPermission(
   JSON_DIR,
   CSV_DIR,
   httpPort,
-  httpsPort,
+  httpsPort
 );
 
 export const allowedOrigins = [
@@ -49,58 +68,33 @@ export const allowedOrigins = [
 ];
 
 const app = express();
-// app.use(express.json()) // for parsing application/json
+
+app.disable("x-powered-by");
+app.use(express.json()); // for parsing application/json
 // app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
 // check origin from all requests
-app.use((req, res, next) => {
-  console.log(
-    (req.secure ? "https" : "http") + " " + req.method + " " + req.url
-  );
-
-  if (!req.secure && !isSelfSignedCA) {
-    res.set("Access-Control-Allow-Origin", req.headers.origin);
-    res.set("Access-Control-Allow-Methods", "GET, PUT");
-    res.set("Access-Control-Allow-Headers", "Content-Type, Data-Version");
-  }
-
-  if (req.secure) {
-    if (req.method === "OPTIONS") {
-      const allowed =
-        req.headers.origin && allowedOrigins.includes(req.headers.origin)
-          ? req.headers.origin
-          : allowedOrigins[0];
-
-      res.set("Access-Control-Allow-Origin", allowed);
-      res.set("Vary", "Origin");
-      res.set("Access-Control-Allow-Methods", "GET, PUT");
-      res.set("Access-Control-Allow-Headers", "Content-Type, Data-Version");
-
-      res.sendStatus(204);
-      return;
-    }
-
-    if (!req.headers.origin || !allowedOrigins.includes(req.headers.origin)) {
-      res.sendStatus(401);
-      next("Missing or unknown origin");
-    }
-
-    res.set("Access-Control-Allow-Origin", req.headers.origin);
-  }
-  next();
-});
+app.use(checkAllOrigin(isSelfSignedCA));
 
 // app.get("/", getUi)
 // app.get("/:resource.:ext", getAsset)
 
-app.get(audioPath, getAudio);
+app.get(audioPath, getAudioAsync);
 
+// JSON
 app.get(dataPath + "/:data.json", getData);
-// TODO: use workbook to save json
-// app.put(dataPath, putData); // firebase not needed? use save?
 
+// SHEETS
 app.get(sheetPath, getWorkbookXS);
-app.put(sheetPath, putWorkbookXS);
+app.put(sheetPath, putWorkbookXSAsync);
+
+// PUSH
+app.get(pathPushGetPubKey, getPublicKey);
+app.post(pathPushRegister, registerClient);
+app.post(pushSheetData, pushSheetDataAsync);
+
+app.use(custom404);
+app.use(customError);
 
 const httpSever = http.createServer(app);
 httpSever.listen(httpPort, localhost, 0, () => {

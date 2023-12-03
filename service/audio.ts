@@ -1,6 +1,6 @@
 import https from "https";
 import { Blob } from "buffer";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import stream from "stream";
 
 const allowedTL = ["en", "ja"];
@@ -8,9 +8,12 @@ const allowedTL = ["en", "ja"];
 /**
  * Fetch audio pronunciation
  */
-export async function getAudio(req: Request, res: Response) {
+export async function getAudioAsync(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   res.set("Content-Type", "audio/mpeg");
-
   try {
     const { tl, q } = req.query;
 
@@ -33,8 +36,8 @@ export async function getAudio(req: Request, res: Response) {
     const audioBlob: Blob = await new Promise((resolve, reject) => {
       https
         .get(url, (res) => {
-          let data: any[] = [];
-          res.on("data", (chunk) => {
+          let data: Blob[] = [];
+          res.on("data", (chunk: Blob) => {
             data.push(chunk);
           });
           res.on("end", () => {
@@ -69,6 +72,7 @@ export async function getAudio(req: Request, res: Response) {
   } catch (e) {
     console.log("getAudio");
     console.log(e);
+    next(e);
     res.sendStatus(500);
   }
 }

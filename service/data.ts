@@ -25,6 +25,8 @@ export function getData(req: Request, res: Response) {
     return;
   }
 
+  res.set({ "Content-Type": "application/json; charset=utf-8" });
+
   try {
     const readStream = createReadStream(
       path.normalize(`${JSON_DIR}/${resource}.json`)
@@ -47,9 +49,38 @@ export async function putData(req: Request, res: Response, next: NextFunction) {
     res.sendStatus(400);
   }
 
+  const { data, hash } = sheetDataToJSON(sheetName, sheetData);
+
+  const fileP = updateData(resource, data);
+  const hashP = updateLocalCache(resource, hash);
+
+  Promise.all([fileP, hashP])
+    .then(() => {
+      res.sendStatus(200);
+    })
+    .catch(() => {
+      res.sendStatus(400);
+    });
+
+  // https://firebase.google.com/docs/reference/rest/database/
+
+  /*
+  curl -X PUT -d '{ "first": "Jack", "last": "Sparrow" }' \
+  'https://[PROJECT_ID].firebaseio.com/users/jack/name.json'
+  https://nmemonica-9d977.firebaseio.com/lambda/cache.json
+  https://nmemonica-9d977.firebaseio.com/lambda/phrases.json
+  https://nmemonica-9d977.firebaseio.com/lambda/vocabulary.json
+  */
+}
+
+/**
+ * Parses sheet data into app's json format
+ */
+export function sheetDataToJSON(sheetName: string, sheetData: SheetData[]) {
   const d = xtof(sheetData, sheetName);
-  let data: object = {};
+  let data: Record<string, unknown> = {};
   let hash = "";
+
   switch (sheetName) {
     case "Vocabulary": {
       const { vocabularyAfter, hash: h } = sheets_sync_vocabulary(d);
@@ -71,29 +102,32 @@ export async function putData(req: Request, res: Response, next: NextFunction) {
     }
   }
 
-  //@ts-expect-error
-  const fileP = updateData(data, resource);
+  return { data, hash };
+}
+/**
+ * Combined operation of
+ *
+ * - Write data to json file
+ * - Update cache json file
+ * @param resource name of data set
+ * @param data value
+ * @param hash
+ */
+export function updateDataAndCache(
+  resource: string,
+  data: Record<string, unknown>,
+  hash: string
+) {
+  if (!allowedResources.filter((r) => r !== "cache").includes(resource)) {
+    // res.sendStatus(400);
+    //
+    throw new Error("invalid resource");
+  }
+
+  const fileP = updateData(resource, data);
   const hashP = updateLocalCache(resource, hash);
 
-  Promise.all([fileP, hashP])
-    .then(() => {
-      res.sendStatus(200);
-    })
-    .catch(() => {
-      res.sendStatus(400);
-    });
-
-  // https://firebase.google.com/docs/reference/rest/database/
-
-  /*
-
-  curl -X PUT -d '{ "first": "Jack", "last": "Sparrow" }' \
-  'https://[PROJECT_ID].firebaseio.com/users/jack/name.json'
-  https://nmemonica-9d977.firebaseio.com/lambda/cache.json
-  https://nmemonica-9d977.firebaseio.com/lambda/phrases.json
-  https://nmemonica-9d977.firebaseio.com/lambda/vocabulary.json
-
-  */
+  return Promise.all([fileP, hashP]).then(() => {});
 }
 
 /**
@@ -101,7 +135,7 @@ export async function putData(req: Request, res: Response, next: NextFunction) {
  * @param jsonData
  * @param resourceName
  */
-function updateData(jsonData: Record<string, unknown>, resourceName: string) {
+function updateData(resourceName: string, jsonData: Record<string, unknown>) {
   const dataPath = path.normalize(`${JSON_DIR}/${resourceName}.json`);
 
   return new Promise<void>((resolve, reject) => {
@@ -125,15 +159,15 @@ function updateLocalCache(resource: string, hash: string) {
   const cachePath = path.normalize(`${JSON_DIR}/cache.json`);
 
   return fs.promises
-    .readFile(cachePath)
-    .then((body) => JSON.parse(body.toString()))
-    .then((value: Record<string, string>) => {
+    .readFile(cachePath, { encoding: "utf-8" })
+    .then((body) => JSON.parse(body) as Record<string, string>)
+    .then((value) => {
       value[resource] = hash;
       return value;
     })
     .then((json) => JSON.stringify(json, null, 2))
     .then((value) => fs.promises.writeFile(cachePath, value))
-    .catch((error) => {
+    .catch((error: Error) => {
       if ("name" in error && error.name === "NotFound") {
         void fs.promises.writeFile(
           cachePath,

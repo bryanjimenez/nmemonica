@@ -1,6 +1,7 @@
 // @deno-types="https://deno.land/x/sheetjs@v0.18.3/types/index.d.ts"
 // import * as XLSX from "https://deno.land/x/sheetjs@v0.18.3/xlsx.mjs";
-import { read as XLSX_read, writeFile as XLSX_writeFile } from "xlsx";
+import fs from "fs";
+import { read as XLSX_read, writeFile as XLSX_writeFile, set_fs } from "xlsx";
 import { stox, xtos } from "./xSpreadSheetParse.js";
 import type { SheetData } from "./firebaseParse.js";
 
@@ -34,6 +35,9 @@ export function readXSheet(file: unknown) {
  * XLSX write csv file
  */
 export function writeXSheet(filename: string, xSheetObj: SheetData[]) {
+  // FIXME: set_fs for sheetJS
+  // pass fs into sheetJS
+  set_fs(fs);
   const wb = xtos(xSheetObj);
   XLSX_writeFile(wb, filename, { compression: true });
 }
