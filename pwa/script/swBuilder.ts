@@ -3,28 +3,14 @@ import glob from "glob";
 import md5 from "md5";
 import path from "path";
 import prettier from "prettier";
-import {
-  SERVICE_WORKER_LOGGER_MSG,
-  SERVICE_WORKER_NEW_TERMS_ADDED,
-} from "../../src/constants/actionNames.js";
 import { getParam, removeParam } from "../../src/helper/urlHelper.js";
+import {
+  SWMsgIncoming,
+  SWMsgOutgoing,
+} from "../../src/helper/serviceWorkerHelper.js";
 import { green } from "./consoleColor.js";
 import { initServiceWorker } from "../src/sw.js"; // TODO: why? sw.ts?
-import "dotenv/config";
-import { isSelfSignedCA, lanIP } from "../../environment-host.cjs";
-
-const uiPort = process.env.UI_PORT;
-
-const servicePort = Number(isSelfSignedCA ? process.env.SERVICE_HTTPS_PORT : process.env.SERVICE_PORT);
-const audioPath = process.env.AUDIO_PATH;
-const dataPath = process.env.DATA_PATH;
-
-const scheme = isSelfSignedCA ? "https://" : "http://";
-
-const appUIEndpoint = scheme + lanIP.address + ":" + uiPort;
-const dataServiceEndpoint =
-  scheme + lanIP.address + ":" + servicePort + dataPath;
-const pronounceEndoint = scheme + lanIP.address + ":" + servicePort + audioPath;
+import { DebugLevel } from "../../src/slices/settingHelper.js";
 
 /**
  * After app is built
@@ -44,12 +30,6 @@ const filesToCache = glob
     const fileName = p.split("/").pop() || p;
     return fileName !== "sw.js" ? [...acc, fileName] : acc;
   }, []);
-
-const stream = fs.createWriteStream(swOutFile, {
-  flags: "w",
-});
-
-stream.on("finish", () => prettifyOutput(swOutFile));
 
 const swVersion = md5(initServiceWorker.toString()).slice(0, 8);
 const main =
@@ -71,38 +51,33 @@ console.log(
 const buildConstants = {
   swVersion,
   initCacheVer,
-  SERVICE_WORKER_LOGGER_MSG,
-  SERVICE_WORKER_NEW_TERMS_ADDED,
-  appUIURL: appUIEndpoint,
-  dataServiceURL: dataServiceEndpoint,
-  pronounceServiceURL: pronounceEndoint,
 };
 
-stream.write(
-  "const buildConstants = " + JSON.stringify(buildConstants) + "\n\n"
-);
-stream.write(getParam.toString() + "\n\n");
-stream.write(removeParam.toString() + "\n\n");
-stream.write(initServiceWorker.toString() + "\n\n");
+export interface SwFnParams {
+  swVersion: string;
+  initCacheVer: string;
+  cacheFiles: string[];
 
-stream.write("const cacheFiles = " + JSON.stringify(filesToCache) + "\n\n");
-stream.end(
-  "initServiceWorker({...buildConstants, getParam, removeParam, cacheFiles});"
-);
-
-// TODO: prettifyOutput reopens file
-function prettifyOutput(path: string) {
-  const swPartialCodeBuff = fs.readFileSync(path);
-  const prettyP = prettier.format(swPartialCodeBuff.toString(), {
-    filepath: path,
-  });
-
-  const stream = fs.createWriteStream(path, {
-    flags: "w",
-  });
-
-  void prettyP.then((code) => {
-    stream.write(code);
-    stream.end();
-  });
+  getParam: (baseUrl: string, param: string) => string;
+  removeParam: (baseUrl: string, param: string) => string;
 }
+
+let out = "";
+out += "const buildConstants = " + JSON.stringify(buildConstants) + "\n\n";
+out += "const SWMsgOutgoing = " + JSON.stringify(SWMsgOutgoing) + "\n\n";
+out += "const SWMsgIncoming = " + JSON.stringify(SWMsgIncoming) + "\n\n";
+out += "const DebugLevel = " + JSON.stringify(DebugLevel) + "\n\n";
+out += getParam.toString() + "\n\n";
+out += removeParam.toString() + "\n\n";
+out += initServiceWorker.toString() + "\n\n";
+out += "const cacheFiles = " + JSON.stringify(filesToCache) + "\n\n";
+out +=
+  "initServiceWorker({...buildConstants, getParam, removeParam, cacheFiles});";
+
+void prettier
+  .format(out, {
+    filepath: swOutFile,
+  })
+  .then((prettyCode) => {
+    fs.writeFileSync(swOutFile, prettyCode, { encoding: "utf-8" });
+  });
