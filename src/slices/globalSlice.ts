@@ -14,13 +14,13 @@ import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
 import { type ConsoleMessage } from "../components/Form/Console";
-import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
+import { SWMsgIncoming } from "../helper/serviceWorkerHelper";
 import type { ValuesOf } from "../typings/raw";
 
 export interface MemoryDataObject {
@@ -208,7 +208,7 @@ const globalSlice = createSlice({
         const { msg, lvl, type } = action.payload;
         if (debug !== 0 && lvl <= debug) {
           let m;
-          if (type === SERVICE_WORKER_LOGGER_MSG) {
+          if (type === SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG) {
             m = `SW: ${msg}`;
           } else {
             m = `UI: ${msg}`;

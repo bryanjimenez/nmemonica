@@ -19,9 +19,9 @@ import { SERVICE_WORKER_LOGGER_MSG } from "./constants/actionNames";
 import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
+import { DebugLevel } from "./slices/settingHelper";
 import { getVersions } from "./slices/versionSlice";
 import "./css/styles.css";
-import { DebugLevel } from "./slices/settingHelper";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
@@ -61,12 +61,14 @@ export default function App() {
           });
         }
       })
-      .catch((e) => {
+      .catch((e: Error) => {
         dispatch(logger(e.message, DebugLevel.ERROR));
-        console.log("service worker not running")
-        console.log(e.message)
+        // eslint-disable-next-line no-console
+        console.log("service worker not running");
+        // eslint-disable-next-line no-console
+        console.log(e.message);
       });
-  }, []);
+  }, [dispatch]);
 
   const darkMode = useSelector(({ global }: RootState) => global.darkMode);
 

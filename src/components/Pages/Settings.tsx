@@ -1,27 +1,41 @@
-import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
+import { Button, TextField } from "@mui/material";
+import {
+  PlusCircleIcon,
+  SyncIcon,
+  UndoIcon,
+  XCircleIcon,
+} from "@primer/octicons-react";
 import classNames from "classnames";
-import React, {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { useDispatch } from "react-redux";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
+import {
+  audioServicePath,
+  dataServicePath,
+} from "../../../environment.development";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getDeviceMotionEventPermission,
   labelOptions,
   motionThresholdCondition,
 } from "../../helper/gameHelper";
+import {
+  type AppEndpoints,
+  swMessageDoHardRefresh,
+  swMessageGetVersions,
+  swMessageSetLocalServiceEndpoint,
+  swMessageSubscribe,
+  swMessageUnsubscribe,
+} from "../../helper/serviceWorkerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import type { AppDispatch } from "../../slices";
+import { useSubscribe } from "../../hooks/useSubscribe";
+import type { AppDispatch, RootState } from "../../slices";
 import {
   debugToggled,
   getMemoryStorageStatus,
   logger,
+  setLocalServiceURL,
   setMotionThreshold,
   setPersistentStorage,
   setSwipeThreshold,
@@ -29,11 +43,13 @@ import {
 } from "../../slices/globalSlice";
 import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { DebugLevel } from "../../slices/settingHelper";
+import { getVersions } from "../../slices/versionSlice";
 import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
+import { useSWMessageVersionEventHandler } from "../../helper/useServiceWorkerHelper";
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
@@ -48,26 +64,6 @@ const SettingsMeta = {
   label: "Settings",
 };
 
-// FIXME: getDerivedStateFromError
-/*
-function /*static getDerivedStateFromError(error: Error) {
-  const causeMsg =
-    (error.cause !== undefined && [
-      { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
-    ]) ||
-    [];
-
-  const errorMsgs = [
-    { msg: error.name + ": " + error.message, css: "px-2" },
-    ...causeMsg,
-  ].map((e) => ({ ...e, lvl: DebugLevel.ERROR }));
-
-  // state
-  return {
-    errorMsgs,
-  };
-}
-*/
 function componentDidCatch(dispatch: AppDispatch, error: Error) {
   const cause = error.cause as { code: string; value: unknown };
 
@@ -166,6 +162,10 @@ export default function Settings() {
   const { darkMode, swipeThreshold, motionThreshold, memory, debug } =
     useConnectSetting();
 
+  const localServiceURL = useSelector(
+    ({ global }: RootState) => global.localServiceURL
+  );
+
   const [spin, setSpin] = useState(false);
 
   const [sectionKanji, setSectionKanji] = useState(false);
@@ -183,28 +183,20 @@ export default function Settings() {
   // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [shakeIntensity, setShakeIntensity] = useState<number | undefined>(0);
 
+  const [userInputError, setUserInputError] = useState(false);
+  const serviceAddress = useRef(localServiceURL);
+  const { registerCB } = useSubscribe(dispatch, serviceAddress);
+
   useEffect(
     () => {
       void dispatch(getMemoryStorageStatus());
 
-      if (navigator.serviceWorker) {
-        navigator.serviceWorker.addEventListener(
-          "message",
-          swMessageEventListener
-        );
+      swMessageSubscribe(swMessageEventListenerCB);
+      swMessageGetVersions();
 
-        navigator.serviceWorker.controller?.postMessage({
-          type: "SW_VERSION",
-        });
-      }
 
       return () => {
-        if (navigator.serviceWorker) {
-          navigator.serviceWorker.removeEventListener(
-            "message",
-            swMessageEventListener
-          );
-        }
+        swMessageUnsubscribe(swMessageEventListenerCB);
 
         if (motionListener.current) {
           window.removeEventListener("devicemotion", motionListener.current);
@@ -254,33 +246,13 @@ export default function Settings() {
     }
   }, [dispatch, motionThreshold]);
 
-  const swMessageEventListener = useCallback(
-    (event: MessageEvent) => {
-      const { type, error } = event.data as { type: string; error: string };
-      if (type === "DO_HARD_REFRESH") {
-        if (error) {
-          dispatch(logger(error, DebugLevel.ERROR));
-        }
-
-        setTimeout(() => {
-          setSpin(false);
-          setHardRefreshUnavailable(true);
-        }, 2000);
-      } else if (type === "SW_VERSION") {
-        interface VersionInfo {
-          swVersion: string;
-          jsVersion: string;
-          bundleVersion: string;
-        }
-        const { swVersion, jsVersion, bundleVersion } =
-          event.data as VersionInfo;
-
-        setSwVersion(swVersion);
-        setJsVersion(jsVersion);
-        setBundleVersion(bundleVersion);
-      }
-    },
-    [dispatch]
+  const swMessageEventListenerCB = useSWMessageVersionEventHandler(
+    dispatch,
+    setSpin,
+    setHardRefreshUnavailable,
+    setSwVersion,
+    setJsVersion,
+    setBundleVersion
   );
 
   // FIXME: errorMsgs component
@@ -564,9 +536,7 @@ export default function Settings() {
                     setJsVersion("");
                     setBundleVersion("");
                     setTimeout(() => {
-                      navigator.serviceWorker.controller?.postMessage({
-                        type: "SW_VERSION",
-                      });
+                      swMessageGetVersions();
                     }, 1000);
                   }}
                 >
@@ -623,9 +593,7 @@ export default function Settings() {
                       }
                     }, 3000);
 
-                    navigator.serviceWorker.controller?.postMessage({
-                      type: "DO_HARD_REFRESH",
-                    });
+                    swMessageDoHardRefresh();
                   }}
                 >
                   <SyncIcon
@@ -651,6 +619,91 @@ export default function Settings() {
                       : "Persistent off"
                   }
                 />
+              </div>
+              <div className="setting-block mb-2">
+                <div className="d-flex flex-row p-2">
+                  <TextField
+                    error={userInputError}
+                    size="small"
+                    label="Sheet Service Endpoint"
+                    variant="outlined"
+                    defaultValue={localServiceURL}
+                    onChange={(event) => {
+                      serviceAddress.current = event.target.value;
+                    }}
+                    onBlur={(event) => {
+                      // TODO: validate user input service (token?)
+                      const serviceUrl = event.target.value;
+                      let validInput = true;
+
+                      if (
+                        !serviceUrl.toLowerCase().startsWith("https://") ||
+                        !new RegExp(/:\d{1,5}$/).test(serviceUrl) ||
+                        serviceUrl.length > 35 ||
+                        serviceUrl.length < 13
+                      ) {
+                        validInput = false;
+                      }
+
+                      const appEndpoints: AppEndpoints = {
+                        data: serviceUrl + dataServicePath,
+                        media: serviceUrl + audioServicePath,
+                      };
+
+                      let versionPath: string | undefined =
+                        serviceUrl + dataServicePath;
+
+                      if (serviceUrl === "") {
+                        appEndpoints.data = "";
+                        appEndpoints.media = "";
+                        versionPath = undefined;
+                      }
+
+                      swMessageSetLocalServiceEndpoint(appEndpoints);
+
+                      setUserInputError(!validInput);
+
+                      if (validInput) {
+                        dispatch(setLocalServiceURL(serviceUrl));
+                        void dispatch(getVersions(versionPath));
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="d-flex flex-row p-2">
+                  <div className="px-1">
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      disabled={userInputError}
+                    >
+                      Update
+                    </Button>
+                  </div>
+                  <div className="px-1">
+                    <Button
+                      variant="outlined"
+                      onClick={registerCB}
+                      size="small"
+                      disabled={userInputError}
+                    >
+                      Subscribe
+                    </Button>
+                  </div>
+
+                  <div className="px-1">
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled={userInputError}
+                    >
+                      <Link to={"/sheet"} className="text-decoration-none">
+                        Sheets <UndoIcon/>
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

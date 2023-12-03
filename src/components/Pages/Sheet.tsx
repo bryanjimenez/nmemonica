@@ -1,10 +1,17 @@
-import React, { useEffect, useRef } from "react";
-import Spreadsheet from "x-data-spreadsheet";
-import "x-data-spreadsheet/dist/xspreadsheet.css";
+import { Button } from "@mui/material";
+import Spreadsheet from "@nmemonica/x-spreadsheet";
+import React, { useCallback, useEffect, useRef } from "react";
+import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
+import { useSelector } from "react-redux";
 
-import { sheetServiceEndPoint } from "../../../environment.development";
-
-import md5 from "md5";
+import {
+  dataServicePath,
+  pushServiceSheetDataUpdatePath,
+  sheetServicePath,
+} from "../../../environment.development";
+import { swMessageSetLocalServiceEndpoint } from "../../helper/serviceWorkerHelper";
+import { RootState } from "../../slices";
+import { NotReady } from "../Form/NotReady";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -17,7 +24,7 @@ const defaultOp = {
   // showGrid: true,
   // showContextmenu: true,
   view: {
-    height: () => document.documentElement.clientHeight - 84,
+    height: () => document.documentElement.clientHeight - 100,
     // width: () => document.documentElement.clientWidth,
   },
   row: {
@@ -32,7 +39,7 @@ const defaultOp = {
   },
 };
 
-function saveSheet(workbook: Spreadsheet | null) {
+function saveSheet(workbook: Spreadsheet | null, dataService: string) {
   if (!workbook) return;
 
   // TODO: fix SpreadSheet.getData type
@@ -52,8 +59,42 @@ function saveSheet(workbook: Spreadsheet | null) {
   container.append("sheetName", activeSheetName);
   container.append("sheetData", data);
 
-  void fetch(sheetServiceEndPoint, {
+  void fetch(dataService + sheetServicePath, {
     method: "PUT",
+    body: container,
+  });
+}
+
+function getActiveSheet(workbook: Spreadsheet) {
+  // TODO: fix SpreadSheet.getData type
+  const datas = workbook.getData() as { name: string }[];
+
+  const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
+  const activeSheetData: unknown = datas.find(
+    ({ name }: { name: string }) => name === activeSheetName
+  );
+
+  return { activeSheetName, activeSheetData };
+}
+/**
+ * Send push to subscribed clients
+ */
+function pushSheet(workbook: Spreadsheet | null, dataService: string) {
+  if (!workbook) return;
+
+  const { activeSheetName, activeSheetData } = getActiveSheet(workbook);
+
+  const container = new FormData();
+  const data = new Blob([JSON.stringify([activeSheetData])], {
+    type: "application/json",
+  });
+
+  container.append("sheetType", "xSheetObj");
+  container.append("sheetName", activeSheetName);
+  container.append("sheetData", data);
+
+  void fetch(dataService + pushServiceSheetDataUpdatePath, {
+    method: "POST",
     body: container,
   });
 }
@@ -62,15 +103,18 @@ export default function Sheet() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
 
+  const dataService = useSelector(
+    ({ global }: RootState) => global.localServiceURL
+  );
+
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void fetch(sheetServiceEndPoint, { method: "GET" }).then((res) =>
+    void fetch(dataService + sheetServicePath, { method: "GET" }).then((res) =>
       res
         .json()
         .then(({ xSheetObj }: { xSheetObj: Record<string, unknown> }) => {
           const grid = new Spreadsheet(gridEl, defaultOp).loadData(xSheetObj);
-
           // console.log(grid);
           // console.log(grid.bottombar.activeEl.el.innerHTML);
 
@@ -80,7 +124,11 @@ export default function Sheet() {
           //   });
           // });
 
-          grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
+          try {
+            grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
+          } catch (err) {
+            // ignore freeze is not a function error for now
+          }
 
           // TODO:
           // grid.setMaxCols(0, sheet1Cols);
@@ -101,22 +149,46 @@ export default function Sheet() {
         c?.removeChild(gridEl);
       }
     };
-  }, []);
+  }, [dataService]);
 
-  // if (false)
-  //   return <NotReady addlStyle="main-panel" />;
+  const saveSheetCB = useCallback(() => {
+    saveSheet(wbRef.current, dataService);
+  }, [dataService]);
+
+  const pushSheetCB = useCallback(() => {
+    pushSheet(wbRef.current, dataService);
+  }, [dataService]);
+
+  if (dataService.length === 0) {
+    return <NotReady addlStyle="sheet" text="Set sheet-service endpoint" />;
+  }
 
   return (
     <React.Fragment>
       <div className="sheet main-panel pt-2">
         <div ref={containerRef} />
 
-        <div className="d-flex flex-column pt-2 px-2">
-          {/* <div>code: {getVerificationCode()}</div> */}
-          <div onClick={() => saveSheet(wbRef.current)}>{"SAVE"}</div>
-          {/** show last saved hash */}
-          {/* <div id="updateBtn">{"UPDATE"}</div>
-          <div id="scrollBtn">{"SCROLL"}</div> */}
+        <div className="d-flex flex-row pt-2 px-2 w-100">
+          <div className="px-1">
+            <Button
+              variant="text"
+              size="small"
+              className="m-0"
+              onClick={saveSheetCB}
+            >
+              Save
+            </Button>
+          </div>
+          <div className="px-1">
+            <Button
+              variant="text"
+              size="small"
+              className="m-0"
+              onClick={pushSheetCB}
+            >
+              Push
+            </Button>
+          </div>
         </div>
       </div>
     </React.Fragment>
@@ -124,9 +196,3 @@ export default function Sheet() {
 }
 
 export { SheetMeta };
-
-function getVerificationCode() {
-  //https://stackoverflow.com/questions/18230217/javascript-generate-a-random-number-within-a-range-using-crypto-getrandomvalues
-
-  return md5(Date.now().toString()).slice(0, 6);
-}
