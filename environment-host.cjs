@@ -2,14 +2,18 @@
 /**
  * This file is commonJS because rspack.config is also
  */
-const os = require("os")
+const os = require("os");
 // import os from "os";
 const fs = require("fs");
 // import fs from "fs";
 const path = require("path");
 // import path from "path";
-require("dotenv").config()
+require("dotenv").config();
 // import "dotenv/config";
+
+const blue = "\x1b[34m";
+const yellow = "\x1b[33m";
+const reset = "\x1b[0m";
 
 const projectRoot = path.resolve();
 
@@ -23,12 +27,30 @@ if (
 
 // Get OS's external facing ip
 const n = os.networkInterfaces();
+const hostname = os.hostname();
 const ip = hasSelfSignedCertificateAuthority
   ? Object.values(n)
       .flat()
       //@ts-expect-error
       .find(({ family, internal }) => family === "IPv4" && !internal)
   : { address: "localhost" };
+
+let host = null;
+switch (true) {
+  case hostname.length > 0:
+    host = hostname;
+    break;
+  case ip?.address && ip?.address?.length > 0:
+    console.log(yellow + "Couldn't get host Name" + reset);
+
+    host = ip?.address;
+    break;
+
+  default:
+    throw new Error("Couldn't get host IP");
+}
+
+console.log("host: " + blue + host + reset);
 
 /**
  * Self signed Certificate Authority is available
@@ -38,5 +60,7 @@ const ip = hasSelfSignedCertificateAuthority
 
 module.exports = {
   isSelfSignedCA: hasSelfSignedCertificateAuthority,
-  lanIP: ip
-}
+  lanIP: ip,
+  hostname,
+  host,
+};

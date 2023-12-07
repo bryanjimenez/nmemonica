@@ -1,7 +1,7 @@
 //@ts-check
 const rspack = require("@rspack/core");
 const path = require("path");
-const host = require("./environment-host.cjs")
+const hostOs = require("./environment-host.cjs");
 const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
 require("dotenv").config();
 // import { fileURLToPath } from "url";
@@ -17,9 +17,7 @@ require("dotenv").config();
 module.exports = function (env, argv) {
   const isProduction = process.env.NODE_ENV === "production";
 
-  if(!host.lanIP){
-    throw new Error("Couldn't get host IP")
-  }
+  const { host } = hostOs;
 
   return {
     entry: {
@@ -46,11 +44,11 @@ module.exports = function (env, argv) {
 
       // Replace dotenv variables here
       new rspack.DefinePlugin({
-        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${host.lanIP.address}"`,
-        "process.env.isSelfSignedCA": `${host.isSelfSignedCA}`,
-        "process.env.SERVICE_PORT": host.isSelfSignedCA
+        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${host}"`,
+        "process.env.isSelfSignedCA": `${hostOs.isSelfSignedCA}`,
+        "process.env.SERVICE_PORT": hostOs.isSelfSignedCA
           ? process.env.SERVICE_HTTPS_PORT
-          : process.env.SERVICE_PORT, 
+          : process.env.SERVICE_PORT,
         "process.env.UI_PORT": process.env.UI_PORT,
       }),
     ],
@@ -95,19 +93,20 @@ module.exports = function (env, argv) {
     },
 
     devServer: {
-      server: host.isSelfSignedCA?{
-        // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
-        // https://webpack.js.org/configuration/dev-server/#devserverhttps
-        type: "https",
-        options: {
-          key: "./" + process.env.PATH_KEY,
-          cert: "./" + process.env.PATH_CRT,
-        },
-      }
-      : {},
+      server: hostOs.isSelfSignedCA
+        ? {
+            // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
+            // https://webpack.js.org/configuration/dev-server/#devserverhttps
+            type: "https",
+            options: {
+              key: "./" + process.env.PATH_KEY,
+              cert: "./" + process.env.PATH_CRT,
+            },
+          }
+        : {},
 
       port: process.env.UI_PORT || 8080, // Port Number
-      host: "0.0.0.0", // external facing server
+      host, // 0.0.0.0 external facing server
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };

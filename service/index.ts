@@ -7,7 +7,7 @@ import { getData } from "./data.js";
 import { getWorkbookXS, putWorkbookXS } from "./workbook.js";
 import { getAudio } from "./audio.js";
 import "dotenv/config";
-import { isSelfSignedCA, lanIP } from "../environment-host.cjs";
+import { isSelfSignedCA, host } from "../environment-host.cjs";
 import { requestUserPermission } from "./helper/userPermission.js";
 
 const uiPort = process.env.UI_PORT;
@@ -22,9 +22,9 @@ if (!(uiPort && httpsPort && audioPath && dataPath && sheetPath)) {
   throw new Error("dotenv missing");
 }
 
-const localhost = "localhost" 
-const serviceIP = lanIP?.address;
-if(serviceIP===undefined){
+const localhost = "localhost";
+export const serviceIP = host;
+if (serviceIP === undefined) {
   throw new Error("Could not get host IP");
 }
 
