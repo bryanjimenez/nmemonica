@@ -23,10 +23,12 @@ const initialState: VersionInitSlice = {
 /**
  * Get app data versions file
  */
-export const getVersions = createAsyncThunk("version/getVersions", async () =>
-  fetch(dataServiceEndpoint + "/cache.json").then((res) =>
-    res.json()
-  )
+export const getVersions = createAsyncThunk(
+  "version/getVersions",
+  async (overrideUrl: string | undefined) =>
+    fetch((overrideUrl ?? dataServiceEndpoint) + "/cache.json").then((res) =>
+      res.json()
+    )
 );
 
 const versionSlice = createSlice({
@@ -38,7 +40,14 @@ const versionSlice = createSlice({
     builder.addCase(
       getVersions.fulfilled,
       (state, action: { payload: VersionInitSlice }) => {
-        state = action.payload;
+        const { vocabulary, kanji, phrases, opposites, particles, suffixes } =
+          action.payload;
+        state.kanji = kanji;
+        state.vocabulary = vocabulary;
+        state.phrases = phrases;
+        state.opposites = opposites;
+        state.particles = particles;
+        state.suffixes = suffixes;
       }
     );
   },

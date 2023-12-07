@@ -37,6 +37,7 @@ export interface GlobalInitSlice {
   console: ConsoleMessage[];
   swipeThreshold: number;
   motionThreshold: number;
+  localServiceURL: string;
 }
 export const UI_LOGGER_MSG = "ui_logger_msg";
 
@@ -47,6 +48,7 @@ export const globalInitState: GlobalInitSlice = {
   console: [],
   swipeThreshold: 0,
   motionThreshold: 0,
+  localServiceURL: "",
 };
 
 export const getMemoryStorageStatus = createAsyncThunk(
@@ -237,6 +239,18 @@ const globalSlice = createSlice({
         payload: { msg, lvl, type },
       }),
     },
+    setLocalServiceURL(state, action: { payload: string }) {
+      const path = "/global/";
+      const attr = "localServiceURL";
+      const time = new Date();
+      state.localServiceURL = localStoreAttrUpdate(
+        time,
+        { global: state },
+        path,
+        attr,
+        action.payload
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -273,5 +287,6 @@ export const {
 
   debugToggled,
   logger,
+  setLocalServiceURL,
 } = globalSlice.actions;
 export default globalSlice.reducer;
