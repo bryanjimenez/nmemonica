@@ -113,6 +113,14 @@ const extraRules = {
   // "promise/no-nesting": "warn",
 };
 
+const unUsedVarsIgnore = {
+  "@typescript-eslint/no-unused-vars": ["warn",{
+    "argsIgnorePattern": "^_",
+    "varsIgnorePattern": "^_",
+    "caughtErrorsIgnorePattern": "^_"
+  }]
+}
+
 export default [
   {
     ignores: [".*", "node_modules/", "dist/"],
@@ -230,6 +238,7 @@ export default [
       ...tsPlugin.configs.strict.rules,
       ...tsPlugin.configs["eslint-recommended"].rules,
       ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
+      ...unUsedVarsIgnore
     },
   },
   {
@@ -254,6 +263,8 @@ export default [
       ...tsPlugin.configs.strict.rules,
       ...tsPlugin.configs["eslint-recommended"].rules,
       ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
+
+      ...unUsedVarsIgnore
     },
   },
   {
