@@ -1,13 +1,19 @@
-const buildConstants = {
-  swVersion: "61428a9a",
-  initCacheVer: "89fda8be",
+const buildConstants = { swVersion: "b02c0977", initCacheVer: "4b1afb92" };
+
+const SWMsgOutgoing = {
+  SW_CACHE_DATA: "SW_CACHE_DATA",
+  SW_VERSION: "SW_VERSION",
+  SET_ENDPOINT: "SET_ENDPOINT",
+  DO_HARD_REFRESH: "DO_HARD_REFRESH",
+};
+
+const SWMsgIncoming = {
+  POST_INSTALL_ACTIVATE_DONE: "POST_INSTALL_ACTIVATE_DONE",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
-  ghURL: "https://bryanjimenez.github.io/nmemonica",
-  fbURL: "https://nmemonica-9d977.firebaseio.com/lambda",
-  gCloudFnPronounce:
-    "https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce",
 };
+
+const DebugLevel = { OFF: 0, ERROR: 1, WARN: 2, DEBUG: 3 };
 
 function getParam(baseUrl, param) {
   const queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
@@ -29,16 +35,15 @@ function initServiceWorker({
   swVersion,
   initCacheVer,
   cacheFiles,
-  ghURL,
-  fbURL,
-  gCloudFnPronounce,
-  SERVICE_WORKER_LOGGER_MSG,
-  SERVICE_WORKER_NEW_TERMS_ADDED,
   getParam,
   removeParam,
 }) {
-  //@ts-expect-error FIXME: ServiceWorkerGlobalScope
   const swSelf = globalThis.self;
+  swSelf.addEventListener("install", installEventHandler);
+  swSelf.addEventListener("activate", activateEventHandler);
+  swSelf.addEventListener("fetch", fetchEventHandler);
+  swSelf.addEventListener("message", messageEventHandler);
+  swSelf.addEventListener("push", pushEventHandler);
   const appStaticCache = "nmemonica-static";
   const appDataCache = "nmemonica-data";
   const appMediaCache = "nmemonica-media";
@@ -46,16 +51,25 @@ function initServiceWorker({
   const indexedDBStore = "media";
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
-  const dataVerURL = fbURL + "/cache.json";
-  const dataURL = [
-    fbURL + "/phrases.json",
-    fbURL + "/vocabulary.json",
-    fbURL + "/opposites.json",
-    fbURL + "/kanji.json",
+  // Set defaults here, may be modified from UI
+  let defaultAppUIURL;
+  let defaultDataServiceURL;
+  let defaultPronounceServiceURL;
+  let urlSourceUI;
+  let urlServiceData;
+  let urlServicePronounceURL;
+  let getDataPath;
+  let getAudioPath;
+  const dataVerPath = "/cache.json";
+  const dataSourcePath = [
+    "/phrases.json",
+    "/vocabulary.json",
+    "/opposites.json",
+    "/kanji.json",
   ];
-  let ERROR = 1,
-    WARN = 2,
-    DEBUG = 3;
+  /** Pronounce cache override */
+  const override = "/override_cache";
+  const dataVersionHeader = "Data-Version";
   function getVersions() {
     const main =
       cacheFiles.find((f) => f.match(new RegExp(/main.([a-z0-9]+).js/))) ||
@@ -63,62 +77,236 @@ function initServiceWorker({
     const [_jsName, jsVersion] = main.split(".");
     return { swVersion, jsVersion, bundleVersion: initCacheVer };
   }
-  swSelf.addEventListener("install", (e) => {
-    swSelf.skipWaiting();
-    const versions = getVersions();
-    clientMsg("SW_VERSION", versions);
-    caches.open(appDataCache).then((cache) =>
-      cache.add(dataVerURL).then(() =>
-        Promise.all(
-          dataURL.map((url) => {
-            return getVersionForData(url).then((v) => cacheVerData(url, v));
+  /**
+   * Update specified data set and hash cache from the local service.
+   * @param serviceUrl
+   * @param name of data set
+   * @param hash
+   */
+  function updateFromLocalService(serviceUrl, name, hash) {
+    return caches.open(appDataCache).then((cache) => {
+      const url = `${urlServiceData}/${name}.json.v${hash}`;
+      if (urlServiceData !== serviceUrl) {
+        clientLogger(
+          "Push service url does not match service worker",
+          DebugLevel.ERROR,
+        );
+        // if they don't match user_DataServiceUrl will be overwritten with serviceUrl's data
+        return;
+      }
+      return fetch(`${serviceUrl}/${name}.json`).then((fetchRes) =>
+        cache
+          .match(urlServiceData + dataVerPath)
+          .then((verRes) => verRes.json())
+          .then((verJson) => {
+            verJson[name] = hash;
+            return verJson;
+          })
+          .then((newVerJson) => {
+            return Promise.all([
+              // update version object
+              updateCacheWithJSON(
+                appDataCache,
+                urlServiceData + dataVerPath,
+                newVerJson,
+              ),
+              // update data object
+              cache.put(url, fetchRes.clone()),
+            ]);
           }),
+      );
+    });
+  }
+  function isPushConfirmation(m) {
+    return m.body.type === "push-subscription";
+  }
+  function isPushDataUpdate(m) {
+    return m.body.type === "push-data-update";
+  }
+  function pushEventHandler(e) {
+    var _a;
+    const message =
+      (_a = e.data) === null || _a === void 0 ? void 0 : _a.json();
+    if (!message) {
+      clientLogger("Bad message", DebugLevel.ERROR);
+      return;
+    }
+    if (isPushConfirmation(message)) {
+      const confirmationP = swSelf.registration.showNotification(
+        message.title,
+        {
+          body: message.body.msg,
+          icon: "",
+          tag: message.tag,
+        },
+      );
+      e.waitUntil(confirmationP);
+      return;
+    }
+    if (isPushDataUpdate(message)) {
+      const { name, hash, url } = message.body;
+      const n = name.toLowerCase();
+      const cacheP = updateFromLocalService(url, n, hash);
+      const doneP = cacheP.then(() => {
+        const notifP = swSelf.registration.showNotification(message.title, {
+          body: `${name}.json.v${hash}`,
+          icon: "",
+          tag: message.tag,
+        });
+        return notifP;
+      });
+      e.waitUntil(doneP);
+      // const notification = new Notification("Verify", {
+      //   body: "message",
+      //   tag: "simple-push-demo-notification",
+      //   // icon,
+      // });
+      // notification.addEventListener("click", () => {
+      //   console.log("confirmed")
+      //   // swSelf.clients.openWindow(
+      //   //   "https://example.blog.com/2015/03/04/something-new.html"
+      //   // );
+      // });
+    }
+  }
+  /**
+   * Cache all data resources
+   */
+  function cacheAllDataResource() {
+    return caches
+      .open(appDataCache)
+      .then((cache) =>
+        cache.add(urlServiceData + dataVerPath).then(() =>
+          Promise.all(
+            dataSourcePath.map((path) => {
+              const url = urlServiceData + path;
+              return getVersionForData(url).then((v) => cacheVerData(url, v));
+            }),
+          ),
         ),
-      ),
-    );
-    const a = ghURL;
-    const b = ghURL + "/";
-    caches
+      )
+      .catch(() => {
+        console.log("[ServiceWorker] Data Prefech failed for some item");
+      });
+  }
+  /**
+   * Cache all static site assets
+   */
+  function cacheAllStaticAssets() {
+    return caches
+      .open(appStaticCache)
+      .then((cache) => cache.addAll([...cacheFiles]))
+      .catch(() => {
+        console.log("[ServiceWorker] Asset Prefectch failed for some item");
+      });
+  }
+  /**
+   * Cache the root / assets
+   */
+  function cacheAllRoot() {
+    const a = urlSourceUI;
+    const b = urlSourceUI + "/";
+    return caches
       .open(appStaticCache)
       .then((cache) => cache.addAll([a, b]))
-      .catch((e) => {
-        console.log("Prefectch failed for some item");
-        console.log(JSON.stringify(e));
+      .catch(() => {
+        console.log("[ServiceWorker] / Prefectch failed for some item");
       });
-    e.waitUntil(
-      caches
-        .open(appStaticCache)
-        .then((cache) => cache.addAll([...cacheFiles])),
-    );
-  });
-  swSelf.addEventListener("activate", (e) => {
-    swSelf.clients
+  }
+  function installEventHandler(_e) {
+    void swSelf.skipWaiting();
+    const versions = getVersions();
+    clientMsg("SW_VERSION", versions);
+  }
+  /**
+   * Cache all resources
+   * @param e
+   */
+  function postInstallEventHandler(e) {
+    const dataCacheP = cacheAllDataResource();
+    const rootCacheP = cacheAllRoot();
+    const staticAssetCacheP = cacheAllStaticAssets();
+    e.waitUntil(Promise.all([dataCacheP, staticAssetCacheP, rootCacheP]));
+  }
+  function activateEventHandler(e) {
+    void swSelf.clients
       .matchAll({ includeUncontrolled: true })
       .then(function (clientList) {
         const urls = clientList.map(function (client) {
           return client.url;
         });
         console.log("[ServiceWorker] Matching clients:", urls.join(", "));
-        clientLogger("Matching clients:" + urls.join(", "), DEBUG);
+        clientLogger("Matching clients:" + urls.join(", "), DebugLevel.DEBUG);
       });
     e.waitUntil(
       Promise.all([removeUnknowCaches(), removeOldStaticCaches()])
         // claim the client
         .then(function () {
           console.log("[ServiceWorker] Claiming clients");
-          clientLogger("Claiming clients", DEBUG);
+          clientLogger("Claiming clients", DebugLevel.DEBUG);
           return swSelf.clients.claim();
+        })
+        .then(() => {
+          // Notify app service worker is ready
+          clientMsg(SWMsgIncoming.POST_INSTALL_ACTIVATE_DONE, {});
         }),
     );
-  });
-  swSelf.addEventListener("message", (event) => {
-    if (event.data && event.data.type === "DO_HARD_REFRESH") {
-      fetch(dataVerURL)
+  }
+  /** Post serviceworker install */
+  function isMessageInitCache(m) {
+    return m.type === SWMsgOutgoing.SW_CACHE_DATA;
+  }
+  /** User changing default service endpoint */
+  function isMessageOverrideEndpoint(m) {
+    return m.type === SWMsgOutgoing.SET_ENDPOINT;
+  }
+  function isMessageHardRefresh(m) {
+    return m.type === SWMsgOutgoing.DO_HARD_REFRESH;
+  }
+  function isMessageGetVersion(m) {
+    return m.type === SWMsgOutgoing.SW_VERSION;
+  }
+  function messageEventHandler(event) {
+    const message = event.data;
+    if (
+      isMessageInitCache(message) &&
+      message.type === SWMsgOutgoing.SW_CACHE_DATA
+    ) {
+      const { ui, data, media } = message.endpoint;
+      defaultAppUIURL = ui;
+      defaultDataServiceURL = data;
+      defaultPronounceServiceURL = media;
+      urlSourceUI = ui;
+      urlServiceData = data;
+      urlServicePronounceURL = media;
+      getDataPath = data.slice(data.lastIndexOf("/"));
+      getAudioPath = media.slice(media.lastIndexOf("/"));
+      // Cache stuff
+      postInstallEventHandler(event);
+      return;
+    }
+    if (
+      isMessageOverrideEndpoint(message) &&
+      message.type === SWMsgOutgoing.SET_ENDPOINT
+    ) {
+      const { data, media } = message.endpoint;
+      urlServiceData = data.length > 0 ? data : defaultDataServiceURL;
+      urlServicePronounceURL =
+        media.length > 0 ? media : defaultPronounceServiceURL;
+      getDataPath = data.slice(data.lastIndexOf("/"));
+      getAudioPath = media.slice(media.lastIndexOf("/"));
+      return;
+    }
+    if (
+      isMessageHardRefresh(message) &&
+      message.type === SWMsgOutgoing.DO_HARD_REFRESH
+    ) {
+      fetch(urlServiceData + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
-              swSelf.registration.unregister();
-              clientMsg("DO_HARD_REFRESH", {
+              void swSelf.registration.unregister();
+              clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
                 msg: "Hard Refresh",
                 status: res.status,
               });
@@ -128,116 +316,146 @@ function initServiceWorker({
           }
         })
         .catch((error) => {
-          clientMsg("DO_HARD_REFRESH", { msg: "Hard Refresh", error });
+          clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
+            msg: "Hard Refresh",
+            error,
+          });
         });
-    } else if (event.data && event.data.type === "SW_VERSION") {
-      const versions = getVersions();
-      clientMsg("SW_VERSION", versions);
+      return;
     }
-  });
-  swSelf.addEventListener("fetch", (e) => {
+    if (
+      isMessageGetVersion(message) &&
+      message.type === SWMsgOutgoing.SW_VERSION
+    ) {
+      const versions = getVersions();
+      clientMsg(SWMsgOutgoing.SW_VERSION, versions);
+      return;
+    }
+    clientLogger("Unrecognized message", DebugLevel.ERROR);
+  }
+  /**
+   * User overriding media cached asset
+   */
+  function pronounceOverride(url) {
+    console.log("[ServiceWorker] Overriding Asset in Cache");
+    const uid = getParam(url, "uid");
+    const cleanUrl = removeParam(url, "uid").replace(override, "");
+    const myRequest = toRequest(cleanUrl);
+    if (!swSelf.indexedDB) {
+      // use cache
+      console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
+      return recache(appMediaCache, myRequest);
+    } else {
+      // use indexedDB
+      clientLogger("IDB.override", DebugLevel.WARN);
+      const fetchP = fetch(myRequest);
+      const dbOpenPromise = openIDB();
+      const dbResults = dbOpenPromise.then((db) => {
+        void countIDBItem(db);
+        return fetchP
+          .then((res) => {
+            if (!res.ok) {
+              clientLogger("fetch", DebugLevel.ERROR);
+              throw new Error(
+                "Network response was not OK" +
+                  (res.status ? " (" + res.status + ")" : ""),
+              );
+            }
+            return res.blob();
+          })
+          .then((blob) =>
+            putIDBItem(
+              { db },
+              {
+                uid,
+                blob,
+              },
+            ).then((dataO) => toResponse(dataO)),
+          );
+      });
+      return dbResults;
+    }
+  }
+  /**
+   * Site media asset
+   */
+  function pronounce(url) {
+    const uid = getParam(url, "uid");
+    const word = decodeURI(getParam(url, "q"));
+    const cleanUrl = removeParam(url, "uid");
+    if (!swSelf.indexedDB) {
+      // use cache
+      console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
+      return appMediaReq(cleanUrl);
+    } else {
+      // use indexedDB
+      const dbOpenPromise = openIDB();
+      const dbResults = dbOpenPromise.then((db) => {
+        return getIDBItem({ db }, uid)
+          .then((dataO) =>
+            //found
+            toResponse(dataO),
+          )
+          .catch(() => {
+            //not found
+            clientLogger("IDB.get [] " + word, DebugLevel.WARN);
+            return fetch(cleanUrl)
+              .then((res) => {
+                if (!res.ok) {
+                  clientLogger("fetch", DebugLevel.ERROR);
+                  throw new Error(
+                    "Network response was not OK" +
+                      (res.status ? " (" + res.status + ")" : ""),
+                  );
+                }
+                return res.blob();
+              })
+              .then((blob) =>
+                addIDBItem({ db }, { uid, blob }).then((dataO) =>
+                  toResponse(dataO),
+                ),
+              );
+          });
+      });
+      return dbResults;
+    }
+  }
+  function noCaching(e) {
+    // for debugging purposes
+    return fetch(e.request);
+  }
+  function fetchEventHandler(e) {
     const req = e.request.clone();
     const url = e.request.url;
+    const protocol = "https://";
+    const path = url.slice(url.indexOf("/", protocol.length + 1));
     if (e.request.method !== "GET") {
       return;
     }
-    if (url === dataVerURL) {
-      e.respondWith(appVersionReq());
-    } else if (req.headers.get("Data-Version")) {
-      e.respondWith(appDataReq(e.request));
-    } else if (url.startsWith(ghURL)) {
-      // site asset
-      e.respondWith(appAssetReq(url));
-    } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
-      // override cache site media asset
-      console.log("[ServiceWorker] Overriding Asset in Cache");
-      const uid = getParam(url, "uid");
-      const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
-      const myRequest = toRequest(cleanUrl);
-      if (!swSelf.indexedDB) {
-        // use cache
-        console.log(NO_INDEXEDDB_SUPPORT);
-        clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-        e.respondWith(recache(appMediaCache, myRequest));
-      } else {
-        // use indexedDB
-        clientLogger("IDB.override", WARN);
-        const fetchP = fetch(myRequest);
-        const dbOpenPromise = openIDB();
-        const dbResults = dbOpenPromise.then((db) => {
-          countIDBItem(db);
-          return fetchP
-            .then((res) => {
-              if (!res.ok) {
-                clientLogger("fetch", ERROR);
-                throw new Error(
-                  "Network response was not OK" +
-                    (res.status ? " (" + res.status + ")" : ""),
-                );
-              }
-              return res.blob();
-            })
-            .then((blob) =>
-              putIDBItem(
-                { db },
-                {
-                  uid,
-                  blob,
-                },
-              ).then((dataO) => toResponse(dataO)),
-            );
-        });
-        e.respondWith(dbResults);
-      }
-    } else if (url.startsWith(gCloudFnPronounce)) {
-      // site media asset
-      const uid = getParam(url, "uid");
-      const word = decodeURI(getParam(url, "q"));
-      const cleanUrl = removeParam(url, "uid");
-      const myRequest = toRequest(cleanUrl);
-      if (!swSelf.indexedDB) {
-        // use cache
-        console.log(NO_INDEXEDDB_SUPPORT);
-        clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-        //@ts-expect-error FIXME: appMediaReq
-        e.respondWith(appMediaReq(myRequest));
-      } else {
-        // use indexedDB
-        const dbOpenPromise = openIDB();
-        const dbResults = dbOpenPromise.then((db) => {
-          return getIDBItem({ db }, uid)
-            .then((dataO) =>
-              //found
-              toResponse(dataO),
-            )
-            .catch(() => {
-              //not found
-              clientLogger("IDB.get [] " + word, WARN);
-              return fetch(myRequest)
-                .then((res) => {
-                  if (!res.ok) {
-                    clientLogger("fetch", ERROR);
-                    throw new Error(
-                      "Network response was not OK" +
-                        (res.status ? " (" + res.status + ")" : ""),
-                    );
-                  }
-                  return res.blob();
-                })
-                .then((blob) =>
-                  addIDBItem({ db }, { uid, blob }).then((dataO) =>
-                    toResponse(dataO),
-                  ),
-                );
-            });
-        });
-        e.respondWith(dbResults);
-      }
-    } else {
-      // everything else
-      e.respondWith(fetch(e.request));
+    switch (true) {
+      case /* cache.json */ path.startsWith(getDataPath + dataVerPath):
+        e.respondWith(appVersionReq(url));
+        break;
+      case /* data */ req.headers.get(dataVersionHeader) !== null:
+        e.respondWith(appDataReq(e.request));
+        break;
+      case /* UI asset */ url.startsWith(urlSourceUI):
+        e.respondWith(appAssetReq(url));
+        break;
+      case /* pronounce override */ path.startsWith(getAudioPath + override):
+        e.respondWith(pronounceOverride(url));
+        break;
+      case /* pronounce */ path.startsWith(getAudioPath):
+        e.respondWith(pronounce(url));
+        break;
+      default:
+        /* everything else */
+        e.respondWith(noCaching(e));
+        break;
     }
-  });
+  }
   /**
    * Creates a request from url
    *
@@ -288,14 +506,14 @@ function initServiceWorker({
         objectStore.transaction.oncomplete = function () {
           // Store values in the newly created objectStore.
           // console.log("upgrade success");
-          // clientLogger("IDB.upgrade", DEBUG);
+          // clientLogger("IDB.upgrade", DebugLevel.DEBUG);
           resolve({ type: "upgrade", val: db });
         };
       };
     });
     const dbOpenP = new Promise((resolve, reject) => {
       openRequest.onerror = function (/*event*/) {
-        clientLogger("IDB.open X(", ERROR);
+        clientLogger("IDB.open X(", DebugLevel.ERROR);
         reject();
       };
       openRequest.onsuccess = function (event) {
@@ -305,8 +523,8 @@ function initServiceWorker({
           // Generic error handler for all errors targeted at this database's
           // requests!
           if (event.target && "errorCode" in event.target) {
-            clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
-            console.error("Database error: " + event.target.errorCode);
+            const { errorCode: _errorCode } = event.target;
+            clientLogger("IDB Open X(", DebugLevel.ERROR);
           }
         };
         // console.log("open success");
@@ -322,56 +540,10 @@ function initServiceWorker({
     });
   }
   /**
-   * objectStore.getAll()
-   * @returns a promise containing array of results
-   */
-  function dumpIDB(version, store) {
-    let openRequest = indexedDB.open(appMediaCache, version);
-    const dbOpenPromise = new Promise((resolve, reject) => {
-      openRequest.onerror = function (/*event*/) {
-        clientLogger("IDB.open X(", ERROR);
-        reject();
-      };
-      openRequest.onsuccess = function (event) {
-        if (event.target === null) throw new Error("dumpIDB open failed");
-        const db = event.target.result;
-        db.onerror = function (event) {
-          // Generic error handler for all errors targeted at this database's
-          // requests!
-          if (event.target && "errorCode" in event.target) {
-            clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
-            console.error("Database error: " + event.target.errorCode);
-          }
-        };
-        // console.log("open success");
-        resolve(db);
-      };
-    });
-    return dbOpenPromise.then((db) => {
-      let transaction = db.transaction([store], "readonly");
-      let objectStore = transaction.objectStore(store);
-      const getAllP = new Promise((resolve, reject) => {
-        const request = objectStore.getAll();
-        request.onerror = () => {
-          clientLogger("IDB.getAll X(", ERROR);
-          reject();
-        };
-        request.onsuccess = (event) => {
-          db.close();
-          if (event.target === null)
-            throw new Error("dumpIDB transaction failed");
-          const transactionDb = event.target.result;
-          resolve(transactionDb);
-        };
-      });
-      return getAllP;
-    });
-  }
-  /**
    * Post message to client
    */
   function clientMsg(type, msg) {
-    return swSelf.clients
+    void swSelf.clients
       .matchAll({ includeUncontrolled: true, type: "window" })
       .then((client) => {
         if (client && client.length) {
@@ -383,16 +555,20 @@ function initServiceWorker({
    * Log to client
    */
   function clientLogger(msg, lvl) {
-    return swSelf.clients
+    swSelf.clients
       .matchAll({ includeUncontrolled: true, type: "window" })
       .then((client) => {
         if (client && client.length) {
           return client[0].postMessage({
-            type: SERVICE_WORKER_LOGGER_MSG,
+            type: SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG,
             msg,
             lvl,
           });
         }
+      })
+      .catch((err) => {
+        console.log("[ServiceWorker] clientLogger failed");
+        console.log(err);
       });
   }
   /**
@@ -403,15 +579,15 @@ function initServiceWorker({
     const request = transaction.objectStore(store).count();
     const requestP = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
-        clientLogger("IDB.count X(", ERROR);
+        clientLogger("IDB.count X(", DebugLevel.ERROR);
         reject();
       };
       request.onsuccess = function () {
         if (request.result) {
-          clientLogger("IDB [" + request.result + "]", DEBUG);
+          clientLogger("IDB [" + request.result + "]", DebugLevel.DEBUG);
           resolve(request.result);
         } else {
-          clientLogger("IDB []", WARN);
+          clientLogger("IDB []", DebugLevel.WARN);
           resolve(-1);
         }
       };
@@ -434,7 +610,7 @@ function initServiceWorker({
     const request = transaction.objectStore(store).get(key);
     const requestP = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
-        clientLogger("IDB.get X(", ERROR);
+        clientLogger("IDB.get X(", DebugLevel.ERROR);
         reject();
       };
       request.onsuccess = function () {
@@ -466,7 +642,7 @@ function initServiceWorker({
         resolve(undefined);
       };
       request.onerror = function () {
-        clientLogger("IDB.add X(", ERROR);
+        clientLogger("IDB.add X(", DebugLevel.ERROR);
         reject();
       };
     });
@@ -491,7 +667,7 @@ function initServiceWorker({
         resolve(undefined);
       };
       request.onerror = function () {
-        clientLogger("IDB.put X(", ERROR);
+        clientLogger("IDB.put X(", DebugLevel.ERROR);
         reject();
       };
     });
@@ -506,66 +682,49 @@ function initServiceWorker({
     return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
   }
   /**
-   * objectStore.delete(key)
-   */
-  function deleteIDBItem(db, store, key) {
-    const transaction = db.transaction([store], "readwrite");
-    let request = transaction.objectStore(store).delete(key);
-    request.onsuccess = function (/*event*/) {};
-    request.onerror = function () {
-      clientLogger("IDB.delete X(", ERROR);
-    };
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-    return transactionP;
-  }
-  /**
    * respond with cache match always fetch and re-cache
    * may return stale version
    * @returns a Promise with a cache response
    */
-  function appVersionReq() {
+  function appVersionReq(url) {
     // return what's on cache
     const cacheRes = caches
       .open(appDataCache)
-      .then((cache) => cache.match(dataVerURL));
+      .then((cache) => cache.match(url))
+      .then((cachedRes) => {
+        return cachedRes || recache(appDataCache, url);
+      });
+    void recache(appDataCache, url);
     // fetch, compare, update
-    const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
-    return cacheRes || fetchAndUpdateRes;
+    // const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
+    return cacheRes; // || fetchAndUpdateRes;
   }
   /**
    * get from cache on fail fetch and re-cache
    * first match may be stale
    * @returns a Promise with a cached dataVersion response
    */
-  function appVersionCacheOnFailFetch() {
+  function appVersionCacheOnFailFetch(authority) {
     return caches.open(appDataCache).then((cache) =>
-      cache.match(dataVerURL).then((cacheRes) => {
+      cache.match(authority + getDataPath + dataVerPath).then((cacheRes) => {
         if (cacheRes) {
           return Promise.resolve(cacheRes);
         } else {
-          return recache(appDataCache, dataVerURL);
+          return recache(appDataCache, authority + getDataPath + dataVerPath);
         }
       }),
     );
   }
   /**
-   * when request contains Data-Version != 0 the version is used otherwise
+   * When request contains Data-Version != 0 the version is used otherwise
    * the version is searched in the cache
    * @returns a Promise that yieds a cached response
    */
   function appDataReq(request) {
     const url = request.url;
-    const version = request.headers.get("Data-Version");
+    const version = request.headers.get(dataVersionHeader);
     let response;
     if (!version || version === "0") {
-      // TODO: catch when no version match
       response = getVersionForData(url).then((v) => cacheVerData(url, v));
     } else {
       response = cacheVerData(url, version);
@@ -576,9 +735,10 @@ function initServiceWorker({
    * @returns a Promise that yields the version on the cache for the provided request
    */
   function getVersionForData(url) {
+    const authority = url.slice(0, url.indexOf("/", "https://".length));
     const filename = url.split("/").pop() || url;
     const [dName] = filename.split(".json");
-    return appVersionCacheOnFailFetch()
+    return appVersionCacheOnFailFetch(authority)
       .then((res) => res && res.json())
       .then((versions) => versions[dName]);
   }
@@ -594,7 +754,7 @@ function initServiceWorker({
           cacheRes ||
           fetch(url).then((fetchRes) => {
             if (fetchRes.status < 400) {
-              cache.put(urlVersion, fetchRes.clone());
+              void cache.put(urlVersion, fetchRes.clone());
             }
             return fetchRes;
           })
@@ -700,102 +860,6 @@ function initServiceWorker({
       .open(cacheName)
       .then((cache) => cache.put(url, createdRes).then(() => cache.match(url)));
   }
-  // TODO: refactor this
-  /**
-   * Finds changed term lists based on version.
-   * Creates object with newly added terms.
-   * Messages client with updates data.
-   * @returns {Promise} a promise containing the fetched res
-   */
-  function fetchVerSendNewDiffsMsg() {
-    return fetch(dataVerURL)
-      .then((r) => r.json())
-      .then((resNew) =>
-        caches
-          .open(appDataCache)
-          .then((cache) => cache.match(dataVerURL))
-          .then((r) => r && r.json())
-          .then((resOld) => {
-            // create obj with new and old hashes
-            let newTermsMsgPromise = Promise.resolve(undefined);
-            let versionChange = {};
-            let update = false;
-            const allowedSets = ["vocabulary", "phrases"];
-            for (let n in resNew) {
-              if (allowedSets.includes(n)) {
-                if (
-                  (resOld === null || resOld === void 0
-                    ? void 0
-                    : resOld[n]) !== resNew[n]
-                ) {
-                  versionChange[n] = { old: resOld[n], new: resNew[n] };
-                  update = !update ? true : true;
-                }
-              }
-            }
-            // update cache with fetched version results
-            const fetchRes = updateCacheWithJSON(
-              appDataCache,
-              dataVerURL,
-              resNew,
-            );
-            // look for changes in terms with new & old hashes values
-            if (update) {
-              update = false;
-              // console.log("v: " + JSON.stringify(versionChange));
-              let newlyAdded = {};
-              let ps = [];
-              for (let setName in versionChange) {
-                const theUrl = fbURL + "/" + setName + ".json";
-                ps.push(
-                  cacheVerData(theUrl, versionChange[setName].new)
-                    .then((d) => d.json())
-                    .then((newData) =>
-                      cacheVerData(theUrl, versionChange[setName].old)
-                        .then((d2) => d2.json())
-                        .then((oldData) => {
-                          let arr = [];
-                          for (let j in newData) {
-                            if (oldData[j] === undefined) {
-                              arr = [...arr, j];
-                              update = !update ? true : true;
-                            }
-                          }
-                          if (arr.length > 0) {
-                            newlyAdded[setName] = {
-                              freq: arr,
-                              dic: newData,
-                            };
-                          }
-                          return Promise.resolve(undefined);
-                        }),
-                    ),
-                );
-              }
-              // message results to client
-              newTermsMsgPromise = Promise.all(ps).then(() => {
-                if (update) {
-                  return swSelf.clients
-                    .matchAll({ includeUncontrolled: true, type: "window" })
-                    .then((client) => {
-                      if (client && client.length) {
-                        // console.log("[SW] posting message");
-                        client[0].postMessage({
-                          type: SERVICE_WORKER_NEW_TERMS_ADDED,
-                          msg: newlyAdded,
-                        });
-                      }
-                      return Promise.resolve(undefined);
-                    });
-                }
-              });
-            }
-            return Promise.all([fetchRes, newTermsMsgPromise]).then(
-              (allPromises) => allPromises[0],
-            );
-          }),
-      );
-  }
 }
 
 const cacheFiles = [
@@ -803,16 +867,16 @@ const cacheFiles = [
   "125.5d152486.js",
   "192.4333daee.css",
   "192.4333daee.js",
+  "229.89d8140e.js",
   "23.6af8dc54.js",
-  "232.e5cf75da.css",
-  "232.e5cf75da.js",
+  "232.bf6c8ea9.css",
+  "232.bf6c8ea9.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
   "463.dd239938.css",
   "463.dd239938.js",
   "657.a73fb00d.js",
-  "69.082fbe44.js",
   "71565d048a3f03f60ac5.png",
   "802.65d665ab.css",
   "802.65d665ab.js",
@@ -823,15 +887,15 @@ const cacheFiles = [
   "dc7b0140cb7644f73ef2.png",
   "ee636d032d073f55d622.png",
   "favicon.ico",
-  "icon192_prod.png",
+  "icon192_dev.png",
   "icon192.png",
-  "icon512_prod.png",
+  "icon512_dev.png",
   "icon512.png",
   "index.html",
-  "main.c0922332.css",
-  "main.c0922332.js",
+  "main.83927012.css",
+  "main.83927012.js",
   "manifest.webmanifest",
-  "maskable512_prod.png",
+  "maskable512_dev.png",
   "maskable512.png",
 ];
 
