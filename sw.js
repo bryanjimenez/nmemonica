@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "cde9521d", initCacheVer: "40adcbde" };
+const buildConstants = { swVersion: "89e2573b", initCacheVer: "569c7f20" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -431,11 +431,6 @@ function initServiceWorker({
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
-    console.log(url);
-    console.log(path);
-    console.log(getDataPath);
-    console.log(getAudioPath);
-    console.log(urlServicePronounceURL);
     if (e.request.method !== "GET") {
       return;
     }
@@ -911,8 +906,8 @@ const cacheFiles = [
   "icon512_dev.png",
   "icon512.png",
   "index.html",
-  "main.1e279339.css",
-  "main.1e279339.js",
+  "main.88ed1a89.css",
+  "main.88ed1a89.js",
   "manifest.webmanifest",
   "maskable512_dev.png",
   "maskable512.png",
