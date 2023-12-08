@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "b02c0977", initCacheVer: "46466f34" };
+const buildConstants = { swVersion: "e2e43a12", initCacheVer: "40adcbde" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -721,7 +721,10 @@ function initServiceWorker({
    * @returns a Promise that yieds a cached response
    */
   function appDataReq(request) {
-    const url = request.url;
+    const url =
+      urlServiceData +
+      getDataPath +
+      request.url.slice(request.url.lastIndexOf("/"));
     const version = request.headers.get(dataVersionHeader);
     let response;
     if (!version || version === "0") {
@@ -869,8 +872,8 @@ const cacheFiles = [
   "192.4333daee.js",
   "229.89d8140e.js",
   "23.6af8dc54.js",
-  "232.bf6c8ea9.css",
-  "232.bf6c8ea9.js",
+  "232.e3802985.css",
+  "232.e3802985.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -892,8 +895,8 @@ const cacheFiles = [
   "icon512_dev.png",
   "icon512.png",
   "index.html",
-  "main.2a155e4c.css",
-  "main.2a155e4c.js",
+  "main.1e279339.css",
+  "main.1e279339.js",
   "manifest.webmanifest",
   "maskable512_dev.png",
   "maskable512.png",
