@@ -1,3 +1,12 @@
+export interface SwMessage {
+  msg: string;
+  lvl: number;
+  type: string;
+}
+
+export const UIMsg =Object.freeze({
+  UI_LOGGER_MSG: "ui_logger_msg"
+})
 
 export interface SWVersionInfo {
   swVersion: string;

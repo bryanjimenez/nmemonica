@@ -17,6 +17,7 @@ import { SheetMeta } from "./components/Pages/Sheet";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import {
   SWMsgIncoming,
+  SwMessage,
   swMessageInitCache,
   swMessageSubscribe,
   swMessageUnsubscribe,
@@ -49,11 +50,7 @@ export default function App() {
 
   useEffect(() => {
     const swMessageHandler = (event: MessageEvent) => {
-      interface SwMessage {
-        msg: string;
-        lvl: number;
-        type: string;
-      }
+ 
       const data = event.data as SwMessage;
 
       if (data.type === SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG) {

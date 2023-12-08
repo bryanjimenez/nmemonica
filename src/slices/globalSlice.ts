@@ -20,7 +20,7 @@ import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
-import { SWMsgIncoming } from "../helper/serviceWorkerHelper";
+import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
 import type { ValuesOf } from "../typings/raw";
 
 export interface MemoryDataObject {
@@ -39,7 +39,6 @@ export interface GlobalInitSlice {
   motionThreshold: number;
   localServiceURL: string;
 }
-export const UI_LOGGER_MSG = "ui_logger_msg";
 
 export const globalInitState: GlobalInitSlice = {
   darkMode: false,
@@ -234,7 +233,7 @@ const globalSlice = createSlice({
       prepare: (
         msg: string,
         lvl: number = DebugLevel.DEBUG,
-        type: string = UI_LOGGER_MSG
+        type: string = UIMsg.UI_LOGGER_MSG
       ) => ({
         payload: { msg, lvl, type },
       }),

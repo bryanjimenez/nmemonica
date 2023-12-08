@@ -14,6 +14,7 @@ export interface ConsoleMessage {
   msg: string;
   lvl: number;
   css?: string;
+  /** Used to distinguish between UI and SW msg */
   type?: string;
   time?: number;
 }
