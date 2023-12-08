@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "e59d1257", initCacheVer: "40adcbde" };
+const buildConstants = { swVersion: "96c253cb", initCacheVer: "40adcbde" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -448,8 +448,8 @@ function initServiceWorker({
         break;
       case /* UI asset */ url.startsWith(urlSourceUI):
         {
-          const rewriteUrl = urlSourceUI + path;
-          e.respondWith(appAssetReq(rewriteUrl));
+          // const rewriteUrl = urlSourceUI + path;
+          e.respondWith(appAssetReq(url));
         }
         break;
       case /* pronounce override */ path.startsWith(getAudioPath + override):
