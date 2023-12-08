@@ -525,27 +525,43 @@ export function initServiceWorker({
     switch (true) {
       case /* cache.json */
       path.startsWith(getDataPath + dataVerPath):
-        e.respondWith(appVersionReq(url));
+        e.respondWith(appVersionReq(urlServiceData + dataVerPath));
         break;
 
       case /* data */
       req.headers.get(dataVersionHeader) !== null:
-        e.respondWith(appDataReq(e.request));
+        {
+          const asset = path.slice(path.lastIndexOf("/"));
+          const rewriteUrl = urlServiceData + asset;
+          const ver = e.request.headers.get(dataVersionHeader);
+          e.respondWith(appDataReq(rewriteUrl, ver));
+        }
         break;
 
       case /* UI asset */
       url.startsWith(urlSourceUI):
-        e.respondWith(appAssetReq(url));
+        {
+          // No rewrite for UI
+          e.respondWith(appAssetReq(url));
+        }
         break;
 
       case /* pronounce override */
       path.startsWith(getAudioPath + override):
-        e.respondWith(pronounceOverride(url));
+        {
+          const query = path.slice(path.lastIndexOf("?"));
+          const rewriteUrl = urlServicePronounceURL + query;
+          e.respondWith(pronounceOverride(rewriteUrl));
+        }
         break;
 
       case /* pronounce */
       path.startsWith(getAudioPath):
-        e.respondWith(pronounce(url));
+        {
+          const query = path.slice(path.lastIndexOf("?"));
+          const rewriteUrl = urlServicePronounceURL + query;
+          e.respondWith(pronounce(rewriteUrl));
+        }
         break;
 
       default:
@@ -882,10 +898,7 @@ export function initServiceWorker({
    * the version is searched in the cache
    * @returns a Promise that yieds a cached response
    */
-  function appDataReq(request: Request) {
-    const url = request.url;
-    const version = request.headers.get(dataVersionHeader);
-
+  function appDataReq(url: string, version: string | null) {
     let response: Promise<Response>;
     if (!version || version === "0") {
       response = getVersionForData(url).then((v) => cacheVerData(url, v));
