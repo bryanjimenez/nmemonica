@@ -185,12 +185,9 @@ export const getPhrase = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching phrase: 0");
     // }
-    const jsonValue = (await fetch(
-      dataServiceEndpoint + "/phrases.json",
-      {
-        headers: { "Data-Version": version },
-      }
-    ).then((res) => res.json())) as Record<string, SourcePhrase>;
+    const jsonValue = (await fetch(dataServiceEndpoint + "/phrases.json", {
+      headers: { "Data-Version": version },
+    }).then((res) => res.json())) as Record<string, SourcePhrase>;
 
     const groups = buildGroupObject(jsonValue);
     const { values, errors } = buildPhraseArray(jsonValue);
@@ -264,6 +261,11 @@ const phraseSlice = createSlice({
   name: "phrase",
   initialState: phraseInitState,
   reducers: {
+    clearPhrases(state) {
+      state.value = phraseInitState.value;
+      state.version = phraseInitState.version;
+      state.grpObj = phraseInitState.grpObj;
+    },
     /**
      * Toggle between group, frequency, and tags filtering
      */
@@ -621,6 +623,7 @@ const phraseSlice = createSlice({
 });
 
 export const {
+  clearPhrases,
   flipPhrasesPracticeSide,
   togglePhrasesRomaji,
   togglePhrasesFilter,

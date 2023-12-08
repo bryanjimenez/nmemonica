@@ -101,12 +101,9 @@ export const getVocabulary = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching vocabulary: 0");
     // }
-    const value = (await fetch(
-      dataServiceEndpoint + "/vocabulary.json",
-      {
-        headers: { "Data-Version": version },
-      }
-    ).then((res) => res.json())) as Record<string, SourceVocabulary>;
+    const value = (await fetch(dataServiceEndpoint + "/vocabulary.json", {
+      headers: { "Data-Version": version },
+    }).then((res) => res.json())) as Record<string, SourceVocabulary>;
 
     return { value, version };
   }
@@ -172,6 +169,12 @@ const vocabularySlice = createSlice({
   name: "vocabulary",
   initialState: vocabularyInitState,
   reducers: {
+    clearVocabulary(state) {
+      state.value = vocabularyInitState.value;
+      state.version = vocabularyInitState.version;
+      state.grpObj = vocabularyInitState.grpObj;
+      state.verbForm = vocabularyInitState.verbForm;
+    },
     verbFormChanged(state, action: { payload: string }) {
       return {
         ...state,
@@ -701,6 +704,7 @@ const vocabularySlice = createSlice({
 });
 
 export const {
+  clearVocabulary,
   verbFormChanged,
   furiganaToggled,
   removeFrequencyWord,

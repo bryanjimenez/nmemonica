@@ -23,18 +23,23 @@ const initialState: VersionInitSlice = {
 /**
  * Get app data versions file
  */
-export const getVersions = createAsyncThunk(
-  "version/getVersions",
-  async (overrideUrl: string | undefined) =>
-    fetch((overrideUrl ?? dataServiceEndpoint) + "/cache.json").then((res) =>
-      res.json()
-    )
+export const getVersions = createAsyncThunk("version/getVersions", async () =>
+  fetch(dataServiceEndpoint + "/cache.json").then((res) => res.json())
 );
 
 const versionSlice = createSlice({
   name: "version",
   initialState,
-  reducers: {},
+  reducers: {
+    clearVersions(state) {
+      state.vocabulary = undefined;
+      state.phrases = undefined;
+      state.kanji = undefined;
+      state.opposites = undefined;
+      state.particles = undefined;
+      state.suffixes = undefined;
+    },
+  },
 
   extraReducers: (builder) => {
     builder.addCase(
@@ -53,4 +58,5 @@ const versionSlice = createSlice({
   },
 });
 
+export const { clearVersions } = versionSlice.actions;
 export default versionSlice.reducer;

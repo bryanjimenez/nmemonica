@@ -12,7 +12,9 @@ import { Link } from "react-router-dom";
 
 import {
   audioServicePath,
+  dataServiceEndpoint,
   dataServicePath,
+  pronounceEndoint,
 } from "../../../environment.development";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
@@ -28,6 +30,7 @@ import {
   swMessageSubscribe,
   swMessageUnsubscribe,
 } from "../../helper/serviceWorkerHelper";
+import { useSWMessageVersionEventHandler } from "../../helper/useServiceWorkerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useSubscribe } from "../../hooks/useSubscribe";
 import type { AppDispatch, RootState } from "../../slices";
@@ -41,15 +44,20 @@ import {
   setSwipeThreshold,
   toggleDarkMode,
 } from "../../slices/globalSlice";
-import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
+import { clearKanji } from "../../slices/kanjiSlice";
+import { clearOpposites } from "../../slices/oppositeSlice";
+import { clearParticleGame } from "../../slices/particleSlice";
+import { clearPhrases, togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { DebugLevel } from "../../slices/settingHelper";
-import { getVersions } from "../../slices/versionSlice";
-import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
+import { clearVersions, getVersions } from "../../slices/versionSlice";
+import {
+  clearVocabulary,
+  toggleVocabularyActiveGrp,
+} from "../../slices/vocabularySlice";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
-import { useSWMessageVersionEventHandler } from "../../helper/useServiceWorkerHelper";
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
@@ -193,7 +201,6 @@ export default function Settings() {
 
       swMessageSubscribe(swMessageEventListenerCB);
       swMessageGetVersions();
-
 
       return () => {
         swMessageUnsubscribe(swMessageEventListenerCB);
@@ -650,23 +657,28 @@ export default function Settings() {
                         media: serviceUrl + audioServicePath,
                       };
 
-                      let versionPath: string | undefined =
-                        serviceUrl + dataServicePath;
-
                       if (serviceUrl === "") {
-                        appEndpoints.data = "";
-                        appEndpoints.media = "";
-                        versionPath = undefined;
+                        validInput = true;
+                        appEndpoints.data = dataServiceEndpoint;
+                        appEndpoints.media = pronounceEndoint;
                       }
-
-                      swMessageSetLocalServiceEndpoint(appEndpoints);
-
-                      setUserInputError(!validInput);
 
                       if (validInput) {
+                        swMessageSetLocalServiceEndpoint(appEndpoints);
+
                         dispatch(setLocalServiceURL(serviceUrl));
-                        void dispatch(getVersions(versionPath));
+
+                        // clear saved states of data
+                        dispatch(clearVersions());
+                        void dispatch(getVersions());
+                        dispatch(clearVocabulary());
+                        dispatch(clearPhrases());
+                        dispatch(clearKanji());
+                        dispatch(clearParticleGame());
+                        dispatch(clearOpposites());
                       }
+
+                      setUserInputError(!validInput);
                     }}
                   />
                 </div>

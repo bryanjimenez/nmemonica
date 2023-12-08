@@ -87,12 +87,9 @@ export const getKanji = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching kanji: 0");
     // }
-    const value = (await fetch(
-      dataServiceEndpoint + "/kanji.json",
-      {
-        headers: { "Data-Version": version },
-      }
-    ).then((res) => res.json())) as Record<string, SourceKanji>;
+    const value = (await fetch(dataServiceEndpoint + "/kanji.json", {
+      headers: { "Data-Version": version },
+    }).then((res) => res.json())) as Record<string, SourceKanji>;
 
     return { value, version };
   }
@@ -158,6 +155,12 @@ const kanjiSlice = createSlice({
   name: "kanji",
   initialState: kanjiInitState,
   reducers: {
+    clearKanji(state) {
+      state.value = kanjiInitState.value;
+      state.version = kanjiInitState.version;
+      state.tagObj = kanjiInitState.tagObj;
+    },
+
     toggleKanjiActiveTag(state, action: { payload: string }) {
       const tagName: string = action.payload;
 
@@ -534,6 +537,7 @@ const kanjiSlice = createSlice({
 });
 
 export const {
+  clearKanji,
   toggleKanjiActiveTag,
   toggleKanjiActiveGrp,
   toggleKanjiOrdering,

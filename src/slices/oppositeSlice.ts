@@ -57,6 +57,10 @@ const oppositeSlice = createSlice({
   initialState: oppositeInitState,
 
   reducers: {
+    clearOpposites(state) {
+      state.value = oppositeInitState.value;
+      state.version = oppositeInitState.version;
+    },
     setOppositesARomaji(state) {
       const path = "/opposite/";
       const attr = "aRomaji";
@@ -122,6 +126,7 @@ const oppositeSlice = createSlice({
 });
 
 export const {
+  clearOpposites,
   setOppositesARomaji,
   setOppositesQRomaji,
   toggleOppositeFadeInAnswers,
