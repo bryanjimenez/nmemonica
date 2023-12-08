@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "96c253cb", initCacheVer: "40adcbde" };
+const buildConstants = { swVersion: "cde9521d", initCacheVer: "40adcbde" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -431,6 +431,11 @@ function initServiceWorker({
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
+    console.log(url);
+    console.log(path);
+    console.log(getDataPath);
+    console.log(getAudioPath);
+    console.log(urlServicePronounceURL);
     if (e.request.method !== "GET") {
       return;
     }
@@ -454,14 +459,14 @@ function initServiceWorker({
         break;
       case /* pronounce override */ path.startsWith(getAudioPath + override):
         {
-          const asset = path.slice(path.lastIndexOf("/"));
+          const asset = path.slice(path.lastIndexOf("?"));
           const rewriteUrl = urlServicePronounceURL + asset;
           e.respondWith(pronounceOverride(rewriteUrl));
         }
         break;
       case /* pronounce */ path.startsWith(getAudioPath):
         {
-          const asset = path.slice(path.lastIndexOf("/"));
+          const asset = path.slice(path.lastIndexOf("?"));
           const rewriteUrl = urlServicePronounceURL + asset;
           e.respondWith(pronounce(rewriteUrl));
         }
