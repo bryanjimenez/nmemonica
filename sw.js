@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "e2e43a12", initCacheVer: "40adcbde" };
+const buildConstants = { swVersion: "e59d1257", initCacheVer: "40adcbde" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -436,19 +436,35 @@ function initServiceWorker({
     }
     switch (true) {
       case /* cache.json */ path.startsWith(getDataPath + dataVerPath):
-        e.respondWith(appVersionReq(url));
+        e.respondWith(appVersionReq(urlServiceData + dataVerPath));
         break;
       case /* data */ req.headers.get(dataVersionHeader) !== null:
-        e.respondWith(appDataReq(e.request));
+        {
+          const asset = path.slice(path.lastIndexOf("/"));
+          const rewriteUrl = urlServiceData + asset;
+          const ver = e.request.headers.get(dataVersionHeader);
+          e.respondWith(appDataReq(rewriteUrl, ver));
+        }
         break;
       case /* UI asset */ url.startsWith(urlSourceUI):
-        e.respondWith(appAssetReq(url));
+        {
+          const rewriteUrl = urlSourceUI + path;
+          e.respondWith(appAssetReq(rewriteUrl));
+        }
         break;
       case /* pronounce override */ path.startsWith(getAudioPath + override):
-        e.respondWith(pronounceOverride(url));
+        {
+          const asset = path.slice(path.lastIndexOf("/"));
+          const rewriteUrl = urlServicePronounceURL + asset;
+          e.respondWith(pronounceOverride(rewriteUrl));
+        }
         break;
       case /* pronounce */ path.startsWith(getAudioPath):
-        e.respondWith(pronounce(url));
+        {
+          const asset = path.slice(path.lastIndexOf("/"));
+          const rewriteUrl = urlServicePronounceURL + asset;
+          e.respondWith(pronounce(rewriteUrl));
+        }
         break;
       default:
         /* everything else */
@@ -720,12 +736,7 @@ function initServiceWorker({
    * the version is searched in the cache
    * @returns a Promise that yieds a cached response
    */
-  function appDataReq(request) {
-    const url =
-      urlServiceData +
-      getDataPath +
-      request.url.slice(request.url.lastIndexOf("/"));
-    const version = request.headers.get(dataVersionHeader);
+  function appDataReq(url, version) {
     let response;
     if (!version || version === "0") {
       response = getVersionForData(url).then((v) => cacheVerData(url, v));
