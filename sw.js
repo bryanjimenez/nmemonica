@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "35cf4ae4", initCacheVer: "8a135464" };
+const buildConstants = { swVersion: "7b6d4d7c", initCacheVer: "7f507508" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -51,10 +51,6 @@ function initServiceWorker({
   const indexedDBStore = "media";
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
-  // Set defaults here, may be modified from UI
-  let defaultAppUIURL;
-  let defaultDataServiceURL;
-  let defaultPronounceServiceURL;
   let urlSourceUI;
   let urlServiceData;
   let urlServicePronounceURL;
@@ -273,9 +269,6 @@ function initServiceWorker({
       message.type === SWMsgOutgoing.SW_CACHE_DATA
     ) {
       const { ui, data, media } = message.endpoint;
-      defaultAppUIURL = ui;
-      defaultDataServiceURL = data;
-      defaultPronounceServiceURL = media;
       urlSourceUI = ui;
       urlServiceData = data;
       urlServicePronounceURL = media;
@@ -290,9 +283,8 @@ function initServiceWorker({
       message.type === SWMsgOutgoing.SET_ENDPOINT
     ) {
       const { data, media } = message.endpoint;
-      urlServiceData = data.length > 0 ? data : defaultDataServiceURL;
-      urlServicePronounceURL =
-        media.length > 0 ? media : defaultPronounceServiceURL;
+      urlServiceData = data;
+      urlServicePronounceURL = media;
       getDataPath = data.slice(data.lastIndexOf("/"));
       getAudioPath = media.slice(media.lastIndexOf("/"));
       return;
@@ -704,20 +696,14 @@ function initServiceWorker({
    * @returns a Promise with a cache response
    */
   function appVersionReq(url) {
-    // return what's on cache
-    // const cacheRes = caches
-    //   .open(appDataCache)
-    //   .then((cache) => cache.match(url))
-    //   .then((cachedRes) => {
-    //     return cachedRes || recache(appDataCache, url);
-    //   });
-    // void recache(appDataCache, url);
+    // fetch new versions
     const f = fetch(url).then((res) => {
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }
       return res;
     });
+    // check if in cache
     const c = caches
       .open(appDataCache)
       .then((cache) => cache.match(url))
@@ -727,13 +713,12 @@ function initServiceWorker({
         }
         return cacheRes;
       });
-    f.then((res) => {
-      caches.open(appDataCache).then((cache) => cache.put(url, res));
-    });
-    return Promise.any([f, c]).catch((errArr) => errArr[0]);
-    // fetch, compare, update
-    // const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
-    // return cacheRes; // || fetchAndUpdateRes;
+    // update cache from new
+    void f.then((res) =>
+      caches.open(appDataCache).then((cache) => cache.put(url, res.clone())),
+    );
+    // return whaterver is fastest
+    return Promise.any([f, c]).catch((errs) => Promise.reject(errs[0].message));
   }
   /**
    * get from cache on fail fetch and re-cache
@@ -903,8 +888,8 @@ const cacheFiles = [
   "192.4333daee.js",
   "229.d0ac0368.js",
   "23.6af8dc54.js",
-  "232.8c8d0beb.css",
-  "232.8c8d0beb.js",
+  "232.929d358b.css",
+  "232.929d358b.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -924,8 +909,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.bea28482.css",
-  "main.bea28482.js",
+  "main.dc7bede0.css",
+  "main.dc7bede0.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
