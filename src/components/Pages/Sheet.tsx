@@ -10,8 +10,12 @@ import {
   sheetServicePath,
 } from "../../../environment.development";
 import { swMessageSetLocalServiceEndpoint } from "../../helper/serviceWorkerHelper";
-import { RootState } from "../../slices";
+import { AppDispatch, RootState } from "../../slices";
 import { NotReady } from "../Form/NotReady";
+import { useWindowSize } from "../../hooks/useWindowSize";
+import { useDispatch } from "react-redux";
+import { logger } from "../../slices/globalSlice";
+import { DebugLevel } from "../../slices/settingHelper";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -24,8 +28,8 @@ const defaultOp = {
   // showGrid: true,
   // showContextmenu: true,
   view: {
-    height: () => document.documentElement.clientHeight - 100,
-    // width: () => document.documentElement.clientWidth,
+    height: () => (document.documentElement.clientHeight - 100),
+    width: () => (document.documentElement.clientWidth - 30),
   },
   row: {
     len: 3000, //100,
@@ -108,6 +112,7 @@ export default function Sheet() {
   );
 
   useEffect(() => {
+
     const gridEl = document.createElement("div");
 
     void fetch(dataService + sheetServicePath, { method: "GET" }).then((res) =>

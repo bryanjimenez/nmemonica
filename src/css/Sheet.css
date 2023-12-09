@@ -1,0 +1,7 @@
+.x-spreadsheet-menu > li:first-child {
+  padding: 0;
+}
+
+.z-index-unset {
+  z-index: unset !important;
+}

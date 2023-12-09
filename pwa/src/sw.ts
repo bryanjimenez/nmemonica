@@ -539,7 +539,7 @@ export function initServiceWorker({
         break;
 
       case /* UI asset */
-      url.startsWith(urlSourceUI):
+      url.startsWith(urlSourceUI) && !url.endsWith(".hot-update.json"):
         {
           // No rewrite for UI
           e.respondWith(appAssetReq(url));
