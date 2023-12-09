@@ -36,9 +36,13 @@ const ip = hasSelfSignedCertificateAuthority
   : { address: "localhost" };
 
 let host = null;
+let prettyHostname = null;
 switch (true) {
   case hostname.length > 0:
     host = hostname;
+    prettyHostname = hostname.endsWith(".local")
+      ? hostname
+      : hostname + ".local";
     break;
   case ip?.address && ip?.address?.length > 0:
     console.log(yellow + "Couldn't get host Name" + reset);
@@ -52,6 +56,7 @@ switch (true) {
 
 console.log("host: " + blue + host + reset);
 
+const lan = { address: ip?.address, hostname: prettyHostname };
 /**
  * Self signed Certificate Authority is available
  */
@@ -60,7 +65,7 @@ console.log("host: " + blue + host + reset);
 
 module.exports = {
   isSelfSignedCA: hasSelfSignedCertificateAuthority,
-  lanIP: ip,
+  lan,
   hostname,
   host,
 };

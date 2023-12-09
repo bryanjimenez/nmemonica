@@ -7,10 +7,12 @@ import { getData } from "./data.js";
 import { getWorkbookXS, putWorkbookXSAsync } from "./workbook.js";
 import { getAudioAsync } from "./audio.js";
 import "dotenv/config";
-import { isSelfSignedCA, host } from "../environment-host.cjs";
+import { isSelfSignedCA, lan } from "../environment-host.cjs";
+import { uiHost as productionOrigin } from "../environment.production.js";
 import { requestUserPermission } from "./helper/userPermission.js";
 import { getPublicKey, pushSheetDataAsync, registerClient } from "./push.js";
 import { checkAllOrigin, custom404, customError } from "./helper/utils.js";
+import { getCA } from "./appUi.js";
 
 const uiPort = process.env.UI_PORT;
 const httpPort = Number(process.env.SERVICE_PORT);
@@ -45,11 +47,12 @@ if (
   throw new Error("dotenv missing");
 }
 
-const localhost = "localhost";
-export const serviceIP = host;
-if (serviceIP === undefined) {
+if (!lan.address) {
   throw new Error("Could not get host IP");
 }
+
+const localhost = lan.address; // or "localhost"
+export const serviceIP = lan.address; // or lan.hostname
 
 await requestUserPermission(
   isSelfSignedCA,
@@ -65,6 +68,8 @@ export const allowedOrigins = [
   `https://localhost:${uiPort}`,
   `https://127.0.0.1:${uiPort}`,
   `https://${serviceIP}:${uiPort}`,
+  `https://${lan.hostname}.local:${uiPort}`,
+  productionOrigin,
 ];
 
 const app = express();
@@ -78,6 +83,7 @@ app.use(checkAllOrigin(isSelfSignedCA));
 
 // app.get("/", getUi)
 // app.get("/:resource.:ext", getAsset)
+app.get("/getCA", getCA);
 
 app.get(audioPath, getAudioAsync);
 

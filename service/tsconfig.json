@@ -15,11 +15,12 @@
     "allowJs": true, // just for environment-host.cjs
     "checkJs": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     ".",
     "../src/typings/raw.js",
-    "../environment-host.cjs"
+    "../environment-host.cjs",
+    "../environment.production.ts"
   ]
 }

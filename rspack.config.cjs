@@ -17,7 +17,7 @@ require("dotenv").config();
 module.exports = function (env, argv) {
   const isProduction = process.env.NODE_ENV === "production";
 
-  const { host } = hostOs;
+  const { lan } = hostOs;
 
   return {
     entry: {
@@ -32,9 +32,13 @@ module.exports = function (env, argv) {
 
     plugins: [
       // copy static site files to dist
-      ...(isProduction
-        ? [new rspack.CopyRspackPlugin({ patterns: [{ from: "./site" }] })]
-        : []),
+      new rspack.CopyRspackPlugin({
+        patterns: [
+          ...(!isProduction ? [{ from: "./site-dev" }] : []),
+          { from: "./site" },
+        ],
+      }),
+
       // output license info
       ...(isProduction ? [new LicenseCheckerWebpackPlugin()] : []),
       // index.html template
@@ -44,7 +48,7 @@ module.exports = function (env, argv) {
 
       // Replace dotenv variables here
       new rspack.DefinePlugin({
-        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${host}"`,
+        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${lan.hostname}"`,
         "process.env.isSelfSignedCA": `${hostOs.isSelfSignedCA}`,
         "process.env.SERVICE_PORT": hostOs.isSelfSignedCA
           ? process.env.SERVICE_HTTPS_PORT
@@ -84,7 +88,9 @@ module.exports = function (env, argv) {
                 }),
               },
             ]
-          : [/** in dev don't replace dependencies */]),
+          : [
+              /** in dev don't replace dependencies */
+            ]),
       ],
     },
 
@@ -106,7 +112,7 @@ module.exports = function (env, argv) {
         : {},
 
       port: process.env.UI_PORT || 8080, // Port Number
-      host, // 0.0.0.0 external facing server
+      host: lan.hostname, //"0.0.0.0", //external facing server
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };
