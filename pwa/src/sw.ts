@@ -859,21 +859,37 @@ export function initServiceWorker({
    * may return stale version
    * @returns a Promise with a cache response
    */
-  function appVersionReq(url: string | Request) {
-    // return what's on cache
-    const cacheRes = caches
+  function appVersionReq(url: string) {
+    // fetch new versions
+    const f = fetch(url).then((res) => {
+      const resClone = res.clone()
+      if (!res.ok) {
+        throw new Error("Failed to fetch");
+      }
+
+      // update cache from new
+      caches.open(appDataCache).then((cache) => cache.put(url, resClone))
+
+      return res;
+    });
+
+    // check if in cache
+    const c = caches
       .open(appDataCache)
       .then((cache) => cache.match(url))
-      .then((cachedRes) => {
-        return cachedRes || recache(appDataCache, url);
+      .then((cacheRes) => {
+        if (!cacheRes) {
+          throw new Error("Not in cache");
+        }
+        return cacheRes;
       });
 
-    void recache(appDataCache, url);
 
-    // fetch, compare, update
-    // const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
 
-    return cacheRes; // || fetchAndUpdateRes;
+    // return whaterver is fastest
+    return Promise.any([f, c]).catch((errs: Error[]) =>
+      Promise.reject(errs[0].message)
+    );
   }
 
   /**
