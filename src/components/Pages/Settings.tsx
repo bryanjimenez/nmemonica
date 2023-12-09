@@ -217,6 +217,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (motionThreshold > 0 && motionListener.current === undefined) {
+      // turned on
       motionListener.current = buildMotionListener(
         dispatch,
         motionThreshold,
@@ -231,9 +232,15 @@ export default function Settings() {
         (error: Error) => componentDidCatch(dispatch, error)
       );
     } else if (motionThreshold === 0 && motionListener.current !== undefined) {
+      // turned off
       window.removeEventListener("devicemotion", motionListener.current);
       motionListener.current = undefined;
+    } else if (motionThreshold === 0 && motionListener.current === undefined) {
+      // Initialization point or
+      // DeviceMotionEvent is not supported
+      // stop ..
     } else {
+      // changed
       if (motionListener.current)
         window.removeEventListener("devicemotion", motionListener.current);
 
