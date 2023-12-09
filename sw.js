@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "89e2573b", initCacheVer: "569c7f20" };
+const buildConstants = { swVersion: "35cf4ae4", initCacheVer: "74e845a4" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -446,23 +446,24 @@ function initServiceWorker({
           e.respondWith(appDataReq(rewriteUrl, ver));
         }
         break;
-      case /* UI asset */ url.startsWith(urlSourceUI):
+      case /* UI asset */ url.startsWith(urlSourceUI) &&
+        !url.endsWith(".hot-update.json"):
         {
-          // const rewriteUrl = urlSourceUI + path;
+          // No rewrite for UI
           e.respondWith(appAssetReq(url));
         }
         break;
       case /* pronounce override */ path.startsWith(getAudioPath + override):
         {
-          const asset = path.slice(path.lastIndexOf("?"));
-          const rewriteUrl = urlServicePronounceURL + asset;
+          const query = path.slice(path.lastIndexOf("?"));
+          const rewriteUrl = urlServicePronounceURL + query;
           e.respondWith(pronounceOverride(rewriteUrl));
         }
         break;
       case /* pronounce */ path.startsWith(getAudioPath):
         {
-          const asset = path.slice(path.lastIndexOf("?"));
-          const rewriteUrl = urlServicePronounceURL + asset;
+          const query = path.slice(path.lastIndexOf("?"));
+          const rewriteUrl = urlServicePronounceURL + query;
           e.respondWith(pronounce(rewriteUrl));
         }
         break;
@@ -704,16 +705,35 @@ function initServiceWorker({
    */
   function appVersionReq(url) {
     // return what's on cache
-    const cacheRes = caches
+    // const cacheRes = caches
+    //   .open(appDataCache)
+    //   .then((cache) => cache.match(url))
+    //   .then((cachedRes) => {
+    //     return cachedRes || recache(appDataCache, url);
+    //   });
+    // void recache(appDataCache, url);
+    const f = fetch(url).then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch");
+      }
+      return res;
+    });
+    const c = caches
       .open(appDataCache)
       .then((cache) => cache.match(url))
-      .then((cachedRes) => {
-        return cachedRes || recache(appDataCache, url);
+      .then((cacheRes) => {
+        if (!cacheRes) {
+          throw new Error("Not in cache");
+        }
+        return cacheRes;
       });
-    void recache(appDataCache, url);
+    f.then((res) => {
+      caches.open(appDataCache).then((cache) => cache.put(url, res));
+    });
+    return Promise.any([f, c]).catch((errArr) => errArr[0]);
     // fetch, compare, update
     // const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
-    return cacheRes; // || fetchAndUpdateRes;
+    // return cacheRes; // || fetchAndUpdateRes;
   }
   /**
    * get from cache on fail fetch and re-cache
@@ -881,7 +901,7 @@ const cacheFiles = [
   "125.5d152486.js",
   "192.4333daee.css",
   "192.4333daee.js",
-  "229.89d8140e.js",
+  "229.d0ac0368.js",
   "23.6af8dc54.js",
   "232.e3802985.css",
   "232.e3802985.js",
@@ -901,15 +921,12 @@ const cacheFiles = [
   "dc7b0140cb7644f73ef2.png",
   "ee636d032d073f55d622.png",
   "favicon.ico",
-  "icon192_dev.png",
   "icon192.png",
-  "icon512_dev.png",
   "icon512.png",
   "index.html",
-  "main.88ed1a89.css",
-  "main.88ed1a89.js",
+  "main.5b55db18.css",
+  "main.5b55db18.js",
   "manifest.webmanifest",
-  "maskable512_dev.png",
   "maskable512.png",
 ];
 
