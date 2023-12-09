@@ -1,21 +1,33 @@
-import { Button } from "@mui/material";
+import { Badge, Fab, TextField } from "@mui/material";
 import Spreadsheet from "@nmemonica/x-spreadsheet";
-import React, { useCallback, useEffect, useRef } from "react";
+import {
+  FileSymlinkFileIcon,
+  RssIcon,
+  SearchIcon,
+} from "@primer/octicons-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
 import { useSelector } from "react-redux";
 
 import {
-  dataServicePath,
   pushServiceSheetDataUpdatePath,
   sheetServicePath,
 } from "../../../environment.development";
-import { swMessageSetLocalServiceEndpoint } from "../../helper/serviceWorkerHelper";
-import { AppDispatch, RootState } from "../../slices";
+import { RootState } from "../../slices";
 import { NotReady } from "../Form/NotReady";
-import { useWindowSize } from "../../hooks/useWindowSize";
-import { useDispatch } from "react-redux";
-import { logger } from "../../slices/globalSlice";
-import { DebugLevel } from "../../slices/settingHelper";
+import "../../css/Sheet.css";
+
+// TODO: import this?
+// service/helper/firebaseParse.ts
+export interface SheetData {
+  name: string;
+  rows: { len: number } & Record<
+    number,
+    {
+      cells: Record<string, { text?: string; merge?: [number, number] | null }>;
+    }
+  >;
+}
 
 const SheetMeta = {
   location: "/sheet/",
@@ -27,9 +39,10 @@ const defaultOp = {
   // showToolbar: true,
   // showGrid: true,
   // showContextmenu: true,
+  autoFocus: false,
   view: {
-    height: () => (document.documentElement.clientHeight - 100),
-    width: () => (document.documentElement.clientWidth - 30),
+    height: () => document.documentElement.clientHeight - 100,
+    width: () => document.documentElement.clientWidth - 30,
   },
   row: {
     len: 3000, //100,
@@ -71,12 +84,12 @@ function saveSheet(workbook: Spreadsheet | null, dataService: string) {
 
 function getActiveSheet(workbook: Spreadsheet) {
   // TODO: fix SpreadSheet.getData type
-  const datas = workbook.getData() as { name: string }[];
+  const datas = workbook.getData() as SheetData[];
 
   const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
-  const activeSheetData: unknown = datas.find(
-    ({ name }: { name: string }) => name === activeSheetName
-  );
+  const activeSheetData =
+    datas.find(({ name }: { name: string }) => name === activeSheetName) ??
+    datas[0];
 
   return { activeSheetName, activeSheetData };
 }
@@ -107,12 +120,16 @@ export default function Sheet() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
 
+  const [searchResults, setSearchResult] = useState(0);
+  const prevResult = useRef<[number, number, string][]>([]);
+  const resultIdx = useRef<number | null>(null);
+  const searchValue = useRef<string | null>(null);
+
   const dataService = useSelector(
     ({ global }: RootState) => global.localServiceURL
   );
 
   useEffect(() => {
-
     const gridEl = document.createElement("div");
 
     void fetch(dataService + sheetServicePath, { method: "GET" }).then((res) =>
@@ -129,11 +146,7 @@ export default function Sheet() {
           //   });
           // });
 
-          try {
-            grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
-          } catch (err) {
-            // ignore freeze is not a function error for now
-          }
+          grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
           // TODO:
           // grid.setMaxCols(0, sheet1Cols);
@@ -171,30 +184,111 @@ export default function Sheet() {
   return (
     <React.Fragment>
       <div className="sheet main-panel pt-2">
-        <div ref={containerRef} />
-
         <div className="d-flex flex-row pt-2 px-2 w-100">
           <div className="px-1">
-            <Button
-              variant="text"
+            <Fab
+              variant="extended"
               size="small"
-              className="m-0"
               onClick={saveSheetCB}
+              className="m-0 z-index-unset"
             >
-              Save
-            </Button>
+              <FileSymlinkFileIcon size="small" />
+            </Fab>
           </div>
           <div className="px-1">
-            <Button
-              variant="text"
+            <Fab
+              variant="extended"
               size="small"
-              className="m-0"
               onClick={pushSheetCB}
+              className="m-0 z-index-unset"
             >
-              Push
-            </Button>
+              <RssIcon size="small" />
+            </Fab>
+          </div>
+          <div className="d-flex">
+            <div>
+              <TextField
+                // error={userInputError}
+                size="small"
+                label="Search"
+                variant="outlined"
+                // defaultValue={localServiceURL}
+                onChange={(event) => {
+                  const { value } = event.target;
+                  resultIdx.current = null;
+                  prevResult.current = [];
+
+                  setSearchResult(0);
+
+                  if (value && value.length > 0) {
+                    searchValue.current = value;
+                  }
+                }}
+              />
+            </div>
+            <div className="ps-1">
+              <Badge badgeContent={searchResults} color="success">
+                <Fab
+                  variant="extended"
+                  size="small"
+                  color="primary"
+                  className="m-0 z-index-unset"
+                  onClick={() => {
+                    const search = searchValue.current;
+                    const workbook = wbRef.current;
+                    if (!search || !workbook) return;
+
+                    if (resultIdx.current === null) {
+                      const { activeSheetData } = getActiveSheet(workbook);
+
+                      const result = Object.values(activeSheetData.rows).reduce<
+                        [number, number, string][]
+                      >((acc, row, x) => {
+                        if (typeof row !== "number" && "cells" in row) {
+                          const find = Object.keys(row.cells).find(
+                            (c) =>
+                              row.cells[c].text
+                                ?.toLowerCase()
+                                .includes(search.toLowerCase())
+                          );
+                          if (find === undefined) return acc;
+
+                          const text = row.cells[find].text;
+                          if (text === undefined) return acc;
+
+                          const y = Number(find);
+                          acc = [...acc, [x, y, text]];
+                        }
+
+                        return acc;
+                      }, []);
+
+                      prevResult.current = result;
+                      setSearchResult(result.length);
+                    }
+
+                    const result = prevResult.current;
+                    if (resultIdx.current === null) {
+                      resultIdx.current = 0;
+                    } else {
+                      resultIdx.current =
+                        (resultIdx.current + 1) % result.length;
+                    }
+
+                    // console.log(result[resultIdx.current]);
+                    const [x] = result[resultIdx.current];
+                    const xOffset = defaultOp.row.height * (x - 2);
+                    workbook.sheet.verticalScrollbar.moveFn(xOffset);
+                  }}
+                >
+                  <SearchIcon size="small" />
+                </Fab>
+              </Badge>
+            </div>
           </div>
         </div>
+
+        <div ref={containerRef} className="pt-2" />
       </div>
     </React.Fragment>
   );
