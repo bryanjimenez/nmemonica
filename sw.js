@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "f428b8ba", initCacheVer: "7be2e260" };
+const buildConstants = { swVersion: "2f8023ba", initCacheVer: "7be2e260" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -264,6 +264,7 @@ function initServiceWorker({
   }
   function messageEventHandler(event) {
     const message = event.data;
+    clientLogger("messageEventHandler", DebugLevel.DEBUG);
     if (
       isMessageInitCache(message) &&
       message.type === SWMsgOutgoing.SW_CACHE_DATA
@@ -293,6 +294,7 @@ function initServiceWorker({
       isMessageHardRefresh(message) &&
       message.type === SWMsgOutgoing.DO_HARD_REFRESH
     ) {
+      clientLogger("HARD refresh", DebugLevel.DEBUG);
       fetch(urlServiceData + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
@@ -698,11 +700,12 @@ function initServiceWorker({
   function appVersionReq(url) {
     // fetch new versions
     const f = fetch(url).then((res) => {
+      const c = res.clone();
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }
       // update cache from new
-      caches.open(appDataCache).then((cache) => cache.put(url, res.clone()));
+      caches.open(appDataCache).then((cache) => cache.put(url, c));
       return res;
     });
     // check if in cache
