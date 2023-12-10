@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "50bdb7ae", initCacheVer: "9e39cd0f" };
+const buildConstants = { swVersion: "021a98e8", initCacheVer: "9e39cd0f" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -60,7 +60,7 @@ function initServiceWorker({
   const dataSourcePath = [
     "/phrases.json",
     "/vocabulary.json",
-    "/opposites.json",
+    // "/opposites.json",
     "/kanji.json",
   ];
   /** Pronounce cache override */
