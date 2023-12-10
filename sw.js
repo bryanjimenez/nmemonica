@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "3b7ead70", initCacheVer: "f0c1edae" };
+const buildConstants = { swVersion: "1f3b2b32", initCacheVer: "f0c1edae" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -303,10 +303,12 @@ function initServiceWorker({
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
-              void swSelf.registration.unregister();
-              clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
-                msg: "Hard Refresh",
-                status: res.status,
+              caches.delete(appDataCache).then(() => {
+                void swSelf.registration.unregister();
+                clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
+                  msg: "Hard Refresh",
+                  status: res.status,
+                });
               });
             });
           } else {
@@ -432,7 +434,8 @@ function initServiceWorker({
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     clientLogger(
-      "fetchEventHandler " + JSON.stringify({ m: e.request.method, p: path }),
+      "fetchEventHandler " +
+        JSON.stringify({ m: e.request.method, h: e.request.headers, p: path }),
       DebugLevel.DEBUG,
     );
     clientLogger(
