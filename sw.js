@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "021a98e8", initCacheVer: "a0d60288" };
+const buildConstants = { swVersion: "d27ee6e2", initCacheVer: "aa02e081" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -284,6 +284,7 @@ function initServiceWorker({
       isMessageOverrideEndpoint(message) &&
       message.type === SWMsgOutgoing.SET_ENDPOINT
     ) {
+      clientLogger("OVERRIDE ENDPOINT", DebugLevel.DEBUG);
       const { data, media } = message.endpoint;
       urlServiceData = data;
       urlServicePronounceURL = media;
@@ -441,7 +442,8 @@ function initServiceWorker({
       DebugLevel.DEBUG,
     );
     clientLogger(
-      " " + JSON.stringify({ d: urlServiceData, m: urlServicePronounceURL }),
+      "consts " +
+        JSON.stringify({ d: urlServiceData, m: urlServicePronounceURL }),
       DebugLevel.DEBUG,
     );
     if (e.request.method !== "GET") {
@@ -933,8 +935,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.010bf8b4.css",
-  "main.010bf8b4.js",
+  "main.c40d8096.css",
+  "main.c40d8096.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
