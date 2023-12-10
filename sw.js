@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "2f8023ba", initCacheVer: "7be2e260" };
+const buildConstants = { swVersion: "8263009a", initCacheVer: "7be2e260" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -294,7 +294,10 @@ function initServiceWorker({
       isMessageHardRefresh(message) &&
       message.type === SWMsgOutgoing.DO_HARD_REFRESH
     ) {
-      clientLogger("HARD refresh", DebugLevel.DEBUG);
+      clientLogger(
+        "HARD refresh " + urlServiceData + "" + dataVerPath,
+        DebugLevel.DEBUG,
+      );
       fetch(urlServiceData + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
@@ -306,7 +309,9 @@ function initServiceWorker({
               });
             });
           } else {
-            throw new Error("Service Unavailable");
+            throw new Error(
+              "Service Unavailable " + res.status + " " + res.statusText,
+            );
           }
         })
         .catch((error) => {
