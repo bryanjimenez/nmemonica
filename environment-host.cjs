@@ -3,37 +3,16 @@
  * This file is commonJS because rspack.config is also
  */
 const os = require("os");
-// import os from "os";
-const fs = require("fs");
-// import fs from "fs";
-const path = require("path");
-// import path from "path";
-require("dotenv").config();
-// import "dotenv/config";
-
-const blue = "\x1b[34m";
-const yellow = "\x1b[33m";
-const reset = "\x1b[0m";
-
-const projectRoot = path.resolve();
-
-let hasSelfSignedCertificateAuthority = false;
-if (
-  fs.existsSync(projectRoot + "/" + process.env.PATH_KEY) &&
-  fs.existsSync(projectRoot + "/" + process.env.PATH_KEY)
-) {
-  hasSelfSignedCertificateAuthority = true;
-}
+const color = require("./console.cjs");
+const { blue, yellow } = color;
 
 // Get OS's external facing ip
 const n = os.networkInterfaces();
 const hostname = os.hostname();
-const ip = hasSelfSignedCertificateAuthority
-  ? Object.values(n)
-      .flat()
-      //@ts-expect-error
-      .find(({ family, internal }) => family === "IPv4" && !internal)
-  : { address: "localhost" };
+const ip = Object.values(n)
+  .flat()
+  //@ts-expect-error
+  .find(({ family, internal }) => family === "IPv4" && !internal);
 
 let host = null;
 let prettyHostname = null;
@@ -45,7 +24,7 @@ switch (true) {
       : hostname + ".local";
     break;
   case ip?.address && ip?.address?.length > 0:
-    console.log(yellow + "Couldn't get host Name" + reset);
+    console.log(yellow("Couldn't get host Name"));
 
     host = ip?.address;
     break;
@@ -54,17 +33,16 @@ switch (true) {
     throw new Error("Couldn't get host IP");
 }
 
-console.log("host: " + blue + host + reset);
+// console.log("host: " + blue(host));
 
 const lan = { address: ip?.address, hostname: prettyHostname };
-/**
- * Self signed Certificate Authority is available
- */
-// export const isSelfSignedCA = hasSelfSignedCertificateAuthority;
-// export const lanIP = ip;
+
+if(require.main?.loaded === false){
+  // running from cli
+  console.log(JSON.stringify(lan))
+}
 
 module.exports = {
-  isSelfSignedCA: hasSelfSignedCertificateAuthority,
   lan,
   hostname,
   host,

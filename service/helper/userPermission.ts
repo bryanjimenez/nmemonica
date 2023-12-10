@@ -16,6 +16,7 @@ export async function requestUserPermission(
   useHTTPS: boolean,
   serviceIP: string,
   localhost: string,
+  CA_DIR: string,
   JSON_DIR: string,
   CSV_DIR: string,
   httpPort: number,
@@ -28,6 +29,9 @@ export async function requestUserPermission(
   const writeGranted = await rl.question(
     `Grant WRITE access? "${CSV_DIR}" [y/n]\t`
   );
+  const readKeyGranted = await rl.question(
+    `Grant READ access? "${CA_DIR}" [y/n]\t`
+  );
   const netGranted = await rl.question(
     `Grant HTTP access? "${localhost}:${httpPort}" [y/n]\t`
   );
@@ -36,38 +40,37 @@ export async function requestUserPermission(
     const httpsGranted = await rl.question(
       `Grant HTTPS access? "${serviceIP}:${httpsPort}" [y/n]\t`
     );
-    if (httpsGranted?.toLowerCase() !== "y") {
-      throw new Error(`Denied HTTPS access "${serviceIP}:${httpsPort}"`);
-    }
+    isAllowed(httpsGranted, `${serviceIP}:${httpsPort}`, "Denied HTTPS access");
   }
 
-  if (readGranted?.toLowerCase() !== "y") {
-    throw new Error(`Denied READ access "${JSON_DIR}"`);
-  }
-  if (writeGranted?.toLowerCase() !== "y") {
-    throw new Error(`Denied WRITE access "${CSV_DIR}"`);
-  }
-  if (netGranted?.toLowerCase() !== "y") {
-    throw new Error(`Denied HTTP access "${localhost}:${httpPort}"`);
-  }
+  isAllowed(readGranted, JSON_DIR, "Denied READ access");
+  isAllowed(writeGranted, CSV_DIR, "Denied WRITE access");
+  isAllowed(readKeyGranted, CA_DIR, "Denied READ access");
+  isAllowed(netGranted, `${localhost}:${httpPort}`, "Denied HTTP access");
+
   if (!fs.existsSync(CSV_DIR)) {
     const createIt = await rl.question(
       `Create directory? "${CSV_DIR}" [y/n]\t`
     );
-    if (createIt?.toLowerCase() === "y") {
+    if (isAllowed(createIt, "Missing required directory ", CSV_DIR)) {
       fs.mkdirSync(CSV_DIR, { recursive: true });
-    } else {
-      throw new Error(`Missing required directory "${CSV_DIR}"`);
     }
   }
   if (!fs.existsSync(JSON_DIR)) {
     const createIt = await rl.question(
       `Create directory? "${JSON_DIR}" [y/n]\t`
     );
-    if (createIt?.toLowerCase() === "y") {
+    if (isAllowed(createIt, "Missing required directory", JSON_DIR)) {
       fs.mkdirSync(JSON_DIR, { recursive: true });
-    } else {
-      throw new Error(`Missing required directory "${JSON_DIR}"`);
     }
   }
+}
+
+function isAllowed(response: string, path?: string, msg?: string) {
+  const allowed = response?.toLowerCase() === "y";
+  if (!allowed && path !== undefined && msg !== undefined) {
+    throw new Error(`${msg} "${path}"`);
+  }
+
+  return allowed;
 }

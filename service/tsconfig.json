@@ -21,6 +21,8 @@
     ".",
     "../src/typings/raw.js",
     "../environment-host.cjs",
-    "../environment.production.ts"
+    "../environment-signed-ca.cjs",
+    "../environment.production.ts",
+    "../console.cjs"
   ]
 }

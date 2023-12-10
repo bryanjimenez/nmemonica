@@ -1,8 +1,11 @@
 //@ts-check
 const rspack = require("@rspack/core");
 const path = require("path");
-const hostOs = require("./environment-host.cjs");
+const { lan } = require("./environment-host.cjs");
 const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
+const { yellow } = require("./console.cjs");
+const ca = require("./environment-signed-ca.cjs")
+
 require("dotenv").config();
 // import { fileURLToPath } from "url";
 // const fileURLToPath = require("url").fileURLToPath;
@@ -17,7 +20,10 @@ require("dotenv").config();
 module.exports = function (env, argv) {
   const isProduction = process.env.NODE_ENV === "production";
 
-  const { lan } = hostOs;
+  if(!ca.exists()){
+    console.log(yellow("Creating Certificate Authority"));
+    ca.create();
+  }
 
   return {
     entry: {
@@ -48,12 +54,12 @@ module.exports = function (env, argv) {
 
       // Replace dotenv variables here
       new rspack.DefinePlugin({
-        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${lan.hostname}"`,
-        "process.env.isSelfSignedCA": `${hostOs.isSelfSignedCA}`,
-        "process.env.SERVICE_PORT": hostOs.isSelfSignedCA
+        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${lan.hostname}"`,  // only in env.development
+        "process.env.isSelfSignedCA": `${ca.exists()}`,             // env.dev only
+        "process.env.SERVICE_PORT": ca.exists()                     // env.dev only
           ? process.env.SERVICE_HTTPS_PORT
           : process.env.SERVICE_PORT,
-        "process.env.UI_PORT": process.env.UI_PORT,
+        "process.env.UI_PORT": process.env.UI_PORT,                 // env.dev only
       }),
     ],
 
@@ -99,14 +105,14 @@ module.exports = function (env, argv) {
     },
 
     devServer: {
-      server: hostOs.isSelfSignedCA
+      server: ca.exists()
         ? {
             // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
             // https://webpack.js.org/configuration/dev-server/#devserverhttps
             type: "https",
             options: {
-              key: "./" + process.env.PATH_KEY,
-              cert: "./" + process.env.PATH_CRT,
+              key: `./${process.env.PATH_CA}/${process.env.CA_KEY}`,
+              cert: `./${process.env.PATH_CA}/${process.env.CA_CRT}`,
             },
           }
         : {},

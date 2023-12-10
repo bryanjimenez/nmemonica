@@ -6,6 +6,7 @@ import { multipart } from "./helper/multipart.js";
 import { SheetData } from "./helper/firebaseParse.js";
 import { sheetDataToJSON, updateDataAndCache } from "./data.js";
 import path from "path";
+import "dotenv/config";
 
 interface Subscription {
   endpoint: string;
@@ -16,12 +17,19 @@ interface Subscription {
   };
 }
 
-function obtainKeys() {
-  const pushAPIDir = path.resolve() + "/data/crypto/pushAPI/";
-  const pubKeyPath = pushAPIDir + "public.pem";
-  const privKeyPath = pushAPIDir + "private.pem";
+const projectRoot = path.resolve();
+const PUSH_DIR = projectRoot + "/" + process.env.PATH_PUSHAPI;
 
-  if (!fs.existsSync(path.resolve() + pushAPIDir)) {
+function obtainKeys() {
+  if (PUSH_DIR === undefined) {
+    throw new Error("Missing Push API directory path");
+  }
+
+  const pushAPIDir = PUSH_DIR;
+  const pubKeyPath = pushAPIDir + "/public.pem";
+  const privKeyPath = pushAPIDir + "/private.pem";
+
+  if (!fs.existsSync(pushAPIDir)) {
     fs.mkdirSync(pushAPIDir, { recursive: true });
   }
 
