@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "1f3b2b32", initCacheVer: "f0c1edae" };
+const buildConstants = { swVersion: "c00c1cd8", initCacheVer: "9ae646fd" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -439,7 +439,7 @@ function initServiceWorker({
       DebugLevel.DEBUG,
     );
     clientLogger(
-      " " + JSON.stringify({ u: urlServiceData, x: urlServicePronounceURL }),
+      " " + JSON.stringify({ d: urlServiceData, m: urlServicePronounceURL }),
       DebugLevel.DEBUG,
     );
     if (e.request.method !== "GET") {
@@ -787,6 +787,7 @@ function initServiceWorker({
    */
   function cacheVerData(url, v) {
     const urlVersion = url + ".v" + v;
+    clientLogger(urlVersion, DebugLevel.DEBUG);
     return caches.open(appDataCache).then((cache) =>
       cache.match(urlVersion).then((cacheRes) => {
         return (
@@ -930,8 +931,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.6a9bfeb1.css",
-  "main.6a9bfeb1.js",
+  "main.6801a49e.css",
+  "main.6801a49e.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
