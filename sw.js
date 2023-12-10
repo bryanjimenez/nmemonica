@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "f999d7c0", initCacheVer: "f0c1edae" };
+const buildConstants = { swVersion: "3b7ead70", initCacheVer: "f0c1edae" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -762,6 +762,7 @@ function initServiceWorker({
     if (!version || version === "0") {
       response = getVersionForData(url).then((v) => cacheVerData(url, v));
     } else {
+      clientLogger(JSON.stringify({ u: url, v: version }), DebugLevel.WARN);
       response = cacheVerData(url, version);
     }
     return response;
@@ -788,6 +789,7 @@ function initServiceWorker({
         return (
           cacheRes ||
           fetch(url).then((fetchRes) => {
+            clientLogger("fetch" + fetchRes.statusText, DebugLevel.WARN);
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }
