@@ -17,7 +17,8 @@ export function getWorkbookXS(req: Request, res: Response) {
   let xSheetObj: WorkSheet[];
   switch (fileType) {
     case ".xlsx": {
-      throw new Error("FIXME: hardcoded range in readXLSX");
+      // FIXME: hardcoded range in readXLSX
+      throw new Error("Incomplete: hardcoded range in readXLSX");
       // const file = fs.readFileSync(`${CSV_DIR}/${XLSX_FILE}`);
       // xSheetObj = readXLSX(file);
       // break;
@@ -46,7 +47,7 @@ export async function putWorkbookXSAsync(
     switch (fileType) {
       case ".xlsx": {
         // FIXME: will override other sheets in wb!
-        throw new Error("FIXME: will override other sheets in wb!");
+        throw new Error("Incomplete: will override other sheets in wb!");
         // write(`${WRITE_DIR}${XLSX_FILE}`, xSheetObj);
         // break;
       }

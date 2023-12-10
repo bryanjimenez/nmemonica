@@ -52,16 +52,18 @@ export function getPublicKey(req: Request, res: Response) {
 }
 
 export function registerClient(req: Request, res: Response) {
-  // FIXME: input check
-  // get registration from req
+  // get incoming subscription
   const subscription = req.body.subscription as Subscription;
 
-  // FIXME: rewrite async
+  // TODO: rewrite async
 
-  // save registration
+  // get previously subscribed
   const subscriptionList = readSubscriptionFileAsMap(subscriptionFile);
+
+  // add incoming (preventing duplicates)
   subscriptionList.set(subscription.endpoint, subscription);
 
+  // save subscriptions
   writeSubscriptionFileFromMap(subscriptionFile, subscriptionList);
 
   // confirmation message
@@ -115,7 +117,7 @@ export async function pushSheetDataAsync(
     const resourceName = sheetName.toLowerCase();
     const updateP = updateDataAndCache(resourceName, data, hash);
 
-    // TODO: pull out scheme/protocol
+    // service worker will only work on https
     const pathToResource = `https://${serviceIP}:${httpsPort}${dataPath}`;
 
     const message = JSON.stringify({
