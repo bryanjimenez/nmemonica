@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "d27ee6e2", initCacheVer: "aa02e081" };
+const buildConstants = { swVersion: "f428b8ba", initCacheVer: "a580663f" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -60,7 +60,7 @@ function initServiceWorker({
   const dataSourcePath = [
     "/phrases.json",
     "/vocabulary.json",
-    // "/opposites.json",
+    "/opposites.json",
     "/kanji.json",
   ];
   /** Pronounce cache override */
@@ -264,12 +264,10 @@ function initServiceWorker({
   }
   function messageEventHandler(event) {
     const message = event.data;
-    clientLogger("messageEventHandler", DebugLevel.DEBUG);
     if (
       isMessageInitCache(message) &&
       message.type === SWMsgOutgoing.SW_CACHE_DATA
     ) {
-      clientLogger("init cache ", DebugLevel.DEBUG);
       const { ui, data, media } = message.endpoint;
       urlSourceUI = ui;
       urlServiceData = data;
@@ -284,40 +282,29 @@ function initServiceWorker({
       isMessageOverrideEndpoint(message) &&
       message.type === SWMsgOutgoing.SET_ENDPOINT
     ) {
-      clientLogger("OVERRIDE ENDPOINT", DebugLevel.DEBUG);
       const { data, media } = message.endpoint;
       urlServiceData = data;
       urlServicePronounceURL = media;
       getDataPath = data.slice(data.lastIndexOf("/"));
       getAudioPath = media.slice(media.lastIndexOf("/"));
-      const dataCacheP = cacheAllDataResource();
-      event.waitUntil(dataCacheP);
       return;
     }
     if (
       isMessageHardRefresh(message) &&
       message.type === SWMsgOutgoing.DO_HARD_REFRESH
     ) {
-      clientLogger(
-        "HARD refresh " + urlServiceData + "" + dataVerPath,
-        DebugLevel.DEBUG,
-      );
       fetch(urlServiceData + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
-              caches.delete(appDataCache).then(() => {
-                void swSelf.registration.unregister();
-                clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
-                  msg: "Hard Refresh",
-                  status: res.status,
-                });
+              void swSelf.registration.unregister();
+              clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
+                msg: "Hard Refresh",
+                status: res.status,
               });
             });
           } else {
-            throw new Error(
-              "Service Unavailable " + res.status + " " + res.statusText,
-            );
+            throw new Error("Service Unavailable");
           }
         })
         .catch((error) => {
@@ -436,16 +423,6 @@ function initServiceWorker({
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
-    clientLogger(
-      "fetchEventHandler " +
-        JSON.stringify({ m: e.request.method, h: e.request.headers, p: path }),
-      DebugLevel.DEBUG,
-    );
-    clientLogger(
-      "consts " +
-        JSON.stringify({ d: urlServiceData, m: urlServicePronounceURL }),
-      DebugLevel.DEBUG,
-    );
     if (e.request.method !== "GET") {
       return;
     }
@@ -484,7 +461,6 @@ function initServiceWorker({
         break;
       default:
         /* everything else */
-        clientLogger("noCaching ", DebugLevel.DEBUG);
         e.respondWith(noCaching(e));
         break;
     }
@@ -722,12 +698,11 @@ function initServiceWorker({
   function appVersionReq(url) {
     // fetch new versions
     const f = fetch(url).then((res) => {
-      const c = res.clone();
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }
       // update cache from new
-      caches.open(appDataCache).then((cache) => cache.put(url, c));
+      caches.open(appDataCache).then((cache) => cache.put(url, res.clone()));
       return res;
     });
     // check if in cache
@@ -769,7 +744,6 @@ function initServiceWorker({
     if (!version || version === "0") {
       response = getVersionForData(url).then((v) => cacheVerData(url, v));
     } else {
-      clientLogger(JSON.stringify({ u: url, v: version }), DebugLevel.WARN);
       response = cacheVerData(url, version);
     }
     return response;
@@ -791,13 +765,11 @@ function initServiceWorker({
    */
   function cacheVerData(url, v) {
     const urlVersion = url + ".v" + v;
-    clientLogger(urlVersion, DebugLevel.DEBUG);
     return caches.open(appDataCache).then((cache) =>
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
           fetch(url).then((fetchRes) => {
-            clientLogger("fetch" + fetchRes.statusText, DebugLevel.WARN);
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }
@@ -914,8 +886,8 @@ const cacheFiles = [
   "192.4333daee.js",
   "229.d0ac0368.js",
   "23.6af8dc54.js",
-  "232.72852cc0.css",
-  "232.72852cc0.js",
+  "232.a8a7e6b9.css",
+  "232.a8a7e6b9.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -935,8 +907,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.c40d8096.css",
-  "main.c40d8096.js",
+  "main.c645ce05.css",
+  "main.c645ce05.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
