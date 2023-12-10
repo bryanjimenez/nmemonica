@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "8263009a", initCacheVer: "7be2e260" };
+const buildConstants = { swVersion: "8ef0c341", initCacheVer: "7be2e260" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -269,6 +269,7 @@ function initServiceWorker({
       isMessageInitCache(message) &&
       message.type === SWMsgOutgoing.SW_CACHE_DATA
     ) {
+      clientLogger("init cache ", DebugLevel.DEBUG);
       const { ui, data, media } = message.endpoint;
       urlSourceUI = ui;
       urlServiceData = data;
@@ -430,6 +431,10 @@ function initServiceWorker({
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
+    clientLogger(
+      "fetchEventHandler " + JSON.stringify({ m: e.request.method, url }),
+      DebugLevel.DEBUG,
+    );
     if (e.request.method !== "GET") {
       return;
     }
@@ -468,6 +473,7 @@ function initServiceWorker({
         break;
       default:
         /* everything else */
+        clientLogger("noCaching ", DebugLevel.DEBUG);
         e.respondWith(noCaching(e));
         break;
     }
