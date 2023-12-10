@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "c00c1cd8", initCacheVer: "9ae646fd" };
+const buildConstants = { swVersion: "50bdb7ae", initCacheVer: "9e39cd0f" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -289,6 +289,8 @@ function initServiceWorker({
       urlServicePronounceURL = media;
       getDataPath = data.slice(data.lastIndexOf("/"));
       getAudioPath = media.slice(media.lastIndexOf("/"));
+      const dataCacheP = cacheAllDataResource();
+      event.waitUntil(dataCacheP);
       return;
     }
     if (
@@ -931,8 +933,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.6801a49e.css",
-  "main.6801a49e.js",
+  "main.d40a8a41.css",
+  "main.d40a8a41.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
