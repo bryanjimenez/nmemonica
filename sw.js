@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "7b6d4d7c", initCacheVer: "4437081a" };
+const buildConstants = { swVersion: "f428b8ba", initCacheVer: "7be2e260" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -701,6 +701,8 @@ function initServiceWorker({
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }
+      // update cache from new
+      caches.open(appDataCache).then((cache) => cache.put(url, res.clone()));
       return res;
     });
     // check if in cache
@@ -713,10 +715,6 @@ function initServiceWorker({
         }
         return cacheRes;
       });
-    // update cache from new
-    void f.then((res) =>
-      caches.open(appDataCache).then((cache) => cache.put(url, res.clone())),
-    );
     // return whaterver is fastest
     return Promise.any([f, c]).catch((errs) => Promise.reject(errs[0].message));
   }
@@ -909,8 +907,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.fe338834.css",
-  "main.fe338834.js",
+  "main.42cf323f.css",
+  "main.42cf323f.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
