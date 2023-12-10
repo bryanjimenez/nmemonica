@@ -1,10 +1,11 @@
-const buildConstants = { swVersion: "f428b8ba", initCacheVer: "a580663f" };
+const buildConstants = { swVersion: "c76059dc", initCacheVer: "daf22472" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
   SW_VERSION: "SW_VERSION",
   SET_ENDPOINT: "SET_ENDPOINT",
   DO_HARD_REFRESH: "DO_HARD_REFRESH",
+  RECACHE_DATA: "RECACHE_DATA",
 };
 
 const SWMsgIncoming = {
@@ -252,6 +253,9 @@ function initServiceWorker({
   function isMessageInitCache(m) {
     return m.type === SWMsgOutgoing.SW_CACHE_DATA;
   }
+  function isMessageRecacheData(m) {
+    return m.type === SWMsgOutgoing.RECACHE_DATA;
+  }
   /** User changing default service endpoint */
   function isMessageOverrideEndpoint(m) {
     return m.type === SWMsgOutgoing.SET_ENDPOINT;
@@ -276,6 +280,14 @@ function initServiceWorker({
       getAudioPath = media.slice(media.lastIndexOf("/"));
       // Cache stuff
       postInstallEventHandler(event);
+      return;
+    }
+    if (
+      isMessageRecacheData(message) &&
+      message.type === SWMsgOutgoing.RECACHE_DATA
+    ) {
+      const dataCacheP = cacheAllDataResource();
+      event.waitUntil(dataCacheP);
       return;
     }
     if (
@@ -698,11 +710,12 @@ function initServiceWorker({
   function appVersionReq(url) {
     // fetch new versions
     const f = fetch(url).then((res) => {
+      const resClone = res.clone();
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }
       // update cache from new
-      caches.open(appDataCache).then((cache) => cache.put(url, res.clone()));
+      void caches.open(appDataCache).then((cache) => cache.put(url, resClone));
       return res;
     });
     // check if in cache
@@ -886,8 +899,8 @@ const cacheFiles = [
   "192.4333daee.js",
   "229.d0ac0368.js",
   "23.6af8dc54.js",
-  "232.a8a7e6b9.css",
-  "232.a8a7e6b9.js",
+  "232.10e384cb.css",
+  "232.10e384cb.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -907,8 +920,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.c645ce05.css",
-  "main.c645ce05.js",
+  "main.749019eb.css",
+  "main.749019eb.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
