@@ -177,6 +177,51 @@ export default function Sheet() {
     pushSheet(wbRef.current, dataService);
   }, [dataService]);
 
+  const doSearchCB = useCallback(() => {
+    const search = searchValue.current;
+    const workbook = wbRef.current;
+    if (!search || !workbook) return;
+
+    if (resultIdx.current === null) {
+      const { activeSheetData } = getActiveSheet(workbook);
+
+      const result = Object.values(activeSheetData.rows).reduce<
+        [number, number, string][]
+      >((acc, row, x) => {
+        if (typeof row !== "number" && "cells" in row) {
+          const find = Object.keys(row.cells).find(
+            (c) =>
+              row.cells[c].text?.toLowerCase().includes(search.toLowerCase())
+          );
+          if (find === undefined) return acc;
+
+          const text = row.cells[find].text;
+          if (text === undefined) return acc;
+
+          const y = Number(find);
+          acc = [...acc, [x, y, text]];
+        }
+
+        return acc;
+      }, []);
+
+      prevResult.current = result;
+      setSearchResult(result.length);
+    }
+
+    const result = prevResult.current;
+    if (resultIdx.current === null) {
+      resultIdx.current = 0;
+    } else {
+      resultIdx.current = (resultIdx.current + 1) % result.length;
+    }
+
+    // console.log(result[resultIdx.current]);
+    const [x] = result[resultIdx.current];
+    const xOffset = defaultOp.row.height * (x - 2);
+    workbook.sheet.verticalScrollbar.moveFn(xOffset);
+  }, []);
+
   if (dataService.length === 0) {
     return <NotReady addlStyle="sheet" text="Set sheet-service endpoint" />;
   }
@@ -213,6 +258,11 @@ export default function Sheet() {
                 label="Search"
                 variant="outlined"
                 // defaultValue={localServiceURL}
+                onKeyUp={(event) => {
+                  if (event.code === "Enter") {
+                    doSearchCB();
+                  }
+                }}
                 onChange={(event) => {
                   const { value } = event.target;
                   resultIdx.current = null;
@@ -226,60 +276,14 @@ export default function Sheet() {
                 }}
               />
             </div>
-            <div className="ps-1">
+            <div className="ps-1 pt-1">
               <Badge badgeContent={searchResults} color="success">
                 <Fab
                   variant="extended"
                   size="small"
                   color="primary"
                   className="m-0 z-index-unset"
-                  onClick={() => {
-                    const search = searchValue.current;
-                    const workbook = wbRef.current;
-                    if (!search || !workbook) return;
-
-                    if (resultIdx.current === null) {
-                      const { activeSheetData } = getActiveSheet(workbook);
-
-                      const result = Object.values(activeSheetData.rows).reduce<
-                        [number, number, string][]
-                      >((acc, row, x) => {
-                        if (typeof row !== "number" && "cells" in row) {
-                          const find = Object.keys(row.cells).find(
-                            (c) =>
-                              row.cells[c].text
-                                ?.toLowerCase()
-                                .includes(search.toLowerCase())
-                          );
-                          if (find === undefined) return acc;
-
-                          const text = row.cells[find].text;
-                          if (text === undefined) return acc;
-
-                          const y = Number(find);
-                          acc = [...acc, [x, y, text]];
-                        }
-
-                        return acc;
-                      }, []);
-
-                      prevResult.current = result;
-                      setSearchResult(result.length);
-                    }
-
-                    const result = prevResult.current;
-                    if (resultIdx.current === null) {
-                      resultIdx.current = 0;
-                    } else {
-                      resultIdx.current =
-                        (resultIdx.current + 1) % result.length;
-                    }
-
-                    // console.log(result[resultIdx.current]);
-                    const [x] = result[resultIdx.current];
-                    const xOffset = defaultOp.row.height * (x - 2);
-                    workbook.sheet.verticalScrollbar.moveFn(xOffset);
-                  }}
+                  onClick={doSearchCB}
                 >
                   <SearchIcon size="small" />
                 </Fab>
