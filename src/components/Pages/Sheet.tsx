@@ -7,15 +7,19 @@ import {
 } from "@primer/octicons-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   pushServiceSheetDataUpdatePath,
   sheetServicePath,
 } from "../../../environment.development";
-import { RootState } from "../../slices";
-import { NotReady } from "../Form/NotReady";
+import { AppDispatch, RootState } from "../../slices";
 import "../../css/Sheet.css";
+import { clearKanji } from "../../slices/kanjiSlice";
+import { clearPhrases } from "../../slices/phraseSlice";
+import { setVersion } from "../../slices/versionSlice";
+import { clearVocabulary } from "../../slices/vocabularySlice";
+import { NotReady } from "../Form/NotReady";
 
 // TODO: import this?
 // service/helper/firebaseParse.ts
@@ -57,7 +61,7 @@ const defaultOp = {
 };
 
 function saveSheet(workbook: Spreadsheet | null, dataService: string) {
-  if (!workbook) return;
+  if (!workbook) return Promise.reject(new Error("Missing workbook"));
 
   // TODO: fix SpreadSheet.getData type
   const datas = workbook.getData() as { name: string }[];
@@ -76,9 +80,16 @@ function saveSheet(workbook: Spreadsheet | null, dataService: string) {
   container.append("sheetName", activeSheetName);
   container.append("sheetData", data);
 
-  void fetch(dataService + sheetServicePath, {
+  return fetch(dataService + sheetServicePath, {
     method: "PUT",
     body: container,
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Faild to save sheet");
+    }
+    return res
+      .json()
+      .then(({ hash }: { hash: string }) => ({ hash, name: activeSheetName }));
   });
 }
 
@@ -117,6 +128,7 @@ function pushSheet(workbook: Spreadsheet | null, dataService: string) {
 }
 
 export default function Sheet() {
+  const dispatch = useDispatch<AppDispatch>();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
 
@@ -170,8 +182,29 @@ export default function Sheet() {
   }, [dataService]);
 
   const saveSheetCB = useCallback(() => {
-    saveSheet(wbRef.current, dataService);
-  }, [dataService]);
+    void saveSheet(wbRef.current, dataService)?.then(({ hash, name }) => {
+      setTimeout(() => {
+        // wait for fs writes
+
+        switch (name) {
+          case "Kanji":
+            dispatch(setVersion({ name: "kanji", hash }));
+            dispatch(clearKanji());
+            break;
+          case "Vocabulary":
+            dispatch(setVersion({ name: "vocabulary", hash }));
+            dispatch(clearVocabulary());
+            break;
+          case "Phrases":
+            dispatch(setVersion({ name: "phrases", hash }));
+            dispatch(clearPhrases());
+            break;
+          default:
+            throw new Error("Incorrect sheet name");
+        }
+      }, 1000);
+    });
+  }, [dispatch, dataService]);
 
   const pushSheetCB = useCallback(() => {
     pushSheet(wbRef.current, dataService);

@@ -44,6 +44,7 @@ export async function putWorkbookXSAsync(
 ) {
   try {
     const { sheetName, sheetData } = await multipart<SheetData[]>(req, next);
+    let h;
     switch (fileType) {
       case ".xlsx": {
         // FIXME: will override other sheets in wb!
@@ -71,9 +72,10 @@ export async function putWorkbookXSAsync(
           const updateP = updateDataAndCache(resourceName, data, hash);
 
           updateP.catch(next);
+          h = hash
         }
 
-        res.sendStatus(200);
+        res.status(200).json({hash:h});
     }
   } catch (e) {
     next(e);

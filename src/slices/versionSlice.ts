@@ -39,6 +39,14 @@ const versionSlice = createSlice({
       state.particles = undefined;
       state.suffixes = undefined;
     },
+    setVersion(
+      state,
+      action: { payload: { name: keyof VersionInitSlice; hash: string } }
+    ) {
+      const { name, hash } = action.payload;
+
+      state[name] = hash;
+    },
   },
 
   extraReducers: (builder) => {
@@ -58,5 +66,5 @@ const versionSlice = createSlice({
   },
 });
 
-export const { clearVersions } = versionSlice.actions;
+export const { clearVersions, setVersion } = versionSlice.actions;
 export default versionSlice.reducer;
