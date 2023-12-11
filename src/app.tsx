@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
@@ -16,20 +16,30 @@ import { SettingsMeta } from "./components/Pages/Settings";
 import { SheetMeta } from "./components/Pages/Sheet";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import {
+  type AppEndpoints,
   SWMsgIncoming,
   SwMessage,
   swMessageInitCache,
+  swMessageRecacheData,
+  swMessageSetLocalServiceEndpoint,
   swMessageSubscribe,
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
+import { clearKanji } from "./slices/kanjiSlice";
+import { clearOpposites } from "./slices/oppositeSlice";
+import { clearParticleGame } from "./slices/particleSlice";
+import { clearPhrases } from "./slices/phraseSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
-import { getVersions } from "./slices/versionSlice";
+import { clearVersions, getVersions } from "./slices/versionSlice";
 import "./css/styles.css";
+import { clearVocabulary } from "./slices/vocabularySlice";
 import {
+  audioServicePath,
   dataServiceEndpoint,
+  dataServicePath,
   pronounceEndoint,
   uiEndpoint,
 } from "../environment.development";
@@ -48,9 +58,19 @@ const Settings = lazy(() => import("./components/Pages/Settings"));
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
 
+  const localServiceURL = useRef("");
+  const { darkMode, localServiceURL: prevSetLocalServURL } = useSelector(
+    ({ global }: RootState) => global
+  );
+
+  useEffect(() => {
+    if (prevSetLocalServURL && localServiceURL.current === "") {
+      localServiceURL.current = prevSetLocalServURL;
+    }
+  }, [dispatch, prevSetLocalServURL]);
+
   useEffect(() => {
     const swMessageHandler = (event: MessageEvent) => {
- 
       const data = event.data as SwMessage;
 
       if (data.type === SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG) {
@@ -60,11 +80,40 @@ export default function App() {
       }
 
       if (data.type === SWMsgIncoming.POST_INSTALL_ACTIVATE_DONE) {
-        swMessageInitCache({
+        void swMessageInitCache({
           ui: uiEndpoint,
           data: dataServiceEndpoint,
           media: pronounceEndoint,
         });
+
+        // Post install w/ localServiceUrl already set
+        if (localServiceURL.current !== "") {
+          const url = localServiceURL.current;
+
+          const appEndpoints: AppEndpoints = {
+            data: url + dataServicePath,
+            media: url + audioServicePath,
+          };
+
+          void swMessageSetLocalServiceEndpoint(appEndpoints)
+            .then(() => {
+              dispatch(clearVersions());
+              void dispatch(getVersions());
+            })
+            .then(() => {
+              void swMessageRecacheData();
+              dispatch(
+                logger("Service endpoint override: " + url, DebugLevel.WARN)
+              );
+            });
+
+          // clear saved states of data
+          dispatch(clearVocabulary());
+          dispatch(clearPhrases());
+          dispatch(clearKanji());
+          dispatch(clearParticleGame());
+          dispatch(clearOpposites());
+        }
       }
       // TODO: SERVICE_WORKER_NEW_TERMS_ADDED removed on hook refactor
       // else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
@@ -89,8 +138,6 @@ export default function App() {
       swMessageUnsubscribe(swMessageHandler);
     };
   }, [dispatch]);
-
-  const darkMode = useSelector(({ global }: RootState) => global.darkMode);
 
   const pClass = classNames({
     "d-flex flex-column": true,

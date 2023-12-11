@@ -4,9 +4,9 @@ export interface SwMessage {
   type: string;
 }
 
-export const UIMsg =Object.freeze({
-  UI_LOGGER_MSG: "ui_logger_msg"
-})
+export const UIMsg = Object.freeze({
+  UI_LOGGER_MSG: "ui_logger_msg",
+});
 
 export interface SWVersionInfo {
   swVersion: string;
@@ -27,16 +27,17 @@ export const SWMsgIncoming = Object.freeze({
   POST_INSTALL_ACTIVATE_DONE: "POST_INSTALL_ACTIVATE_DONE",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
-
 });
 
 export const SWMsgOutgoing = Object.freeze({
   SW_CACHE_DATA: "SW_CACHE_DATA",
   SW_VERSION: "SW_VERSION",
-  SET_ENDPOINT:"SET_ENDPOINT",
-  DO_HARD_REFRESH:"DO_HARD_REFRESH"
-
+  SET_ENDPOINT: "SET_ENDPOINT",
+  DO_HARD_REFRESH: "DO_HARD_REFRESH",
+  RECACHE_DATA: "RECACHE_DATA",
 });
+
+const serviceWorkerNotAvailableErr = new Error("Service Worker not available");
 
 export function swMessageSubscribe(
   swMessageEventListener: (e: MessageEvent) => void
@@ -63,15 +64,18 @@ export function swMessageSetLocalServiceEndpoint({
   media,
 }: AppEndpoints) {
   if (navigator.serviceWorker) {
-    navigator.serviceWorker.controller?.postMessage({
-      type: SWMsgOutgoing.SET_ENDPOINT,
-      endpoint: {
-        ui,
-        data,
-        media,
-      },
+    return navigator.serviceWorker.ready.then(() => {
+      navigator.serviceWorker.controller?.postMessage({
+        type: SWMsgOutgoing.SET_ENDPOINT,
+        endpoint: {
+          ui,
+          data,
+          media,
+        },
+      });
     });
   }
+  return Promise.reject(serviceWorkerNotAvailableErr);
 }
 
 /**
@@ -79,13 +83,31 @@ export function swMessageSetLocalServiceEndpoint({
  * - cache ui
  * - cache data
  */
-export function swMessageInitCache(endpoint:AppEndpoints){
-  navigator.serviceWorker.ready.then(()=>{
-    navigator.serviceWorker.controller?.postMessage({
-      type: SWMsgOutgoing.SW_CACHE_DATA,
-      endpoint}
-    )
-  })
+export function swMessageInitCache(endpoint: AppEndpoints) {
+  if (navigator.serviceWorker) {
+    return navigator.serviceWorker.ready.then(() => {
+      navigator.serviceWorker.controller?.postMessage({
+        type: SWMsgOutgoing.SW_CACHE_DATA,
+        endpoint,
+      });
+    });
+  }
+  return Promise.reject(serviceWorkerNotAvailableErr);
+}
+
+/**
+ * Post install/activate
+ * - cache data
+ */
+export function swMessageRecacheData() {
+  if (navigator.serviceWorker) {
+    return navigator.serviceWorker.ready.then(() => {
+      navigator.serviceWorker.controller?.postMessage({
+        type: SWMsgOutgoing.RECACHE_DATA,
+      });
+    });
+  }
+  return Promise.reject(serviceWorkerNotAvailableErr);
 }
 
 export function swMessageGetVersions() {
@@ -96,7 +118,6 @@ export function swMessageGetVersions() {
 
 export function swMessageDoHardRefresh() {
   navigator.serviceWorker.controller?.postMessage({
-    type:  SWMsgOutgoing.DO_HARD_REFRESH,
+    type: SWMsgOutgoing.DO_HARD_REFRESH,
   });
 }
-

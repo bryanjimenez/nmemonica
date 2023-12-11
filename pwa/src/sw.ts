@@ -301,6 +301,10 @@ export function initServiceWorker({
     };
   }
 
+  interface MessageRecacheData {
+    type: string;
+  }
+
   interface MessageHardRefresh {
     type: string;
   }
@@ -317,6 +321,10 @@ export function initServiceWorker({
   /** Post serviceworker install */
   function isMessageInitCache(m: AppSWMessage): m is MessageSetEndpoint {
     return (m as MessageSetEndpoint).type === SWMsgOutgoing.SW_CACHE_DATA;
+  }
+
+  function isMessageRecacheData(m: AppSWMessage): m is MessageRecacheData {
+    return (m as MessageRecacheData).type === SWMsgOutgoing.RECACHE_DATA;
   }
 
   /** User changing default service endpoint */
@@ -350,6 +358,16 @@ export function initServiceWorker({
 
       // Cache stuff
       postInstallEventHandler(event);
+      return;
+    }
+
+    if (
+      isMessageRecacheData(message) &&
+      message.type === SWMsgOutgoing.RECACHE_DATA
+    ) {
+      const dataCacheP = cacheAllDataResource();
+
+      event.waitUntil(dataCacheP);
       return;
     }
 
@@ -862,13 +880,13 @@ export function initServiceWorker({
   function appVersionReq(url: string) {
     // fetch new versions
     const f = fetch(url).then((res) => {
-      const resClone = res.clone()
+      const resClone = res.clone();
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }
 
       // update cache from new
-      caches.open(appDataCache).then((cache) => cache.put(url, resClone))
+      void caches.open(appDataCache).then((cache) => cache.put(url, resClone));
 
       return res;
     });
@@ -883,8 +901,6 @@ export function initServiceWorker({
         }
         return cacheRes;
       });
-
-
 
     // return whaterver is fastest
     return Promise.any([f, c]).catch((errs: Error[]) =>

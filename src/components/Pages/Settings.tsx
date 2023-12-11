@@ -639,7 +639,7 @@ export default function Settings() {
                   <TextField
                     error={userInputError}
                     size="small"
-                    label="Sheet Service Endpoint"
+                    label="Service Endpoint Override"
                     variant="outlined"
                     defaultValue={localServiceURL}
                     onChange={(event) => {
@@ -671,18 +671,21 @@ export default function Settings() {
                       }
 
                       if (validInput) {
-                        swMessageSetLocalServiceEndpoint(appEndpoints);
-
-                        dispatch(setLocalServiceURL(serviceUrl));
+                        void swMessageSetLocalServiceEndpoint(
+                          appEndpoints
+                        ).then(() => {
+                          dispatch(clearVersions());
+                          void dispatch(getVersions());
+                        });
 
                         // clear saved states of data
-                        dispatch(clearVersions());
-                        void dispatch(getVersions());
                         dispatch(clearVocabulary());
                         dispatch(clearPhrases());
                         dispatch(clearKanji());
                         dispatch(clearParticleGame());
                         dispatch(clearOpposites());
+
+                        dispatch(setLocalServiceURL(serviceUrl));
                       }
 
                       setUserInputError(!validInput);
@@ -718,7 +721,7 @@ export default function Settings() {
                       disabled={userInputError}
                     >
                       <Link to={"/sheet"} className="text-decoration-none">
-                        Sheets <UndoIcon/>
+                        Sheets <UndoIcon />
                       </Link>
                     </Button>
                   </div>
