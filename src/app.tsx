@@ -1,5 +1,7 @@
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 import classNames from "classnames";
-import { Suspense, lazy, useEffect, useRef } from "react";
+// import CssBaseline from '@mui/material/CssBaseline';
+import { Suspense, lazy, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
@@ -62,6 +64,14 @@ export default function App() {
   const { darkMode, localServiceURL: prevSetLocalServURL } = useSelector(
     ({ global }: RootState) => global
   );
+
+  const muiDarkTheme = useMemo(() => {
+    return createTheme({
+      palette: {
+        mode: darkMode ? "dark" : "light",
+      },
+    });
+  }, [darkMode]);
 
   useEffect(() => {
     if (prevSetLocalServURL && localServiceURL.current === "") {
@@ -145,33 +155,35 @@ export default function App() {
   });
 
   return (
-    <HashRouter basename="/">
-      <div id="page-content" className={pClass}>
-        <Console connected={true} />
-        <Navigation />
-        <Suspense fallback={<div />}>
-          <Routes>
-            <Route path="/" element={<Vocabulary />} />
-            <Route path={PhrasesMeta.location} element={<Phrases />} />
-            <Route path={VocabularyMeta.location} element={<Vocabulary />} />
-            <Route
-              path={OppositesGameMeta.location}
-              element={<OppositesGame />}
-            />
-            <Route path={KanaGameMeta.location} element={<KanaGame />} />
-            <Route path={KanjiMeta.location} element={<Kanji />} />
-            <Route path={KanjiGameMeta.location} element={<KanjiGame />} />
-            <Route path={KanjiGridMeta.location} element={<KanjiGrid />} />
-            <Route
-              path={ParticlesGameMeta.location}
-              element={<ParticlesGame />}
-            />
-            <Route path={SheetMeta.location} element={<Sheet />} />
-            <Route path={SettingsMeta.location} element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </div>
-    </HashRouter>
+    <ThemeProvider theme={muiDarkTheme}>
+      <HashRouter basename="/">
+        <div id="page-content" className={pClass}>
+          <Console connected={true} />
+          <Navigation />
+          <Suspense fallback={<div />}>
+            <Routes>
+              <Route path="/" element={<Vocabulary />} />
+              <Route path={PhrasesMeta.location} element={<Phrases />} />
+              <Route path={VocabularyMeta.location} element={<Vocabulary />} />
+              <Route
+                path={OppositesGameMeta.location}
+                element={<OppositesGame />}
+              />
+              <Route path={KanaGameMeta.location} element={<KanaGame />} />
+              <Route path={KanjiMeta.location} element={<Kanji />} />
+              <Route path={KanjiGameMeta.location} element={<KanjiGame />} />
+              <Route path={KanjiGridMeta.location} element={<KanjiGrid />} />
+              <Route
+                path={ParticlesGameMeta.location}
+                element={<ParticlesGame />}
+              />
+              <Route path={SheetMeta.location} element={<Sheet />} />
+              <Route path={SettingsMeta.location} element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </div>
+      </HashRouter>
+    </ThemeProvider>
   );
 }
