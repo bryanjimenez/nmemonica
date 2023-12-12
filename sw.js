@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "c76059dc", initCacheVer: "2e9d7858" };
+const buildConstants = { swVersion: "3424b701", initCacheVer: "2e9d7858" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -435,6 +435,7 @@ function initServiceWorker({
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
+    clientLogger("override: " + urlServiceData, DebugLevel.DEBUG);
     if (e.request.method !== "GET") {
       return;
     }
