@@ -1,9 +1,16 @@
-const buildConstants = { swVersion: "3424b701", initCacheVer: "2e9d7858" };
+const buildConstants = {
+  swVersion: "39b5cc28",
+  initCacheVer: "9c8bb8cb",
+  urlAppUI: "https://bryanjimenez.github.io/nmemonica",
+  urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
+  urlPronounceService:
+    "https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce",
+  audioPath: "/g_translate_pronounce",
+  dataPath: "/lambda",
+};
 
 const SWMsgOutgoing = {
-  SW_CACHE_DATA: "SW_CACHE_DATA",
   SW_VERSION: "SW_VERSION",
-  SET_ENDPOINT: "SET_ENDPOINT",
   DO_HARD_REFRESH: "DO_HARD_REFRESH",
   RECACHE_DATA: "RECACHE_DATA",
 };
@@ -36,6 +43,11 @@ function initServiceWorker({
   swVersion,
   initCacheVer,
   cacheFiles,
+  urlAppUI,
+  urlDataService,
+  urlPronounceService: _urlPronounceService,
+  audioPath,
+  dataPath,
   getParam,
   removeParam,
 }) {
@@ -52,11 +64,6 @@ function initServiceWorker({
   const indexedDBStore = "media";
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
-  let urlSourceUI;
-  let urlServiceData;
-  let urlServicePronounceURL;
-  let getDataPath;
-  let getAudioPath;
   const dataVerPath = "/cache.json";
   const dataSourcePath = [
     "/phrases.json",
@@ -76,24 +83,26 @@ function initServiceWorker({
   }
   /**
    * Update specified data set and hash cache from the local service.
-   * @param serviceUrl
+   * @param pushUrl
    * @param name of data set
    * @param hash
    */
-  function updateFromLocalService(serviceUrl, name, hash) {
+  function updateFromLocalService(pushUrl, name, hash) {
     return caches.open(appDataCache).then((cache) => {
-      const url = `${urlServiceData}/${name}.json.v${hash}`;
-      if (urlServiceData !== serviceUrl) {
-        clientLogger(
-          "Push service url does not match service worker",
-          DebugLevel.ERROR,
-        );
-        // if they don't match user_DataServiceUrl will be overwritten with serviceUrl's data
-        return;
-      }
-      return fetch(`${serviceUrl}/${name}.json`).then((fetchRes) =>
+      const url = `${pushUrl}/${name}.json.v${hash}`;
+      // TODO: what if ip changed?
+      // if (url_ServiceData !== pushUrl) {
+      clientLogger(
+        // "Push service url does not match service worker",
+        "Validate override url matches push url",
+        DebugLevel.ERROR,
+      );
+      // if they don't match user_DataServiceUrl will be overwritten with serviceUrl's data
+      // return;
+      // }
+      return fetch(`${pushUrl}/${name}.json`).then((fetchRes) =>
         cache
-          .match(urlServiceData + dataVerPath)
+          .match(pushUrl + dataVerPath)
           .then((verRes) => verRes.json())
           .then((verJson) => {
             verJson[name] = hash;
@@ -104,7 +113,7 @@ function initServiceWorker({
               // update version object
               updateCacheWithJSON(
                 appDataCache,
-                urlServiceData + dataVerPath,
+                pushUrl + dataVerPath,
                 newVerJson,
               ),
               // update data object
@@ -169,14 +178,14 @@ function initServiceWorker({
   /**
    * Cache all data resources
    */
-  function cacheAllDataResource() {
+  function cacheAllDataResource(baseUrl) {
     return caches
       .open(appDataCache)
       .then((cache) =>
-        cache.add(urlServiceData + dataVerPath).then(() =>
+        cache.add(baseUrl + dataVerPath).then(() =>
           Promise.all(
             dataSourcePath.map((path) => {
-              const url = urlServiceData + path;
+              const url = baseUrl + path;
               return getVersionForData(url).then((v) => cacheVerData(url, v));
             }),
           ),
@@ -201,8 +210,8 @@ function initServiceWorker({
    * Cache the root / assets
    */
   function cacheAllRoot() {
-    const a = urlSourceUI;
-    const b = urlSourceUI + "/";
+    const a = urlAppUI;
+    const b = urlAppUI + "/";
     return caches
       .open(appStaticCache)
       .then((cache) => cache.addAll([a, b]))
@@ -214,16 +223,6 @@ function initServiceWorker({
     void swSelf.skipWaiting();
     const versions = getVersions();
     clientMsg("SW_VERSION", versions);
-  }
-  /**
-   * Cache all resources
-   * @param e
-   */
-  function postInstallEventHandler(e) {
-    const dataCacheP = cacheAllDataResource();
-    const rootCacheP = cacheAllRoot();
-    const staticAssetCacheP = cacheAllStaticAssets();
-    e.waitUntil(Promise.all([dataCacheP, staticAssetCacheP, rootCacheP]));
   }
   function activateEventHandler(e) {
     void swSelf.clients
@@ -244,21 +243,19 @@ function initServiceWorker({
           return swSelf.clients.claim();
         })
         .then(() => {
+          const dataCacheP = cacheAllDataResource(urlDataService);
+          const rootCacheP = cacheAllRoot();
+          const staticAssetCacheP = cacheAllStaticAssets();
+          return Promise.all([dataCacheP, rootCacheP, staticAssetCacheP]);
+        })
+        .then(() => {
           // Notify app service worker is ready
           clientMsg(SWMsgIncoming.POST_INSTALL_ACTIVATE_DONE, {});
         }),
     );
   }
-  /** Post serviceworker install */
-  function isMessageInitCache(m) {
-    return m.type === SWMsgOutgoing.SW_CACHE_DATA;
-  }
   function isMessageRecacheData(m) {
     return m.type === SWMsgOutgoing.RECACHE_DATA;
-  }
-  /** User changing default service endpoint */
-  function isMessageOverrideEndpoint(m) {
-    return m.type === SWMsgOutgoing.SET_ENDPOINT;
   }
   function isMessageHardRefresh(m) {
     return m.type === SWMsgOutgoing.DO_HARD_REFRESH;
@@ -269,43 +266,33 @@ function initServiceWorker({
   function messageEventHandler(event) {
     const message = event.data;
     if (
-      isMessageInitCache(message) &&
-      message.type === SWMsgOutgoing.SW_CACHE_DATA
-    ) {
-      const { ui, data, media } = message.endpoint;
-      urlSourceUI = ui;
-      urlServiceData = data;
-      urlServicePronounceURL = media;
-      getDataPath = data.slice(data.lastIndexOf("/"));
-      getAudioPath = media.slice(media.lastIndexOf("/"));
-      // Cache stuff
-      postInstallEventHandler(event);
-      return;
-    }
-    if (
       isMessageRecacheData(message) &&
       message.type === SWMsgOutgoing.RECACHE_DATA
     ) {
-      const dataCacheP = cacheAllDataResource();
+      const dataCacheP = fetch(message.endpoints.data + dataVerPath)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Local Service Unavailable");
+          }
+        })
+        .then(() => {
+          var _a;
+          return cacheAllDataResource(
+            (_a = message.endpoints.data) !== null && _a !== void 0
+              ? _a
+              : urlDataService,
+          );
+        });
       event.waitUntil(dataCacheP);
-      return;
-    }
-    if (
-      isMessageOverrideEndpoint(message) &&
-      message.type === SWMsgOutgoing.SET_ENDPOINT
-    ) {
-      const { data, media } = message.endpoint;
-      urlServiceData = data;
-      urlServicePronounceURL = media;
-      getDataPath = data.slice(data.lastIndexOf("/"));
-      getAudioPath = media.slice(media.lastIndexOf("/"));
       return;
     }
     if (
       isMessageHardRefresh(message) &&
       message.type === SWMsgOutgoing.DO_HARD_REFRESH
     ) {
-      fetch(urlServiceData + dataVerPath)
+      const overrie = /*message.url ??*/ urlDataService;
+      // TODO: hard refresh send override refresh url
+      fetch(overrie + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
@@ -435,42 +422,28 @@ function initServiceWorker({
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
-    clientLogger("override: " + urlServiceData, DebugLevel.DEBUG);
     if (e.request.method !== "GET") {
       return;
     }
     switch (true) {
-      case /* cache.json */ path.startsWith(getDataPath + dataVerPath):
-        e.respondWith(appVersionReq(urlServiceData + dataVerPath));
+      case /* cache.json */ path.startsWith(dataPath + dataVerPath):
+        e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
       case /* data */ req.headers.get(dataVersionHeader) !== null:
         {
-          const asset = path.slice(path.lastIndexOf("/"));
-          const rewriteUrl = urlServiceData + asset;
           const ver = e.request.headers.get(dataVersionHeader);
-          e.respondWith(appDataReq(rewriteUrl, ver));
+          e.respondWith(appDataReq(url, ver));
         }
         break;
-      case /* UI asset */ url.startsWith(urlSourceUI) &&
+      case /* UI asset */ url.startsWith(urlAppUI) &&
         !url.endsWith(".hot-update.json"):
-        {
-          // No rewrite for UI
-          e.respondWith(appAssetReq(url));
-        }
+        e.respondWith(appAssetReq(url));
         break;
-      case /* pronounce override */ path.startsWith(getAudioPath + override):
-        {
-          const query = path.slice(path.lastIndexOf("?"));
-          const rewriteUrl = urlServicePronounceURL + query;
-          e.respondWith(pronounceOverride(rewriteUrl));
-        }
+      case /* pronounce override */ path.startsWith(audioPath + override):
+        e.respondWith(pronounceOverride(url));
         break;
-      case /* pronounce */ path.startsWith(getAudioPath):
-        {
-          const query = path.slice(path.lastIndexOf("?"));
-          const rewriteUrl = urlServicePronounceURL + query;
-          e.respondWith(pronounce(rewriteUrl));
-        }
+      case /* pronounce */ path.startsWith(audioPath):
+        e.respondWith(pronounce(url));
         break;
       default:
         /* everything else */
@@ -739,11 +712,11 @@ function initServiceWorker({
    */
   function appVersionCacheOnFailFetch(authority) {
     return caches.open(appDataCache).then((cache) =>
-      cache.match(authority + getDataPath + dataVerPath).then((cacheRes) => {
+      cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
         if (cacheRes) {
           return Promise.resolve(cacheRes);
         } else {
-          return recache(appDataCache, authority + getDataPath + dataVerPath);
+          return recache(appDataCache, authority + dataPath + dataVerPath);
         }
       }),
     );
@@ -900,8 +873,8 @@ const cacheFiles = [
   "192.4333daee.js",
   "229.cda58fc5.js",
   "23.6af8dc54.js",
-  "232.ba17d5d3.css",
-  "232.ba17d5d3.js",
+  "232.59395d1b.css",
+  "232.59395d1b.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -921,8 +894,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.ba2ba13f.css",
-  "main.ba2ba13f.js",
+  "main.124edf10.css",
+  "main.124edf10.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
