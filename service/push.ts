@@ -3,7 +3,7 @@ import webPush, { WebPushError } from "web-push";
 import fs from "fs";
 import { dataPath, httpsPort, serviceIP, subscriptionFile } from "./index.js";
 import { multipart } from "./helper/multipart.js";
-import { SheetData } from "./helper/firebaseParse.js";
+import { SheetData } from "./helper/jsonHelper.js";
 import { sheetDataToJSON, updateDataAndCache } from "./data.js";
 import path from "path";
 import "dotenv/config";
@@ -119,10 +119,10 @@ export async function pushSheetDataAsync(
   next: NextFunction
 ) {
   try {
-    const { sheetName, sheetData } = await multipart<SheetData[]>(req, next);
-    const { data, hash } = sheetDataToJSON(sheetName, sheetData);
+    const { sheetName, sheetData } = await multipart<SheetData>(req, next);
+    const { data, hash } = sheetDataToJSON(sheetData);
 
-    const resourceName = sheetName.toLowerCase();
+    const resourceName = sheetData.name.toLowerCase();
     const updateP = updateDataAndCache(resourceName, data, hash);
 
     // service worker will only work on https

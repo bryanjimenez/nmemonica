@@ -27,20 +27,13 @@ export interface SheetData {
 }
 
 /**
- * Parse xspreadsheet to firebase
+ * x to 2d string[][]
  *
- * Creates a matrix of strings from xSheetObj
+ * Creates a matrix of strings from xSpreadsheet data object
  * @param xSheetObj
  */
-export function xtof(xSheetObj: SheetData[], sheetName: string) {
-  // const [sheet1] =  xSheetObj
-
-  const selectedSheet = xSheetObj.find((sheet) => sheet.name === sheetName);
-  if (selectedSheet === undefined) {
-    throw new Error(`Sheet ${sheetName} not found`);
-  }
-
-  const y = Object.values(selectedSheet.rows).reduce<string[][]>(
+export function xtom(xSheetObj: SheetData) {
+  const matrix = Object.values(xSheetObj.rows).reduce<string[][]>(
     (yCol, row) => {
       if (typeof row !== "number" && row.cells) {
         // if cell is empty row will not contain index
@@ -62,22 +55,18 @@ export function xtof(xSheetObj: SheetData[], sheetName: string) {
     []
   );
 
-  return y;
+  return matrix;
 }
 
 /**
  * x to cell array
+ *
+ * Creates a cell array from xSpreadsheet data object
  * @param xSheetObj
  * @param sheetName
  */
-export function xtoc(xSheetObj: SheetData[], sheetName: string) {
-  // const [sheet1] =  xSheetObj
-
-  const selectedSheet = xSheetObj.find((sheet) => sheet.name === sheetName);
-  if (selectedSheet === undefined) {
-    throw new Error(`Sheet ${sheetName} not found`);
-  }
-  const y = Object.values(selectedSheet.rows).reduce<
+export function xtoc(xSheetObj: SheetData) {
+  const cellArray = Object.values(xSheetObj.rows).reduce<
     [number, number, string][] | []
   >((acc, row, xIdx) => {
     if (typeof row !== "number" && row.cells) {
@@ -90,7 +79,12 @@ export function xtoc(xSheetObj: SheetData[], sheetName: string) {
     return acc;
   }, []);
 
-  return y;
+  return cellArray;
+}
+
+export function vocabularyToJSON(sheetData: SheetData) {
+  const stringArray = xtom(sheetData);
+  return sheets_sync_vocabulary(stringArray);
 }
 
 export function sheets_sync_vocabulary(sheetData: string[][]) {
@@ -112,6 +106,10 @@ export function sheets_sync_vocabulary(sheetData: string[][]) {
           romaji: el[RM],
           english: el[EN],
         };
+
+        if (!vocabulary.japanese) {
+          throw new Error("Missing first cell (index)");
+        }
 
         const key: string = md5(vocabulary.japanese);
 
@@ -147,6 +145,11 @@ export function sheets_sync_vocabulary(sheetData: string[][]) {
   return { hash, vocabularyAfter };
 }
 
+export function phrasesToJSON(sheetData: SheetData) {
+  const stringArray = xtom(sheetData);
+  return sheets_sync_phrases(stringArray);
+}
+
 export function sheets_sync_phrases(sheetData: string[][]) {
   const JP = 0,
     // ORDER = -1,
@@ -165,6 +168,10 @@ export function sheets_sync_phrases(sheetData: string[][]) {
           japanese: el[JP],
           english: el[EN],
         };
+
+        if (!phrase.japanese) {
+          throw new Error("Missing first cell (index)");
+        }
 
         const key = md5(phrase.japanese);
 
@@ -205,6 +212,11 @@ export function sheets_sync_phrases(sheetData: string[][]) {
   return { hash, phrasesAfter };
 }
 
+export function kanjiToJSON(sheetData: SheetData) {
+  const stringArray = xtom(sheetData);
+  return sheets_sync_kanji(stringArray);
+}
+
 export function sheets_sync_kanji(sheetData: string[][]) {
   const KANJI = 0,
     EN = 1,
@@ -220,6 +232,10 @@ export function sheets_sync_kanji(sheetData: string[][]) {
         kanji: el[KANJI],
         english: el[EN],
       };
+
+      if (!kanji.kanji) {
+        throw new Error("Missing first cell (index)");
+      }
 
       const key = md5(kanji.kanji);
 

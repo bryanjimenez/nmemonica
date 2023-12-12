@@ -72,7 +72,7 @@ function saveSheet(workbook: Spreadsheet | null, dataService: string) {
   );
 
   const container = new FormData();
-  const data = new Blob([JSON.stringify([activeSheetData])], {
+  const data = new Blob([JSON.stringify(activeSheetData)], {
     type: "application/json",
   });
 
@@ -113,7 +113,7 @@ function pushSheet(workbook: Spreadsheet | null, dataService: string) {
   const { activeSheetName, activeSheetData } = getActiveSheet(workbook);
 
   const container = new FormData();
-  const data = new Blob([JSON.stringify([activeSheetData])], {
+  const data = new Blob([JSON.stringify(activeSheetData)], {
     type: "application/json",
   });
 

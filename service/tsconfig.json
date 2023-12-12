@@ -1,21 +1,24 @@
 {
   // Data Service
   "extends": "../tsconfig.json",
-
   "compilerOptions": {
     "composite": true,
     "rootDir": "../",
     "outDir": "../.tsc-dist/",
 
     "strict": true,
-    "module": "NodeNext",
     "target": "ES2020",
+
+    "module": "NodeNext",
+    "lib": ["ES2021.String"],
+
     "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
 
     "allowJs": true, // just for environment-host.cjs
     "checkJs": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "removeComments": true
   },
   "include": [
     ".",
@@ -24,5 +27,15 @@
     "../environment-signed-ca.cjs",
     "../environment.production.ts",
     "../console.cjs"
-  ]
+  ],
+
+  "ts-node": {
+    // Override tsc config just for run
+    // Skip stuff for faster loading
+    "transpileOnly": true,
+    "skipLibCheck": true,
+
+    // ERR_UNKNOWN_FILE_EXTENSION .ts
+    "esm": true
+  }
 }

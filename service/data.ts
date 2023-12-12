@@ -1,11 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import {
   type SheetData,
-  sheets_sync_kanji,
-  sheets_sync_phrases,
-  sheets_sync_vocabulary,
-  xtof,
-} from "./helper/firebaseParse.js";
+  vocabularyToJSON,
+  phrasesToJSON,
+  kanjiToJSON,
+} from "./helper/jsonHelper.js";
 import { multipart } from "./helper/multipart.js";
 import fs, { createWriteStream, createReadStream } from "node:fs";
 import path from "node:path";
@@ -41,15 +40,15 @@ export function getData(req: Request, res: Response) {
  * Update JSON (vocabulary) resource
  */
 export async function putData(req: Request, res: Response, next: NextFunction) {
-  const { sheetName, sheetData } = await multipart<SheetData[]>(req, next);
+  const { sheetData } = await multipart<SheetData>(req, next);
 
-  const resource = sheetName.toLowerCase();
+  const resource = sheetData.name.toLowerCase();
 
   if (!allowedResources.filter((r) => r !== "cache").includes(resource)) {
     res.sendStatus(400);
   }
 
-  const { data, hash } = sheetDataToJSON(sheetName, sheetData);
+  const { data, hash } = sheetDataToJSON(sheetData);
 
   const fileP = updateData(resource, data);
   const hashP = updateLocalCache(resource, hash);
@@ -76,26 +75,25 @@ export async function putData(req: Request, res: Response, next: NextFunction) {
 /**
  * Parses sheet data into app's json format
  */
-export function sheetDataToJSON(sheetName: string, sheetData: SheetData[]) {
-  const d = xtof(sheetData, sheetName);
+export function sheetDataToJSON(sheetData: SheetData) {
   let data: Record<string, unknown> = {};
   let hash = "";
 
-  switch (sheetName) {
+  switch (sheetData.name) {
     case "Vocabulary": {
-      const { vocabularyAfter, hash: h } = sheets_sync_vocabulary(d);
+      const { vocabularyAfter, hash: h } = vocabularyToJSON(sheetData);
       data = vocabularyAfter;
       hash = h;
       break;
     }
     case "Phrases": {
-      const { phrasesAfter, hash: h } = sheets_sync_phrases(d);
+      const { phrasesAfter, hash: h } = phrasesToJSON(sheetData);
       data = phrasesAfter;
       hash = h;
       break;
     }
     case "Kanji": {
-      const { kanjiList, hash: h } = sheets_sync_kanji(d);
+      const { kanjiList, hash: h } = kanjiToJSON(sheetData);
       data = kanjiList;
       hash = h;
       break;

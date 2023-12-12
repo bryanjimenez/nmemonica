@@ -37,7 +37,8 @@ tsNode.register({
     "./test/**/*.tsx": "cjs",
     "./src/**/*.ts": "cjs",
     "./src/**/*.tsx": "cjs",
-    "./pwa/**/*.ts":"cjs"
+    "./pwa/**/*.ts":"cjs",
+    "./service/**/*.ts": "cjs",
   },
 });
 

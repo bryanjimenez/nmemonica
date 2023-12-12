@@ -6,7 +6,6 @@ const { lan } = require("./environment-host.cjs");
 const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
 const { yellow, red } = require("./console.cjs");
 const ca = require("./environment-signed-ca.cjs");
-const licenseWriter = require("./license-writer.cjs");
 
 require("dotenv").config();
 // import { fileURLToPath } from "url";
@@ -26,25 +25,6 @@ module.exports = function (env, argv) {
     console.log(yellow("Creating Certificate Authority"));
     ca.create();
   }
-
-  const appendLicense = (lic) => {
-    const xlsxLicense = fs.readFileSync("./node_modules/xlsx/LICENSE", {
-      encoding: "utf-8",
-    });
-
-    const sheetJS = {
-      name: "xlsx",
-      version: "0.20.0",
-      author: "SheetJS LLC",
-      repository: "https://git.sheetjs.com/SheetJS/sheetjs",
-      licenseName: "Apache 2.0",
-      licenseText: xlsxLicense,
-    };
-
-    const appended = { dependencies: [...lic.dependencies, sheetJS] };
-
-    return licenseWriter(appended);
-  };
 
   return {
     entry: {
@@ -67,9 +47,7 @@ module.exports = function (env, argv) {
       }),
 
       // output license info
-      ...(isProduction
-        ? [new LicenseCheckerWebpackPlugin({ outputWriter: appendLicense })]
-        : []),
+      ...(isProduction ? [new LicenseCheckerWebpackPlugin()] : []),
       // index.html template
       new rspack.HtmlRspackPlugin({
         template: `index${isProduction ? ".production" : ""}.html`,
