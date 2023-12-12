@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "39b5cc28",
-  initCacheVer: "dac9f9b6",
+  swVersion: "efa2fd36",
+  initCacheVer: "fc12bb4d",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -290,9 +290,7 @@ function initServiceWorker({
       isMessageHardRefresh(message) &&
       message.type === SWMsgOutgoing.DO_HARD_REFRESH
     ) {
-      const overrie = /*message.url ??*/ urlDataService;
-      // TODO: hard refresh send override refresh url
-      fetch(overrie + dataVerPath)
+      fetch(urlDataService + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
@@ -413,15 +411,22 @@ function initServiceWorker({
       return dbResults;
     }
   }
-  function noCaching(e) {
+  function noCaching(request) {
     // for debugging purposes
-    return fetch(e.request);
+    return fetch(request);
   }
   function fetchEventHandler(e) {
     const req = e.request.clone();
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
+    // TODO: proper location ...
+    if (req.headers.get("X-No-Cache") !== null) {
+      // remove header
+      const r = toRequest(req.url);
+      e.respondWith(noCaching(r));
+      return;
+    }
     if (e.request.method !== "GET") {
       return;
     }
@@ -447,7 +452,7 @@ function initServiceWorker({
         break;
       default:
         /* everything else */
-        e.respondWith(noCaching(e));
+        e.respondWith(noCaching(e.request));
         break;
     }
   }
@@ -873,8 +878,8 @@ const cacheFiles = [
   "192.4333daee.js",
   "229.cda58fc5.js",
   "23.6af8dc54.js",
-  "232.df959868.css",
-  "232.df959868.js",
+  "232.fd1a5d7d.css",
+  "232.fd1a5d7d.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -894,8 +899,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.ca99aa94.css",
-  "main.ca99aa94.js",
+  "main.d37f331a.css",
+  "main.d37f331a.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
