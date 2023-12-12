@@ -1,4 +1,4 @@
-const buildConstants = { swVersion: "c76059dc", initCacheVer: "27794e89" };
+const buildConstants = { swVersion: "c76059dc", initCacheVer: "2e9d7858" };
 
 const SWMsgOutgoing = {
   SW_CACHE_DATA: "SW_CACHE_DATA",
@@ -920,8 +920,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.60955266.css",
-  "main.60955266.js",
+  "main.ba2ba13f.css",
+  "main.ba2ba13f.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
