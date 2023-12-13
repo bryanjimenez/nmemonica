@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "efa2fd36",
-  initCacheVer: "fc12bb4d",
+  swVersion: "b5bb5926",
+  initCacheVer: "5d79103e",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -416,25 +416,30 @@ function initServiceWorker({
     return fetch(request);
   }
   function fetchEventHandler(e) {
+    if (e.request.method !== "GET") {
+      return;
+    }
     const req = e.request.clone();
     const url = e.request.url;
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
-    // TODO: proper location ...
-    if (req.headers.get("X-No-Cache") !== null) {
-      // remove header
-      const r = toRequest(req.url);
-      e.respondWith(noCaching(r));
-      return;
-    }
-    if (e.request.method !== "GET") {
-      return;
-    }
     switch (true) {
+      case /* explicit no cache */ req.headers.has("X-No-Cache"): {
+        // remove header
+        let h = {};
+        req.headers.forEach((val, key) => {
+          if (key !== "x-no-cache") {
+            h[key] = val;
+          }
+        });
+        const noCacheReq = new Request(req.url, { headers: new Headers(h) });
+        e.respondWith(noCaching(noCacheReq));
+        break;
+      }
       case /* cache.json */ path.startsWith(dataPath + dataVerPath):
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
-      case /* data */ req.headers.get(dataVersionHeader) !== null:
+      case /* data */ req.headers.has(dataVersionHeader):
         {
           const ver = e.request.headers.get(dataVersionHeader);
           e.respondWith(appDataReq(url, ver));
@@ -878,8 +883,8 @@ const cacheFiles = [
   "192.4333daee.js",
   "229.cda58fc5.js",
   "23.6af8dc54.js",
-  "232.fd1a5d7d.css",
-  "232.fd1a5d7d.js",
+  "232.93f00285.css",
+  "232.93f00285.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -899,8 +904,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.d37f331a.css",
-  "main.d37f331a.js",
+  "main.18282fab.css",
+  "main.18282fab.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
