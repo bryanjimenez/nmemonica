@@ -69,6 +69,9 @@ export async function putWorkbookXSAsync(
           if (!fs.existsSync(backup)) {
             fs.mkdirSync(backup, { recursive: true });
           }
+
+          const { data, hash } = sheetDataToJSON(sheetData);
+
           objectToCsv(`${backup}/${sheetData.name}.csv`, sheetData);
 
           // working files
@@ -76,7 +79,6 @@ export async function putWorkbookXSAsync(
             path.normalize(`${CSV_DIR}/${sheetData.name}.csv`),
             sheetData
           );
-          const { data, hash } = sheetDataToJSON(sheetData);
           const resourceName = sheetData.name.toLowerCase();
           const updateP = updateDataAndCache(resourceName, data, hash);
 

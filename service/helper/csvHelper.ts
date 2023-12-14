@@ -185,6 +185,15 @@ function csvLineToObjParserBuilder(sheetName: string, delimiter: string) {
   };
 }
 
+export function getLastRow(row: Sheet["rows"][0]) {
+  const largest = Object.keys(row.cells).reduce(
+    (big, x) => (big < Number(x) ? Number(x) : big),
+    0
+  );
+
+  return largest;
+}
+
 export function objectToCSVInternal(
   object: Sheet,
   csvPath?: string,

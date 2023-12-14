@@ -64,13 +64,7 @@ const defaultOp = {
 function saveSheet(workbook: Spreadsheet | null, dataService: string) {
   if (!workbook) return Promise.reject(new Error("Missing workbook"));
 
-  // TODO: fix SpreadSheet.getData type
-  const datas = workbook.getData() as { name: string }[];
-
-  const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
-  const activeSheetData: unknown = datas.find(
-    ({ name }: { name: string }) => name === activeSheetName
-  );
+  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
 
   const container = new FormData();
   const data = new Blob([JSON.stringify(activeSheetData)], {
@@ -96,14 +90,16 @@ function saveSheet(workbook: Spreadsheet | null, dataService: string) {
 
 function getActiveSheet(workbook: Spreadsheet) {
   // TODO: fix SpreadSheet.getData type
-  const datas = workbook.getData() as SheetData[];
+  const sheets = workbook.getData() as SheetData[];
 
   const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
   const activeSheetData =
-    datas.find(({ name }: { name: string }) => name === activeSheetName) ??
-    datas[0];
+    sheets.find(({ name }: { name: string }) => name === activeSheetName) ??
+    sheets[0];
 
-  return { activeSheetName, activeSheetData };
+  const data = removeLastRowIfBlank(activeSheetData);
+
+  return { activeSheetName, activeSheetData: data };
 }
 /**
  * Send push to subscribed clients
@@ -128,6 +124,53 @@ function pushSheet(workbook: Spreadsheet | null, dataService: string) {
   });
 }
 
+export function getLastCellIdx(
+  x: SheetData["rows"] | SheetData["rows"][0]["cells"]
+) {
+  const largest = Object.keys(x).reduce(
+    (big, x) => (big < Number(x) ? Number(x) : big),
+    0
+  );
+
+  return largest;
+}
+
+export function addExtraRow(xSheetObj: SheetData[]) {
+  const extraAdded = xSheetObj.reduce<SheetData[]>((acc, o) => {
+    const last = getLastCellIdx(o.rows);
+
+    const n = {
+      ...o,
+      rows: {
+        ...o.rows,
+        [String(last + 1)]: { cells: {} },
+        len: o.rows.len + 1,
+      },
+    };
+
+    return [...acc, n];
+  }, []);
+
+  return extraAdded;
+}
+
+export function removeLastRowIfBlank(o: SheetData) {
+  const clone = { ...o };
+
+  const last = getLastCellIdx(o.rows);
+
+  if (
+    Object.values(o.rows[last].cells).every(
+      (c) => c.text === undefined || c.text.length === 0 || c.text.trim() === ""
+    )
+  ) {
+    delete clone.rows[last];
+    clone.rows.len -= 1;
+  }
+
+  return clone;
+}
+
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -144,28 +187,27 @@ export default function Sheet() {
     const gridEl = document.createElement("div");
 
     void fetch(dataService + sheetServicePath, { method: "GET" }).then((res) =>
-      res
-        .json()
-        .then(({ xSheetObj }: { xSheetObj: Record<string, unknown> }) => {
-          const grid = new Spreadsheet(gridEl, defaultOp).loadData(xSheetObj);
-          // console.log(grid);
-          // console.log(grid.bottombar.activeEl.el.innerHTML);
+      res.json().then(({ xSheetObj }: { xSheetObj: SheetData[] }) => {
+        const data = addExtraRow(xSheetObj);
+        const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
+        // console.log(grid);
+        // console.log(grid.bottombar.activeEl.el.innerHTML);
 
-          // grid.bottombar.items.forEach(({ el }: { el: HTMLElement }) => {
-          //   el.addEventListener("click", function () {
-          //     console.log(el.innerHTML);
-          //   });
-          // });
+        // grid.bottombar.items.forEach(({ el }: { el: HTMLElement }) => {
+        //   el.addEventListener("click", function () {
+        //     console.log(el.innerHTML);
+        //   });
+        // });
 
-          grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
+        grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
-          // TODO:
-          // grid.setMaxCols(0, sheet1Cols);
-          // grid.setMaxCols(1, sheet2Cols);
-          // grid.setMaxCols(2, sheet3Cols);
+        // TODO:
+        // grid.setMaxCols(0, sheet1Cols);
+        // grid.setMaxCols(1, sheet2Cols);
+        // grid.setMaxCols(2, sheet3Cols);
 
-          wbRef.current = grid;
-        })
+        wbRef.current = grid;
+      })
     );
 
     containerRef.current?.appendChild(gridEl);
