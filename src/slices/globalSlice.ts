@@ -12,7 +12,11 @@ import { particleFromLocalStorage } from "./particleSlice";
 import { phraseFromLocalStorage } from "./phraseSlice";
 import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
+import { VersionInitSlice } from "./versionSlice";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
+import {
+  dataServicePath,
+} from "../../environment.development";
 import { type ConsoleMessage } from "../components/Form/Console";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
@@ -20,7 +24,12 @@ import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
-import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
+import {
+  SWMsgIncoming,
+  SWRequestHeader,
+  UIMsg,
+} from "../helper/serviceWorkerHelper";
+import { rewriteUrl } from "../hooks/useRewriteUrl";
 import type { ValuesOf } from "../typings/raw";
 
 export interface MemoryDataObject {
@@ -126,6 +135,28 @@ export const localStorageSettingsInitialized = createAsyncThunk(
     }
 
     return mergedGlobalSettings;
+  }
+);
+
+export const setLocalServiceURL = createAsyncThunk(
+  "setting/setLocalServiceURL",
+  async (arg: string) => {
+    const localServiceURL = arg;
+
+    const url = rewriteUrl(localServiceURL, dataServicePath) + "/cache.json";
+
+    // TODO: do service handshake verif
+    return fetch(url, {
+      headers: { [SWRequestHeader.NO_CACHE]: "ServiceWorkerNoCache" },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Local Service not responding");
+        }
+
+        return res.json();
+      })
+      .then((versions: VersionInitSlice) => ({ versions, localServiceURL }));
   }
 );
 
@@ -238,18 +269,6 @@ const globalSlice = createSlice({
         payload: { msg, lvl, type },
       }),
     },
-    setLocalServiceURL(state, action: { payload: string }) {
-      const path = "/global/";
-      const attr = "localServiceURL";
-      const time = new Date();
-      state.localServiceURL = localStoreAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        action.payload
-      );
-    },
   },
 
   extraReducers: (builder) => {
@@ -276,6 +295,31 @@ const globalSlice = createSlice({
 
       state.memory = { quota, usage, persistent };
     });
+    builder.addCase(setLocalServiceURL.rejected, (state) => {
+      const path = "/global/";
+      const attr = "localServiceURL";
+      const time = new Date();
+      state.localServiceURL = localStoreAttrUpdate(
+        time,
+        { global: state },
+        path,
+        attr,
+        ""
+      );
+    }),
+      builder.addCase(setLocalServiceURL.fulfilled, (state, action) => {
+        const overrideUrl = action.payload.localServiceURL;
+        const path = "/global/";
+        const attr = "localServiceURL";
+        const time = new Date();
+        state.localServiceURL = localStoreAttrUpdate(
+          time,
+          { global: state },
+          path,
+          attr,
+          overrideUrl
+        );
+      });
   },
 });
 
@@ -286,6 +330,5 @@ export const {
 
   debugToggled,
   logger,
-  setLocalServiceURL,
 } = globalSlice.actions;
 export default globalSlice.reducer;

@@ -6,8 +6,15 @@ import {
   XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 
 import {
@@ -26,14 +33,13 @@ import {
   type AppEndpoints,
   swMessageDoHardRefresh,
   swMessageGetVersions,
-  swMessageSetLocalServiceEndpoint,
   swMessageSubscribe,
   swMessageUnsubscribe,
 } from "../../helper/serviceWorkerHelper";
-import { useSWMessageVersionEventHandler } from "../../helper/useServiceWorkerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
+import { useSWMessageVersionEventHandler } from "../../hooks/useServiceWorkerHelper";
 import { useSubscribe } from "../../hooks/useSubscribe";
-import type { AppDispatch, RootState } from "../../slices";
+import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
   getMemoryStorageStatus,
@@ -49,7 +55,11 @@ import { clearOpposites } from "../../slices/oppositeSlice";
 import { clearParticleGame } from "../../slices/particleSlice";
 import { clearPhrases, togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { DebugLevel } from "../../slices/settingHelper";
-import { clearVersions, getVersions } from "../../slices/versionSlice";
+import {
+  VersionInitSlice,
+  clearVersions,
+  setVersion,
+} from "../../slices/versionSlice";
 import {
   clearVocabulary,
   toggleVocabularyActiveGrp,
@@ -167,12 +177,14 @@ export default function Settings() {
     ReturnType<typeof buildMotionListener> | undefined
   >(undefined);
 
-  const { darkMode, swipeThreshold, motionThreshold, memory, debug } =
-    useConnectSetting();
-
-  const localServiceURL = useSelector(
-    ({ global }: RootState) => global.localServiceURL
-  );
+  const {
+    darkMode,
+    swipeThreshold,
+    motionThreshold,
+    memory,
+    debug,
+    localServiceURL,
+  } = useConnectSetting();
 
   const [spin, setSpin] = useState(false);
 
@@ -268,6 +280,61 @@ export default function Settings() {
     setJsVersion,
     setBundleVersion
   );
+
+  const setOverrideCB = useCallback(() => {
+    // TODO: validate user input service (token?)
+    const serviceUrl = serviceAddress.current;
+    let validInput = true;
+
+    if (
+      !serviceUrl.toLowerCase().startsWith("https://") ||
+      !new RegExp(/:\d{1,5}$/).test(serviceUrl) ||
+      serviceUrl.length > 35 ||
+      serviceUrl.length < 13
+    ) {
+      validInput = false;
+    }
+
+    const appEndpoints: AppEndpoints = {
+      data: serviceUrl + dataServicePath,
+      media: serviceUrl + audioServicePath,
+    };
+
+    if (serviceUrl === "") {
+      validInput = true;
+      appEndpoints.data = dataServiceEndpoint;
+      appEndpoints.media = pronounceEndoint;
+    }
+
+    if (validInput) {
+      dispatch(setLocalServiceURL(serviceUrl))
+        .unwrap()
+        .then(({ versions }) => {
+          // verified local service available
+          const keys = Object.keys(versions) as (keyof VersionInitSlice)[];
+          keys.forEach((name) => {
+            const hash = versions[name];
+            if (name && hash) {
+              dispatch(setVersion({ name, hash }));
+            }
+          });
+
+          // clear saved states of data
+          dispatch(clearVersions());
+          dispatch(clearVocabulary());
+          dispatch(clearPhrases());
+          dispatch(clearKanji());
+          dispatch(clearParticleGame());
+          dispatch(clearOpposites());
+        })
+        .catch(() => {
+          // let user know it's unavailable
+          setUserInputError(true);
+        });
+    }
+
+    setUserInputError(!validInput);
+  }, [dispatch]);
 
   // FIXME: errorMsgs component
   // if (errorMsgs.length > 0) {
@@ -636,61 +703,30 @@ export default function Settings() {
               </div>
               <div className="setting-block mb-2">
                 <div className="d-flex flex-row p-2">
-                  <TextField
-                    error={userInputError}
-                    size="small"
-                    label="Service Endpoint Override"
-                    variant="outlined"
-                    defaultValue={localServiceURL}
-                    onChange={(event) => {
-                      serviceAddress.current = event.target.value;
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      setOverrideCB();
                     }}
-                    onBlur={(event) => {
-                      // TODO: validate user input service (token?)
-                      const serviceUrl = event.target.value;
-                      let validInput = true;
-
-                      if (
-                        !serviceUrl.toLowerCase().startsWith("https://") ||
-                        !new RegExp(/:\d{1,5}$/).test(serviceUrl) ||
-                        serviceUrl.length > 35 ||
-                        serviceUrl.length < 13
-                      ) {
-                        validInput = false;
-                      }
-
-                      const appEndpoints: AppEndpoints = {
-                        data: serviceUrl + dataServicePath,
-                        media: serviceUrl + audioServicePath,
-                      };
-
-                      if (serviceUrl === "") {
-                        validInput = true;
-                        appEndpoints.data = dataServiceEndpoint;
-                        appEndpoints.media = pronounceEndoint;
-                      }
-
-                      if (validInput) {
-                        void swMessageSetLocalServiceEndpoint(
-                          appEndpoints
-                        ).then(() => {
-                          dispatch(clearVersions());
-                          void dispatch(getVersions());
-                        });
-
-                        // clear saved states of data
-                        dispatch(clearVocabulary());
-                        dispatch(clearPhrases());
-                        dispatch(clearKanji());
-                        dispatch(clearParticleGame());
-                        dispatch(clearOpposites());
-
-                        dispatch(setLocalServiceURL(serviceUrl));
-                      }
-
-                      setUserInputError(!validInput);
-                    }}
-                  />
+                  >
+                    <TextField
+                      error={userInputError}
+                      size="small"
+                      label="Service Endpoint Override"
+                      variant="outlined"
+                      defaultValue={localServiceURL}
+                      onChange={(event) => {
+                        serviceAddress.current = event.target.value;
+                      }}
+                      onBlur={(event) => {
+                        if (localServiceURL !== event.target.value) {
+                          setOverrideCB();
+                        }
+                      }}
+                    />
+                  </form>
                 </div>
 
                 <div className="d-flex flex-row p-2">
@@ -698,7 +734,7 @@ export default function Settings() {
                     <Button
                       variant="outlined"
                       size="small"
-                      disabled={userInputError}
+                      disabled={userInputError || localServiceURL === ""}
                     >
                       Update
                     </Button>
@@ -708,7 +744,7 @@ export default function Settings() {
                       variant="outlined"
                       onClick={registerCB}
                       size="small"
-                      disabled={userInputError}
+                      disabled={userInputError || localServiceURL === ""}
                     >
                       Subscribe
                     </Button>
@@ -718,7 +754,7 @@ export default function Settings() {
                     <Button
                       variant="contained"
                       size="small"
-                      disabled={userInputError}
+                      disabled={userInputError || localServiceURL === ""}
                     >
                       <Link to={"/sheet"} className="text-decoration-none">
                         Sheets <UndoIcon />

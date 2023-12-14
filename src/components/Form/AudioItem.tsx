@@ -1,10 +1,10 @@
 import { UnmuteIcon } from "@primer/octicons-react";
 import PropTypes from "prop-types";
-import React from "react";
 
-import { pronounceEndoint } from "../../../environment.development";
+import { audioServicePath } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import { addParam } from "../../helper/urlHelper";
+import { useRewriteUrl } from "../../hooks/useRewriteUrl";
 
 interface AudioItemProps {
   visible: boolean;
@@ -15,6 +15,8 @@ interface AudioItemProps {
 
 export default function AudioItem(props: AudioItemProps) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
+
+  const baseUrl = useRewriteUrl(audioServicePath);
 
   let tStart: number;
 
@@ -35,7 +37,7 @@ export default function AudioItem(props: AudioItemProps) {
 
     const override = time < 500 && !props.reCache ? "" : "/override_cache";
 
-    const url = addParam(pronounceEndoint + override, touchPlayParam);
+    const url = addParam(baseUrl + override, touchPlayParam);
     void fetchAudio(url);
   };
 

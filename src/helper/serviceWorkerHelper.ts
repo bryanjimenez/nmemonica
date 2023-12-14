@@ -4,6 +4,10 @@ export interface SwMessage {
   type: string;
 }
 
+export const SWRequestHeader = Object.freeze({
+  NO_CACHE: "X-No-Cache",
+});
+
 export const UIMsg = Object.freeze({
   UI_LOGGER_MSG: "ui_logger_msg",
 });
@@ -30,9 +34,7 @@ export const SWMsgIncoming = Object.freeze({
 });
 
 export const SWMsgOutgoing = Object.freeze({
-  SW_CACHE_DATA: "SW_CACHE_DATA",
   SW_VERSION: "SW_VERSION",
-  SET_ENDPOINT: "SET_ENDPOINT",
   DO_HARD_REFRESH: "DO_HARD_REFRESH",
   RECACHE_DATA: "RECACHE_DATA",
 });
@@ -58,52 +60,16 @@ export function swMessageUnsubscribe(
   }
 }
 
-export function swMessageSetLocalServiceEndpoint({
-  ui,
-  data,
-  media,
-}: AppEndpoints) {
-  if (navigator.serviceWorker) {
-    return navigator.serviceWorker.ready.then(() => {
-      navigator.serviceWorker.controller?.postMessage({
-        type: SWMsgOutgoing.SET_ENDPOINT,
-        endpoint: {
-          ui,
-          data,
-          media,
-        },
-      });
-    });
-  }
-  return Promise.reject(serviceWorkerNotAvailableErr);
-}
-
-/**
- * Post install/activate
- * - cache ui
- * - cache data
- */
-export function swMessageInitCache(endpoint: AppEndpoints) {
-  if (navigator.serviceWorker) {
-    return navigator.serviceWorker.ready.then(() => {
-      navigator.serviceWorker.controller?.postMessage({
-        type: SWMsgOutgoing.SW_CACHE_DATA,
-        endpoint,
-      });
-    });
-  }
-  return Promise.reject(serviceWorkerNotAvailableErr);
-}
-
 /**
  * Post install/activate
  * - cache data
  */
-export function swMessageRecacheData() {
+export function swMessageRecacheData(appEndPoints: AppEndpoints) {
   if (navigator.serviceWorker) {
     return navigator.serviceWorker.ready.then(() => {
       navigator.serviceWorker.controller?.postMessage({
         type: SWMsgOutgoing.RECACHE_DATA,
+        endpoints: appEndPoints,
       });
     });
   }

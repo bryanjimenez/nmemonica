@@ -15,7 +15,7 @@ import { useDispatch } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
-import { pronounceEndoint } from "../../../environment.development";
+import { audioServicePath } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,
@@ -55,6 +55,7 @@ import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
+import { useRewriteUrl } from "../../hooks/useRewriteUrl";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch } from "../../slices";
@@ -505,6 +506,7 @@ export default function Vocabulary() {
     setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
+  const baseUrl = useRewriteUrl(audioServicePath);
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -516,7 +518,8 @@ export default function Vocabulary() {
     filteredVocab,
     recacheAudio,
     naFlip,
-    setWasPlayed
+    setWasPlayed,
+    baseUrl
   );
 
   const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -1054,7 +1057,8 @@ function buildGameActionsHandler(
   filteredVocab: RawVocabulary[],
   recacheAudio: boolean,
   naFlip: React.MutableRefObject<string | undefined>,
-  setWasPlayed: (value: boolean) => void
+  setWasPlayed: (value: boolean) => void,
+  baseUrl: string
 ) {
   return function gameActionHandler(
     direction: string,
@@ -1113,7 +1117,7 @@ function buildGameActionsHandler(
           sayObj = vocabulary;
         }
 
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl + override, {
           tl: "ja",
           q: audioPronunciation(sayObj),
           uid: getCacheUID(sayObj),
@@ -1124,8 +1128,7 @@ function buildGameActionsHandler(
         setMediaSessionPlaybackState("playing");
 
         const inEnglish = vocabulary.english;
-
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl + override, {
           tl: "en",
           q: inEnglish,
           uid: vocabulary.uid + ".en",

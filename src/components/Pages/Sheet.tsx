@@ -7,13 +7,14 @@ import {
 } from "@primer/octicons-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import {
   pushServiceSheetDataUpdatePath,
   sheetServicePath,
 } from "../../../environment.development";
-import { AppDispatch, RootState } from "../../slices";
+import { useRewriteUrl } from "../../hooks/useRewriteUrl";
+import { AppDispatch } from "../../slices";
 import "../../css/Sheet.css";
 import { clearKanji } from "../../slices/kanjiSlice";
 import { clearPhrases } from "../../slices/phraseSlice";
@@ -132,14 +133,12 @@ export default function Sheet() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
 
-  const [searchResults, setSearchResult] = useState(0);
+  const [resultBadge, setResultBadge] = useState(0);
   const prevResult = useRef<[number, number, string][]>([]);
   const resultIdx = useRef<number | null>(null);
   const searchValue = useRef<string | null>(null);
 
-  const dataService = useSelector(
-    ({ global }: RootState) => global.localServiceURL
-  );
+  const dataService = useRewriteUrl("");
 
   useEffect(() => {
     const gridEl = document.createElement("div");
@@ -239,36 +238,49 @@ export default function Sheet() {
       }, []);
 
       prevResult.current = result;
-      setSearchResult(result.length);
+      setResultBadge(result.length);
+      if (result.length > 0) {
+        setTimeout(() => {
+          if (resultIdx.current !== null) {
+            setResultBadge(resultIdx.current + 1);
+          }
+        }, 1500);
+      }
     }
 
     const result = prevResult.current;
+    if (result.length === 0) {
+      // no results
+      setResultBadge(-1);
+      return;
+    }
     if (resultIdx.current === null) {
       resultIdx.current = 0;
     } else {
       resultIdx.current = (resultIdx.current + 1) % result.length;
+      setResultBadge(resultIdx.current + 1);
     }
 
-    // console.log(result[resultIdx.current]);
     const [x] = result[resultIdx.current];
     const xOffset = defaultOp.row.height * (x - 2);
     workbook.sheet.verticalScrollbar.moveFn(xOffset);
   }, []);
 
   if (dataService.length === 0) {
-    return <NotReady addlStyle="sheet" text="Set sheet-service endpoint" />;
+    return <NotReady addlStyle="sheet" text="Set Service Endpoint Override" />;
   }
 
   return (
     <React.Fragment>
       <div className="sheet main-panel pt-2">
-        <div className="d-flex flex-row pt-2 px-2 w-100">
+        <div className="d-flex flex-row pt-2 px-3 w-100">
           <div className="px-1">
             <Fab
               variant="extended"
               size="small"
               onClick={saveSheetCB}
               className="m-0 z-index-unset"
+              tabIndex={3}
             >
               <FileSymlinkFileIcon size="small" />
             </Fab>
@@ -279,43 +291,50 @@ export default function Sheet() {
               size="small"
               onClick={pushSheetCB}
               className="m-0 z-index-unset"
+              tabIndex={4}
             >
               <RssIcon size="small" />
             </Fab>
           </div>
           <div className="d-flex">
             <div>
-              <TextField
-                // error={userInputError}
-                size="small"
-                label="Search"
-                variant="outlined"
-                // defaultValue={localServiceURL}
-                onKeyUp={(event) => {
-                  if (event.code === "Enter") {
-                    doSearchCB();
-                  }
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  doSearchCB();
                 }}
-                onChange={(event) => {
-                  const { value } = event.target;
-                  resultIdx.current = null;
-                  prevResult.current = [];
+              >
+                <TextField
+                  // error={userInputError}
+                  size="small"
+                  label="Search"
+                  variant="outlined"
+                  inputProps={{ tabIndex: 1 }}
+                  onChange={(event) => {
+                    const { value } = event.target;
+                    resultIdx.current = null;
+                    prevResult.current = [];
+                    setResultBadge(0);
 
-                  setSearchResult(0);
-
-                  if (value && value.length > 0) {
-                    searchValue.current = value;
-                  }
-                }}
-              />
+                    if (value && value.length > 0) {
+                      searchValue.current = value;
+                    }
+                  }}
+                />
+              </form>
             </div>
             <div className="ps-1 pt-1">
-              <Badge badgeContent={searchResults} color="success">
+              <Badge
+                badgeContent={resultBadge < 0 ? "!" : resultBadge}
+                color={resultBadge < 0 ? "error" : "success"}
+              >
                 <Fab
                   variant="extended"
                   size="small"
                   color="primary"
                   className="m-0 z-index-unset"
+                  tabIndex={2}
                   onClick={doSearchCB}
                 >
                   <SearchIcon size="small" />

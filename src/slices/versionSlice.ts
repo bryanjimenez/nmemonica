@@ -1,6 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { dataServiceEndpoint } from "../../environment.development";
+import { dataServicePath } from "../../environment.development";
+import { rewriteUrl } from "../hooks/useRewriteUrl";
+
+import { RootState } from ".";
 
 export interface VersionInitSlice {
   vocabulary?: string;
@@ -23,8 +26,15 @@ const initialState: VersionInitSlice = {
 /**
  * Get app data versions file
  */
-export const getVersions = createAsyncThunk("version/getVersions", async () =>
-  fetch(dataServiceEndpoint + "/cache.json").then((res) => res.json())
+export const getVersions = createAsyncThunk(
+  "version/getVersions",
+  async (arg, thunkAPI) => {
+    const state = thunkAPI.getState() as RootState;
+
+    const baseUrl = rewriteUrl(state.global.localServiceURL, dataServicePath);
+
+    return fetch(baseUrl + "/cache.json").then((res) => res.json());
+  }
 );
 
 const versionSlice = createSlice({

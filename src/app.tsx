@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import classNames from "classnames";
 // import CssBaseline from '@mui/material/CssBaseline';
-import { Suspense, lazy, useEffect, useMemo, useRef } from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
@@ -21,12 +21,11 @@ import {
   type AppEndpoints,
   SWMsgIncoming,
   SwMessage,
-  swMessageInitCache,
   swMessageRecacheData,
-  swMessageSetLocalServiceEndpoint,
   swMessageSubscribe,
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
+import { useOnceRewriteUrl } from "./hooks/useRewriteUrl";
 import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
 import { clearKanji } from "./slices/kanjiSlice";
@@ -38,13 +37,7 @@ import { DebugLevel } from "./slices/settingHelper";
 import { clearVersions, getVersions } from "./slices/versionSlice";
 import "./css/styles.css";
 import { clearVocabulary } from "./slices/vocabularySlice";
-import {
-  audioServicePath,
-  dataServiceEndpoint,
-  dataServicePath,
-  pronounceEndoint,
-  uiEndpoint,
-} from "../environment.development";
+import { audioServicePath, dataServicePath } from "../environment.development";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
@@ -60,10 +53,9 @@ const Settings = lazy(() => import("./components/Pages/Settings"));
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const localServiceURL = useRef("");
-  const { darkMode, localServiceURL: prevSetLocalServURL } = useSelector(
-    ({ global }: RootState) => global
-  );
+  const { darkMode } = useSelector(({ global }: RootState) => global);
+
+  const localServiceURLREF = useOnceRewriteUrl();
 
   const muiDarkTheme = useMemo(() => {
     return createTheme({
@@ -72,12 +64,6 @@ export default function App() {
       },
     });
   }, [darkMode]);
-
-  useEffect(() => {
-    if (prevSetLocalServURL && localServiceURL.current === "") {
-      localServiceURL.current = prevSetLocalServURL;
-    }
-  }, [dispatch, prevSetLocalServURL]);
 
   useEffect(() => {
     const swMessageHandler = (event: MessageEvent) => {
@@ -90,32 +76,22 @@ export default function App() {
       }
 
       if (data.type === SWMsgIncoming.POST_INSTALL_ACTIVATE_DONE) {
-        void swMessageInitCache({
-          ui: uiEndpoint,
-          data: dataServiceEndpoint,
-          media: pronounceEndoint,
-        });
-
         // Post install w/ localServiceUrl already set
-        if (localServiceURL.current !== "") {
-          const url = localServiceURL.current;
+        if (localServiceURLREF.current !== null) {
+          const override = localServiceURLREF.current;
 
           const appEndpoints: AppEndpoints = {
-            data: url + dataServicePath,
-            media: url + audioServicePath,
+            data: override + dataServicePath,
+            media: override + audioServicePath,
           };
 
-          void swMessageSetLocalServiceEndpoint(appEndpoints)
-            .then(() => {
-              dispatch(clearVersions());
-              void dispatch(getVersions());
-            })
-            .then(() => {
-              void swMessageRecacheData();
-              dispatch(
-                logger("Service endpoint override: " + url, DebugLevel.WARN)
-              );
-            });
+          dispatch(clearVersions());
+          void dispatch(getVersions());
+
+          void swMessageRecacheData(appEndpoints);
+          dispatch(
+            logger("Service endpoint override: " + override, DebugLevel.WARN)
+          );
 
           // clear saved states of data
           dispatch(clearVocabulary());
@@ -147,7 +123,7 @@ export default function App() {
     return () => {
       swMessageUnsubscribe(swMessageHandler);
     };
-  }, [dispatch]);
+  }, [dispatch, localServiceURLREF]);
 
   const pClass = classNames({
     "d-flex flex-column": true,

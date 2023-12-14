@@ -12,7 +12,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
-import { pronounceEndoint } from "../../../environment.development";
+import { audioServicePath } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,
@@ -48,6 +48,7 @@ import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
+import { useRewriteUrl } from "../../hooks/useRewriteUrl";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
@@ -395,6 +396,7 @@ export default function Phrases() {
     setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
+  const baseUrl = useRewriteUrl(audioServicePath);
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -403,7 +405,8 @@ export default function Phrases() {
     phraseList,
     order,
     filteredPhrases,
-    recacheAudio
+    recacheAudio,
+    baseUrl
   );
 
   // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -894,7 +897,8 @@ function buildGameActionsHandler(
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
-  recacheAudio: boolean
+  recacheAudio: boolean,
+  baseUrl: string
 ) {
   return function gameActionHandler(
     direction: string,
@@ -922,7 +926,7 @@ function buildGameActionsHandler(
 
       if (direction === "up") {
         const inJapanese = audioPronunciation(phrase);
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl + override, {
           tl: "ja",
           q: inJapanese,
           uid,
@@ -931,8 +935,7 @@ function buildGameActionsHandler(
         actionPromise = fetchAudio(audioUrl, AbortController);
       } else if (direction === "down") {
         const inEnglish = phrase.english;
-
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl + override, {
           tl: "en",
           q: inEnglish,
           uid: phrase.uid + ".en",

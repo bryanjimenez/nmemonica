@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { SWMsgOutgoing, SWVersionInfo } from "./serviceWorkerHelper";
+import { SWMsgOutgoing, SWVersionInfo } from "../helper/serviceWorkerHelper";
 import type { AppDispatch } from "../slices";
 import { logger } from "../slices/globalSlice";
 import { DebugLevel } from "../slices/settingHelper";

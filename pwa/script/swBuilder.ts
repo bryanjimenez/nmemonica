@@ -11,6 +11,16 @@ import {
 import { green } from "./consoleColor.js";
 import { initServiceWorker } from "../src/sw.js"; // TODO: why? sw.ts?
 import { DebugLevel } from "../../src/slices/settingHelper.js";
+import {
+  dataServiceEndpoint,
+  uiEndpoint,
+  pronounceEndoint,
+} from "../../environment.production.js";
+
+import "dotenv/config";
+
+const audioPath = process.env.AUDIO_PATH;
+const dataPath = process.env.DATA_PATH;
 
 /**
  * After app is built
@@ -51,12 +61,26 @@ console.log(
 const buildConstants = {
   swVersion,
   initCacheVer,
+
+  urlAppUI: uiEndpoint,
+  urlDataService: dataServiceEndpoint,
+  urlPronounceService: pronounceEndoint,
+
+  audioPath,
+  dataPath,
 };
 
 export interface SwFnParams {
   swVersion: string;
   initCacheVer: string;
   cacheFiles: string[];
+
+  urlAppUI: string;
+  urlDataService: string;
+  urlPronounceService: string;
+
+  audioPath: string;
+  dataPath: string;
 
   getParam: (baseUrl: string, param: string) => string;
   removeParam: (baseUrl: string, param: string) => string;

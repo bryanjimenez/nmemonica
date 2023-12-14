@@ -9,7 +9,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { dataServiceEndpoint } from "../../environment.development";
+import { dataServicePath } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
@@ -18,6 +18,7 @@ import {
 } from "../helper/recallHelper";
 import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
+import { rewriteUrl } from "../hooks/useRewriteUrl";
 import type {
   MetaDataObj,
   RawKanji,
@@ -84,10 +85,12 @@ export const getKanji = createAsyncThunk(
     const state = thunkAPI.getState() as RootState;
     const version = state.version.kanji ?? "0";
 
+    const baseUrl = rewriteUrl(state.global.localServiceURL, dataServicePath);
+
     // if (version === "0") {
     //   console.error("fetching kanji: 0");
     // }
-    const value = (await fetch(dataServiceEndpoint + "/kanji.json", {
+    const value = (await fetch(baseUrl + "/kanji.json", {
       headers: { "Data-Version": version },
     }).then((res) => res.json())) as Record<string, SourceKanji>;
 
