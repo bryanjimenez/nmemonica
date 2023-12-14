@@ -785,7 +785,7 @@ export default function Vocabulary() {
             </div>
           </div>
           <div className="col">
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-end pe-2 pe-sm-0">
               {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
               <Tooltip
                 className={classNames({

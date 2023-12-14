@@ -722,7 +722,7 @@ export default function Kanji() {
             <div className="d-flex justify-content-start"></div>
           </div>
           <div className="col">
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <Tooltip
                 className={classNames({
                   "question-color opacity-50":
