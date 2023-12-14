@@ -33,6 +33,7 @@ import {
   type AppEndpoints,
   swMessageDoHardRefresh,
   swMessageGetVersions,
+  swMessageRecacheData,
   swMessageSubscribe,
   swMessageUnsubscribe,
 } from "../../helper/serviceWorkerHelper";
@@ -295,15 +296,15 @@ export default function Settings() {
       validInput = false;
     }
 
-    const appEndpoints: AppEndpoints = {
+    const overrideEndpoints: AppEndpoints = {
       data: serviceUrl + dataServicePath,
       media: serviceUrl + audioServicePath,
     };
 
     if (serviceUrl === "") {
       validInput = true;
-      appEndpoints.data = dataServiceEndpoint;
-      appEndpoints.media = pronounceEndoint;
+      overrideEndpoints.data = dataServiceEndpoint;
+      overrideEndpoints.media = pronounceEndoint;
     }
 
     if (validInput) {
@@ -319,13 +320,15 @@ export default function Settings() {
             }
           });
 
-          // clear saved states of data
+          // clear saved data states
           dispatch(clearVersions());
           dispatch(clearVocabulary());
           dispatch(clearPhrases());
           dispatch(clearKanji());
           dispatch(clearParticleGame());
           dispatch(clearOpposites());
+
+          void swMessageRecacheData(overrideEndpoints);
         })
         .catch(() => {
           // let user know it's unavailable

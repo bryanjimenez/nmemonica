@@ -34,7 +34,11 @@ import { clearParticleGame } from "./slices/particleSlice";
 import { clearPhrases } from "./slices/phraseSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
-import { clearVersions, getVersions } from "./slices/versionSlice";
+import {
+  VersionInitSlice,
+  getVersions,
+  setVersion,
+} from "./slices/versionSlice";
 import "./css/styles.css";
 import { clearVocabulary } from "./slices/vocabularySlice";
 import { audioServicePath, dataServicePath } from "../environment.development";
@@ -85,20 +89,33 @@ export default function App() {
             media: override + audioServicePath,
           };
 
-          dispatch(clearVersions());
-          void dispatch(getVersions());
+          void dispatch(getVersions())
+            .unwrap()
+            .then((versions: VersionInitSlice) => {
+              // verified local service available
+              const keys = Object.keys(versions) as (keyof VersionInitSlice)[];
+              keys.forEach((name) => {
+                const hash = versions[name];
+                if (name && hash) {
+                  dispatch(setVersion({ name, hash }));
+                }
+              });
 
-          void swMessageRecacheData(appEndpoints);
-          dispatch(
-            logger("Service endpoint override: " + override, DebugLevel.WARN)
-          );
+              void swMessageRecacheData(appEndpoints);
+              dispatch(
+                logger(
+                  "Service endpoint override: " + override,
+                  DebugLevel.WARN
+                )
+              );
 
-          // clear saved states of data
-          dispatch(clearVocabulary());
-          dispatch(clearPhrases());
-          dispatch(clearKanji());
-          dispatch(clearParticleGame());
-          dispatch(clearOpposites());
+              // clear saved states of data
+              dispatch(clearVocabulary());
+              dispatch(clearPhrases());
+              dispatch(clearKanji());
+              dispatch(clearParticleGame());
+              dispatch(clearOpposites());
+            });
         }
       }
       // TODO: SERVICE_WORKER_NEW_TERMS_ADDED removed on hook refactor
