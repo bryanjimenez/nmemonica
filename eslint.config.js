@@ -114,12 +114,15 @@ const extraRules = {
 };
 
 const unUsedVarsIgnore = {
-  "@typescript-eslint/no-unused-vars": ["warn",{
-    "argsIgnorePattern": "^_",
-    "varsIgnorePattern": "^_",
-    "caughtErrorsIgnorePattern": "^_"
-  }]
-}
+  "@typescript-eslint/no-unused-vars": [
+    "warn",
+    {
+      argsIgnorePattern: "^_",
+      varsIgnorePattern: "^_",
+      caughtErrorsIgnorePattern: "^_",
+    },
+  ],
+};
 
 export default [
   {
@@ -217,6 +220,11 @@ export default [
           },
         },
       ],
+      ...unUsedVarsIgnore,
+    },
+    linterOptions: {
+      // report when eslint-disable-next-line is unnecessary
+      reportUnusedDisableDirectives: true,
     },
   },
   {
@@ -238,11 +246,16 @@ export default [
       ...tsPlugin.configs.strict.rules,
       ...tsPlugin.configs["eslint-recommended"].rules,
       ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
-      ...unUsedVarsIgnore
+      ...unUsedVarsIgnore,
+      "no-undef": "off", // ignore in ts files tsc will highlight
+    },
+    linterOptions: {
+      // report when eslint-disable-next-line is unnecessary
+      reportUnusedDisableDirectives: true,
     },
   },
   {
-    files: ["pwa/**/*.{js,ts}"],
+    files: ["pwa/**/*.ts"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -264,25 +277,12 @@ export default [
       ...tsPlugin.configs["eslint-recommended"].rules,
       ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
 
-      ...unUsedVarsIgnore
+      ...unUsedVarsIgnore,
+      "no-undef": "off", // ignore in ts files tsc will highlight
     },
-  },
-  {
-    ...lambdaEslintConf[0],
-    files: ["lambda/**/*.ts"],
-    languageOptions: {
-      ...lambdaEslintConf[0].languageOptions,
-
-      parserOptions: {
-        ...lambdaEslintConf[0].languageOptions.parserOptions,
-        project: ["./lambda/tsconfig.json"],
-      },
-    },
-    plugins: {
-      "@typescript-eslint": tsPlugin,
-      google: googlePlugin,
-      import: importPlugin,
-      prettier: prettierPlugin,
+    linterOptions: {
+      // report when eslint-disable-next-line is unnecessary
+      reportUnusedDisableDirectives: true,
     },
   },
   {
@@ -330,11 +330,20 @@ export default [
             .format(text, { filepath: info.filePath })
             .then((pretty) => fs.createWriteStream(info.filePath).end(pretty));
 
-          throw new Error(
-            "Sent to Prettier -> *." + info.filePath.split(".")[1]
-          );
+          // const [_filePath, fileExt] = info.filePath.split(".");
+
+          console.log("prettier < " + info.filePath);
+          // throw new Error("Sent to Prettier -> *." + fileExt);
           // node_modules/eslint/lib/source-code/source-code.jsL326
-          // return {'type':"Program", "body":[],'tokens':[], "comments":[], "loc":[], "range":{}, "scopes":[]}
+          return {
+            type: "Program",
+            body: [],
+            tokens: [],
+            comments: [],
+            loc: [],
+            range: {},
+            scopes: [],
+          };
         },
       },
     },

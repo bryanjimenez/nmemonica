@@ -7,6 +7,7 @@ import { getParam, removeParam } from "../../src/helper/urlHelper.js";
 import {
   SWMsgIncoming,
   SWMsgOutgoing,
+  SWRequestHeader,
 } from "../../src/helper/serviceWorkerHelper.js";
 import { green } from "./consoleColor.js";
 import { initServiceWorker } from "../src/sw.js"; // TODO: why? sw.ts?
@@ -90,6 +91,7 @@ let out = "";
 out += "const buildConstants = " + JSON.stringify(buildConstants) + "\n\n";
 out += "const SWMsgOutgoing = " + JSON.stringify(SWMsgOutgoing) + "\n\n";
 out += "const SWMsgIncoming = " + JSON.stringify(SWMsgIncoming) + "\n\n";
+out += "const SWRequestHeader = " + JSON.stringify(SWRequestHeader) + "\n\n";
 out += "const DebugLevel = " + JSON.stringify(DebugLevel) + "\n\n";
 out += getParam.toString() + "\n\n";
 out += removeParam.toString() + "\n\n";

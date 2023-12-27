@@ -1,28 +1,8 @@
-import { Button, TextField } from "@mui/material";
-import {
-  PlusCircleIcon,
-  SyncIcon,
-  UndoIcon,
-  XCircleIcon,
-} from "@primer/octicons-react";
+import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
 
-import {
-  audioServicePath,
-  dataServiceEndpoint,
-  dataServicePath,
-  pronounceEndoint,
-} from "../../../environment.development";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getDeviceMotionEventPermission,
@@ -30,45 +10,31 @@ import {
   motionThresholdCondition,
 } from "../../helper/gameHelper";
 import {
-  type AppEndpoints,
   swMessageDoHardRefresh,
   swMessageGetVersions,
-  swMessageRecacheData,
   swMessageSubscribe,
   swMessageUnsubscribe,
 } from "../../helper/serviceWorkerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useSWMessageVersionEventHandler } from "../../hooks/useServiceWorkerHelper";
-import { useSubscribe } from "../../hooks/useSubscribe";
 import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
   getMemoryStorageStatus,
   logger,
-  setLocalServiceURL,
   setMotionThreshold,
   setPersistentStorage,
   setSwipeThreshold,
   toggleDarkMode,
 } from "../../slices/globalSlice";
-import { clearKanji } from "../../slices/kanjiSlice";
-import { clearOpposites } from "../../slices/oppositeSlice";
-import { clearParticleGame } from "../../slices/particleSlice";
-import { clearPhrases, togglePhraseActiveGrp } from "../../slices/phraseSlice";
+import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { DebugLevel } from "../../slices/settingHelper";
-import {
-  VersionInitSlice,
-  clearVersions,
-  setVersion,
-} from "../../slices/versionSlice";
-import {
-  clearVocabulary,
-  toggleVocabularyActiveGrp,
-} from "../../slices/vocabularySlice";
+import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
+const SettingsExternalData = lazy(() => import("../Form/SettingsExternalData"));
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
@@ -178,14 +144,8 @@ export default function Settings() {
     ReturnType<typeof buildMotionListener> | undefined
   >(undefined);
 
-  const {
-    darkMode,
-    swipeThreshold,
-    motionThreshold,
-    memory,
-    debug,
-    localServiceURL,
-  } = useConnectSetting();
+  const { darkMode, swipeThreshold, motionThreshold, memory, debug } =
+    useConnectSetting();
 
   const [spin, setSpin] = useState(false);
 
@@ -197,6 +157,8 @@ export default function Settings() {
   const [sectionKanjiGame, setSectionKanjiGame] = useState(false);
   const [sectionParticle, setSectionParticle] = useState(false);
   const [sectionStats, setSectionStats] = useState(false);
+  const [sectionExternalData, setSectionExternalData] = useState(false);
+
   const [swVersion, setSwVersion] = useState("");
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
@@ -204,16 +166,12 @@ export default function Settings() {
   // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [shakeIntensity, setShakeIntensity] = useState<number | undefined>(0);
 
-  const [userInputError, setUserInputError] = useState(false);
-  const serviceAddress = useRef(localServiceURL);
-  const { registerCB } = useSubscribe(dispatch, serviceAddress);
-
   useEffect(
     () => {
       void dispatch(getMemoryStorageStatus());
 
       swMessageSubscribe(swMessageEventListenerCB);
-      swMessageGetVersions();
+      void swMessageGetVersions();
 
       return () => {
         swMessageUnsubscribe(swMessageEventListenerCB);
@@ -281,63 +239,6 @@ export default function Settings() {
     setJsVersion,
     setBundleVersion
   );
-
-  const setOverrideCB = useCallback(() => {
-    // TODO: validate user input service (token?)
-    const serviceUrl = serviceAddress.current;
-    let validInput = true;
-
-    if (
-      !serviceUrl.toLowerCase().startsWith("https://") ||
-      !new RegExp(/:\d{1,5}$/).test(serviceUrl) ||
-      serviceUrl.length > 35 ||
-      serviceUrl.length < 13
-    ) {
-      validInput = false;
-    }
-
-    const overrideEndpoints: AppEndpoints = {
-      data: serviceUrl + dataServicePath,
-      media: serviceUrl + audioServicePath,
-    };
-
-    if (serviceUrl === "") {
-      validInput = true;
-      overrideEndpoints.data = dataServiceEndpoint;
-      overrideEndpoints.media = pronounceEndoint;
-    }
-
-    if (validInput) {
-      dispatch(setLocalServiceURL(serviceUrl))
-        .unwrap()
-        .then(({ versions }) => {
-          // verified local service available
-          const keys = Object.keys(versions) as (keyof VersionInitSlice)[];
-          keys.forEach((name) => {
-            const hash = versions[name];
-            if (name && hash) {
-              dispatch(setVersion({ name, hash }));
-            }
-          });
-
-          // clear saved data states
-          dispatch(clearVersions());
-          dispatch(clearVocabulary());
-          dispatch(clearPhrases());
-          dispatch(clearKanji());
-          dispatch(clearParticleGame());
-          dispatch(clearOpposites());
-
-          void swMessageRecacheData(overrideEndpoints);
-        })
-        .catch(() => {
-          // let user know it's unavailable
-          setUserInputError(true);
-        });
-    }
-
-    setUserInputError(!validInput);
-  }, [dispatch]);
 
   // FIXME: errorMsgs component
   // if (errorMsgs.length > 0) {
@@ -620,7 +521,7 @@ export default function Settings() {
                     setJsVersion("");
                     setBundleVersion("");
                     setTimeout(() => {
-                      swMessageGetVersions();
+                      void swMessageGetVersions();
                     }, 1000);
                   }}
                 >
@@ -677,7 +578,7 @@ export default function Settings() {
                       }
                     }, 3000);
 
-                    swMessageDoHardRefresh();
+                    void swMessageDoHardRefresh();
                   }}
                 >
                   <SyncIcon
@@ -704,71 +605,26 @@ export default function Settings() {
                   }
                 />
               </div>
-              <div className="setting-block mb-2">
-                <div className="d-flex flex-row p-2">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-
-                      setOverrideCB();
-                    }}
-                  >
-                    <TextField
-                      error={userInputError}
-                      size="small"
-                      label="Service Endpoint Override"
-                      variant="outlined"
-                      defaultValue={localServiceURL}
-                      onChange={(event) => {
-                        serviceAddress.current = event.target.value;
-                      }}
-                      onBlur={(event) => {
-                        if (localServiceURL !== event.target.value) {
-                          setOverrideCB();
-                        }
-                      }}
-                    />
-                  </form>
-                </div>
-
-                <div className="d-flex flex-row p-2">
-                  <div className="px-1">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      disabled={userInputError || localServiceURL === ""}
-                    >
-                      Update
-                    </Button>
-                  </div>
-                  <div className="px-1">
-                    <Button
-                      variant="outlined"
-                      onClick={registerCB}
-                      size="small"
-                      disabled={userInputError || localServiceURL === ""}
-                    >
-                      Subscribe
-                    </Button>
-                  </div>
-
-                  <div className="px-1">
-                    <Button
-                      variant="contained"
-                      size="small"
-                      disabled={userInputError || localServiceURL === ""}
-                    >
-                      <Link to={"/sheet"} className="text-decoration-none">
-                        Sheets <UndoIcon />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
+        {!navigator.serviceWorker ? (
+          <NotReady
+            addlStyle="stats-settings"
+            text="Service worker not available"
+          />
+        ) : (
+          <div className={pageClassName}>
+            <div className="d-flex justify-content-between">
+              <h2>External Data Source</h2>
+              {collapseExpandToggler(
+                sectionExternalData,
+                setSectionExternalData
+              )}
+            </div>
+            {sectionExternalData && <SettingsExternalData />}
+          </div>
+        )}
       </div>
     </div>
   );

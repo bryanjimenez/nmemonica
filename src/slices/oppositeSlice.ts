@@ -1,9 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { dataServicePath } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.production";
 import type { RawOpposite } from "../components/Games/OppositesGame";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { rewriteUrl } from "../hooks/useRewriteUrl";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 
 import type { RootState } from ".";
 
@@ -31,12 +31,11 @@ export const getOpposite = createAsyncThunk(
     const state = thunkAPI.getState() as RootState;
     const version = state.version.phrases ?? "0";
 
-    const baseUrl = rewriteUrl(state.global.localServiceURL, dataServicePath);
     // if (version === "0") {
     //   console.error("fetching opposite: 0");
     // }
-    return fetch(baseUrl + "/opposites.json", {
-      headers: { "Data-Version": version },
+    return fetch(dataServiceEndpoint + "/opposites.json", {
+      headers: { [SWRequestHeader.DATA_VERSION]: version },
     }).then((res) =>
       res
         .json()

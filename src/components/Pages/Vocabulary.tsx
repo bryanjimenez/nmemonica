@@ -15,7 +15,7 @@ import { useDispatch } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
-import { audioServicePath } from "../../../environment.development";
+import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,
@@ -55,7 +55,6 @@ import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
-import { useRewriteUrl } from "../../hooks/useRewriteUrl";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch } from "../../slices";
@@ -506,7 +505,6 @@ export default function Vocabulary() {
     setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
-  const baseUrl = useRewriteUrl(audioServicePath);
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -519,7 +517,7 @@ export default function Vocabulary() {
     recacheAudio,
     naFlip,
     setWasPlayed,
-    baseUrl
+    pronounceEndoint
   );
 
   const deviceMotionEvent = useDeviceMotionActions(motionThreshold);

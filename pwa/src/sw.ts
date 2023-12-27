@@ -1,8 +1,8 @@
 import {
   SWMsgOutgoing as SWMsgOutgoingType,
   SWMsgIncoming as SWMsgIncomingType,
-  type AppEndpoints,
-} from "../../src/helper/serviceWorkerHelper";
+  SWRequestHeader as SWRequestHeaderType,
+  } from "../../src/helper/serviceWorkerHelper";
 import { DebugLevel as DebugLevelType } from "../../src/slices/settingHelper";
 import { SwFnParams } from "../script/swBuilder";
 
@@ -12,6 +12,7 @@ import { SwFnParams } from "../script/swBuilder";
 let SWMsgOutgoing: typeof SWMsgOutgoingType;
 let SWMsgIncoming: typeof SWMsgIncomingType;
 let DebugLevel: typeof DebugLevelType;
+let SWRequestHeader: typeof SWRequestHeaderType;
 
 interface CacheDataObj {
   uid: string;
@@ -51,7 +52,8 @@ export function initServiceWorker({
   const appStaticCache = "nmemonica-static";
   const appDataCache = "nmemonica-data";
   const appMediaCache = "nmemonica-media";
-  const indexedDBVersion = 2;
+  const appIndexedDB = "nmemonica-db";
+  const indexedDBVersion = 1;
   const indexedDBStore = "media";
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
@@ -66,7 +68,6 @@ export function initServiceWorker({
 
   /** Pronounce cache override */
   const override = "/override_cache";
-  const dataVersionHeader = "Data-Version";
 
   function getVersions() {
     const main =
@@ -249,7 +250,7 @@ export function initServiceWorker({
     void swSelf.skipWaiting();
 
     const versions = getVersions();
-    clientMsg("SW_VERSION", versions);
+    clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
   }
 
   function activateEventHandler(e: ExtendableEvent) {
@@ -273,77 +274,105 @@ export function initServiceWorker({
           return swSelf.clients.claim();
         })
         .then(() => {
-          const dataCacheP = cacheAllDataResource(urlDataService);
+          const dataCacheP = isUserEditedData().then((isEdited) => {
+            if (!isEdited) {
+              return cacheAllDataResource(urlDataService);
+            }
+            return;
+          });
           const rootCacheP = cacheAllRoot();
           const staticAssetCacheP = cacheAllStaticAssets();
 
           return Promise.all([dataCacheP, rootCacheP, staticAssetCacheP]);
         })
-        .then(() => {
-          // Notify app service worker is ready
-          clientMsg(SWMsgIncoming.POST_INSTALL_ACTIVATE_DONE, {});
-        })
     );
   }
 
-  interface MessageRecacheData {
+  interface MsgSaveDataJSON {
     type: string;
-    endpoints: AppEndpoints;
+    url: string;
+    dataset: Record<string, unknown>;
+    hash: string;
   }
 
-  interface MessageHardRefresh {
+  interface MsgLocalEdit {
+    type: string;
+    edited: boolean;
+  }
+
+  interface MsgHardRefresh {
     type: string;
   }
 
-  interface MessageGetVersion {
+  interface MsgGetVersion {
     type: string;
   }
 
-  type AppSWMessage = MessageHardRefresh | MessageGetVersion;
+  type AppSWMessage = MsgHardRefresh | MsgGetVersion;
 
-  function isMessageRecacheData(m: AppSWMessage): m is MessageRecacheData {
-    return (m as MessageRecacheData).type === SWMsgOutgoing.RECACHE_DATA;
+  function isMsgSaveDataJSON(m: AppSWMessage): m is MsgSaveDataJSON {
+    return (m as MsgSaveDataJSON).type === SWMsgOutgoing.DATASET_JSON_SAVE;
   }
 
-  function isMessageHardRefresh(m: AppSWMessage): m is MessageHardRefresh {
-    return (m as MessageHardRefresh).type === SWMsgOutgoing.DO_HARD_REFRESH;
+  function isMsgLocallyEdited(m: AppSWMessage): m is MsgLocalEdit {
+    return (m as MsgLocalEdit).type === SWMsgOutgoing.DATASET_LOCAL_EDIT;
   }
 
-  function isMessageGetVersion(m: AppSWMessage): m is MessageGetVersion {
-    return (m as MessageGetVersion).type === SWMsgOutgoing.SW_VERSION;
+  function isMsgHardRefresh(m: AppSWMessage): m is MsgHardRefresh {
+    return (m as MsgHardRefresh).type === SWMsgOutgoing.SW_REFRESH_HARD;
+  }
+
+  function isMsgGetVersion(m: AppSWMessage): m is MsgGetVersion {
+    return (m as MsgGetVersion).type === SWMsgOutgoing.SW_GET_VERSIONS;
   }
 
   function messageEventHandler(event: ExtendableMessageEvent) {
     const message = event.data as AppSWMessage;
 
     if (
-      isMessageRecacheData(message) &&
-      message.type === SWMsgOutgoing.RECACHE_DATA
+      isMsgLocallyEdited(message) &&
+      message.type === SWMsgOutgoing.DATASET_LOCAL_EDIT
     ) {
-      const dataCacheP = fetch(message.endpoints.data + dataVerPath)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Local Service Unavailable");
-          }
-        })
-        .then(() =>
-          cacheAllDataResource(message.endpoints.data ?? urlDataService)
-        );
+      const store = "settings";
+      const dbOpenPromise = openIDB();
 
-      event.waitUntil(dataCacheP);
+      const updateSettingP = dbOpenPromise.then((db: IDBDatabase) => {
+        const key = "localDataEdited";
+        return putIDBItem({ db, store }, { key, value: message.edited });
+      });
+
+      event.waitUntil(updateSettingP);
       return;
     }
 
     if (
-      isMessageHardRefresh(message) &&
-      message.type === SWMsgOutgoing.DO_HARD_REFRESH
+      isMsgSaveDataJSON(message) &&
+      message.type === SWMsgOutgoing.DATASET_JSON_SAVE
+    ) {
+      // update data object
+      const dataP = caches.open(appDataCache).then((cache) => {
+        const blob = new Blob([JSON.stringify(message.dataset)], {
+          type: "application/json; charset=utf-8",
+        });
+
+        const d = new Response(blob);
+        return cache.put(message.url, d);
+      });
+
+      event.waitUntil(dataP);
+      return;
+    }
+
+    if (
+      isMsgHardRefresh(message) &&
+      message.type === SWMsgOutgoing.SW_REFRESH_HARD
     ) {
       fetch(urlDataService + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
               void swSelf.registration.unregister();
-              clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
+              clientMsg(SWMsgOutgoing.SW_REFRESH_HARD, {
                 msg: "Hard Refresh",
                 status: res.status,
               });
@@ -353,7 +382,7 @@ export function initServiceWorker({
           }
         })
         .catch((error: Error) => {
-          clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
+          clientMsg(SWMsgOutgoing.SW_REFRESH_HARD, {
             msg: "Hard Refresh",
             error,
           });
@@ -362,15 +391,39 @@ export function initServiceWorker({
     }
 
     if (
-      isMessageGetVersion(message) &&
-      message.type === SWMsgOutgoing.SW_VERSION
+      isMsgGetVersion(message) &&
+      message.type === SWMsgOutgoing.SW_GET_VERSIONS
     ) {
       const versions = getVersions();
-      clientMsg(SWMsgOutgoing.SW_VERSION, versions);
+      clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
       return;
     }
 
     clientLogger("Unrecognized message", DebugLevel.ERROR);
+  }
+
+  /**
+   * User has edited datasets
+   * -  do not fetch cache.json
+   * -  do not overwrite caches on install
+   */
+  function isUserEditedData() {
+    const dbOpenPromise = openIDB();
+
+    const fetchCheckP = dbOpenPromise.then((db: IDBDatabase) =>
+      getIDBItem<{ key: string; value: string }>(
+        { db, store: "settings" },
+        // TODO: put this in a variable
+        "localDataEdited"
+      )
+        .then((v) => v.value)
+        .catch(() => {
+          // doesn't exist
+          return false;
+        })
+    );
+
+    return fetchCheckP;
   }
 
   /**
@@ -395,8 +448,6 @@ export function initServiceWorker({
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-        void countIDBItem(db);
-
         return fetchP
           .then((res) => {
             if (!res.ok) {
@@ -442,7 +493,7 @@ export function initServiceWorker({
       const dbOpenPromise = openIDB();
 
       const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-        return getIDBItem({ db }, uid)
+        return getIDBItem<CacheDataObj>({ db }, uid)
           .then((dataO) =>
             //found
             toResponse(dataO)
@@ -490,11 +541,11 @@ export function initServiceWorker({
 
     switch (true) {
       case /* explicit no cache */
-      req.headers.has("X-No-Cache"): {
+      req.headers.has(SWRequestHeader.NO_CACHE): {
         // remove header
         let h = {};
         req.headers.forEach((val, key) => {
-          if (key !== "x-no-cache") {
+          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
             h[key] = val;
           }
         });
@@ -508,13 +559,24 @@ export function initServiceWorker({
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
 
-      case /* data */
-      req.headers.has(dataVersionHeader):
-        {
-          const ver = e.request.headers.get(dataVersionHeader);
-          e.respondWith(appDataReq(url, ver));
-        }
+      case /* github user data */
+      url.includes("githubusercontent") &&
+        req.headers.has(SWRequestHeader.DATA_VERSION): {
+        const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
+
+        const cacheP = caches
+          .open(appDataCache)
+          .then((cache) => cache.match(url + ".v" + version));
+        e.respondWith(cacheP);
         break;
+      }
+
+      case /* data */
+      req.headers.has(SWRequestHeader.DATA_VERSION): {
+        const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
+        e.respondWith(appDataReq(url, version));
+        break;
+      }
 
       case /* UI asset */
       url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
@@ -562,17 +624,51 @@ export function initServiceWorker({
   }
 
   /**
+   * Post message to client
+   */
+  function clientMsg(
+    type: keyof typeof SWMsgOutgoing,
+    msg: Record<string, unknown>
+  ) {
+    void swSelf.clients
+      .matchAll({ includeUncontrolled: true, type: "window" })
+      .then((client) => {
+        if (client && client.length) {
+          return client[0].postMessage({
+            type,
+            ...msg,
+          });
+        }
+      });
+  }
+
+  /**
+   * Log to client
+   */
+  function clientLogger(msg: string, lvl: number) {
+    swSelf.clients
+      .matchAll({ includeUncontrolled: true, type: "window" })
+      .then((client) => {
+        if (client && client.length) {
+          return client[0].postMessage({
+            type: SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG,
+            msg,
+            lvl,
+          });
+        }
+      })
+      .catch((err) => {
+        console.log("[ServiceWorker] clientLogger failed");
+        console.log(err);
+      });
+  }
+
+  /**
    * indexedDB.open()
    * @param version
-   * @param objStoreToCreate name of store to open or create
-   * @param objStoreToDelete name of store to delete
    */
-  function openIDB(
-    version: number = indexedDBVersion,
-    objStoreToCreate: string = indexedDBStore,
-    objStoreToDelete?: string
-  ) {
-    let openRequest = indexedDB.open(appMediaCache, version);
+  function openIDB(version: number = indexedDBVersion) {
+    let openRequest = indexedDB.open(appIndexedDB, version);
 
     const dbUpgradeP: Promise<{ type: string; val: IDBDatabase }> = new Promise(
       (resolve /*reject*/) => {
@@ -581,24 +677,40 @@ export function initServiceWorker({
           // Save the IDBDatabase interface
           const db = (event.target as IDBRequest<IDBDatabase>).result;
 
-          if (objStoreToDelete) {
-            db.deleteObjectStore(objStoreToDelete);
+          switch (event.oldVersion) {
+            case 0: {
+              // initial install
+              // Create an objectStore for this database
+              const mediaStore = db.createObjectStore("media", {
+                keyPath: "uid",
+              });
+
+              // Use transaction oncomplete to make sure the objectStore creation is
+              // finished before adding data into it.
+              const mediaStoreP = new Promise<void>((mediaRes, _reject) => {
+                mediaStore.transaction.oncomplete = function () {
+                  mediaRes();
+                };
+              });
+
+              const settingsStore = db.createObjectStore("settings", {
+                keyPath: "key",
+              });
+
+              const settingStoreP = new Promise<void>((settingRes, _reject) => {
+                settingsStore.transaction.oncomplete = function () {
+                  settingRes();
+                };
+              });
+
+              void Promise.all([mediaStoreP, settingStoreP]).then(() => {
+                // DONE creating db and stores
+                resolve({ type: "upgrade", val: db });
+              });
+
+              break;
+            }
           }
-
-          // Create an objectStore for this database
-          let objectStore = db.createObjectStore(objStoreToCreate, {
-            keyPath: "uid",
-          });
-          // objectStore.createIndex("last", "last", { unique: false });
-
-          // Use transaction oncomplete to make sure the objectStore creation is
-          // finished before adding data into it.
-          objectStore.transaction.oncomplete = function () {
-            // Store values in the newly created objectStore.
-            // console.log("upgrade success");
-            // clientLogger("IDB.upgrade", DebugLevel.DEBUG);
-            resolve({ type: "upgrade", val: db });
-          };
         };
       }
     );
@@ -642,90 +754,16 @@ export function initServiceWorker({
   }
 
   /**
-   * Post message to client
-   */
-  function clientMsg(type: string, msg: { [key: string]: unknown }) {
-    void swSelf.clients
-      .matchAll({ includeUncontrolled: true, type: "window" })
-      .then((client) => {
-        if (client && client.length) {
-          return client[0].postMessage({
-            type,
-            ...msg,
-          });
-        }
-      });
-  }
-
-  /**
-   * Log to client
-   */
-  function clientLogger(msg: string, lvl: number) {
-    swSelf.clients
-      .matchAll({ includeUncontrolled: true, type: "window" })
-      .then((client) => {
-        if (client && client.length) {
-          return client[0].postMessage({
-            type: SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG,
-            msg,
-            lvl,
-          });
-        }
-      })
-      .catch((err) => {
-        console.log("[ServiceWorker] clientLogger failed");
-        console.log(err);
-      });
-  }
-
-  /**
-   * objectStore.count()
-   */
-  function countIDBItem(db: IDBDatabase, store = indexedDBStore) {
-    const transaction = db.transaction([store]);
-    const request = transaction.objectStore(store).count();
-
-    const requestP: Promise<number> = new Promise((resolve, reject) => {
-      request.onerror = function (/*event*/) {
-        clientLogger("IDB.count X(", DebugLevel.ERROR);
-        reject();
-      };
-      request.onsuccess = function () {
-        if (request.result) {
-          clientLogger("IDB [" + request.result + "]", DebugLevel.DEBUG);
-          resolve(request.result);
-        } else {
-          clientLogger("IDB []", DebugLevel.WARN);
-          resolve(-1);
-        }
-      };
-    });
-
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-
-    return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
-  }
-
-  /**
    * objectStore.get(key)
    */
-  function getIDBItem(
+  function getIDBItem<T>(
     { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
     key: string
   ) {
     const transaction = db.transaction([store]);
-    const request = transaction
-      .objectStore(store)
-      .get(key) as IDBRequest<CacheDataObj>;
+    const request = transaction.objectStore(store).get(key) as IDBRequest<T>;
 
-    const requestP: Promise<CacheDataObj> = new Promise((resolve, reject) => {
+    const requestP: Promise<T> = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
         clientLogger("IDB.get X(", DebugLevel.ERROR);
         reject();
@@ -754,9 +792,9 @@ export function initServiceWorker({
   /**
    * objectStore.add(value)
    */
-  function addIDBItem(
+  function addIDBItem<T>(
     { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    value: CacheDataObj
+    value: T
   ) {
     let transaction = db.transaction([store], "readwrite");
 
@@ -789,9 +827,9 @@ export function initServiceWorker({
   /**
    * objectStore.put(value)
    */
-  function putIDBItem(
+  function putIDBItem<T>(
     { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    value: CacheDataObj
+    value: T
   ) {
     let transaction = db.transaction([store], "readwrite");
 
@@ -827,34 +865,46 @@ export function initServiceWorker({
    * @returns a Promise with a cache response
    */
   function appVersionReq(url: string) {
-    // fetch new versions
-    const f = fetch(url).then((res) => {
-      const resClone = res.clone();
-      if (!res.ok) {
-        throw new Error("Failed to fetch");
+    const fetchCheckP = isUserEditedData();
+
+    return fetchCheckP.then((cacheOnly) => {
+      // check if in cache
+      const c = caches
+        .open(appDataCache)
+        .then((cache) => cache.match(url))
+        .then((cacheRes) => {
+          if (!cacheRes) {
+            throw new Error("Not in cache");
+          }
+          return cacheRes;
+        });
+
+      if (cacheOnly) {
+        // don't fetch when user in-app
+        // has edited datasets
+        return c;
       }
 
-      // update cache from new
-      void caches.open(appDataCache).then((cache) => cache.put(url, resClone));
-
-      return res;
-    });
-
-    // check if in cache
-    const c = caches
-      .open(appDataCache)
-      .then((cache) => cache.match(url))
-      .then((cacheRes) => {
-        if (!cacheRes) {
-          throw new Error("Not in cache");
+      // fetch new versions
+      const f = fetch(url).then((res) => {
+        const resClone = res.clone();
+        if (!res.ok) {
+          throw new Error("Failed to fetch");
         }
-        return cacheRes;
+
+        // update cache from new
+        void caches
+          .open(appDataCache)
+          .then((cache) => cache.put(url, resClone));
+
+        return res;
       });
 
-    // return whaterver is fastest
-    return Promise.any([f, c]).catch((errs: Error[]) =>
-      Promise.reject(errs[0].message)
-    );
+      // return whaterver is fastest
+      return Promise.any([f, c]).catch((errs: Error[]) =>
+        Promise.reject(errs[0].message)
+      );
+    });
   }
 
   /**
@@ -939,6 +989,7 @@ export function initServiceWorker({
   }
 
   /**
+   * Only used if no IndexedDB support
    * cache match first otherwise fetch then cache
    * @returns a Promise that yieds a cached response
    */

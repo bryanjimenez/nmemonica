@@ -1,38 +1,34 @@
+import EventEmitter from "events";
+
 import { Badge, Fab, TextField } from "@mui/material";
-import Spreadsheet from "@nmemonica/x-spreadsheet";
+import Spreadsheet, { type SheetData } from "@nmemonica/x-spreadsheet";
 import {
-  FileSymlinkFileIcon,
+  DesktopDownloadIcon,
   RssIcon,
   SearchIcon,
+  ShareIcon,
 } from "@primer/octicons-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
-import {
-  pushServiceSheetDataUpdatePath,
-  sheetServicePath,
-} from "../../../environment.development";
-import { useRewriteUrl } from "../../hooks/useRewriteUrl";
-import { AppDispatch } from "../../slices";
+import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
+import { AppDispatch, RootState } from "../../slices";
 import "../../css/Sheet.css";
+import { setLocalDataEdited } from "../../slices/globalSlice";
 import { clearKanji } from "../../slices/kanjiSlice";
+import { clearOpposites } from "../../slices/oppositeSlice";
+import { clearParticleGame } from "../../slices/particleSlice";
 import { clearPhrases } from "../../slices/phraseSlice";
-import { setVersion } from "../../slices/versionSlice";
+import { getDatasets } from "../../slices/sheetSlice";
+import { setSwVersions, setVersion } from "../../slices/versionSlice";
 import { clearVocabulary } from "../../slices/vocabularySlice";
-import { NotReady } from "../Form/NotReady";
+import {
+  ExternalSourceType,
+  getExternalSourceType,
+} from "../Form/ExtSourceInput";
+import { pushServiceSheetDataUpdatePath } from "../../../environment.production";
 
-// TODO: import this?
-// service/helper/firebaseParse.ts
-export interface SheetData {
-  name: string;
-  rows: { len: number } & Record<
-    number,
-    {
-      cells: Record<string, { text?: string; merge?: [number, number] | null }>;
-    }
-  >;
-}
 
 const SheetMeta = {
   location: "/sheet/",
@@ -61,7 +57,33 @@ const defaultOp = {
   },
 };
 
-function saveSheet(workbook: Spreadsheet | null, dataService: string) {
+function saveSheetServiceWorker(workbook: Spreadsheet | null, url: string) {
+  if (!workbook) return Promise.reject(new Error("Missing workbook"));
+  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
+  if (!isFilledSheetData(activeSheetData)) {
+    throw new Error("Missing data");
+  }
+
+  const d = removeLastRowIfBlank(activeSheetData);
+
+  const { data, hash } = sheetDataToJSON(d);
+
+  const resource = activeSheetData.name.toLowerCase();
+
+  return swMessageSaveDataJSON(
+    url + "/" + resource + ".json.v" + hash,
+    data,
+    hash
+  ).then(() => ({
+    name: activeSheetName,
+    hash,
+  }));
+}
+
+function saveSheetLocalService(
+  workbook: Spreadsheet | null,
+  serviceBaseUrl: string
+) {
   if (!workbook) return Promise.reject(new Error("Missing workbook"));
 
   const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
@@ -75,7 +97,7 @@ function saveSheet(workbook: Spreadsheet | null, dataService: string) {
   container.append("sheetName", activeSheetName);
   container.append("sheetData", data);
 
-  return fetch(dataService + sheetServicePath, {
+  return fetch(serviceBaseUrl + sheetServicePath, {
     method: "PUT",
     body: container,
   }).then((res) => {
@@ -104,7 +126,7 @@ function getActiveSheet(workbook: Spreadsheet) {
 /**
  * Send push to subscribed clients
  */
-function pushSheet(workbook: Spreadsheet | null, dataService: string) {
+function pushSheet(workbook: Spreadsheet | null, serviceBaseUrl: string) {
   if (!workbook) return;
 
   const { activeSheetName, activeSheetData } = getActiveSheet(workbook);
@@ -118,26 +140,20 @@ function pushSheet(workbook: Spreadsheet | null, dataService: string) {
   container.append("sheetName", activeSheetName);
   container.append("sheetData", data);
 
-  void fetch(dataService + pushServiceSheetDataUpdatePath, {
+  void fetch(serviceBaseUrl + pushServiceSheetDataUpdatePath, {
     method: "POST",
     body: container,
   });
 }
 
-export function getLastCellIdx(
-  x: SheetData["rows"] | SheetData["rows"][0]["cells"]
-) {
-  const largest = Object.keys(x).reduce(
-    (big, x) => (big < Number(x) ? Number(x) : big),
-    0
-  );
+export function addExtraRow(xObj: SheetData[]) {
+  const extraAdded = xObj.reduce<SheetData[]>((acc, o) => {
+    let rows = o.rows;
+    if (!rows) {
+      return [...acc, { rows: { "0": { cells: {} } }, len: 1 }];
+    }
 
-  return largest;
-}
-
-export function addExtraRow(xSheetObj: SheetData[]) {
-  const extraAdded = xSheetObj.reduce<SheetData[]>((acc, o) => {
-    const last = getLastCellIdx(o.rows);
+    const last = getLastCellIdx(rows);
 
     const n = {
       ...o,
@@ -154,8 +170,13 @@ export function addExtraRow(xSheetObj: SheetData[]) {
   return extraAdded;
 }
 
-export function removeLastRowIfBlank(o: SheetData) {
-  const clone = { ...o };
+export function removeLastRowIfBlank<T extends SheetData>(o: T) {
+  const rows = o.rows;
+  if (!o.rows || !rows) {
+    return o;
+  }
+
+  const clone = { ...o, rows };
 
   const last = getLastCellIdx(o.rows);
 
@@ -181,14 +202,17 @@ export default function Sheet() {
   const resultIdx = useRef<number | null>(null);
   const searchValue = useRef<string | null>(null);
 
-  const dataService = useRewriteUrl("");
+  const { localServiceURL } = useSelector(({ global }: RootState) => global);
+  const externalSource = getExternalSourceType(localServiceURL);
 
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void fetch(dataService + sheetServicePath, { method: "GET" }).then((res) =>
-      res.json().then(({ xSheetObj }: { xSheetObj: SheetData[] }) => {
-        const data = addExtraRow(xSheetObj);
+    void dispatch(getDatasets())
+      .unwrap()
+      .then((obj) => {
+        const data = addExtraRow(obj);
+
         const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
         // console.log(grid);
         // console.log(grid.bottombar.activeEl.el.innerHTML);
@@ -207,8 +231,7 @@ export default function Sheet() {
         // grid.setMaxCols(2, sheet3Cols);
 
         wbRef.current = grid;
-      })
-    );
+      });
 
     containerRef.current?.appendChild(gridEl);
 
@@ -220,36 +243,61 @@ export default function Sheet() {
         c?.removeChild(gridEl);
       }
     };
-  }, [dataService]);
+  }, [dispatch, externalSource]);
 
   const saveSheetCB = useCallback(() => {
-    void saveSheet(wbRef.current, dataService)?.then(({ hash, name }) => {
-      setTimeout(() => {
-        // wait for fs writes
+    let saveP;
+    switch (externalSource) {
+      case ExternalSourceType.Unset: {
+        saveP = saveSheetServiceWorker(wbRef.current, dataServiceEndpoint);
+        break;
+      }
+      case ExternalSourceType.GitHubUserContent:
+        saveP = saveSheetServiceWorker(wbRef.current, dataServiceEndpoint);
+        break;
 
-        switch (name) {
-          case "Kanji":
-            dispatch(setVersion({ name: "kanji", hash }));
-            dispatch(clearKanji());
-            break;
-          case "Vocabulary":
-            dispatch(setVersion({ name: "vocabulary", hash }));
-            dispatch(clearVocabulary());
-            break;
-          case "Phrases":
-            dispatch(setVersion({ name: "phrases", hash }));
-            dispatch(clearPhrases());
-            break;
-          default:
-            throw new Error("Incorrect sheet name");
-        }
-      }, 1000);
+      case ExternalSourceType.LocalService: {
+        // backup to local service
+        void saveSheetLocalService(wbRef.current, localServiceURL);
+        // save in cache
+        saveP = saveSheetServiceWorker(wbRef.current, dataServiceEndpoint);
+        break;
+      }
+      default:
+        throw new Error("Save Sheet unknown source");
+    }
+
+    void saveP.then(({ hash, name }) => {
+      switch (name) {
+        case "Kanji":
+          dispatch(setVersion({ name: "kanji", hash }));
+          dispatch(clearKanji());
+          break;
+        case "Vocabulary":
+          dispatch(setVersion({ name: "vocabulary", hash }));
+          dispatch(clearVocabulary());
+          dispatch(clearOpposites());
+          break;
+        case "Phrases":
+          dispatch(setVersion({ name: "phrases", hash }));
+          dispatch(clearPhrases());
+          dispatch(clearParticleGame());
+          break;
+        default:
+          throw new Error("Incorrect sheet name: " + name);
+      }
+
+      // update service worker cache.json file with app state versions
+      void dispatch(setSwVersions());
     });
-  }, [dispatch, dataService]);
+
+    // local data edited, do not fetch use cached cache.json
+    void dispatch(setLocalDataEdited(true));
+  }, [dispatch, externalSource, localServiceURL]);
 
   const pushSheetCB = useCallback(() => {
-    pushSheet(wbRef.current, dataService);
-  }, [dataService]);
+    pushSheet(wbRef.current, localServiceURL);
+  }, [localServiceURL]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -308,10 +356,6 @@ export default function Sheet() {
     workbook.sheet.verticalScrollbar.moveFn(xOffset);
   }, []);
 
-  if (dataService.length === 0) {
-    return <NotReady addlStyle="sheet" text="Set Service Endpoint Override" />;
-  }
-
   return (
     <React.Fragment>
       <div className="sheet main-panel pt-2">
@@ -323,21 +367,98 @@ export default function Sheet() {
               onClick={saveSheetCB}
               className="m-0 z-index-unset"
               tabIndex={3}
+              aria-label="Save Sheet"
             >
-              <FileSymlinkFileIcon size="small" />
+              <ShareIcon size="small" />
             </Fab>
           </div>
-          <div className="px-1">
+          <div>
             <Fab
               variant="extended"
               size="small"
-              onClick={pushSheetCB}
+              onClick={() => {
+                //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
+
+                const xObj = wbRef.current?.getData() as FilledSheetData[];
+                if (xObj) {
+                  const filesP = xObj.map((xObjSheet: FilledSheetData) => {
+                    const fileSim = new EventEmitter();
+
+                    const fileWriterSimulator = {
+                      write: (line: string) => {
+                        fileSim.emit("write", line);
+                      },
+                      end: () => {
+                        fileSim.emit("end");
+                      },
+                    };
+
+                    const csvP = new Promise<[string, string]>(
+                      (resolve, _reject) => {
+                        let file = "";
+                        fileSim.on("write", (line) => {
+                          file += line;
+                        });
+
+                        fileSim.on("end", () => {
+                          resolve([xObjSheet.name, file]);
+                        });
+                      }
+                    );
+
+                    objectToCSV(xObjSheet, fileWriterSimulator);
+
+                    return csvP;
+                  });
+
+                  void Promise.all(filesP).then((data1) => {
+                    data1.forEach(([name, data]) => {
+                      const file = new Blob([data], {
+                        type: "application/plaintext; charset=utf-8",
+                      });
+                      // const file = new Blob(['csv.file'],{type:"octet/stream"})
+                      // const f = new File([file], './file.csv', {type:"octet/stream"})
+
+                      const dlUrl = URL.createObjectURL(file);
+                      // window.location.assign(dlUrl)
+
+                      // URL.revokeObjectURL()
+                      // browser.downloads.download(URL.createObjectURL(file))
+                      const a = document.createElement("a");
+                      a.download = `${name}.csv`;
+                      a.href = dlUrl;
+                      // document.body.appendChild(a)
+                      a.click();
+
+                      setTimeout(() => {
+                        // document.body.removeChild(a)
+                        URL.revokeObjectURL(dlUrl);
+                      }, 0);
+                    });
+                  });
+                }
+              }}
               className="m-0 z-index-unset"
               tabIndex={4}
+              aria-label="Download Sheet"
             >
-              <RssIcon size="small" />
+              <DesktopDownloadIcon size="small" />
             </Fab>
           </div>
+          {externalSource === ExternalSourceType.LocalService && (
+            <div className="px-1">
+              <Fab
+                variant="extended"
+                size="small"
+                onClick={pushSheetCB}
+                className="m-0 z-index-unset"
+                tabIndex={4}
+                aria-label="Push to subscribers"
+              >
+                <RssIcon size="small" />
+              </Fab>
+            </div>
+          )}
           <div className="d-flex">
             <div>
               <form
@@ -386,7 +507,7 @@ export default function Sheet() {
           </div>
         </div>
 
-        <div ref={containerRef} className="pt-2" />
+        <div ref={containerRef} className="sheet-container pt-2" />
       </div>
     </React.Fragment>
   );

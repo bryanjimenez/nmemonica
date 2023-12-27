@@ -16,22 +16,12 @@ export function getWorkbookXS(req: Request, res: Response, next: NextFunction) {
   let xSheetObj: Promise<SheetData>[];
   switch (fileType) {
     case ".xlsx": {
-      // FIXME: hardcoded range in readXLSX
       throw new Error("Incomplete: hardcoded range in readXLSX");
-      // const file = fs.readFileSync(`${CSV_DIR}/${XLSX_FILE}`);
-      // xSheetObj = readXLSX(file);
-      // break;
     }
     default: /** CSV */ {
-<<<<<<< HEAD
-      xSheetObj = sheetNames.reduce<WorkSheet[]>((acc, sheet) => {
-        const file = fs.readFileSync(path.normalize(`${CSV_DIR}/${sheet}.csv`));
-        const [cellArr] = readXSheet(file);
-        cellArr.name = sheet;
-=======
       xSheetObj = sheetNames.reduce<Promise<SheetData>[]>((acc, sheet) => {
         const filePath = path.normalize(`${CSV_DIR}/${sheet}.csv`);
->>>>>>> bac981d (remove dependency xlsx)
+
 
         return [...acc, csvToObject(filePath, { name: sheet })];
       }, []);
@@ -40,7 +30,7 @@ export function getWorkbookXS(req: Request, res: Response, next: NextFunction) {
 
   Promise.all(xSheetObj)
     .then((vals) => {
-      res.status(200).json({ xSheetObj: vals });
+      res.status(200).json(vals);
     })
     .catch(next);
 }
@@ -55,10 +45,7 @@ export async function putWorkbookXSAsync(
     let h;
     switch (fileType) {
       case ".xlsx": {
-        // FIXME: will override other sheets in wb!
         throw new Error("Incomplete: will override other sheets in wb!");
-        // write(`${WRITE_DIR}${XLSX_FILE}`, xSheetObj);
-        // break;
       }
       default:
         /** CSV */ {

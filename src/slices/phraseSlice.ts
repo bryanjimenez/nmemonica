@@ -11,7 +11,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { dataServicePath } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.production";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
@@ -19,8 +19,8 @@ import {
   updateAction,
 } from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import { rewriteUrl } from "../hooks/useRewriteUrl";
 import type {
   GroupListMap,
   MetaDataObj,
@@ -183,13 +183,11 @@ export const getPhrase = createAsyncThunk(
     // TODO: rename state.phrases -> state.phrase
     const version = state.version.phrases ?? "0";
 
-    const baseUrl = rewriteUrl(state.global.localServiceURL, dataServicePath);
-
     // if (version === "0") {
     //   console.error("fetching phrase: 0");
     // }
-    const jsonValue = (await fetch(baseUrl + "/phrases.json", {
-      headers: { "Data-Version": version },
+    const jsonValue = (await fetch(dataServiceEndpoint + "/phrases.json", {
+      headers: { [SWRequestHeader.DATA_VERSION]: version },
     }).then((res) => res.json())) as Record<string, SourcePhrase>;
 
     const groups = buildGroupObject(jsonValue);
@@ -200,7 +198,7 @@ export const getPhrase = createAsyncThunk(
       });
     }
 
-    return { version, values, groups };
+    return { version, value: jsonValue, values, groups };
   }
 );
 

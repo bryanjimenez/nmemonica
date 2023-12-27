@@ -14,10 +14,13 @@ import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { VersionInitSlice } from "./versionSlice";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
-import {
-  dataServicePath,
-} from "../../environment.development";
+import { dataServicePath } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.production";
 import { type ConsoleMessage } from "../components/Form/Console";
+import {
+  ExternalSourceType,
+  getExternalSourceType,
+} from "../components/Form/ExtSourceInput";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import {
@@ -28,8 +31,8 @@ import {
   SWMsgIncoming,
   SWRequestHeader,
   UIMsg,
+  swMessageDataLocalEdit,
 } from "../helper/serviceWorkerHelper";
-import { rewriteUrl } from "../hooks/useRewriteUrl";
 import type { ValuesOf } from "../typings/raw";
 
 export interface MemoryDataObject {
@@ -47,6 +50,7 @@ export interface GlobalInitSlice {
   swipeThreshold: number;
   motionThreshold: number;
   localServiceURL: string;
+  lastImport: string[];
 }
 
 export const globalInitState: GlobalInitSlice = {
@@ -57,6 +61,7 @@ export const globalInitState: GlobalInitSlice = {
   swipeThreshold: 0,
   motionThreshold: 0,
   localServiceURL: "",
+  lastImport: [],
 };
 
 export const getMemoryStorageStatus = createAsyncThunk(
@@ -143,10 +148,35 @@ export const setLocalServiceURL = createAsyncThunk(
   async (arg: string) => {
     const localServiceURL = arg;
 
-    const url = rewriteUrl(localServiceURL, dataServicePath) + "/cache.json";
+    let url: string;
+    const externalSource = getExternalSourceType(localServiceURL);
+    switch (externalSource) {
+      case ExternalSourceType.GitHubUserContent:
+        url = localServiceURL;
+        break;
+
+      case ExternalSourceType.LocalService:
+        url = localServiceURL + dataServicePath;
+        break;
+
+      default:
+        url = dataServiceEndpoint;
+        break;
+    }
+
+    if (externalSource === ExternalSourceType.GitHubUserContent) {
+      // verify is available
+      // is not cached
+      return fetch(url + "/Vocabulary.csv").then((res) => {
+        if (!res.ok) {
+          throw new Error("Could not verify repo");
+        }
+        return { versions: {} as VersionInitSlice, localServiceURL: url };
+      });
+    }
 
     // TODO: do service handshake verif
-    return fetch(url, {
+    return fetch(url + "/cache.json", {
       headers: { [SWRequestHeader.NO_CACHE]: "ServiceWorkerNoCache" },
     })
       .then((res) => {
@@ -269,6 +299,37 @@ const globalSlice = createSlice({
         payload: { msg, lvl, type },
       }),
     },
+
+    setLocalDataEdited(_state, action: PayloadAction<boolean>) {
+      let override = action.payload;
+      void swMessageDataLocalEdit(override);
+    },
+    setLastImport(state, action: PayloadAction<string>) {
+      const value = action.payload;
+
+      const path = "/global/";
+      const attr = "lastImport";
+      const time = new Date();
+
+      const storage = getLocalStorageSettings(localStorageKey);
+      let lastImport: string[] = [value];
+      if (storage?.global.lastImport) {
+        lastImport = [...storage.global.lastImport, value];
+      }
+
+      // no more than 3 import events
+      if (lastImport.length > 3) {
+        lastImport = lastImport.slice(lastImport.length - 3);
+      }
+
+      state.lastImport = localStoreAttrUpdate(
+        time,
+        { global: state },
+        path,
+        attr,
+        lastImport
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -327,6 +388,8 @@ export const {
   toggleDarkMode,
   setMotionThreshold,
   setSwipeThreshold,
+  setLocalDataEdited,
+  setLastImport,
 
   debugToggled,
   logger,

@@ -17,7 +17,7 @@ export function useSWMessageVersionEventHandler(
   const swMessageEventListenerCB = useCallback(
     (event: MessageEvent) => {
       const { type, error } = event.data as { type: string; error: string };
-      if (type === SWMsgOutgoing.DO_HARD_REFRESH) {
+      if (type === SWMsgOutgoing.SW_REFRESH_HARD) {
         if (error) {
           dispatch(logger(error, DebugLevel.ERROR));
         }
@@ -26,7 +26,7 @@ export function useSWMessageVersionEventHandler(
           setSpin(false);
           setHardRefreshUnavailable(true);
         }, 2000);
-      } else if (type === SWMsgOutgoing.SW_VERSION) {
+      } else if (type === SWMsgOutgoing.SW_GET_VERSIONS) {
         const { swVersion, jsVersion, bundleVersion } =
           event.data as SWVersionInfo;
 

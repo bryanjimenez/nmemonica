@@ -6,6 +6,7 @@ export interface SwMessage {
 
 export const SWRequestHeader = Object.freeze({
   NO_CACHE: "X-No-Cache",
+  DATA_VERSION: "Data-Version",
 });
 
 export const UIMsg = Object.freeze({
@@ -18,15 +19,6 @@ export interface SWVersionInfo {
   bundleVersion: string;
 }
 
-export interface AppEndpoints {
-  /** Endpoint for UI resources (html, js, css, ...) */
-  ui?: string;
-  /** Endpoint for Data sets (cache.json, kanji.json, ...) */
-  data?: string;
-  /** Endpoint for Pronounce resource */
-  media?: string;
-}
-
 export const SWMsgIncoming = Object.freeze({
   POST_INSTALL_ACTIVATE_DONE: "POST_INSTALL_ACTIVATE_DONE",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
@@ -34,9 +26,10 @@ export const SWMsgIncoming = Object.freeze({
 });
 
 export const SWMsgOutgoing = Object.freeze({
-  SW_VERSION: "SW_VERSION",
-  DO_HARD_REFRESH: "DO_HARD_REFRESH",
-  RECACHE_DATA: "RECACHE_DATA",
+  SW_GET_VERSIONS: "SW_GET_VERSIONS",
+  SW_REFRESH_HARD: "SW_REFRESH_HARD",
+  DATASET_JSON_SAVE: "DATASET_JSON_SAVE",
+  DATASET_LOCAL_EDIT: "DATASET_LOCAL_EDIT",
 });
 
 const serviceWorkerNotAvailableErr = new Error("Service Worker not available");
@@ -61,15 +54,37 @@ export function swMessageUnsubscribe(
 }
 
 /**
- * Post install/activate
- * - cache data
+ * User action
+ * - save data
  */
-export function swMessageRecacheData(appEndPoints: AppEndpoints) {
+export function swMessageSaveDataJSON(
+  url: string,
+  dataset: Record<string, unknown>,
+  hash: string
+) {
   if (navigator.serviceWorker) {
     return navigator.serviceWorker.ready.then(() => {
       navigator.serviceWorker.controller?.postMessage({
-        type: SWMsgOutgoing.RECACHE_DATA,
-        endpoints: appEndPoints,
+        type: SWMsgOutgoing.DATASET_JSON_SAVE,
+        url,
+        dataset,
+        hash,
+      });
+    });
+  }
+  return Promise.reject(serviceWorkerNotAvailableErr);
+}
+
+/**
+ * After user edits or imports a dataset
+ * - mark cached data as edited/untouched
+ */
+export function swMessageDataLocalEdit(edited: boolean) {
+  if (navigator.serviceWorker) {
+    return navigator.serviceWorker.ready.then(() => {
+      navigator.serviceWorker.controller?.postMessage({
+        type: SWMsgOutgoing.DATASET_LOCAL_EDIT,
+        edited,
       });
     });
   }
@@ -77,13 +92,25 @@ export function swMessageRecacheData(appEndPoints: AppEndpoints) {
 }
 
 export function swMessageGetVersions() {
-  navigator.serviceWorker.controller?.postMessage({
-    type: SWMsgOutgoing.SW_VERSION,
-  });
+  if (navigator.serviceWorker) {
+    return navigator.serviceWorker.ready.then(() => {
+      navigator.serviceWorker.controller?.postMessage({
+        type: SWMsgOutgoing.SW_GET_VERSIONS,
+      });
+    });
+  }
+
+  return Promise.reject(serviceWorkerNotAvailableErr);
 }
 
 export function swMessageDoHardRefresh() {
-  navigator.serviceWorker.controller?.postMessage({
-    type: SWMsgOutgoing.DO_HARD_REFRESH,
-  });
+  if (navigator.serviceWorker) {
+    return navigator.serviceWorker.ready.then(() => {
+      navigator.serviceWorker.controller?.postMessage({
+        type: SWMsgOutgoing.SW_REFRESH_HARD,
+      });
+    });
+  }
+
+  return Promise.reject(serviceWorkerNotAvailableErr);
 }

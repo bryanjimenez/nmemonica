@@ -12,7 +12,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
-import { audioServicePath } from "../../../environment.development";
+import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,
@@ -48,7 +48,6 @@ import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
-import { useRewriteUrl } from "../../hooks/useRewriteUrl";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
@@ -396,7 +395,6 @@ export default function Phrases() {
     setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
-  const baseUrl = useRewriteUrl(audioServicePath);
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -406,7 +404,7 @@ export default function Phrases() {
     order,
     filteredPhrases,
     recacheAudio,
-    baseUrl
+    pronounceEndoint
   );
 
   // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);

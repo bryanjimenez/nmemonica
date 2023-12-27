@@ -3,6 +3,9 @@ import type {
   RawKanji,
   RawPhrase,
   RawVocabulary,
+  SourceKanji,
+  SourcePhrase,
+  SourceVocabulary,
 } from "../../src/typings/raw.js";
 import md5 from "md5";
 
@@ -30,7 +33,7 @@ export interface SheetData {
  * x to 2d string[][]
  *
  * Creates a matrix of strings from xSpreadsheet data object
- * @param xSheetObj
+ * @param xObj
  */
 export function xtom(xSheetObj: SheetData) {
   const matrix = Object.values(xSheetObj.rows).reduce<string[][]>(
@@ -62,7 +65,7 @@ export function xtom(xSheetObj: SheetData) {
  * x to cell array
  *
  * Creates a cell array from xSpreadsheet data object
- * @param xSheetObj
+ * @param xObj
  * @param sheetName
  */
 export function xtoc(xSheetObj: SheetData) {
@@ -82,7 +85,103 @@ export function xtoc(xSheetObj: SheetData) {
   return cellArray;
 }
 
-export function vocabularyToJSON(sheetData: SheetData) {
+/**
+ * JSON object to x
+ */
+export function jtox(
+  appJSONData: Record<string, SourceVocabulary | SourcePhrase | SourceKanji>,
+  dataSetName: string
+) {
+  const xObj: FilledSheetData = { name: dataSetName, rows: { len: 0 } };
+
+  let h: Partial<Record<keyof typeof prettyHeaders, number>>;
+
+  switch (dataSetName) {
+    case "Vocabulary":
+      {
+        h = { ...vocabularyMinHeaders };
+      }
+      break;
+
+    case "Phrases":
+      {
+        h = { ...phraseMinHeaders };
+      }
+      break;
+
+    case "Kanji":
+      {
+        h = { ...kanjiMinHeaders };
+      }
+      break;
+
+    default:
+      throw new Error(`Mapping for ${dataSetName} not implemented`);
+  }
+
+  const headerIdx = Object.keys(h) as (keyof typeof prettyHeaders)[];
+  headerIdx.forEach((head, i) => {
+    xObj.rows[0] = {
+      cells: {
+        ...(xObj.rows[0]?.cells ?? {}),
+        [i]: { text: prettyHeaders[head][0] },
+      },
+    };
+  });
+
+  let rowIdx = 1;
+  for (const [_uid, entry] of Object.entries(appJSONData)) {
+    for (const [field, value] of Object.entries(entry)) {
+      const cellIdx = (headerIdx as string[]).indexOf(field);
+      if (cellIdx > -1) {
+        if (!xObj.rows[rowIdx] || !xObj.rows[rowIdx].cells) {
+          xObj.rows[rowIdx] = { cells: {} };
+        }
+
+        if (typeof value === "string") {
+          xObj.rows[rowIdx].cells[cellIdx] = { text: value };
+        }
+      }
+    }
+    rowIdx++;
+  }
+  xObj.rows.len = rowIdx;
+
+  return xObj;
+}
+
+/**
+ * Parses sheet data into app's json format
+ */
+export function sheetDataToJSON(sheetData: FilledSheetData) {
+  let data: Record<string, unknown> = {};
+  let hash = "";
+
+  switch (sheetData.name) {
+    case "Vocabulary": {
+      const { vocabularyAfter, hash: h } = vocabularyToJSON(sheetData);
+      data = vocabularyAfter;
+      hash = h;
+      break;
+    }
+    case "Phrases": {
+      const { phrasesAfter, hash: h } = phrasesToJSON(sheetData);
+      data = phrasesAfter;
+      hash = h;
+      break;
+    }
+    case "Kanji": {
+      const { kanjiList, hash: h } = kanjiToJSON(sheetData);
+      data = kanjiList;
+      hash = h;
+      break;
+    }
+  }
+
+  return { data, hash };
+}
+
+export function vocabularyToJSON(sheetData: FilledSheetData) {
   const stringArray = xtom(sheetData);
   return sheets_sync_vocabulary(sheetData.name, stringArray);
 }
@@ -90,20 +189,25 @@ export function vocabularyToJSON(sheetData: SheetData) {
 /**
  * Maps a header name to a header index in the csv
  * @param headers Object to be modified
- * @param hh value of csv header
+ * @param headerValue value of csv header
  * @param headerIndex index of header in csv
  */
 function getHeaderIndex(
   headers: Record<string, number>,
-  hh: string,
+  headerValue: string,
   headerIndex: number
 ) {
-  const isAHeader = Object.keys(headers);
+  const search = headerValue.toLowerCase();
 
-  const h = hh.toLowerCase();
-  if (h && h.length > 0 && isAHeader.includes(h)) {
-    const k = h;
-    headers[k] = headerIndex;
+  const headerMap = Object.entries(prettyHeaders);
+  const key = 0;
+  if (search && search.length > 0) {
+    const index = headerMap.findIndex(
+      ([_kk, vv]) => vv.find((v) => v.toLowerCase() === search) !== undefined
+    );
+    if (index !== -1) {
+      headers[headerMap[index][key]] = headerIndex;
+    }
   }
 }
 
@@ -111,15 +215,7 @@ export function sheets_sync_vocabulary(
   sheetName: string,
   sheetData: string[][]
 ) {
-  const h = {
-    japanese: -1,
-    romaji: -1,
-    english: -1,
-    group: -1,
-    subgroup: -1,
-    pronunciation: -1,
-    tags: -1,
-  };
+  const h = { ...vocabularyMinHeaders };
 
   const vocabularyAfter = sheetData.reduce<Record<string, Vocabulary>>(
     (acc, row, i) => {
@@ -127,15 +223,23 @@ export function sheets_sync_vocabulary(
         row.forEach((headVal, headIdx) => {
           getHeaderIndex(h, headVal, headIdx);
         });
+      }
 
-        Object.keys(h).forEach((hVal) => {
-          const k = hVal as keyof typeof h;
-          if (h[k] < 0) {
-            throw new Error(
-              `Missing or incorrect header '${hVal}' in ${sheetName}.csv`
-            );
-          }
-        });
+      if (
+        h.english < 0 ||
+        h.japanese < 0 ||
+        h.romaji < 0 ||
+        h.grp < 0 ||
+        h.subGrp < 0 ||
+        h.tag < 0 ||
+        h.pronounce < 0
+      ) {
+        const theHeaders = Object.entries(h);
+        const missIdx = theHeaders.findIndex(([_k, v]) => v < 0);
+        const name = 0;
+        throw new Error(
+          `Missing or incorrect header '${theHeaders[missIdx][name]}' in ${sheetName}.csv`
+        );
       }
 
       if (i > 0) {
@@ -151,20 +255,20 @@ export function sheets_sync_vocabulary(
 
         const key: string = md5(vocabulary.japanese);
 
-        if (row[h.group] && row[h.group] !== "") {
-          vocabulary.grp = row[h.group];
+        if (row[h.grp] && row[h.grp] !== "") {
+          vocabulary.grp = row[h.grp];
         }
 
-        if (row[h.subgroup] && row[h.subgroup] !== "") {
-          vocabulary.subGrp = row[h.subgroup];
+        if (row[h.subGrp] && row[h.subGrp] !== "") {
+          vocabulary.subGrp = row[h.subGrp];
         }
 
-        if (row[h.pronunciation] && row[h.pronunciation] !== "") {
-          vocabulary.pronounce = row[h.pronunciation];
+        if (row[h.pronounce] && row[h.pronounce] !== "") {
+          vocabulary.pronounce = row[h.pronounce];
         }
 
-        if (row[h.tags] && row[h.tags] !== "") {
-          vocabulary.tag = row[h.tags];
+        if (row[h.tag] && row[h.tag] !== "") {
+          vocabulary.tag = row[h.tag];
         }
 
         if (row[h.romaji] && row[h.romaji] !== "") {
@@ -189,16 +293,7 @@ export function phrasesToJSON(sheetData: SheetData) {
 }
 
 export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
-  const h = {
-    japanese: -1,
-    romaji: -1,
-    english: -1,
-    group: -1,
-    subgroup: -1,
-    literal: -1,
-    lesson: -1,
-    tags: -1,
-  };
+  const h = { ...phraseMinHeaders };
 
   const phrasesAfter = sheetData.reduce<Record<string, Phrase>>(
     (acc, row, i) => {
@@ -206,15 +301,24 @@ export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
         row.forEach((headVal, headIdx) => {
           getHeaderIndex(h, headVal, headIdx);
         });
+      }
 
-        Object.keys(h).forEach((hVal) => {
-          const k = hVal as keyof typeof h;
-          if (h[k] < 0) {
-            throw new Error(
-              `Missing or incorrect header '${hVal}' in ${sheetName}.csv`
-            );
-          }
-        });
+      if (
+        h.english < 0 ||
+        h.japanese < 0 ||
+        h.romaji < 0 ||
+        h.grp < 0 ||
+        h.subGrp < 0 ||
+        h.tag < 0 ||
+        h.lit < 0 ||
+        h.lesson < 0
+      ) {
+        const theHeaders = Object.entries(h);
+        const missIdx = theHeaders.findIndex(([_k, v]) => v < 0);
+        const name = 0;
+        throw new Error(
+          `Missing or incorrect header '${theHeaders[missIdx][name]}' in ${sheetName}.csv`
+        );
       }
 
       if (i > 0) {
@@ -229,16 +333,16 @@ export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
 
         const key = md5(phrase.japanese);
 
-        if (row[h.literal] && row[h.literal] !== "") {
-          phrase.lit = row[h.literal];
+        if (row[h.lit] && row[h.lit] !== "") {
+          phrase.lit = row[h.lit];
         }
 
-        if (row[h.group] && row[h.group] !== "") {
-          phrase.grp = row[h.group];
+        if (row[h.grp] && row[h.grp] !== "") {
+          phrase.grp = row[h.grp];
         }
 
-        if (row[h.subgroup] && row[h.subgroup] !== "") {
-          phrase.subGrp = row[h.subgroup];
+        if (row[h.subGrp] && row[h.subGrp] !== "") {
+          phrase.subGrp = row[h.subGrp];
         }
 
         if (row[h.romaji] && row[h.romaji] !== "") {
@@ -249,8 +353,8 @@ export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
           phrase.lesson = row[h.lesson];
         }
 
-        if (row[h.tags] && row[h.tags] !== "") {
-          phrase.tag = row[h.tags];
+        if (row[h.tag] && row[h.tag] !== "") {
+          phrase.tag = row[h.tag];
         }
 
         acc[key] = phrase;
@@ -287,15 +391,23 @@ export function sheets_sync_kanji(sheetName: string, sheetData: string[][]) {
       row.forEach((headVal, headIdx) => {
         getHeaderIndex(h, headVal, headIdx);
       });
+    }
 
-      Object.keys(h).forEach((hVal) => {
-        const k = hVal as keyof typeof h;
-        if (h[k] < 0) {
-          throw new Error(
-            `Missing or incorrect header '${hVal}' in ${sheetName}.csv`
-          );
-        }
-      });
+    if (
+      h.english < 0 ||
+      h.kanji < 0 ||
+      h.on < 0 ||
+      h.kun < 0 ||
+      h.grp < 0 ||
+      h.tag < 0 ||
+      h.radex < 0
+    ) {
+      const theHeaders = Object.entries(h);
+      const missIdx = theHeaders.findIndex(([_k, v]) => v < 0);
+      const name = 0;
+      throw new Error(
+        `Missing or incorrect header '${theHeaders[missIdx][name]}' in ${sheetName}.csv`
+      );
     }
 
     if (i > 0) {
@@ -320,12 +432,12 @@ export function sheets_sync_kanji(sheetName: string, sheetData: string[][]) {
         kanji.kun = row[h.kunyoumi];
       }
 
-      if (row[h.group] && row[h.group] !== "") {
-        kanji.grp = row[h.group];
+      if (row[h.grp] && row[h.grp] !== "") {
+        kanji.grp = row[h.grp];
       }
 
-      if (row[h.tags] && row[h.tags] !== "") {
-        kanji.tag = row[h.tags];
+      if (row[h.tag] && row[h.tag] !== "") {
+        kanji.tag = row[h.tag];
       }
 
       if (row[h.radex] && row[h.radex] !== "") {

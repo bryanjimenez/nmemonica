@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { dataServicePath } from "../../environment.development";
-import { rewriteUrl } from "../hooks/useRewriteUrl";
+import { dataServiceEndpoint } from "../../environment.production";
+import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
 
 import { RootState } from ".";
 
@@ -28,12 +28,23 @@ const initialState: VersionInitSlice = {
  */
 export const getVersions = createAsyncThunk(
   "version/getVersions",
+  async (_arg, _thunkAPI) =>
+    fetch(dataServiceEndpoint + "/cache.json").then((res) => res.json())
+);
+
+/**
+ * Update sw versions
+ */
+export const setSwVersions = createAsyncThunk(
+  "version/setSwVersions",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
+    const stateVersions = { ...state.version };
 
-    const baseUrl = rewriteUrl(state.global.localServiceURL, dataServicePath);
+    const url = dataServiceEndpoint + "/cache.json";
+    const hash = ""; // no hash since updating cache.json
 
-    return fetch(baseUrl + "/cache.json").then((res) => res.json());
+    return swMessageSaveDataJSON(url, stateVersions, hash);
   }
 );
 
