@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "b5bb5926",
-  initCacheVer: "de48cfd3",
+  swVersion: "ffd15193",
+  initCacheVer: "3c66d691",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -10,9 +10,9 @@ const buildConstants = {
 };
 
 const SWMsgOutgoing = {
-  SW_VERSION: "SW_VERSION",
-  DO_HARD_REFRESH: "DO_HARD_REFRESH",
-  RECACHE_DATA: "RECACHE_DATA",
+  SW_GET_VERSIONS: "SW_GET_VERSIONS",
+  SW_REFRESH_HARD: "SW_REFRESH_HARD",
+  DATASET_JSON_SAVE: "DATASET_JSON_SAVE",
 };
 
 const SWMsgIncoming = {
@@ -21,7 +21,242 @@ const SWMsgIncoming = {
   SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
 };
 
+const SWRequestHeader = {
+  NO_CACHE: "X-No-Cache",
+  DATA_VERSION: "Data-Version",
+};
+
+const IDBStores = {
+  MEDIA: "media",
+  STATE: "state",
+  SETTINGS: "settings",
+  WORKBOOK: "workbook",
+};
+
+const IDBKeys = { State: { EDITED: "localDataEdited" } };
+
 const DebugLevel = { OFF: 0, ERROR: 1, WARN: 2, DEBUG: 3 };
+
+const appDBName = "nmemonica-db";
+
+const appDBVersion = 1;
+
+const IDBErrorCause = { NoResult: "IDBNoResults" };
+
+function openIDB(version = appDBVersion) {
+  let openRequest = indexedDB.open(appDBName, version);
+  const dbUpgradeP = new Promise((resolve /*reject*/) => {
+    openRequest.onupgradeneeded = function (event) {
+      if (event.target === null) throw new Error("onupgradeneeded failed");
+      // Save the IDBDatabase interface
+      const db = event.target.result;
+      switch (event.oldVersion) {
+        case 0: {
+          // initial install
+          // Create an objectStore for this database
+          const mediaStore = db.createObjectStore(IDBStores.MEDIA, {
+            keyPath: "uid",
+          });
+          // Use transaction oncomplete to make sure the objectStore creation is
+          // finished before adding data into it.
+          const mediaStoreP = new Promise((mediaRes, _reject) => {
+            mediaStore.transaction.oncomplete = function () {
+              mediaRes();
+            };
+          });
+          const stateStore = db.createObjectStore(IDBStores.STATE, {
+            keyPath: "key",
+          });
+          const stateStoreP = new Promise((stateRes, _reject) => {
+            stateStore.transaction.oncomplete = function () {
+              stateRes();
+            };
+          });
+          const settingsStore = db.createObjectStore(IDBStores.SETTINGS, {
+            keyPath: "key",
+          });
+          const settingStoreP = new Promise((settingRes, _reject) => {
+            settingsStore.transaction.oncomplete = function () {
+              settingRes();
+            };
+          });
+          const workbookStore = db.createObjectStore(IDBStores.WORKBOOK, {
+            keyPath: "key",
+          });
+          const workbookStoreP = new Promise((workbookRes, _reject) => {
+            workbookStore.transaction.oncomplete = function () {
+              workbookRes();
+            };
+          });
+          void Promise.all([
+            mediaStoreP,
+            stateStoreP,
+            settingStoreP,
+            workbookStoreP,
+          ]).then(() => {
+            // DONE creating db and stores
+            resolve({ type: "upgrade", val: db });
+          });
+          break;
+        }
+      }
+    };
+  });
+  const dbOpenP = new Promise((resolve, reject) => {
+    openRequest.onerror = function (/*event*/) {
+      // clientLogger("IDB.open X(", DebugLevel.ERROR);
+      reject();
+    };
+    openRequest.onsuccess = function (event) {
+      if (event.target === null) throw new Error("openIDB failed");
+      const db = event.target.result;
+      db.onerror = function (event) {
+        // Generic error handler for all errors targeted at this database's
+        // requests!
+        if (event.target && "errorCode" in event.target) {
+          const { errorCode: _errorCode } = event.target;
+          // clientLogger("IDB Open X(", DebugLevel.ERROR);
+        }
+      };
+      // console.log("open success");
+      resolve({ type: "open", val: db });
+    };
+  });
+  return Promise.any([dbUpgradeP, dbOpenP]).then((pArr) => {
+    // if upgradeP happens wait for dbOpenP
+    if (pArr.type === "upgrade") {
+      return dbOpenP.then((db) => db.val);
+    }
+    return pArr.val;
+  });
+}
+
+function getIDBItem({ db, store }, key) {
+  const defaultStore = IDBStores.MEDIA;
+  const transaction = db.transaction([
+    store !== null && store !== void 0 ? store : defaultStore,
+  ]);
+  const request = transaction
+    .objectStore(store !== null && store !== void 0 ? store : defaultStore)
+    .get(key);
+  const requestP = new Promise((resolve, reject) => {
+    request.onerror = function (/*event*/) {
+      // clientLogger("IDB.get X(", DebugLevel.ERROR);
+      reject();
+    };
+    request.onsuccess = function () {
+      if (request.result) {
+        resolve(request.result);
+      } else {
+        reject(
+          // @ts-expect-error Error.cause
+          new Error("No results found", {
+            cause: { code: IDBErrorCause.NoResult },
+          }),
+        );
+      }
+    };
+  });
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function () {
+      resolve(undefined);
+    };
+    transaction.onerror = function () {
+      reject();
+    };
+  });
+  return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
+}
+
+function putIDBItem({ db, store }, value) {
+  const defaultStore = IDBStores.MEDIA;
+  let transaction = db.transaction(
+    [store !== null && store !== void 0 ? store : defaultStore],
+    "readwrite",
+  );
+  let request = transaction
+    .objectStore(store !== null && store !== void 0 ? store : defaultStore)
+    .put(value);
+  const requestP = new Promise((resolve, reject) => {
+    request.onsuccess = function (/*event*/) {
+      resolve(undefined);
+    };
+    request.onerror = function () {
+      // clientLogger("IDB.put X(", DebugLevel.ERROR);
+      reject();
+    };
+  });
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function () {
+      resolve(value);
+    };
+    transaction.onerror = function () {
+      reject();
+    };
+  });
+  return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
+}
+
+function addIDBItem({ db, store }, value) {
+  const defaultStore = IDBStores.MEDIA;
+  let transaction = db.transaction(
+    [store !== null && store !== void 0 ? store : defaultStore],
+    "readwrite",
+  );
+  let request = transaction
+    .objectStore(store !== null && store !== void 0 ? store : defaultStore)
+    .add(value);
+  const requestP = new Promise((resolve, reject) => {
+    request.onsuccess = function (/*event*/) {
+      resolve(undefined);
+    };
+    request.onerror = function () {
+      // clientLogger("IDB.add X(", DebugLevel.ERROR);
+      reject();
+    };
+  });
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function () {
+      resolve(value);
+    };
+    transaction.onerror = function () {
+      reject();
+    };
+  });
+  return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
+}
+
+function countIDBItem(db, store = IDBStores.MEDIA) {
+  const transaction = db.transaction([store]);
+  const request = transaction.objectStore(store).count();
+  const requestP = new Promise((resolve, reject) => {
+    request.onerror = function (/*event*/) {
+      // clientLogger("IDB.count X(", DebugLevel.ERROR);
+      reject();
+    };
+    request.onsuccess = function () {
+      if (request.result) {
+        // clientLogger(
+        //   `${db.name}.${store} [${request.result}]`,
+        //   DebugLevel.DEBUG
+        // );
+        resolve(request.result);
+      } else {
+        // clientLogger(`${db.name}.${store} []`, DebugLevel.WARN);
+        resolve(-1);
+      }
+    };
+  });
+  const transactionP = new Promise((resolve, reject) => {
+    transaction.oncomplete = function () {
+      resolve(undefined);
+    };
+    transaction.onerror = function () {
+      reject();
+    };
+  });
+  return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
+}
 
 function getParam(baseUrl, param) {
   const queryPart = baseUrl.includes("?") ? baseUrl.split("?")[1] : "";
@@ -60,7 +295,8 @@ function initServiceWorker({
   const appStaticCache = "nmemonica-static";
   const appDataCache = "nmemonica-data";
   const appMediaCache = "nmemonica-media";
-  const indexedDBVersion = 2;
+  const appIndexedDB = "nmemonica-db";
+  const indexedDBVersion = 1;
   const indexedDBStore = "media";
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
@@ -73,7 +309,6 @@ function initServiceWorker({
   ];
   /** Pronounce cache override */
   const override = "/override_cache";
-  const dataVersionHeader = "Data-Version";
   function getVersions() {
     const main =
       cacheFiles.find((f) => f.match(new RegExp(/main.([a-z0-9]+).js/))) ||
@@ -222,7 +457,7 @@ function initServiceWorker({
   function installEventHandler(_e) {
     void swSelf.skipWaiting();
     const versions = getVersions();
-    clientMsg("SW_VERSION", versions);
+    clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
   }
   function activateEventHandler(e) {
     void swSelf.clients
@@ -243,59 +478,159 @@ function initServiceWorker({
           return swSelf.clients.claim();
         })
         .then(() => {
-          const dataCacheP = cacheAllDataResource(urlDataService);
+          const dataCacheP = isUserEditedData().then((isEdited) => {
+            if (!isEdited) {
+              return cacheAllDataResource(urlDataService);
+            }
+            return;
+          });
           const rootCacheP = cacheAllRoot();
           const staticAssetCacheP = cacheAllStaticAssets();
           return Promise.all([dataCacheP, rootCacheP, staticAssetCacheP]);
-        })
-        .then(() => {
-          // Notify app service worker is ready
-          clientMsg(SWMsgIncoming.POST_INSTALL_ACTIVATE_DONE, {});
         }),
     );
   }
-  function isMessageRecacheData(m) {
-    return m.type === SWMsgOutgoing.RECACHE_DATA;
+  function isMsgSaveDataJSON(m) {
+    return m.type === SWMsgOutgoing.DATASET_JSON_SAVE;
   }
-  function isMessageHardRefresh(m) {
-    return m.type === SWMsgOutgoing.DO_HARD_REFRESH;
+  function isMsgHardRefresh(m) {
+    return m.type === SWMsgOutgoing.SW_REFRESH_HARD;
   }
-  function isMessageGetVersion(m) {
-    return m.type === SWMsgOutgoing.SW_VERSION;
+  function isMsgGetVersion(m) {
+    return m.type === SWMsgOutgoing.SW_GET_VERSIONS;
+  }
+  function moveARecord(oldDB, oldDBT, resolve) {
+    oldDBT.oncomplete = () => {
+      oldDBT = oldDB.transaction(IDBStores.MEDIA, "readwrite");
+      moveARecord(oldDB, oldDBT, resolve);
+    };
+    oldDBT.onabort = () => {
+      oldDB.close();
+    };
+    oldDBT.onerror = () => {
+      console.log("moveARecord error?");
+    };
+    const oldMedia = oldDBT.objectStore(IDBStores.MEDIA);
+    const oldDBEntry = oldMedia.openCursor();
+    const newDB = openIDB();
+    oldDBEntry.onsuccess = () => {
+      const cursor = oldDBEntry.result;
+      if (cursor) {
+        const { key, value } = cursor;
+        cursor.delete();
+        // oldMedia.delete(key);
+        void newDB.then((newDBObj) =>
+          putIDBItem(
+            { db: newDBObj, store: IDBStores.MEDIA },
+            { uid: key.toString(), blob: value },
+          ),
+        );
+        // ).then(()=>{
+        //   cursor.continue()
+        // })
+        return key;
+      } else {
+        console.log("finished! aborting this transaction");
+        oldDBT.abort();
+        resolve();
+      }
+    };
   }
   function messageEventHandler(event) {
     const message = event.data;
-    if (
-      isMessageRecacheData(message) &&
-      message.type === SWMsgOutgoing.RECACHE_DATA
-    ) {
-      const dataCacheP = fetch(message.endpoints.data + dataVerPath)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Local Service Unavailable");
-          }
+    if (message.type === "INDEXEDDB_MIGRATE") {
+      // https://javascript.info/indexeddb
+      console.log("INDEXEDDB_MIGRATE");
+      let migrationP;
+      try {
+        const req = indexedDB.open("nmemonica-media", 2);
+        migrationP = new Promise((res, rej) => {
+          req.onsuccess = (ev) => {
+            // @ts-expect-error ev.target.result -> db
+            res(ev.target.result);
+          };
+          req.onerror = rej;
         })
-        .then(() => {
-          var _a;
-          return cacheAllDataResource(
-            (_a = message.endpoints.data) !== null && _a !== void 0
-              ? _a
-              : urlDataService,
-          );
-        });
-      event.waitUntil(dataCacheP);
+          .then((oldDB) => {
+            return new Promise((resolve, reject) => {
+              console.log("begin migration");
+              void countIDBItem(oldDB).then((value) => {
+                clientLogger("old COUNT: " + value, DebugLevel.DEBUG);
+              });
+              let oldDBT = oldDB.transaction("media", "readwrite");
+              moveARecord(oldDB, oldDBT, resolve);
+              oldDBT.onerror = () => {
+                console.log("failed 0?");
+              };
+            });
+          })
+          .then((p) => {
+            // migration done
+            console.log("migration done");
+            // return openIDB_OLD("nmemonica-media", 3);
+            return openIDB().then((newDB) =>
+              countIDBItem(newDB).then((newV) => {
+                const req = indexedDB.open("nmemonica-media", 2);
+                return new Promise((res, rej) => {
+                  req.onsuccess = (ev) => {
+                    // @ts-expect-error ev.target.result -> db
+                    res(ev.target.result);
+                  };
+                  req.onerror = rej;
+                }).then((oldDB) =>
+                  countIDBItem(oldDB).then((oldV) => {
+                    clientLogger(
+                      "old DB:" + oldV + " new DB:" + newV,
+                      DebugLevel.DEBUG,
+                    );
+                    if (oldV === -1 && newV > 0) {
+                      console.log("deleting old db");
+                      // delete old db
+                      oldDB.close();
+                      const delReq =
+                        indexedDB.deleteDatabase("nmemonica-media");
+                      return new Promise((res, rej) => {
+                        delReq.onsuccess = res;
+                        delReq.onerror = rej;
+                      });
+                    }
+                  }),
+                );
+              }),
+            );
+          });
+      } catch (e) {
+        console.log("migration threw err");
+        console.log(e);
+      }
+      event.waitUntil(migrationP);
       return;
     }
     if (
-      isMessageHardRefresh(message) &&
-      message.type === SWMsgOutgoing.DO_HARD_REFRESH
+      isMsgSaveDataJSON(message) &&
+      message.type === SWMsgOutgoing.DATASET_JSON_SAVE
+    ) {
+      // update data object
+      const dataP = caches.open(appDataCache).then((cache) => {
+        const blob = new Blob([JSON.stringify(message.dataset)], {
+          type: "application/json; charset=utf-8",
+        });
+        const d = new Response(blob);
+        return cache.put(message.url, d);
+      });
+      event.waitUntil(dataP);
+      return;
+    }
+    if (
+      isMsgHardRefresh(message) &&
+      message.type === SWMsgOutgoing.SW_REFRESH_HARD
     ) {
       fetch(urlDataService + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
               void swSelf.registration.unregister();
-              clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
+              clientMsg(SWMsgOutgoing.SW_REFRESH_HARD, {
                 msg: "Hard Refresh",
                 status: res.status,
               });
@@ -305,7 +640,7 @@ function initServiceWorker({
           }
         })
         .catch((error) => {
-          clientMsg(SWMsgOutgoing.DO_HARD_REFRESH, {
+          clientMsg(SWMsgOutgoing.SW_REFRESH_HARD, {
             msg: "Hard Refresh",
             error,
           });
@@ -313,14 +648,30 @@ function initServiceWorker({
       return;
     }
     if (
-      isMessageGetVersion(message) &&
-      message.type === SWMsgOutgoing.SW_VERSION
+      isMsgGetVersion(message) &&
+      message.type === SWMsgOutgoing.SW_GET_VERSIONS
     ) {
       const versions = getVersions();
-      clientMsg(SWMsgOutgoing.SW_VERSION, versions);
+      clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
       return;
     }
     clientLogger("Unrecognized message", DebugLevel.ERROR);
+  }
+  /**
+   * User has edited datasets
+   * -  do not fetch cache.json
+   * -  do not overwrite caches on install
+   */
+  function isUserEditedData() {
+    const fetchCheckP = openIDB().then((db) =>
+      getIDBItem({ db, store: IDBStores.STATE }, IDBKeys.State.EDITED)
+        .then((v) => v.value)
+        .catch(() => {
+          // doesn't exist
+          return false;
+        }),
+    );
+    return fetchCheckP;
   }
   /**
    * User overriding media cached asset
@@ -341,7 +692,6 @@ function initServiceWorker({
       const fetchP = fetch(myRequest);
       const dbOpenPromise = openIDB();
       const dbResults = dbOpenPromise.then((db) => {
-        void countIDBItem(db);
         return fetchP
           .then((res) => {
             if (!res.ok) {
@@ -382,7 +732,7 @@ function initServiceWorker({
       // use indexedDB
       const dbOpenPromise = openIDB();
       const dbResults = dbOpenPromise.then((db) => {
-        return getIDBItem({ db }, uid)
+        return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
           .then((dataO) =>
             //found
             toResponse(dataO),
@@ -424,11 +774,11 @@ function initServiceWorker({
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
-      case /* explicit no cache */ req.headers.has("X-No-Cache"): {
+      case /* explicit no cache */ req.headers.has(SWRequestHeader.NO_CACHE): {
         // remove header
         let h = {};
         req.headers.forEach((val, key) => {
-          if (key !== "x-no-cache") {
+          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
             h[key] = val;
           }
         });
@@ -439,12 +789,27 @@ function initServiceWorker({
       case /* cache.json */ path.startsWith(dataPath + dataVerPath):
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
-      case /* data */ req.headers.has(dataVersionHeader):
-        {
-          const ver = e.request.headers.get(dataVersionHeader);
-          e.respondWith(appDataReq(url, ver));
-        }
+      case /* github user cache.json */ path.endsWith(dataVerPath): {
+        const verP = caches
+          .open(appDataCache)
+          .then((cache) => cache.match(url));
+        e.respondWith(verP);
         break;
+      }
+      case /* github user data */ url.includes("githubusercontent") &&
+        req.headers.has(SWRequestHeader.DATA_VERSION): {
+        const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
+        const cacheP = caches
+          .open(appDataCache)
+          .then((cache) => cache.match(url + ".v" + version));
+        e.respondWith(cacheP);
+        break;
+      }
+      case /* data */ req.headers.has(SWRequestHeader.DATA_VERSION): {
+        const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
+        e.respondWith(appDataReq(url, version));
+        break;
+      }
       case /* UI asset */ url.startsWith(urlAppUI) &&
         !url.endsWith(".hot-update.json"):
         e.respondWith(appAssetReq(url));
@@ -482,69 +847,6 @@ function initServiceWorker({
     return new Response(obj.blob, init);
   }
   /**
-   * indexedDB.open()
-   * @param version
-   * @param objStoreToCreate name of store to open or create
-   * @param objStoreToDelete name of store to delete
-   */
-  function openIDB(
-    version = indexedDBVersion,
-    objStoreToCreate = indexedDBStore,
-    objStoreToDelete,
-  ) {
-    let openRequest = indexedDB.open(appMediaCache, version);
-    const dbUpgradeP = new Promise((resolve /*reject*/) => {
-      openRequest.onupgradeneeded = function (event) {
-        if (event.target === null) throw new Error("onupgradeneeded failed");
-        // Save the IDBDatabase interface
-        const db = event.target.result;
-        if (objStoreToDelete) {
-          db.deleteObjectStore(objStoreToDelete);
-        }
-        // Create an objectStore for this database
-        let objectStore = db.createObjectStore(objStoreToCreate, {
-          keyPath: "uid",
-        });
-        // objectStore.createIndex("last", "last", { unique: false });
-        // Use transaction oncomplete to make sure the objectStore creation is
-        // finished before adding data into it.
-        objectStore.transaction.oncomplete = function () {
-          // Store values in the newly created objectStore.
-          // console.log("upgrade success");
-          // clientLogger("IDB.upgrade", DebugLevel.DEBUG);
-          resolve({ type: "upgrade", val: db });
-        };
-      };
-    });
-    const dbOpenP = new Promise((resolve, reject) => {
-      openRequest.onerror = function (/*event*/) {
-        clientLogger("IDB.open X(", DebugLevel.ERROR);
-        reject();
-      };
-      openRequest.onsuccess = function (event) {
-        if (event.target === null) throw new Error("openIDB failed");
-        const db = event.target.result;
-        db.onerror = function (event) {
-          // Generic error handler for all errors targeted at this database's
-          // requests!
-          if (event.target && "errorCode" in event.target) {
-            const { errorCode: _errorCode } = event.target;
-            clientLogger("IDB Open X(", DebugLevel.ERROR);
-          }
-        };
-        // console.log("open success");
-        resolve({ type: "open", val: db });
-      };
-    });
-    return Promise.any([dbUpgradeP, dbOpenP]).then((pArr) => {
-      // if upgradeP happens wait for dbOpenP
-      if (pArr.type === "upgrade") {
-        return dbOpenP.then((db) => db.val);
-      }
-      return pArr.val;
-    });
-  }
-  /**
    * Post message to client
    */
   function clientMsg(type, msg) {
@@ -577,143 +879,45 @@ function initServiceWorker({
       });
   }
   /**
-   * objectStore.count()
-   */
-  function countIDBItem(db, store = indexedDBStore) {
-    const transaction = db.transaction([store]);
-    const request = transaction.objectStore(store).count();
-    const requestP = new Promise((resolve, reject) => {
-      request.onerror = function (/*event*/) {
-        clientLogger("IDB.count X(", DebugLevel.ERROR);
-        reject();
-      };
-      request.onsuccess = function () {
-        if (request.result) {
-          clientLogger("IDB [" + request.result + "]", DebugLevel.DEBUG);
-          resolve(request.result);
-        } else {
-          clientLogger("IDB []", DebugLevel.WARN);
-          resolve(-1);
-        }
-      };
-    });
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-    return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
-  }
-  /**
-   * objectStore.get(key)
-   */
-  function getIDBItem({ db, store = indexedDBStore }, key) {
-    const transaction = db.transaction([store]);
-    const request = transaction.objectStore(store).get(key);
-    const requestP = new Promise((resolve, reject) => {
-      request.onerror = function (/*event*/) {
-        clientLogger("IDB.get X(", DebugLevel.ERROR);
-        reject();
-      };
-      request.onsuccess = function () {
-        if (request.result) {
-          resolve(request.result);
-        } else {
-          reject();
-        }
-      };
-    });
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-    return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
-  }
-  /**
-   * objectStore.add(value)
-   */
-  function addIDBItem({ db, store = indexedDBStore }, value) {
-    let transaction = db.transaction([store], "readwrite");
-    let request = transaction.objectStore(store).add(value);
-    const requestP = new Promise((resolve, reject) => {
-      request.onsuccess = function (/*event*/) {
-        resolve(undefined);
-      };
-      request.onerror = function () {
-        clientLogger("IDB.add X(", DebugLevel.ERROR);
-        reject();
-      };
-    });
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(value);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-    return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
-  }
-  /**
-   * objectStore.put(value)
-   */
-  function putIDBItem({ db, store = indexedDBStore }, value) {
-    let transaction = db.transaction([store], "readwrite");
-    let request = transaction.objectStore(store).put(value);
-    const requestP = new Promise((resolve, reject) => {
-      request.onsuccess = function (/*event*/) {
-        resolve(undefined);
-      };
-      request.onerror = function () {
-        clientLogger("IDB.put X(", DebugLevel.ERROR);
-        reject();
-      };
-    });
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(value);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-    return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
-  }
-  /**
    * respond with cache match always fetch and re-cache
    * may return stale version
    * @returns a Promise with a cache response
    */
   function appVersionReq(url) {
-    // fetch new versions
-    const f = fetch(url).then((res) => {
-      const resClone = res.clone();
-      if (!res.ok) {
-        throw new Error("Failed to fetch");
+    const fetchCheckP = isUserEditedData();
+    return fetchCheckP.then((cacheOnly) => {
+      // check if in cache
+      const c = caches
+        .open(appDataCache)
+        .then((cache) => cache.match(url))
+        .then((cacheRes) => {
+          if (!cacheRes) {
+            throw new Error("Not in cache");
+          }
+          return cacheRes;
+        });
+      if (cacheOnly) {
+        // don't fetch when user in-app
+        // has edited datasets
+        return c;
       }
-      // update cache from new
-      void caches.open(appDataCache).then((cache) => cache.put(url, resClone));
-      return res;
-    });
-    // check if in cache
-    const c = caches
-      .open(appDataCache)
-      .then((cache) => cache.match(url))
-      .then((cacheRes) => {
-        if (!cacheRes) {
-          throw new Error("Not in cache");
+      // fetch new versions
+      const f = fetch(url).then((res) => {
+        const resClone = res.clone();
+        if (!res.ok) {
+          throw new Error("Failed to fetch");
         }
-        return cacheRes;
+        // update cache from new
+        void caches
+          .open(appDataCache)
+          .then((cache) => cache.put(url, resClone));
+        return res;
       });
-    // return whaterver is fastest
-    return Promise.any([f, c]).catch((errs) => Promise.reject(errs[0].message));
+      // return whaterver is fastest
+      return Promise.any([f, c]).catch((errs) =>
+        Promise.reject(errs[0].message),
+      );
+    });
   }
   /**
    * get from cache on fail fetch and re-cache
@@ -789,6 +993,7 @@ function initServiceWorker({
       });
   }
   /**
+   * Only used if no IndexedDB support
    * cache match first otherwise fetch then cache
    * @returns a Promise that yieds a cached response
    */
@@ -879,23 +1084,24 @@ function initServiceWorker({
 const cacheFiles = [
   "11f4a4136ea351b3efb4.png",
   "125.5d152486.js",
-  "192.4333daee.css",
-  "192.4333daee.js",
-  "229.cda58fc5.js",
-  "23.6af8dc54.js",
-  "232.69ca5b8c.css",
-  "232.69ca5b8c.js",
+  "192.6c14fdb7.css",
+  "192.6c14fdb7.js",
+  "23.44fa880a.js",
+  "232.05f64ff7.css",
+  "232.05f64ff7.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
-  "463.dd239938.css",
-  "463.dd239938.js",
-  "657.a73fb00d.js",
+  "463.c457155e.css",
+  "463.c457155e.js",
+  "568.ef9019ca.js",
+  "657.68db5c32.js",
   "71565d048a3f03f60ac5.png",
+  "716.7170320d.js",
   "802.65d665ab.css",
   "802.65d665ab.js",
-  "832.c1a7f121.css",
-  "832.c1a7f121.js",
+  "832.79adf3c5.css",
+  "832.79adf3c5.js",
   "856.f9bd9358.js",
   "927.bfc4db9c.js",
   "dc7b0140cb7644f73ef2.png",
@@ -904,8 +1110,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.655975e6.css",
-  "main.655975e6.js",
+  "main.a496d953.css",
+  "main.a496d953.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
