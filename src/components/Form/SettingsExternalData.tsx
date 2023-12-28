@@ -13,6 +13,7 @@ import ExtSourceInput, {
   getExternalSourceType,
 } from "./ExtSourceInput";
 import { dataServiceEndpoint } from "../../../environment.production";
+import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { sheetDataToJSON } from "../../../service/helper/jsonHelper";
 import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
 import { useSubscribe } from "../../hooks/useSubscribe";
@@ -62,18 +63,26 @@ export default function SettingsExternalData() {
       .unwrap()
       .then((obj) => {
         return Promise.all(
-          obj.map((o) => {
-            const { data, hash } = sheetDataToJSON(o);
-            const name = o.name.toLowerCase() as keyof VersionInitSlice;
+          obj.map((sheetObj) => {
+            const { data, hash } = sheetDataToJSON(sheetObj);
+            const name = sheetObj.name.toLowerCase() as keyof VersionInitSlice;
             dispatch(setVersion({ name, hash }));
 
             return swMessageSaveDataJSON(
               dataServiceEndpoint + "/" + name + ".json.v" + hash,
               data,
               hash
-            );
+            ).then(() => sheetObj);
           })
-        ).then(() => {
+        ).then((workbook) => {
+          // store workbook in indexedDB
+          void openIDB().then((db) =>
+            putIDBItem(
+              { db, store: IDBStores.WORKBOOK },
+              { key: "0", workbook }
+            )
+          );
+
           // update service worker versions
           return dispatch(setSwVersions());
         });
@@ -95,16 +104,16 @@ export default function SettingsExternalData() {
       });
   }, [dispatch, localServiceURL]);
 
-  const onChangeInputCB = useCallback((valid:boolean) => {
+  const onChangeInputCB = useCallback((valid: boolean) => {
     setUserInputError(valid);
-  },[])
+  }, []);
 
-  const onChangeTrustCB = useCallback((trust:boolean|null) => {
+  const onChangeTrustCB = useCallback((trust: boolean | null) => {
     setUserTrust(trust);
     if (!trust) {
       setImported(null);
     }
-  },[])
+  }, []);
 
   return (
     <div className="outer">

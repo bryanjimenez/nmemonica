@@ -2,7 +2,15 @@ import {
   SWMsgOutgoing as SWMsgOutgoingType,
   SWMsgIncoming as SWMsgIncomingType,
   SWRequestHeader as SWRequestHeaderType,
-  } from "../../src/helper/serviceWorkerHelper";
+} from "../../src/helper/serviceWorkerHelper";
+import {
+  IDBStores as IDBStoresType,
+  IDBKeys as IDBKeysType,
+  openIDB as openIDBType,
+  getIDBItem as getIDBItemType,
+  putIDBItem as putIDBItemType,
+  addIDBItem as addIDBItemType,
+} from "../helper/idbHelper";
 import { DebugLevel as DebugLevelType } from "../../src/slices/settingHelper";
 import { SwFnParams } from "../script/swBuilder";
 
@@ -13,11 +21,12 @@ let SWMsgOutgoing: typeof SWMsgOutgoingType;
 let SWMsgIncoming: typeof SWMsgIncomingType;
 let DebugLevel: typeof DebugLevelType;
 let SWRequestHeader: typeof SWRequestHeaderType;
-
-interface CacheDataObj {
-  uid: string;
-  blob: Blob;
-}
+let IDBStores: typeof IDBStoresType;
+let IDBKeys: typeof IDBKeysType;
+let openIDB: typeof openIDBType;
+let getIDBItem: typeof getIDBItemType;
+let putIDBItem: typeof putIDBItemType;
+let addIDBItem: typeof addIDBItemType;
 
 /**
  * Service worker
@@ -52,9 +61,7 @@ export function initServiceWorker({
   const appStaticCache = "nmemonica-static";
   const appDataCache = "nmemonica-data";
   const appMediaCache = "nmemonica-media";
-  const appIndexedDB = "nmemonica-db";
-  const indexedDBVersion = 1;
-  const indexedDBStore = "media";
+
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
 
@@ -295,11 +302,6 @@ export function initServiceWorker({
     hash: string;
   }
 
-  interface MsgLocalEdit {
-    type: string;
-    edited: boolean;
-  }
-
   interface MsgHardRefresh {
     type: string;
   }
@@ -314,10 +316,6 @@ export function initServiceWorker({
     return (m as MsgSaveDataJSON).type === SWMsgOutgoing.DATASET_JSON_SAVE;
   }
 
-  function isMsgLocallyEdited(m: AppSWMessage): m is MsgLocalEdit {
-    return (m as MsgLocalEdit).type === SWMsgOutgoing.DATASET_LOCAL_EDIT;
-  }
-
   function isMsgHardRefresh(m: AppSWMessage): m is MsgHardRefresh {
     return (m as MsgHardRefresh).type === SWMsgOutgoing.SW_REFRESH_HARD;
   }
@@ -328,22 +326,6 @@ export function initServiceWorker({
 
   function messageEventHandler(event: ExtendableMessageEvent) {
     const message = event.data as AppSWMessage;
-
-    if (
-      isMsgLocallyEdited(message) &&
-      message.type === SWMsgOutgoing.DATASET_LOCAL_EDIT
-    ) {
-      const store = "settings";
-      const dbOpenPromise = openIDB();
-
-      const updateSettingP = dbOpenPromise.then((db: IDBDatabase) => {
-        const key = "localDataEdited";
-        return putIDBItem({ db, store }, { key, value: message.edited });
-      });
-
-      event.waitUntil(updateSettingP);
-      return;
-    }
 
     if (
       isMsgSaveDataJSON(message) &&
@@ -408,14 +390,8 @@ export function initServiceWorker({
    * -  do not overwrite caches on install
    */
   function isUserEditedData() {
-    const dbOpenPromise = openIDB();
-
-    const fetchCheckP = dbOpenPromise.then((db: IDBDatabase) =>
-      getIDBItem<{ key: string; value: string }>(
-        { db, store: "settings" },
-        // TODO: put this in a variable
-        "localDataEdited"
-      )
+    const fetchCheckP = openIDB({ logger: clientLogger }).then((db) =>
+      getIDBItem({ db, store: IDBStores.STATE }, IDBKeys.State.EDITED)
         .then((v) => v.value)
         .catch(() => {
           // doesn't exist
@@ -445,7 +421,7 @@ export function initServiceWorker({
       clientLogger("IDB.override", DebugLevel.WARN);
 
       const fetchP = fetch(myRequest);
-      const dbOpenPromise = openIDB();
+      const dbOpenPromise = openIDB({ logger: clientLogger });
 
       const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
         return fetchP
@@ -490,10 +466,10 @@ export function initServiceWorker({
       return appMediaReq(cleanUrl);
     } else {
       // use indexedDB
-      const dbOpenPromise = openIDB();
+      const dbOpenPromise = openIDB({ logger: clientLogger });
 
       const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-        return getIDBItem<CacheDataObj>({ db }, uid)
+        return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
           .then((dataO) =>
             //found
             toResponse(dataO)
@@ -661,202 +637,6 @@ export function initServiceWorker({
         console.log("[ServiceWorker] clientLogger failed");
         console.log(err);
       });
-  }
-
-  /**
-   * indexedDB.open()
-   * @param version
-   */
-  function openIDB(version: number = indexedDBVersion) {
-    let openRequest = indexedDB.open(appIndexedDB, version);
-
-    const dbUpgradeP: Promise<{ type: string; val: IDBDatabase }> = new Promise(
-      (resolve /*reject*/) => {
-        openRequest.onupgradeneeded = function (event) {
-          if (event.target === null) throw new Error("onupgradeneeded failed");
-          // Save the IDBDatabase interface
-          const db = (event.target as IDBRequest<IDBDatabase>).result;
-
-          switch (event.oldVersion) {
-            case 0: {
-              // initial install
-              // Create an objectStore for this database
-              const mediaStore = db.createObjectStore("media", {
-                keyPath: "uid",
-              });
-
-              // Use transaction oncomplete to make sure the objectStore creation is
-              // finished before adding data into it.
-              const mediaStoreP = new Promise<void>((mediaRes, _reject) => {
-                mediaStore.transaction.oncomplete = function () {
-                  mediaRes();
-                };
-              });
-
-              const settingsStore = db.createObjectStore("settings", {
-                keyPath: "key",
-              });
-
-              const settingStoreP = new Promise<void>((settingRes, _reject) => {
-                settingsStore.transaction.oncomplete = function () {
-                  settingRes();
-                };
-              });
-
-              void Promise.all([mediaStoreP, settingStoreP]).then(() => {
-                // DONE creating db and stores
-                resolve({ type: "upgrade", val: db });
-              });
-
-              break;
-            }
-          }
-        };
-      }
-    );
-
-    const dbOpenP: Promise<{ type: string; val: IDBDatabase }> = new Promise(
-      (resolve, reject) => {
-        openRequest.onerror = function (/*event*/) {
-          clientLogger("IDB.open X(", DebugLevel.ERROR);
-          reject();
-        };
-        openRequest.onsuccess = function (event) {
-          if (event.target === null) throw new Error("openIDB failed");
-
-          const db = (event.target as IDBRequest<IDBDatabase>).result;
-
-          db.onerror = function (event) {
-            // Generic error handler for all errors targeted at this database's
-            // requests!
-            if (event.target && "errorCode" in event.target) {
-              const { errorCode: _errorCode } = event.target;
-              clientLogger("IDB Open X(", DebugLevel.ERROR);
-            }
-          };
-
-          // console.log("open success");
-          resolve({ type: "open", val: db });
-        };
-      }
-    );
-
-    return Promise.any([dbUpgradeP, dbOpenP]).then(
-      (pArr: { type: string; val: IDBDatabase }) => {
-        // if upgradeP happens wait for dbOpenP
-        if (pArr.type === "upgrade") {
-          return dbOpenP.then((db) => db.val);
-        }
-
-        return pArr.val;
-      }
-    );
-  }
-
-  /**
-   * objectStore.get(key)
-   */
-  function getIDBItem<T>(
-    { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    key: string
-  ) {
-    const transaction = db.transaction([store]);
-    const request = transaction.objectStore(store).get(key) as IDBRequest<T>;
-
-    const requestP: Promise<T> = new Promise((resolve, reject) => {
-      request.onerror = function (/*event*/) {
-        clientLogger("IDB.get X(", DebugLevel.ERROR);
-        reject();
-      };
-      request.onsuccess = function () {
-        if (request.result) {
-          resolve(request.result);
-        } else {
-          reject();
-        }
-      };
-    });
-
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-
-    return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
-  }
-
-  /**
-   * objectStore.add(value)
-   */
-  function addIDBItem<T>(
-    { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    value: T
-  ) {
-    let transaction = db.transaction([store], "readwrite");
-
-    let request = transaction.objectStore(store).add(value);
-
-    const requestP = new Promise((resolve, reject) => {
-      request.onsuccess = function (/*event*/) {
-        resolve(undefined);
-      };
-      request.onerror = function () {
-        clientLogger("IDB.add X(", DebugLevel.ERROR);
-        reject();
-      };
-    });
-
-    const transactionP: Promise<typeof value> = new Promise(
-      (resolve, reject) => {
-        transaction.oncomplete = function () {
-          resolve(value);
-        };
-        transaction.onerror = function () {
-          reject();
-        };
-      }
-    );
-
-    return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
-  }
-
-  /**
-   * objectStore.put(value)
-   */
-  function putIDBItem<T>(
-    { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    value: T
-  ) {
-    let transaction = db.transaction([store], "readwrite");
-
-    let request = transaction.objectStore(store).put(value);
-
-    const requestP = new Promise((resolve, reject) => {
-      request.onsuccess = function (/*event*/) {
-        resolve(undefined);
-      };
-      request.onerror = function () {
-        clientLogger("IDB.put X(", DebugLevel.ERROR);
-        reject();
-      };
-    });
-
-    const transactionP: Promise<typeof value> = new Promise(
-      (resolve, reject) => {
-        transaction.oncomplete = function () {
-          resolve(value);
-        };
-        transaction.onerror = function () {
-          reject();
-        };
-      }
-    );
-
-    return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
   }
 
   /**

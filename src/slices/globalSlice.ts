@@ -16,6 +16,12 @@ import { VersionInitSlice } from "./versionSlice";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
 import { dataServicePath } from "../../environment.development";
 import { dataServiceEndpoint } from "../../environment.production";
+import {
+  IDBKeys,
+  IDBStores,
+  openIDB,
+  putIDBItem,
+} from "../../pwa/helper/idbHelper";
 import { type ConsoleMessage } from "../components/Form/Console";
 import {
   ExternalSourceType,
@@ -31,7 +37,6 @@ import {
   SWMsgIncoming,
   SWRequestHeader,
   UIMsg,
-  swMessageDataLocalEdit,
 } from "../helper/serviceWorkerHelper";
 import type { ValuesOf } from "../typings/raw";
 
@@ -190,6 +195,24 @@ export const setLocalServiceURL = createAsyncThunk(
   }
 );
 
+/**
+ * After user edits or imports a dataset
+ * - mark cached data as edited or untouched
+ */
+export const setLocalDataEdited = createAsyncThunk(
+  "setting/setLocalDataEdited",
+  async (arg: boolean) => {
+    const override = arg;
+
+    return openIDB().then((db) =>
+      putIDBItem(
+        { db, store: IDBStores.STATE },
+        { key: IDBKeys.State.EDITED, value: override }
+      )
+    );
+  }
+);
+
 const globalSlice = createSlice({
   name: "setting",
   initialState: globalInitState,
@@ -299,11 +322,6 @@ const globalSlice = createSlice({
         payload: { msg, lvl, type },
       }),
     },
-
-    setLocalDataEdited(_state, action: PayloadAction<boolean>) {
-      let override = action.payload;
-      void swMessageDataLocalEdit(override);
-    },
     setLastImport(state, action: PayloadAction<string>) {
       const value = action.payload;
 
@@ -388,7 +406,6 @@ export const {
   toggleDarkMode,
   setMotionThreshold,
   setSwipeThreshold,
-  setLocalDataEdited,
   setLastImport,
 
   debugToggled,

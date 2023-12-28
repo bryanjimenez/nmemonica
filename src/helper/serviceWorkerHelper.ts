@@ -29,7 +29,6 @@ export const SWMsgOutgoing = Object.freeze({
   SW_GET_VERSIONS: "SW_GET_VERSIONS",
   SW_REFRESH_HARD: "SW_REFRESH_HARD",
   DATASET_JSON_SAVE: "DATASET_JSON_SAVE",
-  DATASET_LOCAL_EDIT: "DATASET_LOCAL_EDIT",
 });
 
 const serviceWorkerNotAvailableErr = new Error("Service Worker not available");
@@ -69,22 +68,6 @@ export function swMessageSaveDataJSON(
         url,
         dataset,
         hash,
-      });
-    });
-  }
-  return Promise.reject(serviceWorkerNotAvailableErr);
-}
-
-/**
- * After user edits or imports a dataset
- * - mark cached data as edited/untouched
- */
-export function swMessageDataLocalEdit(edited: boolean) {
-  if (navigator.serviceWorker) {
-    return navigator.serviceWorker.ready.then(() => {
-      navigator.serviceWorker.controller?.postMessage({
-        type: SWMsgOutgoing.DATASET_LOCAL_EDIT,
-        edited,
       });
     });
   }

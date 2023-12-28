@@ -12,6 +12,18 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
 import { useDispatch, useSelector } from "react-redux";
 
+import {
+  dataServiceEndpoint,
+  pushServiceSheetDataUpdatePath,
+  sheetServicePath,
+} from "../../../environment.production";
+import {
+  IDBErrorCause,
+  IDBStores,
+  getIDBItem,
+  openIDB,
+  putIDBItem,
+} from "../../../pwa/helper/idbHelper";
 import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
 import { AppDispatch, RootState } from "../../slices";
 import "../../css/Sheet.css";
@@ -27,7 +39,6 @@ import {
   ExternalSourceType,
   getExternalSourceType,
 } from "../Form/ExtSourceInput";
-import { pushServiceSheetDataUpdatePath } from "../../../environment.production";
 
 
 const SheetMeta = {
@@ -208,8 +219,41 @@ export default function Sheet() {
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void dispatch(getDatasets())
-      .unwrap()
+    void openIDB()
+      .then((db) => {
+        // if indexedDB has stored workbook
+        const stores = Array.from(db.objectStoreNames);
+
+        const ErrorWorkbookMissing = new Error("Workbook not stored", {
+          cause: { code: IDBErrorCause.NoResult },
+        });
+        if (!stores.includes("workbook")) {
+          throw ErrorWorkbookMissing;
+        }
+
+        // use stored workbook
+        return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then(
+          (res) => {
+            if (!res.workbook || res.workbook.length === 0) {
+              throw ErrorWorkbookMissing;
+            }
+
+            return res.workbook;
+          }
+        );
+      })
+      .catch((error) => {
+        // if not fetch and build spreadsheet
+
+        if (error?.cause?.code !== IDBErrorCause.NoResult) {
+          // eslint-disable-next-line no-console
+          console.log("Unknown error getting workbook from indexedDB");
+          // eslint-disable-next-line no-console
+          console.error(error);
+        }
+
+        return dispatch(getDatasets()).unwrap();
+      })
       .then((obj) => {
         const data = addExtraRow(obj);
 
@@ -266,6 +310,15 @@ export default function Sheet() {
       default:
         throw new Error("Save Sheet unknown source");
     }
+
+    // store workbook in indexedDB
+    // (keep ordering and notes)
+    void openIDB().then((db) =>
+      putIDBItem(
+        { db, store: IDBStores.WORKBOOK },
+        { key: "0", workbook: wbRef.current?.getData() as FilledSheetData[] }
+      )
+    );
 
     void saveP.then(({ hash, name }) => {
       switch (name) {

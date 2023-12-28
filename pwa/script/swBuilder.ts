@@ -19,6 +19,17 @@ import {
 } from "../../environment.production.js";
 
 import "dotenv/config";
+import {
+  IDBErrorCause,
+  IDBKeys,
+  IDBStores,
+  addIDBItem,
+  appDBName,
+  appDBVersion,
+  getIDBItem,
+  openIDB,
+  putIDBItem,
+} from "../helper/idbHelper.js";
 
 const audioPath = process.env.AUDIO_PATH;
 const dataPath = process.env.DATA_PATH;
@@ -92,7 +103,19 @@ out += "const buildConstants = " + JSON.stringify(buildConstants) + "\n\n";
 out += "const SWMsgOutgoing = " + JSON.stringify(SWMsgOutgoing) + "\n\n";
 out += "const SWMsgIncoming = " + JSON.stringify(SWMsgIncoming) + "\n\n";
 out += "const SWRequestHeader = " + JSON.stringify(SWRequestHeader) + "\n\n";
+out += "const IDBStores = " + JSON.stringify(IDBStores) + "\n\n";
+out += "const IDBKeys = " + JSON.stringify(IDBKeys) + "\n\n";
 out += "const DebugLevel = " + JSON.stringify(DebugLevel) + "\n\n";
+
+// IndexedDB imports
+out += "const appDBName = '" + appDBName + "'\n\n";
+out += "const appDBVersion = " + appDBVersion + "\n\n";
+out += "const IDBErrorCause = " + JSON.stringify(IDBErrorCause) + "\n\n";
+out += openIDB.toString() + "\n\n";
+out += getIDBItem.toString() + "\n\n";
+out += putIDBItem.toString() + "\n\n";
+out += addIDBItem.toString() + "\n\n";
+
 out += getParam.toString() + "\n\n";
 out += removeParam.toString() + "\n\n";
 out += initServiceWorker.toString() + "\n\n";
