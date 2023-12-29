@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "6ba06108",
-  initCacheVer: "23580a0a",
+  swVersion: "75bb11f7",
+  initCacheVer: "7201f2c1",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -501,113 +501,8 @@ function initServiceWorker({
   function isMsgGetVersion(m) {
     return m.type === SWMsgOutgoing.SW_GET_VERSIONS;
   }
-  function moveARecord(oldDB, oldDBT, resolve) {
-    oldDBT.oncomplete = () => {
-      oldDBT = oldDB.transaction(IDBStores.MEDIA, "readwrite");
-      moveARecord(oldDB, oldDBT, resolve);
-    };
-    oldDBT.onabort = () => {
-      oldDB.close();
-    };
-    oldDBT.onerror = () => {
-      console.log("moveARecord error?");
-    };
-    const oldMedia = oldDBT.objectStore(IDBStores.MEDIA);
-    const oldDBEntry = oldMedia.openCursor();
-    const newDB = openIDB();
-    oldDBEntry.onsuccess = () => {
-      const cursor = oldDBEntry.result;
-      if (cursor) {
-        const { key, value } = cursor;
-        cursor.delete();
-        // oldMedia.delete(key);
-        void newDB.then((newDBObj) =>
-          putIDBItem(
-            { db: newDBObj, store: IDBStores.MEDIA },
-            { uid: key.toString(), blob: value },
-          ),
-        );
-        // ).then(()=>{
-        //   cursor.continue()
-        // })
-        return key;
-      } else {
-        console.log("finished! aborting this transaction");
-        oldDBT.abort();
-        resolve();
-      }
-    };
-  }
   function messageEventHandler(event) {
     const message = event.data;
-    if (message.type === "INDEXEDDB_MIGRATE") {
-      // https://javascript.info/indexeddb
-      console.log("INDEXEDDB_MIGRATE");
-      let migrationP;
-      try {
-        const req = indexedDB.open("nmemonica-media", 2);
-        migrationP = new Promise((res, rej) => {
-          req.onsuccess = (ev) => {
-            // @ts-expect-error ev.target.result -> db
-            res(ev.target.result);
-          };
-          req.onerror = rej;
-        })
-          .then((oldDB) => {
-            return new Promise((resolve, reject) => {
-              console.log("begin migration");
-              void countIDBItem(oldDB).then((value) => {
-                clientLogger("old COUNT: " + value, DebugLevel.DEBUG);
-              });
-              let oldDBT = oldDB.transaction("media", "readwrite");
-              moveARecord(oldDB, oldDBT, resolve);
-              oldDBT.onerror = () => {
-                console.log("failed 0?");
-              };
-            });
-          })
-          .then((p) => {
-            // migration done
-            console.log("migration done");
-            // return openIDB_OLD("nmemonica-media", 3);
-            return openIDB({ logger: clientLogger }).then((newDB) =>
-              countIDBItem(newDB).then((newV) => {
-                const req = indexedDB.open("nmemonica-media", 2);
-                return new Promise((res, rej) => {
-                  req.onsuccess = (ev) => {
-                    // @ts-expect-error ev.target.result -> db
-                    res(ev.target.result);
-                  };
-                  req.onerror = rej;
-                }).then((oldDB) =>
-                  countIDBItem(oldDB).then((oldV) => {
-                    clientLogger(
-                      "old DB:" + oldV + " new DB:" + newV,
-                      DebugLevel.DEBUG,
-                    );
-                    if (oldV === -1 && newV > 0) {
-                      console.log("deleting old db");
-                      // delete old db
-                      oldDB.close();
-                      const delReq =
-                        indexedDB.deleteDatabase("nmemonica-media");
-                      return new Promise((res, rej) => {
-                        delReq.onsuccess = res;
-                        delReq.onerror = rej;
-                      });
-                    }
-                  }),
-                );
-              }),
-            );
-          });
-      } catch (e) {
-        console.log("migration threw err");
-        console.log(e);
-      }
-      event.waitUntil(migrationP);
-      return;
-    }
     if (
       isMsgSaveDataJSON(message) &&
       message.type === SWMsgOutgoing.DATASET_JSON_SAVE
@@ -1089,8 +984,8 @@ const cacheFiles = [
   "192.6c14fdb7.css",
   "192.6c14fdb7.js",
   "23.44fa880a.js",
-  "232.05f64ff7.css",
-  "232.05f64ff7.js",
+  "232.e30b24ed.css",
+  "232.e30b24ed.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -1112,8 +1007,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.af0f6d3a.css",
-  "main.af0f6d3a.js",
+  "main.48c4ea6e.css",
+  "main.48c4ea6e.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
