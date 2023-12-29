@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "ffd15193",
-  initCacheVer: "3c66d691",
+  swVersion: "ccaeecc1",
+  initCacheVer: "97c26b3c",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -43,7 +43,7 @@ const appDBVersion = 1;
 
 const IDBErrorCause = { NoResult: "IDBNoResults" };
 
-function openIDB(version = appDBVersion) {
+function openIDB({ version = appDBVersion, logger } = undefined) {
   let openRequest = indexedDB.open(appDBName, version);
   const dbUpgradeP = new Promise((resolve /*reject*/) => {
     openRequest.onupgradeneeded = function (event) {
@@ -104,7 +104,9 @@ function openIDB(version = appDBVersion) {
   });
   const dbOpenP = new Promise((resolve, reject) => {
     openRequest.onerror = function (/*event*/) {
-      // clientLogger("IDB.open X(", DebugLevel.ERROR);
+      if (typeof logger === "function") {
+        logger("IDB.open X(", 1);
+      }
       reject();
     };
     openRequest.onsuccess = function (event) {
@@ -115,11 +117,13 @@ function openIDB(version = appDBVersion) {
         // requests!
         if (event.target && "errorCode" in event.target) {
           const { errorCode: _errorCode } = event.target;
-          // clientLogger("IDB Open X(", DebugLevel.ERROR);
+          if (typeof logger === "function") {
+            logger("IDB Open X(", 1);
+          }
         }
+        // console.log("open success");
+        resolve({ type: "open", val: db });
       };
-      // console.log("open success");
-      resolve({ type: "open", val: db });
     };
   });
   return Promise.any([dbUpgradeP, dbOpenP]).then((pArr) => {
@@ -131,7 +135,7 @@ function openIDB(version = appDBVersion) {
   });
 }
 
-function getIDBItem({ db, store }, key) {
+function getIDBItem({ db, store, logger }, key) {
   const defaultStore = IDBStores.MEDIA;
   const transaction = db.transaction([
     store !== null && store !== void 0 ? store : defaultStore,
@@ -141,7 +145,9 @@ function getIDBItem({ db, store }, key) {
     .get(key);
   const requestP = new Promise((resolve, reject) => {
     request.onerror = function (/*event*/) {
-      // clientLogger("IDB.get X(", DebugLevel.ERROR);
+      if (typeof logger === "function") {
+        logger("IDB.get X(", 1);
+      }
       reject();
     };
     request.onsuccess = function () {
@@ -568,7 +574,7 @@ function initServiceWorker({
             // migration done
             console.log("migration done");
             // return openIDB_OLD("nmemonica-media", 3);
-            return openIDB().then((newDB) =>
+            return openIDB({ logger: clientLogger }).then((newDB) =>
               countIDBItem(newDB).then((newV) => {
                 const req = indexedDB.open("nmemonica-media", 2);
                 return new Promise((res, rej) => {
@@ -663,7 +669,7 @@ function initServiceWorker({
    * -  do not overwrite caches on install
    */
   function isUserEditedData() {
-    const fetchCheckP = openIDB().then((db) =>
+    const fetchCheckP = openIDB({ logger: clientLogger }).then((db) =>
       getIDBItem({ db, store: IDBStores.STATE }, IDBKeys.State.EDITED)
         .then((v) => v.value)
         .catch(() => {
@@ -690,7 +696,7 @@ function initServiceWorker({
       // use indexedDB
       clientLogger("IDB.override", DebugLevel.WARN);
       const fetchP = fetch(myRequest);
-      const dbOpenPromise = openIDB();
+      const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return fetchP
           .then((res) => {
@@ -730,7 +736,7 @@ function initServiceWorker({
       return appMediaReq(cleanUrl);
     } else {
       // use indexedDB
-      const dbOpenPromise = openIDB();
+      const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
           .then((dataO) =>
@@ -1110,8 +1116,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.a496d953.css",
-  "main.a496d953.js",
+  "main.fad793d7.css",
+  "main.fad793d7.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
