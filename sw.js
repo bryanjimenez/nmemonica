@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "ccaeecc1",
-  initCacheVer: "97c26b3c",
+  swVersion: "6ba06108",
+  initCacheVer: "23580a0a",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -121,9 +121,8 @@ function openIDB({ version = appDBVersion, logger } = undefined) {
             logger("IDB Open X(", 1);
           }
         }
-        // console.log("open success");
-        resolve({ type: "open", val: db });
       };
+      resolve({ type: "open", val: db });
     };
   });
   return Promise.any([dbUpgradeP, dbOpenP]).then((pArr) => {
@@ -301,9 +300,6 @@ function initServiceWorker({
   const appStaticCache = "nmemonica-static";
   const appDataCache = "nmemonica-data";
   const appMediaCache = "nmemonica-media";
-  const appIndexedDB = "nmemonica-db";
-  const indexedDBVersion = 1;
-  const indexedDBStore = "media";
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
   const dataVerPath = "/cache.json";
@@ -1116,8 +1112,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.fad793d7.css",
-  "main.fad793d7.js",
+  "main.af0f6d3a.css",
+  "main.af0f6d3a.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
