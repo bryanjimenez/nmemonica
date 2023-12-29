@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "75bb11f7",
-  initCacheVer: "7201f2c1",
+  swVersion: "ebeaaa8e",
+  initCacheVer: "30e31864",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -43,8 +43,12 @@ const appDBVersion = 1;
 
 const IDBErrorCause = { NoResult: "IDBNoResults" };
 
-function openIDB({ version = appDBVersion, logger } = undefined) {
-  let openRequest = indexedDB.open(appDBName, version);
+function openIDB({ version, logger } = {}) {
+  // const v = version!==undefined?version:appDBVersion;
+  let openRequest = indexedDB.open(
+    appDBName,
+    version !== null && version !== void 0 ? version : appDBVersion,
+  );
   const dbUpgradeP = new Promise((resolve /*reject*/) => {
     openRequest.onupgradeneeded = function (event) {
       if (event.target === null) throw new Error("onupgradeneeded failed");
@@ -503,6 +507,50 @@ function initServiceWorker({
   }
   function messageEventHandler(event) {
     const message = event.data;
+    if (message.type === "INDEXEDDB_PURGE") {
+      const a = openIDB().then((db) => {
+        const t = db.transaction("media", "readwrite");
+        const o = t.objectStore("media");
+        const oldDBEntry = o.openCursor();
+        return new Promise((res, rej) => {
+          oldDBEntry.onsuccess = () => {
+            const cursor = oldDBEntry.result;
+            if (cursor) {
+              cursor.delete();
+            } else {
+              res();
+            }
+          };
+        });
+      });
+      // const r = indexedDB.deleteDatabase('nmemonica-db');
+      //               // console.log(r);
+      //   const a = new Promise<void>((res,rej)=>{
+      //     console.log('in p')
+      //     r.onsuccess=()=> {
+      //       console.log('resolved')
+      //       res()
+      //     };
+      //     r.onerror=()=>{
+      //       console.log('rejected')
+      //       rej()};
+      //     r.onblocked=()=>{
+      //       console.log('blocked')
+      //     }
+      //     r.onupgradeneeded=()=>{
+      //       console.log('upgrade?')
+      //     }
+      //   })
+      a.then(() => {
+        openIDB().then((db) => {
+          countIDBItem(db, "media").then((v) => {
+            clientLogger("media: " + v, DebugLevel.DEBUG);
+            // console.log('media: '+v)
+          });
+        });
+      });
+      return;
+    }
     if (
       isMsgSaveDataJSON(message) &&
       message.type === SWMsgOutgoing.DATASET_JSON_SAVE
@@ -984,8 +1032,8 @@ const cacheFiles = [
   "192.6c14fdb7.css",
   "192.6c14fdb7.js",
   "23.44fa880a.js",
-  "232.e30b24ed.css",
-  "232.e30b24ed.js",
+  "232.abec6487.css",
+  "232.abec6487.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
@@ -1007,8 +1055,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.48c4ea6e.css",
-  "main.48c4ea6e.js",
+  "main.814ef352.css",
+  "main.814ef352.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
