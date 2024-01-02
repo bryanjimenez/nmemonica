@@ -21,6 +21,9 @@ crypto/
 # environment variables file
 environment.*
 
+# service configuration file
+snservice.conf.json
+
 # notes
 *.txt
 

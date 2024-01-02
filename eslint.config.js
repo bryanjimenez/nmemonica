@@ -228,33 +228,6 @@ export default [
     },
   },
   {
-    files: ["service/**/*.ts"],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: "./service/tsconfig.json",
-      },
-
-      globals: { console: false, process: false },
-    },
-    plugins: {
-      "@typescript-eslint": tsPlugin,
-    },
-    rules: {
-      ...eslintJsPlugin.configs.recommended.rules,
-
-      ...tsPlugin.configs.strict.rules,
-      ...tsPlugin.configs["eslint-recommended"].rules,
-      ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
-      ...unUsedVarsIgnore,
-      "no-undef": "off", // ignore in ts files tsc will highlight
-    },
-    linterOptions: {
-      // report when eslint-disable-next-line is unnecessary
-      reportUnusedDisableDirectives: true,
-    },
-  },
-  {
     files: ["pwa/**/*.ts"],
     languageOptions: {
       parser: tsParser,

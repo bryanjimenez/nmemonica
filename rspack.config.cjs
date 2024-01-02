@@ -1,13 +1,18 @@
 //@ts-check
 const rspack = require("@rspack/core");
-const fs = require("fs");
 const path = require("path");
-const { lan } = require("./environment-host.cjs");
-const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
-const { yellow, red } = require("./console.cjs");
-const ca = require("./environment-signed-ca.cjs");
 
-require("dotenv").config();
+const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
+
+//@ts-expect-error rspack.conf outside of tsconfig
+const { lan } = require("@nmemonica/snservice/utils/host");
+//@ts-expect-error rspack.conf outside of tsconfig
+const { yellow, red } = require("@nmemonica/snservice/utils/consoleColor");
+//@ts-expect-error rspack.conf outside of tsconfig
+const {ca} = require("@nmemonica/snservice/utils/signed-ca");
+//@ts-expect-error rspack.conf outside of tsconfig
+const {config} = require("@nmemonica/snservice/utils/config");
+
 // import { fileURLToPath } from "url";
 // const fileURLToPath = require("url").fileURLToPath;
 
@@ -53,14 +58,13 @@ module.exports = function (env, argv) {
         template: `index${isProduction ? ".production" : ""}.html`,
       }),
 
-      // Replace dotenv variables here
       new rspack.DefinePlugin({
         "process.env.OS_EXT_FACE_IP_ADDRESS": `"${lan.hostname}"`,  // only in env.development
         "process.env.isSelfSignedCA": `${ca.exists()}`,             // env.dev only
         "process.env.SERVICE_PORT": ca.exists()                     // env.dev only
-          ? process.env.SERVICE_HTTPS_PORT
-          : process.env.SERVICE_PORT,
-        "process.env.UI_PORT": process.env.UI_PORT,                 // env.dev only
+          ? config.port.https
+          : config.port.http,
+        "process.env.UI_PORT": config.port.ui,                      // env.dev only
       }),
     ],
 
@@ -112,13 +116,13 @@ module.exports = function (env, argv) {
             // https://webpack.js.org/configuration/dev-server/#devserverhttps
             type: "https",
             options: {
-              key: `./${process.env.PATH_CA}/${process.env.CA_KEY}`,
-              cert: `./${process.env.PATH_CA}/${process.env.CA_CRT}`,
+              key: `${config.directory.ca}/${config.ca.server.key}`,
+              cert: `${config.directory.ca}/${config.ca.server.crt}`,
             },
           }
         : {},
 
-      port: process.env.UI_PORT || 8080, // Port Number
+      port: config.port.ui || 8080, // Port Number
       host: lan.hostname, //"0.0.0.0", //external facing server
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },

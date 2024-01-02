@@ -150,11 +150,15 @@ export default function ExtSourceInput(props: ExternalSourceProps) {
             onChangeInput(false);
         }
 
-        result?.catch(() => {
-          // let user know it's unavailable
-          setUserInputError(true);
-          onChangeInput(false);
-        });
+        result
+          ?.then(() => {
+            setUserInputError(false);
+          })
+          .catch(() => {
+            // let user know it's unavailable
+            setUserInputError(true);
+            onChangeInput(false);
+          });
       }
     },
     [dispatch, localServiceURL, onChangeInput]
@@ -222,7 +226,10 @@ export default function ExtSourceInput(props: ExternalSourceProps) {
           </div>
           <div className="d-flex w-100 justify-content-around">
             <span
-              className={classNames({ underline: dataTrustAnswer })}
+              className={classNames({
+                clickable: true,
+                underline: dataTrustAnswer,
+              })}
               onClick={() => {
                 onChangeTrust(true);
                 setDataTrustAnswer(true);
@@ -231,7 +238,10 @@ export default function ExtSourceInput(props: ExternalSourceProps) {
               Yes
             </span>
             <span
-              className={classNames({ underline: dataTrustAnswer === false })}
+              className={classNames({
+                clickable: true,
+                underline: dataTrustAnswer === false,
+              })}
               onClick={() => {
                 onChangeTrust(false);
                 setLocalServiceURL("");

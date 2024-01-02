@@ -1,5 +1,5 @@
 import type { ValuesOf } from "../../src/typings/raw";
-import type { FilledSheetData } from "../../service/helper/sheetHelper";
+import type { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 
 export const appDBName = "nmemonica-db";
 export const appDBVersion = 1;
@@ -199,7 +199,6 @@ export function getIDBItem<
         resolve(request.result);
       } else {
         reject(
-          // @ts-expect-error Error.cause
           new Error("No results found", {
             cause: { code: IDBErrorCause.NoResult },
           })

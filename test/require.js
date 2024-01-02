@@ -30,6 +30,11 @@ tsNode.register({
   // disregard typescript errors before transpilation
   transpileOnly: true,
 
+  compilerOptions:{
+    // error TS5095: Option 'bundler' can only be used when 'module' is set to 'es2015' or later.
+    moduleResolution: 'node'
+  },
+
   //override package.json *type: module* setting
   moduleTypes: {
     "./environment.*.ts": "cjs",
@@ -38,7 +43,6 @@ tsNode.register({
     "./src/**/*.ts": "cjs",
     "./src/**/*.tsx": "cjs",
     "./pwa/**/*.ts":"cjs",
-    "./service/**/*.ts": "cjs",
   },
 });
 
@@ -65,14 +69,14 @@ Module._extensions[".js"] = function (module, filename) {
     console.log(e.code + " " + path.relative(projectRoot, filename));
     // console.log(e.message)
     // From: https://github.com/nodejs/node/blob/c24b74a7abec0848484671771d250cfd961f128e/lib/internal/modules/cjs/loader.js#L1237-L1238
-    if (e.code === "ERR_REQUIRE_ESM") {
-      // because package.json type: "module"
-      // and imports don't have extensions
-      // create module being searched with contents
-      const content = fs.readFileSync(filename, "utf8");
-      module._compile(content, filename.split("/").pop());
-      return;
-    }
+    // if (e.code === "ERR_REQUIRE_ESM") {
+    //   // because package.json type: "module"
+    //   // and imports don't have extensions
+    //   // create module being searched with contents
+    //   const content = fs.readFileSync(filename, "utf8");
+    //   module._compile(content, filename.split("/").pop());
+    //   return;
+    // }
 
     throw e;
   }

@@ -107,7 +107,12 @@ export function initServiceWorker({
       return fetch(`${pushUrl}/${name}.json`).then((fetchRes) =>
         cache
           .match(pushUrl + dataVerPath)
-          .then((verRes) => verRes.json())
+          .then((verRes) => {
+            if (!verRes) {
+              throw new Error("Missing cache.json");
+            }
+            return verRes.json();
+          })
           .then((verJson: { [k: string]: string }) => {
             verJson[name] = hash;
             return verJson;
@@ -211,7 +216,7 @@ export function initServiceWorker({
   /**
    * Cache all data resources
    */
-  function cacheAllDataResource(baseUrl) {
+  function cacheAllDataResource(baseUrl: string) {
     return caches
       .open(appDataCache)
       .then((cache) =>
@@ -409,7 +414,9 @@ export function initServiceWorker({
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const uid = getParam(url, "uid");
     const cleanUrl = removeParam(url, "uid").replace(override, "");
-    const myRequest = toRequest(cleanUrl);
+    const myRequest = new Request(cleanUrl, {
+      headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
+    });
 
     if (!swSelf.indexedDB) {
       // use cache
@@ -519,7 +526,7 @@ export function initServiceWorker({
       case /* explicit no cache */
       req.headers.has(SWRequestHeader.NO_CACHE): {
         // remove header
-        let h = {};
+        let h: Record<string, string> = {};
         req.headers.forEach((val, key) => {
           if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
             h[key] = val;
@@ -542,7 +549,13 @@ export function initServiceWorker({
 
         const cacheP = caches
           .open(appDataCache)
-          .then((cache) => cache.match(url + ".v" + version));
+          .then((cache) => cache.match(url + ".v" + version))
+          .then((v) => {
+            if (v === undefined) {
+              throw new Error(`Missing ${url + ".v" + version}`);
+            }
+            return v;
+          });
         e.respondWith(cacheP);
         break;
       }
@@ -574,19 +587,6 @@ export function initServiceWorker({
         e.respondWith(noCaching(e.request));
         break;
     }
-  }
-
-  /**
-   * Creates a request from url
-   *
-   * Adds authentication in development env
-   */
-  function toRequest(url: string) {
-    const myInit = {
-      method: "GET",
-    };
-
-    return new Request(url, myInit);
   }
 
   /**
@@ -790,6 +790,12 @@ export function initServiceWorker({
       cache
         .add(url)
         .then(() => cache.match(url))
+        .then((urlRes) => {
+          if (!urlRes) {
+            throw new Error("Could not recache");
+          }
+          return urlRes;
+        })
         .catch(() => {
           console.log("[ServiceWorker] Network unavailable");
           return Promise.reject();

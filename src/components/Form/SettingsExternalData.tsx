@@ -1,10 +1,11 @@
 import { Button } from "@mui/material";
+import { sheetDataToJSON } from "@nmemonica/snservice/src/helper/jsonHelper";
 import {
   CheckCircleIcon,
   DownloadIcon,
   UndoIcon,
 } from "@primer/octicons-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
@@ -14,9 +15,8 @@ import ExtSourceInput, {
 } from "./ExtSourceInput";
 import { dataServiceEndpoint } from "../../../environment.production";
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
-import { sheetDataToJSON } from "../../../service/helper/jsonHelper";
 import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
-import { useSubscribe } from "../../hooks/useSubscribe";
+// import { useSubscribe } from "../../hooks/useSubscribe";
 import { type AppDispatch, RootState } from "../../slices";
 import { setLastImport, setLocalDataEdited } from "../../slices/globalSlice";
 import { clearKanji } from "../../slices/kanjiSlice";
@@ -42,8 +42,8 @@ export default function SettingsExternalData() {
   const [userTrust, setUserTrust] = useState<boolean | null>(false);
 
   const [imported, setImported] = useState<boolean | null>(false);
-  const serviceAddress = useRef(localServiceURL);
-  const { registerCB } = useSubscribe(dispatch, serviceAddress);
+  // const serviceAddress = useRef(localServiceURL);
+  // const { registerCB } = useSubscribe(dispatch, serviceAddress);
 
   const importCB = useCallback(() => {
     if (!confirm("User edited datasets will be overwritten")) {
@@ -141,6 +141,7 @@ export default function SettingsExternalData() {
           <div className="d-flex">
             <div className="px-1">
               <Button
+                aria-label="Import Datasets"
                 variant="outlined"
                 size="small"
                 disabled={
@@ -161,6 +162,7 @@ export default function SettingsExternalData() {
             </div>
             <div className="px-1">
               <Button
+                aria-label="Edit Datasets"
                 variant="contained"
                 size="small"
                 disabled={
@@ -172,8 +174,9 @@ export default function SettingsExternalData() {
                 </Link>
               </Button>
             </div>
-            <div className="px-1">
+            {/* <div className="px-1">
               <Button
+                aria-label="Subscribe"
                 variant="outlined"
                 onClick={registerCB}
                 size="small"
@@ -183,7 +186,7 @@ export default function SettingsExternalData() {
               >
                 Subscribe
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

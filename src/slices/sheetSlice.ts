@@ -4,9 +4,9 @@ import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
 import { sheetServicePath } from "../../environment.development";
-import { csvToObject } from "../../service/helper/csvHelper";
-import { jtox } from "../../service/helper/jsonHelper";
-import { FilledSheetData } from "../../service/helper/sheetHelper";
+import { csvToObject } from "@nmemonica/snservice/src/helper/csvHelper";
+import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
+import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import {
   ExternalSourceType,
   getExternalSourceType,

@@ -9,16 +9,15 @@ import {
   SWMsgOutgoing,
   SWRequestHeader,
 } from "../../src/helper/serviceWorkerHelper.js";
-import { green } from "./consoleColor.js";
-import { initServiceWorker } from "../src/sw.js"; // TODO: why? sw.ts?
+import { green } from "@nmemonica/snservice/utils/consoleColor";
+import {config} from "@nmemonica/snservice/utils/config";
+import { initServiceWorker } from "../src/sw.js";
 import { DebugLevel } from "../../src/slices/settingHelper.js";
 import {
   dataServiceEndpoint,
   uiEndpoint,
   pronounceEndoint,
 } from "../../environment.production.js";
-
-import "dotenv/config";
 import {
   IDBErrorCause,
   IDBKeys,
@@ -31,8 +30,8 @@ import {
   putIDBItem,
 } from "../helper/idbHelper.js";
 
-const audioPath = process.env.AUDIO_PATH;
-const dataPath = process.env.DATA_PATH;
+const audioPath = config.route.audio
+const dataPath = config.route.data
 
 /**
  * After app is built

@@ -24,6 +24,13 @@ import {
   openIDB,
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
+import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
+import { sheetDataToJSON } from "@nmemonica/snservice/src/helper/jsonHelper";
+import {
+  FilledSheetData,
+  getLastCellIdx,
+  isFilledSheetData,
+} from "@nmemonica/snservice/src/helper/sheetHelper";
 import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
 import { AppDispatch, RootState } from "../../slices";
 import "../../css/Sheet.css";
@@ -39,7 +46,6 @@ import {
   ExternalSourceType,
   getExternalSourceType,
 } from "../Form/ExtSourceInput";
-
 
 const SheetMeta = {
   location: "/sheet/",
@@ -127,8 +133,7 @@ function getActiveSheet(workbook: Spreadsheet) {
 
   const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
   const activeSheetData =
-    sheets.find(({ name }: { name: string }) => name === activeSheetName) ??
-    sheets[0];
+    sheets.find((sheet) => sheet.name === activeSheetName) ?? sheets[0];
 
   const data = removeLastRowIfBlank(activeSheetData);
 
@@ -169,9 +174,10 @@ export function addExtraRow(xObj: SheetData[]) {
     const n = {
       ...o,
       rows: {
-        ...o.rows,
+        ...rows,
         [String(last + 1)]: { cells: {} },
-        len: o.rows.len + 1,
+        // @ts-expect-error SheetData.rows.len
+        len: rows.len + 1,
       },
     };
 
@@ -197,6 +203,7 @@ export function removeLastRowIfBlank<T extends SheetData>(o: T) {
     )
   ) {
     delete clone.rows[last];
+    // @ts-expect-error SheetData.rows.len
     clone.rows.len -= 1;
   }
 
@@ -258,7 +265,7 @@ export default function Sheet() {
         const data = addExtraRow(obj);
 
         const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
-        // console.log(grid);
+
         // console.log(grid.bottombar.activeEl.el.innerHTML);
 
         // grid.bottombar.items.forEach(({ el }: { el: HTMLElement }) => {
@@ -359,26 +366,11 @@ export default function Sheet() {
 
     if (resultIdx.current === null) {
       const { activeSheetData } = getActiveSheet(workbook);
+      if (!activeSheetData.rows) {
+        return;
+      }
 
-      const result = Object.values(activeSheetData.rows).reduce<
-        [number, number, string][]
-      >((acc, row, x) => {
-        if (typeof row !== "number" && "cells" in row) {
-          const find = Object.keys(row.cells).find(
-            (c) =>
-              row.cells[c].text?.toLowerCase().includes(search.toLowerCase())
-          );
-          if (find === undefined) return acc;
-
-          const text = row.cells[find].text;
-          if (text === undefined) return acc;
-
-          const y = Number(find);
-          acc = [...acc, [x, y, text]];
-        }
-
-        return acc;
-      }, []);
+      const result = searchInSheet(activeSheetData, search);
 
       prevResult.current = result;
       setResultBadge(result.length);

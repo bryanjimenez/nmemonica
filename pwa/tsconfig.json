@@ -10,21 +10,18 @@
     "target": "es6",
     // Specify what module code is generated.
     "module": "es2022",
-    "lib": ["dom", "webworker", "es2021.Promise"],
+    "lib": ["dom", "webworker", "es2021.Promise", "ES2022.Error"],
 
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true
   },
-  // "exclude": ["./src/sw.js"],
   "include": [
     ".",
-    "./helper",
     "../environment.production.ts",
     "../src/constants/actionNames.ts",
     "../src/helper/urlHelper.ts",
     "../src/helper/serviceWorkerHelper.ts",
     "../src/slices/settingHelper.ts",
-    "../service/helper/sheetHelper.ts"
   ],
 
   "ts-node": {
