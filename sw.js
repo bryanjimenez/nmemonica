@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "75bb11f7",
-  initCacheVer: "7f800f9b",
+  swVersion: "cefb131d",
+  initCacheVer: "9fdba286",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -233,38 +233,6 @@ function addIDBItem({ db, store }, value) {
     };
   });
   return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
-}
-
-function countIDBItem(db, store = IDBStores.MEDIA) {
-  const transaction = db.transaction([store]);
-  const request = transaction.objectStore(store).count();
-  const requestP = new Promise((resolve, reject) => {
-    request.onerror = function (/*event*/) {
-      // clientLogger("IDB.count X(", DebugLevel.ERROR);
-      reject();
-    };
-    request.onsuccess = function () {
-      if (request.result) {
-        // clientLogger(
-        //   `${db.name}.${store} [${request.result}]`,
-        //   DebugLevel.DEBUG
-        // );
-        resolve(request.result);
-      } else {
-        // clientLogger(`${db.name}.${store} []`, DebugLevel.WARN);
-        resolve(-1);
-      }
-    };
-  });
-  const transactionP = new Promise((resolve, reject) => {
-    transaction.oncomplete = function () {
-      resolve(undefined);
-    };
-    transaction.onerror = function () {
-      reject();
-    };
-  });
-  return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
 }
 
 function getParam(baseUrl, param) {
@@ -581,7 +549,9 @@ function initServiceWorker({
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const uid = getParam(url, "uid");
     const cleanUrl = removeParam(url, "uid").replace(override, "");
-    const myRequest = toRequest(cleanUrl);
+    const myRequest = new Request(cleanUrl, {
+      headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
+    });
     if (!swSelf.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
@@ -726,17 +696,6 @@ function initServiceWorker({
         e.respondWith(noCaching(e.request));
         break;
     }
-  }
-  /**
-   * Creates a request from url
-   *
-   * Adds authentication in development env
-   */
-  function toRequest(url) {
-    const myInit = {
-      method: "GET",
-    };
-    return new Request(url, myInit);
   }
   /**
    * Retrieved cache object to Response
@@ -985,24 +944,24 @@ function initServiceWorker({
 const cacheFiles = [
   "11f4a4136ea351b3efb4.png",
   "125.5d152486.js",
-  "192.6c14fdb7.css",
-  "192.6c14fdb7.js",
-  "23.44fa880a.js",
-  "232.805345c5.css",
-  "232.805345c5.js",
+  "192.124611a9.css",
+  "192.124611a9.js",
+  "23.76f9155b.js",
+  "230.392d51c9.js",
+  "232.eb650563.css",
+  "232.eb650563.js",
   "331225628f00d1a9fb35.jpeg",
   "352.b3c756ee.js",
   "4156f5574d12ea2e130b.png",
   "463.c457155e.css",
   "463.c457155e.js",
-  "568.ef9019ca.js",
-  "657.68db5c32.js",
+  "568.ba17d67f.js",
+  "657.dee830c3.js",
   "71565d048a3f03f60ac5.png",
-  "716.7170320d.js",
-  "802.65d665ab.css",
-  "802.65d665ab.js",
-  "832.79adf3c5.css",
-  "832.79adf3c5.js",
+  "802.036eb0ab.css",
+  "802.036eb0ab.js",
+  "832.7d9e08e1.css",
+  "832.7d9e08e1.js",
   "856.f9bd9358.js",
   "927.bfc4db9c.js",
   "dc7b0140cb7644f73ef2.png",
@@ -1011,8 +970,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.566de996.css",
-  "main.566de996.js",
+  "main.95be5947.css",
+  "main.95be5947.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
