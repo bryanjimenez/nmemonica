@@ -1,6 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
+import type { RawKanji, RawVocabulary } from "nmemonica";
 import {
   useCallback,
   useEffect,
@@ -47,7 +48,6 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import type { RawKanji, RawVocabulary } from "../../typings/raw";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import {

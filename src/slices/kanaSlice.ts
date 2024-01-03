@@ -4,7 +4,7 @@ import merge from "lodash/fp/merge";
 import { KanaType } from "./settingHelper";
 import data from "../../data/json/kana.json";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import type { ValuesOf } from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 export interface KanaInitSlice {
   hiragana: string[][];

@@ -1,5 +1,11 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type {
+  GroupListMap,
+  MetaDataObj,
+  RawPhrase,
+  SourcePhrase,
+} from "nmemonica";
 
 import { logger } from "./globalSlice";
 import {
@@ -21,13 +27,7 @@ import {
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import type {
-  GroupListMap,
-  MetaDataObj,
-  RawPhrase,
-  SourcePhrase,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 

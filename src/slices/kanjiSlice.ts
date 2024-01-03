@@ -1,5 +1,6 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type { MetaDataObj, RawKanji, SourceKanji } from "nmemonica";
 
 import {
   TermFilterBy,
@@ -19,12 +20,7 @@ import {
 import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
 import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import type {
-  MetaDataObj,
-  RawKanji,
-  SourceKanji,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 

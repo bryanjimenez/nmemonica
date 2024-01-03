@@ -14,11 +14,11 @@ import {
   XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
+import type { RawVocabulary } from "nmemonica";
 import PropTypes from "prop-types";
 import React, { memo, useEffect, useRef } from "react";
 
 import { useForceRender } from "../../hooks/useFade";
-import type { RawVocabulary } from "../../typings/raw";
 
 interface MinimunRawItem {
   uid: string;

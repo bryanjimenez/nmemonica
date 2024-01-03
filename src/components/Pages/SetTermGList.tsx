@@ -1,8 +1,8 @@
 import orderBy from "lodash/orderBy";
+import type { GroupListMap } from "nmemonica";
 import PropTypes from "prop-types";
 import React from "react";
 
-import type { GroupListMap } from "../../typings/raw";
 import { GroupItem } from "../Form/GroupItem";
 
 interface SetTermGListProps {

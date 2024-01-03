@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import partition from "lodash/partition";
+import type { RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -75,7 +76,6 @@ import {
   toggleVocabularyFilter,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
-import type { MetaDataObj, RawVocabulary } from "../../typings/raw";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";

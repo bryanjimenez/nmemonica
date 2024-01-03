@@ -1,4 +1,4 @@
-import type { ActionHandlerTuple } from "../typings/raw";
+import type { ActionHandlerTuple } from "nmemonica";
 
 export function setMediaSessionMetadata(
   title: string,

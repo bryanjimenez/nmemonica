@@ -1,4 +1,4 @@
-import type { ValuesOf } from "../../src/typings/raw";
+import type { ValuesOf } from "../../src/typings/utils";
 import type { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 
 export const appDBName = "nmemonica-db";

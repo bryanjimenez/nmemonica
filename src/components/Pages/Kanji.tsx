@@ -4,6 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
+import type { RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -61,7 +62,6 @@ import {
   TermSortBy,
 } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import type { MetaDataObj, RawVocabulary } from "../../typings/raw";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { type ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";

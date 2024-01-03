@@ -1,4 +1,4 @@
-import type { GroupListMap, RawVocabulary, SourceVocabulary } from "../typings/raw";
+import type { GroupListMap, RawVocabulary, SourceVocabulary } from "nmemonica";
 
 export function getPropsFromTags(tag: string | undefined) {
   if (tag === undefined) return { tags: [] };
@@ -84,9 +84,9 @@ export function getPropsFromTags(tag: string | undefined) {
 /**
  * Parses tag info to RawVocabulary
  */
-export function buildVocabularyArray<
-  T extends SourceVocabulary
->(original: Record<string, T>) {
+export function buildVocabularyArray<T extends SourceVocabulary>(
+  original: Record<string, T>
+) {
   let transitivity: Record<string, { trans?: string; intr: string }> = {};
   let value: RawVocabulary[] = Object.keys(original).map((k) => {
     const { tags, slang, keigo, exv, intr, trans, adj } = getPropsFromTags(
@@ -131,7 +131,9 @@ export function buildVocabularyArray<
  * Builds group info object. Keys are mainGrp.
  * For each mainGrp aggregates all subGrp of a mainGrp
  */
-export function buildGroupObject<T extends {grp?: string, subGrp?:string}>(termObj: Record<string, T>) {
+export function buildGroupObject<T extends { grp?: string; subGrp?: string }>(
+  termObj: Record<string, T>
+) {
   const mainGrp: keyof RawVocabulary = "grp";
   const subGrp: keyof RawVocabulary = "subGrp";
 

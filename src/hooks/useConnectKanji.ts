@@ -3,7 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
 import type { TermFilterBy, TermSortBy } from "../slices/settingHelper";
-import { ValuesOf } from "../typings/raw";
+import { ValuesOf } from "../typings/utils";
 
 /**
  * Kanji app-state props

@@ -38,7 +38,7 @@ import {
   SWRequestHeader,
   UIMsg,
 } from "../helper/serviceWorkerHelper";
-import type { ValuesOf } from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 export interface MemoryDataObject {
   quota: number;

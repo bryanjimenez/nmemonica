@@ -1,9 +1,9 @@
 import orderBy from "lodash/orderBy";
+import type { MetaDataObj } from "nmemonica";
 
 import { shuffleArray } from "./arrayHelper";
 import { daysSince } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
-import { MetaDataObj } from "../typings/raw";
 
 /**
  * Below this threshold considered memorized

@@ -3,7 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
 import { TermFilterBy } from "../slices/settingHelper";
-import type { ValuesOf } from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 /**
  * Phrase app-state props

@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import type { FuriganaParseObject, RawJapanese } from "nmemonica";
 import React from "react";
 
 import {
@@ -12,7 +13,6 @@ import {
 import { buildRubyElement, getParseObjectMask, wrap } from "./kanjiHelper";
 import type { kanaHintBuilder as kanaHintBuilderType } from "../helper/kanaHelper";
 import type { furiganaHintBuilder as furiganaHintBuilderType } from "../helper/kanjiHelper";
-import type { FuriganaParseObject, RawJapanese } from "../typings/raw";
 
 export class JapaneseText {
   _furigana: string;
@@ -38,7 +38,6 @@ export class JapaneseText {
     this.adj = "";
   }
 
-  // eslint-disable-next-line @typescript-eslint/class-literal-property-style
   get [Symbol.toStringTag]() {
     return "JapaneseText";
   }

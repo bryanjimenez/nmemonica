@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type { RawPhrase } from "nmemonica";
 
 import { logger } from "./globalSlice";
 import { getPhrase } from "./phraseSlice";
@@ -11,7 +12,6 @@ import type {
 import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import type { RawPhrase } from "../typings/raw";
 
 import type { RootState } from ".";
 

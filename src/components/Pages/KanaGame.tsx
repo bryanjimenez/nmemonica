@@ -8,7 +8,7 @@ import { swapKana } from "../../helper/kanaHelper";
 import { useConnectKana } from "../../hooks/useConnectKana";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { KanaType } from "../../slices/settingHelper";
-import type { ValuesOf } from "../../typings/raw";
+import type { ValuesOf } from "../../typings/utils";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";

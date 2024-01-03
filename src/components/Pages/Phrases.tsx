@@ -2,6 +2,7 @@ import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
+import type { RawPhrase } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -67,7 +68,6 @@ import {
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
-import type { MetaDataObj, RawPhrase } from "../../typings/raw";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";

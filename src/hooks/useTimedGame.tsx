@@ -1,3 +1,4 @@
+import type { MetaDataObj } from "nmemonica";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import type { useDeviceMotionActions } from "./useDeviceMotionActions";
@@ -16,7 +17,6 @@ import {
   setWordTPCorrect,
   setWordTPIncorrect,
 } from "../slices/vocabularySlice";
-import type { MetaDataObj } from "../typings/raw";
 
 /* globals NodeJS */
 

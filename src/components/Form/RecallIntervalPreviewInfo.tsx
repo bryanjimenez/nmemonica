@@ -1,9 +1,9 @@
 import { KebabHorizontalIcon } from "@primer/octicons-react";
+import type { MetaDataObj } from "nmemonica";
 import PropTypes from "prop-types";
 
 import { daysSince } from "../../helper/consoleHelper";
 import { calculateDaysBetweenReviews } from "../../helper/recallHelper";
-import type { MetaDataObj } from "../../typings/raw";
 
 interface RecallIntervalPreviewInfoProps {
   metadata?: MetaDataObj;

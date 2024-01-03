@@ -4,6 +4,12 @@ import {
   createSlice,
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type {
+  GroupListMap,
+  MetaDataObj,
+  RawVocabulary,
+  SourceVocabulary,
+} from "nmemonica";
 
 import {
   TermFilterBy,
@@ -27,13 +33,7 @@ import {
 } from "../helper/reducerHelper";
 import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import type {
-  GroupListMap,
-  MetaDataObj,
-  RawVocabulary,
-  SourceVocabulary,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 

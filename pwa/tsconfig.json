@@ -5,6 +5,9 @@
     "outDir": "../.tsc-dist/",
     "rootDir": "../",
 
+    // specify location of module 'nmemonica'
+    "typeRoots": ["../node_modules/@types", "../src/typings"],
+
     // Set the JavaScript language version for emitted JavaScript
     // and include compatible library declarations.
     "target": "es6",
@@ -21,7 +24,7 @@
     "../src/constants/actionNames.ts",
     "../src/helper/urlHelper.ts",
     "../src/helper/serviceWorkerHelper.ts",
-    "../src/slices/settingHelper.ts",
+    "../src/slices/settingHelper.ts"
   ],
 
   "ts-node": {

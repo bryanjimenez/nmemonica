@@ -1,11 +1,11 @@
 import clamp from "lodash/clamp";
 import orderBy from "lodash/orderBy";
+import type { MetaDataObj } from "nmemonica";
 
 import { daysSince, msgInnerTrim } from "./consoleHelper";
 import { AppDispatch } from "../slices";
 import { logger } from "../slices/globalSlice";
 import { DebugLevel } from "../slices/settingHelper";
-import type { MetaDataObj } from "../typings/raw";
 
 /** Cutoff value between right/wrong
  *

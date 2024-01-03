@@ -1,6 +1,7 @@
+import type { MetaDataObj } from "nmemonica";
+
 import { daysSince } from "./consoleHelper";
 import { SR_CORRECT_TRESHHOLD, getPercentOverdue } from "./recallHelper";
-import type { MetaDataObj } from "../typings/raw";
 
 /**
  * For every available metadata item a

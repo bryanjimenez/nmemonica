@@ -1,3 +1,4 @@
+import type { ActionHandlerTuple } from "nmemonica";
 import { useEffect } from "react";
 
 import {
@@ -6,7 +7,6 @@ import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
 } from "../helper/mediaHelper";
-import type { ActionHandlerTuple } from "../typings/raw";
 
 /**
  * Use browser's media session controls
