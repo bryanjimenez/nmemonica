@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "cefb131d",
-  initCacheVer: "1882e58b",
+  swVersion: "f09315a4",
+  initCacheVer: "c4df0824",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -44,25 +44,19 @@ const appDBVersion = 1;
 const IDBErrorCause = { NoResult: "IDBNoResults" };
 
 function openIDB({ version, logger } = {}) {
-  // const v = version!==undefined?version:appDBVersion;
   let openRequest = indexedDB.open(
     appDBName,
     version !== null && version !== void 0 ? version : appDBVersion,
   );
-  const dbUpgradeP = new Promise((resolve /*reject*/) => {
+  const dbUpgradeP = new Promise((resolve) => {
     openRequest.onupgradeneeded = function (event) {
       if (event.target === null) throw new Error("onupgradeneeded failed");
-      // Save the IDBDatabase interface
       const db = event.target.result;
       switch (event.oldVersion) {
         case 0: {
-          // initial install
-          // Create an objectStore for this database
           const mediaStore = db.createObjectStore(IDBStores.MEDIA, {
             keyPath: "uid",
           });
-          // Use transaction oncomplete to make sure the objectStore creation is
-          // finished before adding data into it.
           const mediaStoreP = new Promise((mediaRes, _reject) => {
             mediaStore.transaction.oncomplete = function () {
               mediaRes();
@@ -98,7 +92,6 @@ function openIDB({ version, logger } = {}) {
             settingStoreP,
             workbookStoreP,
           ]).then(() => {
-            // DONE creating db and stores
             resolve({ type: "upgrade", val: db });
           });
           break;
@@ -107,7 +100,7 @@ function openIDB({ version, logger } = {}) {
     };
   });
   const dbOpenP = new Promise((resolve, reject) => {
-    openRequest.onerror = function (/*event*/) {
+    openRequest.onerror = function () {
       if (typeof logger === "function") {
         logger("IDB.open X(", 1);
       }
@@ -117,8 +110,6 @@ function openIDB({ version, logger } = {}) {
       if (event.target === null) throw new Error("openIDB failed");
       const db = event.target.result;
       db.onerror = function (event) {
-        // Generic error handler for all errors targeted at this database's
-        // requests!
         if (event.target && "errorCode" in event.target) {
           const { errorCode: _errorCode } = event.target;
           if (typeof logger === "function") {
@@ -130,7 +121,6 @@ function openIDB({ version, logger } = {}) {
     };
   });
   return Promise.any([dbUpgradeP, dbOpenP]).then((pArr) => {
-    // if upgradeP happens wait for dbOpenP
     if (pArr.type === "upgrade") {
       return dbOpenP.then((db) => db.val);
     }
@@ -147,7 +137,7 @@ function getIDBItem({ db, store, logger }, key) {
     .objectStore(store !== null && store !== void 0 ? store : defaultStore)
     .get(key);
   const requestP = new Promise((resolve, reject) => {
-    request.onerror = function (/*event*/) {
+    request.onerror = function () {
       if (typeof logger === "function") {
         logger("IDB.get X(", 1);
       }
@@ -158,7 +148,6 @@ function getIDBItem({ db, store, logger }, key) {
         resolve(request.result);
       } else {
         reject(
-          // @ts-expect-error Error.cause
           new Error("No results found", {
             cause: { code: IDBErrorCause.NoResult },
           }),
@@ -187,11 +176,10 @@ function putIDBItem({ db, store }, value) {
     .objectStore(store !== null && store !== void 0 ? store : defaultStore)
     .put(value);
   const requestP = new Promise((resolve, reject) => {
-    request.onsuccess = function (/*event*/) {
+    request.onsuccess = function () {
       resolve(undefined);
     };
     request.onerror = function () {
-      // clientLogger("IDB.put X(", DebugLevel.ERROR);
       reject();
     };
   });
@@ -216,11 +204,10 @@ function addIDBItem({ db, store }, value) {
     .objectStore(store !== null && store !== void 0 ? store : defaultStore)
     .add(value);
   const requestP = new Promise((resolve, reject) => {
-    request.onsuccess = function (/*event*/) {
+    request.onsuccess = function () {
       resolve(undefined);
     };
     request.onerror = function () {
-      // clientLogger("IDB.add X(", DebugLevel.ERROR);
       reject();
     };
   });
@@ -281,7 +268,6 @@ function initServiceWorker({
     "/opposites.json",
     "/kanji.json",
   ];
-  /** Pronounce cache override */
   const override = "/override_cache";
   function getVersions() {
     const main =
@@ -290,42 +276,30 @@ function initServiceWorker({
     const [_jsName, jsVersion] = main.split(".");
     return { swVersion, jsVersion, bundleVersion: initCacheVer };
   }
-  /**
-   * Update specified data set and hash cache from the local service.
-   * @param pushUrl
-   * @param name of data set
-   * @param hash
-   */
   function updateFromLocalService(pushUrl, name, hash) {
     return caches.open(appDataCache).then((cache) => {
       const url = `${pushUrl}/${name}.json.v${hash}`;
-      // TODO: what if ip changed?
-      // if (url_ServiceData !== pushUrl) {
-      clientLogger(
-        // "Push service url does not match service worker",
-        "Validate override url matches push url",
-        DebugLevel.ERROR,
-      );
-      // if they don't match user_DataServiceUrl will be overwritten with serviceUrl's data
-      // return;
-      // }
+      clientLogger("Validate override url matches push url", DebugLevel.ERROR);
       return fetch(`${pushUrl}/${name}.json`).then((fetchRes) =>
         cache
           .match(pushUrl + dataVerPath)
-          .then((verRes) => verRes.json())
+          .then((verRes) => {
+            if (!verRes) {
+              throw new Error("Missing cache.json");
+            }
+            return verRes.json();
+          })
           .then((verJson) => {
             verJson[name] = hash;
             return verJson;
           })
           .then((newVerJson) => {
             return Promise.all([
-              // update version object
               updateCacheWithJSON(
                 appDataCache,
                 pushUrl + dataVerPath,
                 newVerJson,
               ),
-              // update data object
               cache.put(url, fetchRes.clone()),
             ]);
           }),
@@ -371,22 +345,8 @@ function initServiceWorker({
         return notifP;
       });
       e.waitUntil(doneP);
-      // const notification = new Notification("Verify", {
-      //   body: "message",
-      //   tag: "simple-push-demo-notification",
-      //   // icon,
-      // });
-      // notification.addEventListener("click", () => {
-      //   console.log("confirmed")
-      //   // swSelf.clients.openWindow(
-      //   //   "https://example.blog.com/2015/03/04/something-new.html"
-      //   // );
-      // });
     }
   }
-  /**
-   * Cache all data resources
-   */
   function cacheAllDataResource(baseUrl) {
     return caches
       .open(appDataCache)
@@ -404,9 +364,6 @@ function initServiceWorker({
         console.log("[ServiceWorker] Data Prefech failed for some item");
       });
   }
-  /**
-   * Cache all static site assets
-   */
   function cacheAllStaticAssets() {
     return caches
       .open(appStaticCache)
@@ -415,9 +372,6 @@ function initServiceWorker({
         console.log("[ServiceWorker] Asset Prefectch failed for some item");
       });
   }
-  /**
-   * Cache the root / assets
-   */
   function cacheAllRoot() {
     const a = urlAppUI;
     const b = urlAppUI + "/";
@@ -445,7 +399,6 @@ function initServiceWorker({
       });
     e.waitUntil(
       Promise.all([removeUnknowCaches(), removeOldStaticCaches()])
-        // claim the client
         .then(function () {
           console.log("[ServiceWorker] Claiming clients");
           clientLogger("Claiming clients", DebugLevel.DEBUG);
@@ -479,7 +432,6 @@ function initServiceWorker({
       isMsgSaveDataJSON(message) &&
       message.type === SWMsgOutgoing.DATASET_JSON_SAVE
     ) {
-      // update data object
       const dataP = caches.open(appDataCache).then((cache) => {
         const blob = new Blob([JSON.stringify(message.dataset)], {
           type: "application/json; charset=utf-8",
@@ -526,25 +478,16 @@ function initServiceWorker({
     }
     clientLogger("Unrecognized message", DebugLevel.ERROR);
   }
-  /**
-   * User has edited datasets
-   * -  do not fetch cache.json
-   * -  do not overwrite caches on install
-   */
   function isUserEditedData() {
     const fetchCheckP = openIDB({ logger: clientLogger }).then((db) =>
       getIDBItem({ db, store: IDBStores.STATE }, IDBKeys.State.EDITED)
         .then((v) => v.value)
         .catch(() => {
-          // doesn't exist
           return false;
         }),
     );
     return fetchCheckP;
   }
-  /**
-   * User overriding media cached asset
-   */
   function pronounceOverride(url) {
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const uid = getParam(url, "uid");
@@ -553,12 +496,10 @@ function initServiceWorker({
       headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
     });
     if (!swSelf.indexedDB) {
-      // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
       return recache(appMediaCache, myRequest);
     } else {
-      // use indexedDB
       clientLogger("IDB.override", DebugLevel.WARN);
       const fetchP = fetch(myRequest);
       const dbOpenPromise = openIDB({ logger: clientLogger });
@@ -587,29 +528,20 @@ function initServiceWorker({
       return dbResults;
     }
   }
-  /**
-   * Site media asset
-   */
   function pronounce(url) {
     const uid = getParam(url, "uid");
     const word = decodeURI(getParam(url, "q"));
     const cleanUrl = removeParam(url, "uid");
     if (!swSelf.indexedDB) {
-      // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
       return appMediaReq(cleanUrl);
     } else {
-      // use indexedDB
       const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
-          .then((dataO) =>
-            //found
-            toResponse(dataO),
-          )
+          .then((dataO) => toResponse(dataO))
           .catch(() => {
-            //not found
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
             return fetch(cleanUrl)
               .then((res) => {
@@ -633,7 +565,6 @@ function initServiceWorker({
     }
   }
   function noCaching(request) {
-    // for debugging purposes
     return fetch(request);
   }
   function fetchEventHandler(e) {
@@ -645,8 +576,7 @@ function initServiceWorker({
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
-      case /* explicit no cache */ req.headers.has(SWRequestHeader.NO_CACHE): {
-        // remove header
+      case req.headers.has(SWRequestHeader.NO_CACHE): {
         let h = {};
         req.headers.forEach((val, key) => {
           if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
@@ -657,58 +587,49 @@ function initServiceWorker({
         e.respondWith(noCaching(noCacheReq));
         break;
       }
-      case /* cache.json */ path.startsWith(dataPath + dataVerPath):
+      case path.startsWith(dataPath + dataVerPath):
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
-      case /* github user cache.json */ path.endsWith(dataVerPath): {
-        const verP = caches
-          .open(appDataCache)
-          .then((cache) => cache.match(url));
-        e.respondWith(verP);
-        break;
-      }
-      case /* github user data */ url.includes("githubusercontent") &&
+      case url.includes("githubusercontent") &&
         req.headers.has(SWRequestHeader.DATA_VERSION): {
         const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
         const cacheP = caches
           .open(appDataCache)
-          .then((cache) => cache.match(url + ".v" + version));
+          .then((cache) => cache.match(url + ".v" + version))
+          .then((v) => {
+            if (v === undefined) {
+              throw new Error(`Missing ${url + ".v" + version}`);
+            }
+            return v;
+          });
         e.respondWith(cacheP);
         break;
       }
-      case /* data */ req.headers.has(SWRequestHeader.DATA_VERSION): {
+      case req.headers.has(SWRequestHeader.DATA_VERSION): {
         const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
         e.respondWith(appDataReq(url, version));
         break;
       }
-      case /* UI asset */ url.startsWith(urlAppUI) &&
-        !url.endsWith(".hot-update.json"):
+      case url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
         e.respondWith(appAssetReq(url));
         break;
-      case /* pronounce override */ path.startsWith(audioPath + override):
+      case path.startsWith(audioPath + override):
         e.respondWith(pronounceOverride(url));
         break;
-      case /* pronounce */ path.startsWith(audioPath):
+      case path.startsWith(audioPath):
         e.respondWith(pronounce(url));
         break;
       default:
-        /* everything else */
         e.respondWith(noCaching(e.request));
         break;
     }
   }
-  /**
-   * Retrieved cache object to Response
-   */
   function toResponse(obj) {
     const status = 200,
       statusText = "OK";
     const init = { status, statusText };
     return new Response(obj.blob, init);
   }
-  /**
-   * Post message to client
-   */
   function clientMsg(type, msg) {
     void swSelf.clients
       .matchAll({ includeUncontrolled: true, type: "window" })
@@ -718,9 +639,6 @@ function initServiceWorker({
         }
       });
   }
-  /**
-   * Log to client
-   */
   function clientLogger(msg, lvl) {
     swSelf.clients
       .matchAll({ includeUncontrolled: true, type: "window" })
@@ -738,15 +656,9 @@ function initServiceWorker({
         console.log(err);
       });
   }
-  /**
-   * respond with cache match always fetch and re-cache
-   * may return stale version
-   * @returns a Promise with a cache response
-   */
   function appVersionReq(url) {
     const fetchCheckP = isUserEditedData();
     return fetchCheckP.then((cacheOnly) => {
-      // check if in cache
       const c = caches
         .open(appDataCache)
         .then((cache) => cache.match(url))
@@ -757,33 +669,23 @@ function initServiceWorker({
           return cacheRes;
         });
       if (cacheOnly) {
-        // don't fetch when user in-app
-        // has edited datasets
         return c;
       }
-      // fetch new versions
       const f = fetch(url).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
         }
-        // update cache from new
         void caches
           .open(appDataCache)
           .then((cache) => cache.put(url, resClone));
         return res;
       });
-      // return whaterver is fastest
       return Promise.any([f, c]).catch((errs) =>
         Promise.reject(errs[0].message),
       );
     });
   }
-  /**
-   * get from cache on fail fetch and re-cache
-   * first match may be stale
-   * @returns a Promise with a cached dataVersion response
-   */
   function appVersionCacheOnFailFetch(authority) {
     return caches.open(appDataCache).then((cache) =>
       cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
@@ -795,11 +697,6 @@ function initServiceWorker({
       }),
     );
   }
-  /**
-   * When request contains Data-Version != 0 the version is used otherwise
-   * the version is searched in the cache
-   * @returns a Promise that yieds a cached response
-   */
   function appDataReq(url, version) {
     let response;
     if (!version || version === "0") {
@@ -809,9 +706,6 @@ function initServiceWorker({
     }
     return response;
   }
-  /**
-   * @returns a Promise that yields the version on the cache for the provided request
-   */
   function getVersionForData(url) {
     const authority = url.slice(0, url.indexOf("/", "https://".length));
     const filename = url.split("/").pop() || url;
@@ -820,10 +714,6 @@ function initServiceWorker({
       .then((res) => res && res.json())
       .then((versions) => versions[dName]);
   }
-  /**
-   * when cache match fails fetch and re-cache (only good response)
-   * @returns a Promise that yieds a cached response
-   */
   function cacheVerData(url, v) {
     const urlVersion = url + ".v" + v;
     return caches.open(appDataCache).then((cache) =>
@@ -840,10 +730,6 @@ function initServiceWorker({
       }),
     );
   }
-  /**
-   * cache match first otherwise fetch then cache
-   * @returns a Promise that yieds a cached response
-   */
   function appAssetReq(url) {
     return caches
       .open(appStaticCache)
@@ -852,11 +738,6 @@ function initServiceWorker({
         return cachedRes || recache(appStaticCache, url);
       });
   }
-  /**
-   * Only used if no IndexedDB support
-   * cache match first otherwise fetch then cache
-   * @returns a Promise that yieds a cached response
-   */
   function appMediaReq(url) {
     return caches
       .open(appMediaCache)
@@ -865,23 +746,23 @@ function initServiceWorker({
         return cachedRes || recache(appMediaCache, url);
       });
   }
-  /**
-   * @returns a Promise that yields a response from the cache or a rejected Promise
-   */
   function recache(cacheName, url) {
     return caches.open(cacheName).then((cache) =>
       cache
         .add(url)
         .then(() => cache.match(url))
+        .then((urlRes) => {
+          if (!urlRes) {
+            throw new Error("Could not recache");
+          }
+          return urlRes;
+        })
         .catch(() => {
           console.log("[ServiceWorker] Network unavailable");
           return Promise.reject();
         }),
     );
   }
-  /**
-   * delete unknown caches
-   */
   function removeUnknowCaches() {
     return caches.keys().then((cacheNames) =>
       Promise.all(
@@ -897,17 +778,12 @@ function initServiceWorker({
       ),
     );
   }
-  /**
-   * deletes non indexed cache files in current caches
-   */
   function removeOldStaticCaches() {
     return caches.open(appStaticCache).then((cache) =>
       cache.keys().then((requests) =>
         Promise.all(
           requests.reduce((acc, req) => {
             const name = req.url.split("/").pop();
-            // files not having . should not have hashes so will be overwritten
-            // by caches.add upon install
             if (name && name.indexOf(".") > -1 && !cacheFiles.includes(name)) {
               console.log("[ServiceWorker] Removed static asset: " + name);
               return [...acc, cache.delete(req.url)];
@@ -918,9 +794,6 @@ function initServiceWorker({
       ),
     );
   }
-  /**
-   * @returns a promise with the cached jsonObj
-   */
   function updateCacheWithJSON(
     cacheName,
     url,
@@ -929,7 +802,6 @@ function initServiceWorker({
     status = 200,
     statusText = "OK",
   ) {
-    // update cache with fetched version results
     const blob = new Blob([JSON.stringify(jsonObj)], {
       type,
     });
@@ -970,8 +842,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.964b9373.css",
-  "main.964b9373.js",
+  "main.4b886943.css",
+  "main.4b886943.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
