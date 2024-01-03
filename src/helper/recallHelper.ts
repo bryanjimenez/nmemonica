@@ -411,20 +411,18 @@ export function updateAction(
  */
 export function recallDebugLogHelper(
   dispatch: AppDispatch,
-  uid: string,
-  meta: Record<string, MetaDataObj>,
-  oldMeta: Record<string, MetaDataObj>,
+  meta: MetaDataObj | undefined,
+  oldMeta: MetaDataObj | undefined,
   english: string
 ) {
-  const lastReviewDate = oldMeta[uid]?.lastReview;
+  const lastReviewDate = oldMeta?.lastReview;
   const lastReview = lastReviewDate ? `${daysSince(lastReviewDate)}d` : "";
 
-  const reviewEvery = meta[uid].daysBetweenReviews?.toFixed(0);
+  const reviewEvery = meta?.daysBetweenReviews?.toFixed(0);
   const w = msgInnerTrim(english, 30);
 
-  // FIXME: testing
-  const oReviewEvery = oldMeta[uid].daysBetweenReviews?.toFixed(0) ?? "";
-  const consec = oldMeta[uid].consecutiveRight ?? "0";
+  const oReviewEvery = oldMeta?.daysBetweenReviews?.toFixed(0) ?? "";
+  const consec = oldMeta?.consecutiveRight ?? "0";
 
   const msg =
     reviewEvery === undefined

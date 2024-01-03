@@ -1,6 +1,5 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import partition from "lodash/partition";
 import type { RawVocabulary } from "nmemonica";
@@ -250,7 +249,10 @@ export default function Vocabulary() {
           const {
             accuracyP = 0,
             lastReview,
+
             daysBetweenReviews,
+            // metadata includes filtered in Recall sort
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           } = metadata.current[filtered[i].uid]!;
           const daysSinceReview = lastReview
             ? daysSince(lastReview)
@@ -586,7 +588,7 @@ export default function Vocabulary() {
       const vocabulary = getTerm(uid, filteredVocab, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
-      let spaceRepUpdated: Promise<unknown> = Promise.resolve();
+      let spaceRepUpdated;
       if (
         metadata.current[uid]?.difficultyP &&
         accuracyModifiedRef.current
@@ -594,64 +596,61 @@ export default function Vocabulary() {
         // accuracyModifiedRef.current > 0
       ) {
         // when difficulty exists and accuracyP has been set
-        spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
+        spaceRepUpdated = dispatch(
+          setSpaceRepetitionMetadata({ uid })
+        ).unwrap();
       } else if (accuracyModifiedRef.current === null) {
         // when accuracyP is nulled
-        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
+        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }))
+          .unwrap()
+          .then(() => {
+            /** results not needed */
+          });
+      } else {
+        spaceRepUpdated = Promise.resolve();
       }
 
-      void spaceRepUpdated.then(
-        (
-          action: PayloadAction<{
-            newValue: Record<string, MetaDataObj>;
-            oldValue: Record<string, MetaDataObj>;
-          }>
-        ) => {
-          if (action && "payload" in action) {
-            const { newValue: meta, oldValue: oldMeta } = action.payload;
+      void spaceRepUpdated.then((payload) => {
+        if (payload && "newValue" in payload && "oldValue" in payload) {
+          const { newValue, oldValue } = payload;
+          const meta = newValue[uid];
+          const oldMeta = oldValue[uid];
 
-            recallDebugLogHelper(
-              dispatch,
-              uid,
-              meta,
-              oldMeta,
-              vocabulary.english
-            );
-          }
-
-          // after space rep updates
-
-          // prevent updates when quick scrolling
-          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-            // don't increment reinforced terms
-            const shouldIncrement = uid !== prevState.reinforcedUID;
-            const frequency = prevState.reinforcedUID !== null;
-
-            void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
-              .unwrap()
-              .then((payload) => {
-                const { value, prevVal } = payload;
-
-                let prevDate;
-                if (accuracyModifiedRef.current && prevVal.lastReview) {
-                  // if term was reviewed
-                  prevDate = prevVal.lastReview;
-                } else {
-                  prevDate = prevVal.lastView ?? value.lastView;
-                }
-
-                const repStats = { [uid]: { ...value, lastView: prevDate } };
-                const messageLog = (m: string, l: number) =>
-                  dispatch(logger(m, l));
-                if (tpAnsweredREF.current !== undefined) {
-                  timedPlayLog(messageLog, vocabulary, repStats, { frequency });
-                } else {
-                  spaceRepLog(messageLog, vocabulary, repStats, { frequency });
-                }
-              });
-          }
+          recallDebugLogHelper(dispatch, meta, oldMeta, vocabulary.english);
         }
-      );
+
+        // after space rep updates
+
+        // prevent updates when quick scrolling
+        if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+          // don't increment reinforced terms
+          const shouldIncrement = uid !== prevState.reinforcedUID;
+          const frequency = prevState.reinforcedUID !== null;
+
+          void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
+            .unwrap()
+            .then((payload) => {
+              const { value, prevVal } = payload;
+
+              let prevDate;
+              if (accuracyModifiedRef.current && prevVal.lastReview) {
+                // if term was reviewed
+                prevDate = prevVal.lastReview;
+              } else {
+                prevDate = prevVal.lastView ?? value.lastView;
+              }
+
+              const repStats = { [uid]: { ...value, lastView: prevDate } };
+              const messageLog = (m: string, l: number) =>
+                dispatch(logger(m, l));
+              if (tpAnsweredREF.current !== undefined) {
+                timedPlayLog(messageLog, vocabulary, repStats, { frequency });
+              } else {
+                spaceRepLog(messageLog, vocabulary, repStats, { frequency });
+              }
+            });
+        }
+      });
 
       const wasReset = resetTimedPlay();
       if (wasReset) {
