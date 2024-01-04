@@ -3,7 +3,7 @@ import { MutableRefObject, useCallback } from "react";
 import {
   pushServicePubKeyPath,
   pushServiceRegisterClientPath,
-} from "../../environment.development";
+} from "../../environment.production";
 import { AppDispatch } from "../slices";
 import { logger } from "../slices/globalSlice";
 import { DebugLevel } from "../slices/settingHelper";

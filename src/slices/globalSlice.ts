@@ -14,8 +14,10 @@ import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { VersionInitSlice } from "./versionSlice";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
-import { dataServicePath } from "../../environment.development";
-import { dataServiceEndpoint } from "../../environment.production";
+import {
+  dataServiceEndpoint,
+  dataServicePath,
+} from "../../environment.production";
 import {
   IDBKeys,
   IDBStores,

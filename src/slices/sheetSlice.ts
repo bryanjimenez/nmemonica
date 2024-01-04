@@ -1,12 +1,12 @@
+import { csvToObject } from "@nmemonica/snservice/src/helper/csvHelper";
+import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
+import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
-import { sheetServicePath } from "../../environment.development";
-import { csvToObject } from "@nmemonica/snservice/src/helper/csvHelper";
-import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
-import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
+import { sheetServicePath } from "../../environment.production";
 import {
   ExternalSourceType,
   getExternalSourceType,
