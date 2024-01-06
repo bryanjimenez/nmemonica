@@ -1,20 +1,34 @@
 import EventEmitter from "events";
 
 import { Badge, Fab, TextField } from "@mui/material";
+import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
+import { sheetDataToJSON } from "@nmemonica/snservice/src/helper/jsonHelper";
+import {
+  FilledSheetData,
+  getLastCellIdx,
+  isFilledSheetData,
+} from "@nmemonica/snservice/src/helper/sheetHelper";
 import Spreadsheet, { type SheetData } from "@nmemonica/x-spreadsheet";
 import {
   DesktopDownloadIcon,
-  RssIcon,
+  LinkExternalIcon,
+  // RssIcon,
   SearchIcon,
   ShareIcon,
 } from "@primer/octicons-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
   dataServiceEndpoint,
-  pushServiceSheetDataUpdatePath,
+  // pushServiceSheetDataUpdatePath,
   sheetServicePath,
 } from "../../../environment.production";
 import {
@@ -24,13 +38,6 @@ import {
   openIDB,
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
-import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
-import { sheetDataToJSON } from "@nmemonica/snservice/src/helper/jsonHelper";
-import {
-  FilledSheetData,
-  getLastCellIdx,
-  isFilledSheetData,
-} from "@nmemonica/snservice/src/helper/sheetHelper";
 import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
 import { AppDispatch, RootState } from "../../slices";
 import "../../css/Sheet.css";
@@ -59,8 +66,8 @@ const defaultOp = {
   // showContextmenu: true,
   autoFocus: false,
   view: {
-    height: () => document.documentElement.clientHeight - 100,
-    width: () => document.documentElement.clientWidth - 30,
+    height: () => document.documentElement.clientHeight - 65,
+    width: () => document.documentElement.clientWidth - 15,
   },
   row: {
     len: 3000, //100,
@@ -142,25 +149,25 @@ function getActiveSheet(workbook: Spreadsheet) {
 /**
  * Send push to subscribed clients
  */
-function pushSheet(workbook: Spreadsheet | null, serviceBaseUrl: string) {
-  if (!workbook) return;
+// function pushSheet(workbook: Spreadsheet | null, serviceBaseUrl: string) {
+//   if (!workbook) return;
 
-  const { activeSheetName, activeSheetData } = getActiveSheet(workbook);
+//   const { activeSheetName, activeSheetData } = getActiveSheet(workbook);
 
-  const container = new FormData();
-  const data = new Blob([JSON.stringify(activeSheetData)], {
-    type: "application/json",
-  });
+//   const container = new FormData();
+//   const data = new Blob([JSON.stringify(activeSheetData)], {
+//     type: "application/json",
+//   });
 
-  container.append("sheetType", "xSheetObj");
-  container.append("sheetName", activeSheetName);
-  container.append("sheetData", data);
+//   container.append("sheetType", "xSheetObj");
+//   container.append("sheetName", activeSheetName);
+//   container.append("sheetData", data);
 
-  void fetch(serviceBaseUrl + pushServiceSheetDataUpdatePath, {
-    method: "POST",
-    body: container,
-  });
-}
+//   void fetch(serviceBaseUrl + pushServiceSheetDataUpdatePath, {
+//     method: "POST",
+//     body: container,;
+//   });
+// }
 
 export function addExtraRow(xObj: SheetData[]) {
   const extraAdded = xObj.reduce<SheetData[]>((acc, o) => {
@@ -208,6 +215,72 @@ export function removeLastRowIfBlank<T extends SheetData>(o: T) {
   }
 
   return clone;
+}
+
+function searchInSheet(sheet: SheetData, query: string) {
+  if (!sheet.rows) {
+    return [];
+  }
+
+  const result = Object.values(sheet.rows).reduce<[number, number, string][]>(
+    (acc, row, x) => {
+      if (typeof row !== "number" && "cells" in row) {
+        const find = Object.keys(row.cells).find(
+          (c) =>
+            row.cells[Number(c)].text
+              ?.toLowerCase()
+              .includes(query.toLowerCase())
+        );
+        if (find === undefined) return acc;
+
+        const text = row.cells[Number(find)].text;
+        if (text === undefined) return acc;
+
+        const y = Number(find);
+        acc = [...acc, [x, y, text]];
+      }
+
+      return acc;
+    },
+    []
+  );
+
+  return result;
+}
+
+/**
+ * Check if device has touch screen
+ * [MDN mobile detection](https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent)
+ * @returns
+ */
+function touchScreenCheck() {
+  let hasTouchScreen = false;
+
+  if (
+    "maxTouchPoints" in navigator &&
+    typeof navigator.maxTouchPoints === "number"
+  ) {
+    hasTouchScreen = navigator.maxTouchPoints > 0;
+  } else if (
+    "msMaxTouchPoints" in navigator &&
+    typeof navigator.msMaxTouchPoints === "number"
+  ) {
+    hasTouchScreen = navigator.msMaxTouchPoints > 0;
+  } else {
+    const mQ = matchMedia?.("(pointer:coarse)");
+    if (mQ?.media === "(pointer:coarse)") {
+      hasTouchScreen = Boolean(mQ.matches);
+    } else if ("orientation" in window) {
+      hasTouchScreen = true; // deprecated, but good fallback
+    } else {
+      // Only as a last resort, fall back to user agent sniffing
+      const UA = navigator.userAgent;
+      hasTouchScreen =
+        /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(UA) ||
+        /\b(Android|Windows Phone|iPad|iPod)\b/i.test(UA);
+    }
+  }
+  return hasTouchScreen;
 }
 
 export default function Sheet() {
@@ -267,12 +340,6 @@ export default function Sheet() {
         const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
 
         // console.log(grid.bottombar.activeEl.el.innerHTML);
-
-        // grid.bottombar.items.forEach(({ el }: { el: HTMLElement }) => {
-        //   el.addEventListener("click", function () {
-        //     console.log(el.innerHTML);
-        //   });
-        // });
 
         grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
@@ -355,9 +422,70 @@ export default function Sheet() {
     void dispatch(setLocalDataEdited(true));
   }, [dispatch, externalSource, localServiceURL]);
 
-  const pushSheetCB = useCallback(() => {
-    pushSheet(wbRef.current, localServiceURL);
-  }, [localServiceURL]);
+  const downloadSheetsCB = useCallback(() => {
+    //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
+
+    const xObj = wbRef.current?.getData() as FilledSheetData[];
+    if (xObj) {
+      const filesP = xObj.map((xObjSheet: FilledSheetData) => {
+        const fileSim = new EventEmitter();
+
+        const fileWriterSimulator = {
+          write: (line: string) => {
+            fileSim.emit("write", line);
+          },
+          end: () => {
+            fileSim.emit("end");
+          },
+        };
+
+        const csvP = new Promise<[string, string]>((resolve, _reject) => {
+          let file = "";
+          fileSim.on("write", (line) => {
+            file += line;
+          });
+
+          fileSim.on("end", () => {
+            resolve([xObjSheet.name, file]);
+          });
+        });
+
+        objectToCSV(xObjSheet, fileWriterSimulator);
+
+        return csvP;
+      });
+
+      void Promise.all(filesP).then((data1) => {
+        data1.forEach(([name, data]) => {
+          const file = new Blob([data], {
+            type: "application/plaintext; charset=utf-8",
+          });
+          // const file = new Blob(['csv.file'],{type:"octet/stream"})
+          // const f = new File([file], './file.csv', {type:"octet/stream"})
+
+          const dlUrl = URL.createObjectURL(file);
+          // window.location.assign(dlUrl)
+
+          // URL.revokeObjectURL()
+          // browser.downloads.download(URL.createObjectURL(file))
+          const a = document.createElement("a");
+          a.download = `${name}.csv`;
+          a.href = dlUrl;
+          // document.body.appendChild(a)
+          a.click();
+
+          setTimeout(() => {
+            // document.body.removeChild(a)
+            URL.revokeObjectURL(dlUrl);
+          }, 0);
+        });
+      });
+    }
+  }, []);
+
+  // const pushSheetCB = useCallback(() => {
+  //   pushSheet(wbRef.current, localServiceURL);
+  // }, [localServiceURL]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -401,109 +529,78 @@ export default function Sheet() {
     workbook.sheet.verticalScrollbar.moveFn(xOffset);
   }, []);
 
+  const probablyMobile = useMemo(() => {
+    const smallScreen = window.innerWidth < 1000 || window.innerHeight < 1000;
+    const touch = touchScreenCheck();
+
+    return touch && smallScreen;
+  }, []);
+
+  /** On mobile give a show-context-menu btn */
+  const temporaryMobileContextMenuCB = useCallback(() => {
+    // https://developer.mozilla.org/en-US/docs/Web/Events/Creating_and_triggering_events
+    // const e = new Event("contextmenu")
+    // document.querySelector('.x-spreadsheet-table').dispatchEvent(e)
+
+    const menu = document.querySelector(".x-spreadsheet-contextmenu");
+    const items = menu?.children;
+    if (items) {
+      Array.from(items).forEach((element, i) => {
+        // remove most menu items
+        // leave insert + remove row/columns
+        if (i < 6 || i > 10) {
+          element.setAttribute("style", "display: none;");
+        }
+      });
+    }
+
+    const css = `display: block; right: ${1}px; bottom: ${1}px;`;
+    menu?.setAttribute("style", css);
+  }, []);
+
   return (
     <React.Fragment>
       <div className="sheet main-panel pt-2">
         <div className="d-flex flex-row pt-2 px-3 w-100">
-          <div className="px-1">
+          <div className="pt-1 pe-1">
             <Fab
+              aria-label="Save Sheet"
               variant="extended"
               size="small"
               onClick={saveSheetCB}
               className="m-0 z-index-unset"
               tabIndex={3}
-              aria-label="Save Sheet"
             >
               <ShareIcon size="small" />
             </Fab>
           </div>
-          <div>
+          <div className="pt-1 pe-1">
             <Fab
+              aria-label="Download Sheet"
               variant="extended"
               size="small"
-              onClick={() => {
-                //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
-
-                const xObj = wbRef.current?.getData() as FilledSheetData[];
-                if (xObj) {
-                  const filesP = xObj.map((xObjSheet: FilledSheetData) => {
-                    const fileSim = new EventEmitter();
-
-                    const fileWriterSimulator = {
-                      write: (line: string) => {
-                        fileSim.emit("write", line);
-                      },
-                      end: () => {
-                        fileSim.emit("end");
-                      },
-                    };
-
-                    const csvP = new Promise<[string, string]>(
-                      (resolve, _reject) => {
-                        let file = "";
-                        fileSim.on("write", (line) => {
-                          file += line;
-                        });
-
-                        fileSim.on("end", () => {
-                          resolve([xObjSheet.name, file]);
-                        });
-                      }
-                    );
-
-                    objectToCSV(xObjSheet, fileWriterSimulator);
-
-                    return csvP;
-                  });
-
-                  void Promise.all(filesP).then((data1) => {
-                    data1.forEach(([name, data]) => {
-                      const file = new Blob([data], {
-                        type: "application/plaintext; charset=utf-8",
-                      });
-                      // const file = new Blob(['csv.file'],{type:"octet/stream"})
-                      // const f = new File([file], './file.csv', {type:"octet/stream"})
-
-                      const dlUrl = URL.createObjectURL(file);
-                      // window.location.assign(dlUrl)
-
-                      // URL.revokeObjectURL()
-                      // browser.downloads.download(URL.createObjectURL(file))
-                      const a = document.createElement("a");
-                      a.download = `${name}.csv`;
-                      a.href = dlUrl;
-                      // document.body.appendChild(a)
-                      a.click();
-
-                      setTimeout(() => {
-                        // document.body.removeChild(a)
-                        URL.revokeObjectURL(dlUrl);
-                      }, 0);
-                    });
-                  });
-                }
-              }}
+              onClick={downloadSheetsCB}
               className="m-0 z-index-unset"
               tabIndex={4}
-              aria-label="Download Sheet"
             >
               <DesktopDownloadIcon size="small" />
             </Fab>
           </div>
-          {externalSource === ExternalSourceType.LocalService && (
-            <div className="px-1">
-              <Fab
-                variant="extended"
-                size="small"
-                onClick={pushSheetCB}
-                className="m-0 z-index-unset"
-                tabIndex={4}
-                aria-label="Push to subscribers"
-              >
-                <RssIcon size="small" />
-              </Fab>
-            </div>
-          )}
+          {/* {externalSource === ExternalSourceType.LocalService &&
+            !probablyMobile && (
+              <div className="pt-1 pe-1">
+                <Fab
+                  aria-label="Push to subscribers"
+                  variant="extended"
+                  size="small"
+                  onClick={pushSheetCB}
+                  className="m-0 z-index-unset"
+                  tabIndex={4}
+                >
+                  <RssIcon size="small" />
+                </Fab>
+              </div>
+            )} */}
           <div className="d-flex">
             <div>
               <form
@@ -532,12 +629,13 @@ export default function Sheet() {
                 />
               </form>
             </div>
-            <div className="ps-1 pt-1">
+            <div className="pt-1 ps-1">
               <Badge
                 badgeContent={resultBadge < 0 ? "!" : resultBadge}
                 color={resultBadge < 0 ? "error" : "success"}
               >
                 <Fab
+                  aria-label="Search sheet"
                   variant="extended"
                   size="small"
                   color="primary"
@@ -549,6 +647,20 @@ export default function Sheet() {
                 </Fab>
               </Badge>
             </div>
+            {probablyMobile && (
+              <div className="pt-1 ps-1">
+                <Fab
+                  aria-label="Show context menu"
+                  variant="extended"
+                  size="small"
+                  className="m-0 z-index-unset"
+                  tabIndex={2}
+                  onClick={temporaryMobileContextMenuCB}
+                >
+                  <LinkExternalIcon size="small" className="rotate-180" />
+                </Fab>
+              </div>
+            )}
           </div>
         </div>
 

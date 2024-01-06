@@ -12,3 +12,8 @@
 .z-index-unset {
   z-index: unset !important;
 }
+
+/** Remove toolbar */
+.x-spreadsheet-toolbar {
+  display: none;
+}
