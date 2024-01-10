@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "f09315a4",
-  initCacheVer: "e9805a5d",
+  swVersion: "1e895428",
+  initCacheVer: "f15063c1",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -577,14 +577,7 @@ function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
       case req.headers.has(SWRequestHeader.NO_CACHE): {
-        let h = {};
-        req.headers.forEach((val, key) => {
-          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
-            h[key] = val;
-          }
-        });
-        const noCacheReq = new Request(req.url, { headers: new Headers(h) });
-        e.respondWith(noCaching(noCacheReq));
+        e.respondWith(noCaching(req));
         break;
       }
       case path.startsWith(dataPath + dataVerPath):
@@ -842,8 +835,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.06c6e10a.css",
-  "main.06c6e10a.js",
+  "main.ad0c6c7b.css",
+  "main.ad0c6c7b.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
