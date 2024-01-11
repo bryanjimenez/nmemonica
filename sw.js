@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "1e895428",
-  initCacheVer: "f15063c1",
+  swVersion: "5844f9ab",
+  initCacheVer: "e9805a5d",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -446,7 +446,7 @@ function initServiceWorker({
       isMsgHardRefresh(message) &&
       message.type === SWMsgOutgoing.SW_REFRESH_HARD
     ) {
-      fetch(urlDataService + dataVerPath)
+      fetch(urlDataService + dataVerPath, { credentials: "include" })
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
@@ -501,7 +501,7 @@ function initServiceWorker({
       return recache(appMediaCache, myRequest);
     } else {
       clientLogger("IDB.override", DebugLevel.WARN);
-      const fetchP = fetch(myRequest);
+      const fetchP = fetch(myRequest, { credentials: "include" });
       const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return fetchP
@@ -543,7 +543,7 @@ function initServiceWorker({
           .then((dataO) => toResponse(dataO))
           .catch(() => {
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
-            return fetch(cleanUrl)
+            return fetch(cleanUrl, { credentials: "include" })
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", DebugLevel.ERROR);
@@ -565,7 +565,7 @@ function initServiceWorker({
     }
   }
   function noCaching(request) {
-    return fetch(request);
+    return fetch(request, { credentials: "include" });
   }
   function fetchEventHandler(e) {
     if (e.request.method !== "GET") {
@@ -664,7 +664,7 @@ function initServiceWorker({
       if (cacheOnly) {
         return c;
       }
-      const f = fetch(url).then((res) => {
+      const f = fetch(url, { credentials: "include" }).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -713,7 +713,7 @@ function initServiceWorker({
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
-          fetch(url).then((fetchRes) => {
+          fetch(url, { credentials: "include" }).then((fetchRes) => {
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }
@@ -835,8 +835,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.ad0c6c7b.css",
-  "main.ad0c6c7b.js",
+  "main.06c6e10a.css",
+  "main.06c6e10a.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
