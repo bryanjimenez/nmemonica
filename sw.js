@@ -1,5 +1,5 @@
 const buildConstants = {
-  swVersion: "1b4609ad",
+  swVersion: "0c39b8b4",
   initCacheVer: "e9805a5d",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
@@ -689,10 +689,8 @@ function initServiceWorker({
     return caches.open(appDataCache).then((cache) =>
       cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
         if (cacheRes) {
-          console.log("Has Cached!!");
           return Promise.resolve(cacheRes);
         } else {
-          console.log("NO cache?");
           return recache(appDataCache, authority + dataPath + dataVerPath);
         }
       }),
