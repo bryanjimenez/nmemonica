@@ -1,5 +1,5 @@
 const buildConstants = {
-  swVersion: "5844f9ab",
+  swVersion: "1b4609ad",
   initCacheVer: "e9805a5d",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
@@ -280,29 +280,30 @@ function initServiceWorker({
     return caches.open(appDataCache).then((cache) => {
       const url = `${pushUrl}/${name}.json.v${hash}`;
       clientLogger("Validate override url matches push url", DebugLevel.ERROR);
-      return fetch(`${pushUrl}/${name}.json`).then((fetchRes) =>
-        cache
-          .match(pushUrl + dataVerPath)
-          .then((verRes) => {
-            if (!verRes) {
-              throw new Error("Missing cache.json");
-            }
-            return verRes.json();
-          })
-          .then((verJson) => {
-            verJson[name] = hash;
-            return verJson;
-          })
-          .then((newVerJson) => {
-            return Promise.all([
-              updateCacheWithJSON(
-                appDataCache,
-                pushUrl + dataVerPath,
-                newVerJson,
-              ),
-              cache.put(url, fetchRes.clone()),
-            ]);
-          }),
+      return fetch(`${pushUrl}/${name}.json`, { credentials: "include" }).then(
+        (fetchRes) =>
+          cache
+            .match(pushUrl + dataVerPath)
+            .then((verRes) => {
+              if (!verRes) {
+                throw new Error("Missing cache.json");
+              }
+              return verRes.json();
+            })
+            .then((verJson) => {
+              verJson[name] = hash;
+              return verJson;
+            })
+            .then((newVerJson) => {
+              return Promise.all([
+                updateCacheWithJSON(
+                  appDataCache,
+                  pushUrl + dataVerPath,
+                  newVerJson,
+                ),
+                cache.put(url, fetchRes.clone()),
+              ]);
+            }),
       );
     });
   }
@@ -446,7 +447,7 @@ function initServiceWorker({
       isMsgHardRefresh(message) &&
       message.type === SWMsgOutgoing.SW_REFRESH_HARD
     ) {
-      fetch(urlDataService + dataVerPath, { credentials: "include" })
+      fetch(urlDataService + dataVerPath)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
@@ -488,6 +489,11 @@ function initServiceWorker({
     );
     return fetchCheckP;
   }
+  function isAuthNeeded(url) {
+    const isLocal = !url.startsWith(urlDataService);
+    const withAuth = isLocal ? { credentials: "include" } : {};
+    return withAuth;
+  }
   function pronounceOverride(url) {
     console.log("[ServiceWorker] Overriding Asset in Cache");
     const uid = getParam(url, "uid");
@@ -501,7 +507,7 @@ function initServiceWorker({
       return recache(appMediaCache, myRequest);
     } else {
       clientLogger("IDB.override", DebugLevel.WARN);
-      const fetchP = fetch(myRequest, { credentials: "include" });
+      const fetchP = fetch(myRequest, isAuthNeeded(myRequest.url));
       const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return fetchP
@@ -543,7 +549,7 @@ function initServiceWorker({
           .then((dataO) => toResponse(dataO))
           .catch(() => {
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
-            return fetch(cleanUrl, { credentials: "include" })
+            return fetch(cleanUrl, isAuthNeeded(cleanUrl))
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", DebugLevel.ERROR);
@@ -565,7 +571,7 @@ function initServiceWorker({
     }
   }
   function noCaching(request) {
-    return fetch(request, { credentials: "include" });
+    return fetch(request, isAuthNeeded(request.url));
   }
   function fetchEventHandler(e) {
     if (e.request.method !== "GET") {
@@ -664,7 +670,7 @@ function initServiceWorker({
       if (cacheOnly) {
         return c;
       }
-      const f = fetch(url, { credentials: "include" }).then((res) => {
+      const f = fetch(url, isAuthNeeded(url)).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -683,8 +689,10 @@ function initServiceWorker({
     return caches.open(appDataCache).then((cache) =>
       cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
         if (cacheRes) {
+          console.log("Has Cached!!");
           return Promise.resolve(cacheRes);
         } else {
+          console.log("NO cache?");
           return recache(appDataCache, authority + dataPath + dataVerPath);
         }
       }),
@@ -713,7 +721,7 @@ function initServiceWorker({
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
-          fetch(url, { credentials: "include" }).then((fetchRes) => {
+          fetch(url, isAuthNeeded(url)).then((fetchRes) => {
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }
