@@ -104,31 +104,32 @@ export function initServiceWorker({
       // return;
       // }
 
-      return fetch(`${pushUrl}/${name}.json`).then((fetchRes) =>
-        cache
-          .match(pushUrl + dataVerPath)
-          .then((verRes) => {
-            if (!verRes) {
-              throw new Error("Missing cache.json");
-            }
-            return verRes.json();
-          })
-          .then((verJson: { [k: string]: string }) => {
-            verJson[name] = hash;
-            return verJson;
-          })
-          .then((newVerJson) => {
-            return Promise.all([
-              // update version object
-              updateCacheWithJSON(
-                appDataCache,
-                pushUrl + dataVerPath,
-                newVerJson
-              ),
-              // update data object
-              cache.put(url, fetchRes.clone()),
-            ]);
-          })
+      return fetch(`${pushUrl}/${name}.json`, { credentials: "include" }).then(
+        (fetchRes) =>
+          cache
+            .match(pushUrl + dataVerPath)
+            .then((verRes) => {
+              if (!verRes) {
+                throw new Error("Missing cache.json");
+              }
+              return verRes.json();
+            })
+            .then((verJson: { [k: string]: string }) => {
+              verJson[name] = hash;
+              return verJson;
+            })
+            .then((newVerJson) => {
+              return Promise.all([
+                // update version object
+                updateCacheWithJSON(
+                  appDataCache,
+                  pushUrl + dataVerPath,
+                  newVerJson
+                ),
+                // update data object
+                cache.put(url, fetchRes.clone()),
+              ]);
+            })
       );
     });
   }
@@ -354,7 +355,7 @@ export function initServiceWorker({
       isMsgHardRefresh(message) &&
       message.type === SWMsgOutgoing.SW_REFRESH_HARD
     ) {
-      fetch(urlDataService + dataVerPath)
+      fetch(urlDataService + dataVerPath /** no credentials (net check) */)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
@@ -408,6 +409,20 @@ export function initServiceWorker({
   }
 
   /**
+   * Local requests need credentials  
+   * checks if `url` is local
+   * @param url
+   */
+  function requiredAuth(url: string) {
+    const isLocal = !url.startsWith(urlDataService);
+    const withAuth: RequestInit = isLocal
+      ? { credentials: "include" }
+      : {/** only needed for local service */};
+
+    return withAuth;
+  }
+
+  /**
    * User overriding media cached asset
    */
   function pronounceOverride(url: string) {
@@ -427,7 +442,7 @@ export function initServiceWorker({
       // use indexedDB
       clientLogger("IDB.override", DebugLevel.WARN);
 
-      const fetchP = fetch(myRequest);
+      const fetchP = fetch(myRequest, requiredAuth(myRequest.url));
       const dbOpenPromise = openIDB({ logger: clientLogger });
 
       const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
@@ -485,7 +500,7 @@ export function initServiceWorker({
             //not found
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
 
-            return fetch(cleanUrl)
+            return fetch(cleanUrl, requiredAuth(cleanUrl))
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", DebugLevel.ERROR);
@@ -509,7 +524,7 @@ export function initServiceWorker({
 
   function noCaching(request: Request) {
     // for debugging purposes
-    return fetch(request);
+    return fetch(request, requiredAuth(request.url));
   }
 
   function fetchEventHandler(e: FetchEvent) {
@@ -666,7 +681,7 @@ export function initServiceWorker({
       }
 
       // fetch new versions
-      const f = fetch(url).then((res) => {
+      const f = fetch(url, requiredAuth(url)).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -744,7 +759,7 @@ export function initServiceWorker({
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
-          fetch(url).then((fetchRes) => {
+          fetch(url, requiredAuth(url)).then((fetchRes) => {
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }

@@ -3,6 +3,7 @@ import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
 import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+import { requiredAuth } from "./globalSlice";
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
@@ -88,7 +89,7 @@ export const importDatasets = createAsyncThunk(
   "sheet/importDatasets",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
-
+    const { localServiceURL: url } = state.global;
     const externalSource = getExternalSourceType(state.global.localServiceURL);
 
     const baseUrl = state.global.localServiceURL;
@@ -106,7 +107,7 @@ export const importDatasets = createAsyncThunk(
 
       case /** local service */
       ExternalSourceType.LocalService:
-        dataP = fetch(baseUrl + sheetServicePath)
+        dataP = fetch(baseUrl + sheetServicePath, requiredAuth(url))
           .then((res) => res.json())
           .then((data) => data as FilledSheetData[]);
         break;

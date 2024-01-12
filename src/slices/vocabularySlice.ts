@@ -11,6 +11,7 @@ import type {
   SourceVocabulary,
 } from "nmemonica";
 
+import { requiredAuth } from "./globalSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -102,8 +103,11 @@ export const getVocabulary = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching vocabulary: 0");
     // }
+    const { localServiceURL: url } = state.global;
+
     const value = (await fetch(dataServiceEndpoint + "/vocabulary.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
+      ...requiredAuth(url),
     }).then((res) => res.json())) as Record<string, SourceVocabulary>;
 
     return { value, version };

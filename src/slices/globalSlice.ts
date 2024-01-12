@@ -150,6 +150,21 @@ export const localStorageSettingsInitialized = createAsyncThunk(
   }
 );
 
+/**
+ * Local requests need credentials  
+ * checks if `url` is local
+ * @param url
+ */
+export function requiredAuth(url: string) {
+  const srcType = getExternalSourceType(url);
+  const needAuth: RequestInit =
+    srcType === ExternalSourceType.LocalService
+      ? { credentials: "include" }
+      : {/** only needed for local service */};
+
+  return needAuth;
+}
+
 export const setLocalServiceURL = createAsyncThunk(
   "setting/setLocalServiceURL",
   async (arg: string) => {
@@ -182,9 +197,9 @@ export const setLocalServiceURL = createAsyncThunk(
       });
     }
 
-    // TODO: do service handshake verif
     return fetch(url + "/cache.json", {
       headers: { [SWRequestHeader.NO_CACHE]: "ServiceWorkerNoCache" },
+      ...requiredAuth(localServiceURL),
     })
       .then((res) => {
         if (!res.ok) {

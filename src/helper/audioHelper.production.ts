@@ -52,7 +52,8 @@ export async function fetchAudio(
   const source = audioCtx.createBufferSource();
   const destination = audioCtx.destination;
 
-  const audioRes = await fetch(audioUrl);
+  // TODO: use requiredAuth after moving to audioSlice
+  const audioRes = await fetch(audioUrl, { credentials: "include" });
   const audioBuf = await audioRes.arrayBuffer();
 
   const playP = audioCtx.decodeAudioData(audioBuf).then((decodBuf) => {

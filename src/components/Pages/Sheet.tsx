@@ -123,6 +123,7 @@ function saveSheetLocalService(
 
   return fetch(serviceBaseUrl + sheetServicePath, {
     method: "PUT",
+    credentials: "include",
     body: container,
   }).then((res) => {
     if (!res.ok) {
