@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
-import type { TermFilterBy } from "../slices/settingHelper";
+import type { TermFilterBy, TermSortBy } from "../slices/settingHelper";
 
 /**
  * Kanji app-state props
@@ -17,9 +17,9 @@ export function useConnectKanji() {
     (before, after) => before.version === after.version
   );
 
-  const { value: vocabList } = useSelector(
-    ({ vocabulary }: RootState) => vocabulary,
-    (before, after) => before.version === after.version
+  const kanjiTagObj = useSelector<RootState, string[]>(
+    ({ kanji }: RootState) => kanji.tagObj,
+    shallowEqual
   );
 
   const { repetition } = useSelector(
@@ -27,13 +27,27 @@ export function useConnectKanji() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const [r, ft, choiceN] = useSelector<
+  const [r, ft, or, memoThreshold, choiceN, fadeInAnswers] = useSelector<
     RootState,
-    [boolean, (typeof TermFilterBy)[keyof typeof TermFilterBy], number]
+    [
+      boolean,
+      (typeof TermFilterBy)[keyof typeof TermFilterBy],
+      (typeof TermSortBy)[keyof typeof TermSortBy],
+      number,
+      number,
+      boolean
+    ]
   >(({ kanji }: RootState) => {
-    const { reinforce, filter, choiceN } = kanji.setting;
+    const {
+      reinforce,
+      filter,
+      ordered,
+      memoThreshold,
+      choiceN,
+      fadeInAnswers,
+    } = kanji.setting;
 
-    return [reinforce, filter, choiceN];
+    return [reinforce, filter, ordered, memoThreshold, choiceN, fadeInAnswers];
   }, shallowEqual);
 
   const activeTags = useSelector<RootState, string[]>(
@@ -44,12 +58,14 @@ export function useConnectKanji() {
     shallowEqual
   );
 
-  /** setting to randomly re-quiz marked terms */
+  /** Setting to randomly re-quiz marked terms */
   const reinforce = useRef(r);
   reinforce.current = r;
   /** Settings menu selected filter method */
   const filterType = useRef(ft);
   filterType.current = ft;
+  const orderType = useRef(or);
+  orderType.current = or;
 
   return {
     // Changing during game
@@ -57,13 +73,19 @@ export function useConnectKanji() {
 
     // Not changing during game
     swipeThreshold,
+    memoThreshold,
     kanjiList,
-    vocabList,
+    /** All available kanji tags */
+    kanjiTagObj,
+    /** Selected kanji tags */
     activeTags,
+    // Game
     choiceN,
+    fadeInAnswers,
 
     // Refs ()
     reinforce,
     filterType,
+    orderType,
   };
 }

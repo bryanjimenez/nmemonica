@@ -12,7 +12,7 @@ import { useWindowSize } from "../../hooks/helperHK";
 import "../../css/Difficulty.css";
 
 interface DifficultySliderProps {
-  value: number; //difficulty value
+  value?: number; //difficulty value
   onChange: (value: number) => void; //is called after touch event ends
   manualUpdate: string; // a changing value that will trigger an update to useFloating
 }

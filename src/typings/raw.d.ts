@@ -40,46 +40,48 @@ export interface RawKanji {
   uid: string;
 
   kanji: string;
-  on: string;
-  kun: string;
+  on?: string;
+  kun?: string;
   english: string;
 
   grp?: string;
-  tag: string[];
+  tag?: string[];
+  /** Radical shown in an example Kanji */
+  radex?: string;
+
+  /** Radical info (example Kanji) */
+  radical?: { example: string[] };
 }
 
-export interface GroupListMap {
-  [mainGrp: string]: string[];
-}
+export type GroupListMap = Record<string, string[]>;
 
 export interface MetaDataObj {
-    /**
-     * Last view
-     * (Date.toJSON '2020-01-01T01:01:01.001Z')
-     **/
-    d: string;
-    /** View count */ vC: number;
-    difficulty?: number;
-    /** number of days to */ nextReview?: number;
+  /**
+   * Last view
+   * (Date.toJSON '2020-01-01T01:01:01.001Z')
+   **/
+  d: string;
+  /** View count */ vC: number;
+  difficulty?: number;
+  /** number of days to */ nextReview?: number;
 
+  /** Furigana shown (yes:undefined|true) */ f?: boolean;
+  /** Reinforce */ rein?: boolean;
+  /** Pronunciation incorrect */ pron?: true;
+
+  /** Timed play play-count */ tpPc?: number;
+  /** Timed play accuracy [0,1] */ tpAcc?: number;
+  /** Timed play correct avg (ms) */ tpCAvg?: number;
+}
+
+export type SpaceRepetitionMap = Record<string, MetaDataObj | undefined>;
+
+export type FuriganaToggleMap = Record<
+  string,
+  {
     /** Furigana shown (yes:undefined|true) */ f?: boolean;
-    /** Reinforce */ rein?: boolean;
-    /** Pronunciation incorrect */ pron?: true;
-
-    /** Timed play play-count */ tpPc?: number;
-    /** Timed play accuracy [0,1] */ tpAcc?: number;
-    /** Timed play correct avg (ms) */ tpCAvg?: number;
-}
-
-export interface SpaceRepetitionMap {
-  [uid: string]: MetaDataObj | undefined
-}
-
-export interface FuriganaToggleMap {
-  [uid: string]: {
-    /** Furigana shown (yes:undefined|true) */ f?: boolean;
-  };
-}
+  }
+>;
 
 export interface AudioQueryParams {
   /** Target language */ tl: string;
@@ -139,3 +141,7 @@ export type WithoutOpt<O> = {
 export type FilterKeysOfType<O, type> = {
   [k in keyof WithoutOpt<O>]: WithoutOpt<O>[k] extends type ? k : never;
 }[keyof O];
+
+// Partial<T> & Pick<T, "english" | "kanji">;
+// export type Optional<T, K extends keyof T> = Omit<T, K> & { [P in keyof T]: T[P] | undefined; }
+export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

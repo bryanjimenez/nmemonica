@@ -1,15 +1,19 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import { firebaseConfig } from "../../environment.development";
-import { buildTagObject } from "../helper/reducerHelper";
+
 import {
   TermFilterBy,
+  TermSortBy,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
+import { firebaseConfig } from "../../environment.development";
+import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { buildTagObject } from "../helper/reducerHelper";
 import type { RawKanji, SpaceRepetitionMap } from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface KanjiInitSlice {
@@ -18,13 +22,18 @@ export interface KanjiInitSlice {
   tagObj: string[];
 
   setting: {
-    choiceN: number;
     filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
     reinforce: boolean;
+    memoThreshold: number;
     repTID: number;
     repetition: SpaceRepetitionMap;
     activeGroup: string[];
     activeTags: string[];
+
+    // Game
+    choiceN: number;
+    fadeInAnswers: boolean;
   };
 }
 
@@ -34,13 +43,18 @@ export const kanjiInitState: KanjiInitSlice = {
   tagObj: [],
 
   setting: {
-    choiceN: 32,
     filter: 2,
+    ordered: 0,
     reinforce: false,
+    memoThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
     activeGroup: [],
     activeTags: [],
+
+    // Game
+    choiceN: 32,
+    fadeInAnswers: false,
   },
 };
 
@@ -64,10 +78,25 @@ export const getKanji = createAsyncThunk(
 
 export const kanjiFromLocalStorage = createAsyncThunk(
   "kanji/kanjiFromLocalStorage",
-  async (arg: typeof kanjiInitState.setting) => {
+  (arg: typeof kanjiInitState.setting) => {
     const initValues = arg;
 
     return initValues;
+  }
+);
+
+export const updateSpaceRepKanji = createAsyncThunk(
+  "kanji/updateSpaceRepKanji",
+  (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = (thunkAPI.getState() as RootState).kanji;
+
+    const spaceRep = state.setting.repetition;
+
+    return updateSpaceRepTerm(uid, spaceRep, {
+      count: shouldIncrement,
+      date: true,
+    });
   }
 );
 
@@ -109,6 +138,35 @@ const kanjiSlice = createSlice({
         "/kanji/",
         "activeGroup",
         newValue
+      );
+    },
+
+    toggleKanjiOrdering(
+      state,
+      action: { payload: (typeof TermSortBy)[keyof typeof TermSortBy] }
+    ) {
+      const { ordered } = state.setting;
+      const override = action.payload;
+
+      const allowed = [
+        // TermSortBy.ALPHABETIC,
+        TermSortBy.DIFFICULTY,
+        // TermSortBy.GAME,
+        TermSortBy.RANDOM,
+        TermSortBy.VIEW_DATE,
+      ];
+      const newOrdered = toggleAFilter(
+        ordered + 1,
+        allowed,
+        override
+      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+
+      state.setting.ordered = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "ordered",
+        newOrdered
       );
     },
 
@@ -165,6 +223,49 @@ const kanjiSlice = createSlice({
         }
       }
     },
+
+    /**
+     * Filter Kanji excluding terms with value above
+     */
+    setKanjiMemorizedThreshold(state, action: PayloadAction<number>) {
+      const threshold = action.payload;
+
+      state.setting.memoThreshold = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "memoThreshold",
+        threshold
+      );
+    },
+
+    setKanjiDifficulty: {
+      reducer: (
+        state: KanjiInitSlice,
+        action: { payload: { uid: string; value: number } }
+      ) => {
+        const { uid, value } = action.payload;
+
+        const { value: newValue } = updateSpaceRepTerm(
+          uid,
+          state.setting.repetition,
+          { count: false, date: false },
+          {
+            set: { difficulty: value },
+          }
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid: string, value: number) => ({ payload: { uid, value } }),
+    },
     setKanjiBtnN(state, action: { payload: number }) {
       const number = action.payload;
 
@@ -174,6 +275,17 @@ const kanjiSlice = createSlice({
         "/kanji/",
         "choiceN",
         number
+      );
+    },
+    toggleKanjiFadeInAnswers(state, action: { payload?: boolean }) {
+      const override = action.payload;
+
+      state.setting.fadeInAnswers = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "fadeInAnswers",
+        override
       );
     },
 
@@ -223,11 +335,20 @@ const kanjiSlice = createSlice({
         }
       ) => {
         const { value: v, version } = action.payload;
-        const value = Object.keys(v).map((k) => ({
-          ...v[k],
-          uid: k,
-          tag: v[k].tag === undefined ? [] : v[k].tag,
-        }));
+        const value = Object.keys(v).map((k) => {
+          const isRadical =
+            v[k].grp?.toLowerCase() === "radical" ||
+            v[k].tag?.find((t) => t.toLowerCase() === "radical");
+
+          return {
+            ...v[k],
+            uid: k,
+            tag: v[k].tag === undefined ? [] : v[k].tag,
+            radical: isRadical
+              ? { example: v[k].radex?.split("") ?? [] }
+              : undefined,
+          };
+        });
 
         state.tagObj = buildTagObject(v);
         state.value = value;
@@ -244,17 +365,35 @@ const kanjiSlice = createSlice({
         setting: { ...mergedSettings, repTID: Date.now() },
       };
     });
+
+    builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
+      const { value: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "repetition",
+        newValue
+      );
+    });
   },
 });
 
 export const {
   toggleKanjiActiveTag,
   toggleKanjiActiveGrp,
+  toggleKanjiOrdering,
   addFrequencyKanji,
   removeFrequencyKanji,
-  setKanjiBtnN,
+  setKanjiMemorizedThreshold,
+  setKanjiDifficulty,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
+
+  setKanjiBtnN,
+  toggleKanjiFadeInAnswers,
 } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;

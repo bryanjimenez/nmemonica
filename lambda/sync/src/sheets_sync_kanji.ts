@@ -2,10 +2,10 @@ import type * as express from "express";
 import * as admin from "firebase-admin";
 import { googleSheetId } from "./constants";
 import * as md5 from "md5";
-import type { RawKanji } from "../../../src/typings/raw";
+import type { Optional, RawKanji } from "../../../src/typings/raw";
 import { fetchGSheetsData } from "./sheets";
 
-type Kanji = Partial<RawKanji> & Pick<RawKanji, "english" | "kanji">;
+type Kanji = Optional<RawKanji, "uid">;
 
 function setPropsFromTags(el: Kanji, tag: string) {
   const tags = tag.split(/[,]+/);
@@ -38,7 +38,7 @@ export async function sheets_sync_kanji(
 ) {
   try {
     const spreadsheetId = googleSheetId;
-    const range = "Kanji!A1:F";
+    const range = "Kanji!A1:G";
 
     const sheetData = await fetchGSheetsData(spreadsheetId, range);
 
@@ -47,7 +47,8 @@ export async function sheets_sync_kanji(
       ON = 2,
       KUN = 3,
       GRP = 4,
-      TAG = 5;
+      TAG = 5,
+      RADEX = 6; // Radical: example usage in a Kanji
 
     // let sheetHeaders = [];
     const kanjiList = sheetData.reduce<Record<string, Kanji>>((acc, el, i) => {
@@ -74,9 +75,13 @@ export async function sheets_sync_kanji(
         if (el[TAG] && el[TAG] !== "") {
           kanji = setPropsFromTags(kanji, el[TAG]);
 
-          if (kanji.tag?.length === 0) {
+          if (kanji.tag.length === 0) {
             delete kanji.tag;
           }
+        }
+
+        if (el[RADEX] && el[RADEX] !== "") {
+          kanji.radex = el[RADEX];
         }
 
         acc[key] = kanji;

@@ -6,13 +6,14 @@ import MenuItem from "@mui/material/MenuItem";
 import { KebabHorizontalIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface SimpleListMenuProps {
   disabled?: boolean; //whether menu is interdisabled
   flip?: boolean; //whether elipsis and options are horizontally reversed
   title: string;
   options: string[];
+  allowed?: number[];
   initial: number;
   onChange: (index: number) => void;
 }
@@ -21,9 +22,12 @@ export default function SimpleListMenu(props: SimpleListMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(props.initial);
 
-  const options = useMemo(() => props.options, []);
+  const optionsRef = useRef(props.options);
+  const allowedRef = useRef(props.allowed ?? props.options.map((o, i) => i));
+  const options = optionsRef.current;
+  const allowed = allowedRef.current;
 
-  useMemo(() => {
+  useEffect(() => {
     setSelectedIndex(props.initial);
   }, [props.initial]);
 
@@ -86,9 +90,15 @@ export default function SimpleListMenu(props: SimpleListMenuProps) {
             key={option}
             // disabled={index === 0}
             selected={index === selectedIndex}
-            onClick={(event) => handleMenuItemClick(event, index)}
+            onClick={(event) => {
+              if (allowed.includes(index)) handleMenuItemClick(event, index);
+            }}
           >
-            {option}
+            {allowed.includes(index) ? (
+              option
+            ) : (
+              <span className="disabled-color">{option}</span>
+            )}
           </MenuItem>
         ))}
       </Menu>

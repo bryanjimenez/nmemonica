@@ -9,6 +9,11 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+
+import type { GameChoice, GameQuestion } from "./FourChoices";
+import { KanjiGameMeta, oneFromList } from "./KanjiGame";
+import XChoices from "./XChoices";
+import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
   getTermUID,
@@ -17,26 +22,26 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { setStateFunction } from "../../hooks/helperHK";
+import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
+import type { AppDispatch } from "../../slices";
 import {
   addFrequencyKanji,
   getKanji,
   removeFrequencyKanji,
 } from "../../slices/kanjiSlice";
+import { TermFilterBy } from "../../slices/settingHelper";
+import type { RawKanji } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
-import { KanjiGameMeta, oneFromList } from "./KanjiGame";
-import XChoices from "./XChoices";
-import { TermFilterBy } from "../../slices/settingHelper";
-import { shuffleArray } from "../../helper/arrayHelper";
-import { useBlast } from "../../hooks/useBlast";
-import type { RawKanji } from "../../typings/raw";
-import type { GameQuestion, GameChoice } from "./XChoices";
-import type { AppDispatch } from "../../slices";
+
+interface KanjiGridChoice extends GameChoice {
+  toString: (side: boolean) => string;
+}
 
 const KanjiGridMeta = {
   location: "/kanji-grid/",
@@ -53,7 +58,7 @@ function prepareGame(
   kanji: RawKanji,
   choices: RawKanji[],
   writePractice: boolean,
-  [currExmpl, nextExmpl]: [string, Function]
+  [currExmpl, nextExmpl]: [string, () => void]
 ) {
   const { english, kanji: japanese, on, kun, uid } = kanji;
   const isShortened = currExmpl !== english;
@@ -100,7 +105,11 @@ function prepareGame(
     answer: uid,
     choices: choices.map((c) => ({
       compare: c.uid,
-      toHTML: (side: boolean) => (side ?? writePractice ? c.english : c.kanji),
+      toString: (side: boolean) =>
+        side ?? writePractice ? c.english : c.kanji,
+      toHTML: (side: boolean) => (
+        <>{side ?? writePractice ? c.english : c.kanji}</>
+      ),
     })),
   };
 }
@@ -190,7 +199,9 @@ export default function KanjiGrid() {
       kanjiList,
       allFrequency,
       filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
-      () => {} // Don't toggle filter if last freq is removed
+      () => {
+        /** Don't toggle filter if last freq is removed */
+      }
     );
 
     if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
@@ -469,7 +480,7 @@ function buildIsCorrect(
   setAnswered: React.Dispatch<React.SetStateAction<string>>,
   fadeRef: React.MutableRefObject<number>
 ) {
-  function isCorrect(answered: GameChoice): [boolean, number] {
+  function isCorrect(answered: KanjiGridChoice): [boolean, number] {
     const correct = answered.compare === game?.answer;
     const correctIdx =
       game?.choices.findIndex((c) => c.compare === game?.answer) || -1;
@@ -478,9 +489,9 @@ function buildIsCorrect(
       if (fadeRef.current > -1 && chosenAnswer.length > 0) {
         clearTimeout(fadeRef.current);
         setAnswered("");
-        setTimeout(() => setAnswered(answered.toHTML(!writePractice)), 100);
+        setTimeout(() => setAnswered(answered.toString(!writePractice)), 100);
       } else {
-        setAnswered(answered.toHTML(!writePractice));
+        setAnswered(answered.toString(!writePractice));
         fadeRef.current = window.setTimeout(() => setAnswered(""), 2500);
       }
     }

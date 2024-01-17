@@ -1,24 +1,27 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import { romajiParticle } from "../helper/kanaHelper";
-import { JapaneseText } from "../helper/JapaneseText";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+
 import { buildPhraseArray, getPhrase } from "./phraseSlice";
-import type { RawPhrase } from "../typings/raw";
 import type {
-  ParticleChoice,
+  ChoiceParticle,
   ParticleGamePhrase,
 } from "../components/Games/ParticlesGame";
+import { JapaneseText } from "../helper/JapaneseText";
+import { romajiParticle } from "../helper/kanaHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import type { RawPhrase } from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface ParticleInitSlice {
   particleGame: {
     phrases: ParticleGamePhrase[];
-    particles: ParticleChoice[];
+    particles: ChoiceParticle[];
   };
 
   setting: {
     aRomaji: boolean;
+    fadeInAnswers: boolean;
   };
 }
 
@@ -30,6 +33,7 @@ export const ParticleInitState: ParticleInitSlice = {
 
   setting: {
     aRomaji: false,
+    fadeInAnswers: false,
   },
 };
 
@@ -74,8 +78,11 @@ export const particleFromLocalStorage = createAsyncThunk(
  * Filters RawPhrase to be used by PhrasesGame
  */
 export function buildParticleGame(rawPhrases: RawPhrase[]) {
-  let particleList: ParticleChoice[] = [];
-  let multipleMatch: Record<string, {}> = {};
+  let particleList: ChoiceParticle[] = [];
+  let multipleMatch: Record<
+    string,
+    { japanese: string; particle: string; times: number }
+  > = {};
 
   const wParticles = rawPhrases.reduce<ParticleGamePhrase[]>((acc, curr) => {
     if (curr.particles && curr.particles?.length > 0) {
@@ -87,13 +94,12 @@ export function buildParticleGame(rawPhrases: RawPhrase[]) {
           const romaji = romajiParticle(p);
           const start = spelling.indexOf(p);
           const end = start + p.length;
-          const particle = { japanese: p, romaji, html: p };
+          const particle = { japanese: p, romaji };
           const particleCopy = {
             japanese: p,
             romaji,
             start,
             end,
-            html: p,
           };
 
           particleList = [...particleList, particle];
@@ -148,6 +154,18 @@ const particleSlice = createSlice({
         "aRomaji"
       );
     },
+
+    toggleParticleFadeInAnswers(state, action: { payload?: boolean }) {
+      const override = action.payload;
+
+      state.setting.fadeInAnswers = localStoreAttrUpdate(
+        new Date(),
+        { particle: state.setting },
+        "/particle/",
+        "fadeInAnswers",
+        override
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -174,5 +192,6 @@ const particleSlice = createSlice({
   },
 });
 
-export const { setParticlesARomaji } = particleSlice.actions;
+export const { setParticlesARomaji, toggleParticleFadeInAnswers } =
+  particleSlice.actions;
 export default particleSlice.reducer;

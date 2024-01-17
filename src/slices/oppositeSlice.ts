@@ -1,20 +1,24 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+
 import { firebaseConfig } from "../../environment.development";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import type { RootState } from ".";
 import type { RawOpposite } from "../components/Games/OppositesGame";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+
+import type { RootState } from ".";
 
 export interface OppositeInitSlice {
   value: [RawOpposite, RawOpposite][];
   version: string;
   aRomaji: boolean;
   qRomaji: boolean;
+  fadeInAnswers: boolean;
 }
 const oppositeInitState: OppositeInitSlice = {
   value: [],
   version: "",
   aRomaji: false,
   qRomaji: false,
+  fadeInAnswers: false,
 };
 
 /**
@@ -71,6 +75,18 @@ const oppositeSlice = createSlice({
       localStoreAttrUpdate(time, partState, path, attr, !state.qRomaji);
       state.qRomaji = !state.qRomaji;
     },
+
+    toggleOppositeFadeInAnswers(state, action: { payload?: boolean }) {
+      const override = action.payload;
+
+      state.fadeInAnswers = localStoreAttrUpdate(
+        new Date(),
+        { opposite: state },
+        "/opposite/",
+        "fadeInAnswers",
+        override
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -101,6 +117,9 @@ const oppositeSlice = createSlice({
   },
 });
 
-export const { setOppositesARomaji, setOppositesQRomaji } =
-  oppositeSlice.actions;
+export const {
+  setOppositesARomaji,
+  setOppositesQRomaji,
+  toggleOppositeFadeInAnswers,
+} = oppositeSlice.actions;
 export default oppositeSlice.reducer;

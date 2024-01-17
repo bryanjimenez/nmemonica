@@ -358,8 +358,9 @@ export function furiganaParseRetry(
     ));
   } catch (e) {
     // don't retry unless parse error
+    const cause = e.cause as {code: string};
 
-    if (e instanceof Error && e.cause?.code === "ParseError") {
+    if (e instanceof Error && cause?.code === "ParseError") {
       // reverse try
       try {
         const rP = pronunciation.split("").reverse().join("");

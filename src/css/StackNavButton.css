@@ -1,4 +1,4 @@
-.main-panel > div button {
+.main-panel .MuiButton {
   width: 40px;
   min-width: unset;
 }

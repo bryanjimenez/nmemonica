@@ -10,15 +10,20 @@ import React, {
   useState,
 } from "react";
 import { useDispatch } from "react-redux";
-import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
+
 import {
   getDeviceMotionEventPermission,
   getStaleSpaceRepKeys,
   labelOptions,
   motionThresholdCondition,
 } from "../../helper/gameHelper";
+import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import { buildAction } from "../../hooks/helperHK";
+import { useConnectKana } from "../../hooks/useConnectKana";
+import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
@@ -37,47 +42,43 @@ import {
 } from "../../slices/kanaSlice";
 import {
   getKanji,
-  removeFrequencyKanji,
   setKanjiBtnN,
-  toggleKanjiActiveGrp,
-  toggleKanjiActiveTag,
-  toggleKanjiFilter,
-  toggleKanjiReinforcement,
+  setKanjiMemorizedThreshold,
+  toggleKanjiFadeInAnswers,
+  toggleKanjiOrdering,
 } from "../../slices/kanjiSlice";
 import {
   setOppositesARomaji,
   setOppositesQRomaji,
+  toggleOppositeFadeInAnswers,
 } from "../../slices/oppositeSlice";
-import { setParticlesARomaji } from "../../slices/particleSlice";
+import {
+  setParticlesARomaji,
+  toggleParticleFadeInAnswers,
+} from "../../slices/particleSlice";
 import { getPhrase, togglePhraseActiveGrp } from "../../slices/phraseSlice";
-import { DebugLevel, KanaType, TermFilterBy } from "../../slices/settingHelper";
+import {
+  DebugLevel,
+  KanaType,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import {
   getVocabulary,
   toggleVocabularyActiveGrp,
 } from "../../slices/vocabularySlice";
 import type { RawVocabulary } from "../../typings/raw";
 import type { ConsoleMessage } from "../Form/Console";
+import { DifficultySubFilter } from "../Form/DifficultySubFilter";
 import KanaOptionsSlider from "../Form/KanaOptionsSlider";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
-import { SetTermGFList } from "./SetTermGFList";
-import { SetTermTagList } from "./SetTermTagList";
 import "../../css/Settings.css";
 import "../../css/spin.css";
+import SimpleListMenu from "../Form/SimpleListMenu";
+const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
-
-type Sections =
-  | "sectionPhrase"
-  | "sectionVocabulary"
-  | "sectionKanji"
-  | "sectionStaleSpaceRep";
-interface MemoryDataObject {
-  // TODO: refactor into one
-  quota: number;
-  usage: number;
-  persistent: boolean;
-}
 
 const SettingsMeta = {
   location: "/settings/",
@@ -104,15 +105,15 @@ function /*static*/ getDerivedStateFromError(error: Error) {
   };
 }
 
-function componentDidCatch(dispatch: Function, error: Error) {
-  const cause = error.cause;
+function componentDidCatch(dispatch: AppDispatch, error: Error) {
+  const cause = error.cause as { code: string; value: unknown };
 
   dispatch(debugToggled(DebugLevel.DEBUG));
 
   switch (cause?.code) {
     case "StaleVocabActiveGrp":
       {
-        const stale = cause.value;
+        const stale = cause.value as string;
         dispatch(logger("Error: " + error.message, DebugLevel.ERROR));
         dispatch(
           logger(
@@ -128,7 +129,7 @@ function componentDidCatch(dispatch: Function, error: Error) {
       break;
     case "StalePhraseActiveGrp":
       {
-        const stale = cause.value;
+        const stale = cause.value as string;
         dispatch(logger("Error: " + error.message, DebugLevel.ERROR));
         dispatch(
           logger(
@@ -159,7 +160,7 @@ function staleSpaceRep(terms: { key: string; uid: string; english: string }[]) {
     const separator = <hr key={`stale-meta-${text.uid}`} />;
 
     const row = (
-      <div key={i} className="row">
+      <div key={text.uid} className="row">
         <span className="col p-0">{text.key}</span>
         <span className="col p-0">{text.english}</span>
         <span className="col p-0 app-sm-fs-xx-small">
@@ -211,9 +212,9 @@ function failedFuriganaList(terms: RawVocabulary[]) {
 }
 
 function buildMotionListener(
-  dispatch: Function,
+  dispatch: AppDispatch,
   motionThreshold: number,
-  setShakeIntensity: Function
+  setShakeIntensity: React.Dispatch<React.SetStateAction<number | undefined>>
 ) {
   /**
    * Handler for when device is shaken
@@ -265,30 +266,28 @@ export default function Settings() {
     memory,
     debug,
 
-    kanjiChoiceN,
-    kanjiFilter,
-    kanjiReinforce,
-    kanjiActiveTags: kanjiActive,
-
     oppositesQRomaji,
     oppositesARomaji,
-
-    choiceN,
-    wideMode,
-    easyMode,
-    charSet,
+    oppositeFadeInAnswers,
 
     particlesARomaji,
-
-    vocabList: vocabulary,
-    kanjiTagObj: kanjiTags,
-    phraseList: phrases,
-    KanjiList: kanji,
-
-    vocabMeta: vRepetition,
-    phraseMeta: pRepetition,
-    kanjiMeta: kRepetition,
+    particleFadeInAnswer,
   } = useConnectSetting();
+
+  const { vocabList: vocabulary, repetition: vRepetition } =
+    useConnectVocabulary();
+  const { phraseList: phrases, repetition: pRepetition } = useConnectPhrase();
+  const {
+    kanjiList: kanji,
+    orderType: kanjiOrder,
+    repetition: kRepetition,
+    kanjiTagObj: kanjiTags,
+    fadeInAnswers: kanjiFadeInAnswers,
+    choiceN: kanjiChoiceN,
+  } = useConnectKanji();
+  const { charSet, easyMode, wideMode, choiceN } = useConnectKana();
+
+  const { memoThreshold } = useConnectKanji();
 
   const [spin, setSpin] = useState(false);
 
@@ -305,18 +304,18 @@ export default function Settings() {
 
   useEffect(
     () => {
-      dispatch(getMemoryStorageStatus());
+      void dispatch(getMemoryStorageStatus());
 
       if (vocabulary.length === 0) {
-        dispatch(getVocabulary());
+        void dispatch(getVocabulary());
       }
 
       if (kanjiTags.length === 0) {
-        dispatch(getKanji());
+        void dispatch(getKanji());
       }
 
       if (phrases.length === 0) {
-        dispatch(getPhrase());
+        void dispatch(getPhrase());
       }
 
       navigator.serviceWorker.addEventListener(
@@ -384,19 +383,24 @@ export default function Settings() {
 
   const swMessageEventListener = useCallback(
     (event: MessageEvent) => {
-      if (event.data.type === "DO_HARD_REFRESH") {
-        const { error } = event.data;
-
+      const { type, error } = event.data as { type: string; error: string };
+      if (type === "DO_HARD_REFRESH") {
         if (error) {
           dispatch(logger(error, DebugLevel.ERROR));
         }
 
         setTimeout(() => {
           setSpin(false);
-          setHardRefreshUnavailable(error);
+          setHardRefreshUnavailable(true);
         }, 2000);
-      } else if (event.data.type === "SW_VERSION") {
-        const { swVersion, jsVersion, bundleVersion } = event.data;
+      } else if (type === "SW_VERSION") {
+        interface VersionInfo {
+          swVersion: string;
+          jsVersion: string;
+          bundleVersion: string;
+        }
+        const { swVersion, jsVersion, bundleVersion } =
+          event.data as VersionInfo;
 
         setSwVersion(swVersion);
         setJsVersion(jsVersion);
@@ -464,20 +468,6 @@ export default function Settings() {
 
   if (vocabulary.length < 1 || phrases.length < 1 || kanjiTags.length < 1)
     return <NotReady addlStyle="main-panel" />;
-
-  const kanjiSelectedTags = Object.values(kanji).filter((k) =>
-    k.tag.some((aTag: string) => kanjiActive.includes(aTag))
-  );
-  const kanjiSelectedUids = kanjiSelectedTags.map((k) => k.uid);
-
-  const kanjiFreq = Object.keys(kRepetition).filter(
-    (k) => kRepetition[k]?.rein === true
-  );
-
-  // kanjis in frequency list, but outside of current tag selection
-  const kFreqExcluTagSelected = kanjiFreq.filter(
-    (k) => !kanjiSelectedUids.includes(k)
-  );
 
   return (
     <div className="settings">
@@ -633,74 +623,13 @@ export default function Settings() {
             {collapseExpandToggler(sectionKanji, setSectionKanji)}
           </div>
           {sectionKanji && (
-            <div className="d-flex flex-row justify-content-between">
-              <div className="column-1">
-                <h4>
-                  {labelOptions(kanjiFilter, [
-                    "Kanji Group",
-                    "Frequency List",
-                    "Tags",
-                  ])}
-                </h4>
-                <div className="mb-2">
-                  <SettingsSwitch
-                    active={kanjiFilter % 2 === 0}
-                    action={buildAction(dispatch, toggleKanjiFilter)}
-                    color="default"
-                    statusText={"Filter by"}
-                  />
-                </div>
-                {kanjiFilter === TermFilterBy.FREQUENCY &&
-                  kanjiFreq.length === 0 && (
-                    <div className="fst-italic">No words have been chosen</div>
-                  )}
-                {kanjiFilter === TermFilterBy.TAGS && (
-                  <SetTermTagList
-                    selectedCount={
-                      kanjiSelectedTags.length === 0
-                        ? Object.values(kanji).length
-                        : kanjiSelectedTags.length
-                    }
-                    termsTags={kanjiTags}
-                    termsActive={kanjiActive}
-                    toggleTermActive={buildAction(
-                      dispatch,
-                      toggleKanjiActiveTag
-                    )}
-                  />
-                )}
-                {kanjiFilter === TermFilterBy.FREQUENCY &&
-                  kanjiFreq.length > 0 && (
-                    <SetTermGFList
-                      termsActive={kanjiActive}
-                      termsFreq={kanjiFreq}
-                      terms={kanji}
-                      removeFrequencyTerm={buildAction(
-                        dispatch,
-                        removeFrequencyKanji
-                      )}
-                      toggleTermActiveGrp={buildAction(
-                        dispatch,
-                        toggleKanjiActiveGrp
-                      )}
-                    />
-                  )}
-              </div>
-              <div className="column-2 setting-block">
-                <div className="mb-2">
-                  <SettingsSwitch
-                    active={kanjiReinforce}
-                    action={buildAction(dispatch, toggleKanjiReinforcement)}
-                    disabled={kanjiFilter === TermFilterBy.FREQUENCY}
-                    statusText={
-                      (kanjiReinforce
-                        ? "(+" + kFreqExcluTagSelected.length + ") "
-                        : "") + "Reinforcement"
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+            <Suspense
+              fallback={
+                <NotReady addlStyle="kanji-settings" text="Loading..." />
+              }
+            >
+              <SettingsKanji />
+            </Suspense>
           )}
         </div>
         <div className={pageClassName}>
@@ -715,11 +644,18 @@ export default function Settings() {
                 statusText="Question Romaji"
               />
             </div>
-            <div>
+            <div className="mb-2">
               <SettingsSwitch
                 active={oppositesARomaji}
                 action={buildAction(dispatch, setOppositesARomaji)}
                 statusText="Answer Romaji"
+              />
+            </div>
+            <div className="mb-2">
+              <SettingsSwitch
+                active={oppositeFadeInAnswers}
+                action={buildAction(dispatch, toggleOppositeFadeInAnswers)}
+                statusText="Fade in answers"
               />
             </div>
           </div>
@@ -763,12 +699,45 @@ export default function Settings() {
             <h2>Kanji Game</h2>
           </div>
 
-          <div className="setting-block">
-            <div className="d-flex justify-content-end p-2">
-              <KanaOptionsSlider
-                initial={kanjiChoiceN}
-                setChoiceN={buildAction(dispatch, setKanjiBtnN)}
-              />
+          <div className="d-flex flex-row justify-content-between">
+            <div className="column-1" />
+            <div className="column-2">
+              <div className="mb-2">
+                <SimpleListMenu
+                  title={"Sort by:"}
+                  options={TermSortByLabel}
+                  allowed={[
+                    TermSortBy.DIFFICULTY,
+                    TermSortBy.RANDOM,
+                    TermSortBy.VIEW_DATE,
+                  ]}
+                  initial={kanjiOrder.current}
+                  onChange={buildAction(dispatch, toggleKanjiOrdering)}
+                />
+
+                {kanjiOrder.current === TermSortBy.DIFFICULTY && (
+                  <DifficultySubFilter
+                    memoThreshold={memoThreshold}
+                    setThreshold={buildAction(
+                      dispatch,
+                      setKanjiMemorizedThreshold
+                    )}
+                  />
+                )}
+              </div>
+              <div className="d-flex justify-content-end p-2 text-end">
+                <KanaOptionsSlider
+                  initial={kanjiChoiceN}
+                  setChoiceN={buildAction(dispatch, setKanjiBtnN)}
+                />
+              </div>
+              <div className="d-flex justify-content-end p-2">
+                <SettingsSwitch
+                  active={kanjiFadeInAnswers}
+                  action={buildAction(dispatch, toggleKanjiFadeInAnswers)}
+                  statusText="Fade in answers"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -782,17 +751,24 @@ export default function Settings() {
               action={buildAction(dispatch, setParticlesARomaji)}
               statusText="Answer Romaji"
             />
+            <div className="mb-2">
+              <SettingsSwitch
+                active={particleFadeInAnswer}
+                action={buildAction(dispatch, toggleParticleFadeInAnswers)}
+                statusText="Fade in answers"
+              />
+            </div>
           </div>
         </div>
         <div className={pageClassName}>
           <div className="d-flex justify-content-between">
             <h2>Application</h2>
           </div>
-          <div className="d-flex flex-row justify-content-between">
+          <div className="d-flex flex-column flex-sm-row justify-content-between">
             <div className="column-1">
               <div className="setting-block mb-2 mt-2">
                 <div
-                  className="d-flex flex-row justify-content-between clickable"
+                  className="d-flex flex-row w-50 w-sm-100 justify-content-between clickable"
                   onClick={() => {
                     setSwVersion("");
                     setJsVersion("");
@@ -878,11 +854,10 @@ export default function Settings() {
                   color="default"
                   statusText={
                     memory.persistent
-                      ? "Persistent " +
-                        ~~(memory.usage / 1024 / 1024) +
-                        "/" +
-                        ~~(memory.quota / 1024 / 1024) +
-                        "MB"
+                      ? `Persistent ${~~(memory.usage / 1024 / 1024)}
+                        /
+                        ${~~(memory.quota / 1024 / 1024)}
+                        MB`
                       : "Persistent off"
                   }
                 />

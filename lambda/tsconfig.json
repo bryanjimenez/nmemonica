@@ -8,6 +8,7 @@
     "sourceMap": false,
     "strict": true,
     "noImplicitAny": true,
+    "removeComments": true
   },
   "compileOnSave": true,
   "exclude": ["./node_modules"],

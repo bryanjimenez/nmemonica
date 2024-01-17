@@ -1,3 +1,4 @@
+import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -11,6 +12,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
   getTerm,
@@ -20,8 +22,15 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
-import { buildAction, setStateFunction } from "../../hooks/helperHK";
+import {
+  buildAction,
+  setStateFunction,
+  useWindowSize,
+} from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
+import type { AppDispatch } from "../../slices";
 import {
   addFrequencyKanji,
   getKanji,
@@ -30,6 +39,7 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import type { RawVocabulary } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
   FrequencyTermIcon,
@@ -37,10 +47,6 @@ import {
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
 import "../../css/Kanji.css";
-import { isGroupLevel } from "./SetTermTagList";
-import { useSwipeActions } from "../../hooks/useSwipeActions";
-import type { RawVocabulary } from "../../typings/raw";
-import type { AppDispatch } from "../../slices";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -67,21 +73,22 @@ export default function Kanji() {
 
   const {
     kanjiList,
-    vocabList,
 
-    filterType: filterTypeRef,
-    reinforce: reinforceRef,
+    filterType: filterTypeREF,
+    reinforce: reinforceREF,
     activeTags,
     repetition,
   } = useConnectKanji();
 
+  const { vocabList } = useConnectVocabulary();
+
   // after initial render
   useEffect(() => {
     if (kanjiList.length === 0) {
-      dispatch(getKanji());
+      void dispatch(getKanji());
     }
     if (vocabList.length === 0) {
-      dispatch(getVocabulary());
+      void dispatch(getVocabulary());
     }
   }, []);
 
@@ -116,10 +123,10 @@ export default function Kanji() {
     );
 
     let filtered = termFilterByType(
-      filterTypeRef.current,
+      filterTypeREF.current,
       kanjiList,
       allFrequency,
-      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
+      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : [],
       buildAction(dispatch, toggleKanjiFilter)
     );
 
@@ -132,7 +139,7 @@ export default function Kanji() {
     setFrequency(frequency);
 
     return filtered;
-  }, [dispatch, kanjiList, filterTypeRef, activeTags]);
+  }, [dispatch, kanjiList, filterTypeREF, activeTags]);
 
   const order = useMemo(() => {
     if (filteredTerms.length === 0) return [];
@@ -155,7 +162,7 @@ export default function Kanji() {
   const gotoNextSlide = useCallback(() => {
     let filtered = filteredTerms;
     // include frequency terms outside of filtered set
-    if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
+    if (reinforceREF.current && filterTypeREF.current === TermFilterBy.TAGS) {
       const allFrequency = Object.keys(repetition).reduce<string[]>(
         (acc, cur) => {
           if (repetition[cur]?.rein === true) {
@@ -171,8 +178,8 @@ export default function Kanji() {
     }
 
     play(
-      reinforceRef.current,
-      filterTypeRef.current,
+      reinforceREF.current,
+      filterTypeREF.current,
       frequency,
       // filteredTerms,
       filtered,
@@ -190,8 +197,8 @@ export default function Kanji() {
     reinforcedUID,
     repetition,
 
-    reinforceRef,
-    filterTypeRef,
+    reinforceREF,
+    filterTypeREF,
   ]);
 
   const gotoPrev = useCallback(() => {
@@ -230,6 +237,23 @@ export default function Kanji() {
   );
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
+
+  const w = useWindowSize();
+  const xPad = (w.width && w.height ? w.width > w.height : true) ? 0 : 70;
+  const halfWidth = w.width ? w.width / 2 : 0;
+
+  const yOffset = 0; // horizontal alignment spacing
+  const xOffset = 0 - halfWidth + xPad; // vertical spacing between tooltip and element
+  const { x, y, strategy, refs, update } = useFloating({
+    placement: "bottom",
+    middleware: [offset({ mainAxis: yOffset, crossAxis: xOffset }), shift()],
+  });
+
+  useEffect(() => {
+    // force a recalculate on
+    // window resize
+    update();
+  }, [update, w.height, w.width]);
 
   if (order.length < 1) return <NotReady addlStyle="main-panel" />;
 
@@ -271,9 +295,9 @@ export default function Kanji() {
   // TODO: does it need to be active?
   const aGroupLevel =
     term.tag
-      .find((t) => activeTags.includes(t) && isGroupLevel(t))
-      ?.replace("_", " ") ||
-    term.tag.find((t) => isGroupLevel(t))?.replace("_", " ") ||
+      ?.find((t) => activeTags.includes(t) && isGroupLevel(t))
+      ?.replace("_", " ") ??
+    term.tag?.find((t) => isGroupLevel(t))?.replace("_", " ") ??
     "";
 
   const term_reinforce = repetition[term.uid]?.rein === true;
@@ -295,6 +319,23 @@ export default function Kanji() {
   let page = (
     <React.Fragment>
       <div className="kanji main-panel h-100">
+        <div ref={refs.setReference} />
+        <div
+          ref={refs.setFloating}
+          style={{
+            //  height: "200px",
+            position: strategy,
+            top: y ?? 0,
+            left: x ?? 0,
+            width: "max-content",
+          }}
+          className="grp-info"
+        >
+          <div>
+            <div>{term.grp}</div>
+            <div>{aGroupLevel}</div>
+          </div>
+        </div>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -303,14 +344,7 @@ export default function Kanji() {
             <ChevronLeftIcon size={16} />
           </StackNavButton>
 
-          <div className="grp-info">
-            <div>
-              <div>{term.grp}</div>
-              <div>{aGroupLevel}</div>
-            </div>
-          </div>
-
-          <div className="text-center">
+          <div className="d-flex flex-column justify-content-around text-center">
             <h1 className="pt-0">
               <span>{term.kanji}</span>
             </h1>
@@ -353,7 +387,7 @@ export default function Kanji() {
               </h4>
             </div>
           </div>
-          <div className="right-info"></div>
+          {/* <div className="right-info"></div> */}
 
           <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
             <ChevronRightIcon size={16} />

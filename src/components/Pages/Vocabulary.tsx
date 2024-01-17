@@ -165,10 +165,19 @@ export default function Vocabulary() {
           const dT = memoThreshold.current;
           const d = metadata.current[v.uid]?.difficulty;
 
-          const showUndefMemoV =
-            d === undefined &&
-            (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
-          const showV = dT < 0 ? d > -1 * dT : d < dT;
+          // TODO: extract to fn for tests?
+          // const showUndefMemoV =
+          //   d === undefined &&
+          //   (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
+          // const showV = dT < 0 ? d > -1 * dT : d < dT;
+
+          let showUndefMemoV = false;
+          let showV= false;
+          if(d===undefined){
+            showUndefMemoV = (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
+          }else{
+            showV = dT < 0 ? d > -1 * dT : d < dT;
+          }
 
           return showUndefMemoV || showV;
         });

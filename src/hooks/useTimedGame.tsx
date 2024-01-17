@@ -238,7 +238,9 @@ export function useTimedGame(
             return looperSwipe("left");
           })
           .catch((error: Error) => {
-            if (error.cause?.code === "UserAborted") {
+            const cause = error.cause as {code: string };
+
+            if (cause?.code === "UserAborted") {
               // user aborted
               // don't continue
             } else {

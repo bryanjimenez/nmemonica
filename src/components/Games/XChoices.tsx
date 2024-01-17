@@ -2,26 +2,17 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import React, { useCallback, useReducer } from "react";
+
+import type { GameChoice, GameQuestion } from "./FourChoices";
 import StackNavButton from "../Form/StackNavButton";
-
-export interface GameQuestion {
-  english?: string;
-  toHTML: (correct: boolean) => React.JSX.Element;
-}
-
-export interface GameChoice {
-  english?: string;
-  toHTML: Function;
-  compare: string;
-}
 
 interface XChoicesProps {
   question: GameQuestion;
   hint?: string; // a hint to be displayed if provided
   choices: GameChoice[];
   isCorrect: (answered: GameChoice) => [boolean, number]; //Answer validator, returns if correct and correct answer index
-  gotoPrev: Function;
-  gotoNext: Function;
+  gotoPrev: () => void;
+  gotoNext: () => void;
 }
 
 interface XChoicesState {

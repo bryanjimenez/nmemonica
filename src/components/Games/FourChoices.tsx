@@ -1,20 +1,23 @@
-import React, { useReducer } from "react";
-import PropTypes from "prop-types";
-import classNames from "classnames";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import classNames from "classnames";
+import { forwardRef, memo, useLayoutEffect, useReducer, useRef } from "react";
+import type React from "react";
+
+import { useFade } from "../../hooks/helperHK";
 import StackNavButton from "../Form/StackNavButton";
 
-interface GameQuestion {
+export interface GameQuestion {
   english?: string;
   romaji?: string;
   toHTML: (correct: boolean) => React.JSX.Element;
 }
 
-interface GameChoice {
+export interface GameChoice {
   compare: string;
   english?: string;
+  japanese?: string;
   romaji?: string;
-  toHTML: Function;
+  toHTML: (correct?: boolean) => React.JSX.Element;
 }
 
 interface FourChoicesProps {
@@ -24,8 +27,11 @@ interface FourChoicesProps {
   hint?: string;
   choices: GameChoice[];
   isCorrect: (answered: GameChoice) => boolean;
-  gotoPrev: Function;
-  gotoNext: Function;
+  gotoPrev: () => void;
+  gotoNext: () => void;
+
+  /** True by default: Fade in options? */
+  fadeInAnswers?: boolean;
 }
 
 interface FourChoicesState {
@@ -34,7 +40,10 @@ interface FourChoicesState {
   correct: boolean;
 }
 
-function FourChoices(props: FourChoicesProps) {
+export function FourChoices(
+  props: FourChoicesProps,
+  forParentRef: React.MutableRefObject<HTMLDivElement | null>
+) {
   const [state, dispatch]: [
     FourChoicesState,
     React.Dispatch<Partial<FourChoicesState>>
@@ -50,18 +59,27 @@ function FourChoices(props: FourChoicesProps) {
     }
   );
 
-  const clearAnswers = () => {
+  const timerStart = useRef(Date.now());
+  const timerStop = useRef<number | undefined>(undefined);
+
+  const { gotoNext, gotoPrev } = props;
+
+  useLayoutEffect(() => {
+    if (props.fadeInAnswers !== false) {
+      timerStart.current = Date.now();
+      timerStop.current = undefined;
+    }
     dispatch({ showMeaning: false, correct: false, incorrect: [] });
-  };
+  }, [props.question, props.fadeInAnswers]);
 
   const checkAnswer = (answered: GameChoice, i: number) => {
+    // Already correctly answered
+    if (state.correct) return;
+
     if (props.isCorrect(answered)) {
       // console.log("RIGHT!");
+      timerStop.current = Date.now();
       dispatch({ correct: true, showMeaning: true });
-      setTimeout(() => {
-        clearAnswers();
-        props.gotoNext();
-      }, 1000);
     } else if (state.incorrect.length === 2) {
       // console.log("WRONG");
       dispatch({
@@ -69,21 +87,15 @@ function FourChoices(props: FourChoicesProps) {
         correct: true,
         showMeaning: true,
       });
-      setTimeout(() => {
-        clearAnswers();
-        props.gotoNext();
-      }, 1000);
     } else {
       // console.log("WRONG");
+      // navigator.vibrate(30)
       dispatch({ incorrect: [...state.incorrect, i] });
     }
   };
 
   const question = props.question;
   const choices = props.choices;
-
-  // console.log(question);
-  // console.log(choices);
 
   let meaning = question.english !== undefined ? "[English]" : "";
   if (props.hint === undefined) {
@@ -98,103 +110,177 @@ function FourChoices(props: FourChoicesProps) {
     }
   }
 
+  // optional forwardRef by default undefined
+  const optionalRef =
+    forParentRef.current === undefined ? undefined : forParentRef;
+
   return (
-    <div key={0} className="pick4game main-panel h-100">
-      <div className="d-flex justify-content-between h-100">
-        <StackNavButton
-          ariaLabel="Previous"
-          action={() => {
-            clearAnswers();
-            props.gotoPrev();
-          }}
-        >
-          <ChevronLeftIcon size={16} />
-        </StackNavButton>
-        <div
-          className={classNames({
-            "question d-flex flex-column justify-content-center text-center w-50":
-              true,
-          })}
-        >
-          <h1>{question.toHTML(state.correct)}</h1>
-          <span
+    <div ref={optionalRef} className="pick4game main-panel h-100 d-flex">
+      <StackNavButton ariaLabel="Previous" action={gotoPrev}>
+        <ChevronLeftIcon size={16} />
+      </StackNavButton>
+      <div className="container">
+        <div className="row row-cols-1 row-cols-sm-2 h-100">
+          <div
             className={classNames({
-              invisible: !props.qRomaji,
+              "col question d-flex flex-column justify-content-center text-center":
+                true,
             })}
           >
-            {question.romaji}
-          </span>
-          {meaning !== undefined && (
+            <div>{question.toHTML(state.correct)}</div>
             <span
-              className="clickable"
-              onClick={() => {
-                dispatch({ showMeaning: !state.showMeaning });
-              }}
+              className={classNames({
+                invisible: !props.qRomaji,
+              })}
             >
-              {meaning}
+              {question.romaji}
             </span>
-          )}
-        </div>
-        <div className="choices d-flex justify-content-around flex-wrap w-50">
-          {choices.map((c, i) => {
-            const isRight = props.isCorrect(choices[i]) && state.correct;
-            const isWrong = state.incorrect.includes(i);
-
-            const choiceCSS = classNames({
-              "w-50 h-50 pt-3 d-flex flex-column justify-content-evenly text-center clickable":
-                true,
-              "correct-color": isRight,
-              "incorrect-color": isWrong,
-            });
-
-            return (
-              <div
-                key={`${c.english ?? "blank"}-${c.compare}`}
-                className={choiceCSS}
+            {meaning !== undefined && (
+              <span
+                className="clickable"
                 onClick={() => {
-                  checkAnswer(c, i);
+                  dispatch({
+                    showMeaning: !state.showMeaning,
+                  });
                 }}
               >
-                <div>
-                  <h4>{c.toHTML()}</h4>
-                  {isRight && <div>{c.english}</div>}
-                  <span
-                    className={classNames({
-                      invisible: !props.aRomaji,
-                    })}
-                  >
-                    {c.romaji}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+                {meaning}
+              </span>
+            )}
+          </div>
+          <div className="col choices d-flex justify-content-around flex-wrap">
+            {choices.map((c, i) => {
+              const isRight = props.isCorrect(choices[i]) && state.correct;
+              const isWrong = state.incorrect.includes(i);
+
+              let aChoice;
+
+              const elapsed = Math.abs(
+                (timerStop.current ?? Date.now()) - timerStart.current
+              );
+
+              if (props.fadeInAnswers && state.correct) {
+                // Don't check any more answers
+                // Don't show remaining options
+
+                if ((i + 1) * 1000 > elapsed) {
+                  // Choice showed after picking answer
+                  aChoice = (
+                    <div key={c.compare} className="invisible w-50 h-50">
+                      {c.english}
+                    </div>
+                  );
+                } else {
+                  // Choice showed before picking answer
+                  aChoice = (
+                    <AChoice
+                      key={String(timerStart.current) + c.compare}
+                      css={!isRight ? "disabled-color" : undefined}
+                      fadeIn={false}
+                      c={c}
+                      i={i}
+                      isRight={isRight}
+                      isWrong={isWrong}
+                      aRomaji={props.aRomaji}
+                    />
+                  );
+                }
+              } else {
+                aChoice = (
+                  <AChoice
+                    key={String(timerStart.current) + c.compare}
+                    c={c}
+                    i={i}
+                    isRight={isRight}
+                    isWrong={isWrong}
+                    checkAnswer={checkAnswer}
+                    aRomaji={props.aRomaji}
+                    fadeIn={props.fadeInAnswers}
+                    elapsed={elapsed}
+                  />
+                );
+              }
+
+              return aChoice;
+            })}
+          </div>
         </div>
-        <StackNavButton
-          ariaLabel="Next"
-          action={() => {
-            clearAnswers();
-            props.gotoNext();
-          }}
+      </div>
+      <StackNavButton ariaLabel="Next" action={gotoNext}>
+        <ChevronRightIcon size={16} />
+      </StackNavButton>
+    </div>
+  );
+}
+
+interface AChoiceProps {
+  css?: string;
+  c: GameChoice;
+  i: number;
+  isRight: boolean;
+  isWrong: boolean;
+  checkAnswer?: (answered: GameChoice, i: number) => void;
+  aRomaji?: boolean;
+  fadeIn?: boolean;
+  elapsed?: number;
+}
+
+function AChoice(props: AChoiceProps) {
+  const FADE_IN_MS = 1000;
+  const { c, i, isRight, isWrong, checkAnswer, aRomaji, fadeIn, elapsed } =
+    props;
+
+  let delay = (i + 1) * FADE_IN_MS;
+  if (elapsed) {
+    // A rerender mid fading will interrupt
+    // Skip fade if interrupted
+    const interruptFix = (i + 1) * 1000 - elapsed;
+    delay = interruptFix < 0 ? 1 : interruptFix;
+  }
+
+  const [shown] = useFade(fadeIn === false ? 0 : delay);
+  const fadeCss = {
+    "notification-fade": !shown,
+    "notification-fade-in": shown,
+  };
+
+  const choiceCSS = classNames({
+    "d-flex flex-column justify-content-evenly": true,
+    "w-50 h-50 pt-3 text-center clickable": true,
+    "text-break": true,
+
+    ...(!props.css ? {} : { [props.css]: true }),
+    ...(fadeIn === false ? {} : fadeCss),
+
+    "correct-color": isRight,
+    "incorrect-color": isWrong,
+  });
+
+  return (
+    <div
+      key={`${c.compare ?? ""}${c.english ?? ""}${c.japanese ?? ""}`}
+      className={choiceCSS}
+      onClick={() => {
+        if (typeof checkAnswer === "function") {
+          checkAnswer(c, i);
+        }
+      }}
+    >
+      <div>
+        <h4>{c.toHTML()}</h4>
+        {isRight && <div>{c.english}</div>}
+        <span
+          className={classNames({
+            invisible: !aRomaji,
+          })}
         >
-          <ChevronRightIcon size={16} />
-        </StackNavButton>
+          {c.romaji}
+        </span>
       </div>
     </div>
   );
 }
 
-FourChoices.propTypes = {
-  question: PropTypes.object,
-  hint: PropTypes.string,
-  isCorrect: PropTypes.func.isRequired,
-  choices: PropTypes.array,
+export const FourChoicesWRef = memo(forwardRef(FourChoices));
 
-  gotoNext: PropTypes.func.isRequired,
-  gotoPrev: PropTypes.func.isRequired,
-
-  qRomaji: PropTypes.bool,
-  aRomaji: PropTypes.bool,
-};
-
-export default FourChoices;
+export default memo(FourChoices);

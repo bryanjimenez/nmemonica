@@ -21,6 +21,7 @@ export function StackNavButton(props: StackNavButtonProps) {
   return (
     <Button
       size="small"
+      className="MuiButton"
       color={props.color}
       aria-label={props.ariaLabel}
       sx={{
