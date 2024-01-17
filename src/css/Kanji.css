@@ -1,0 +1,16 @@
+.grp-info > div {
+  max-width: 70px;
+}
+
+.example-blk {
+  height: 65px;
+}
+
+/* Small devices (landscape phones, 576px and up)*/
+@media (min-width: 576px) {
+  .grp-info > div {
+    position: absolute;
+    left: 45px;
+    max-width: unset;
+  }
+}

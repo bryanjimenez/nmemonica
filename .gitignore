@@ -48,6 +48,10 @@ node_modules/
 
 # Build directory
 dist/
+.tsc-dist/
+
+# Keys directory
+crypto/
 
 # Optional npm cache directory
 .npm
@@ -67,6 +71,9 @@ dist/
 # dotenv environment variables file
 .env
 
+# environment variables file
+environment.*
+
 # project login conf
 conf.js
 
@@ -79,3 +86,6 @@ conf.js
 
 # gimp files
 *.xcf
+
+# lighthouse reports
+lighthouse/*.html

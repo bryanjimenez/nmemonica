@@ -1,0 +1,25 @@
+.dark-mode #tooltip {
+  background: #424242;
+}
+
+#tooltip {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 20px 0;
+
+  -webkit-transition: visibility 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transition: visibility 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+#tooltip :first-child {
+  z-index: 1; /** show slider shadow above #arrow */
+}
+
+.tooltip-fade {
+  opacity: 0;
+}
+
+#arrow {
+  background: inherit;
+  transform: rotate(45deg);
+}

@@ -1,0 +1,31 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "../.tsc-dist/",
+    "rootDir": "../",
+
+    // Set the JavaScript language version for emitted JavaScript
+    // and include compatible library declarations.
+    "target": "es6",
+    // Specify what module code is generated.
+    "module": "es2022",
+    "lib": ["dom", "webworker", "es2021.Promise"],
+
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true
+  },
+  // "exclude": ["./src/sw.js"],
+  "include": [
+    ".",
+    "../environment.development.ts",
+    "../environment.production.ts",
+    "../src/constants/actionNames.ts",
+    "../src/helper/urlHelper.ts"
+  ],
+
+  "ts-node": {
+    // ERR_UNKNOWN_FILE_EXTENSION .ts
+    "esm": true
+  }
+}

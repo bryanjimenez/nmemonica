@@ -1,0 +1,12 @@
+{
+  // "extends": "@tsconfig/node16/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./.tsc-dist/",
+
+    "skipLibCheck": true
+  },
+  "exclude": ["./node_modules", "./dist"],
+  "files": [],
+  "references": [{ "path": "./src" }, { "path": "./pwa" }]
+}

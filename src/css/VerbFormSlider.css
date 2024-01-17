@@ -1,0 +1,15 @@
+.verb-form-slider-root > span/*.MuiSlider-root*/ {
+  position: absolute;
+  right: 16px;
+  width: 75vw;
+  max-width: 300px;
+}
+
+/* Small devices (landscape phones, 576px and up)*/
+@media (min-width: 576px) {
+  .verb-form-slider-root > span/*.MuiSlider-root*/ {
+    position: relative;
+    right: unset;
+    width: 300px;
+  }
+}

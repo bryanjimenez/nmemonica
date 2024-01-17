@@ -1,0 +1,101 @@
+.my-navbar {
+  height: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.mobile li {
+  list-style-type: none;
+}
+
+.mobile a {
+  text-decoration: none;
+}
+
+.not-a-real-icon {
+  font-size: xx-large;
+  height: 35px;
+  position: relative;
+  top: -10px;
+}
+
+.mobile .caption {
+  font-size: x-small;
+  margin: auto;
+  width: fit-content;
+}
+
+.desktop li {
+  list-style-type: none;
+}
+
+.desktop-link {
+  display: block;
+  text-decoration: none;
+  padding: 0 0.5rem;
+}
+
+.nav-menu-btn {
+  padding: 0.5rem;
+  border: 0;
+  background-color: transparent;
+}
+
+.nav-menu-btn:not(.collapsed) .nav-btn-line:nth-of-type(1) {
+  -webkit-transform: translateY(8px) rotate(45deg);
+  -ms-transform: translateY(8px) rotate(45deg);
+  transform: translateY(8px) rotate(45deg);
+  background: white;
+  z-index: 1000;
+  position: absolute;
+}
+.nav-menu-btn:not(.collapsed) .nav-btn-line:nth-of-type(2) {
+  -webkit-transform: translateY(8px);
+  -ms-transform: translateY(8px);
+  transform: translateY(8px);
+  opacity: 0;
+}
+.nav-menu-btn:not(.collapsed) .nav-btn-line:nth-of-type(3) {
+  -webkit-transform: translateY(0px) rotate(-45deg);
+  -ms-transform: translateY(0px) rotate(-45deg);
+  transform: translateY(0px) rotate(-45deg);
+  position: absolute;
+  z-index: 1000;
+  background: white;
+}
+
+.nav-btn-line {
+  width: 25px;
+  height: 3px;
+  -webkit-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  -webkit-transition: all 0.2s ease-in-out 0s;
+  transition: all 0.2s ease-in-out 0s;
+  display: block;
+  background-color: #000;
+  margin-bottom: 5px;
+}
+
+.mobile {
+  position: absolute;
+  z-index: 999;
+  width: 100vw;
+  height: 100vh;
+  color: white;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Large devices (desktops, 992px and up)*/
+@media (min-width: 992px) {
+  .mobile {
+    position: unset;
+    z-index: unset;
+    width: unset;
+    height: unset;
+    color: unset;
+    background: unset;
+  }
+}

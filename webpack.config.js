@@ -1,21 +1,39 @@
-const webpack = require("webpack");
-const HtmlWebPackPlugin = require("html-webpack-plugin");
-const path = require("path");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const PurgecssPlugin = require("purgecss-webpack-plugin");
-const glob = require("glob-all");
+import glob from "glob";
+import HtmlWebPackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import path from "path";
+import { PurgeCSSPlugin } from "purgecss-webpack-plugin";
+import webpack from "webpack";
 
-module.exports = function (webpackEnv, argv) {
+import { fileURLToPath } from "url";
+
+// mimic CommonJS variables -- not needed if using CommonJS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default function (webpackEnv, argv) {
   const envFile = /^(.*\.)(development|production)(\.js|\.json|)$/;
+  const prodIndexHtmlTemplate = "./index.production.html";
 
   return {
     module: {
       rules: [
         {
-          test: /\.(js|jsx)$/,
+          test: /\.(ts|tsx)$/,
           include: path.resolve(__dirname, "src"),
           use: {
-            loader: "babel-loader",
+            loader: "ts-loader",
+            options:{
+              // webpack build with tsc errors
+              transpileOnly: true,
+            },
+          },
+      
+          // because package.json type: "module"
+          // and imports don't have extensions
+          // https://github.com/webpack/webpack/issues/11467#issuecomment-691873586
+          resolve: {
+            fullySpecified: false,
           },
         },
         {
@@ -31,6 +49,7 @@ module.exports = function (webpackEnv, argv) {
         },
         {
           test: /\.(png|svg|jpg|jpeg|gif)$/,
+          include: path.resolve(__dirname, "image"),
           use: ["file-loader"],
         },
       ],
@@ -38,7 +57,9 @@ module.exports = function (webpackEnv, argv) {
 
     plugins: [
       new HtmlWebPackPlugin({
-        template: "./index.html",
+        // template: "./index.html",
+        template:
+          argv.mode === "production" ? prodIndexHtmlTemplate : "./index.html",
         filename: "./index.html",
       }),
 
@@ -48,7 +69,31 @@ module.exports = function (webpackEnv, argv) {
         // webpack-dev-server has requests that need to be excluded
         if (res.context.indexOf("node_modules") === -1) {
           const match = new RegExp(envFile).exec(res.request);
-          res.request = match[1] + argv.mode + match[3];
+
+          // Allow in Dev Environment
+          // from dev file to include prod dependency
+          const envFileDev = /^(.*\.)(development)(\.ts|\.js|\.json|)$/;
+          const envFileProd = /^(.*\.)(production)(\.ts|\.js|\.json|)$/;
+          const srcFile = res.contextInfo.issuer.split("/").pop();
+          const depFile = res.request;
+
+          if (
+            argv.mode === "development" &&
+            new RegExp(envFileDev).test(srcFile) &&
+            new RegExp(envFileProd).test(depFile)
+          ) {
+            const depName = res.dependencies.reduce(
+              (acc, d) => (acc = !acc && d.name ? d.name : undefined),
+              undefined
+            );
+            console.log(
+              JSON.stringify({ at: srcFile, include: depName, from: depFile })
+            );
+
+            res.request = match[1] + "production" + match[3];
+          } else {
+            res.request = match[1] + argv.mode + match[3];
+          }
         }
       }),
       new MiniCssExtractPlugin({
@@ -61,17 +106,21 @@ module.exports = function (webpackEnv, argv) {
         chunkFilename:
           argv.mode === "development" ? "[id].css" : "[id].[contenthash].css",
       }),
-      new PurgecssPlugin({
-        paths: glob.sync(
-          [path.join("index.html"), `${path.join(__dirname, "src")}/**/*`],
-          { nodir: true }
-        ),
-        whitelist: ["html", "body"],
+      new PurgeCSSPlugin({
+        paths: [
+          ...glob.sync(path.join("index.html"), { nodir: true }),
+          ...glob.sync(`${path.join(__dirname, "src")}/**/*`, { nodir: true }),
+        ],
+        safelist: {
+          standard: [
+            /\bd(?:-sm|-md|-lg|-xl|-xxl){0,1}-(?:none|block|inline)\b/,
+          ],
+        },
       }),
     ],
 
     resolve: {
-      extensions: [".js", ".jsx"],
+      extensions: [".ts", ".tsx", ".js"],
     },
 
     output: {
@@ -92,12 +141,14 @@ module.exports = function (webpackEnv, argv) {
             name(module) {
               // get the name. E.g. node_modules/packageName/not/this/part.js
               // or node_modules/packageName
-              const packageName = module.context.match(
-                /[\\/]node_modules[\\/](.*?)([\\/]|$)/
-              )[1];
+              if (module.context.indexOf("node_modules") > -1) {
+                const packageName = module.context.match(
+                  /[\\/]node_modules[\\/](.*?)([\\/]|$)/
+                )[1];
 
-              // npm package names are URL-safe, but some servers don't like @ symbols
-              return `npm.${packageName.replace("@", "")}`;
+                // npm package names are URL-safe, but some servers don't like @ symbols
+                return `npm.${packageName.replace("@", "")}`;
+              }
             },
           },
         },
@@ -111,6 +162,7 @@ module.exports = function (webpackEnv, argv) {
       port: process.env.PORT || 8080, // Port Number
       host: "localhost", // Change to '0.0.0.0' for external facing server
       // historyApiFallback: true,
+      static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };
-};
+}

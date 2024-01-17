@@ -1,0 +1,34 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "../",
+    "outDir": "../.tsc-dist/",
+
+    // Set the JavaScript language version for emitted JavaScript
+    // and include compatible library declarations.
+    "target": "es6",
+    // Specify what module code is generated.
+    "module": "ES2022",
+    "lib": ["dom", "ES2022.Error", "ES2021.String"],
+
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+
+    "allowJs": true,
+    "checkJs": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "jsx": "react-jsx" // missing import React
+  },
+  "exclude": ["../lambda"],
+  "include": [
+    ".",
+    "../data/kana.json",
+    "../environment.development.ts",
+    "../environment.production.ts",
+    "../image/notfound/*"
+  ]
+}
