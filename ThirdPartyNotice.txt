@@ -1,7 +1,6 @@
 THIRD PARTY SOFTWARE NOTICES AND INFORMATION
 Do Not Translate or Localize
 
-
 --------------------------------------------------------------------------------
 @babel/runtime v7.23.7 - The Babel Team (https://babel.dev/team)
 https://github.com/babel/babel.git
@@ -30,9 +29,8 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/cache v11.11.0
+@emotion/cache v11.11.0 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/cache
 --------------------------------------------------------------------------------
 
@@ -58,9 +56,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/hash v0.9.1
+@emotion/hash v0.9.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/hash
 --------------------------------------------------------------------------------
 
@@ -86,9 +83,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/is-prop-valid v1.2.1
+@emotion/is-prop-valid v1.2.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/is-prop-valid
 --------------------------------------------------------------------------------
 
@@ -114,9 +110,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/memoize v0.8.1
+@emotion/memoize v0.8.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/memoize
 --------------------------------------------------------------------------------
 
@@ -141,7 +136,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @emotion/react v11.11.3 - Emotion Contributors
@@ -170,9 +164,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/serialize v1.1.3
+@emotion/serialize v1.1.3 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/serialize
 --------------------------------------------------------------------------------
 
@@ -198,9 +191,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/sheet v1.2.2
+@emotion/sheet v1.2.2 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/sheet
 --------------------------------------------------------------------------------
 
@@ -226,9 +218,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/styled v11.11.0
+@emotion/styled v11.11.0 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/styled
 --------------------------------------------------------------------------------
 
@@ -254,9 +245,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/unitless v0.8.1
+@emotion/unitless v0.8.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/unitless
 --------------------------------------------------------------------------------
 
@@ -282,9 +272,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/use-insertion-effect-with-fallbacks v1.0.1
+@emotion/use-insertion-effect-with-fallbacks v1.0.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/use-insertion-effect-with-fallbacks
 --------------------------------------------------------------------------------
 
@@ -310,9 +299,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/utils v1.2.1
+@emotion/utils v1.2.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/utils
 --------------------------------------------------------------------------------
 
@@ -338,9 +326,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@emotion/weak-memoize v0.3.1
+@emotion/weak-memoize v0.3.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/weak-memoize
 --------------------------------------------------------------------------------
 
@@ -365,7 +352,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @floating-ui/core v1.5.2 - atomiks
@@ -393,7 +379,6 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 @floating-ui/dom v1.5.3 - atomiks
 https://github.com/floating-ui/floating-ui.git
@@ -419,7 +404,6 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @floating-ui/react-dom v2.0.4 - atomiks
@@ -447,7 +431,6 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 @floating-ui/utils v0.1.6 - atomiks
 https://github.com/floating-ui/floating-ui.git
@@ -473,7 +456,6 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @fortawesome/fontawesome-svg-core v1.2.36 - Dave Gandy
@@ -515,7 +497,6 @@ trademarks does not indicate endorsement of the trademark holder by Font
 Awesome, nor vice versa. **Please do not use brand logos for any purpose except
 to represent the company, product, or service to which they refer.**
 
-
 --------------------------------------------------------------------------------
 @fortawesome/free-regular-svg-icons v5.15.4 - Dave Gandy
 https://github.com/FortAwesome/Font-Awesome
@@ -555,7 +536,6 @@ All brand icons are trademarks of their respective owners. The use of these
 trademarks does not indicate endorsement of the trademark holder by Font
 Awesome, nor vice versa. **Please do not use brand logos for any purpose except
 to represent the company, product, or service to which they refer.**
-
 
 --------------------------------------------------------------------------------
 @fortawesome/free-solid-svg-icons v5.15.4 - Dave Gandy
@@ -597,9 +577,8 @@ trademarks does not indicate endorsement of the trademark holder by Font
 Awesome, nor vice versa. **Please do not use brand logos for any purpose except
 to represent the company, product, or service to which they refer.**
 
-
 --------------------------------------------------------------------------------
-@fortawesome/react-fontawesome v0.1.19
+@fortawesome/react-fontawesome v0.1.19 - undefined
 https://github.com/FortAwesome/react-fontawesome.git
 --------------------------------------------------------------------------------
 
@@ -622,7 +601,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @mui/base v5.0.0-beta.29 - MUI Team
@@ -651,7 +629,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 @mui/material v5.15.2 - MUI Team
 https://github.com/mui/material-ui.git
@@ -678,7 +655,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @mui/private-theming v5.15.2 - MUI Team
@@ -707,7 +683,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 @mui/styled-engine v5.15.2 - MUI Team
 https://github.com/mui/material-ui.git
@@ -734,7 +709,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @mui/system v5.15.2 - MUI Team
@@ -763,7 +737,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 @mui/utils v5.15.2 - MUI Team
 https://github.com/mui/material-ui.git
@@ -791,9 +764,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-@nmemonica/snservice v1.0.0 - Bryan Jimenez
+@nmemonica/snservice v1.1.0 - Bryan Jimenez
 git+https://github.com/bryanjimenez/snservice.git
 --------------------------------------------------------------------------------
 
@@ -1472,7 +1444,6 @@ the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
-
 --------------------------------------------------------------------------------
 @nmemonica/x-spreadsheet v1.0.2 - bryan
 git+https://github.com/bryanjimenez/x-spreadsheet.git
@@ -1500,7 +1471,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 @popperjs/core v2.11.8 - Federico Zivolo <federico.zivolo@gmail.com>
 github:popperjs/popper-core
@@ -1526,7 +1496,6 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @primer/octicons-react v19.8.0 - GitHub, Inc.
@@ -1555,7 +1524,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 @reduxjs/toolkit v1.9.7 - Mark Erikson <mark@isquaredsoftware.com>
 git+https://github.com/reduxjs/redux-toolkit.git
@@ -1582,7 +1550,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 @remix-run/router v1.14.1 - Remix Software <hello@remix.run>
@@ -1613,7 +1580,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 bootstrap v5.3.2 - The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
 git+https://github.com/twbs/bootstrap.git
@@ -1640,7 +1606,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 charenc v0.0.2 - Paul Vorbach <paul@vorb.de> (http://vorb.de)
@@ -1675,7 +1640,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 --------------------------------------------------------------------------------
 classnames v2.5.1 - Jed Watson
 git+https://github.com/JedWatson/classnames.git
@@ -1703,7 +1667,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 clsx v2.1.0 - Luke Edwards
 lukeed/clsx
@@ -1729,7 +1692,6 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 crypt v0.0.2 - Paul Vorbach <paul@vorb.de> (http://vorb.de)
@@ -1764,7 +1726,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 --------------------------------------------------------------------------------
 dom-helpers v5.2.1 - Jason Quense
 git+https://github.com/react-bootstrap/dom-helpers.git
@@ -1791,7 +1752,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 --------------------------------------------------------------------------------
 events v3.3.0 - Irakli Gozalishvili <rfobic@gmail.com> (http://jeditoolkit.com)
 git://github.com/Gozala/events.git
@@ -1819,7 +1779,6 @@ NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 hoist-non-react-statics v3.3.2 - Michael Ridgway <mcridgway@gmail.com>
@@ -1856,7 +1815,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 --------------------------------------------------------------------------------
 immer v9.0.21 - Michel Weststrate
 https://github.com/immerjs/immer.git
@@ -1884,7 +1842,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 is-buffer v1.1.6 - Feross Aboukhadijeh
 git://github.com/feross/is-buffer.git
@@ -1911,7 +1868,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 lodash v4.17.21 - John-David Dalton <john.david.dalton@gmail.com>
@@ -1966,7 +1922,6 @@ maintained libraries used by this software which have their own
 licenses; we recommend you read them, as their terms may differ from the
 terms above.
 
-
 --------------------------------------------------------------------------------
 md5 v2.3.0 - Paul Vorbach <paul@vorba.ch> (http://paul.vorba.ch)
 git://github.com/pvorb/node-md5.git
@@ -2000,9 +1955,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 --------------------------------------------------------------------------------
-prop-types v15.8.1
+prop-types v15.8.1 - undefined
 facebook/prop-types
 --------------------------------------------------------------------------------
 
@@ -2028,9 +1982,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-react v18.2.0
+react v18.2.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -2056,9 +2009,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-react-dom v18.2.0
+react-dom v18.2.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -2084,9 +2036,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-react-is v18.2.0
+react-is v18.2.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -2111,7 +2062,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 react-redux v8.1.3 - Dan Abramov <dan.abramov@me.com> (https://github.com/gaearon)
@@ -2139,7 +2089,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 react-router v6.21.1 - Remix Software <hello@remix.run>
@@ -2170,7 +2119,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
 react-router-dom v6.21.1 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
@@ -2200,9 +2148,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-react-transition-group v4.4.5
+react-transition-group v4.4.5 - 
 https://github.com/reactjs/react-transition-group.git
 --------------------------------------------------------------------------------
 
@@ -2238,9 +2185,8 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 --------------------------------------------------------------------------------
-redux v4.2.1
+redux v4.2.1 - undefined
 github:reduxjs/redux
 --------------------------------------------------------------------------------
 
@@ -2265,7 +2211,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 redux-thunk v2.4.2 - Dan Abramov <dan.abramov@me.com>
@@ -2294,9 +2239,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-reselect v4.1.8
+reselect v4.1.8 - undefined
 https://github.com/reduxjs/reselect.git
 --------------------------------------------------------------------------------
 
@@ -2322,9 +2266,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-scheduler v0.23.0
+scheduler v0.23.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -2349,7 +2292,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 --------------------------------------------------------------------------------
 stylis v4.2.0 - Sultan Tarimo <sultantarimo@me.com>
@@ -2378,9 +2320,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
 --------------------------------------------------------------------------------
-use-sync-external-store v1.2.0
+use-sync-external-store v1.2.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -2406,4 +2347,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+--------------------------------------------------------------------------------
+react-slick v0.29.0 - 2014 Kiran Abburi
+https://github.com/akiran/react-slick
+--------------------------------------------------------------------------------
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Kiran Abburi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 

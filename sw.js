@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "0c39b8b4",
-  initCacheVer: "e9805a5d",
+  swVersion: "60c994f3",
+  initCacheVer: "74625654",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -489,7 +489,7 @@ function initServiceWorker({
     );
     return fetchCheckP;
   }
-  function isAuthNeeded(url) {
+  function requiredAuth(url) {
     const isLocal = !url.startsWith(urlDataService);
     const withAuth = isLocal ? { credentials: "include" } : {};
     return withAuth;
@@ -507,7 +507,7 @@ function initServiceWorker({
       return recache(appMediaCache, myRequest);
     } else {
       clientLogger("IDB.override", DebugLevel.WARN);
-      const fetchP = fetch(myRequest, isAuthNeeded(myRequest.url));
+      const fetchP = fetch(myRequest, requiredAuth(myRequest.url));
       const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return fetchP
@@ -549,7 +549,7 @@ function initServiceWorker({
           .then((dataO) => toResponse(dataO))
           .catch(() => {
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
-            return fetch(cleanUrl, isAuthNeeded(cleanUrl))
+            return fetch(cleanUrl, requiredAuth(cleanUrl))
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", DebugLevel.ERROR);
@@ -571,7 +571,7 @@ function initServiceWorker({
     }
   }
   function noCaching(request) {
-    return fetch(request, isAuthNeeded(request.url));
+    return fetch(request, requiredAuth(request.url));
   }
   function fetchEventHandler(e) {
     if (e.request.method !== "GET") {
@@ -583,7 +583,14 @@ function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
       case req.headers.has(SWRequestHeader.NO_CACHE): {
-        e.respondWith(noCaching(req));
+        let h = {};
+        req.headers.forEach((val, key) => {
+          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
+            h[key] = val;
+          }
+        });
+        const noCacheReq = new Request(req.url, { headers: new Headers(h) });
+        e.respondWith(noCaching(noCacheReq));
         break;
       }
       case path.startsWith(dataPath + dataVerPath):
@@ -670,7 +677,7 @@ function initServiceWorker({
       if (cacheOnly) {
         return c;
       }
-      const f = fetch(url, isAuthNeeded(url)).then((res) => {
+      const f = fetch(url, requiredAuth(url)).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -719,7 +726,7 @@ function initServiceWorker({
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
-          fetch(url, isAuthNeeded(url)).then((fetchRes) => {
+          fetch(url, requiredAuth(url)).then((fetchRes) => {
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }
@@ -826,7 +833,7 @@ const cacheFiles = [
   "4156f5574d12ea2e130b.png",
   "463.c457155e.css",
   "463.c457155e.js",
-  "568.7dc45015.js",
+  "568.51a37474.js",
   "657.dee830c3.js",
   "71565d048a3f03f60ac5.png",
   "802.036eb0ab.css",
@@ -841,8 +848,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.06c6e10a.css",
-  "main.06c6e10a.js",
+  "main.93559aa4.css",
+  "main.93559aa4.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
