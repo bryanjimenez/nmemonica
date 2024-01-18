@@ -8,7 +8,7 @@
     "strict": true,
     "removeComments": true
   },
-  "files": ["./rspack.config.js"],
+  "files": ["./rspack.config.js", "./license-writer.js"],
   "exclude": ["./node_modules", "./dist"],
   "references": [{ "path": "./src" }, { "path": "./pwa" }]
 }

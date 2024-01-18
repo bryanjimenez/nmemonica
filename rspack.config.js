@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
 import { ca } from "@nmemonica/utils/signed-ca";
 import { config } from "@nmemonica/snservice";
+import { appendLicense } from "./license-writer.js";
 
 // https://www.rspack.dev/config/devtool.html
 // https://www.rspack.dev/guide/migrate-from-webpack.html
@@ -44,7 +45,9 @@ export default function rspackConfig(
       }),
 
       // output license info
-      ...(isProduction ? [new LicenseCheckerWebpackPlugin()] : []),
+      ...(isProduction
+        ? [new LicenseCheckerWebpackPlugin({ outputWriter: appendLicense })]
+        : []),
       // index.html template
       new rspack.HtmlRspackPlugin({
         template: `index${isProduction ? ".production" : ""}.html`,
