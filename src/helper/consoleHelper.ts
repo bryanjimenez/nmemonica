@@ -1,5 +1,11 @@
+import { type ConsoleMessage } from "../components/Form/Console";
 import { DebugLevel } from "../slices/settingHelper";
-import { RawPhrase, RawVocabulary, SpaceRepetitionMap } from "../typings/raw";
+import type {
+  MetaDataObj,
+  RawPhrase,
+  RawVocabulary,
+  ValuesOf,
+} from "../typings/raw";
 
 /**
  * Trims a string keeping the begining and end.
@@ -53,10 +59,10 @@ export function answerSeconds(tpElapsed: number) {
 /**
  * UI logger
  */
-export function spaceRepLog(
-  logger: Function,
-  term: RawVocabulary | RawPhrase,
-  spaceRepMap: SpaceRepetitionMap,
+export function spaceRepLog<T extends { uid: string; english: string }>(
+  logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
+  term: T,
+  spaceRepMap: Record<string, MetaDataObj | undefined>,
   options: { frequency: boolean }
 ) {
   const lastDate = spaceRepMap[term.uid]?.d;
@@ -86,9 +92,9 @@ export function spaceRepLog(
  * instead of regular view count
  */
 export function timedPlayLog(
-  logger: Function,
+  logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
   term: RawVocabulary | RawPhrase,
-  spaceRepMap: SpaceRepetitionMap,
+  spaceRepMap: Record<string, MetaDataObj | undefined>,
   options: { frequency: boolean }
 ) {
   const lastDate = spaceRepMap[term.uid]?.d;
@@ -151,4 +157,40 @@ export function logify(
   }, {});
 
   return JSON.stringify(bare).replaceAll(",", ", ");
+}
+
+/**
+ * Takes one or two messages and checks if they can be squashed
+ *
+ * Sequential messages that are the same can be squashed
+ * incrementing a counter on the final message
+ * @param messages one or two messages to be squashed
+ */
+export function squashSeqMsgs(messages: ConsoleMessage[]) {
+  let squashed: ConsoleMessage[] = [];
+
+  if (messages.length < 2) {
+    return messages as [ConsoleMessage];
+  }
+
+  const [last, incoming] = messages;
+
+  const zero = last.msg === incoming.msg;
+  const notZero =
+    last.msg.endsWith("+") && last.msg.slice(0, -4) === incoming.msg;
+
+  if (zero || notZero) {
+    // squashable
+    if (zero) {
+      squashed = [{ ...incoming, msg: `${incoming.msg} ${1} +` }];
+    } else {
+      const c = Number(last.msg.slice(-3).slice(0, 1));
+      squashed = [{ ...incoming, msg: `${incoming.msg} ${c + 1} +` }];
+    }
+  } else {
+    // not squashable
+    squashed = messages;
+  }
+
+  return squashed;
 }

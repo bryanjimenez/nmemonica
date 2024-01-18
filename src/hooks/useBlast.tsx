@@ -1,7 +1,8 @@
 import { offset, shift, useFloating } from "@floating-ui/react-dom";
-import { useEffect, useState } from "react";
-import { useWindowSize } from "./helperHK";
 import classNames from "classnames";
+import { useEffect, useState } from "react";
+
+import { useWindowSize } from "./useWindowSize";
 
 /**
  * Display a fading text on the center of the screen

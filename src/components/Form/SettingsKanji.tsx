@@ -2,8 +2,8 @@ import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
 import SettingsSwitch from "./SettingsSwitch";
+import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
-import { buildAction } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";

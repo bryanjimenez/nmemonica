@@ -1,12 +1,10 @@
-import { type PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import merge from "lodash/fp/merge";
-import { firebaseConfig } from "../../environment.development";
-import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
-  buildGroupObject,
-  buildVocabularyObject,
-} from "../helper/reducerHelper";
+  type PayloadAction,
+  createAsyncThunk,
+  createSlice,
+} from "@reduxjs/toolkit";
+import merge from "lodash/fp/merge";
+
 import {
   TermFilterBy,
   TermSortBy,
@@ -14,30 +12,39 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
+import { firebaseConfig } from "../../environment.development";
+import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  buildGroupObject,
+  buildVocabularyObject,
+} from "../helper/reducerHelper";
 import type {
+  GroupListMap,
   MetaDataObj,
   RawVocabulary,
-  SpaceRepetitionMap,
+  ValuesOf,
 } from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface VocabularyInitSlice {
   value: RawVocabulary[];
   version: string;
-  grpObj: {};
+  grpObj: GroupListMap;
   verbForm: string;
 
   setting: {
-    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
-    practiceSide: boolean;
+    ordered: ValuesOf<typeof TermSortBy>;
+    englishSideUp: boolean;
     romaji: boolean;
     bareKanji: boolean;
     hintEnabled: boolean;
-    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+    filter: ValuesOf<typeof TermFilterBy>;
     memoThreshold: number;
     reinforce: boolean;
     repTID: number;
-    repetition: SpaceRepetitionMap;
+    repetition: Record<string, MetaDataObj | undefined>;
     activeGroup: string[];
     autoVerbView: boolean;
     verbColSplit: number;
@@ -52,7 +59,7 @@ export const vocabularyInitState: VocabularyInitSlice = {
 
   setting: {
     ordered: 0,
-    practiceSide: false,
+    englishSideUp: false,
     romaji: false,
     bareKanji: false,
     hintEnabled: false,
@@ -80,15 +87,20 @@ export const getVocabulary = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching vocabulary: 0");
     // }
-    return fetch(firebaseConfig.databaseURL + "/lambda/vocabulary.json", {
-      headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
+    const value = (await fetch(
+      firebaseConfig.databaseURL + "/lambda/vocabulary.json",
+      {
+        headers: { "Data-Version": version },
+      }
+    ).then((res) => res.json())) as Record<string, RawVocabulary>;
+
+    return { value, version };
   }
 );
 
 export const updateSpaceRepWord = createAsyncThunk(
   "vocabulary/updateSpaceRepWord",
-  async (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
+  (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
     const state = (thunkAPI.getState() as RootState).vocabulary;
 
@@ -103,7 +115,7 @@ export const updateSpaceRepWord = createAsyncThunk(
 
 export const vocabularyFromLocalStorage = createAsyncThunk(
   "vocabulary/vocabularyFromLocalStorage",
-  async (arg: (typeof vocabularyInitState)["setting"]) => {
+  (arg: (typeof vocabularyInitState)["setting"]) => {
     const initValues = arg;
 
     return initValues;
@@ -144,7 +156,7 @@ const vocabularySlice = createSlice({
     furiganaToggled(state, action: { payload: string }) {
       const uid = action.payload;
 
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -174,7 +186,7 @@ const vocabularySlice = createSlice({
 
     toggleVocabularyOrdering(
       state,
-      action: { payload: (typeof TermSortBy)[keyof typeof TermSortBy] }
+      action: { payload: ValuesOf<typeof TermSortBy> }
     ) {
       const { ordered } = state.setting;
       const override = action.payload;
@@ -190,7 +202,7 @@ const vocabularySlice = createSlice({
         ordered + 1,
         allowed,
         override
-      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+      ) as ValuesOf<typeof TermSortBy>;
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -202,11 +214,11 @@ const vocabularySlice = createSlice({
     },
 
     flipVocabularyPracticeSide(state) {
-      state.setting.practiceSide = localStoreAttrUpdate(
+      state.setting.englishSideUp = localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
-        "practiceSide"
+        "englishSideUp"
       );
     },
 
@@ -239,7 +251,7 @@ const vocabularySlice = createSlice({
 
     toggleVocabularyFilter(
       state,
-      action: { payload: (typeof TermFilterBy)[keyof typeof TermFilterBy] }
+      action: { payload: ValuesOf<typeof TermFilterBy> }
     ) {
       const allowed: number[] = [TermFilterBy.FREQUENCY, TermFilterBy.GROUP];
 
@@ -250,7 +262,7 @@ const vocabularySlice = createSlice({
         filter + 1,
         allowed,
         override
-      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
+      ) as ValuesOf<typeof TermFilterBy>;
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),
@@ -299,7 +311,7 @@ const vocabularySlice = createSlice({
     addFrequencyWord(state, action: { payload: string }) {
       const uid = action.payload;
 
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -324,7 +336,7 @@ const vocabularySlice = createSlice({
 
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           spaceRep,
           { count: false, date: false },
@@ -366,7 +378,7 @@ const vocabularySlice = createSlice({
       ) => {
         const { uid, value } = action.payload;
 
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           state.setting.repetition,
           { count: false, date: false },
@@ -389,9 +401,11 @@ const vocabularySlice = createSlice({
     setWordTPCorrect: {
       reducer: (
         state: VocabularyInitSlice,
-        action: {
-          payload: { uid: string; tpElapsed: number; pronunciation: boolean };
-        }
+        action: PayloadAction<{
+          uid: string;
+          tpElapsed: number;
+          pronunciation?: boolean;
+        }>
       ) => {
         const { uid, tpElapsed, pronunciation } = action.payload;
 
@@ -407,7 +421,7 @@ const vocabularySlice = createSlice({
           const accuracy = uidData.tpAcc;
           const correctAvg = uidData.tpCAvg ?? 0;
 
-          if (playCount !== undefined && accuracy != undefined) {
+          if (playCount !== undefined && accuracy !== undefined) {
             newPlayCount = playCount + 1;
 
             const scores = playCount * accuracy;
@@ -419,9 +433,9 @@ const vocabularySlice = createSlice({
           }
         }
 
-        const prevMisPron = pronunciation || (uidData?.pron ?? false);
+        const prevMisPron = pronunciation === true || (uidData?.pron ?? false);
         const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? {}),
+          ...(spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 }),
           pron: prevMisPron || undefined,
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
@@ -438,14 +452,19 @@ const vocabularySlice = createSlice({
           newValue
         );
       },
-      prepare: (uid: string, tpElapsed: number, { pronunciation } = {}) => ({
+      prepare: (
+        uid: string,
+        tpElapsed: number,
+        { pronunciation }: { pronunciation?: boolean } | undefined = {}
+      ) => ({
+        type: "string",
         payload: { uid, tpElapsed, pronunciation },
       }),
     },
     setWordTPIncorrect: {
       reducer: (
         state: VocabularyInitSlice,
-        action: PayloadAction<{ uid: string; pronunciation: boolean }>
+        action: PayloadAction<{ uid: string; pronunciation?: boolean }>
       ) => {
         const { uid, pronunciation } = action.payload;
 
@@ -459,7 +478,7 @@ const vocabularySlice = createSlice({
           const playCount = uidData.tpPc;
           const accuracy = uidData.tpAcc;
 
-          if (playCount !== undefined && accuracy != undefined) {
+          if (playCount !== undefined && accuracy !== undefined) {
             newPlayCount = playCount + 1;
 
             const scores = playCount * accuracy;
@@ -467,14 +486,14 @@ const vocabularySlice = createSlice({
           }
         }
 
-        const o = {
-          ...(spaceRep[uid] ?? {}),
+        const o: MetaDataObj = {
+          ...(spaceRep[uid] ?? { d: new Date().toJSON(), vC: 1 }),
           tpPc: newPlayCount,
           tpAcc: newAccuracy,
-          pron: pronunciation ? true : undefined,
+          pron: pronunciation === true ? true : undefined,
         };
 
-        const newValue = { ...spaceRep, [uid]: o } as SpaceRepetitionMap;
+        const newValue = { ...spaceRep, [uid]: o };
         state.setting.repTID = Date.now();
         state.setting.repetition = localStoreAttrUpdate(
           new Date(),
@@ -484,7 +503,10 @@ const vocabularySlice = createSlice({
           newValue
         );
       },
-      prepare: (uid: string, { pronunciation } = {}) => ({
+      prepare: (
+        uid: string,
+        { pronunciation }: { pronunciation?: boolean } | undefined = {}
+      ) => ({
         payload: { uid, pronunciation },
       }),
     },
@@ -512,7 +534,7 @@ const vocabularySlice = createSlice({
     });
 
     builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
-      const { value: newValue } = action.payload;
+      const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(

@@ -20,7 +20,7 @@ export default function KanaOptionsSlider(props: KanaOptionsSliderProps) {
 
   const min = 4;
   const max = 16;
-  const wide = 32;
+  const wide = 31;
 
   let marks: Marks[] = [];
   let marksMap: Record<string, number> = {};

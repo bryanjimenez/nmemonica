@@ -14,6 +14,7 @@ import type { GameChoice, GameQuestion } from "./FourChoices";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
@@ -21,7 +22,6 @@ import {
   randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
-import { setStateFunction } from "../../hooks/helperHK";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch } from "../../slices";
@@ -34,7 +34,6 @@ import { TermFilterBy } from "../../slices/settingHelper";
 import type { RawKanji } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -107,7 +106,7 @@ function prepareGame(
       compare: c.uid,
       toString: (side: boolean) =>
         side ?? writePractice ? c.english : c.kanji,
-      toHTML: (side: boolean) => (
+      toHTML: ({ side }: { side?: boolean } = {}) => (
         <>{side ?? writePractice ? c.english : c.kanji}</>
       ),
     })),
@@ -160,7 +159,7 @@ export default function KanjiGrid() {
 
   useEffect(() => {
     if (kanjiList.length === 0) {
-      dispatch(getKanji());
+      void dispatch(getKanji());
     }
   }, []);
 
@@ -170,9 +169,7 @@ export default function KanjiGrid() {
   const [frequency, setFrequency] = useState<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
   const prevUidRef = useRef<string | undefined>("");
   const [writePractice, setEnglishSide] = useState(false);
@@ -239,7 +236,7 @@ export default function KanjiGrid() {
     // setLastNext(Date.now());
     // prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setCurrExmpl(null);
   }, [filteredTerms, selectedIndex /* lastNext, errorSkipIndex*/]);
 
@@ -284,7 +281,7 @@ export default function KanjiGrid() {
     // setLastNext(Date.now());
     // prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setCurrExmpl(null);
   }, [
     filteredTerms,
@@ -386,22 +383,15 @@ export default function KanjiGrid() {
               </Link>
             </div>
           </div>
-          <div className="col text-center">
-            <FrequencyTermIcon
-              visible={
-                term_reinforce &&
-                kanji.uid !== filteredTerms[order[selectedIndex]].uid
-              }
-            />
-          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <span>{game.question.toHTML(false)}</span>
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
-                toggle={term_reinforce}
+                hasReinforce={term_reinforce}
                 term={kanji}
+                isReinforced={reinforcedUID !== null}
               />
             </div>
           </div>

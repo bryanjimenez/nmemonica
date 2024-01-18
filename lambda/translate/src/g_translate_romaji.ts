@@ -113,13 +113,13 @@ async function updatePhrases() {
  * @returns an AxiosPromise
  */
 async function getRomaji(japanese: string) {
-  var data = qs.stringify({
+  const data = qs.stringify({
     "f.req":
       '[[["MkEWBc","[[\\"' +
       japanese +
       '\\",\\"ja\\",\\"en\\",true],[null]]",null,"generic"]]]',
   });
-  var config = {
+  const config = {
     method: "post",
     url: "https://translate.google.com/_/TranslateWebserverUi/data/batchexecute",
     // headers: {

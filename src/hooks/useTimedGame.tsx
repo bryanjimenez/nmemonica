@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { useForceRender } from "./helperHK";
 import type { useDeviceMotionActions } from "./useDeviceMotionActions";
+import { useForceRender } from "./useFade";
 import type { GameActionHandler } from "./useSwipeActions";
 import {
   LoopSettingBtn,
@@ -16,7 +16,7 @@ import {
   setWordTPCorrect,
   setWordTPIncorrect,
 } from "../slices/vocabularySlice";
-import type { SpaceRepetitionMap } from "../typings/raw";
+import type { MetaDataObj } from "../typings/raw";
 
 /* globals NodeJS */
 
@@ -185,8 +185,8 @@ export function useTimedGame(
 
     loopAbortControllers.current = [ac1, ac2, ac3, ac4, ac5];
 
-    let gamePropmt: (ac: AbortController) => Promise<Awaited<void>[]>;
-    let gameResponse: (ac: AbortController) => Promise<void>;
+    let gamePropmt: (ac: AbortController) => Promise<unknown>;
+    let gameResponse: (ac: AbortController) => Promise<unknown>;
     if (englishSideUp) {
       gamePropmt = (ac) => looperSwipe("down", ac);
 
@@ -210,19 +210,21 @@ export function useTimedGame(
       });
     };
 
-    pause(700, ac1)
+    void pause(700, ac1)
       .then(() => {
         // begin elapsing here
         tpTimeStamp.current = Date.now();
-        return gamePropmt(ac2).catch((error) => {
-          if (error.cause?.code === "UserAborted") {
-            // skip all playback
-            throw error;
-          } else {
-            // caught trying to fetch gamePrompt
-            // continue
+        return gamePropmt(ac2).catch(
+          (error: Error & { cause?: { code: string } }) => {
+            if (error.cause?.code === "UserAborted") {
+              // skip all playback
+              throw error;
+            } else {
+              // caught trying to fetch gamePrompt
+              // continue
+            }
           }
-        });
+        );
       })
       .then(() => {
         // begin tpAnimation here
@@ -237,10 +239,8 @@ export function useTimedGame(
             loopAbortControllers.current = undefined;
             return looperSwipe("left");
           })
-          .catch((error: Error) => {
-            const cause = error.cause as {code: string };
-
-            if (cause?.code === "UserAborted") {
+          .catch((error: Error & { cause?: { code: string } }) => {
+            if (error.cause?.code === "UserAborted") {
               // user aborted
               // don't continue
             } else {
@@ -272,11 +272,6 @@ export function useTimedGame(
     loopAbortControllers.current?.forEach((ac /*, idx, { length }*/) => {
       wasLooping = true;
       ac.abort();
-      // TODO: unused
-      // if (idx === length - 1) {
-      //   // TODO: interruptTimedPlayAnimation  here?
-      //   interruptTimedPlayAnimation(setTpAnimation);
-      // }
     });
     loopAbortControllers.current = undefined;
 
@@ -291,7 +286,7 @@ export function useTimedGame(
     if (loop > 0) {
       promise = gameActionHandler(direction, AbortController);
     }
-    return promise || Promise.reject("loop disabled");
+    return promise ?? Promise.reject(new Error("loop disabled"));
   }
 
   /**
@@ -334,7 +329,7 @@ export function useTimedGame(
   function gradeTimedPlayEvent(
     dispatch: AppDispatch,
     uid: string,
-    repetition: SpaceRepetitionMap
+    repetition: Record<string, MetaDataObj | undefined>
   ) {
     if (loop > 0 && tpAnswered.current !== undefined) {
       if (tpBtn === "reset") {
@@ -396,7 +391,7 @@ export function useTimedGame(
    */
   function timedPlayAnswerHandlerWrapper(
     direction: string,
-    handler: (direction: string) => void
+    handler: GameActionHandler
   ) {
     if (loop === 0) return handler;
 
@@ -463,11 +458,8 @@ function interruptTimedPlayToAnswer(
   tpElapsed: React.MutableRefObject<number | undefined>
 ) {
   let handler = answerHandler;
-  const noop = () => {
-    /** override handler with no-op */
-  };
-  let userInterruptAnimation = () =>
-    interruptTimedPlayAnimation(tpAnimation, setTpAnimation);
+
+  let needInterruptAnimation = true;
 
   // interrupt loop
   const wasLooping = abortLoop();
@@ -485,7 +477,7 @@ function interruptTimedPlayToAnswer(
       tpAnswered.current = true;
 
       if (duringQuery) {
-        userInterruptAnimation = noop;
+        needInterruptAnimation = false;
 
         tpAnswered.current = undefined;
         setTimeout(() => {
@@ -499,12 +491,12 @@ function interruptTimedPlayToAnswer(
         // normal behavior
       } else if (duringResponse) {
         tpAnswered.current = false;
-        handler = noop; // avoid replaying ontop of loop
-        userInterruptAnimation = noop;
+        handler = () => Promise.resolve(/** avoid replaying ontop of loop */);
+        needInterruptAnimation = false;
       }
     } else {
       if (duringResponse) {
-        userInterruptAnimation = noop;
+        needInterruptAnimation = false;
       }
 
       // interrupt-to-auto-quit
@@ -512,7 +504,10 @@ function interruptTimedPlayToAnswer(
       loopQuitTimer.current = [countDown];
     }
 
-    userInterruptAnimation();
+    if (needInterruptAnimation) {
+      interruptTimedPlayAnimation(tpAnimation, setTpAnimation);
+    }
+
     setMediaSessionPlaybackState("paused");
   }
 

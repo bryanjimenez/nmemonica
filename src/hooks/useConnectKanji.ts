@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
 import type { TermFilterBy, TermSortBy } from "../slices/settingHelper";
+import { ValuesOf } from "../typings/raw";
 
 /**
  * Kanji app-state props
@@ -31,8 +32,8 @@ export function useConnectKanji() {
     RootState,
     [
       boolean,
-      (typeof TermFilterBy)[keyof typeof TermFilterBy],
-      (typeof TermSortBy)[keyof typeof TermSortBy],
+      ValuesOf<typeof TermFilterBy>,
+      ValuesOf<typeof TermSortBy>,
       number,
       number,
       boolean

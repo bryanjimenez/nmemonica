@@ -98,7 +98,7 @@ export function initServiceWorker({
     swSelf.clients
       .matchAll({ includeUncontrolled: true })
       .then(function (clientList) {
-        var urls = clientList.map(function (client) {
+        const urls = clientList.map(function (client) {
           return client.url;
         });
         console.log("[ServiceWorker] Matching clients:", urls.join(", "));
@@ -462,8 +462,8 @@ export function initServiceWorker({
    * objectStore.count()
    */
   function countIDBItem(db: IDBDatabase, store = indexedDBStore) {
-    var transaction = db.transaction([store]);
-    var request = transaction.objectStore(store).count();
+    const transaction = db.transaction([store]);
+    const request = transaction.objectStore(store).count();
 
     const requestP: Promise<number> = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
@@ -500,8 +500,8 @@ export function initServiceWorker({
     { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
     key: string
   ) {
-    var transaction = db.transaction([store]);
-    var request = transaction.objectStore(store).get(key);
+    const transaction = db.transaction([store]);
+    const request = transaction.objectStore(store).get(key);
 
     const requestP: Promise<CacheDataObj> = new Promise((resolve, reject) => {
       request.onerror = function (/*event*/) {
@@ -603,7 +603,7 @@ export function initServiceWorker({
    * objectStore.delete(key)
    */
   function deleteIDBItem(db: IDBDatabase, store: string, key: string) {
-    var transaction = db.transaction([store], "readwrite");
+    const transaction = db.transaction([store], "readwrite");
 
     let request = transaction.objectStore(store).delete(key);
 

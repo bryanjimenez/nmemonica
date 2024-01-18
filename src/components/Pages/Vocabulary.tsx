@@ -15,11 +15,12 @@ import VocabularyMain from "./VocabularyMain";
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
 import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
-  DIFFICULTY_THRLD,
   alphaOrder,
   dateViewOrder,
   difficultyOrder,
+  difficultySubFilter,
   getCacheUID,
   getTerm,
   getTermUID,
@@ -35,7 +36,6 @@ import {
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import { addParam } from "../../helper/urlHelper";
-import { buildAction, setStateFunction } from "../../hooks/helperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -60,7 +60,6 @@ import type { RawVocabulary } from "../../typings/raw";
 import { DifficultySlider } from "../Form/Difficulty";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ReCacheAudioBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
@@ -84,12 +83,10 @@ export default function Vocabulary() {
   /** Alphabetic order quick scroll in progress */
   const isAlphaSortScrolling = useRef(false);
 
-  const prevReinforcedUID = useRef<string | undefined>(undefined);
+  const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
 
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
   // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   // const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
@@ -111,11 +108,11 @@ export default function Vocabulary() {
     vocabList,
 
     // Refs
-    memoThreshold,
-    reinforce,
-    filterType,
-    hintEnabled,
-    sortMethod,
+    memoThreshold: memoThresholdREF,
+    reinforce: reinforceREF,
+    filterType: filterTypeREF,
+    hintEnabled: hintEnabledREF,
+    sortMethod: sortMethodREF,
     activeGroup,
 
     // modifiable during game
@@ -131,7 +128,7 @@ export default function Vocabulary() {
 
   useEffect(() => {
     if (vocabList.length === 0) {
-      dispatch(getVocabulary());
+      void dispatch(getVocabulary());
     }
   }, []);
 
@@ -151,36 +148,21 @@ export default function Vocabulary() {
     );
 
     let filtered = termFilterByType(
-      filterType.current,
+      filterTypeREF.current,
       vocabList,
       allFrequency,
       activeGroup,
       buildAction(dispatch, toggleVocabularyFilter)
     );
 
-    switch (sortMethod.current) {
+    switch (sortMethodREF.current) {
       case TermSortBy.DIFFICULTY: {
         // exclude vocab with difficulty beyond memoThreshold
-        const subFilter = filtered.filter((v) => {
-          const dT = memoThreshold.current;
-          const d = metadata.current[v.uid]?.difficulty;
-
-          // TODO: extract to fn for tests?
-          // const showUndefMemoV =
-          //   d === undefined &&
-          //   (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
-          // const showV = dT < 0 ? d > -1 * dT : d < dT;
-
-          let showUndefMemoV = false;
-          let showV= false;
-          if(d===undefined){
-            showUndefMemoV = (dT < 0 ? -1 * dT < DIFFICULTY_THRLD : dT > DIFFICULTY_THRLD);
-          }else{
-            showV = dT < 0 ? d > -1 * dT : d < dT;
-          }
-
-          return showUndefMemoV || showV;
-        });
+        const subFilter = difficultySubFilter(
+          memoThresholdREF.current,
+          filtered,
+          metadata.current
+        );
 
         if (subFilter.length > 0) {
           filtered = subFilter;
@@ -192,7 +174,7 @@ export default function Vocabulary() {
         break;
       }
       case TermSortBy.GAME:
-        if (reinforce.current) {
+        if (reinforceREF.current) {
           // if reinforce, place reinforced/frequency terms
           // at the end
           const [freqTerms, nonFreqTerms] = partition(
@@ -224,7 +206,7 @@ export default function Vocabulary() {
     if (filteredVocab.length === 0) return { newOrder: [] };
 
     let newOrder, jOrder, eOrder;
-    switch (sortMethod.current) {
+    switch (sortMethodREF.current) {
       case TermSortBy.RANDOM:
         newOrder = randomOrder(filteredVocab);
         break;
@@ -232,7 +214,7 @@ export default function Vocabulary() {
         newOrder = dateViewOrder(filteredVocab, metadata.current);
         break;
       case TermSortBy.GAME:
-        if (reinforce.current) {
+        if (reinforceREF.current) {
           // search backwards for splitIdx where [...nonFreqTerms, ...freqTerms]
           let splitIdx = -1;
           for (let idx = filteredVocab.length - 1; idx > -1; idx--) {
@@ -292,13 +274,13 @@ export default function Vocabulary() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
     play(
-      reinforce.current,
-      filterType.current,
+      reinforceREF.current,
+      filterTypeREF.current,
       frequency,
       filteredVocab,
       metadata.current,
@@ -330,7 +312,7 @@ export default function Vocabulary() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = buildGameActionsHandler(
@@ -362,7 +344,7 @@ export default function Vocabulary() {
     resetTimedPlay,
 
     loop,
-    tpAnswered,
+    tpAnswered: tpAnsweredREF,
     tpAnimation,
   } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
 
@@ -402,17 +384,17 @@ export default function Vocabulary() {
 
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
-        const frequency = prevState.reinforcedUID !== undefined;
+        const frequency = prevState.reinforcedUID !== null;
 
-        dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
+        void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
-            const { map, prevMap } = payload;
+            const { value, prevVal } = payload;
 
-            const prevDate = prevMap[uid]?.d;
-            const repStats = { [uid]: { ...map[uid], d: prevDate } };
+            const prevDate = prevVal.d ?? value.d;
+            const repStats = { [uid]: { ...value, d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
-            if (tpAnswered.current !== undefined) {
+            if (tpAnsweredREF.current !== undefined) {
               timedPlayLog(messageLog, vocabulary, repStats, { frequency });
             } else {
               spaceRepLog(messageLog, vocabulary, repStats, { frequency });
@@ -581,11 +563,6 @@ export default function Vocabulary() {
                 <div className="sm-icon-grp">{loopActionBtn}</div>
               </div>
             </div>
-            <div className="col text-center">
-              <FrequencyTermIcon
-                visible={reinforcedUID !== undefined && reinforcedUID !== ""}
-              />
-            </div>
             <div className="col">
               <div className="d-flex justify-content-end">
                 {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
@@ -597,7 +574,7 @@ export default function Vocabulary() {
                   manualUpdate={uid}
                 />
                 <ShowHintBtn
-                  visible={hintEnabled.current}
+                  visible={hintEnabledREF.current}
                   active={isHintable}
                   setShowHint={setStateFunction(setShowHint, (prev) =>
                     prev ? undefined : uid
@@ -615,6 +592,10 @@ export default function Vocabulary() {
                   vocabulary={vocabulary}
                 />
                 <ToggleFrequencyTermBtnMemo
+                  term={vocabulary}
+                  count={frequency.length}
+                  isReinforced={reinforcedUID !== null}
+                  hasReinforce={vocabulary_reinforce}
                   addFrequencyTerm={
                     // TODO: memoize me ?
                     (uid) => {
@@ -626,9 +607,6 @@ export default function Vocabulary() {
                     setFrequency((f) => f.filter((id) => id !== uid));
                     buildAction(dispatch, removeFrequencyWord)(uid);
                   }}
-                  toggle={vocabulary_reinforce}
-                  term={vocabulary}
-                  count={frequency.length}
                 />
               </div>
             </div>
@@ -637,7 +615,7 @@ export default function Vocabulary() {
         <div
           className="progress-line flex-shrink-1"
           onClick={() => {
-            if (sortMethod.current === TermSortBy.ALPHABETIC) {
+            if (sortMethodREF.current === TermSortBy.ALPHABETIC) {
               const delayTime = 4000;
               setShowPageBar(true);
 
@@ -736,7 +714,7 @@ function buildRecacheAudioHandler(
 function buildGameActionsHandler(
   gotoNextSlide: () => void,
   gotoPrev: () => void,
-  reinforcedUID: string | undefined,
+  reinforcedUID: string | null,
   selectedIndex: number,
   vocab: RawVocabulary[],
   verbForm: string,
@@ -753,10 +731,16 @@ function buildGameActionsHandler(
 
     if (direction === "left") {
       gotoNextSlide();
-      actionPromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else if (direction === "right") {
       gotoPrev();
-      actionPromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else {
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
@@ -815,7 +799,10 @@ function buildGameActionsHandler(
         actionPromise = fetchAudio(audioUrl, AbortController);
       }
     }
-    return actionPromise ?? Promise.reject();
+    return (
+      actionPromise ??
+      Promise.reject(/** TODO: give direction a type to remove this */)
+    );
   };
 }
 

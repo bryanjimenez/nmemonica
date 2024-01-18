@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -11,7 +12,8 @@ import { useDispatch } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
-import { logify, spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -28,7 +30,6 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { addParam } from "../../helper/urlHelper";
-import { buildAction, setStateFunction } from "../../hooks/helperHK";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -48,12 +49,9 @@ import {
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
 import type { RawPhrase } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
-import Console from "../Form/Console";
 import type { ConsoleMessage } from "../Form/Console";
-import { MinimalUI } from "../Form/MinimalUI";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ReCacheAudioBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
@@ -70,20 +68,18 @@ const PhrasesMeta = {
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const prevReinforcedUID = useRef<string | undefined>(undefined);
+  const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
 
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
   const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showMeaning, setShowMeaning] = useState<string | null>(null);
-  const [showRomaji, setShowRomaji] = useState<string | null>(null);
-  const [showLit, setShowLit] = useState<string | null>(null);
+  const [showMeaning, setShowMeaning] = useState<boolean>(false);
+  const [showRomaji, setShowRomaji] = useState<boolean>(false);
+  const [showLit, setShowLit] = useState<boolean>(false);
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [recacheAudio, setRecacheAudio] = useState(false);
 
@@ -112,7 +108,7 @@ export default function Phrases() {
 
   useEffect(() => {
     if (phraseList.length === 0) {
-      dispatch(getPhrase());
+      void dispatch(getPhrase());
     }
   }, []);
 
@@ -186,7 +182,7 @@ export default function Phrases() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, lastNext, errorSkipIndex]);
 
   const gotoNextSlide = useCallback(() => {
@@ -204,7 +200,6 @@ export default function Phrases() {
       gotoNext
     );
   }, [
-    dispatch,
     reinforce,
     filterType,
     frequency,
@@ -232,7 +227,7 @@ export default function Phrases() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext, errorSkipIndex]);
 
   const gameActionHandler = buildGameActionsHandler(
@@ -258,7 +253,6 @@ export default function Phrases() {
     // timedPlayVerifyBtn, // not used
 
     timedPlayAnswerHandlerWrapper,
-    gradeTimedPlayEvent,
     resetTimedPlay,
 
     loop,
@@ -267,7 +261,7 @@ export default function Phrases() {
   } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
   // TODO: variable countdown time
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
       reinforcedUID: prevReinforcedUID.current,
@@ -288,15 +282,15 @@ export default function Phrases() {
 
         // don't increment reinforced terms
         const shouldIncrement = uid !== prevState.reinforcedUID;
-        dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
+        void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
-            const { map, prevMap } = payload;
+            const { value, prevVal } = payload;
 
-            const prevDate = prevMap[uid] && prevMap[uid]?.d;
-            const repStats = { [uid]: { ...map[uid], d: prevDate } };
+            const prevDate = prevVal.d ?? value.d;
+            const repStats = { [uid]: { ...value, d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
-            const frequency = prevState.reinforcedUID !== undefined;
+            const frequency = prevState.reinforcedUID !== null;
             if (tpAnsweredREF.current !== undefined) {
               timedPlayLog(messageLog, phrase, repStats, { frequency });
             } else {
@@ -312,9 +306,9 @@ export default function Phrases() {
         }
       }
 
-      setShowMeaning(null);
-      setShowRomaji(null);
-      setShowLit(null);
+      setShowMeaning(false);
+      setShowRomaji(false);
+      setShowLit(false);
       setErrorMsgs([]);
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
@@ -421,8 +415,8 @@ export default function Phrases() {
     jLabelMemo
   );
 
-  const shortEN = phrase && (phrase.lit?.length || phrase.english.length) < 55;
-  const shortJP = jObj && jObj.getSpelling().length < 55;
+  const shortEN = (phrase.lit?.length ?? phrase.english.length) < 55;
+  const shortJP = jObj?.getSpelling().length < 55;
 
   const {
     aboveSmallCss,
@@ -459,25 +453,21 @@ export default function Phrases() {
             {romajiActive.current && romaji && (
               <h5>
                 <span
-                  onClick={setStateFunction(setShowRomaji, (romaji) =>
-                    romaji ? null : uid
-                  )}
+                  onClick={setStateFunction(setShowRomaji, (romaji) => !romaji)}
                   className="clickable loop-no-interrupt"
                 >
-                  {showRomaji === uid ? romaji : "[Romaji]"}
+                  {showRomaji ? romaji : "[Romaji]"}
                 </span>
               </h5>
             )}
             <Sizable
               className={belowNoInterruptCss}
               breakPoint="md"
-              onClick={setStateFunction(setShowMeaning, (meaning) =>
-                meaning ? null : uid
-              )}
+              onClick={setStateFunction(setShowMeaning, (meaning) => !meaning)}
               largeClassName={belowLargeCss}
               smallClassName={belowSmallCss}
             >
-              {showMeaning === uid ? bottomValue : bottomLabel}
+              {showMeaning ? bottomValue : bottomLabel}
             </Sizable>
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>
@@ -502,21 +492,14 @@ export default function Phrases() {
               <div className="sm-icon-grp">{loopActionBtn}</div>
             </div>
           </div>
-          <div className="col text-center">
-            <FrequencyTermIcon
-              visible={reinforcedUID !== undefined && reinforcedUID !== ""}
-            />
-          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <ToggleLiteralPhraseBtn
                 visible={
                   englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
                 }
-                toggle={showLit === uid}
-                action={setStateFunction(setShowLit, (lit) =>
-                  lit ? null : uid
-                )}
+                toggle={showLit}
+                action={setStateFunction(setShowLit, (lit) => !lit)}
               />
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={
@@ -530,7 +513,8 @@ export default function Phrases() {
                   setFrequency((f) => f.filter((id) => id !== uid));
                   buildAction(dispatch, removeFrequencyPhrase)(uid);
                 }}
-                toggle={phrase_reinforce}
+                hasReinforce={phrase_reinforce}
+                isReinforced={reinforcedUID !== null}
                 term={phrase}
                 count={frequency.length}
               />
@@ -560,8 +544,8 @@ function getJapanesePhrase(
 
 function englishPhraseSubComp(
   phrase: RawPhrase,
-  showLit: string | null,
-  setShowLit: React.Dispatch<React.SetStateAction<string | null>>
+  showLit: boolean,
+  setShowLit: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   return (
     <span
@@ -569,7 +553,7 @@ function englishPhraseSubComp(
       onClick={
         phrase.lit
           ? () => {
-              setShowLit((lit) => (lit ? null : phrase.uid));
+              setShowLit((lit) => !lit);
             }
           : undefined
       }
@@ -655,28 +639,33 @@ function buildRecacheAudioHandler(
 }
 
 function buildGameActionsHandler(
-  gotoNextSlide: Function,
-  gotoPrev: Function,
-  reinforcedUID: string | undefined,
+  gotoNextSlide: () => void,
+  gotoPrev: () => void,
+  reinforcedUID: string | null,
   selectedIndex: number,
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
   recacheAudio: boolean
 ) {
-  return function swipeActionHandler(
+  return function gameActionHandler(
     direction: string,
     AbortController?: AbortController
   ) {
-    // this.props.logger("swiped " + direction, DebugLevel.WARN);
-    let swipePromise;
+    let actionPromise;
 
     if (direction === "left") {
       gotoNextSlide();
-      swipePromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else if (direction === "right") {
       gotoPrev();
-      swipePromise = Promise.all([Promise.resolve()]);
+      actionPromise = Promise.all([
+        Promise.resolve(/** Interrupt */),
+        Promise.resolve(/** Fetch */),
+      ]);
     } else {
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
@@ -691,7 +680,7 @@ function buildGameActionsHandler(
           uid,
         });
 
-        swipePromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(audioUrl, AbortController);
       } else if (direction === "down") {
         const inEnglish = phrase.english;
 
@@ -701,10 +690,13 @@ function buildGameActionsHandler(
           uid: phrase.uid + ".en",
         });
 
-        swipePromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(audioUrl, AbortController);
       }
     }
-    return swipePromise || Promise.reject();
+    return (
+      actionPromise ??
+      Promise.reject(/** TODO: give direction a type to remove this */)
+    );
   };
 }
 

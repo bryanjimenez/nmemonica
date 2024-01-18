@@ -2,87 +2,9 @@ import type {
   ActionCreatorWithoutPayload,
   PayloadActionCreator,
 } from "@reduxjs/toolkit";
-import React, { useEffect, useState } from "react";
+import type React from "react";
 
-import { getWindow } from "../helper/browserGlobal";
 import type { AppDispatch } from "../slices";
-
-/**
- * For fading/transition
- * @param delay in ms to toggle from false to true
- * @return a tuple [state?:boolean, trigger:function] state and a trigger
- */
-export function useFade(delay: number): [boolean | undefined, () => void] {
-  const [fade, setFade] = useState(true);
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout | undefined = undefined;
-    if (delay > 0) {
-      timeout = setTimeout(() => {
-        if (fade) {
-          setFade(false);
-        }
-      }, delay);
-    }
-
-    return () => {
-      if (delay > 0) clearTimeout(timeout);
-    };
-  });
-
-  if (delay > 0) {
-    return [!fade, () => setFade(true)];
-  } else {
-    return [
-      undefined,
-      () => {
-        /** Not needed, delay:0 */
-      },
-    ];
-  }
-}
-
-/**
- * Force a rerender
- */
-export function useForceRender() {
-  const [toggle, forceRender] = useState(true);
-
-  return () => forceRender(!toggle);
-}
-
-/**
- * https://usehooks.com/useWindowSize/
- */
-export function useWindowSize() {
-  // Initialize state with undefined width/height so server and client renders match
-  // Learn more here: https://joshwcomeau.com/react/the-perils-of-rehydration/
-  const [windowSize, setWindowSize] = useState<{
-    width?: number;
-    height?: number;
-  }>({
-    width: undefined,
-    height: undefined,
-  });
-  useEffect(() => {
-    const w = getWindow();
-    // Handler to call on window resize
-    function handleResize() {
-      // Set window width/height to state
-      setWindowSize({
-        width: w.innerWidth,
-        height: w.innerHeight,
-      });
-    }
-    // Add event listener
-    w.addEventListener("resize", handleResize);
-    // Call handler right away so state gets updated with initial window size
-    handleResize();
-    // Remove event listener on cleanup
-    return () => w.removeEventListener("resize", handleResize);
-  }, []); // Empty array ensures that effect is only run on mount
-  return windowSize;
-}
 
 /**
  * State setter from event

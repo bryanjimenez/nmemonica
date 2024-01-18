@@ -56,7 +56,7 @@ fs.open(indexDevelopment, "r", (err, fd_sw) => {
       throw err;
     }
 
-    var stream = fs.createWriteStream(indexProduction, {
+    const stream = fs.createWriteStream(indexProduction, {
       flags: "w",
     });
 

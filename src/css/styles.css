@@ -114,6 +114,14 @@ a {
   background-color: var(--bs-light);
 }
 
+.underline {
+  border-bottom: 2px solid var(--bs-dark) !important;
+}
+
+.dark-mode .underline {
+  border-bottom: 2px solid var(--bs-light) !important;
+}
+
 .fs-kanji-huge {
   font-size: 10rem;
 }

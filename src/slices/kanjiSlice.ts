@@ -12,7 +12,7 @@ import { firebaseConfig } from "../../environment.development";
 import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { buildTagObject } from "../helper/reducerHelper";
-import type { RawKanji, SpaceRepetitionMap } from "../typings/raw";
+import type { MetaDataObj, RawKanji, ValuesOf } from "../typings/raw";
 
 import type { RootState } from ".";
 
@@ -22,12 +22,12 @@ export interface KanjiInitSlice {
   tagObj: string[];
 
   setting: {
-    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
-    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
+    filter: ValuesOf<typeof TermFilterBy>;
+    ordered: ValuesOf<typeof TermSortBy>;
     reinforce: boolean;
     memoThreshold: number;
     repTID: number;
-    repetition: SpaceRepetitionMap;
+    repetition: Record<string, MetaDataObj | undefined>;
     activeGroup: string[];
     activeTags: string[];
 
@@ -70,9 +70,14 @@ export const getKanji = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching kanji: 0");
     // }
-    return fetch(firebaseConfig.databaseURL + "/lambda/kanji.json", {
-      headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
+    const value = (await fetch(
+      firebaseConfig.databaseURL + "/lambda/kanji.json",
+      {
+        headers: { "Data-Version": version },
+      }
+    ).then((res) => res.json())) as Record<string, RawKanji>;
+
+    return { value, version };
   }
 );
 
@@ -143,7 +148,7 @@ const kanjiSlice = createSlice({
 
     toggleKanjiOrdering(
       state,
-      action: { payload: (typeof TermSortBy)[keyof typeof TermSortBy] }
+      action: { payload: ValuesOf<typeof TermSortBy> }
     ) {
       const { ordered } = state.setting;
       const override = action.payload;
@@ -159,7 +164,7 @@ const kanjiSlice = createSlice({
         ordered + 1,
         allowed,
         override
-      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+      ) as ValuesOf<typeof TermSortBy>;
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -173,7 +178,7 @@ const kanjiSlice = createSlice({
     addFrequencyKanji(state, action: { payload: string }) {
       const uid = action.payload;
 
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -200,7 +205,7 @@ const kanjiSlice = createSlice({
 
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           spaceRep,
           { count: false, date: false },
@@ -246,7 +251,7 @@ const kanjiSlice = createSlice({
       ) => {
         const { uid, value } = action.payload;
 
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           state.setting.repetition,
           { count: false, date: false },
@@ -297,7 +302,7 @@ const kanjiSlice = createSlice({
         filter + 1,
         [TermFilterBy.FREQUENCY, TermFilterBy.TAGS],
         override
-      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
+      ) as ValuesOf<typeof TermFilterBy>;
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),
@@ -367,7 +372,7 @@ const kanjiSlice = createSlice({
     });
 
     builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
-      const { value: newValue } = action.payload;
+      const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(

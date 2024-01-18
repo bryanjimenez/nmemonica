@@ -14,8 +14,8 @@ import { NotReady } from "./NotReady";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import VerbFormSlider from "./VerbFormSlider";
+import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
-import { buildAction } from "../../hooks/helperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
@@ -71,7 +71,7 @@ export default function SettingsVocab() {
   const [initialMemoThreshold] = useState(Math.abs(memoThreshold));
 
   if (Object.keys(vocabGroups).length === 0) {
-    dispatch(getVocabulary());
+    void dispatch(getVocabulary());
   }
 
   const vocabFreq = useMemo(
@@ -232,7 +232,12 @@ export default function SettingsVocab() {
                     shownForms.map((form, k) => (
                       <div
                         key={form}
-                        className="d-flex justify-content-between"
+                        className={classNames({
+                          "d-flex justify-content-between": true,
+                          "pt-2": k === shownForms.length - verbColSplit,
+                          "pb-2":
+                            k === shownForms.length - 1 && verbColSplit === 0,
+                        })}
                       >
                         <div
                           className={classNames({
@@ -320,8 +325,10 @@ export default function SettingsVocab() {
             <div>
               <div className="d-flex justify-content-end p-2">
                 <VerbFormSlider
-                  initial={verbColSplit}
-                  setChoiceN={buildAction(dispatch, updateVerbColSplit)}
+                  initial={shownForms.length - verbColSplit}
+                  setChoiceN={(slip: number) => {
+                    dispatch(updateVerbColSplit(shownForms.length - slip));
+                  }}
                   max={verbFormsOrder.length}
                   statusText="Column layout"
                 />

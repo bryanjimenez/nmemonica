@@ -26,6 +26,7 @@ export interface RawPhrase {
 
   english: string;
   lit?: string; // literal translation
+  lesson?: string;
   romaji?: string;
 
   japanese: string;
@@ -74,13 +75,12 @@ export interface MetaDataObj {
   /** Timed play correct avg (ms) */ tpCAvg?: number;
 }
 
-export type SpaceRepetitionMap = Record<string, MetaDataObj | undefined>;
-
 export type FuriganaToggleMap = Record<
   string,
-  {
-    /** Furigana shown (yes:undefined|true) */ f?: boolean;
-  }
+  | {
+      /** Furigana shown (yes:undefined|true) */ f?: boolean;
+    }
+  | undefined
 >;
 
 export interface AudioQueryParams {
@@ -88,11 +88,6 @@ export interface AudioQueryParams {
   /** Query */ q: string;
   /** Caching/indexedDB key */ uid: string;
 }
-
-export type VerbFormArray = {
-  /** Verb form (tense label) */ name: string;
-  /** inflected/conjugated verb */ value: JapaneseText;
-}[];
 
 /**
  * Parsing used for Ruby Element
@@ -145,3 +140,6 @@ export type FilterKeysOfType<O, type> = {
 // Partial<T> & Pick<T, "english" | "kanji">;
 // export type Optional<T, K extends keyof T> = Omit<T, K> & { [P in keyof T]: T[P] | undefined; }
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+/** Get all values from a Record */
+export type ValuesOf<R> = R[keyof R];

@@ -91,8 +91,11 @@ export default function ParticlesGame() {
 
     const question: GameQuestion = {
       english: english,
-      toHTML: (correct: boolean) =>(<div className="fs-1">
-        {buildQuestionElement(JapaneseText.parse(q), answer, correct)}</div>),
+      toHTML: (correct: boolean) => (
+        <div className="fs-1">
+          {buildQuestionElement(JapaneseText.parse(q), answer, correct)}
+        </div>
+      ),
     };
 
     return { question, answer, choices, literal };
@@ -130,6 +133,8 @@ export default function ParticlesGame() {
         default:
           break;
       }
+
+      return Promise.resolve(/** interrupt, fetch */)
     },
     [gotoPrev, gotoNext]
   );
@@ -164,11 +169,12 @@ export default function ParticlesGame() {
  * Returns a list of choices which includes the right answer
  */
 function createChoices(answer: AnswerParticle, particleList: ChoiceParticle[]) {
+  const choiceCss = "fs-1";
   let choices: GameChoice[] = [
     {
       ...answer,
       compare: answer.japanese,
-      toHTML: () => <>{answer.japanese}</>,
+      toHTML: () => <span className={choiceCss}>{answer.japanese}</span>,
     },
   ];
   while (choices.length < 4) {
@@ -183,7 +189,7 @@ function createChoices(answer: AnswerParticle, particleList: ChoiceParticle[]) {
         {
           ...choice,
           compare: choice.japanese,
-          toHTML: () => <>{choice.japanese}</>,
+          toHTML: () => <span className={choiceCss}>{choice.japanese}</span>,
         },
       ];
     }

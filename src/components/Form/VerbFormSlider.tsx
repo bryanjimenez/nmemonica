@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import PropTypes from "prop-types";
 import { Slider, Typography } from "@mui/material";
+import PropTypes from "prop-types";
+import React, { useState } from "react";
 import "../../css/VerbFormSlider.css";
 
 interface Marks {
@@ -48,7 +48,7 @@ export default function VerbFormSlider(props: VerbFormSliderProps) {
     let splt = half + Math.abs(half - idx);
     if (max % 2 !== 0 && idx <= half) {
       splt++;
-      label = splt + "";
+      label = String(splt);
     }
 
     if (max % 2 === 0 && idx === half) {
@@ -81,6 +81,7 @@ export default function VerbFormSlider(props: VerbFormSliderProps) {
         valueLabelFormat={slideToLabel}
         getAriaValueText={slideToLabel}
         aria-labelledby="discrete-slider-restrict"
+        track={false}
         step={null}
         valueLabelDisplay="auto"
         marks={marks}

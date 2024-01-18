@@ -1,8 +1,8 @@
+import { fetchAudio as fetchAudioWithAuth } from "./audioHelper.production";
 import {
   authenticationHeader,
   developmentAuthEndPoint,
 } from "../../environment.development";
-import { fetchAudio as fetchAudioWithAuth } from "./audioHelper.production";
 
 /**
  * Request auth from **dev_auth** service
@@ -19,14 +19,20 @@ export function fetchAudio(
 
   const authP = fetch(developmentAuthEndPoint + url)
     .then((res) => res.json())
-    .then((data) => ({ [authenticationHeader]: data.auth }))
-    .catch((err) => {
+    .catch((err: Error) => {
       console.log("dev_auth failed");
+      console.log(err.message);
       return err;
     });
 
-  return authP.then((auth) => {
-    const aRequest = new Request(audioUrl, { headers: auth });
-    return fetchAudioWithAuth(aRequest, AbortController);
+  return authP.then((data) => {
+    const { auth } = data as { auth: string };
+    if (auth) {
+      const h = { [authenticationHeader]: auth };
+      const aRequest = new Request(audioUrl, { headers: h });
+      return fetchAudioWithAuth(aRequest, AbortController);
+    }
+
+    // TODO: return unavailable warning?
   });
 }

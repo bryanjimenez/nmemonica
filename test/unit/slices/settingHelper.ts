@@ -219,7 +219,7 @@ describe("settingHelper", function () {
     };
     it("increment view count", function () {
 
-      const { map, prevMap, value } = updateSpaceRepTerm(
+      const { record, value, prevVal  } = updateSpaceRepTerm(
         "uid0",
         metaData,
         { count: true, date: false },
@@ -229,12 +229,12 @@ describe("settingHelper", function () {
         undefined
       );
 
-      expect(prevMap["uid0"].vC).to.eq(1);
-      expect(map["uid0"].vC).to.eq(2);
-      expect(value["uid0"].vC).to.eq(2);
+      expect(prevVal.vC).to.eq(1);
+      expect(value.vC).to.eq(2);
+      expect(record["uid0"].vC).to.eq(2);
     });
     it("set reinforce", function () {
-      const { map, prevMap, value } = updateSpaceRepTerm(
+      const { record, value, prevVal } = updateSpaceRepTerm(
         "uid0",
         metaData,
         { count: false, date: false },
@@ -243,12 +243,12 @@ describe("settingHelper", function () {
         }
       );
 
-      expect(prevMap["uid0"].rein).to.eq(false);
-      expect(map["uid0"].rein).to.eq(true);
-      expect(value["uid0"].rein).to.eq(true);
+      expect(prevVal.rein).to.eq(false);
+      expect(value.rein).to.eq(true);
+      expect(record["uid0"].rein).to.eq(true);
     });
     it("toggle reinforce", function () {
-      const { map, prevMap, value } = updateSpaceRepTerm(
+      const { record, value, prevVal } = updateSpaceRepTerm(
         "uid0",
         metaData,
         { count: false, date: false },
@@ -257,14 +257,14 @@ describe("settingHelper", function () {
         }
       );
 
-      expect(prevMap["uid0"].rein).to.eq(false);
-      expect(map["uid0"].rein).to.eq(true);
-      expect(value["uid0"].rein).to.eq(true);
+      expect(prevVal.rein).to.eq(false);
+      expect(value.rein).to.eq(true);
+      expect(record["uid0"].rein).to.eq(true);
     });
    
     it("toggle furigana", function () {
 
-      const { map, prevMap, value } = updateSpaceRepTerm(
+      const { record, value, prevVal } = updateSpaceRepTerm(
         "uid0",
         metaData,
         { count: true, date: false },
@@ -273,9 +273,9 @@ describe("settingHelper", function () {
         }
       );
 
-      expect(prevMap["uid0"].f).to.eq(true);
-      expect(map["uid0"].f).to.eq(false);
-      expect(value["uid0"].f).to.eq(false);
+      expect(prevVal.f).to.eq(true);
+      expect(value.f).to.eq(false);
+      expect(record["uid0"].f).to.eq(false);
     });
   }); // updateSpaceRepTerm
 });

@@ -58,7 +58,7 @@ function validateAuthenticationSignature(
  */
 function replaceErrors(key: string, value: unknown) {
   if (value instanceof Error) {
-    var error: Record<string, Error[keyof Error]> = {};
+    const error: Record<string, Error[keyof Error]> = {};
 
     const keys = Object.getOwnPropertyNames(value) as (keyof Error)[];
     keys.forEach((propName) => {

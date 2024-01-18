@@ -4,21 +4,24 @@ import {
   createSlice,
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+
+import { kanaFromLocalStorage } from "./kanaSlice";
+import { kanjiFromLocalStorage } from "./kanjiSlice";
+import { oppositeFromLocalStorage } from "./oppositeSlice";
+import { particleFromLocalStorage } from "./particleSlice";
+import { phraseFromLocalStorage } from "./phraseSlice";
+import { DebugLevel, toggleAFilter } from "./settingHelper";
+import { memoryStorageStatus, persistStorage } from "./storageHelper";
+import { vocabularyFromLocalStorage } from "./vocabularySlice";
+import { type ConsoleMessage } from "../components/Form/Console";
+import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
 import { localStorageKey } from "../constants/paths";
+import { squashSeqMsgs } from "../helper/consoleHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
-import { DebugLevel, toggleAFilter } from "./settingHelper";
-import { memoryStorageStatus, persistStorage } from "./storageHelper";
-import { phraseFromLocalStorage } from "./phraseSlice";
-import { kanjiFromLocalStorage } from "./kanjiSlice";
-import { kanaFromLocalStorage } from "./kanaSlice";
-import { oppositeFromLocalStorage } from "./oppositeSlice";
-import { particleFromLocalStorage } from "./particleSlice";
-import { vocabularyFromLocalStorage } from "./vocabularySlice";
-import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
-import type { ConsoleMessage } from "../components/Form/Console";
+import type { ValuesOf } from "../typings/raw";
 
 export interface MemoryDataObject {
   quota: number;
@@ -65,37 +68,46 @@ export const getMemoryStorageStatus = createAsyncThunk(
 export const setPersistentStorage = createAsyncThunk(
   "setting/setPersistentStorage",
   async (arg, thunkAPI) => {
-    return persistStorage().catch((e) => {
-      if (e instanceof Error) {
-        thunkAPI.dispatch(
-          logger("Could not set persistent storage", DebugLevel.WARN)
-        );
-        thunkAPI.dispatch(logger(e.message, DebugLevel.WARN));
-        throw e;
-      }
-    });
+    return persistStorage()
+      .then((resInfo) => {
+        const { warning } = resInfo;
+        if (warning) {
+          thunkAPI.dispatch(logger(warning, DebugLevel.WARN));
+        }
+
+        return resInfo;
+      })
+      .catch((e) => {
+        if (e instanceof Error) {
+          thunkAPI.dispatch(
+            logger("Could not set persistent storage", DebugLevel.WARN)
+          );
+          thunkAPI.dispatch(logger(e.message, DebugLevel.WARN));
+          throw e;
+        }
+      });
   }
 );
 
 export const localStorageSettingsInitialized = createAsyncThunk(
   "setting/localStorageSettingsInitialized",
-  async (arg, thunkAPI) => {
+  (arg, thunkAPI) => {
     let lsSettings = null;
     let mergedGlobalSettings = globalInitState;
 
     try {
       lsSettings = getLocalStorageSettings(localStorageKey);
     } catch (e) {
-      thunkAPI.dispatch(logger("localStorage not supported"));
+      void thunkAPI.dispatch(logger("localStorage not supported"));
     }
 
     if (lsSettings !== null) {
-      thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
-      thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
-      thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
-      thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
-      thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
-      thunkAPI.dispatch(vocabularyFromLocalStorage(lsSettings.vocabulary));
+      void thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
+      void thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
+      void thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
+      void thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
+      void thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
+      void thunkAPI.dispatch(vocabularyFromLocalStorage(lsSettings.vocabulary));
 
       // use merge to prevent losing defaults not found in localStorage
       mergedGlobalSettings = merge(globalInitState, {
@@ -154,10 +166,7 @@ const globalSlice = createSlice({
     },
 
     debugToggled: {
-      reducer: (
-        state,
-        action: PayloadAction<(typeof DebugLevel)[keyof typeof DebugLevel]>
-      ) => {
+      reducer: (state, action: PayloadAction<ValuesOf<typeof DebugLevel>>) => {
         const override = action.payload;
         const newDebug: number = toggleAFilter(
           state.debug + 1,
@@ -174,7 +183,7 @@ const globalSlice = createSlice({
         );
       },
 
-      prepare: (override: (typeof DebugLevel)[keyof typeof DebugLevel]) => ({
+      prepare: (override: ValuesOf<typeof DebugLevel>) => ({
         payload: override,
       }),
     },
@@ -190,7 +199,21 @@ const globalSlice = createSlice({
           } else {
             m = `UI: ${msg}`;
           }
-          state.console = [...state.console, { msg: m, lvl }];
+
+          const begining = state.console.slice(0, -1);
+          const lastOne = state.console.slice(-1);
+          const incoming = { msg: m, lvl, time: Date.now() };
+
+          /** one to two messages */
+          const squashed = squashSeqMsgs([...lastOne, incoming]);
+
+          // Only keep a fixed number of lines
+          if (begining.length > 100) {
+            const maxed = begining.slice(-100);
+            state.console = [...maxed, ...squashed];
+          } else {
+            state.console = [...begining, ...squashed];
+          }
         }
       },
 
@@ -223,12 +246,8 @@ const globalSlice = createSlice({
     });
 
     builder.addCase(setPersistentStorage.fulfilled, (state, action) => {
-      const { quota, usage, persistent, warning } =
+      const { quota, usage, persistent } =
         action.payload as GlobalInitSlice["memory"];
-
-      if (warning) {
-        console.warn(warning);
-      }
 
       state.memory = { quota, usage, persistent };
     });

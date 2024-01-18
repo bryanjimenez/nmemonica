@@ -1,13 +1,3 @@
-import React, { memo, useEffect, useRef } from "react";
-import classNames from "classnames";
-import PropTypes from "prop-types";
-import {
-  GiftIcon,
-  PlusCircleIcon,
-  ProjectIcon,
-  XCircleIcon,
-} from "@primer/octicons-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBan,
   faDice,
@@ -16,7 +6,18 @@ import {
   faRecycle,
   faRunning,
 } from "@fortawesome/free-solid-svg-icons";
-import { useForceRender } from "../../hooks/helperHK";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  GiftIcon,
+  PlusCircleIcon,
+  ProjectIcon,
+  XCircleIcon,
+} from "@primer/octicons-react";
+import classNames from "classnames";
+import PropTypes from "prop-types";
+import React, { memo, useEffect, useRef } from "react";
+
+import { useForceRender } from "../../hooks/useFade";
 import type { RawVocabulary } from "../../typings/raw";
 
 interface MinimunRawItem {
@@ -71,21 +72,29 @@ ToggleFuriganaBtn.propTypes = {
 
 interface ToggleFrequencyTermBtnProps {
   visible?: boolean;
-  active?: boolean;
+  term: MinimunRawItem;
+  /** Count of reinforced terms */
+  count?: number;
+  /** Is it **currently** being reinforced? */
+  isReinforced?: boolean;
+  /**
+   * Has it been marked for reinforcement
+   *
+   * toggle between add/remove
+   **/
+  hasReinforce: boolean;
   addFrequencyTerm: (uid: string) => void;
   removeFrequencyTerm: (uid: string) => void;
-  toggle: boolean;
-  term: MinimunRawItem;
-  count?: number;
 }
 
 export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
   const prevCount = useRef(0);
 
   const {
+    isReinforced,
     addFrequencyTerm,
     removeFrequencyTerm,
-    toggle,
+    hasReinforce,
     term,
     count = prevCount.current, // count is optional
   } = props;
@@ -94,7 +103,7 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
   const fade = prevCount.current === count;
 
   useEffect(() => {
-    prevCount.current = count !== undefined ? count : 0;
+    prevCount.current = count;
 
     if (!fade) {
       // fade this time
@@ -104,18 +113,27 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
 
   return props.visible === false ? null : (
     <div
-      aria-label={toggle ? "Remove term" : "Add term"}
+      aria-label={hasReinforce ? "Remove term" : "Add term"}
       className="sm-icon-grp clickable"
       onClick={() => {
-        if (toggle) {
+        if (hasReinforce) {
           removeFrequencyTerm(term.uid);
         } else {
           addFrequencyTerm(term.uid);
         }
       }}
     >
-      {toggle ? <XCircleIcon size="small" /> : <PlusCircleIcon size="small" />}
-      {count !== undefined && count > -1 && (
+      {hasReinforce ? (
+        <XCircleIcon size="small" />
+      ) : (
+        <PlusCircleIcon size="small" />
+      )}
+
+      {isReinforced ? (
+        <span className="notification">
+          <FontAwesomeIcon icon={faDice} />
+        </span>
+      ) : (
         <span
           className={classNames({
             notification: true,
@@ -131,10 +149,10 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
 
 ToggleFrequencyTermBtn.propTypes = {
   visible: PropTypes.bool,
-  active: PropTypes.bool,
+  isReinforced: PropTypes.bool,
   addFrequencyTerm: PropTypes.func,
   removeFrequencyTerm: PropTypes.func,
-  toggle: PropTypes.bool,
+  hasReinforce: PropTypes.bool,
   term: PropTypes.object,
   count: PropTypes.number,
 };
@@ -183,7 +201,7 @@ ShowHintBtn.propTypes = {
 interface ToggleAutoVerbViewBtnProps {
   visible?: boolean;
   active?: boolean;
-  toggleAutoVerbView: Function;
+  toggleAutoVerbView: () => void;
   autoVerbView: boolean;
 }
 
@@ -197,6 +215,9 @@ export function ToggleAutoVerbViewBtn(props: ToggleAutoVerbViewBtnProps) {
       aria-label="Toggle auto verb view"
     >
       <FontAwesomeIcon icon={!autoVerbView ? faRunning : faBan} />
+      <span className="notification">
+        <FontAwesomeIcon icon={!autoVerbView ? faBan : faRunning} />
+      </span>
     </div>
   );
 }
@@ -211,7 +232,7 @@ ToggleAutoVerbViewBtn.propTypes = {
 interface ReCacheAudioBtnProps {
   visible?: boolean;
   active?: boolean;
-  action: Function;
+  action: () => void;
 }
 
 export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
@@ -276,7 +297,7 @@ TogglePracticeSideBtn.propTypes = {
 interface ToggleLiteralPhraseBtnProps {
   visible: boolean;
   active?: boolean;
-  action: Function;
+  action: () => void;
   toggle: boolean;
 }
 
@@ -313,25 +334,13 @@ interface FrequencyWordIconProps {
   visible: boolean;
 }
 
-export function FrequencyTermIcon(props: FrequencyWordIconProps) {
-  return !props.visible ? null : (
-    <div>
-      <FontAwesomeIcon icon={faDice} />
-    </div>
-  );
-}
-
-FrequencyTermIcon.propTypes = {
-  visible: PropTypes.bool,
-};
-
 interface TimePlayVerifyBtnsProps {
   visible: boolean;
   hover?: "pronunciation" | "incorrect" | "reset";
-  onClick?: Function;
-  onPronunciation?: Function;
-  onIncorrect?: Function;
-  onReset?: Function;
+  onClick?: () => void;
+  onPronunciation?: () => void;
+  onIncorrect?: () => void;
+  onReset?: () => void;
   prevMissPronu: boolean;
 }
 
@@ -353,7 +362,7 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
       >
         <span
           className={classNames({
-            "border-bottom": props.hover === "incorrect",
+            underline: props.hover === "incorrect",
           })}
         >
           {"-1"}
@@ -374,7 +383,7 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
       >
         <span
           className={classNames({
-            "border-bottom":
+            underline:
               props.hover === "pronunciation" ||
               (props.hover !== "reset" && props.prevMissPronu),
           })}
@@ -396,7 +405,7 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
       >
         <span
           className={classNames({
-            "border-bottom": props.hover === "reset",
+            underline: props.hover === "reset",
           })}
         >
           0

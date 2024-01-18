@@ -13,7 +13,7 @@ import type { RootState } from "../slices";
 export type GameActionHandler = (
   direction: string,
   ab?: AbortController
-) => void;
+) => Promise<unknown>;
 /**
  * @param gameActionHandler a function that takes a direction and does an action
  * @param timedPlayAnswerHandlerWrapper
@@ -23,7 +23,7 @@ export function useSwipeActions(
   timedPlayAnswerHandlerWrapper?: (
     direction: string,
     handler: GameActionHandler
-  ) => typeof gameActionHandler
+  ) => GameActionHandler
 ) {
   const swipeThreshold = useSelector(
     ({ global }: RootState) => global.swipeThreshold
@@ -46,7 +46,7 @@ export function useSwipeActions(
       timedPlayAnswerHandlerWrapper
     );
 
-    if (HTMLDivElementSwipeRef.current) {
+    if (HTMLDivElementSwipeRef.current && swipeThreshold > 0) {
       HTMLDivElementSwipeRef.current.addEventListener("touchstart", startMove);
       HTMLDivElementSwipeRef.current.addEventListener("touchmove", inMove);
       HTMLDivElementSwipeRef.current.addEventListener("touchend", endMove);
@@ -54,9 +54,11 @@ export function useSwipeActions(
 
     const cleanup = HTMLDivElementSwipeRef.current;
     return () => {
-      cleanup?.removeEventListener("touchstart", startMove);
-      cleanup?.removeEventListener("touchmove", inMove);
-      cleanup?.removeEventListener("touchend", endMove);
+      if (swipeThreshold > 0) {
+        cleanup?.removeEventListener("touchstart", startMove);
+        cleanup?.removeEventListener("touchmove", inMove);
+        cleanup?.removeEventListener("touchend", endMove);
+      }
     };
   }, [
     swiping,
@@ -108,7 +110,7 @@ function buildEndMove(
   timedPlayAnswerHandlerWrapper: (
     direction: string,
     handler: GameActionHandler
-  ) => typeof gameActionHandler
+  ) => GameActionHandler
 ) {
   return function endMove(e: TouchEvent) {
     let swipeHandler = gameActionHandler;

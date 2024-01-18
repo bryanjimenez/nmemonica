@@ -17,20 +17,24 @@ import type {
   RawKanji,
   RawPhrase,
   RawVocabulary,
-  SpaceRepetitionMap,
-  VerbFormArray,
+  ValuesOf,
 } from "../typings/raw";
+
+export type VerbFormArray = {
+  /** Verb form (tense label) */ name: string;
+  /** inflected/conjugated verb */ value: JapaneseText;
+}[];
 
 /**
  * Goes to the next term or selects one from the frequency list
  */
 export function play<RawItem extends { uid: string }>(
   reinforce: boolean,
-  freqFilter: (typeof TermFilterBy)[keyof typeof TermFilterBy],
+  freqFilter: ValuesOf<typeof TermFilterBy>,
   frequency: string[],
   filteredTerms: RawItem[],
-  metadata: SpaceRepetitionMap,
-  reinforcedUID: string | undefined,
+  metadata: Record<string, MetaDataObj | undefined>,
+  reinforcedUID: string | null,
   updateReinforcedUID: (uid: string) => void,
   gotoNext: () => void
 ) {
@@ -43,9 +47,11 @@ export function play<RawItem extends { uid: string }>(
     frequency.length > 0
   ) {
     const min = 0;
-    const staleFreq = frequency.filter(
-      (f) => minsSince(metadata[f]?.d) > frequency.length
-    );
+    const staleFreq = frequency.filter((fUid) => {
+      const lastSeen = metadata[fUid]?.d;
+
+      return lastSeen && minsSince(lastSeen) > frequency.length;
+    });
     const max = staleFreq.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
     const vocabulary = filteredTerms.find((v) => staleFreq[idx] === v.uid);
@@ -114,7 +120,7 @@ export function getTerm<Term extends { uid: string }>(
 export function termFilterByType<
   Term extends { uid: string; grp?: string; subGrp?: string; tag?: string[] }
 >(
-  filterType: (typeof TermFilterBy)[keyof typeof TermFilterBy],
+  filterType: ValuesOf<typeof TermFilterBy>,
   termList: Term[],
   frequencyList: string[] = [],
   activeGrpList: string[],
@@ -205,17 +211,17 @@ export function getStaleGroups(termGroups: GroupListMap, termActive: string[]) {
 }
 
 /**
- * Given a SpaceRepetitionMap and a term list
- * finds stale keys, and uids in the SpaceRepetitionMap
+ * Given a Record of MetadataObj and a term list
+ * finds stale keys, and uids in the MetadataObj
  * returns a set of stale keys and a list of which uid the key belonged to
  */
 export function getStaleSpaceRepKeys(
-  repetition: SpaceRepetitionMap,
+  repetition: Record<string, MetaDataObj | undefined>,
   termList: RawVocabulary[] | RawPhrase[] | RawKanji[],
   staleLabel: string
 ) {
-  const SpaceRepetitionMapKeys: {
-    [key in keyof SpaceRepetitionMap["uid"]]: null;
+  const MetadataObjKeys: {
+    [key in keyof MetaDataObj]: null;
   } = {
     d: null,
     difficulty: null,
@@ -228,29 +234,32 @@ export function getStaleSpaceRepKeys(
     tpAcc: null,
     tpCAvg: null,
   };
-  const SpaceRepKeys = new Set(Object.keys(SpaceRepetitionMapKeys));
+  const SpaceRepKeys = new Set(Object.keys(MetadataObjKeys));
 
   let OldSpaceRepKeys = new Set<string>();
   let staleInfoList: { key: string; uid: string; english: string }[] = [];
   Object.keys(repetition).forEach((srepUid) => {
-    Object.keys(repetition[srepUid]).forEach((key) => {
-      let staleInfo;
-      if (!SpaceRepKeys.has(key)) {
-        let term;
-        try {
-          term = getTerm<(typeof termList)[0]>(srepUid, termList);
-        } catch (err) {
-          term = { english: staleLabel };
+    const o = repetition[srepUid];
+    if (o !== undefined) {
+      Object.keys(o).forEach((key) => {
+        let staleInfo;
+        if (!SpaceRepKeys.has(key)) {
+          let term;
+          try {
+            term = getTerm<(typeof termList)[0]>(srepUid, termList);
+          } catch (err) {
+            term = { english: staleLabel };
+          }
+
+          staleInfo = { key, uid: srepUid, english: term.english };
         }
 
-        staleInfo = { key, uid: srepUid, english: term.english };
-      }
-
-      if (staleInfo !== undefined) {
-        OldSpaceRepKeys.add(key);
-        staleInfoList = [...staleInfoList, staleInfo];
-      }
-    });
+        if (staleInfo !== undefined) {
+          OldSpaceRepKeys.add(key);
+          staleInfoList = [...staleInfoList, staleInfo];
+        }
+      });
+    }
   });
 
   return { keys: OldSpaceRepKeys, list: staleInfoList };
@@ -279,7 +288,7 @@ export function minimumTimeForTimedPlay(prevTime: number) {
  */
 export function spaceRepOrder(
   terms: RawVocabulary[],
-  spaceRepObj: SpaceRepetitionMap
+  spaceRepObj: Record<string, MetaDataObj | undefined>
 ) {
   interface timedPlayedSortable {
     staleness: number;
@@ -300,8 +309,8 @@ export function spaceRepOrder(
   let notTimedTemp: notTimedPlayedSortable[] = [];
   let timedTemp: timedPlayedSortable[] = [];
 
-  for (const tIdx in terms) {
-    const tUid = terms[tIdx].uid;
+  terms.forEach((term, tIdx) => {
+    const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
     if (termRep !== undefined) {
@@ -370,7 +379,7 @@ export function spaceRepOrder(
     } else {
       notPlayed = [...notPlayed, Number(tIdx)];
     }
-  }
+  });
 
   // prettier-ignore
   const failedSort = orderBy(failedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
@@ -436,7 +445,7 @@ export function getCorrectnessScore(count = 0, average = 0) {
  */
 export function dateViewOrder(
   terms: { uid: string }[],
-  spaceRepObj: SpaceRepetitionMap
+  spaceRepObj: Record<string, MetaDataObj | undefined>
 ) {
   interface lastSeenSortable {
     date: string;
@@ -447,8 +456,8 @@ export function dateViewOrder(
   let notPlayed: number[] = [];
   let prevPlayedTemp: lastSeenSortable[] = [];
 
-  for (const tIdx in terms) {
-    const tUid = terms[tIdx].uid;
+  terms.forEach((term, tIdx) => {
+    const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
     if (termRep?.d !== undefined) {
@@ -463,7 +472,7 @@ export function dateViewOrder(
     } else {
       notPlayed = [...notPlayed, Number(tIdx)];
     }
-  }
+  });
 
   // prettier-ignore
   const prevPlayedSort = orderBy(prevPlayedTemp, ["date", "uid"], ["asc", "asc"]);
@@ -493,7 +502,7 @@ export const DIFFICULTY_THRLD = 30;
  */
 export function difficultyOrder(
   terms: { uid: string }[],
-  spaceRepObj: SpaceRepetitionMap
+  spaceRepObj: Record<string, MetaDataObj | undefined>
 ) {
   interface difficultySortable {
     difficulty: number;
@@ -505,8 +514,8 @@ export function difficultyOrder(
   let withDifficulty: difficultySortable[] = [];
   let noDifficulty: number[] = [];
 
-  for (const tIdx in terms) {
-    const tUid: string = terms[tIdx].uid;
+  terms.forEach((term, tIdx) => {
+    const tUid = term.uid;
     const termRep = spaceRepObj[tUid];
 
     if (termRep?.difficulty !== undefined) {
@@ -534,7 +543,7 @@ export function difficultyOrder(
     } else {
       undefDifficulty = [...undefDifficulty, Number(tIdx)];
     }
-  }
+  });
 
   // prettier-ignore
   const withDifficultySort = orderBy(withDifficulty, ["difficulty", "uid"], ["asc", "asc"]);
@@ -651,14 +660,32 @@ export function toggleOptions<T>(index: number, options: T[]) {
 }
 
 /**
+ * @overload Return a list of verb forms names
+ * Form names only
+ */
+export function getVerbFormsArray(): { name: string }[];
+
+/**
+ * @overload Returns verb forms
+ * Form names and values
+ */
+export function getVerbFormsArray(
+  rawVerb: RawJapanese,
+  order?: string[]
+): VerbFormArray;
+
+/**
  * Array containing the avaiable verb forms
  */
-export function getVerbFormsArray(rawVerb?: RawJapanese, order?: string[]) {
+export function getVerbFormsArray(
+  rawVerb?: RawJapanese,
+  order?: string[]
+): VerbFormArray | { name: string }[] {
   const verb = {
     dictionary: rawVerb === undefined ? undefined : JapaneseVerb.parse(rawVerb),
   };
 
-  const allAvailable = [
+  const allForms = [
     { name: "-masu", value: verb.dictionary?.masuForm() },
     { name: "-mashou", value: verb.dictionary?.mashouForm() },
     { name: "dictionary", value: verb.dictionary },
@@ -666,27 +693,42 @@ export function getVerbFormsArray(rawVerb?: RawJapanese, order?: string[]) {
     { name: "-saseru", value: verb.dictionary?.saseruForm() },
     { name: "-te", value: verb.dictionary?.teForm() },
     { name: "-ta", value: verb.dictionary?.taForm() },
-    ...(verb.dictionary?.chattaForm() !== null
-      ? [{ name: "-chatta", value: verb.dictionary?.chattaForm() }]
-      : []),
-    ...(verb.dictionary?.reruForm() !== null
-      ? [{ name: "-reru", value: verb.dictionary?.reruForm() }]
-      : []),
+    { name: "-chatta", value: verb.dictionary?.chattaForm() },
+    { name: "-reru", value: verb.dictionary?.reruForm() },
   ];
 
-  let filtered;
-  if (order && order.length > 0) {
-    filtered = order.reduce<VerbFormArray>((acc, form) => {
-      const f = allAvailable.find((el) => el.name === form);
-      if (f !== undefined) {
-        acc = [...acc, f];
-      }
+  if (rawVerb === undefined) {
+    const verbNamesOnly = allForms.map((thing) => ({ name: thing.name }));
 
-      return acc;
-    }, []);
+    return verbNamesOnly;
+  } else {
+    // Some forms can be nulled, exclude those
+    const nonNull = allForms.filter(
+      (thing) => thing.value !== null
+    ) as VerbFormArray;
+
+    // Reorder and select based on order array
+    let filtered: VerbFormArray = [];
+    if (order && order.length > 0) {
+      filtered = order.reduce<{ name: string; value: JapaneseText }[]>(
+        (acc, form) => {
+          const f = nonNull.find((el) => el.name === form);
+          if (f !== undefined) {
+            acc = [...acc, f];
+          }
+
+          return acc;
+        },
+        []
+      );
+    }
+
+    if (filtered.length === 0) {
+      filtered = nonNull;
+    }
+
+    return filtered;
   }
-
-  return filtered ?? allAvailable;
 }
 
 /**
@@ -718,6 +760,7 @@ export function japaneseLabel(
 ) {
   const isOnTop = !isOnBottom;
   let indicators: React.JSX.Element[] = [];
+
   let showAsterix = false;
   let showIntr = false;
   let pairUID: string | undefined;
@@ -735,6 +778,14 @@ export function japaneseLabel(
   const showKeigo = jObj.isKeigo();
 
   if (isOnTop && (showIntr || pairUID)) {
+    let viewMyPair = undefined;
+    if (pairUID !== undefined && typeof jumpToTerm === "function") {
+      const p = pairUID;
+      viewMyPair = () => {
+        jumpToTerm(p);
+      };
+    }
+
     indicators = [
       ...indicators,
       <span
@@ -743,13 +794,7 @@ export function japaneseLabel(
           clickable: pairUID,
           "question-color": pairUID,
         })}
-        onClick={
-          pairUID && jumpToTerm
-            ? () => {
-                jumpToTerm(pairUID);
-              }
-            : undefined
-        }
+        onClick={viewMyPair}
       >
         {showIntr ? "intr" : "trans"}
       </span>,
@@ -840,6 +885,14 @@ export function englishLabel(
   const showKeigo = jObj.isKeigo();
 
   if (isOnTop && (showIntr || pairUID)) {
+    let viewMyPair = undefined;
+    if (pairUID !== undefined && typeof jumpToTerm === "function") {
+      const p = pairUID;
+      viewMyPair = () => {
+        jumpToTerm(p);
+      };
+    }
+
     indicators = [
       ...indicators,
       <span
@@ -848,13 +901,7 @@ export function englishLabel(
           clickable: pairUID,
           "question-color": pairUID,
         })}
-        onClick={
-          pairUID && jumpToTerm
-            ? () => {
-                jumpToTerm(pairUID);
-              }
-            : undefined
-        }
+        onClick={viewMyPair}
       >
         {showIntr ? "intr" : "trans"}
       </span>,
@@ -902,14 +949,15 @@ export function englishLabel(
  * Flips En > Jp or Jp > En
  */
 export function labelPlacementHelper(
-  practiceSide: boolean,
+  englishSideUp: boolean,
   inEnglish: React.JSX.Element,
   inJapanese: React.JSX.Element,
   eLabel: React.JSX.Element,
   jLabel: React.JSX.Element
 ) {
   let topValue, bottomValue, topLabel, bottomLabel;
-  if (practiceSide) {
+
+  if (englishSideUp) {
     topValue = inEnglish;
     bottomValue = inJapanese;
     topLabel = eLabel;
@@ -966,26 +1014,25 @@ export function getCacheUID(word: RawVocabulary) {
 /**
  * Creates the settings object for furigana toggling
  */
-export function toggleFuriganaSettingHelper(
+export function toggleFuriganaSettingHelper<T extends FuriganaToggleMap>(
   uid: string,
-  settings: FuriganaToggleMap,
+  settings: T,
   englishSideUp?: boolean,
-  toggleFn?: (uid: string) => void
+  toggleFn?: () => void
 ) {
-  let furiganaToggable;
-
   // show by default unless explicitly set to false
   const show = !(settings?.[uid]?.f === false);
-  furiganaToggable = {
+
+  // provide a toggle fn
+  const toggle =
+    englishSideUp === false && typeof toggleFn === "function"
+      ? toggleFn
+      : undefined;
+
+  const furiganaToggable = {
     furigana: {
       show,
-      toggle:
-        (englishSideUp === false &&
-          toggleFn &&
-          (() => {
-            toggleFn(uid);
-          })) ||
-        undefined,
+      toggle,
     },
   };
 
@@ -1036,9 +1083,9 @@ export function pause(
  * @param waitBeforeEach ms to wait before triggering actions
  * @param AbortController signal
  */
-export function loopN<T>(
+export function loopN(
   n: number,
-  action: () => Promise<T>,
+  action: () => Promise<unknown>,
   waitBeforeEach: number,
   { signal }: { signal: AbortSignal }
 ) {

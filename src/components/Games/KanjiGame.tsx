@@ -9,6 +9,7 @@ import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { spaceRepLog } from "../../helper/consoleHelper";
+import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   dateViewOrder,
   difficultyOrder,
@@ -22,7 +23,6 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
-import { buildAction } from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -42,7 +42,6 @@ import type { RawKanji, RawVocabulary } from "../../typings/raw";
 import { DifficultySlider } from "../Form/Difficulty";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -51,74 +50,6 @@ const KanjiGameMeta = {
   location: "/kanji-game/",
   label: "Kanji Game",
 };
-
-function properCase(text: string) {
-  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-}
-
-/**
- * Split comma separated string(list) and select one.
- * Apply ProperCase
- */
-export function oneFromList(english: string) {
-  let englishShortened = english;
-  const engList = english.split(",");
-  if (engList.length > 1) {
-    const i = Math.floor(Math.random() * engList.length);
-    const e = engList[i].trim();
-    englishShortened = properCase(e);
-  } else {
-    englishShortened = properCase(english);
-  }
-
-  return englishShortened;
-}
-
-/**
- * Returns a list of choices which includes the right answer
- */
-function createEnglishChoices(
-  answer: RawKanji,
-  kanjiList: RawKanji[],
-  exampleList: RawVocabulary[]
-) {
-  const TOTAL_CHOICES = 4;
-  const splitToArray = (term: string) => term.split(",").map((s) => s.trim());
-
-  const aArr = splitToArray(answer.english);
-
-  const a = { ...answer, english: oneFromList(answer.english) };
-  const examples = exampleList.reduce<string[]>((acc, e) => {
-    const list = e.english.split(",").map((e) => e.trim());
-
-    return [...acc, ...list];
-  }, []);
-
-  const noDuplicateChoices = new Set([a.english, ...examples]);
-
-  let choices: RawKanji[] = [a];
-  while (choices.length < TOTAL_CHOICES) {
-    const i = Math.floor(Math.random() * kanjiList.length);
-
-    const choice = kanjiList[i];
-    const cArr = splitToArray(choice.english);
-
-    // should not match the right answer(s)
-    // should not match a previous choice
-    if (
-      cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
-      cArr.every((cCurr) => !noDuplicateChoices.has(cCurr))
-    ) {
-      const english = oneFromList(choice.english);
-      noDuplicateChoices.add(english);
-      choices = [...choices, { ...choice, english }];
-    }
-  }
-
-  shuffleArray(choices);
-
-  return choices;
-}
 
 function prepareGame(
   kanji: RawKanji,
@@ -216,7 +147,7 @@ function prepareGame(
     answer: uid,
     choices: choices.map((c) => ({
       compare: c.uid,
-      toHTML: () => <>{c.english}</>,
+      toHTML: choiceToHtml(c),
     })),
   };
 }
@@ -246,9 +177,7 @@ export default function KanjiGame() {
   const frequency = useRef<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
   useEffect(() => {
     if (kanjiList.length === 0) {
@@ -344,7 +273,7 @@ export default function KanjiGame() {
     return newOrder;
   }, [filteredTerms]);
 
-  const prevReinforcedUID = useRef<string | undefined>(undefined);
+  const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef<number>(Date.now());
@@ -370,14 +299,15 @@ export default function KanjiGame() {
 
         // don't increment reinforced terms
         const shouldIncrement = prevUid !== prevState.reinforcedUID;
+        const frequency = prevState.reinforcedUID !== null;
 
         void dispatch(updateSpaceRepKanji({ uid: prevUid, shouldIncrement }))
           .unwrap()
           .then((payload) => {
-            const { map, prevMap } = payload;
+            const { value, prevVal } = payload;
 
-            const prevDate = prevMap[prevUid]?.d;
-            const repStats = { [prevUid]: { ...map[prevUid], d: prevDate } };
+            const prevDate = prevVal.d ?? value.d;
+            const repStats = { [prevUid]: { ...value, d: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
 
             spaceRepLog(messageLog, prevTerm, repStats, { frequency });
@@ -448,7 +378,7 @@ export default function KanjiGame() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext /*, errorSkipIndex*/]);
 
   const gotoNextSlide = useCallback(() => {
@@ -492,7 +422,7 @@ export default function KanjiGame() {
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
   }, [
     filteredTerms,
     selectedIndex,
@@ -547,6 +477,8 @@ export default function KanjiGame() {
         default:
           break;
       }
+
+      return Promise.resolve(/** interrupt, fetch */);
     },
     [gotoPrev, gotoNextSlide]
   );
@@ -602,14 +534,6 @@ export default function KanjiGame() {
               </Link>
             </div>
           </div>
-          <div className="col text-center">
-            <FrequencyTermIcon
-              visible={
-                term_reinforce &&
-                kanji.uid !== filteredTerms[order[selectedIndex]].uid
-              }
-            />
-          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <DifficultySlider
@@ -623,8 +547,9 @@ export default function KanjiGame() {
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
-                toggle={term_reinforce}
+                hasReinforce={term_reinforce}
                 term={kanji}
+                isReinforced={reinforcedUID !== null}
               />
             </div>
           </div>
@@ -640,6 +565,143 @@ export default function KanjiGame() {
       </div>
     </>
   );
+}
+
+export function properCase(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}
+
+/**
+ * Split comma separated string(list) and select one.
+ * Apply ProperCase
+ */
+export function oneFromList(english: string) {
+  let englishShortened = english;
+  const engList = english.split(",");
+  if (engList.length > 1) {
+    const i = Math.floor(Math.random() * engList.length);
+    const e = engList[i].trim();
+    englishShortened = properCase(e);
+  } else {
+    englishShortened = properCase(english);
+  }
+
+  return englishShortened;
+}
+
+/**
+ * Returns a list of choices which includes the right answer
+ */
+export function createEnglishChoices(
+  answer: RawKanji,
+  kanjiList: RawKanji[],
+  exampleList: RawVocabulary[]
+) {
+  const TOTAL_CHOICES = 4;
+  const splitToArray = (term: string) => term.split(",").map((s) => s.trim());
+
+  const aArr = splitToArray(answer.english);
+
+  const a = { ...answer, english: oneFromList(answer.english) };
+  const examples = exampleList.reduce<string[]>((acc, e) => {
+    const list = e.english.split(",").map((e) => e.trim());
+
+    return [...acc, ...list];
+  }, []);
+
+  const noDuplicateChoices = new Set([a.english, ...examples]);
+
+  let choices: RawKanji[] = [a];
+  while (choices.length < TOTAL_CHOICES) {
+    const i = Math.floor(Math.random() * kanjiList.length);
+
+    const choice = kanjiList[i];
+    const cArr = splitToArray(choice.english);
+
+    // should not match the right answer(s)
+    // should not match a previous choice
+    if (
+      cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
+      cArr.every((cCurr) => !noDuplicateChoices.has(cCurr))
+    ) {
+      const english = oneFromList(choice.english);
+      noDuplicateChoices.add(english);
+      choices = [...choices, { ...choice, english }];
+    }
+  }
+
+  shuffleArray(choices);
+
+  return choices;
+}
+
+export function choiceToHtml<T extends { english: string }>(c: T) {
+  return function toHtml(options: { fadeIn?: boolean } = {}) {
+    const { fadeIn } = options;
+    const fadeCss = {
+      "notification-fade": fadeIn !== undefined ? !fadeIn : undefined,
+      "notification-fade-in": fadeIn,
+    };
+
+    let element;
+    if (new RegExp(/^[^a-zA-Z]/).test(c.english)) {
+      // non alpha start
+      const nonAlphaOrSpcRegEx = new RegExp(/[^a-zA-Z\s]/);
+      const nonAlpha = c.english
+        .split("")
+        .filter((char) => nonAlphaOrSpcRegEx.test(char));
+
+      if (nonAlpha.length === 1) {
+        // just one non alpha
+        const nonAlpha = c.english.slice(0, 1);
+        const firstLetter = c.english.slice(1, 2);
+        const restLetters = c.english.slice(2);
+
+        element = (
+          <>
+            <span className={classNames(fadeCss)}>{nonAlpha}</span>
+            <span className="fw-bold">{firstLetter}</span>
+            <span className={classNames(fadeCss)}>{restLetters}</span>
+          </>
+        );
+      } else {
+        // many?
+        // no hint
+
+        element = (
+          <>
+            <span className={classNames(fadeCss)}>{c.english}</span>
+          </>
+        );
+      }
+    } else if (c.english.startsWith("To ")) {
+      // verbs
+      const toDo = c.english.slice(0, 3);
+      const firstLetter = c.english.slice(3, 4);
+      const restLetters = c.english.slice(4);
+
+      element = (
+        <>
+          <span className={classNames(fadeCss)}>{toDo}</span>
+          <span className="fw-bold">{firstLetter}</span>
+          <span className={classNames(fadeCss)}>{restLetters}</span>
+        </>
+      );
+    } else {
+      // non verbs
+      const firstLetter = c.english.slice(0, 1);
+      const restLetters = c.english.slice(1);
+
+      element = (
+        <>
+          <span className="fw-bold">{firstLetter}</span>
+          <span className={classNames(fadeCss)}>{restLetters}</span>
+        </>
+      );
+    }
+
+    return element;
+  };
 }
 
 export { KanjiGameMeta };

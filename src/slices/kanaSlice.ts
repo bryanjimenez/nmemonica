@@ -1,8 +1,10 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+
+import { KanaType } from "./settingHelper";
 import data from "../../data/kana.json";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { KanaType } from "./settingHelper";
+import type { ValuesOf } from "../typings/raw";
 
 export interface KanaInitSlice {
   hiragana: string[][];
@@ -15,7 +17,7 @@ export interface KanaInitSlice {
     choiceN: number;
     wideMode: boolean;
     easyMode: boolean;
-    charSet: (typeof KanaType)[keyof typeof KanaType];
+    charSet: ValuesOf<typeof KanaType>;
   };
 }
 
@@ -36,7 +38,7 @@ const kanaInitState: KanaInitSlice = {
 
 export const kanaFromLocalStorage = createAsyncThunk(
   "kana/kanaFromLocalStorage",
-  async (arg: typeof kanaInitState.setting) => {
+  (arg: typeof kanaInitState.setting) => {
     const initValues = arg;
 
     return initValues;
@@ -54,7 +56,7 @@ const kanaSlice = createSlice({
         charSet + 1 < Object.keys(KanaType).length
           ? charSet + 1
           : KanaType.HIRAGANA
-      ) as (typeof KanaType)[keyof typeof KanaType];
+      ) as ValuesOf<typeof KanaType>;
 
       state.setting.charSet = localStoreAttrUpdate(
         new Date(),
@@ -64,8 +66,8 @@ const kanaSlice = createSlice({
         newCharSet
       );
     },
-    setKanaBtnN(state, action) {
-      const number: number = action.payload;
+    setKanaBtnN(state, action: PayloadAction<number>) {
+      const number = action.payload;
       state.setting.choiceN = localStoreAttrUpdate(
         new Date(),
         { kana: state.setting },

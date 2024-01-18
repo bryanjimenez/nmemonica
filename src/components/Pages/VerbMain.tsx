@@ -1,26 +1,25 @@
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import {
+  type VerbFormArray,
+  englishLabel,
   getCacheUID,
   getEnglishHint,
   getJapaneseHint,
+  getVerbFormsArray,
+  japaneseLabel,
+  labelPlacementHelper,
+  toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
-import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+import { audioPronunciation } from "../../helper/JapaneseText";
 import { JapaneseVerb } from "../../helper/JapaneseVerb";
-import {
-  useEnglishLabel,
-  useGetVerbFormsArray,
-  useJapaneseLabel,
-  useLabelPlacementHelper,
-  useToggleFuriganaSettingHelper,
-} from "../../hooks/gameHelperHK";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
-import { verbFormChanged } from "../../slices/vocabularySlice";
-import type { RawVocabulary, VerbFormArray } from "../../typings/raw";
+import { furiganaToggled, verbFormChanged } from "../../slices/vocabularySlice";
+import type { RawVocabulary } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 
@@ -31,65 +30,13 @@ interface VerbMainProps {
   linkToOtherTerm: (uid: string) => void;
 }
 
-function getSplitIdx(verbForms: VerbFormArray, verbColSplit: number) {
-  const middle =
-    Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
-
-  const rightShift = middle - verbColSplit;
-  const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
-
-  return splitIdx;
-}
-
-/**
- * splits the verb forms into two columns
- * @returns an object containing two columns
- */
-function splitVerbFormsToColumns(
-  verbForms: VerbFormArray,
-  verbColSplit: number
-) {
-  const splitIdx = getSplitIdx(verbForms, verbColSplit);
-
-  const t1 = verbForms.slice(0, splitIdx);
-  const t2 = verbForms.slice(splitIdx);
-  return { t1, t2 };
-}
-
-/**
- * @param verb
- * @param verbForms
- * @param theForm the form to filter by
- * @param verbColSplit
- * @param furiganaToggable
- */
-function getVerbLabelItems(
-  verb: RawVocabulary,
-  verbForms: VerbFormArray,
-  theForm: string,
-  verbColSplit: number,
-  furiganaToggable: { furigana: { show?: boolean; toggle?: () => void } } // TODO: refactor? JapaneseText.toHTML
-) {
-  const romaji = verb.romaji ?? ".";
-  const splitIdx = getSplitIdx(verbForms, verbColSplit);
-
-  const formResult = verbForms.find((form) => form.name === theForm);
-  const japaneseObj = (formResult?.value ??
-    verbForms[splitIdx].value) as JapaneseText;
-
-  let inJapanese = japaneseObj.toHTML(furiganaToggable);
-  let inEnglish = verb.english;
-
-  return { inJapanese, inEnglish, romaji, japaneseObj };
-}
-
 export default function VerbMain(props: VerbMainProps) {
   const dispatch = useDispatch<AppDispatch>();
 
   const { verb, reCache, linkToOtherTerm, showHint } = props;
 
-  const [showMeaning, setShowMeaning] = useState<string | undefined>(undefined);
-  const [showRomaji, setShowRomaji] = useState<string | undefined>(undefined);
+  const [showMeaning, setShowMeaning] = useState<boolean>(false);
+  const [showRomaji, setShowRomaji] = useState<boolean>(false);
 
   const {
     verbForm,
@@ -102,19 +49,17 @@ export default function VerbMain(props: VerbMainProps) {
     verbColSplit,
   } = useConnectVocabulary();
 
-  useEffect(() => {
-    // When scrolling back and forth
-    // reset last words shownMeaning (etc.)
-    // avoids re-showing when scrolling back
-    const currUid = verb.uid;
-    setShowMeaning((prev) => (prev === currUid ? prev : undefined));
-    setShowRomaji((prev) => (prev === currUid ? prev : undefined));
+  useLayoutEffect(() => {
+    setShowMeaning(false);
+    setShowRomaji(false);
   }, [verb]);
 
   const buildTenseElement = (key: number, tense: VerbFormArray) => {
     const columnClass = classNames({
-      "pt-3 pe-sm-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap":
+      "pt-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap":
         true,
+      "ps-sm-3": key === 0,
+      "pe-sm-3": key !== 0,
       "text-end": key !== 0,
     });
 
@@ -154,13 +99,16 @@ export default function VerbMain(props: VerbMainProps) {
     );
   };
 
-  const verbForms = useGetVerbFormsArray(verb, verbFormsOrder);
+  const verbForms = getVerbFormsArray(verb, verbFormsOrder);
   const { t1, t2 } = splitVerbFormsToColumns(verbForms, verbColSplit);
 
-  const furiganaToggable = useToggleFuriganaSettingHelper(
+  const furiganaToggable = toggleFuriganaSettingHelper(
     verb.uid,
     repetition,
-    englishSideUp
+    englishSideUp,
+    () => {
+      dispatch(furiganaToggled(verb.uid));
+    }
   );
 
   const { inJapanese, inEnglish, romaji, japaneseObj } = getVerbLabelItems(
@@ -172,18 +120,13 @@ export default function VerbMain(props: VerbMainProps) {
   );
 
   const vObj = useMemo(() => JapaneseVerb.parse(verb), [verb]);
-  const jValue = useJapaneseLabel(
+  const jValue = japaneseLabel(
     englishSideUp,
     vObj,
     inJapanese,
     linkToOtherTerm
   );
-  const eValue = useEnglishLabel(
-    englishSideUp,
-    vObj,
-    inEnglish,
-    linkToOtherTerm
-  );
+  const eValue = englishLabel(englishSideUp, vObj, inEnglish, linkToOtherTerm);
 
   const { jLabel, eLabel } = useMemo(() => {
     let eLabel = <span>{"[English]"}</span>;
@@ -213,7 +156,7 @@ export default function VerbMain(props: VerbMainProps) {
     return { jLabel, eLabel };
   }, [hintEnabled, showHint, englishSideUp, japaneseObj, verb]);
 
-  const { topValue, bottomValue, bottomLabel } = useLabelPlacementHelper(
+  const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
     englishSideUp,
     eValue,
     jValue,
@@ -270,11 +213,9 @@ export default function VerbMain(props: VerbMainProps) {
           <div>
             <span
               className="clickable loop-no-interrupt"
-              onClick={() =>
-                setShowRomaji((r) => (r === verb.uid ? undefined : verb.uid))
-              }
+              onClick={() => setShowRomaji((r) => !r)}
             >
-              {showRomaji === verb.uid ? romaji : "[romaji]"}
+              {showRomaji ? romaji : "[romaji]"}
             </span>
           </div>
         )}
@@ -286,11 +227,9 @@ export default function VerbMain(props: VerbMainProps) {
             ...(englishSideUp ? { "fs-display-6": true } : { h5: true }),
           }}
           largeClassName={{ "fs-display-6": true }}
-          onClick={() =>
-            setShowMeaning((m) => (m === verb.uid ? undefined : verb.uid))
-          }
+          onClick={() => setShowMeaning((m) => !m)}
         >
-          {showMeaning === verb.uid ? bottomValue : bottomLabel}
+          {showMeaning ? bottomValue : bottomLabel}
         </Sizable>
         <div className="d-flex justify-content-center">{playButton}</div>
       </div>
@@ -298,6 +237,57 @@ export default function VerbMain(props: VerbMainProps) {
       {buildTenseElement(2, t2)}
     </>
   );
+}
+
+function getSplitIdx(verbForms: VerbFormArray, verbColSplit: number) {
+  const middle =
+    Math.trunc(verbForms.length / 2) + (verbForms.length % 2 === 0 ? 0 : 1);
+
+  const rightShift = middle - verbColSplit;
+  const splitIdx = Math.trunc(verbForms.length / 2) + rightShift;
+
+  return splitIdx;
+}
+
+/**
+ * splits the verb forms into two columns
+ * @returns an object containing two columns
+ */
+function splitVerbFormsToColumns(
+  verbForms: VerbFormArray,
+  verbColSplit: number
+) {
+  const splitIdx = getSplitIdx(verbForms, verbColSplit);
+
+  const t1 = verbForms.slice(0, splitIdx);
+  const t2 = verbForms.slice(splitIdx);
+  return { t1, t2 };
+}
+
+/**
+ * @param verb
+ * @param verbForms
+ * @param theForm the form to filter by
+ * @param verbColSplit
+ * @param furiganaToggable
+ */
+function getVerbLabelItems(
+  verb: RawVocabulary,
+  verbForms: VerbFormArray,
+  theForm: string,
+  verbColSplit: number,
+  furiganaToggable: { furigana: { show?: boolean; toggle?: () => void } } // TODO: refactor? JapaneseText.toHTML
+) {
+  const romaji = verb.romaji ?? ".";
+  const splitIdx = getSplitIdx(verbForms, verbColSplit);
+
+  const formResult = verbForms.find((form) => form.name === theForm);
+  const japaneseObj = formResult?.value ?? verbForms[splitIdx].value;
+
+  let inJapanese = japaneseObj.toHTML(furiganaToggable);
+  let inEnglish = <>{verb.english}</>;
+
+  return { inJapanese, inEnglish, romaji, japaneseObj };
 }
 
 VerbMain.propTypes = {

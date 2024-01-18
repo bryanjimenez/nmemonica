@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
@@ -22,14 +23,10 @@ import {
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
-import {
-  buildAction,
-  setStateFunction,
-  useWindowSize,
-} from "../../hooks/helperHK";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
+import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch } from "../../slices";
 import {
   addFrequencyKanji,
@@ -42,7 +39,6 @@ import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawVocabulary } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
-  FrequencyTermIcon,
   ToggleFrequencyTermBtnMemo,
 } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
@@ -97,9 +93,7 @@ export default function Kanji() {
   metadata.current = repetition;
 
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [reinforcedUID, setReinforcedUID] = useState<string | undefined>(
-    undefined
-  );
+  const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
@@ -152,7 +146,7 @@ export default function Kanji() {
     const newSel = (selectedIndex + 1) % l;
 
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
@@ -208,7 +202,7 @@ export default function Kanji() {
     let newSel = i < 0 ? (l + i) % l : i % l;
 
     setSelectedIndex(newSel);
-    setReinforcedUID(undefined);
+    setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
@@ -232,6 +226,8 @@ export default function Kanji() {
           // on
         }
       }
+
+      return Promise.resolve(/** interrupt, fetch */);
     },
     [gotoNextSlide, gotoPrev]
   );
@@ -399,19 +395,15 @@ export default function Kanji() {
           <div className="col">
             <div className="d-flex justify-content-start"></div>
           </div>
-          <div className="col text-center">
-            <FrequencyTermIcon
-              visible={reinforcedUID !== undefined && reinforcedUID !== ""}
-            />
-          </div>
           <div className="col">
             <div className="d-flex justify-content-end">
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
-                toggle={term_reinforce}
+                hasReinforce={term_reinforce}
                 term={term}
                 count={frequency.length}
+                isReinforced={reinforcedUID !== null}
               />
             </div>
           </div>

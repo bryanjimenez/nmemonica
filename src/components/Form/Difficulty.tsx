@@ -5,11 +5,12 @@ import { Slider } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import { useEffect, useRef, useState } from "react";
+
 import { lerp } from "../../helper/arrayHelper";
 import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/gameHelper";
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
-import { useWindowSize } from "../../hooks/helperHK";
 import "../../css/Difficulty.css";
+import { useWindowSize } from "../../hooks/useWindowSize";
 
 interface DifficultySliderProps {
   value?: number; //difficulty value
@@ -52,7 +53,7 @@ export function DifficultySlider(props: DifficultySliderProps) {
   const [r, g, b] = colorVals.map((v) => Math.floor(v));
   const a = 0.25;
   // console.log( r, g, b)
-  const difficultyColor = "rgb(" + r + "," + g + "," + b + "," + a + ")";
+  const difficultyColor = `rgb(${r},${g},${b},${a})`;
 
   const marks = [
     {

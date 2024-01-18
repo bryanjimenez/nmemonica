@@ -3,10 +3,12 @@ import classNames from "classnames";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { shuffleArray } from "../../helper/arrayHelper";
+import { setStateFunction } from "../../helper/eventHandlerHelper";
 import { swapKana } from "../../helper/kanaHelper";
-import { setStateFunction, useWindowSize } from "../../hooks/helperHK";
 import { useConnectKana } from "../../hooks/useConnectKana";
+import { useWindowSize } from "../../hooks/useWindowSize";
 import { KanaType } from "../../slices/settingHelper";
+import type { ValuesOf } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import StackNavButton from "../Form/StackNavButton";
@@ -56,10 +58,25 @@ export default function KanaGame() {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforce, setReinforce] = useState<Choice[]>([]); // list of recently wrong chosen hiragana used to reinforce
-  const [practiceSide, setPracticeSide] = useState(false); //false=hiragana q shown (read), true=romaji q shown (write)
+  const sideFlipState = useState(false);
+  /**
+   * **true** (write practice)
+   *
+   * Question: romaji
+   *
+   * Choices: kana
+   *
+   * **false** (read practice)
+   *
+   * Question: kana
+   *
+   * Choices: romaji
+   */
+  const practiceSide = sideFlipState[0];
+  const setPracticeSide = sideFlipState[1];
 
   const {
-    prepareGame,
+    prepareGame: prepareGameCB,
     setWrongs,
     setCorrect,
 
@@ -138,7 +155,7 @@ export default function KanaGame() {
 
   useEffect(() => {
     if (hiraganaR.current.length > 0) {
-      prepareGame();
+      prepareGameCB();
     }
   }, [selectedIndex, practiceSide, charSet]);
 
@@ -164,7 +181,7 @@ export default function KanaGame() {
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          <div className="d-flex flex-column flex-sm-row justify-content-around">
+          <div className="d-flex flex-column flex-sm-row justify-content-around w-100">
             {!wideMode.current && (
               <div
                 className={classNames({
@@ -215,7 +232,7 @@ export default function KanaGame() {
  *
  * 2 = randomize 0 or 1
  */
-function kanaTypeLogic(charSet: (typeof KanaType)[keyof typeof KanaType]) {
+function kanaTypeLogic(charSet: ValuesOf<typeof KanaType>) {
   let useCharSet;
   if (charSet === KanaType.MIXED) {
     useCharSet = Math.floor(Math.random() * 2) as 0 | 1;
@@ -305,7 +322,7 @@ function populateChoices(
       vowel: number,
       charset: number
     ) => string;
-    charSet: (typeof KanaType)[keyof typeof KanaType];
+    charSet: ValuesOf<typeof KanaType>;
     choiceN: number;
     practiceSide: boolean;
   },
@@ -376,7 +393,7 @@ export function usePrepareGame({
   reinforce,
   selectedIndex,
 }: {
-  charSet: (typeof KanaType)[keyof typeof KanaType];
+  charSet: ValuesOf<typeof KanaType>;
   choiceN: number;
   wideMode: boolean;
   vowelsR: React.MutableRefObject<string[]>;
@@ -561,7 +578,7 @@ export function buildChoiceButton({
   isLandscape: boolean;
   wideMode: boolean;
   easyMode: boolean;
-  charSet: (typeof KanaType)[keyof typeof KanaType];
+  charSet: ValuesOf<typeof KanaType>;
   practiceSide: boolean;
   wrongs: number[];
   choices: Choice[];

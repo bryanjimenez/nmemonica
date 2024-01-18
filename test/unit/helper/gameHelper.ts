@@ -7,12 +7,13 @@ import {
   alphaOrder,
   difficultySubFilter,
   getJapaneseHint,
+  getVerbFormsArray,
   randomOrder,
   spaceRepOrder,
   termFilterByType,
 } from "../../../src/helper/gameHelper";
 import { TermFilterBy } from "../../../src/slices/settingHelper";
-import { MetaDataObj, RawVocabulary } from "../../../src/typings/raw";
+import type { RawVocabulary } from "../../../src/typings/raw";
 
 describe("gameHelper", function () {
   const terms: RawVocabulary[] = [
@@ -122,13 +123,9 @@ describe("gameHelper", function () {
     },
   ];
   describe("spaceRepOrder", function () {
-    interface SpaceRepetitionMap {
-      [key: string]: Partial<MetaDataObj>;
-    }
-
     it("term order when undefined", function () {
       const expected = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0];
-      const spaceRepObj: SpaceRepetitionMap = {
+      const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
           vC: 1,
           d: "2021-09-28T17:38:09.319Z",
@@ -141,7 +138,7 @@ describe("gameHelper", function () {
     it("date order oldest first", function () {
       const expected = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
 
-      const spaceRepObj: SpaceRepetitionMap = {
+      const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 1,
@@ -214,7 +211,7 @@ describe("gameHelper", function () {
     });
     it("view count order lowest first", function () {
       const expected = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-      const spaceRepObj: SpaceRepetitionMap = {
+      const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 13,
@@ -287,7 +284,7 @@ describe("gameHelper", function () {
     });
     it("date order superseedes count order", function () {
       const expected = [11, 12, 10, 9, 8, 7, 6, 5, 4, 3, 0, 1, 2];
-      const spaceRepObj: SpaceRepetitionMap = {
+      const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 1,
@@ -360,7 +357,7 @@ describe("gameHelper", function () {
     });
     it("timed play ", function () {
       const expected = [0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 12];
-      const spaceRepObj: SpaceRepetitionMap = {
+      const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 13,
@@ -449,7 +446,7 @@ describe("gameHelper", function () {
         "12",
         "0",
       ];
-      const spaceRepObj: SpaceRepetitionMap = {
+      const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
           vC: 1,
           d: "2021-09-28T17:38:09.319Z",
@@ -983,6 +980,55 @@ describe("gameHelper", function () {
       expect(screen.getByText("しょ").tagName).equal("SPAN");
       expect(screen.getByText("心者").className).equal("invisible");
       expect(screen.getByText("しんしゃ").className).equal("invisible");
+    });
+  });
+  describe("getVerbFormsArray", function () {
+    it("verb form names only", function () {
+      const actual = getVerbFormsArray();
+
+      expect(actual).to.have.lengthOf(9);
+      actual.forEach((el) => {
+        expect(el).to.have.key("name");
+        expect(el).to.not.have.key("value");
+      });
+    });
+
+    it("verb form", function () {
+      const actual = getVerbFormsArray({ japanese: "いく\n行く", exv: 1 });
+
+      expect(actual).to.have.lengthOf(9);
+      actual.forEach((el) => {
+        expect(el).to.have.all.keys("name", "value");
+      });
+    });
+    it("exception verb forms", function () {
+      const regular = getVerbFormsArray({ japanese: "たべる\n食べる" });
+      // exception verbs don't have all forms
+      const actual = getVerbFormsArray({ japanese: "ある" });
+
+      expect(actual).to.have.lengthOf.lessThan(regular.length);
+      actual.forEach((el) => {
+        expect(el).to.have.all.keys("name", "value");
+      });
+    });
+    it("filtered verb form", function () {
+      const filter = ["-ta"];
+      const actual = getVerbFormsArray({ japanese: "読む" }, filter);
+
+      expect(actual).to.have.lengthOf(filter.length);
+      actual.forEach((el) => {
+        expect(el).to.have.all.keys("name", "value");
+      });
+    });
+    it("ordered verb form", function () {
+      const filter = ["-ta", "-te"];
+      const actual = getVerbFormsArray({ japanese: "読む" }, filter);
+
+      expect(actual).to.have.lengthOf(filter.length);
+      actual.forEach((el, i) => {
+        expect(el).to.have.all.keys("name", "value");
+        expect(el.name).to.eq(filter[i]);
+      });
     });
   });
 });

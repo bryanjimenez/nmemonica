@@ -1,10 +1,11 @@
 import { useEffect } from "react";
+import type { GameActionHandler } from "./useSwipeActions";
 
 /**
  * Attaches keyboard actions to component
  */
 export function useKeyboardActions(
-  gameActionHandler: Function,
+  gameActionHandler: GameActionHandler,
   flipPhrasesPracticeSide: Function,
   timedPlayAnswerHandlerWrapper?: Function
 ) {
@@ -27,7 +28,7 @@ export function useKeyboardActions(
 }
 
 function buildArrowKeyPress(
-  gameActionHandler: Function,
+  gameActionHandler: GameActionHandler,
   flipVocabularyPracticeSide: Function,
   timedPlayAnswerHandlerWrapper?: Function
 ) {

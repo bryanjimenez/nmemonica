@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
 import { TermFilterBy, TermSortBy } from "../slices/settingHelper";
+import type { ValuesOf } from "../typings/raw";
 
 /**
  * Vocabulary app-state props
@@ -30,16 +31,16 @@ export function useConnectVocabulary() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const [practiceSide, autoVerbView, verbForm] = useSelector<
+  const [englishSideUp, autoVerbView, verbForm] = useSelector<
     RootState,
     [boolean, boolean, string]
   >(({ vocabulary }: RootState) => {
-    const { practiceSide, autoVerbView } = vocabulary.setting;
+    const { englishSideUp, autoVerbView } = vocabulary.setting;
 
     const { verbForm } = vocabulary;
 
     // TODO: https://github.com/reduxjs/reselect#basic-usage
-    return [practiceSide, autoVerbView, verbForm];
+    return [englishSideUp, autoVerbView, verbForm];
   }, shallowEqual);
 
   const [mt, r, ft, he, romajiEnabled, bareKanji, verbColSplit, sm] =
@@ -48,12 +49,12 @@ export function useConnectVocabulary() {
       [
         number,
         boolean,
-        (typeof TermFilterBy)[keyof typeof TermFilterBy],
+        ValuesOf<typeof TermFilterBy>,
         boolean,
         boolean,
         boolean,
         number,
-        (typeof TermSortBy)[keyof typeof TermSortBy]
+        ValuesOf<typeof TermSortBy>
       ]
     >(({ vocabulary }: RootState) => {
       const {
@@ -112,7 +113,7 @@ export function useConnectVocabulary() {
 
   return {
     // Changing during game
-    englishSideUp: practiceSide,
+    englishSideUp: englishSideUp,
     autoVerbView,
     verbForm,
     repetition,

@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
 import { TermFilterBy } from "../slices/settingHelper";
+import type { ValuesOf } from "../typings/raw";
 
 /**
  * Phrase app-state props
@@ -30,14 +31,14 @@ export function useConnectPhrase() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const practiceSide = useSelector(({ phrases }: RootState) => {
-    const { practiceSide } = phrases.setting;
-    return practiceSide;
+  const englishSideUp = useSelector(({ phrases }: RootState) => {
+    const { englishSideUp } = phrases.setting;
+    return englishSideUp;
   });
 
   const [r, ft, sm, rm] = useSelector<
     RootState,
-    [boolean, (typeof TermFilterBy)[keyof typeof TermFilterBy], number, boolean]
+    [boolean, ValuesOf<typeof TermFilterBy>, number, boolean]
   >(({ phrases }: RootState) => {
     const { reinforce, filter, ordered, romaji } = phrases.setting;
     return [reinforce, filter, ordered, romaji];
@@ -67,7 +68,7 @@ export function useConnectPhrase() {
 
   return {
     // Changing during game
-    englishSideUp: practiceSide,
+    englishSideUp: englishSideUp,
     repetition,
 
     // Not changing during game

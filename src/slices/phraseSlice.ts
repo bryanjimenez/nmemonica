@@ -1,8 +1,6 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import { firebaseConfig } from "../../environment.development";
-import { buildGroupObject } from "../helper/reducerHelper";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+
 import {
   TermFilterBy,
   TermSortBy,
@@ -10,24 +8,33 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import type { RawPhrase, SpaceRepetitionMap } from "../typings/raw";
+import { firebaseConfig } from "../../environment.development";
+import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { buildGroupObject } from "../helper/reducerHelper";
+import type {
+  GroupListMap,
+  MetaDataObj,
+  RawPhrase,
+  ValuesOf,
+} from "../typings/raw";
+
 import type { RootState } from ".";
 
 export interface PhraseInitSlice {
   value: RawPhrase[];
   version: string;
-  grpObj: {};
+  grpObj: GroupListMap;
 
   setting: {
-    ordered: (typeof TermSortBy)[keyof typeof TermSortBy];
-    practiceSide: boolean;
+    ordered: ValuesOf<typeof TermSortBy>;
+    englishSideUp: boolean;
     romaji: boolean;
     reinforce: boolean;
     repTID: number;
-    repetition: SpaceRepetitionMap;
+    repetition: Record<string, MetaDataObj | undefined>;
     frequency: { uid?: string; count: number };
     activeGroup: string[];
-    filter: (typeof TermFilterBy)[keyof typeof TermFilterBy];
+    filter: ValuesOf<typeof TermFilterBy>;
   };
 }
 
@@ -38,7 +45,7 @@ export const phraseInitState: PhraseInitSlice = {
 
   setting: {
     ordered: 0,
-    practiceSide: false,
+    englishSideUp: false,
     romaji: false,
     reinforce: false,
     repTID: -1,
@@ -68,15 +75,20 @@ export const getPhrase = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching phrase: 0");
     // }
-    return fetch(firebaseConfig.databaseURL + "/lambda/phrases.json", {
-      headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
+    const value = (await fetch(
+      firebaseConfig.databaseURL + "/lambda/phrases.json",
+      {
+        headers: { "Data-Version": version },
+      }
+    ).then((res) => res.json())) as Record<string, RawPhrase>;
+
+    return { value, version };
   }
 );
 
 export const phraseFromLocalStorage = createAsyncThunk(
   "phrase/phraseFromLocalStorage",
-  async (arg: typeof phraseInitState.setting) => {
+  (arg: typeof phraseInitState.setting) => {
     const initValues = arg;
 
     return initValues;
@@ -85,7 +97,7 @@ export const phraseFromLocalStorage = createAsyncThunk(
 
 export const updateSpaceRepPhrase = createAsyncThunk(
   "phrase/updateSpaceRepPhrase",
-  async (arg: { uid: string; shouldIncrement: boolean }, thunkAPI) => {
+  (arg: { uid: string; shouldIncrement: boolean }, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
     const state = (thunkAPI.getState() as RootState).phrases;
 
@@ -107,7 +119,7 @@ const phraseSlice = createSlice({
      */
     togglePhrasesFilter(
       state,
-      action: { payload?: (typeof TermFilterBy)[keyof typeof TermFilterBy] }
+      action: { payload?: ValuesOf<typeof TermFilterBy> }
     ) {
       const override = action.payload;
 
@@ -119,7 +131,7 @@ const phraseSlice = createSlice({
         filter + 1,
         allowed,
         override
-      ) as (typeof TermFilterBy)[keyof typeof TermFilterBy];
+      ) as ValuesOf<typeof TermFilterBy>;
 
       state.setting.filter = localStoreAttrUpdate(
         new Date(),
@@ -159,9 +171,9 @@ const phraseSlice = createSlice({
       );
     },
 
-    addFrequencyPhrase(state, action) {
+    addFrequencyPhrase(state, action: PayloadAction<string>) {
       const uid = action.payload;
-      const { value: newValue } = updateSpaceRepTerm(
+      const { record: newValue } = updateSpaceRepTerm(
         uid,
         state.setting.repetition,
         { count: false, date: false },
@@ -195,7 +207,7 @@ const phraseSlice = createSlice({
       const spaceRep = state.setting.repetition;
       if (spaceRep[uid]?.rein === true) {
         // null to delete
-        const { value: newValue } = updateSpaceRepTerm(
+        const { record: newValue } = updateSpaceRepTerm(
           uid,
           spaceRep,
           { count: false, date: false },
@@ -225,11 +237,11 @@ const phraseSlice = createSlice({
     },
 
     flipPhrasesPracticeSide(state) {
-      state.setting.practiceSide = localStoreAttrUpdate(
+      state.setting.englishSideUp = localStoreAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
-        "practiceSide"
+        "englishSideUp"
       );
     },
 
@@ -247,10 +259,9 @@ const phraseSlice = createSlice({
 
       const { ordered } = state.setting;
 
-      let newOrdered = toggleAFilter(
-        ordered + 1,
-        allowed
-      ) as (typeof TermSortBy)[keyof typeof TermSortBy];
+      let newOrdered = toggleAFilter(ordered + 1, allowed) as ValuesOf<
+        typeof TermSortBy
+      >;
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -288,7 +299,7 @@ const phraseSlice = createSlice({
       };
     });
     builder.addCase(updateSpaceRepPhrase.fulfilled, (state, action) => {
-      const { value: newValue } = action.payload;
+      const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = localStoreAttrUpdate(
