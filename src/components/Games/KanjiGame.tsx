@@ -609,7 +609,12 @@ export function createEnglishChoices(
     return [...acc, ...list];
   }, []);
 
-  const noDuplicateChoices = new Set([a.english, ...examples]);
+  const { firstLetter: ansFirstLetter } = choiceFadePrefix(a.english);
+  const noDuplicateChoices = new Set([
+    a.english, // the answer
+    ...(ansFirstLetter ? [ansFirstLetter] : []), // the answer's first letter
+    ...examples,
+  ]);
 
   let choices: RawKanji[] = [a];
   while (choices.length < TOTAL_CHOICES) {
@@ -618,14 +623,32 @@ export function createEnglishChoices(
     const choice = kanjiList[i];
     const cArr = splitToArray(choice.english);
 
+    /** firstLetters of choices */
+    const flArr = cArr.reduce<string[]>((acc, c) => {
+      const { firstLetter } = choiceFadePrefix(c);
+
+      if (firstLetter) {
+        acc = [...acc, firstLetter];
+      }
+
+      return acc;
+    }, []);
+
     // should not match the right answer(s)
     // should not match a previous choice
+    // should not match a previous firstLetter fade hint
     if (
       cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
-      cArr.every((cCurr) => !noDuplicateChoices.has(cCurr))
+      cArr.every((cCurr) => !noDuplicateChoices.has(cCurr)) &&
+      (flArr.length === 0 ||
+        flArr.every((firstLetter) => !noDuplicateChoices.has(firstLetter)))
     ) {
       const english = oneFromList(choice.english);
       noDuplicateChoices.add(english);
+      const { firstLetter } = choiceFadePrefix(english);
+      if (firstLetter) {
+        noDuplicateChoices.add(firstLetter);
+      }
       choices = [...choices, { ...choice, english }];
     }
   }
@@ -633,6 +656,43 @@ export function createEnglishChoices(
   shuffleArray(choices);
 
   return choices;
+}
+
+function choiceFadePrefix(english: string) {
+  let firstLetter;
+  let restLetters;
+  let nonAlpha;
+  let toDo;
+
+  if (new RegExp(/^[^a-zA-Z]/).test(english)) {
+    // non alpha start
+    const nonAlphaOrSpcRegEx = new RegExp(/[^a-zA-Z\s]/);
+    const symbolChars = english
+      .split("")
+      .filter((char) => nonAlphaOrSpcRegEx.test(char));
+
+    if (symbolChars.length === 1) {
+      // just one non alpha
+      nonAlpha = english.slice(0, 1);
+      firstLetter = english.slice(1, 2);
+      restLetters = english.slice(2);
+    } else {
+      // many?
+      // no hint
+      // don't renturn splits
+    }
+  } else if (english.startsWith("To ")) {
+    // verbs
+    toDo = english.slice(0, 3);
+    firstLetter = english.slice(3, 4);
+    restLetters = english.slice(4);
+  } else {
+    // non verbs
+    firstLetter = english.slice(0, 1);
+    restLetters = english.slice(1);
+  }
+
+  return { firstLetter, restLetters, nonAlpha, toDo };
 }
 
 export function choiceToHtml<T extends { english: string }>(c: T) {
@@ -643,62 +703,24 @@ export function choiceToHtml<T extends { english: string }>(c: T) {
       "notification-fade-in": fadeIn,
     };
 
-    let element;
-    if (new RegExp(/^[^a-zA-Z]/).test(c.english)) {
-      // non alpha start
-      const nonAlphaOrSpcRegEx = new RegExp(/[^a-zA-Z\s]/);
-      const nonAlpha = c.english
-        .split("")
-        .filter((char) => nonAlphaOrSpcRegEx.test(char));
+    const { firstLetter, restLetters, nonAlpha, toDo } = choiceFadePrefix(
+      c.english
+    );
 
-      if (nonAlpha.length === 1) {
-        // just one non alpha
-        const nonAlpha = c.english.slice(0, 1);
-        const firstLetter = c.english.slice(1, 2);
-        const restLetters = c.english.slice(2);
-
-        element = (
-          <>
-            <span className={classNames(fadeCss)}>{nonAlpha}</span>
-            <span className="fw-bold">{firstLetter}</span>
-            <span className={classNames(fadeCss)}>{restLetters}</span>
-          </>
-        );
-      } else {
-        // many?
-        // no hint
-
-        element = (
-          <>
-            <span className={classNames(fadeCss)}>{c.english}</span>
-          </>
-        );
-      }
-    } else if (c.english.startsWith("To ")) {
-      // verbs
-      const toDo = c.english.slice(0, 3);
-      const firstLetter = c.english.slice(3, 4);
-      const restLetters = c.english.slice(4);
-
-      element = (
-        <>
-          <span className={classNames(fadeCss)}>{toDo}</span>
-          <span className="fw-bold">{firstLetter}</span>
+    const element = !firstLetter ? (
+      <>
+        <span className={classNames(fadeCss)}>{c.english}</span>
+      </>
+    ) : (
+      <>
+        {nonAlpha && <span className={classNames(fadeCss)}>{nonAlpha}</span>}
+        {toDo && <span className={classNames(fadeCss)}>{toDo}</span>}
+        {firstLetter && <span className="fw-bold">{firstLetter}</span>}
+        {restLetters && (
           <span className={classNames(fadeCss)}>{restLetters}</span>
-        </>
-      );
-    } else {
-      // non verbs
-      const firstLetter = c.english.slice(0, 1);
-      const restLetters = c.english.slice(1);
-
-      element = (
-        <>
-          <span className="fw-bold">{firstLetter}</span>
-          <span className={classNames(fadeCss)}>{restLetters}</span>
-        </>
-      );
-    }
+        )}
+      </>
+    );
 
     return element;
   };
