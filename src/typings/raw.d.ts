@@ -5,10 +5,16 @@ export interface RawJapanese {
   slang?: boolean;
   keigo?: boolean;
   adj?: string;
+  /** uid of intransitive pair */
   intr?: true | string;
+  /** uid of transitive pair */
   trans?: string;
   exv?: 1 | 2 | 3;
 }
+
+export type SourceVocabulary = Omit<RawVocabulary, "uid" | "tags"> & {
+  tag?: string;
+};
 
 export interface RawVocabulary extends RawJapanese {
   uid: string;
@@ -18,9 +24,14 @@ export interface RawVocabulary extends RawJapanese {
 
   grp?: string;
   subGrp?: string;
-  tag?: string[];
+
+  tags: string[];
 }
 
+export type SourcePhrase = Omit<
+  RawPhrase,
+  "uid" | "tags" | "particles" | "inverse"
+> & { tag?: string };
 export interface RawPhrase {
   uid: string;
 
@@ -33,10 +44,16 @@ export interface RawPhrase {
 
   grp?: string;
   subGrp?: string;
-  tag?: string[];
+
+  tags: string[];
   particles?: string[];
+  inverse?: string;
+  polite: boolean;
 }
 
+export type SourceKanji = Omit<RawKanji, "uid" | "tags" | "radical"> & {
+  tag?: string;
+};
 export interface RawKanji {
   uid: string;
 
@@ -46,7 +63,7 @@ export interface RawKanji {
   english: string;
 
   grp?: string;
-  tag?: string[];
+  tags: string[];
   /** Radical shown in an example Kanji */
   radex?: string;
 

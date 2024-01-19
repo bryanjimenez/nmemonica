@@ -17,12 +17,13 @@ import { MEMORIZED_THRLD, getVerbFormsArray } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   buildGroupObject,
-  buildVocabularyObject,
+  buildVocabularyArray,
 } from "../helper/reducerHelper";
 import type {
   GroupListMap,
   MetaDataObj,
   RawVocabulary,
+  SourceVocabulary,
   ValuesOf,
 } from "../typings/raw";
 
@@ -92,7 +93,7 @@ export const getVocabulary = createAsyncThunk(
       {
         headers: { "Data-Version": version },
       }
-    ).then((res) => res.json())) as Record<string, RawVocabulary>;
+    ).then((res) => res.json())) as Record<string, SourceVocabulary>;
 
     return { value, version };
   }
@@ -529,7 +530,7 @@ const vocabularySlice = createSlice({
     builder.addCase(getVocabulary.fulfilled, (state, action) => {
       const { value, version } = action.payload;
       state.grpObj = buildGroupObject(value);
-      state.value = buildVocabularyObject(value);
+      state.value = buildVocabularyArray(value);
       state.version = version;
     });
 

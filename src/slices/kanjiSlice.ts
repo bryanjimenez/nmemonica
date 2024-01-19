@@ -11,8 +11,8 @@ import {
 import { firebaseConfig } from "../../environment.development";
 import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { buildTagObject } from "../helper/reducerHelper";
-import type { MetaDataObj, RawKanji, ValuesOf } from "../typings/raw";
+import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
+import type { MetaDataObj, RawKanji, SourceKanji, ValuesOf } from "../typings/raw";
 
 import type { RootState } from ".";
 
@@ -75,7 +75,10 @@ export const getKanji = createAsyncThunk(
       {
         headers: { "Data-Version": version },
       }
-    ).then((res) => res.json())) as Record<string, RawKanji>;
+    ).then((res) => res.json())) as Record<
+      string,
+      SourceKanji
+    >;
 
     return { value, version };
   }
@@ -328,38 +331,34 @@ const kanjiSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(
-      getKanji.fulfilled,
-      (
-        state,
-        action: {
-          payload: {
-            value: Record<string, RawKanji>;
-            version: KanjiInitSlice["version"];
-          };
-        }
-      ) => {
-        const { value: v, version } = action.payload;
-        const value = Object.keys(v).map((k) => {
-          const isRadical =
-            v[k].grp?.toLowerCase() === "radical" ||
-            v[k].tag?.find((t) => t.toLowerCase() === "radical");
+    builder.addCase(getKanji.fulfilled, (state, action) => {
+      const { value: v, version } = action.payload;
+      const kanjiArr: RawKanji[] = Object.keys(v).map((k) => {
+        const { tags } = getPropsFromTags(v[k].tag) as { tags: string[] };
 
-          return {
-            ...v[k],
-            uid: k,
-            tag: v[k].tag === undefined ? [] : v[k].tag,
-            radical: isRadical
-              ? { example: v[k].radex?.split("") ?? [] }
-              : undefined,
-          };
-        });
+        const isRadical =
+          v[k].grp?.toLowerCase() === "radical" ||
+          tags.find((t) => t.toLowerCase() === "radical");
 
-        state.tagObj = buildTagObject(v);
-        state.value = value;
-        state.version = version;
-      }
-    );
+        return {
+          ...v[k],
+          uid: k,
+          // Not used after parsing
+          tag: undefined,
+
+          // Derived from tag
+          tags,
+
+          radical: isRadical
+            ? { example: v[k].radex?.split("") ?? [] }
+            : undefined,
+        };
+      });
+
+      state.tagObj = buildTagObject(kanjiArr);
+      state.value = kanjiArr;
+      state.version = version;
+    });
 
     builder.addCase(kanjiFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;

@@ -5,32 +5,7 @@ import * as md5 from "md5";
 import type { Optional, RawKanji } from "../../../src/typings/raw";
 import { fetchGSheetsData } from "./sheets";
 
-type Kanji = Optional<RawKanji, "uid">;
-
-function setPropsFromTags(el: Kanji, tag: string) {
-  const tags = tag.split(/[,]+/);
-
-  tags.forEach((t) => {
-    t = t.trim();
-    if (t.endsWith(",")) {
-      t = t.slice(0, -1);
-    }
-
-    switch (t) {
-      // case "slang":
-      //   el.slang = true;
-      //   break;
-      default:
-        if (!el.tag || el.tag.length === 0) {
-          el.tag = [t];
-        } else {
-          el.tag = [...el.tag, t];
-        }
-    }
-  });
-
-  return el;
-}
+type Kanji = Optional<RawKanji, "uid" | "tags"> & { tag?: string };
 
 export async function sheets_sync_kanji(
   req: express.Request,
@@ -73,11 +48,7 @@ export async function sheets_sync_kanji(
         }
 
         if (el[TAG] && el[TAG] !== "") {
-          kanji = setPropsFromTags(kanji, el[TAG]);
-
-          if (kanji.tag?.length === 0) {
-            delete kanji.tag;
-          }
+          kanji.tag = el[TAG];
         }
 
         if (el[RADEX] && el[RADEX] !== "") {

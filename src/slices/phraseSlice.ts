@@ -1,7 +1,9 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   grpParse,
@@ -10,11 +12,12 @@ import {
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { buildGroupObject } from "../helper/reducerHelper";
+import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import type {
   GroupListMap,
   MetaDataObj,
   RawPhrase,
+  SourcePhrase,
   ValuesOf,
 } from "../typings/raw";
 
@@ -56,11 +59,104 @@ export const phraseInitState: PhraseInitSlice = {
   },
 };
 
-export const buildPhraseArray = (object: Record<string, RawPhrase>) =>
-  Object.keys(object).map((k) => ({
-    ...object[k],
-    uid: k,
-  }));
+/**
+ * For inverse tagged phrases
+ * Checks that an initial uid has atleast one pair
+ */
+function inversePairCheck<T extends SourcePhrase>(
+  initial: string,
+  object: Record<string, T>
+) {
+  let errors;
+
+  let { inverse } = getPropsFromTags(object[initial].tag);
+  let inversePair = inverse;
+
+  while (inversePair && inversePair !== initial) {
+    const { inverse } = getPropsFromTags(object[inversePair]?.tag);
+
+    if (inverse) {
+      inversePair = inverse;
+    } else {
+      // match failed
+      inversePair = undefined;
+      errors = [
+        ...(errors ?? []),
+        `Missing inverse pair for ${object[initial].japanese}`,
+      ];
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Determine if a phrase is polite.
+ *
+ * **When** they contain multiple periods or commas; polite phrases are left **unedited**.
+ *
+ * *Otherwise* the period is *removed*.
+ *
+ * @param o
+ * @returns
+ */
+export function isPolitePhrase<T extends { japanese: string }>(o: T) {
+  let polite: { japanese?: string; polite: boolean } = { polite: false };
+  if (o.japanese.endsWith("。")) {
+    const [furigana, phrase] = o.japanese.split("\n");
+
+    let withoutDot;
+    if (
+      furigana.indexOf("。") !== furigana.lastIndexOf("。") ||
+      furigana.includes("、")
+    ) {
+      // multiple 。or 、
+      // japanese is not defined. withoutDot is not used.
+      polite = { polite: true };
+    } else {
+      if (phrase?.endsWith("。") && furigana.endsWith("。")) {
+        withoutDot = `${furigana.slice(0, -1)}\n${phrase.slice(0, -1)}`;
+      } else {
+        withoutDot = o.japanese.slice(0, -1);
+      }
+
+      polite = { japanese: withoutDot, polite: true };
+    }
+
+  }
+
+  return polite;
+}
+
+export function buildPhraseArray<T extends SourcePhrase>(
+  object: Record<string, T>
+): { values: RawPhrase[]; errors?: string[] } {
+  let errors: undefined | string[];
+  const values = Object.keys(object).map((k) => {
+    let { tags, particles, inverse } = getPropsFromTags(object[k].tag);
+
+    errors = inversePairCheck(k, object);
+
+    const o = object[k];
+    const polite = isPolitePhrase(o);
+
+    return {
+      ...object[k],
+      uid: k,
+
+      // Not used after parsing
+      tag: undefined,
+
+      // Derived from tag
+      tags,
+      particles,
+      inverse,
+      ...polite,
+    };
+  });
+
+  return { values, errors };
+}
 
 /**
  * Fetch phrases
@@ -75,14 +171,22 @@ export const getPhrase = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching phrase: 0");
     // }
-    const value = (await fetch(
+    const jsonValue = (await fetch(
       firebaseConfig.databaseURL + "/lambda/phrases.json",
       {
         headers: { "Data-Version": version },
       }
-    ).then((res) => res.json())) as Record<string, RawPhrase>;
+    ).then((res) => res.json())) as Record<string, SourcePhrase>;
 
-    return { value, version };
+    const groups = buildGroupObject(jsonValue);
+    const { values, errors } = buildPhraseArray(jsonValue);
+    if (errors) {
+      errors.forEach((e) => {
+        thunkAPI.dispatch(logger(e, DebugLevel.WARN));
+      });
+    }
+
+    return { version, values, groups };
   }
 );
 
@@ -275,9 +379,9 @@ const phraseSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(getPhrase.fulfilled, (state, action) => {
-      const { value, version } = action.payload;
-      state.grpObj = buildGroupObject(value);
-      state.value = buildPhraseArray(value);
+      const { version, values, groups } = action.payload;
+      state.grpObj = groups;
+      state.value = values;
       state.version = version;
     });
 

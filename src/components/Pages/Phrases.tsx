@@ -17,9 +17,11 @@ import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   alphaOrder,
   dateViewOrder,
+  englishLabel,
   getCacheUID,
   getTerm,
   getTermUID,
+  japaneseLabel,
   labelOptions,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
@@ -404,13 +406,28 @@ export default function Phrases() {
   );
 
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
-
   const englishPhrase = englishPhraseSubComp(phrase, showLit, setShowLit);
+
+  /** Display inverse links and polite when available */
+  const enDecorated = englishLabel(
+    englishSideUp,
+    jObj,
+    englishPhrase,
+    (uid) => setReinforcedUID(uid),
+    phrase
+  );
+  const jpDecorated = japaneseLabel(
+    englishSideUp,
+    jObj,
+    japanesePhrase,
+    (uid) => setReinforcedUID(uid),
+    phrase
+  );
 
   const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
     englishSideUp,
-    englishPhrase,
-    japanesePhrase,
+    enDecorated,
+    jpDecorated,
     eLabelMemo,
     jLabelMemo
   );

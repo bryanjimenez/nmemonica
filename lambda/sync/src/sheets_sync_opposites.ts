@@ -5,7 +5,7 @@ import * as md5 from "md5";
 import type { RawVocabulary } from "../../../src/typings/raw";
 import { fetchGSheetsData } from "./sheets";
 
-type Vocabulary = Omit<RawVocabulary, "uid">;
+type Vocabulary = Omit<RawVocabulary, "uid" | "tags">;
 
 export async function sheets_sync_opposites(
   req: express.Request,

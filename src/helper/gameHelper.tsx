@@ -118,7 +118,7 @@ export function getTerm<Term extends { uid: string }>(
  * @returns filteredPhrases
  */
 export function termFilterByType<
-  Term extends { uid: string; grp?: string; subGrp?: string; tag?: string[] }
+  Term extends { uid: string; grp?: string; subGrp?: string; tags: string[] }
 >(
   filterType: ValuesOf<typeof TermFilterBy>,
   termList: Term[],
@@ -156,7 +156,7 @@ export function termFilterByType<
   } else if (filterType === TermFilterBy.TAGS) {
     if (activeGrpList.length > 0) {
       filteredTerms = termList.filter((term) =>
-        term.tag?.some((aTag) => activeGrpList.includes(aTag))
+        term.tags.some((aTag) => activeGrpList.includes(aTag))
       );
     }
   } else {
@@ -561,7 +561,8 @@ export function alphaOrder(terms: RawVocabulary[]) {
   // preserve terms unmodified
 
   let originalIndex: Record<string, number> = {};
-  let modifiableTerms: RawVocabulary[] = [];
+  let modifiableTerms: { uid: string; japanese: string; english: string }[] =
+    [];
   terms.forEach((t, i) => {
     originalIndex[t.uid] = i;
 
@@ -750,14 +751,16 @@ export function verbToTargetForm(
 }
 
 /**
- * decorates label with metadata info (intransitive, keigo, etc.)
+ * Decorates label with metadata info (intransitive, keigo, etc.)
  */
 export function japaneseLabel(
   isOnBottom: boolean,
   jObj: JapaneseText | JapaneseVerb,
   inJapanese: React.JSX.Element,
-  jumpToTerm?: (uid: string) => void
+  jumpToTerm?: (uid: string) => void,
+  rawObj?: RawPhrase
 ) {
+  const indicatorsCss = "fs-5";
   const isOnTop = !isOnBottom;
   let indicators: React.JSX.Element[] = [];
 
@@ -776,6 +779,7 @@ export function japaneseLabel(
   const showNaAdj = jObj.isNaAdj();
   const showSlang = jObj.isSlang();
   const showKeigo = jObj.isKeigo();
+  const showInverse = rawObj?.inverse;
 
   if (isOnTop && (showIntr || pairUID)) {
     let viewMyPair = undefined;
@@ -815,6 +819,28 @@ export function japaneseLabel(
   if (showAsterix && indicators.length > 0) {
     indicators = [<span key={indicators.length + 1}>*</span>, ...indicators];
   }
+  if (isOnTop && showInverse !== undefined) {
+    let viewMyInverse = undefined;
+    if (typeof jumpToTerm === "function") {
+      viewMyInverse = () => {
+        jumpToTerm(showInverse);
+      };
+    }
+
+    indicators = [
+      ...indicators,
+      <span
+        key={indicators.length + 1}
+        className={classNames({
+          clickable: showInverse,
+          "question-color": showInverse,
+        })}
+        onClick={viewMyInverse}
+      >
+        inv
+      </span>,
+    ];
+  }
 
   let inJapaneseLbl;
   if (indicators.length > 0) {
@@ -822,11 +848,12 @@ export function japaneseLabel(
       <span>
         {inJapanese}
         {showNaAdj && <span className="opacity-25"> {"な"}</span>}
-        <span className="fs-5">
+        <span className={indicatorsCss}>
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
-              return [...a, <span key={indicators.length + i}> , </span>, c];
+              const separator = <span key={indicators.length + i}> , </span>;
+              return [...a, separator, c];
             } else {
               return [...a, c];
             }
@@ -857,19 +884,16 @@ export function japaneseLabel(
 }
 
 /**
- * decorates label with metadata info (intransitive, keigo, etc.)
- * @param {boolean} isOnTop
- * @param {JapaneseText | JapaneseVerb} jObj
- * @param {*} inEnglish
- * @param {function} [jumpToTerm]
- * @returns {React.JSX.Element}
+ * Decorates label with metadata info (intransitive, keigo, etc.)
  */
 export function englishLabel(
   isOnTop: boolean,
   jObj: JapaneseText | JapaneseVerb,
   inEnglish: React.JSX.Element,
-  jumpToTerm?: (uid: string) => void
+  jumpToTerm?: (uid: string) => void,
+  rawObj?: RawPhrase
 ) {
+  const indicatorsCss = "fs-5";
   let indicators: React.JSX.Element[] = [];
   let showIntr = false;
   let pairUID: string | undefined;
@@ -920,16 +944,49 @@ export function englishLabel(
     ];
   }
 
+  // rawObj only for phrases
+  const showInverse = rawObj?.inverse;
+  const showPolite = rawObj?.polite;
+  if (isOnTop && showInverse !== undefined) {
+    let viewMyInverse = undefined;
+    if (typeof jumpToTerm === "function") {
+      viewMyInverse = () => {
+        jumpToTerm(showInverse);
+      };
+    }
+
+    indicators = [
+      ...indicators,
+      <span
+        key={indicators.length + 1}
+        className={classNames({
+          clickable: showInverse,
+          "question-color": showInverse,
+        })}
+        onClick={viewMyInverse}
+      >
+        inv
+      </span>,
+    ];
+  }
+  if (isOnTop && showPolite) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>polite</span>,
+    ];
+  }
+
   let inEnglishLbl;
   if (indicators.length > 0) {
     inEnglishLbl = (
       <span>
         {inEnglish}
-        <span>
+        <span className={indicatorsCss}>
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
-              return [...a, <span key={indicators.length + i}> , </span>, c];
+              const separator = <span key={indicators.length + i}> , </span>;
+              return [...a, separator, c];
             } else {
               return [...a, c];
             }

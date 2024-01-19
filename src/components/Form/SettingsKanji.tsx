@@ -47,7 +47,7 @@ export default function SettingsKanji() {
     return <NotReady addlStyle="vocabulary-settings" />;
 
   const kanjiSelectedTags = Object.values(kanji).filter((k) =>
-    k.tag?.some((aTag: string) => kanjiActive.includes(aTag))
+    k.tags.some((aTag: string) => kanjiActive.includes(aTag))
   );
   const kanjiSelectedUids = kanjiSelectedTags.map((k) => k.uid);
 
