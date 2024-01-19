@@ -1,5 +1,5 @@
 const buildConstants = {
-  swVersion: "60c994f3",
+  swVersion: "3f581e66",
   initCacheVer: "74625654",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
@@ -583,14 +583,7 @@ function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
       case req.headers.has(SWRequestHeader.NO_CACHE): {
-        let h = {};
-        req.headers.forEach((val, key) => {
-          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
-            h[key] = val;
-          }
-        });
-        const noCacheReq = new Request(req.url, { headers: new Headers(h) });
-        e.respondWith(noCaching(noCacheReq));
+        e.respondWith(noCaching(req));
         break;
       }
       case path.startsWith(dataPath + dataVerPath):
