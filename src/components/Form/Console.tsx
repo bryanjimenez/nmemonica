@@ -104,7 +104,7 @@ export default function Console(props: ConsoleProps) {
         "mw-50": props.connected === true,
       })}
     >
-      {m.map((e: ConsoleMessage & { time: number }) => {
+      {m.map((e) => {
         const key = `${e.time}+${e.msg}+${e.lvl}`;
         const mClass = classNames({
           "app-sm-fs-xx-small": true,

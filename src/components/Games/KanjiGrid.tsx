@@ -113,38 +113,6 @@ function prepareGame(
   };
 }
 
-/**
- * Returns a list of choices which includes the right answer
- */
-export function useCreateChoices(
-  n: number,
-  compareOn: keyof RawKanji,
-  answer: RawKanji,
-  kanjiList: RawKanji[]
-) {
-  const c = useMemo(() => {
-    if (!answer) return [];
-
-    let choices = [answer];
-    while (choices.length < n) {
-      const i = Math.floor(Math.random() * kanjiList.length);
-
-      const choice = kanjiList[i];
-
-      // should not be same choices or the right answer
-      if (choices.every((c) => c[compareOn] !== choice[compareOn])) {
-        choices = [...choices, choice];
-      }
-    }
-
-    shuffleArray(choices);
-
-    return choices;
-  }, [n, compareOn, answer, kanjiList]);
-
-  return c;
-}
-
 export default function KanjiGrid() {
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -290,7 +258,7 @@ export default function KanjiGrid() {
   ]);
 
   const fadeTimerRef = useRef(-1);
-  const { blastEl, anchorElRef, text, setText } = useBlast();
+  const { blastElRef, anchorElRef, text, setText } = useBlast();
 
   const addFrequencyTerm = useCallback(
     (uid: string) => {
@@ -328,7 +296,7 @@ export default function KanjiGrid() {
   if (prevUidRef.current !== kanji.uid) {
     prevUidRef.current = kanji.uid;
 
-    choices.current = createChoices(choiceN, "english", kanji, kanjiList);
+    choices.current = createChoices(choiceN, kanji, kanjiList);
     example = oneFromList(kanji.english);
   } else {
     // choices.current changes when scrolling back-forth
@@ -357,7 +325,7 @@ export default function KanjiGrid() {
   return (
     <>
       <div className="tooltip-anchor" ref={anchorElRef}></div>
-      {blastEl}
+      <div ref={blastElRef}>{text}</div>
       <XChoices
         question={game.question}
         isCorrect={isCorrect}
@@ -411,22 +379,45 @@ export default function KanjiGrid() {
 /**
  * Returns a list of choices which includes the right answer
  */
-function createChoices(
+export function createChoices(
   n: number,
-  compareOn: keyof RawKanji,
   answer: RawKanji,
   kanjiList: RawKanji[]
 ) {
+  const compareOn = "english";
+  const splitToArray = (term: string) => term.split(",").map((s) => s.trim());
+
   let choices = [answer];
-  while (choices.length < n) {
+  /** Answer array */
+  const aArr = splitToArray(answer[compareOn]);
+  /** Set of unique choices */
+  const noDuplicateChoices = new Set([
+    ...aArr, // the answer
+  ]);
+
+  const consumed = new Set([answer.uid]);
+
+  while (choices.length < n && kanjiList.length !== consumed.size) {
     const i = Math.floor(Math.random() * kanjiList.length);
 
     const choice = kanjiList[i];
+    /** Choice array */
+    const cArr = splitToArray(choice[compareOn]);
 
-    // should not be same choices or the right answer
-    if (choices.every((c) => c[compareOn] !== choice[compareOn])) {
+    // should not match the right answer(s)
+    // should not match a previous choice
+    if (
+      // cArr.every((cCurr) => aArr.every((a) => a !== cCurr)) &&
+      cArr.every((cCurr) => !noDuplicateChoices.has(cCurr))
+      // && choices.every((c) => c[compareOn] !== choice[compareOn])
+    ) {
       choices = [...choices, choice];
+      cArr.forEach((c) => {
+        noDuplicateChoices.add(c);
+      });
     }
+
+    consumed.add(choice.uid);
   }
 
   shuffleArray(choices);
