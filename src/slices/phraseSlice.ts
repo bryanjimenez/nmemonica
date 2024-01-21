@@ -12,6 +12,11 @@ import {
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  SR_MIN_REV_ITEMS,
+  removeAction,
+  updateAction,
+} from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import type {
   GroupListMap,
@@ -35,6 +40,7 @@ export interface PhraseInitSlice {
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
+    spaRepMaxReviewItem: number;
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
@@ -53,6 +59,7 @@ export const phraseInitState: PhraseInitSlice = {
     reinforce: false,
     repTID: -1,
     repetition: {},
+    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
@@ -122,7 +129,6 @@ export function isPolitePhrase<T extends { japanese: string }>(o: T) {
 
       polite = { japanese: withoutDot, polite: true };
     }
-
   }
 
   return polite;
@@ -214,6 +220,28 @@ export const updateSpaceRepPhrase = createAsyncThunk(
   }
 );
 
+export const removeFromSpaceRepetition = createAsyncThunk(
+  "phrase/removeFromSpaceRepetition",
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState).phrases;
+
+    const spaceRep = state.setting.repetition;
+    return removeAction(uid, spaceRep);
+  }
+);
+
+export const setSpaceRepetitionMetadata = createAsyncThunk(
+  "phrase/setSpaceRepetitionMetadata",
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState).phrases;
+
+    const spaceRep = state.setting.repetition;
+    return updateAction(uid, spaceRep);
+  }
+);
+
 const phraseSlice = createSlice({
   name: "phrase",
   initialState: phraseInitState,
@@ -266,13 +294,93 @@ const phraseSlice = createSlice({
         newValue
       );
     },
-    togglePhrasesReinforcement(state) {
+    togglePhrasesReinforcement(
+      state,
+      action: { payload: boolean | undefined }
+    ) {
+      const newValue = action.payload;
+
       state.setting.reinforce = localStoreAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
-        "reinforce"
+        "reinforce",
+        newValue
       );
+    },
+
+    setPhraseDifficulty: {
+      reducer: (
+        state: PhraseInitSlice,
+        action: { payload: { uid: string; value: number | null } }
+      ) => {
+        const { uid, value } = action.payload;
+
+        const { record: newValue } = updateSpaceRepTerm(
+          uid,
+          state.setting.repetition,
+          { count: false, date: false },
+          {
+            set: { difficultyP: value },
+          }
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { phrases: state.setting },
+          "/phrases/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid: string, value: number | null) => ({
+        payload: { uid, value },
+      }),
+    },
+    /**
+     * Space Repetition maximum item review
+     * per session
+     */
+    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
+      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+
+      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "spaRepMaxReviewItem",
+        value
+      );
+    },
+    setPhraseAccuracy: {
+      reducer: (
+        state: PhraseInitSlice,
+        action: { payload: { uid: string; value: number | null } }
+      ) => {
+        const { uid, value } = action.payload;
+
+        const { record: newValue } = updateSpaceRepTerm(
+          uid,
+          state.setting.repetition,
+          { count: false, date: false },
+          {
+            set: { accuracyP: value },
+          }
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { phrases: state.setting },
+          "/phrases/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid: string, value: number | null) => ({
+        payload: { uid, value },
+      }),
     },
 
     addFrequencyPhrase(state, action: PayloadAction<string>) {
@@ -358,14 +466,24 @@ const phraseSlice = createSlice({
       );
     },
 
-    togglePhrasesOrdering(state) {
-      const allowed = [TermSortBy.RANDOM, TermSortBy.VIEW_DATE];
+    togglePhrasesOrdering(
+      state,
+      action: PayloadAction<ValuesOf<typeof TermSortBy>>
+    ) {
+      const allowed = [
+        TermSortBy.RANDOM,
+        TermSortBy.VIEW_DATE,
+        TermSortBy.RECALL,
+      ];
+      const override = action.payload;
 
       const { ordered } = state.setting;
 
-      let newOrdered = toggleAFilter(ordered + 1, allowed) as ValuesOf<
-        typeof TermSortBy
-      >;
+      let newOrdered = toggleAFilter(
+        ordered + 1,
+        allowed,
+        override
+      ) as ValuesOf<typeof TermSortBy>;
 
       state.setting.ordered = localStoreAttrUpdate(
         new Date(),
@@ -414,6 +532,32 @@ const phraseSlice = createSlice({
         newValue
       );
     });
+    builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
+      const { newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "repetition",
+        newValue
+      );
+    });
+    builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      if (newValue) {
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { phrases: state.setting },
+          "/phrases/",
+          "repetition",
+          newValue
+        );
+      }
+    });
   },
 });
 
@@ -424,6 +568,10 @@ export const {
   togglePhraseActiveGrp,
   togglePhrasesReinforcement,
   addFrequencyPhrase,
+  setPhraseDifficulty,
+  setPhraseAccuracy,
+  setSpaRepMaxItemReview,
+
   removeFrequencyPhrase,
   togglePhrasesOrdering,
 } = phraseSlice.actions;

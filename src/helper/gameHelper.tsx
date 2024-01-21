@@ -1,9 +1,7 @@
 import classNames from "classnames";
-import orderBy from "lodash/orderBy";
 import React from "react";
 
-import { shuffleArray } from "./arrayHelper";
-import { daysSince, minsSince } from "./consoleHelper";
+import { minsSince } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
 import { isYoon, kanaHintBuilder } from "./kanaHelper";
@@ -48,7 +46,7 @@ export function play<RawItem extends { uid: string }>(
   ) {
     const min = 0;
     const staleFreq = frequency.filter((fUid) => {
-      const lastSeen = metadata[fUid]?.d;
+      const lastSeen = metadata[fUid]?.lastView;
 
       return lastSeen && minsSince(lastSeen) > frequency.length;
     });
@@ -92,13 +90,21 @@ export function getTermUID<Term extends { uid: string }>(
 /**
  * @returns the term in the list matching the uid
  * @param uid
- * @param list of terms
+ * @param filteredList list of terms (subset)
+ * @param completeList list ot terms
  */
 export function getTerm<Term extends { uid: string }>(
   uid: string,
-  list: Term[]
+  filteredList: Term[],
+  completeList?: Term[]
 ) {
-  const term = list.find((v) => uid === v.uid);
+  let term = filteredList.find((v) => uid === v.uid);
+
+  if (!term && completeList) {
+    // previous term was outside of filteredList
+    // a jumpToTerm
+    term = completeList.find((v) => uid === v.uid);
+  }
 
   if (!term) {
     throw new Error("No term found");
@@ -223,9 +229,7 @@ export function getStaleSpaceRepKeys(
   const MetadataObjKeys: {
     [key in keyof MetaDataObj]: null;
   } = {
-    d: null,
-    difficulty: null,
-    nextReview: null,
+    lastView: null,
     vC: null,
     f: null,
     rein: null,
@@ -233,6 +237,13 @@ export function getStaleSpaceRepKeys(
     tpPc: null,
     tpAcc: null,
     tpCAvg: null,
+
+    // Space Repetition
+    lastReview: null,
+    consecutiveRight: null,
+    difficultyP: null,
+    accuracyP: null,
+    daysBetweenReviews: null,
   };
   const SpaceRepKeys = new Set(Object.keys(MetadataObjKeys));
 
@@ -279,375 +290,6 @@ export function minimumTimeForSpaceRepUpdate(prevTime: number) {
  */
 export function minimumTimeForTimedPlay(prevTime: number) {
   return ~~(Date.now() - prevTime) > 300;
-}
-
-/**
- * space repetition order
- * [timedPlayFailed, timedPlayMispronounced, newTerms, notTimedPlayed, timedPlayedCorrect]
- * @returns an array containing the indexes of terms in space repetition order
- */
-export function spaceRepOrder(
-  terms: RawVocabulary[],
-  spaceRepObj: Record<string, MetaDataObj | undefined>
-) {
-  interface timedPlayedSortable {
-    staleness: number;
-    correctness: number;
-    uid: string;
-    index: number;
-  }
-  interface notTimedPlayedSortable {
-    date: string;
-    views: number;
-    uid: string;
-    index: number;
-  }
-
-  let failedTemp: timedPlayedSortable[] = [];
-  let misPronTemp: timedPlayedSortable[] = [];
-  let notPlayed: number[] = [];
-  let notTimedTemp: notTimedPlayedSortable[] = [];
-  let timedTemp: timedPlayedSortable[] = [];
-
-  terms.forEach((term, tIdx) => {
-    const tUid = term.uid;
-    const termRep = spaceRepObj[tUid];
-
-    if (termRep !== undefined) {
-      if (termRep.tpAcc === undefined) {
-        notTimedTemp = [
-          ...notTimedTemp,
-          {
-            date: termRep.d,
-            views: termRep.vC,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      } else if (termRep.pron === true) {
-        const staleness = getStalenessScore(
-          termRep.d,
-          termRep.tpAcc,
-          termRep.vC
-        );
-        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
-
-        misPronTemp = [
-          ...misPronTemp,
-          {
-            staleness,
-            correctness,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      } else if (termRep.tpAcc >= 0.65) {
-        const staleness = getStalenessScore(
-          termRep.d,
-          termRep.tpAcc,
-          termRep.vC
-        );
-        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
-
-        timedTemp = [
-          ...timedTemp,
-          {
-            staleness,
-            correctness,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      } else if (termRep.tpAcc < 0.65) {
-        const staleness = getStalenessScore(
-          termRep.d,
-          termRep.tpAcc,
-          termRep.vC
-        );
-        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
-
-        failedTemp = [
-          ...failedTemp,
-          {
-            staleness,
-            correctness,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      }
-    } else {
-      notPlayed = [...notPlayed, Number(tIdx)];
-    }
-  });
-
-  // prettier-ignore
-  const failedSort = orderBy(failedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
-  // prettier-ignore
-  const misPronSort = orderBy(misPronTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
-
-  // prettier-ignore
-  const notTimedSort = orderBy(notTimedTemp, ["date", "views", "uid"], ["asc", "asc", "asc"]);
-  // prettier-ignore
-  const timedSort = orderBy(timedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
-
-  // console.log("failed");
-  // console.log(JSON.stringify(failedOrdered.map((p) => ({[terms[p.index].english]:p.accuracy, u:terms[p.index].uid, c:p.correctAvg}))));
-  // console.log("played");
-  // console.log(JSON.stringify(playedOrdered.map((p) => ({[terms[p.index].english]:p.date,c:p.count}))));
-  // console.log('unPlayed');
-  // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
-  // console.log("timed");
-  // console.log(JSON.stringify(timedOrdered.map((p) => ({[terms[p.index].english]:p.accuracy, c:p.correctAvg}))));
-
-  const failed = failedSort.map((el) => el.index);
-  const misPron = misPronSort.map((el) => el.index);
-
-  const notTimed = notTimedSort.map((el) => el.index);
-  const timed = timedSort.map((el) => el.index);
-
-  return [...failed, ...misPron, ...notPlayed, ...notTimed, ...timed];
-}
-
-/**
- * Staleness score based on last viewed date and accuracy
- * @param date Last viewed
- * @param accuracy Correct/Times played
- * @param views Times viewed
- */
-export function getStalenessScore(date: string, accuracy: number, views = 1) {
-  let staleness = Number.MAX_SAFE_INTEGER;
-  if (date !== undefined && accuracy > 0 && views > 0) {
-    staleness = daysSince(date) * (1 / accuracy) * (1 / views);
-  }
-
-  return staleness;
-}
-
-/**
- * Correctness score based on times played and average answer time.
- * @param count Times played
- * @param average Answer (ms) average
- */
-export function getCorrectnessScore(count = 0, average = 0) {
-  let correctness = Number.MIN_SAFE_INTEGER;
-  if (count > 0 && average > 0) {
-    correctness = count * (1 / average);
-  }
-
-  return correctness;
-}
-
-/**
- * Terms in last viewed descending order
- * @param terms
- * @param spaceRepObj
- */
-export function dateViewOrder(
-  terms: { uid: string }[],
-  spaceRepObj: Record<string, MetaDataObj | undefined>
-) {
-  interface lastSeenSortable {
-    date: string;
-    uid: string;
-    index: number;
-  }
-
-  let notPlayed: number[] = [];
-  let prevPlayedTemp: lastSeenSortable[] = [];
-
-  terms.forEach((term, tIdx) => {
-    const tUid = term.uid;
-    const termRep = spaceRepObj[tUid];
-
-    if (termRep?.d !== undefined) {
-      prevPlayedTemp = [
-        ...prevPlayedTemp,
-        {
-          date: termRep.d,
-          uid: tUid,
-          index: Number(tIdx),
-        },
-      ];
-    } else {
-      notPlayed = [...notPlayed, Number(tIdx)];
-    }
-  });
-
-  // prettier-ignore
-  const prevPlayedSort = orderBy(prevPlayedTemp, ["date", "uid"], ["asc", "asc"]);
-
-  // console.log('unPlayed');
-  // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
-
-  const prevPlayed = prevPlayedSort.map((el) => el.index);
-
-  return [...notPlayed, ...prevPlayed];
-}
-
-/**
- * Below this threshold considered not memorized
- */
-export const MEMORIZED_THRLD = 80;
-/**
- * At or below this threshold considered incorrect
- */
-export const DIFFICULTY_THRLD = 30;
-/**
- * Difficulty order
- * [DecreasingDifficulty, UndefinedDifficulty, KnownTerms]
- * @param terms
- * @param spaceRepObj
- * @returns an array containing the indexes of terms in difficulty order
- */
-export function difficultyOrder(
-  terms: { uid: string }[],
-  spaceRepObj: Record<string, MetaDataObj | undefined>
-) {
-  interface difficultySortable {
-    difficulty: number;
-    uid: string;
-    index: number;
-  }
-
-  let undefDifficulty: number[] = [];
-  let withDifficulty: difficultySortable[] = [];
-  let noDifficulty: number[] = [];
-
-  terms.forEach((term, tIdx) => {
-    const tUid = term.uid;
-    const termRep = spaceRepObj[tUid];
-
-    if (termRep?.difficulty !== undefined) {
-      const difficulty = Number(termRep.difficulty);
-      if (difficulty < MEMORIZED_THRLD) {
-        withDifficulty = [
-          ...withDifficulty,
-          {
-            difficulty,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      } else {
-        // noDifficulty = [
-        //   ...noDifficulty,
-        //   {
-        //     difficulty,
-        //     uid: tUid,
-        //     index: Number(tIdx),
-        //   },
-        // ];
-        noDifficulty = [...noDifficulty, Number(tIdx)];
-      }
-    } else {
-      undefDifficulty = [...undefDifficulty, Number(tIdx)];
-    }
-  });
-
-  // prettier-ignore
-  const withDifficultySort = orderBy(withDifficulty, ["difficulty", "uid"], ["asc", "asc"]);
-  // const noDifficultySort = orderBy(noDifficulty, ["difficulty", "uid"], ["asc", "asc"]);
-
-  const descDifficulty = withDifficultySort.map((el) => el.index);
-  // const easyDifficulty = noDifficulty.map((el) => el.index);
-
-  return [...descDifficulty, ...undefDifficulty, ...noDifficulty];
-}
-/**
- * @returns an array containing the indexes of terms in alphabetic order
- */
-export function alphaOrder(terms: RawVocabulary[]) {
-  // preserve terms unmodified
-
-  let originalIndex: Record<string, number> = {};
-  let modifiableTerms: { uid: string; japanese: string; english: string }[] =
-    [];
-  terms.forEach((t, i) => {
-    originalIndex[t.uid] = i;
-
-    modifiableTerms = [
-      ...modifiableTerms,
-      {
-        uid: t.uid,
-        japanese: t.japanese,
-        english: t.english,
-      },
-    ];
-  });
-
-  let order: number[] = [],
-    eOrder: { uid: string; label: string; idx: number }[] = [],
-    jOrder: { uid: string; label: string; idx: number }[] = [];
-
-  // order in japanese
-  modifiableTerms = orderBy(modifiableTerms, ["japanese"], ["asc"]);
-  modifiableTerms.forEach((t, i) => {
-    order = [...order, originalIndex[t.uid]];
-    jOrder = [
-      ...jOrder,
-      {
-        uid: t.uid,
-        label: JapaneseText.parse(t).getPronunciation(),
-        idx: -1,
-      },
-    ];
-    eOrder = [
-      ...eOrder,
-      { uid: t.uid, label: t.english.toLowerCase(), idx: i },
-    ];
-  });
-
-  // order in english
-  eOrder = orderBy(eOrder, ["label"], ["asc"]);
-  eOrder.forEach((e, i) => {
-    jOrder[e.idx] = { ...jOrder[e.idx], idx: i };
-  });
-
-  // console.log(JSON.stringify(order))
-  // console.log(JSON.stringify(jOrder.map(j=>j.uid)))
-  // console.log(JSON.stringify(eOrder.map(e=>e.uid)))
-
-  return { order, jOrder, eOrder };
-}
-
-/**
- * @returns an array containing the indexes of terms in random order
- */
-export function randomOrder<T>(terms: T[]) {
-  const order = terms.map((v, i) => i);
-
-  shuffleArray(order);
-
-  return order;
-}
-
-/**
- * Applies a difficulty threshold filter on a list of terms
- * @param threshold difficulty threshold (negative thresholds below, positive above)
- * @param termList list of terms
- * @param metadata record of term metadata
- */
-export function difficultySubFilter<T extends { uid: string }>(
-  threshold: number,
-  termList: T[],
-  metadata: Record<string, MetaDataObj | undefined>
-) {
-  return termList.filter((v) => {
-    const dT = threshold;
-    const d = metadata[v.uid]?.difficulty;
-
-    let showUndefMemoV = false;
-    let showV = false;
-    if (d === undefined) {
-      showUndefMemoV =
-        dT < 0 ? -1 * dT > DIFFICULTY_THRLD : dT < DIFFICULTY_THRLD;
-    } else {
-      showV = dT < 0 ? d < -1 * dT : d > dT;
-    }
-
-    return showUndefMemoV || showV;
-  });
 }
 
 export function labelOptions(index: number, options: string[]) {

@@ -18,6 +18,10 @@ body {
   height: 0;
 }
 
+.w-0 {
+  width: 0;
+}
+
 .w-40 {
   width: 40% !important;
 }
@@ -66,7 +70,11 @@ a {
 }
 
 .question-color {
-  color: orange;
+  color: #ffa500;
+}
+
+.done-color {
+  color: #0059ff;
 }
 
 .info-color {
@@ -79,6 +87,14 @@ a {
 
 .opacity-25 {
   opacity: 25%;
+}
+
+.opacity-50 {
+  opacity: 50%;
+}
+
+.opacity-75 {
+  opacity: 75%;
 }
 
 .opts-max-h {
@@ -180,6 +196,12 @@ a {
   -webkit-transform: rotate(90deg);
   -ms-transform: rotate(90deg);
   transform: rotate(90deg);
+}
+
+.rotate-270 {
+  -webkit-transform: rotate(270deg);
+  -ms-transform: rotate(270deg);
+  transform: rotate(270deg);
 }
 
 .rotate-45 {

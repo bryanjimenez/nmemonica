@@ -11,11 +11,14 @@ import { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
+import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import VerbFormSlider from "./VerbFormSlider";
+import { heatMap } from "../../helper/colorHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
+import { DIFFICULTY_THRLD, MEMORIZED_THRLD } from "../../helper/sortHelper";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
@@ -28,6 +31,7 @@ import {
   getVocabulary,
   removeFrequencyWord,
   setMemorizedThreshold,
+  setSpaRepMaxItemReview,
   setVerbFormsOrder,
   toggleAutoVerbView,
   toggleVocabularyActiveGrp,
@@ -58,6 +62,7 @@ export default function SettingsVocab() {
     filterType: vocabFilterRef,
     memoThreshold: memoThresholdRef,
     repetition: vocabRep,
+    spaRepMaxReviewItem,
     reinforce: vocabReinforceRef,
     verbFormsOrder,
   } = useConnectVocabulary();
@@ -111,6 +116,18 @@ export default function SettingsVocab() {
     throw error;
   }
 
+  const c = heatMap(Math.abs(memoThreshold) / 100, 0.75);
+  const difficultyMarks = [
+    {
+      value: MEMORIZED_THRLD,
+      // label: "memorized"
+    },
+    {
+      value: DIFFICULTY_THRLD,
+      // label: "difficult",
+    },
+  ];
+
   const el = (
     <div className="outer">
       <div className="d-flex flex-row justify-content-between">
@@ -158,18 +175,29 @@ export default function SettingsVocab() {
             title={"Sort by:"}
             options={TermSortByLabel}
             initial={vocabOrder}
-            onChange={buildAction(dispatch, toggleVocabularyOrdering)}
+            onChange={(index) => {
+              if (TermSortBy.RECALL === index) {
+                dispatch(toggleVocabularyReinforcement(false));
+              }
+              return buildAction(dispatch, toggleVocabularyOrdering)(index);
+            }}
           />
 
           {vocabOrder === TermSortBy.DIFFICULTY && (
             <div className="d-flex justify-content-end">
               <Slider
+                sx={{ color: c }}
                 defaultValue={initialMemoThreshold}
-                track={memoThreshold < 0 ? "inverted" : undefined}
+                marks={difficultyMarks}
+                track={memoThreshold < 0 ? undefined : "inverted"}
                 onChangeCommitted={(e, newValue) => {
                   const sign = memoThreshold < 0 ? -1 : 1;
                   if (typeof newValue === "number") {
-                    dispatch(setMemorizedThreshold(sign * newValue));
+                    if (newValue === 0) {
+                      dispatch(setMemorizedThreshold(Number(sign)));
+                    } else {
+                      dispatch(setMemorizedThreshold(sign * newValue));
+                    }
                   }
                 }}
                 valueLabelDisplay="auto"
@@ -183,16 +211,28 @@ export default function SettingsVocab() {
                   -1 * memoThreshold
                 )}
               >
-                {memoThreshold < 0 ? <SortDescIcon /> : <SortAscIcon />}
+                {memoThreshold < 0 ? <SortAscIcon /> : <SortDescIcon />}
               </div>
             </div>
+          )}
+          {vocabOrder === TermSortBy.RECALL && (
+            <PlusMinus
+              label="Max review items "
+              value={spaRepMaxReviewItem}
+              onChange={(value: number) => {
+                dispatch(setSpaRepMaxItemReview(value));
+              }}
+            />
           )}
 
           <div className="mb-2">
             <SettingsSwitch
               active={vocabReinforce}
               action={buildAction(dispatch, toggleVocabularyReinforcement)}
-              disabled={vocabFilter === TermFilterBy.FREQUENCY}
+              disabled={
+                vocabFilter === TermFilterBy.FREQUENCY ||
+                vocabOrder === TermSortBy.RECALL
+              }
               statusText="Reinforcement"
             />
           </div>

@@ -5,8 +5,8 @@ import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 import { FourChoicesWRef, type GameChoice } from "./FourChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { randomOrder } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { randomOrder } from "../../helper/sortHelper";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { getOpposite } from "../../slices/oppositeSlice";
@@ -84,7 +84,7 @@ export default function OppositesGame() {
           break;
       }
 
-      return Promise.resolve(/** interrupt, fetch */)
+      return Promise.resolve(/** interrupt, fetch */);
     },
     [gotoPrev, gotoNext]
   );

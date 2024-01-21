@@ -113,6 +113,15 @@ export const localStorageSettingsInitialized = createAsyncThunk(
       mergedGlobalSettings = merge(globalInitState, {
         ...lsSettings.global,
       });
+
+      // Batch update localstate settings
+      // setTimeout(()=>{
+      //   const now = new Date('2023-07-25T001:21:00.000Z');
+      //   void thunkAPI.dispatch(logger("Batch update ...", DebugLevel.ERROR));
+      //   const done = renameVocabularyLastView(lsSettings, now);
+      //   // const done = flipVocabularyDifficulty(lsSettings);
+      //   void thunkAPI.dispatch(logger("modified: "+done, DebugLevel.ERROR));
+      // }, 15000);
     }
 
     return mergedGlobalSettings;

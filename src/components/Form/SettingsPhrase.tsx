@@ -1,7 +1,9 @@
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
+import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
+import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
@@ -9,6 +11,7 @@ import type { AppDispatch } from "../../slices";
 import {
   getPhrase,
   removeFrequencyPhrase,
+  setSpaRepMaxItemReview,
   togglePhraseActiveGrp,
   togglePhrasesFilter,
   togglePhrasesOrdering,
@@ -35,6 +38,7 @@ export default function SettingsPhrase() {
     filterType: phraseFilterRef,
     repetition: phraseRep,
     reinforce: phraseReinforceRef,
+    spaRepMaxReviewItem,
   } = useConnectPhrase();
 
   const phraseFilter = phraseFilterRef.current;
@@ -107,31 +111,51 @@ export default function SettingsPhrase() {
             />
           )}
         </div>
-        <div className="column-2">
-          <div className="setting-block">
-            <div className="mb-2">
-              <SettingsSwitch
-                active={phraseOrder === TermSortBy.RANDOM}
-                action={buildAction(dispatch, togglePhrasesOrdering)}
-                color="default"
-                statusText={labelOptions(phraseOrder, TermSortByLabel)}
-              />
-            </div>
-            <div className="mb-2">
-              <SettingsSwitch
-                active={phraseReinforce}
-                action={buildAction(dispatch, togglePhrasesReinforcement)}
-                disabled={phraseFilter === TermFilterBy.FREQUENCY}
-                statusText="Reinforcement"
-              />
-            </div>
-            <div className="mb-2">
-              <SettingsSwitch
-                active={phraseRomaji}
-                action={buildAction(dispatch, togglePhrasesRomaji)}
-                statusText="Romaji"
-              />
-            </div>
+        <div className="column-2 setting-block">
+          <div className="mb-2">
+            <SimpleListMenu
+              title={"Sort by:"}
+              options={TermSortByLabel}
+              initial={phraseOrder}
+              allowed={[
+                TermSortBy.RANDOM,
+                TermSortBy.VIEW_DATE,
+                TermSortBy.RECALL,
+              ]}
+              onChange={(index) => {
+                if (TermSortBy.RECALL === index) {
+                  dispatch(togglePhrasesReinforcement(false));
+                }
+                return buildAction(dispatch, togglePhrasesOrdering)(index);
+              }}
+            />
+          </div>
+          {phraseOrder === TermSortBy.RECALL && (
+            <PlusMinus
+              label="Max review items "
+              value={spaRepMaxReviewItem}
+              onChange={(value: number) => {
+                dispatch(setSpaRepMaxItemReview(value));
+              }}
+            />
+          )}
+          <div className="mb-2">
+            <SettingsSwitch
+              active={phraseReinforce}
+              action={buildAction(dispatch, togglePhrasesReinforcement)}
+              disabled={
+                phraseFilter === TermFilterBy.FREQUENCY ||
+                phraseOrder === TermSortBy.RECALL
+              }
+              statusText="Reinforcement"
+            />
+          </div>
+          <div className="mb-2">
+            <SettingsSwitch
+              active={phraseRomaji}
+              action={buildAction(dispatch, togglePhrasesRomaji)}
+              statusText="Romaji"
+            />
           </div>
         </div>
       </div>

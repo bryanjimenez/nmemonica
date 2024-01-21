@@ -1087,6 +1087,39 @@ describe("kanjiHelper", function () {
         })
       })
     });
+    describe("contains space as workaround", function(){
+      describe("starts w/ kanji", function(){
+        it("behaves?", function(){
+
+          const particle = "を";
+          
+          const expected = [
+            { k: 0, f: 0, o: 0 },
+            { k: 0, f: 0, o: 0 },
+            { k: 0, f: 0, o: 1 },
+            { k: 0, f: 0, o: 0 },
+          ];
+
+          const testObj = JapaneseText.parse({
+            japanese:
+              "せいとがせんせいに にほんごをおしえてもらう\n生徒が先生に 日本語を教えてもらう"
+          });
+
+          const start = testObj.getSpelling().indexOf(particle);
+          const end = start + particle.length;
+          const info = JSON.stringify({start, end, b:particle, i: testObj.getSpelling()});
+
+
+          const actual = getParseObjectSpliceMask(
+            testObj.parseObj,
+            start,
+            end
+          );
+
+          expect(actual, info).to.deep.equal(expected);
+        })
+      })
+    })
   }); /** getParseObjectSpliceMask */
 
   describe("kanjiOkuriganaSpliceApplyCss", function () {

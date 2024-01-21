@@ -11,18 +11,20 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { spaceRepLog } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
-  dateViewOrder,
-  difficultyOrder,
-  difficultySubFilter,
   getTerm,
   getTermUID,
   minimumTimeForSpaceRepUpdate,
   play,
-  randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
+import {
+  dateViewOrder,
+  difficultyOrder,
+  difficultySubFilter,
+  randomOrder,
+} from "../../helper/sortHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -39,12 +41,13 @@ import {
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawKanji, RawVocabulary } from "../../typings/raw";
-import { DifficultySlider } from "../Form/Difficulty";
+import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import {
   ToggleFrequencyTermBtnMemo,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import { Tooltip } from "../Form/Tooltip";
 
 const KanjiGameMeta = {
   location: "/kanji-game/",
@@ -306,8 +309,8 @@ export default function KanjiGame() {
           .then((payload) => {
             const { value, prevVal } = payload;
 
-            const prevDate = prevVal.d ?? value.d;
-            const repStats = { [prevUid]: { ...value, d: prevDate } };
+            const prevDate = prevVal.lastView ?? value.lastView;
+            const repStats = { [prevUid]: { ...value, lastView: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
 
             spaceRepLog(messageLog, prevTerm, repStats, { frequency });
@@ -536,14 +539,15 @@ export default function KanjiGame() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
-              <DifficultySlider
-                value={metadata.current[kanji.uid]?.difficulty}
-                onChange={buildAction(dispatch, (value: number) =>
-                  setKanjiDifficulty(kanji.uid, value)
-                )}
-                manualUpdate={kanji.uid}
-              />
-
+              <Tooltip idKey={kanji.uid}>
+                <DifficultySlider
+                  difficulty={metadata.current[kanji.uid]?.difficultyP}
+                  onChange={buildAction(dispatch, (value: number) =>
+                    setKanjiDifficulty(kanji.uid, value)
+                  )}
+                  resetOn={kanji.uid}
+                />
+              </Tooltip>
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}

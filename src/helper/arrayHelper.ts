@@ -12,8 +12,8 @@ export function shuffleArray<T>(array: T[]) {
 /**
  * @param a
  * @param b
- * @param t
- * @param {{clamped?:boolean}} options
+ * @param t [0,1]
+ * @param options
  */
 export function lerp(a: number, b: number, t: number, { clamped = true } = {}) {
   const max = Math.min(...[1, t]);

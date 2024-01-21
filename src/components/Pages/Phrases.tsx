@@ -1,5 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import { PayloadAction } from "@reduxjs/toolkit";
+import classNames from "classnames";
 import React, {
   useCallback,
   useEffect,
@@ -12,32 +14,39 @@ import { useDispatch } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.development";
-import { spaceRepLog, timedPlayLog } from "../../helper/consoleHelper";
+import {
+  daysSince,
+  spaceRepLog,
+  // timedPlayLog,
+} from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
-  alphaOrder,
-  dateViewOrder,
   englishLabel,
   getCacheUID,
   getTerm,
   getTermUID,
   japaneseLabel,
-  labelOptions,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
-  minimumTimeForTimedPlay,
+  // minimumTimeForTimedPlay,
   play,
-  randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+import {
+  getPercentOverdue,
+  recallDebugLogHelper,
+  recallNotificationHelper,
+  spaceRepetitionOrder,
+} from "../../helper/recallHelper";
+import { dateViewOrder, randomOrder } from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
-import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
+// import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
-import { useMediaSession } from "../../hooks/useMediaSession";
+// import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
-import { useTimedGame } from "../../hooks/useTimedGame";
+// import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
@@ -45,13 +54,19 @@ import {
   flipPhrasesPracticeSide,
   getPhrase,
   removeFrequencyPhrase,
+  removeFromSpaceRepetition,
+  setPhraseAccuracy,
+  setPhraseDifficulty,
+  setSpaceRepetitionMetadata,
   togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
-import type { RawPhrase } from "../../typings/raw";
+import type { MetaDataObj, RawPhrase } from "../../typings/raw";
+import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
+import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -59,8 +74,10 @@ import {
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
+import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
 import StackNavButton from "../Form/StackNavButton";
+import { Tooltip } from "../Form/Tooltip";
 
 const PhrasesMeta = {
   location: "/phrases/",
@@ -74,8 +91,8 @@ export default function Phrases() {
   const prevSelectedIndex = useRef(0);
 
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
-  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
-  const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
+  // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
+  // const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -84,6 +101,9 @@ export default function Phrases() {
   const [showLit, setShowLit] = useState<boolean>(false);
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [recacheAudio, setRecacheAudio] = useState(false);
+  const [log, setLog] = useState<ConsoleMessage[]>([]);
+  /** Is not undefined after user modifies accuracyP value */
+  const accuracyModifiedRef = useRef<undefined | null | number>();
 
   const {
     // Changing during game
@@ -91,17 +111,20 @@ export default function Phrases() {
     repetition,
 
     // Not changing during game
-    motionThreshold,
+    // motionThreshold,
     swipeThreshold,
     phraseList,
     activeGroup,
+    spaRepMaxReviewItem,
 
     // Refs ()
-    reinforce,
+    reinforce: reinforceREF,
     romajiActive,
-    filterType,
+    filterType: filterTypeREF,
     sortMethod: sortMethodREF,
   } = useConnectPhrase();
+
+  const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
 
   // repetitionOnce is only updated the first time
   /** metadata table ref */
@@ -133,13 +156,63 @@ export default function Phrases() {
     // TODO: Do we want this?
     // const lastRemoved = filterType === TermFilterBy.FREQUENCY && frequencyInfo.count === 0? []: false;
 
-    const filtered = termFilterByType(
-      filterType.current,
+    let filtered = termFilterByType(
+      filterTypeREF.current,
       phraseList,
       allFrequency,
       activeGroup,
       buildAction(dispatch, togglePhrasesFilter)
     );
+
+    switch (sortMethodREF.current) {
+      case TermSortBy.RECALL:
+        // discard the nonPending terms
+        const { failed, overdue, overLimit } = spaceRepetitionOrder(
+          filtered,
+          metadata.current,
+          repMinItemReviewREF.current
+        );
+        const pending = [...failed, ...overdue];
+
+        if (pending.length > 0 && filtered.length !== pending.length) {
+          // reduce filtered
+          filtered = pending.map((p) => filtered[p]);
+        }
+
+        const overdueVals = pending.map((item, i) => {
+          const {
+            accuracyP = 0,
+            lastReview,
+            daysBetweenReviews,
+          } = metadata.current[filtered[i].uid]!;
+          const daysSinceReview = lastReview
+            ? daysSince(lastReview)
+            : undefined;
+          const p = getPercentOverdue({
+            accuracy: accuracyP/100,
+            daysSinceReview,
+            daysBetweenReviews,
+          });
+
+          return p.toFixed(2).replace(".00", "").replace("0.", ".");
+        });
+
+        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 2 (${
+              overdueVals.length
+            })${more} [${overdueVals.toString()}]`,
+            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+          },
+        ]);
+
+        break;
+      default:
+        break;
+    }
 
     const frequency = filtered.reduce<string[]>((acc, cur) => {
       if (firstRepObject[cur.uid]?.rein === true) {
@@ -150,47 +223,86 @@ export default function Phrases() {
     setFrequency(frequency);
 
     return filtered;
-  }, [dispatch, phraseList, filterType, activeGroup]);
+  }, [filterTypeREF, sortMethodREF, dispatch, phraseList, activeGroup]);
 
-  const order = useMemo(() => {
+  const { order, recallGame } = useMemo(() => {
     const repetition = metadata.current;
-    if (filteredPhrases.length === 0) return [];
+    if (filteredPhrases.length === 0) return { order: [] };
 
-    let newOrder;
+    let newOrder: number[];
+    let recallGame: number | undefined;
     switch (sortMethodREF.current) {
-      case TermSortBy.RANDOM:
-        newOrder = randomOrder(filteredPhrases);
-        break;
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredPhrases, repetition);
+
+        let newN = 0;
+        let oldDt = NaN;
+        const views = newOrder.map((i) => {
+          const d = metadata.current[filteredPhrases[i].uid]?.lastView;
+          newN = !d ? newN + 1 : newN;
+          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d ? daysSince(d) : 0;
+        });
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
         break;
-      default: //TermSortBy.ALPHABETIC:
-        ({ order: newOrder } = alphaOrder(filteredPhrases));
+
+      case TermSortBy.RECALL:
+        const {
+          failed,
+          overdue,
+          notPlayed: nonPending,
+          todayDone,
+        } = spaceRepetitionOrder(filteredPhrases, metadata.current);
+        const pending = [...failed, ...overdue];
+
+        if (pending.length > 0) {
+          newOrder = pending;
+        } else {
+          newOrder = [...nonPending, ...todayDone];
+        }
+        recallGame = pending.length;
+
+        break;
+
+      default: //TermSortBy.RANDOM:
+        newOrder = randomOrder(filteredPhrases);
+        setLog((l) => [
+          ...l,
+          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+        ]);
         break;
     }
 
-    return newOrder;
-  }, [filteredPhrases]);
+    return { order: newOrder, recallGame };
+  }, [sortMethodREF, filteredPhrases]);
 
   const gotoNext = useCallback(() => {
     const l = filteredPhrases.length;
     let newSel = (selectedIndex + 1) % l;
 
-    if (newSel === errorSkipIndex) {
-      newSel = (l + newSel + 1) % l;
-    }
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel + 1) % l;
+    // }
 
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(null);
-  }, [filteredPhrases, selectedIndex, lastNext, errorSkipIndex]);
+  }, [filteredPhrases, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
     play(
-      reinforce.current,
-      filterType.current,
+      reinforceREF.current,
+      filterTypeREF.current,
       frequency,
       filteredPhrases,
       metadata.current,
@@ -202,8 +314,8 @@ export default function Phrases() {
       gotoNext
     );
   }, [
-    reinforce,
-    filterType,
+    filterTypeREF,
+    reinforceREF,
     frequency,
     filteredPhrases,
     reinforcedUID,
@@ -221,16 +333,16 @@ export default function Phrases() {
       newSel = (l + i) % l;
     }
 
-    if (newSel === errorSkipIndex) {
-      newSel = (l + newSel - 1) % l;
-    }
+    // if (newSel === errorSkipIndex) {
+    //   newSel = (l + newSel - 1) % l;
+    // }
 
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
     setSelectedIndex(newSel);
     setReinforcedUID(null);
-  }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext, errorSkipIndex]);
+  }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
@@ -243,26 +355,26 @@ export default function Phrases() {
     recacheAudio
   );
 
-  const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
+  // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
 
-  const {
-    beginLoop,
-    abortLoop,
-    looperSwipe,
+  // const {
+  //   beginLoop,
+  //   abortLoop,
+  //   looperSwipe,
 
-    loopSettingBtn,
-    loopActionBtn,
-    // timedPlayVerifyBtn, // not used
+  //   loopSettingBtn,
+  //   loopActionBtn,
+  //   // timedPlayVerifyBtn, // not used
 
-    timedPlayAnswerHandlerWrapper,
-    resetTimedPlay,
+  //   timedPlayAnswerHandlerWrapper,
+  //   resetTimedPlay,
 
-    loop,
-    tpAnswered: tpAnsweredREF,
-    tpAnimation,
-  } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
-  // TODO: variable countdown time
+  //   loop,
+  //   tpAnswered: tpAnsweredREF,
+  //   tpAnimation,
+  // } = useTimedGame(gameActionHandler, englishSideUp, deviceMotionEvent);
 
+  // next or prev
   useLayoutEffect(() => {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
@@ -278,80 +390,106 @@ export default function Phrases() {
         prevState.reinforcedUID ??
         getTermUID(prevState.selectedIndex, filteredPhrases, order);
 
-      // prevent updates when quick scrolling
-      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const phrase = getTerm(uid, phraseList);
+      const p = getTerm(uid, filteredPhrases, phraseList);
 
-        // don't increment reinforced terms
-        const shouldIncrement = uid !== prevState.reinforcedUID;
-        void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
-          .unwrap()
-          .then((payload) => {
-            const { value, prevVal } = payload;
+      let spaceRepUpdated: Promise<unknown> = Promise.resolve();
+      if (metadata.current[uid]?.difficultyP && accuracyModifiedRef.current) {
+        // when difficulty exists and accuracyP has been set
+        spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
+      } else if (accuracyModifiedRef.current === null) {
+        // when accuracyP is nulled
+        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
+      }
 
-            const prevDate = prevVal.d ?? value.d;
-            const repStats = { [uid]: { ...value, d: prevDate } };
-            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
+      void spaceRepUpdated.then(
+        (
+          action: PayloadAction<{
+            newValue: Record<string, MetaDataObj>;
+            oldValue: Record<string, MetaDataObj>;
+          }>
+        ) => {
+          if (action && "payload" in action) {
+            const { newValue: meta, oldValue: oldMeta } = action.payload;
+
+            recallDebugLogHelper(dispatch, uid, meta, oldMeta, p.english);
+          }
+
+          // prevent updates when quick scrolling
+          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+            // don't increment reinforced terms
+            const shouldIncrement = uid !== prevState.reinforcedUID;
             const frequency = prevState.reinforcedUID !== null;
-            if (tpAnsweredREF.current !== undefined) {
-              timedPlayLog(messageLog, phrase, repStats, { frequency });
-            } else {
-              spaceRepLog(messageLog, phrase, repStats, { frequency });
-            }
-          });
-      }
 
-      const wasReset = resetTimedPlay();
-      if (wasReset) {
-        if (minimumTimeForTimedPlay(prevState.lastNext)) {
-          beginLoop();
+            void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
+              .unwrap()
+              .then((payload) => {
+                const { value, prevVal } = payload;
+
+                let prevDate;
+                if (accuracyModifiedRef.current && prevVal.lastReview) {
+                  // if term was reviewed
+                  prevDate = prevVal.lastReview;
+                } else {
+                  prevDate = prevVal.lastView ?? value.lastView;
+                }
+
+                const repStats = { [uid]: { ...value, lastView: prevDate } };
+                const messageLog = (m: string, l: number) =>
+                  dispatch(logger(m, l));
+                // if (tpAnsweredREF.current !== undefined) {
+                //   timedPlayLog(messageLog, p, repStats, { frequency });
+                // } else {
+                spaceRepLog(messageLog, p, repStats, { frequency });
+                // }
+              });
+          }
         }
-      }
+      );
+
+      // const wasReset = resetTimedPlay();
+      // if (wasReset) {
+      //   if (minimumTimeForTimedPlay(prevState.lastNext)) {
+      //     beginLoop();
+      //   }
+      // }
 
       setShowMeaning(false);
       setShowRomaji(false);
       setShowLit(false);
-      setErrorMsgs([]);
+      // setErrorMsgs([]);
+
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
+      accuracyModifiedRef.current = undefined;
     }
   }, [
     dispatch,
-    beginLoop,
-    resetTimedPlay,
+    phraseList,
     reinforcedUID,
     selectedIndex,
-    phraseList,
     filteredPhrases,
     order,
-    loop,
+    recallGame,
   ]);
 
-  // TODO: probably append to array then update the Console?
+  // Logger messages
   useEffect(() => {
-    dispatch(
-      logger(
-        labelOptions(sortMethodREF.current, [
-          "Random",
-          "Alphhabetic",
-          "View Date",
-        ]),
-        DebugLevel.DEBUG
-      )
-    );
-  }, [dispatch]);
+    log.forEach((message) => {
+      dispatch(logger(message.msg, message.lvl));
+    });
+  }, [dispatch, log]);
 
   useKeyboardActions(
     gameActionHandler,
-    buildAction(dispatch, flipPhrasesPracticeSide),
-    timedPlayAnswerHandlerWrapper
+    buildAction(dispatch, flipPhrasesPracticeSide)
+    // timedPlayAnswerHandlerWrapper
   );
 
-  useMediaSession("Phrases Loop", loop, beginLoop, abortLoop, looperSwipe);
+  // useMediaSession("Phrases Loop", loop, beginLoop, abortLoop, looperSwipe);
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(
-    gameActionHandler,
-    timedPlayAnswerHandlerWrapper
+    gameActionHandler
+    // timedPlayAnswerHandlerWrapper
   );
 
   // FIXME: implement this
@@ -376,6 +514,8 @@ export default function Phrases() {
   //   );
   // }
 
+  if (recallGame === 0)
+    return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (filteredPhrases.length < 1 || order.length < 1)
     return <NotReady addlStyle="main-panel" />;
 
@@ -395,14 +535,15 @@ export default function Phrases() {
   //   })
   // );
 
-  const phrase = getTerm(uid, phraseList);
+  const phrase = getTerm(uid, filteredPhrases, phraseList);
 
   const playButton = getPlayBtn(
     swipeThreshold,
     englishSideUp,
     phrase,
     recacheAudio,
-    loop
+    // loop
+    0
   );
 
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
@@ -448,6 +589,14 @@ export default function Phrases() {
   const romaji = phrase.romaji;
 
   const progress = ((selectedIndex + 1) / filteredPhrases.length) * 100;
+  const wasReviewed = metadata.current[uid]?.lastReview;
+  const reviewedToday =
+    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+
+  const revNotification = recallNotificationHelper(
+    metadata.current[uid]?.daysBetweenReviews,
+    metadata.current[uid]?.lastReview
+  );
 
   return (
     <React.Fragment>
@@ -505,12 +654,43 @@ export default function Phrases() {
                 active={recacheAudio}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
-              <div className="sm-icon-grp">{loopSettingBtn}</div>
-              <div className="sm-icon-grp">{loopActionBtn}</div>
             </div>
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
+              <Tooltip
+                className={classNames({
+                  "question-color opacity-50":
+                    sortMethodREF.current === TermSortBy.RECALL &&
+                    !reviewedToday,
+                  "done-color opacity-50": reviewedToday,
+                })}
+                idKey={uid}
+                notification={revNotification}
+              >
+                <DifficultySlider
+                  difficulty={metadata.current[uid]?.difficultyP}
+                  resetOn={uid}
+                  onChange={(difficulty: number | null) => {
+                    if (difficulty !== undefined) {
+                      dispatch(setPhraseDifficulty(uid, difficulty));
+                    }
+                  }}
+                />
+                <AccuracySlider
+                  accuracy={metadata.current[uid]?.accuracyP}
+                  resetOn={uid}
+                  onChange={(accuracy: number | null) => {
+                    if (accuracy !== undefined) {
+                      dispatch(setPhraseAccuracy(uid, accuracy));
+                      accuracyModifiedRef.current = accuracy;
+                    }
+                  }}
+                />
+                <div className="fs-xx-small me-2">
+                  <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
+              </Tooltip>
               <ToggleLiteralPhraseBtn
                 visible={
                   englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
@@ -541,9 +721,11 @@ export default function Phrases() {
       </div>
       <div className="progress-line flex-shrink-1">
         <LinearProgress
-          variant={tpAnimation === null ? "determinate" : "buffer"}
-          value={tpAnimation === null ? progress : 0}
-          valueBuffer={tpAnimation ?? undefined}
+          variant="determinate"
+          // variant={tpAnimation === null ? "determinate" : "buffer"}
+          // value={tpAnimation === null ? progress : 0}
+          // valueBuffer={tpAnimation ?? undefined}
+          value={progress}
           color={phrase_reinforce ? "secondary" : "primary"}
         />
       </div>

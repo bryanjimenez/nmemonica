@@ -78,10 +78,8 @@ export interface MetaDataObj {
    * Last view
    * (Date.toJSON '2020-01-01T01:01:01.001Z')
    **/
-  d: string;
+  lastView: string;
   /** View count */ vC: number;
-  difficulty?: number;
-  /** number of days to */ nextReview?: number;
 
   /** Furigana shown (yes:undefined|true) */ f?: boolean;
   /** Reinforce */ rein?: boolean;
@@ -90,6 +88,22 @@ export interface MetaDataObj {
   /** Timed play play-count */ tpPc?: number;
   /** Timed play accuracy [0,1] */ tpAcc?: number;
   /** Timed play correct avg (ms) */ tpCAvg?: number;
+
+  // Space Repetition
+  /**
+   * Last date reviewed
+   * (Date.toJSON '2020-01-01T01:01:01.001Z')
+   */
+  lastReview?: string;
+  consecutiveRight?: number;
+
+  /** Item difficulty percentage [0,100]*/
+  difficultyP?: number;
+  /** Recall accuracy percentage [0,100]*/
+  accuracyP?: number;
+
+  /** Calculated review value */
+  daysBetweenReviews?: number;
 }
 
 export type FuriganaToggleMap = Record<

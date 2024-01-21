@@ -9,10 +9,20 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { firebaseConfig } from "../../environment.development";
-import { MEMORIZED_THRLD } from "../helper/gameHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  SR_MIN_REV_ITEMS,
+  removeAction,
+  updateAction,
+} from "../helper/recallHelper";
 import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
-import type { MetaDataObj, RawKanji, SourceKanji, ValuesOf } from "../typings/raw";
+import { MEMORIZED_THRLD } from "../helper/sortHelper";
+import type {
+  MetaDataObj,
+  RawKanji,
+  SourceKanji,
+  ValuesOf,
+} from "../typings/raw";
 
 import type { RootState } from ".";
 
@@ -28,6 +38,7 @@ export interface KanjiInitSlice {
     memoThreshold: number;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
+    spaRepMaxReviewItem: number;
     activeGroup: string[];
     activeTags: string[];
 
@@ -49,6 +60,7 @@ export const kanjiInitState: KanjiInitSlice = {
     memoThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
+    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
     activeGroup: [],
     activeTags: [],
 
@@ -75,10 +87,7 @@ export const getKanji = createAsyncThunk(
       {
         headers: { "Data-Version": version },
       }
-    ).then((res) => res.json())) as Record<
-      string,
-      SourceKanji
-    >;
+    ).then((res) => res.json())) as Record<string, SourceKanji>;
 
     return { value, version };
   }
@@ -105,6 +114,28 @@ export const updateSpaceRepKanji = createAsyncThunk(
       count: shouldIncrement,
       date: true,
     });
+  }
+);
+
+export const removeFromSpaceRepetition = createAsyncThunk(
+  "kanji/removeFromSpaceRepetition",
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState).kanji;
+
+    const spaceRep = state.setting.repetition;
+    return removeAction(uid, spaceRep);
+  }
+);
+
+export const setSpaceRepetitionMetadata = createAsyncThunk(
+  "kanji/setSpaceRepetitionMetadata",
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState).kanji;
+
+    const spaceRep = state.setting.repetition;
+    return updateAction(uid, spaceRep);
   }
 );
 
@@ -162,6 +193,7 @@ const kanjiSlice = createSlice({
         // TermSortBy.GAME,
         TermSortBy.RANDOM,
         TermSortBy.VIEW_DATE,
+        TermSortBy.RECALL,
       ];
       const newOrdered = toggleAFilter(
         ordered + 1,
@@ -250,7 +282,7 @@ const kanjiSlice = createSlice({
     setKanjiDifficulty: {
       reducer: (
         state: KanjiInitSlice,
-        action: { payload: { uid: string; value: number } }
+        action: { payload: { uid: string; value: number | null } }
       ) => {
         const { uid, value } = action.payload;
 
@@ -259,7 +291,7 @@ const kanjiSlice = createSlice({
           state.setting.repetition,
           { count: false, date: false },
           {
-            set: { difficulty: value },
+            set: { difficultyP: value },
           }
         );
 
@@ -272,7 +304,53 @@ const kanjiSlice = createSlice({
           newValue
         );
       },
-      prepare: (uid: string, value: number) => ({ payload: { uid, value } }),
+      prepare: (uid: string, value: number | null) => ({
+        payload: { uid, value },
+      }),
+    },
+    setKanjiAccuracy: {
+      reducer: (
+        state: KanjiInitSlice,
+        action: { payload: { uid: string; value: number | null } }
+      ) => {
+        const { uid, value } = action.payload;
+
+        const { record: newValue } = updateSpaceRepTerm(
+          uid,
+          state.setting.repetition,
+          { count: false, date: false },
+          {
+            set: { accuracyP: value },
+          }
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "repetition",
+          newValue
+        );
+      },
+      prepare: (uid: string, value: number | null) => ({
+        payload: { uid, value },
+      }),
+    },
+    /**
+     * Space Repetition maximum item review
+     * per session
+     */
+    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
+      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+
+      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "spaRepMaxReviewItem",
+        value
+      );
     },
     setKanjiBtnN(state, action: { payload: number }) {
       const number = action.payload;
@@ -320,12 +398,15 @@ const kanjiSlice = createSlice({
       }
     },
 
-    toggleKanjiReinforcement(state) {
+    toggleKanjiReinforcement(state, action: { payload: boolean | undefined }) {
+      const newValue = action.payload;
+
       state.setting.reinforce = localStoreAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
-        "reinforce"
+        "reinforce",
+        newValue
       );
     },
   },
@@ -382,6 +463,33 @@ const kanjiSlice = createSlice({
         newValue
       );
     });
+
+    builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
+      const { newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { kanji: state.setting },
+        "/kanji/",
+        "repetition",
+        newValue
+      );
+    });
+    builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      if (newValue) {
+        state.setting.repTID = Date.now();
+        state.setting.repetition = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "repetition",
+          newValue
+        );
+      }
+    });
   },
 });
 
@@ -393,6 +501,8 @@ export const {
   removeFrequencyKanji,
   setKanjiMemorizedThreshold,
   setKanjiDifficulty,
+  setKanjiAccuracy,
+  setSpaRepMaxItemReview,
   toggleKanjiFilter,
   toggleKanjiReinforcement,
 

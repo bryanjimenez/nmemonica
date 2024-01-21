@@ -1,6 +1,7 @@
 import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
 import React, {
@@ -14,32 +15,59 @@ import { useDispatch } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
+import { daysSince, spaceRepLog } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
+  minimumTimeForSpaceRepUpdate,
   play,
-  randomOrder,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import {
+  getPercentOverdue,
+  recallDebugLogHelper,
+  recallNotificationHelper,
+  spaceRepetitionOrder,
+} from "../../helper/recallHelper";
+import {
+  dateViewOrder,
+  difficultyOrder,
+  randomOrder,
+} from "../../helper/sortHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch } from "../../slices";
+import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyKanji,
   getKanji,
   removeFrequencyKanji,
+  removeFromSpaceRepetition,
+  setKanjiAccuracy,
+  setKanjiDifficulty,
+  setSpaceRepetitionMetadata,
   toggleKanjiFilter,
+  updateSpaceRepKanji,
 } from "../../slices/kanjiSlice";
-import { TermFilterBy } from "../../slices/settingHelper";
+import {
+  DebugLevel,
+  TermFilterBy,
+  TermSortBy,
+} from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import type { RawVocabulary } from "../../typings/raw";
+import type { MetaDataObj, RawVocabulary } from "../../typings/raw";
+import { AccuracySlider } from "../Form/AccuracySlider";
+import { ConsoleMessage } from "../Form/Console";
+import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
+import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
+import { Tooltip } from "../Form/Tooltip";
 import "../../css/Kanji.css";
 
 const KanjiMeta = {
@@ -71,8 +99,13 @@ export default function Kanji() {
     filterType: filterTypeREF,
     reinforce: reinforceREF,
     activeTags,
+    orderType: sortMethodREF,
+    spaRepMaxReviewItem,
+
     repetition,
   } = useConnectKanji();
+
+  const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
 
   const { vocabList } = useConnectVocabulary();
 
@@ -92,12 +125,21 @@ export default function Kanji() {
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
+  const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
+  const prevLastNext = useRef<number>(Date.now());
+
+  const prevReinforcedUID = useRef<string | null>(null);
+  const prevSelectedIndex = useRef(0);
 
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
   const [showKun, setShowKun] = useState(false);
   const [showEx, setShowEx] = useState(false);
   const [showMeaning, setShowMeaning] = useState(false);
+
+  const [log, setLog] = useState<ConsoleMessage[]>([]);
+  /** Is not undefined after user modifies accuracyP value */
+  const accuracyModifiedRef = useRef<undefined | null | number>();
 
   const filteredTerms = useMemo(() => {
     if (kanjiList.length === 0) return [];
@@ -122,6 +164,54 @@ export default function Kanji() {
       buildAction(dispatch, toggleKanjiFilter)
     );
 
+    switch (sortMethodREF.current) {
+      case TermSortBy.RECALL:
+        // discard the nonPending terms
+        const { failed, overdue, overLimit } = spaceRepetitionOrder(
+          filtered,
+          metadata.current,
+          repMinItemReviewREF.current
+        );
+        const pending = [...failed, ...overdue];
+
+        if (pending.length > 0 && filtered.length !== pending.length) {
+          // reduce filtered
+          filtered = pending.map((p) => filtered[p]);
+        }
+
+        const overdueVals = pending.map((item, i) => {
+          const {
+            accuracyP = 0,
+            lastReview,
+            daysBetweenReviews,
+          } = metadata.current[filtered[i].uid]!;
+          const daysSinceReview = lastReview
+            ? daysSince(lastReview)
+            : undefined;
+          const p = getPercentOverdue({
+            accuracy: accuracyP,
+            daysSinceReview,
+            daysBetweenReviews,
+          });
+
+          return p.toFixed(2).replace(".00", "").replace("0.", ".");
+        });
+
+        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Space Rep 2 (${
+              overdueVals.length
+            })${more} [${overdueVals.toString()}]`,
+            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+          },
+        ]);
+
+        break;
+    }
+
     const frequency = filtered.reduce<string[]>((acc, cur) => {
       if (metadata.current[cur.uid]?.rein === true) {
         acc = [...acc, cur.uid];
@@ -133,10 +223,73 @@ export default function Kanji() {
     return filtered;
   }, [dispatch, kanjiList, filterTypeREF, activeTags]);
 
-  const order = useMemo(() => {
-    if (filteredTerms.length === 0) return [];
+  const { order, recallGame } = useMemo(() => {
+    if (filteredTerms.length === 0) return { order: [] };
 
-    return randomOrder(filteredTerms);
+    let newOrder: number[];
+    let recallGame: number | undefined;
+    switch (sortMethodREF.current) {
+      case TermSortBy.DIFFICULTY:
+        newOrder = difficultyOrder(filteredTerms, metadata.current);
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Difficulty (${newOrder.length})`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
+        break;
+      case TermSortBy.VIEW_DATE:
+        newOrder = dateViewOrder(filteredTerms, metadata.current);
+
+        let newN = 0;
+        let oldDt = NaN;
+        const views = newOrder.map((i) => {
+          const d = metadata.current[filteredTerms[i].uid]?.lastView;
+          newN = !d ? newN + 1 : newN;
+          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d ? daysSince(d) : 0;
+        });
+
+        setLog((l) => [
+          ...l,
+          {
+            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            lvl: DebugLevel.DEBUG,
+          },
+        ]);
+
+        break;
+      case TermSortBy.RECALL:
+        const {
+          failed,
+          overdue,
+          notPlayed: nonPending,
+          todayDone,
+        } = spaceRepetitionOrder(filteredTerms, metadata.current);
+
+        const pending = [...failed, ...overdue];
+        if (pending.length > 0) {
+          newOrder = pending;
+        } else {
+          newOrder = [...nonPending, ...todayDone];
+        }
+        recallGame = pending.length;
+
+        break;
+
+      default:
+        /*TermSortBy.RANDOM*/ newOrder = randomOrder(filteredTerms);
+        setLog((l) => [
+          ...l,
+          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+        ]);
+
+        break;
+    }
+
+    return { order: newOrder, recallGame };
   }, [filteredTerms]);
 
   const gotoNext = useCallback(() => {
@@ -144,12 +297,16 @@ export default function Kanji() {
     const newSel = (selectedIndex + 1) % l;
 
     setSelectedIndex(newSel);
+    prevSelectedIndex.current = selectedIndex;
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+
     setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
     setShowMeaning(false);
-  }, [filteredTerms, selectedIndex]);
+  }, [filteredTerms, selectedIndex, lastNext]);
 
   const gotoNextSlide = useCallback(() => {
     let filtered = filteredTerms;
@@ -177,7 +334,10 @@ export default function Kanji() {
       filtered,
       repetition, //metadata,
       reinforcedUID,
-      setReinforcedUID,
+      (uid) => {
+        prevReinforcedUID.current = reinforcedUID;
+        setReinforcedUID(uid);
+      },
       gotoNext
     );
   }, [
@@ -200,12 +360,16 @@ export default function Kanji() {
     let newSel = i < 0 ? (l + i) % l : i % l;
 
     setSelectedIndex(newSel);
+    prevSelectedIndex.current = selectedIndex;
+    prevLastNext.current = lastNext;
+    setLastNext(Date.now());
+
     setReinforcedUID(null);
     setShowOn(false);
     setShowKun(false);
     setShowEx(false);
     setShowMeaning(false);
-  }, [filteredTerms, selectedIndex]);
+  }, [filteredTerms, selectedIndex, lastNext]);
 
   const swipeActionHandler = useCallback(
     (direction: string) => {
@@ -249,6 +413,109 @@ export default function Kanji() {
     update();
   }, [update, w.height, w.width]);
 
+  useEffect(() => {
+    const prevState = {
+      selectedIndex: prevSelectedIndex.current,
+      reinforcedUID: prevReinforcedUID.current,
+      lastNext: prevLastNext.current,
+    };
+
+    if (
+      reinforcedUID !== prevState.reinforcedUID ||
+      selectedIndex !== prevState.selectedIndex
+    ) {
+      const uid =
+        prevState.reinforcedUID ??
+        getTermUID(prevState.selectedIndex, filteredTerms, order);
+
+      const k = getTerm(uid, filteredTerms);
+
+      let spaceRepUpdated: Promise<unknown> = Promise.resolve();
+      if (
+        metadata.current[uid]?.difficultyP &&
+        accuracyModifiedRef.current
+        // typeof accuracyModifiedRef.current === 'number' &&
+        // accuracyModifiedRef.current > 0
+      ) {
+        // when difficulty exists and accuracyP has been set
+        spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
+      } else if (accuracyModifiedRef.current === null) {
+        // when accuracyP is nulled
+        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
+      }
+
+      if (recallGame && recallGame > 0 && selectedIndex === recallGame + 1) {
+        // just finished recall game
+        dispatch(logger("No more pending items", DebugLevel.DEBUG));
+      }
+
+      void spaceRepUpdated.then(
+        (
+          action: PayloadAction<{
+            newValue: Record<string, MetaDataObj>;
+            oldValue: Record<string, MetaDataObj>;
+          }>
+        ) => {
+          if (action && "payload" in action) {
+            const { newValue: meta, oldValue: oldMeta } = action.payload;
+
+            recallDebugLogHelper(dispatch, uid, meta, oldMeta, k.english);
+          }
+
+          // after space rep updates
+
+          // prevent updates when quick scrolling
+          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+            // don't increment reinforced terms
+            const shouldIncrement = uid !== prevState.reinforcedUID;
+            const frequency = prevState.reinforcedUID !== null;
+
+            void dispatch(updateSpaceRepKanji({ uid, shouldIncrement }))
+              .unwrap()
+              .then((payload) => {
+                const { value, prevVal } = payload;
+
+                let prevDate;
+                if (accuracyModifiedRef.current && prevVal.lastReview) {
+                  // if term was reviewed
+                  prevDate = prevVal.lastReview;
+                } else {
+                  prevDate = prevVal.lastView ?? value.lastView;
+                }
+
+                const repStats = { [uid]: { ...value, lastView: prevDate } };
+                const messageLog = (m: string, l: number) =>
+                  dispatch(logger(m, l));
+
+                spaceRepLog(messageLog, k, repStats, { frequency });
+              });
+          }
+        }
+      );
+
+      prevSelectedIndex.current = selectedIndex;
+      prevReinforcedUID.current = reinforcedUID;
+      accuracyModifiedRef.current = undefined;
+    }
+  }, [
+    dispatch,
+    vocabList,
+    reinforcedUID,
+    selectedIndex,
+    filteredTerms,
+    order,
+    recallGame,
+  ]);
+
+  // Logger messages
+  useEffect(() => {
+    log.forEach((message) => {
+      dispatch(logger(message.msg, message.lvl));
+    });
+  }, [dispatch, log]);
+
+  if (recallGame === 0)
+    return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (order.length < 1) return <NotReady addlStyle="main-panel" />;
 
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
@@ -309,6 +576,14 @@ export default function Kanji() {
   const meaning = <span>{term.english}</span>;
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
+  const wasReviewed = metadata.current[uid]?.lastReview;
+  const reviewedToday =
+    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+
+  const revNotification = recallNotificationHelper(
+    metadata.current[uid]?.daysBetweenReviews,
+    metadata.current[uid]?.lastReview
+  );
 
   let page = (
     <React.Fragment>
@@ -395,6 +670,39 @@ export default function Kanji() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end">
+              <Tooltip
+                className={classNames({
+                  "question-color opacity-50":
+                    sortMethodREF.current === TermSortBy.RECALL &&
+                    !reviewedToday,
+                  "done-color opacity-50": reviewedToday,
+                })}
+                idKey={uid}
+                notification={revNotification}
+              >
+                <DifficultySlider
+                  difficulty={metadata.current[uid]?.difficultyP}
+                  onChange={(difficulty: number | null) => {
+                    if (difficulty !== undefined) {
+                      dispatch(setKanjiDifficulty(uid, difficulty));
+                    }
+                  }}
+                  resetOn={uid}
+                />
+                <AccuracySlider
+                  accuracy={metadata.current[uid]?.accuracyP}
+                  resetOn={uid}
+                  onChange={(accuracy: number | null) => {
+                    if (accuracy !== undefined) {
+                      dispatch(setKanjiAccuracy(uid, accuracy));
+                      accuracyModifiedRef.current = accuracy;
+                    }
+                  }}
+                />
+                <div className="fs-xx-small me-2">
+                  <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
+              </Tooltip>
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}

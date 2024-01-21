@@ -358,28 +358,30 @@ export function furiganaParseRetry(
     ));
   } catch (e) {
     // don't retry unless parse error
-    const cause = e.cause as {code: string};
+    if(e instanceof Error){
+      const cause = e.cause as {code: string};
 
-    if (e instanceof Error && cause?.code === "ParseError") {
-      // reverse try
-      try {
-        const rP = pronunciation.split("").reverse().join("");
-        const rW = ortography.split("").reverse().join("");
+      if (cause?.code === "ParseError") {
+        // reverse try
+        try {
+          const rP = pronunciation.split("").reverse().join("");
+          const rW = ortography.split("").reverse().join("");
 
-        const {
-          kanjis: rk,
-          furiganas: rf,
-          okuriganas: ro,
-        } = furiganaParse(rP, rW);
+          const {
+            kanjis: rk,
+            furiganas: rf,
+            okuriganas: ro,
+          } = furiganaParse(rP, rW);
 
-        kanjis = rk.map((v) => v.split("").reverse().join("")).reverse();
-        furiganas = rf.map((v) => v.split("").reverse().join("")).reverse();
-        okuriganas = ro.map((v) => v.split("").reverse().join("")).reverse();
-        startsWKana = !isKanji(ortography.charAt(0));
+          kanjis = rk.map((v) => v.split("").reverse().join("")).reverse();
+          furiganas = rf.map((v) => v.split("").reverse().join("")).reverse();
+          okuriganas = ro.map((v) => v.split("").reverse().join("")).reverse();
+          startsWKana = !isKanji(ortography.charAt(0));
 
-        return { kanjis, furiganas, okuriganas, startsWKana };
-      } catch {
-        // throw in outer try
+          return { kanjis, furiganas, okuriganas, startsWKana };
+        } catch {
+          // throw in outer try
+        }
       }
     }
     throw e;
