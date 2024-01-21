@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "3f581e66",
-  initCacheVer: "74625654",
+  swVersion: "15436c16",
+  initCacheVer: "c4c1e38f",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -574,6 +574,10 @@ function initServiceWorker({
     return fetch(request, requiredAuth(request.url));
   }
   function fetchEventHandler(e) {
+    if (e.request.method === "OPTIONS") {
+      e.respondWith(fetch(e.request));
+      return;
+    }
     if (e.request.method !== "GET") {
       return;
     }
@@ -583,7 +587,14 @@ function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
       case req.headers.has(SWRequestHeader.NO_CACHE): {
-        e.respondWith(noCaching(req));
+        let h = {};
+        req.headers.forEach((val, key) => {
+          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
+            h[key] = val;
+          }
+        });
+        const noCacheReq = new Request(req.url, { headers: new Headers(h) });
+        e.respondWith(noCaching(noCacheReq));
         break;
       }
       case path.startsWith(dataPath + dataVerPath):
@@ -815,10 +826,10 @@ function initServiceWorker({
 const cacheFiles = [
   "11f4a4136ea351b3efb4.png",
   "125.5d152486.js",
+  "186.7736b8c9.js",
   "192.124611a9.css",
   "192.124611a9.js",
   "23.76f9155b.js",
-  "230.392d51c9.js",
   "232.eb650563.css",
   "232.eb650563.js",
   "331225628f00d1a9fb35.jpeg",
@@ -826,7 +837,7 @@ const cacheFiles = [
   "4156f5574d12ea2e130b.png",
   "463.c457155e.css",
   "463.c457155e.js",
-  "568.51a37474.js",
+  "568.4be17896.js",
   "657.dee830c3.js",
   "71565d048a3f03f60ac5.png",
   "802.036eb0ab.css",
@@ -841,8 +852,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.93559aa4.css",
-  "main.93559aa4.js",
+  "main.bc193bb8.css",
+  "main.bc193bb8.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
