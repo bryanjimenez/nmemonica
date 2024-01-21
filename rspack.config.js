@@ -1,11 +1,10 @@
+//@ts-check
 import rspack from "@rspack/core";
-import path from "node:path";
+import path, { sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
-import { lan } from "@nmemonica/snservice/utils/host";
-import { yellow } from "@nmemonica/snservice/utils/consoleColor";
-import { ca } from "@nmemonica/snservice/utils/signed-ca";
-import { config } from "@nmemonica/snservice/utils/config";
+import { ca } from "@nmemonica/utils/signed-ca";
+import { config } from "@nmemonica/snservice";
 
 // https://www.rspack.dev/config/devtool.html
 // https://www.rspack.dev/guide/migrate-from-webpack.html
@@ -20,9 +19,8 @@ export default function rspackConfig(
 ) {
   const isProduction = process.env.NODE_ENV === "production";
 
-  if (!ca.exists()) {
-    console.log(yellow("Creating Certificate Authority"));
-    ca.create();
+  if (!isProduction && !ca.exists()) {
+    ca.createServer();
   }
 
   return {
@@ -52,13 +50,10 @@ export default function rspackConfig(
         template: `index${isProduction ? ".production" : ""}.html`,
       }),
 
+      // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
-        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${lan.hostname}"`,  // only in env.development
-        "process.env.isSelfSignedCA": `${ca.exists()}`,             // env.dev only
-        "process.env.SERVICE_PORT": ca.exists()                     // env.dev only
-          ? config.port.https
-          : config.port.http,
-        "process.env.UI_PORT": config.port.ui,                      // env.dev only
+        "process.env.SERVICE_HOSTNAME": `"${config.service.hostname}"`, // only in env.development
+        "process.env.SERVICE_PORT": String(config.service.port), //        env.dev only
       }),
     ],
 
@@ -109,14 +104,14 @@ export default function rspackConfig(
             // https://webpack.js.org/configuration/dev-server/#devserverhttps
             type: "https",
             options: {
-              key: `${config.directory.ca}/${config.ca.server.key}`,
-              cert: `${config.directory.ca}/${config.ca.server.crt}`,
+              key: `${config.directory.ca}${sep}${config.ca.server.key}`,
+              cert: `${config.directory.ca}${sep}${config.ca.server.crt}`,
             },
           }
         : {},
 
-      port: config.port.ui || 8080, // Port Number
-      host: lan.hostname, //"0.0.0.0", //external facing server
+      port: config.ui.port || 8080, // Port Number
+      host: config.service.hostname, //"0.0.0.0", //external facing server
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };
