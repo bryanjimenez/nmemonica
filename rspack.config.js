@@ -1,29 +1,23 @@
-//@ts-check
-const rspack = require("@rspack/core");
-const path = require("path");
-
-const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
-
-//@ts-expect-error rspack.conf outside of tsconfig
-const { lan } = require("@nmemonica/snservice/utils/host");
-//@ts-expect-error rspack.conf outside of tsconfig
-const { yellow, red } = require("@nmemonica/snservice/utils/consoleColor");
-//@ts-expect-error rspack.conf outside of tsconfig
-const {ca} = require("@nmemonica/snservice/utils/signed-ca");
-//@ts-expect-error rspack.conf outside of tsconfig
-const {config} = require("@nmemonica/snservice/utils/config");
-
-// import { fileURLToPath } from "url";
-// const fileURLToPath = require("url").fileURLToPath;
+import rspack from "@rspack/core";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
+import { lan } from "@nmemonica/snservice/utils/host";
+import { yellow } from "@nmemonica/snservice/utils/consoleColor";
+import { ca } from "@nmemonica/snservice/utils/signed-ca";
+import { config } from "@nmemonica/snservice/utils/config";
 
 // https://www.rspack.dev/config/devtool.html
 // https://www.rspack.dev/guide/migrate-from-webpack.html
 
 // mimic CommonJS variables -- not needed if using CommonJS
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-module.exports = function (env, argv) {
+export default function rspackConfig(
+  /** @type string */ _env,
+  /** @type string[] */ argv
+) {
   const isProduction = process.env.NODE_ENV === "production";
 
   if (!ca.exists()) {
@@ -90,9 +84,8 @@ module.exports = function (env, argv) {
               {
                 // https://rspack.org/guide/loader.html#using-a-custom-loader
                 test: /\.(jsx?|tsx?)$/i,
-                // loader: require.resolve('./normal-module-replacement.cjs'),
-                use: (info) => ({
-                  loader: require.resolve("./environment-dep-replace.cjs"),
+                use: (/** @type unknown*/ _info) => ({
+                  loader: "./environment-dep-replace.cjs",
                   options: {
                     loaderOptionParam: "paramValue",
                   },
@@ -127,4 +120,4 @@ module.exports = function (env, argv) {
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };
-};
+}

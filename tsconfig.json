@@ -8,6 +8,7 @@
     "strict": true,
     "removeComments": true
   },
+  "files": ["./rspack.config.js"],
   "exclude": ["./node_modules", "./dist"],
   "references": [{ "path": "./src" }, { "path": "./pwa" }]
 }
