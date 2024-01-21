@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "15436c16",
-  initCacheVer: "a684cc0b",
+  swVersion: "3432e6cf",
+  initCacheVer: "d41d8cd9",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -494,10 +494,10 @@ function initServiceWorker({
     const withAuth = isLocal ? { credentials: "include" } : {};
     return withAuth;
   }
-  function pronounceOverride(url) {
+  function pronounceOverride(req) {
     console.log("[ServiceWorker] Overriding Asset in Cache");
-    const uid = getParam(url, "uid");
-    const cleanUrl = removeParam(url, "uid").replace(override, "");
+    const uid = getParam(req.url, "uid");
+    const cleanUrl = removeParam(req.url, "uid").replace(override, "");
     const myRequest = new Request(cleanUrl, {
       headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
     });
@@ -507,7 +507,10 @@ function initServiceWorker({
       return recache(appMediaCache, myRequest);
     } else {
       clientLogger("IDB.override", DebugLevel.WARN);
-      const fetchP = fetch(myRequest, requiredAuth(myRequest.url));
+      const fetchP =
+        req.method !== undefined
+          ? fetch(req)
+          : fetch(myRequest, requiredAuth(myRequest.url));
       const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return fetchP
@@ -623,9 +626,11 @@ function initServiceWorker({
       case url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
         e.respondWith(appAssetReq(url));
         break;
-      case path.startsWith(audioPath + override):
-        e.respondWith(pronounceOverride(url));
+      case path.startsWith(audioPath + override): {
+        const r = !req.url.startsWith(urlDataService) ? req : { url: req.url };
+        e.respondWith(pronounceOverride(r));
         break;
+      }
       case path.startsWith(audioPath):
         e.respondWith(pronounce(url));
         break;
@@ -823,39 +828,6 @@ function initServiceWorker({
   }
 }
 
-const cacheFiles = [
-  "11f4a4136ea351b3efb4.png",
-  "125.5d152486.js",
-  "186.7736b8c9.js",
-  "192.124611a9.css",
-  "192.124611a9.js",
-  "23.76f9155b.js",
-  "232.eb650563.css",
-  "232.eb650563.js",
-  "331225628f00d1a9fb35.jpeg",
-  "352.b3c756ee.js",
-  "4156f5574d12ea2e130b.png",
-  "463.c457155e.css",
-  "463.c457155e.js",
-  "568.4be17896.js",
-  "657.dee830c3.js",
-  "71565d048a3f03f60ac5.png",
-  "802.036eb0ab.css",
-  "802.036eb0ab.js",
-  "832.7d9e08e1.css",
-  "832.7d9e08e1.js",
-  "856.f9bd9358.js",
-  "927.bfc4db9c.js",
-  "dc7b0140cb7644f73ef2.png",
-  "ee636d032d073f55d622.png",
-  "favicon.ico",
-  "icon192.png",
-  "icon512.png",
-  "index.html",
-  "main.83fe193e.css",
-  "main.83fe193e.js",
-  "manifest.webmanifest",
-  "maskable512.png",
-];
+const cacheFiles = [];
 
 initServiceWorker({ ...buildConstants, getParam, removeParam, cacheFiles });
