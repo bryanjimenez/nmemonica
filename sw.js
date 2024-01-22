@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "15224323",
-  initCacheVer: "b0b2f635",
+  swVersion: "7d5a2589",
+  initCacheVer: "45aeb7bd",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -268,7 +268,6 @@ function initServiceWorker({
     "/opposites.json",
     "/kanji.json",
   ];
-  const override = "/override_cache";
   function getVersions() {
     const main =
       cacheFiles.find((f) => f.match(new RegExp(/main.([a-z0-9]+).js/))) ||
@@ -607,14 +606,10 @@ function initServiceWorker({
       case url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
         e.respondWith(appAssetReq(url));
         break;
-      case path.startsWith(audioPath + override): {
+      case path.startsWith(audioPath) &&
+        req.headers.has(SWRequestHeader.NO_CACHE): {
         const uid = getParam(req.url, "uid");
-        const cleanUrl = removeParam(req.url, "uid").replace(override, "");
-        const myRequest = new Request(cleanUrl, {
-          headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
-        });
-        const modReq = !req.url.startsWith(urlDataService) ? req : myRequest;
-        e.respondWith(pronounceOverride(uid, modReq));
+        e.respondWith(pronounceOverride(uid, req));
         break;
       }
       case path.startsWith(audioPath): {
@@ -859,8 +854,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.0de96b65.css",
-  "main.0de96b65.js",
+  "main.86d623d8.css",
+  "main.86d623d8.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
