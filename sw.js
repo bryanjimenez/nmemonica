@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "7d5a2589",
-  initCacheVer: "af7c5d1a",
+  swVersion: "b4bfd081",
+  initCacheVer: "24a885e2",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -22,7 +22,8 @@ const SWMsgIncoming = {
 };
 
 const SWRequestHeader = {
-  NO_CACHE: "X-No-Cache",
+  CACHE_RELOAD: { "Cache-Control": "reload" },
+  CACHE_NO_WRITE: { "Cache-Control": "no-store" },
   DATA_VERSION: "Data-Version",
 };
 
@@ -575,13 +576,13 @@ function initServiceWorker({
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
-      case req.headers.has(SWRequestHeader.NO_CACHE): {
-        e.respondWith(noCaching(req));
-        break;
-      }
-      case path.startsWith(dataPath + dataVerPath):
+      case path.endsWith(dataPath + dataVerPath): {
+        if (req.cache === "no-store") {
+          e.respondWith(noCaching(req));
+        }
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
+      }
       case url.includes("githubusercontent") &&
         req.headers.has(SWRequestHeader.DATA_VERSION): {
         const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
@@ -606,18 +607,15 @@ function initServiceWorker({
       case url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
         e.respondWith(appAssetReq(url));
         break;
-      case path.startsWith(audioPath) &&
-        req.headers.has(SWRequestHeader.NO_CACHE): {
-        const uid = getParam(req.url, "uid");
-        e.respondWith(pronounceOverride(uid, req));
-        break;
-      }
       case path.startsWith(audioPath): {
         const uid = getParam(url, "uid");
         const cleanUrl = removeParam(url, "uid");
         const modRed = !req.url.startsWith(urlDataService)
           ? req
           : new Request(cleanUrl);
+        if (req.cache === "reload") {
+          e.respondWith(pronounceOverride(uid, modRed));
+        }
         e.respondWith(pronounce(uid, modRed));
         break;
       }
@@ -854,8 +852,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.6a6c96c0.css",
-  "main.6a6c96c0.js",
+  "main.e7984583.css",
+  "main.e7984583.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
