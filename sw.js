@@ -1,5 +1,5 @@
 const buildConstants = {
-  swVersion: "607cfa0c",
+  swVersion: "7d5a2589",
   initCacheVer: "af7c5d1a",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
@@ -538,7 +538,7 @@ function initServiceWorker({
           .then((dataO) => toResponse(dataO))
           .catch(() => {
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
-            return fetch(req.clone())
+            return fetch(req)
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", DebugLevel.ERROR);
