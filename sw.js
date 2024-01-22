@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "3432e6cf",
-  initCacheVer: "d41d8cd9",
+  swVersion: "15224323",
+  initCacheVer: "b0b2f635",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -356,7 +356,9 @@ function initServiceWorker({
           Promise.all(
             dataSourcePath.map((path) => {
               const url = baseUrl + path;
-              return getVersionForData(url).then((v) => cacheVerData(url, v));
+              return getVersionForData(new Request(url)).then((v) =>
+                cacheVerData(new Request(url), v),
+              );
             }),
           ),
         ),
@@ -489,28 +491,15 @@ function initServiceWorker({
     );
     return fetchCheckP;
   }
-  function requiredAuth(url) {
-    const isLocal = !url.startsWith(urlDataService);
-    const withAuth = isLocal ? { credentials: "include" } : {};
-    return withAuth;
-  }
-  function pronounceOverride(req) {
+  function pronounceOverride(uid, req) {
     console.log("[ServiceWorker] Overriding Asset in Cache");
-    const uid = getParam(req.url, "uid");
-    const cleanUrl = removeParam(req.url, "uid").replace(override, "");
-    const myRequest = new Request(cleanUrl, {
-      headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
-    });
     if (!swSelf.indexedDB) {
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
-      return recache(appMediaCache, myRequest);
+      return recache(appMediaCache, req);
     } else {
       clientLogger("IDB.override", DebugLevel.WARN);
-      const fetchP =
-        req.method !== undefined
-          ? fetch(req)
-          : fetch(myRequest, requiredAuth(myRequest.url));
+      const fetchP = fetch(req);
       const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
         return fetchP
@@ -537,14 +526,12 @@ function initServiceWorker({
       return dbResults;
     }
   }
-  function pronounce(url) {
-    const uid = getParam(url, "uid");
-    const word = decodeURI(getParam(url, "q"));
-    const cleanUrl = removeParam(url, "uid");
+  function pronounce(uid, req) {
+    const word = decodeURI(getParam(req.url, "q"));
     if (!swSelf.indexedDB) {
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
-      return appMediaReq(cleanUrl);
+      return appMediaReq(req.url);
     } else {
       const dbOpenPromise = openIDB({ logger: clientLogger });
       const dbResults = dbOpenPromise.then((db) => {
@@ -552,7 +539,7 @@ function initServiceWorker({
           .then((dataO) => toResponse(dataO))
           .catch(() => {
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
-            return fetch(cleanUrl, requiredAuth(cleanUrl))
+            return fetch(req)
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", DebugLevel.ERROR);
@@ -574,7 +561,7 @@ function initServiceWorker({
     }
   }
   function noCaching(request) {
-    return fetch(request, requiredAuth(request.url));
+    return fetch(request);
   }
   function fetchEventHandler(e) {
     if (e.request.method === "OPTIONS") {
@@ -590,14 +577,7 @@ function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
       case req.headers.has(SWRequestHeader.NO_CACHE): {
-        let h = {};
-        req.headers.forEach((val, key) => {
-          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
-            h[key] = val;
-          }
-        });
-        const noCacheReq = new Request(req.url, { headers: new Headers(h) });
-        e.respondWith(noCaching(noCacheReq));
+        e.respondWith(noCaching(req));
         break;
       }
       case path.startsWith(dataPath + dataVerPath):
@@ -619,21 +599,33 @@ function initServiceWorker({
         break;
       }
       case req.headers.has(SWRequestHeader.DATA_VERSION): {
-        const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
-        e.respondWith(appDataReq(url, version));
+        const version = req.headers.get(SWRequestHeader.DATA_VERSION);
+        const modReq = !url.startsWith(urlDataService) ? req : new Request(url);
+        e.respondWith(appDataReq(modReq, version));
         break;
       }
       case url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
         e.respondWith(appAssetReq(url));
         break;
       case path.startsWith(audioPath + override): {
-        const r = !req.url.startsWith(urlDataService) ? req : { url: req.url };
-        e.respondWith(pronounceOverride(r));
+        const uid = getParam(req.url, "uid");
+        const cleanUrl = removeParam(req.url, "uid").replace(override, "");
+        const myRequest = new Request(cleanUrl, {
+          headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
+        });
+        const modReq = !req.url.startsWith(urlDataService) ? req : myRequest;
+        e.respondWith(pronounceOverride(uid, modReq));
         break;
       }
-      case path.startsWith(audioPath):
-        e.respondWith(pronounce(url));
+      case path.startsWith(audioPath): {
+        const uid = getParam(url, "uid");
+        const cleanUrl = removeParam(url, "uid");
+        const modRed = !req.url.startsWith(urlDataService)
+          ? req
+          : new Request(cleanUrl);
+        e.respondWith(pronounce(uid, modRed));
         break;
+      }
       default:
         e.respondWith(noCaching(e.request));
         break;
@@ -686,7 +678,7 @@ function initServiceWorker({
       if (cacheOnly) {
         return c;
       }
-      const f = fetch(url, requiredAuth(url)).then((res) => {
+      const f = fetch(url).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -701,41 +693,46 @@ function initServiceWorker({
       );
     });
   }
-  function appVersionCacheOnFailFetch(authority) {
-    return caches.open(appDataCache).then((cache) =>
-      cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
-        if (cacheRes) {
-          return Promise.resolve(cacheRes);
-        } else {
-          return recache(appDataCache, authority + dataPath + dataVerPath);
-        }
-      }),
-    );
-  }
-  function appDataReq(url, version) {
+  function appDataReq(req, version) {
     let response;
     if (!version || version === "0") {
-      response = getVersionForData(url).then((v) => cacheVerData(url, v));
+      response = getVersionForData(req).then((v) => cacheVerData(req, v));
     } else {
-      response = cacheVerData(url, version);
+      response = cacheVerData(req, version);
     }
     return response;
   }
-  function getVersionForData(url) {
+  function getVersionForData(req) {
+    const url = req.url;
     const authority = url.slice(0, url.indexOf("/", "https://".length));
     const filename = url.split("/").pop() || url;
     const [dName] = filename.split(".json");
-    return appVersionCacheOnFailFetch(authority)
+    return caches
+      .open(appDataCache)
+      .then((cache) =>
+        cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
+          if (cacheRes) {
+            return Promise.resolve(cacheRes);
+          } else {
+            return recache(
+              appDataCache,
+              new Request(authority + dataPath + dataVerPath, {
+                credentials: "include",
+              }),
+            );
+          }
+        }),
+      )
       .then((res) => res && res.json())
       .then((versions) => versions[dName]);
   }
-  function cacheVerData(url, v) {
-    const urlVersion = url + ".v" + v;
+  function cacheVerData(req, v) {
+    const urlVersion = req.url + ".v" + v;
     return caches.open(appDataCache).then((cache) =>
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
-          fetch(url, requiredAuth(url)).then((fetchRes) => {
+          fetch(req).then((fetchRes) => {
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }
@@ -750,7 +747,7 @@ function initServiceWorker({
       .open(appStaticCache)
       .then((cache) => cache.match(url))
       .then((cachedRes) => {
-        return cachedRes || recache(appStaticCache, url);
+        return cachedRes || recache(appStaticCache, new Request(url));
       });
   }
   function appMediaReq(url) {
@@ -758,14 +755,19 @@ function initServiceWorker({
       .open(appMediaCache)
       .then((cache) => cache.match(url))
       .then((cachedRes) => {
-        return cachedRes || recache(appMediaCache, url);
+        return cachedRes || recache(appMediaCache, new Request(url));
       });
   }
-  function recache(cacheName, url) {
+  function recache(cacheName, req) {
     return caches.open(cacheName).then((cache) =>
-      cache
-        .add(url)
-        .then(() => cache.match(url))
+      fetch(req)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Could not fetch");
+          }
+          return cache.put(req.url, res);
+        })
+        .then(() => cache.match(req.url))
         .then((urlRes) => {
           if (!urlRes) {
             throw new Error("Could not recache");
@@ -828,6 +830,39 @@ function initServiceWorker({
   }
 }
 
-const cacheFiles = [];
+const cacheFiles = [
+  "11f4a4136ea351b3efb4.png",
+  "125.5d152486.js",
+  "186.7736b8c9.js",
+  "192.124611a9.css",
+  "192.124611a9.js",
+  "23.76f9155b.js",
+  "232.eb650563.css",
+  "232.eb650563.js",
+  "331225628f00d1a9fb35.jpeg",
+  "352.b3c756ee.js",
+  "4156f5574d12ea2e130b.png",
+  "463.c457155e.css",
+  "463.c457155e.js",
+  "568.4be17896.js",
+  "657.dee830c3.js",
+  "71565d048a3f03f60ac5.png",
+  "802.036eb0ab.css",
+  "802.036eb0ab.js",
+  "832.7d9e08e1.css",
+  "832.7d9e08e1.js",
+  "856.f9bd9358.js",
+  "927.bfc4db9c.js",
+  "dc7b0140cb7644f73ef2.png",
+  "ee636d032d073f55d622.png",
+  "favicon.ico",
+  "icon192.png",
+  "icon512.png",
+  "index.html",
+  "main.0de96b65.css",
+  "main.0de96b65.js",
+  "manifest.webmanifest",
+  "maskable512.png",
+];
 
 initServiceWorker({ ...buildConstants, getParam, removeParam, cacheFiles });
