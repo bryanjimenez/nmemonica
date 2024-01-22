@@ -1,5 +1,5 @@
 const buildConstants = {
-  swVersion: "b4bfd081",
+  swVersion: "9387c784",
   initCacheVer: "24a885e2",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
@@ -577,7 +577,8 @@ function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
       case path.endsWith(dataPath + dataVerPath): {
-        if (req.cache === "no-store") {
+        console.log(req.headers.get("Cache-Control"));
+        if (req.headers.get("Cache-Control") === "no-store") {
           e.respondWith(noCaching(req));
         }
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
@@ -613,7 +614,7 @@ function initServiceWorker({
         const modRed = !req.url.startsWith(urlDataService)
           ? req
           : new Request(cleanUrl);
-        if (req.cache === "reload") {
+        if (req.headers.get("Cache-Control") === "reload") {
           e.respondWith(pronounceOverride(uid, modRed));
         }
         e.respondWith(pronounce(uid, modRed));
