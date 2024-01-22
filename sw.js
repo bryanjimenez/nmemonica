@@ -1,5 +1,5 @@
 const buildConstants = {
-  swVersion: "9387c784",
+  swVersion: "27f9ac43",
   initCacheVer: "24a885e2",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
@@ -577,7 +577,6 @@ function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
       case path.endsWith(dataPath + dataVerPath): {
-        console.log(req.headers.get("Cache-Control"));
         if (req.headers.get("Cache-Control") === "no-store") {
           e.respondWith(noCaching(req));
         }
