@@ -12,8 +12,10 @@ import PropTypes from "prop-types";
 import React, { useEffect, useRef, useState } from "react";
 
 interface SimpleListMenuProps {
-  disabled?: boolean; //whether menu is interdisabled
-  flip?: boolean; //whether elipsis and options are horizontally reversed
+  /** Whether menu is interdisabled */
+  disabled?: boolean; //
+  /** Whether elipsis and options are horizontally reversed */
+  flip?: boolean;
   title: string;
   options: string[];
   allowed?: number[];
