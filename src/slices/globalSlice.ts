@@ -198,7 +198,7 @@ export const setLocalServiceURL = createAsyncThunk(
     }
 
     return fetch(url + "/cache.json", {
-      headers: { [SWRequestHeader.NO_CACHE]: "ServiceWorkerNoCache" },
+      headers: SWRequestHeader.CACHE_NO_WRITE,
       ...requiredAuth(localServiceURL),
     })
       .then((res) => {

@@ -44,6 +44,7 @@ import {
   recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
+import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -1095,7 +1096,9 @@ function buildGameActionsHandler(
         reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
       const vocabulary = getTerm(uid, vocab);
 
-      const override = recacheAudio ? "/override_cache" : "";
+      const override = recacheAudio
+        ? { headers: SWRequestHeader.CACHE_RELOAD }
+        : {};
 
       setWasPlayed(true);
 
@@ -1129,24 +1132,24 @@ function buildGameActionsHandler(
           sayObj = vocabulary;
         }
 
-        const audioUrl = addParam(baseUrl + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "ja",
           q: audioPronunciation(sayObj),
           uid: getCacheUID(sayObj),
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       } else if (direction === "down") {
         setMediaSessionPlaybackState("playing");
 
         const inEnglish = vocabulary.english;
-        const audioUrl = addParam(baseUrl + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "en",
           q: inEnglish,
           uid: vocabulary.uid + ".en",
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       }
     }
     return (

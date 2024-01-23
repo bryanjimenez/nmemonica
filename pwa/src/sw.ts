@@ -73,9 +73,6 @@ export function initServiceWorker({
     "/kanji.json",
   ];
 
-  /** Pronounce cache override */
-  const override = "/override_cache";
-
   function getVersions() {
     const main =
       cacheFiles.find((f) => f.match(new RegExp(/main.([a-z0-9]+).js/))) ||
@@ -225,7 +222,9 @@ export function initServiceWorker({
           Promise.all(
             dataSourcePath.map((path) => {
               const url = baseUrl + path;
-              return getVersionForData(url).then((v) => cacheVerData(url, v));
+              return getVersionForData(new Request(url)).then((v) =>
+                cacheVerData(new Request(url), v)
+              );
             })
           )
         )
@@ -409,40 +408,21 @@ export function initServiceWorker({
   }
 
   /**
-   * Local requests need credentials  
-   * checks if `url` is local
-   * @param url
-   */
-  function requiredAuth(url: string) {
-    const isLocal = !url.startsWith(urlDataService);
-    const withAuth: RequestInit = isLocal
-      ? { credentials: "include" }
-      : {/** only needed for local service */};
-
-    return withAuth;
-  }
-
-  /**
    * User overriding media cached asset
    */
-  function pronounceOverride(url: string) {
+  function pronounceOverride(uid: string, req: Request) {
     console.log("[ServiceWorker] Overriding Asset in Cache");
-    const uid = getParam(url, "uid");
-    const cleanUrl = removeParam(url, "uid").replace(override, "");
-    const myRequest = new Request(cleanUrl, {
-      headers: new Headers({ [SWRequestHeader.NO_CACHE]: "ReFetch" }),
-    });
 
     if (!swSelf.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
-      return recache(appMediaCache, myRequest);
+      return recache(appMediaCache, req);
     } else {
       // use indexedDB
       clientLogger("IDB.override", DebugLevel.WARN);
 
-      const fetchP = fetch(myRequest, requiredAuth(myRequest.url));
+      const fetchP = fetch(req);
       const dbOpenPromise = openIDB({ logger: clientLogger });
 
       const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
@@ -475,17 +455,14 @@ export function initServiceWorker({
   /**
    * Site media asset
    */
-  function pronounce(url: string) {
-    const uid = getParam(url, "uid");
-    const word = decodeURI(getParam(url, "q"));
-
-    const cleanUrl = removeParam(url, "uid");
+  function pronounce(uid: string, req: Request) {
+    const word = decodeURI(getParam(req.url, "q"));
 
     if (!swSelf.indexedDB) {
       // use cache
       console.log(NO_INDEXEDDB_SUPPORT);
       clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
-      return appMediaReq(cleanUrl);
+      return appMediaReq(req.url);
     } else {
       // use indexedDB
       const dbOpenPromise = openIDB({ logger: clientLogger });
@@ -500,7 +477,7 @@ export function initServiceWorker({
             //not found
             clientLogger("IDB.get [] " + word, DebugLevel.WARN);
 
-            return fetch(cleanUrl, requiredAuth(cleanUrl))
+            return fetch(req)
               .then((res) => {
                 if (!res.ok) {
                   clientLogger("fetch", DebugLevel.ERROR);
@@ -524,10 +501,16 @@ export function initServiceWorker({
 
   function noCaching(request: Request) {
     // for debugging purposes
-    return fetch(request, requiredAuth(request.url));
+    return fetch(request);
   }
 
   function fetchEventHandler(e: FetchEvent) {
+    if (e.request.method === "OPTIONS") {
+      // forward mTLS handshake request
+      e.respondWith(noCaching(e.request));
+      return;
+    }
+
     if (e.request.method !== "GET") {
       return;
     }
@@ -538,24 +521,16 @@ export function initServiceWorker({
     const path = url.slice(url.indexOf("/", protocol.length + 1));
 
     switch (true) {
-      case /* explicit no cache */
-      req.headers.has(SWRequestHeader.NO_CACHE): {
-        // remove header
-        let h: Record<string, string> = {};
-        req.headers.forEach((val, key) => {
-          if (key !== SWRequestHeader.NO_CACHE.toLowerCase()) {
-            h[key] = val;
-          }
-        });
-        const noCacheReq = new Request(req.url, { headers: new Headers(h) });
-        e.respondWith(noCaching(noCacheReq));
-        break;
-      }
-
       case /* cache.json */
-      path.startsWith(dataPath + dataVerPath):
+      path.startsWith(dataPath + dataVerPath): {
+        if (req.headers.get("Cache-Control") === "no-store") {
+          // mTLS handshake in progress
+          e.respondWith(noCaching(req));
+        }
+
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
+      }
 
       case /* github user data */
       url.includes("githubusercontent") &&
@@ -577,8 +552,10 @@ export function initServiceWorker({
 
       case /* data */
       req.headers.has(SWRequestHeader.DATA_VERSION): {
-        const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
-        e.respondWith(appDataReq(url, version));
+        const version = req.headers.get(SWRequestHeader.DATA_VERSION);
+        const modReq = !url.startsWith(urlDataService) ? req : new Request(url);
+
+        e.respondWith(appDataReq(modReq, version));
         break;
       }
 
@@ -587,15 +564,21 @@ export function initServiceWorker({
         e.respondWith(appAssetReq(url));
         break;
 
-      case /* pronounce override */
-      path.startsWith(audioPath + override):
-        e.respondWith(pronounceOverride(url));
-        break;
-
       case /* pronounce */
-      path.startsWith(audioPath):
-        e.respondWith(pronounce(url));
+      path.startsWith(audioPath): {
+        const uid = getParam(url, "uid");
+        const cleanUrl = removeParam(url, "uid");
+        const modRed = req.url.startsWith(urlDataService)
+          ? new Request(cleanUrl) //  remove everything for external
+          : req; //                   keep auth for local service
+
+        if (req.headers.get("Cache-Control") === "reload") {
+          e.respondWith(pronounceOverride(uid, modRed));
+        }
+
+        e.respondWith(pronounce(uid, modRed));
         break;
+      }
 
       default:
         /* everything else */
@@ -681,7 +664,7 @@ export function initServiceWorker({
       }
 
       // fetch new versions
-      const f = fetch(url, requiredAuth(url)).then((res) => {
+      const f = fetch(url).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -703,33 +686,16 @@ export function initServiceWorker({
   }
 
   /**
-   * get from cache on fail fetch and re-cache
-   * first match may be stale
-   * @returns a Promise with a cached dataVersion response
-   */
-  function appVersionCacheOnFailFetch(authority: string) {
-    return caches.open(appDataCache).then((cache) =>
-      cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
-        if (cacheRes) {
-          return Promise.resolve(cacheRes);
-        } else {
-          return recache(appDataCache, authority + dataPath + dataVerPath);
-        }
-      })
-    );
-  }
-
-  /**
    * When request contains Data-Version != 0 the version is used otherwise
    * the version is searched in the cache
    * @returns a Promise that yieds a cached response
    */
-  function appDataReq(url: string, version: string | null) {
+  function appDataReq(req: Request, version: string | null) {
     let response: Promise<Response>;
     if (!version || version === "0") {
-      response = getVersionForData(url).then((v) => cacheVerData(url, v));
+      response = getVersionForData(req).then((v) => cacheVerData(req, v));
     } else {
-      response = cacheVerData(url, version);
+      response = cacheVerData(req, version);
     }
 
     return response;
@@ -738,12 +704,33 @@ export function initServiceWorker({
   /**
    * @returns a Promise that yields the version on the cache for the provided request
    */
-  function getVersionForData(url: string) {
+  function getVersionForData(req: Request) {
+    const url = req.url;
     const authority = url.slice(0, url.indexOf("/", "https://".length));
     const filename = url.split("/").pop() || url;
     const [dName] = filename.split(".json");
 
-    return appVersionCacheOnFailFetch(authority)
+    /**
+     * get from cache on fail fetch and re-cache
+     * first match may be stale
+     * returns a Promise with a cached dataVersion response
+     */
+    return caches
+      .open(appDataCache)
+      .then((cache) =>
+        cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
+          if (cacheRes) {
+            return Promise.resolve(cacheRes);
+          } else {
+            return recache(
+              appDataCache,
+              new Request(authority + dataPath + dataVerPath, {
+                credentials: "include",
+              })
+            );
+          }
+        })
+      )
       .then((res) => res && res.json())
       .then((versions: { [k: string]: string }) => versions[dName]);
   }
@@ -752,14 +739,14 @@ export function initServiceWorker({
    * when cache match fails fetch and re-cache (only good response)
    * @returns a Promise that yieds a cached response
    */
-  function cacheVerData(url: string, v: string) {
-    const urlVersion = url + ".v" + v;
+  function cacheVerData(req: Request, v: string) {
+    const urlVersion = req.url + ".v" + v;
 
     return caches.open(appDataCache).then((cache) =>
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
-          fetch(url, requiredAuth(url)).then((fetchRes) => {
+          fetch(req).then((fetchRes) => {
             if (fetchRes.status < 400) {
               void cache.put(urlVersion, fetchRes.clone());
             }
@@ -779,7 +766,7 @@ export function initServiceWorker({
       .open(appStaticCache)
       .then((cache) => cache.match(url))
       .then((cachedRes) => {
-        return cachedRes || recache(appStaticCache, url);
+        return cachedRes || recache(appStaticCache, new Request(url));
       });
   }
 
@@ -793,18 +780,24 @@ export function initServiceWorker({
       .open(appMediaCache)
       .then((cache) => cache.match(url))
       .then((cachedRes) => {
-        return cachedRes || recache(appMediaCache, url);
+        return cachedRes || recache(appMediaCache, new Request(url));
       });
   }
 
   /**
    * @returns a Promise that yields a response from the cache or a rejected Promise
    */
-  function recache(cacheName: string, url: string | Request) {
+  function recache(cacheName: string, req: Request) {
     return caches.open(cacheName).then((cache) =>
-      cache
-        .add(url)
-        .then(() => cache.match(url))
+      fetch(req)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Could not fetch");
+          }
+
+          return cache.put(req.url, res);
+        })
+        .then(() => cache.match(req.url))
         .then((urlRes) => {
           if (!urlRes) {
             throw new Error("Could not recache");

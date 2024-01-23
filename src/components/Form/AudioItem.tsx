@@ -6,6 +6,7 @@ import { ExternalSourceType, getExternalSourceType } from "./ExtSourceInput";
 import { pronounceEndoint } from "../../../environment.development";
 import { audioServicePath } from "../../../environment.production";
 import { fetchAudio } from "../../helper/audioHelper.production";
+import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import { addParam } from "../../helper/urlHelper";
 import { RootState } from "../../slices";
 
@@ -40,15 +41,18 @@ export default function AudioItem(props: AudioItemProps) {
     // remove decimal and coerce to number
     const time = ~~(Date.now() - tStart);
 
-    const override = time < 500 && !props.reCache ? "" : "/override_cache";
+    const override =
+      time < 500 && !props.reCache
+        ? {}
+        : { headers: SWRequestHeader.CACHE_RELOAD };
 
     const audioUrl =
       getExternalSourceType(localServiceURL) === ExternalSourceType.LocalService
         ? localServiceURL + audioServicePath
         : pronounceEndoint;
 
-    const url = addParam(audioUrl + override, touchPlayParam);
-    void fetchAudio(url);
+    const url = addParam(audioUrl, touchPlayParam);
+    void fetchAudio(new Request(url, override));
   };
 
   return (

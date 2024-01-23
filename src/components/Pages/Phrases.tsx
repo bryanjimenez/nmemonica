@@ -41,6 +41,7 @@ import {
   recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
+import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import {
   dateViewOrder,
   difficultySubFilter,
@@ -934,26 +935,28 @@ function buildGameActionsHandler(
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
       const phrase = getTerm(uid, phrases);
-      const override = recacheAudio ? "/override_cache" : "";
+      const override = recacheAudio
+        ? { headers: SWRequestHeader.CACHE_RELOAD }
+        : {};
 
       if (direction === "up") {
         const inJapanese = audioPronunciation(phrase);
-        const audioUrl = addParam(baseUrl + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "ja",
           q: inJapanese,
           uid,
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       } else if (direction === "down") {
         const inEnglish = phrase.english;
-        const audioUrl = addParam(baseUrl + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "en",
           q: inEnglish,
           uid: phrase.uid + ".en",
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       }
     }
     return (

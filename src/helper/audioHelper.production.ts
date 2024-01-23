@@ -39,7 +39,7 @@ let audioCtx: AudioContext | null = null;
  * Play using AudioContext
  */
 export async function fetchAudio(
-  audioUrl: Request | string,
+  audioUrl: Request,
   AbortController?: AbortController
 ) {
   if (audioCtx === null) {
