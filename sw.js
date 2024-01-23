@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "91c3e369",
-  initCacheVer: "24a885e2",
+  swVersion: "4e5c35be",
+  initCacheVer: "2799bf37",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -576,7 +576,7 @@ function initServiceWorker({
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
-      case path.endsWith(dataPath + dataVerPath): {
+      case path.startsWith(dataPath + dataVerPath): {
         if (req.headers.get("Cache-Control") === "no-store") {
           e.respondWith(noCaching(req));
         }
@@ -610,9 +610,9 @@ function initServiceWorker({
       case path.startsWith(audioPath): {
         const uid = getParam(url, "uid");
         const cleanUrl = removeParam(url, "uid");
-        const modRed = !req.url.startsWith(urlDataService)
-          ? req
-          : new Request(cleanUrl);
+        const modRed = req.url.startsWith(urlDataService)
+          ? new Request(cleanUrl)
+          : req;
         if (req.headers.get("Cache-Control") === "reload") {
           e.respondWith(pronounceOverride(uid, modRed));
         }
@@ -852,8 +852,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.e7984583.css",
-  "main.e7984583.js",
+  "main.b06533bb.css",
+  "main.b06533bb.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
