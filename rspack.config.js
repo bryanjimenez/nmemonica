@@ -46,7 +46,12 @@ export default function rspackConfig(
 
       // output license info
       ...(isProduction
-        ? [new LicenseCheckerWebpackPlugin({ outputWriter: appendLicense })]
+        ? [
+            new LicenseCheckerWebpackPlugin({
+              allow: "MIT OR BSD-3-Clause OR CC-BY-4.0",
+              outputWriter: appendLicense,
+            }),
+          ]
         : []),
       // index.html template
       new rspack.HtmlRspackPlugin({
