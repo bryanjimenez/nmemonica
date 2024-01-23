@@ -1,5 +1,5 @@
 const buildConstants = {
-  swVersion: "27f9ac43",
+  swVersion: "91c3e369",
   initCacheVer: "24a885e2",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
@@ -565,7 +565,7 @@ function initServiceWorker({
   }
   function fetchEventHandler(e) {
     if (e.request.method === "OPTIONS") {
-      e.respondWith(fetch(e.request));
+      e.respondWith(noCaching(e.request));
       return;
     }
     if (e.request.method !== "GET") {
