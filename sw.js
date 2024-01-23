@@ -1,6 +1,6 @@
 const buildConstants = {
   swVersion: "4e5c35be",
-  initCacheVer: "2799bf37",
+  initCacheVer: "450c75f0",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -826,7 +826,7 @@ function initServiceWorker({
 const cacheFiles = [
   "11f4a4136ea351b3efb4.png",
   "125.5d152486.js",
-  "186.7736b8c9.js",
+  "186.f3dc36c7.js",
   "192.124611a9.css",
   "192.124611a9.js",
   "23.76f9155b.js",
@@ -852,8 +852,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.b06533bb.css",
-  "main.b06533bb.js",
+  "main.60d094f1.css",
+  "main.60d094f1.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];

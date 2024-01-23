@@ -2,7 +2,7 @@ THIRD PARTY SOFTWARE NOTICES AND INFORMATION
 Do Not Translate or Localize
 
 --------------------------------------------------------------------------------
-@babel/runtime v7.23.7 - The Babel Team (https://babel.dev/team)
+@babel/runtime v7.23.8 - The Babel Team (https://babel.dev/team)
 https://github.com/babel/babel.git
 --------------------------------------------------------------------------------
 
@@ -354,7 +354,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/core v1.5.2 - atomiks
+@floating-ui/core v1.5.3 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -380,7 +380,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/dom v1.5.3 - atomiks
+@floating-ui/dom v1.5.4 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -406,7 +406,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/react-dom v2.0.4 - atomiks
+@floating-ui/react-dom v2.0.6 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -432,7 +432,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/utils v0.1.6 - atomiks
+@floating-ui/utils v0.2.1 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -603,7 +603,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/base v5.0.0-beta.29 - MUI Team
+@mui/base v5.0.0-beta.33 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -630,7 +630,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/material v5.15.2 - MUI Team
+@mui/material v5.15.6 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -657,7 +657,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/private-theming v5.15.2 - MUI Team
+@mui/private-theming v5.15.6 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -684,7 +684,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/styled-engine v5.15.2 - MUI Team
+@mui/styled-engine v5.15.6 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -711,7 +711,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/system v5.15.2 - MUI Team
+@mui/system v5.15.6 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -738,7 +738,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/utils v5.15.2 - MUI Team
+@mui/utils v5.15.6 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -1552,7 +1552,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@remix-run/router v1.14.1 - Remix Software <hello@remix.run>
+@remix-run/router v1.14.2 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -2091,7 +2091,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router v6.21.1 - Remix Software <hello@remix.run>
+react-router v6.21.3 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -2120,7 +2120,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router-dom v6.21.1 - Remix Software <hello@remix.run>
+react-router-dom v6.21.3 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
