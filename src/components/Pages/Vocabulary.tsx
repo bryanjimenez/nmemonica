@@ -31,7 +31,6 @@ import {
   play,
   termFilterByType,
   toggleFuriganaSettingHelper,
-  verbToTargetForm,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
@@ -91,6 +90,7 @@ import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import type { BareIdx } from "../Form/VocabularyOrderSlider";
+import { verbToTargetForm } from "../../helper/JapaneseVerb";
 
 const VocabularyMeta = {
   location: "/vocabulary/",

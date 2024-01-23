@@ -5,7 +5,6 @@ import { JapaneseText } from "../../../src/helper/JapaneseText";
 import {
   activeGroupIncludes,
   getJapaneseHint,
-  getVerbFormsArray,
   termFilterByType,
 } from "../../../src/helper/gameHelper";
 import { TermFilterBy } from "../../../src/slices/settingHelper";
@@ -512,55 +511,6 @@ describe("gameHelper", function () {
       expect(screen.getByText("しょ").tagName).equal("SPAN");
       expect(screen.getByText("心者").className).equal("invisible");
       expect(screen.getByText("しんしゃ").className).equal("invisible");
-    });
-  });
-  describe("getVerbFormsArray", function () {
-    it("verb form names only", function () {
-      const actual = getVerbFormsArray();
-
-      expect(actual).to.have.lengthOf(9);
-      actual.forEach((el) => {
-        expect(el).to.have.key("name");
-        expect(el).to.not.have.key("value");
-      });
-    });
-
-    it("verb form", function () {
-      const actual = getVerbFormsArray({ japanese: "いく\n行く", exv: 1 });
-
-      expect(actual).to.have.lengthOf(9);
-      actual.forEach((el) => {
-        expect(el).to.have.all.keys("name", "value");
-      });
-    });
-    it("exception verb forms", function () {
-      const regular = getVerbFormsArray({ japanese: "たべる\n食べる" });
-      // exception verbs don't have all forms
-      const actual = getVerbFormsArray({ japanese: "ある" });
-
-      expect(actual).to.have.lengthOf.lessThan(regular.length);
-      actual.forEach((el) => {
-        expect(el).to.have.all.keys("name", "value");
-      });
-    });
-    it("filtered verb form", function () {
-      const filter = ["-ta"];
-      const actual = getVerbFormsArray({ japanese: "読む" }, filter);
-
-      expect(actual).to.have.lengthOf(filter.length);
-      actual.forEach((el) => {
-        expect(el).to.have.all.keys("name", "value");
-      });
-    });
-    it("ordered verb form", function () {
-      const filter = ["-ta", "-te"];
-      const actual = getVerbFormsArray({ japanese: "読む" }, filter);
-
-      expect(actual).to.have.lengthOf(filter.length);
-      actual.forEach((el, i) => {
-        expect(el).to.have.all.keys("name", "value");
-        expect(el.name).to.eq(filter[i]);
-      });
     });
   });
 });

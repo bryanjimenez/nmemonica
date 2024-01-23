@@ -4,18 +4,20 @@ import React, { useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import {
-  type VerbFormArray,
   englishLabel,
   getCacheUID,
   getEnglishHint,
   getJapaneseHint,
-  getVerbFormsArray,
   japaneseLabel,
   labelPlacementHelper,
   toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
 import { audioPronunciation } from "../../helper/JapaneseText";
-import { JapaneseVerb } from "../../helper/JapaneseVerb";
+import {
+  JapaneseVerb,
+  type VerbFormArray,
+  getVerbFormsArray,
+} from "../../helper/JapaneseVerb";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { furiganaToggled, verbFormChanged } from "../../slices/vocabularySlice";
