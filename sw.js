@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "4e5c35be",
-  initCacheVer: "450c75f0",
+  swVersion: "ed4c3744",
+  initCacheVer: "f081176a",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -576,13 +576,12 @@ function initServiceWorker({
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
-      case path.startsWith(dataPath + dataVerPath): {
-        if (req.headers.get("Cache-Control") === "no-store") {
-          e.respondWith(noCaching(req));
-        }
+      case path === dataPath + "/init":
+        e.respondWith(noCaching(req));
+        break;
+      case path.startsWith(dataPath + dataVerPath):
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
-      }
       case url.includes("githubusercontent") &&
         req.headers.has(SWRequestHeader.DATA_VERSION): {
         const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
@@ -852,8 +851,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.60d094f1.css",
-  "main.60d094f1.js",
+  "main.a945bd55.css",
+  "main.a945bd55.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
