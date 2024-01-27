@@ -1,6 +1,6 @@
 const buildConstants = {
   swVersion: "ed4c3744",
-  initCacheVer: "48db82c5",
+  initCacheVer: "5b3bf528",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
   urlPronounceService:
@@ -851,8 +851,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.3e085de5.css",
-  "main.3e085de5.js",
+  "main.45e6d0c8.css",
+  "main.45e6d0c8.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
