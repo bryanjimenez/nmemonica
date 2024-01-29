@@ -1,10 +1,11 @@
 const buildConstants = {
   swVersion: "ed4c3744",
-  initCacheVer: "8aced0ce",
+  initCacheVer: "1000d891",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
-  urlDataService: "https://nmemonica-9d977.firebaseio.com/lambda",
+  urlDataService:
+    "https://c8f6e140-c35a-415f-afa9-7201e5b19bb8-00-3lsfar97s9hmz.riker.replit.dev/lambda",
   urlPronounceService:
-    "https://us-east1-nmemonica-9d977.cloudfunctions.net/g_translate_pronounce",
+    "https://c8f6e140-c35a-415f-afa9-7201e5b19bb8-00-3lsfar97s9hmz.riker.replit.dev/g_translate_pronounce",
   audioPath: "/g_translate_pronounce",
   dataPath: "/lambda",
 };
@@ -851,8 +852,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.09b9c58b.css",
-  "main.09b9c58b.js",
+  "main.3afd7586.css",
+  "main.3afd7586.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
