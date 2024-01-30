@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "ed4c3744",
-  initCacheVer: "1000d891",
+  swVersion: "329bcdb7",
+  initCacheVer: "6e5a686b",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService:
     "https://c8f6e140-c35a-415f-afa9-7201e5b19bb8-00-3lsfar97s9hmz.riker.replit.dev/lambda",
@@ -600,8 +600,7 @@ function initServiceWorker({
       }
       case req.headers.has(SWRequestHeader.DATA_VERSION): {
         const version = req.headers.get(SWRequestHeader.DATA_VERSION);
-        const modReq = !url.startsWith(urlDataService) ? req : new Request(url);
-        e.respondWith(appDataReq(modReq, version));
+        e.respondWith(appDataReq(req, version));
         break;
       }
       case url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
@@ -671,7 +670,7 @@ function initServiceWorker({
       if (cacheOnly) {
         return c;
       }
-      const f = fetch(url).then((res) => {
+      const f = fetch(url, { credentials: "include" }).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -837,7 +836,7 @@ const cacheFiles = [
   "4156f5574d12ea2e130b.png",
   "463.c457155e.css",
   "463.c457155e.js",
-  "568.34cb4503.js",
+  "568.8cab0f64.js",
   "657.dee830c3.js",
   "71565d048a3f03f60ac5.png",
   "802.036eb0ab.css",
@@ -852,8 +851,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.3afd7586.css",
-  "main.3afd7586.js",
+  "main.7ca0204e.css",
+  "main.7ca0204e.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
