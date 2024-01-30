@@ -1,6 +1,6 @@
 const buildConstants = {
-  swVersion: "329bcdb7",
-  initCacheVer: "6e5a686b",
+  swVersion: "4e5c35be",
+  initCacheVer: "03b09c49",
   urlAppUI: "https://bryanjimenez.github.io/nmemonica",
   urlDataService:
     "https://c8f6e140-c35a-415f-afa9-7201e5b19bb8-00-3lsfar97s9hmz.riker.replit.dev/lambda",
@@ -577,12 +577,13 @@ function initServiceWorker({
     const protocol = "https://";
     const path = url.slice(url.indexOf("/", protocol.length + 1));
     switch (true) {
-      case path === dataPath + "/init":
-        e.respondWith(noCaching(req));
-        break;
-      case path.startsWith(dataPath + dataVerPath):
+      case path.startsWith(dataPath + dataVerPath): {
+        if (req.headers.get("Cache-Control") === "no-store") {
+          e.respondWith(noCaching(req));
+        }
         e.respondWith(appVersionReq(urlDataService + dataVerPath));
         break;
+      }
       case url.includes("githubusercontent") &&
         req.headers.has(SWRequestHeader.DATA_VERSION): {
         const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
@@ -600,7 +601,8 @@ function initServiceWorker({
       }
       case req.headers.has(SWRequestHeader.DATA_VERSION): {
         const version = req.headers.get(SWRequestHeader.DATA_VERSION);
-        e.respondWith(appDataReq(req, version));
+        const modReq = !url.startsWith(urlDataService) ? req : new Request(url);
+        e.respondWith(appDataReq(modReq, version));
         break;
       }
       case url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
@@ -670,7 +672,7 @@ function initServiceWorker({
       if (cacheOnly) {
         return c;
       }
-      const f = fetch(url, { credentials: "include" }).then((res) => {
+      const f = fetch(url).then((res) => {
         const resClone = res.clone();
         if (!res.ok) {
           throw new Error("Failed to fetch");
@@ -836,7 +838,7 @@ const cacheFiles = [
   "4156f5574d12ea2e130b.png",
   "463.c457155e.css",
   "463.c457155e.js",
-  "568.8cab0f64.js",
+  "568.4be17896.js",
   "657.dee830c3.js",
   "71565d048a3f03f60ac5.png",
   "802.036eb0ab.css",
@@ -851,8 +853,8 @@ const cacheFiles = [
   "icon192.png",
   "icon512.png",
   "index.html",
-  "main.7ca0204e.css",
-  "main.7ca0204e.js",
+  "main.5fa1c1c1.css",
+  "main.5fa1c1c1.js",
   "manifest.webmanifest",
   "maskable512.png",
 ];
