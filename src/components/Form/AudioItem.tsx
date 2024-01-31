@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 import { useSelector } from "react-redux";
 
 import { ExternalSourceType, getExternalSourceType } from "./ExtSourceInput";
-import { pronounceEndoint } from "../../../environment.development";
-import { audioServicePath } from "../../../environment.production";
+import { audioServicePath, pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import { addParam } from "../../helper/urlHelper";

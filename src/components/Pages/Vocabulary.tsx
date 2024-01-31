@@ -15,8 +15,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
-import { pronounceEndoint } from "../../../environment.development";
-import { audioServicePath } from "../../../environment.production";
+import { audioServicePath, pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,

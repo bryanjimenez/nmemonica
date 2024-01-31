@@ -7,7 +7,7 @@ import { requiredAuth } from "./globalSlice";
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
-import { sheetServicePath } from "../../environment.production";
+import { sheetServicePath } from "../../environment.development";
 import {
   ExternalSourceType,
   getExternalSourceType,

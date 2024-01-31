@@ -11,7 +11,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { dataServiceEndpoint } from "../../environment.production";
+import { dataServiceEndpoint } from "../../environment.development";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,

@@ -12,8 +12,7 @@ import React, {
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { pronounceEndoint } from "../../../environment.development";
-import { audioServicePath } from "../../../environment.production";
+import { audioServicePath, pronounceEndoint } from "../../../environment.development";
 import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,

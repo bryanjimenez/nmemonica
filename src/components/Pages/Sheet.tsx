@@ -30,7 +30,7 @@ import {
   dataServiceEndpoint,
   // pushServiceSheetDataUpdatePath,
   sheetServicePath,
-} from "../../../environment.production";
+} from "../../../environment.development";
 import {
   IDBErrorCause,
   IDBStores,
@@ -70,16 +70,16 @@ const defaultOp = {
     width: () => document.documentElement.clientWidth - 15,
   },
   row: {
-    len: 3000, //100,
-    height: 35, //25,
+    len: 3000, //   100,
+    height: 35, //  25,
   },
   col: {
-    // len: 26,
-    // width: 100,
+    len: 10, //     26:Z
+    width: 150,
     indexWidth: 60,
     minWidth: 60,
   },
-};
+} as const;
 
 function saveSheetServiceWorker(workbook: Spreadsheet | null, url: string) {
   if (!workbook) return Promise.reject(new Error("Missing workbook"));

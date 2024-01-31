@@ -20,7 +20,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { dataServiceEndpoint } from "../../environment.production";
+import { dataServiceEndpoint } from "../../environment.development";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {

@@ -17,7 +17,7 @@ import { vocabularyFromLocalStorage } from "./vocabularySlice";
 import {
   dataServiceEndpoint,
   dataServicePath,
-} from "../../environment.production";
+} from "../../environment.development";
 import {
   IDBKeys,
   IDBStores,
