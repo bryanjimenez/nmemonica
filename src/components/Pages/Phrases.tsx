@@ -12,8 +12,10 @@ import React, {
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { audioServicePath, pronounceEndoint } from "../../../environment.development";
-import { fetchAudio } from "../../helper/audioHelper.production";
+import {
+  audioServicePath,
+  pronounceEndoint,
+} from "../../../environment.development";
 import {
   daysSince,
   spaceRepLog,
@@ -53,6 +55,7 @@ import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch, RootState } from "../../slices";
+import { fetchAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyPhrase,
@@ -950,7 +953,10 @@ function buildGameActionsHandler(
           uid,
         });
 
-        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
+        actionPromise = fetchAudio(
+          new Request(audioUrl, override),
+          AbortController
+        );
       } else if (direction === "down") {
         const inEnglish = phrase.english;
         const audioUrl = addParam(baseUrl, {
@@ -959,7 +965,10 @@ function buildGameActionsHandler(
           uid: phrase.uid + ".en",
         });
 
-        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
+        actionPromise = fetchAudio(
+          new Request(audioUrl, override),
+          AbortController
+        );
       }
     }
     return (
