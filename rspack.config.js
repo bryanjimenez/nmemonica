@@ -106,17 +106,15 @@ export default function rspackConfig(
     },
 
     devServer: {
-      server: ca.exists()
-        ? {
-            // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
-            // https://webpack.js.org/configuration/dev-server/#devserverhttps
-            type: "https",
-            options: {
-              key: `${config.directory.ca}${sep}${config.ca.server.key}`,
-              cert: `${config.directory.ca}${sep}${config.ca.server.crt}`,
-            },
-          }
-        : {},
+      server: {
+        // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
+        // https://webpack.js.org/configuration/dev-server/#devserverhttps
+        type: "https",
+        options: {
+          key: `${config.directory.ca}${sep}${config.ca.server.key}`,
+          cert: `${config.directory.ca}${sep}${config.ca.server.crt}`,
+        },
+      },
 
       port: config.ui.port || 8080, // Port Number
       host: config.service.hostname, //"0.0.0.0", //external facing server
