@@ -36,6 +36,8 @@ export function useConnectKanji() {
     choiceN,
     fadeInAnswers,
     spaRepMaxReviewItem,
+    includeNew,
+    includeReviewed,
   ] = useSelector<
     RootState,
     [
@@ -45,7 +47,9 @@ export function useConnectKanji() {
       number,
       number,
       boolean,
-      number
+      number,
+      boolean,
+      boolean
     ]
   >(({ kanji }: RootState) => {
     const {
@@ -56,6 +60,8 @@ export function useConnectKanji() {
       choiceN,
       fadeInAnswers,
       spaRepMaxReviewItem,
+      includeNew,
+      includeReviewed,
     } = kanji.setting;
 
     return [
@@ -66,6 +72,8 @@ export function useConnectKanji() {
       choiceN,
       fadeInAnswers,
       spaRepMaxReviewItem,
+      includeNew,
+      includeReviewed,
     ];
   }, shallowEqual);
 
@@ -103,6 +111,10 @@ export function useConnectKanji() {
     fadeInAnswers,
     /** Maximum number of space repetition items to review at once */
     spaRepMaxReviewItem,
+    /** dateViewOrder include new terms */
+    includeNew,
+    /** dateViewOrder include terms previously reviewed */
+    includeReviewed,
 
     // Refs ()
     reinforce,

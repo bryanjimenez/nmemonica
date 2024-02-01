@@ -102,6 +102,7 @@ export default function Console(props: ConsoleProps) {
         "console p-1": true,
         "position-absolute": props.connected === true,
         "mw-50": props.connected === true,
+        "text-break": true,
       })}
     >
       {m.map((e) => {

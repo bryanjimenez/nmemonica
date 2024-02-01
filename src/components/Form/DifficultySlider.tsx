@@ -65,8 +65,8 @@ export function DifficultySlider(props: DifficultySliderProps) {
             typeof props.onChange === "function" &&
             typeof newValue === "number"
           ) {
-            const d = newValue === 0 ? null : newValue;
-            props.onChange(d);
+            // const d = newValue === 0 ? null : newValue;
+            props.onChange(newValue);
           }
         }}
         marks={difficultyMarks}

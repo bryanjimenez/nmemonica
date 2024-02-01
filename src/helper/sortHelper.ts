@@ -183,20 +183,20 @@ export function dateViewOrder(
     index: number;
   }
 
-  interface recallSortable {
-    percentOverdueCalc: number;
-    uid: string;
-    index: number;
-  }
+  // interface recallSortable {
+  //   percentOverdueCalc: number;
+  //   uid: string;
+  //   index: number;
+  // }
 
   let notViewed: number[] = [];
   let prevViewedTemp: lastSeenSortable[] = [];
-  let spaceRepTemp: recallSortable[] = [];
+  // let spaceRepTemp: recallSortable[] = [];
 
   terms.forEach((term, tIdx) => {
     const tUid = term.uid;
     const oMeta = metaRecord[tUid];
-
+    /*
     if (oMeta?.lastReview && oMeta.daysBetweenReviews && oMeta.accuracyP) {
       // a space repetition item
       // won't be sorted by lastView
@@ -215,7 +215,8 @@ export function dateViewOrder(
           index: Number(tIdx),
         },
       ];
-    } else if (oMeta?.lastView !== undefined) {
+    } else */
+    if (oMeta?.lastView !== undefined) {
       // regular non-space-rep items
       prevViewedTemp = [
         ...prevViewedTemp,
@@ -233,12 +234,12 @@ export function dateViewOrder(
   // prettier-ignore
   const prevViewedSort = orderBy(prevViewedTemp, ["lastView", "uid"], ["asc", "asc"]);
   // prettier-ignore
-  const prevSpaceRepSort = orderBy(spaceRepTemp, ["percentOverdueCalc", "uid"], ["desc", "asc"]);
+  // const prevSpaceRepSort = orderBy(spaceRepTemp, ["percentOverdueCalc", "uid"], ["desc", "asc"]);
 
   const prevViewed = prevViewedSort.map((el) => el.index);
-  const prevSpaceRepd = prevSpaceRepSort.map((el) => el.index);
+  // const prevSpaceRepd = prevSpaceRepSort.map((el) => el.index);
 
-  return [...notViewed, ...prevViewed, ...prevSpaceRepd];
+  return [...notViewed, ...prevViewed/*, ...prevSpaceRepd*/];
 }
 
 /**

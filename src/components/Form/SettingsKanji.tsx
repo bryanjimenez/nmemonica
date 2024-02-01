@@ -13,6 +13,8 @@ import {
   getKanji,
   removeFrequencyKanji,
   setSpaRepMaxItemReview,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
   toggleKanjiActiveGrp,
   toggleKanjiActiveTag,
   toggleKanjiFilter,
@@ -41,6 +43,8 @@ export default function SettingsKanji() {
     repetition: kRepetition,
     kanjiTagObj: kanjiTags,
     spaRepMaxReviewItem,
+    includeNew,
+    includeReviewed,
   } = useConnectKanji();
 
   const kanjiFilter = kanjiFilterREF.current;
@@ -143,6 +147,24 @@ export default function SettingsKanji() {
                 dispatch(setSpaRepMaxItemReview(value));
               }}
             />
+          )}
+          {kanjiOrder === TermSortBy.VIEW_DATE && (
+            <>
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={includeNew}
+                  action={buildAction(dispatch, toggleIncludeNew)}
+                  statusText="Staleness +New"
+                />
+              </div>
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={includeReviewed}
+                  action={buildAction(dispatch, toggleIncludeReviewed)}
+                  statusText="Staleness +Reviewed"
+                />
+              </div>
+            </>
           )}
           <div className="mb-2">
             <SettingsSwitch

@@ -8,6 +8,7 @@ import merge from "lodash/fp/merge";
 import {
   TermFilterBy,
   TermSortBy,
+  deleteMetadata,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
@@ -57,6 +58,8 @@ export interface VocabularyInitSlice {
     autoVerbView: boolean;
     verbColSplit: number;
     verbFormsOrder: string[];
+    includeNew: boolean;
+    includeReviewed: boolean;
   };
 }
 export const vocabularyInitState: VocabularyInitSlice = {
@@ -81,6 +84,8 @@ export const vocabularyInitState: VocabularyInitSlice = {
     autoVerbView: false,
     verbColSplit: 0,
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
+    includeNew: true,
+    includeReviewed: true,
   },
 };
 
@@ -104,6 +109,25 @@ export const getVocabulary = createAsyncThunk(
     ).then((res) => res.json())) as Record<string, SourceVocabulary>;
 
     return { value, version };
+  }
+);
+
+export const vocabularyFromLocalStorage = createAsyncThunk(
+  "vocabulary/vocabularyFromLocalStorage",
+  (arg: (typeof vocabularyInitState)["setting"]) => {
+    const initValues = arg;
+
+    return initValues;
+  }
+);
+
+export const deleteMetaVocab = createAsyncThunk(
+  "vocabulary/deleteMetaVocab",
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).vocabulary;
+    const spaceRep = state.setting.repetition;
+
+    return deleteMetadata(uidList, spaceRep);
   }
 );
 
@@ -141,15 +165,6 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
     return updateAction(uid, spaceRep);
-  }
-);
-
-export const vocabularyFromLocalStorage = createAsyncThunk(
-  "vocabulary/vocabularyFromLocalStorage",
-  (arg: (typeof vocabularyInitState)["setting"]) => {
-    const initValues = arg;
-
-    return initValues;
   }
 );
 
@@ -594,6 +609,22 @@ const vocabularySlice = createSlice({
         payload: { uid, value },
       }),
     },
+    toggleIncludeNew(state) {
+      state.setting.includeNew = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "includeNew"
+      );
+    },
+    toggleIncludeReviewed(state) {
+      state.setting.includeReviewed = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "includeReviewed"
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -656,6 +687,19 @@ const vocabularySlice = createSlice({
         );
       }
     });
+
+    builder.addCase(deleteMetaVocab.fulfilled, (state, action) => {
+      const { record: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "repetition",
+        newValue
+      );
+    });
   },
 });
 
@@ -671,6 +715,8 @@ export const {
   toggleVocabularyHint,
   toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
   updateVerbColSplit,
   toggleVocabularyBareKanji,
   flipVocabularyPracticeSide,

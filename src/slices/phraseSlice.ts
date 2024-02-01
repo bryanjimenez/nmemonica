@@ -6,6 +6,7 @@ import {
   DebugLevel,
   TermFilterBy,
   TermSortBy,
+  deleteMetadata,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
@@ -44,6 +45,8 @@ export interface PhraseInitSlice {
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
+    includeNew: boolean;
+    includeReviewed: boolean;
   };
 }
 
@@ -63,6 +66,8 @@ export const phraseInitState: PhraseInitSlice = {
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
+    includeNew: true,
+    includeReviewed: true,
   },
 };
 
@@ -202,6 +207,16 @@ export const phraseFromLocalStorage = createAsyncThunk(
     const initValues = arg;
 
     return initValues;
+  }
+);
+
+export const deleteMetaPhrase = createAsyncThunk(
+  "phrase/deleteMetaPhrase",
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).phrases;
+    const spaceRep = state.setting.repetition;
+
+    return deleteMetadata(uidList, spaceRep);
   }
 );
 
@@ -493,6 +508,22 @@ const phraseSlice = createSlice({
         newOrdered
       );
     },
+    toggleIncludeNew(state) {
+      state.setting.includeNew = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "includeNew"
+      );
+    },
+    toggleIncludeReviewed(state) {
+      state.setting.includeReviewed = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "includeReviewed"
+      );
+    },
   },
 
   extraReducers: (builder) => {
@@ -558,6 +589,19 @@ const phraseSlice = createSlice({
         );
       }
     });
+
+    builder.addCase(deleteMetaPhrase.fulfilled, (state, action) => {
+      const { record: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { phrases: state.setting },
+        "/phrases/",
+        "repetition",
+        newValue
+      );
+    });
   },
 });
 
@@ -567,6 +611,8 @@ export const {
   togglePhrasesFilter,
   togglePhraseActiveGrp,
   togglePhrasesReinforcement,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
   addFrequencyPhrase,
   setPhraseDifficulty,
   setPhraseAccuracy,

@@ -31,10 +31,13 @@ export function useConnectPhrase() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const englishSideUp = useSelector(({ phrases }: RootState) => {
-    const { englishSideUp } = phrases.setting;
-    return englishSideUp;
-  });
+  const [englishSideUp, includeNew, includeReviewed] = useSelector(
+    ({ phrases }: RootState) => {
+      const { englishSideUp, includeNew, includeReviewed } = phrases.setting;
+      return [englishSideUp, includeNew, includeReviewed];
+    },
+    shallowEqual
+  );
 
   const [r, ft, sm, rm, spaRepMaxReviewItem] = useSelector<
     RootState,
@@ -81,6 +84,10 @@ export function useConnectPhrase() {
     activeGroup,
     /** Maximum number of space repetition items to review at once */
     spaRepMaxReviewItem,
+    /** dateViewOrder include new terms */
+    includeNew,
+    /** dateViewOrder include terms previously reviewed */
+    includeReviewed,
 
     // Refs ()
     reinforce,

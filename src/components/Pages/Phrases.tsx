@@ -116,6 +116,8 @@ export default function Phrases() {
     phraseList,
     activeGroup,
     spaRepMaxReviewItem,
+    includeNew,
+    includeReviewed,
 
     // Refs ()
     reinforce: reinforceREF,
@@ -189,7 +191,7 @@ export default function Phrases() {
             ? daysSince(lastReview)
             : undefined;
           const p = getPercentOverdue({
-            accuracy: accuracyP/100,
+            accuracy: accuracyP / 100,
             daysSinceReview,
             daysBetweenReviews,
           });
@@ -210,6 +212,20 @@ export default function Phrases() {
         ]);
 
         break;
+      case TermSortBy.VIEW_DATE:
+        if (!includeNew) {
+          filtered = filtered.filter(
+            (el) => metadata.current[el.uid]?.lastView !== undefined
+          );
+        }
+
+        if (!includeReviewed) {
+          filtered = filtered.filter(
+            (el) => metadata.current[el.uid]?.lastReview === undefined
+          );
+        }
+
+        break;
       default:
         break;
     }
@@ -223,7 +239,15 @@ export default function Phrases() {
     setFrequency(frequency);
 
     return filtered;
-  }, [filterTypeREF, sortMethodREF, dispatch, phraseList, activeGroup]);
+  }, [
+    filterTypeREF,
+    sortMethodREF,
+    dispatch,
+    phraseList,
+    activeGroup,
+    includeNew,
+    includeReviewed,
+  ]);
 
   const { order, recallGame } = useMemo(() => {
     const repetition = metadata.current;
@@ -672,9 +696,7 @@ export default function Phrases() {
                   difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
-                    if (difficulty !== undefined) {
-                      dispatch(setPhraseDifficulty(uid, difficulty));
-                    }
+                    dispatch(setPhraseDifficulty(uid, difficulty));
                   }}
                 />
                 <AccuracySlider

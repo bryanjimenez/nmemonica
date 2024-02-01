@@ -42,6 +42,7 @@ const SettingsOppositeGame = lazy(() => import("../Form/SettingsGOpposite"));
 const SettingsKanaGame = lazy(() => import("../Form/SettingsGKana"));
 const SettingsKanjiGame = lazy(() => import("../Form/SettingsGKanji"));
 const SettingsParticleGame = lazy(() => import("../Form/SettingsGParticle"));
+const SettingsStats = lazy(() => import("../Form/SettingsStats"));
 const SettingsStale = lazy(() => import("../Form/SettingsStale"));
 const SettingsFailedFurigana = lazy(
   () => import("../Form/SettingsFailedFurigana")
@@ -179,6 +180,7 @@ export default function Settings() {
   const [sectionKana, setSectionKana] = useState(false);
   const [sectionKanjiGame, setSectionKanjiGame] = useState(false);
   const [sectionParticle, setSectionParticle] = useState(false);
+  const [sectionStats, setSectionStats] = useState(false);
   const [swVersion, setSwVersion] = useState("");
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
@@ -529,6 +531,22 @@ export default function Settings() {
               }
             >
               <SettingsParticleGame />
+            </Suspense>
+          )}
+        </div>
+
+        <div className={pageClassName}>
+          <div className="d-flex justify-content-between">
+            <h2>Study Stats</h2>
+            {collapseExpandToggler(sectionStats, setSectionStats)}
+          </div>
+          {sectionStats && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="stats-settings" text="Loading..." />
+              }
+            >
+              <SettingsStats />
             </Suspense>
           )}
         </div>

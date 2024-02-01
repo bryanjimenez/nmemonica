@@ -31,19 +31,37 @@ export function useConnectVocabulary() {
     (before, after) => before.repTID === after.repTID
   );
 
-  const [englishSideUp, autoVerbView, verbForm, spaRepMaxReviewItem] =
-    useSelector<RootState, [boolean, boolean, string, number]>(
-      ({ vocabulary }: RootState) => {
-        const { englishSideUp, autoVerbView, spaRepMaxReviewItem } =
-          vocabulary.setting;
+  const [
+    englishSideUp,
+    autoVerbView,
+    verbForm,
+    spaRepMaxReviewItem,
+    includeNew,
+    includeReviewed,
+  ] = useSelector<
+    RootState,
+    [boolean, boolean, string, number, boolean, boolean]
+  >(({ vocabulary }: RootState) => {
+    const {
+      englishSideUp,
+      autoVerbView,
+      spaRepMaxReviewItem,
+      includeNew,
+      includeReviewed,
+    } = vocabulary.setting;
 
-        const { verbForm } = vocabulary;
+    const { verbForm } = vocabulary;
 
-        // TODO: https://github.com/reduxjs/reselect#basic-usage
-        return [englishSideUp, autoVerbView, verbForm, spaRepMaxReviewItem];
-      },
-      shallowEqual
-    );
+    // TODO: https://github.com/reduxjs/reselect#basic-usage
+    return [
+      englishSideUp,
+      autoVerbView,
+      verbForm,
+      spaRepMaxReviewItem,
+      includeNew,
+      includeReviewed,
+    ];
+  }, shallowEqual);
 
   const [mt, r, ft, he, romajiEnabled, bareKanji, verbColSplit, sm] =
     useSelector<
@@ -133,6 +151,10 @@ export function useConnectVocabulary() {
     activeGroup,
     /** Maximum number of space repetition items to review at once */
     spaRepMaxReviewItem,
+    /** dateViewOrder include new terms */
+    includeNew,
+    /** dateViewOrder include terms previously reviewed */
+    includeReviewed,
 
     // Refs ()
     reinforce,

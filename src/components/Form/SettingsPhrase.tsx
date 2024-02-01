@@ -12,6 +12,8 @@ import {
   getPhrase,
   removeFrequencyPhrase,
   setSpaRepMaxItemReview,
+  toggleIncludeNew,
+  toggleIncludeReviewed,
   togglePhraseActiveGrp,
   togglePhrasesFilter,
   togglePhrasesOrdering,
@@ -39,6 +41,8 @@ export default function SettingsPhrase() {
     repetition: phraseRep,
     reinforce: phraseReinforceRef,
     spaRepMaxReviewItem,
+    includeNew,
+    includeReviewed,
   } = useConnectPhrase();
 
   const phraseFilter = phraseFilterRef.current;
@@ -138,6 +142,24 @@ export default function SettingsPhrase() {
                 dispatch(setSpaRepMaxItemReview(value));
               }}
             />
+          )}
+          {phraseOrder === TermSortBy.VIEW_DATE && (
+            <>
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={includeNew}
+                  action={buildAction(dispatch, toggleIncludeNew)}
+                  statusText="Staleness +New"
+                />
+              </div>
+              <div className="mb-2">
+                <SettingsSwitch
+                  active={includeReviewed}
+                  action={buildAction(dispatch, toggleIncludeReviewed)}
+                  statusText="Staleness +Reviewed"
+                />
+              </div>
+            </>
           )}
           <div className="mb-2">
             <SettingsSwitch

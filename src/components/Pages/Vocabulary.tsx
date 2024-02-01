@@ -139,6 +139,8 @@ export default function Vocabulary() {
     hintEnabled: hintEnabledREF,
     sortMethod: sortMethodREF,
     activeGroup,
+    includeNew,
+    includeReviewed,
 
     // modifiable during game
     autoVerbView,
@@ -263,6 +265,20 @@ export default function Vocabulary() {
         ]);
 
         break;
+      case TermSortBy.VIEW_DATE:
+        if (!includeNew) {
+          filtered = filtered.filter(
+            (el) => metadata.current[el.uid]?.lastView !== undefined
+          );
+        }
+
+        if (!includeReviewed) {
+          filtered = filtered.filter(
+            (el) => metadata.current[el.uid]?.lastReview === undefined
+          );
+        }
+
+        break;
     }
 
     const frequency = filtered.reduce<string[]>((acc, cur) => {
@@ -274,7 +290,7 @@ export default function Vocabulary() {
     setFrequency(frequency);
 
     return { filteredVocab: filtered };
-  }, [dispatch, vocabList, activeGroup]);
+  }, [dispatch, vocabList, activeGroup, includeNew, includeReviewed]);
 
   const {
     newOrder: order,
@@ -744,9 +760,7 @@ export default function Vocabulary() {
                   difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
-                    if (difficulty !== undefined) {
-                      dispatch(setWordDifficulty(uid, difficulty));
-                    }
+                    dispatch(setWordDifficulty(uid, difficulty));
                   }}
                 />
                 <AccuracySlider
