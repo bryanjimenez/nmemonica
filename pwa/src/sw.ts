@@ -549,9 +549,7 @@ function fetchEventHandler(e: FetchEvent) {
     case /* data */
     req.headers.has(SWRequestHeader.DATA_VERSION): {
       const version = req.headers.get(SWRequestHeader.DATA_VERSION);
-      const modReq = !url.startsWith(urlDataService) ? req : new Request(url);
-
-      e.respondWith(appDataReq(modReq, version));
+      e.respondWith(appDataReq(req, version));
       break;
     }
 

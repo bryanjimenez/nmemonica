@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { requiredAuth } from "./globalSlice";
 import { dataServiceEndpoint } from "../../environment.development";
 import type { RawOpposite } from "../components/Games/OppositesGame";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
@@ -37,7 +36,7 @@ export const getOpposite = createAsyncThunk(
     // }
     return fetch(dataServiceEndpoint + "/opposites.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
-      ...requiredAuth(url),
+      credentials: "include",
     }).then((res) =>
       res
         .json()

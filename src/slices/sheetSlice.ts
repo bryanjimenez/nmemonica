@@ -149,14 +149,29 @@ export function saveSheetLocalService(
     method: "PUT",
     credentials: "include",
     body: container,
-  }).then((res) => {
-    if (!res.ok) {
-      throw new Error("Faild to save sheet");
-    }
-    return res
-      .json()
-      .then(({ hash }: { hash: string }) => ({ hash, name: activeSheetName }));
-  });
+  })
+    .then((res) => {
+      if (res.status === 307) {
+        // received an httpOnly cookie
+        return fetch(serviceBaseUrl + sheetServicePath, {
+          method: "PUT",
+          credentials: "include",
+          body: container,
+        }).then((res) => {
+          if (!res.ok) {
+            throw new Error("Redirected and failed to save sheet");
+          }
+          return res;
+        });
+      }
+
+      if (!res.ok) {
+        throw new Error("Failed to save sheet");
+      }
+      return res;
+    })
+    .then((res) => res.json())
+    .then(({ hash }: { hash: string }) => ({ hash, name: activeSheetName }));
 }
 
 /**
