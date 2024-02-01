@@ -20,6 +20,7 @@
   },
   "include": [
     ".",
+    "../environment.development.ts",
     "../environment.production.ts",
     "../src/constants/actionNames.ts",
     "../src/helper/urlHelper.ts",

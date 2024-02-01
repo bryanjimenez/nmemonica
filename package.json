@@ -15,7 +15,7 @@
     "b:clean": "rm -rf ./dist/*",
     "b:tag": "ts-node ./pwa/script/indexTagger.ts",
     "b:rspack": "npm run b:clean && rspack build",
-    "b:sw": "ts-node ./pwa/script/swBuilder.ts",
+    "b:sw": "ts-node ./pwa/script/swBuilder.bundle.ts && rspack build -c ./rspack.config.sw.js",
     "prebuild": "npm run b:clean && npm run b:tag",
     "build": "npm run b:rspack",
     "postbuild": "npm run b:sw && rm index.production.html",
