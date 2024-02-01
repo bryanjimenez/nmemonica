@@ -5,7 +5,10 @@ import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
 import { ca } from "@nmemonica/utils/signed-ca";
 import { config } from "@nmemonica/snservice";
+//@ts-expect-error js instead of ts file
 import { appendLicense } from "./license-writer.js";
+//@ts-expect-error js instead of ts file
+import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
 // https://www.rspack.dev/config/devtool.html
 // https://www.rspack.dev/guide/migrate-from-webpack.html
@@ -27,13 +30,15 @@ export default function rspackConfig(
   return {
     entry: {
       main: "./src/index.tsx",
+      sw: "./pwa/src/sw.ts",
     },
     output: {
       filename: "[name].[chunkhash:8].js",
       path: path.resolve(__dirname, "dist"),
     },
 
-    devtool: isProduction ? false : "eval-cheap-module-source-map",
+    // FIXME: process.env.SW_VERSION etc replace breaks because of devtool in dev
+    devtool: false, //isProduction ? false : "eval-cheap-module-source-map",
 
     plugins: [
       // copy static site files to dist
@@ -60,9 +65,11 @@ export default function rspackConfig(
 
       // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
-        "process.env.SERVICE_HOSTNAME": `"${config.service.hostname}"`, // only in env.development
-        "process.env.SERVICE_PORT": String(config.service.port), //        env.dev only
+        "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`, // only in env.development
       }),
+
+      // adds cache files to sw.js
+      serviceWorkerCacheHelperPlugin,
     ],
 
     // solution for
@@ -103,6 +110,7 @@ export default function rspackConfig(
 
     optimization: {
       chunkIds: "deterministic",
+      // minimize:false
     },
 
     devServer: {
