@@ -31,6 +31,7 @@ import {
 } from "../components/Form/ExtSourceInput";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
+import { allowedCookies } from "../helper/cookieHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
@@ -50,6 +51,7 @@ export interface MemoryDataObject {
 }
 
 export interface GlobalInitSlice {
+  cookies: boolean;
   darkMode: boolean;
   memory: MemoryDataObject;
   debug: number;
@@ -61,6 +63,7 @@ export interface GlobalInitSlice {
 }
 
 export const globalInitState: GlobalInitSlice = {
+  cookies: allowedCookies(),
   darkMode: false,
   memory: { quota: 0, usage: 0, persistent: false },
   debug: 0,
@@ -206,9 +209,9 @@ export const setLocalServiceURL = createAsyncThunk(
           throw new Error("Local Service not responding");
         }
 
-        return res.json();
-      })
-      .then((versions: VersionInitSlice) => ({ versions, localServiceURL }));
+      // /init returns no value
+      return { versions: {} as VersionInitSlice, localServiceURL };
+    });
   }
 );
 
@@ -234,6 +237,13 @@ const globalSlice = createSlice({
   name: "setting",
   initialState: globalInitState,
   reducers: {
+    toggleCookies(state, action: PayloadAction<boolean>) {
+      if (action.payload !== undefined) {
+        state.cookies = action.payload;
+      } else {
+        state.cookies = !state.cookies;
+      }
+    },
     toggleDarkMode(state) {
       const path = "/global/";
       const attr = "darkMode";
@@ -420,6 +430,7 @@ const globalSlice = createSlice({
 });
 
 export const {
+  toggleCookies,
   toggleDarkMode,
   setMotionThreshold,
   setSwipeThreshold,

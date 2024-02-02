@@ -28,6 +28,7 @@ import {
   openIDB,
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
+import { allowedCookies } from "../../helper/cookieHelper";
 import {
   addExtraRow,
   getActiveSheet,
@@ -92,6 +93,8 @@ export default function Sheet() {
 
   const { localServiceURL } = useSelector(({ global }: RootState) => global);
   const externalSource = getExternalSourceType(localServiceURL);
+
+  const acceptedCookies = useMemo(allowedCookies, []);
 
   useEffect(() => {
     const gridEl = document.createElement("div");
@@ -374,8 +377,10 @@ export default function Sheet() {
           <div className="pt-1 pe-1">
             <Fab
               aria-label="Save Sheet"
+              aria-disabled={!acceptedCookies}
               variant="extended"
               size="small"
+              disabled={!acceptedCookies}
               onClick={saveSheetCB}
               className="m-0 z-index-unset"
               tabIndex={3}
