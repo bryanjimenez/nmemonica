@@ -32,6 +32,7 @@ import {
 import {
   addExtraRow,
   getActiveSheet,
+  removeLastRowIfBlank,
   searchInSheet,
   touchScreenCheck,
 } from "../../helper/sheetHelper";
@@ -183,12 +184,15 @@ export default function Sheet() {
     // );
     const saveP = saveSheetServiceWorker(wbRef.current);
 
+    const workbook = wbRef.current?.getData() as FilledSheetData[];
+    const trimmed = workbook.map((w) => removeLastRowIfBlank(w));
+
     // store workbook in indexedDB
     // (keep ordering and notes)
     void openIDB().then((db) =>
       putIDBItem(
         { db, store: IDBStores.WORKBOOK },
-        { key: "0", workbook: wbRef.current?.getData() as FilledSheetData[] }
+        { key: "0", workbook: trimmed }
       )
     );
 
