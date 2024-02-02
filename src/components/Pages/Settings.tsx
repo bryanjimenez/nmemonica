@@ -51,7 +51,6 @@ import "../../css/Settings.css";
 import "../../css/spin.css";
 import { PrivacyPolicyMeta } from "../Terms/PrivacyPolicy";
 import { TermsAndConditionsMeta } from "../Terms/TermsAndConditions";
-const SettingsExternalData = lazy(() => import("../Form/SettingsExternalData"));
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
@@ -714,24 +713,6 @@ export default function Settings() {
             </div>
           </div>
         </div>
-        {!navigator.serviceWorker ? (
-          <NotReady
-            addlStyle="stats-settings"
-            text="Service worker not available"
-          />
-        ) : (
-          <div className={pageClassName}>
-            <div className={clickableSectionClass}>
-              <h2>External Data Source</h2>
-              {collapseExpandToggler(
-                sectionExternalData,
-                setSectionExternalData,
-                cookies
-              )}
-            </div>
-            {sectionExternalData && <SettingsExternalData />}
-          </div>
-        )}
       </div>
     </div>
   );

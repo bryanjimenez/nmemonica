@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { requiredAuth } from "./globalSlice";
 import { dataServiceEndpoint } from "../../environment.development";
 import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
 
@@ -29,13 +28,10 @@ const initialState: VersionInitSlice = {
  */
 export const getVersions = createAsyncThunk(
   "version/getVersions",
-  async (_arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
-
-    return fetch(dataServiceEndpoint + "/cache.json", requiredAuth(url)).then(
-      (res) => res.json()
-    );
+  async (_arg, _thunkAPI) => {
+    return fetch(dataServiceEndpoint + "/cache.json", {
+      credentials: "include",
+    }).then((res) => res.json());
   }
 );
 

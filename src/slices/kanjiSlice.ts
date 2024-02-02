@@ -80,7 +80,6 @@ export const getKanji = createAsyncThunk(
   "kanji/getKanji",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
     const version = state.version.kanji ?? "0";
 
     // if (version === "0") {

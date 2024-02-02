@@ -49,10 +49,6 @@ import {
 } from "../../slices/sheetSlice";
 import { setSwVersions, setVersion } from "../../slices/versionSlice";
 import { clearVocabulary } from "../../slices/vocabularySlice";
-import {
-  ExternalSourceType,
-  getExternalSourceType,
-} from "../Form/ExtSourceInput";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -91,10 +87,7 @@ export default function Sheet() {
   const resultIdx = useRef<number | null>(null);
   const searchValue = useRef<string | null>(null);
 
-  const { localServiceURL, cookies } = useSelector(
-    ({ global }: RootState) => global
-  );
-  const externalSource = getExternalSourceType(localServiceURL);
+  const { cookies } = useSelector(({ global }: RootState) => global);
 
   useEffect(() => {
     const gridEl = document.createElement("div");
@@ -173,29 +166,13 @@ export default function Sheet() {
         c?.removeChild(gridEl);
       }
     };
-  }, [dispatch, externalSource]);
+  }, [dispatch]);
 
   const saveSheetCB = useCallback(() => {
-    let saveP;
-    switch (externalSource) {
-      case ExternalSourceType.Unset: {
-        saveP = saveSheetServiceWorker(wbRef.current);
-        break;
-      }
-      case ExternalSourceType.GitHubUserContent:
-        saveP = saveSheetServiceWorker(wbRef.current);
-        break;
-
-      case ExternalSourceType.LocalService: {
-        // backup to local service
-        void saveSheetLocalService(wbRef.current, localServiceURL);
-        // save in cache
-        saveP = saveSheetServiceWorker(wbRef.current);
-        break;
-      }
-      default:
-        throw new Error("Save Sheet unknown source");
-    }
+    // void saveSheetLocalService(wbRef.current, sheetService).catch(
+    //   onUploadErrorCB
+    // );
+    const saveP = saveSheetServiceWorker(wbRef.current);
 
     // store workbook in indexedDB
     // (keep ordering and notes)
@@ -232,7 +209,7 @@ export default function Sheet() {
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
-  }, [dispatch, externalSource, localServiceURL]);
+  }, [dispatch]);
 
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
@@ -294,10 +271,6 @@ export default function Sheet() {
       });
     }
   }, []);
-
-  // const pushSheetCB = useCallback(() => {
-  //   pushSheet(wbRef.current, localServiceURL);
-  // }, [localServiceURL]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;

@@ -180,7 +180,6 @@ export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
     // TODO: rename state.phrases -> state.phrase
     const version = state.version.phrases ?? "0";
 

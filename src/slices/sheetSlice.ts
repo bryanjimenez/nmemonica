@@ -10,7 +10,7 @@ import {
 import type Spreadsheet from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { logger, requiredAuth } from "./globalSlice";
+import { logger } from "./globalSlice";
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { DebugLevel } from "./settingHelper";
@@ -22,14 +22,10 @@ import {
   pushServiceSheetDataUpdatePath,
   sheetServicePath,
 } from "../../environment.development";
-import {
-  ExternalSourceType,
-  getExternalSourceType,
-} from "../components/Form/ExtSourceInput";
 import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
 import { getActiveSheet, removeLastRowIfBlank } from "../helper/sheetHelper";
 
-import { AppDispatch, RootState } from ".";
+import { AppDispatch } from ".";
 
 export interface SheetInitSlice {}
 
@@ -104,35 +100,8 @@ function getCSVDataset(url: string, name: string) {
 export const importDatasets = createAsyncThunk(
   "sheet/importDatasets",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
-    const externalSource = getExternalSourceType(state.global.localServiceURL);
-
-    const baseUrl = state.global.localServiceURL;
-
-    let dataP: Promise<FilledSheetData[]>;
-    switch (externalSource) {
-      case /** github repo */
-      ExternalSourceType.GitHubUserContent:
-        dataP = Promise.all([
-          getCSVDataset(baseUrl + "/", "Phrases.csv"),
-          getCSVDataset(baseUrl + "/", "Vocabulary.csv"),
-          getCSVDataset(baseUrl + "/", "Kanji.csv"),
-        ]);
-        break;
-
-      case /** local service */
-      ExternalSourceType.LocalService:
-        dataP = fetch(baseUrl + sheetServicePath, requiredAuth(url))
-          .then((res) => res.json())
-          .then((data) => data as FilledSheetData[]);
-        break;
-
-      default:
-        // fetch cache.json then ...
-        dataP = getCachedDataset(thunkAPI.dispatch as AppDispatch);
-        break;
-    }
+    // fetch cache.json then ...
+    const dataP = getCachedDataset(thunkAPI.dispatch as AppDispatch);
 
     return dataP;
   }

@@ -30,7 +30,6 @@ export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
     const version = state.version.phrases ?? "0";
 
     // if (version === "0") {

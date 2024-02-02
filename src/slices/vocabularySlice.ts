@@ -103,7 +103,6 @@ export const getVocabulary = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching vocabulary: 0");
     // }
-    const { localServiceURL: url } = state.global;
 
     const value = (await fetch(dataServiceEndpoint + "/vocabulary.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },

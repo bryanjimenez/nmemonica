@@ -12,12 +12,7 @@ import { particleFromLocalStorage } from "./particleSlice";
 import { phraseFromLocalStorage } from "./phraseSlice";
 import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
-import { VersionInitSlice } from "./versionSlice";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
-import {
-  dataServiceEndpoint,
-  dataServicePath,
-} from "../../environment.development";
 import {
   IDBKeys,
   IDBStores,
@@ -25,10 +20,6 @@ import {
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
 import { type ConsoleMessage } from "../components/Form/Console";
-import {
-  ExternalSourceType,
-  getExternalSourceType,
-} from "../components/Form/ExtSourceInput";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
@@ -36,11 +27,7 @@ import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
-import {
-  SWMsgIncoming,
-  SWRequestHeader,
-  UIMsg,
-} from "../helper/serviceWorkerHelper";
+import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
 import type { ValuesOf } from "../typings/utils";
 
 export interface MemoryDataObject {
@@ -58,7 +45,6 @@ export interface GlobalInitSlice {
   console: ConsoleMessage[];
   swipeThreshold: number;
   motionThreshold: number;
-  localServiceURL: string;
   lastImport: string[];
 }
 
@@ -70,7 +56,6 @@ export const globalInitState: GlobalInitSlice = {
   console: [],
   swipeThreshold: 0,
   motionThreshold: 0,
-  localServiceURL: "",
   lastImport: [],
 };
 
@@ -160,69 +145,6 @@ export const localStorageSettingsInitialized = createAsyncThunk(
     }
 
     return mergedGlobalSettings;
-  }
-);
-
-/**
- * Local requests need credentials
- * checks if `url` is local
- * @param url
- */
-export function requiredAuth(url: string) {
-  const srcType = getExternalSourceType(url);
-  const needAuth: RequestInit =
-    srcType === ExternalSourceType.LocalService
-      ? { credentials: "include" }
-      : {
-          /** only needed for local service */
-        };
-
-  return needAuth;
-}
-
-export const setLocalServiceURL = createAsyncThunk(
-  "setting/setLocalServiceURL",
-  async (arg: string) => {
-    const localServiceURL = arg;
-
-    let url: string;
-    const externalSource = getExternalSourceType(localServiceURL);
-    switch (externalSource) {
-      case ExternalSourceType.GitHubUserContent:
-        url = localServiceURL;
-        break;
-
-      case ExternalSourceType.LocalService:
-        url = localServiceURL + dataServicePath;
-        break;
-
-      default:
-        url = dataServiceEndpoint;
-        break;
-    }
-
-    if (externalSource === ExternalSourceType.GitHubUserContent) {
-      // verify is available
-      // is not cached
-      return fetch(url + "/Vocabulary.csv").then((res) => {
-        if (!res.ok) {
-          throw new Error("Could not verify repo");
-        }
-        return { versions: {} as VersionInitSlice, localServiceURL: url };
-      });
-    }
-
-    return fetch(url + "/cache.json", {
-      headers: SWRequestHeader.CACHE_NO_WRITE,
-      ...requiredAuth(localServiceURL),
-    }).then((res) => {
-      if (!res.ok) {
-        throw new Error("Local Service not responding");
-      }
-
-      // /init returns no value
-      return { versions: {} as VersionInitSlice, localServiceURL };
-    });
   }
 );
 
@@ -412,31 +334,6 @@ const globalSlice = createSlice({
 
       state.memory = { quota, usage, persistent };
     });
-    builder.addCase(setLocalServiceURL.rejected, (state) => {
-      const path = "/global/";
-      const attr = "localServiceURL";
-      const time = new Date();
-      state.localServiceURL = localStoreAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        ""
-      );
-    }),
-      builder.addCase(setLocalServiceURL.fulfilled, (state, action) => {
-        const overrideUrl = action.payload.localServiceURL;
-        const path = "/global/";
-        const attr = "localServiceURL";
-        const time = new Date();
-        state.localServiceURL = localStoreAttrUpdate(
-          time,
-          { global: state },
-          path,
-          attr,
-          overrideUrl
-        );
-      });
   },
 });
 

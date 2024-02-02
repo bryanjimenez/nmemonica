@@ -1,15 +1,9 @@
 import { UnmuteIcon } from "@primer/octicons-react";
 import PropTypes from "prop-types";
-import { useSelector } from "react-redux";
 
-import { ExternalSourceType, getExternalSourceType } from "./ExtSourceInput";
-import {
-  audioServicePath,
-  pronounceEndoint,
-} from "../../../environment.development";
+import { pronounceEndoint } from "../../../environment.development";
 import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import { addParam } from "../../helper/urlHelper";
-import { RootState } from "../../slices";
 import { fetchAudio } from "../../slices/audioHelper";
 
 interface AudioItemProps {
@@ -21,10 +15,6 @@ interface AudioItemProps {
 
 export default function AudioItem(props: AudioItemProps) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
-
-  const localServiceURL = useSelector(
-    ({ global }: RootState) => global.localServiceURL
-  );
 
   let tStart: number;
 
@@ -48,12 +38,7 @@ export default function AudioItem(props: AudioItemProps) {
         ? {}
         : { headers: SWRequestHeader.CACHE_RELOAD };
 
-    const audioUrl =
-      getExternalSourceType(localServiceURL) === ExternalSourceType.LocalService
-        ? localServiceURL + audioServicePath
-        : pronounceEndoint;
-
-    const url = addParam(audioUrl, touchPlayParam);
+    const url = addParam(pronounceEndoint, touchPlayParam);
     void fetchAudio(new Request(url, override));
   };
 
