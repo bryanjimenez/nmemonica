@@ -44,7 +44,6 @@ import { clearParticleGame } from "../../slices/particleSlice";
 import { clearPhrases } from "../../slices/phraseSlice";
 import {
   getDatasets,
-  saveSheetLocalService,
   saveSheetServiceWorker,
 } from "../../slices/sheetSlice";
 import { setSwVersions, setVersion } from "../../slices/versionSlice";
@@ -88,6 +87,8 @@ export default function Sheet() {
   const searchValue = useRef<string | null>(null);
 
   const { cookies } = useSelector(({ global }: RootState) => global);
+
+  const [uploadError, setUploadError] = useState<boolean>(false);
 
   useEffect(() => {
     const gridEl = document.createElement("div");
@@ -167,6 +168,14 @@ export default function Sheet() {
       }
     };
   }, [dispatch]);
+
+  const onUploadErrorCB = useCallback((err: Error) => {
+    setUploadError(true);
+
+    setTimeout(() => {
+      setUploadError(false);
+    }, 2000);
+  }, []);
 
   const saveSheetCB = useCallback(() => {
     // void saveSheetLocalService(wbRef.current, sheetService).catch(
@@ -357,6 +366,7 @@ export default function Sheet() {
               onClick={saveSheetCB}
               className="m-0 z-index-unset"
               tabIndex={3}
+              color={uploadError ? "error" : undefined}
             >
               <ShareIcon size="small" />
             </Fab>
