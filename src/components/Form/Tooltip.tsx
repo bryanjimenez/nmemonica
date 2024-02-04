@@ -17,6 +17,7 @@ import "../../css/Tooltip.css";
 import { useWindowSize } from "../../hooks/useWindowSize";
 
 interface TooltipProps {
+  disabled?: boolean;
   idKey: string;
   className?: string;
   notification?: string;
@@ -107,7 +108,7 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
             clickable: true,
             ...(props.className ? { [props.className]: true } : {}),
           })}
-          onClick={onTooltipToggleCB}
+          onClick={props.disabled !== true ? onTooltipToggleCB : undefined}
         >
           <FontAwesomeIcon icon={faBullseye} />
         </div>

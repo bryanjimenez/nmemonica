@@ -27,6 +27,7 @@ interface MinimunRawItem {
 }
 
 interface ToggleFuriganaBtnProps {
+  disabled?: boolean;
   visible?: boolean;
   active: boolean;
   toggle: boolean;
@@ -35,16 +36,21 @@ interface ToggleFuriganaBtnProps {
 }
 
 export function ToggleFuriganaBtn(props: ToggleFuriganaBtnProps) {
-  const { active, toggle, toggleFurigana, vocabulary } = props;
+  const { disabled, visible, active, toggle, toggleFurigana, vocabulary } =
+    props;
 
-  return props.visible === false ? null : (
+  return visible === false ? null : (
     <div
       className={classNames({
         clickable: active,
         "sm-icon-grp": true,
         "sm-kanji": active,
       })}
-      onClick={active ? () => toggleFurigana(vocabulary.uid) : undefined}
+      onClick={
+        active && disabled !== true
+          ? () => toggleFurigana(vocabulary.uid)
+          : undefined
+      }
       aria-label="Toggle furigana"
     >
       {active ? (
@@ -71,6 +77,7 @@ ToggleFuriganaBtn.propTypes = {
 };
 
 interface ToggleFrequencyTermBtnProps {
+  disabled?: boolean;
   visible?: boolean;
   term: MinimunRawItem;
   /** Count of reinforced terms */
@@ -88,6 +95,7 @@ interface ToggleFrequencyTermBtnProps {
 }
 
 export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
+  const { disabled, visible } = props;
   const prevCount = useRef(0);
 
   const {
@@ -111,17 +119,21 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
     }
   }, [count, fade, forceRender]);
 
-  return props.visible === false ? null : (
+  return visible === false ? null : (
     <div
       aria-label={hasReinforce ? "Remove term" : "Add term"}
       className="sm-icon-grp clickable"
-      onClick={() => {
-        if (hasReinforce) {
-          removeFrequencyTerm(term.uid);
-        } else {
-          addFrequencyTerm(term.uid);
-        }
-      }}
+      onClick={
+        disabled !== true
+          ? () => {
+              if (hasReinforce) {
+                removeFrequencyTerm(term.uid);
+              } else {
+                addFrequencyTerm(term.uid);
+              }
+            }
+          : undefined
+      }
     >
       {hasReinforce ? (
         <XCircleIcon size="small" />
@@ -160,13 +172,14 @@ ToggleFrequencyTermBtn.propTypes = {
 export const ToggleFrequencyTermBtnMemo = memo(ToggleFrequencyTermBtn);
 
 interface ShowHintBtnProps {
+  disabled?: boolean;
   visible?: boolean;
   active: boolean;
   setShowHint: (showHintValue: boolean) => void;
 }
 
 export function ShowHintBtn(props: ShowHintBtnProps) {
-  const { active, setShowHint } = props;
+  const { disabled, active, setShowHint } = props;
 
   return !props.visible ? null : (
     <div
@@ -176,7 +189,7 @@ export function ShowHintBtn(props: ShowHintBtnProps) {
         "disabled disabled-color": !active,
       })}
       onClick={
-        active
+        active && !disabled
           ? () => {
               setShowHint(true);
               setTimeout(() => {
@@ -199,6 +212,7 @@ ShowHintBtn.propTypes = {
 };
 
 interface ToggleAutoVerbViewBtnProps {
+  disabled?: boolean;
   visible?: boolean;
   active?: boolean;
   toggleAutoVerbView: () => void;
@@ -206,12 +220,12 @@ interface ToggleAutoVerbViewBtnProps {
 }
 
 export function ToggleAutoVerbViewBtn(props: ToggleAutoVerbViewBtnProps) {
-  const { toggleAutoVerbView, autoVerbView } = props;
+  const { disabled, visible, toggleAutoVerbView, autoVerbView } = props;
 
-  return !props.visible ? null : (
+  return !visible ? null : (
     <div
       className="sm-icon-grp clickable"
-      onClick={() => toggleAutoVerbView()}
+      onClick={disabled !== true ? () => toggleAutoVerbView() : undefined}
       aria-label="Toggle auto verb view"
     >
       <FontAwesomeIcon icon={!autoVerbView ? faRunning : faBan} />
@@ -230,13 +244,14 @@ ToggleAutoVerbViewBtn.propTypes = {
 };
 
 interface ReCacheAudioBtnProps {
+  disabled?: boolean;
   visible?: boolean;
   active?: boolean;
   action: () => void;
 }
 
 export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
-  const { active, action } = props;
+  const { disabled, active, action } = props;
 
   return props.visible === false ? null : (
     <div
@@ -245,11 +260,15 @@ export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
         "sm-icon-grp": true,
         "disabled-color": active,
       })}
-      onClick={() => {
-        if (typeof action === "function") {
-          action();
-        }
-      }}
+      onClick={
+        disabled !== true
+          ? () => {
+              if (typeof action === "function") {
+                action();
+              }
+            }
+          : undefined
+      }
       aria-label="Override audio"
     >
       <FontAwesomeIcon icon={faRecycle} />
@@ -264,6 +283,7 @@ ReCacheAudioBtn.propTypes = {
 };
 
 interface TogglePracticeSideBtnProps {
+  disabled?: boolean;
   visible?: boolean;
   active?: boolean;
   action?: React.MouseEventHandler;
@@ -271,13 +291,13 @@ interface TogglePracticeSideBtnProps {
 }
 
 export function TogglePracticeSideBtn(props: TogglePracticeSideBtnProps) {
-  const { action, toggle } = props;
+  const { disabled, visible, action, toggle } = props;
 
-  return props.visible === false ? null : (
+  return visible === false ? null : (
     <div aria-label="Toggle practice side">
       <FontAwesomeIcon
         className="clickable"
-        onClick={action}
+        onClick={disabled !== true ? action : undefined}
         icon={toggle ? faGlasses : faPencilAlt}
       />
       <span className="notification">
@@ -295,6 +315,7 @@ TogglePracticeSideBtn.propTypes = {
 };
 
 interface ToggleLiteralPhraseBtnProps {
+  disabled?: boolean;
   visible: boolean;
   active?: boolean;
   action: () => void;
@@ -302,20 +323,24 @@ interface ToggleLiteralPhraseBtnProps {
 }
 
 export function ToggleLiteralPhraseBtn(props: ToggleLiteralPhraseBtnProps) {
-  const { action, toggle } = props;
+  const { disabled, visible, action, toggle } = props;
 
-  return !props.visible ? null : (
+  return !visible ? null : (
     <div
       className={classNames({
         clickable: true,
         "sm-icon-grp": true,
         "info-color": toggle,
       })}
-      onClick={() => {
-        if (typeof action === "function") {
-          action();
-        }
-      }}
+      onClick={
+        disabled !== true
+          ? () => {
+              if (typeof action === "function") {
+                action();
+              }
+            }
+          : undefined
+      }
       aria-label="Literal english translation"
     >
       <ProjectIcon size="small" />

@@ -12,7 +12,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
@@ -42,7 +42,7 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import type { AppDispatch } from "../../slices";
+import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyKanji,
@@ -78,6 +78,7 @@ const KanjiMeta = {
 
 export default function Kanji() {
   const dispatch = useDispatch<AppDispatch>();
+  const { cookies } = useSelector(({ global }: RootState) => global);
 
   const addFrequencyTerm = useCallback(
     (uid: string) => {
@@ -715,7 +716,12 @@ export default function Kanji() {
           </StackNavButton>
         </div>
       </div>
-      <div className="options-bar mb-3 flex-shrink-1">
+      <div
+        className={classNames({
+          "options-bar mb-3 flex-shrink-1": true,
+          "disabled-color": !cookies,
+        })}
+      >
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start"></div>
@@ -729,6 +735,7 @@ export default function Kanji() {
                     !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
+                disabled={!cookies}
                 idKey={uid}
                 notification={revNotification}
               >
@@ -754,6 +761,7 @@ export default function Kanji() {
                 </div>
               </Tooltip>
               <ToggleFrequencyTermBtnMemo
+                disabled={!cookies}
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
                 hasReinforce={term_reinforce}
