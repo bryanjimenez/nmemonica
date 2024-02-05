@@ -24,12 +24,14 @@ interface VocabularyMainProps {
   vocabulary: RawVocabulary;
   showHint: boolean;
   reCache: boolean;
+  /** was audio played? */
+  wasPlayed: boolean;
 }
 
 export default function VocabularyMain(props: VocabularyMainProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { vocabulary, reCache, showHint } = props;
+  const { vocabulary, reCache, showHint, wasPlayed } = props;
 
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
   const [showRomaji, setShowRomaji] = useState<boolean>(false);
@@ -54,16 +56,33 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     [dispatch, vocabulary.uid]
   );
 
-  const furiganaToggable = useMemo(
-    () =>
-      toggleFuriganaSettingHelper(
-        vocabulary.uid,
-        repetition,
-        englishSideUp,
-        toggleFuriganaCB
-      ),
-    [toggleFuriganaCB, vocabulary.uid, repetition, englishSideUp]
-  );
+  /** English showing, menu showBareKanji enabled, this terms furigana disabled */
+  const showBareKanji =
+    englishSideUp &&
+    showBareKanjiSetting &&
+    repetition[vocabulary.uid]?.f === false;
+
+  const furiganaToggable = useMemo(() => {
+    // show furigana
+    const revealFurigana =
+      (!englishSideUp || showBareKanji) && wasPlayed
+        ? { [vocabulary.uid]: { ...repetition[vocabulary.uid], f: true } }
+        : undefined;
+
+    return toggleFuriganaSettingHelper(
+      vocabulary.uid,
+      revealFurigana ?? repetition,
+      englishSideUp,
+      toggleFuriganaCB
+    );
+  }, [
+    toggleFuriganaCB,
+    vocabulary.uid,
+    repetition,
+    englishSideUp,
+    showBareKanji,
+    wasPlayed,
+  ]);
 
   let jLabel = <span>{"[Japanese]"}</span>;
   let eLabel = <span>{"[English]"}</span>;
@@ -94,12 +113,6 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     eLabel,
     jLabel
   );
-
-  /** English showing, menu showBareKanji enabled, this terms furigana disabled */
-  const showBareKanji =
-    englishSideUp &&
-    showBareKanjiSetting &&
-    repetition[vocabulary.uid]?.f === false;
 
   const audioWords = useMemo(() => {
     let sayObj = vocabulary;

@@ -69,11 +69,11 @@ export class JapaneseText {
       if (this.hasFurigana()) {
         this._parseObj = furiganaParseRetry(
           this.getPronunciation(),
-          this.getSpelling()
+          this.getSpellingRAW()
         );
       } else {
         this._parseObj = {
-          okuriganas: [this.getSpelling()],
+          okuriganas: [this.getSpellingRAW()],
           startsWKana: true,
           kanjis: [],
           furiganas: [],
@@ -89,13 +89,26 @@ export class JapaneseText {
   }
 
   /**
+   * may contain workaround space
    * @returns {string} spelling may contain kanji
    */
-  getSpelling() {
+  getSpellingRAW() {
     if (this._kanji) {
       return this._kanji;
     } else {
       return this._furigana;
+    }
+  }
+
+  /**
+   * removes workaround space
+   * @returns {string} spelling may contain kanji
+   */
+  getSpelling() {
+    if (this._kanji) {
+      return this._kanji.replaceAll(" ", "");
+    } else {
+      return this._furigana.replaceAll(" ", "");
     }
   }
 
@@ -165,7 +178,7 @@ export class JapaneseText {
 
     if (this.hasFurigana()) {
       const pronunciation = this.getPronunciation();
-      const orthography = this.getSpelling();
+      const orthography = this.getSpellingRAW();
 
       if (pronunciation.length < minimumMora) {
         hint = false;
@@ -213,7 +226,7 @@ export class JapaneseText {
     } else {
       if (this.hasFurigana()) {
         const pronunciation = this.getPronunciation();
-        const orthography = this.getSpelling();
+        const orthography = this.getSpellingRAW();
 
         const { kanjis, furiganas, okuriganas, startsWKana } =
           furiganaParseRetry(pronunciation, orthography);
@@ -265,7 +278,7 @@ export class JapaneseText {
         const mask = getParseObjectMask(this.parseObj);
 
         const clickableCss =
-          classNames({ clickable: !!furiganaToggle }) || undefined;
+          classNames({ clickable: Boolean(furiganaToggle) }) || undefined;
         const toggleHandler = furiganaToggle
           ? (furiganaToggle as React.MouseEventHandler)
           : undefined;
@@ -358,8 +371,8 @@ export function furiganaParseRetry(
     ));
   } catch (e) {
     // don't retry unless parse error
-    if(e instanceof Error){
-      const cause = e.cause as {code: string};
+    if (e instanceof Error) {
+      const cause = e.cause as { code: string };
 
       if (cause?.code === "ParseError") {
         // reverse try
@@ -405,13 +418,13 @@ export function isNumericCounter(
   const char = orthography.charAt(pos);
 
   return (
-    Number.isInteger(toEnglishNumber(char)) || // is Japanese arabic number char
-    (Number.isInteger(Number.parseInt(char)) && // is a number
-      !pronunciation.includes(char) && // the number has furigana
-      !isKanji(char) &&
-      !isHiragana(char) &&
-      !isKatakana(char) &&
-      pos < orthography.length - 1) // cannot be the last character
+    (Number.isInteger(toEnglishNumber(char)) || // is Japanese arabic number char
+      Number.isInteger(Number.parseInt(char))) && // is a number
+    !pronunciation.includes(char) && // the number has furigana
+    !isKanji(char) &&
+    !isHiragana(char) &&
+    !isKatakana(char) &&
+    pos < orthography.length - 1 // cannot be the last character
   );
 }
 /**
@@ -460,7 +473,7 @@ export function furiganaParse(
     ) {
       //kana
       if (prevWasKanji) {
-        while (pronunciation.charAt(start) != thisChar) {
+        while (pronunciation.charAt(start) !== thisChar) {
           if (pronunciation.charAt(start) !== " ") {
             fword += pronunciation.charAt(start);
           }

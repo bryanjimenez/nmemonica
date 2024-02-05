@@ -266,7 +266,7 @@ ReCacheAudioBtn.propTypes = {
 interface TogglePracticeSideBtnProps {
   visible?: boolean;
   active?: boolean;
-  action: React.MouseEventHandler;
+  action?: React.MouseEventHandler;
   toggle: boolean;
 }
 

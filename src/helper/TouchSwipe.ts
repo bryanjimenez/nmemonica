@@ -73,13 +73,14 @@ export function swipeStart(
     verticalSwiping: false,
     touchThreshold: 5,
   }
-) {
+): Spec {
   (e.target as HTMLElement).tagName === "IMG" && safePreventDefault(e);
 
   return {
     verticalSwiping,
     touchThreshold,
     touchObject: {
+      swipeLength: 0,
       startX: "touches" in e ? e.touches[0].pageX : e.clientX,
       startY: "touches" in e ? e.touches[0].pageY : e.clientY,
       curX: "touches" in e ? e.touches[0].pageX : e.clientX,

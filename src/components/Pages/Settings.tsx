@@ -30,7 +30,6 @@ import {
 import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { DebugLevel } from "../../slices/settingHelper";
 import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
-import type { ConsoleMessage } from "../Form/Console";
 import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
@@ -43,10 +42,6 @@ const SettingsKanaGame = lazy(() => import("../Form/SettingsGKana"));
 const SettingsKanjiGame = lazy(() => import("../Form/SettingsGKanji"));
 const SettingsParticleGame = lazy(() => import("../Form/SettingsGParticle"));
 const SettingsStats = lazy(() => import("../Form/SettingsStats"));
-const SettingsStale = lazy(() => import("../Form/SettingsStale"));
-const SettingsFailedFurigana = lazy(
-  () => import("../Form/SettingsFailedFurigana")
-);
 
 const SettingsMeta = {
   location: "/settings/",
@@ -185,7 +180,7 @@ export default function Settings() {
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
   const [hardRefreshUnavailable, setHardRefreshUnavailable] = useState(false);
-  const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
+  // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [shakeIntensity, setShakeIntensity] = useState<number | undefined>(0);
 
   useEffect(
@@ -655,12 +650,6 @@ export default function Settings() {
               </div>
             </div>
           </div>
-          <Suspense fallback={<NotReady addlStyle="failed-spacerep-view" />}>
-            <SettingsStale />
-          </Suspense>
-          <Suspense fallback={<NotReady addlStyle="failed-furigana-view" />}>
-            <SettingsFailedFurigana />
-          </Suspense>
         </div>
       </div>
     </div>

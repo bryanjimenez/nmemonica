@@ -274,7 +274,7 @@ export default [
     },
     rules: {
       ...prettierPlugin.configs.recommended.rules,
-      "prettier/prettier": ["error"],
+      "prettier/prettier": ["warn", { trailingComma: "es5" }],
 
       // "jsdoc/require-description": "error",
       // "jsdoc/check-values": "error"
@@ -289,17 +289,11 @@ export default [
         parse: (text, info) => {
           // When file is Json send it to prettier for formatting
 
-          // const [text, info] = arg
           // console.log(JSON.stringify(info))
 
-          const pretty = prettier.format(text, { filepath: info.filePath });
-
-          const stream = fs.createWriteStream(info.filePath, {
-            flags: "w",
-          });
-
-          stream.write(pretty);
-          stream.end();
+          prettier
+            .format(text, { filepath: info.filePath })
+            .then((pretty) => fs.createWriteStream(info.filePath).end(pretty));
 
           throw new Error(
             "Sent to Prettier -> *." + info.filePath.split(".")[1]

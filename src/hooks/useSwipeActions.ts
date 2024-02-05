@@ -29,8 +29,7 @@ export function useSwipeActions(
     ({ global }: RootState) => global.swipeThreshold
   );
 
-  // FIXME: swiping can be null?
-  const swiping = useRef<Spec | Record<string, never>>({});
+  const swiping = useRef<Spec>({});
 
   /** HTMLElement ref */
   const HTMLDivElementSwipeRef = useRef<HTMLDivElement | null>(null);
@@ -76,7 +75,7 @@ export function useSwipeActions(
  */
 function buildStartMove(
   swipeThreshold: number,
-  swiping: React.MutableRefObject<Spec | Record<string, never>>
+  swiping: React.MutableRefObject<Spec>
 ) {
   return function startMove(e: TouchEvent) {
     swiping.current = swipeStart(e, {
@@ -105,9 +104,9 @@ function buildInMove(swiping: React.MutableRefObject<Spec>) {
  */
 function buildEndMove(
   swiping: React.MutableRefObject<Spec>,
-  swipeEnd: (e: Event, spec: Spec) => void,
+  swipeEnd: (e: TouchEvent, spec: Spec) => void,
   gameActionHandler: GameActionHandler,
-  timedPlayAnswerHandlerWrapper: (
+  timedPlayAnswerHandlerWrapper?: (
     direction: string,
     handler: GameActionHandler
   ) => GameActionHandler

@@ -6,6 +6,7 @@ import partition from "lodash/partition";
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -33,6 +34,7 @@ import {
   toggleFuriganaSettingHelper,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
+import { verbToTargetForm } from "../../helper/JapaneseVerb";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import {
   getPercentOverdue,
@@ -90,7 +92,6 @@ import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import type { BareIdx } from "../Form/VocabularyOrderSlider";
-import { verbToTargetForm } from "../../helper/JapaneseVerb";
 
 const VocabularyMeta = {
   location: "/vocabulary/",
@@ -121,6 +122,8 @@ export default function Vocabulary() {
 
   const [recacheAudio, setRecacheAudio] = useState(false);
   const naFlip = useRef();
+
+  const [wasPlayed, setWasPlayed] = useState(false);
 
   const [scrollJOrder, setScrollJOrder] = useState(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
@@ -495,7 +498,8 @@ export default function Vocabulary() {
     order,
     filteredVocab,
     recacheAudio,
-    naFlip
+    naFlip,
+    setWasPlayed
   );
 
   const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -531,7 +535,7 @@ export default function Vocabulary() {
 
   useMediaSession("Vocabulary Loop", loop, beginLoop, abortLoop, looperSwipe);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prevState = {
       selectedIndex: prevSelectedIndex.current,
       reinforcedUID: prevReinforcedUID.current,
@@ -628,6 +632,8 @@ export default function Vocabulary() {
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
       accuracyModifiedRef.current = undefined;
+
+      setWasPlayed(false);
     }
   }, [
     dispatch,
@@ -687,6 +693,7 @@ export default function Vocabulary() {
               vocabulary={vocabulary}
               reCache={recacheAudio}
               showHint={showHint === uid}
+              wasPlayed={wasPlayed}
             />
           )}
 
@@ -703,6 +710,7 @@ export default function Vocabulary() {
       autoVerbView,
       recacheAudio,
       showHint,
+      wasPlayed,
     ]
   );
 
@@ -1027,7 +1035,8 @@ function buildGameActionsHandler(
   order: number[],
   filteredVocab: RawVocabulary[],
   recacheAudio: boolean,
-  naFlip: React.MutableRefObject<string | undefined>
+  naFlip: React.MutableRefObject<string | undefined>,
+  setWasPlayed: (value: boolean) => void
 ) {
   return function gameActionHandler(
     direction: string,
@@ -1053,6 +1062,8 @@ function buildGameActionsHandler(
       const vocabulary = getTerm(uid, vocab);
 
       const override = recacheAudio ? "/override_cache" : "";
+
+      setWasPlayed(true);
 
       if (direction === "up") {
         setMediaSessionPlaybackState("playing");

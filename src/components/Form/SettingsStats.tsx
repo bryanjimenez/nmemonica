@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { Suspense, lazy, useMemo } from "react";
 
+import { NotReady } from "./NotReady";
 import {
   getDifficultyCounts,
   getLastViewCounts,
@@ -9,6 +10,11 @@ import {
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+
+const SettingsStale = lazy(() => import("../Form/SettingsStale"));
+const SettingsFailedFurigana = lazy(
+  () => import("../Form/SettingsFailedFurigana")
+);
 
 export default function SettingsStats() {
   const { repetition: phraseRep } = useConnectPhrase();
@@ -208,7 +214,7 @@ export default function SettingsStats() {
         </div>
         <div className="column-2 setting-block"></div>
       </div>
-      <div className="d-flex flex-column flex-sm-row justify-content-between">
+      <div className="d-flex flex-column flex-sm-row justify-content-between mb-2">
         <div className="column-1 text-end">
           <table className="w-50">
             <thead>
@@ -249,6 +255,16 @@ export default function SettingsStats() {
           </table>
         </div>
         <div className="column-2 setting-block"></div>
+      </div>
+
+      <div>
+        <Suspense fallback={<NotReady addlStyle="failed-spacerep-view" />}>
+          <SettingsStale />
+        </Suspense>
+
+        <Suspense fallback={<NotReady addlStyle="failed-furigana-view" />}>
+          <SettingsFailedFurigana />
+        </Suspense>
       </div>
     </div>
   );

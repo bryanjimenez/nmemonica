@@ -1,14 +1,28 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
+import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
 import { JapaneseText, furiganaParseRetry } from "../../helper/JapaneseText";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { type AppDispatch } from "../../slices";
+import { getPhrase } from "../../slices/phraseSlice";
+import { getVocabulary } from "../../slices/vocabularySlice";
 import type { RawVocabulary } from "../../typings/raw";
 
 export default function SettingsFailedFurigana() {
+  const dispatch = useDispatch<AppDispatch>();
   const { vocabList: vocabulary } = useConnectVocabulary();
   const { phraseList: phrases } = useConnectPhrase();
+
+  useEffect(() => {
+    if (vocabulary.length === 0) {
+      void dispatch(getVocabulary());
+    }
+    if (phrases.length === 0) {
+      void dispatch(getPhrase());
+    }
+  }, []);
 
   const failedFurigana = useMemo(
     () => failedFuriganaList([...phrases, ...vocabulary]),
@@ -38,7 +52,7 @@ function failedFuriganaList(terms: RawVocabulary[]) {
     const t = JapaneseText.parse(text);
     if (t.hasFurigana()) {
       try {
-        furiganaParseRetry(t.getPronunciation(), t.getSpelling());
+        furiganaParseRetry(t.getPronunciation(), t.getSpellingRAW());
       } catch (e) {
         if (e instanceof Error && "cause" in e) {
           const errData = e.cause as { code: string; info: unknown };
