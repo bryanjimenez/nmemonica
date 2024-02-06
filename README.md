@@ -28,6 +28,47 @@ Editing your datasets on a desktop and viewing the app on a mobile device. See [
 1. `npm run start`
 1. Open a browser to https://localhost:8080
 
+## Getting Started
+### Navigation
+Navigating through the games and pages in the application is done from the hamburger menu {% octicon "three-bars" %} located at the top right of the app. Once the menu is open different areas of the app can be reached by clicking the corresponding icon. Some areas are grouped together under one icon. The items under a group can be accessed by clicking on the caption under the group's icon. For example under the Kanji icon the caption will either display "Kanji" or "Kanji Game".
+
+### Settings Page
+> Application and user settings will be found here.  
+URL: [/#/settings](https://bryanjimenez.github.io/nmemonica/#/settings)  
+
+### Kana Game
+URL: [/#/kana](https://bryanjimenez.github.io/nmemonica/#/kana)  
+This game will display a character (kana) or the corresponding pronunciation and the goal is to correctly choose. There are varying levels of difficulty (more choices) options to play depending on the configuration in the settings page (under Kana Game).
+
+### Opposites Game
+URL: [/#/opposites](https://bryanjimenez.github.io/nmemonica/#/opposites)  
+This is a multiple choice game. A term is displayed and several options given. The goal is to choose the opposite term from the options.
+
+### Vocabulary
+URL: [/#/vocabulary](https://bryanjimenez.github.io/nmemonica/#/vocabulary)  
+This page will display a list of pairs of vocabulary words (English + Japanese) as if seen on a deck of cards. The order and filtering of the list can be configured from the settings page (under Vocabulary). In touch screen devices swiping horizontally will move through out the deck and vertically will play the pronunciation of the word.
+
+### Phrases
+URL: [/#/phrases](https://bryanjimenez.github.io/nmemonica/#/phrases)  
+This page is nearly identical to the vocabulary page with the exception that it will display phrases.
+
+### Particles Game
+URL: [/#/particles](https://bryanjimenez.github.io/nmemonica/#/particles)  
+This game is another multiple choice game. The goal of the game is to choose the correct particle that makes the phrase grammatically correct.
+
+### Kanji
+URL: [/#/kanji](https://bryanjimenez.github.io/nmemonica/#/kanji)  
+This page is similar to the vocabulary and phrases. The list of Kanji each has (if available) a kunyomi and onyomi reading, the symbol's meaning and example usage.
+
+### Edit
+URL: [/#/sheet](https://bryanjimenez.github.io/nmemonica/#/sheet)  
+> Note: To add a line break inside a cell use `\n` or multiple consecutive spaces.
+
+> Note: Datasets **won't** be saved **until** the save button {% octicon "share" %} is pressed.
+
+This page contains the phrases, vocabulary and kanji datasets. The user can edit these to include the desired items to study. Datasets can be saved {% octicon "share" %}, downloaded {% octicon "desktop-download" %} as CSV files and searched {% octicon "search" %} using the corresponding buttons. 
+
+For details on the dataset structure see the [datasets](https://github.com/bryanjimenez/nmemonica-snservice?tab=readme-ov-file#datasets) section of snservice.
 
 ## Thanks
  - http://www.japaneseverbconjugator.com/
