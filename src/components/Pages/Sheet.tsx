@@ -140,6 +140,13 @@ export default function Sheet() {
 
         grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
+        // replace typed '\n' with newline inside cell
+        grid.on("cell-edited-done", (text, ri, ci) => {
+          if (text.includes("\\n")) {
+            grid.cellText(ri, ci, text.replace("\\n", "\n")).reRender();
+          }
+        });
+
         // TODO:
         // grid.setMaxCols(0, sheet1Cols);
         // grid.setMaxCols(1, sheet2Cols);
