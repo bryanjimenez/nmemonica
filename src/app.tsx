@@ -44,7 +44,7 @@ const Settings = lazy(() => import("./components/Pages/Settings"));
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { darkMode } = useSelector(({ global }: RootState) => global);
+  const { darkMode, cookies } = useSelector(({ global }: RootState) => global);
 
   const muiDarkTheme = useMemo(() => {
     return createTheme({
@@ -70,23 +70,41 @@ export default function App() {
       // }
     };
 
-    void dispatch(getVersions());
-    void dispatch(localStorageSettingsInitialized());
+    if (cookies) {
+      void dispatch(localStorageSettingsInitialized());
 
-    swMessageSubscribe(swMessageHandler);
+      swMessageSubscribe(swMessageHandler);
 
-    void dispatch(serviceWorkerRegistered()).catch((e: Error) => {
-      dispatch(logger(e.message, DebugLevel.ERROR));
+      void dispatch(serviceWorkerRegistered())
+        .then(() => {
+          // wait for old->new service worker change
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            void navigator.serviceWorker.ready.then(() => {
+              // get cached versions
+              void dispatch(getVersions());
+            });
+          });
+        })
+        .catch((e: Error) => {
+          dispatch(logger(e.message, DebugLevel.ERROR));
+          // eslint-disable-next-line no-console
+          console.log("service worker not running");
+          // eslint-disable-next-line no-console
+          console.log(e.message);
+
+          // get uncached versions
+          void dispatch(getVersions());
+        });
+    } else {
       // eslint-disable-next-line no-console
-      console.log("service worker not running");
-      // eslint-disable-next-line no-console
-      console.log(e.message);
-    });
-
+      console.log("cookies are disabled");
+    }
     return () => {
-      swMessageUnsubscribe(swMessageHandler);
+      if (cookies) {
+        swMessageUnsubscribe(swMessageHandler);
+      }
     };
-  }, [dispatch]);
+  }, [dispatch, cookies]);
 
   const pClass = classNames({
     "d-flex flex-column": true,
