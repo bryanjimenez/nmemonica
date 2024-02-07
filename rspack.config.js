@@ -30,15 +30,23 @@ export default function rspackConfig(
   return {
     entry: {
       main: "./src/index.tsx",
-      sw: "./pwa/src/sw.ts",
+      ...(isProduction
+        ? {
+            sw: {
+              filename: "sw.js",
+              import: "./pwa/src/sw.ts",
+            },
+          }
+        : {
+            /** see rspack.config.sw.js */
+          }),
     },
     output: {
       filename: "[name].[chunkhash:8].js",
       path: path.resolve(__dirname, "dist"),
     },
 
-    // FIXME: process.env.SW_VERSION etc replace breaks because of devtool in dev
-    devtool: false, //isProduction ? false : "eval-cheap-module-source-map",
+    devtool: isProduction ? false : "eval-cheap-module-source-map",
 
     plugins: [
       // copy static site files to dist
@@ -69,7 +77,11 @@ export default function rspackConfig(
       }),
 
       // adds cache files to sw.js
-      serviceWorkerCacheHelperPlugin,
+      ...(isProduction
+        ? [serviceWorkerCacheHelperPlugin]
+        : [
+            /** is ran from rspack.config.sw.js */
+          ]),
     ],
 
     // solution for
@@ -110,7 +122,6 @@ export default function rspackConfig(
 
     optimization: {
       chunkIds: "deterministic",
-      // minimize:false
     },
 
     devServer: {

@@ -21,7 +21,6 @@ import {
   uiEndpoint,
 } from "../../environment.development";
 
-
 /**
  * FIXME: workaround to prevent ReferenceError: process is not defined (in dev)
  * @see [serviceWorkerCacheHelperPlugin](../plugin/swPlugin.js)
@@ -683,7 +682,7 @@ function appVersionReq(url: string) {
 
     // return whaterver is fastest
     return Promise.any([f, c]).catch((errs: Error[]) =>
-      Promise.reject(errs[0].message)
+      Promise.reject(errs[0])
     );
   });
 }

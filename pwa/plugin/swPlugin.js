@@ -1,15 +1,14 @@
 //@ts-check
-import /* type */ {Compiler, Compilation} from "@rspack/core";
+import { /* type */ Compiler, Compilation } from "@rspack/core";
 import md5 from "md5";
 
 // https://webpack.js.org/contribute/writing-a-plugin/
 
-
 /**
- * Inject asset names into service worker source  
- * (for caching)  
+ * Inject asset names into service worker source
+ * (for caching)
  * at build time
- * 
+ *
  * @param {Compiler} compiler
  */
 export function serviceWorkerCacheHelperPlugin(compiler) {
@@ -17,22 +16,24 @@ export function serviceWorkerCacheHelperPlugin(compiler) {
   compiler.hooks.thisCompilation.tap(
     pluginName,
     (/** @type {Compilation} */ compilation) => {
+      const RawSource = compiler.webpack.sources.RawSource;
       compilation.hooks.processAssets.tapPromise(
         {
           name: pluginName,
         },
         async () => {
-          const isSW = new RegExp(/sw.[a-z0-9]+.js/);
+          // const isSW = new RegExp(/sw.[a-z0-9]+.js/);
+          const isSW = new RegExp(/sw.js/);
           const isMain = new RegExp(/main.[a-z0-9]+.js/);
           const assets = compilation.getAssets();
           const main = assets.find((a) => isMain.test(a.name));
           const sw = assets.find((a) => isSW.test(a.name));
 
-          if(!main){
-            throw new Error("Missing main.js")
+          if (!main) {
+            throw new Error("Missing main.js");
           }
-          if(!sw || !sw.source){
-            throw new Error("Missing sw.js")
+          if (!sw || !sw.source) {
+            throw new Error("Missing sw.js");
           }
 
           const source = sw.source.source().toString();
@@ -53,11 +54,12 @@ export function serviceWorkerCacheHelperPlugin(compiler) {
             );
           });
 
-          const [_sw, swVersion, _swExt] = sw?.name.split(".");
+          // const [_sw, swVersion, _swExt] = sw?.name.split(".");
+          const swVersion = md5(source).slice(0, 8);
           const [_main, mainVersion, _mainExt] = main?.name.split(".");
           const bundleVersion = md5(filesToCache.toString()).slice(0, 8);
 
-          const mod = source
+          const srcWCacheFiles = source
             .replace(
               "process.env.SW_CACHE_FILES",
               `${JSON.stringify(filesToCache)}`
@@ -66,14 +68,18 @@ export function serviceWorkerCacheHelperPlugin(compiler) {
             .replace("process.env.SW_MAIN_VERSION", `"${mainVersion}"`)
             .replace("process.env.SW_BUNDLE_VERSION", `"${bundleVersion}"`);
 
-          if (
-            !main?.name.endsWith(".hot-update.js") &&
-            !sw?.name.endsWith(".hot-update.js")
-          ) {
-            compilation.emitAsset(
-              "sw.js",
-              new compiler.webpack.sources.RawSource(mod)
-            );
+          compilation.updateAsset("sw.js", new RawSource(srcWCacheFiles), { ...sw.info });
+
+          const isDevelopment = process.env.NODE_ENV === "development";
+
+          if (isDevelopment) {
+            // in Dev swPlugin runs as a separate process from the build
+            // only sw.js is needed as an asset
+            assetNames.forEach((a) => {
+              if (!isSW.test(a)) {
+                compilation.deleteAsset(a);
+              }
+            });
           }
         }
       );
