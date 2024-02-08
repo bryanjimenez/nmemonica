@@ -4,7 +4,6 @@ import {
   Radio,
   RadioGroup,
 } from "@mui/material";
-import { InfoIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
@@ -17,24 +16,92 @@ import {
 } from "../../helper/cookieHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { toggleCookies } from "../../slices/globalSlice";
-import { CookiePolicyMeta } from "../Pages/CookiePolicy";
+import { CookiePolicyMeta } from "../Terms/CookiePolicy";
 
-export default function SettingsCookies() {
+export function CookieOptions() {
   const dispatch = useDispatch();
   const { cookies: usingCookies } = useConnectSetting();
+
   const [clicked, setClicked] = useState(false);
 
   return (
+    <FormControl>
+      <RadioGroup aria-labelledby="Cookie consent response">
+        <FormControlLabel
+          className="m-0"
+          value="Accept Cookies"
+          control={
+            <Radio
+              checked={usingCookies}
+              onChange={() => {
+                dispatch(toggleCookies(true));
+                setCookie(cookieAcceptance, new Date().toJSON());
+              }}
+            />
+          }
+          label={
+            <span>
+              <span>Accept</span>
+              <span className={classNames({ invisible: !usingCookies })}>
+                ed
+              </span>
+            </span>
+          }
+        />
+        <FormControlLabel
+          className="m-0"
+          value="Reject Cookies"
+          control={
+            <Radio
+              checked={!usingCookies && clicked}
+              onChange={() => {
+                dispatch(toggleCookies(false));
+                deleteCookie(cookieAcceptance);
+                setClicked(true);
+              }}
+            />
+          }
+          label={
+            <span>
+              <span>Reject</span>
+              <span
+                className={classNames({ invisible: usingCookies || !clicked })}
+              >
+                ed
+              </span>
+            </span>
+          }
+        />
+      </RadioGroup>
+    </FormControl>
+  );
+}
+
+export default function SettingsCookies() {
+  const { cookies: usingCookies } = useConnectSetting();
+
+  return (
     <div className="outer">
-      <div className="d-flex flex-column flex-sm-row justify-content-between">
-        <div className="column-2">
-          <InfoIcon size="large" />
-        </div>
-        <div className="column-1 mb-2 me-sm-2 w-50">
-          <div className="mt-2 mb-2">
+      <h3 className="mt-3 mb-1">Cookies</h3>
+
+      <div className="text-end">
+        <p>
+          Read our <Link to={CookiePolicyMeta.location}>Cookie Policy</Link>.
+        </p>
+      </div>
+
+      <div className="d-flex flex-row justify-content-between">
+        <div className="column-1 mb-2 me-sm-2">
+          <div className="ps-2 mt-2 mb-2">
             <p>
-              {"We use cookies." +
-                (!usingCookies ? " But you've opted out." : "")}
+              <span>We use cookies.</span>
+            </p>
+            <p
+              className={classNames({
+                invisible: usingCookies,
+              })}
+            >
+              But you&apos;ve opted out.
             </p>
             <p
               className={classNames({
@@ -42,48 +109,14 @@ export default function SettingsCookies() {
                 "disabled-color": !usingCookies,
               })}
             >
-              Only basic functionality enabled.
-            </p>
-            <p>
-              Read our <Link to={CookiePolicyMeta.location}>Cookie Policy</Link>
-              .
+              <strong>Only basic functionality enabled.</strong>
             </p>
           </div>
         </div>
 
-        <div className="column-3">
-          <div className="d-flex flex-column">
-            <FormControl>
-              <RadioGroup aria-labelledby="Cookie consent response">
-                <FormControlLabel
-                  value="Accept Cookies"
-                  control={
-                    <Radio
-                      checked={usingCookies}
-                      onChange={() => {
-                        dispatch(toggleCookies(true));
-                        setCookie(cookieAcceptance, new Date().toJSON());
-                      }}
-                    />
-                  }
-                  label="Accept"
-                />
-                <FormControlLabel
-                  value="Reject Cookies"
-                  control={
-                    <Radio
-                      checked={!usingCookies && clicked}
-                      onChange={() => {
-                        dispatch(toggleCookies(false));
-                        deleteCookie(cookieAcceptance);
-                        setClicked(true);
-                      }}
-                    />
-                  }
-                  label="Reject"
-                />
-              </RadioGroup>
-            </FormControl>
+        <div className="column-2">
+          <div className="ps-2 d-flex flex-column align-items-end">
+            <CookieOptions />
           </div>
         </div>
       </div>

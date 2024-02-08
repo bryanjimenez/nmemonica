@@ -1,9 +1,9 @@
 import { arrow, offset, shift, useFloating } from "@floating-ui/react-dom";
 import { Box, ClickAwayListener } from "@mui/material";
-import { InfoIcon, XIcon } from "@primer/octicons-react";
+import { XIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import {
-  PropsWithChildren,
+  type PropsWithChildren,
   useCallback,
   useEffect,
   useRef,
@@ -12,23 +12,27 @@ import {
 
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import "../../css/Cookie.css";
+import "../../css/Notice.css";
 
-interface CookieProps {
+interface NoticeProps {
   disabled?: boolean;
   className?: string;
+  label?: string;
+  icon?: React.JSX.Element;
   notification?: string;
-  /** Optional timeout to close tooltip after a value change */
+  /** Timeout to close tooltip after a value change */
   timeout?: number;
+  /** Initially render visible */
+  initShown?: boolean;
 }
 
 const READY = -1;
 
-export function Cookie(props: PropsWithChildren<CookieProps>) {
-  const { children, timeout } = props;
+export function Notice(props: PropsWithChildren<NoticeProps>) {
+  const { children, timeout, initShown } = props;
   const w = useWindowSize();
 
-  const [showSlider, setShowSlider] = useState(false);
+  const [showNotice, setShowNotice] = useState(() => props.initShown === true);
   const arrowRef = useRef(null);
   const hiding = useRef<NodeJS.Timeout | typeof READY | undefined>();
   const fadeTimeout = useRef(timeout);
@@ -56,29 +60,39 @@ export function Cookie(props: PropsWithChildren<CookieProps>) {
     if (fadeTimeout.current !== undefined) {
       if (hiding.current === READY) {
         hiding.current = setTimeout(() => {
-          setShowSlider(false);
+          setShowNotice(false);
           hiding.current = undefined;
         }, fadeTimeout.current);
       } else if (hiding.current !== undefined) {
         clearTimeout(hiding.current);
         hiding.current = setTimeout(() => {
-          setShowSlider(false);
+          setShowNotice(false);
+          hiding.current = undefined;
+        }, fadeTimeout.current);
+      } else if (
+        hiding.current === undefined &&
+        initShown === false &&
+        showNotice
+      ) {
+        // initially displayed then rerendered
+        hiding.current = setTimeout(() => {
+          setShowNotice(false);
           hiding.current = undefined;
         }, fadeTimeout.current);
       }
     }
-  }, [update, w.height, w.width, children]);
+  }, [update, w.height, w.width, children, initShown, showNotice]);
 
   const onCloseCB = useCallback(() => {
-    setShowSlider(false);
+    setShowNotice(false);
     if (hiding.current !== undefined) {
       clearTimeout(hiding.current);
       hiding.current = undefined;
     }
   }, []);
 
-  const onTooltipToggleCB = useCallback(() => {
-    setShowSlider((s) => !s);
+  const onNoticeToggleCB = useCallback(() => {
+    setShowNotice((s) => !s);
     hiding.current = READY;
   }, []);
 
@@ -89,16 +103,16 @@ export function Cookie(props: PropsWithChildren<CookieProps>) {
         className={classNames({
           "sm-icon-grp": true,
         })}
-        aria-label="Cookie Policy Information"
+        aria-label={props.label}
       >
         <div
           className={classNames({
             "position-absolute pt-2 clickable": true,
             ...(props.className ? { [props.className]: true } : {}),
           })}
-          onClick={props.disabled !== true ? onTooltipToggleCB : undefined}
+          onClick={props.disabled !== true ? onNoticeToggleCB : undefined}
         >
-          <InfoIcon size="medium" />
+          {props.icon}
         </div>
         {props.notification && (
           <span className="notification">{props.notification}</span>
@@ -106,11 +120,11 @@ export function Cookie(props: PropsWithChildren<CookieProps>) {
       </div>
       <ClickAwayListener
         onClickAway={onCloseCB}
-        mouseEvent={showSlider ? "onMouseUp" : false}
-        touchEvent={showSlider ? "onTouchEnd" : false}
+        mouseEvent={showNotice ? "onMouseUp" : false}
+        touchEvent={showNotice ? "onTouchEnd" : false}
       >
         <Box
-          id="cookie"
+          id="notice"
           ref={refs.setFloating}
           style={{
             position: strategy,
@@ -119,8 +133,8 @@ export function Cookie(props: PropsWithChildren<CookieProps>) {
             width: "false",
           }}
           className={classNames({
-            invisible: !showSlider,
-            "cookie-fade": !showSlider,
+            invisible: !showNotice,
+            "notice-fade": !showNotice,
             [TouchSwipeIgnoreCss]: true,
             "d-flex mx-2": true,
             ...(props.className ? { [props.className]: true } : {}),

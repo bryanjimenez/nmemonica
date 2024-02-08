@@ -1,4 +1,4 @@
-.dark-mode #cookie {
+.dark-mode #notice {
   background: #424242;
   /* border: unset; */
 }
@@ -7,10 +7,10 @@
   border: unset;
 }
 
-#cookie {
+#notice {
   background: #f5f5f5;
   border-radius: 8px;
-  padding: 20px 0;
+  /* padding: 20px 0; */
   z-index: 1;
 
   /* border: 1px solid var(--bs-dark); */
@@ -23,15 +23,15 @@
     opacity 0.3s ease-in-out;
 }
 
-#cookie :first-child {
+#notice :first-child {
   z-index: 1; /** show slider shadow above #arrow */
 }
 
-.cookie-fade {
+.notice-fade {
   opacity: 0;
 }
 
-#cookie #arrow {
+#notice #arrow {
   background: inherit;
   transform: rotate(45deg);
 }

@@ -1,4 +1,9 @@
-import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
+import {
+  InfoIcon,
+  PlusCircleIcon,
+  SyncIcon,
+  XCircleIcon,
+} from "@primer/octicons-react";
 import classNames from "classnames";
 import React, {
   Suspense,
@@ -9,6 +14,7 @@ import React, {
   useState,
 } from "react";
 import { useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 
 import { allowedCookies } from "../../helper/cookieHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
@@ -43,6 +49,7 @@ import SettingsCookies from "../Form/SettingsCookies";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
+import { PrivacyPolicyMeta } from "../Terms/PrivacyPolicy";
 const SettingsExternalData = lazy(() => import("../Form/SettingsExternalData"));
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
@@ -165,7 +172,7 @@ export default function Settings() {
 
   const [spin, setSpin] = useState(false);
 
-  const [sectionCookies, setSectionCookies] = useState(false);
+  const [sectionTerms, setSectionTerms] = useState(false);
 
   const [sectionKanji, setSectionKanji] = useState(false);
   const [sectionVocabulary, setSectionVocabulary] = useState(false);
@@ -286,22 +293,37 @@ export default function Settings() {
   });
 
   const important = !useMemo(allowedCookies, []);
-  const cookieSection = (
-    <div className={pageClassName}>
+  const theTerms = (
+    <div className={classNames({ "mb-5": !important, "mb-2": important })}>
       <div className="d-flex justify-content-between">
-        <h2>Cookies</h2>
+        <h2>
+          <InfoIcon size={20} className="pb-2" />
+          Terms
+        </h2>
         {!important &&
-          cookies &&
-          collapseExpandToggler(sectionCookies, setSectionCookies, true)}
+          collapseExpandToggler(sectionTerms, setSectionTerms, true)}
       </div>
-      {(important || sectionCookies) && <SettingsCookies />}
+
+      {(important || sectionTerms) && (
+        <div>
+          <h3 className="mt-3 mb-1">Privacy Policy</h3>
+          <div className="text-end">
+            <p>
+              Read our{" "}
+              <Link to={PrivacyPolicyMeta.location}>Privacy Policy</Link>.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {(important || sectionTerms) && <SettingsCookies />}
     </div>
   );
 
   return (
     <div className="settings">
       <div className="d-flex flex-column justify-content-between px-3">
-        {important && cookieSection}
+        {important && theTerms}
         <div className={pageClassName}>
           <div className={clickableSectionClass}>
             <h2>Global</h2>
@@ -564,7 +586,7 @@ export default function Settings() {
           )}
         </div>
 
-        {!important && cookieSection}
+        {!important && theTerms}
 
         <div className={pageClassName}>
           <div className={clickableSectionClass}>
