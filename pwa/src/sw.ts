@@ -350,7 +350,7 @@ function messageEventHandler(event: ExtendableMessageEvent) {
     isMsgHardRefresh(message) &&
     message.type === SWMsgOutgoing.SW_REFRESH_HARD
   ) {
-    fetch(urlDataService + dataVerPath /** no credentials (net check) */)
+    fetch(urlAppUI + "/robots.txt" /** no credentials (net check) */)
       .then((res) => {
         if (res.status < 400) {
           return caches.delete(appStaticCache).then(() => {
