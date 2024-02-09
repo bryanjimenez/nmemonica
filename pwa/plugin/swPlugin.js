@@ -1,6 +1,7 @@
 //@ts-check
 import { /* type */ Compiler, Compilation } from "@rspack/core";
 import md5 from "md5";
+import chalk from "chalk";
 
 // https://webpack.js.org/contribute/writing-a-plugin/
 
@@ -68,7 +69,9 @@ export function serviceWorkerCacheHelperPlugin(compiler) {
             .replace("process.env.SW_MAIN_VERSION", `"${mainVersion}"`)
             .replace("process.env.SW_BUNDLE_VERSION", `"${bundleVersion}"`);
 
-          compilation.updateAsset("sw.js", new RawSource(srcWCacheFiles), { ...sw.info });
+          compilation.updateAsset("sw.js", new RawSource(srcWCacheFiles), {
+            ...sw.info,
+          });
 
           const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -81,6 +84,16 @@ export function serviceWorkerCacheHelperPlugin(compiler) {
               }
             });
           }
+
+          console.log(
+            chalk.green(
+              JSON.stringify({
+                swVersion,
+                jsVersion: mainVersion,
+                bundleVersion,
+              })
+            )
+          );
         }
       );
     }
