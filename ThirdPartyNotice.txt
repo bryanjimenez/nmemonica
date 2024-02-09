@@ -765,7 +765,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@nmemonica/snservice v0.0.1 - Bryan Jimenez
+@nmemonica/snservice v0.0.2 - Bryan Jimenez
 git+https://github.com/bryanjimenez/nmemonica-snservice.git
 --------------------------------------------------------------------------------
 
