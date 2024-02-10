@@ -7,6 +7,9 @@ const CookiePolicyMeta = {
   label: "CookiePolicy",
 };
 
+const headerCss = "py-2 pt-4";
+const topicCss = "py-2 pt-4"
+
 export default function CookiePolicy() {
   return (
     <React.Fragment>
@@ -15,21 +18,21 @@ export default function CookiePolicy() {
           <div className="pt-3">
             <h1>Cookie Policy</h1>
 
-            <h2 className="py-2">What are cookies?</h2>
-            <p>
+            <h2 className={headerCss}>What are cookies?</h2>
+            <p className="m-0 ps-2">
               A cookie (and cookie technologies for example: browser cookies,
               local storage, and IndexedDB storage) is a file that is stored on
               your device that contains information which identifies you to a
               website. Websites use cookies to personalize your web experience
               based on your preferences and also for personalized ads.
             </p>
-            <h2 className="py-2">How do we use cookies?</h2>
-            <p>
+            <h2 className={headerCss}>How do we use cookies?</h2>
+            <p className="m-0 ps-2">
               This application does not collect personal information, analyze
               user browsing behavior, display targeted ads, nor does it share
               any of your data with third parties.
             </p>
-            <p>This application uses cookie technologies to:</p>
+            <p className="m-0 ps-2">This application uses cookie technologies to:</p>
             <ul>
               <li>Identify you as a user.</li>
               <li>Store user app data (language datasets).</li>
@@ -38,13 +41,13 @@ export default function CookiePolicy() {
                 Enable offline app use by utilizing stored data and media.
               </li>
             </ul>
-            <h2 className="py-2">Opting out of cookies</h2>
-            <p>
+            <h2 className={headerCss}>Opting out of cookies</h2>
+            <p className="m-0 ps-2">
               Please note that blocking cookies will impact the functionality of
               the application and only minimal features will remain.
             </p>
-            <p>Instructions on deleting cookies for commonly used browsers:</p>
-            <p>
+            <p className="m-0 ps-2">Instructions on deleting cookies for commonly used browsers:</p>
+            <p className="m-0 ps-2">
               <a
                 href="https://support.google.com/chrome/answer/95647?hl=en"
                 target="_blank"
@@ -53,7 +56,7 @@ export default function CookiePolicy() {
                 Chrome
               </a>
             </p>
-            <p>
+            <p className="m-0 ps-2">
               <a
                 href="https://support.mozilla.org/en-US/kb/delete-cookies-remove-info-websites-stored"
                 target="_blank"
@@ -62,7 +65,7 @@ export default function CookiePolicy() {
                 Firefox
               </a>
             </p>
-            <p>
+            <p className="m-0 ps-2">
               <a
                 href="https://support.microsoft.com/en-us/help/17442/windows-internet-explorer-delete-manage-cookies"
                 target="_blank"
@@ -72,11 +75,11 @@ export default function CookiePolicy() {
               </a>
             </p>
 
-            <h2 className="py-2">Cookie usage</h2>
+            <h2 className={headerCss}>Cookie usage</h2>
 
-            <h3 className="py-2">Technical Cookies</h3>
+            <h3 className={topicCss}>Technical Cookies</h3>
 
-            <div className="pb-5">
+            <div className="pb-3">
               <table className="border">
                 <thead className="border">
                   <tr>
@@ -100,16 +103,16 @@ export default function CookiePolicy() {
               </table>
             </div>
 
-            <h3 className="py-2">Local storage</h3>
-            <p>
+            <h3 className={topicCss}>Local storage</h3>
+            <p className="m-0 ps-2">
               Local storage is used to store the user&apos;s app settings. This
               is nearly permanent storage that enables app functionality when
               offline.
             </p>
 
-            <h3 className="py-2">IndexedDB</h3>
-            <p>
-              IndexedDB is used to store the user&apos;s app data set. This is
+            <h3 className={topicCss}>IndexedDB</h3>
+            <p className="m-0 ps-2">
+              IndexedDB is used to store the user&apos;s app dataset. This is
               nearly permanent storage that enables app functionality when
               offline.
             </p>
