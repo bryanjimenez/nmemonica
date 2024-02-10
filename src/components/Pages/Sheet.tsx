@@ -143,7 +143,9 @@ export default function Sheet() {
         // replace typed '\n' with newline inside cell
         grid.on("cell-edited-done", (text, ri, ci) => {
           if (text.includes("\\n")) {
-            grid.cellText(ri, ci, text.replace("\\n", "\n")).reRender();
+            // grid.cellText(ri, ci, text.replace("\\n", "\n")).reRender();
+            grid.sheet.data.setSelectedCellText(text.replace("\\n", "\n"), 'finished');
+            grid.sheet.table.render();
           }
         });
 
