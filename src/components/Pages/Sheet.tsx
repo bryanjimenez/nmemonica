@@ -2,6 +2,7 @@ import EventEmitter from "events";
 
 import { Badge, Fab, TextField } from "@mui/material";
 import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
+import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
 import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import Spreadsheet from "@nmemonica/x-spreadsheet";
 import {
@@ -128,6 +129,17 @@ export default function Sheet() {
         }
 
         return dispatch(getDatasets()).unwrap();
+      })
+      .catch((err) => {
+        if (err.message === "Failed to fetch") {
+          return [
+            jtox({/** no data just headers */}, "Phrases"),
+            jtox({/** no data just headers */}, "Vocabulary"),
+            jtox({/** no data just headers */}, "Kanji"),
+          ];
+        }
+
+        throw err;
       })
       .then((obj) => {
         const data = addExtraRow(obj);
