@@ -605,7 +605,7 @@ export default function Settings() {
 
         <div className={pageClassName}>
           <div className={clickableSectionClass}>
-            <h2>Application</h2>
+            <h2>About Nmemonica</h2>
           </div>
           <div className="d-flex flex-column flex-sm-row justify-content-between">
             <div className="column-1">
