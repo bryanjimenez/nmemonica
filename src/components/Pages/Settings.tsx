@@ -50,6 +50,7 @@ import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
 import { PrivacyPolicyMeta } from "../Terms/PrivacyPolicy";
+import { TermsAndConditionsMeta } from "../Terms/TermsAndConditions";
 const SettingsExternalData = lazy(() => import("../Form/SettingsExternalData"));
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
@@ -298,11 +299,26 @@ export default function Settings() {
       <div className="d-flex justify-content-between">
         <h2>
           <InfoIcon size={20} className="pb-2" />
-          Terms
+          Guidelines
         </h2>
         {!important &&
           collapseExpandToggler(sectionTerms, setSectionTerms, true)}
       </div>
+
+      {(important || sectionTerms) && (
+        <div>
+          <h3 className="mt-3 mb-1">Terms and Conditions</h3>
+          <div className="text-end">
+            <p>
+              Read our{" "}
+              <Link to={TermsAndConditionsMeta.location}>
+                Terms and Conditions
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      )}
 
       {(important || sectionTerms) && (
         <div>
