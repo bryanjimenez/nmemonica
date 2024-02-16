@@ -32,7 +32,7 @@ export function useConnectKanji() {
     r,
     ft,
     or,
-    memoThreshold,
+    difficultyThreshold,
     choiceN,
     fadeInAnswers,
     spaRepMaxReviewItem,
@@ -56,7 +56,7 @@ export function useConnectKanji() {
       reinforce,
       filter,
       ordered,
-      memoThreshold,
+      difficultyThreshold,
       choiceN,
       fadeInAnswers,
       spaRepMaxReviewItem,
@@ -68,7 +68,7 @@ export function useConnectKanji() {
       reinforce,
       filter,
       ordered,
-      memoThreshold,
+      difficultyThreshold,
       choiceN,
       fadeInAnswers,
       spaRepMaxReviewItem,
@@ -100,7 +100,8 @@ export function useConnectKanji() {
 
     // Not changing during game
     swipeThreshold,
-    memoThreshold,
+    /** Threshold to filter terms difficulty */
+    difficultyThreshold,
     kanjiList,
     /** All available kanji tags */
     kanjiTagObj,

@@ -49,7 +49,7 @@ export interface VocabularyInitSlice {
     bareKanji: boolean;
     hintEnabled: boolean;
     filter: ValuesOf<typeof TermFilterBy>;
-    memoThreshold: number;
+    difficultyThreshold: number;
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
@@ -75,7 +75,7 @@ export const vocabularyInitState: VocabularyInitSlice = {
     bareKanji: false,
     hintEnabled: false,
     filter: 0,
-    memoThreshold: MEMORIZED_THRLD,
+    difficultyThreshold: MEMORIZED_THRLD,
     reinforce: false,
     repTID: -1,
     repetition: {},
@@ -409,17 +409,14 @@ const vocabularySlice = createSlice({
       }
     },
 
-    /**
-     * Filter vocabulary excluding terms with value above
-     */
     setMemorizedThreshold(state, action: { payload: number }) {
       const threshold = action.payload;
 
-      state.setting.memoThreshold = localStoreAttrUpdate(
+      state.setting.difficultyThreshold = localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
-        "memoThreshold",
+        "difficultyThreshold",
         threshold
       );
     },

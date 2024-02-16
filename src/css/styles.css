@@ -175,6 +175,10 @@ a {
   font-size: 2.5rem;
 }
 
+.fs-x-small {
+  font-size: 0.75rem;
+}
+
 .fs-xx-small {
   font-size: xx-small;
 }

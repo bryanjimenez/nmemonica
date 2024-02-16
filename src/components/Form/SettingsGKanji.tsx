@@ -1,7 +1,6 @@
 import { useDispatch } from "react-redux";
 
 import ChoiceNumberSlider from "./ChoiceNumberSlider";
-import { DifficultySubFilter } from "./DifficultySubFilter";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
@@ -9,7 +8,6 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch } from "../../slices";
 import {
   setKanjiBtnN,
-  setKanjiMemorizedThreshold,
   toggleKanjiFadeInAnswers,
   toggleKanjiOrdering,
 } from "../../slices/kanjiSlice";
@@ -23,8 +21,6 @@ export default function SettingsKanjiGame() {
     fadeInAnswers: kanjiFadeInAnswers,
     choiceN: kanjiChoiceN,
   } = useConnectKanji();
-
-  const { memoThreshold } = useConnectKanji();
 
   const el = (
     <div className="outer">
@@ -43,13 +39,6 @@ export default function SettingsKanjiGame() {
               initial={kanjiOrder.current}
               onChange={buildAction(dispatch, toggleKanjiOrdering)}
             />
-
-            {kanjiOrder.current === TermSortBy.DIFFICULTY && (
-              <DifficultySubFilter
-                memoThreshold={memoThreshold}
-                setThreshold={buildAction(dispatch, setKanjiMemorizedThreshold)}
-              />
-            )}
           </div>
           <div className="d-flex justify-content-end p-2 text-end">
             <ChoiceNumberSlider

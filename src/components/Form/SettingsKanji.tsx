@@ -4,6 +4,7 @@ import { NotReady } from "./NotReady";
 import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
+import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
@@ -12,6 +13,7 @@ import type { AppDispatch } from "../../slices";
 import {
   getKanji,
   removeFrequencyKanji,
+  setMemorizedThreshold,
   setSpaRepMaxItemReview,
   toggleIncludeNew,
   toggleIncludeReviewed,
@@ -37,6 +39,7 @@ export default function SettingsKanji() {
   const {
     filterType: kanjiFilterREF,
     orderType: kanjiOrderREF,
+    difficultyThreshold,
     reinforce: kanjiReinforce,
     activeTags: kanjiActive,
     kanjiList: kanji,
@@ -148,6 +151,12 @@ export default function SettingsKanji() {
               }}
             />
           )}
+          <div className="d-flex justify-content-end">
+            <ThresholdFilterSlider
+              threshold={difficultyThreshold}
+              setThreshold={buildAction(dispatch, setMemorizedThreshold)}
+            />
+          </div>
           {kanjiOrder === TermSortBy.VIEW_DATE && (
             <>
               <div className="mb-2">

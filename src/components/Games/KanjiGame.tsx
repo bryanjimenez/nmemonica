@@ -169,16 +169,14 @@ export default function KanjiGame() {
     activeTags,
     repetition,
     fadeInAnswers,
-    memoThreshold,
+    difficultyThreshold,
 
-    filterType: filterTypeRef,
+    filterType: filterTypeREF,
     orderType: orderTypeREF,
-    reinforce: reinforceRef,
+    reinforce: reinforceREF,
   } = useConnectKanji();
 
-  const memoThresholdRef = useRef(memoThreshold);
-  memoThresholdRef.current = memoThreshold;
-
+  const difficultyThresholdREF = useRef(difficultyThreshold);
   const { vocabList } = useConnectVocabulary();
 
   const metadata = useRef(repetition);
@@ -214,14 +212,14 @@ export default function KanjiGame() {
     );
 
     let filtered = termFilterByType(
-      filterTypeRef.current,
+      filterTypeREF.current,
       kanjiList,
       allFrequency,
-      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
+      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : [],
       undefined // Don't toggle filter if last freq is removed
     );
 
-    if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
+    if (reinforceREF.current && filterTypeREF.current === TermFilterBy.TAGS) {
       const filteredList = filtered.map((k) => k.uid);
       const additional = kanjiList.filter(
         (k) => allFrequency.includes(k.uid) && !filteredList.includes(k.uid)
@@ -230,25 +228,18 @@ export default function KanjiGame() {
       filtered = [...filtered, ...additional];
     }
 
-    switch (orderTypeREF.current) {
-      case TermSortBy.DIFFICULTY: {
-        // exclude vocab with difficulty beyond memoThreshold
+    // exclude terms with difficulty beyond difficultyThreshold
+    const subFilter = difficultySubFilter(
+      difficultyThresholdREF.current,
+      filtered,
+      metadata.current
+    );
 
-        const subFilter = difficultySubFilter(
-          memoThresholdRef.current,
-          filtered,
-          metadata.current
-        );
-
-        if (subFilter.length > 0) {
-          filtered = subFilter;
-        } else {
-          console.warn(
-            "Excluded all terms. Discarding memorized subfiltering."
-          );
-        }
-        break;
-      }
+    if (subFilter.length > 0) {
+      filtered = subFilter;
+    } else {
+      // TODO: use setLog()
+      // console.warn("Excluded all terms. Discarding memorized subfiltering.");
     }
 
     const initialFrequency = filtered.reduce<string[]>((acc, cur) => {
@@ -261,7 +252,13 @@ export default function KanjiGame() {
     frequency.current = initialFrequency;
 
     return filtered;
-  }, [kanjiList, activeTags, reinforceRef, filterTypeRef]);
+  }, [
+    filterTypeREF,
+    reinforceREF,
+    difficultyThresholdREF,
+    kanjiList,
+    activeTags,
+  ]);
 
   const order = useMemo(() => {
     const repetition = metadata.current;
@@ -273,7 +270,7 @@ export default function KanjiGame() {
         newOrder = dateViewOrder(filteredTerms, repetition);
         break;
       case TermSortBy.DIFFICULTY:
-        // exclude filteredTerms with difficulty beyond memoThreshold
+        // exclude filteredTerms with difficulty beyond difficultyThreshold
         newOrder = difficultyOrder(filteredTerms, metadata.current);
         break;
       default:
@@ -281,7 +278,7 @@ export default function KanjiGame() {
     }
 
     return newOrder;
-  }, [filteredTerms]);
+  }, [orderTypeREF, filteredTerms]);
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
@@ -393,8 +390,8 @@ export default function KanjiGame() {
 
   const gotoNextSlide = useCallback(() => {
     play(
-      reinforceRef.current,
-      filterTypeRef.current,
+      reinforceREF.current,
+      filterTypeREF.current,
       frequency.current,
       filteredTerms,
       metadata.current,
@@ -409,8 +406,8 @@ export default function KanjiGame() {
     filteredTerms,
     reinforcedUID,
     gotoNext,
-    reinforceRef,
-    filterTypeRef,
+    reinforceREF,
+    filterTypeREF,
   ]);
 
   const gotoPrev = useCallback(() => {
