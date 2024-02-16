@@ -1,8 +1,9 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { GroupItem } from "../Form/GroupItem";
 import orderBy from "lodash/orderBy";
+import PropTypes from "prop-types";
+import React from "react";
+
 import type { GroupListMap } from "../../typings/raw";
+import { GroupItem } from "../Form/GroupItem";
 
 interface SetTermGListProps {
   termsGroups: GroupListMap;
@@ -17,15 +18,14 @@ interface SetTermGListProps {
 export function SetTermGList(props: SetTermGListProps) {
   return (
     <div>
-      <h5 key={0}>Groups</h5>
+      <h5>Groups</h5>
 
-      {Object.keys(props.termsGroups).map((g, i) => {
+      {Object.keys(props.termsGroups).map((g) => {
         const grpActive = props.termsActive.includes(g);
 
         return (
-          <div key={i + 1}>
+          <div key={g}>
             <GroupItem
-              key={i}
               active={props.termsActive.includes(g)}
               onClick={() => props.toggleTermActiveGrp(g)}
             >
@@ -40,9 +40,9 @@ export function SetTermGList(props: SetTermGListProps) {
                   return parseInt(num, 10);
                 }
                 return o;
-              }).map((s, i) => (
+              }).map((s) => (
                 <GroupItem
-                  key={i}
+                  key={`${g}.${s}`}
                   addlStyle="ms-3"
                   active={props.termsActive.includes(g + "." + s)}
                   onClick={() => {

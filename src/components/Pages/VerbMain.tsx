@@ -197,10 +197,7 @@ export default function VerbMain(props: VerbMainProps) {
   return (
     <>
       {buildTenseElement(0, t1)}
-      <div
-        key={1}
-        className="pt-3 w-100 d-flex flex-column justify-content-around text-center"
-      >
+      <div className="pt-3 w-100 d-flex flex-column justify-content-around text-center">
         <Sizable
           breakPoint="md"
           smallClassName={{

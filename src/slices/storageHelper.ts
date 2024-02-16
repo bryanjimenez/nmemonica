@@ -1,11 +1,14 @@
 /**
  * gets persistent status and quota info
  */
-export function memoryStorageStatus(): Promise<{
-  quota?: number;
-  usage?: number;
-  persistent: boolean;
-}|Error> {
+export function memoryStorageStatus(): Promise<
+  | {
+      quota?: number;
+      usage?: number;
+      persistent: boolean;
+    }
+  | Error
+> {
   if ("storage" in navigator && "persist" in navigator.storage) {
     return navigator.storage.persisted().then((persistent) =>
       getStorageUsage().then(({ quota, usage }) => ({
@@ -79,8 +82,8 @@ export function getStorageUsage(): Promise<StorageEstimate> {
         reject
       );
     } else if (
-      navigator.storage != null &&
-      navigator.storage.estimate != null
+      navigator.storage !== null &&
+      navigator.storage.estimate !== null
     ) {
       navigator.storage.estimate().then(resolve).catch(reject);
     } else {

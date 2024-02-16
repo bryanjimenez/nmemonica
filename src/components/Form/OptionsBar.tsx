@@ -330,10 +330,6 @@ ToggleLiteralPhraseBtn.propTypes = {
   action: PropTypes.func,
 };
 
-interface FrequencyWordIconProps {
-  visible: boolean;
-}
-
 interface TimePlayVerifyBtnsProps {
   visible: boolean;
   hover?: "pronunciation" | "incorrect" | "reset";
@@ -348,7 +344,6 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
   return !props.visible ? null : (
     <React.Fragment>
       <div
-        key={0}
         className="sm-icon-grp"
         onClick={() => {
           if (typeof props.onClick === "function") {
@@ -369,7 +364,6 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
         </span>
       </div>
       <div
-        key={1}
         className="sm-icon-grp"
         onClick={() => {
           if (typeof props.onClick === "function") {
@@ -392,7 +386,6 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
         </span>
       </div>
       <div
-        key={2}
         className="sm-icon-grp"
         onClick={() => {
           if (typeof props.onClick === "function") {

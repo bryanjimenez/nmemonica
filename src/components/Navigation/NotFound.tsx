@@ -1,6 +1,7 @@
+import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 import "../../css/NotFound.css";
-import classNames from "classnames";
+
 import background from "../../../image/notfound/background.jpeg";
 import bigHouse from "../../../image/notfound/bhouse.png";
 import error from "../../../image/notfound/error.png";
@@ -22,11 +23,9 @@ export default function NotFound() {
         "position-relative": true,
         "notification-fade": !fadeIn,
         "notification-fade-in": fadeIn,
-      })} /*style="z-index: 0; transition: all 0.25s ease-in"*/
+      })}
     >
-      <div
-        className="position-absolute overflow-hidden width-full top-0 left-0" /*style="height: 370px"*/
-      >
+      <div className="position-absolute overflow-hidden width-full top-0 left-0">
         <img
           alt=""
           className="c404-back"
@@ -35,12 +34,11 @@ export default function NotFound() {
           data-yrange="20"
           height="415"
           width="940"
-          src={background}
+          // eslint-disable-next-line
+          src={background} // imported image(any) to url(string)
         />
       </div>
-      <div
-        className="c404-cont position-relative d-block my-0 mx-auto overflow-hidden" /*style="width: 940px; height: 370px; clear: both"*/
-      >
+      <div className="c404-cont position-relative d-block my-0 mx-auto overflow-hidden">
         <img
           alt="404 “This is not the web page you are looking for”"
           className="c404-err js-plaxify position-absolute"
@@ -48,6 +46,7 @@ export default function NotFound() {
           data-yrange="10"
           height="249"
           width="271"
+          // eslint-disable-next-line
           src={error}
         />
 
@@ -58,6 +57,7 @@ export default function NotFound() {
           data-yrange="10"
           height="230"
           width="188"
+          // eslint-disable-next-line
           src={octocat}
         />
 
@@ -68,13 +68,9 @@ export default function NotFound() {
           data-yrange="10"
           height="156"
           width="440"
+          // eslint-disable-next-line
           src={ship}
         />
-
-        {/* <img alt="" className="js-plaxify position-absolute" data-xrange="10" data-yrange="10" height="49" width="166" src="" /> */}
-
-        {/* <img alt="" className="js-plaxify position-absolute" data-xrange="10" data-yrange="10" height="75" width="430" src="" /> */}
-
         <img
           alt=""
           className="c404-bhouse js-plaxify position-absolute"
@@ -83,6 +79,7 @@ export default function NotFound() {
           data-yrange="20"
           height="123"
           width="304"
+          // eslint-disable-next-line
           src={bigHouse}
         />
 
@@ -94,6 +91,7 @@ export default function NotFound() {
           data-yrange="30"
           height="50"
           width="116"
+          // eslint-disable-next-line
           src={lilHouse}
         />
       </div>

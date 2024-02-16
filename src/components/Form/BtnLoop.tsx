@@ -1,18 +1,18 @@
-import React from "react";
-import classNames from "classnames";
-import PropTypes from "prop-types";
-import { GitCompareIcon } from "@primer/octicons-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlayCircle,
   faStopCircle,
 } from "@fortawesome/free-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { GitCompareIcon } from "@primer/octicons-react";
+import classNames from "classnames";
+import PropTypes from "prop-types";
+import React from "react";
 
 interface BtnLoopProps {
   visible?: boolean;
   active?: boolean;
   loop: number;
-  onClick?: Function;
+  onClick?: () => void;
 }
 
 export function LoopSettingBtn(props: BtnLoopProps) {
@@ -46,7 +46,7 @@ LoopSettingBtn.propTypes = {
 
 interface LoopStartBtn {
   visible?: boolean;
-  onClick?: Function;
+  onClick?: () => void;
   className?: { [name: string]: boolean };
   countDown?: number;
 }
@@ -69,7 +69,7 @@ export function LoopStartBtn(props: LoopStartBtn) {
         }}
         icon={faPlayCircle}
       />
-      {props.countDown != undefined && (
+      {props.countDown !== undefined && (
         <span className="notification">{props.countDown}</span>
       )}
     </div>
@@ -85,7 +85,7 @@ LoopStartBtn.propTypes = {
 
 interface LoopStopBtn {
   visible?: boolean;
-  onClick?: Function;
+  onClick?: () => void;
   className?: { [name: string]: boolean };
 }
 

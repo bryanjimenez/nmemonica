@@ -1,4 +1,5 @@
 import type {
+  ActionCreatorWithOptionalPayload,
   ActionCreatorWithoutPayload,
   PayloadActionCreator,
 } from "@reduxjs/toolkit";
@@ -32,7 +33,9 @@ export function setStateFunction<T>(
  */
 export function buildAction(
   dispatch: AppDispatch,
-  action: ActionCreatorWithoutPayload
+  action:
+    | ActionCreatorWithoutPayload
+    | ActionCreatorWithOptionalPayload<unknown, string>
 ): () => void;
 
 /**
@@ -45,7 +48,7 @@ export function buildAction(
 export function buildAction(
   dispatch: AppDispatch,
   action: Function
-): (childValue: unknown) => void;
+): (childValue?: unknown) => void;
 
 /**
  * @overload Wrap dispatch around an action

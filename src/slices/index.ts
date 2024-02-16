@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 
-import globalSlice, { GlobalInitSlice } from "./globalSlice";
+import globalReducer, { GlobalInitSlice } from "./globalSlice";
 import kanaReducer, { KanaInitSlice } from "./kanaSlice";
 import kanjiReducer, { KanjiInitSlice } from "./kanjiSlice";
 import oppositesReducer, { OppositeInitSlice } from "./oppositeSlice";
@@ -12,7 +12,7 @@ import vocabularyReducer, { VocabularyInitSlice } from "./vocabularySlice";
 
 export const store = configureStore({
   reducer: {
-    global: globalSlice,
+    global: globalReducer,
     sw: serviceWorkerReducer,
     version: versionsReducer,
 

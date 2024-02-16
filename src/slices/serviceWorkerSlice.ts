@@ -1,8 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import {
-  ADD_FREQUENCY_PHRASE,
-  ADD_FREQUENCY_WORD,
-} from "../constants/actionNames";
+
+// import {
+//   ADD_FREQUENCY_PHRASE,
+//   ADD_FREQUENCY_WORD,
+// } from "../constants/actionNames";
 
 const serviceWorkerInitState = {
   registered: false,
@@ -16,7 +17,7 @@ export const serviceWorkerRegistered = createAsyncThunk(
         .register("sw.js")
         .then((info) => info.active?.state);
     } else {
-      return Promise.reject("No Service Worker");
+      return Promise.reject(new Error("No Service Worker"));
     }
   }
 );
@@ -37,16 +38,16 @@ const serviceWorkerSlice = createSlice({
       // const getState = () => ({ settings: state });
       const { newestWords } = action.payload;
       for (let termType in newestWords) {
-        const { freq: uidArr, dic: termObj } = newestWords[termType];
+        const { freq: uidArr /*, dic: termObj*/ } = newestWords[termType];
 
         // if (termType === "vocabulary")
-        let actType = ADD_FREQUENCY_WORD;
-        let type = "GET_VOCABULARY";
+        // let actType = ADD_FREQUENCY_WORD;
+        // let type = "GET_VOCABULARY";
 
-        if (termType === "phrases") {
-          actType = ADD_FREQUENCY_PHRASE;
-          type = "GET_PHRASES";
-        }
+        // if (termType === "phrases") {
+        // actType = ADD_FREQUENCY_PHRASE;
+        // type = "GET_PHRASES";
+        // }
 
         console.warn("serviceWorkerNewTermsAdded Disabled");
         console.warn(`${uidArr.length} new ${termType}`);

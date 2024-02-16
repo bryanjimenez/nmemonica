@@ -1,6 +1,6 @@
-import React from "react";
-import PropTypes from "prop-types";
 import classNames from "classnames";
+import PropTypes from "prop-types";
+import React from "react";
 
 // Conditinal css mapping
 interface CSSMap {
@@ -17,7 +17,7 @@ interface SizableProps {
   className?: CSSMap;
   largeClassName?: CSSMap;
   smallClassName?: CSSMap;
-  onClick?: Function;
+  onClick?: () => void;
   children?: string | React.JSX.Element;
   largeValue?: string | React.JSX.Element;
   smallValue?: string | React.JSX.Element;
@@ -65,36 +65,36 @@ export default function Sizable(props: SizableProps) {
     }
   };
 
-  const content = [
-    <span
-      key={0}
-      data-name="large"
-      className={
-        classNames({
-          [largeViewClass]: true,
-          ...unconditionalClass,
-          clickable: typeof props.onClick === "function",
-        }) || undefined
-      }
-      onClick={onClickHandler}
-    >
-      {largeValue}
-    </span>,
-    <span
-      key={1}
-      data-name="small"
-      className={
-        classNames({
-          [smallViewClass]: true,
-          ...unconditionalClass,
-          clickable: typeof props.onClick === "function",
-        }) || undefined
-      }
-      onClick={onClickHandler}
-    >
-      {smallValue}
-    </span>,
-  ];
+  const content = (
+    <>
+      <span
+        data-name="large"
+        className={
+          classNames({
+            [largeViewClass]: true,
+            ...unconditionalClass,
+            clickable: typeof props.onClick === "function",
+          }) || undefined
+        }
+        onClick={onClickHandler}
+      >
+        {largeValue}
+      </span>
+      <span
+        data-name="small"
+        className={
+          classNames({
+            [smallViewClass]: true,
+            ...unconditionalClass,
+            clickable: typeof props.onClick === "function",
+          }) || undefined
+        }
+        onClick={onClickHandler}
+      >
+        {smallValue}
+      </span>
+    </>
+  );
 
   return props.fragment === true ? (
     <React.Fragment>{content}</React.Fragment>

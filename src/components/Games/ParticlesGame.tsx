@@ -60,7 +60,7 @@ export default function ParticlesGame() {
 
   useEffect(() => {
     if (phrases.length === 0) {
-      dispatch(getParticleGame());
+      void dispatch(getParticleGame());
     }
   }, []);
 

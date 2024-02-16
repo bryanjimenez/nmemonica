@@ -1,6 +1,6 @@
 import { shallowEqual, useSelector } from "react-redux";
 
-import data from "../../data/kana.json";
+import data from "../../data/json/kana.json";
 import type { RootState } from "../slices";
 import { KanaType } from "../slices/settingHelper";
 import type { ValuesOf } from "../typings/raw";
@@ -16,7 +16,7 @@ export function useConnectKana() {
     string[][],
     string[],
     string[],
-    typeof data.sounds
+    typeof data.sounds,
   ] = useSelector(
     ({ kana }: RootState) => {
       const { hiragana, katakana, vowels, consonants, sounds } = kana;

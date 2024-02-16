@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import type { GameActionHandler } from "./useSwipeActions";
 
 /**
@@ -6,8 +7,11 @@ import type { GameActionHandler } from "./useSwipeActions";
  */
 export function useKeyboardActions(
   gameActionHandler: GameActionHandler,
-  flipPhrasesPracticeSide: Function,
-  timedPlayAnswerHandlerWrapper?: Function
+  flipPhrasesPracticeSide: () => void,
+  timedPlayAnswerHandlerWrapper?: (
+    direction: string,
+    handler: GameActionHandler
+  ) => GameActionHandler
 ) {
   useEffect(() => {
     const kHandler = buildArrowKeyPress(
@@ -29,8 +33,11 @@ export function useKeyboardActions(
 
 function buildArrowKeyPress(
   gameActionHandler: GameActionHandler,
-  flipVocabularyPracticeSide: Function,
-  timedPlayAnswerHandlerWrapper?: Function
+  flipVocabularyPracticeSide: () => void,
+  timedPlayAnswerHandlerWrapper?: (
+    direction: string,
+    handler: GameActionHandler
+  ) => GameActionHandler
 ) {
   return function arrowKeyPress(event: KeyboardEvent) {
     const actionHandlers: [string, Function][] = [
@@ -60,9 +67,9 @@ function buildArrowKeyPress(
 
             const handlerWrapper = (correctedDirection: string) => {
               if (correctedDirection) {
-                gameActionHandler(correctedDirection);
+                return gameActionHandler(correctedDirection);
               } else {
-                handler();
+                return handler();
               }
             };
 

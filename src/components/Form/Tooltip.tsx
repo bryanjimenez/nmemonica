@@ -1,6 +1,7 @@
 import { arrow, offset, shift, useFloating } from "@floating-ui/react-dom";
 import { faBullseye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, ClickAwayListener } from "@mui/material";
 import classNames from "classnames";
 import PropTypes from "prop-types";
 import {
@@ -14,8 +15,6 @@ import {
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
 import "../../css/Tooltip.css";
 import { useWindowSize } from "../../hooks/useWindowSize";
-
-import { Box, ClickAwayListener } from "@mui/material";
 
 interface TooltipProps {
   idKey: string;

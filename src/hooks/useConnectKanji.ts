@@ -49,7 +49,7 @@ export function useConnectKanji() {
       boolean,
       number,
       boolean,
-      boolean
+      boolean,
     ]
   >(({ kanji }: RootState) => {
     const {

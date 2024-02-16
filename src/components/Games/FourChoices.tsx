@@ -50,7 +50,7 @@ export function FourChoices(
 ) {
   const [state, dispatch]: [
     FourChoicesState,
-    React.Dispatch<Partial<FourChoicesState>>
+    React.Dispatch<Partial<FourChoicesState>>,
   ] = useReducer(
     (state: FourChoicesState, action: Partial<FourChoicesState>) => ({
       ...state,

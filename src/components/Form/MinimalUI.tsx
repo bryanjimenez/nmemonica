@@ -1,8 +1,9 @@
-import PropTypes from "prop-types";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import StackNavButton from "./StackNavButton";
+import PropTypes from "prop-types";
 import type { MouseEventHandler } from "react";
 import React from "react";
+
+import StackNavButton from "./StackNavButton";
 
 interface MinimalUIProps {
   prev: MouseEventHandler;

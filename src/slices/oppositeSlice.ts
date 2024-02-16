@@ -35,13 +35,17 @@ export const getOpposite = createAsyncThunk(
     // }
     return fetch(firebaseConfig.databaseURL + "/lambda/opposites.json", {
       headers: { "Data-Version": version },
-    }).then((res) => res.json().then((value) => ({ value, version })));
+    }).then((res) =>
+      res
+        .json()
+        .then((value: [RawOpposite, RawOpposite][]) => ({ value, version }))
+    );
   }
 );
 
 export const oppositeFromLocalStorage = createAsyncThunk(
   "opposite/oppositeFromLocalStorage",
-  async (arg: typeof oppositeInitState) => {
+  (arg: typeof oppositeInitState) => {
     const initValues = arg;
 
     return initValues;

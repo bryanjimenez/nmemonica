@@ -1,7 +1,7 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { XCircleIcon, IssueDraftIcon } from "@primer/octicons-react";
+import { IssueDraftIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
+import PropTypes from "prop-types";
+import React from "react";
 
 interface MinimunRawItem {
   uid: string;
@@ -26,7 +26,7 @@ function listItem(
 ) {
   return (
     <div
-      key={i}
+      key={uid}
       className={classNames({
         "p-0 px-2": true,
         clickable: grpActive,
@@ -93,9 +93,9 @@ export function SetTermGFList(props: SetTermGFListProps) {
 
   return (
     <div>
-      <h5 key={0}>Frequency</h5>
-      <div key={1}>
-        {Object.keys(grplist).map((g, ig) => {
+      <h5>Frequency</h5>
+      <div>
+        {Object.keys(grplist).map((g) => {
           const grpActive = props.termsActive.includes(g);
 
           return (

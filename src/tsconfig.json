@@ -25,7 +25,7 @@
   "exclude": ["../lambda"],
   "include": [
     ".",
-    "../data/kana.json",
+    "../data/json/kana.json",
     "../environment.development.ts",
     "../environment.production.ts",
     "../image/notfound/*"

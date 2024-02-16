@@ -1,12 +1,12 @@
-import React from "react";
-import PropTypes from "prop-types";
 import { Switch } from "@mui/material";
 import classNames from "classnames";
+import PropTypes from "prop-types";
+import React from "react";
 import "../../css/SettingsSwitch.css";
 
 interface SettingsSwitchProps {
   active: boolean;
-  action: Function;
+  action: () => void;
   statusText: string;
   color?: "primary" | "secondary" | "default" | undefined;
   disabled?: boolean;

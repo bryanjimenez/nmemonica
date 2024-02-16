@@ -24,7 +24,7 @@ interface XChoicesState {
 export default function XChoices(props: XChoicesProps) {
   const [state, dispatch]: [
     XChoicesState,
-    React.Dispatch<Partial<XChoicesState>>
+    React.Dispatch<Partial<XChoicesState>>,
   ] = useReducer(
     (state: XChoicesState, action: Partial<XChoicesState>) => ({
       ...state,
@@ -121,7 +121,7 @@ export default function XChoices(props: XChoicesProps) {
   });
 
   return (
-    <div key={0} className={mainPanel}>
+    <div className={mainPanel}>
       <div className="d-flex justify-content-between h-100">
         <StackNavButton ariaLabel="Previous" action={gotoPrevLogic}>
           <ChevronLeftIcon size={16} />
