@@ -606,12 +606,11 @@ export default function Kanji() {
   //   })
   // );
 
-  // TODO: does it need to be active?
   const aGroupLevel =
-    term.tags
-      .find((t) => activeTags.includes(t) && isGroupLevel(t))
-      ?.replace("_", " ") ??
-    term.tags.find((t) => isGroupLevel(t))?.replace("_", " ") ??
+    term.tags.find(
+      (t) => activeTags.includes(t) && isGroupLevel(t) && term.grp !== t
+    ) ??
+    term.tags.find((t) => isGroupLevel(t) && term.grp !== t) ??
     "";
 
   const term_reinforce = repetition[term.uid]?.rein === true;
