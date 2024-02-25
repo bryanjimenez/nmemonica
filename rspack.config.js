@@ -54,8 +54,8 @@ export default function rspackConfig(
       // copy static site files to dist
       new rspack.CopyRspackPlugin({
         patterns: [
-          ...(!isProduction ? [{ from: "./site-dev" }] : []),
-          { from: "./site" },
+          ...(!isProduction ? [{ from: "./site/dev" }] : []),
+          { from: "./site/prod" },
         ],
       }),
 
