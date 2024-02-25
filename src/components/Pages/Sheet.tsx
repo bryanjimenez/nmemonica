@@ -371,13 +371,14 @@ export default function Sheet() {
     // const e = new Event("contextmenu")
     // document.querySelector('.x-spreadsheet-table').dispatchEvent(e)
 
+    // TODO: find better way to do this
     const menu = document.querySelector(".x-spreadsheet-contextmenu");
     const items = menu?.children;
     if (items) {
       Array.from(items).forEach((element, i) => {
         // remove most menu items
         // leave insert + remove row/columns
-        if (i < 6 || i > 10) {
+        if (i !== 6 && i !== 7 && i !== 9 && i !== 10 && i !== 22) {
           element.setAttribute("style", "display: none;");
         }
       });
