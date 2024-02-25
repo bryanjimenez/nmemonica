@@ -8,6 +8,8 @@ import { config } from "@nmemonica/snservice";
 //@ts-expect-error js instead of ts file
 import { appendLicense } from "./license-writer.js";
 //@ts-expect-error js instead of ts file
+import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
+//@ts-expect-error js instead of ts file
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
 // https://www.rspack.dev/config/devtool.html
@@ -66,10 +68,15 @@ export default function rspackConfig(
             }),
           ]
         : []),
+      // For development only
       // index.html template
-      new rspack.HtmlRspackPlugin({
-        template: `index${isProduction ? ".production" : ""}.html`,
-      }),
+      ...(!isProduction
+        ? [
+            new rspack.HtmlRspackPlugin({
+              template: `index.html`,
+            }),
+          ]
+        : []),
 
       // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
@@ -78,7 +85,7 @@ export default function rspackConfig(
 
       // adds cache files to sw.js
       ...(isProduction
-        ? [serviceWorkerCacheHelperPlugin]
+        ? [indexTagHelperPlugin, serviceWorkerCacheHelperPlugin]
         : [
             /** is ran from rspack.config.sw.js */
           ]),

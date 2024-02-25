@@ -1,6 +1,8 @@
+// import fs from 'node:fs';
 import tsNode from "ts-node";
 import path from "node:path";
 import Module from "module";
+// import  ts from "typescript";
 
 /*
 # ts-node
@@ -30,9 +32,9 @@ tsNode.register({
   // disregard typescript errors before transpilation
   transpileOnly: true,
 
-  compilerOptions:{
+  compilerOptions: {
     // error TS5095: Option 'bundler' can only be used when 'module' is set to 'es2015' or later.
-    moduleResolution: 'node'
+    moduleResolution: "node",
   },
 
   //override package.json *type: module* setting
@@ -42,7 +44,7 @@ tsNode.register({
     "./test/**/*.tsx": "cjs",
     "./src/**/*.ts": "cjs",
     "./src/**/*.tsx": "cjs",
-    "./pwa/**/*.ts":"cjs",
+    "./pwa/**/*.ts": "cjs",
   },
 });
 
@@ -74,7 +76,9 @@ Module._extensions[".js"] = function (module, filename) {
     //   // and imports don't have extensions
     //   // create module being searched with contents
     //   const content = fs.readFileSync(filename, "utf8");
-    //   module._compile(content, filename.split("/").pop());
+    //   let result = ts.transpileModule(content, { compilerOptions: { module: ts.ModuleKind.CommonJS }});
+
+    //   module._compile(result.outputText, filename.split("/").pop());
     //   return;
     // }
 
