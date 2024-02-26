@@ -374,24 +374,44 @@ export default function Sheet() {
     // TODO: find better way to do this
     const menu = document.querySelector(".x-spreadsheet-contextmenu");
     const items = menu?.children;
+    /**
+     * Context Menu Items to display
+     */
+    const contextMenuItmToShow = (index: number) => {
+      const items: { [key: number]: string } = {
+        0: "Copy",
+        2: "Paste",
+        6: "InsertRow",
+        7: "InsertColumn",
+        9: "DeleteRow",
+        10: "DeleteColumn",
+        22: "ScrollToLastRow",
+      };
+
+      return items[index] !== undefined;
+    };
+
     if (items) {
       Array.from(items).forEach((element, i) => {
-        // remove most menu items
-        // leave insert + remove row/columns
-        if (i !== 6 && i !== 7 && i !== 9 && i !== 10 && i !== 22) {
+        if (!contextMenuItmToShow(i)) {
           element.setAttribute("style", "display: none;");
         }
       });
     }
 
-    const css = `display: block; right: ${1}px; bottom: ${1}px;`;
+    const hiddenCss = "display: none;";
+    const hidden = menu?.getAttribute("style")?.includes(hiddenCss);
+
+    const css = hidden
+      ? `display: block; right: ${1}px; bottom: ${1}px;`
+      : hiddenCss;
     menu?.setAttribute("style", css);
   }, []);
 
   return (
     <React.Fragment>
       <div className="sheet main-panel pt-2">
-        <div className="d-flex flex-row pt-2 px-3 w-100">
+        <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
             <Fab
               aria-label="Save Sheet"
