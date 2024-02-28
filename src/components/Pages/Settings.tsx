@@ -1,9 +1,4 @@
-import {
-  InfoIcon,
-  PlusCircleIcon,
-  SyncIcon,
-  XCircleIcon,
-} from "@primer/octicons-react";
+import { InfoIcon, PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, {
   Suspense,
@@ -20,11 +15,9 @@ import { allowedCookies } from "../../helper/cookieHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getDeviceMotionEventPermission,
-  labelOptions,
   motionThresholdCondition,
 } from "../../helper/gameHelper";
 import {
-  swMessageDoHardRefresh,
   swMessageGetVersions,
   swMessageSubscribe,
   swMessageUnsubscribe,
@@ -167,10 +160,8 @@ export default function Settings() {
     ReturnType<typeof buildMotionListener> | undefined
   >(undefined);
 
-  const { cookies, darkMode, swipeThreshold, motionThreshold, memory, debug } =
+  const { cookies, darkMode, swipeThreshold, motionThreshold, memory } =
     useConnectSetting();
-
-  const [spin, setSpin] = useState(false);
 
   const [sectionTerms, setSectionTerms] = useState(false);
 
@@ -182,12 +173,10 @@ export default function Settings() {
   const [sectionKanjiGame, setSectionKanjiGame] = useState(false);
   const [sectionParticle, setSectionParticle] = useState(false);
   const [sectionStats, setSectionStats] = useState(false);
-  const [sectionExternalData, setSectionExternalData] = useState(false);
 
   const [swVersion, setSwVersion] = useState("");
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
-  const [hardRefreshUnavailable, setHardRefreshUnavailable] = useState(false);
   // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [shakeIntensity, setShakeIntensity] = useState<number | undefined>(0);
 
@@ -257,14 +246,20 @@ export default function Settings() {
   }, [dispatch, motionThreshold]);
 
   const swMessageEventListenerCB = useSWMessageVersionEventHandler(
-    dispatch,
-    setSpin,
-    setHardRefreshUnavailable,
     setSwVersion,
     setJsVersion,
     setBundleVersion
   );
 
+  const hash =
+    swVersion !== ""
+      ? "." +
+        swVersion.slice(-3) +
+        jsVersion.slice(-3) +
+        bundleVersion.slice(-3)
+      : "";
+
+  const version = process.env.APP_VERSION + hash;
   // FIXME: errorMsgs component
   // if (errorMsgs.length > 0) {
   //   const minState = logify(this.state);
@@ -340,10 +335,13 @@ export default function Settings() {
       <div className="d-flex flex-column justify-content-between px-3">
         {important && theTerms}
         <div className={pageClassName}>
-          <div className={clickableSectionClass}>
-            <h2>Global</h2>
-            <h2></h2>
-          </div>
+          <div
+            className={classNames({
+              "pt-5": true,
+              "d-flex justify-content-between": true,
+              "disabled-color": !cookies,
+            })}
+          ></div>
           <div>
             <div className="d-flex flex-row justify-content-between">
               <div className="column-1 d-flex flex-column justify-content-end">
@@ -622,78 +620,15 @@ export default function Settings() {
                   }}
                 >
                   <div className="pe-2">
-                    <div>{"swVersion:"}</div>
-                    <div>{"jsVersion:"}</div>
-                    <div>{"bundleVersion:"}</div>
+                    <div>{"Version:"}</div>
                   </div>
                   <div>
-                    <div>{swVersion}</div>
-                    <div>{jsVersion}</div>
-                    <div>{bundleVersion}</div>
+                    <div>{version}</div>
                   </div>
                 </div>
               </div>
             </div>
             <div className="column-2">
-              <div className="setting-block mb-2">
-                <SettingsSwitch
-                  disabled={!cookies}
-                  active={debug > DebugLevel.OFF}
-                  action={buildAction(dispatch, debugToggled)}
-                  color="default"
-                  statusText={labelOptions(debug, [
-                    "Debug",
-                    "Debug Error",
-                    "Debug Warn",
-                    "Debug",
-                  ])}
-                />
-              </div>
-              <div
-                className={classNames({
-                  "d-flex justify-content-end mb-2": true,
-                  "disabled-color": hardRefreshUnavailable,
-                })}
-              >
-                <p
-                  id="hard-refresh"
-                  className={classNames({
-                    "text-right": true,
-                    "disabled-color": !cookies,
-                  })}
-                >
-                  Hard Refresh
-                </p>
-                <div
-                  className={classNames({
-                    "spin-a-bit": spin,
-                    "disabled-color": !cookies,
-                    clickable: cookies,
-                  })}
-                  style={{ height: "24px" }}
-                  aria-labelledby="hard-refresh"
-                  onClick={
-                    cookies
-                      ? () => {
-                          setSpin(true);
-                          setHardRefreshUnavailable(false);
-
-                          setTimeout(() => {
-                            if (spin) {
-                              setSpin(false);
-                              setHardRefreshUnavailable(true);
-                            }
-                          }, 3000);
-
-                          void swMessageDoHardRefresh();
-                        }
-                      : undefined
-                  }
-                >
-                  <SyncIcon size={24} aria-label="Hard Refresh" />
-                </div>
-              </div>
-
               <div className="setting-block mb-2">
                 <SettingsSwitch
                   active={memory.persistent}
