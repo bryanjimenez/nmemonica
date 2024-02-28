@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
     <React.Fragment>
       <div className="privacy-policy main-panel h-100">
         <div className="d-flex justify-content-between h-100 px-2">
-          <div className="pt-3">
+          <div className="py-3">
             <h1>Privacy Policy</h1>
 
             <h2 className={headerCss}>Type of information collected</h2>

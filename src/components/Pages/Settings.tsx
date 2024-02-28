@@ -27,10 +27,8 @@ import { useSWMessageVersionEventHandler } from "../../hooks/useServiceWorkerHel
 import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
-  getMemoryStorageStatus,
   logger,
   setMotionThreshold,
-  setPersistentStorage,
   setSwipeThreshold,
   toggleDarkMode,
 } from "../../slices/globalSlice";
@@ -160,7 +158,7 @@ export default function Settings() {
     ReturnType<typeof buildMotionListener> | undefined
   >(undefined);
 
-  const { cookies, darkMode, swipeThreshold, motionThreshold, memory } =
+  const { cookies, darkMode, swipeThreshold, motionThreshold } =
     useConnectSetting();
 
   const [sectionTerms, setSectionTerms] = useState(false);
@@ -182,8 +180,6 @@ export default function Settings() {
 
   useEffect(
     () => {
-      void dispatch(getMemoryStorageStatus());
-
       swMessageSubscribe(swMessageEventListenerCB);
       void swMessageGetVersions();
 
@@ -626,24 +622,6 @@ export default function Settings() {
                     <div>{version}</div>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className="column-2">
-              <div className="setting-block mb-2">
-                <SettingsSwitch
-                  active={memory.persistent}
-                  action={buildAction(dispatch, setPersistentStorage)}
-                  disabled={!cookies || memory.persistent}
-                  color="default"
-                  statusText={
-                    memory.persistent
-                      ? `Persistent ${~~(memory.usage / 1024 / 1024)}
-                        /
-                        ${~~(memory.quota / 1024 / 1024)}
-                        MB`
-                      : "Persistent off"
-                  }
-                />
               </div>
             </div>
           </div>

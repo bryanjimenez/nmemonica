@@ -15,7 +15,7 @@ export default function CookiePolicy() {
     <React.Fragment>
       <div className="cookie-policy main-panel h-100">
         <div className="d-flex justify-content-between h-100 px-2">
-          <div className="pt-3">
+          <div className="py-3">
             <h1>Cookie Policy</h1>
 
             <h2 className={headerCss}>What are cookies?</h2>
@@ -26,13 +26,26 @@ export default function CookiePolicy() {
               website. Websites use cookies to personalize your web experience
               based on your preferences and also for personalized ads.
             </p>
+            <p className="m-0 ps-2 pt-2">
+              To learn more about browser storage technologies see{" "}
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#what_technologies_store_data_in_the_browser"
+                target="_blank"
+                rel="noreferrer"
+              >
+                MDN Storage_API
+              </a>
+              .
+            </p>
             <h2 className={headerCss}>How do we use cookies?</h2>
             <p className="m-0 ps-2">
               This application does not collect personal information, analyze
               user browsing behavior, display targeted ads, nor does it share
               any of your data with third parties.
             </p>
-            <p className="m-0 ps-2">This application uses cookie technologies to:</p>
+            <p className="m-0 ps-2">
+              This application uses cookie technologies to:
+            </p>
             <ul>
               <li>Identify you as a user.</li>
               <li>Store user app data (language datasets).</li>
@@ -46,7 +59,9 @@ export default function CookiePolicy() {
               Please note that blocking cookies will impact the functionality of
               the application and only minimal features will remain.
             </p>
-            <p className="m-0 ps-2">Instructions on deleting cookies for commonly used browsers:</p>
+            <p className="m-0 ps-2">
+              Instructions on deleting cookies for commonly used browsers:
+            </p>
             <p className="m-0 ps-2">
               <a
                 href="https://support.google.com/chrome/answer/95647?hl=en"
@@ -115,6 +130,23 @@ export default function CookiePolicy() {
               IndexedDB is used to store the user&apos;s app dataset. This is
               nearly permanent storage that enables app functionality when
               offline.
+            </p>
+
+            <h3 className={topicCss}>Persistent Storage</h3>
+            <p className="m-0 ps-2">
+              Persistent Storage is a setting you can enable to prevent the
+              browser from deleting data from this application (without being asked) in the event storage quota nears it&apos;s limit.
+              Storage can always be cleared with explicit user action.
+            </p>
+            <p className="m-0 ps-2 pt-2">
+              To learn more, see{" "}
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#does_browser-stored_data_persist"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Does browser-stored data persist?
+              </a>
             </p>
           </div>
         </div>

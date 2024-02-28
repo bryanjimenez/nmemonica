@@ -12,7 +12,7 @@ export default function TermsAndConditions() {
     <React.Fragment>
       <div className="terms-and-conditions main-panel h-100">
         <div className="d-flex justify-content-between h-100 px-2">
-          <div className="pt-3">
+          <div className="py-3">
             <h1>Terms and Conditions</h1>
 
             <p>Definitions</p>
