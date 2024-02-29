@@ -297,7 +297,7 @@ export default function Settings() {
 
       {(important || sectionTerms) && (
         <div>
-          <h3 className="mt-3 mb-1">Terms and Conditions</h3>
+          <h3 className="mt-3 mb-1 fw-light">Terms and Conditions</h3>
           <div className="text-end">
             <p>
               Read our{" "}
@@ -312,7 +312,7 @@ export default function Settings() {
 
       {(important || sectionTerms) && (
         <div>
-          <h3 className="mt-3 mb-1">Privacy Policy</h3>
+          <h3 className="mt-3 mb-1 fw-light">Privacy Policy</h3>
           <div className="text-end">
             <p>
               Read our{" "}

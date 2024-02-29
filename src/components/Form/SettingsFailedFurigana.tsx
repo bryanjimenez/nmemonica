@@ -33,7 +33,7 @@ export default function SettingsFailedFurigana() {
     <>
       {failedFurigana.length > 0 && (
         <div className="mb-2">
-          <h5>Failed Furigana Parse</h5>
+          <span className="fs-5">Failed Furigana Parse</span>
           <Suspense fallback={<NotReady addlStyle="failed-furigana-view" />}>
             <div className="failed-furigana-view container mt-2 p-0">
               {failedFurigana}

@@ -675,14 +675,14 @@ export default function Phrases() {
               {topValue}
             </Sizable>
             {romajiActive.current && romaji && (
-              <h5>
+              <span className="fs-5">
                 <span
                   onClick={setStateFunction(setShowRomaji, (romaji) => !romaji)}
                   className="clickable loop-no-interrupt"
                 >
                   {showRomaji ? romaji : "[Romaji]"}
                 </span>
-              </h5>
+              </span>
             )}
             <Sizable
               className={belowNoInterruptCss}

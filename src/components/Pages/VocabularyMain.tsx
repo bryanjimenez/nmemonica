@@ -172,14 +172,14 @@ export default function VocabularyMain(props: VocabularyMainProps) {
         {topValue}
       </Sizable>
       {romajiEnabled && romaji && (
-        <h5>
+        <span className="fs-5">
           <span
             onClick={setStateFunction(setShowRomaji, (r) => !r)}
             className="clickable loop-no-interrupt"
           >
             {showRomaji ? romaji : "[Romaji]"}
           </span>
-        </h5>
+        </span>
       )}
       <Sizable
         className={{ "loop-no-interrupt": true }}

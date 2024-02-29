@@ -74,7 +74,7 @@ export function SetTermTagList(props: SetTermTagListProps) {
 
   return (
     <div>
-      <h5>Tag List {count}</h5>
+      <span className="fs-5 fw-light">Tag List {count}</span>
       {sorted.map((g) => (
         <GroupItem
           key={g}

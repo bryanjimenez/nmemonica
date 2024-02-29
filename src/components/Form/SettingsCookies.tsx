@@ -98,7 +98,7 @@ export default function SettingsCookies() {
   return (
     <>
       <div>
-        <h3 className="mt-3 mb-1">Cookies</h3>
+        <h3 className="mt-3 mb-1 fw-light">Cookies</h3>
 
         <div className="text-end">
           <p>
@@ -138,7 +138,7 @@ export default function SettingsCookies() {
         </div>
       </div>
       <div className={classNames({ "disabled-color": !usingCookies })}>
-        <h3 className="mt-3 mb-1">Persistent Storage</h3>
+        <h3 className="mt-3 mb-1 fw-light">Persistent Storage</h3>
         <div className="d-flex flex-row justify-content-between">
           <div className="column-1 mb-2 me-sm-2">
             <div className="ps-2 mt-2 mb-2">

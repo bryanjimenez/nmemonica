@@ -82,13 +82,13 @@ export default function SettingsKanji() {
     <div className="outer">
       <div className="d-flex flex-row justify-content-between">
         <div className="column-1">
-          <h4>
+          <span className="fs-5 fw-light">
             {labelOptions(kanjiFilter, [
               "Kanji Group",
               "Frequency List",
               "Tags",
             ])}
-          </h4>
+          </span>
           <div className="mb-2">
             <SettingsSwitch
               active={kanjiFilter % 2 === 0}
