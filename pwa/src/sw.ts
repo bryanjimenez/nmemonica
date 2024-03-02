@@ -17,6 +17,7 @@ import {
   audioServicePath,
   dataServiceEndpoint,
   dataServicePath,
+  pronounceEndoint,
   uiEndpoint,
 } from "../../environment.development";
 
@@ -40,6 +41,7 @@ const bundleVersion = process.env.SW_BUNDLE_VERSION;
 
 let urlAppUI = uiEndpoint;
 let urlDataService = dataServiceEndpoint;
+let urlPronounceService = pronounceEndoint;
 let audioPath = audioServicePath;
 let dataPath = dataServicePath;
 
@@ -445,8 +447,6 @@ function pronounceOverride(uid: string, req: Request) {
  * Site media asset
  */
 function pronounce(uid: string, req: Request) {
-  const word = decodeURI(getParam(req.url, "q"));
-
   if (!swSelf.indexedDB) {
     // use cache
     console.log(NO_INDEXEDDB_SUPPORT);
@@ -464,7 +464,7 @@ function pronounce(uid: string, req: Request) {
         )
         .catch(() => {
           //not found
-          clientLogger("IDB.get [] " + word, DebugLevel.WARN);
+          clientLogger("IDB.get [] ", DebugLevel.WARN);
 
           return fetch(req)
             .then((res) => {
@@ -554,8 +554,11 @@ function fetchEventHandler(e: FetchEvent) {
     case /* pronounce */
     path.startsWith(audioPath): {
       const uid = getParam(url, "uid");
+      if (!uid) {
+        throw new Error("Request missing uid");
+      }
       const cleanUrl = removeParam(url, "uid");
-      const modRed = req.url.startsWith(urlDataService)
+      const modRed = req.url.startsWith(urlPronounceService)
         ? new Request(cleanUrl) //  remove everything for external
         : req; //                   keep auth for local service
 
