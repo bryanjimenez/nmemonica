@@ -44,29 +44,29 @@ export function removeLastRowIfBlank<T extends SheetData>(sheet: T) {
   return clone;
 }
 
-export function addExtraRow(xObj: SheetData[]) {
-  const extraAdded = xObj.reduce<SheetData[]>((acc, o) => {
-    let rows = o.rows;
-    if (!rows) {
-      return [...acc, { rows: { "0": { cells: {} } }, len: 1 }];
-    }
+/**
+ * Appends an empty row to a sheet
+ * @param sheet
+ */
+export function sheetAddExtraRow(sheet: SheetData) {
+  let rows = sheet.rows;
+  if (!rows) {
+    return { rows: { "0": { cells: {} } }, len: 1 };
+  }
 
-    const last = getLastCellIdx(rows);
+  const last = getLastCellIdx(rows);
 
-    const n = {
-      ...o,
-      rows: {
-        ...rows,
-        [String(last + 1)]: { cells: {} },
-        // @ts-expect-error SheetData.rows.len
-        len: rows.len + 1,
-      },
-    };
+  const withExtraRow = {
+    ...sheet,
+    rows: {
+      ...rows,
+      [String(last + 1)]: { cells: {} },
+      // @ts-expect-error SheetData.rows.len
+      len: rows.len + 1,
+    },
+  };
 
-    return [...acc, n];
-  }, []);
-
-  return extraAdded;
+  return withExtraRow;
 }
 
 export function searchInSheet(sheet: SheetData, query: string) {

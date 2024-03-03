@@ -5,6 +5,7 @@ import {
 } from "@nmemonica/snservice/src/helper/jsonHelper";
 import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import type Spreadsheet from "@nmemonica/x-spreadsheet";
+import type { SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { logger } from "./globalSlice";
@@ -126,12 +127,12 @@ export const getDatasets = createAsyncThunk(
 );
 
 export function saveSheetLocalService(
-  workbook: Spreadsheet | null,
+  activeSheetData: SheetData,
   serviceBaseUrl: string
 ) {
-  if (!workbook) return Promise.reject(new Error("Missing workbook"));
+  if (!activeSheetData.name) return Promise.reject(new Error("Missing sheet"));
 
-  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
+  const activeSheetName = activeSheetData.name;
 
   const container = new FormData();
   const data = new Blob([JSON.stringify(activeSheetData)], {

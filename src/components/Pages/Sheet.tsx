@@ -31,10 +31,10 @@ import {
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
 import {
-  addExtraRow,
   getActiveSheet,
   removeLastRowIfBlank,
   searchInSheet,
+  sheetAddExtraRow,
   touchScreenCheck,
 } from "../../helper/sheetHelper";
 import { AppDispatch, RootState } from "../../slices";
@@ -153,8 +153,8 @@ export default function Sheet() {
 
         throw err;
       })
-      .then((obj) => {
-        const data = addExtraRow(obj);
+      .then((sheetArr) => {
+        const data = sheetArr.map((s) => sheetAddExtraRow(s));
 
         const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
 
