@@ -196,8 +196,10 @@ export default function Sheet() {
     // );
     const saveP = saveSheetServiceWorker(wbRef.current);
 
-    const workbook = wbRef.current?.getData() as FilledSheetData[];
+    // const { activeSheetName } = getActiveSheet(wbRef.current);
+    const workbook = wbRef.current?.exportValues() as FilledSheetData[];
     const trimmed = workbook.map((w) => removeLastRowIfBlank(w));
+    // const sheet = trimmed.find((s) => s.name === activeSheetName);
 
     // store workbook in indexedDB
     // (keep ordering and notes)
@@ -239,7 +241,7 @@ export default function Sheet() {
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
 
-    const xObj = wbRef.current?.getData() as FilledSheetData[];
+    const xObj = wbRef.current?.exportValues() as FilledSheetData[];
     if (xObj) {
       const filesP = xObj.map((xObjSheet: FilledSheetData) => {
         const fileSim = new EventEmitter();
