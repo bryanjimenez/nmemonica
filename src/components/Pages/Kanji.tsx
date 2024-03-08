@@ -4,7 +4,7 @@ import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
-import type { RawVocabulary } from "nmemonica";
+import type { RawKanji, RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -81,6 +81,61 @@ const KanjiMeta = {
   location: "/kanji/",
   label: "Kanji",
 };
+
+/**
+ * Finds a kanji in a list of terms. Filtering terms by strongest match.
+ * @param term
+ * @param vocabList
+ */
+function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
+  let match = [];
+
+  // exact
+  match = vocabList.filter((v) => {
+    const spelling = JapaneseText.parse(v).getSpelling();
+    return (
+      spelling.includes(term.kanji) &&
+      v.english.toLowerCase() === term.english.toLowerCase()
+    );
+  });
+
+  // exact or verb
+  match =
+    match.length > 0
+      ? match
+      : vocabList.filter((v) => {
+          const spelling = JapaneseText.parse(v).getSpelling();
+          return (
+            spelling.includes(term.kanji) &&
+            v.english.toLowerCase().includes(term.english.toLowerCase()) &&
+            v.grp === "Verb"
+          );
+        });
+
+  // exact or similar
+  match =
+    match.length > 0
+      ? match
+      : vocabList.filter((v) => {
+          const spelling = JapaneseText.parse(v).getSpelling();
+          return (
+            spelling.includes(term.kanji) &&
+            (v.english.toLowerCase().includes(term.english.toLowerCase()) ||
+              term.english.toLowerCase().includes(v.english.toLowerCase()))
+          );
+        });
+
+  // any matching
+  match =
+    match.length > 0
+      ? match
+      : vocabList.filter((v) => {
+          const spelling = JapaneseText.parse(v).getSpelling();
+          return spelling.includes(term.kanji);
+        });
+
+  return match;
+}
 
 export default function Kanji() {
   const dispatch = useDispatch<AppDispatch>();
@@ -622,17 +677,7 @@ export default function Kanji() {
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
   const term = getTerm(uid, kanjiList);
 
-  const match = vocabList.filter(
-    (v) =>
-      (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-        v.english.toLowerCase() === term.english.toLowerCase()) ||
-      (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-        v.english.toLowerCase().includes(term.english.toLowerCase()) &&
-        v.grp === "Verb") ||
-      (JapaneseText.parse(v).getSpelling() === term.kanji &&
-        (v.english.toLowerCase().includes(term.english.toLowerCase()) ||
-          term.english.toLowerCase().includes(v.english.toLowerCase())))
-  );
+  const match = getKanjiExamples(term, vocabList);
 
   let examples: RawVocabulary[] = [];
   if (match.length > 0) {
@@ -725,6 +770,12 @@ export default function Kanji() {
             <span className="fs-1 pt-0">
               <span>{term.kanji}</span>
             </span>
+            <span
+              className="fs-4 align-self-center pt-2 clickable"
+              onClick={setStateFunction(setShowMeaning, (toggle) => !toggle)}
+            >
+              {showMeaning ? meaning : <span>{"[Meaning]"}</span>}
+            </span>
             {(term.on && (
               <span
                 className="fs-4 pt-0"
@@ -754,13 +805,6 @@ export default function Kanji() {
                     ? calcExamples
                     : "[Examples]"}
                 </span>
-              </span>
-
-              <span
-                className="fs-4 align-self-center pt-2 clickable"
-                onClick={setStateFunction(setShowMeaning, (toggle) => !toggle)}
-              >
-                {showMeaning ? meaning : <span>{"[Meaning]"}</span>}
               </span>
             </div>
           </div>
