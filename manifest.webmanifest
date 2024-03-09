@@ -14,19 +14,17 @@
       "type": "image/x-icon"
     },
     {
-      "src": "icon192.png",
+      "src": "icon192_dev.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any"
+      "sizes": "192x192"
     },
     {
-      "src": "icon512.png",
+      "src": "icon512_dev.png",
       "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any"
+      "sizes": "512x512"
     },
     {
-      "src": "maskable512.png",
+      "src": "maskable512_dev.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
