@@ -51,7 +51,6 @@ swSelf.addEventListener("install", installEventHandler);
 swSelf.addEventListener("activate", activateEventHandler);
 swSelf.addEventListener("fetch", fetchEventHandler);
 swSelf.addEventListener("message", messageEventHandler);
-swSelf.addEventListener("push", pushEventHandler);
 
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
@@ -64,138 +63,7 @@ const dataVerPath = "/cache.json";
 const dataSourcePath = ["/phrases.json", "/vocabulary.json", "/kanji.json"];
 
 function getVersions() {
-  // const main =
-  //   cacheFiles.find((f) => f.match(new RegExp(/main.([a-z0-9]+).js/))) ||
-  //   "main.00000000.js";
-  // const [_jsName, jsVersion] = main.split(".");
   return { swVersion, jsVersion, bundleVersion };
-}
-
-/**
- * Update specified data set and hash cache from the local service.
- * @param pushUrl
- * @param name of data set
- * @param hash
- */
-function updateFromLocalService(pushUrl: string, name: string, hash: string) {
-  return caches.open(appDataCache).then((cache) => {
-    const url = `${pushUrl}/${name}.json.v${hash}`;
-    // TODO: what if ip changed?
-    // if (url_ServiceData !== pushUrl) {
-    clientLogger(
-      // "Push service url does not match service worker",
-      "Validate override url matches push url",
-      DebugLevel.ERROR
-    );
-    // if they don't match user_DataServiceUrl will be overwritten with serviceUrl's data
-    // return;
-    // }
-
-    return fetch(`${pushUrl}/${name}.json`, { credentials: "include" }).then(
-      (fetchRes) =>
-        cache
-          .match(pushUrl + dataVerPath)
-          .then((verRes) => {
-            if (!verRes) {
-              throw new Error("Missing cache.json");
-            }
-            return verRes.json();
-          })
-          .then((verJson: { [k: string]: string }) => {
-            verJson[name] = hash;
-            return verJson;
-          })
-          .then((newVerJson) => {
-            return Promise.all([
-              // update version object
-              updateCacheWithJSON(
-                appDataCache,
-                pushUrl + dataVerPath,
-                newVerJson
-              ),
-              // update data object
-              cache.put(url, fetchRes.clone()),
-            ]);
-          })
-    );
-  });
-}
-
-interface PushConfirmation {
-  title: string;
-  tag: string;
-  body: { type: string; msg: string };
-}
-interface PushDataUpdate {
-  title: string;
-  tag: string;
-  body: {
-    type: string;
-    name: string;
-    hash: string;
-    url: string;
-  };
-}
-
-type PushMessage = PushConfirmation | PushDataUpdate;
-
-function isPushConfirmation(m: PushMessage): m is PushConfirmation {
-  return (m as PushConfirmation).body.type === "push-subscription";
-}
-
-function isPushDataUpdate(m: PushMessage): m is PushDataUpdate {
-  return (m as PushDataUpdate).body.type === "push-data-update";
-}
-
-function pushEventHandler(e: PushEvent) {
-  const message = e.data?.json() as PushMessage;
-  if (!message) {
-    clientLogger("Bad message", DebugLevel.ERROR);
-    return;
-  }
-
-  if (isPushConfirmation(message)) {
-    const confirmationP = swSelf.registration.showNotification(message.title, {
-      body: message.body.msg,
-      icon: "",
-      tag: message.tag,
-    });
-
-    e.waitUntil(confirmationP);
-    return;
-  }
-
-  if (isPushDataUpdate(message)) {
-    const { name, hash, url } = message.body;
-    const n = name.toLowerCase();
-
-    const cacheP = updateFromLocalService(url, n, hash);
-
-    const doneP = cacheP.then(() => {
-      const notifP = swSelf.registration.showNotification(message.title, {
-        body: `${name}.json.v${hash}`,
-        icon: "",
-        tag: message.tag,
-      });
-
-      return notifP;
-    });
-
-    e.waitUntil(doneP);
-
-    // const notification = new Notification("Verify", {
-    //   body: "message",
-    //   tag: "simple-push-demo-notification",
-    //   // icon,
-    // });
-
-    // notification.addEventListener("click", () => {
-    //   console.log("confirmed")
-    //   // swSelf.clients.openWindow(
-    //   //   "https://example.blog.com/2015/03/04/something-new.html"
-    //   // );
-    // });
-  }
 }
 
 /**
@@ -278,7 +146,9 @@ function activateEventHandler(e: ExtendableEvent) {
       })
       .then(() => {
         const dataCacheP = isUserEditedData().then((isEdited) => {
-          if (!isEdited) {
+          if (isEdited) {
+            clientLogger("Datasets edited: Skipping recache", DebugLevel.WARN);
+          } else {
             return cacheAllDataResource(urlDataService);
           }
           return;
@@ -849,27 +719,4 @@ function removeOldStaticCaches() {
       )
     )
   );
-}
-
-/**
- * @returns a promise with the cached jsonObj
- */
-function updateCacheWithJSON(
-  cacheName: string,
-  url: string,
-  jsonObj: { [k: string]: unknown },
-  type = "application/json",
-  status = 200,
-  statusText = "OK"
-) {
-  // update cache with fetched version results
-  const blob = new Blob([JSON.stringify(jsonObj)], {
-    type,
-  });
-  const init = { status, statusText };
-  const createdRes = new Response(blob, init);
-
-  return caches
-    .open(cacheName)
-    .then((cache) => cache.put(url, createdRes).then(() => cache.match(url)));
 }
