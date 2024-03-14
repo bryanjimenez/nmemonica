@@ -76,6 +76,7 @@ import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
 import "../../css/Kanji.css";
 import { Tooltip } from "../Form/Tooltip";
+import { oneFromList } from "../Games/KanjiGame";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -88,7 +89,7 @@ const KanjiMeta = {
  * @param vocabList
  */
 function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
-  let match = [];
+  let match: RawVocabulary[] = [];
 
   // exact
   match = vocabList.filter((v) => {
@@ -709,16 +710,26 @@ export default function Kanji() {
   const term_reinforce = repetition[term.uid]?.rein === true;
 
   const maxShowEx = 3;
-  const calcExamples = examples.slice(0, maxShowEx).map((el, k, arr) => (
-    <React.Fragment key={el.uid}>
-      {el.english + " "}
-      {JapaneseText.parse(el).toHTML()}
-      {k < arr.length - 1 ? "; " : ""}
-      <wbr />
-    </React.Fragment>
+  const examplesEl = examples.slice(0, maxShowEx).map((el) => (
+    <div
+      key={el.uid}
+      className={classNames({
+        "d-flex justify-content-between": true,
+        invisible: !showEx,
+      })}
+    >
+      <div className="fs-3 mw-50 text-nowrap text-start">
+        {JapaneseText.parse(el).toHTML()}
+      </div>
+      <div className="pt-2 text-break text-end">{oneFromList(el.english)}</div>
+    </div>
+    // <React.Fragment key={el.uid}>
+    //   {el.english + " "}
+    //   {JapaneseText.parse(el).toHTML()}
+    //   {k < arr.length - 1 ? "; " : ""}
+    //   <wbr />
+    // </React.Fragment>
   ));
-
-  const meaning = <span>{term.english}</span>;
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
   const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
@@ -731,7 +742,7 @@ export default function Kanji() {
     metadata.current[uid]?.lastReview
   );
 
-  let page = (
+  return (
     <React.Fragment>
       <div
         className={classNames({
@@ -765,51 +776,55 @@ export default function Kanji() {
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-
-          <div className="d-flex flex-column justify-content-around text-center">
-            <span className="fs-1 pt-0">
-              <span>{term.kanji}</span>
-            </span>
-            <span
-              className="fs-4 align-self-center pt-2 clickable"
-              onClick={setStateFunction(setShowMeaning, (toggle) => !toggle)}
-            >
-              {showMeaning ? meaning : <span>{"[Meaning]"}</span>}
-            </span>
-            {(term.on && (
-              <span
-                className="fs-4 pt-0"
-                onClick={setStateFunction(setShowOn, (toggle) => !toggle)}
-              >
-                <span>{showOn ? term.on : "[On]"}</span>
-              </span>
-            )) || <span className="fs-4 pt-0">.</span>}
-            {(term.kun && (
-              <span
-                className="fs-4 pt-2"
-                onClick={setStateFunction(setShowKun, (toggle) => !toggle)}
-              >
-                <span>{showKun ? term.kun : "[Kun]"}</span>
-              </span>
-            )) || <span className="fs-4 pt-2 mb-0">.</span>}
-            <div className="d-flex flex-column">
-              <span
+          <div className="container">
+            <div className="row row-cols-1 row-cols-sm-2 h-100">
+              <div
                 className={classNames({
-                  "example-blk align-self-center clickable h6 pt-2": true,
-                  "disabled-color": calcExamples.length === 0,
+                  "col question d-flex flex-column justify-content-top text-center":
+                    true,
                 })}
-                onClick={setStateFunction(setShowEx, (toggle) => !toggle)}
               >
-                <span className="text-nowrap">
-                  {showEx && calcExamples.length > 0
-                    ? calcExamples
-                    : "[Examples]"}
+                <div className="d-flex align-items-center">
+                  <div
+                    className={classNames({
+                      "fs-kanji-huge lh-1 w-100 pt-5": true,
+                      "opacity-25": true,
+                    })}
+                  >
+                    <span>{term.kanji}</span>
+                  </div>
+                </div>
+                <span
+                  className="fs-4 align-self-center clickable"
+                  onClick={setStateFunction(
+                    setShowMeaning,
+                    (toggle) => !toggle
+                  )}
+                >
+                  <span>{showMeaning ? term.english : "[Meaning]"}</span>
                 </span>
-              </span>
+              </div>
+              <div className="col choices d-flex flex-column justify-content-around text-center">
+                <div className="d-flex flex-column fs-4">{examplesEl}</div>
+                {(term.on && (
+                  <span
+                    className="fs-4 pt-0"
+                    onClick={setStateFunction(setShowOn, (toggle) => !toggle)}
+                  >
+                    <span>{showOn ? term.on : "[On]"}</span>
+                  </span>
+                )) || <span className="fs-4 pt-0">.</span>}
+                {(term.kun && (
+                  <span
+                    className="fs-4 pt-2"
+                    onClick={setStateFunction(setShowKun, (toggle) => !toggle)}
+                  >
+                    <span>{showKun ? term.kun : "[Kun]"}</span>
+                  </span>
+                )) || <span className="fs-4 pt-2 mb-0">.</span>}
+              </div>
             </div>
           </div>
-          {/* <div className="right-info"></div> */}
-
           <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
@@ -896,8 +911,6 @@ export default function Kanji() {
       </div>
     </React.Fragment>
   );
-
-  return page;
 }
 
 export { KanjiMeta };
