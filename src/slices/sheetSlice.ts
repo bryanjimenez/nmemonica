@@ -3,7 +3,6 @@ import {
   sheetDataToJSON,
 } from "@nmemonica/snservice/src/helper/jsonHelper";
 import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
-import type Spreadsheet from "@nmemonica/x-spreadsheet";
 import type { SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
@@ -15,7 +14,6 @@ import {
   sheetServicePath,
 } from "../../environment.development";
 import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
-import { getActiveSheet } from "../helper/sheetHelper";
 
 import { AppDispatch } from ".";
 
@@ -125,7 +123,6 @@ export function saveSheetServiceWorker(sheet: FilledSheetData) {
   return swMessageSaveDataJSON(
     dataServiceEndpoint + "/" + resource + ".json.v" + hash,
     data,
-    ""
   ).then(() => ({
     name: sheet.name,
     hash,

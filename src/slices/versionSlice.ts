@@ -43,9 +43,8 @@ export const setSwVersions = createAsyncThunk(
     const stateVersions = { ...state.version };
 
     const url = dataServiceEndpoint + "/cache.json";
-    const hash = ""; // no hash since updating cache.json
 
-    return swMessageSaveDataJSON(url, stateVersions, hash);
+    return swMessageSaveDataJSON(url, stateVersions);
   }
 );
 

@@ -165,7 +165,6 @@ interface MsgSaveDataJSON {
   type: string;
   url: string;
   dataset: Record<string, unknown>;
-  hash: string;
 }
 
 interface MsgHardRefresh {

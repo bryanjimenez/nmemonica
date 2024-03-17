@@ -61,7 +61,6 @@ export function swMessageUnsubscribe(
 export function swMessageSaveDataJSON(
   url: string,
   dataset: unknown,
-  hash: string
 ) {
   if (navigator.serviceWorker) {
     return navigator.serviceWorker.ready.then(() => {
@@ -69,7 +68,6 @@ export function swMessageSaveDataJSON(
         type: SWMsgOutgoing.DATASET_JSON_SAVE,
         url,
         dataset,
-        hash,
       });
     });
   }
