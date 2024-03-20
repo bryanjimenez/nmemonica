@@ -621,6 +621,21 @@ export function oneFromList(english: string) {
 }
 
 /**
+ * Split comma separated string.
+ *
+ * Apply ProperCase
+ */
+export function splitToList(str: string) {
+  let list = [properCase(str)];
+  const engList = str.split(",");
+  if (engList.length > 1) {
+    list = engList.map((el) => properCase(el.trim()));
+  }
+
+  return list;
+}
+
+/**
  * Returns a list of choices which includes the right answer
  */
 export function createEnglishChoices<T extends { english: string }>(

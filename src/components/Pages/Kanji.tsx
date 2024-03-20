@@ -76,7 +76,7 @@ import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
 import "../../css/Kanji.css";
 import { Tooltip } from "../Form/Tooltip";
-import { oneFromList } from "../Games/KanjiGame";
+import { oneFromList, splitToList } from "../Games/KanjiGame";
 
 const KanjiMeta = {
   location: "/kanji/",
@@ -89,10 +89,10 @@ const KanjiMeta = {
  * @param vocabList
  */
 function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
-  let match: RawVocabulary[] = [];
+  let examples: RawVocabulary[] = [];
 
   // exact
-  match = vocabList.filter((v) => {
+  examples = vocabList.filter((v) => {
     const spelling = JapaneseText.parse(v).getSpelling();
     return (
       spelling.includes(term.kanji) &&
@@ -101,9 +101,9 @@ function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
   });
 
   // exact or verb
-  match =
-    match.length > 0
-      ? match
+  examples =
+    examples.length > 0
+      ? examples
       : vocabList.filter((v) => {
           const spelling = JapaneseText.parse(v).getSpelling();
           return (
@@ -114,9 +114,9 @@ function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
         });
 
   // exact or similar
-  match =
-    match.length > 0
-      ? match
+  examples =
+    examples.length > 0
+      ? examples
       : vocabList.filter((v) => {
           const spelling = JapaneseText.parse(v).getSpelling();
           return (
@@ -127,15 +127,15 @@ function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
         });
 
   // any matching
-  match =
-    match.length > 0
-      ? match
+  examples =
+    examples.length > 0
+      ? examples
       : vocabList.filter((v) => {
           const spelling = JapaneseText.parse(v).getSpelling();
           return spelling.includes(term.kanji);
         });
 
-  return match;
+  return examples;
 }
 
 export default function Kanji() {
@@ -671,6 +671,9 @@ export default function Kanji() {
     });
   }, [dispatch, log]);
 
+  const ex = useRef<{ el: RawVocabulary; en: string; jp: JSX.Element }[]>([]);
+  const prevUid = useRef<string | null>();
+
   if (recallGame === 0)
     return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (order.length < 1) return <NotReady addlStyle="main-panel" />;
@@ -678,12 +681,22 @@ export default function Kanji() {
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
   const term = getTerm(uid, kanjiList);
 
-  const match = getKanjiExamples(term, vocabList);
+  if (prevUid.current !== uid && vocabList.length > 0) {
+    const match = getKanjiExamples(term, vocabList);
+    prevUid.current = uid;
+    if (match.length > 0) {
+      const [first, ...theRest] = orderBy(match, (ex) => ex.japanese.length);
+      const examples = [first, ...shuffleArray(theRest)];
 
-  let examples: RawVocabulary[] = [];
-  if (match.length > 0) {
-    const [first, ...theRest] = orderBy(match, (ex) => ex.english.length);
-    examples = [first, ...shuffleArray(theRest)];
+      const maxShowEx = 3;
+      ex.current = examples.slice(0, maxShowEx).map((el) => ({
+        el,
+        en: oneFromList(el.english),
+        jp: JapaneseText.parse(el).toHTML(),
+      }));
+    } else {
+      ex.current = [];
+    }
   }
 
   // console.log(
@@ -709,8 +722,7 @@ export default function Kanji() {
 
   const term_reinforce = repetition[term.uid]?.rein === true;
 
-  const maxShowEx = 3;
-  const examplesEl = examples.slice(0, maxShowEx).map((el) => (
+  const examplesEl = ex.current.map(({ el, en, jp }) => (
     <div
       key={el.uid}
       className={classNames({
@@ -718,10 +730,8 @@ export default function Kanji() {
         invisible: !showEx,
       })}
     >
-      <div className="fs-3 mw-50 text-nowrap text-start">
-        {JapaneseText.parse(el).toHTML()}
-      </div>
-      <div className="pt-2 text-break text-end">{oneFromList(el.english)}</div>
+      <div className="fs-3 mw-50 text-nowrap text-start">{jp}</div>
+      <div className="pt-2 text-break text-end">{en}</div>
     </div>
     // <React.Fragment key={el.uid}>
     //   {el.english + " "}
@@ -795,13 +805,36 @@ export default function Kanji() {
                   </div>
                 </div>
                 <span
-                  className="fs-4 align-self-center clickable"
+                  className="lh-1 align-self-center clickable"
                   onClick={setStateFunction(
                     setShowMeaning,
                     (toggle) => !toggle
                   )}
                 >
-                  <span>{showMeaning ? term.english : "[Meaning]"}</span>
+                  {showMeaning ? (
+                    splitToList(term.english).map((el, i, { length }) => (
+                      <span
+                        key={el}
+                        className={classNames({
+                          "fs-1": i === 0,
+                          "fs-6 fw-light": i > 0,
+                        })}
+                      >
+                        {i === 1 ? <br /> : null}
+                        {i > 1 ? <span>{", "}</span> : null}
+                        <span
+                          className={classNames({ "text-nowrap": i === 0 })}
+                        >
+                          {el}
+                        </span>
+                        {i === 0 && length > 1 ? (
+                          <span className="fs-6">,</span>
+                        ) : null}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="fs-4">[Meaning]</span>
+                  )}
                 </span>
               </div>
               <div className="col choices d-flex flex-column justify-content-around text-center">
@@ -813,7 +846,7 @@ export default function Kanji() {
                   >
                     <span>{showOn ? term.on : "[On]"}</span>
                   </span>
-                )) || <span className="fs-4 pt-0">.</span>}
+                )) || <span className="fs-4 pt-0 invisible">.</span>}
                 {(term.kun && (
                   <span
                     className="fs-4 pt-2"
@@ -821,7 +854,7 @@ export default function Kanji() {
                   >
                     <span>{showKun ? term.kun : "[Kun]"}</span>
                   </span>
-                )) || <span className="fs-4 pt-2 mb-0">.</span>}
+                )) || <span className="fs-4 pt-2 mb-0 invisible">.</span>}
               </div>
             </div>
           </div>
