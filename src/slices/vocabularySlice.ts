@@ -11,7 +11,9 @@ import type {
   SourceVocabulary,
 } from "nmemonica";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -96,12 +98,26 @@ export const vocabularyInitState: VocabularyInitSlice = {
 export const getVocabulary = createAsyncThunk(
   "vocabulary/getVocabulary",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const version = state.version.vocabulary ?? "0";
+    const initVersion = ["0", "ce0a"];
+    let version = "0";
+    let tries = 0;
+    while (tries < 3 && initVersion.includes(version)) {
+      const state = thunkAPI.getState() as RootState;
+      version = state.version.vocabulary ?? "0";
 
-    // if (version === "0") {
-    //   console.error("fetching vocabulary: 0");
-    // }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+      tries++;
+    }
+
+    thunkAPI.dispatch(
+      logger(
+        `getVocabulary ${version}`,
+        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
+      )
+    );
 
     const value = (await fetch(dataServiceEndpoint + "/vocabulary.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },

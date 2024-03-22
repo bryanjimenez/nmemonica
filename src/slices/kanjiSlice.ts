@@ -2,7 +2,9 @@ import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import type { MetaDataObj, RawKanji, SourceKanji } from "nmemonica";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -78,12 +80,26 @@ export const kanjiInitState: KanjiInitSlice = {
 export const getKanji = createAsyncThunk(
   "kanji/getKanji",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const version = state.version.kanji ?? "0";
+    const initVersion = ["0", "c059"];
+    let version = "0";
+    let tries = 0;
+    while (tries < 3 && initVersion.includes(version)) {
+      const state = thunkAPI.getState() as RootState;
+      version = state.version.kanji ?? "0";
 
-    // if (version === "0") {
-    //   console.error("fetching kanji: 0");
-    // }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+      tries++;
+    }
+
+    thunkAPI.dispatch(
+      logger(
+        `getKanji ${version}`,
+        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
+      )
+    );
 
     const value = (await fetch(dataServiceEndpoint + "/kanji.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },

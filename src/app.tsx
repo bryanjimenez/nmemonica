@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import Console from "./components/Form/Console";
-import { KanjiGameMeta } from "./components/Games/KanjiGame";
+import { KanjiGameMeta, properCase } from "./components/Games/KanjiGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import { OppositesGameMeta } from "./components/Games/OppositesGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
@@ -29,10 +29,14 @@ import {
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
+import { clearKanji, getKanji } from "./slices/kanjiSlice";
+import { clearOpposites } from "./slices/oppositeSlice";
+import { clearParticleGame } from "./slices/particleSlice";
+import { clearPhrases, getPhrase } from "./slices/phraseSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
-import { getVersions } from "./slices/versionSlice";
-import "./css/styles.css";
+import { clearVersions, getVersions } from "./slices/versionSlice";
+import { clearVocabulary, getVocabulary } from "./slices/vocabularySlice";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const TermsAndConditions = lazy(
   () => import("./components/Terms/TermsAndConditions")
@@ -49,6 +53,7 @@ const KanjiGrid = lazy(() => import("./components/Games/KanjiGrid"));
 const ParticlesGame = lazy(() => import("./components/Games/ParticlesGame"));
 const Sheet = lazy(() => import("./components/Pages/Sheet"));
 const Settings = lazy(() => import("./components/Pages/Settings"));
+import "./css/styles.css";
 
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -85,13 +90,61 @@ export default function App() {
       swMessageSubscribe(swMessageHandler);
 
       void dispatch(serviceWorkerRegistered())
-        .then(() => {
+        .unwrap()
+        .then((swStatus) => {
+          dispatch(logger(`SW status: ${swStatus}`, DebugLevel.DEBUG));
+          if (swStatus === "activated") {
+            void dispatch(getVersions());
+          }
+
           // wait for old->new service worker change
           navigator.serviceWorker.addEventListener("controllerchange", () => {
-            void navigator.serviceWorker.ready.then(() => {
-              // get cached versions
-              void dispatch(getVersions());
-            });
+            void navigator.serviceWorker.ready
+              .then(() => {
+                dispatch(logger(`SW controllerchange`, DebugLevel.DEBUG));
+
+                dispatch(clearVersions());
+
+                // clear versions
+                return dispatch(getVersions()).then(() =>
+                  Promise.all([
+                    dispatch(clearPhrases()),
+                    dispatch(clearParticleGame()),
+                    dispatch(clearVocabulary()),
+                    dispatch(clearOpposites()),
+                    dispatch(clearKanji()),
+                  ])
+                );
+              })
+              .then(() =>
+                // get cached versions
+                Promise.all([
+                  dispatch(getPhrase()).unwrap(),
+                  dispatch(getVocabulary()).unwrap(),
+                  dispatch(getKanji()).unwrap(),
+                ])
+              )
+              .then(([phrase, vocabulary, kanji]) => {
+                const dataset = { phrase, vocabulary, kanji };
+
+                for (const k in dataset) {
+                  const name = k as keyof typeof dataset;
+                  const { version } = dataset[name];
+                  if (version === "0") {
+                    dispatch(
+                      logger(
+                        `${properCase(k)} v:${version}`,
+                        version === "0" ? DebugLevel.ERROR : DebugLevel.DEBUG
+                      )
+                    );
+                  }
+                }
+              })
+              .catch((e) => {
+                if (e instanceof Error) {
+                  dispatch(logger(e.message, DebugLevel.ERROR));
+                }
+              });
           });
         })
         .catch((e: Error) => {

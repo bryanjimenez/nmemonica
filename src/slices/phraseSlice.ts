@@ -179,13 +179,28 @@ export function buildPhraseArray<T extends SourcePhrase>(
 export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
     // TODO: rename state.phrases -> state.phrase
-    const version = state.version.phrases ?? "0";
+    const initVersion = ["0", "0ee3"];
+    let version = "0";
+    let tries = 0;
+    while (tries < 3 && initVersion.includes(version)) {
+      const state = thunkAPI.getState() as RootState;
+      version = state.version.phrases ?? "0";
 
-    // if (version === "0") {
-    //   console.error("fetching phrase: 0");
-    // }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+      tries++;
+    }
+
+    thunkAPI.dispatch(
+      logger(
+        `getPhrase ${version}`,
+        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
+      )
+    );
+
     const jsonValue = (await fetch(dataServiceEndpoint + "/phrases.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
       credentials: "include",

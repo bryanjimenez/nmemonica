@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+import { logger } from "./globalSlice";
+import { DebugLevel } from "./settingHelper";
 import { dataServiceEndpoint } from "../../environment.development";
 import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
 
@@ -26,7 +28,9 @@ const initialState: VersionInitSlice = {
  */
 export const getVersions = createAsyncThunk(
   "version/getVersions",
-  async (_arg, _thunkAPI) => {
+  async (_arg, thunkAPI) => {
+    thunkAPI.dispatch(logger("getVersions", DebugLevel.WARN));
+
     return fetch(dataServiceEndpoint + "/cache.json", {
       credentials: "include",
     }).then((res) => res.json());
