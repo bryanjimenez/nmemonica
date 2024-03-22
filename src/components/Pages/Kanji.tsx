@@ -29,6 +29,7 @@ import {
   updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { isKatakana } from "../../helper/kanaHelper";
 import {
   getPercentOverdue,
   recallDebugLogHelper,
@@ -90,6 +91,11 @@ const KanjiMeta = {
  */
 function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
   let examples: RawVocabulary[] = [];
+
+  // Radicals that are just katakana don't need examples;
+  if (isKatakana(term.kanji) && term.tags.includes("Radical")) {
+    return [];
+  }
 
   // exact
   examples = vocabList.filter((v) => {
