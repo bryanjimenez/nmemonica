@@ -20,6 +20,7 @@ export default function rspackConfig(
   /** @type string[] */ argv
 ) {
   return {
+    context: __dirname,
     entry: {
       main: "./src/index.tsx",
       sw: {
@@ -32,8 +33,46 @@ export default function rspackConfig(
       path: path.resolve(__dirname, "dist"),
     },
 
-    // FIXME: process.env.SW_VERSION etc replace breaks because of devtool in dev
-    devtool: false,
+    resolve: {
+      // solution for
+      // 'npm link ../child-module'
+      // with peerDependency
+      modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
+
+      extensions: ["...", ".js", ".ts", ".tsx"],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(png|svg|jpe?g|gif)$/i,
+          type: "asset/resource",
+        },
+        {
+          test: /\.(jsx?|tsx?)$/,
+          use: [
+            {
+              loader: "builtin:swc-loader",
+              options: {
+                sourceMap: true,
+                jsc: {
+                  parser: {
+                    syntax: "typescript",
+                  },
+                },
+                env: {
+                  targets: [
+                    "chrome >= 87",
+                    "edge >= 88",
+                    "firefox >= 78",
+                    "safari >= 14",
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
 
     plugins: [
       // replacements in *code* (strings need "")
@@ -43,31 +82,8 @@ export default function rspackConfig(
 
       // adds cache files to sw.js
       serviceWorkerCacheHelperPlugin,
-    ],
 
-    // solution for
-    // 'npm link ../child-module'
-    // with peerDependency
-    resolve: {
-      modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
-    },
-
-    module: {
-      rules: [
-        // {
-        //   test: /\.css$/i,
-        //   type: "css", // this is enabled by default for .css, so you don't need to specify it
-        // },
-        {
-          test: /\.(png|svg|jpe?g|gif)$/i,
-          type: "asset/resource",
-        },
-      ],
-    },
-
-    optimization: {
-      // chunkIds: "deterministic",
-      //   minimize: false,
-    },
+      new rspack.ProgressPlugin({}),
+    ].filter(Boolean),
   };
 }

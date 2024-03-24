@@ -1,6 +1,6 @@
 //@ts-check
 import * as fs from "node:fs";
-import { /* type */ Compiler, Compilation } from "@rspack/core";
+// import { /* type */ Compiler, Compilation } from "@rspack/core";
 import ts from "typescript";
 
 // https://webpack.js.org/contribute/writing-a-plugin/

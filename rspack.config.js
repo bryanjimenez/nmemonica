@@ -1,6 +1,6 @@
-//@ts-check
 import fs from "node:fs";
 import rspack from "@rspack/core";
+import refreshPlugin from "@rspack/plugin-react-refresh";
 import path, { sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
@@ -13,8 +13,7 @@ import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
 //@ts-expect-error js instead of ts file
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
-// https://www.rspack.dev/config/devtool.html
-// https://www.rspack.dev/guide/migrate-from-webpack.html
+const isDev = process.env.NODE_ENV === "development";
 
 // mimic CommonJS variables -- not needed if using CommonJS
 const __filename = fileURLToPath(import.meta.url);
@@ -30,9 +29,12 @@ export default function rspackConfig(
     ca.createServer();
   }
 
-  const appVersion = JSON.parse(fs.readFileSync('package.json','utf-8')).version;
+  const appVersion = JSON.parse(
+    fs.readFileSync("package.json", "utf-8")
+  ).version;
 
   return {
+    context: __dirname,
     entry: {
       main: "./src/index.tsx",
       ...(isProduction
@@ -51,7 +53,71 @@ export default function rspackConfig(
       path: path.resolve(__dirname, "dist"),
     },
 
-    devtool: isProduction ? false : "eval-cheap-module-source-map",
+    // devtool: isProduction ? false : "eval-cheap-module-source-map",
+    resolve: {
+      // solution for
+      // 'npm link ../child-module'
+      // with peerDependency
+      modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
+
+      extensions: ["...", ".ts", ".tsx"],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(png|svg|jpe?g|gif)$/i,
+          type: "asset/resource",
+        },
+        ...(isProduction
+          ? [
+              {
+                // https://rspack.org/guide/loader.html#using-a-custom-loader
+                test: /\.(jsx?|tsx?)$/i,
+                use: (/** @type unknown*/ _info) => ({
+                  loader: "./environment-dep-replace.cjs",
+                  options: {
+                    loaderOptionParam: "paramValue",
+                  },
+                }),
+              },
+            ]
+          : [
+              /** in dev don't replace dependencies */
+            ]),
+        {
+          test: /\.(jsx?|tsx?)$/,
+          use: [
+            {
+              loader: "builtin:swc-loader",
+              options: {
+                sourceMap: true,
+                jsc: {
+                  parser: {
+                    syntax: "typescript",
+                    tsx: true,
+                  },
+                  transform: {
+                    react: {
+                      runtime: "automatic",
+                      development: isDev,
+                      refresh: isDev,
+                    },
+                  },
+                },
+                env: {
+                  targets: [
+                    "chrome >= 87",
+                    "edge >= 88",
+                    "firefox >= 78",
+                    "safari >= 14",
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
 
     plugins: [
       // copy static site files to dist
@@ -83,6 +149,7 @@ export default function rspackConfig(
 
       // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
+        // "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
         "process.env.APP_VERSION": `"${appVersion}"`,
         "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`, // only in env.development
       }),
@@ -93,47 +160,10 @@ export default function rspackConfig(
         : [
             /** is ran from rspack.config.sw.js */
           ]),
-    ],
 
-    // solution for
-    // 'npm link ../child-module'
-    // with peerDependency
-    resolve: {
-      modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
-    },
-
-    module: {
-      rules: [
-        {
-          test: /\.css$/i,
-          type: "css", // this is enabled by default for .css, so you don't need to specify it
-        },
-        {
-          test: /\.(png|svg|jpe?g|gif)$/i,
-          type: "asset/resource",
-        },
-        ...(isProduction
-          ? [
-              {
-                // https://rspack.org/guide/loader.html#using-a-custom-loader
-                test: /\.(jsx?|tsx?)$/i,
-                use: (/** @type unknown*/ _info) => ({
-                  loader: "./environment-dep-replace.cjs",
-                  options: {
-                    loaderOptionParam: "paramValue",
-                  },
-                }),
-              },
-            ]
-          : [
-              /** in dev don't replace dependencies */
-            ]),
-      ],
-    },
-
-    optimization: {
-      chunkIds: "deterministic",
-    },
+      new rspack.ProgressPlugin({}),
+      isDev ? new refreshPlugin() : null,
+    ].filter(Boolean),
 
     devServer: {
       server: {
