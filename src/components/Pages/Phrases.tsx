@@ -281,10 +281,10 @@ export default function Phrases() {
 
   const { order, recallGame } = useMemo(() => {
     const repetition = metadata.current;
-    if (filteredPhrases.length === 0) return { order: [] };
+    if (filteredPhrases.length === 0) return { order: [], recallGame: -1 };
 
     let newOrder: number[];
-    let recallGame: number | undefined;
+    let recallGame = -1;
     switch (sortMethodREF.current) {
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredPhrases, repetition);

@@ -274,10 +274,10 @@ export default function Kanji() {
   ]);
 
   const { order, recallGame } = useMemo(() => {
-    if (filteredTerms.length === 0) return { order: [] };
+    if (filteredTerms.length === 0) return { order: [], recallGame: -1 };
 
     let newOrder: number[];
-    let recallGame: number | undefined;
+    let recallGame = -1;
     switch (sortMethodREF.current) {
       case TermSortBy.DIFFICULTY:
         newOrder = difficultyOrder(filteredTerms, metadata.current);
@@ -498,7 +498,7 @@ export default function Kanji() {
         spaceRepUpdated = Promise.resolve();
       }
 
-      if (recallGame && recallGame > 0 && selectedIndex === recallGame + 1) {
+      if (recallGame > 0 && selectedIndex === recallGame + 1) {
         // just finished recall game
         dispatch(logger("No more pending items", DebugLevel.DEBUG));
       }

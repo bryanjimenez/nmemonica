@@ -315,12 +315,12 @@ export default function Vocabulary() {
     jbare,
     recallGame,
   } = useMemo(() => {
-    if (filteredVocab.length === 0) return { newOrder: [] };
+    if (filteredVocab.length === 0) return { newOrder: [], recallGame: -1 };
 
     let newOrder: number[] = [];
     let jOrder: undefined | { uid: string; label: string; idx: number }[];
     let eOrder: undefined | { uid: string; label: string; idx: number }[];
-    let recallGame: number | undefined;
+    let recallGame = -1;
     switch (sortMethodREF.current) {
       case TermSortBy.RANDOM:
         newOrder = randomOrder(filteredVocab);
