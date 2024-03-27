@@ -46,6 +46,7 @@ import { getLastViewCounts } from "../../helper/statsHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch, RootState } from "../../slices";
@@ -142,6 +143,20 @@ function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
         });
 
   return examples;
+}
+
+function buildGameActionsHandler(
+  gotoNextSlide: () => void,
+  gotoPrev: () => void
+) {
+  return function gameActionHandler(direction: string) {
+    if (direction === "left") {
+      gotoNextSlide();
+    } else if (direction === "right") {
+      gotoPrev();
+    }
+    return Promise.resolve();
+  };
 }
 
 export default function Kanji() {
@@ -504,6 +519,16 @@ export default function Kanji() {
     setLastNext(Date.now());
     setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext]);
+
+  const gameActionHandler = buildGameActionsHandler(gotoNextSlide, gotoPrev);
+
+  useKeyboardActions(
+    gameActionHandler,
+    () => {
+      /** no English/Japanse flipping */
+    }
+    // timedPlayAnswerHandlerWrapper
+  );
 
   const swipeActionHandler = useCallback(
     (direction: string) => {
