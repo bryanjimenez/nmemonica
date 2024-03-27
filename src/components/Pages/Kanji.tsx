@@ -632,6 +632,10 @@ export default function Kanji() {
   const wasReviewed = metadata.current[uid]?.lastReview;
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+  const wasViewed = metadata.current[uid]?.lastView;
+  const viewedToday = wasViewed !== undefined && daysSince(wasViewed) === 0;
+  /** Item reviewed in current game */
+  const alreadyReviewed = recallGame > 0 && viewedToday;
 
   const revNotification = recallNotificationHelper(
     metadata.current[uid]?.daysBetweenReviews,
@@ -640,7 +644,12 @@ export default function Kanji() {
 
   let page = (
     <React.Fragment>
-      <div className="kanji main-panel h-100">
+      <div
+        className={classNames({
+          "kanji main-panel h-100": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <div ref={refs.setReference} />
         <div
           ref={refs.setFloating}
@@ -719,7 +728,7 @@ export default function Kanji() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies,
+          "disabled-color": !cookies || alreadyReviewed,
         })}
       >
         <div className="row opts-max-h">
@@ -773,7 +782,12 @@ export default function Kanji() {
           </div>
         </div>
       </div>
-      <div className="progress-line flex-shrink-1">
+      <div
+        className={classNames({
+          "progress-line flex-shrink-1": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <LinearProgress
           variant="determinate"
           value={progress}

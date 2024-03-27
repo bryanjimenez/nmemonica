@@ -650,6 +650,10 @@ export default function Phrases() {
   const wasReviewed = metadata.current[uid]?.lastReview;
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+  const wasViewed = metadata.current[uid]?.lastView;
+  const viewedToday = wasViewed !== undefined && daysSince(wasViewed) === 0;
+  /** Item reviewed in current game */
+  const alreadyReviewed = recallGame > 0 && viewedToday;
 
   const revNotification = recallNotificationHelper(
     metadata.current[uid]?.daysBetweenReviews,
@@ -658,7 +662,12 @@ export default function Phrases() {
 
   return (
     <React.Fragment>
-      <div className="phrases main-panel h-100">
+      <div
+        className={classNames({
+          "phrases main-panel h-100": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -703,7 +712,7 @@ export default function Phrases() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies,
+          "disabled-color": !cookies || alreadyReviewed,
         })}
       >
         <div className="row opts-max-h">
@@ -785,7 +794,12 @@ export default function Phrases() {
           </div>
         </div>
       </div>
-      <div className="progress-line flex-shrink-1">
+      <div
+        className={classNames({
+          "progress-line flex-shrink-1": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <LinearProgress
           variant="determinate"
           // variant={tpAnimation === null ? "determinate" : "buffer"}

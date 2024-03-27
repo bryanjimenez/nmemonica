@@ -691,8 +691,18 @@ export default function Vocabulary() {
   // }
 
   const getInnerPage = useCallback(
-    (uid: string, vocabulary: RawVocabulary, isVerb: boolean) => (
-      <div className="vocabulary main-panel h-100">
+    (
+      uid: string,
+      vocabulary: RawVocabulary,
+      isVerb: boolean,
+      alreadyReviewed: boolean
+    ) => (
+      <div
+        className={classNames({
+          "vocabulary main-panel h-100": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -743,12 +753,13 @@ export default function Vocabulary() {
       isHintable: boolean,
       vocabulary_reinforce: boolean,
       reviewedToday: boolean,
+      alreadyReviewed: boolean,
       revNotification?: string
     ) => (
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies,
+          "disabled-color": !cookies || alreadyReviewed,
         })}
       >
         <div className="row opts-max-h">
@@ -982,6 +993,10 @@ export default function Vocabulary() {
   const wasReviewed = metadata.current[uid]?.lastReview;
   const reviewedToday =
     wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+  const wasViewed = metadata.current[uid]?.lastView;
+  const viewedToday = wasViewed !== undefined && daysSince(wasViewed) === 0;
+  /** Item reviewed in current game */
+  const alreadyReviewed = recallGame > 0 && viewedToday;
 
   const revNotification = recallNotificationHelper(
     metadata.current[uid]?.daysBetweenReviews,
@@ -990,7 +1005,10 @@ export default function Vocabulary() {
 
   const pageLinearProgress = (
     <div
-      className="progress-line flex-shrink-1"
+      className={classNames({
+        "progress-line flex-shrink-1": true,
+        "disabled-color": alreadyReviewed,
+      })}
       onClick={() => {
         if (sortMethodREF.current === TermSortBy.ALPHABETIC) {
           const delayTime = 4000;
@@ -1021,7 +1039,7 @@ export default function Vocabulary() {
   if (!showPageMultiOrderScroller) {
     page = (
       <React.Fragment>
-        {getInnerPage(uid, vocabulary, isVerb)}
+        {getInnerPage(uid, vocabulary, isVerb, alreadyReviewed)}
         {pageOptionBar(
           uid,
           vocabulary,
@@ -1030,6 +1048,7 @@ export default function Vocabulary() {
           isHintable,
           vocabulary_reinforce,
           reviewedToday,
+          alreadyReviewed,
           revNotification
         )}
         {pageLinearProgress}
@@ -1038,7 +1057,7 @@ export default function Vocabulary() {
   } else {
     page = (
       <React.Fragment>
-        {getInnerPage(uid, vocabulary, isVerb)}
+        {getInnerPage(uid, vocabulary, isVerb, alreadyReviewed)}
         {pageMultiOrderScroller}
       </React.Fragment>
     );
