@@ -9,7 +9,6 @@ export interface VersionInitSlice {
   vocabulary?: string;
   phrases?: string;
   kanji?: string;
-  opposites?: string;
   particles?: string;
   suffixes?: string;
 }
@@ -18,7 +17,6 @@ const initialState: VersionInitSlice = {
   vocabulary: undefined,
   phrases: undefined,
   kanji: undefined,
-  opposites: undefined,
   particles: undefined,
   suffixes: undefined,
 };
@@ -59,7 +57,6 @@ const versionSlice = createSlice({
       state.vocabulary = undefined;
       state.phrases = undefined;
       state.kanji = undefined;
-      state.opposites = undefined;
       state.particles = undefined;
       state.suffixes = undefined;
     },
@@ -77,12 +74,11 @@ const versionSlice = createSlice({
     builder.addCase(
       getVersions.fulfilled,
       (state, action: { payload: VersionInitSlice }) => {
-        const { vocabulary, kanji, phrases, opposites, particles, suffixes } =
+        const { vocabulary, kanji, phrases, particles, suffixes } =
           action.payload;
         state.kanji = kanji;
         state.vocabulary = vocabulary;
         state.phrases = phrases;
-        state.opposites = opposites;
         state.particles = particles;
         state.suffixes = suffixes;
       }

@@ -44,6 +44,20 @@ This game will display a character (kana) or the corresponding pronunciation and
 URL: [/#/opposites](https://bryanjimenez.github.io/nmemonica/#/opposites)  
 This is a multiple choice game. A term is displayed and several options given. The goal is to choose the opposite term from the options.
 
+Data for this game comes from the Vocabulary dataset. To add additional game entries in the Vocabulary dataset under the Opposites column add the uid of the term that is opposite word to the currently selected term.
+
+> NOTE: The term's uid is generated using the `md5` formula.
+
+For example:
+
+|        | Japanese       | English  | Opposite   |
+| ------ | -------------- | -------- | -----------|
+| ...
+| **A6** | にんげん\n人間   | Human    | `=md5(A8)` |
+| ...
+| **A8** | ばけもの\n化け物 | Monster  | `=md5(A6)` |
+
+
 ### Vocabulary
 URL: [/#/vocabulary](https://bryanjimenez.github.io/nmemonica/#/vocabulary)  
 This page will display a list of pairs of vocabulary words (English + Japanese) as if seen on a deck of cards. The order and filtering of the list can be configured from the settings page (under Vocabulary). In touch screen devices swiping horizontally will move through out the deck and vertically will play the pronunciation of the word.
