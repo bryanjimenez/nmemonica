@@ -66,12 +66,12 @@ function prepareGame(
   kanjiList: RawKanji[],
   exampleList: RawVocabulary[]
 ) {
-  const { uid, kanji: japanese, on, kun } = kanji;
+  const { uid, kanji: japanese, pronounce } = kanji;
 
   const choices = createEnglishChoices(kanji, kanjiList, exampleList);
 
   /** Max number of examples to show */
-  const exMax = on && kun ? 2 : on || kun ? 3 : 5;
+  const exMax = pronounce ? 2 : 5;
   /** Examples sorted and limited */
   const displayEx = orderBy(
     exampleList,
@@ -86,9 +86,9 @@ function prepareGame(
           <div className="position-absolute w-100">
             {correct && (
               <div className="d-flex flex-column fs-4">
-                {on && (
+                {pronounce && (
                   <div
-                    key={on}
+                    key={pronounce}
                     className={classNames({
                       "d-flex justify-content-between": true,
                       invisible: !correct,
@@ -99,23 +99,7 @@ function prepareGame(
                         japanese: "おんよみ\n音読み",
                       }).toHTML()}
                     </div>
-                    <div className="fs-5">{on}</div>
-                  </div>
-                )}
-                {kun && (
-                  <div
-                    key={kun}
-                    className={classNames({
-                      "d-flex justify-content-between": true,
-                      invisible: !correct,
-                    })}
-                  >
-                    <div className="fs-6">
-                      {JapaneseText.parse({
-                        japanese: "くんよみ\n訓読み",
-                      }).toHTML()}
-                    </div>
-                    <div className="fs-5">{kun}</div>
+                    <div className="fs-5">{pronounce}</div>
                   </div>
                 )}
 

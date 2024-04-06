@@ -60,11 +60,9 @@ declare module "nmemonica" {
     uid: string;
 
     kanji: string;
-    on?: string;
-    kun?: string;
+    pronounce?: string;
     english: string;
 
-    grp?: string;
     tags: string[];
 
     /** Radical info (example Kanji) */

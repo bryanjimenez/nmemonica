@@ -263,7 +263,6 @@ export default function Kanji() {
 
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
-  const [showKun, setShowKun] = useState(false);
   const [showEx, setShowEx] = useState(false);
   const [showMeaning, setShowMeaning] = useState(false);
 
@@ -568,7 +567,6 @@ export default function Kanji() {
         gotoPrev();
       } else {
         setShowOn(true);
-        setShowKun(true);
         setShowEx(true);
         setShowMeaning(true);
 
@@ -706,7 +704,6 @@ export default function Kanji() {
       accuracyModifiedRef.current = undefined;
 
       setShowOn(false);
-      setShowKun(false);
       setShowEx(false);
       setShowMeaning(false);
     }
@@ -773,11 +770,15 @@ export default function Kanji() {
   // );
 
   const aGroupLevel =
-    term.tags.find(
-      (t) => activeTags.includes(t) && isGroupLevel(t) && term.grp !== t
-    ) ??
-    term.tags.find((t) => isGroupLevel(t) && term.grp !== t) ??
-    "";
+    term.tags.find((t) => activeTags.includes(t) && isGroupLevel(t)) ??
+    term.tags.find((t) => isGroupLevel(t)) ??
+    null;
+  const grp =
+    aGroupLevel !== null
+      ? term.tags.find((t) => t !== aGroupLevel) ?? null
+      : term.tags.length > 0
+        ? term.tags[0]
+        : null;
 
   const term_reinforce = repetition[term.uid]?.rein === true;
 
@@ -832,7 +833,7 @@ export default function Kanji() {
           className="grp-info"
         >
           <div>
-            <div>{term.grp}</div>
+            <div className="text-nowrap">{grp}</div>
             <div>{aGroupLevel}</div>
           </div>
         </div>
@@ -898,22 +899,14 @@ export default function Kanji() {
               </div>
               <div className="col choices d-flex flex-column justify-content-around text-center">
                 <div className="d-flex flex-column fs-4">{examplesEl}</div>
-                {(term.on && (
+                {(term.pronounce && (
                   <span
                     className="fs-4 pt-0"
                     onClick={setStateFunction(setShowOn, (toggle) => !toggle)}
                   >
-                    <span>{showOn ? term.on : "[On]"}</span>
+                    <span>{showOn ? term.pronounce : "[Pronounce]"}</span>
                   </span>
                 )) || <span className="fs-4 pt-0 invisible">.</span>}
-                {(term.kun && (
-                  <span
-                    className="fs-4 pt-2"
-                    onClick={setStateFunction(setShowKun, (toggle) => !toggle)}
-                  >
-                    <span>{showKun ? term.kun : "[Kun]"}</span>
-                  </span>
-                )) || <span className="fs-4 pt-2 mb-0 invisible">.</span>}
               </div>
             </div>
           </div>
