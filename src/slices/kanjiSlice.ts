@@ -503,11 +503,9 @@ const kanjiSlice = createSlice({
     builder.addCase(getKanji.fulfilled, (state, action) => {
       const { value: v, version } = action.payload;
       const kanjiArr: RawKanji[] = Object.keys(v).map((k) => {
-        const { tags } = getPropsFromTags(v[k].tag) as { tags: string[] };
-
-        const isRadical =
-          v[k].grp?.toLowerCase() === "radical" ||
-          tags.find((t) => t.toLowerCase() === "radical");
+        const { tags, radicalExample, phoneticKanji } = getPropsFromTags(
+          v[k].tag
+        );
 
         return {
           ...v[k],
@@ -518,9 +516,8 @@ const kanjiSlice = createSlice({
           // Derived from tag
           tags,
 
-          radical: isRadical
-            ? { example: v[k].radex?.split("") ?? [] }
-            : undefined,
+          radical: radicalExample ? { example: radicalExample } : undefined,
+          phoneticKanji,
         };
       });
 

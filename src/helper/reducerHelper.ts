@@ -1,15 +1,23 @@
 import type { GroupListMap, RawVocabulary, SourceVocabulary } from "nmemonica";
 
 export function getPropsFromTags(tag: string | undefined) {
-  if (tag === undefined) return { tags: [] };
+  if (tag === undefined) return { tags: [] as string[] };
 
   const tagList = tag.split(/[\n;]+/);
-  const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
-  const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
+  const h = "[\u3041-\u309F]{1,4}"; //  hiragana particle
+  const commonK = "\u4E00-\u9FAF"; //   kanji
+  const rareK = "\u3400-\u4DBF"; //     kanji
+  const hasParticle = new RegExp("[pP]:" + h + "(?:," + h + ")*");
   const hasInverse = new RegExp("inv:[a-z0-9]{32}");
   const isIntransitive = new RegExp("intr:[a-z0-9]{32}");
   const isAdjective = new RegExp("(i|na)-adj");
   const nonWhiteSpace = new RegExp(/\S/);
+  const hasPhoneticKanji = new RegExp(
+    "[pP]:[" + commonK + rareK + "][+][\u3041-\u309F]+"
+  );
+  const hasRadicalExample = new RegExp(
+    "[eE]:[" + commonK + rareK + "]" + "(?:,[" + commonK + rareK + "])*"
+  );
 
   let remainingTags: string[] = [];
   let particles: string[] = [];
@@ -20,6 +28,8 @@ export function getPropsFromTags(tag: string | undefined) {
   let intr: true | undefined;
   let trans: string | undefined;
   let adj: string | undefined;
+  let phoneticKanji: { k: string; p: string } | undefined;
+  let radicalExample: string[] | undefined;
 
   tagList.forEach((tagWSpace: string) => {
     const t = tagWSpace.trim();
@@ -53,6 +63,17 @@ export function getPropsFromTags(tag: string | undefined) {
         inverse = t.split(":")[1];
         break;
 
+      // Kanji
+      case hasPhoneticKanji.test(t) && t:
+        const [_p, ktag] = t.split(":");
+        const [k, p] = ktag.split("+");
+        phoneticKanji = { k, p };
+        break;
+      case hasRadicalExample.test(t) && t:
+        const [_e, example] = t.split(":");
+        radicalExample = example.split(",");
+        break;
+
       default:
         if (t && nonWhiteSpace.test(t)) {
           // don't add empty whitespace
@@ -78,6 +99,10 @@ export function getPropsFromTags(tag: string | undefined) {
     // Phrases
     inverse,
     particles,
+
+    // Kanji
+    phoneticKanji,
+    radicalExample,
   };
 }
 

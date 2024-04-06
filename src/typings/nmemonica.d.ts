@@ -66,8 +66,6 @@ declare module "nmemonica" {
 
     grp?: string;
     tags: string[];
-    /** Radical shown in an example Kanji */
-    radex?: string;
 
     /** Radical info (example Kanji) */
     radical?: { example: string[] };
