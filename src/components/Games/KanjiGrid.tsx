@@ -57,7 +57,7 @@ function prepareGame(
   [currExmpl, nextExmpl]: [string, () => void]
 ) {
   const { english, uid } = kanji;
-  const isShortened = currExmpl !== english;
+  const isShortened = currExmpl.toLowerCase() !== english.toLowerCase();
 
   const q: GameQuestion = {
     // english, not needed, shown as a choice
