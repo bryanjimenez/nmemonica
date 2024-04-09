@@ -60,7 +60,11 @@ import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch, RootState } from "../../slices";
 import { fetchAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
-import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
+import {
+  DebugLevel,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import {
   addFrequencyWord,
   flipVocabularyPracticeSide,
@@ -273,7 +277,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 2 (${
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -335,7 +339,10 @@ export default function Vocabulary() {
         newOrder = randomOrder(filteredVocab);
         setLog((l) => [
           ...l,
-          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+          {
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            lvl: DebugLevel.DEBUG,
+          },
         ]);
 
         break;
@@ -354,7 +361,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -392,7 +399,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 1 (${newOrder.length})`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -405,7 +412,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Difficulty (${newOrder.length})`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -436,7 +443,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Alphabetic (${newOrder.length})`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);

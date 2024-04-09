@@ -21,10 +21,10 @@ export const TermFilterBy = Object.freeze({
 export const TermSortBy = Object.freeze({
   RANDOM: 0,
   ALPHABETIC: 1,
-  VIEW_DATE: 2,
-  GAME: 3,
-  DIFFICULTY: 4,
-  RECALL: 5,
+  DIFFICULTY: 2,
+  VIEW_DATE: 3,
+  RECALL: 4,
+  GAME: 5,
 });
 
 // enum
@@ -37,10 +37,10 @@ export const KanaType = Object.freeze({
 export const TermSortByLabel = [
   "Randomized",
   "Alphabetic",
-  "Staleness",
-  "Space Rep",
   "Difficulty",
-  "Recall",
+  "Viewed Date",
+  "Recall Interval",
+  "OLD Space Rep",
 ];
 
 /**

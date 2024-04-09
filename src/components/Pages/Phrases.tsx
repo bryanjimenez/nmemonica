@@ -66,7 +66,11 @@ import {
   togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
-import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
+import {
+  DebugLevel,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
@@ -242,7 +246,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 2 (${
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -310,7 +314,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -339,7 +343,10 @@ export default function Phrases() {
         newOrder = randomOrder(filteredPhrases);
         setLog((l) => [
           ...l,
-          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+          {
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            lvl: DebugLevel.DEBUG,
+          },
         ]);
         break;
     }
