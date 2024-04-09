@@ -196,12 +196,21 @@ export default function Phrases() {
     switch (sortMethodREF.current) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
-        const { failed, overdue, overLimit } = spaceRepetitionOrder(
+        const {
+          failed,
+          overdue,
+          overLimit: leftOver,
+        } = spaceRepetitionOrder(
           filtered,
           metadata.current,
           repMinItemReviewREF.current
         );
-        const pending = [...failed, ...overdue];
+        // if *just one* overLimit then add to pending now
+        const overLimit = leftOver.length === 1 ? [] : leftOver;
+        const pending =
+          leftOver.length === 1
+            ? [...failed, ...overdue, ...leftOver]
+            : [...failed, ...overdue];
 
         if (pending.length > 0 && filtered.length !== pending.length) {
           // reduce filtered
