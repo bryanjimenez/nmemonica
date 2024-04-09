@@ -13,7 +13,10 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { dataServiceEndpoint } from "../../environment.development";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
   removeAction,
@@ -38,7 +41,7 @@ export interface KanjiInitSlice {
     difficultyThreshold: number;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
-    spaRepMaxReviewItem: number;
+    spaRepMaxReviewItem?: number;
     activeGroup: string[];
     activeTags: string[];
     includeNew: boolean;
@@ -62,7 +65,7 @@ export const kanjiInitState: KanjiInitSlice = {
     difficultyThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
-    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
+    spaRepMaxReviewItem: undefined,
     activeGroup: [],
     activeTags: [],
     includeNew: true,
@@ -371,16 +374,21 @@ const kanjiSlice = createSlice({
      * Space Repetition maximum item review
      * per session
      */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
-      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+      const max = action.payload;
 
-      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
-        new Date(),
-        { kanji: state.setting },
-        "/kanji/",
-        "spaRepMaxReviewItem",
-        value
-      );
+      if (max === undefined) {
+        localStoreAttrDelete(new Date(), "/kanji/", "spaRepMaxReviewItem");
+        state.setting.spaRepMaxReviewItem = undefined;
+      } else {
+        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "spaRepMaxReviewItem",
+          Math.max(SR_MIN_REV_ITEMS, max)
+        );
+      }
     },
     setKanjiBtnN(state, action: { payload: number }) {
       const number = action.payload;

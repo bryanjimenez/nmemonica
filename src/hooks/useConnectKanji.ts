@@ -47,7 +47,7 @@ export function useConnectKanji() {
       number,
       number,
       boolean,
-      number,
+      number | undefined,
       boolean,
       boolean,
     ]

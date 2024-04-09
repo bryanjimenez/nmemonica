@@ -18,7 +18,10 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { dataServiceEndpoint } from "../../environment.development";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
   removeAction,
@@ -43,7 +46,7 @@ export interface PhraseInitSlice {
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
-    spaRepMaxReviewItem: number;
+    spaRepMaxReviewItem?: number;
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
@@ -65,7 +68,7 @@ export const phraseInitState: PhraseInitSlice = {
     reinforce: false,
     repTID: -1,
     repetition: {},
-    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
+    spaRepMaxReviewItem: undefined,
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
@@ -391,16 +394,21 @@ const phraseSlice = createSlice({
      * Space Repetition maximum item review
      * per session
      */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
-      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+      const max = action.payload;
 
-      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "spaRepMaxReviewItem",
-        value
-      );
+      if (max === undefined) {
+        localStoreAttrDelete(new Date(), "/phrases/", "spaRepMaxReviewItem");
+        state.setting.spaRepMaxReviewItem = undefined;
+      } else {
+        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+          new Date(),
+          { phrases: state.setting },
+          "/phrases/",
+          "spaRepMaxReviewItem",
+          Math.max(SR_MIN_REV_ITEMS, max)
+        );
+      }
     },
     setPhraseAccuracy: {
       reducer: (

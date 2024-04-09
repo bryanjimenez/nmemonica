@@ -41,7 +41,14 @@ export function useConnectPhrase() {
 
   const [r, ft, sm, rm, difficultyThreshold, spaRepMaxReviewItem] = useSelector<
     RootState,
-    [boolean, ValuesOf<typeof TermFilterBy>, number, boolean, number, number]
+    [
+      boolean,
+      ValuesOf<typeof TermFilterBy>,
+      number,
+      boolean,
+      number,
+      number | undefined,
+    ]
   >(({ phrases }: RootState) => {
     const {
       reinforce,

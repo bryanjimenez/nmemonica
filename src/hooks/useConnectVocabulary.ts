@@ -40,7 +40,7 @@ export function useConnectVocabulary() {
     includeReviewed,
   ] = useSelector<
     RootState,
-    [boolean, boolean, string, number, boolean, boolean]
+    [boolean, boolean, string, number | undefined, boolean, boolean]
   >(({ vocabulary }: RootState) => {
     const {
       englishSideUp,

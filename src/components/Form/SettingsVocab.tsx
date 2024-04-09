@@ -178,7 +178,7 @@ export default function SettingsVocab() {
             <PlusMinus
               label="Max review items "
               value={spaRepMaxReviewItem}
-              onChange={(value: number) => {
+              onChange={(value) => {
                 dispatch(setSpaRepMaxItemReview(value));
               }}
             />

@@ -23,7 +23,10 @@ import {
 } from "./settingHelper";
 import { dataServiceEndpoint } from "../../environment.development";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
   removeAction,
@@ -56,7 +59,7 @@ export interface VocabularyInitSlice {
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
-    spaRepMaxReviewItem: number;
+    spaRepMaxReviewItem?: number;
     activeGroup: string[];
     autoVerbView: boolean;
     verbColSplit: number;
@@ -82,7 +85,7 @@ export const vocabularyInitState: VocabularyInitSlice = {
     reinforce: false,
     repTID: -1,
     repetition: {},
-    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
+    spaRepMaxReviewItem: undefined,
     activeGroup: [],
     autoVerbView: false,
     verbColSplit: 0,
@@ -588,16 +591,21 @@ const vocabularySlice = createSlice({
      * Space Repetition maximum item review
      * per session
      */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
-      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+      const max = action.payload;
 
-      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "spaRepMaxReviewItem",
-        value
-      );
+      if (max === undefined) {
+        localStoreAttrDelete(new Date(), "/vocabulary/", "spaRepMaxReviewItem");
+        state.setting.spaRepMaxReviewItem = undefined;
+      } else {
+        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "spaRepMaxReviewItem",
+          Math.max(SR_MIN_REV_ITEMS, max)
+        );
+      }
     },
     setWordAccuracy: {
       reducer: (
