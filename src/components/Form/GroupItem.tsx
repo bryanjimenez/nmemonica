@@ -15,7 +15,7 @@ export function GroupItem(props: GroupItemProps) {
   const css = classNames({
     [String(props.addlStyle)]: props.addlStyle ? true : false,
     "p-0 px-2": true,
-    "font-weight-bold": props.active,
+    "fw-bold": props.active,
   });
 
   return (

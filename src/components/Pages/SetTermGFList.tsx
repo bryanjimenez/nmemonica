@@ -101,7 +101,7 @@ export function SetTermGFList(props: SetTermGFListProps) {
           return (
             <div key={g} className="mb-2">
               <span
-                className={classNames({ "font-weight-bold": grpActive })}
+                className={classNames({ "fw-bold": grpActive })}
                 onClick={() => props.toggleTermActiveGrp(g)}
               >
                 {g}
@@ -123,7 +123,7 @@ export function SetTermGFList(props: SetTermGFListProps) {
       </div>
       {cleanup.length > 0 && (
         <div className="mt-5 text-break">
-          <span className="font-weight-bold">Manual cleanup</span>
+          <span className="fw-bold">Manual cleanup</span>
           {cleanup.map((orphanUid, i) =>
             listItem(true, i, orphanUid, orphanUid, props.removeFrequencyTerm)
           )}
