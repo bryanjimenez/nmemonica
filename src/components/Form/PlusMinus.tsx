@@ -19,7 +19,7 @@ export default function PlusMinus(props: PlusMinusProps) {
   return (
     <div
       className={classNames({
-        "mb-3 d-flex flex-row justify-content-end": true,
+        "d-flex flex-row justify-content-end": true,
       })}
     >
       <div className="d-flex flex-column justify-content-center">

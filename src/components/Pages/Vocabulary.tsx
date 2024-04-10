@@ -1,4 +1,5 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
+import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import partition from "lodash/partition";
@@ -20,17 +21,20 @@ import {
   daysSince,
   spaceRepLog,
   timedPlayLog,
+  wasToday,
 } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getCacheUID,
   getTerm,
   getTermUID,
+  initGoalPending,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
   play,
   termFilterByType,
   toggleFuriganaSettingHelper,
+  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { verbToTargetForm } from "../../helper/JapaneseVerb";
@@ -50,7 +54,9 @@ import {
   randomOrder,
   spaceRepOrder,
 } from "../../helper/sortHelper";
+import { getLastViewCounts } from "../../helper/statsHelper";
 import { addParam } from "../../helper/urlHelper";
+import { useBlast } from "../../hooks/useBlast";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -157,6 +163,8 @@ export default function Vocabulary() {
     verbForm,
     repetition,
     spaRepMaxReviewItem,
+
+    viewGoal,
   } = useConnectVocabulary();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
@@ -166,11 +174,23 @@ export default function Vocabulary() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  const goalPending = useRef<number>(-1);
+  const [goalProgress, setGoalProgress] = useState<number | null>(null);
+
   useEffect(() => {
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
+
+    goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
+
+  const { blastElRef, anchorElRef, text, setText } = useBlast({
+    top: 10,
+    fontWeight: "normal",
+    fontSize: "xx-large",
+    color: amber[500],
+  });
 
   const { filteredVocab } = useMemo(() => {
     if (vocabList.length === 0) return { filteredVocab: [] };
@@ -591,6 +611,19 @@ export default function Vocabulary() {
       const vocabulary = getTerm(uid, filteredVocab, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
+      updateDailyGoal({
+        viewGoal,
+        msg: "Vocabulary Goal Reached!",
+        lastView: metadata.current[uid]?.lastView,
+        selectedIndex,
+        prevSelectedIndex: prevState.selectedIndex,
+        prevTimestamp: prevState.lastNext,
+        progressTotal: filteredVocab.length,
+        goalPending,
+        setGoalProgress,
+        setText,
+      });
+
       let spaceRepUpdated;
       if (
         metadata.current[uid]?.difficultyP &&
@@ -682,6 +715,9 @@ export default function Vocabulary() {
     filteredVocab,
     order,
     recallGame,
+
+    setText,
+    viewGoal,
   ]);
 
   // FIXME: implement error handling
@@ -719,6 +755,8 @@ export default function Vocabulary() {
           "disabled-color": alreadyReviewed,
         })}
       >
+        <div className="tooltip-anchor" ref={anchorElRef}></div>
+        <div ref={blastElRef}>{text}</div>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -757,6 +795,9 @@ export default function Vocabulary() {
       recacheAudio,
       showHint,
       wasPlayed,
+      anchorElRef,
+      blastElRef,
+      text,
     ]
   );
 
@@ -1006,11 +1047,8 @@ export default function Vocabulary() {
   const isHintable = showHint !== uid && englishSideUp ? hasJHint : hasEHint;
 
   const progress = ((selectedIndex + 1) / filteredVocab.length) * 100;
-  const wasReviewed = metadata.current[uid]?.lastReview;
-  const reviewedToday =
-    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
-  const wasViewed = metadata.current[uid]?.lastView;
-  const viewedToday = wasViewed !== undefined && daysSince(wasViewed) === 0;
+  const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
+  const viewedToday = wasToday(metadata.current[uid]?.lastView);
   /** Item reviewed in current game */
   const alreadyReviewed = recallGame > 0 && viewedToday;
 
@@ -1043,10 +1081,24 @@ export default function Vocabulary() {
       }}
     >
       <LinearProgress
-        variant={tpAnimation === null ? "determinate" : "buffer"}
-        value={tpAnimation === null ? progress : 0}
-        valueBuffer={tpAnimation ?? undefined}
-        color={vocabulary_reinforce ? "secondary" : "primary"}
+        // variant={tpAnimation === null ? "determinate" : "buffer"}
+        // value={tpAnimation === null ? progress : 0}
+        // valueBuffer={tpAnimation ?? undefined}
+        // color={vocabulary_reinforce ? "secondary" : "primary"}
+        variant={
+          goalProgress === null && tpAnimation === null
+            ? "determinate"
+            : "buffer"
+        }
+        value={goalProgress === null && tpAnimation === null ? progress : 0}
+        valueBuffer={tpAnimation ?? goalProgress ?? undefined}
+        color={
+          goalProgress === null
+            ? vocabulary_reinforce
+              ? "secondary"
+              : "primary"
+            : "warning"
+        }
       />
     </div>
   );

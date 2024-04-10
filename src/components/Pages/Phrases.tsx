@@ -1,4 +1,5 @@
 import { LinearProgress } from "@mui/material";
+import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
@@ -16,6 +17,7 @@ import { pronounceEndoint } from "../../../environment.development";
 import {
   daysSince,
   spaceRepLog,
+  wasToday,
   // timedPlayLog,
 } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
@@ -24,12 +26,14 @@ import {
   getCacheUID,
   getTerm,
   getTermUID,
+  initGoalPending,
   japaneseLabel,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
   // minimumTimeForTimedPlay,
   play,
   termFilterByType,
+  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
@@ -44,7 +48,9 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
+import { getLastViewCounts } from "../../helper/statsHelper";
 import { addParam } from "../../helper/urlHelper";
+import { useBlast } from "../../hooks/useBlast";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -135,6 +141,7 @@ export default function Phrases() {
     romajiActive,
     filterType: filterTypeREF,
     sortMethod: sortMethodREF,
+    viewGoal,
   } = useConnectPhrase();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
@@ -145,11 +152,23 @@ export default function Phrases() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  const goalPending = useRef<number>(-1);
+  const [goalProgress, setGoalProgress] = useState<number | null>(null);
+
   useEffect(() => {
     if (phraseList.length === 0) {
       void dispatch(getPhrase());
     }
+
+    goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
+
+  const { blastElRef, anchorElRef, text, setText } = useBlast({
+    top: 10,
+    fontWeight: "normal",
+    fontSize: "xx-large",
+    color: amber[500],
+  });
 
   const filteredPhrases = useMemo(() => {
     const firstRepObject = metadata.current;
@@ -463,6 +482,19 @@ export default function Phrases() {
 
       const p = getTerm(uid, filteredPhrases, phraseList);
 
+      updateDailyGoal({
+        viewGoal,
+        msg: "Phrase Goal Reached!",
+        lastView: metadata.current[uid]?.lastView,
+        selectedIndex,
+        prevSelectedIndex: prevState.selectedIndex,
+        prevTimestamp: prevState.lastNext,
+        progressTotal: filteredPhrases.length,
+        goalPending,
+        setGoalProgress,
+        setText,
+      });
+
       let spaceRepUpdated;
       if (metadata.current[uid]?.difficultyP && accuracyModifiedRef.current) {
         // when difficulty exists and accuracyP has been set
@@ -544,6 +576,8 @@ export default function Phrases() {
     filteredPhrases,
     order,
     recallGame,
+    setText,
+    viewGoal,
   ]);
 
   // Logger messages
@@ -663,11 +697,8 @@ export default function Phrases() {
   const romaji = phrase.romaji;
 
   const progress = ((selectedIndex + 1) / filteredPhrases.length) * 100;
-  const wasReviewed = metadata.current[uid]?.lastReview;
-  const reviewedToday =
-    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
-  const wasViewed = metadata.current[uid]?.lastView;
-  const viewedToday = wasViewed !== undefined && daysSince(wasViewed) === 0;
+  const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
+  const viewedToday = wasToday(metadata.current[uid]?.lastView);
   /** Item reviewed in current game */
   const alreadyReviewed = recallGame > 0 && viewedToday;
 
@@ -684,6 +715,8 @@ export default function Phrases() {
           "disabled-color": alreadyReviewed,
         })}
       >
+        <div className="tooltip-anchor" ref={anchorElRef}></div>
+        <div ref={blastElRef}>{text}</div>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -817,12 +850,22 @@ export default function Phrases() {
         })}
       >
         <LinearProgress
-          variant="determinate"
+          // variant="determinate"
           // variant={tpAnimation === null ? "determinate" : "buffer"}
           // value={tpAnimation === null ? progress : 0}
           // valueBuffer={tpAnimation ?? undefined}
-          value={progress}
-          color={phrase_reinforce ? "secondary" : "primary"}
+          variant={goalProgress === null ? "determinate" : "buffer"}
+          value={goalProgress === null ? progress : 0}
+          valueBuffer={goalProgress ?? undefined}
+          // value={progress}
+          // color={phrase_reinforce ? "secondary" : "primary"}
+          color={
+            goalProgress === null
+              ? phrase_reinforce
+                ? "secondary"
+                : "primary"
+              : "warning"
+          }
         />
       </div>
     </React.Fragment>

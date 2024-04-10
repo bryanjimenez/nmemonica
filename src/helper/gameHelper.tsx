@@ -8,11 +8,12 @@ import type {
 } from "nmemonica";
 import React from "react";
 
-import { minsSince } from "./consoleHelper";
+import { minsSince, wasToday } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
 import { isYoon, kanaHintBuilder } from "./kanaHelper";
 import { furiganaHintBuilder } from "./kanjiHelper";
+import { getLastViewCounts } from "./statsHelper";
 import { TermFilterBy } from "../slices/settingHelper";
 import type { ValuesOf } from "../typings/utils";
 
@@ -57,6 +58,88 @@ export function play<RawItem extends { uid: string }>(
   }
 
   gotoNext();
+}
+
+interface DailyGoal {
+  lastView: string | undefined;
+  selectedIndex: number;
+  prevSelectedIndex: number;
+  /** Previous scroll action timestamp */
+  prevTimestamp: number;
+  /** Total number of items */
+  progressTotal: number;
+  /** User-set goal */
+  viewGoal: number | undefined;
+  /** pending goal items */
+  goalPending: React.MutableRefObject<number>;
+
+  /** notification message */
+  msg: string;
+
+  /** progress bar setter */
+  setGoalProgress: React.Dispatch<React.SetStateAction<number | null>>;
+  /** notification setter */
+  setText: React.Dispatch<React.SetStateAction<string>>;
+}
+
+/**
+ * Initialize goalPending with count of items pending till goal  
+ * @note returns `-1` when no goal is set or already met
+ * @param viewGoal User-set goal
+ * @param repetition
+ */
+export function initGoalPending(
+  viewGoal: number | undefined,
+  repetition: Record<string, MetaDataObj | undefined>
+) {
+  // get todays viewed total
+  const [alreadyViewedToday] = getLastViewCounts(repetition, 1);
+  // set goalPending to countdown if goal not yet reached
+  if (viewGoal !== undefined && alreadyViewedToday < viewGoal) {
+    return viewGoal - alreadyViewedToday;
+  }
+
+  return -1;
+}
+/**
+ * Logic to show progress and notification for set-goals
+ */
+export function updateDailyGoal({
+  lastView,
+  selectedIndex,
+  prevSelectedIndex,
+  prevTimestamp,
+  progressTotal,
+  viewGoal,
+  goalPending,
+  msg,
+  setGoalProgress,
+  setText,
+}: DailyGoal) {
+  if (goalPending.current === 0) {
+    setText(`${viewGoal} ${msg}`);
+    goalPending.current = -1;
+  } else if (
+    viewGoal !== undefined &&
+    goalPending.current > 0 &&
+    !wasToday(lastView) && //                       term has not yet been viewed
+    prevSelectedIndex < selectedIndex && //         on scroll forward only
+    minimumTimeForSpaceRepUpdate(prevTimestamp) //  no update on quick scrolls
+  ) {
+    goalPending.current -= 1;
+
+    const goalProgress = ((viewGoal - goalPending.current) / viewGoal) * 100;
+    const totalProgress = ((selectedIndex + 1) / progressTotal) * 100;
+
+    // LinearProgress animation
+    setGoalProgress(totalProgress);
+    setTimeout(() => {
+      setGoalProgress(goalProgress);
+    }, 150);
+    setTimeout(() => {
+      setGoalProgress(null);
+    }, 2000);
+  }
 }
 
 export function getTermUID<Term extends { uid: string }>(

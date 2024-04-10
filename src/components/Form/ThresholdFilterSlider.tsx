@@ -33,32 +33,32 @@ export function ThresholdFilterSlider(props: ThresholdFilterSliderProps) {
 
   return (
     <>
-      <div
-        className="position-relative text-nowrap w-0 fs-x-small"
-        style={{ top: "-15px" }}
-      >
-        {`Difficulty filter: ${threshold}`}
-      </div>
-      <Slider
-        sx={{ color: c }}
-        defaultValue={defaultValue}
-        marks={difficultyMarks}
-        track={threshold < 0 ? undefined : "inverted"}
-        onChangeCommitted={(e, newValue) => {
-          const sign = threshold < 0 ? -1 : 1;
-          if (typeof newValue === "number") {
-            if (newValue === 0) {
-              setThreshold(Number(sign));
-            } else {
-              setThreshold(sign * newValue);
-            }
-          }
-        }}
-        valueLabelDisplay="auto"
-      />
-
-      <div className="mt-2 ms-3 " onClick={flipThresholdCB}>
-        {threshold < 0 ? <SortAscIcon /> : <SortDescIcon />}
+      <div className="w-100 d-flex flex-column">
+        <div className="text-nowrap fs-x-small text-start">
+          {`Difficulty filter: ${threshold}`}
+        </div>
+        <div className="d-flex">
+          <Slider
+            sx={{ color: c }}
+            defaultValue={defaultValue}
+            marks={difficultyMarks}
+            track={threshold < 0 ? undefined : "inverted"}
+            onChangeCommitted={(e, newValue) => {
+              const sign = threshold < 0 ? -1 : 1;
+              if (typeof newValue === "number") {
+                if (newValue === 0) {
+                  setThreshold(Number(sign));
+                } else {
+                  setThreshold(sign * newValue);
+                }
+              }
+            }}
+            valueLabelDisplay="auto"
+          />
+          <div className="mt-2 ms-3 " onClick={flipThresholdCB}>
+            {threshold < 0 ? <SortAscIcon /> : <SortDescIcon />}
+          </div>
+        </div>
       </div>
     </>
   );

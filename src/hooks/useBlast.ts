@@ -4,10 +4,21 @@ import { useEffect, useState } from "react";
 
 import { useWindowSize } from "./useWindowSize";
 
+interface BlastDefaults {
+  top?: number;
+  fontWeight?: "bold" | "bolder" | "normal" | "lighter";
+  fontSize?: "xxx-large" | "xx-large" | "x-large" | "large" | "medium";
+  color?: string;
+}
 /**
  * Display a fading text on the center of the screen
  */
-export function useBlast() {
+export function useBlast({
+  top,
+  fontWeight,
+  fontSize,
+  color,
+}: BlastDefaults = {}) {
   const [text, setText] = useState("");
 
   const [floatDim, setOffset] = useState({ w: 0, h: 0 });
@@ -41,23 +52,26 @@ export function useBlast() {
     refs.floating.current.style.top = "";
     const style = {
       position: strategy,
-      top: `${y ?? 0}px`,
+      top: `${top ?? y ?? 0}px`,
       left: `${x ?? 0}px`,
-      width: "max-content",
+      // width: "max-content",  // breaks vertical view \w long text
 
-      fontWeight: "bold",
-      fontSize: "xxx-large",
+      fontWeight: fontWeight ?? "bold",
+      fontSize: fontSize ?? "xxx-large",
+      color: color,
     };
 
     refs.floating.current.className = classNames({
       "dark-mode-color": true,
       "notification-fade": text.length > 0,
+      "text-center text-wrap": true,
     });
 
     Object.keys(style).forEach((k) => {
-      if (refs.floating.current !== null) {
-        const key = k as keyof typeof style;
-        refs.floating.current.style[key] = style[key];
+      const key = k as keyof typeof style;
+      const propStyle = style[key];
+      if (refs.floating.current !== null && propStyle) {
+        refs.floating.current.style[key] = propStyle;
       }
     });
   }

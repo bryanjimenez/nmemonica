@@ -138,13 +138,35 @@ export default function SettingsPhrase() {
             />
           </div>
           {phraseOrder === TermSortBy.RECALL && (
-            <PlusMinus
-              label="Max review items "
-              value={spaRepMaxReviewItem}
-              onChange={(value) => {
-                dispatch(setSpaRepMaxItemReview(value));
-              }}
-            />
+            <div className="mb-2">
+              <PlusMinus
+                value={spaRepMaxReviewItem}
+                onChange={(value) => {
+                  dispatch(setSpaRepMaxItemReview(value));
+                }}
+              >
+                <div className="text-nowrap">Max review items</div>
+                <div className="text-center">
+                  <span
+                    className="clickable"
+                    onClick={() => {
+                      dispatch(setSpaRepMaxItemReview(0));
+                    }}
+                  >
+                    <b>m</b>in
+                  </span>{" "}
+                  -{" "}
+                  <span
+                    className="clickable"
+                    onClick={() => {
+                      dispatch(setSpaRepMaxItemReview(undefined));
+                    }}
+                  >
+                    <b>M</b>ax
+                  </span>
+                </div>
+              </PlusMinus>
+            </div>
           )}
           <div className="d-flex justify-content-end">
             <ThresholdFilterSlider

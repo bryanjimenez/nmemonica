@@ -18,6 +18,14 @@ export function msgInnerTrim(term: string, len: number) {
 }
 
 /**
+ * Whether the date is today
+ * @param rawDateString Date.toJSON string
+ */
+export function wasToday(rawDateString?: string) {
+  return rawDateString !== undefined && daysSince(rawDateString) === 0;
+}
+
+/**
  * Days since rawDateString
  * @param rawDateString Date.toJSON string
  */

@@ -47,6 +47,8 @@ export interface KanjiInitSlice {
     includeNew: boolean;
     includeReviewed: boolean;
 
+    viewGoal?: number;
+
     // Game
     choiceN: number;
     fadeInAnswers: boolean;
@@ -70,6 +72,8 @@ export const kanjiInitState: KanjiInitSlice = {
     activeTags: [],
     includeNew: true,
     includeReviewed: true,
+
+    viewGoal: undefined,
 
     // Game
     choiceN: 32,
@@ -463,6 +467,25 @@ const kanjiSlice = createSlice({
         "includeReviewed"
       );
     },
+    setGoal(
+      state,
+      action: PayloadAction<KanjiInitSlice["setting"]["viewGoal"]>
+    ) {
+      const goal = action.payload;
+
+      if (goal !== undefined) {
+        state.setting.viewGoal = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "viewGoal",
+          goal
+        );
+      } else {
+        state.setting.viewGoal = undefined;
+        localStoreAttrDelete(new Date(), "/kanji/", "viewGoal");
+      }
+    },
   },
 
   extraReducers: (builder) => {
@@ -577,6 +600,7 @@ export const {
 
   setKanjiBtnN,
   toggleKanjiFadeInAnswers,
+  setGoal,
 } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;

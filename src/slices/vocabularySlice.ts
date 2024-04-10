@@ -66,6 +66,8 @@ export interface VocabularyInitSlice {
     verbFormsOrder: string[];
     includeNew: boolean;
     includeReviewed: boolean;
+
+    viewGoal?: number;
   };
 }
 export const vocabularyInitState: VocabularyInitSlice = {
@@ -92,6 +94,8 @@ export const vocabularyInitState: VocabularyInitSlice = {
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
     includeNew: true,
     includeReviewed: true,
+
+    viewGoal: undefined,
   },
 };
 
@@ -652,6 +656,25 @@ const vocabularySlice = createSlice({
         "includeReviewed"
       );
     },
+    setGoal(
+      state,
+      action: PayloadAction<VocabularyInitSlice["setting"]["viewGoal"]>
+    ) {
+      const goal = action.payload;
+
+      if (goal !== undefined) {
+        state.setting.viewGoal = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "viewGoal",
+          goal
+        );
+      } else {
+        state.setting.viewGoal = undefined;
+        localStoreAttrDelete(new Date(), "/vocabulary/", "viewGoal");
+      }
+    },
   },
 
   extraReducers: (builder) => {
@@ -756,5 +779,6 @@ export const {
   setWordTPIncorrect,
   setSpaRepMaxItemReview,
   setWordAccuracy,
+  setGoal,
 } = vocabularySlice.actions;
 export default vocabularySlice.reducer;

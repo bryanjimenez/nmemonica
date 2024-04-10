@@ -39,34 +39,38 @@ export function useConnectPhrase() {
     shallowEqual
   );
 
-  const [r, ft, sm, rm, difficultyThreshold, spaRepMaxReviewItem] = useSelector<
-    RootState,
-    [
-      boolean,
-      ValuesOf<typeof TermFilterBy>,
-      number,
-      boolean,
-      number,
-      number | undefined,
-    ]
-  >(({ phrases }: RootState) => {
-    const {
-      reinforce,
-      filter,
-      ordered,
-      romaji,
-      difficultyThreshold,
-      spaRepMaxReviewItem,
-    } = phrases.setting;
-    return [
-      reinforce,
-      filter,
-      ordered,
-      romaji,
-      difficultyThreshold,
-      spaRepMaxReviewItem,
-    ];
-  }, shallowEqual);
+  const [r, ft, sm, rm, difficultyThreshold, spaRepMaxReviewItem, viewGoal] =
+    useSelector<
+      RootState,
+      [
+        boolean,
+        ValuesOf<typeof TermFilterBy>,
+        number,
+        boolean,
+        number,
+        number | undefined,
+        number | undefined,
+      ]
+    >(({ phrases }: RootState) => {
+      const {
+        reinforce,
+        filter,
+        ordered,
+        romaji,
+        difficultyThreshold,
+        spaRepMaxReviewItem,
+        viewGoal,
+      } = phrases.setting;
+      return [
+        reinforce,
+        filter,
+        ordered,
+        romaji,
+        difficultyThreshold,
+        spaRepMaxReviewItem,
+        viewGoal,
+      ];
+    }, shallowEqual);
 
   const activeGroup = useSelector<RootState, string[]>(
     ({ phrases }: RootState) => {
@@ -111,6 +115,9 @@ export function useConnectPhrase() {
     includeNew,
     /** dateViewOrder include terms previously reviewed */
     includeReviewed,
+
+    /** Goal of daily term views */
+    viewGoal,
 
     // Refs ()
     reinforce,

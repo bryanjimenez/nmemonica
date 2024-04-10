@@ -53,6 +53,8 @@ export interface PhraseInitSlice {
     difficultyThreshold: number;
     includeNew: boolean;
     includeReviewed: boolean;
+
+    viewGoal?: number;
   };
 }
 
@@ -75,6 +77,8 @@ export const phraseInitState: PhraseInitSlice = {
     difficultyThreshold: MEMORIZED_THRLD,
     includeNew: true,
     includeReviewed: true,
+
+    viewGoal: undefined,
   },
 };
 
@@ -566,6 +570,26 @@ const phraseSlice = createSlice({
         "includeReviewed"
       );
     },
+
+    setGoal(
+      state,
+      action: PayloadAction<PhraseInitSlice["setting"]["viewGoal"]>
+    ) {
+      const goal = action.payload;
+
+      if (goal !== undefined) {
+        state.setting.viewGoal = localStoreAttrUpdate(
+          new Date(),
+          { phrases: state.setting },
+          "/phrases/",
+          "viewGoal",
+          goal
+        );
+      } else {
+        state.setting.viewGoal = undefined;
+        localStoreAttrDelete(new Date(), "/phrases/", "viewGoal");
+      }
+    },
   },
 
   extraReducers: (builder) => {
@@ -661,6 +685,7 @@ export const {
   setPhraseAccuracy,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
+  setGoal,
 
   removeFrequencyPhrase,
   togglePhrasesOrdering,
