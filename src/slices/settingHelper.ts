@@ -24,14 +24,6 @@ export const TermSortBy = Object.freeze({
   DIFFICULTY: 2,
   VIEW_DATE: 3,
   RECALL: 4,
-  GAME: 5,
-});
-
-// enum
-export const KanaType = Object.freeze({
-  HIRAGANA: 0,
-  KATAKANA: 1,
-  MIXED: 2,
 });
 
 export const TermSortByLabel = [
@@ -40,8 +32,14 @@ export const TermSortByLabel = [
   "Difficulty",
   "Viewed Date",
   "Recall Interval",
-  "OLD Space Rep",
 ];
+
+// enum
+export const KanaType = Object.freeze({
+  HIRAGANA: 0,
+  KATAKANA: 1,
+  MIXED: 2,
+});
 
 /**
  * Toggle a filter, or override. Skips non-allowed values

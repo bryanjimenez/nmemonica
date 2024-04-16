@@ -230,7 +230,6 @@ const kanjiSlice = createSlice({
       const allowed = [
         // TermSortBy.ALPHABETIC,
         TermSortBy.DIFFICULTY,
-        // TermSortBy.GAME,
         TermSortBy.RANDOM,
         TermSortBy.VIEW_DATE,
         TermSortBy.RECALL,

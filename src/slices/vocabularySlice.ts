@@ -275,7 +275,6 @@ const vocabularySlice = createSlice({
       const allowed = [
         TermSortBy.ALPHABETIC,
         TermSortBy.DIFFICULTY,
-        TermSortBy.GAME,
         TermSortBy.RANDOM,
         TermSortBy.VIEW_DATE,
         TermSortBy.RECALL,
@@ -479,118 +478,7 @@ const vocabularySlice = createSlice({
         payload: { uid, value },
       }),
     },
-    setWordTPCorrect: {
-      reducer: (
-        state: VocabularyInitSlice,
-        action: PayloadAction<{
-          uid: string;
-          tpElapsed: number;
-          pronunciation?: boolean;
-        }>
-      ) => {
-        const { uid, tpElapsed, pronunciation } = action.payload;
 
-        const spaceRep = state.setting.repetition;
-
-        let newPlayCount = 1;
-        let newAccuracy = 1.0;
-        let newCorrAvg = tpElapsed;
-
-        const uidData = spaceRep[uid];
-        if (uidData !== undefined) {
-          const playCount = uidData.tpPc;
-          const accuracy = uidData.tpAcc;
-          const correctAvg = uidData.tpCAvg ?? 0;
-
-          if (playCount !== undefined && accuracy !== undefined) {
-            newPlayCount = playCount + 1;
-
-            const scores = playCount * accuracy;
-            newAccuracy = (scores + 1.0) / newPlayCount;
-
-            const correctCount = scores;
-            const correctSum = correctAvg * correctCount;
-            newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
-          }
-        }
-
-        const prevMisPron = pronunciation === true || (uidData?.pron ?? false);
-        const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 }),
-          pron: prevMisPron || undefined,
-          tpPc: newPlayCount,
-          tpAcc: newAccuracy,
-          tpCAvg: newCorrAvg,
-        };
-
-        const newValue = { ...spaceRep, [uid]: o };
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-      },
-      prepare: (
-        uid: string,
-        tpElapsed: number,
-        { pronunciation }: { pronunciation?: boolean } | undefined = {}
-      ) => ({
-        type: "string",
-        payload: { uid, tpElapsed, pronunciation },
-      }),
-    },
-    setWordTPIncorrect: {
-      reducer: (
-        state: VocabularyInitSlice,
-        action: PayloadAction<{ uid: string; pronunciation?: boolean }>
-      ) => {
-        const { uid, pronunciation } = action.payload;
-
-        const spaceRep = state.setting.repetition;
-
-        let newPlayCount = 1;
-        let newAccuracy = 0;
-
-        const uidData = spaceRep[uid];
-        if (uidData !== undefined) {
-          const playCount = uidData.tpPc;
-          const accuracy = uidData.tpAcc;
-
-          if (playCount !== undefined && accuracy !== undefined) {
-            newPlayCount = playCount + 1;
-
-            const scores = playCount * accuracy;
-            newAccuracy = (scores + 0) / newPlayCount;
-          }
-        }
-
-        const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 }),
-          tpPc: newPlayCount,
-          tpAcc: newAccuracy,
-          pron: pronunciation === true ? true : undefined,
-        };
-
-        const newValue = { ...spaceRep, [uid]: o };
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-      },
-      prepare: (
-        uid: string,
-        { pronunciation }: { pronunciation?: boolean } | undefined = {}
-      ) => ({
-        payload: { uid, pronunciation },
-      }),
-    },
     /**
      * Space Repetition maximum item review
      * per session
@@ -775,8 +663,6 @@ export const {
 
   setWordDifficulty,
   setMemorizedThreshold,
-  setWordTPCorrect,
-  setWordTPIncorrect,
   setSpaRepMaxItemReview,
   setWordAccuracy,
   setGoal,

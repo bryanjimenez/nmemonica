@@ -83,7 +83,7 @@ interface DailyGoal {
 }
 
 /**
- * Initialize goalPending with count of items pending till goal  
+ * Initialize goalPending with count of items pending till goal
  * @note returns `-1` when no goal is set or already met
  * @param viewGoal User-set goal
  * @param repetition
@@ -316,9 +316,6 @@ export function getStaleSpaceRepKeys<
     f: null,
     rein: null,
     pron: null,
-    tpPc: null,
-    tpAcc: null,
-    tpCAvg: null,
 
     // Space Repetition
     lastReview: null,
@@ -861,7 +858,11 @@ export function getDeviceMotionEventPermission(
     "requestPermission" in DeviceMotionEvent &&
     typeof DeviceMotionEvent.requestPermission === "function"
   ) {
-    DeviceMotionEvent.requestPermission()
+    (
+      DeviceMotionEvent.requestPermission() as Promise<
+        "default" | "denied" | "granted"
+      >
+    )
       .then((permissionState: "default" | "denied" | "granted") => {
         if (permissionState === "granted") {
           onGranted();

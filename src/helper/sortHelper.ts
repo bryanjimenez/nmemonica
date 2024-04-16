@@ -195,28 +195,8 @@ export function dateViewOrder(
   terms.forEach((term, tIdx) => {
     const tUid = term.uid;
     const oMeta = metaRecord[tUid];
-    /*
-    if (oMeta?.lastReview && oMeta.daysBetweenReviews && oMeta.accuracyP) {
-      // a space repetition item
-      // won't be sorted by lastView
-      const daysSinceReview = daysSince(oMeta.lastReview);
-      const percentOverdueCalc = getPercentOverdue({
-        accuracy: oMeta.accuracyP/100,
-        daysSinceReview,
-        daysBetweenReviews: oMeta.daysBetweenReviews,
-      });
 
-      spaceRepTemp = [
-        ...spaceRepTemp,
-        {
-          percentOverdueCalc,
-          uid: tUid,
-          index: Number(tIdx),
-        },
-      ];
-    } else */
     if (oMeta?.lastView !== undefined) {
-      // regular non-space-rep items
       prevViewedTemp = [
         ...prevViewedTemp,
         {
@@ -232,141 +212,10 @@ export function dateViewOrder(
 
   // prettier-ignore
   const prevViewedSort = orderBy(prevViewedTemp, ["lastView", "uid"], ["asc", "asc"]);
-  // prettier-ignore
-  // const prevSpaceRepSort = orderBy(spaceRepTemp, ["percentOverdueCalc", "uid"], ["desc", "asc"]);
 
   const prevViewed = prevViewedSort.map((el) => el.index);
-  // const prevSpaceRepd = prevSpaceRepSort.map((el) => el.index);
 
-  return [...notViewed, ...prevViewed /*, ...prevSpaceRepd*/];
-}
-
-/**
- * space repetition order
- * [timedPlayFailed, timedPlayMispronounced, newTerms, notTimedPlayed, timedPlayedCorrect]
- * @returns an array containing the indexes of terms in space repetition order
- */
-export function spaceRepOrder<T extends { uid: string }>(
-  terms: T[],
-  spaceRepObj: Record<string, MetaDataObj | undefined>
-) {
-  interface timedPlayedSortable {
-    staleness: number;
-    correctness: number;
-    uid: string;
-    index: number;
-  }
-  interface notTimedPlayedSortable {
-    date: string;
-    views: number;
-    uid: string;
-    index: number;
-  }
-
-  let failedTemp: timedPlayedSortable[] = [];
-  let misPronTemp: timedPlayedSortable[] = [];
-  let notPlayed: number[] = [];
-  let notTimedTemp: notTimedPlayedSortable[] = [];
-  let timedTemp: timedPlayedSortable[] = [];
-
-  terms.forEach((term, tIdx) => {
-    const tUid = term.uid;
-    const termRep = spaceRepObj[tUid];
-
-    if (termRep !== undefined) {
-      if (termRep.tpAcc === undefined) {
-        notTimedTemp = [
-          ...notTimedTemp,
-          {
-            date: termRep.lastView,
-            views: termRep.vC,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      } else if (termRep.pron === true) {
-        const staleness = getStalenessScore(
-          termRep.lastView,
-          termRep.tpAcc,
-          termRep.vC
-        );
-        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
-
-        misPronTemp = [
-          ...misPronTemp,
-          {
-            staleness,
-            correctness,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      } else if (termRep.tpAcc >= 0.65) {
-        const staleness = getStalenessScore(
-          termRep.lastView,
-          termRep.tpAcc,
-          termRep.vC
-        );
-        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
-
-        timedTemp = [
-          ...timedTemp,
-          {
-            staleness,
-            correctness,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      } else if (termRep.tpAcc < 0.65) {
-        const staleness = getStalenessScore(
-          termRep.lastView,
-          termRep.tpAcc,
-          termRep.vC
-        );
-        const correctness = getCorrectnessScore(termRep.tpPc, termRep.tpCAvg);
-
-        failedTemp = [
-          ...failedTemp,
-          {
-            staleness,
-            correctness,
-            uid: tUid,
-            index: Number(tIdx),
-          },
-        ];
-      }
-    } else {
-      notPlayed = [...notPlayed, Number(tIdx)];
-    }
-  });
-
-  // prettier-ignore
-  const failedSort = orderBy(failedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
-  // prettier-ignore
-  const misPronSort = orderBy(misPronTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
-
-  // prettier-ignore
-  const notTimedSort = orderBy(notTimedTemp, ["date", "views", "uid"], ["asc", "asc", "asc"]);
-  // prettier-ignore
-  const timedSort = orderBy(timedTemp, ["staleness", "correctness", "uid"], ["desc", "asc", "asc"]);
-
-  // console.log("failed");
-  // console.log(JSON.stringify(failedOrdered.map((p) => ({[terms[p.index].english]:p.accuracy, u:terms[p.index].uid, c:p.correctAvg}))));
-  // console.log("played");
-  // console.log(JSON.stringify(playedOrdered.map((p) => ({[terms[p.index].english]:p.date,c:p.count}))));
-  // console.log('unPlayed');
-  // console.log(JSON.stringify(unPlayed.map((p) => ({[terms[p.index].english]:p.date}))));
-  // console.log("timed");
-  // console.log(JSON.stringify(timedOrdered.map((p) => ({[terms[p.index].english]:p.accuracy, c:p.correctAvg}))));
-
-  const failed = failedSort.map((el) => el.index);
-  const misPron = misPronSort.map((el) => el.index);
-
-  const notTimed = notTimedSort.map((el) => el.index);
-  const timed = timedSort.map((el) => el.index);
-
-  return [...failed, ...misPron, ...notPlayed, ...notTimed, ...timed];
+  return [...notViewed, ...prevViewed];
 }
 
 /**

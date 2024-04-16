@@ -2,7 +2,6 @@ import { Avatar, Grow, LinearProgress } from "@mui/material";
 import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import partition from "lodash/partition";
 import type { RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
@@ -17,12 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 import { pronounceEndoint } from "../../../environment.development";
-import {
-  daysSince,
-  spaceRepLog,
-  timedPlayLog,
-  wasToday,
-} from "../../helper/consoleHelper";
+import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getCacheUID,
@@ -52,9 +46,7 @@ import {
   difficultyOrder,
   difficultySubFilter,
   randomOrder,
-  spaceRepOrder,
 } from "../../helper/sortHelper";
-import { getLastViewCounts } from "../../helper/statsHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -235,18 +227,6 @@ export default function Vocabulary() {
     }
 
     switch (sortMethodREF.current) {
-      case TermSortBy.GAME:
-        if (reinforceREF.current) {
-          // if reinforce, place reinforced/frequency terms
-          // at the end
-          const [freqTerms, nonFreqTerms] = partition(
-            filtered,
-            (o) => metadata.current[o.uid]?.rein === true
-          );
-
-          filtered = [...nonFreqTerms, ...freqTerms];
-        }
-        break;
       case TermSortBy.RECALL:
         // discard the nonPending terms
         const {
@@ -335,7 +315,6 @@ export default function Vocabulary() {
     filterTypeREF,
     sortMethodREF,
     difficultyThresholdREF,
-    reinforceREF,
     vocabList,
     activeGroup,
     includeNew,
@@ -386,43 +365,6 @@ export default function Vocabulary() {
           },
         ]);
 
-        break;
-      case TermSortBy.GAME:
-        if (reinforceREF.current) {
-          // search backwards for splitIdx where [...nonFreqTerms, ...freqTerms]
-          let splitIdx = -1;
-          for (let idx = filteredVocab.length - 1; idx > -1; idx--) {
-            const currEl = metadata.current[filteredVocab[idx].uid];
-            const prevIdx = idx - 1 > -1 ? idx - 1 : 0;
-            const prevEl = metadata.current[filteredVocab[prevIdx].uid];
-            if (currEl?.rein === true && !prevEl?.rein) {
-              splitIdx = idx;
-              break;
-            }
-          }
-
-          if (splitIdx !== -1) {
-            const nonFreqTerms = filteredVocab.slice(0, splitIdx);
-            const freqTerms = filteredVocab.slice(splitIdx);
-
-            const nonFreqOrder = spaceRepOrder(nonFreqTerms, metadata.current);
-            const freqOrder = freqTerms.map((f, i) => nonFreqTerms.length + i);
-            newOrder = [...nonFreqOrder, ...freqOrder];
-          }
-        }
-
-        // not reinforced or no reinforcement terms
-        if (newOrder.length === 0) {
-          newOrder = spaceRepOrder(filteredVocab, metadata.current);
-        }
-
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
         break;
 
       case TermSortBy.DIFFICULTY:
@@ -476,7 +418,7 @@ export default function Vocabulary() {
     setScrollJOrder(true);
 
     return { newOrder, jbare: jOrder, ebare: eOrder, recallGame };
-  }, [reinforceREF, sortMethodREF, filteredVocab]);
+  }, [sortMethodREF, filteredVocab]);
 
   // Logger messages
   useEffect(() => {
@@ -569,7 +511,6 @@ export default function Vocabulary() {
 
     loopSettingBtn,
     loopActionBtn,
-    timedPlayVerifyBtn,
 
     timedPlayAnswerHandlerWrapper,
     gradeTimedPlayEvent,
@@ -679,11 +620,11 @@ export default function Vocabulary() {
               const repStats = { [uid]: { ...value, lastView: prevDate } };
               const messageLog = (m: string, l: number) =>
                 dispatch(logger(m, l));
-              if (tpAnsweredREF.current !== undefined) {
-                timedPlayLog(messageLog, vocabulary, repStats, { frequency });
-              } else {
-                spaceRepLog(messageLog, vocabulary, repStats, { frequency });
-              }
+              // if (tpAnsweredREF.current !== undefined) {
+              //   timedPlayLog(messageLog, vocabulary, repStats, { frequency });
+              // } else {
+              spaceRepLog(messageLog, vocabulary, repStats, { frequency });
+              // }
             });
         }
       });
@@ -856,7 +797,7 @@ export default function Vocabulary() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
-              {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
+              {/* {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)} */}
               <Tooltip
                 disabled={!cookies}
                 className={classNames({
@@ -941,7 +882,6 @@ export default function Vocabulary() {
       reinforcedUID,
       resetTimedPlay,
       sortMethodREF,
-      timedPlayVerifyBtn,
     ]
   );
 

@@ -14,12 +14,7 @@ import React, {
 import { useDispatch, useSelector } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
-import {
-  daysSince,
-  spaceRepLog,
-  wasToday,
-  // timedPlayLog,
-} from "../../helper/consoleHelper";
+import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
@@ -48,7 +43,6 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
-import { getLastViewCounts } from "../../helper/statsHelper";
 import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
@@ -543,11 +537,8 @@ export default function Phrases() {
               const repStats = { [uid]: { ...value, lastView: prevDate } };
               const messageLog = (m: string, l: number) =>
                 dispatch(logger(m, l));
-              // if (tpAnsweredREF.current !== undefined) {
-              //   timedPlayLog(messageLog, p, repStats, { frequency });
-              // } else {
+
               spaceRepLog(messageLog, p, repStats, { frequency });
-              // }
             });
         }
       });
