@@ -3,7 +3,7 @@ import EventEmitter from "events";
 import { Badge, Fab, TextField } from "@mui/material";
 import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
 import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
-import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
+import { FilledSheetData, isFilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import Spreadsheet from "@nmemonica/x-spreadsheet";
 import {
   DesktopDownloadIcon,
@@ -20,7 +20,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
+import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -163,7 +163,7 @@ export default function Sheet() {
         grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
         // replace typed '\n' with newline inside cell
-        grid.on("cell-edited-done", (text, ri, ci) => {
+        grid.on("cell-edited-done", (text:string, _ri:number, _ci:number) => {
             grid.sheet.data.setSelectedCellText(
               // characters to replace with \n
               //    literal '\n'
@@ -208,11 +208,11 @@ export default function Sheet() {
     // );
 
     const { activeSheetName } = getActiveSheet(wbRef.current);
-    const w = wbRef.current?.exportValues() as FilledSheetData[];
+    const w = wbRef.current?.exportValues();
     const trimmed = w.map((w) => removeLastRowIfBlank(w));
     const sheet = trimmed.find((s) => s.name === activeSheetName);
 
-    if (!sheet) {
+    if (!sheet || !isFilledSheetData(sheet)) {
       throw new Error("No Worksheet");
     }
 

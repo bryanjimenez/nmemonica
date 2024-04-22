@@ -1,5 +1,5 @@
+import { type SheetData } from "@nmemonica/x-spreadsheet";
 import type { ValuesOf } from "../../src/typings/utils";
-import type { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 
 export const appDBName = "nmemonica-db";
 export const appDBVersion = 1;
@@ -39,7 +39,7 @@ interface SettingsEntry {
 
 interface WorkbookEntry {
   key: string;
-  workbook: FilledSheetData[];
+  workbook: SheetData[];
 }
 
 type LoggerLike = (msg: string, severity: number) => void;
