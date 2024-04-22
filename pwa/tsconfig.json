@@ -16,7 +16,8 @@
     "lib": ["dom", "webworker", "es2021.Promise", "ES2022.Error"],
 
     "moduleResolution": "Bundler",
-    "allowSyntheticDefaultImports": true
+    "allowJs": true,
+    "checkJs": true
   },
   "include": [
     ".",

@@ -1,5 +1,4 @@
-//@ts-check
-import lineByLine from 'n-readlines'
+import lineByLine from "n-readlines";
 
 /**
  * @typedef {Object} DependencyBlock
@@ -9,7 +8,7 @@ import lineByLine from 'n-readlines'
  * @property {string} repository
  * @property {string} licenseName
  * @property {string} licenseText
- * 
+ *
  */
 /*
 interface DependencyBlock {
@@ -25,7 +24,7 @@ interface DependencyBlock {
  * Append additional licenses
  * @param {{dependencies: DependencyBlock[]}} lic
  */
-export function appendLicense(lic/*:{dependencies:DependencyBlock[]}*/) {
+export function appendLicense(lic /*:{dependencies:DependencyBlock[]}*/) {
   const reactSlickBlock = {
     name: "react-slick",
     version: "0.29.0",
@@ -45,19 +44,18 @@ export function appendLicense(lic/*:{dependencies:DependencyBlock[]}*/) {
  * License text is expected to be the header
  * @param {string} filePath
  */
-function fromComment(/** @type string */filePath/*:string*/) {
+function fromComment(/** @type string */ filePath /*:string*/) {
   // const input = fs.createReadStream(filePath, { encoding: "utf-8" });
 
-  const l = new lineByLine(filePath)
+  const l = new lineByLine(filePath);
   let line2;
-  let lineNumber= 0;
+  let lineNumber = 0;
 
   let reactSlickCodeLicense = "";
-  let header/*:null|boolean*/ = null;
+  let header /*:null|boolean*/ = null;
 
-
-  while(line2 = l.next()){
-    const line = line2.toString('utf-8')
+  while ((line2 = l.next())) {
+    const line = line2.toString("utf-8");
     lineNumber++;
 
     if (header === null && line.startsWith("/**")) {
@@ -116,7 +114,7 @@ function fromComment(/** @type string */filePath/*:string*/) {
  * Creates finalized license text
  * @param {{dependencies:DependencyBlock[]}} license
  */
-function licenseJsonToString(license/*:{dependencies:DependencyBlock[]}*/) {
+function licenseJsonToString(license /*:{dependencies:DependencyBlock[]}*/) {
   const header =
     "THIRD PARTY SOFTWARE NOTICES AND INFORMATION\n" +
     "Do Not Translate or Localize\n" +

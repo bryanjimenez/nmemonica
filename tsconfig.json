@@ -6,13 +6,13 @@
 
     "skipLibCheck": true,
     "strict": true,
-    "removeComments": true,
+    "removeComments": true
   },
-  "files": [
+  "exclude": ["./node_modules", "./dist", "./tsc-dist"],
+  "include": [
     "./rspack.config.js",
     "./rspack.config.sw.js",
-    "./license-writer.js",
+    "./license-writer.js"
   ],
-  "exclude": ["./node_modules", "./dist"],
-  "references": [{ "path": "./src" }, { "path": "./pwa" }],
+  "references": [{ "path": "./src" }, { "path": "./pwa" }]
 }

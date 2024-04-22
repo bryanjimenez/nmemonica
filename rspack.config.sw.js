@@ -1,9 +1,7 @@
-//@ts-check
 import rspack from "@rspack/core";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "@nmemonica/snservice";
-//@ts-expect-error js instead of ts file
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
 /**
