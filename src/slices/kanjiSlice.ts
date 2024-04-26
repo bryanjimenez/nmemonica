@@ -373,6 +373,18 @@ const kanjiSlice = createSlice({
         payload: { uid, value },
       }),
     },
+    batchRepetitionUpdate(
+      state,
+      action: { payload: Record<string, MetaDataObj | undefined> }
+    ) {
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        {},
+        "/kanji/",
+        "repetition",
+        action.payload
+      );
+    },
     /**
      * Space Repetition maximum item review
      * per session
@@ -600,6 +612,7 @@ export const {
   setKanjiBtnN,
   toggleKanjiFadeInAnswers,
   setGoal,
+  batchRepetitionUpdate,
 } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;

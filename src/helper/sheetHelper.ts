@@ -1,8 +1,8 @@
 import { getLastCellIdx } from "@nmemonica/snservice/src/helper/sheetHelper";
-import Spreadsheet, { SheetData } from "@nmemonica/x-spreadsheet";
+import { type SheetData, type Spreadsheet } from "@nmemonica/x-spreadsheet";
 
 export function getActiveSheet(workbook: Spreadsheet) {
-  const sheets = workbook.exportValues()
+  const sheets = workbook.exportValues();
 
   if (sheets.length === 1) {
     const name = sheets[0].name;
@@ -12,8 +12,8 @@ export function getActiveSheet(workbook: Spreadsheet) {
   }
 
   const activeSheetName = workbook.bottombar?.activeEl?.el.innerHTML;
-  if(activeSheetName ===  undefined){
-    throw new Error("Expected Sheet name")
+  if (activeSheetName === undefined) {
+    throw new Error("Expected Sheet name");
   }
   const activeSheetData =
     sheets.find((sheet) => sheet.name === activeSheetName) ?? sheets[0];
@@ -35,18 +35,22 @@ export function removeLastRowIfBlank<T extends SheetData>(sheet: T) {
 
   const clone = { ...sheet, rows };
 
-  if(clone.rows.len === undefined){
+  if (clone.rows.len === undefined) {
     // TODO: set row length?
-    throw new Error("Expected row length")
+    throw new Error("Expected row length");
   }
 
   let last = getLastCellIdx(sheet.rows);
 
   while (
     Object.values(sheet.rows[last].cells).every(
-      (cell) => cell.text === undefined || cell.text.length === 0 || cell.text.trim() === ""
+      (cell) =>
+        cell.text === undefined ||
+        cell.text.length === 0 ||
+        cell.text.trim() === ""
     )
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete clone.rows[last];
     clone.rows.len -= 1;
 
@@ -64,7 +68,7 @@ export function sheetAddExtraRow(sheet: SheetData): SheetData {
   let rows = sheet.rows;
   if (!rows) {
     const name = sheet.name ?? "sheet";
-    return { name, rows: { "0": { cells: {} }, len: 1 }, autofilter:{} };
+    return { name, rows: { "0": { cells: {} }, len: 1 }, autofilter: {} };
   }
 
   const last = getLastCellIdx(rows);

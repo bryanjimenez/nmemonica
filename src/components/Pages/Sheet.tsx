@@ -2,9 +2,15 @@ import EventEmitter from "events";
 
 import { Badge, Fab, TextField } from "@mui/material";
 import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
-import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
-import { FilledSheetData, isFilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
-import Spreadsheet from "@nmemonica/x-spreadsheet";
+import {
+  jtox,
+  sheetDataToJSON,
+} from "@nmemonica/snservice/src/helper/jsonHelper";
+import {
+  type FilledSheetData,
+  isFilledSheetData,
+} from "@nmemonica/snservice/src/helper/sheetHelper";
+import { Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
   DesktopDownloadIcon,
   LinkExternalIcon,
@@ -37,16 +43,29 @@ import {
   sheetAddExtraRow,
   touchScreenCheck,
 } from "../../helper/sheetHelper";
+import { updateEditedUID } from "../../helper/sheetHelperNoImport";
+import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useConnectPhrase } from "../../hooks/useConnectPhrase";
+import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch, RootState } from "../../slices";
 import "../../css/Sheet.css";
 import { setLocalDataEdited } from "../../slices/globalSlice";
-import { clearKanji } from "../../slices/kanjiSlice";
+import {
+  clearKanji,
+  batchRepetitionUpdate as kanjiBatchMetaUpdate,
+} from "../../slices/kanjiSlice";
 import { clearOpposites } from "../../slices/oppositeSlice";
 import { clearParticleGame } from "../../slices/particleSlice";
-import { clearPhrases } from "../../slices/phraseSlice";
+import {
+  clearPhrases,
+  batchRepetitionUpdate as phraseBatchMetaUpdate,
+} from "../../slices/phraseSlice";
 import { getDatasets, saveSheetServiceWorker } from "../../slices/sheetSlice";
 import { setSwVersions, setVersion } from "../../slices/versionSlice";
-import { clearVocabulary } from "../../slices/vocabularySlice";
+import {
+  clearVocabulary,
+  batchRepetitionUpdate as vocabularyBatchMetaUpdate,
+} from "../../slices/vocabularySlice";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -77,6 +96,20 @@ const defaultOp = {
 
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const { phraseList, repetition: pRep } = useConnectPhrase();
+  const { vocabList, repetition: vRep } = useConnectVocabulary();
+  const { kanjiList, repetition: kRep } = useConnectKanji();
+
+  const pMeta = useRef(pRep);
+  pMeta.current = pRep;
+
+  const vMeta = useRef(vRep);
+  vMeta.current = vRep;
+
+  const kMeta = useRef(kRep);
+  kMeta.current = kRep;
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
 
@@ -128,7 +161,7 @@ export default function Sheet() {
         return dispatch(getDatasets()).unwrap();
       })
       .catch((err) => {
-        if (err.message === "Failed to fetch") {
+        if ("message" in err && err.message === "Failed to fetch") {
           return [
             jtox(
               {
@@ -194,7 +227,7 @@ export default function Sheet() {
     };
   }, [dispatch]);
 
-  const onUploadErrorCB = useCallback((err: Error) => {
+  const onUploadErrorCB = useCallback((_err: Error) => {
     setUploadError(true);
 
     setTimeout(() => {
@@ -207,6 +240,10 @@ export default function Sheet() {
     //   onUploadErrorCB
     // );
 
+    if (wbRef.current === null) {
+      throw new Error("Expected workbook");
+    }
+
     const { activeSheetName } = getActiveSheet(wbRef.current);
     const w = wbRef.current?.exportValues();
     const trimmed = w.map((w) => removeLastRowIfBlank(w));
@@ -216,7 +253,42 @@ export default function Sheet() {
       throw new Error("No Worksheet");
     }
 
-    const saveP = saveSheetServiceWorker(sheet);
+    // update metadata for existing, but edited records (uid)
+    const name = sheet.name as keyof typeof selectedData;
+    const selectedData = {
+      Phrases: {
+        meta: pMeta.current,
+        list: phraseList,
+        update: phraseBatchMetaUpdate,
+      },
+      Vocabulary: {
+        meta: vMeta.current,
+        list: vocabList,
+        update: vocabularyBatchMetaUpdate,
+      },
+      Kanji: {
+        meta: kMeta.current,
+        list: kanjiList,
+        update: kanjiBatchMetaUpdate,
+      },
+    };
+    const { meta, list: oldList } = selectedData[name];
+    const { data, hash } = sheetDataToJSON(sheet) as {
+      hash: string;
+      data: Record<string, { uid: string; english: string }>;
+    };
+
+    const newList: { uid: string; english: string }[] = Object.keys(data).map(
+      (k) => ({ uid: k, english: data[k].english })
+    );
+    const { updatedMeta: metaUpdatedUids, changedUID } = updateEditedUID(
+      meta,
+      oldList,
+      newList
+    );
+    // TODO: use changedUID to remove or update? audio assets
+
+    const saveP = saveSheetServiceWorker(sheet, data, hash);
 
     // store workbook in indexedDB
     // (keep ordering and notes)
@@ -232,16 +304,19 @@ export default function Sheet() {
         case "Kanji":
           dispatch(setVersion({ name: "kanji", hash }));
           dispatch(clearKanji());
+          dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
           break;
         case "Vocabulary":
           dispatch(setVersion({ name: "vocabulary", hash }));
           dispatch(clearVocabulary());
           dispatch(clearOpposites());
+          dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
           break;
         case "Phrases":
           dispatch(setVersion({ name: "phrases", hash }));
           dispatch(clearPhrases());
           dispatch(clearParticleGame());
+          dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
           break;
         default:
           throw new Error("Incorrect sheet name: " + name);
@@ -253,7 +328,7 @@ export default function Sheet() {
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
-  }, [dispatch]);
+  }, [dispatch, phraseList, vocabList, kanjiList]);
 
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files

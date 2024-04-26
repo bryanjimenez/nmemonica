@@ -45,10 +45,10 @@ function usingPathWrite(
 /**
  * Modifies an attribute or toggles the existing value
  * @param time
- * @param state
+ * @param state required when toggling `attr` for prev value
  * @param path
  * @param attr
- * @param value optional if absent [attr] will be toggled
+ * @param value optional if absent `attr` will be toggled
  */
 export function localStoreAttrUpdate<T>(
   time: Date,

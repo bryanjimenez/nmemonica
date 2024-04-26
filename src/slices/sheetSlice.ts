@@ -1,9 +1,6 @@
-import {
-  jtox,
-  sheetDataToJSON,
-} from "@nmemonica/snservice/src/helper/jsonHelper";
-import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
-import type { SheetData } from "@nmemonica/x-spreadsheet";
+import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
+import { type FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
+import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { getKanji } from "./kanjiSlice";
@@ -115,14 +112,16 @@ export function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export function saveSheetServiceWorker(sheet: FilledSheetData) {
-  const { data, hash } = sheetDataToJSON(sheet);
-
+export function saveSheetServiceWorker(
+  sheet: FilledSheetData,
+  data: Record<string, unknown>,
+  hash: string
+) {
   const resource = sheet.name.toLowerCase();
 
   return swMessageSaveDataJSON(
     dataServiceEndpoint + "/" + resource + ".json.v" + hash,
-    data,
+    data
   ).then(() => ({
     name: sheet.name,
     hash,

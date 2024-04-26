@@ -394,6 +394,18 @@ const phraseSlice = createSlice({
         payload: { uid, value },
       }),
     },
+    batchRepetitionUpdate(
+      state,
+      action: { payload: Record<string, MetaDataObj | undefined> }
+    ) {
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        {},
+        "/phrases/",
+        "repetition",
+        action.payload
+      );
+    },
     /**
      * Space Repetition maximum item review
      * per session
@@ -689,5 +701,6 @@ export const {
 
   removeFrequencyPhrase,
   togglePhrasesOrdering,
+  batchRepetitionUpdate,
 } = phraseSlice.actions;
 export default phraseSlice.reducer;

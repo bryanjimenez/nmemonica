@@ -479,6 +479,19 @@ const vocabularySlice = createSlice({
       }),
     },
 
+    batchRepetitionUpdate(
+      state,
+      action: { payload: Record<string, MetaDataObj | undefined> }
+    ) {
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        {},
+        "/vocabulary/",
+        "repetition",
+        action.payload
+      );
+    },
+
     /**
      * Space Repetition maximum item review
      * per session
@@ -666,5 +679,6 @@ export const {
   setSpaRepMaxItemReview,
   setWordAccuracy,
   setGoal,
+  batchRepetitionUpdate,
 } = vocabularySlice.actions;
 export default vocabularySlice.reducer;
