@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import {
   buildGroupObject,
+  buildSimilarityMap,
   buildTagObject,
   getPropsFromTags,
 } from "../../../src/helper/reducerHelper";
@@ -188,6 +189,29 @@ describe("reducerHelper", function () {
           .and.include.members(["は", "から", "を"]);
         expect(inverse, "inverse").to.equal(expectedUid);
       });
+    });
+  });
+  describe("buildSimilarityMap", function () {
+    it("adds itself and all similars", function () {
+      let allSimilars = new Map<string, Set<string>>();
+      const similarList = ["A", "aa"];
+      const thisKanji = "a";
+
+      const actual = buildSimilarityMap(allSimilars, thisKanji, similarList);
+
+      expect(actual.size).to.eq(3);
+      expect(actual.get("a")).to.deep.eq(new Set(["A", "aa"]));
+      expect(actual.get("A")).to.deep.eq(new Set(["a", "aa"]));
+      expect(actual.get("aa")).to.deep.eq(new Set(["A", "a"]));
+    });
+    it("does not add empty", function () {
+      let allSimilars = new Map<string, Set<string>>();
+      const similarList = [];
+      const thisKanji = "a";
+
+      const actual = buildSimilarityMap(allSimilars, thisKanji, similarList);
+
+      expect(actual.size).to.eq(0);
     });
   });
 });

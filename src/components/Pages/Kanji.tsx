@@ -42,7 +42,6 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
-import { getLastViewCounts } from "../../helper/statsHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -71,6 +70,7 @@ import {
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { type ConsoleMessage } from "../Form/Console";
+import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
@@ -269,6 +269,10 @@ export default function Kanji() {
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
+  const [similar, setSimilar] = useState<RawKanji | undefined>(undefined);
+  const closeSimilar = useCallback(() => {
+    setSimilar(undefined);
+  }, []);
 
   const filteredTerms = useMemo(() => {
     if (kanjiList.length === 0) return [];
@@ -839,6 +843,25 @@ export default function Kanji() {
         </div>
         <div className="tooltip-anchor" ref={anchorElRef}></div>
         <div ref={blastElRef}>{text}</div>
+        <DialogMsg
+          open={similar !== undefined}
+          onClose={closeSimilar}
+          title="These Kanji look alike"
+          ariaLabel="Kanji Similarity Information"
+        >
+          <div className="row row-cols-1 row-cols-sm-2 h-100 text-center">
+            <div className="col d-flex flex-column">
+              <span className="fs-kanji-huge lh-1">{term.kanji}</span>
+              <span>{term.english}</span>
+            </div>
+            <div className="col d-flex flex-column">
+              <span className="fs-kanji-huge lh-1 opacity-25">
+                {similar?.kanji}
+              </span>
+              <span>{similar?.english}</span>
+            </div>
+          </div>
+        </DialogMsg>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -855,15 +878,60 @@ export default function Kanji() {
                 })}
               >
                 <div className="d-flex align-items-center">
-                  <div
-                    className={classNames({
-                      "fs-kanji-huge lh-1 w-100 pt-5": true,
-                      "opacity-25": true,
-                    })}
-                  >
-                    <span>{term.kanji}</span>
+                  <div className="d-flex flex-column  w-100 pt-4">
+                    <div
+                      className={classNames({
+                        "phonetic-radical d-flex flex-row justify-content-end":
+                          true,
+                        invisible:
+                          term.phoneticKanji?.p === undefined ||
+                          term.phoneticKanji.p === term.kanji,
+                      })}
+                    >
+                      <div className="d-flex flex-column text-end lh-1">
+                        <div className="d-flex flex-row w-100 justify-content-between">
+                          <span className="pt-1 pe-2 fs-xx-small">
+                            Radical:
+                          </span>
+                          <span className="text-end fs-x-small">
+                            {term.phoneticKanji?.k ?? ""}
+                          </span>
+                        </div>
+                        <div className="d-flex flex-row w-100  justify-content-between">
+                          <span className="pt-1 pe-2 fs-xx-small">Sound:</span>
+                          <span className="text-end fs-x-small">
+                            {term.phoneticKanji?.p ?? ""}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="row">
+                      <div className="col similar-k d-flex flex-column">
+                        {term.similarKanji.map((k) => (
+                          <div
+                            key={`${k}`}
+                            className="clickable pt-2"
+                            onClick={() => {
+                              const similar = kanjiList.find(
+                                (x) => x.uid === k
+                              );
+                              if (similar !== undefined) {
+                                setSimilar(similar);
+                              }
+                            }}
+                          >
+                            {kanjiList.find((x) => x.uid === k)?.kanji}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="col fs-kanji-huge lh-1 opacity-25">
+                        {term.kanji}
+                      </span>
+                      <span className="col"></span>
+                    </div>
                   </div>
                 </div>
+
                 <span
                   className="lh-1 align-self-center clickable"
                   onClick={setStateFunction(
