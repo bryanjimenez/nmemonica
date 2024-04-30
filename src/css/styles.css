@@ -195,6 +195,11 @@ a {
   line-height: 1.8;
 }
 
+/** furigana smaller size */
+.lh-furigana > ruby > rt > span {
+  font-size: 0.8em;
+}
+
 .lh-xs {
   line-height: 1;
 }
