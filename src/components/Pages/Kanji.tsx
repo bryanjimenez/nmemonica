@@ -76,7 +76,6 @@ import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
-import "../../css/Kanji.css";
 import { Tooltip } from "../Form/Tooltip";
 import { oneFromList, splitToList } from "../Games/KanjiGame";
 
@@ -590,22 +589,25 @@ export default function Kanji() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
 
-  const w = useWindowSize();
-  const xPad = (w.width && w.height ? w.width > w.height : true) ? 0 : 70;
-  const halfWidth = w.width ? w.width / 2 : 0;
+  const ws = useWindowSize();
+  const halfWidth = ws.width ? ws.width / 2 : 0;
+  const grpElW = useRef({ w: 0 });
 
-  const yOffset = 0; // horizontal alignment spacing
-  const xOffset = 0 - halfWidth + xPad; // vertical spacing between tooltip and element
+  const yOffset = ws.height ? ws.height - 50 : 0; //    horizontal alignment spacing
+  const xOffset = halfWidth - grpElW.current.w / 2; //  vertical spacing
   const { x, y, strategy, refs, update } = useFloating({
-    placement: "bottom",
-    middleware: [offset({ mainAxis: yOffset, crossAxis: xOffset }), shift()],
+    placement: "top-start",
+    middleware: [offset({ mainAxis: -yOffset, crossAxis: xOffset }), shift()],
   });
+
+  const w = refs.floating.current?.firstElementChild?.clientWidth ?? 0;
+  grpElW.current = { w };
 
   useEffect(() => {
     // force a recalculate on
     // window resize
     update();
-  }, [update, w.height, w.width]);
+  }, [update, ws.height, ws.width]);
 
   useLayoutEffect(() => {
     const prevState = {
@@ -834,7 +836,6 @@ export default function Kanji() {
             left: x ?? 0,
             width: "max-content",
           }}
-          className="grp-info"
         >
           <div>
             <div className="text-nowrap">{grp}</div>
@@ -907,10 +908,13 @@ export default function Kanji() {
                     </div>
                     <div className="row">
                       <div className="col similar-k d-flex flex-column">
+                        {term.similarKanji.length > 0 && (
+                          <span className="fs-xx-small">Similar</span>
+                        )}
                         {term.similarKanji.map((k) => (
                           <div
                             key={`${k}`}
-                            className="clickable pt-2"
+                            className="clickable pt-2 fs-4"
                             onClick={() => {
                               const similar = kanjiList.find(
                                 (x) => x.uid === k
