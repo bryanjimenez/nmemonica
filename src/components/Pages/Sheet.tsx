@@ -429,8 +429,8 @@ export default function Sheet() {
     }
 
     const [x] = result[resultIdx.current];
-    const xOffset = defaultOp.row.height * (x - 2);
-    workbook.sheet.verticalScrollbar.moveFn(xOffset);
+    const xOffset = defaultOp.row.height * (x - 1);
+    workbook.sheet.verticalScrollbar.move({top:xOffset});
   }, []);
 
   const probablyMobile = useMemo(() => {
