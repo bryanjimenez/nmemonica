@@ -84,6 +84,9 @@ const KanjiMeta = {
   label: "Kanji",
 };
 
+/** Pronunciations are comma delimited (Japanese) */
+const KanjiPronComma = "、";
+
 /**
  * Finds a kanji in a list of terms. Filtering terms by strongest match.
  * @param term
@@ -750,7 +753,7 @@ export default function Kanji() {
       const [first, ...theRest] = orderBy(match, (ex) => ex.japanese.length);
       const examples = [first, ...shuffleArray(theRest)];
 
-      const maxShowEx = 3;
+      const maxShowEx = 5;
       ex.current = examples.slice(0, maxShowEx).map((el) => ({
         el,
         en: oneFromList(el.english),
@@ -878,38 +881,56 @@ export default function Kanji() {
                     true,
                 })}
               >
-                <div className="d-flex align-items-center">
-                  <div className="d-flex flex-column  w-100 pt-4">
-                    <div
-                      className={classNames({
-                        "phonetic-radical d-flex flex-row justify-content-end":
-                          true,
-                        invisible:
-                          term.phoneticKanji?.p === undefined ||
-                          term.phoneticKanji.p === term.kanji,
-                      })}
-                    >
-                      <div className="d-flex flex-column text-end lh-1">
-                        <div className="d-flex flex-row w-100 justify-content-between">
-                          <span className="pt-1 pe-2 fs-xx-small">
-                            Radical:
-                          </span>
-                          <span className="text-end fs-x-small">
-                            {term.phoneticKanji?.k ?? ""}
-                          </span>
-                        </div>
-                        <div className="d-flex flex-row w-100  justify-content-between">
-                          <span className="pt-1 pe-2 fs-xx-small">Sound:</span>
-                          <span className="text-end fs-x-small">
-                            {term.phoneticKanji?.p ?? ""}
-                          </span>
-                        </div>
+                <div className="d-flex ">
+                  <div className="d-flex flex-column w-100">
+                    {(term.pronounce && (
+                      <div
+                        style={{ minHeight: "66px" }}
+                        className="pronunciation fs-5 p-0 d-flex flex-wrap align-items-end justify-content-center clickable"
+                        onClick={setStateFunction(
+                          setShowOn,
+                          (toggle) => !toggle
+                        )}
+                      >
+                        {showOn ? (
+                          term.pronounce
+                            .split(KanjiPronComma)
+                            .flatMap((p, i, { length }) => [
+                              <span
+                                key={`item-${p}`}
+                                className={classNames({
+                                  "text-nowrap": true,
+                                  "fs-6": length > 3,
+                                })}
+                              >
+                                {p}
+                              </span>,
+                              i !== length - 1 ? (
+                                <span key={`comma-${p}`}>{KanjiPronComma}</span>
+                              ) : (
+                                [
+                                  /** no comma after last item */
+                                ]
+                              ),
+                              <wbr key={`wbr-${p}`} />,
+                            ])
+                        ) : (
+                          <span>{"[Pronounce]"}</span>
+                        )}
                       </div>
-                    </div>
+                    )) || (
+                      <div
+                        style={{ minHeight: "68px" }}
+                        className="fs-4 pt-0 invisible"
+                      >
+                        .
+                      </div>
+                    )}
+
                     <div className="row">
-                      <div className="col similar-k d-flex flex-column">
+                      <div className="col p-0 similar-k d-flex flex-column">
                         {term.similarKanji.length > 0 && (
-                          <span className="fs-xx-small">Similar</span>
+                          <span className="pt-1 fs-xx-small">Similar</span>
                         )}
                         {term.similarKanji.map((k) => (
                           <div
@@ -928,15 +949,40 @@ export default function Kanji() {
                           </div>
                         ))}
                       </div>
-                      <span className="col fs-kanji-huge lh-1 opacity-25">
+                      <div className="col p-0 fs-kanji-huge lh-1 opacity-25">
                         {term.kanji}
-                      </span>
-                      <span className="col"></span>
+                      </div>
+
+                      <div
+                        className={classNames({
+                          "col p-0 phonetic-radical d-flex flex-column justify-content-center":
+                            true,
+                          invisible:
+                            term.phoneticKanji?.p === undefined ||
+                            term.phoneticKanji.p === term.kanji,
+                        })}
+                      >
+                        <span className="fs-xx-small">Radical</span>
+                        <span className="fs-4">
+                          {term.phoneticKanji?.k ?? ""}
+                        </span>
+                        <span className="pt-2 fs-xx-small">Sound</span>
+                        {term.phoneticKanji?.p
+                          .split(KanjiPronComma)
+                          .map((p, i, { length }) => (
+                            <span
+                              key={`item-${p}`}
+                              className="text-nowrap fs-4"
+                            >
+                              {`${p}${i !== length - 1 ? KanjiPronComma : ""}`}
+                            </span>
+                          ))}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <span
+                <div
                   className="lh-1 align-self-center clickable"
                   onClick={setStateFunction(
                     setShowMeaning,
@@ -948,7 +994,7 @@ export default function Kanji() {
                       <span
                         key={el}
                         className={classNames({
-                          "fs-1": i === 0,
+                          "fs-2": i === 0,
                           "fs-6 fw-light": i > 0,
                         })}
                       >
@@ -967,18 +1013,10 @@ export default function Kanji() {
                   ) : (
                     <span className="fs-4">[Meaning]</span>
                   )}
-                </span>
+                </div>
               </div>
               <div className="col choices d-flex flex-column justify-content-around text-center">
                 <div className="d-flex flex-column fs-4">{examplesEl}</div>
-                {(term.pronounce && (
-                  <span
-                    className="fs-4 pt-0"
-                    onClick={setStateFunction(setShowOn, (toggle) => !toggle)}
-                  >
-                    <span>{showOn ? term.pronounce : "[Pronounce]"}</span>
-                  </span>
-                )) || <span className="fs-4 pt-0 invisible">.</span>}
               </div>
             </div>
           </div>
