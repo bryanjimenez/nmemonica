@@ -1,6 +1,10 @@
 import { LinearProgress } from "@mui/material";
 import { amber } from "@mui/material/colors";
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MilestoneIcon,
+} from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
 import React, {
@@ -74,6 +78,7 @@ import {
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
+import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import {
@@ -146,6 +151,11 @@ export default function Phrases() {
 
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
+  const [lesson, setLesson] = useState(false);
+
+  const closeLesson = useCallback(() => {
+    setLesson(false);
+  }, []);
 
   useEffect(() => {
     if (phraseList.length === 0) {
@@ -686,6 +696,14 @@ export default function Phrases() {
       >
         <div className="tooltip-anchor" ref={anchorElRef}></div>
         <div ref={blastElRef}>{text}</div>
+        <DialogMsg
+          open={lesson}
+          onClose={closeLesson}
+          title="Lesson"
+          ariaLabelledby="lesson-info"
+        >
+          {phrase.lesson}
+        </DialogMsg>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -750,6 +768,17 @@ export default function Phrases() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
+              {phrase.lesson && (
+                <div
+                  className="sm-icon-grp clickable"
+                  aria-label="Show lesson"
+                  onClick={() => {
+                    setLesson(true);
+                  }}
+                >
+                  <MilestoneIcon />
+                </div>
+              )}
               <Tooltip
                 disabled={!cookies}
                 className={classNames({
