@@ -13,6 +13,7 @@ import {
 import { Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
   DesktopDownloadIcon,
+  FileSymlinkFileIcon,
   LinkExternalIcon,
   // RssIcon,
   SearchIcon,
@@ -60,6 +61,7 @@ import {
   clearVocabulary,
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
 } from "../../slices/vocabularySlice";
+import { DragDropSync } from "../Form/DragDropSync";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -491,10 +493,34 @@ export default function Sheet() {
     menu?.setAttribute("style", css);
   }, []);
 
+  const [uploadDialog, uploadStatus] = useState(false);
+  const closeUpload = useCallback(() => {
+    uploadStatus(false);
+  }, []);
+  const openUpload = useCallback(() => {
+    uploadStatus(true);
+  }, []);
+
   return (
     <>
       <div className="sheet main-panel pt-2">
+        <DragDropSync visible={uploadDialog} close={closeUpload} />
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
+          <div className="pt-1 pe-1">
+            <Fab
+              aria-label="Drop files"
+              // aria-disabled={!cookies}
+              variant="extended"
+              size="small"
+              // disabled={!cookies}
+              onClick={openUpload}
+              className="m-0 z-index-unset"
+              // tabIndex={3}
+              // color={uploadError ? "error" : undefined}
+            >
+              <FileSymlinkFileIcon size="small" />
+            </Fab>
+          </div>
           <div className="pt-1 pe-1">
             <Fab
               aria-label="Save Sheet"
