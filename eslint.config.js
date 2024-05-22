@@ -111,6 +111,9 @@ const extraRules = {
 
   // Warn against nested then() or catch() statements
   // "promise/no-nesting": "warn",
+
+  // Warn about 'todo:'  comments
+  "no-warning-comments":"warn",
 };
 
 const unUsedVarsIgnore = {
