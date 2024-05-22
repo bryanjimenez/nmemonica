@@ -217,7 +217,7 @@ export default function Sheet() {
         // reset search when switching sheet
         grid.bottombar?.menuEl.on("click", resetSearchCB);
 
-        // TODO:
+        // TODO: x-spreadsheet grid.setMaxCols()
         // grid.setMaxCols(0, sheet1Cols);
         // grid.setMaxCols(1, sheet2Cols);
         // grid.setMaxCols(2, sheet3Cols);
@@ -343,6 +343,7 @@ export default function Sheet() {
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
 
+    // TODO: downloadSheetsCB export to file (should zip and include settings?)
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
     if (xObj) {
       const filesP = xObj.map((xObjSheet: FilledSheetData) => {
@@ -456,7 +457,7 @@ export default function Sheet() {
     // const e = new Event("contextmenu")
     // document.querySelector('.x-spreadsheet-table').dispatchEvent(e)
 
-    // TODO: find better way to do this
+    // TODO: show-context-menu hack
     const menu = document.querySelector(".x-spreadsheet-contextmenu");
     const items = menu?.children;
     /**
@@ -504,7 +505,18 @@ export default function Sheet() {
   return (
     <>
       <div className="sheet main-panel pt-2">
-        <DragDropSync visible={uploadDialog} close={closeUpload} />
+        <DragDropSync
+          visible={uploadDialog}
+          close={closeUpload}
+          updateDataHandler={(dataObject) => {
+            // TODO: update datasets after csv import
+            // eslint-disable-next-line
+            console.log("data has been updated");
+            // eslint-disable-next-line
+            console.log(dataObject);
+            return Promise.resolve();
+          }}
+        />
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
             <Fab
