@@ -19,6 +19,7 @@ import {
   SearchIcon,
   ShareIcon,
 } from "@primer/octicons-react";
+import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
@@ -68,6 +69,16 @@ const SheetMeta = {
   label: "Sheet",
 };
 
+// TODO: use workbookNames instead of hardcoded
+/**
+ * Keep all naming and order
+ */
+const workbookNames = Object.freeze({
+  phrase: { index: 0, file: "Phrases.csv", pretty: "Phrases" },
+  vocabulary: { index: 1, file: "Vocabulary.csv", pretty: "Vocabulary" },
+  kanji: { index: 2, file: "Kanji.csv", pretty: "Kanji" },
+});
+
 const defaultOp = {
   mode: "edit", // edit | read
   // showToolbar: true,
@@ -90,6 +101,83 @@ const defaultOp = {
   },
 } as const;
 
+/**
+ * Retrieves worksheet from:
+ * indexedDB
+ * cache
+ * or creates placeholders
+ *
+ * @param dispatch
+ * @param getDatasets fetch action (if no indexedDB)
+ */
+function getWorkbookFromIndexDB(
+  dispatch: AppDispatch,
+  getDatasets: AsyncThunk<FilledSheetData[], void, any>
+) {
+  return openIDB()
+    .then((db) => {
+      // if indexedDB has stored workbook
+      const stores = Array.from(db.objectStoreNames);
+
+      const ErrorWorkbookMissing = new Error("Workbook not stored", {
+        cause: { code: IDBErrorCause.NoResult },
+      });
+      if (!stores.includes("workbook")) {
+        throw ErrorWorkbookMissing;
+      }
+
+      // use stored workbook
+      return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
+        if (!res.workbook || res.workbook.length === 0) {
+          throw ErrorWorkbookMissing;
+        }
+
+        return res.workbook;
+      });
+    })
+    .catch((error) => {
+      // if not fetch and build spreadsheet
+      if (error instanceof Error) {
+        const errData = error.cause as { code: string };
+        if (errData?.code !== IDBErrorCause.NoResult) {
+          // eslint-disable-next-line no-console
+          console.log("Unknown error getting workbook from indexedDB");
+          // eslint-disable-next-line no-console
+          console.error(error);
+        }
+      }
+
+      return dispatch(getDatasets()).unwrap();
+    })
+    .catch((err) => {
+      const { message } = err as { message: unknown };
+      if (typeof message === "string" && message === "Failed to fetch") {
+        return [
+          jtox(
+            {
+              /** no data just headers */
+            },
+            "Phrases"
+          ),
+          jtox(
+            {
+              /** no data just headers */
+            },
+            "Vocabulary"
+          ),
+          jtox(
+            {
+              /** no data just headers */
+            },
+            "Kanji"
+          ),
+        ];
+      }
+
+      throw err;
+    });
+}
+
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -108,6 +196,7 @@ export default function Sheet() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
+  const [workbookImported, setWorkbookImported] = useState<number>();
 
   const [resultBadge, setResultBadge] = useState(0);
   const prevResult = useRef<[number, number, string][]>([]);
@@ -126,104 +215,37 @@ export default function Sheet() {
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void openIDB()
-      .then((db) => {
-        // if indexedDB has stored workbook
-        const stores = Array.from(db.objectStoreNames);
+    void getWorkbookFromIndexDB(dispatch, getDatasets).then((sheetArr) => {
+      const data = sheetArr.map((s) => sheetAddExtraRow(s));
 
-        const ErrorWorkbookMissing = new Error("Workbook not stored", {
-          cause: { code: IDBErrorCause.NoResult },
-        });
-        if (!stores.includes("workbook")) {
-          throw ErrorWorkbookMissing;
-        }
+      const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
 
-        // use stored workbook
-        return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then(
-          (res) => {
-            if (!res.workbook || res.workbook.length === 0) {
-              throw ErrorWorkbookMissing;
-            }
+      // console.log(grid.bottombar.activeEl.el.innerHTML);
 
-            return res.workbook;
-          }
+      grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
+   
+      // replace typed '\n' with newline inside cell
+      grid.on("cell-edited-done", (text:string, _ri:number, _ci:number) => {
+        grid.sheet.data.setSelectedCellText(
+          // characters to replace with \n
+          //    literal '\n'
+          //    two or more japanese spaces
+          //    two or more english spaces
+          text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
+          "finished"
         );
-      })
-      .catch((error) => {
-        // if not fetch and build spreadsheet
-        if (error instanceof Error) {
-          const errData = error.cause as { code: string };
-          if (errData?.code !== IDBErrorCause.NoResult) {
-            // eslint-disable-next-line no-console
-            console.log("Unknown error getting workbook from indexedDB");
-            // eslint-disable-next-line no-console
-            console.error(error);
-          }
-        }
-
-        return dispatch(getDatasets()).unwrap();
-      })
-      .catch((err) => {
-        const { message } = err as { message: unknown };
-        if (typeof message === "string" && message === "Failed to fetch") {
-          return [
-            jtox(
-              {
-                /** no data just headers */
-              },
-              "Phrases"
-            ),
-            jtox(
-              {
-                /** no data just headers */
-              },
-              "Vocabulary"
-            ),
-            jtox(
-              {
-                /** no data just headers */
-              },
-              "Kanji"
-            ),
-          ];
-        }
-
-        throw err;
-      })
-      .then((sheetArr) => {
-        const data = sheetArr.map((s) => sheetAddExtraRow(s));
-
-        const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
-
-        // console.log(grid.bottombar.activeEl.el.innerHTML);
-
-        grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
-
-        // replace typed '\n' with newline inside cell
-        grid.on(
-          "cell-edited-done",
-          (text: string, _ri: number, _ci: number) => {
-            grid.sheet.data.setSelectedCellText(
-              // characters to replace with \n
-              //    literal '\n'
-              //    two or more japanese spaces
-              //    two or more english spaces
-              text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
-              "finished"
-            );
-          }
-        );
-
-        // reset search when switching sheet
-        grid.bottombar?.menuEl.on("click", resetSearchCB);
-
-        // TODO: x-spreadsheet grid.setMaxCols()
-        // grid.setMaxCols(0, sheet1Cols);
-        // grid.setMaxCols(1, sheet2Cols);
-        // grid.setMaxCols(2, sheet3Cols);
-
-        wbRef.current = grid;
       });
+
+      // reset search when switching sheet
+      grid.bottombar?.menuEl.on("click", resetSearchCB);
+
+      // TODO: x-spreadsheet grid.setMaxCols()
+      // grid.setMaxCols(0, sheet1Cols);
+      // grid.setMaxCols(1, sheet2Cols);
+      // grid.setMaxCols(2, sheet3Cols);
+
+      wbRef.current = grid;
+    });
 
     containerRef.current?.appendChild(gridEl);
 
@@ -235,7 +257,7 @@ export default function Sheet() {
         c?.removeChild(gridEl);
       }
     };
-  }, [dispatch, resetSearchCB]);
+  }, [dispatch, resetSearchCB, workbookImported]);
 
   const onUploadErrorCB = useCallback((_err: Error) => {
     setUploadError(true);
@@ -495,27 +517,72 @@ export default function Sheet() {
   }, []);
 
   const [uploadDialog, uploadStatus] = useState(false);
-  const closeUpload = useCallback(() => {
+  const closeUploadCB = useCallback(() => {
     uploadStatus(false);
   }, []);
-  const openUpload = useCallback(() => {
+  const openUploadCB = useCallback(() => {
     uploadStatus(true);
   }, []);
+
+  const updateImportedDataCB = useCallback(
+    (fileWorkbook: FilledSheetData[]) => {
+      if (!confirm("User edited datasets will be overwritten")) {
+        return Promise.reject(new Error("User rejected"));
+      }
+
+      return getWorkbookFromIndexDB(dispatch, getDatasets).then(
+        (dbWorkbook) => {
+          const trimmed = Object.values(workbookNames).map((w) => {
+            const { pretty: prettyName } = w;
+
+            const fileSheet = fileWorkbook.find(
+              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+            );
+            if (fileSheet) {
+              return removeLastRowIfBlank(fileSheet);
+            }
+
+            const dbSheet = dbWorkbook.find(
+              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+            );
+            if (dbSheet) {
+              return dbSheet;
+            }
+
+            // if it never existed add blank placeholder
+            return jtox(
+              {
+                /** no data just headers */
+              },
+              prettyName
+            );
+          });
+
+          // store workbook in indexedDB
+          return openIDB()
+            .then((db) =>
+              putIDBItem(
+                { db, store: IDBStores.WORKBOOK },
+                { key: "0", workbook: trimmed }
+              )
+            )
+            .then(() => {
+              // update workbook useEffect
+              setWorkbookImported(Date.now());
+            });
+        }
+      );
+    },
+    [dispatch]
+  );
 
   return (
     <>
       <div className="sheet main-panel pt-2">
         <DragDropSync
           visible={uploadDialog}
-          close={closeUpload}
-          updateDataHandler={(dataObject) => {
-            // TODO: update datasets after csv import
-            // eslint-disable-next-line
-            console.log("data has been updated");
-            // eslint-disable-next-line
-            console.log(dataObject);
-            return Promise.resolve();
-          }}
+          close={closeUploadCB}
+          updateDataHandler={updateImportedDataCB}
         />
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
@@ -525,7 +592,7 @@ export default function Sheet() {
               variant="extended"
               size="small"
               // disabled={!cookies}
-              onClick={openUpload}
+              onClick={openUploadCB}
               className="m-0 z-index-unset"
               // tabIndex={3}
               // color={uploadError ? "error" : undefined}
