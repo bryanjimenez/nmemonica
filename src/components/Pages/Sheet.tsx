@@ -69,14 +69,13 @@ const SheetMeta = {
   label: "Sheet",
 };
 
-// TODO: use workbookNames instead of hardcoded
 /**
  * Keep all naming and order
  */
 const workbookNames = Object.freeze({
-  phrase: { index: 0, file: "Phrases.csv", pretty: "Phrases" },
-  vocabulary: { index: 1, file: "Vocabulary.csv", pretty: "Vocabulary" },
-  kanji: { index: 2, file: "Kanji.csv", pretty: "Kanji" },
+  phrase: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
+  vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
+  kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
 });
 
 const defaultOp = {
@@ -157,19 +156,19 @@ function getWorkbookFromIndexDB(
             {
               /** no data just headers */
             },
-            "Phrases"
+            workbookNames.phrase.prettyName
           ),
           jtox(
             {
               /** no data just headers */
             },
-            "Vocabulary"
+            workbookNames.vocabulary.prettyName
           ),
           jtox(
             {
               /** no data just headers */
             },
-            "Kanji"
+            workbookNames.kanji.prettyName
           ),
         ];
       }
@@ -333,18 +332,18 @@ export default function Sheet() {
 
     void saveP.then(({ hash, name }) => {
       switch (name) {
-        case "Kanji":
+        case workbookNames.kanji.prettyName:
           dispatch(setVersion({ name: "kanji", hash }));
           dispatch(clearKanji());
           dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
           break;
-        case "Vocabulary":
+        case workbookNames.vocabulary.prettyName:
           dispatch(setVersion({ name: "vocabulary", hash }));
           dispatch(clearVocabulary());
           dispatch(clearOpposites());
           dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
           break;
-        case "Phrases":
+        case workbookNames.phrase.prettyName:
           dispatch(setVersion({ name: "phrases", hash }));
           dispatch(clearPhrases());
           dispatch(clearParticleGame());
@@ -533,7 +532,7 @@ export default function Sheet() {
       return getWorkbookFromIndexDB(dispatch, getDatasets).then(
         (dbWorkbook) => {
           const trimmed = Object.values(workbookNames).map((w) => {
-            const { pretty: prettyName } = w;
+            const { prettyName: prettyName } = w;
 
             const fileSheet = fileWorkbook.find(
               (d) => d.name.toLowerCase() === prettyName.toLowerCase()

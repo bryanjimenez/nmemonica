@@ -39,7 +39,7 @@ export function DragDropSync(props: DragDropSyncProps) {
     setHoverName(undefined);
     setFileData([]);
     setShareId(undefined);
-    setImportStatus(undefined)
+    setImportStatus(undefined);
     socket.current?.close();
   }, [close]);
 
@@ -74,8 +74,8 @@ export function DragDropSync(props: DragDropSyncProps) {
     }
 
     const fileName = e.currentTarget.getAttribute("data-file-name");
-    const sheetName = e.currentTarget.id;
-    if (fileName === null) {
+    const sheetName = e.currentTarget.getAttribute("data-pretty-name");
+    if (fileName === null || sheetName === null) {
       throw new Error("Element should have a data-file-name property");
     }
 
@@ -226,6 +226,7 @@ export function DragDropSync(props: DragDropSyncProps) {
           { name: "Vocabulary.csv" },
           { name: "Kanji.csv" },
         ].map((el) => {
+          const prettyName = el.name.slice(0, el.name.indexOf("."));
           const name = el.name.toLowerCase().slice(0, el.name.indexOf("."));
           const dataItem = fileData.find((d) => d.name.toLowerCase() === name);
 
@@ -233,6 +234,7 @@ export function DragDropSync(props: DragDropSyncProps) {
             <div
               id={name}
               data-file-name={el.name}
+              data-pretty-name={prettyName}
               key={name}
               // className="col d-flex flex-column border px-4"
               className={classNames({
