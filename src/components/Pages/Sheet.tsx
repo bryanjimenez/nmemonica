@@ -1,6 +1,12 @@
 import EventEmitter from "events";
 
-import { Badge, Fab, TextField } from "@mui/material";
+import {
+  Badge,
+  Fab,
+  FormControl,
+  FormHelperText,
+  TextField,
+} from "@mui/material";
 import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
 import {
   jtox,
@@ -12,12 +18,10 @@ import {
 } from "@nmemonica/snservice/src/helper/sheetHelper";
 import { Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
-  DesktopDownloadIcon,
-  FileSymlinkFileIcon,
+  GearIcon,
   LinkExternalIcon,
   // RssIcon,
   SearchIcon,
-  ShareIcon,
 } from "@primer/octicons-react";
 import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
@@ -62,6 +66,8 @@ import {
   clearVocabulary,
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
 } from "../../slices/vocabularySlice";
+import { DataSetActionMenu } from "../Form/DataSetActionMenu";
+import DialogMsg from "../Form/DialogMsg";
 import { DragDropSync } from "../Form/DragDropSync";
 
 const SheetMeta = {
@@ -515,12 +521,31 @@ export default function Sheet() {
     menu?.setAttribute("style", css);
   }, []);
 
-  const [uploadDialog, uploadStatus] = useState(false);
-  const closeUploadCB = useCallback(() => {
-    uploadStatus(false);
+  const [dataSetActionMenu, setDataSetActionMenu] = useState(false);
+  const closeDataSetActionMenuCB = useCallback(() => {
+    setDataSetActionMenu(false);
   }, []);
-  const openUploadCB = useCallback(() => {
-    uploadStatus(true);
+  const openDataSetActionMenuCB = useCallback(() => {
+    setDataSetActionMenu(true);
+  }, []);
+
+  const [uploadDialog, uploadStatus] = useState<"sync" | "file">();
+  const closeUploadCB = useCallback(() => {
+    uploadStatus(undefined);
+  }, []);
+  const openUploadFileCB = useCallback(() => {
+    uploadStatus("file");
+  }, []);
+  const openUploadSyncCB = useCallback(() => {
+    uploadStatus("sync");
+  }, []);
+
+  const [syncId, setSyncId] = useState(false);
+  const closeSyncImportCB = useCallback(() => {
+    setSyncId(false);
+  }, []);
+  const openSyncImportCB = useCallback(() => {
+    setSyncId(true);
   }, []);
 
   const updateImportedDataCB = useCallback(
@@ -578,28 +603,82 @@ export default function Sheet() {
   return (
     <>
       <div className="sheet main-panel pt-2">
+        <DataSetActionMenu
+          visible={dataSetActionMenu}
+          close={closeDataSetActionMenuCB}
+          saveChanges={saveSheetCB}
+          importFromFile={openUploadFileCB}
+          importFromSync={openSyncImportCB}
+          exportToFile={downloadSheetsCB}
+          exportToSync={openUploadSyncCB}
+        />
         <DragDropSync
           visible={uploadDialog}
           close={closeUploadCB}
           updateDataHandler={updateImportedDataCB}
         />
+        <DialogMsg open={syncId} onClose={closeSyncImportCB} title="">
+          <FormControl className="mt-2">
+            <TextField
+              id="source"
+              // error={userInputError}
+              size="small"
+              label={"Sync ID"}
+              variant="outlined"
+              aria-label="Load user dataset"
+              // defaultValue={
+              //   type === ExternalSourceType.GitHubUserContent
+              //     ? getUserName(localServiceURL)
+              //     : localServiceURL
+              // }
+              onChange={() => {}}
+              // InputProps={{
+              //   startAdornment: (
+              //     <InputAdornment
+              //       position="start"
+              //       onClick={() => {
+              //         const newType = toggleAFilter(type + 1, [
+              //           ExternalSourceType.Unset,
+              //           ExternalSourceType.LocalService,
+              //           ExternalSourceType.GitHubUserContent,
+              //         ]) as (typeof ExternalSourceType)[keyof typeof ExternalSourceType];
+
+              //         setType(newType);
+              //       }}
+              //     >
+              //       {type === ExternalSourceType.Unset && (
+              //         <CloudOfflineIcon size="small" />
+              //       )}
+              //       {type === ExternalSourceType.LocalService && (
+              //         <WorkflowIcon size="small" />
+              //       )}
+              //       {type === ExternalSourceType.GitHubUserContent && (
+              //         <MarkGithubIcon size="small" />
+              //       )}
+              //     </InputAdornment>
+              //   ),
+              // }}
+            />
+            <FormHelperText>Import and overwrite local data !</FormHelperText>
+          </FormControl>
+        </DialogMsg>
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
             <Fab
-              aria-label="Drop files"
-              // aria-disabled={!cookies}
+              aria-label="DataSet Actions"
+              aria-disabled={!cookies}
               variant="extended"
               size="small"
-              // disabled={!cookies}
-              onClick={openUploadCB}
+              disabled={!cookies}
+              onClick={openDataSetActionMenuCB}
               className="m-0 z-index-unset"
-              // tabIndex={3}
+              tabIndex={3}
               // color={uploadError ? "error" : undefined}
             >
-              <FileSymlinkFileIcon size="small" />
+              <GearIcon size="small" />
             </Fab>
           </div>
-          <div className="pt-1 pe-1">
+          {/* <div className="pt-1 pe-1">
             <Fab
               aria-label="Save Sheet"
               aria-disabled={!cookies}
@@ -613,19 +692,7 @@ export default function Sheet() {
             >
               <ShareIcon size="small" />
             </Fab>
-          </div>
-          <div className="pt-1 pe-1">
-            <Fab
-              aria-label="Download Sheet"
-              variant="extended"
-              size="small"
-              onClick={downloadSheetsCB}
-              className="m-0 z-index-unset"
-              tabIndex={4}
-            >
-              <DesktopDownloadIcon size="small" />
-            </Fab>
-          </div>
+          </div> */}
           {/* {externalSource === ExternalSourceType.LocalService &&
             !probablyMobile && (
               <div className="pt-1 pe-1">

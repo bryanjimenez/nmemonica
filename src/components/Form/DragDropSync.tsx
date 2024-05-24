@@ -15,7 +15,7 @@ import { readCsvToSheet } from "../../slices/sheetSlice";
 import "../../css/DragDropSync.css";
 
 interface DragDropSyncProps {
-  visible?: boolean;
+  visible?: "sync" | "file";
   close: () => void;
   updateDataHandler: (data: FilledSheetData[]) => Promise<void>;
 }
@@ -203,7 +203,7 @@ export function DragDropSync(props: DragDropSyncProps) {
 
   return (
     <DialogMsg
-      open={visible === true}
+      open={visible !== undefined}
       onClose={closeDragDropSync}
       title="Drag & Drop files here:"
       ariaLabel="File drag drop area"
@@ -284,7 +284,7 @@ export function DragDropSync(props: DragDropSyncProps) {
       <div className="d-flex justify-content-between">
         <div>{shareId}</div>
         <div className="d-flex">
-          <div className="me-2">
+          {visible === "file" && (
             <Button
               aria-label="Import Datasets from disk"
               variant="outlined"
@@ -301,21 +301,23 @@ export function DragDropSync(props: DragDropSyncProps) {
               )}
               Import
             </Button>
-          </div>
-          <Button
-            aria-label="Share Datasets"
-            variant="outlined"
-            size="small"
-            disabled={fileData.length < 1 || shareId !== undefined}
-            onClick={shareDatasetCB}
-          >
-            {shareId !== undefined ? (
-              <CheckCircleIcon size="small" className="pe-1" />
-            ) : (
-              <UploadIcon size="small" className="pe-1" />
-            )}
-            Share
-          </Button>
+          )}
+          {visible === "sync" && (
+            <Button
+              aria-label="Share Datasets"
+              variant="outlined"
+              size="small"
+              disabled={fileData.length < 1 || shareId !== undefined}
+              onClick={shareDatasetCB}
+            >
+              {shareId !== undefined ? (
+                <CheckCircleIcon size="small" className="pe-1" />
+              ) : (
+                <UploadIcon size="small" className="pe-1" />
+              )}
+              Share
+            </Button>
+          )}
         </div>
       </div>
     </DialogMsg>
