@@ -61,8 +61,8 @@ import {
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
 } from "../../slices/vocabularySlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
+import { DataSetDragDrop } from "../Form/DataSetDragDrop";
 import { DataSetSyncImport } from "../Form/DataSetSyncImport";
-import { DragDropSync } from "../Form/DragDropSync";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -523,15 +523,15 @@ export default function Sheet() {
     setDataSetActionMenu(true);
   }, []);
 
-  const [dragDropDialog, uploadStatus] = useState<"sync" | "file">();
-  const closeUploadCB = useCallback(() => {
-    uploadStatus(undefined);
+  const [dragDropDialog, dragDropStatus] = useState<"sync" | "file">();
+  const closeDragDropCB = useCallback(() => {
+    dragDropStatus(undefined);
   }, []);
-  const openUploadFileCB = useCallback(() => {
-    uploadStatus("file");
+  const openDragDropFileCB = useCallback(() => {
+    dragDropStatus("file");
   }, []);
-  const openUploadSyncCB = useCallback(() => {
-    uploadStatus("sync");
+  const openDragDropSyncCB = useCallback(() => {
+    dragDropStatus("sync");
   }, []);
 
   const [syncImportDialog, setSyncId] = useState(false);
@@ -585,8 +585,9 @@ export default function Sheet() {
               )
             )
             .then(() => {
-              // update workbook useEffect
+              // reload workbook (update useEffect)
               setWorkbookImported(Date.now());
+              return;
             });
         }
       );
@@ -601,14 +602,14 @@ export default function Sheet() {
           visible={dataSetActionMenu}
           close={closeDataSetActionMenuCB}
           saveChanges={saveSheetCB}
-          importFromFile={openUploadFileCB}
+          importFromFile={openDragDropFileCB}
           importFromSync={openSyncImportCB}
           exportToFile={downloadSheetsCB}
-          exportToSync={openUploadSyncCB}
+          exportToSync={openDragDropSyncCB}
         />
-        <DragDropSync
+        <DataSetDragDrop
           visible={dragDropDialog}
-          close={closeUploadCB}
+          close={closeDragDropCB}
           updateDataHandler={updateImportedDataCB}
         />
         <DataSetSyncImport

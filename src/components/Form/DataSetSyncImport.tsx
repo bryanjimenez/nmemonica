@@ -5,8 +5,12 @@ import {
   TextField,
 } from "@mui/material";
 import { FilledSheetData } from "@nmemonica/snservice";
-import { ArrowSwitchIcon } from "@primer/octicons-react";
-import { useCallback } from "react";
+import {
+  ArrowSwitchIcon,
+  BlockedIcon,
+  CloudOfflineIcon,
+} from "@primer/octicons-react";
+import { useCallback, useState } from "react";
 
 import DialogMsg from "./DialogMsg";
 import { syncService } from "../../../environment.development";
@@ -28,7 +32,9 @@ interface DataSetSyncImportProps {
 export function DataSetSyncImport(props: DataSetSyncImportProps) {
   const { visible, close, updateDataHandler } = props;
 
-  const termporaryPullCB_TEST = useCallback(
+  const [warning, setWarning] = useState<"connect" | "input">();
+
+  const importFromSyncCB = useCallback(
     (e: React.FormEvent<CustomForm>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -39,14 +45,17 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
         const shareId = form.source.value;
 
         if (shareId.length !== 5) {
-          // TODO: display input check error
+          setWarning("input");
           return;
         }
 
         const ws = new WebSocket(syncService);
 
+        ws.addEventListener("error", () => {
+          setWarning("connect");
+        });
+
         ws.addEventListener("open", () => {
-          // TODO: other ws.send use eventName also
           ws.send(
             JSON.stringify({
               eventName: "pull",
@@ -114,22 +123,35 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
     [close, updateDataHandler]
   );
 
+  const clearWarningCB = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.value === "") {
+        setWarning(undefined);
+      }
+    },
+    []
+  );
+
   return (
     <DialogMsg open={visible === true} onClose={close} title="">
-      <form onSubmit={termporaryPullCB_TEST}>
+      <form onSubmit={importFromSyncCB}>
         <FormControl className="mt-2">
           <TextField
             id="source"
-            // error={userInputError}
+            error={warning !== undefined}
             size="small"
-            label={"Sync ID"}
+            label="Sync ID"
             variant="outlined"
             aria-label="Enter import ID"
-            onChange={() => {}}
+            onChange={clearWarningCB}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <ArrowSwitchIcon className="rotate-90" />
+                  {warning === "connect" && <CloudOfflineIcon />}
+                  {warning === "input" && <BlockedIcon />}
+                  {warning === undefined && (
+                    <ArrowSwitchIcon className="rotate-90" />
+                  )}
                 </InputAdornment>
               ),
             }}

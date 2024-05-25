@@ -14,13 +14,13 @@ import { syncService } from "../../../environment.development";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import "../../css/DragDropSync.css";
 
-interface DragDropSyncProps {
+interface DataSetDragDropProps {
   visible?: "sync" | "file";
   close: () => void;
   updateDataHandler: (data: FilledSheetData[]) => Promise<void>;
 }
 
-export function DragDropSync(props: DragDropSyncProps) {
+export function DataSetDragDrop(props: DataSetDragDropProps) {
   const { visible, close, updateDataHandler } = props;
 
   const [fileData, setFileData] = useState<
@@ -144,6 +144,9 @@ export function DragDropSync(props: DragDropSyncProps) {
       .then((dataObj) => updateDataHandler(dataObj))
       .then(() => {
         setImportStatus(true);
+        if (visible === "file") {
+          setTimeout(close, 500);
+        }
       })
       .catch(() => {
         setImportStatus(false);
@@ -153,6 +156,12 @@ export function DragDropSync(props: DragDropSyncProps) {
   const shareDatasetCB = useCallback(() => {
     const ws = new WebSocket(syncService);
     ws.binaryType = "arraybuffer";
+
+    ws.addEventListener("error", () => {
+      // TODO: display connection error icon
+      // eslint-disable-next-line
+      console.log("error connecting")
+    });
 
     ws.addEventListener("open", () => {
       const payload = fileData.map((d) => ({
@@ -184,6 +193,7 @@ export function DragDropSync(props: DragDropSyncProps) {
       try {
         uid = JSON.parse(msgData).uid;
 
+        // TODO: other ws.send use eventName
         if (typeof uid !== "string") {
           throw new Error("Expected a string ID");
         }
