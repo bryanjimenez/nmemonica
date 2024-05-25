@@ -1,12 +1,6 @@
 import EventEmitter from "events";
 
-import {
-  Badge,
-  Fab,
-  FormControl,
-  FormHelperText,
-  TextField,
-} from "@mui/material";
+import { Badge, Fab, TextField } from "@mui/material";
 import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
 import {
   jtox,
@@ -67,7 +61,7 @@ import {
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
 } from "../../slices/vocabularySlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
-import DialogMsg from "../Form/DialogMsg";
+import { DataSetSyncImport } from "../Form/DataSetSyncImport";
 import { DragDropSync } from "../Form/DragDropSync";
 
 const SheetMeta = {
@@ -117,7 +111,7 @@ const defaultOp = {
  */
 function getWorkbookFromIndexDB(
   dispatch: AppDispatch,
-  getDatasets: AsyncThunk<FilledSheetData[], void, any>
+  getDatasets: AsyncThunk<FilledSheetData[], void, object>
 ) {
   return openIDB()
     .then((db) => {
@@ -370,7 +364,7 @@ export default function Sheet() {
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
 
-    // TODO: downloadSheetsCB export to file (should zip and include settings?)
+    // TODO: should zip and include settings?
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
     if (xObj) {
       const filesP = xObj.map((xObjSheet: FilledSheetData) => {
@@ -484,7 +478,7 @@ export default function Sheet() {
     // const e = new Event("contextmenu")
     // document.querySelector('.x-spreadsheet-table').dispatchEvent(e)
 
-    // TODO: show-context-menu hack
+    // TODO: show context-menu hack
     const menu = document.querySelector(".x-spreadsheet-contextmenu");
     const items = menu?.children;
     /**
@@ -529,7 +523,7 @@ export default function Sheet() {
     setDataSetActionMenu(true);
   }, []);
 
-  const [uploadDialog, uploadStatus] = useState<"sync" | "file">();
+  const [dragDropDialog, uploadStatus] = useState<"sync" | "file">();
   const closeUploadCB = useCallback(() => {
     uploadStatus(undefined);
   }, []);
@@ -540,7 +534,7 @@ export default function Sheet() {
     uploadStatus("sync");
   }, []);
 
-  const [syncId, setSyncId] = useState(false);
+  const [syncImportDialog, setSyncId] = useState(false);
   const closeSyncImportCB = useCallback(() => {
     setSyncId(false);
   }, []);
@@ -613,55 +607,16 @@ export default function Sheet() {
           exportToSync={openUploadSyncCB}
         />
         <DragDropSync
-          visible={uploadDialog}
+          visible={dragDropDialog}
           close={closeUploadCB}
           updateDataHandler={updateImportedDataCB}
         />
-        <DialogMsg open={syncId} onClose={closeSyncImportCB} title="">
-          <FormControl className="mt-2">
-            <TextField
-              id="source"
-              // error={userInputError}
-              size="small"
-              label={"Sync ID"}
-              variant="outlined"
-              aria-label="Load user dataset"
-              // defaultValue={
-              //   type === ExternalSourceType.GitHubUserContent
-              //     ? getUserName(localServiceURL)
-              //     : localServiceURL
-              // }
-              onChange={() => {}}
-              // InputProps={{
-              //   startAdornment: (
-              //     <InputAdornment
-              //       position="start"
-              //       onClick={() => {
-              //         const newType = toggleAFilter(type + 1, [
-              //           ExternalSourceType.Unset,
-              //           ExternalSourceType.LocalService,
-              //           ExternalSourceType.GitHubUserContent,
-              //         ]) as (typeof ExternalSourceType)[keyof typeof ExternalSourceType];
+        <DataSetSyncImport
+          visible={syncImportDialog}
+          close={closeSyncImportCB}
+          updateDataHandler={updateImportedDataCB}
+        />
 
-              //         setType(newType);
-              //       }}
-              //     >
-              //       {type === ExternalSourceType.Unset && (
-              //         <CloudOfflineIcon size="small" />
-              //       )}
-              //       {type === ExternalSourceType.LocalService && (
-              //         <WorkflowIcon size="small" />
-              //       )}
-              //       {type === ExternalSourceType.GitHubUserContent && (
-              //         <MarkGithubIcon size="small" />
-              //       )}
-              //     </InputAdornment>
-              //   ),
-              // }}
-            />
-            <FormHelperText>Import and overwrite local data !</FormHelperText>
-          </FormControl>
-        </DialogMsg>
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
             <Fab
