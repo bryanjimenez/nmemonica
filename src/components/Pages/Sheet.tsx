@@ -361,11 +361,43 @@ export default function Sheet() {
     void dispatch(setLocalDataEdited(true));
   }, [dispatch, phraseList, vocabList, kanjiList]);
 
+  const downloadFilesCB = useCallback(
+    (files: { name: string; text: string }[]) => {
+      files.forEach(({ name, text }) => {
+        const file = new Blob([text], {
+          type: "application/plaintext; charset=utf-8",
+        });
+        // const file = new Blob(['csv.file'],{type:"octet/stream"})
+        // const f = new File([file], './file.csv', {type:"octet/stream"})
+
+        const dlUrl = URL.createObjectURL(file);
+        // window.location.assign(dlUrl)
+
+        // URL.revokeObjectURL()
+        // browser.downloads.download(URL.createObjectURL(file))
+        const a = document.createElement("a");
+        a.download = `${name}.csv`;
+        a.href = dlUrl;
+        // document.body.appendChild(a)
+        a.click();
+
+        setTimeout(() => {
+          // document.body.removeChild(a)
+          URL.revokeObjectURL(dlUrl);
+        }, 0);
+      });
+
+      return Promise.resolve();
+    },
+    []
+  );
+
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
 
     // TODO: should zip and include settings?
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
+
     if (xObj) {
       const filesP = xObj.map((xObjSheet: FilledSheetData) => {
         const fileSim = new EventEmitter();
@@ -379,49 +411,27 @@ export default function Sheet() {
           },
         };
 
-        const csvP = new Promise<[string, string]>((resolve, _reject) => {
-          let file = "";
-          fileSim.on("write", (line) => {
-            file += line;
-          });
+        const csvP = new Promise<{ name: string; text: string }>(
+          (resolve, _reject) => {
+            let file = "";
+            fileSim.on("write", (line) => {
+              file += line;
+            });
 
-          fileSim.on("end", () => {
-            resolve([xObjSheet.name, file]);
-          });
-        });
+            fileSim.on("end", () => {
+              resolve({ name: xObjSheet.name, text: file });
+            });
+          }
+        );
 
         objectToCSV(xObjSheet, fileWriterSimulator);
 
         return csvP;
       });
 
-      void Promise.all(filesP).then((data1) => {
-        data1.forEach(([name, data]) => {
-          const file = new Blob([data], {
-            type: "application/plaintext; charset=utf-8",
-          });
-          // const file = new Blob(['csv.file'],{type:"octet/stream"})
-          // const f = new File([file], './file.csv', {type:"octet/stream"})
-
-          const dlUrl = URL.createObjectURL(file);
-          // window.location.assign(dlUrl)
-
-          // URL.revokeObjectURL()
-          // browser.downloads.download(URL.createObjectURL(file))
-          const a = document.createElement("a");
-          a.download = `${name}.csv`;
-          a.href = dlUrl;
-          // document.body.appendChild(a)
-          a.click();
-
-          setTimeout(() => {
-            // document.body.removeChild(a)
-            URL.revokeObjectURL(dlUrl);
-          }, 0);
-        });
-      });
+      void Promise.all(filesP).then((files) => downloadFilesCB(files));
     }
-  }, []);
+  }, [downloadFilesCB]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -544,9 +554,9 @@ export default function Sheet() {
 
   const updateImportedDataCB = useCallback(
     (fileWorkbook: FilledSheetData[]) => {
-      if (!confirm("User edited datasets will be overwritten")) {
-        return Promise.reject(new Error("User rejected"));
-      }
+      // if (!confirm("User edited datasets will be overwritten")) {
+      //   return Promise.reject(new Error("User rejected"));
+      // }
 
       return getWorkbookFromIndexDB(dispatch, getDatasets).then(
         (dbWorkbook) => {
@@ -615,6 +625,7 @@ export default function Sheet() {
         <DataSetSyncImport
           visible={syncImportDialog}
           close={closeSyncImportCB}
+          downloadFileHandler={downloadFilesCB}
           updateDataHandler={updateImportedDataCB}
         />
 

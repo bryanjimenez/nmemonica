@@ -141,7 +141,11 @@ export function DataSetDragDrop(props: DataSetDragDropProps) {
     setImportStatus(undefined);
 
     void Promise.all(fileData.map((d) => readCsvToSheet(d.text, d.name)))
-      .then((dataObj) => updateDataHandler(dataObj))
+      .then((dataObj) => {
+        if (!confirm("User edited datasets will be overwritten")) {
+          return Promise.reject(new Error("User rejected"));
+        }
+        return updateDataHandler(dataObj)})
       .then(() => {
         setImportStatus(true);
         if (visible === "file") {

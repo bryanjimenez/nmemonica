@@ -1,4 +1,5 @@
 import {
+  Alert,
   FormControl,
   FormHelperText,
   InputAdornment,
@@ -10,6 +11,7 @@ import {
   BlockedIcon,
   CheckCircleIcon,
   CloudOfflineIcon,
+  XCircleFillIcon,
 } from "@primer/octicons-react";
 import { useCallback, useState } from "react";
 
@@ -27,18 +29,24 @@ interface CustomForm extends HTMLFormElement {
 interface DataSetSyncImportProps {
   visible?: boolean;
   close: () => void;
+  downloadFileHandler: (
+    files: { name: string; text: string }[]
+  ) => Promise<void>;
   updateDataHandler: (data: FilledSheetData[]) => Promise<void>;
 }
 
 export function DataSetSyncImport(props: DataSetSyncImportProps) {
-  const { visible, close, updateDataHandler } = props;
+  const { visible, close, updateDataHandler, downloadFileHandler } = props;
 
   const [status, setStatus] = useState<
-    "successStatus" | "connectError" | "inputError"
+    "successStatus" | "connectError" | "inputError" | "outputError"
   >();
+
+  const [warning, setWarning] = useState<string>();
 
   const closeCB = useCallback(() => {
     setStatus(undefined);
+    setWarning(undefined);
     close();
   }, [close]);
 
@@ -82,16 +90,14 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
             try {
               hasErr = JSON.parse(msgData) as typeof hasErr;
             } catch (_err) {
-              // TODO: display unparsable error
-              // eslint-disable-next-line
-              console.log("failed to parse");
+              setStatus("outputError");
+              setWarning("failed to parse");
               return;
             }
 
             if (hasErr.error !== undefined) {
-              // TODO: display incoming sync error
-              // eslint-disable-next-line
-              console.log(msgData);
+              setStatus("outputError");
+              setWarning(hasErr.error ?? msgData.toString());
             }
             return;
           }
@@ -102,34 +108,41 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
             let jsonObj;
             try {
               jsonObj = JSON.parse(text) as { name: string; text: string }[];
-            } catch (err) {
-              // TODO: display json.parse error
-              // eslint-disable-next-line
-              console.log("JSON.parse error");
-              // eslint-disable-next-line
-              console.log(err);
+            } catch (_err) {
+              setStatus("outputError");
+              setWarning("JSON.parse error");
               return;
             }
 
             Promise.all(
               jsonObj.map(({ name, text }) => readCsvToSheet(text, name))
             )
-              .then((dataObj) =>
-                updateDataHandler(dataObj).then(() => {
+              .then((dataObj) => {
+                if (
+                  !confirm(
+                    "User edited datasets will be overwritten [cancel: Download]"
+                  )
+                ) {
+                  return downloadFileHandler(jsonObj).then(() => {
+                    setStatus("successStatus");
+                    setTimeout(closeCB, 1000);
+                  });
+                }
+
+                return updateDataHandler(dataObj).then(() => {
                   setStatus("successStatus");
                   setTimeout(closeCB, 1000);
-                })
-              )
+                });
+              })
               .catch(() => {
-                // TODO: display csv parse error
-                // eslint-disable-next-line
-                console.log("csv parse error");
+                setStatus("outputError");
+                setWarning("csv parse error");
               });
           });
         });
       }
     },
-    [closeCB, updateDataHandler]
+    [closeCB, downloadFileHandler, updateDataHandler]
   );
 
   const clearWarningCB = useCallback(
@@ -145,6 +158,11 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
     <DialogMsg open={visible === true} onClose={close} title="">
       <form onSubmit={importFromSyncCB}>
         <FormControl className="mt-2">
+          {warning && (
+            <Alert severity="warning" className="py-0 mb-1">
+              <span className="p-0">{warning}</span>
+            </Alert>
+          )}
           <TextField
             id="source"
             error={status?.endsWith("Error")}
@@ -158,6 +176,9 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
                 <InputAdornment position="start">
                   {status === "connectError" && <CloudOfflineIcon />}
                   {status === "inputError" && <BlockedIcon />}
+                  {status === "outputError" && (
+                    <XCircleFillIcon className="incorrect-color" />
+                  )}
                   {status === "successStatus" && (
                     <CheckCircleIcon className="correct-color" />
                   )}
