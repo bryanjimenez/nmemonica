@@ -3,8 +3,11 @@ import {
   Dialog,
   DialogContent,
   FormControl,
+  FormControlLabel,
   FormHelperText,
   InputAdornment,
+  Radio,
+  RadioGroup,
   TextField,
 } from "@mui/material";
 import { FilledSheetData } from "@nmemonica/snservice";
@@ -39,6 +42,7 @@ interface DataSetSyncImportProps {
 export function DataSetSyncImport(props: DataSetSyncImportProps) {
   const { visible, close, updateDataHandler, downloadFileHandler } = props;
 
+  const [destination, setDestination] = useState<"import" | "save">("import");
   const [status, setStatus] = useState<
     "successStatus" | "connectError" | "inputError" | "outputError"
   >();
@@ -119,11 +123,7 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
               jsonObj.map(({ name, text }) => readCsvToSheet(text, name))
             )
               .then((dataObj) => {
-                if (
-                  !confirm(
-                    "User edited datasets will be overwritten [cancel: Download]"
-                  )
-                ) {
+                if (destination === "save") {
                   return downloadFileHandler(jsonObj).then(() => {
                     setStatus("successStatus");
                     setTimeout(closeCB, 1000);
@@ -143,7 +143,7 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
         });
       }
     },
-    [closeCB, downloadFileHandler, updateDataHandler]
+    [destination, closeCB, downloadFileHandler, updateDataHandler]
   );
 
   const clearWarningCB = useCallback(
@@ -158,10 +158,48 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
   return (
     <Dialog
       open={visible === true}
-      onClose={close}
+      onClose={closeCB}
       aria-label="DataSet Sync import"
     >
       <DialogContent>
+        <div className="d-flex justify-content-between">
+          <span className="pt-2">Destination:</span>
+          <FormControl>
+            <RadioGroup row aria-labelledby="Import destination">
+              <FormControlLabel
+                className="m-0"
+                value="Import"
+                control={
+                  <Radio
+                    //@ts-expect-error size=sm
+                    size="sm"
+                    checked={destination === "import"}
+                    onChange={() => {
+                      setDestination("import");
+                    }}
+                  />
+                }
+                label={<span>Import</span>}
+              />
+              <FormControlLabel
+                className="m-0"
+                value="Save to file"
+                control={
+                  <Radio
+                    //@ts-expect-error size=sm
+                    size="sm"
+                    checked={destination === "save"}
+                    onChange={() => {
+                      setDestination("save");
+                    }}
+                  />
+                }
+                label={<span>Save</span>}
+              />
+            </RadioGroup>
+          </FormControl>
+        </div>
+
         <form onSubmit={importFromSyncCB}>
           <FormControl className="mt-2">
             {warning && (
@@ -195,7 +233,16 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
                 ),
               }}
             />
-            <FormHelperText>Import and overwrite local data !</FormHelperText>
+            <FormHelperText>
+              {destination === "import" ? (
+                <span>
+                  Import and <strong>overwrite</strong> local data{" "}
+                  <strong>!</strong>
+                </span>
+              ) : (
+                <span>Save to file system</span>
+              )}
+            </FormHelperText>
           </FormControl>
         </form>
       </DialogContent>
