@@ -8,6 +8,7 @@ import { FilledSheetData } from "@nmemonica/snservice";
 import {
   ArrowSwitchIcon,
   BlockedIcon,
+  CheckCircleIcon,
   CloudOfflineIcon,
 } from "@primer/octicons-react";
 import { useCallback, useState } from "react";
@@ -32,7 +33,14 @@ interface DataSetSyncImportProps {
 export function DataSetSyncImport(props: DataSetSyncImportProps) {
   const { visible, close, updateDataHandler } = props;
 
-  const [warning, setWarning] = useState<"connect" | "input">();
+  const [status, setStatus] = useState<
+    "successStatus" | "connectError" | "inputError"
+  >();
+
+  const closeCB = useCallback(() => {
+    setStatus(undefined);
+    close();
+  }, [close]);
 
   const importFromSyncCB = useCallback(
     (e: React.FormEvent<CustomForm>) => {
@@ -45,14 +53,14 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
         const shareId = form.source.value;
 
         if (shareId.length !== 5) {
-          setWarning("input");
+          setStatus("inputError");
           return;
         }
 
         const ws = new WebSocket(syncService);
 
         ws.addEventListener("error", () => {
-          setWarning("connect");
+          setStatus("connectError");
         });
 
         ws.addEventListener("open", () => {
@@ -108,7 +116,8 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
             )
               .then((dataObj) =>
                 updateDataHandler(dataObj).then(() => {
-                  close();
+                  setStatus("successStatus");
+                  setTimeout(closeCB, 1000);
                 })
               )
               .catch(() => {
@@ -120,13 +129,13 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
         });
       }
     },
-    [close, updateDataHandler]
+    [closeCB, updateDataHandler]
   );
 
   const clearWarningCB = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.value === "") {
-        setWarning(undefined);
+        setStatus(undefined);
       }
     },
     []
@@ -138,7 +147,7 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
         <FormControl className="mt-2">
           <TextField
             id="source"
-            error={warning !== undefined}
+            error={status?.endsWith("Error")}
             size="small"
             label="Sync ID"
             variant="outlined"
@@ -147,9 +156,12 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  {warning === "connect" && <CloudOfflineIcon />}
-                  {warning === "input" && <BlockedIcon />}
-                  {warning === undefined && (
+                  {status === "connectError" && <CloudOfflineIcon />}
+                  {status === "inputError" && <BlockedIcon />}
+                  {status === "successStatus" && (
+                    <CheckCircleIcon className="correct-color" />
+                  )}
+                  {status === undefined && (
                     <ArrowSwitchIcon className="rotate-90" />
                   )}
                 </InputAdornment>

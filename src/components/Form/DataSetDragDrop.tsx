@@ -145,7 +145,7 @@ export function DataSetDragDrop(props: DataSetDragDropProps) {
       .then(() => {
         setImportStatus(true);
         if (visible === "file") {
-          setTimeout(close, 500);
+          setTimeout(close, 1000);
         }
       })
       .catch(() => {
