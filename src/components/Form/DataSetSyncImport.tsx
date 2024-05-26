@@ -1,5 +1,7 @@
 import {
   Alert,
+  Dialog,
+  DialogContent,
   FormControl,
   FormHelperText,
   InputAdornment,
@@ -15,7 +17,6 @@ import {
 } from "@primer/octicons-react";
 import { useCallback, useState } from "react";
 
-import DialogMsg from "./DialogMsg";
 import { syncService } from "../../../environment.development";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 
@@ -155,43 +156,49 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
   );
 
   return (
-    <DialogMsg open={visible === true} onClose={close} title="">
-      <form onSubmit={importFromSyncCB}>
-        <FormControl className="mt-2">
-          {warning && (
-            <Alert severity="warning" className="py-0 mb-1">
-              <span className="p-0">{warning}</span>
-            </Alert>
-          )}
-          <TextField
-            id="source"
-            error={status?.endsWith("Error")}
-            size="small"
-            label="Sync ID"
-            variant="outlined"
-            aria-label="Enter import ID"
-            onChange={clearWarningCB}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  {status === "connectError" && <CloudOfflineIcon />}
-                  {status === "inputError" && <BlockedIcon />}
-                  {status === "outputError" && (
-                    <XCircleFillIcon className="incorrect-color" />
-                  )}
-                  {status === "successStatus" && (
-                    <CheckCircleIcon className="correct-color" />
-                  )}
-                  {status === undefined && (
-                    <ArrowSwitchIcon className="rotate-90" />
-                  )}
-                </InputAdornment>
-              ),
-            }}
-          />
-          <FormHelperText>Import and overwrite local data !</FormHelperText>
-        </FormControl>
-      </form>
-    </DialogMsg>
+    <Dialog
+      open={visible === true}
+      onClose={close}
+      aria-label="DataSet Sync import"
+    >
+      <DialogContent>
+        <form onSubmit={importFromSyncCB}>
+          <FormControl className="mt-2">
+            {warning && (
+              <Alert severity="warning" className="py-0 mb-1">
+                <span className="p-0">{warning}</span>
+              </Alert>
+            )}
+            <TextField
+              id="source"
+              error={status?.endsWith("Error")}
+              size="small"
+              label="Sync ID"
+              variant="outlined"
+              aria-label="Enter import ID"
+              onChange={clearWarningCB}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    {status === "connectError" && <CloudOfflineIcon />}
+                    {status === "inputError" && <BlockedIcon />}
+                    {status === "outputError" && (
+                      <XCircleFillIcon className="incorrect-color" />
+                    )}
+                    {status === "successStatus" && (
+                      <CheckCircleIcon className="correct-color" />
+                    )}
+                    {status === undefined && (
+                      <ArrowSwitchIcon className="rotate-90" />
+                    )}
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <FormHelperText>Import and overwrite local data !</FormHelperText>
+          </FormControl>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

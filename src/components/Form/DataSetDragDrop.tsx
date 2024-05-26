@@ -1,4 +1,4 @@
-import { Alert, Button } from "@mui/material";
+import { Alert, Button, Dialog, DialogContent } from "@mui/material";
 import { type FilledSheetData } from "@nmemonica/snservice";
 import {
   AlertIcon,
@@ -9,7 +9,6 @@ import {
 import classNames from "classnames";
 import React, { ReactElement, useCallback, useRef, useState } from "react";
 
-import DialogMsg from "./DialogMsg";
 import { syncService } from "../../../environment.development";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import "../../css/DragDropSync.css";
@@ -145,7 +144,8 @@ export function DataSetDragDrop(props: DataSetDragDropProps) {
         if (!confirm("User edited datasets will be overwritten")) {
           return Promise.reject(new Error("User rejected"));
         }
-        return updateDataHandler(dataObj)})
+        return updateDataHandler(dataObj);
+      })
       .then(() => {
         setImportStatus(true);
         if (visible === "file") {
@@ -155,7 +155,7 @@ export function DataSetDragDrop(props: DataSetDragDropProps) {
       .catch(() => {
         setImportStatus(false);
       });
-  }, [fileData, updateDataHandler]);
+  }, [close, visible, fileData, updateDataHandler]);
 
   const shareDatasetCB = useCallback(() => {
     const ws = new WebSocket(syncService);
@@ -216,124 +216,128 @@ export function DataSetDragDrop(props: DataSetDragDropProps) {
   }, [fileData]);
 
   return (
-    <DialogMsg
+    <Dialog
       open={visible !== undefined}
       onClose={closeDragDropSync}
-      title="Drag & Drop files here:"
-      ariaLabel="File drag drop area"
+      aria-label="File drag drop area"
     >
-      {warning.length > 0 && (
-        <Alert severity={true ? "warning" : "success"} className="py-0 mb-1">
-          <div className="p-0 d-flex flex-column">
-            <ul className="mb-0">
-              {warning.map((el) => (
-                <li key={el.key}>{el}</li>
-              ))}
-            </ul>
-          </div>
-        </Alert>
-      )}
+      {/* <DialogTitle id="lesson">{title}</DialogTitle> */}
+      <DialogContent>
+        {warning.length > 0 && (
+          <Alert severity={true ? "warning" : "success"} className="py-0 mb-1">
+            <div className="p-0 d-flex flex-column">
+              <ul className="mb-0">
+                {warning.map((el) => (
+                  <li key={el.key}>{el}</li>
+                ))}
+              </ul>
+            </div>
+          </Alert>
+        )}
 
-      <div className="row row-cols-1 row-cols-sm-3 h-100 text-center m-0 mb-1">
-        {[
-          { name: "Phrases.csv" },
-          { name: "Vocabulary.csv" },
-          { name: "Kanji.csv" },
-        ].map((el) => {
-          const prettyName = el.name.slice(0, el.name.indexOf("."));
-          const name = el.name.toLowerCase().slice(0, el.name.indexOf("."));
-          const dataItem = fileData.find((d) => d.name.toLowerCase() === name);
+        <div className="row row-cols-1 row-cols-sm-3 h-100 text-center m-0 mb-1">
+          {[
+            { name: "Phrases.csv" },
+            { name: "Vocabulary.csv" },
+            { name: "Kanji.csv" },
+          ].map((el) => {
+            const prettyName = el.name.slice(0, el.name.indexOf("."));
+            const name = el.name.toLowerCase().slice(0, el.name.indexOf("."));
+            const dataItem = fileData.find(
+              (d) => d.name.toLowerCase() === name
+            );
 
-          return (
-            <div
-              id={name}
-              data-file-name={el.name}
-              data-pretty-name={prettyName}
-              key={name}
-              // className="col d-flex flex-column border px-4"
-              className={classNames({
-                "col d-flex flex-column border px-4": true,
-                "dash-border": hoverName === name,
-              })}
-              onDragOver={overElHandler}
-              // onDrop={dragDropHandler}
-              onDropCapture={dragDropHandler}
-            >
-              <span
+            return (
+              <div
+                id={name}
+                data-file-name={el.name}
+                data-pretty-name={prettyName}
+                key={name}
+                // className="col d-flex flex-column border px-4"
                 className={classNames({
-                  "fs-6 opacity-25": true,
-                  "opacity-50": hoverName === name,
+                  "col d-flex flex-column border px-4": true,
+                  "dash-border": hoverName === name,
                 })}
+                onDragOver={overElHandler}
+                // onDrop={dragDropHandler}
+                onDropCapture={dragDropHandler}
               >
-                {dataItem ? `Rows: ${dataItem.sheet.rows.len}` : "Drop"}
-              </span>
-              <span
-                className={classNames({
-                  "fs-4 opacity-25": true,
-                  "opacity-50": hoverName === name,
-                })}
-              >
-                {el.name}
-              </span>
-              {dataItem ? (
-                <CheckCircleIcon
-                  size="small"
-                  className="col ps-1 pb-1 align-self-center correct-color"
-                />
-              ) : (
                 <span
                   className={classNames({
-                    "col fs-6 opacity-25": true,
+                    "fs-6 opacity-25": true,
                     "opacity-50": hoverName === name,
                   })}
                 >
-                  {"here"}
+                  {dataItem ? `Rows: ${dataItem.sheet.rows.len}` : "Drop"}
                 </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="d-flex justify-content-between">
-        <div>{shareId}</div>
-        <div className="d-flex">
-          {visible === "file" && (
-            <Button
-              aria-label="Import Datasets from disk"
-              variant="outlined"
-              size="small"
-              disabled={fileData.length < 1 || importStatus === true}
-              onClick={importDatasetCB}
-            >
-              {importStatus === undefined ? (
-                <DownloadIcon size="small" className="pe-1" />
-              ) : importStatus === true ? (
-                <CheckCircleIcon size="small" className="pe-1" />
-              ) : (
-                <AlertIcon size="small" className="pe-1" />
-              )}
-              Import
-            </Button>
-          )}
-          {visible === "sync" && (
-            <Button
-              aria-label="Share Datasets"
-              variant="outlined"
-              size="small"
-              disabled={fileData.length < 1 || shareId !== undefined}
-              onClick={shareDatasetCB}
-            >
-              {shareId !== undefined ? (
-                <CheckCircleIcon size="small" className="pe-1" />
-              ) : (
-                <UploadIcon size="small" className="pe-1" />
-              )}
-              Share
-            </Button>
-          )}
+                <span
+                  className={classNames({
+                    "fs-4 opacity-25": true,
+                    "opacity-50": hoverName === name,
+                  })}
+                >
+                  {el.name}
+                </span>
+                {dataItem ? (
+                  <CheckCircleIcon
+                    size="small"
+                    className="col ps-1 pb-1 align-self-center correct-color"
+                  />
+                ) : (
+                  <span
+                    className={classNames({
+                      "col fs-6 opacity-25": true,
+                      "opacity-50": hoverName === name,
+                    })}
+                  >
+                    {"here"}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
-    </DialogMsg>
+
+        <div className="d-flex justify-content-between">
+          <div>{shareId}</div>
+          <div className="d-flex">
+            {visible === "file" && (
+              <Button
+                aria-label="Import Datasets from disk"
+                variant="outlined"
+                size="small"
+                disabled={fileData.length < 1 || importStatus === true}
+                onClick={importDatasetCB}
+              >
+                {importStatus === undefined ? (
+                  <DownloadIcon size="small" className="pe-1" />
+                ) : importStatus === true ? (
+                  <CheckCircleIcon size="small" className="pe-1" />
+                ) : (
+                  <AlertIcon size="small" className="pe-1" />
+                )}
+                Import
+              </Button>
+            )}
+            {visible === "sync" && (
+              <Button
+                aria-label="Share Datasets"
+                variant="outlined"
+                size="small"
+                disabled={fileData.length < 1 || shareId !== undefined}
+                onClick={shareDatasetCB}
+              >
+                {shareId !== undefined ? (
+                  <CheckCircleIcon size="small" className="pe-1" />
+                ) : (
+                  <UploadIcon size="small" className="pe-1" />
+                )}
+                Share
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
