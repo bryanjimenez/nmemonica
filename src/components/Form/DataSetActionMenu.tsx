@@ -7,6 +7,7 @@ import {
   FileBinaryIcon,
   FileZipIcon,
 } from "@primer/octicons-react";
+import classNames from "classnames";
 import { useCallback } from "react";
 
 interface DataSetActionMenuProps {
@@ -37,13 +38,11 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
 
   const importFromFileCB = useCallback(() => {
     importFromFile();
-    close();
-  }, [close, importFromFile]);
+  }, [importFromFile]);
 
   const importFromSyncCB = useCallback(() => {
     importFromSync();
-    close();
-  }, [close, importFromSync]);
+  }, [importFromSync]);
 
   const exportToFileCB = useCallback(() => {
     exportToFile();
@@ -52,8 +51,7 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
 
   const exportToSyncCB = useCallback(() => {
     exportToSync();
-    close();
-  }, [close, exportToSync]);
+  }, [exportToSync]);
 
   return (
     <Dialog
@@ -116,7 +114,10 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
                 size="small"
                 onClick={el.handler}
                 style={{ textTransform: "none" }}
-                className="py-0 mb-1"
+                className={classNames({
+                  "py-0 mb-1": true,
+                  "mb-3": el.name === "Save Changes",
+                })}
               >
                 <div className="d-flex w-100 justify-content-between">
                   <span className="mt-2">{el.name}</span>

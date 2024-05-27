@@ -19,7 +19,14 @@ import {
 } from "@primer/octicons-react";
 import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -62,6 +69,7 @@ import {
 } from "../../slices/vocabularySlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
 import { DataSetDragDrop } from "../Form/DataSetDragDrop";
+import { DataSetExportSync } from "../Form/DataSetExportSync";
 import { DataSetSyncImport } from "../Form/DataSetSyncImport";
 
 const SheetMeta = {
@@ -109,7 +117,7 @@ const defaultOp = {
  * @param dispatch
  * @param getDatasets fetch action (if no indexedDB)
  */
-function getWorkbookFromIndexDB(
+export function getWorkbookFromIndexDB(
   dispatch: AppDispatch,
   getDatasets: AsyncThunk<FilledSheetData[], void, object>
 ) {
@@ -175,6 +183,45 @@ function getWorkbookFromIndexDB(
 
       throw err;
     });
+}
+
+/**
+ * Parse xObject into csv text
+ */
+export function xObjectToCsvText(xObj: FilledSheetData[]) {
+  //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
+
+  const filesP = xObj.map((xObjSheet: FilledSheetData) => {
+    const fileSim = new EventEmitter();
+
+    const fileWriterSimulator = {
+      write: (line: string) => {
+        fileSim.emit("write", line);
+      },
+      end: () => {
+        fileSim.emit("end");
+      },
+    };
+
+    const csvP = new Promise<{ name: string; text: string }>(
+      (resolve, _reject) => {
+        let file = "";
+        fileSim.on("write", (line) => {
+          file += line;
+        });
+
+        fileSim.on("end", () => {
+          resolve({ name: xObjSheet.name, text: file });
+        });
+      }
+    );
+
+    objectToCSV(xObjSheet, fileWriterSimulator);
+
+    return csvP;
+  });
+
+  return Promise.all(filesP);
 }
 
 export default function Sheet() {
@@ -393,44 +440,10 @@ export default function Sheet() {
   );
 
   const downloadSheetsCB = useCallback(() => {
-    //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
-
     // TODO: should zip and include settings?
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
 
-    if (xObj) {
-      const filesP = xObj.map((xObjSheet: FilledSheetData) => {
-        const fileSim = new EventEmitter();
-
-        const fileWriterSimulator = {
-          write: (line: string) => {
-            fileSim.emit("write", line);
-          },
-          end: () => {
-            fileSim.emit("end");
-          },
-        };
-
-        const csvP = new Promise<{ name: string; text: string }>(
-          (resolve, _reject) => {
-            let file = "";
-            fileSim.on("write", (line) => {
-              file += line;
-            });
-
-            fileSim.on("end", () => {
-              resolve({ name: xObjSheet.name, text: file });
-            });
-          }
-        );
-
-        objectToCSV(xObjSheet, fileWriterSimulator);
-
-        return csvP;
-      });
-
-      void Promise.all(filesP).then((files) => downloadFilesCB(files));
-    }
+    void xObjectToCsvText(xObj).then((files) => downloadFilesCB(files));
   }, [downloadFilesCB]);
 
   const doSearchCB = useCallback(() => {
@@ -525,39 +538,27 @@ export default function Sheet() {
     menu?.setAttribute("style", css);
   }, []);
 
-  const [dataSetActionMenu, setDataSetActionMenu] = useState(false);
-  const closeDataSetActionMenuCB = useCallback(() => {
-    setDataSetActionMenu(false);
+  const [dataAction, setDataAction] = useState<
+    "menu" | "importSync" | "exportSync" | "importFile"
+  >();
+  const closeDataAction = useCallback(() => {
+    setDataAction(undefined);
   }, []);
-  const openDataSetActionMenuCB = useCallback(() => {
-    setDataSetActionMenu(true);
+  const openDataActionMenuCB = useCallback(() => {
+    setDataAction("menu");
   }, []);
-
-  const [dragDropDialog, dragDropStatus] = useState<"sync" | "file">();
-  const closeDragDropCB = useCallback(() => {
-    dragDropStatus(undefined);
+  const openImportFileCB = useCallback(() => {
+    setDataAction("importFile");
   }, []);
-  const openDragDropFileCB = useCallback(() => {
-    dragDropStatus("file");
+  const openImportSyncCB = useCallback(() => {
+    setDataAction("importSync");
   }, []);
-  const openDragDropSyncCB = useCallback(() => {
-    dragDropStatus("sync");
-  }, []);
-
-  const [syncImportDialog, setSyncId] = useState(false);
-  const closeSyncImportCB = useCallback(() => {
-    setSyncId(false);
-  }, []);
-  const openSyncImportCB = useCallback(() => {
-    setSyncId(true);
+  const openExportSyncCB = useCallback(() => {
+    setDataAction("exportSync");
   }, []);
 
   const updateImportedDataCB = useCallback(
     (fileWorkbook: FilledSheetData[]) => {
-      // if (!confirm("User edited datasets will be overwritten")) {
-      //   return Promise.reject(new Error("User rejected"));
-      // }
-
       return getWorkbookFromIndexDB(dispatch, getDatasets).then(
         (dbWorkbook) => {
           const trimmed = Object.values(workbookNames).map((w) => {
@@ -605,26 +606,32 @@ export default function Sheet() {
     [dispatch]
   );
 
+  const [warning, setWarning] = useState<ReactElement[]>([]);
+
   return (
     <>
       <div className="sheet main-panel pt-2">
         <DataSetActionMenu
-          visible={dataSetActionMenu}
-          close={closeDataSetActionMenuCB}
+          visible={dataAction === "menu"}
+          close={closeDataAction}
           saveChanges={saveSheetCB}
-          importFromFile={openDragDropFileCB}
-          importFromSync={openSyncImportCB}
+          importFromFile={openImportFileCB}
+          importFromSync={openImportSyncCB}
           exportToFile={downloadSheetsCB}
-          exportToSync={openDragDropSyncCB}
+          exportToSync={openExportSyncCB}
         />
         <DataSetDragDrop
-          visible={dragDropDialog}
-          close={closeDragDropCB}
+          visible={dataAction === "importFile"}
+          close={closeDataAction}
           updateDataHandler={updateImportedDataCB}
         />
+        <DataSetExportSync
+          visible={dataAction === "exportSync"}
+          close={closeDataAction}
+        />
         <DataSetSyncImport
-          visible={syncImportDialog}
-          close={closeSyncImportCB}
+          visible={dataAction === "importSync"}
+          close={closeDataAction}
           downloadFileHandler={downloadFilesCB}
           updateDataHandler={updateImportedDataCB}
         />
@@ -637,29 +644,13 @@ export default function Sheet() {
               variant="extended"
               size="small"
               disabled={!cookies}
-              onClick={openDataSetActionMenuCB}
+              onClick={openDataActionMenuCB}
               className="m-0 z-index-unset"
               tabIndex={3}
-              // color={uploadError ? "error" : undefined}
             >
               <GearIcon size="small" />
             </Fab>
           </div>
-          {/* <div className="pt-1 pe-1">
-            <Fab
-              aria-label="Save Sheet"
-              aria-disabled={!cookies}
-              variant="extended"
-              size="small"
-              disabled={!cookies}
-              onClick={saveSheetCB}
-              className="m-0 z-index-unset"
-              tabIndex={3}
-              color={uploadError ? "error" : undefined}
-            >
-              <ShareIcon size="small" />
-            </Fab>
-          </div> */}
           {/* {externalSource === ExternalSourceType.LocalService &&
             !probablyMobile && (
               <div className="pt-1 pe-1">
