@@ -20,7 +20,6 @@ import {
 import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import {
-  ReactElement,
   useCallback,
   useEffect,
   useMemo,
@@ -68,9 +67,9 @@ import {
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
 } from "../../slices/vocabularySlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
-import { DataSetDragDrop } from "../Form/DataSetDragDrop";
 import { DataSetExportSync } from "../Form/DataSetExportSync";
-import { DataSetSyncImport } from "../Form/DataSetSyncImport";
+import { DataSetImportFile } from "../Form/DataSetImportFile";
+import { DataSetImportSync } from "../Form/DataSetImportSync";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -80,10 +79,14 @@ const SheetMeta = {
 /**
  * Keep all naming and order
  */
-const workbookNames = Object.freeze({
+export const workbookNames = Object.freeze({
   phrase: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
   vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
   kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
+});
+
+export const metaDataNames = Object.freeze({
+  userSettings: { file: "Settings.json", prettyName: "Settings" },
 });
 
 const defaultOp = {
@@ -313,10 +316,10 @@ export default function Sheet() {
     }, 2000);
   }, []);
 
-  const saveSheetCB = useCallback(() => {
-    // void saveSheetLocalService(wbRef.current, sheetService).catch(
-    //   onUploadErrorCB
-    // );
+  const saveSheetHandlerCB = useCallback(() => {
+    if (!wbRef.current) {
+      throw new Error("No Workbook");
+    }
 
     if (wbRef.current === null) {
       throw new Error("Expected workbook");
@@ -408,7 +411,7 @@ export default function Sheet() {
     void dispatch(setLocalDataEdited(true));
   }, [dispatch, phraseList, vocabList, kanjiList]);
 
-  const downloadFilesCB = useCallback(
+  const downloadFileHandlerCB = useCallback(
     (files: { name: string; text: string }[]) => {
       files.forEach(({ name, text }) => {
         const file = new Blob([text], {
@@ -439,12 +442,12 @@ export default function Sheet() {
     []
   );
 
-  const downloadSheetsCB = useCallback(() => {
+  const downloadWorkbookHandlerCB = useCallback(() => {
     // TODO: should zip and include settings?
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
 
-    void xObjectToCsvText(xObj).then((files) => downloadFilesCB(files));
-  }, [downloadFilesCB]);
+    void xObjectToCsvText(xObj).then((files) => downloadFileHandlerCB(files));
+  }, [downloadFileHandlerCB]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -557,7 +560,7 @@ export default function Sheet() {
     setDataAction("exportSync");
   }, []);
 
-  const updateImportedDataCB = useCallback(
+  const importDataHandlerCB = useCallback(
     (fileWorkbook: FilledSheetData[]) => {
       return getWorkbookFromIndexDB(dispatch, getDatasets).then(
         (dbWorkbook) => {
@@ -606,34 +609,32 @@ export default function Sheet() {
     [dispatch]
   );
 
-  const [warning, setWarning] = useState<ReactElement[]>([]);
-
   return (
     <>
       <div className="sheet main-panel pt-2">
         <DataSetActionMenu
           visible={dataAction === "menu"}
           close={closeDataAction}
-          saveChanges={saveSheetCB}
+          saveChanges={saveSheetHandlerCB}
           importFromFile={openImportFileCB}
           importFromSync={openImportSyncCB}
-          exportToFile={downloadSheetsCB}
+          exportToFile={downloadWorkbookHandlerCB}
           exportToSync={openExportSyncCB}
         />
-        <DataSetDragDrop
+        <DataSetImportFile
           visible={dataAction === "importFile"}
           close={closeDataAction}
-          updateDataHandler={updateImportedDataCB}
+          updateDataHandler={importDataHandlerCB}
         />
         <DataSetExportSync
           visible={dataAction === "exportSync"}
           close={closeDataAction}
         />
-        <DataSetSyncImport
+        <DataSetImportSync
           visible={dataAction === "importSync"}
           close={closeDataAction}
-          downloadFileHandler={downloadFilesCB}
-          updateDataHandler={updateImportedDataCB}
+          downloadFileHandler={downloadFileHandlerCB}
+          updateDataHandler={importDataHandlerCB}
         />
 
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">

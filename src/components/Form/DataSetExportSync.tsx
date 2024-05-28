@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogContent } from "@mui/material";
+import { Alert, Button, Dialog, DialogContent } from "@mui/material";
 import { FilledSheetData } from "@nmemonica/snservice";
 import {
   ArrowSwitchIcon,
@@ -11,7 +11,7 @@ import { ReactElement, useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
-import { DataSetFromDragDrop } from "./DataSetFromDragDrop";
+import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
 import { syncService } from "../../../environment.development";
 import { AppDispatch } from "../../slices";
 import { getDatasets } from "../../slices/sheetSlice";
@@ -29,15 +29,8 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   const [warning, setWarning] = useState<ReactElement[]>([]);
 
   const [shareId, setShareId] = useState<string>();
-  const [source, setSource] = useState<"file" | "app">("app");
-  const [fileData, setFileData] = useState<
-    {
-      name: string;
-      source: "app" | "file";
-      text: string;
-      sheet: FilledSheetData;
-    }[]
-  >([]);
+  const [source, setSource] = useState<"FileSystem" | "AppCache">("AppCache");
+  const [fileData, setFileData] = useState<TransferObject[]>([]);
 
   const shareDatasetCB = useCallback(
     (payload: { name: string; text: string }[]) => {
@@ -95,7 +88,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     []
   );
 
-  const closeMixedCB = useCallback(() => {
+  const closeHandlerCB = useCallback(() => {
     setFileData([]);
     setShareId(undefined);
     setWarning([]);
@@ -103,7 +96,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   }, [close]);
 
   const exportDataSetCB = useCallback(() => {
-    const fromApp = fileData.filter((f) => f.source === "app");
+    const fromApp = fileData.filter((f) => f.origin === "AppCache");
     let transferData = Promise.resolve(
       fileData.map((f) => ({
         name: f.name,
@@ -118,7 +111,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
           ) as FilledSheetData[];
 
           return xObjectToCsvText(included).then((dBtoCsv) => [
-            ...fileData.filter((f) => f.source === "file"),
+            ...fileData.filter((f) => f.origin === "FileSystem"),
             ...dBtoCsv,
           ]);
         }
@@ -131,49 +124,55 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   return (
     <Dialog
       open={visible === true}
-      onClose={closeMixedCB}
+      onClose={closeHandlerCB}
       aria-label="File drag drop area"
       fullWidth={true}
     >
       <DialogContent className="p-2 m-0">
         <div className="d-flex justify-content-end">
-          {source === "file" && (
+          {source === "FileSystem" && (
             <div
               className="clickable"
               onClick={() => {
-                setSource("app");
+                setSource("AppCache");
               }}
             >
               <ArrowSwitchIcon className="px-0" /> <DatabaseIcon />
             </div>
           )}
-          {source === "app" && (
+          {source === "AppCache" && (
             <div
               className="clickable"
               onClick={() => {
-                setSource("file");
+                setSource("FileSystem");
               }}
             >
               <FileDirectoryIcon /> <ArrowSwitchIcon className="px-0" />
             </div>
           )}
         </div>
-        {source === "app" && (
+        {warning.length > 0 && (
+          <Alert severity="warning" className="py-0 mb-1">
+            <div className="p-0 d-flex flex-column">
+              <ul className="mb-0">
+                {warning.map((el) => (
+                  <li key={el.key}>{el}</li>
+                ))}
+              </ul>
+            </div>
+          </Alert>
+        )}
+        {source === "AppCache" && (
           <DataSetFromAppCache
             data={fileData}
             updateDataHandler={(name) => {
               setFileData((prev) => {
-                let newPrev: {
-                  name: string;
-                  source: string;
-                  text: string;
-                  sheet: FilledSheetData;
-                }[] = [];
+                let newPrev: TransferObject[] = [];
                 // if is not in state add it
                 if (prev.find((p) => p.name === name) === undefined) {
                   newPrev = [
                     ...prev,
-                    { name, source: "app", text: "", sheet: null },
+                    { name, origin: "AppCache", text: "", sheet: null },
                   ];
                 } else {
                   newPrev = prev.filter((p) => p.name !== name);
@@ -184,7 +183,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
             }}
           />
         )}
-        {source === "file" && (
+        {source === "FileSystem" && (
           <DataSetFromDragDrop
             data={fileData}
             updateDataHandler={(item) => {

@@ -12,18 +12,19 @@ import React, { ReactElement, useCallback, useState } from "react";
 
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
-import "../../css/DragDropSync.css";
+import { metaDataNames, workbookNames } from "../Pages/Sheet";
+import "../../css/DragDrop.css";
 
-export interface TransferFile {
+export interface TransferObject {
   name: string;
-  source: "app" | "file";
+  origin: "AppCache" | "FileSystem";
   text: string;
-  sheet: FilledSheetData;
+  sheet: FilledSheetData | null;
 }
 
 interface DataSetFromDragDropProps {
-  data: TransferFile[];
-  updateDataHandler: (data: TransferFile) => void;
+  data: TransferObject[];
+  updateDataHandler: (data: TransferObject) => void;
 }
 
 export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
@@ -109,7 +110,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
 
             updateDataHandler({
               name: xObj.name,
-              source: "file",
+              origin: "FileSystem",
               text,
               sheet: xObj,
             });
@@ -136,7 +137,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
   return (
     <>
       {warning.length > 0 && (
-        <Alert severity={true ? "warning" : "success"} className="py-0 mb-1">
+        <Alert severity="warning" className="py-0 mb-1">
           <div className="p-0 d-flex flex-column">
             <ul className="mb-0">
               {warning.map((el) => (
@@ -178,22 +179,17 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               <span className="col">Name</span>
             </div>
             <div className="row">
-              <span className="col px-2">rows</span>
-              <span className="col px-2">source</span>
+              <span className="col px-2">Rows</span>
+              <span className="col px-2">Source</span>
             </div>
           </div>
-          {[
-            { name: "Phrases.csv" },
-            { name: "Vocabulary.csv" },
-            { name: "Kanji.csv" },
-            { name: "Settings.json" },
-          ].map((el) => {
-            // const prettyName = el.name.slice(0, el.name.indexOf("."));
-            const name = el.name.toLowerCase().slice(0, el.name.indexOf("."));
+          {Object.values({ ...workbookNames, ...metaDataNames }).map((el) => {
+            const { prettyName, file } = el;
+            const name = prettyName.toLowerCase();
             const dataItem = data.find((d) => d.name.toLowerCase() === name);
 
             return (
-              <div key={el.name} className="d-flex justify-content-between">
+              <div key={name} className="d-flex justify-content-between">
                 <div className="me-5">
                   <span
                     className={classNames({
@@ -201,7 +197,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                       "opacity-25": dataItem?.name.toLowerCase() !== name,
                     })}
                   >
-                    {el.name}
+                    {file}
                   </span>
                 </div>
                 <div>
@@ -210,8 +206,10 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                       {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
                     </span>
                     <div className="col px-1">
-                      {dataItem?.source === "app" && <DatabaseIcon />}
-                      {dataItem?.source === "file" && <FileDirectoryIcon />}
+                      {dataItem?.origin === "AppCache" && <DatabaseIcon />}
+                      {dataItem?.origin === "FileSystem" && (
+                        <FileDirectoryIcon />
+                      )}
                     </div>
                     <div
                       className={classNames({

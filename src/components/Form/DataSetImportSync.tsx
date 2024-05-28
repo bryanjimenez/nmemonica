@@ -30,7 +30,7 @@ interface CustomForm extends HTMLFormElement {
   elements: CustomElements;
 }
 
-interface DataSetSyncImportProps {
+interface DataSetImportSyncProps {
   visible?: boolean;
   close: () => void;
   downloadFileHandler: (
@@ -39,7 +39,7 @@ interface DataSetSyncImportProps {
   updateDataHandler: (data: FilledSheetData[]) => Promise<void>;
 }
 
-export function DataSetSyncImport(props: DataSetSyncImportProps) {
+export function DataSetImportSync(props: DataSetImportSyncProps) {
   const { visible, close, updateDataHandler, downloadFileHandler } = props;
 
   const [destination, setDestination] = useState<"import" | "save">("import");
@@ -49,7 +49,7 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
 
   const [warning, setWarning] = useState<string>();
 
-  const closeCB = useCallback(() => {
+  const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
     setWarning(undefined);
     close();
@@ -126,13 +126,13 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
                 if (destination === "save") {
                   return downloadFileHandler(jsonObj).then(() => {
                     setStatus("successStatus");
-                    setTimeout(closeCB, 1000);
+                    setTimeout(closeHandlerCB, 1000);
                   });
                 }
 
                 return updateDataHandler(dataObj).then(() => {
                   setStatus("successStatus");
-                  setTimeout(closeCB, 1000);
+                  setTimeout(closeHandlerCB, 1000);
                 });
               })
               .catch(() => {
@@ -143,7 +143,7 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
         });
       }
     },
-    [destination, closeCB, downloadFileHandler, updateDataHandler]
+    [destination, closeHandlerCB, downloadFileHandler, updateDataHandler]
   );
 
   const clearWarningCB = useCallback(
@@ -158,7 +158,7 @@ export function DataSetSyncImport(props: DataSetSyncImportProps) {
   return (
     <Dialog
       open={visible === true}
-      onClose={closeCB}
+      onClose={closeHandlerCB}
       aria-label="DataSet Sync import"
     >
       <DialogContent>
