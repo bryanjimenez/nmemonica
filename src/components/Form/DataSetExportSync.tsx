@@ -172,7 +172,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
                 if (prev.find((p) => p.name === name) === undefined) {
                   newPrev = [
                     ...prev,
-                    { name, origin: "AppCache", text: "", sheet: null },
+                    { name, origin: "AppCache", text: "" },
                   ];
                 } else {
                   newPrev = prev.filter((p) => p.name !== name);

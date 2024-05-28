@@ -10,6 +10,7 @@ import {
 import classNames from "classnames";
 import React, { ReactElement, useCallback, useState } from "react";
 
+import { LocalStorageState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 import { metaDataNames, workbookNames } from "../Pages/Sheet";
@@ -19,7 +20,8 @@ export interface TransferObject {
   name: string;
   origin: "AppCache" | "FileSystem";
   text: string;
-  sheet: FilledSheetData | null;
+  sheet?: FilledSheetData;
+  setting?: Partial<LocalStorageState>;
 }
 
 interface DataSetFromDragDropProps {
@@ -64,15 +66,15 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
         ];
       }
 
-      const files = [
-        "Phrases.csv",
-        "Vocabulary.csv",
-        "Kanji.csv",
-        "Settings.csv",
-      ];
+      const allowedFiles = Object.values({
+        ...workbookNames,
+        ...metaDataNames,
+      }).map((e) => e.file);
+      const isSettings =
+        f.name.toLowerCase() === metaDataNames.userSettings.file.toLowerCase();
 
       if (
-        files.find((ff) => ff.toLowerCase() === f.name.toLowerCase()) ===
+        allowedFiles.find((ff) => ff.toLowerCase() === f.name.toLowerCase()) ===
         undefined
       ) {
         w = [
@@ -82,7 +84,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           >{`File (${f.name}) is not correctly named`}</span>,
         ];
       }
-      if (f.type !== "text/csv") {
+      if (!isSettings && f.type !== "text/csv") {
         w = [
           ...w,
           <span
@@ -90,8 +92,16 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           >{`${f.name} is not a proper csv file.`}</span>,
         ];
       }
+      if (isSettings && f.type !== "application/json") {
+        w = [
+          ...w,
+          <span
+            key={`${f.name}-type`}
+          >{`${f.name} is not a proper json file.`}</span>,
+        ];
+      }
 
-      if (w.length === 0) {
+      if (!isSettings && w.length === 0) {
         const reader = new FileReader();
         reader.onload = async (e) => {
           if (e.target === null) return;
@@ -127,6 +137,28 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
 
         reader.readAsText(f);
         // reader.readAsArrayBuffer(f);
+      } else if (isSettings && w.length === 0) {
+        void f
+          .text()
+          .then((text) => {
+            const s = JSON.parse(text) as Partial<LocalStorageState>;
+            // TODO: settings.json extra validations
+            updateDataHandler({
+              name: metaDataNames.userSettings.prettyName,
+              origin: "FileSystem",
+              text,
+              setting: s,
+            });
+          })
+          .catch((_err) => {
+            w = [
+              ...w,
+              <span
+                key={`${f.name}-parse`}
+              >{`Failed to parse (${f.name})`}</span>,
+            ];
+            setWarning((warn) => [...warn, ...w]);
+          });
       } else {
         setWarning((warn) => [...warn, ...w]);
       }

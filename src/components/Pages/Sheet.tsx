@@ -47,7 +47,7 @@ import { updateEditedUID } from "../../helper/sheetHelperNoImport";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import { AppDispatch, RootState } from "../../slices";
+import { AppDispatch, LocalStorageState, RootState } from "../../slices";
 import "../../css/Sheet.css";
 import { setLocalDataEdited } from "../../slices/globalSlice";
 import {
@@ -560,51 +560,74 @@ export default function Sheet() {
     setDataAction("exportSync");
   }, []);
 
+  /**
+   * Imports datasets and settings to app
+   */
   const importDataHandlerCB = useCallback(
-    (fileWorkbook: FilledSheetData[]) => {
-      return getWorkbookFromIndexDB(dispatch, getDatasets).then(
-        (dbWorkbook) => {
-          const trimmed = Object.values(workbookNames).map((w) => {
-            const { prettyName: prettyName } = w;
+    (
+      importWorkbook?: FilledSheetData[],
+      importSettings?: Partial<LocalStorageState>
+    ) => {
+      let completeP: Promise<unknown>[] = [];
+      if (importSettings && Object.keys(importSettings).length > 0) {
+        // TODO: import settings here
+        const settingsP = Promise.resolve();
 
-            const fileSheet = fileWorkbook.find(
-              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-            );
-            if (fileSheet) {
-              return removeLastRowIfBlank(fileSheet);
-            }
+        completeP = [...completeP, settingsP];
+      }
 
-            const dbSheet = dbWorkbook.find(
-              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-            );
-            if (dbSheet) {
-              return dbSheet;
-            }
+      if (importWorkbook && importWorkbook.length > 0) {
+        const workbookP = getWorkbookFromIndexDB(dispatch, getDatasets).then(
+          (dbWorkbook) => {
+            const trimmed = Object.values(workbookNames).map((w) => {
+              const { prettyName: prettyName } = w;
 
-            // if it never existed add blank placeholder
-            return jtox(
-              {
-                /** no data just headers */
-              },
-              prettyName
-            );
-          });
+              const fileSheet = importWorkbook.find(
+                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+              );
+              if (fileSheet) {
+                return removeLastRowIfBlank(fileSheet);
+              }
 
-          // store workbook in indexedDB
-          return openIDB()
-            .then((db) =>
-              putIDBItem(
-                { db, store: IDBStores.WORKBOOK },
-                { key: "0", workbook: trimmed }
-              )
-            )
-            .then(() => {
-              // reload workbook (update useEffect)
-              setWorkbookImported(Date.now());
-              return;
+              const dbSheet = dbWorkbook.find(
+                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+              );
+              if (dbSheet) {
+                return dbSheet;
+              }
+
+              // if it never existed add blank placeholder
+              return jtox(
+                {
+                  /** no data just headers */
+                },
+                prettyName
+              );
             });
-        }
-      );
+
+            // store workbook in indexedDB
+            return openIDB()
+              .then((db) =>
+                putIDBItem(
+                  { db, store: IDBStores.WORKBOOK },
+                  { key: "0", workbook: trimmed }
+                )
+              )
+              .then(() => {
+                // TODO: update cache .json s (trigger save?)
+              })
+              .then(() => {
+                // reload workbook (update useEffect)
+                setWorkbookImported(Date.now());
+                return;
+              });
+          }
+        );
+
+        completeP = [...completeP, workbookP];
+      }
+
+      return Promise.all(completeP).then(() => Promise.resolve());
     },
     [dispatch]
   );

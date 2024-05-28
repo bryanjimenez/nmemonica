@@ -14,13 +14,16 @@ import {
 import { useCallback, useRef, useState } from "react";
 
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
-import { readCsvToSheet } from "../../slices/sheetSlice";
+import { LocalStorageState } from "../../slices";
 import "../../css/DragDrop.css";
 
 interface DataSetImportFileProps {
   visible?: boolean;
   close: () => void;
-  updateDataHandler: (data: FilledSheetData[]) => Promise<void>;
+  updateDataHandler: (
+    data?: FilledSheetData[],
+    settings?: Partial<LocalStorageState>
+  ) => Promise<void>;
 }
 
 export function DataSetImportFile(props: DataSetImportFileProps) {
@@ -44,8 +47,17 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
   const importDatasetCB = useCallback(() => {
     setImportStatus(undefined);
 
-    void Promise.all(fileData.map((d) => readCsvToSheet(d.text, d.name)))
-      .then((dataObj) => updateDataHandler(dataObj))
+    const xObj = fileData.reduce<FilledSheetData[]>(
+      (acc, el) => (el.sheet ? [...acc, el.sheet] : acc),
+      []
+    );
+
+    const [settingObj] = fileData.reduce<Partial<LocalStorageState>[]>(
+      (acc, el) => (el.setting ? [...acc, el.setting] : acc),
+      []
+    );
+
+    updateDataHandler(xObj, settingObj)
       .then(() => {
         setImportStatus(true);
         setTimeout(closeHandlerCB, 1000);
@@ -56,14 +68,15 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
   }, [fileData, updateDataHandler, closeHandlerCB]);
 
   const [confirm, setConfirm] = useState(false);
+  const cancelCB = useCallback(() => {
+    setConfirm(false);
+  }, []);
 
   return (
     <>
       <Dialog
         open={confirm}
-        onClose={() => {
-          setConfirm(false);
-        }}
+        onClose={cancelCB}
         aria-label="Confirm file import"
       >
         <DialogContent>
@@ -73,13 +86,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
         </DialogContent>
         <DialogActions>
           <Button onClick={importDatasetCB}>Ok</Button>
-          <Button
-            onClick={() => {
-              setConfirm(false);
-            }}
-          >
-            Cancel
-          </Button>
+          <Button onClick={cancelCB}>Cancel</Button>
         </DialogActions>
       </Dialog>
       <Dialog
