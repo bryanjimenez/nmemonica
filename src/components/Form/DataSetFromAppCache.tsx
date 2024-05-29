@@ -7,7 +7,7 @@ import {
 import classNames from "classnames";
 
 import { TransferObject } from "./DataSetFromDragDrop";
-import { metaDataNames, workbookNames } from "../Pages/Sheet";
+import { metaDataNames, workbookSheetNames } from "../Pages/Sheet";
 
 interface DataSetFromAppCacheProps {
   data: TransferObject[];
@@ -34,7 +34,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
             <span className="col px-2">Source</span>
           </div>
         </div>
-        {Object.values({ ...workbookNames, ...metaDataNames }).map((el) => {
+        {Object.values({ ...workbookSheetNames, ...metaDataNames }).map((el) => {
           const { prettyName } = el;
           const name = prettyName.toLowerCase();
 

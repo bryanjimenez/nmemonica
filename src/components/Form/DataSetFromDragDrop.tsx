@@ -13,7 +13,7 @@ import React, { ReactElement, useCallback, useState } from "react";
 import { LocalStorageState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
-import { metaDataNames, workbookNames } from "../Pages/Sheet";
+import { metaDataNames, workbookSheetNames } from "../Pages/Sheet";
 import "../../css/DragDrop.css";
 
 export interface TransferObject {
@@ -67,7 +67,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
       }
 
       const allowedFiles = Object.values({
-        ...workbookNames,
+        ...workbookSheetNames,
         ...metaDataNames,
       }).map((e) => e.file);
       const isSettings =
@@ -215,7 +215,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               <span className="col px-2">Source</span>
             </div>
           </div>
-          {Object.values({ ...workbookNames, ...metaDataNames }).map((el) => {
+          {Object.values({ ...workbookSheetNames, ...metaDataNames }).map((el) => {
             const { prettyName, file } = el;
             const name = prettyName.toLowerCase();
             const dataItem = data.find((d) => d.name.toLowerCase() === name);
