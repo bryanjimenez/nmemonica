@@ -169,17 +169,17 @@ export function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function saveSheetServiceWorker(
-  sheet: FilledSheetData,
+  name: string,
   data: Record<string, unknown>,
   hash: string
 ) {
-  const resource = sheet.name.toLowerCase();
+  const resource = name.toLowerCase();
 
   return swMessageSaveDataJSON(
     dataServiceEndpoint + "/" + resource + ".json.v" + hash,
     data
   ).then(() => ({
-    name: sheet.name,
+    name: name,
     hash,
   }));
 }

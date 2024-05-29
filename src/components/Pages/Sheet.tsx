@@ -369,7 +369,7 @@ export default function Sheet() {
     );
     // TODO: use changedUID to remove or update? audio assets
 
-    const saveP = saveSheetServiceWorker(sheet, data, hash);
+    const saveP = saveSheetServiceWorker(sheet.name, data, hash);
 
     // store workbook in indexedDB
     // (keep ordering and notes)
