@@ -28,6 +28,11 @@ interface DataSetExportSyncProps {
   close: () => void;
 }
 
+export interface SyncDataFile {
+  fileName: string;
+  text: string;
+}
+
 export function DataSetExportSync(props: DataSetExportSyncProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { visible, close } = props;
@@ -49,61 +54,58 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
    * Upload to Sync
    * @param payload Array of items to be transfered
    */
-  const sendMessageSyncCB = useCallback(
-    (payload: { name: string; text: string }[]) => {
-      const ws = new WebSocket(syncService);
-      ws.binaryType = "arraybuffer";
+  const sendMessageSyncCB = useCallback((payload: SyncDataFile[]) => {
+    const ws = new WebSocket(syncService);
+    ws.binaryType = "arraybuffer";
 
-      ws.addEventListener("error", () => {
-        // TODO: display connection error icon
-        // eslint-disable-next-line
+    ws.addEventListener("error", () => {
+      // TODO: display connection error icon
+      // eslint-disable-next-line
       console.log("error connecting")
+    });
+
+    ws.addEventListener("open", () => {
+      const b = new TextEncoder().encode(JSON.stringify(payload));
+      const blob = new Blob([b.buffer], {
+        type: "application/x-nmemonica-data",
       });
 
-      ws.addEventListener("open", () => {
-        const b = new TextEncoder().encode(JSON.stringify(payload));
-        const blob = new Blob([b.buffer], {
-          type: "application/x-nmemonica-data",
-        });
+      void blob.arrayBuffer().then((b) => ws.send(b));
+    });
 
-        void blob.arrayBuffer().then((b) => ws.send(b));
-      });
+    ws.addEventListener("message", (msg: MessageEvent<Blob | string>) => {
+      const { data: msgData } = msg;
+      if (msgData instanceof Blob === true) {
+        setWarning((w) => [
+          ...w,
+          <span key={`no-share-id`}>{`Expected a share ID`}</span>,
+        ]);
 
-      ws.addEventListener("message", (msg: MessageEvent<Blob | string>) => {
-        const { data: msgData } = msg;
-        if (msgData instanceof Blob === true) {
-          setWarning((w) => [
-            ...w,
-            <span key={`no-share-id`}>{`Expected a share ID`}</span>,
-          ]);
-
-          ws.close();
-          return;
-        }
-
-        let uid: unknown;
-        try {
-          uid = (JSON.parse(msgData) as { uid: unknown }).uid;
-
-          // TODO: other ws.send use eventName
-          if (typeof uid !== "string") {
-            throw new Error("Expected a string ID");
-          }
-        } catch (_err) {
-          setWarning((w) => [
-            ...w,
-            <span key={`bad-share-id`}>{`Failed to parse share ID`}</span>,
-          ]);
-          ws.close();
-          return;
-        }
-
-        setShareId(uid);
         ws.close();
-      });
-    },
-    []
-  );
+        return;
+      }
+
+      let uid: unknown;
+      try {
+        uid = (JSON.parse(msgData) as { uid: unknown }).uid;
+
+        // TODO: other ws.send use eventName
+        if (typeof uid !== "string") {
+          throw new Error("Expected a string ID");
+        }
+      } catch (_err) {
+        setWarning((w) => [
+          ...w,
+          <span key={`bad-share-id`}>{`Failed to parse share ID`}</span>,
+        ]);
+        ws.close();
+        return;
+      }
+
+      setShareId(uid);
+      ws.close();
+    });
+  }, []);
 
   const exportDataSetHandlerCB = useCallback(() => {
     let transferData = Promise.resolve(
@@ -157,7 +159,13 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
       );
     }
 
-    void transferData.then((d) => sendMessageSyncCB(d));
+    void transferData.then((d) => {
+      const m: SyncDataFile[] = d.map((p) => ({
+        fileName: `${p.name}.${p.name.toLowerCase() === metaDataNames.settings.prettyName.toLowerCase() ? "json" : "csv"}`,
+        text: p.text,
+      }));
+      return sendMessageSyncCB(m);
+    });
   }, [dispatch, fileData, sendMessageSyncCB]);
 
   return (

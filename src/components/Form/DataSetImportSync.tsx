@@ -20,9 +20,9 @@ import {
 } from "@primer/octicons-react";
 import { useCallback, useState } from "react";
 
+import { SyncDataFile } from "./DataSetExportSync";
 import { syncService } from "../../../environment.development";
 import { readCsvToSheet } from "../../slices/sheetSlice";
-import { metaDataNames } from "../Pages/Sheet";
 
 interface CustomElements extends HTMLFormControlsCollection {
   source: HTMLInputElement;
@@ -111,30 +111,41 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
           void msgData.arrayBuffer().then((buff) => {
             const text = new TextDecoder("utf-8").decode(buff);
 
-            let jsonObj;
+            let fileObj;
             try {
-              jsonObj = JSON.parse(text) as { name: string; text: string }[];
-            } catch (_err) {
+              fileObj = JSON.parse(text) as SyncDataFile[];
+              fileObj.forEach((f) => {
+                if (!("fileName" in f) || typeof f.fileName !== "string") {
+                  throw new Error("Expected filename", {
+                    cause: { code: "BadFileName" },
+                  });
+                }
+                if (!("text" in f) || typeof f.text !== "string") {
+                  throw new Error("Expected filename", {
+                    cause: { code: "BadText" },
+                  });
+                }
+              });
+            } catch (err) {
               setStatus("outputError");
-              setWarning("JSON.parse error");
+              let errCode;
+              if (err instanceof Error) {
+                const { code } = err.cause as { code?: string };
+                errCode = code;
+              }
+              setWarning("JSON.parse error" + errCode ? ` [${errCode}]` : "");
               return;
             }
 
             Promise.all(
-              jsonObj.map(({ name, text }) => readCsvToSheet(text, name))
+              fileObj.map(({ fileName, text }) => {
+                const sheetName = fileName.slice(0, fileName.indexOf("."));
+                return readCsvToSheet(text, sheetName);
+              })
             )
               .then((dataObj) => {
                 if (destination === "save") {
-                  const wFileExt = jsonObj.map((j) => ({
-                    ...j,
-                    fileName:
-                      j.name +
-                      (j.name.toLowerCase() ===
-                      metaDataNames.settings.prettyName.toLowerCase()
-                        ? ".json"
-                        : ".csv"),
-                  }));
-                  return downloadFileHandler(wFileExt).then(() => {
+                  return downloadFileHandler(fileObj).then(() => {
                     setStatus("successStatus");
                     setTimeout(closeHandlerCB, 1000);
                   });
