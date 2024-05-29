@@ -106,13 +106,14 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   );
 
   const exportDataSetHandlerCB = useCallback(() => {
-    const fromApp = fileData.filter((f) => f.origin === "AppCache");
     let transferData = Promise.resolve(
       fileData.map((f) => ({
         name: f.name,
         text: f.text,
       }))
     );
+
+    const fromApp = fileData.filter((f) => f.origin === "AppCache");
     if (fromApp.length > 0) {
       transferData = getWorkbookFromIndexDB(dispatch, getDatasets).then(
         (xObj) => {
@@ -126,14 +127,14 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
               if (
                 f.origin === "AppCache" &&
                 f.name.toLowerCase() ===
-                  metaDataNames.userSettings.prettyName.toLowerCase()
+                  metaDataNames.settings.prettyName.toLowerCase()
               ) {
                 const ls = getLocalStorageSettings(localStorageKey);
                 if (ls) {
                   return [
                     ...acc,
                     {
-                      name: metaDataNames.userSettings.prettyName,
+                      name: metaDataNames.settings.prettyName,
                       text: JSON.stringify(ls),
                     },
                   ];

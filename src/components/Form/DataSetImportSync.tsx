@@ -130,7 +130,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                     fileName:
                       j.name +
                       (j.name.toLowerCase() ===
-                      metaDataNames.userSettings.prettyName.toLowerCase()
+                      metaDataNames.settings.prettyName.toLowerCase()
                         ? ".json"
                         : ".csv"),
                   }));

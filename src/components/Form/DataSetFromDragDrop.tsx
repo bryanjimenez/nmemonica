@@ -71,7 +71,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
         ...metaDataNames,
       }).map((e) => e.file);
       const isSettings =
-        f.name.toLowerCase() === metaDataNames.userSettings.file.toLowerCase();
+        f.name.toLowerCase() === metaDataNames.settings.file.toLowerCase();
 
       if (
         allowedFiles.find((ff) => ff.toLowerCase() === f.name.toLowerCase()) ===
@@ -144,7 +144,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
             const s = JSON.parse(text) as Partial<LocalStorageState>;
             // TODO: settings.json extra validations
             updateDataHandler({
-              name: metaDataNames.userSettings.prettyName,
+              name: metaDataNames.settings.prettyName,
               origin: "FileSystem",
               text,
               setting: s,

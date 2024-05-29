@@ -95,7 +95,7 @@ export const workbookSheetNames = Object.freeze({
 });
 
 export const metaDataNames = Object.freeze({
-  userSettings: { file: "Settings.json", prettyName: "Settings" },
+  settings: { file: "Settings.json", prettyName: "Settings" },
 });
 
 const defaultOp = {
@@ -494,8 +494,8 @@ export default function Sheet() {
     if (ls) {
       appSettings = [
         {
-          fileName: metaDataNames.userSettings.file,
-          name: metaDataNames.userSettings.prettyName,
+          fileName: metaDataNames.settings.file,
+          name: metaDataNames.settings.prettyName,
           text: JSON.stringify(ls),
         },
       ];
