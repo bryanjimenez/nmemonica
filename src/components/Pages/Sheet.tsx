@@ -19,6 +19,7 @@ import {
 } from "@primer/octicons-react";
 import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
+import { MetaDataObj } from "nmemonica";
 import {
   useCallback,
   useEffect,
@@ -316,6 +317,54 @@ export default function Sheet() {
     }, 2000);
   }, []);
 
+  /**
+   * Updates app state with incoming dataset
+   * Updates metadata with incoming metadata
+   * Updates SW cache.json with state versions
+   * @param name name of DataSet
+   * @param hash
+   * @param metaUpdateUids Record containing updated uids
+   */
+  const updateStateAndCacheCB = useCallback(
+    (
+      name: string,
+      hash: string,
+      metaUpdatedUids?: Record<string, MetaDataObj | undefined>
+    ) => {
+      switch (name) {
+        case workbookSheetNames.kanji.prettyName:
+          dispatch(setVersion({ name: "kanji", hash }));
+          dispatch(clearKanji());
+          if (metaUpdatedUids) {
+            dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
+          }
+          break;
+        case workbookSheetNames.vocabulary.prettyName:
+          dispatch(setVersion({ name: "vocabulary", hash }));
+          dispatch(clearVocabulary());
+          dispatch(clearOpposites());
+          if (metaUpdatedUids) {
+            dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
+          }
+          break;
+        case workbookSheetNames.phrases.prettyName:
+          dispatch(setVersion({ name: "phrases", hash }));
+          dispatch(clearPhrases());
+          dispatch(clearParticleGame());
+          if (metaUpdatedUids) {
+            dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
+          }
+          break;
+        default:
+          throw new Error("Incorrect sheet name: " + name);
+      }
+
+      // update service worker cache.json file with app state versions
+      void dispatch(setSwVersions());
+    },
+    [dispatch]
+  );
+
   const saveSheetHandlerCB = useCallback(() => {
     if (!wbRef.current) {
       throw new Error("No Workbook");
@@ -380,36 +429,19 @@ export default function Sheet() {
       )
     );
 
-    void saveP.then(({ hash, name }) => {
-      switch (name) {
-        case workbookSheetNames.kanji.prettyName:
-          dispatch(setVersion({ name: "kanji", hash }));
-          dispatch(clearKanji());
-          dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
-          break;
-        case workbookSheetNames.vocabulary.prettyName:
-          dispatch(setVersion({ name: "vocabulary", hash }));
-          dispatch(clearVocabulary());
-          dispatch(clearOpposites());
-          dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
-          break;
-        case workbookSheetNames.phrases.prettyName:
-          dispatch(setVersion({ name: "phrases", hash }));
-          dispatch(clearPhrases());
-          dispatch(clearParticleGame());
-          dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
-          break;
-        default:
-          throw new Error("Incorrect sheet name: " + name);
-      }
-
-      // update service worker cache.json file with app state versions
-      void dispatch(setSwVersions());
-    });
+    void saveP.then(({ hash, name }) =>
+      updateStateAndCacheCB(name, hash, metaUpdatedUids)
+    );
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
-  }, [dispatch, phraseList, vocabList, kanjiList]);
+  }, [
+    dispatch,
+    updateStateAndCacheCB,
+    phraseList,
+    vocabList,
+    kanjiList,
+  ]);
 
   const downloadFileHandlerCB = useCallback(
     (files: { name: string; text: string }[]) => {
@@ -568,12 +600,13 @@ export default function Sheet() {
       importWorkbook?: FilledSheetData[],
       importSettings?: Partial<LocalStorageState>
     ) => {
-      let completeP: Promise<unknown>[] = [];
+      let importCompleteP: Promise<unknown>[] = [];
       if (importSettings && Object.keys(importSettings).length > 0) {
         // TODO: import settings here
         const settingsP = Promise.resolve();
 
-        completeP = [...completeP, settingsP];
+        // eslint-disable-next-line
+        importCompleteP = [...importCompleteP, settingsP];
       }
 
       if (importWorkbook && importWorkbook.length > 0) {
@@ -606,30 +639,40 @@ export default function Sheet() {
             });
 
             // store workbook in indexedDB
-            return openIDB()
-              .then((db) =>
+            // update cached json objects
+            return Promise.all([
+              openIDB().then((db) =>
                 putIDBItem(
                   { db, store: IDBStores.WORKBOOK },
                   { key: "0", workbook: trimmed }
                 )
-              )
-              .then(() => {
-                // TODO: update cache .json s (trigger save?)
-              })
-              .then(() => {
-                // reload workbook (update useEffect)
-                setWorkbookImported(Date.now());
-                return;
-              });
+              ),
+              ...trimmed.map((sheet) => {
+                const { data, hash } = sheetDataToJSON(
+                  sheet as FilledSheetData
+                );
+                return saveSheetServiceWorker(sheet.name, data, hash).then(() =>
+                  updateStateAndCacheCB(sheet.name, hash)
+                );
+              }),
+            ]).then(() => {
+              // reload workbook (update useEffect)
+              setWorkbookImported(Date.now());
+
+              // local data edited, do not fetch use cached cache.json
+              void dispatch(setLocalDataEdited(true));
+              return;
+            });
           }
         );
 
-        completeP = [...completeP, workbookP];
+        // eslint-disable-next-line
+        importCompleteP = [...importCompleteP, workbookP];
       }
 
-      return Promise.all(completeP).then(() => Promise.resolve());
+      return Promise.all(importCompleteP).then(() => Promise.resolve());
     },
-    [dispatch]
+    [dispatch, updateStateAndCacheCB]
   );
 
   return (
