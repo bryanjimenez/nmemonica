@@ -37,6 +37,11 @@ import {
   openIDB,
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
+import { localStorageKey } from "../../constants/paths";
+import {
+  getLocalStorageSettings,
+  setLocalStorage,
+} from "../../helper/localStorageHelper";
 import {
   getActiveSheet,
   removeLastRowIfBlank,
@@ -49,8 +54,10 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch, LocalStorageState, RootState } from "../../slices";
-import "../../css/Sheet.css";
-import { setLocalDataEdited } from "../../slices/globalSlice";
+import {
+  localStorageSettingsInitialized,
+  setLocalDataEdited,
+} from "../../slices/globalSlice";
 import {
   clearKanji,
   batchRepetitionUpdate as kanjiBatchMetaUpdate,
@@ -70,7 +77,8 @@ import {
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
 import { DataSetExportSync } from "../Form/DataSetExportSync";
 import { DataSetImportFile } from "../Form/DataSetImportFile";
-import { DataSetImportSync } from "../Form/DataSetImportSync";
+import { DataSetImportSync } from "../Form/DataSetImportSync";  
+import "../../css/Sheet.css";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -444,8 +452,8 @@ export default function Sheet() {
   ]);
 
   const downloadFileHandlerCB = useCallback(
-    (files: { name: string; text: string }[]) => {
-      files.forEach(({ name, text }) => {
+    (files: { fileName: string; text: string }[]) => {
+      files.forEach(({ fileName, text }) => {
         const file = new Blob([text], {
           type: "application/plaintext; charset=utf-8",
         });
@@ -458,7 +466,7 @@ export default function Sheet() {
         // URL.revokeObjectURL()
         // browser.downloads.download(URL.createObjectURL(file))
         const a = document.createElement("a");
-        a.download = `${name}.csv`;
+        a.download = fileName;
         a.href = dlUrl;
         // document.body.appendChild(a)
         a.click();
@@ -474,11 +482,31 @@ export default function Sheet() {
     []
   );
 
-  const downloadWorkbookHandlerCB = useCallback(() => {
+  const exportAppDataToFileHandlerCB = useCallback(() => {
     // TODO: should zip and include settings?
+
+    // TODO: should be from indexedDB (what's saved) unless nothing avail
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
 
-    void xObjectToCsvText(xObj).then((files) => downloadFileHandlerCB(files));
+    // send AppCache UserSettings
+    let appSettings: { fileName: string; name: string; text: string }[] = [];
+    const ls = getLocalStorageSettings(localStorageKey);
+    if (ls) {
+      appSettings = [
+        {
+          fileName: metaDataNames.userSettings.file,
+          name: metaDataNames.userSettings.prettyName,
+          text: JSON.stringify(ls),
+        },
+      ];
+    }
+
+    void xObjectToCsvText(xObj).then((fileDataSet) =>
+      downloadFileHandlerCB([
+        ...fileDataSet.map((f) => ({ fileName: f.name + ".csv", ...f })),
+        ...appSettings,
+      ])
+    );
   }, [downloadFileHandlerCB]);
 
   const doSearchCB = useCallback(() => {
@@ -602,8 +630,11 @@ export default function Sheet() {
     ) => {
       let importCompleteP: Promise<unknown>[] = [];
       if (importSettings && Object.keys(importSettings).length > 0) {
-        // TODO: import settings here
-        const settingsP = Promise.resolve();
+        // write to device's local storage
+        setLocalStorage(localStorageKey, importSettings);
+
+        // initialize app setttings from local storage
+        const settingsP = dispatch(localStorageSettingsInitialized());
 
         // eslint-disable-next-line
         importCompleteP = [...importCompleteP, settingsP];
@@ -684,7 +715,7 @@ export default function Sheet() {
           saveChanges={saveSheetHandlerCB}
           importFromFile={openImportFileCB}
           importFromSync={openImportSyncCB}
-          exportToFile={downloadWorkbookHandlerCB}
+          exportToFile={exportAppDataToFileHandlerCB}
           exportToSync={openExportSyncCB}
         />
         <DataSetImportFile

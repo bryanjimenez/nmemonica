@@ -22,6 +22,7 @@ import { useCallback, useState } from "react";
 
 import { syncService } from "../../../environment.development";
 import { readCsvToSheet } from "../../slices/sheetSlice";
+import { metaDataNames } from "../Pages/Sheet";
 
 interface CustomElements extends HTMLFormControlsCollection {
   source: HTMLInputElement;
@@ -34,7 +35,7 @@ interface DataSetImportSyncProps {
   visible?: boolean;
   close: () => void;
   downloadFileHandler: (
-    files: { name: string; text: string }[]
+    files: { fileName: string; text: string }[]
   ) => Promise<void>;
   updateDataHandler: (data: FilledSheetData[]) => Promise<void>;
 }
@@ -124,7 +125,16 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
             )
               .then((dataObj) => {
                 if (destination === "save") {
-                  return downloadFileHandler(jsonObj).then(() => {
+                  const wFileExt = jsonObj.map((j) => ({
+                    ...j,
+                    fileName:
+                      j.name +
+                      (j.name.toLowerCase() ===
+                      metaDataNames.userSettings.prettyName.toLowerCase()
+                        ? ".json"
+                        : ".csv"),
+                  }));
+                  return downloadFileHandler(wFileExt).then(() => {
                     setStatus("successStatus");
                     setTimeout(closeHandlerCB, 1000);
                   });

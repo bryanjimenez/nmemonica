@@ -13,9 +13,15 @@ import { useDispatch } from "react-redux";
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
 import { syncService } from "../../../environment.development";
+import { localStorageKey } from "../../constants/paths";
+import { getLocalStorageSettings } from "../../helper/localStorageHelper";
 import { AppDispatch } from "../../slices";
 import { getDatasets } from "../../slices/sheetSlice";
-import { getWorkbookFromIndexDB, xObjectToCsvText } from "../Pages/Sheet";
+import {
+  getWorkbookFromIndexDB,
+  metaDataNames,
+  xObjectToCsvText,
+} from "../Pages/Sheet";
 
 interface DataSetExportSyncProps {
   visible?: boolean;
@@ -32,7 +38,18 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   const [source, setSource] = useState<"FileSystem" | "AppCache">("AppCache");
   const [fileData, setFileData] = useState<TransferObject[]>([]);
 
-  const shareDatasetCB = useCallback(
+  const closeHandlerCB = useCallback(() => {
+    setFileData([]);
+    setShareId(undefined);
+    setWarning([]);
+    close();
+  }, [close]);
+
+  /**
+   * Upload to Sync
+   * @param payload Array of items to be transfered
+   */
+  const sendMessageSyncCB = useCallback(
     (payload: { name: string; text: string }[]) => {
       const ws = new WebSocket(syncService);
       ws.binaryType = "arraybuffer";
@@ -88,14 +105,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     []
   );
 
-  const closeHandlerCB = useCallback(() => {
-    setFileData([]);
-    setShareId(undefined);
-    setWarning([]);
-    close();
-  }, [close]);
-
-  const exportDataSetCB = useCallback(() => {
+  const exportDataSetHandlerCB = useCallback(() => {
     const fromApp = fileData.filter((f) => f.origin === "AppCache");
     let transferData = Promise.resolve(
       fileData.map((f) => ({
@@ -110,16 +120,44 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
             fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
           ) as FilledSheetData[];
 
+          // send AppCache UserSettings if selected
+          const appSettings = fileData.reduce<{ name: string; text: string }[]>(
+            (acc, f) => {
+              if (
+                f.origin === "AppCache" &&
+                f.name.toLowerCase() ===
+                  metaDataNames.userSettings.prettyName.toLowerCase()
+              ) {
+                const ls = getLocalStorageSettings(localStorageKey);
+                if (ls) {
+                  return [
+                    ...acc,
+                    {
+                      name: metaDataNames.userSettings.prettyName,
+                      text: JSON.stringify(ls),
+                    },
+                  ];
+                }
+              }
+              return acc;
+            },
+            []
+          );
+
           return xObjectToCsvText(included).then((dBtoCsv) => [
+            // any filesystem imports (already text)
             ...fileData.filter((f) => f.origin === "FileSystem"),
+            // converted AppCache to csv text
             ...dBtoCsv,
+            // converted UserSettings to json text
+            ...appSettings,
           ]);
         }
       );
     }
 
-    void transferData.then((d) => shareDatasetCB(d));
-  }, [dispatch, fileData, shareDatasetCB]);
+    void transferData.then((d) => sendMessageSyncCB(d));
+  }, [dispatch, fileData, sendMessageSyncCB]);
 
   return (
     <Dialog
@@ -170,10 +208,8 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
                 let newPrev: TransferObject[] = [];
                 // if is not in state add it
                 if (prev.find((p) => p.name === name) === undefined) {
-                  newPrev = [
-                    ...prev,
-                    { name, origin: "AppCache", text: "" },
-                  ];
+                  // text is added for all on final action trigger (btn)
+                  newPrev = [...prev, { name, origin: "AppCache", text: "" }];
                 } else {
                   newPrev = prev.filter((p) => p.name !== name);
                 }
@@ -212,7 +248,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
               variant="outlined"
               size="small"
               disabled={fileData.length < 1 || shareId !== undefined}
-              onClick={exportDataSetCB}
+              onClick={exportDataSetHandlerCB}
               style={{ textTransform: "none" }}
             >
               {shareId !== undefined ? (

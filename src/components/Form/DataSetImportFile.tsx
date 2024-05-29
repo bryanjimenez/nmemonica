@@ -82,6 +82,8 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
         <DialogContent>
           <Alert severity="warning" className="py-0 mb-1">
             <span>User edited datasets will be overwritten!</span>
+
+            <span>User Settings will be overwritten!</span>
           </Alert>
         </DialogContent>
         <DialogActions>
