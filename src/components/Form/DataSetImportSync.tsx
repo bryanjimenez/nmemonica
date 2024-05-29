@@ -18,11 +18,13 @@ import {
   CloudOfflineIcon,
   XCircleFillIcon,
 } from "@primer/octicons-react";
-import { useCallback, useState } from "react";
+import { ReactElement, useCallback, useState } from "react";
 
-import { SyncDataFile } from "./DataSetExportSync";
+import { SyncDataFile, SyncDataMsg } from "./DataSetExportSync";
 import { syncService } from "../../../environment.development";
+import { LocalStorageState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
+import { properCase } from "../Games/KanjiGame";
 
 interface CustomElements extends HTMLFormControlsCollection {
   source: HTMLInputElement;
@@ -37,7 +39,10 @@ interface DataSetImportSyncProps {
   downloadFileHandler: (
     files: { fileName: string; text: string }[]
   ) => Promise<void>;
-  updateDataHandler: (data: FilledSheetData[]) => Promise<void>;
+  updateDataHandler: (
+    importWorkbook?: FilledSheetData[],
+    importSettings?: Partial<LocalStorageState>
+  ) => Promise<void>;
 }
 
 export function DataSetImportSync(props: DataSetImportSyncProps) {
@@ -48,11 +53,11 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
     "successStatus" | "connectError" | "inputError" | "outputError"
   >();
 
-  const [warning, setWarning] = useState<string>();
+  const [warning, setWarning] = useState<ReactElement[]>([]);
 
   const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
-    setWarning(undefined);
+    setWarning([]);
     close();
   }, [close]);
 
@@ -92,28 +97,38 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
           ws.close();
 
           if (msgData instanceof Blob === false) {
-            let hasErr: { error?: string };
+            let hasErr: string | undefined;
             try {
-              hasErr = JSON.parse(msgData) as typeof hasErr;
+              const m = JSON.parse(msgData) as SyncDataMsg;
+              if (m.payload && "error" in m.payload) {
+                const { error } = m.payload;
+                hasErr = error as string;
+              }
             } catch (_err) {
               setStatus("outputError");
-              setWarning("failed to parse");
+              setWarning((w) => [
+                ...w,
+                <span key={`msg-parse-error`}>{`Failed to parse`}</span>,
+              ]);
               return;
             }
 
-            if (hasErr.error !== undefined) {
+            if (typeof hasErr === "string") {
               setStatus("outputError");
-              setWarning(hasErr.error ?? msgData.toString());
+              setWarning((w) => [
+                ...w,
+                <span key={`msg-error`}>{`Sync Error ${hasErr}`}</span>,
+              ]);
             }
             return;
           }
 
           void msgData.arrayBuffer().then((buff) => {
-            const text = new TextDecoder("utf-8").decode(buff);
+            const msgAsText = new TextDecoder("utf-8").decode(buff);
 
             let fileObj;
             try {
-              fileObj = JSON.parse(text) as SyncDataFile[];
+              fileObj = JSON.parse(msgAsText) as SyncDataFile[];
               fileObj.forEach((f) => {
                 if (!("fileName" in f) || typeof f.fileName !== "string") {
                   throw new Error("Expected filename", {
@@ -128,21 +143,59 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
               });
             } catch (err) {
               setStatus("outputError");
-              let errCode;
+              let errCode: string | undefined;
               if (err instanceof Error) {
                 const { code } = err.cause as { code?: string };
                 errCode = code;
               }
-              setWarning("JSON.parse error" + errCode ? ` [${errCode}]` : "");
+
+              setWarning((w) => [
+                ...w,
+                <span key={`msg-parse-error`}>
+                  {"Sync Message JSON.parse error" + errCode
+                    ? ` [${errCode}]`
+                    : ""}
+                </span>,
+              ]);
               return;
             }
 
-            Promise.all(
-              fileObj.map(({ fileName, text }) => {
-                const sheetName = fileName.slice(0, fileName.indexOf("."));
-                return readCsvToSheet(text, sheetName);
-              })
-            )
+            const { data, settings } = fileObj.reduce(
+              (acc, o) => {
+                if (o.fileName.toLowerCase().endsWith(".csv")) {
+                  const dot = o.fileName.indexOf(".");
+                  const sheetName = properCase(
+                    o.fileName.slice(0, dot > -1 ? dot : undefined)
+                  );
+
+                  const csvFile = readCsvToSheet(o.text, sheetName);
+
+                  return { ...acc, data: [...(acc.data ?? []), csvFile] };
+                } else {
+                  let s;
+                  try {
+                    s = JSON.parse(o.text) as Partial<LocalStorageState>;
+                    // TODO: settings.json verify is LocalStorageState
+                    return { ...acc, settings: s };
+                  } catch (err) {
+                    setStatus("outputError");
+                    setWarning((w) => [
+                      ...w,
+                      <span
+                        key={`msg-parse-error`}
+                      >{`Failed to parse Settings`}</span>,
+                    ]);
+                  }
+                }
+                return acc;
+              },
+              { data: [] } as {
+                data: Promise<FilledSheetData>[];
+                settings?: Partial<LocalStorageState>;
+              }
+            );
+
+            Promise.all(data)
               .then((dataObj) => {
                 if (destination === "save") {
                   return downloadFileHandler(fileObj).then(() => {
@@ -151,14 +204,21 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                   });
                 }
 
-                return updateDataHandler(dataObj).then(() => {
+                const d = dataObj.length === 0 ? undefined : dataObj;
+
+                return updateDataHandler(d, settings).then(() => {
                   setStatus("successStatus");
                   setTimeout(closeHandlerCB, 1000);
                 });
               })
-              .catch(() => {
+              .catch((_err) => {
                 setStatus("outputError");
-                setWarning("csv parse error");
+                setWarning((w) => [
+                  ...w,
+                  <span
+                    key={`msg-parse-error`}
+                  >{`Failed to parse DataSet`}</span>,
+                ]);
               });
           });
         });
@@ -223,9 +283,15 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
 
         <form onSubmit={importFromSyncCB}>
           <FormControl className="mt-2">
-            {warning && (
-              <Alert severity="warning" className="py-0 mb-1">
-                <span className="p-0">{warning}</span>
+            {warning.length > 0 && (
+              <Alert severity="warning" className="py-0 mb-2">
+                <div className="p-0 d-flex flex-column">
+                  <ul className="mb-0">
+                    {warning.map((el) => (
+                      <li key={el.key}>{el}</li>
+                    ))}
+                  </ul>
+                </div>
               </Alert>
             )}
             <TextField

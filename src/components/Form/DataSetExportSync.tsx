@@ -33,6 +33,11 @@ export interface SyncDataFile {
   text: string;
 }
 
+export interface SyncDataMsg {
+  eventName: string;
+  payload: object;
+}
+
 export function DataSetExportSync(props: DataSetExportSyncProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { visible, close } = props;
@@ -59,9 +64,11 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     ws.binaryType = "arraybuffer";
 
     ws.addEventListener("error", () => {
-      // TODO: display connection error icon
-      // eslint-disable-next-line
-      console.log("error connecting")
+      setWarning([
+        <span
+          key={`connect-error`}
+        >{`Error connecting, service may be offline.`}</span>,
+      ]);
     });
 
     ws.addEventListener("open", () => {
@@ -87,9 +94,12 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
       let uid: unknown;
       try {
-        uid = (JSON.parse(msgData) as { uid: unknown }).uid;
+        const p = JSON.parse(msgData) as SyncDataMsg;
 
-        // TODO: other ws.send use eventName
+        if (p.eventName === "pushSuccess" && "uid" in p.payload) {
+          uid = p.payload.uid;
+        }
+
         if (typeof uid !== "string") {
           throw new Error("Expected a string ID");
         }
@@ -103,6 +113,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
       }
 
       setShareId(uid);
+      setWarning([]);
       ws.close();
     });
   }, []);

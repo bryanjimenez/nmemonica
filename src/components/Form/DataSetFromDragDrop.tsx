@@ -114,9 +114,13 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           // const text = new TextDecoder("utf-8").decode(b);
 
           try {
-            const sheetName = properCase(f.name.slice(0, f.name.indexOf(".")));
+            const dot = f.name.indexOf(".");
+            const sheetName = properCase(
+              f.name.slice(0, dot > -1 ? dot : undefined)
+            );
             const xObj = await readCsvToSheet(text, sheetName);
             // TODO: verify xObj (headers) prevent bad data sharing
+            // sheetDataToJSON()
 
             updateDataHandler({
               name: xObj.name,
@@ -142,7 +146,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           .text()
           .then((text) => {
             const s = JSON.parse(text) as Partial<LocalStorageState>;
-            // TODO: settings.json extra validations
+            // TODO: settings.json verify is LocalStorageState
             updateDataHandler({
               name: metaDataNames.settings.prettyName,
               origin: "FileSystem",
@@ -215,56 +219,58 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               <span className="col px-2">Source</span>
             </div>
           </div>
-          {Object.values({ ...workbookSheetNames, ...metaDataNames }).map((el) => {
-            const { prettyName, file } = el;
-            const name = prettyName.toLowerCase();
-            const dataItem = data.find((d) => d.name.toLowerCase() === name);
+          {Object.values({ ...workbookSheetNames, ...metaDataNames }).map(
+            (el) => {
+              const { prettyName, file } = el;
+              const name = prettyName.toLowerCase();
+              const dataItem = data.find((d) => d.name.toLowerCase() === name);
 
-            return (
-              <div key={name} className="d-flex justify-content-between">
-                <div className="me-5">
-                  <span
-                    className={classNames({
-                      "col fs-6": true,
-                      "opacity-25": dataItem?.name.toLowerCase() !== name,
-                    })}
-                  >
-                    {file}
-                  </span>
-                </div>
-                <div>
-                  <div className="row">
-                    <span className="col px-1">
-                      {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
-                    </span>
-                    <div className="col px-1">
-                      {dataItem?.origin === "AppCache" && <DatabaseIcon />}
-                      {dataItem?.origin === "FileSystem" && (
-                        <FileDirectoryIcon />
-                      )}
-                    </div>
-                    <div
+              return (
+                <div key={name} className="d-flex justify-content-between">
+                  <div className="me-5">
+                    <span
                       className={classNames({
-                        "col px-1 clickable": true,
-                        "opacity-25": !dataItem,
+                        "col fs-6": true,
+                        "opacity-25": dataItem?.name.toLowerCase() !== name,
                       })}
-                      onClick={() => {
-                        if (dataItem) {
-                          updateDataHandler(dataItem);
-                        }
-                      }}
                     >
-                      {dataItem ? (
-                        <XIcon />
-                      ) : (
-                        <DiamondIcon className="rotate-45 px-0 opacity-0" />
-                      )}
+                      {file}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="row">
+                      <span className="col px-1">
+                        {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
+                      </span>
+                      <div className="col px-1">
+                        {dataItem?.origin === "AppCache" && <DatabaseIcon />}
+                        {dataItem?.origin === "FileSystem" && (
+                          <FileDirectoryIcon />
+                        )}
+                      </div>
+                      <div
+                        className={classNames({
+                          "col px-1 clickable": true,
+                          "opacity-25": !dataItem,
+                        })}
+                        onClick={() => {
+                          if (dataItem) {
+                            updateDataHandler(dataItem);
+                          }
+                        }}
+                      >
+                        {dataItem ? (
+                          <XIcon />
+                        ) : (
+                          <DiamondIcon className="rotate-45 px-0 opacity-0" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            }
+          )}
           {/* <span className="fs-6 opacity-25">Here</span> */}
         </div>
       </div>

@@ -81,9 +81,20 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       >
         <DialogContent>
           <Alert severity="warning" className="py-0 mb-1">
-            <span>User edited datasets will be overwritten!</span>
-
-            <span>User Settings will be overwritten!</span>
+            <div className="p-0 d-flex flex-column">
+              <ul className="mb-0">
+                {fileData.find((f) => f.sheet) && (
+                  <li>
+                    User <strong>Datasets</strong> will be overwritten!
+                  </li>
+                )}
+                {fileData.find((f) => f.setting) && (
+                  <li>
+                    User <strong>Settings</strong> will be overwritten!
+                  </li>
+                )}
+              </ul>
+            </div>
           </Alert>
         </DialogContent>
         <DialogActions>
