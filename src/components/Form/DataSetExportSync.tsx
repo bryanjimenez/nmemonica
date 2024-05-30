@@ -5,9 +5,11 @@ import {
   CheckCircleIcon,
   DatabaseIcon,
   FileDirectoryIcon,
+  LinkIcon,
   UploadIcon,
 } from "@primer/octicons-react";
-import { ReactElement, useCallback, useState } from "react";
+import classNames from "classnames";
+import { ReactElement, useCallback, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
@@ -47,12 +49,18 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   const [shareId, setShareId] = useState<string>();
   const [source, setSource] = useState<"FileSystem" | "AppCache">("AppCache");
   const [fileData, setFileData] = useState<TransferObject[]>([]);
+  const [finished, setFinished] = useState(false);
+  const connection = useRef<WebSocket | null>(null);
 
   const closeHandlerCB = useCallback(() => {
     setFileData([]);
     setShareId(undefined);
     setWarning([]);
     close();
+    setFinished(false);
+    if (connection.current) {
+      connection.current.close();
+    }
   }, [close]);
 
   /**
@@ -69,6 +77,10 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
           key={`connect-error`}
         >{`Error connecting, service may be offline.`}</span>,
       ]);
+    });
+
+    ws.addEventListener("close", () => {
+      setFinished(true);
     });
 
     ws.addEventListener("open", () => {
@@ -114,7 +126,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
       setShareId(uid);
       setWarning([]);
-      ws.close();
+      connection.current = ws;
     });
   }, []);
 
@@ -261,7 +273,16 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
         )}
 
         <div className="d-flex justify-content-between">
-          <div>{shareId}</div>
+          <div
+            className={classNames({ "d-flex": true, "opacity-25": finished })}
+          >
+            {finished ? (
+              <CheckCircleIcon size="small" className="mt-1 pt-1 me-2" />
+            ) : (
+              shareId && <LinkIcon size="small" className="mt-1 pt-1 me-2" />
+            )}
+            <div className="mt-1 me-2">{shareId}</div>
+          </div>
           <div className="d-flex">
             <Button
               aria-label="Share Datasets"
