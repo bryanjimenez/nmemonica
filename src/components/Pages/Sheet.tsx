@@ -142,11 +142,14 @@ export default function Sheet() {
 
         // replace typed '\n' with newline inside cell
         grid.on("cell-edited-done", (text, ri, ci) => {
-          if (text.includes("\\n")) {
-            // grid.cellText(ri, ci, text.replace("\\n", "\n")).reRender();
-            grid.sheet.data.setSelectedCellText(text.replace("\\n", "\n"), 'finished');
-            grid.sheet.table.render();
-          }
+            grid.sheet.data.setSelectedCellText(
+              // characters to replace with \n
+              //    literal '\n'
+              //    two or more japanese spaces
+              //    two or more english spaces
+              text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
+              "finished"
+            );
         });
 
         // TODO:
