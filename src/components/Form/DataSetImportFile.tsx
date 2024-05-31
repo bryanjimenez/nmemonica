@@ -32,6 +32,15 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
   const [fileData, setFileData] = useState<TransferObject[]>([]);
   const [importStatus, setImportStatus] = useState<boolean>();
 
+  const [confirm, setConfirm] = useState(false);
+  const cancelCB = useCallback(() => {
+    setConfirm(false);
+  }, []);
+
+  const confirmCB = useCallback(() => {
+    setConfirm(true);
+  }, []);
+
   const [shareId, setShareId] = useState<string>();
   const socket = useRef<WebSocket>();
 
@@ -67,9 +76,19 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       });
   }, [fileData, updateDataHandler, closeHandlerCB]);
 
-  const [confirm, setConfirm] = useState(false);
-  const cancelCB = useCallback(() => {
-    setConfirm(false);
+  const fromDragDropUpdateDataCB = useCallback((item: TransferObject) => {
+    setFileData((prev) => {
+      if (
+        prev.find((p) => p.name.toLowerCase() === item.name.toLowerCase()) ===
+        undefined
+      ) {
+        return [...prev, item];
+      } else {
+        return prev.filter(
+          (p) => p.name.toLowerCase() !== item.name.toLowerCase()
+        );
+      }
+    });
   }, []);
 
   return (
@@ -111,21 +130,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
         <DialogContent className="p-2 m-0">
           <DataSetFromDragDrop
             data={fileData}
-            updateDataHandler={(item) => {
-              setFileData((prev) => {
-                if (
-                  prev.find(
-                    (p) => p.name.toLowerCase() === item.name.toLowerCase()
-                  ) === undefined
-                ) {
-                  return [...prev, item];
-                } else {
-                  return prev.filter(
-                    (p) => p.name.toLowerCase() !== item.name.toLowerCase()
-                  );
-                }
-              });
-            }}
+            updateDataHandler={fromDragDropUpdateDataCB}
           />
 
           <div className="d-flex justify-content-between">
@@ -136,9 +141,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
                 variant="outlined"
                 size="small"
                 disabled={fileData.length < 1 || importStatus === true}
-                onClick={() => {
-                  setConfirm(true);
-                }}
+                onClick={confirmCB}
                 style={{ textTransform: "none" }}
               >
                 {importStatus === undefined ? (

@@ -8,7 +8,7 @@ import {
   XIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, { ReactElement, useCallback, useState } from "react";
+import React, { ReactElement, useCallback, useMemo, useState } from "react";
 
 import { LocalStorageState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
@@ -51,8 +51,8 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
       const dt = e.dataTransfer;
       const file = dt.files;
 
-      const f = file.item(0);
-      if (f === null) {
+      const fileItem = file.item(0);
+      if (fileItem === null) {
         return;
       }
 
@@ -61,7 +61,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
         w = [
           ...w,
           <span
-            key={`${f.name}-name`}
+            key={`${fileItem.name}-name`}
           >{`Expected one file (${file.length} instead)`}</span>,
         ];
       }
@@ -71,33 +71,35 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
         ...metaDataNames,
       }).map((e) => e.file);
       const isSettings =
-        f.name.toLowerCase() === metaDataNames.settings.file.toLowerCase();
+        fileItem.name.toLowerCase() ===
+        metaDataNames.settings.file.toLowerCase();
 
       if (
-        allowedFiles.find((ff) => ff.toLowerCase() === f.name.toLowerCase()) ===
-        undefined
+        allowedFiles.find(
+          (ff) => ff.toLowerCase() === fileItem.name.toLowerCase()
+        ) === undefined
       ) {
         w = [
           ...w,
           <span
-            key={`${f.name}-name`}
-          >{`File (${f.name}) is not correctly named`}</span>,
+            key={`${fileItem.name}-name`}
+          >{`File (${fileItem.name}) is not correctly named`}</span>,
         ];
       }
-      if (!isSettings && f.type !== "text/csv") {
+      if (!isSettings && fileItem.type !== "text/csv") {
         w = [
           ...w,
           <span
-            key={`${f.name}-type`}
-          >{`${f.name} is not a proper csv file.`}</span>,
+            key={`${fileItem.name}-type`}
+          >{`${fileItem.name} is not a proper csv file.`}</span>,
         ];
       }
-      if (isSettings && f.type !== "application/json") {
+      if (isSettings && fileItem.type !== "application/json") {
         w = [
           ...w,
           <span
-            key={`${f.name}-type`}
-          >{`${f.name} is not a proper json file.`}</span>,
+            key={`${fileItem.name}-type`}
+          >{`${fileItem.name} is not a proper json file.`}</span>,
         ];
       }
 
@@ -114,9 +116,9 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           // const text = new TextDecoder("utf-8").decode(b);
 
           try {
-            const dot = f.name.indexOf(".");
+            const dot = fileItem.name.indexOf(".");
             const sheetName = properCase(
-              f.name.slice(0, dot > -1 ? dot : undefined)
+              fileItem.name.slice(0, dot > -1 ? dot : undefined)
             );
             const xObj = await readCsvToSheet(text, sheetName);
             // TODO: verify xObj (headers) prevent bad data sharing
@@ -132,17 +134,17 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
             w = [
               ...w,
               <span
-                key={`${f.name}-parse`}
-              >{`Failed to parse (${f.name})`}</span>,
+                key={`${fileItem.name}-parse`}
+              >{`Failed to parse (${fileItem.name})`}</span>,
             ];
             setWarning((warn) => [...warn, ...w]);
           }
         };
 
-        reader.readAsText(f);
+        reader.readAsText(fileItem);
         // reader.readAsArrayBuffer(f);
       } else if (isSettings && w.length === 0) {
-        void f
+        void fileItem
           .text()
           .then((text) => {
             const s = JSON.parse(text) as Partial<LocalStorageState>;
@@ -158,8 +160,8 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
             w = [
               ...w,
               <span
-                key={`${f.name}-parse`}
-              >{`Failed to parse (${f.name})`}</span>,
+                key={`${fileItem.name}-parse`}
+              >{`Failed to parse (${fileItem.name})`}</span>,
             ];
             setWarning((warn) => [...warn, ...w]);
           });
@@ -168,6 +170,59 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
       }
     },
     [updateDataHandler]
+  );
+
+  const items = useMemo(
+    () =>
+      Object.values({ ...workbookSheetNames, ...metaDataNames }).map((el) => {
+        const { prettyName, file } = el;
+        const name = prettyName.toLowerCase();
+        const dataItem = data.find((d) => d.name.toLowerCase() === name);
+
+        return (
+          <div key={name} className="d-flex justify-content-between">
+            <div className="me-5">
+              <span
+                className={classNames({
+                  "col fs-6": true,
+                  "opacity-25": dataItem?.name.toLowerCase() !== name,
+                })}
+              >
+                {file}
+              </span>
+            </div>
+            <div>
+              <div className="row">
+                <span className="col px-1">
+                  {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
+                </span>
+                <div className="col px-1">
+                  {dataItem?.origin === "AppCache" && <DatabaseIcon />}
+                  {dataItem?.origin === "FileSystem" && <FileDirectoryIcon />}
+                </div>
+                <div
+                  className={classNames({
+                    "col px-1 clickable": true,
+                    "opacity-25": !dataItem,
+                  })}
+                  onClick={() => {
+                    if (dataItem) {
+                      updateDataHandler(dataItem);
+                    }
+                  }}
+                >
+                  {dataItem ? (
+                    <XIcon />
+                  ) : (
+                    <DiamondIcon className="rotate-45 px-0 opacity-0" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }),
+    [data, updateDataHandler]
   );
 
   return (
@@ -219,59 +274,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               <span className="col px-2">Source</span>
             </div>
           </div>
-          {Object.values({ ...workbookSheetNames, ...metaDataNames }).map(
-            (el) => {
-              const { prettyName, file } = el;
-              const name = prettyName.toLowerCase();
-              const dataItem = data.find((d) => d.name.toLowerCase() === name);
-
-              return (
-                <div key={name} className="d-flex justify-content-between">
-                  <div className="me-5">
-                    <span
-                      className={classNames({
-                        "col fs-6": true,
-                        "opacity-25": dataItem?.name.toLowerCase() !== name,
-                      })}
-                    >
-                      {file}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="row">
-                      <span className="col px-1">
-                        {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
-                      </span>
-                      <div className="col px-1">
-                        {dataItem?.origin === "AppCache" && <DatabaseIcon />}
-                        {dataItem?.origin === "FileSystem" && (
-                          <FileDirectoryIcon />
-                        )}
-                      </div>
-                      <div
-                        className={classNames({
-                          "col px-1 clickable": true,
-                          "opacity-25": !dataItem,
-                        })}
-                        onClick={() => {
-                          if (dataItem) {
-                            updateDataHandler(dataItem);
-                          }
-                        }}
-                      >
-                        {dataItem ? (
-                          <XIcon />
-                        ) : (
-                          <DiamondIcon className="rotate-45 px-0 opacity-0" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-          )}
-          {/* <span className="fs-6 opacity-25">Here</span> */}
+          {items}
         </div>
       </div>
     </>

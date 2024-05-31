@@ -49,6 +49,13 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
   const { visible, close, updateDataHandler, downloadFileHandler } = props;
 
   const [destination, setDestination] = useState<"import" | "save">("import");
+  const destinationImportCB = useCallback(() => {
+    setDestination("import");
+  }, []);
+  const destinationSaveCB = useCallback(() => {
+    setDestination("save");
+  }, []);
+
   const [status, setStatus] = useState<
     "successStatus" | "connectError" | "inputError" | "outputError"
   >();
@@ -255,9 +262,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                     //@ts-expect-error size=sm
                     size="sm"
                     checked={destination === "import"}
-                    onChange={() => {
-                      setDestination("import");
-                    }}
+                    onChange={destinationImportCB}
                   />
                 }
                 label={<span>Import</span>}
@@ -270,9 +275,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                     //@ts-expect-error size=sm
                     size="sm"
                     checked={destination === "save"}
-                    onChange={() => {
-                      setDestination("save");
-                    }}
+                    onChange={destinationSaveCB}
                   />
                 }
                 label={<span>Save</span>}
@@ -300,7 +303,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
               size="small"
               label="Sync ID"
               variant="outlined"
-              aria-label="Enter import ID"
+              aria-label="Enter Sync ID"
               onChange={clearWarningCB}
               InputProps={{
                 startAdornment: (

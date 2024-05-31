@@ -48,6 +48,13 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
   const [shareId, setShareId] = useState<string>();
   const [source, setSource] = useState<"FileSystem" | "AppCache">("AppCache");
+  const sourceFileSysCB = useCallback(() => {
+    setSource("FileSystem");
+  }, []);
+  const sourceAppCacheCB = useCallback(() => {
+    setSource("AppCache");
+  }, []);
+
   const [fileData, setFileData] = useState<TransferObject[]>([]);
   const [finished, setFinished] = useState(false);
   const connection = useRef<WebSocket | null>(null);
@@ -191,6 +198,36 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     });
   }, [dispatch, fileData, sendMessageSyncCB]);
 
+  const fromAppCacheUpdateDataCB = useCallback((name: string) => {
+    setFileData((prev) => {
+      let newPrev: TransferObject[] = [];
+      // if is not in state add it
+      if (prev.find((p) => p.name === name) === undefined) {
+        // text is added for all on final action trigger (btn)
+        newPrev = [...prev, { name, origin: "AppCache", text: "" }];
+      } else {
+        newPrev = prev.filter((p) => p.name !== name);
+      }
+
+      return newPrev;
+    });
+  }, []);
+
+  const fromFileSysUpdateDataCB = useCallback((item: TransferObject) => {
+    setFileData((prev) => {
+      if (
+        prev.find((p) => p.name.toLowerCase() === item.name.toLowerCase()) ===
+        undefined
+      ) {
+        return [...prev, item];
+      } else {
+        return prev.filter(
+          (p) => p.name.toLowerCase() !== item.name.toLowerCase()
+        );
+      }
+    });
+  }, []);
+
   return (
     <Dialog
       open={visible === true}
@@ -201,22 +238,12 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
       <DialogContent className="p-2 m-0">
         <div className="d-flex justify-content-end">
           {source === "FileSystem" && (
-            <div
-              className="clickable"
-              onClick={() => {
-                setSource("AppCache");
-              }}
-            >
+            <div className="clickable" onClick={sourceAppCacheCB}>
               <ArrowSwitchIcon className="px-0" /> <DatabaseIcon />
             </div>
           )}
           {source === "AppCache" && (
-            <div
-              className="clickable"
-              onClick={() => {
-                setSource("FileSystem");
-              }}
-            >
+            <div className="clickable" onClick={sourceFileSysCB}>
               <FileDirectoryIcon /> <ArrowSwitchIcon className="px-0" />
             </div>
           )}
@@ -235,40 +262,13 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
         {source === "AppCache" && (
           <DataSetFromAppCache
             data={fileData}
-            updateDataHandler={(name) => {
-              setFileData((prev) => {
-                let newPrev: TransferObject[] = [];
-                // if is not in state add it
-                if (prev.find((p) => p.name === name) === undefined) {
-                  // text is added for all on final action trigger (btn)
-                  newPrev = [...prev, { name, origin: "AppCache", text: "" }];
-                } else {
-                  newPrev = prev.filter((p) => p.name !== name);
-                }
-
-                return newPrev;
-              });
-            }}
+            updateDataHandler={fromAppCacheUpdateDataCB}
           />
         )}
         {source === "FileSystem" && (
           <DataSetFromDragDrop
             data={fileData}
-            updateDataHandler={(item) => {
-              setFileData((prev) => {
-                if (
-                  prev.find(
-                    (p) => p.name.toLowerCase() === item.name.toLowerCase()
-                  ) === undefined
-                ) {
-                  return [...prev, item];
-                } else {
-                  return prev.filter(
-                    (p) => p.name.toLowerCase() !== item.name.toLowerCase()
-                  );
-                }
-              });
-            }}
+            updateDataHandler={fromFileSysUpdateDataCB}
           />
         )}
 
