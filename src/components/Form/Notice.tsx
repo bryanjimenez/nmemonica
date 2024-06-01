@@ -22,6 +22,8 @@ interface NoticeProps {
   notification?: string;
   /** Timeout to close tooltip after a value change */
   timeout?: number;
+  /** User input change */
+  refresh: number;
   /** Initially render visible */
   initShown?: boolean;
 }
@@ -29,10 +31,11 @@ interface NoticeProps {
 const READY = -1;
 
 export function Notice(props: PropsWithChildren<NoticeProps>) {
-  const { children, timeout, initShown } = props;
+  const { timeout, initShown, refresh } = props;
   const w = useWindowSize();
 
   const [showNotice, setShowNotice] = useState(() => props.initShown === true);
+  const prevVal = useRef(-1);
   const arrowRef = useRef(null);
   const hiding = useRef<NodeJS.Timeout | typeof READY | undefined>();
   const fadeTimeout = useRef(timeout);
@@ -58,13 +61,7 @@ export function Notice(props: PropsWithChildren<NoticeProps>) {
     update();
 
     if (fadeTimeout.current !== undefined) {
-      if (hiding.current === READY) {
-        hiding.current = setTimeout(() => {
-          setShowNotice(false);
-          hiding.current = undefined;
-        }, fadeTimeout.current);
-      } else if (hiding.current !== undefined) {
-        clearTimeout(hiding.current);
+      if (hiding.current === READY && prevVal.current !== refresh) {
         hiding.current = setTimeout(() => {
           setShowNotice(false);
           hiding.current = undefined;
@@ -80,8 +77,10 @@ export function Notice(props: PropsWithChildren<NoticeProps>) {
           hiding.current = undefined;
         }, fadeTimeout.current);
       }
+
+      prevVal.current = refresh;
     }
-  }, [update, w.height, w.width, children, initShown, showNotice]);
+  }, [update, w.height, w.width, refresh, initShown, showNotice]);
 
   const onCloseCB = useCallback(() => {
     setShowNotice(false);

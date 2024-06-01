@@ -5,7 +5,7 @@ import {
   RadioGroup,
 } from "@mui/material";
 import classNames from "classnames";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 
@@ -28,12 +28,18 @@ import { CookiePolicyMeta } from "../Terms/CookiePolicy";
 export function CookieOptions() {
   const dispatch = useDispatch();
   const { cookies: usingCookies } = useConnectSetting();
+  const refreshCookieResponseCB = useCallback(() => {
+    dispatch(toggleCookies(usingCookies));
+  }, [dispatch, usingCookies]);
 
   const [clicked, setClicked] = useState(false);
 
   return (
     <FormControl>
-      <RadioGroup aria-labelledby="Cookie consent response">
+      <RadioGroup
+        aria-labelledby="Cookie consent response"
+        onClick={refreshCookieResponseCB}
+      >
         <FormControlLabel
           className="m-0"
           value="Accept Cookies"
