@@ -150,18 +150,21 @@ export default function Sheet() {
       })
       .catch((error) => {
         // if not fetch and build spreadsheet
-
-        if (error?.cause?.code !== IDBErrorCause.NoResult) {
-          // eslint-disable-next-line no-console
-          console.log("Unknown error getting workbook from indexedDB");
-          // eslint-disable-next-line no-console
-          console.error(error);
+        if (error instanceof Error) {
+          const errData = error.cause as { code: string };
+          if (errData?.code !== IDBErrorCause.NoResult) {
+            // eslint-disable-next-line no-console
+            console.log("Unknown error getting workbook from indexedDB");
+            // eslint-disable-next-line no-console
+            console.error(error);
+          }
         }
 
         return dispatch(getDatasets()).unwrap();
       })
       .catch((err) => {
-        if ("message" in err && err.message === "Failed to fetch") {
+        const { message } = err as { message: unknown };
+        if (typeof message === "string" && message === "Failed to fetch") {
           return [
             jtox(
               {
@@ -430,7 +433,7 @@ export default function Sheet() {
 
     const [x] = result[resultIdx.current];
     const xOffset = defaultOp.row.height * (x - 1);
-    workbook.sheet.verticalScrollbar.move({top:xOffset});
+    workbook.sheet.verticalScrollbar.move({ top: xOffset });
   }, []);
 
   const probablyMobile = useMemo(() => {
