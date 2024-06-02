@@ -36,140 +36,153 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
   const [onHover, setOnHover] = useState<boolean>();
 
   const overElHandler = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.stopPropagation();
     e.preventDefault();
+    e.stopPropagation();
     setOnHover(true);
+    return false;
   }, []);
 
   const dragDropHandler = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
-      e.stopPropagation();
       e.preventDefault();
+      e.stopPropagation();
 
       setOnHover(undefined);
 
       const dt = e.dataTransfer;
-      const file = dt.files;
-
-      const fileItem = file.item(0);
-      if (fileItem === null) {
-        return;
-      }
-
-      let w: ReactElement[] = [];
-      if (file.length !== 1) {
-        w = [
-          ...w,
-          <span
-            key={`${fileItem.name}-name`}
-          >{`Expected one file (${file.length} instead)`}</span>,
-        ];
-      }
 
       const allowedFiles = Object.values({
         ...workbookSheetNames,
         ...metaDataNames,
       }).map((e) => e.file);
-      const isSettings =
-        fileItem.name.toLowerCase() ===
-        metaDataNames.settings.file.toLowerCase();
 
-      if (
-        allowedFiles.find(
-          (ff) => ff.toLowerCase() === fileItem.name.toLowerCase()
-        ) === undefined
-      ) {
-        w = [
-          ...w,
-          <span
-            key={`${fileItem.name}-name`}
-          >{`File (${fileItem.name}) is not correctly named`}</span>,
-        ];
-      }
-      if (!isSettings && fileItem.type !== "text/csv") {
-        w = [
-          ...w,
-          <span
-            key={`${fileItem.name}-type`}
-          >{`${fileItem.name} is not a proper csv file.`}</span>,
-        ];
-      }
-      if (isSettings && fileItem.type !== "application/json") {
-        w = [
-          ...w,
-          <span
-            key={`${fileItem.name}-type`}
-          >{`${fileItem.name} is not a proper json file.`}</span>,
-        ];
-      }
+      // multiple file drag drop
+      for (let i = 0; i < dt.items.length; i++) {
+        const fileItem = dt.items[i].getAsFile();
 
-      if (!isSettings && w.length === 0) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          if (e.target === null) return;
-          const { result } = e.target;
-          if (result === null) return;
+        if (fileItem === null) {
+          continue;
+        }
 
-          const text = result as string;
+        const isSettings =
+          fileItem.name.toLowerCase() ===
+          metaDataNames.settings.file.toLowerCase();
 
-          // const b = new Uint8Array(result as ArrayBuffer);
-          // const text = new TextDecoder("utf-8").decode(b);
+        let w: ReactElement[] = [];
+        if (
+          allowedFiles.find(
+            (ff) => ff.toLowerCase() === fileItem.name.toLowerCase()
+          ) === undefined
+        ) {
+          w = [
+            ...w,
+            <span
+              key={`${fileItem.name}-name`}
+            >{`File (${fileItem.name}) is not correctly named`}</span>,
+          ];
+        }
+        if (!isSettings && fileItem.type !== "text/csv") {
+          w = [
+            ...w,
+            <span
+              key={`${fileItem.name}-type`}
+            >{`${fileItem.name} is not a proper csv file.`}</span>,
+          ];
+        }
+        if (isSettings && fileItem.type !== "application/json") {
+          w = [
+            ...w,
+            <span
+              key={`${fileItem.name}-type`}
+            >{`${fileItem.name} is not a proper json file.`}</span>,
+          ];
+        }
 
-          try {
-            const dot = fileItem.name.indexOf(".");
-            const sheetName = properCase(
-              fileItem.name.slice(0, dot > -1 ? dot : undefined)
-            );
-            const xObj = await readCsvToSheet(text, sheetName);
-            // TODO: verify xObj (headers) prevent bad data sharing
-            // sheetDataToJSON()
+        if (!isSettings && w.length === 0) {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            if (e.target === null) return;
+            const { result } = e.target;
+            if (result === null) return;
 
-            updateDataHandler({
-              name: xObj.name,
-              origin: "FileSystem",
-              text,
-              sheet: xObj,
+            const text = result as string;
+
+            // const b = new Uint8Array(result as ArrayBuffer);
+            // const text = new TextDecoder("utf-8").decode(b);
+
+            try {
+              const dot = fileItem.name.indexOf(".");
+              const sheetName = properCase(
+                fileItem.name.slice(0, dot > -1 ? dot : undefined)
+              );
+              const xObj = await readCsvToSheet(text, sheetName);
+              // TODO: verify xObj (headers) prevent bad data sharing
+              // sheetDataToJSON()
+
+              if (
+                data.find(
+                  (to) =>
+                    to.name === xObj.name &&
+                    JSON.stringify(to.sheet) === JSON.stringify(xObj)
+                ) === undefined
+              ) {
+                updateDataHandler({
+                  name: xObj.name,
+                  origin: "FileSystem",
+                  text,
+                  sheet: xObj,
+                });
+              }
+            } catch (_err) {
+              w = [
+                ...w,
+                <span
+                  key={`${fileItem.name}-parse`}
+                >{`Failed to parse (${fileItem.name})`}</span>,
+              ];
+              setWarning((warn) => [...warn, ...w]);
+            }
+          };
+
+          reader.readAsText(fileItem);
+          // reader.readAsArrayBuffer(f);
+        } else if (isSettings && w.length === 0) {
+          void fileItem
+            .text()
+            .then((text) => {
+              const s = JSON.parse(text) as Partial<LocalStorageState>;
+              // TODO: settings.json verify is LocalStorageState
+
+              if (
+                data.find(
+                  (to) =>
+                    to.name === metaDataNames.settings.prettyName &&
+                    JSON.stringify(to.setting) === JSON.stringify(s)
+                ) === undefined
+              ) {
+                updateDataHandler({
+                  name: metaDataNames.settings.prettyName,
+                  origin: "FileSystem",
+                  text,
+                  setting: s,
+                });
+              }
+            })
+            .catch((_err) => {
+              w = [
+                ...w,
+                <span
+                  key={`${fileItem.name}-parse`}
+                >{`Failed to parse (${fileItem.name})`}</span>,
+              ];
+              setWarning((warn) => [...warn, ...w]);
             });
-          } catch (_err) {
-            w = [
-              ...w,
-              <span
-                key={`${fileItem.name}-parse`}
-              >{`Failed to parse (${fileItem.name})`}</span>,
-            ];
-            setWarning((warn) => [...warn, ...w]);
-          }
-        };
-
-        reader.readAsText(fileItem);
-        // reader.readAsArrayBuffer(f);
-      } else if (isSettings && w.length === 0) {
-        void fileItem
-          .text()
-          .then((text) => {
-            const s = JSON.parse(text) as Partial<LocalStorageState>;
-            // TODO: settings.json verify is LocalStorageState
-            updateDataHandler({
-              name: metaDataNames.settings.prettyName,
-              origin: "FileSystem",
-              text,
-              setting: s,
-            });
-          })
-          .catch((_err) => {
-            w = [
-              ...w,
-              <span
-                key={`${fileItem.name}-parse`}
-              >{`Failed to parse (${fileItem.name})`}</span>,
-            ];
-            setWarning((warn) => [...warn, ...w]);
-          });
-      } else {
-        setWarning((warn) => [...warn, ...w]);
+        } else {
+          setWarning((warn) => [...warn, ...w]);
+        }
       }
     },
-    [updateDataHandler]
+    [data, updateDataHandler]
   );
 
   const items = useMemo(
@@ -246,7 +259,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
             "dash-border": onHover,
           })}
           onDragOver={overElHandler}
-          onDropCapture={dragDropHandler}
+          onDrop={dragDropHandler}
         >
           <div>
             <span
@@ -265,7 +278,12 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               <ReplyIcon />
             </div>
           </div>
-          <div className="d-flex justify-content-between fs-x-small opacity-25">
+          <div
+            className={classNames({
+              "d-flex justify-content-between fs-x-small": true,
+              "opacity-25": data.length === 0,
+            })}
+          >
             <div>
               <span className="col">Name</span>
             </div>
