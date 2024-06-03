@@ -138,10 +138,10 @@ URL: [/#/settings](https://bryanjimenez.github.io/nmemonica/#/settings)
 - Usage Terms and Policies
 
 ### Edit
-> Your study material in spreadsheet format. Data entry/edit page.  
+> Your study material in spreadsheet format. Data entry/edit page and [Dataset Action Menu](#dataset-action-menu).  
 URL: [/#/sheet](https://bryanjimenez.github.io/nmemonica/#/sheet)  
 
-> **Note**: Datasets **won't** be saved **until** the save button {% octicon "share" %} is pressed.
+> **Note**: Datasets **won't** be saved **until** the save button is pressed.
 
 > **Note**: To add a line break inside a cell use `\n` or multiple consecutive spaces.
 
@@ -149,15 +149,29 @@ URL: [/#/sheet](https://bryanjimenez.github.io/nmemonica/#/sheet)
 
 > **Note**: Inside a cell multiple tags need to be separated using a `;` or `\n` (line break)
 
-This page contains the phrases, vocabulary and kanji datasets. The user can edit these to include the desired items to study. Datasets can be saved {% octicon "share" %}, downloaded {% octicon "desktop-download" %} as CSV files and searched {% octicon "search" %} using the corresponding buttons. 
+This page contains the phrases, vocabulary and kanji datasets. The user can edit these to include the desired items to study. Datasets can be saved and shared as CSV files and searched {% octicon "search" %} using the corresponding buttons. 
 
-For details on the dataset structure see the [datasets](https://github.com/bryanjimenez/nmemonica-snservice?tab=readme-ov-file#datasets) section of snservice.
+The Dataset structure can be downloaded and data can be entered using a spread sheet software.
+> **Note**: spread sheet must be saved as CSV file in order to imported once again.
 
 Minimal **spreadsheet formula knowledge** is required to tag terms.  
 For example:  
 - How to start a formula statement in a cell (use the `=` symbol followed by your formula).
 - How to call a formula with a cell's reference (`=CoolFormula(B3)`).
 - How to concatenate a string inside a cell (`="first part" & "second part"`).
+
+#### Dataset Action Menu
+> Dataset save and share actions can be found here.  
+
+The Sync Service is a data relay between two users. Any user can share their UGC (User Generated Content) by providing a one-time share id and an encryption key to the receiving user.
+
+| Action | Description | Icon |
+| ----- | -------- | ----------- |
+| Save Changes | Saves your changes | {% octicon "database" %} |
+| Import from File | Import Datasets or settings from file system| {% octicon "file" %} |
+| Import from Sync | Import shared Datasets from Sync (need: share ID and Key)| {% octicon "cloud" %}|
+| Export to File | Backup your Datasets and settings to the file system | {% octicon "file-zip" %}|
+| Export to Sync | Export and share Datasets using Sync (provide the recipiant the share ID and Key) |{% octicon "cloud" %} |
 
 
 ## Credits
