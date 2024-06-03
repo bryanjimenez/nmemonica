@@ -5,7 +5,9 @@ import {
   CheckCircleIcon,
   DatabaseIcon,
   FileDirectoryIcon,
+  KeyIcon,
   LinkIcon,
+  ShieldSlashIcon,
   UploadIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -14,8 +16,10 @@ import { useDispatch } from "react-redux";
 
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
+import { DataSetKeyInput } from "./DataSetKeyInput";
 import { syncService } from "../../../environment.development";
 import { localStorageKey } from "../../constants/paths";
+import { encrypt } from "../../helper/cryptoHelper";
 import { getLocalStorageSettings } from "../../helper/localStorageHelper";
 import { AppDispatch } from "../../slices";
 import { getDatasets } from "../../slices/sheetSlice";
@@ -46,6 +50,16 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
 
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const showKeyInputCB = useCallback(() => {
+    setShowKeyInput(true);
+  }, []);
+  const closeKeyInputCB = useCallback(() => {
+    setShowKeyInput(false);
+  }, []);
+
+  const [encryptKey, setEncryptKey] = useState<string>();
+
   const [shareId, setShareId] = useState<string>();
   const [source, setSource] = useState<"FileSystem" | "AppCache">("AppCache");
   const sourceFileSysCB = useCallback(() => {
@@ -74,68 +88,93 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
    * Upload to Sync
    * @param payload Array of items to be transfered
    */
-  const sendMessageSyncCB = useCallback((payload: SyncDataFile[]) => {
-    const ws = new WebSocket(syncService);
-    ws.binaryType = "arraybuffer";
+  const sendMessageSyncCB = useCallback(
+    (payload: SyncDataFile[]) => {
+      if (!encryptKey) {
+        if (
+          warning.find((w) => w.key === "missing-encrypt-key") === undefined
+        ) {
+          setWarning([
+            <span
+              key={`missing-encrypt-key`}
+            >{`Encrypt key required for sharing.`}</span>,
+          ]);
+        }
+        return;
+      }
 
-    ws.addEventListener("error", () => {
-      setWarning([
-        <span
-          key={`connect-error`}
-        >{`Error connecting, service may be offline.`}</span>,
-      ]);
-    });
+      const ws = new WebSocket(syncService);
+      ws.binaryType = "arraybuffer";
 
-    ws.addEventListener("close", () => {
-      setFinished(true);
-    });
-
-    ws.addEventListener("open", () => {
-      const b = new TextEncoder().encode(JSON.stringify(payload));
-      const blob = new Blob([b.buffer], {
-        type: "application/x-nmemonica-data",
+      ws.addEventListener("error", () => {
+        if (warning.find((w) => w.key === "connect-error") === undefined) {
+          setWarning([
+            <span
+              key={`connect-error`}
+            >{`Error connecting, service may be offline.`}</span>,
+          ]);
+        }
       });
 
-      void blob.arrayBuffer().then((b) => ws.send(b));
-    });
+      ws.addEventListener("close", () => {
+        setFinished(true);
+      });
 
-    ws.addEventListener("message", (msg: MessageEvent<Blob | string>) => {
-      const { data: msgData } = msg;
-      if (msgData instanceof Blob === true) {
-        setWarning((w) => [
-          ...w,
-          <span key={`no-share-id`}>{`Expected a share ID`}</span>,
-        ]);
+      ws.addEventListener("open", () => {
+        const { encrypted: encryptedText, iv } = encrypt(
+          "aes-192-cbc",
+          encryptKey,
+          JSON.stringify(payload)
+        );
+        const b = new TextEncoder().encode(
+          JSON.stringify({ payload: encryptedText, iv })
+        );
+        const blob = new Blob([b.buffer], {
+          type: "application/x-nmemonica-data",
+        });
 
-        ws.close();
-        return;
-      }
+        void blob.arrayBuffer().then((b) => ws.send(b));
+      });
 
-      let uid: unknown;
-      try {
-        const p = JSON.parse(msgData) as SyncDataMsg;
+      ws.addEventListener("message", (msg: MessageEvent<Blob | string>) => {
+        const { data: msgData } = msg;
+        if (msgData instanceof Blob === true) {
+          setWarning((w) => [
+            ...w,
+            <span key={`no-share-id`}>{`Expected a share ID`}</span>,
+          ]);
 
-        if (p.eventName === "pushSuccess" && "uid" in p.payload) {
-          uid = p.payload.uid;
+          ws.close();
+          return;
         }
 
-        if (typeof uid !== "string") {
-          throw new Error("Expected a string ID");
-        }
-      } catch (_err) {
-        setWarning((w) => [
-          ...w,
-          <span key={`bad-share-id`}>{`Failed to parse share ID`}</span>,
-        ]);
-        ws.close();
-        return;
-      }
+        let uid: unknown;
+        try {
+          const p = JSON.parse(msgData) as SyncDataMsg;
 
-      setShareId(uid);
-      setWarning([]);
-      connection.current = ws;
-    });
-  }, []);
+          if (p.eventName === "pushSuccess" && "uid" in p.payload) {
+            uid = p.payload.uid;
+          }
+
+          if (typeof uid !== "string") {
+            throw new Error("Expected a string ID");
+          }
+        } catch (_err) {
+          setWarning((w) => [
+            ...w,
+            <span key={`bad-share-id`}>{`Failed to parse share ID`}</span>,
+          ]);
+          ws.close();
+          return;
+        }
+
+        setShareId(uid);
+        setWarning([]);
+        connection.current = ws;
+      });
+    },
+    [encryptKey, warning]
+  );
 
   const exportDataSetHandlerCB = useCallback(() => {
     let transferData = Promise.resolve(
@@ -229,79 +268,90 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   }, []);
 
   return (
-    <Dialog
-      open={visible === true}
-      onClose={closeHandlerCB}
-      aria-label="File drag drop area"
-      fullWidth={true}
-    >
-      <DialogContent className="p-2 m-0">
-        <div className="d-flex justify-content-end">
-          {source === "FileSystem" && (
-            <div className="clickable" onClick={sourceAppCacheCB}>
-              <ArrowSwitchIcon className="px-0" /> <DatabaseIcon />
+    <>
+      <DataSetKeyInput
+        visible={showKeyInput}
+        encryptKey={encryptKey}
+        enterHandler={setEncryptKey}
+        closeHandler={closeKeyInputCB}
+      />
+      <Dialog
+        open={visible === true}
+        onClose={closeHandlerCB}
+        aria-label="File drag drop area"
+        fullWidth={true}
+      >
+        <DialogContent className="p-2 m-0">
+          <div className="d-flex justify-content-between">
+            <div onClick={showKeyInputCB}>
+              {encryptKey ? <KeyIcon /> : <ShieldSlashIcon />}
             </div>
+            {source === "FileSystem" && (
+              <div className="clickable" onClick={sourceAppCacheCB}>
+                <ArrowSwitchIcon className="px-0" /> <DatabaseIcon />
+              </div>
+            )}
+            {source === "AppCache" && (
+              <div className="clickable" onClick={sourceFileSysCB}>
+                <FileDirectoryIcon /> <ArrowSwitchIcon className="px-0" />
+              </div>
+            )}
+          </div>
+          {warning.length > 0 && (
+            <Alert severity="warning" className="py-0 mb-1">
+              <div className="p-0 d-flex flex-column">
+                <ul className="mb-0">
+                  {warning.map((el) => (
+                    <li key={el.key}>{el}</li>
+                  ))}
+                </ul>
+              </div>
+            </Alert>
           )}
           {source === "AppCache" && (
-            <div className="clickable" onClick={sourceFileSysCB}>
-              <FileDirectoryIcon /> <ArrowSwitchIcon className="px-0" />
-            </div>
+            <DataSetFromAppCache
+              data={fileData}
+              updateDataHandler={fromAppCacheUpdateDataCB}
+            />
           )}
-        </div>
-        {warning.length > 0 && (
-          <Alert severity="warning" className="py-0 mb-1">
-            <div className="p-0 d-flex flex-column">
-              <ul className="mb-0">
-                {warning.map((el) => (
-                  <li key={el.key}>{el}</li>
-                ))}
-              </ul>
-            </div>
-          </Alert>
-        )}
-        {source === "AppCache" && (
-          <DataSetFromAppCache
-            data={fileData}
-            updateDataHandler={fromAppCacheUpdateDataCB}
-          />
-        )}
-        {source === "FileSystem" && (
-          <DataSetFromDragDrop
-            data={fileData}
-            updateDataHandler={fromFileSysUpdateDataCB}
-          />
-        )}
+          {source === "FileSystem" && (
+            <DataSetFromDragDrop
+              data={fileData}
+              updateDataHandler={fromFileSysUpdateDataCB}
+            />
+          )}
 
-        <div className="d-flex justify-content-between">
-          <div
-            className={classNames({ "d-flex": true, "opacity-25": finished })}
-          >
-            {finished ? (
-              <CheckCircleIcon size="small" className="mt-1 pt-1 me-2" />
-            ) : (
-              shareId && <LinkIcon size="small" className="mt-1 pt-1 me-2" />
-            )}
-            <div className="mt-1 me-2">{shareId}</div>
-          </div>
-          <div className="d-flex">
-            <Button
-              aria-label="Share Datasets"
-              variant="outlined"
-              size="small"
-              disabled={fileData.length < 1 || shareId !== undefined}
-              onClick={exportDataSetHandlerCB}
-              style={{ textTransform: "none" }}
+          <div className="d-flex justify-content-between">
+            <div
+              className={classNames({ "d-flex": true, "opacity-25": finished })}
             >
-              {shareId !== undefined ? (
-                <CheckCircleIcon size="small" className="pe-1" />
+              {finished ? (
+                <CheckCircleIcon size="small" className="mt-1 pt-1 me-2" />
               ) : (
-                <UploadIcon size="small" className="pe-1" />
+                shareId && <LinkIcon size="small" className="mt-1 pt-1 me-2" />
               )}
-              Share
-            </Button>
+              <div className="mt-1 me-2">{shareId}</div>
+            </div>
+            <div className="d-flex">
+              <Button
+                aria-label="Share Datasets"
+                variant="outlined"
+                size="small"
+                disabled={fileData.length < 1 || shareId !== undefined}
+                onClick={exportDataSetHandlerCB}
+                style={{ textTransform: "none" }}
+              >
+                {shareId !== undefined ? (
+                  <CheckCircleIcon size="small" className="pe-1" />
+                ) : (
+                  <UploadIcon size="small" className="pe-1" />
+                )}
+                Share
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

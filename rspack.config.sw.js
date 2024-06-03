@@ -1,6 +1,7 @@
 import rspack from "@rspack/core";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import { config } from "@nmemonica/snservice";
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
@@ -12,6 +13,7 @@ import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 // mimic CommonJS variables -- not needed if using CommonJS
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const nodeModulesDir = path.resolve(__dirname, "node_modules");
 
 export default function rspackConfig(
   /** @type string */ _env,
@@ -35,9 +37,14 @@ export default function rspackConfig(
       // solution for
       // 'npm link ../child-module'
       // with peerDependency
-      modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
+      modules: [nodeModulesDir, "node_modules"],
 
       extensions: ["...", ".js", ".ts", ".tsx"],
+      fallback: {
+        fs: false,
+        crypto: path.normalize(nodeModulesDir + path.sep + "crypto-browserify"),
+        stream: path.normalize(nodeModulesDir + path.sep + "stream-browserify"),
+      },
     },
     module: {
       rules: [
@@ -82,6 +89,7 @@ export default function rspackConfig(
       serviceWorkerCacheHelperPlugin,
 
       new rspack.ProgressPlugin({}),
+      new NodePolyfillPlugin(),
     ].filter(Boolean),
   };
 }

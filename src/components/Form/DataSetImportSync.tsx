@@ -16,18 +16,22 @@ import {
   BlockedIcon,
   CheckCircleIcon,
   CloudOfflineIcon,
+  KeyIcon,
+  ShieldSlashIcon,
   XCircleFillIcon,
 } from "@primer/octicons-react";
 import { ReactElement, useCallback, useState } from "react";
 
 import { SyncDataFile, SyncDataMsg } from "./DataSetExportSync";
+import { DataSetKeyInput } from "./DataSetKeyInput";
 import { syncService } from "../../../environment.development";
+import { decrypt } from "../../helper/cryptoHelper";
 import { LocalStorageState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 
 interface CustomElements extends HTMLFormControlsCollection {
-  source: HTMLInputElement;
+  syncId: HTMLInputElement;
 }
 interface CustomForm extends HTMLFormElement {
   elements: CustomElements;
@@ -47,6 +51,16 @@ interface DataSetImportSyncProps {
 
 export function DataSetImportSync(props: DataSetImportSyncProps) {
   const { visible, close, updateDataHandler, downloadFileHandler } = props;
+
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const showKeyInputCB = useCallback(() => {
+    setShowKeyInput(true);
+  }, []);
+  const closeKeyInputCB = useCallback(() => {
+    setShowKeyInput(false);
+  }, []);
+
+  const [encryptKey, setEncryptKey] = useState<string>();
 
   const [destination, setDestination] = useState<"import" | "save">("import");
   const destinationImportCB = useCallback(() => {
@@ -73,10 +87,23 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
       e.preventDefault();
       e.stopPropagation();
 
+      if (!encryptKey) {
+        if (
+          warning.find((w) => w.key === "missing-encrypt-key") === undefined
+        ) {
+          setWarning([
+            <span
+              key={`missing-encrypt-key`}
+            >{`Encrypt key required for sharing.`}</span>,
+          ]);
+        }
+        return;
+      }
+
       const form = e.currentTarget.elements;
 
-      if (form && "source" in form) {
-        const shareId = form.source.value;
+      if (form && "syncId" in form) {
+        const shareId = form.syncId.value;
 
         if (shareId.length !== 5) {
           setStatus("inputError");
@@ -135,7 +162,15 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
 
             let fileObj;
             try {
-              fileObj = JSON.parse(msgAsText) as SyncDataFile[];
+              const { payload, iv } = JSON.parse(msgAsText) as {
+                payload: string;
+                iv: string;
+              };
+
+              fileObj = JSON.parse(
+                decrypt("aes-192-cbc", encryptKey, iv, payload)
+              ) as SyncDataFile[];
+
               fileObj.forEach((f) => {
                 if (!("fileName" in f) || typeof f.fileName !== "string") {
                   throw new Error("Expected filename", {
@@ -231,7 +266,14 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
         });
       }
     },
-    [destination, closeHandlerCB, downloadFileHandler, updateDataHandler]
+    [
+      closeHandlerCB,
+      downloadFileHandler,
+      updateDataHandler,
+      destination,
+      encryptKey,
+      warning,
+    ]
   );
 
   const clearWarningCB = useCallback(
@@ -244,98 +286,111 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
   );
 
   return (
-    <Dialog
-      open={visible === true}
-      onClose={closeHandlerCB}
-      aria-label="DataSet Sync import"
-    >
-      <DialogContent>
-        <div className="d-flex justify-content-between">
-          <span className="pt-2">Destination:</span>
-          <FormControl>
-            <RadioGroup row aria-labelledby="Import destination">
-              <FormControlLabel
-                className="m-0"
-                value="Import"
-                control={
-                  <Radio
-                    //@ts-expect-error size=sm
-                    size="sm"
-                    checked={destination === "import"}
-                    onChange={destinationImportCB}
-                  />
-                }
-                label={<span>Import</span>}
-              />
-              <FormControlLabel
-                className="m-0"
-                value="Save to file"
-                control={
-                  <Radio
-                    //@ts-expect-error size=sm
-                    size="sm"
-                    checked={destination === "save"}
-                    onChange={destinationSaveCB}
-                  />
-                }
-                label={<span>Save</span>}
-              />
-            </RadioGroup>
-          </FormControl>
-        </div>
+    <>
+      <DataSetKeyInput
+        visible={showKeyInput}
+        encryptKey={encryptKey}
+        enterHandler={setEncryptKey}
+        closeHandler={closeKeyInputCB}
+      />
+      <Dialog
+        open={visible === true}
+        onClose={closeHandlerCB}
+        aria-label="DataSet Sync import"
+      >
+        <DialogContent>
+          <div className="d-flex justify-content-start">
+            <div onClick={showKeyInputCB}>
+              {encryptKey ? <KeyIcon /> : <ShieldSlashIcon />}
+            </div>
+          </div>
+          <div className="d-flex justify-content-between">
+            <span className="pt-2">Destination:</span>
+            <FormControl>
+              <RadioGroup row aria-labelledby="Import destination">
+                <FormControlLabel
+                  className="m-0"
+                  value="Import"
+                  control={
+                    <Radio
+                      //@ts-expect-error size=sm
+                      size="sm"
+                      checked={destination === "import"}
+                      onChange={destinationImportCB}
+                    />
+                  }
+                  label={<span>Import</span>}
+                />
+                <FormControlLabel
+                  className="m-0"
+                  value="Save to file"
+                  control={
+                    <Radio
+                      //@ts-expect-error size=sm
+                      size="sm"
+                      checked={destination === "save"}
+                      onChange={destinationSaveCB}
+                    />
+                  }
+                  label={<span>Save</span>}
+                />
+              </RadioGroup>
+            </FormControl>
+          </div>
 
-        <form onSubmit={importFromSyncCB}>
-          <FormControl className="mt-2">
-            {warning.length > 0 && (
-              <Alert severity="warning" className="py-0 mb-2">
-                <div className="p-0 d-flex flex-column">
-                  <ul className="mb-0">
-                    {warning.map((el) => (
-                      <li key={el.key}>{el}</li>
-                    ))}
-                  </ul>
-                </div>
-              </Alert>
-            )}
-            <TextField
-              id="source"
-              error={status?.endsWith("Error")}
-              size="small"
-              label="Sync ID"
-              variant="outlined"
-              aria-label="Enter Sync ID"
-              onChange={clearWarningCB}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {status === "connectError" && <CloudOfflineIcon />}
-                    {status === "inputError" && <BlockedIcon />}
-                    {status === "outputError" && (
-                      <XCircleFillIcon className="incorrect-color" />
-                    )}
-                    {status === "successStatus" && (
-                      <CheckCircleIcon className="correct-color" />
-                    )}
-                    {status === undefined && (
-                      <ArrowSwitchIcon className="rotate-90" />
-                    )}
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <FormHelperText>
-              {destination === "import" ? (
-                <span>
-                  Import and <strong>overwrite</strong> local data{" "}
-                  <strong>!</strong>
-                </span>
-              ) : (
-                <span>Save to file system</span>
+          <form onSubmit={importFromSyncCB}>
+            <FormControl className="mt-2">
+              {warning.length > 0 && (
+                <Alert severity="warning" className="py-0 mb-2">
+                  <div className="p-0 d-flex flex-column">
+                    <ul className="mb-0">
+                      {warning.map((el) => (
+                        <li key={el.key}>{el}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </Alert>
               )}
-            </FormHelperText>
-          </FormControl>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <TextField
+                id="syncId"
+                error={status?.endsWith("Error")}
+                size="small"
+                label="Sync ID"
+                variant="outlined"
+                aria-label="Enter Sync ID"
+                onChange={clearWarningCB}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      {status === "connectError" && <CloudOfflineIcon />}
+                      {status === "inputError" && <BlockedIcon />}
+                      {status === "outputError" && (
+                        <XCircleFillIcon className="incorrect-color" />
+                      )}
+                      {status === "successStatus" && (
+                        <CheckCircleIcon className="correct-color" />
+                      )}
+                      {status === undefined && (
+                        <ArrowSwitchIcon className="rotate-90" />
+                      )}
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <FormHelperText>
+                {destination === "import" ? (
+                  <span>
+                    Import and <strong>overwrite</strong> local data{" "}
+                    <strong>!</strong>
+                  </span>
+                ) : (
+                  <span>Save to file system</span>
+                )}
+              </FormHelperText>
+            </FormControl>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
