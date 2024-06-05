@@ -90,7 +90,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
    */
   const sendMessageSyncCB = useCallback(
     (payload: SyncDataFile[]) => {
-      if (!encryptKey) {
+      if (encryptKey === undefined) {
         if (
           warning.find((w) => w.key === "missing-encrypt-key") === undefined
         ) {
@@ -271,6 +271,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     <>
       <DataSetKeyInput
         visible={showKeyInput}
+        generate={true}
         encryptKey={encryptKey}
         enterHandler={setEncryptKey}
         closeHandler={closeKeyInputCB}
@@ -284,7 +285,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
         <DialogContent className="p-2 m-0">
           <div className="d-flex justify-content-between">
             <div onClick={showKeyInputCB}>
-              {encryptKey ? <KeyIcon /> : <ShieldSlashIcon />}
+              {encryptKey !== undefined ? <KeyIcon /> : <ShieldSlashIcon />}
             </div>
             {source === "FileSystem" && (
               <div className="clickable" onClick={sourceAppCacheCB}>
@@ -328,7 +329,9 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
               {finished ? (
                 <CheckCircleIcon size="small" className="mt-1 pt-1 me-2" />
               ) : (
-                shareId && <LinkIcon size="small" className="mt-1 pt-1 me-2" />
+                shareId !== undefined && (
+                  <LinkIcon size="small" className="mt-1 pt-1 me-2" />
+                )
               )}
               <div className="mt-1 me-2">{shareId}</div>
             </div>

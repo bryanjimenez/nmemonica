@@ -24,6 +24,11 @@ export function urlBase64ToUint8Array(base64String: string) {
   return outputArray
 }
 
+export function generateKey() {
+  const key = Buffer.from(randomBytes(24));
+  return uint8ArrayToUrlBase64(key);
+}
+
 /**
  * Encrypt
  * @param algorithm
