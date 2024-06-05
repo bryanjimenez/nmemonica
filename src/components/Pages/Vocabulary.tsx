@@ -267,9 +267,8 @@ export default function Vocabulary() {
             // metadata includes filtered in Recall sort
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           } = metadata.current[filtered[i].uid]!;
-          const daysSinceReview = lastReview
-            ? daysSince(lastReview)
-            : undefined;
+          const daysSinceReview =
+            lastReview !== undefined ? daysSince(lastReview) : undefined;
           const p = getPercentOverdue({
             accuracy: accuracyP,
             daysSinceReview,
@@ -360,9 +359,9 @@ export default function Vocabulary() {
         let oldDt = NaN;
         const views = newOrder.map((i) => {
           const d = metadata.current[filteredVocab[i].uid]?.lastView;
-          newN = !d ? newN + 1 : newN;
-          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
-          return d ? daysSince(d) : 0;
+          newN = d === undefined ? newN + 1 : newN;
+          oldDt = d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d !== undefined ? daysSince(d) : 0;
         });
 
         setLog((l) => [
@@ -474,7 +473,7 @@ export default function Vocabulary() {
     const i = selectedIndex - 1;
 
     let newSel;
-    if (reinforcedUID) {
+    if (reinforcedUID !== null) {
       newSel = selectedIndex;
     } else {
       newSel = (l + i) % l;
@@ -572,8 +571,8 @@ export default function Vocabulary() {
 
       let spaceRepUpdated;
       if (
-        metadata.current[uid]?.difficultyP &&
-        accuracyModifiedRef.current
+        metadata.current[uid]?.difficultyP !== undefined &&
+        typeof accuracyModifiedRef.current === "number"
         // typeof accuracyModifiedRef.current === 'number' &&
         // accuracyModifiedRef.current > 0
       ) {
@@ -615,7 +614,10 @@ export default function Vocabulary() {
               const { value, prevVal } = payload;
 
               let prevDate;
-              if (accuracyModifiedRef.current && prevVal.lastReview) {
+              if (
+                typeof accuracyModifiedRef.current === "number" &&
+                prevVal.lastReview !== undefined
+              ) {
                 // if term was reviewed
                 prevDate = prevVal.lastReview;
               } else {
@@ -817,7 +819,7 @@ export default function Vocabulary() {
                 visible={hintEnabledREF.current}
                 active={isHintable}
                 setShowHint={setStateFunction(setShowHint, (prev) =>
-                  prev ? undefined : uid
+                  prev !== undefined ? undefined : uid
                 )}
               />
               <ToggleFuriganaBtn

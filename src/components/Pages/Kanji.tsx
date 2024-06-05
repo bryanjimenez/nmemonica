@@ -360,9 +360,8 @@ export default function Kanji() {
             // metadata includes filtered in Recall sort
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           } = metadata.current[filtered[i].uid]!;
-          const daysSinceReview = lastReview
-            ? daysSince(lastReview)
-            : undefined;
+          const daysSinceReview =
+            lastReview !== undefined ? daysSince(lastReview) : undefined;
           const p = getPercentOverdue({
             accuracy: accuracyP,
             daysSinceReview,
@@ -445,9 +444,9 @@ export default function Kanji() {
         let oldDt = NaN;
         const views = newOrder.map((i) => {
           const d = metadata.current[filteredTerms[i].uid]?.lastView;
-          newN = !d ? newN + 1 : newN;
-          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
-          return d ? daysSince(d) : 0;
+          newN = d === undefined ? newN + 1 : newN;
+          oldDt = d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d !== undefined ? daysSince(d) : 0;
         });
 
         setLog((l) => [
@@ -603,10 +602,10 @@ export default function Kanji() {
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
 
   const ws = useWindowSize();
-  const halfWidth = ws.width ? ws.width / 2 : 0;
+  const halfWidth = ws.width !== undefined ? ws.width / 2 : 0;
   const grpElW = useRef({ w: 0 });
 
-  const yOffset = ws.height ? ws.height - 50 : 0; //    horizontal alignment spacing
+  const yOffset = ws.height !== undefined ? ws.height - 50 : 0; //    horizontal alignment spacing
   const xOffset = halfWidth - grpElW.current.w / 2; //  vertical spacing
   const { x, y, strategy, refs, update } = useFloating({
     placement: "top-start",
@@ -659,8 +658,8 @@ export default function Kanji() {
 
       let spaceRepUpdated;
       if (
-        metadata.current[uid]?.difficultyP &&
-        accuracyModifiedRef.current
+        metadata.current[uid]?.difficultyP !== undefined &&
+        typeof accuracyModifiedRef.current === "number"
         // typeof accuracyModifiedRef.current === 'number' &&
         // accuracyModifiedRef.current > 0
       ) {
@@ -702,7 +701,10 @@ export default function Kanji() {
               const { value, prevVal } = payload;
 
               let prevDate;
-              if (accuracyModifiedRef.current && prevVal.lastReview) {
+              if (
+                typeof accuracyModifiedRef.current === "number" &&
+                prevVal.lastReview !== undefined
+              ) {
                 // if term was reviewed
                 prevDate = prevVal.lastReview;
               } else {
@@ -928,7 +930,8 @@ export default function Kanji() {
               >
                 <div className="d-flex ">
                   <div className="d-flex flex-column w-100">
-                    {(term.pronounce && (
+                    {(term.pronounce !== undefined && (
+                      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                       <div
                         style={{ minHeight: "66px" }}
                         className="pronunciation fs-5 p-0 d-flex flex-wrap align-items-end justify-content-center clickable"
