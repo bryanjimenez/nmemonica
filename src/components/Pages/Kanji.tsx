@@ -75,6 +75,7 @@ import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
+import SimpleListMenu from "../Form/SimpleListMenu";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import { oneFromList, splitToList } from "../Games/KanjiGame";
@@ -224,11 +225,20 @@ export default function Kanji() {
     viewGoal,
   } = useConnectKanji();
 
+  // after recall complete
+  // resume with alternate sorting
+  const [resumeSort, setResumeSort] = useState<number>(-1);
+  /** Alternate sort upon ending recall */
+  const sort = useMemo(() => {
+    return resumeSort === -1 ? sortMethodREF.current : resumeSort;
+  }, [resumeSort, sortMethodREF]);
+
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);
 
   const { vocabList } = useConnectVocabulary();
 
+  /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
 
@@ -318,7 +328,7 @@ export default function Kanji() {
       ]);
     }
 
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
         const {
@@ -367,7 +377,7 @@ export default function Kanji() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${
+            msg: `${TermSortByLabel[sort]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -404,7 +414,7 @@ export default function Kanji() {
     dispatch,
     filterTypeREF,
     difficultyThresholdREF,
-    sortMethodREF,
+    sort,
     kanjiList,
     activeTags,
     includeNew,
@@ -416,13 +426,13 @@ export default function Kanji() {
 
     let newOrder: number[];
     let recallGame = -1;
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.DIFFICULTY:
         newOrder = difficultyOrder(filteredTerms, metadata.current);
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -443,7 +453,7 @@ export default function Kanji() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -472,7 +482,7 @@ export default function Kanji() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -481,7 +491,7 @@ export default function Kanji() {
     }
 
     return { order: newOrder, recallGame };
-  }, [sortMethodREF, filteredTerms]);
+  }, [sort, filteredTerms]);
 
   const gotoNext = useCallback(() => {
     const l = filteredTerms.length;
@@ -739,8 +749,43 @@ export default function Kanji() {
   const ex = useRef<{ el: RawVocabulary; en: string; jp: JSX.Element }[]>([]);
   const prevUid = useRef<string | null>();
 
-  if (recallGame === 0)
-    return <NotReady addlStyle="main-panel" text="No pending items" />;
+  if (recallGame === 0) {
+    const msg =
+      viewGoal === undefined ? (
+        "No goal set"
+      ) : goalPending.current > 0 ? (
+        <span>
+          <strong>{String(goalPending.current)}</strong> pending to meet daily
+          goal
+        </span>
+      ) : (
+        `Met the ${String(viewGoal)}${goalPending.current < 0 ? " goal (+" + Math.abs(goalPending.current) + ")" : ""}`
+      );
+
+    return (
+      <div className="main-panel d-flex flex-column justify-content-center text-center h-100">
+        <div>
+          <span className="fs-3">{msg}</span>
+        </div>
+        <div className="mt-3 d-flex justify-content-center">
+          <div className="fs-4 mt-5">resume sorting by</div>
+          <SimpleListMenu
+            options={TermSortByLabel}
+            initial={-1}
+            allowed={[
+              TermSortBy.VIEW_DATE,
+              TermSortBy.DIFFICULTY,
+              TermSortBy.RANDOM,
+            ]}
+            onChange={(index) => {
+              setResumeSort(index);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (order.length < 1) return <NotReady addlStyle="main-panel" />;
 
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
@@ -1040,8 +1085,7 @@ export default function Kanji() {
               <Tooltip
                 className={classNames({
                   "question-color opacity-50":
-                    sortMethodREF.current === TermSortBy.RECALL &&
-                    !reviewedToday,
+                    sort === TermSortBy.RECALL && !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
                 disabled={!cookies}

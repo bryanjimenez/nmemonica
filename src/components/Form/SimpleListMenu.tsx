@@ -15,7 +15,7 @@ interface SimpleListMenuProps {
   disabled?: boolean; //
   /** Whether elipsis and options are horizontally reversed */
   flip?: boolean;
-  title: string;
+  title?: string;
   options: string[];
   allowed?: number[];
   initial: number;

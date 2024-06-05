@@ -88,6 +88,7 @@ import {
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
+import SimpleListMenu from "../Form/SimpleListMenu";
 import Sizable from "../Form/Sizable";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
@@ -141,6 +142,14 @@ export default function Phrases() {
     viewGoal,
   } = useConnectPhrase();
 
+  // after recall complete
+  // resume with alternate sorting
+  const [resumeSort, setResumeSort] = useState<number>(-1);
+  /** Alternate sort upon ending recall */
+  const sort = useMemo(() => {
+    return resumeSort === -1 ? sortMethodREF.current : resumeSort;
+  }, [resumeSort, sortMethodREF]);
+
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);
 
@@ -149,6 +158,7 @@ export default function Phrases() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
   const [lesson, setLesson] = useState(false);
@@ -215,7 +225,7 @@ export default function Phrases() {
       ]);
     }
 
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
         const {
@@ -264,7 +274,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${
+            msg: `${TermSortByLabel[sort]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -301,7 +311,7 @@ export default function Phrases() {
     return filtered;
   }, [
     filterTypeREF,
-    sortMethodREF,
+    sort,
     difficultyThresholdREF,
     dispatch,
     phraseList,
@@ -316,7 +326,7 @@ export default function Phrases() {
 
     let newOrder: number[];
     let recallGame = -1;
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredPhrases, repetition);
 
@@ -332,7 +342,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -362,7 +372,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -370,7 +380,7 @@ export default function Phrases() {
     }
 
     return { order: newOrder, recallGame };
-  }, [sortMethodREF, filteredPhrases]);
+  }, [sortMethodREF, filteredPhrases, resumeSort]);
 
   const gotoNext = useCallback(() => {
     const l = filteredPhrases.length;
@@ -601,8 +611,43 @@ export default function Phrases() {
     [dispatch]
   );
 
-  if (recallGame === 0)
-    return <NotReady addlStyle="main-panel" text="No pending items" />;
+  if (recallGame === 0) {
+    const msg =
+      viewGoal === undefined ? (
+        "No goal set"
+      ) : goalPending.current > 0 ? (
+        <span>
+          <strong>{String(goalPending.current)}</strong> pending to meet daily
+          goal
+        </span>
+      ) : (
+        `Met the ${String(viewGoal)}${goalPending.current < 0 ? " goal (+" + Math.abs(goalPending.current) + ")" : ""}`
+      );
+
+    return (
+      <div className="main-panel d-flex flex-column justify-content-center text-center h-100">
+        <div>
+          <span className="fs-3">{msg}</span>
+        </div>
+        <div className="mt-3 d-flex justify-content-center">
+          <div className="fs-4 mt-5">resume sorting by</div>
+          <SimpleListMenu
+            options={TermSortByLabel}
+            initial={-1}
+            allowed={[
+              TermSortBy.VIEW_DATE,
+              TermSortBy.DIFFICULTY,
+              TermSortBy.RANDOM,
+            ]}
+            onChange={(index) => {
+              setResumeSort(index);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (filteredPhrases.length < 1 || order.length < 1)
     return <NotReady addlStyle="main-panel" />;
 
@@ -783,8 +828,7 @@ export default function Phrases() {
                 disabled={!cookies}
                 className={classNames({
                   "question-color opacity-50":
-                    sortMethodREF.current === TermSortBy.RECALL &&
-                    !reviewedToday,
+                    sort === TermSortBy.RECALL && !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
                 idKey={uid}
