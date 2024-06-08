@@ -6,8 +6,8 @@ import reactPlugin from "eslint-plugin-react";
 import reactHookPlugin from "eslint-plugin-react-hooks";
 import importPlugin from "eslint-plugin-import";
 // importPlugin uses 'eslint-import-resolver-typescript'
-import googlePlugin from "eslint-config-google";
-import lambdaEslintConf from "./lambda/eslint.config.mjs";
+// import googlePlugin from "eslint-config-google";
+// import lambdaEslintConf from "./lambda/eslint.config.mjs";
 import fs from "fs";
 import globals from "globals";
 import prettier from "prettier";
@@ -113,6 +113,17 @@ const extraRules = {
   // "promise/no-nesting": "warn",
 };
 
+const unUsedVarsIgnore = {
+  "@typescript-eslint/no-unused-vars": [
+    "warn",
+    {
+      argsIgnorePattern: "^_",
+      varsIgnorePattern: "^_",
+      caughtErrorsIgnorePattern: "^_",
+    },
+  ],
+};
+
 export default [
   {
     ignores: [".*", "node_modules/", "dist/"],
@@ -209,17 +220,25 @@ export default [
           },
         },
       ],
+      ...unUsedVarsIgnore,
+    },
+    linterOptions: {
+      // report when eslint-disable-next-line is unnecessary
+      reportUnusedDisableDirectives: true,
     },
   },
   {
-    files: ["pwa/**/*.{js,ts}"],
+    files: ["pwa/**/*.ts"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
         project: "./pwa/tsconfig.json",
       },
 
-      globals: { ...globals.browser /** only sw.js needs this */ },
+      globals: {
+        ...globals.browser,
+        process: false /** only sw.js needs this */,
+      },
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
@@ -230,24 +249,13 @@ export default [
       ...tsPlugin.configs.strict.rules,
       ...tsPlugin.configs["eslint-recommended"].rules,
       ...tsPlugin.configs["recommended-requiring-type-checking"].rules,
-    },
-  },
-  {
-    ...lambdaEslintConf[0],
-    files: ["lambda/**/*.ts"],
-    languageOptions: {
-      ...lambdaEslintConf[0].languageOptions,
 
-      parserOptions: {
-        ...lambdaEslintConf[0].languageOptions.parserOptions,
-        project: ["./lambda/tsconfig.json"],
-      },
+      ...unUsedVarsIgnore,
+      "no-undef": "off", // ignore in ts files tsc will highlight
     },
-    plugins: {
-      "@typescript-eslint": tsPlugin,
-      google: googlePlugin,
-      import: importPlugin,
-      prettier: prettierPlugin,
+    linterOptions: {
+      // report when eslint-disable-next-line is unnecessary
+      reportUnusedDisableDirectives: true,
     },
   },
   {
@@ -295,11 +303,20 @@ export default [
             .format(text, { filepath: info.filePath })
             .then((pretty) => fs.createWriteStream(info.filePath).end(pretty));
 
-          throw new Error(
-            "Sent to Prettier -> *." + info.filePath.split(".")[1]
-          );
+          // const [_filePath, fileExt] = info.filePath.split(".");
+
+          console.log("prettier < " + info.filePath);
+          // throw new Error("Sent to Prettier -> *." + fileExt);
           // node_modules/eslint/lib/source-code/source-code.jsL326
-          // return {'type':"Program", "body":[],'tokens':[], "comments":[], "loc":[], "range":{}, "scopes":[]}
+          return {
+            type: "Program",
+            body: [],
+            tokens: [],
+            comments: [],
+            loc: [],
+            range: {},
+            scopes: [],
+          };
         },
       },
     },

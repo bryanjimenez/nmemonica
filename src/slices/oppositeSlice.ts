@@ -1,8 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { firebaseConfig } from "../../environment.development";
+import { requiredAuth } from "./globalSlice";
+import { dataServiceEndpoint } from "../../environment.production";
 import type { RawOpposite } from "../components/Games/OppositesGame";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 
 import type { RootState } from ".";
 
@@ -28,13 +30,15 @@ export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
+    const { localServiceURL: url } = state.global;
     const version = state.version.phrases ?? "0";
 
     // if (version === "0") {
     //   console.error("fetching opposite: 0");
     // }
-    return fetch(firebaseConfig.databaseURL + "/lambda/opposites.json", {
-      headers: { "Data-Version": version },
+    return fetch(dataServiceEndpoint + "/opposites.json", {
+      headers: { [SWRequestHeader.DATA_VERSION]: version },
+      ...requiredAuth(url),
     }).then((res) =>
       res
         .json()
@@ -57,6 +61,10 @@ const oppositeSlice = createSlice({
   initialState: oppositeInitState,
 
   reducers: {
+    clearOpposites(state) {
+      state.value = oppositeInitState.value;
+      state.version = oppositeInitState.version;
+    },
     setOppositesARomaji(state) {
       const path = "/opposite/";
       const attr = "aRomaji";
@@ -122,6 +130,7 @@ const oppositeSlice = createSlice({
 });
 
 export const {
+  clearOpposites,
   setOppositesARomaji,
   setOppositesQRomaji,
   toggleOppositeFadeInAnswers,

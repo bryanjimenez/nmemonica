@@ -3,19 +3,35 @@ import glob from "glob";
 import md5 from "md5";
 import path from "path";
 import prettier from "prettier";
-import { authenticationHeader } from "../../environment.development.js";
+import { getParam, removeParam } from "../../src/helper/urlHelper.js";
 import {
-  appUIEndpoint,
-  firebaseConfig,
+  SWMsgIncoming,
+  SWMsgOutgoing,
+  SWRequestHeader,
+} from "../../src/helper/serviceWorkerHelper.js";
+import { green } from "@nmemonica/snservice/utils/consoleColor";
+import {config} from "@nmemonica/snservice/utils/config";
+import { initServiceWorker } from "../src/sw.js";
+import { DebugLevel } from "../../src/slices/settingHelper.js";
+import {
+  dataServiceEndpoint,
+  uiEndpoint,
   pronounceEndoint,
 } from "../../environment.production.js";
 import {
-  SERVICE_WORKER_LOGGER_MSG,
-  SERVICE_WORKER_NEW_TERMS_ADDED,
-} from "../../src/constants/actionNames.js";
-import { getParam, removeParam } from "../../src/helper/urlHelper.js";
-import { green } from "./consoleColor.js";
-import { initServiceWorker } from "../src/sw.js"; // TODO: why? sw.ts?
+  IDBErrorCause,
+  IDBKeys,
+  IDBStores,
+  addIDBItem,
+  appDBName,
+  appDBVersion,
+  getIDBItem,
+  openIDB,
+  putIDBItem,
+} from "../helper/idbHelper.js";
+
+const audioPath = config.route.audio
+const dataPath = config.route.data
 
 /**
  * After app is built
@@ -35,12 +51,6 @@ const filesToCache = glob
     const fileName = p.split("/").pop() || p;
     return fileName !== "sw.js" ? [...acc, fileName] : acc;
   }, []);
-
-const stream = fs.createWriteStream(swOutFile, {
-  flags: "w",
-});
-
-stream.on("finish", () => prettifyOutput(swOutFile));
 
 const swVersion = md5(initServiceWorker.toString()).slice(0, 8);
 const main =
@@ -62,39 +72,60 @@ console.log(
 const buildConstants = {
   swVersion,
   initCacheVer,
-  SERVICE_WORKER_LOGGER_MSG,
-  SERVICE_WORKER_NEW_TERMS_ADDED,
-  authenticationHeader,
-  ghURL: appUIEndpoint,
-  fbURL: firebaseConfig.databaseURL,
-  gCloudFnPronounce: pronounceEndoint,
+
+  urlAppUI: uiEndpoint,
+  urlDataService: dataServiceEndpoint,
+  urlPronounceService: pronounceEndoint,
+
+  audioPath,
+  dataPath,
 };
 
-stream.write(
-  "const buildConstants = " + JSON.stringify(buildConstants) + "\n\n"
-);
-stream.write(getParam + "\n\n");
-stream.write(removeParam + "\n\n");
-stream.write(initServiceWorker + "\n\n");
+export interface SwFnParams {
+  swVersion: string;
+  initCacheVer: string;
+  cacheFiles: string[];
 
-stream.write("const cacheFiles = " + JSON.stringify(filesToCache) + "\n\n");
-stream.end(
-  "initServiceWorker({...buildConstants, getParam, removeParam, cacheFiles});"
-);
+  urlAppUI: string;
+  urlDataService: string;
+  urlPronounceService: string;
 
-// TODO: prettifyOutput reopens file
-function prettifyOutput(path: string) {
-  const swPartialCodeBuff = fs.readFileSync(path);
-  const prettyP = prettier.format(swPartialCodeBuff.toString(), {
-    filepath: path,
-  });
+  audioPath: string;
+  dataPath: string;
 
-  const stream = fs.createWriteStream(path, {
-    flags: "w",
-  });
-
-  prettyP.then(code=>{
-    stream.write(code);
-    stream.end();
-  });
+  getParam: (baseUrl: string, param: string) => string;
+  removeParam: (baseUrl: string, param: string) => string;
 }
+
+let out = "";
+out += "const buildConstants = " + JSON.stringify(buildConstants) + "\n\n";
+out += "const SWMsgOutgoing = " + JSON.stringify(SWMsgOutgoing) + "\n\n";
+out += "const SWMsgIncoming = " + JSON.stringify(SWMsgIncoming) + "\n\n";
+out += "const SWRequestHeader = " + JSON.stringify(SWRequestHeader) + "\n\n";
+out += "const IDBStores = " + JSON.stringify(IDBStores) + "\n\n";
+out += "const IDBKeys = " + JSON.stringify(IDBKeys) + "\n\n";
+out += "const DebugLevel = " + JSON.stringify(DebugLevel) + "\n\n";
+
+// IndexedDB imports
+out += "const appDBName = '" + appDBName + "'\n\n";
+out += "const appDBVersion = " + appDBVersion + "\n\n";
+out += "const IDBErrorCause = " + JSON.stringify(IDBErrorCause) + "\n\n";
+out += openIDB.toString() + "\n\n";
+out += getIDBItem.toString() + "\n\n";
+out += putIDBItem.toString() + "\n\n";
+out += addIDBItem.toString() + "\n\n";
+
+out += getParam.toString() + "\n\n";
+out += removeParam.toString() + "\n\n";
+out += initServiceWorker.toString() + "\n\n";
+out += "const cacheFiles = " + JSON.stringify(filesToCache) + "\n\n";
+out +=
+  "initServiceWorker({...buildConstants, getParam, removeParam, cacheFiles});";
+
+void prettier
+  .format(out, {
+    filepath: swOutFile,
+  })
+  .then((prettyCode) => {
+    fs.writeFileSync(swOutFile, prettyCode, { encoding: "utf-8" });
+  });

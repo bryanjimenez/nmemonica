@@ -7,10 +7,11 @@ import {
   randomOrder,
   spaceRepOrder,
 } from "../../../src/helper/sortHelper";
-import type { Optional, RawVocabulary } from "../../../src/typings/raw";
+import type { Optional } from "../../../src/typings/utils";
+import type { RawVocabulary } from "nmemonica";
 
 describe("sortHelper", function () {
-  const terms: Optional<RawVocabulary,'tags'>[] = [
+  const terms: Optional<RawVocabulary, "tags">[] = [
     {
       english: "blue",
       grp: "Noun",
@@ -505,7 +506,7 @@ describe("sortHelper", function () {
     });
   });
   describe("dateViewOrder", function () {
-    it.skip("separate Space Repetition items to the end (COMMENTED)", function(){
+    it.skip("separate Space Repetition items to the end (COMMENTED)", function () {
       const expected = [4, 5, 3, 0, 1, 2];
       const termsWSpaceRepMixed = [
         { uid: "00c102a7e10b45b19afbab71c030bf63" }, // newest
@@ -527,7 +528,7 @@ describe("sortHelper", function () {
           lastView: "2020-01-01T01:06:00.000Z",
           lastReview: "2020-01-01T01:06:00.000Z",   // Space Repetition item
           daysBetweenReviews: 2,
-          accuracyP: 99
+          accuracyP: 99,
         },
         "729307b04a77bccc5db86d6b49f55f2f": {
           // english: 'grey',
@@ -535,7 +536,7 @@ describe("sortHelper", function () {
           lastView: "2020-01-01T01:05:00.000Z",
           lastReview: "2020-01-01T01:05:00.000Z",   // Space Repetition item
           daysBetweenReviews: 2,
-          accuracyP: 99
+          accuracyP: 99,
         },
         "e5d47019e1b948c2445b6c1ea3850c2b": {
           // english: 'red',
@@ -559,13 +560,13 @@ describe("sortHelper", function () {
       expect(actual).to.deep.eq(expected);
     });
 
-    it("not viewed first, then oldest to newest",function(){
+    it("not viewed first, then oldest to newest", function () {
       const expected = [11, 12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
       const spaceRepObj = {
         "00c102a7e10b45b19afbab71c030bf63": {
           // english: 'blue',
           vC: 13,
-          lastView: "2020-01-01T01:10:00.000Z",     // newest
+          lastView: "2020-01-01T01:10:00.000Z", // newest
         },
         "12e960a0d8ae82cf5804a8e9f192d664": {
           // english: 'purple',
@@ -632,10 +633,15 @@ describe("sortHelper", function () {
 
       const actual = dateViewOrder(terms, spaceRepObj);
       expect(actual).to.deep.eq(expected);
-    })
-  })
+    });
+  });
   describe("difficultySubFilter", function () {
-    const terms = [{ uid: "uidA" }, { uid: "uidB" }, { uid: "uidC" }, { uid: "uidD" }];
+    const terms = [
+      { uid: "uidA" },
+      { uid: "uidB" },
+      { uid: "uidC" },
+      { uid: "uidD" },
+    ];
 
     it("below a value", function () {
       const expected = [{ uid: "uidA" }];

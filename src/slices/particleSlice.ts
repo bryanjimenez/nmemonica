@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type { RawPhrase } from "nmemonica";
 
 import { logger } from "./globalSlice";
 import { getPhrase } from "./phraseSlice";
@@ -11,7 +12,6 @@ import type {
 import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import type { RawPhrase } from "../typings/raw";
 
 import type { RootState } from ".";
 
@@ -27,7 +27,7 @@ export interface ParticleInitSlice {
   };
 }
 
-export const ParticleInitState: ParticleInitSlice = {
+export const particleInitState: ParticleInitSlice = {
   particleGame: {
     phrases: [],
     particles: [],
@@ -99,7 +99,7 @@ export const getParticleGame = createAsyncThunk(
 
 export const particleFromLocalStorage = createAsyncThunk(
   "particleGame/particleFromLocalStorage",
-  (arg: typeof ParticleInitState.setting) => {
+  (arg: typeof particleInitState.setting) => {
     const initValues = arg;
 
     return initValues;
@@ -178,8 +178,12 @@ export function buildParticleGame(rawPhrases: RawPhrase[]) {
 
 const particleSlice = createSlice({
   name: "particleGame",
-  initialState: ParticleInitState,
+  initialState: particleInitState,
   reducers: {
+    clearParticleGame(state) {
+      state.particleGame.particles = particleInitState.particleGame.particles;
+      state.particleGame.phrases = particleInitState.particleGame.phrases;
+    },
     setParticlesARomaji(state) {
       state.setting.aRomaji = localStoreAttrUpdate(
         new Date(),
@@ -214,7 +218,7 @@ const particleSlice = createSlice({
     builder.addCase(particleFromLocalStorage.fulfilled, (state, action) => {
       const localStorageValue = action.payload;
       const mergedSettings = merge(
-        ParticleInitState.setting,
+        particleInitState.setting,
         localStorageValue
       );
 
@@ -226,6 +230,9 @@ const particleSlice = createSlice({
   },
 });
 
-export const { setParticlesARomaji, toggleParticleFadeInAnswers } =
-  particleSlice.actions;
+export const {
+  clearParticleGame,
+  setParticlesARomaji,
+  toggleParticleFadeInAnswers,
+} = particleSlice.actions;
 export default particleSlice.reducer;

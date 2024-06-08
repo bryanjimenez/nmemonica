@@ -1,4 +1,6 @@
-import type { FilterKeysOfType, MetaDataObj } from "../typings/raw";
+import type { MetaDataObj } from "nmemonica";
+
+import type { FilterKeysOfType } from "../typings/utils";
 
 // enum
 export const DebugLevel = Object.freeze({

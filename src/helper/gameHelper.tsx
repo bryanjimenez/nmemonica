@@ -1,4 +1,11 @@
 import classNames from "classnames";
+import type {
+  FuriganaToggleMap,
+  GroupListMap,
+  MetaDataObj,
+  RawPhrase,
+  RawVocabulary,
+} from "nmemonica";
 import React from "react";
 
 import { minsSince } from "./consoleHelper";
@@ -7,14 +14,7 @@ import { JapaneseVerb } from "./JapaneseVerb";
 import { isYoon, kanaHintBuilder } from "./kanaHelper";
 import { furiganaHintBuilder } from "./kanjiHelper";
 import { TermFilterBy } from "../slices/settingHelper";
-import type {
-  FuriganaToggleMap,
-  GroupListMap,
-  MetaDataObj,
-  RawPhrase,
-  RawVocabulary,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 /**
  * Goes to the next term or selects one from the frequency list
@@ -117,7 +117,7 @@ export function getTerm<Term extends { uid: string }>(
  * @returns filteredPhrases
  */
 export function termFilterByType<
-  Term extends { uid: string; grp?: string; subGrp?: string; tags: string[] }
+  Term extends { uid: string; grp?: string; subGrp?: string; tags: string[] },
 >(
   filterType: ValuesOf<typeof TermFilterBy>,
   termList: Term[],
@@ -174,7 +174,7 @@ export function termFilterByType<
  * Active group filtering logic
  */
 export function activeGroupIncludes<
-  Term extends { grp?: string; subGrp?: string }
+  Term extends { grp?: string; subGrp?: string },
 >(activeGrpList: string[], term: Term) {
   return (
     (term.grp !== undefined &&
@@ -215,7 +215,7 @@ export function getStaleGroups(termGroups: GroupListMap, termActive: string[]) {
  * returns a set of stale keys and a list of which uid the key belonged to
  */
 export function getStaleSpaceRepKeys<
-  T extends { uid: string; english: string }
+  T extends { uid: string; english: string },
 >(
   repetition: Record<string, MetaDataObj | undefined>,
   termList: T[],
@@ -773,9 +773,11 @@ export function getDeviceMotionEventPermission(
   onGranted: () => void,
   onError: (error: Error) => void
 ) {
-  // @ts-expect-error DeviceMotionEvent.requestPermission
-  if (typeof DeviceMotionEvent.requestPermission === "function") {
-    // @ts-expect-error DeviceMotionEvent.requestPermission
+  if (
+    "DeviceMotionEvent" in window &&
+    "requestPermission" in DeviceMotionEvent &&
+    typeof DeviceMotionEvent.requestPermission === "function"
+  ) {
     DeviceMotionEvent.requestPermission()
       .then((permissionState: "default" | "denied" | "granted") => {
         if (permissionState === "granted") {

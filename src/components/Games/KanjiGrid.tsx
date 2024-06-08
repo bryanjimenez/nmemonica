@@ -1,5 +1,6 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
+import type { RawKanji } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -31,7 +32,6 @@ import {
   removeFrequencyKanji,
 } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
-import type { RawKanji } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import {
   ToggleFrequencyTermBtnMemo,

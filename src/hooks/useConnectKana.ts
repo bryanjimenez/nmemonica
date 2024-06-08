@@ -3,7 +3,7 @@ import { shallowEqual, useSelector } from "react-redux";
 import data from "../../data/json/kana.json";
 import type { RootState } from "../slices";
 import { KanaType } from "../slices/settingHelper";
-import type { ValuesOf } from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 /**
  * KanaGame app-state props

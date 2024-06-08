@@ -4,7 +4,14 @@ import {
   createSlice,
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type {
+  GroupListMap,
+  MetaDataObj,
+  RawVocabulary,
+  SourceVocabulary,
+} from "nmemonica";
 
+import { requiredAuth } from "./globalSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -13,7 +20,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.production";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
@@ -25,14 +32,9 @@ import {
   buildGroupObject,
   buildVocabularyArray,
 } from "../helper/reducerHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import type {
-  GroupListMap,
-  MetaDataObj,
-  RawVocabulary,
-  SourceVocabulary,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 
@@ -101,12 +103,12 @@ export const getVocabulary = createAsyncThunk(
     // if (version === "0") {
     //   console.error("fetching vocabulary: 0");
     // }
-    const value = (await fetch(
-      firebaseConfig.databaseURL + "/lambda/vocabulary.json",
-      {
-        headers: { "Data-Version": version },
-      }
-    ).then((res) => res.json())) as Record<string, SourceVocabulary>;
+    const { localServiceURL: url } = state.global;
+
+    const value = (await fetch(dataServiceEndpoint + "/vocabulary.json", {
+      headers: { [SWRequestHeader.DATA_VERSION]: version },
+      ...requiredAuth(url),
+    }).then((res) => res.json())) as Record<string, SourceVocabulary>;
 
     return { value, version };
   }
@@ -172,6 +174,12 @@ const vocabularySlice = createSlice({
   name: "vocabulary",
   initialState: vocabularyInitState,
   reducers: {
+    clearVocabulary(state) {
+      state.value = vocabularyInitState.value;
+      state.version = vocabularyInitState.version;
+      state.grpObj = vocabularyInitState.grpObj;
+      state.verbForm = vocabularyInitState.verbForm;
+    },
     verbFormChanged(state, action: { payload: string }) {
       return {
         ...state,
@@ -701,6 +709,7 @@ const vocabularySlice = createSlice({
 });
 
 export const {
+  clearVocabulary,
   verbFormChanged,
   furiganaToggled,
   removeFrequencyWord,

@@ -1,10 +1,14 @@
 import { UnmuteIcon } from "@primer/octicons-react";
 import PropTypes from "prop-types";
-import React from "react";
+import { useSelector } from "react-redux";
 
+import { ExternalSourceType, getExternalSourceType } from "./ExtSourceInput";
 import { pronounceEndoint } from "../../../environment.development";
-import { fetchAudio } from "../../helper/audioHelper.development";
+import { audioServicePath } from "../../../environment.production";
+import { fetchAudio } from "../../helper/audioHelper.production";
+import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import { addParam } from "../../helper/urlHelper";
+import { RootState } from "../../slices";
 
 interface AudioItemProps {
   visible: boolean;
@@ -15,6 +19,10 @@ interface AudioItemProps {
 
 export default function AudioItem(props: AudioItemProps) {
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
+
+  const localServiceURL = useSelector(
+    ({ global }: RootState) => global.localServiceURL
+  );
 
   let tStart: number;
 
@@ -33,10 +41,18 @@ export default function AudioItem(props: AudioItemProps) {
     // remove decimal and coerce to number
     const time = ~~(Date.now() - tStart);
 
-    const override = time < 500 && !props.reCache ? "" : "/override_cache";
+    const override =
+      time < 500 && !props.reCache
+        ? {}
+        : { headers: SWRequestHeader.CACHE_RELOAD };
 
-    const url = addParam(pronounceEndoint + override, touchPlayParam);
-    void fetchAudio(url);
+    const audioUrl =
+      getExternalSourceType(localServiceURL) === ExternalSourceType.LocalService
+        ? localServiceURL + audioServicePath
+        : pronounceEndoint;
+
+    const url = addParam(audioUrl, touchPlayParam);
+    void fetchAudio(new Request(url, override));
   };
 
   return (

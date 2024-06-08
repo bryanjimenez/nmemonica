@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import type { RawVocabulary } from "nmemonica";
 import PropTypes from "prop-types";
 import React, { useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -21,7 +22,6 @@ import {
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { furiganaToggled, verbFormChanged } from "../../slices/vocabularySlice";
-import type { RawVocabulary } from "../../typings/raw";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 

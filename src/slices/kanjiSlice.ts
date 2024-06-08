@@ -1,6 +1,8 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type { MetaDataObj, RawKanji, SourceKanji } from "nmemonica";
 
+import { requiredAuth } from "./globalSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -9,7 +11,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.production";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
@@ -17,13 +19,9 @@ import {
   updateAction,
 } from "../helper/recallHelper";
 import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import type {
-  MetaDataObj,
-  RawKanji,
-  SourceKanji,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 
@@ -82,17 +80,17 @@ export const getKanji = createAsyncThunk(
   "kanji/getKanji",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
+    const { localServiceURL: url } = state.global;
     const version = state.version.kanji ?? "0";
 
     // if (version === "0") {
     //   console.error("fetching kanji: 0");
     // }
-    const value = (await fetch(
-      firebaseConfig.databaseURL + "/lambda/kanji.json",
-      {
-        headers: { "Data-Version": version },
-      }
-    ).then((res) => res.json())) as Record<string, SourceKanji>;
+
+    const value = (await fetch(dataServiceEndpoint + "/kanji.json", {
+      headers: { [SWRequestHeader.DATA_VERSION]: version },
+      ...requiredAuth(url),
+    }).then((res) => res.json())) as Record<string, SourceKanji>;
 
     return { value, version };
   }
@@ -158,6 +156,12 @@ const kanjiSlice = createSlice({
   name: "kanji",
   initialState: kanjiInitState,
   reducers: {
+    clearKanji(state) {
+      state.value = kanjiInitState.value;
+      state.version = kanjiInitState.version;
+      state.tagObj = kanjiInitState.tagObj;
+    },
+
     toggleKanjiActiveTag(state, action: { payload: string }) {
       const tagName: string = action.payload;
 
@@ -534,6 +538,7 @@ const kanjiSlice = createSlice({
 });
 
 export const {
+  clearKanji,
   toggleKanjiActiveTag,
   toggleKanjiActiveGrp,
   toggleKanjiOrdering,

@@ -17,7 +17,7 @@ export const serviceWorkerRegistered = createAsyncThunk(
         .register("sw.js")
         .then((info) => info.active?.state);
     } else {
-      return Promise.reject(new Error("No Service Worker"));
+      throw new Error("No Service Worker Available");
     }
   }
 );
@@ -61,6 +61,10 @@ const serviceWorkerSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(serviceWorkerRegistered.fulfilled, (state) => {
       state.registered = true;
+    });
+    builder.addCase(serviceWorkerRegistered.rejected, (state, action) => {
+      state.registered = false;
+      throw action.error
     });
   },
 });

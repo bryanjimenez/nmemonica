@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { MetaDataObj } from "../../../src/typings/raw";
+import type { MetaDataObj } from "nmemonica";
 import { xAgoDate } from "./recallHelper.data";
 import {
   getDifficultyCounts,

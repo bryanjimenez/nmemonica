@@ -1,9 +1,9 @@
 import fs from "fs";
 import path from "path";
 import {
-  firebaseConfig,
-  gCloudFn,
-} from "../../environment.development.js";
+  audioService,
+  dataService,
+} from "../../environment.production.js";
 
 /**
  * Add HTTP Security tags to index.html
@@ -22,12 +22,12 @@ const indexProduction = projectRoot + "/index.production.html";
 const ContentSecurityPolicy = "<!--Content-Security-Policy-->";
 const ContentSecurityPolicyTag =
   `<meta http-equiv="Content-Security-Policy" content="default-src 'self' ` +
-  firebaseConfig.databaseURL +
+  dataService +
   `; script-src 'self'` +
   `; media-src ` +
-  gCloudFn +
+  audioService +
   `; connect-src 'self' `+
-  firebaseConfig.databaseURL+" "+ gCloudFn +
+  dataService+" "+ audioService +
   `; style-src 'self' 'unsafe-inline';" />`;
 
 // FIXME: remove unsafe-inline ^^^
@@ -42,7 +42,7 @@ const XFrameOptions = "<!--X-Frame-Options-->";
 const XFrameOptionsTag = `<meta http-equiv="X-Frame-Options" content="DENY" />`;
 
 const PreConnect = "<!--PreConnect-->";
-const PreConnectTag =`<link rel="preconnect" href="`+firebaseConfig.databaseURL+`">`
+const PreConnectTag =`<link rel="preconnect" href="`+dataService+`">`
 
 
 fs.open(indexDevelopment, "r", (err, fd_sw) => {

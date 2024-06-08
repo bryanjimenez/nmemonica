@@ -1,3 +1,4 @@
+import type { RawVocabulary } from "nmemonica";
 import { Suspense, useEffect, useMemo } from "react";
 import { useDispatch } from "react-redux";
 
@@ -8,7 +9,6 @@ import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { type AppDispatch } from "../../slices";
 import { getPhrase } from "../../slices/phraseSlice";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import type { RawVocabulary } from "../../typings/raw";
 
 export default function SettingsFailedFurigana() {
   const dispatch = useDispatch<AppDispatch>();

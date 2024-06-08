@@ -31,34 +31,58 @@ export function fadeOut(audio: HTMLAudioElement) {
 // https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API
 
 // Single instance of AudioContext https://web.dev/webaudio-intro/#toc-play
-const audioCtx = new AudioContext();
+let audioCtx: AudioContext | null = null;
 
 /**
  * Fetch audio
  *
  * Play using AudioContext
  */
-export function fetchAudio(
-  audioUrl: Request | string,
+export async function fetchAudio(
+  audioUrl: Request,
   AbortController?: AbortController
 ) {
-  const source = audioCtx.createBufferSource();
+  if (audioCtx === null) {
+    // To prevent:
+    // An AudioContext was prevented from starting automatically.
+    // It must be created or resumed after a user gesture on the page.
+    audioCtx = new AudioContext();
+  }
 
+  const source = audioCtx.createBufferSource();
+  const destination = audioCtx.destination;
+
+  // TODO: use requiredAuth after moving to audioSlice
+  const audioRes = await fetch(audioUrl, { credentials: "include" });
+  const audioBuf = await audioRes.arrayBuffer();
+
+  const playP = audioCtx.decodeAudioData(audioBuf).then((decodBuf) => {
+    source.buffer = decodBuf;
+
+    // connect the AudioBufferSourceNode to the
+    // destination so we can hear the sound
+    source.connect(destination);
+
+    // start the source playing
+    source.start();
+  });
+
+  /*
   const fetchP = fetch(audioUrl)
     .then((d) => d.arrayBuffer())
-    .then((a) =>
+    .then((a) => {
       audioCtx.decodeAudioData(a).then((b) => {
-        // const source = audioCtx.createBufferSource();
         source.buffer = b;
 
         // connect the AudioBufferSourceNode to the
         // destination so we can hear the sound
-        source.connect(audioCtx.destination);
+        source.connect(destination);
 
         // start the source playing
         source.start();
-      })
+      })}
     );
+    */
 
   const interruptP: Promise<void> = new Promise((resolve, reject) => {
     const listener = () => {
@@ -78,7 +102,7 @@ export function fetchAudio(
     AbortController?.signal.addEventListener("abort", listener);
   });
 
-  return Promise.all([interruptP, fetchP]);
+  return Promise.all([interruptP, playP]);
 }
 
 /**
@@ -96,7 +120,7 @@ export function sourceAudio(
   swipePromise = Promise.all([
     new Promise<void>((resolve, reject) => {
       const listener = () => {
-        fadeOut(audio).then(() => {
+        void fadeOut(audio).then(() => {
           reject(userAbortError);
         });
       };

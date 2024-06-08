@@ -1,7 +1,13 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import type {
+  GroupListMap,
+  MetaDataObj,
+  RawPhrase,
+  SourcePhrase,
+} from "nmemonica";
 
-import { logger } from "./globalSlice";
+import { logger, requiredAuth } from "./globalSlice";
 import {
   DebugLevel,
   TermFilterBy,
@@ -11,7 +17,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { firebaseConfig } from "../../environment.development";
+import { dataServiceEndpoint } from "../../environment.production";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
@@ -19,14 +25,9 @@ import {
   updateAction,
 } from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import type {
-  GroupListMap,
-  MetaDataObj,
-  RawPhrase,
-  SourcePhrase,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 
@@ -179,18 +180,17 @@ export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
+    const { localServiceURL: url } = state.global;
     // TODO: rename state.phrases -> state.phrase
     const version = state.version.phrases ?? "0";
 
     // if (version === "0") {
     //   console.error("fetching phrase: 0");
     // }
-    const jsonValue = (await fetch(
-      firebaseConfig.databaseURL + "/lambda/phrases.json",
-      {
-        headers: { "Data-Version": version },
-      }
-    ).then((res) => res.json())) as Record<string, SourcePhrase>;
+    const jsonValue = (await fetch(dataServiceEndpoint + "/phrases.json", {
+      headers: { [SWRequestHeader.DATA_VERSION]: version },
+      ...requiredAuth(url),
+    }).then((res) => res.json())) as Record<string, SourcePhrase>;
 
     const groups = buildGroupObject(jsonValue);
     const { values, errors } = buildPhraseArray(jsonValue);
@@ -200,7 +200,7 @@ export const getPhrase = createAsyncThunk(
       });
     }
 
-    return { version, values, groups };
+    return { version, value: jsonValue, values, groups };
   }
 );
 
@@ -264,6 +264,11 @@ const phraseSlice = createSlice({
   name: "phrase",
   initialState: phraseInitState,
   reducers: {
+    clearPhrases(state) {
+      state.value = phraseInitState.value;
+      state.version = phraseInitState.version;
+      state.grpObj = phraseInitState.grpObj;
+    },
     /**
      * Toggle between group, frequency, and tags filtering
      */
@@ -621,6 +626,7 @@ const phraseSlice = createSlice({
 });
 
 export const {
+  clearPhrases,
   flipPhrasesPracticeSide,
   togglePhrasesRomaji,
   togglePhrasesFilter,

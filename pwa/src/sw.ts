@@ -1,59 +1,77 @@
-interface SwFnParams {
-  swVersion: string;
-  initCacheVer: string;
-  cacheFiles: string[];
-  ghURL: string;
-  fbURL: string;
-  gCloudFnPronounce: string;
-  SERVICE_WORKER_LOGGER_MSG: string;
-  SERVICE_WORKER_NEW_TERMS_ADDED: string;
+import {
+  SWMsgOutgoing as SWMsgOutgoingType,
+  SWMsgIncoming as SWMsgIncomingType,
+  SWRequestHeader as SWRequestHeaderType,
+} from "../../src/helper/serviceWorkerHelper";
+import {
+  IDBStores as IDBStoresType,
+  IDBKeys as IDBKeysType,
+  openIDB as openIDBType,
+  getIDBItem as getIDBItemType,
+  putIDBItem as putIDBItemType,
+  addIDBItem as addIDBItemType,
+} from "../helper/idbHelper";
+import { DebugLevel as DebugLevelType } from "../../src/slices/settingHelper";
+import { SwFnParams } from "../script/swBuilder";
 
-  getParam: Function;
-  removeParam: Function;
-  authenticationHeader: string;
-}
+// only for typescript typing
+// will not be included in sw.js code from here
+// needs to be injected by swBuilder
+let SWMsgOutgoing: typeof SWMsgOutgoingType;
+let SWMsgIncoming: typeof SWMsgIncomingType;
+let DebugLevel: typeof DebugLevelType;
+let SWRequestHeader: typeof SWRequestHeaderType;
+let IDBStores: typeof IDBStoresType;
+let IDBKeys: typeof IDBKeysType;
+let openIDB: typeof openIDBType;
+let getIDBItem: typeof getIDBItemType;
+let putIDBItem: typeof putIDBItemType;
+let addIDBItem: typeof addIDBItemType;
 
-interface CacheDataObj {
-  uid: string;
-  blob: Blob;
-}
-
+/**
+ * Service worker
+ *
+ * Code within the function will be bundled in sw.js
+ * Code outside needs to be injected by swBuilder
+ * @param param0
+ */
 export function initServiceWorker({
   swVersion,
   initCacheVer,
   cacheFiles,
-  ghURL,
-  fbURL,
-  gCloudFnPronounce,
-  SERVICE_WORKER_LOGGER_MSG,
-  SERVICE_WORKER_NEW_TERMS_ADDED,
+
+  urlAppUI,
+  urlDataService,
+  urlPronounceService: _urlPronounceService,
+
+  audioPath,
+  dataPath,
 
   getParam,
   removeParam,
-  authenticationHeader,
 }: SwFnParams) {
-  //@ts-expect-error FIXME: ServiceWorkerGlobalScope
-  const swSelf = globalThis.self as ServiceWorkerGlobalScope;
+  const swSelf = globalThis.self as unknown as ServiceWorkerGlobalScope;
+
+  swSelf.addEventListener("install", installEventHandler);
+  swSelf.addEventListener("activate", activateEventHandler);
+  swSelf.addEventListener("fetch", fetchEventHandler);
+  swSelf.addEventListener("message", messageEventHandler);
+  swSelf.addEventListener("push", pushEventHandler);
 
   const appStaticCache = "nmemonica-static";
   const appDataCache = "nmemonica-data";
   const appMediaCache = "nmemonica-media";
-  const indexedDBVersion = 2;
-  const indexedDBStore = "media";
+
   const NO_INDEXEDDB_SUPPORT =
     "Your browser doesn't support a stable version of IndexedDB.";
 
-  const dataVerURL = fbURL + "/lambda/cache.json";
-  const dataURL = [
-    fbURL + "/lambda/phrases.json",
-    fbURL + "/lambda/vocabulary.json",
-    fbURL + "/lambda/opposites.json",
-    fbURL + "/lambda/kanji.json",
+  const dataVerPath = "/cache.json";
+  const dataSourcePath = [
+    "/phrases.json",
+    "/vocabulary.json",
+    "/opposites.json",
+    "/kanji.json",
   ];
-
-  let ERROR = 1,
-    WARN = 2,
-    DEBUG = 3;
 
   function getVersions() {
     const main =
@@ -63,46 +81,199 @@ export function initServiceWorker({
     return { swVersion, jsVersion, bundleVersion: initCacheVer };
   }
 
-  swSelf.addEventListener("install", (e) => {
-    swSelf.skipWaiting();
+  /**
+   * Update specified data set and hash cache from the local service.
+   * @param pushUrl
+   * @param name of data set
+   * @param hash
+   */
+  function updateFromLocalService(pushUrl: string, name: string, hash: string) {
+    return caches.open(appDataCache).then((cache) => {
+      const url = `${pushUrl}/${name}.json.v${hash}`;
+      // TODO: what if ip changed?
+      // if (url_ServiceData !== pushUrl) {
+      clientLogger(
+        // "Push service url does not match service worker",
+        "Validate override url matches push url",
+        DebugLevel.ERROR
+      );
+      // if they don't match user_DataServiceUrl will be overwritten with serviceUrl's data
+      // return;
+      // }
 
-    const versions = getVersions();
-    clientMsg("SW_VERSION", versions);
+      return fetch(`${pushUrl}/${name}.json`, { credentials: "include" }).then(
+        (fetchRes) =>
+          cache
+            .match(pushUrl + dataVerPath)
+            .then((verRes) => {
+              if (!verRes) {
+                throw new Error("Missing cache.json");
+              }
+              return verRes.json();
+            })
+            .then((verJson: { [k: string]: string }) => {
+              verJson[name] = hash;
+              return verJson;
+            })
+            .then((newVerJson) => {
+              return Promise.all([
+                // update version object
+                updateCacheWithJSON(
+                  appDataCache,
+                  pushUrl + dataVerPath,
+                  newVerJson
+                ),
+                // update data object
+                cache.put(url, fetchRes.clone()),
+              ]);
+            })
+      );
+    });
+  }
 
-    caches.open(appDataCache).then((cache) =>
-      cache.add(dataVerURL).then(() =>
-        Promise.all(
-          dataURL.map((url) => {
-            return getVersionForData(url).then((v) => cacheVerData(url, v));
-          })
-        )
-      )
-    );
+  interface PushConfirmation {
+    title: string;
+    tag: string;
+    body: { type: string; msg: string };
+  }
+  interface PushDataUpdate {
+    title: string;
+    tag: string;
+    body: {
+      type: string;
+      name: string;
+      hash: string;
+      url: string;
+    };
+  }
 
-    const a = ghURL;
-    const b = ghURL + "/";
-    caches
-      .open(appStaticCache)
-      .then((cache) => cache.addAll([a, b]))
-      .catch((e) => {
-        console.log("Prefectch failed for some item");
-        console.log(JSON.stringify(e));
+  type PushMessage = PushConfirmation | PushDataUpdate;
+
+  function isPushConfirmation(m: PushMessage): m is PushConfirmation {
+    return (m as PushConfirmation).body.type === "push-subscription";
+  }
+
+  function isPushDataUpdate(m: PushMessage): m is PushDataUpdate {
+    return (m as PushDataUpdate).body.type === "push-data-update";
+  }
+
+  function pushEventHandler(e: PushEvent) {
+    const message = e.data?.json() as PushMessage;
+    if (!message) {
+      clientLogger("Bad message", DebugLevel.ERROR);
+      return;
+    }
+
+    if (isPushConfirmation(message)) {
+      const confirmationP = swSelf.registration.showNotification(
+        message.title,
+        {
+          body: message.body.msg,
+          icon: "",
+          tag: message.tag,
+        }
+      );
+
+      e.waitUntil(confirmationP);
+      return;
+    }
+
+    if (isPushDataUpdate(message)) {
+      const { name, hash, url } = message.body;
+      const n = name.toLowerCase();
+
+      const cacheP = updateFromLocalService(url, n, hash);
+
+      const doneP = cacheP.then(() => {
+        const notifP = swSelf.registration.showNotification(message.title, {
+          body: `${name}.json.v${hash}`,
+          icon: "",
+          tag: message.tag,
+        });
+
+        return notifP;
       });
 
-    e.waitUntil(
-      caches.open(appStaticCache).then((cache) => cache.addAll([...cacheFiles]))
-    );
-  });
+      e.waitUntil(doneP);
 
-  swSelf.addEventListener("activate", (e) => {
-    swSelf.clients
+      // const notification = new Notification("Verify", {
+      //   body: "message",
+      //   tag: "simple-push-demo-notification",
+      //   // icon,
+      // });
+
+      // notification.addEventListener("click", () => {
+      //   console.log("confirmed")
+      //   // swSelf.clients.openWindow(
+      //   //   "https://example.blog.com/2015/03/04/something-new.html"
+      //   // );
+      // });
+    }
+  }
+
+  /**
+   * Cache all data resources
+   */
+  function cacheAllDataResource(baseUrl: string) {
+    return caches
+      .open(appDataCache)
+      .then((cache) =>
+        cache.add(baseUrl + dataVerPath).then(() =>
+          Promise.all(
+            dataSourcePath.map((path) => {
+              const url = baseUrl + path;
+              return getVersionForData(new Request(url)).then((v) =>
+                cacheVerData(new Request(url), v)
+              );
+            })
+          )
+        )
+      )
+      .catch(() => {
+        console.log("[ServiceWorker] Data Prefech failed for some item");
+      });
+  }
+  /**
+   * Cache all static site assets
+   */
+  function cacheAllStaticAssets() {
+    return caches
+      .open(appStaticCache)
+      .then((cache) => cache.addAll([...cacheFiles]))
+      .catch(() => {
+        console.log("[ServiceWorker] Asset Prefectch failed for some item");
+      });
+  }
+  /**
+   * Cache the root / assets
+   */
+  function cacheAllRoot() {
+    const a = urlAppUI;
+    const b = urlAppUI + "/";
+    return caches
+      .open(appStaticCache)
+      .then((cache) => cache.addAll([a, b]))
+      .catch(() => {
+        console.log("[ServiceWorker] / Prefectch failed for some item");
+      });
+  }
+
+  function installEventHandler(_e: ExtendableEvent) {
+    void swSelf.skipWaiting();
+
+    const versions = getVersions();
+    clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
+  }
+
+  function activateEventHandler(e: ExtendableEvent) {
+    void swSelf.clients
       .matchAll({ includeUncontrolled: true })
       .then(function (clientList) {
         const urls = clientList.map(function (client) {
           return client.url;
         });
         console.log("[ServiceWorker] Matching clients:", urls.join(", "));
-        clientLogger("Matching clients:" + urls.join(", "), DEBUG);
+        clientLogger("Matching clients:" + urls.join(", "), DebugLevel.DEBUG);
       });
 
     e.waitUntil(
@@ -111,20 +282,84 @@ export function initServiceWorker({
         // claim the client
         .then(function () {
           console.log("[ServiceWorker] Claiming clients");
-          clientLogger("Claiming clients", DEBUG);
+          clientLogger("Claiming clients", DebugLevel.DEBUG);
           return swSelf.clients.claim();
         })
-    );
-  });
+        .then(() => {
+          const dataCacheP = isUserEditedData().then((isEdited) => {
+            if (!isEdited) {
+              return cacheAllDataResource(urlDataService);
+            }
+            return;
+          });
+          const rootCacheP = cacheAllRoot();
+          const staticAssetCacheP = cacheAllStaticAssets();
 
-  swSelf.addEventListener("message", (event) => {
-    if (event.data && event.data.type === "DO_HARD_REFRESH") {
-      fetch(dataVerURL)
+          return Promise.all([dataCacheP, rootCacheP, staticAssetCacheP]);
+        })
+    );
+  }
+
+  interface MsgSaveDataJSON {
+    type: string;
+    url: string;
+    dataset: Record<string, unknown>;
+    hash: string;
+  }
+
+  interface MsgHardRefresh {
+    type: string;
+  }
+
+  interface MsgGetVersion {
+    type: string;
+  }
+
+  type AppSWMessage = MsgHardRefresh | MsgGetVersion;
+
+  function isMsgSaveDataJSON(m: AppSWMessage): m is MsgSaveDataJSON {
+    return (m as MsgSaveDataJSON).type === SWMsgOutgoing.DATASET_JSON_SAVE;
+  }
+
+  function isMsgHardRefresh(m: AppSWMessage): m is MsgHardRefresh {
+    return (m as MsgHardRefresh).type === SWMsgOutgoing.SW_REFRESH_HARD;
+  }
+
+  function isMsgGetVersion(m: AppSWMessage): m is MsgGetVersion {
+    return (m as MsgGetVersion).type === SWMsgOutgoing.SW_GET_VERSIONS;
+  }
+
+  function messageEventHandler(event: ExtendableMessageEvent) {
+    const message = event.data as AppSWMessage;
+
+    if (
+      isMsgSaveDataJSON(message) &&
+      message.type === SWMsgOutgoing.DATASET_JSON_SAVE
+    ) {
+      // update data object
+      const dataP = caches.open(appDataCache).then((cache) => {
+        const blob = new Blob([JSON.stringify(message.dataset)], {
+          type: "application/json; charset=utf-8",
+        });
+
+        const d = new Response(blob);
+        return cache.put(message.url, d);
+      });
+
+      event.waitUntil(dataP);
+      return;
+    }
+
+    if (
+      isMsgHardRefresh(message) &&
+      message.type === SWMsgOutgoing.SW_REFRESH_HARD
+    ) {
+      fetch(urlDataService + dataVerPath /** no credentials (net check) */)
         .then((res) => {
           if (res.status < 400) {
             return caches.delete(appStaticCache).then(() => {
-              swSelf.registration.unregister();
-              clientMsg("DO_HARD_REFRESH", {
+              void swSelf.registration.unregister();
+              clientMsg(SWMsgOutgoing.SW_REFRESH_HARD, {
                 msg: "Hard Refresh",
                 status: res.status,
               });
@@ -133,147 +368,223 @@ export function initServiceWorker({
             throw new Error("Service Unavailable");
           }
         })
-        .catch((error) => {
-          clientMsg("DO_HARD_REFRESH", { msg: "Hard Refresh", error });
+        .catch((error: Error) => {
+          clientMsg(SWMsgOutgoing.SW_REFRESH_HARD, {
+            msg: "Hard Refresh",
+            error,
+          });
         });
-    } else if (event.data && event.data.type === "SW_VERSION") {
-      const versions = getVersions();
-      clientMsg("SW_VERSION", versions);
+      return;
     }
-  });
 
-  swSelf.addEventListener("fetch", (e) => {
-    const req = e.request.clone();
-    const url = e.request.url;
+    if (
+      isMsgGetVersion(message) &&
+      message.type === SWMsgOutgoing.SW_GET_VERSIONS
+    ) {
+      const versions = getVersions();
+      clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
+      return;
+    }
+
+    clientLogger("Unrecognized message", DebugLevel.ERROR);
+  }
+
+  /**
+   * User has edited datasets
+   * -  do not fetch cache.json
+   * -  do not overwrite caches on install
+   */
+  function isUserEditedData() {
+    const fetchCheckP = openIDB({ logger: clientLogger }).then((db) =>
+      getIDBItem({ db, store: IDBStores.STATE }, IDBKeys.State.EDITED)
+        .then((v) => v.value)
+        .catch(() => {
+          // doesn't exist
+          return false;
+        })
+    );
+
+    return fetchCheckP;
+  }
+
+  /**
+   * User overriding media cached asset
+   */
+  function pronounceOverride(uid: string, req: Request) {
+    console.log("[ServiceWorker] Overriding Asset in Cache");
+
+    if (!swSelf.indexedDB) {
+      // use cache
+      console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
+      return recache(appMediaCache, req);
+    } else {
+      // use indexedDB
+      clientLogger("IDB.override", DebugLevel.WARN);
+
+      const fetchP = fetch(req);
+      const dbOpenPromise = openIDB({ logger: clientLogger });
+
+      const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
+        return fetchP
+          .then((res) => {
+            if (!res.ok) {
+              clientLogger("fetch", DebugLevel.ERROR);
+              throw new Error(
+                "Network response was not OK" +
+                  (res.status ? " (" + res.status + ")" : "")
+              );
+            }
+            return res.blob();
+          })
+          .then((blob) =>
+            putIDBItem(
+              { db },
+              {
+                uid,
+                blob,
+              }
+            ).then((dataO) => toResponse(dataO))
+          );
+      });
+
+      return dbResults;
+    }
+  }
+
+  /**
+   * Site media asset
+   */
+  function pronounce(uid: string, req: Request) {
+    const word = decodeURI(getParam(req.url, "q"));
+
+    if (!swSelf.indexedDB) {
+      // use cache
+      console.log(NO_INDEXEDDB_SUPPORT);
+      clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
+      return appMediaReq(req.url);
+    } else {
+      // use indexedDB
+      const dbOpenPromise = openIDB({ logger: clientLogger });
+
+      const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
+        return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
+          .then((dataO) =>
+            //found
+            toResponse(dataO)
+          )
+          .catch(() => {
+            //not found
+            clientLogger("IDB.get [] " + word, DebugLevel.WARN);
+
+            return fetch(req)
+              .then((res) => {
+                if (!res.ok) {
+                  clientLogger("fetch", DebugLevel.ERROR);
+                  throw new Error(
+                    "Network response was not OK" +
+                      (res.status ? " (" + res.status + ")" : "")
+                  );
+                }
+                return res.blob();
+              })
+              .then((blob) =>
+                addIDBItem({ db }, { uid, blob }).then((dataO) =>
+                  toResponse(dataO)
+                )
+              );
+          });
+      });
+      return dbResults;
+    }
+  }
+
+  function noCaching(request: Request) {
+    // for debugging purposes
+    return fetch(request);
+  }
+
+  function fetchEventHandler(e: FetchEvent) {
+    if (e.request.method === "OPTIONS") {
+      // forward mTLS handshake request
+      e.respondWith(noCaching(e.request));
+      return;
+    }
 
     if (e.request.method !== "GET") {
       return;
     }
 
-    if (url === dataVerURL) {
-      e.respondWith(appVersionReq());
-    } else if (req.headers.get("Data-Version")) {
-      e.respondWith(appDataReq(e.request));
-    } else if (url.startsWith(ghURL)) {
-      // site asset
-      e.respondWith(appAssetReq(url));
-    } else if (url.startsWith(gCloudFnPronounce + "/override_cache")) {
-      // override cache site media asset
-      console.log("[ServiceWorker] Overriding Asset in Cache");
-      const uid = getParam(url, "uid");
-      const cleanUrl = removeParam(url, "uid").replace("/override_cache", "");
-      const dev_env_auth = req.headers.get(authenticationHeader);
-      const myRequest = toRequest(cleanUrl, dev_env_auth);
+    const req = e.request.clone();
+    const url = e.request.url;
+    const protocol = "https://";
+    const path = url.slice(url.indexOf("/", protocol.length + 1));
 
-      if (!swSelf.indexedDB) {
-        // use cache
-        console.log(NO_INDEXEDDB_SUPPORT);
-        clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-        e.respondWith(recache(appMediaCache, myRequest));
-      } else {
-        // use indexedDB
-        clientLogger("IDB.override", WARN);
+    switch (true) {
+      case /* cache.json */
+      path.startsWith(dataPath + dataVerPath): {
+        if (req.headers.get("Cache-Control") === "no-store") {
+          // mTLS handshake in progress
+          e.respondWith(noCaching(req));
+        }
 
-        const fetchP = fetch(myRequest);
-        const dbOpenPromise = openIDB();
-
-        const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-          countIDBItem(db);
-
-          return fetchP
-            .then((res) => {
-              if (!res.ok) {
-                clientLogger("fetch", ERROR);
-                throw new Error(
-                  "Network response was not OK" +
-                    (res.status ? " (" + res.status + ")" : "")
-                );
-              }
-              return res.blob();
-            })
-            .then((blob) =>
-              putIDBItem(
-                { db },
-                {
-                  uid,
-                  blob,
-                }
-              ).then((dataO: CacheDataObj) => toResponse(dataO))
-            );
-        });
-
-        e.respondWith(dbResults);
+        e.respondWith(appVersionReq(urlDataService + dataVerPath));
+        break;
       }
-    } else if (url.startsWith(gCloudFnPronounce)) {
-      // site media asset
 
-      const uid = getParam(url, "uid");
-      const word = decodeURI(getParam(url, "q"));
+      case /* github user data */
+      url.includes("githubusercontent") &&
+        req.headers.has(SWRequestHeader.DATA_VERSION): {
+        const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
 
-      const cleanUrl = removeParam(url, "uid");
-      const dev_env_auth = req.headers.get(authenticationHeader);
-      const myRequest = toRequest(cleanUrl, dev_env_auth);
-
-      if (!swSelf.indexedDB) {
-        // use cache
-        console.log(NO_INDEXEDDB_SUPPORT);
-        clientLogger(NO_INDEXEDDB_SUPPORT, WARN);
-        //@ts-expect-error FIXME: appMediaReq
-        e.respondWith(appMediaReq(myRequest));
-      } else {
-        // use indexedDB
-        const dbOpenPromise = openIDB();
-
-        const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-          return getIDBItem({ db }, uid)
-            .then((dataO) =>
-              //found
-              toResponse(dataO)
-            )
-            .catch(() => {
-              //not found
-              clientLogger("IDB.get [] " + word, WARN);
-
-              return fetch(myRequest)
-                .then((res) => {
-                  if (!res.ok) {
-                    clientLogger("fetch", ERROR);
-                    throw new Error(
-                      "Network response was not OK" +
-                        (res.status ? " (" + res.status + ")" : "")
-                    );
-                  }
-                  return res.blob();
-                })
-                .then((blob) =>
-                  addIDBItem({ db }, { uid, blob }).then((dataO) =>
-                    toResponse(dataO)
-                  )
-                );
-            });
-        });
-        e.respondWith(dbResults);
+        const cacheP = caches
+          .open(appDataCache)
+          .then((cache) => cache.match(url + ".v" + version))
+          .then((v) => {
+            if (v === undefined) {
+              throw new Error(`Missing ${url + ".v" + version}`);
+            }
+            return v;
+          });
+        e.respondWith(cacheP);
+        break;
       }
-    } else {
-      // everything else
-      e.respondWith(fetch(e.request));
+
+      case /* data */
+      req.headers.has(SWRequestHeader.DATA_VERSION): {
+        const version = req.headers.get(SWRequestHeader.DATA_VERSION);
+        const modReq = !url.startsWith(urlDataService) ? req : new Request(url);
+
+        e.respondWith(appDataReq(modReq, version));
+        break;
+      }
+
+      case /* UI asset */
+      url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
+        e.respondWith(appAssetReq(url));
+        break;
+
+      case /* pronounce */
+      path.startsWith(audioPath): {
+        const uid = getParam(url, "uid");
+        const cleanUrl = removeParam(url, "uid");
+        const modRed = req.url.startsWith(urlDataService)
+          ? new Request(cleanUrl) //  remove everything for external
+          : req; //                   keep auth for local service
+
+        if (req.headers.get("Cache-Control") === "reload") {
+          e.respondWith(pronounceOverride(uid, modRed));
+        }
+
+        e.respondWith(pronounce(uid, modRed));
+        break;
+      }
+
+      default:
+        /* everything else */
+        e.respondWith(noCaching(e.request));
+        break;
     }
-  });
-
-  /**
-   * Creates a request from url
-   *
-   * Adds authentication in development env
-   */
-  function toRequest(url: string, auth: string | null) {
-    const devAuth =
-      auth === null ? undefined : new Headers({ [authenticationHeader]: auth });
-    const myInit = {
-      method: "GET",
-      headers: devAuth,
-    };
-
-    return new Request(url, myInit);
   }
 
   /**
@@ -287,149 +598,13 @@ export function initServiceWorker({
   }
 
   /**
-   * indexedDB.open()
-   * @param version
-   * @param objStoreToCreate name of store to open or create
-   * @param objStoreToDelete name of store to delete
-   */
-  function openIDB(
-    version: number = indexedDBVersion,
-    objStoreToCreate: string = indexedDBStore,
-    objStoreToDelete?: string
-  ) {
-    let openRequest = indexedDB.open(appMediaCache, version);
-
-    const dbUpgradeP: Promise<{ type: string; val: IDBDatabase }> = new Promise(
-      (resolve /*reject*/) => {
-        openRequest.onupgradeneeded = function (event) {
-          if (event.target === null) throw new Error("onupgradeneeded failed");
-          // Save the IDBDatabase interface
-          const db = (event.target as IDBRequest<IDBDatabase>).result;
-
-          if (objStoreToDelete) {
-            db.deleteObjectStore(objStoreToDelete);
-          }
-
-          // Create an objectStore for this database
-          let objectStore = db.createObjectStore(objStoreToCreate, {
-            keyPath: "uid",
-          });
-          // objectStore.createIndex("last", "last", { unique: false });
-
-          // Use transaction oncomplete to make sure the objectStore creation is
-          // finished before adding data into it.
-          objectStore.transaction.oncomplete = function () {
-            // Store values in the newly created objectStore.
-            // console.log("upgrade success");
-            // clientLogger("IDB.upgrade", DEBUG);
-            resolve({ type: "upgrade", val: db });
-          };
-        };
-      }
-    );
-
-    const dbOpenP: Promise<{ type: string; val: IDBDatabase }> = new Promise(
-      (resolve, reject) => {
-        openRequest.onerror = function (/*event*/) {
-          clientLogger("IDB.open X(", ERROR);
-          reject();
-        };
-        openRequest.onsuccess = function (event) {
-          if (event.target === null) throw new Error("openIDB failed");
-
-          const db = (event.target as IDBRequest<IDBDatabase>).result;
-
-          db.onerror = function (event) {
-            // Generic error handler for all errors targeted at this database's
-            // requests!
-            if (event.target && "errorCode" in event.target) {
-              clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
-              console.error("Database error: " + event.target.errorCode);
-            }
-          };
-
-          // console.log("open success");
-          resolve({ type: "open", val: db });
-        };
-      }
-    );
-
-    return Promise.any([dbUpgradeP, dbOpenP]).then(
-      (pArr: { type: string; val: IDBDatabase }) => {
-        // if upgradeP happens wait for dbOpenP
-        if (pArr.type === "upgrade") {
-          return dbOpenP.then((db) => db.val);
-        }
-
-        return pArr.val;
-      }
-    );
-  }
-
-  /**
-   * objectStore.getAll()
-   * @returns a promise containing array of results
-   */
-  function dumpIDB(version: number, store: string) {
-    let openRequest = indexedDB.open(appMediaCache, version);
-
-    const dbOpenPromise: Promise<IDBDatabase> = new Promise(
-      (resolve, reject) => {
-        openRequest.onerror = function (/*event*/) {
-          clientLogger("IDB.open X(", ERROR);
-          reject();
-        };
-        openRequest.onsuccess = function (event) {
-          if (event.target === null) throw new Error("dumpIDB open failed");
-
-          const db = (event.target as IDBRequest<IDBDatabase>).result;
-
-          db.onerror = function (event) {
-            // Generic error handler for all errors targeted at this database's
-            // requests!
-            if (event.target && "errorCode" in event.target) {
-              clientLogger("IDB " + event.target.errorCode + " X(", ERROR);
-              console.error("Database error: " + event.target.errorCode);
-            }
-          };
-
-          // console.log("open success");
-          resolve(db);
-        };
-      }
-    );
-
-    return dbOpenPromise.then((db: IDBDatabase) => {
-      let transaction = db.transaction([store], "readonly");
-      let objectStore = transaction.objectStore(store);
-
-      const getAllP: Promise<IDBDatabase> = new Promise((resolve, reject) => {
-        const request = objectStore.getAll();
-        request.onerror = () => {
-          clientLogger("IDB.getAll X(", ERROR);
-          reject();
-        };
-        request.onsuccess = (event) => {
-          db.close();
-          if (event.target === null)
-            throw new Error("dumpIDB transaction failed");
-
-          const transactionDb = (event.target as IDBRequest<IDBDatabase>)
-            .result;
-
-          resolve(transactionDb);
-        };
-      });
-
-      return getAllP;
-    });
-  }
-
-  /**
    * Post message to client
    */
-  function clientMsg(type: string, msg: Object) {
-    return swSelf.clients
+  function clientMsg(
+    type: keyof typeof SWMsgOutgoing,
+    msg: Record<string, unknown>
+  ) {
+    void swSelf.clients
       .matchAll({ includeUncontrolled: true, type: "window" })
       .then((client) => {
         if (client && client.length) {
@@ -445,183 +620,21 @@ export function initServiceWorker({
    * Log to client
    */
   function clientLogger(msg: string, lvl: number) {
-    return swSelf.clients
+    swSelf.clients
       .matchAll({ includeUncontrolled: true, type: "window" })
       .then((client) => {
         if (client && client.length) {
           return client[0].postMessage({
-            type: SERVICE_WORKER_LOGGER_MSG,
+            type: SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG,
             msg,
             lvl,
           });
         }
+      })
+      .catch((err) => {
+        console.log("[ServiceWorker] clientLogger failed");
+        console.log(err);
       });
-  }
-
-  /**
-   * objectStore.count()
-   */
-  function countIDBItem(db: IDBDatabase, store = indexedDBStore) {
-    const transaction = db.transaction([store]);
-    const request = transaction.objectStore(store).count();
-
-    const requestP: Promise<number> = new Promise((resolve, reject) => {
-      request.onerror = function (/*event*/) {
-        clientLogger("IDB.count X(", ERROR);
-        reject();
-      };
-      request.onsuccess = function () {
-        if (request.result) {
-          clientLogger("IDB [" + request.result + "]", DEBUG);
-          resolve(request.result);
-        } else {
-          clientLogger("IDB []", WARN);
-          resolve(-1);
-        }
-      };
-    });
-
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-
-    return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
-  }
-
-  /**
-   * objectStore.get(key)
-   */
-  function getIDBItem(
-    { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    key: string
-  ) {
-    const transaction = db.transaction([store]);
-    const request = transaction.objectStore(store).get(key);
-
-    const requestP: Promise<CacheDataObj> = new Promise((resolve, reject) => {
-      request.onerror = function (/*event*/) {
-        clientLogger("IDB.get X(", ERROR);
-        reject();
-      };
-      request.onsuccess = function () {
-        if (request.result) {
-          resolve(request.result);
-        } else {
-          reject();
-        }
-      };
-    });
-
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-
-    return Promise.all([requestP, transactionP]).then((pArr) => pArr[0]);
-  }
-
-  /**
-   * objectStore.add(value)
-   */
-  function addIDBItem(
-    { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    value: CacheDataObj
-  ) {
-    let transaction = db.transaction([store], "readwrite");
-
-    let request = transaction.objectStore(store).add(value);
-
-    const requestP = new Promise((resolve, reject) => {
-      request.onsuccess = function (/*event*/) {
-        resolve(undefined);
-      };
-      request.onerror = function () {
-        clientLogger("IDB.add X(", ERROR);
-        reject();
-      };
-    });
-
-    const transactionP: Promise<typeof value> = new Promise(
-      (resolve, reject) => {
-        transaction.oncomplete = function () {
-          resolve(value);
-        };
-        transaction.onerror = function () {
-          reject();
-        };
-      }
-    );
-
-    return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
-  }
-
-  /**
-   * objectStore.put(value)
-   */
-  function putIDBItem(
-    { db, store = indexedDBStore }: { db: IDBDatabase; store?: string },
-    value: CacheDataObj
-  ) {
-    let transaction = db.transaction([store], "readwrite");
-
-    let request = transaction.objectStore(store).put(value);
-
-    const requestP = new Promise((resolve, reject) => {
-      request.onsuccess = function (/*event*/) {
-        resolve(undefined);
-      };
-      request.onerror = function () {
-        clientLogger("IDB.put X(", ERROR);
-        reject();
-      };
-    });
-
-    const transactionP: Promise<typeof value> = new Promise(
-      (resolve, reject) => {
-        transaction.oncomplete = function () {
-          resolve(value);
-        };
-        transaction.onerror = function () {
-          reject();
-        };
-      }
-    );
-
-    return Promise.all([requestP, transactionP]).then((arrP) => arrP[1]);
-  }
-
-  /**
-   * objectStore.delete(key)
-   */
-  function deleteIDBItem(db: IDBDatabase, store: string, key: string) {
-    const transaction = db.transaction([store], "readwrite");
-
-    let request = transaction.objectStore(store).delete(key);
-
-    request.onsuccess = function (/*event*/) {};
-    request.onerror = function () {
-      clientLogger("IDB.delete X(", ERROR);
-    };
-
-    const transactionP = new Promise((resolve, reject) => {
-      transaction.oncomplete = function () {
-        resolve(undefined);
-      };
-      transaction.onerror = function () {
-        reject();
-      };
-    });
-
-    return transactionP;
   }
 
   /**
@@ -629,50 +642,60 @@ export function initServiceWorker({
    * may return stale version
    * @returns a Promise with a cache response
    */
-  function appVersionReq() {
-    // return what's on cache
-    const cacheRes = caches
-      .open(appDataCache)
-      .then((cache) => cache.match(dataVerURL));
+  function appVersionReq(url: string) {
+    const fetchCheckP = isUserEditedData();
 
-    // fetch, compare, update
-    const fetchAndUpdateRes = fetchVerSendNewDiffsMsg();
+    return fetchCheckP.then((cacheOnly) => {
+      // check if in cache
+      const c = caches
+        .open(appDataCache)
+        .then((cache) => cache.match(url))
+        .then((cacheRes) => {
+          if (!cacheRes) {
+            throw new Error("Not in cache");
+          }
+          return cacheRes;
+        });
 
-    return cacheRes || fetchAndUpdateRes;
-  }
+      if (cacheOnly) {
+        // don't fetch when user in-app
+        // has edited datasets
+        return c;
+      }
 
-  /**
-   * get from cache on fail fetch and re-cache
-   * first match may be stale
-   * @returns a Promise with a cached dataVersion response
-   */
-  function appVersionCacheOnFailFetch() {
-    return caches.open(appDataCache).then((cache) =>
-      cache.match(dataVerURL).then((cacheRes) => {
-        if (cacheRes) {
-          return Promise.resolve(cacheRes);
-        } else {
-          return recache(appDataCache, dataVerURL);
+      // fetch new versions
+      const f = fetch(url).then((res) => {
+        const resClone = res.clone();
+        if (!res.ok) {
+          throw new Error("Failed to fetch");
         }
-      })
-    );
+
+        // update cache from new
+        void caches
+          .open(appDataCache)
+          .then((cache) => cache.put(url, resClone));
+
+        return res;
+      });
+
+      // return whaterver is fastest
+      return Promise.any([f, c]).catch((errs: Error[]) =>
+        Promise.reject(errs[0].message)
+      );
+    });
   }
 
   /**
-   * when request contains Data-Version != 0 the version is used otherwise
+   * When request contains Data-Version != 0 the version is used otherwise
    * the version is searched in the cache
    * @returns a Promise that yieds a cached response
    */
-  function appDataReq(request: Request) {
-    const url = request.url;
-    const version = request.headers.get("Data-Version");
-
-    let response;
+  function appDataReq(req: Request, version: string | null) {
+    let response: Promise<Response>;
     if (!version || version === "0") {
-      // TODO: catch when no version match
-      response = getVersionForData(url).then((v) => cacheVerData(url, v));
+      response = getVersionForData(req).then((v) => cacheVerData(req, v));
     } else {
-      response = cacheVerData(url, version);
+      response = cacheVerData(req, version);
     }
 
     return response;
@@ -681,29 +704,51 @@ export function initServiceWorker({
   /**
    * @returns a Promise that yields the version on the cache for the provided request
    */
-  function getVersionForData(url: string) {
+  function getVersionForData(req: Request) {
+    const url = req.url;
+    const authority = url.slice(0, url.indexOf("/", "https://".length));
     const filename = url.split("/").pop() || url;
     const [dName] = filename.split(".json");
 
-    return appVersionCacheOnFailFetch()
+    /**
+     * get from cache on fail fetch and re-cache
+     * first match may be stale
+     * returns a Promise with a cached dataVersion response
+     */
+    return caches
+      .open(appDataCache)
+      .then((cache) =>
+        cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
+          if (cacheRes) {
+            return Promise.resolve(cacheRes);
+          } else {
+            return recache(
+              appDataCache,
+              new Request(authority + dataPath + dataVerPath, {
+                credentials: "include",
+              })
+            );
+          }
+        })
+      )
       .then((res) => res && res.json())
-      .then((versions) => versions[dName]);
+      .then((versions: { [k: string]: string }) => versions[dName]);
   }
 
   /**
    * when cache match fails fetch and re-cache (only good response)
    * @returns a Promise that yieds a cached response
    */
-  function cacheVerData(url: string, v: string) {
-    const urlVersion = url + ".v" + v;
+  function cacheVerData(req: Request, v: string) {
+    const urlVersion = req.url + ".v" + v;
 
     return caches.open(appDataCache).then((cache) =>
       cache.match(urlVersion).then((cacheRes) => {
         return (
           cacheRes ||
-          fetch(url).then((fetchRes) => {
+          fetch(req).then((fetchRes) => {
             if (fetchRes.status < 400) {
-              cache.put(urlVersion, fetchRes.clone());
+              void cache.put(urlVersion, fetchRes.clone());
             }
             return fetchRes;
           })
@@ -721,11 +766,12 @@ export function initServiceWorker({
       .open(appStaticCache)
       .then((cache) => cache.match(url))
       .then((cachedRes) => {
-        return cachedRes || recache(appStaticCache, url);
+        return cachedRes || recache(appStaticCache, new Request(url));
       });
   }
 
   /**
+   * Only used if no IndexedDB support
    * cache match first otherwise fetch then cache
    * @returns a Promise that yieds a cached response
    */
@@ -734,18 +780,30 @@ export function initServiceWorker({
       .open(appMediaCache)
       .then((cache) => cache.match(url))
       .then((cachedRes) => {
-        return cachedRes || recache(appMediaCache, url);
+        return cachedRes || recache(appMediaCache, new Request(url));
       });
   }
 
   /**
    * @returns a Promise that yields a response from the cache or a rejected Promise
    */
-  function recache(cacheName: string, url: string | Request) {
+  function recache(cacheName: string, req: Request) {
     return caches.open(cacheName).then((cache) =>
-      cache
-        .add(url)
-        .then(() => cache.match(url))
+      fetch(req)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Could not fetch");
+          }
+
+          return cache.put(req.url, res);
+        })
+        .then(() => cache.match(req.url))
+        .then((urlRes) => {
+          if (!urlRes) {
+            throw new Error("Could not recache");
+          }
+          return urlRes;
+        })
         .catch(() => {
           console.log("[ServiceWorker] Network unavailable");
           return Promise.reject();
@@ -801,7 +859,7 @@ export function initServiceWorker({
   function updateCacheWithJSON(
     cacheName: string,
     url: string,
-    jsonObj: Object,
+    jsonObj: { [k: string]: unknown },
     type = "application/json",
     status = 200,
     statusText = "OK"
@@ -816,109 +874,5 @@ export function initServiceWorker({
     return caches
       .open(cacheName)
       .then((cache) => cache.put(url, createdRes).then(() => cache.match(url)));
-  }
-
-  // TODO: refactor this
-  /**
-   * Finds changed term lists based on version.
-   * Creates object with newly added terms.
-   * Messages client with updates data.
-   * @returns {Promise} a promise containing the fetched res
-   */
-  function fetchVerSendNewDiffsMsg() {
-    return fetch(dataVerURL)
-      .then((r) => r.json())
-      .then((resNew) =>
-        caches
-          .open(appDataCache)
-          .then((cache) => cache.match(dataVerURL))
-          .then((r) => r && r.json())
-          .then((resOld) => {
-            // create obj with new and old hashes
-            let newTermsMsgPromise = Promise.resolve(undefined);
-            let versionChange: Record<string, { old: string; new: string }> =
-              {};
-            let update = false;
-            const allowedSets = ["vocabulary", "phrases"];
-            for (let n in resNew) {
-              if (allowedSets.includes(n)) {
-                if (resOld?.[n] !== resNew[n]) {
-                  versionChange[n] = { old: resOld[n], new: resNew[n] };
-                  update = !update ? true : true;
-                }
-              }
-            }
-
-            // update cache with fetched version results
-            const fetchRes = updateCacheWithJSON(
-              appDataCache,
-              dataVerURL,
-              resNew
-            );
-
-            // look for changes in terms with new & old hashes values
-            if (update) {
-              update = false;
-              // console.log("v: " + JSON.stringify(versionChange));
-
-              let newlyAdded: Record<string, { freq: Object[]; dic: Object }> =
-                {};
-              let ps: Promise<void>[] = [];
-              for (let setName in versionChange) {
-                const theUrl = fbURL + "/lambda/" + setName + ".json";
-
-                ps.push(
-                  cacheVerData(theUrl, versionChange[setName].new)
-                    .then((d) => d.json())
-                    .then((newData: Object) =>
-                      cacheVerData(theUrl, versionChange[setName].old)
-                        .then((d2) => d2.json())
-                        .then((oldData) => {
-                          let arr: Object[] = [];
-                          for (let j in newData) {
-                            if (oldData[j] === undefined) {
-                              arr = [...arr, j];
-                              update = !update ? true : true;
-                            }
-                          }
-
-                          if (arr.length > 0) {
-                            newlyAdded[setName] = {
-                              freq: arr,
-                              dic: newData,
-                            };
-                          }
-
-                          return Promise.resolve(undefined);
-                        })
-                    )
-                );
-              }
-
-              // message results to client
-              newTermsMsgPromise = Promise.all(ps).then(() => {
-                if (update) {
-                  return swSelf.clients
-                    .matchAll({ includeUncontrolled: true, type: "window" })
-                    .then((client) => {
-                      if (client && client.length) {
-                        // console.log("[SW] posting message");
-                        client[0].postMessage({
-                          type: SERVICE_WORKER_NEW_TERMS_ADDED,
-                          msg: newlyAdded,
-                        });
-                      }
-
-                      return Promise.resolve(undefined);
-                    });
-                }
-              });
-            }
-
-            return Promise.all([fetchRes, newTermsMsgPromise]).then(
-              (allPromises) => allPromises[0]
-            );
-          })
-      );
   }
 }

@@ -1,0 +1,19 @@
+/** Prevent darkmode text unreadable*/
+.sheet-container {
+  color: black;
+}
+
+/** Fit the menu in narrow views*/
+.x-spreadsheet-menu > li:first-child {
+  padding: 0;
+}
+
+/** Fabs pop above app nav menu */
+.z-index-unset {
+  z-index: unset !important;
+}
+
+/** Remove toolbar */
+.x-spreadsheet-toolbar {
+  display: none;
+}

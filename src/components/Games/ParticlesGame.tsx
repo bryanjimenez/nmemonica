@@ -1,4 +1,5 @@
 import { LinearProgress } from "@mui/material";
+import type { RawPhrase } from "nmemonica";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -14,7 +15,6 @@ import { randomOrder } from "../../helper/sortHelper";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { getParticleGame } from "../../slices/particleSlice";
-import type { RawPhrase } from "../../typings/raw";
 import { NotReady } from "../Form/NotReady";
 import "../../css/ParticlesGame.css";
 
@@ -73,7 +73,7 @@ export default function ParticlesGame() {
     phrases: ParticleGamePhrase[],
     particles: ChoiceParticle[]
   ) {
-    if (phrases.length === 0 || particles.length === 0) return;
+    if (phrases.length === 0 || particles.length === 0) return null;
 
     if (order.current.length === 0) {
       order.current = randomOrder(phrases);

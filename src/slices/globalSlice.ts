@@ -12,16 +12,35 @@ import { particleFromLocalStorage } from "./particleSlice";
 import { phraseFromLocalStorage } from "./phraseSlice";
 import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
+import { VersionInitSlice } from "./versionSlice";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
+import {
+  dataServiceEndpoint,
+  dataServicePath,
+} from "../../environment.production";
+import {
+  IDBKeys,
+  IDBStores,
+  openIDB,
+  putIDBItem,
+} from "../../pwa/helper/idbHelper";
 import { type ConsoleMessage } from "../components/Form/Console";
-import { SERVICE_WORKER_LOGGER_MSG } from "../constants/actionNames";
+import {
+  ExternalSourceType,
+  getExternalSourceType,
+} from "../components/Form/ExtSourceInput";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
 } from "../helper/localStorageHelper";
-import type { ValuesOf } from "../typings/raw";
+import {
+  SWMsgIncoming,
+  SWRequestHeader,
+  UIMsg,
+} from "../helper/serviceWorkerHelper";
+import type { ValuesOf } from "../typings/utils";
 
 export interface MemoryDataObject {
   quota: number;
@@ -37,8 +56,9 @@ export interface GlobalInitSlice {
   console: ConsoleMessage[];
   swipeThreshold: number;
   motionThreshold: number;
+  localServiceURL: string;
+  lastImport: string[];
 }
-export const UI_LOGGER_MSG = "ui_logger_msg";
 
 export const globalInitState: GlobalInitSlice = {
   darkMode: false,
@@ -47,6 +67,8 @@ export const globalInitState: GlobalInitSlice = {
   console: [],
   swipeThreshold: 0,
   motionThreshold: 0,
+  localServiceURL: "",
+  lastImport: [],
 };
 
 export const getMemoryStorageStatus = createAsyncThunk(
@@ -128,6 +150,86 @@ export const localStorageSettingsInitialized = createAsyncThunk(
   }
 );
 
+/**
+ * Local requests need credentials  
+ * checks if `url` is local
+ * @param url
+ */
+export function requiredAuth(url: string) {
+  const srcType = getExternalSourceType(url);
+  const needAuth: RequestInit =
+    srcType === ExternalSourceType.LocalService
+      ? { credentials: "include" }
+      : {/** only needed for local service */};
+
+  return needAuth;
+}
+
+export const setLocalServiceURL = createAsyncThunk(
+  "setting/setLocalServiceURL",
+  async (arg: string) => {
+    const localServiceURL = arg;
+
+    let url: string;
+    const externalSource = getExternalSourceType(localServiceURL);
+    switch (externalSource) {
+      case ExternalSourceType.GitHubUserContent:
+        url = localServiceURL;
+        break;
+
+      case ExternalSourceType.LocalService:
+        url = localServiceURL + dataServicePath;
+        break;
+
+      default:
+        url = dataServiceEndpoint;
+        break;
+    }
+
+    if (externalSource === ExternalSourceType.GitHubUserContent) {
+      // verify is available
+      // is not cached
+      return fetch(url + "/Vocabulary.csv").then((res) => {
+        if (!res.ok) {
+          throw new Error("Could not verify repo");
+        }
+        return { versions: {} as VersionInitSlice, localServiceURL: url };
+      });
+    }
+
+    return fetch(url + "/cache.json", {
+      headers: SWRequestHeader.CACHE_NO_WRITE,
+      ...requiredAuth(localServiceURL),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Local Service not responding");
+        }
+
+        return res.json();
+      })
+      .then((versions: VersionInitSlice) => ({ versions, localServiceURL }));
+  }
+);
+
+/**
+ * After user edits or imports a dataset
+ * - mark cached data as edited or untouched
+ */
+export const setLocalDataEdited = createAsyncThunk(
+  "setting/setLocalDataEdited",
+  async (arg: boolean) => {
+    const override = arg;
+
+    return openIDB().then((db) =>
+      putIDBItem(
+        { db, store: IDBStores.STATE },
+        { key: IDBKeys.State.EDITED, value: override }
+      )
+    );
+  }
+);
+
 const globalSlice = createSlice({
   name: "setting",
   initialState: globalInitState,
@@ -206,7 +308,7 @@ const globalSlice = createSlice({
         const { msg, lvl, type } = action.payload;
         if (debug !== 0 && lvl <= debug) {
           let m;
-          if (type === SERVICE_WORKER_LOGGER_MSG) {
+          if (type === SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG) {
             m = `SW: ${msg}`;
           } else {
             m = `UI: ${msg}`;
@@ -232,10 +334,36 @@ const globalSlice = createSlice({
       prepare: (
         msg: string,
         lvl: number = DebugLevel.DEBUG,
-        type: string = UI_LOGGER_MSG
+        type: string = UIMsg.UI_LOGGER_MSG
       ) => ({
         payload: { msg, lvl, type },
       }),
+    },
+    setLastImport(state, action: PayloadAction<string>) {
+      const value = action.payload;
+
+      const path = "/global/";
+      const attr = "lastImport";
+      const time = new Date();
+
+      const storage = getLocalStorageSettings(localStorageKey);
+      let lastImport: string[] = [value];
+      if (storage?.global.lastImport) {
+        lastImport = [...storage.global.lastImport, value];
+      }
+
+      // no more than 3 import events
+      if (lastImport.length > 3) {
+        lastImport = lastImport.slice(lastImport.length - 3);
+      }
+
+      state.lastImport = localStoreAttrUpdate(
+        time,
+        { global: state },
+        path,
+        attr,
+        lastImport
+      );
     },
   },
 
@@ -263,6 +391,31 @@ const globalSlice = createSlice({
 
       state.memory = { quota, usage, persistent };
     });
+    builder.addCase(setLocalServiceURL.rejected, (state) => {
+      const path = "/global/";
+      const attr = "localServiceURL";
+      const time = new Date();
+      state.localServiceURL = localStoreAttrUpdate(
+        time,
+        { global: state },
+        path,
+        attr,
+        ""
+      );
+    }),
+      builder.addCase(setLocalServiceURL.fulfilled, (state, action) => {
+        const overrideUrl = action.payload.localServiceURL;
+        const path = "/global/";
+        const attr = "localServiceURL";
+        const time = new Date();
+        state.localServiceURL = localStoreAttrUpdate(
+          time,
+          { global: state },
+          path,
+          attr,
+          overrideUrl
+        );
+      });
   },
 });
 
@@ -270,6 +423,7 @@ export const {
   toggleDarkMode,
   setMotionThreshold,
   setSwipeThreshold,
+  setLastImport,
 
   debugToggled,
   logger,

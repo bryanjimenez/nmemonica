@@ -1,11 +1,8 @@
+import type { MetaDataObj, RawPhrase, RawVocabulary } from "nmemonica";
+
 import { type ConsoleMessage } from "../components/Form/Console";
 import { DebugLevel } from "../slices/settingHelper";
-import type {
-  MetaDataObj,
-  RawPhrase,
-  RawVocabulary,
-  ValuesOf,
-} from "../typings/raw";
+import type { ValuesOf } from "../typings/utils";
 
 /**
  * Trims a string keeping the begining and end.

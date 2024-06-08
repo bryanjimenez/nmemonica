@@ -1,13 +1,6 @@
 import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { buildAction } from "../../helper/eventHandlerHelper";
@@ -16,7 +9,14 @@ import {
   labelOptions,
   motionThresholdCondition,
 } from "../../helper/gameHelper";
+import {
+  swMessageDoHardRefresh,
+  swMessageGetVersions,
+  swMessageSubscribe,
+  swMessageUnsubscribe,
+} from "../../helper/serviceWorkerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
+import { useSWMessageVersionEventHandler } from "../../hooks/useServiceWorkerHelper";
 import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
@@ -34,6 +34,7 @@ import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
+const SettingsExternalData = lazy(() => import("../Form/SettingsExternalData"));
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
@@ -48,26 +49,6 @@ const SettingsMeta = {
   label: "Settings",
 };
 
-// FIXME: getDerivedStateFromError
-/*
-function /*static getDerivedStateFromError(error: Error) {
-  const causeMsg =
-    (error.cause !== undefined && [
-      { msg: JSON.stringify(error.cause).replaceAll(",", ", "), css: "px-4" },
-    ]) ||
-    [];
-
-  const errorMsgs = [
-    { msg: error.name + ": " + error.message, css: "px-2" },
-    ...causeMsg,
-  ].map((e) => ({ ...e, lvl: DebugLevel.ERROR }));
-
-  // state
-  return {
-    errorMsgs,
-  };
-}
-*/
 function componentDidCatch(dispatch: AppDispatch, error: Error) {
   const cause = error.cause as { code: string; value: unknown };
 
@@ -176,6 +157,8 @@ export default function Settings() {
   const [sectionKanjiGame, setSectionKanjiGame] = useState(false);
   const [sectionParticle, setSectionParticle] = useState(false);
   const [sectionStats, setSectionStats] = useState(false);
+  const [sectionExternalData, setSectionExternalData] = useState(false);
+
   const [swVersion, setSwVersion] = useState("");
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
@@ -187,20 +170,11 @@ export default function Settings() {
     () => {
       void dispatch(getMemoryStorageStatus());
 
-      navigator.serviceWorker.addEventListener(
-        "message",
-        swMessageEventListener
-      );
-
-      navigator.serviceWorker.controller?.postMessage({
-        type: "SW_VERSION",
-      });
+      swMessageSubscribe(swMessageEventListenerCB);
+      void swMessageGetVersions();
 
       return () => {
-        navigator.serviceWorker.removeEventListener(
-          "message",
-          swMessageEventListener
-        );
+        swMessageUnsubscribe(swMessageEventListenerCB);
 
         if (motionListener.current) {
           window.removeEventListener("devicemotion", motionListener.current);
@@ -214,6 +188,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (motionThreshold > 0 && motionListener.current === undefined) {
+      // turned on
       motionListener.current = buildMotionListener(
         dispatch,
         motionThreshold,
@@ -228,9 +203,15 @@ export default function Settings() {
         (error: Error) => componentDidCatch(dispatch, error)
       );
     } else if (motionThreshold === 0 && motionListener.current !== undefined) {
+      // turned off
       window.removeEventListener("devicemotion", motionListener.current);
       motionListener.current = undefined;
+    } else if (motionThreshold === 0 && motionListener.current === undefined) {
+      // Initialization point or
+      // DeviceMotionEvent is not supported
+      // stop ..
     } else {
+      // changed
       if (motionListener.current)
         window.removeEventListener("devicemotion", motionListener.current);
 
@@ -250,33 +231,13 @@ export default function Settings() {
     }
   }, [dispatch, motionThreshold]);
 
-  const swMessageEventListener = useCallback(
-    (event: MessageEvent) => {
-      const { type, error } = event.data as { type: string; error: string };
-      if (type === "DO_HARD_REFRESH") {
-        if (error) {
-          dispatch(logger(error, DebugLevel.ERROR));
-        }
-
-        setTimeout(() => {
-          setSpin(false);
-          setHardRefreshUnavailable(true);
-        }, 2000);
-      } else if (type === "SW_VERSION") {
-        interface VersionInfo {
-          swVersion: string;
-          jsVersion: string;
-          bundleVersion: string;
-        }
-        const { swVersion, jsVersion, bundleVersion } =
-          event.data as VersionInfo;
-
-        setSwVersion(swVersion);
-        setJsVersion(jsVersion);
-        setBundleVersion(bundleVersion);
-      }
-    },
-    [dispatch]
+  const swMessageEventListenerCB = useSWMessageVersionEventHandler(
+    dispatch,
+    setSpin,
+    setHardRefreshUnavailable,
+    setSwVersion,
+    setJsVersion,
+    setBundleVersion
   );
 
   // FIXME: errorMsgs component
@@ -560,9 +521,7 @@ export default function Settings() {
                     setJsVersion("");
                     setBundleVersion("");
                     setTimeout(() => {
-                      navigator.serviceWorker.controller?.postMessage({
-                        type: "SW_VERSION",
-                      });
+                      void swMessageGetVersions();
                     }, 1000);
                   }}
                 >
@@ -619,9 +578,7 @@ export default function Settings() {
                       }
                     }, 3000);
 
-                    navigator.serviceWorker.controller?.postMessage({
-                      type: "DO_HARD_REFRESH",
-                    });
+                    void swMessageDoHardRefresh();
                   }}
                 >
                   <SyncIcon
@@ -651,6 +608,23 @@ export default function Settings() {
             </div>
           </div>
         </div>
+        {!navigator.serviceWorker ? (
+          <NotReady
+            addlStyle="stats-settings"
+            text="Service worker not available"
+          />
+        ) : (
+          <div className={pageClassName}>
+            <div className="d-flex justify-content-between">
+              <h2>External Data Source</h2>
+              {collapseExpandToggler(
+                sectionExternalData,
+                setSectionExternalData
+              )}
+            </div>
+            {sectionExternalData && <SettingsExternalData />}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
+import type { RawPhrase } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -10,10 +11,11 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
-import { fetchAudio } from "../../helper/audioHelper.development";
+import { audioServicePath } from "../../../environment.production";
+import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,
   spaceRepLog,
@@ -39,6 +41,7 @@ import {
   recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
+import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import {
   dateViewOrder,
   difficultySubFilter,
@@ -51,7 +54,7 @@ import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
-import type { AppDispatch } from "../../slices";
+import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyPhrase,
@@ -66,11 +69,14 @@ import {
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
-import type { MetaDataObj, RawPhrase } from "../../typings/raw";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
+import {
+  ExternalSourceType,
+  getExternalSourceType,
+} from "../Form/ExtSourceInput";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -90,6 +96,10 @@ const PhrasesMeta = {
 
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const localServiceURL = useSelector(
+    ({ global }: RootState) => global.localServiceURL
+  );
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
@@ -395,6 +405,11 @@ export default function Phrases() {
     setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
+  const audioUrl =
+    getExternalSourceType(localServiceURL) === ExternalSourceType.LocalService
+      ? localServiceURL + audioServicePath
+      : pronounceEndoint;
+
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -403,7 +418,8 @@ export default function Phrases() {
     phraseList,
     order,
     filteredPhrases,
-    recacheAudio
+    recacheAudio,
+    audioUrl
   );
 
   // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -894,7 +910,8 @@ function buildGameActionsHandler(
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
-  recacheAudio: boolean
+  recacheAudio: boolean,
+  baseUrl: string
 ) {
   return function gameActionHandler(
     direction: string,
@@ -918,27 +935,28 @@ function buildGameActionsHandler(
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
       const phrase = getTerm(uid, phrases);
-      const override = recacheAudio ? "/override_cache" : "";
+      const override = recacheAudio
+        ? { headers: SWRequestHeader.CACHE_RELOAD }
+        : {};
 
       if (direction === "up") {
         const inJapanese = audioPronunciation(phrase);
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "ja",
           q: inJapanese,
           uid,
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       } else if (direction === "down") {
         const inEnglish = phrase.english;
-
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "en",
           q: inEnglish,
           uid: phrase.uid + ".en",
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       }
     }
     return (

@@ -1,10 +1,6 @@
 import classNames from "classnames";
+import type { FuriganaParseObject, FuriganaParseObjectMask } from "nmemonica";
 import React from "react";
-
-import type {
-  FuriganaParseObject,
-  FuriganaParseObjectMask,
-} from "../typings/raw";
 
 /**
  * From a splice of 0 to nMora, creates a FuriganaParseObject mask

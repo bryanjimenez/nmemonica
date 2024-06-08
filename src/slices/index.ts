@@ -1,14 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 
-import globalReducer, { GlobalInitSlice } from "./globalSlice";
-import kanaReducer, { KanaInitSlice } from "./kanaSlice";
-import kanjiReducer, { KanjiInitSlice } from "./kanjiSlice";
-import oppositesReducer, { OppositeInitSlice } from "./oppositeSlice";
-import particleGameReducer, { ParticleInitSlice } from "./particleSlice";
-import phrasesReducer, { PhraseInitSlice } from "./phraseSlice";
+import globalReducer, { type GlobalInitSlice } from "./globalSlice";
+import kanaReducer, { type KanaInitSlice } from "./kanaSlice";
+import kanjiReducer, { type KanjiInitSlice } from "./kanjiSlice";
+import oppositesReducer, { type OppositeInitSlice } from "./oppositeSlice";
+import particleGameReducer, { type ParticleInitSlice } from "./particleSlice";
+import phrasesReducer, { type PhraseInitSlice } from "./phraseSlice";
 import serviceWorkerReducer from "./serviceWorkerSlice";
 import versionsReducer from "./versionSlice";
-import vocabularyReducer, { VocabularyInitSlice } from "./vocabularySlice";
+import vocabularyReducer, { type VocabularyInitSlice } from "./vocabularySlice";
 
 export const store = configureStore({
   reducer: {

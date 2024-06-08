@@ -10,22 +10,21 @@
     "target": "es6",
     // Specify what module code is generated.
     "module": "ES2022",
-    "lib": ["dom", "ES2022.Error", "ES2021.String"],
+    "lib": ["dom", "ES2022.Error", "ES2021.String", "ES2021.Promise"],
 
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
     "allowJs": true,
     "checkJs": true,
-    "strict": true,
     "sourceMap": true,
-    "jsx": "react-jsx" // missing import React
+    "jsx": "react-jsx", // missing import React
   },
-  "exclude": ["../lambda"],
   "include": [
     ".",
     "../data/json/kana.json",
+    "../pwa/helper/idbHelper.ts",
     "../environment.development.ts",
     "../environment.production.ts",
     "../image/notfound/*"

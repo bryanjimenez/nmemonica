@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import partition from "lodash/partition";
+import type { RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -11,12 +12,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 import { pronounceEndoint } from "../../../environment.development";
-import { fetchAudio } from "../../helper/audioHelper.development";
+import { audioServicePath } from "../../../environment.production";
+import { fetchAudio } from "../../helper/audioHelper.production";
 import {
   daysSince,
   spaceRepLog,
@@ -42,6 +44,7 @@ import {
   recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
+import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -57,7 +60,7 @@ import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
-import type { AppDispatch } from "../../slices";
+import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
 import {
@@ -74,10 +77,13 @@ import {
   toggleVocabularyFilter,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
-import type { MetaDataObj, RawVocabulary } from "../../typings/raw";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
+import {
+  ExternalSourceType,
+  getExternalSourceType,
+} from "../Form/ExtSourceInput";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -100,6 +106,10 @@ const VocabularyMeta = {
 
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const localServiceURL = useSelector(
+    ({ global }: RootState) => global.localServiceURL
+  );
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
     useState(false);
@@ -505,6 +515,11 @@ export default function Vocabulary() {
     setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
+  const audioUrl =
+    getExternalSourceType(localServiceURL) === ExternalSourceType.LocalService
+      ? localServiceURL + audioServicePath
+      : pronounceEndoint;
+
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -516,7 +531,8 @@ export default function Vocabulary() {
     filteredVocab,
     recacheAudio,
     naFlip,
-    setWasPlayed
+    setWasPlayed,
+    audioUrl
   );
 
   const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -1054,7 +1070,8 @@ function buildGameActionsHandler(
   filteredVocab: RawVocabulary[],
   recacheAudio: boolean,
   naFlip: React.MutableRefObject<string | undefined>,
-  setWasPlayed: (value: boolean) => void
+  setWasPlayed: (value: boolean) => void,
+  baseUrl: string
 ) {
   return function gameActionHandler(
     direction: string,
@@ -1079,7 +1096,9 @@ function buildGameActionsHandler(
         reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
       const vocabulary = getTerm(uid, vocab);
 
-      const override = recacheAudio ? "/override_cache" : "";
+      const override = recacheAudio
+        ? { headers: SWRequestHeader.CACHE_RELOAD }
+        : {};
 
       setWasPlayed(true);
 
@@ -1113,25 +1132,24 @@ function buildGameActionsHandler(
           sayObj = vocabulary;
         }
 
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "ja",
           q: audioPronunciation(sayObj),
           uid: getCacheUID(sayObj),
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       } else if (direction === "down") {
         setMediaSessionPlaybackState("playing");
 
         const inEnglish = vocabulary.english;
-
-        const audioUrl = addParam(pronounceEndoint + override, {
+        const audioUrl = addParam(baseUrl, {
           tl: "en",
           q: inEnglish,
           uid: vocabulary.uid + ".en",
         });
 
-        actionPromise = fetchAudio(audioUrl, AbortController);
+        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
       }
     }
     return (

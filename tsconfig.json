@@ -4,9 +4,10 @@
     "rootDir": ".",
     "outDir": "./.tsc-dist/",
 
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true,
+    "removeComments": true
   },
   "exclude": ["./node_modules", "./dist"],
-  "files": [],
   "references": [{ "path": "./src" }, { "path": "./pwa" }]
 }

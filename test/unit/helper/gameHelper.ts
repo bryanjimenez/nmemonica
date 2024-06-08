@@ -8,10 +8,11 @@ import {
   termFilterByType,
 } from "../../../src/helper/gameHelper";
 import { TermFilterBy } from "../../../src/slices/settingHelper";
-import type { Optional, RawVocabulary } from "../../../src/typings/raw";
+import type { Optional } from "../../../src/typings/utils";
+import type { RawVocabulary } from "nmemonica";
 
 describe("gameHelper", function () {
-  const terms: Optional<RawVocabulary,'tags'>[] = [
+  const terms: Optional<RawVocabulary, "tags">[] = [
     {
       english: "blue",
       grp: "Noun",
