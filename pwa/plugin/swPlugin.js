@@ -1,5 +1,5 @@
 //@ts-check
-import { /* type */ Compiler, Compilation } from "@rspack/core";
+// import { /* type */ Compiler, Compilation } from "@rspack/core";
 import md5 from "md5";
 import chalk from "chalk";
 
