@@ -1,17 +1,33 @@
 import { csvToObject } from "@nmemonica/snservice/src/helper/csvHelper";
-import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
-import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
+import {
+  jtox,
+  sheetDataToJSON,
+} from "@nmemonica/snservice/src/helper/jsonHelper";
+import {
+  FilledSheetData,
+  isFilledSheetData,
+} from "@nmemonica/snservice/src/helper/sheetHelper";
+import type Spreadsheet from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { requiredAuth } from "./globalSlice";
+import { logger, requiredAuth } from "./globalSlice";
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
+import { DebugLevel } from "./settingHelper";
 import { getVocabulary } from "./vocabularySlice";
-import { sheetServicePath } from "../../environment.production";
+import {
+  dataServiceEndpoint,
+  pushServicePubKeyPath,
+  pushServiceRegisterClientPath,
+  pushServiceSheetDataUpdatePath,
+  sheetServicePath,
+} from "../../environment.development";
 import {
   ExternalSourceType,
   getExternalSourceType,
 } from "../components/Form/ExtSourceInput";
+import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
+import { getActiveSheet, removeLastRowIfBlank } from "../helper/sheetHelper";
 
 import { AppDispatch, RootState } from ".";
 
@@ -142,6 +158,144 @@ export const getDatasets = createAsyncThunk(
     return getCachedDataset(thunkAPI.dispatch as AppDispatch);
   }
 );
+
+export function saveSheetLocalService(
+  workbook: Spreadsheet | null,
+  serviceBaseUrl: string
+) {
+  if (!workbook) return Promise.reject(new Error("Missing workbook"));
+
+  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
+
+  const container = new FormData();
+  const data = new Blob([JSON.stringify(activeSheetData)], {
+    type: "application/json",
+  });
+
+  container.append("sheetType", "xSheetObj");
+  container.append("sheetName", activeSheetName);
+  container.append("sheetData", data);
+
+  return fetch(serviceBaseUrl + sheetServicePath, {
+    method: "PUT",
+    credentials: "include",
+    body: container,
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Faild to save sheet");
+    }
+    return res
+      .json()
+      .then(({ hash }: { hash: string }) => ({ hash, name: activeSheetName }));
+  });
+}
+
+/**
+ * Borrowed from MDN serviceworker cookbook
+ * @link https://github.com/mdn/serviceworker-cookbook/blob/master/tools.js
+ */
+export function urlBase64ToUint8Array(base64String: string) {
+  var padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  var base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+
+  var rawData = window.atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+
+  for (var i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+/**
+ * Register Service Worker to a subscription service from `serviceURL`
+ * @param dispatch
+ * @param serviceURL
+ */
+export function registerSWForSubscription(
+  dispatch: AppDispatch,
+  serviceURL: string
+) {
+  void navigator.serviceWorker.ready.then((registration) => {
+    void registration.pushManager
+      .getSubscription()
+      .then(async (subscription) => {
+        if (subscription) {
+          return subscription;
+        }
+
+        const res = await fetch(serviceURL + pushServicePubKeyPath);
+        const keyBase64String = await res.text();
+        // Chrome doesn't accept the base64-encoded (string) vapidPublicKey yet
+        // urlBase64ToUint8Array() is defined in /tools.js
+        const keyUint8Array = urlBase64ToUint8Array(keyBase64String);
+
+        return registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: keyUint8Array,
+        });
+      })
+      .then((subscription) => {
+        void fetch(serviceURL + pushServiceRegisterClientPath, {
+          method: "post",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            subscription,
+          }),
+        });
+      })
+      .catch((err: Error) => {
+        dispatch(logger("Push API: " + err.message, DebugLevel.ERROR));
+      });
+  });
+}
+
+/**
+ * Send push to subscribed clients
+ */
+function pushSheet(workbook: Spreadsheet | null, serviceBaseUrl: string) {
+  if (!workbook) return;
+
+  const { activeSheetName, activeSheetData } = getActiveSheet(workbook);
+
+  const container = new FormData();
+  const data = new Blob([JSON.stringify(activeSheetData)], {
+    type: "application/json",
+  });
+
+  container.append("sheetType", "xSheetObj");
+  container.append("sheetName", activeSheetName);
+  container.append("sheetData", data);
+
+  void fetch(serviceBaseUrl + pushServiceSheetDataUpdatePath, {
+    method: "POST",
+    body: container,
+  });
+}
+
+export function saveSheetServiceWorker(workbook: Spreadsheet | null) {
+  if (!workbook) return Promise.reject(new Error("Missing workbook"));
+  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
+  if (!isFilledSheetData(activeSheetData)) {
+    throw new Error("Missing data");
+  }
+
+  const d = removeLastRowIfBlank(activeSheetData);
+
+  const { data, hash } = sheetDataToJSON(d);
+
+  const resource = activeSheetData.name.toLowerCase();
+
+  return swMessageSaveDataJSON(
+    dataServiceEndpoint + "/" + resource + ".json.v" + hash,
+    data,
+    hash
+  ).then(() => ({
+    name: activeSheetName,
+    hash,
+  }));
+}
 
 const sheetSlice = createSlice({
   name: "sheet",

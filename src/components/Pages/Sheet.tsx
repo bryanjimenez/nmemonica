@@ -2,13 +2,8 @@ import EventEmitter from "events";
 
 import { Badge, Fab, TextField } from "@mui/material";
 import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
-import { sheetDataToJSON } from "@nmemonica/snservice/src/helper/jsonHelper";
-import {
-  FilledSheetData,
-  getLastCellIdx,
-  isFilledSheetData,
-} from "@nmemonica/snservice/src/helper/sheetHelper";
-import Spreadsheet, { type SheetData } from "@nmemonica/x-spreadsheet";
+import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
+import Spreadsheet from "@nmemonica/x-spreadsheet";
 import {
   DesktopDownloadIcon,
   LinkExternalIcon,
@@ -27,18 +22,18 @@ import "@nmemonica/x-spreadsheet/dist/xspreadsheet.css";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
-  dataServiceEndpoint,
-  // pushServiceSheetDataUpdatePath,
-  sheetServicePath,
-} from "../../../environment.production";
-import {
   IDBErrorCause,
   IDBStores,
   getIDBItem,
   openIDB,
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
-import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
+import {
+  addExtraRow,
+  getActiveSheet,
+  searchInSheet,
+  touchScreenCheck,
+} from "../../helper/sheetHelper";
 import { AppDispatch, RootState } from "../../slices";
 import "../../css/Sheet.css";
 import { setLocalDataEdited } from "../../slices/globalSlice";
@@ -46,7 +41,11 @@ import { clearKanji } from "../../slices/kanjiSlice";
 import { clearOpposites } from "../../slices/oppositeSlice";
 import { clearParticleGame } from "../../slices/particleSlice";
 import { clearPhrases } from "../../slices/phraseSlice";
-import { getDatasets } from "../../slices/sheetSlice";
+import {
+  getDatasets,
+  saveSheetLocalService,
+  saveSheetServiceWorker,
+} from "../../slices/sheetSlice";
 import { setSwVersions, setVersion } from "../../slices/versionSlice";
 import { clearVocabulary } from "../../slices/vocabularySlice";
 import {
@@ -70,219 +69,16 @@ const defaultOp = {
     width: () => document.documentElement.clientWidth - 15,
   },
   row: {
-    len: 3000, //100,
-    height: 35, //25,
+    len: 3000, //   100,
+    height: 35, //  25,
   },
   col: {
-    // len: 26,
-    // width: 100,
+    len: 10, //     26:Z
+    width: 150,
     indexWidth: 60,
     minWidth: 60,
   },
-};
-
-function saveSheetServiceWorker(workbook: Spreadsheet | null, url: string) {
-  if (!workbook) return Promise.reject(new Error("Missing workbook"));
-  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
-  if (!isFilledSheetData(activeSheetData)) {
-    throw new Error("Missing data");
-  }
-
-  const d = removeLastRowIfBlank(activeSheetData);
-
-  const { data, hash } = sheetDataToJSON(d);
-
-  const resource = activeSheetData.name.toLowerCase();
-
-  return swMessageSaveDataJSON(
-    url + "/" + resource + ".json.v" + hash,
-    data,
-    hash
-  ).then(() => ({
-    name: activeSheetName,
-    hash,
-  }));
-}
-
-function saveSheetLocalService(
-  workbook: Spreadsheet | null,
-  serviceBaseUrl: string
-) {
-  if (!workbook) return Promise.reject(new Error("Missing workbook"));
-
-  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
-
-  const container = new FormData();
-  const data = new Blob([JSON.stringify(activeSheetData)], {
-    type: "application/json",
-  });
-
-  container.append("sheetType", "xSheetObj");
-  container.append("sheetName", activeSheetName);
-  container.append("sheetData", data);
-
-  return fetch(serviceBaseUrl + sheetServicePath, {
-    method: "PUT",
-    credentials: "include",
-    body: container,
-  }).then((res) => {
-    if (!res.ok) {
-      throw new Error("Faild to save sheet");
-    }
-    return res
-      .json()
-      .then(({ hash }: { hash: string }) => ({ hash, name: activeSheetName }));
-  });
-}
-
-function getActiveSheet(workbook: Spreadsheet) {
-  // TODO: fix SpreadSheet.getData type
-  const sheets = workbook.getData() as SheetData[];
-
-  const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
-  const activeSheetData =
-    sheets.find((sheet) => sheet.name === activeSheetName) ?? sheets[0];
-
-  const data = removeLastRowIfBlank(activeSheetData);
-
-  return { activeSheetName, activeSheetData: data };
-}
-/**
- * Send push to subscribed clients
- */
-// function pushSheet(workbook: Spreadsheet | null, serviceBaseUrl: string) {
-//   if (!workbook) return;
-
-//   const { activeSheetName, activeSheetData } = getActiveSheet(workbook);
-
-//   const container = new FormData();
-//   const data = new Blob([JSON.stringify(activeSheetData)], {
-//     type: "application/json",
-//   });
-
-//   container.append("sheetType", "xSheetObj");
-//   container.append("sheetName", activeSheetName);
-//   container.append("sheetData", data);
-
-//   void fetch(serviceBaseUrl + pushServiceSheetDataUpdatePath, {
-//     method: "POST",
-//     body: container,;
-//   });
-// }
-
-export function addExtraRow(xObj: SheetData[]) {
-  const extraAdded = xObj.reduce<SheetData[]>((acc, o) => {
-    let rows = o.rows;
-    if (!rows) {
-      return [...acc, { rows: { "0": { cells: {} } }, len: 1 }];
-    }
-
-    const last = getLastCellIdx(rows);
-
-    const n = {
-      ...o,
-      rows: {
-        ...rows,
-        [String(last + 1)]: { cells: {} },
-        // @ts-expect-error SheetData.rows.len
-        len: rows.len + 1,
-      },
-    };
-
-    return [...acc, n];
-  }, []);
-
-  return extraAdded;
-}
-
-export function removeLastRowIfBlank<T extends SheetData>(o: T) {
-  const rows = o.rows;
-  if (!o.rows || !rows) {
-    return o;
-  }
-
-  const clone = { ...o, rows };
-
-  const last = getLastCellIdx(o.rows);
-
-  if (
-    Object.values(o.rows[last].cells).every(
-      (c) => c.text === undefined || c.text.length === 0 || c.text.trim() === ""
-    )
-  ) {
-    delete clone.rows[last];
-    // @ts-expect-error SheetData.rows.len
-    clone.rows.len -= 1;
-  }
-
-  return clone;
-}
-
-function searchInSheet(sheet: SheetData, query: string) {
-  if (!sheet.rows) {
-    return [];
-  }
-
-  const result = Object.values(sheet.rows).reduce<[number, number, string][]>(
-    (acc, row, x) => {
-      if (typeof row !== "number" && "cells" in row) {
-        const find = Object.keys(row.cells).find(
-          (c) =>
-            row.cells[Number(c)].text
-              ?.toLowerCase()
-              .includes(query.toLowerCase())
-        );
-        if (find === undefined) return acc;
-
-        const text = row.cells[Number(find)].text;
-        if (text === undefined) return acc;
-
-        const y = Number(find);
-        acc = [...acc, [x, y, text]];
-      }
-
-      return acc;
-    },
-    []
-  );
-
-  return result;
-}
-
-/**
- * Check if device has touch screen
- * [MDN mobile detection](https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent)
- * @returns
- */
-function touchScreenCheck() {
-  let hasTouchScreen = false;
-
-  if (
-    "maxTouchPoints" in navigator &&
-    typeof navigator.maxTouchPoints === "number"
-  ) {
-    hasTouchScreen = navigator.maxTouchPoints > 0;
-  } else if (
-    "msMaxTouchPoints" in navigator &&
-    typeof navigator.msMaxTouchPoints === "number"
-  ) {
-    hasTouchScreen = navigator.msMaxTouchPoints > 0;
-  } else {
-    const mQ = matchMedia?.("(pointer:coarse)");
-    if (mQ?.media === "(pointer:coarse)") {
-      hasTouchScreen = Boolean(mQ.matches);
-    } else if ("orientation" in window) {
-      hasTouchScreen = true; // deprecated, but good fallback
-    } else {
-      // Only as a last resort, fall back to user agent sniffing
-      const UA = navigator.userAgent;
-      hasTouchScreen =
-        /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(UA) ||
-        /\b(Android|Windows Phone|iPad|iPod)\b/i.test(UA);
-    }
-  }
-  return hasTouchScreen;
-}
+} as const;
 
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
@@ -368,18 +164,18 @@ export default function Sheet() {
     let saveP;
     switch (externalSource) {
       case ExternalSourceType.Unset: {
-        saveP = saveSheetServiceWorker(wbRef.current, dataServiceEndpoint);
+        saveP = saveSheetServiceWorker(wbRef.current);
         break;
       }
       case ExternalSourceType.GitHubUserContent:
-        saveP = saveSheetServiceWorker(wbRef.current, dataServiceEndpoint);
+        saveP = saveSheetServiceWorker(wbRef.current);
         break;
 
       case ExternalSourceType.LocalService: {
         // backup to local service
         void saveSheetLocalService(wbRef.current, localServiceURL);
         // save in cache
-        saveP = saveSheetServiceWorker(wbRef.current, dataServiceEndpoint);
+        saveP = saveSheetServiceWorker(wbRef.current);
         break;
       }
       default:

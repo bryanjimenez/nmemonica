@@ -2,7 +2,7 @@ const userAbortError = new Error("User interrupted audio playback.", {
   cause: { code: "UserAborted" },
 });
 
-export function fadeOut(audio: HTMLAudioElement) {
+function fadeOut(audio: HTMLAudioElement) {
   return new Promise<void>((resolve) => {
     const fade = () => {
       if (audio.volume < 0.000001) {
@@ -52,7 +52,6 @@ export async function fetchAudio(
   const source = audioCtx.createBufferSource();
   const destination = audioCtx.destination;
 
-  // TODO: use requiredAuth after moving to audioSlice
   const audioRes = await fetch(audioUrl, { credentials: "include" });
   const audioBuf = await audioRes.arrayBuffer();
 
@@ -66,23 +65,6 @@ export async function fetchAudio(
     // start the source playing
     source.start();
   });
-
-  /*
-  const fetchP = fetch(audioUrl)
-    .then((d) => d.arrayBuffer())
-    .then((a) => {
-      audioCtx.decodeAudioData(a).then((b) => {
-        source.buffer = b;
-
-        // connect the AudioBufferSourceNode to the
-        // destination so we can hear the sound
-        source.connect(destination);
-
-        // start the source playing
-        source.start();
-      })}
-    );
-    */
 
   const interruptP: Promise<void> = new Promise((resolve, reject) => {
     const listener = () => {
@@ -109,10 +91,7 @@ export async function fetchAudio(
  * Use HTMLAudioElement Audio() to play media
  * @deprecated use fetchAudio
  */
-export function sourceAudio(
-  audioUrl: string,
-  AbortController: AbortController
-) {
+function sourceAudio(audioUrl: string, AbortController: AbortController) {
   let swipePromise;
 
   const audio = new Audio(audioUrl);

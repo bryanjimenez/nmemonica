@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { requiredAuth } from "./globalSlice";
-import { dataServiceEndpoint } from "../../environment.production";
+import { dataServiceEndpoint } from "../../environment.development";
 import type { RawOpposite } from "../components/Games/OppositesGame";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
 import { SWRequestHeader } from "../helper/serviceWorkerHelper";

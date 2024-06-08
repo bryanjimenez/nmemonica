@@ -13,7 +13,7 @@ import ExtSourceInput, {
   ExternalSourceType,
   getExternalSourceType,
 } from "./ExtSourceInput";
-import { dataServiceEndpoint } from "../../../environment.production";
+import { dataServiceEndpoint } from "../../../environment.development";
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { swMessageSaveDataJSON } from "../../helper/serviceWorkerHelper";
 // import { useSubscribe } from "../../hooks/useSubscribe";

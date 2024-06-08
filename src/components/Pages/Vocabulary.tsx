@@ -15,9 +15,10 @@ import { useDispatch, useSelector } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
-import { pronounceEndoint } from "../../../environment.development";
-import { audioServicePath } from "../../../environment.production";
-import { fetchAudio } from "../../helper/audioHelper.production";
+import {
+  audioServicePath,
+  pronounceEndoint,
+} from "../../../environment.development";
 import {
   daysSince,
   spaceRepLog,
@@ -60,6 +61,7 @@ import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch, RootState } from "../../slices";
+import { fetchAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
 import {
@@ -1137,7 +1139,10 @@ function buildGameActionsHandler(
           uid: getCacheUID(sayObj),
         });
 
-        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
+        actionPromise = fetchAudio(
+          new Request(audioUrl, override),
+          AbortController
+        );
       } else if (direction === "down") {
         setMediaSessionPlaybackState("playing");
 
@@ -1148,7 +1153,10 @@ function buildGameActionsHandler(
           uid: vocabulary.uid + ".en",
         });
 
-        actionPromise = fetchAudio(new Request(audioUrl, override), AbortController);
+        actionPromise = fetchAudio(
+          new Request(audioUrl, override),
+          AbortController
+        );
       }
     }
     return (

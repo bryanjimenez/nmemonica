@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { requiredAuth } from "./globalSlice";
-import { dataServiceEndpoint } from "../../environment.production";
+import { dataServiceEndpoint } from "../../environment.development";
 import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
 
 import { RootState } from ".";
