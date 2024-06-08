@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
@@ -37,7 +37,7 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
-import type { AppDispatch } from "../../slices";
+import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyKanji,
@@ -164,6 +164,8 @@ function prepareGame(
 
 export default function KanjiGame() {
   const dispatch = useDispatch<AppDispatch>();
+  const { cookies } = useSelector(({ global }: RootState) => global);
+
   const {
     kanjiList,
     activeTags,
@@ -546,7 +548,12 @@ export default function KanjiGame() {
         gotoNext={gotoNextSlide}
         fadeInAnswers={fadeInAnswers}
       />
-      <div className="options-bar mb-3 flex-shrink-1">
+      <div
+        className={classNames({
+          "options-bar mb-3 flex-shrink-1": true,
+          "disabled-color": !cookies,
+        })}
+      >
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
@@ -557,7 +564,7 @@ export default function KanjiGame() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
-              <Tooltip idKey={kanji.uid}>
+              <Tooltip disabled={!cookies} idKey={kanji.uid}>
                 <DifficultySlider
                   difficulty={metadata.current[kanji.uid]?.difficultyP}
                   onChange={buildAction(dispatch, (value: number) =>
@@ -567,6 +574,7 @@ export default function KanjiGame() {
                 />
               </Tooltip>
               <ToggleFrequencyTermBtnMemo
+                disabled={!cookies}
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
                 hasReinforce={term_reinforce}

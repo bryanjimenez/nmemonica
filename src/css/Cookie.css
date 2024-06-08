@@ -1,16 +1,17 @@
-.dark-mode #tooltip {
+.dark-mode #cookie {
   background: #424242;
-  border: unset;
+  /* border: unset; */
 }
 
 .dark-mode #arrow {
   border: unset;
 }
 
-#tooltip {
+#cookie {
   background: #f5f5f5;
   border-radius: 8px;
   padding: 20px 0;
+  z-index: 1;
 
   /* border: 1px solid var(--bs-dark); */
 
@@ -22,28 +23,15 @@
     opacity 0.3s ease-in-out;
 }
 
-#tooltip :first-child {
+#cookie :first-child {
   z-index: 1; /** show slider shadow above #arrow */
 }
 
-.tooltip-fade {
+.cookie-fade {
   opacity: 0;
 }
 
-/*
-.x-button {
-  position: absolute;
-  top: -3px;
-  right: 1px;
-}
-*/
-
-#tooltip #arrow {
+#cookie #arrow {
   background: inherit;
   transform: rotate(45deg);
-
-  /* border-bottom: 1px solid var(--bs-dark);
-  border-right: 1px solid var(--bs-dark); */
-
-  box-shadow: 3px 3px 4px -2px var(--bs-dark);
 }

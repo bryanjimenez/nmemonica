@@ -1,8 +1,16 @@
 import { PlusCircleIcon, SyncIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
+import React, {
+  Suspense,
+  lazy,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useDispatch } from "react-redux";
 
+import { allowedCookies } from "../../helper/cookieHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getDeviceMotionEventPermission,
@@ -31,6 +39,7 @@ import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { DebugLevel } from "../../slices/settingHelper";
 import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
 import { NotReady } from "../Form/NotReady";
+import SettingsCookies from "../Form/SettingsCookies";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
@@ -122,7 +131,8 @@ function buildMotionListener(
 
 export function collapseExpandToggler(
   name: boolean,
-  toggleSection: (arg0: (arg1: boolean) => boolean) => void
+  toggleSection: (arg0: (arg1: boolean) => boolean) => void,
+  disabled?: boolean
 ) {
   const icon = name ? (
     <XCircleIcon className="clickable" size="medium" aria-label="collapse" />
@@ -130,7 +140,13 @@ export function collapseExpandToggler(
     <PlusCircleIcon className="clickable" size="medium" aria-label="expand" />
   );
 
-  return <h2 onClick={() => toggleSection((t) => !t)}>{icon}</h2>;
+  return (
+    <h2
+      onClick={disabled === true ? () => toggleSection((t) => !t) : undefined}
+    >
+      {icon}
+    </h2>
+  );
 }
 
 /**
@@ -144,10 +160,12 @@ export default function Settings() {
     ReturnType<typeof buildMotionListener> | undefined
   >(undefined);
 
-  const { darkMode, swipeThreshold, motionThreshold, memory, debug } =
+  const { cookies, darkMode, swipeThreshold, motionThreshold, memory, debug } =
     useConnectSetting();
 
   const [spin, setSpin] = useState(false);
+
+  const [sectionCookies, setSectionCookies] = useState(false);
 
   const [sectionKanji, setSectionKanji] = useState(false);
   const [sectionVocabulary, setSectionVocabulary] = useState(false);
@@ -262,11 +280,30 @@ export default function Settings() {
   //   );
   // }
 
+  const clickableSectionClass = classNames({
+    "d-flex justify-content-between": true,
+    "disabled-color": !cookies,
+  });
+
+  const important = !useMemo(allowedCookies, []);
+  const cookieSection = (
+    <div className={pageClassName}>
+      <div className="d-flex justify-content-between">
+        <h2>Cookies</h2>
+        {!important &&
+          cookies &&
+          collapseExpandToggler(sectionCookies, setSectionCookies, true)}
+      </div>
+      {(important || sectionCookies) && <SettingsCookies />}
+    </div>
+  );
+
   return (
     <div className="settings">
       <div className="d-flex flex-column justify-content-between px-3">
+        {important && cookieSection}
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Global</h2>
             <h2></h2>
           </div>
@@ -350,6 +387,7 @@ export default function Settings() {
               <div className="column-2">
                 <div className="setting-block">
                   <SettingsSwitch
+                    disabled={!cookies}
                     active={darkMode}
                     action={buildAction(dispatch, toggleDarkMode)}
                     statusText={(darkMode ? "Dark" : "Light") + " Mode"}
@@ -357,6 +395,7 @@ export default function Settings() {
                 </div>
                 <div className="setting-block">
                   <SettingsSwitch
+                    disabled={!cookies}
                     active={swipeThreshold > 0}
                     action={() => {
                       swipeThreshold > 0
@@ -368,6 +407,7 @@ export default function Settings() {
                 </div>
                 <div className="setting-block">
                   <SettingsSwitch
+                    disabled={!cookies}
                     active={motionThreshold > 0}
                     action={() => {
                       if (motionThreshold === 0) {
@@ -383,10 +423,11 @@ export default function Settings() {
             </div>
           </div>
         </div>
+
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Phrases</h2>
-            {collapseExpandToggler(sectionPhrase, setSectionPhrase)}
+            {collapseExpandToggler(sectionPhrase, setSectionPhrase, cookies)}
           </div>
           {sectionPhrase && (
             <Suspense
@@ -399,9 +440,13 @@ export default function Settings() {
           )}
         </div>
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Vocabulary</h2>
-            {collapseExpandToggler(sectionVocabulary, setSectionVocabulary)}
+            {collapseExpandToggler(
+              sectionVocabulary,
+              setSectionVocabulary,
+              cookies
+            )}
           </div>
           {sectionVocabulary && (
             <Suspense
@@ -414,11 +459,11 @@ export default function Settings() {
           )}
         </div>
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Kanji</h2>
-            {collapseExpandToggler(sectionKanji, setSectionKanji)}
+            {collapseExpandToggler(sectionKanji, setSectionKanji, cookies)}
           </div>
-          {sectionKanji && (
+          {cookies && sectionKanji && (
             <Suspense
               fallback={
                 <NotReady addlStyle="kanji-settings" text="Loading..." />
@@ -429,11 +474,15 @@ export default function Settings() {
           )}
         </div>
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Opposites Game</h2>
-            {collapseExpandToggler(sectionOpposites, setSectionOpposites)}
+            {collapseExpandToggler(
+              sectionOpposites,
+              setSectionOpposites,
+              cookies
+            )}
           </div>
-          {sectionOpposites && (
+          {cookies && sectionOpposites && (
             <Suspense
               fallback={
                 <NotReady addlStyle="opposites-settings" text="Loading..." />
@@ -444,11 +493,11 @@ export default function Settings() {
           )}
         </div>
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Kana Game</h2>
-            {collapseExpandToggler(sectionKana, setSectionKana)}
+            {collapseExpandToggler(sectionKana, setSectionKana, cookies)}
           </div>
-          {sectionKana && (
+          {cookies && sectionKana && (
             <Suspense
               fallback={
                 <NotReady addlStyle="kana-settings" text="Loading..." />
@@ -460,11 +509,15 @@ export default function Settings() {
         </div>
 
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Kanji Game</h2>
-            {collapseExpandToggler(sectionKanjiGame, setSectionKanjiGame)}
+            {collapseExpandToggler(
+              sectionKanjiGame,
+              setSectionKanjiGame,
+              cookies
+            )}
           </div>
-          {sectionKanjiGame && (
+          {cookies && sectionKanjiGame && (
             <Suspense
               fallback={
                 <NotReady addlStyle="kanji-game-settings" text="Loading..." />
@@ -476,11 +529,15 @@ export default function Settings() {
         </div>
 
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Particles Game</h2>
-            {collapseExpandToggler(sectionParticle, setSectionParticle)}
+            {collapseExpandToggler(
+              sectionParticle,
+              setSectionParticle,
+              cookies
+            )}
           </div>
-          {sectionParticle && (
+          {cookies && sectionParticle && (
             <Suspense
               fallback={
                 <NotReady addlStyle="particle-settings" text="Loading..." />
@@ -492,11 +549,11 @@ export default function Settings() {
         </div>
 
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Study Stats</h2>
-            {collapseExpandToggler(sectionStats, setSectionStats)}
+            {collapseExpandToggler(sectionStats, setSectionStats, cookies)}
           </div>
-          {sectionStats && (
+          {cookies && sectionStats && (
             <Suspense
               fallback={
                 <NotReady addlStyle="stats-settings" text="Loading..." />
@@ -507,8 +564,10 @@ export default function Settings() {
           )}
         </div>
 
+        {!important && cookieSection}
+
         <div className={pageClassName}>
-          <div className="d-flex justify-content-between">
+          <div className={clickableSectionClass}>
             <h2>Application</h2>
           </div>
           <div className="d-flex flex-column flex-sm-row justify-content-between">
@@ -541,6 +600,7 @@ export default function Settings() {
             <div className="column-2">
               <div className="setting-block mb-2">
                 <SettingsSwitch
+                  disabled={!cookies}
                   active={debug > DebugLevel.OFF}
                   action={buildAction(dispatch, debugToggled)}
                   color="default"
@@ -558,34 +618,42 @@ export default function Settings() {
                   "disabled-color": hardRefreshUnavailable,
                 })}
               >
-                <p id="hard-refresh" className="text-right">
+                <p
+                  id="hard-refresh"
+                  className={classNames({
+                    "text-right": true,
+                    "disabled-color": !cookies,
+                  })}
+                >
                   Hard Refresh
                 </p>
                 <div
                   className={classNames({
                     "spin-a-bit": spin,
+                    "disabled-color": !cookies,
+                    clickable: cookies,
                   })}
                   style={{ height: "24px" }}
                   aria-labelledby="hard-refresh"
-                  onClick={() => {
-                    setSpin(true);
-                    setHardRefreshUnavailable(false);
+                  onClick={
+                    cookies
+                      ? () => {
+                          setSpin(true);
+                          setHardRefreshUnavailable(false);
 
-                    setTimeout(() => {
-                      if (spin) {
-                        setSpin(false);
-                        setHardRefreshUnavailable(true);
-                      }
-                    }, 3000);
+                          setTimeout(() => {
+                            if (spin) {
+                              setSpin(false);
+                              setHardRefreshUnavailable(true);
+                            }
+                          }, 3000);
 
-                    void swMessageDoHardRefresh();
-                  }}
+                          void swMessageDoHardRefresh();
+                        }
+                      : undefined
+                  }
                 >
-                  <SyncIcon
-                    className="clickable"
-                    size={24}
-                    aria-label="Hard Refresh"
-                  />
+                  <SyncIcon size={24} aria-label="Hard Refresh" />
                 </div>
               </div>
 
@@ -593,7 +661,7 @@ export default function Settings() {
                 <SettingsSwitch
                   active={memory.persistent}
                   action={buildAction(dispatch, setPersistentStorage)}
-                  disabled={memory.persistent}
+                  disabled={!cookies || memory.persistent}
                   color="default"
                   statusText={
                     memory.persistent
@@ -615,11 +683,12 @@ export default function Settings() {
           />
         ) : (
           <div className={pageClassName}>
-            <div className="d-flex justify-content-between">
+            <div className={clickableSectionClass}>
               <h2>External Data Source</h2>
               {collapseExpandToggler(
                 sectionExternalData,
-                setSectionExternalData
+                setSectionExternalData,
+                cookies
               )}
             </div>
             {sectionExternalData && <SettingsExternalData />}

@@ -107,9 +107,8 @@ const VocabularyMeta = {
 
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
-
-  const localServiceURL = useSelector(
-    ({ global }: RootState) => global.localServiceURL
+  const { localServiceURL, cookies } = useSelector(
+    ({ global }: RootState) => global
   );
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
@@ -760,36 +759,52 @@ export default function Vocabulary() {
       reviewedToday: boolean,
       revNotification?: string
     ) => (
-      <div className="options-bar mb-3 flex-shrink-1">
+      <div
+        className={classNames({
+          "options-bar mb-3 flex-shrink-1": true,
+          "disabled-color": !cookies,
+        })}
+      >
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
               <TogglePracticeSideBtn
                 toggle={englishSideUp}
-                action={() => {
-                  if (abortLoop()) {
-                    resetTimedPlay();
-                  }
-                  dispatch(flipVocabularyPracticeSide());
-                }}
+                action={
+                  cookies
+                    ? () => {
+                        if (abortLoop()) {
+                          resetTimedPlay();
+                        }
+                        dispatch(flipVocabularyPracticeSide());
+                      }
+                    : undefined
+                }
               />
               <ReCacheAudioBtn
+                disabled={!cookies}
                 active={recacheAudio}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
               <ToggleAutoVerbViewBtn
+                disabled={!cookies}
                 visible={isVerb}
                 toggleAutoVerbView={buildAction(dispatch, toggleAutoVerbView)}
                 autoVerbView={autoVerbView}
               />
-              <div className="sm-icon-grp">{loopSettingBtn}</div>
-              <div className="sm-icon-grp">{loopActionBtn}</div>
+              <div className="sm-icon-grp">
+                {!cookies ? null : loopSettingBtn}
+              </div>
+              <div className="sm-icon-grp">
+                {!cookies ? null : loopActionBtn}
+              </div>
             </div>
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
               <Tooltip
+                disabled={!cookies}
                 className={classNames({
                   "question-color opacity-50":
                     sortMethodREF.current === TermSortBy.RECALL &&
@@ -821,6 +836,7 @@ export default function Vocabulary() {
                 </div>
               </Tooltip>
               <ShowHintBtn
+                disabled={!cookies}
                 visible={hintEnabledREF.current}
                 active={isHintable}
                 setShowHint={setStateFunction(setShowHint, (prev) =>
@@ -828,6 +844,7 @@ export default function Vocabulary() {
                 )}
               />
               <ToggleFuriganaBtn
+                disabled={!cookies}
                 active={hasFurigana}
                 toggle={
                   toggleFuriganaSettingHelper(vocabulary.uid, metadata.current)
@@ -837,6 +854,7 @@ export default function Vocabulary() {
                 vocabulary={vocabulary}
               />
               <ToggleFrequencyTermBtnMemo
+                disabled={!cookies}
                 term={vocabulary}
                 count={frequency.length}
                 isReinforced={reinforcedUID !== null}
@@ -856,6 +874,7 @@ export default function Vocabulary() {
       </div>
     ),
     [
+      cookies,
       abortLoop,
       autoVerbView,
       dispatch,

@@ -97,9 +97,8 @@ const PhrasesMeta = {
 
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
-
-  const localServiceURL = useSelector(
-    ({ global }: RootState) => global.localServiceURL
+  const { localServiceURL, cookies } = useSelector(
+    ({ global }: RootState) => global
   );
 
   const prevReinforcedUID = useRef<string | null>(null);
@@ -715,15 +714,22 @@ export default function Phrases() {
           </StackNavButton>
         </div>
       </div>
-      <div className="options-bar mb-3 flex-shrink-1">
+      <div
+        className={classNames({
+          "options-bar mb-3 flex-shrink-1": true,
+          "disabled-color": !cookies,
+        })}
+      >
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
               <TogglePracticeSideBtn
+                disabled={!cookies}
                 toggle={englishSideUp}
                 action={buildAction(dispatch, flipPhrasesPracticeSide)}
               />
               <ReCacheAudioBtn
+                disabled={!cookies}
                 active={recacheAudio}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
@@ -732,6 +738,7 @@ export default function Phrases() {
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <Tooltip
+                disabled={!cookies}
                 className={classNames({
                   "question-color opacity-50":
                     sortMethodREF.current === TermSortBy.RECALL &&
@@ -763,6 +770,7 @@ export default function Phrases() {
                 </div>
               </Tooltip>
               <ToggleLiteralPhraseBtn
+                disabled={!cookies}
                 visible={
                   englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
                 }
@@ -770,6 +778,7 @@ export default function Phrases() {
                 action={setStateFunction(setShowLit, (lit) => !lit)}
               />
               <ToggleFrequencyTermBtnMemo
+                disabled={!cookies}
                 addFrequencyTerm={
                   // TODO: memoize me
                   (uid) => {

@@ -11,6 +11,7 @@ import {
   SearchIcon,
   ShareIcon,
 } from "@primer/octicons-react";
+import classNames from "classnames";
 import React, {
   useCallback,
   useEffect,
@@ -90,7 +91,9 @@ export default function Sheet() {
   const resultIdx = useRef<number | null>(null);
   const searchValue = useRef<string | null>(null);
 
-  const { localServiceURL } = useSelector(({ global }: RootState) => global);
+  const { localServiceURL, cookies } = useSelector(
+    ({ global }: RootState) => global
+  );
   const externalSource = getExternalSourceType(localServiceURL);
 
   useEffect(() => {
@@ -374,8 +377,10 @@ export default function Sheet() {
           <div className="pt-1 pe-1">
             <Fab
               aria-label="Save Sheet"
+              aria-disabled={!cookies}
               variant="extended"
               size="small"
+              disabled={!cookies}
               onClick={saveSheetCB}
               className="m-0 z-index-unset"
               tabIndex={3}
@@ -473,7 +478,13 @@ export default function Sheet() {
           </div>
         </div>
 
-        <div ref={containerRef} className="sheet-container pt-2" />
+        <div
+          ref={containerRef}
+          className={classNames({
+            "sheet-container pt-2": true,
+            "disabled-color": !cookies,
+          })}
+        />
       </div>
     </React.Fragment>
   );

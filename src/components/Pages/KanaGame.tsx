@@ -1,12 +1,14 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 
 import { shuffleArray } from "../../helper/arrayHelper";
 import { setStateFunction } from "../../helper/eventHandlerHelper";
 import { swapKana } from "../../helper/kanaHelper";
 import { useConnectKana } from "../../hooks/useConnectKana";
 import { useWindowSize } from "../../hooks/useWindowSize";
+import { RootState } from "../../slices";
 import { KanaType } from "../../slices/settingHelper";
 import type { ValuesOf } from "../../typings/utils";
 import { NotReady } from "../Form/NotReady";
@@ -43,6 +45,7 @@ export default function KanaGame() {
     easyMode: em,
     charSet,
   } = useConnectKana();
+  const { cookies } = useSelector(({ global }: RootState) => global);
 
   const vowelsR = useRef(v);
   const consonantsR = useRef(c);
@@ -209,12 +212,21 @@ export default function KanaGame() {
           </StackNavButton>
         </div>
       </div>
-      <div className="options-bar mb-2 flex-shrink-1">
+      <div
+        className={classNames({
+          "options-bar mb-2 flex-shrink-1": true,
+          "disabled-color": !cookies,
+        })}
+      >
         <div className="row">
           <div className="col">
             <TogglePracticeSideBtn
               toggle={practiceSide}
-              action={setStateFunction(setPracticeSide, (p) => !p)}
+              action={
+                cookies
+                  ? setStateFunction(setPracticeSide, (p) => !p)
+                  : undefined
+              }
             />
           </div>
           <div className="col"></div>

@@ -31,6 +31,7 @@ import {
 } from "../components/Form/ExtSourceInput";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
+import { allowedCookies } from "../helper/cookieHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
@@ -50,6 +51,7 @@ export interface MemoryDataObject {
 }
 
 export interface GlobalInitSlice {
+  cookies: boolean;
   darkMode: boolean;
   memory: MemoryDataObject;
   debug: number;
@@ -61,6 +63,7 @@ export interface GlobalInitSlice {
 }
 
 export const globalInitState: GlobalInitSlice = {
+  cookies: allowedCookies(),
   darkMode: false,
   memory: { quota: 0, usage: 0, persistent: false },
   debug: 0,
@@ -70,6 +73,15 @@ export const globalInitState: GlobalInitSlice = {
   localServiceURL: "",
   lastImport: [],
 };
+
+/**
+ * Gets current cookie state + initial global state
+ */
+function getGlobalInitState() {
+  const cookies = allowedCookies();
+
+  return { ...globalInitState, cookies };
+}
 
 export const getMemoryStorageStatus = createAsyncThunk(
   "setting/getMemoryStorageStatus",
@@ -115,7 +127,7 @@ export const localStorageSettingsInitialized = createAsyncThunk(
   "setting/localStorageSettingsInitialized",
   (arg, thunkAPI) => {
     let lsSettings = null;
-    let mergedGlobalSettings = globalInitState;
+    let mergedGlobalSettings = getGlobalInitState();
 
     try {
       lsSettings = getLocalStorageSettings(localStorageKey);
@@ -131,8 +143,9 @@ export const localStorageSettingsInitialized = createAsyncThunk(
       void thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
       void thunkAPI.dispatch(vocabularyFromLocalStorage(lsSettings.vocabulary));
 
+      const globalInitStateAndCookies = getGlobalInitState();
       // use merge to prevent losing defaults not found in localStorage
-      mergedGlobalSettings = merge(globalInitState, {
+      mergedGlobalSettings = merge(globalInitStateAndCookies, {
         ...lsSettings.global,
       });
 
@@ -151,7 +164,7 @@ export const localStorageSettingsInitialized = createAsyncThunk(
 );
 
 /**
- * Local requests need credentials  
+ * Local requests need credentials
  * checks if `url` is local
  * @param url
  */
@@ -160,7 +173,9 @@ export function requiredAuth(url: string) {
   const needAuth: RequestInit =
     srcType === ExternalSourceType.LocalService
       ? { credentials: "include" }
-      : {/** only needed for local service */};
+      : {
+          /** only needed for local service */
+        };
 
   return needAuth;
 }
@@ -200,15 +215,14 @@ export const setLocalServiceURL = createAsyncThunk(
     return fetch(url + "/cache.json", {
       headers: SWRequestHeader.CACHE_NO_WRITE,
       ...requiredAuth(localServiceURL),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Local Service not responding");
-        }
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error("Local Service not responding");
+      }
 
-        return res.json();
-      })
-      .then((versions: VersionInitSlice) => ({ versions, localServiceURL }));
+      // /init returns no value
+      return { versions: {} as VersionInitSlice, localServiceURL };
+    });
   }
 );
 
@@ -234,6 +248,13 @@ const globalSlice = createSlice({
   name: "setting",
   initialState: globalInitState,
   reducers: {
+    toggleCookies(state, action: PayloadAction<boolean>) {
+      if (action.payload !== undefined) {
+        state.cookies = action.payload;
+      } else {
+        state.cookies = !state.cookies;
+      }
+    },
     toggleDarkMode(state) {
       const path = "/global/";
       const attr = "darkMode";
@@ -420,6 +441,7 @@ const globalSlice = createSlice({
 });
 
 export const {
+  toggleCookies,
   toggleDarkMode,
   setMotionThreshold,
   setSwipeThreshold,

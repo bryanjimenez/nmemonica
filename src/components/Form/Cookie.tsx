@@ -1,9 +1,7 @@
 import { arrow, offset, shift, useFloating } from "@floating-ui/react-dom";
-import { faBullseye } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, ClickAwayListener } from "@mui/material";
+import { InfoIcon, XIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import {
   PropsWithChildren,
   useCallback,
@@ -13,12 +11,11 @@ import {
 } from "react";
 
 import { TouchSwipeIgnoreCss } from "../../helper/TouchSwipe";
-import "../../css/Tooltip.css";
 import { useWindowSize } from "../../hooks/useWindowSize";
+import "../../css/Cookie.css";
 
-interface TooltipProps {
+interface CookieProps {
   disabled?: boolean;
-  idKey: string;
   className?: string;
   notification?: string;
   /** Optional timeout to close tooltip after a value change */
@@ -27,58 +24,50 @@ interface TooltipProps {
 
 const READY = -1;
 
-export function Tooltip(props: PropsWithChildren<TooltipProps>) {
-  const { children, idKey, timeout } = props;
+export function Cookie(props: PropsWithChildren<CookieProps>) {
+  const { children, timeout } = props;
   const w = useWindowSize();
 
   const [showSlider, setShowSlider] = useState(false);
   const arrowRef = useRef(null);
-  const oldKey = useRef(idKey);
   const hiding = useRef<NodeJS.Timeout | typeof READY | undefined>();
   const fadeTimeout = useRef(timeout);
 
   // https://floating-ui.com/docs/react
-  const xOffset = 8; // horizontal alignment spacing
-  const yOffset = 10; // vertical spacing between tooltip and element
+  const xOffset = 50; // horizontal alignment spacing
+  const yOffset = 0; // vertical spacing between tooltip and element
   const arrowW = 8; // arrow width
-  const { x, y, strategy, refs, middlewareData, update } = useFloating({
-    placement: "top",
-    middleware: [
-      offset({ mainAxis: xOffset, crossAxis: yOffset }),
-      shift(),
-      arrow({ element: arrowRef }),
-    ],
-  });
+  const { /*x,*/ y, strategy, refs /*, middlewareData*/, update } = useFloating(
+    {
+      placement: "bottom",
+      middleware: [
+        offset({ mainAxis: xOffset, crossAxis: yOffset }),
+        shift(),
+        arrow({ element: arrowRef }),
+      ],
+    }
+  );
 
   useEffect(() => {
     // force a recalculate on
     // window resize
-    // term navigation (term properties change)
     update();
-    if (idKey !== oldKey.current) {
-      oldKey.current = idKey;
-      setShowSlider(false);
-      if (fadeTimeout.current !== undefined) {
+
+    if (fadeTimeout.current !== undefined) {
+      if (hiding.current === READY) {
+        hiding.current = setTimeout(() => {
+          setShowSlider(false);
+          hiding.current = undefined;
+        }, fadeTimeout.current);
+      } else if (hiding.current !== undefined) {
         clearTimeout(hiding.current);
-        hiding.current = undefined;
-      }
-    } else {
-      if (fadeTimeout.current !== undefined) {
-        if (hiding.current === READY) {
-          hiding.current = setTimeout(() => {
-            setShowSlider(false);
-            hiding.current = undefined;
-          }, fadeTimeout.current);
-        } else if (hiding.current !== undefined) {
-          clearTimeout(hiding.current);
-          hiding.current = setTimeout(() => {
-            setShowSlider(false);
-            hiding.current = undefined;
-          }, fadeTimeout.current);
-        }
+        hiding.current = setTimeout(() => {
+          setShowSlider(false);
+          hiding.current = undefined;
+        }, fadeTimeout.current);
       }
     }
-  }, [update, w.height, w.width, children, idKey]);
+  }, [update, w.height, w.width, children]);
 
   const onCloseCB = useCallback(() => {
     setShowSlider(false);
@@ -100,17 +89,16 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
         className={classNames({
           "sm-icon-grp": true,
         })}
-        aria-label="Set difficulty"
+        aria-label="Cookie Policy Information"
       >
         <div
           className={classNames({
-            "d-inline": true,
-            clickable: true,
+            "position-absolute pt-2 clickable": true,
             ...(props.className ? { [props.className]: true } : {}),
           })}
           onClick={props.disabled !== true ? onTooltipToggleCB : undefined}
         >
-          <FontAwesomeIcon icon={faBullseye} />
+          <InfoIcon size="medium" />
         </div>
         {props.notification && (
           <span className="notification">{props.notification}</span>
@@ -121,30 +109,24 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
         mouseEvent={showSlider ? "onMouseUp" : false}
         touchEvent={showSlider ? "onTouchEnd" : false}
       >
-        {/* <Box component={Grid} boxShadow={3}> */}
         <Box
-          // component={Grid}
-          id="tooltip"
+          id="cookie"
           ref={refs.setFloating}
           style={{
-            height: "200px",
             position: strategy,
             top: y ?? 0,
-            left: x ?? 0,
-            width: "max-content",
+            left: 0,
+            width: "false",
           }}
           className={classNames({
             invisible: !showSlider,
-            "tooltip-fade": !showSlider,
+            "cookie-fade": !showSlider,
             [TouchSwipeIgnoreCss]: true,
-            "d-flex": true,
+            "d-flex mx-2": true,
+            ...(props.className ? { [props.className]: true } : {}),
           })}
           boxShadow={3}
         >
-          {props.children}
-          {/* <div className="x-button" onClick={onCloseCB}>
-          <XIcon className="clickable" size="small" aria-label="close" />
-        </div> */}
           <div
             ref={arrowRef}
             id="arrow"
@@ -152,18 +134,18 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
               position: strategy,
               height: arrowW,
               width: arrowW,
-              bottom: -arrowW / 2,
-              left: xOffset + (middlewareData.arrow?.x ?? 0),
+              top: -arrowW / 2,
+              left: 20, //xOffset + (middlewareData.arrow?.x ?? 0),
             }}
           />
+          <div className="d-flex flex-column">
+            <div className="x-button align-self-end pe-2" onClick={onCloseCB}>
+              <XIcon className="clickable" size="small" aria-label="close" />
+            </div>
+            <div>{props.children}</div>
+          </div>
         </Box>
       </ClickAwayListener>
     </>
   );
 }
-
-Tooltip.propTypes = {
-  value: PropTypes.number,
-  onChange: PropTypes.func,
-  manualUpdate: PropTypes.string,
-};

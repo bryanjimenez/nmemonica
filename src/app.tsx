@@ -6,11 +6,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import Console from "./components/Form/Console";
+import { CookieNotice } from "./components/Form/CookieNotice";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import { OppositesGameMeta } from "./components/Games/OppositesGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import Navigation from "./components/Navigation/Navigation";
+import { CookiePolicyMeta } from "./components/Pages/CookiePolicy";
 import { KanaGameMeta } from "./components/Pages/KanaGame";
 import { KanjiMeta } from "./components/Pages/Kanji";
 import { PhrasesMeta } from "./components/Pages/Phrases";
@@ -30,6 +32,7 @@ import { DebugLevel } from "./slices/settingHelper";
 import { getVersions } from "./slices/versionSlice";
 import "./css/styles.css";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
+const CookiePolicy = lazy(() => import("./components/Pages/CookiePolicy"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
 const OppositesGame = lazy(() => import("./components/Games/OppositesGame"));
@@ -44,7 +47,7 @@ const Settings = lazy(() => import("./components/Pages/Settings"));
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { darkMode } = useSelector(({ global }: RootState) => global);
+  const { darkMode, cookies } = useSelector(({ global }: RootState) => global);
 
   const muiDarkTheme = useMemo(() => {
     return createTheme({
@@ -70,23 +73,41 @@ export default function App() {
       // }
     };
 
-    void dispatch(getVersions());
-    void dispatch(localStorageSettingsInitialized());
+    if (cookies) {
+      void dispatch(localStorageSettingsInitialized());
 
-    swMessageSubscribe(swMessageHandler);
+      swMessageSubscribe(swMessageHandler);
 
-    void dispatch(serviceWorkerRegistered()).catch((e: Error) => {
-      dispatch(logger(e.message, DebugLevel.ERROR));
+      void dispatch(serviceWorkerRegistered())
+        .then(() => {
+          // wait for old->new service worker change
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            void navigator.serviceWorker.ready.then(() => {
+              // get cached versions
+              void dispatch(getVersions());
+            });
+          });
+        })
+        .catch((e: Error) => {
+          dispatch(logger(e.message, DebugLevel.ERROR));
+          // eslint-disable-next-line no-console
+          console.log("service worker not running");
+          // eslint-disable-next-line no-console
+          console.log(e.message);
+
+          // get uncached versions
+          void dispatch(getVersions());
+        });
+    } else {
       // eslint-disable-next-line no-console
-      console.log("service worker not running");
-      // eslint-disable-next-line no-console
-      console.log(e.message);
-    });
-
+      console.log("cookies are disabled");
+    }
     return () => {
-      swMessageUnsubscribe(swMessageHandler);
+      if (cookies) {
+        swMessageUnsubscribe(swMessageHandler);
+      }
     };
-  }, [dispatch]);
+  }, [dispatch, cookies]);
 
   const pClass = classNames({
     "d-flex flex-column": true,
@@ -98,10 +119,16 @@ export default function App() {
       <HashRouter basename="/">
         <div id="page-content" className={pClass}>
           <Console connected={true} />
+          <CookieNotice />
           <Navigation />
           <Suspense fallback={<div />}>
             <Routes>
               <Route path="/" element={<Vocabulary />} />
+              <Route
+                path={CookiePolicyMeta.location}
+                element={<CookiePolicy />}
+              />
+
               <Route path={PhrasesMeta.location} element={<Phrases />} />
               <Route path={VocabularyMeta.location} element={<Vocabulary />} />
               <Route

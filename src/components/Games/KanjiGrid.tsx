@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import type { GameChoice, GameQuestion } from "./FourChoices";
@@ -25,7 +25,7 @@ import {
 import { randomOrder } from "../../helper/sortHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
-import type { AppDispatch } from "../../slices";
+import type { AppDispatch, RootState } from "../../slices";
 import {
   addFrequencyKanji,
   getKanji,
@@ -115,6 +115,8 @@ function prepareGame(
 
 export default function KanjiGrid() {
   const dispatch = useDispatch<AppDispatch>();
+  const { cookies } = useSelector(({ global }: RootState) => global);
+
   const {
     kanjiList,
     activeTags,
@@ -333,7 +335,12 @@ export default function KanjiGrid() {
         gotoPrev={gotoPrev}
         gotoNext={gotoNextSlide}
       />
-      <div className="options-bar mb-3 flex-shrink-1">
+      <div
+        className={classNames({
+          "options-bar mb-3 flex-shrink-1": true,
+          "disabled-color": !cookies,
+        })}
+      >
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
@@ -346,7 +353,11 @@ export default function KanjiGrid() {
               >
                 <TogglePracticeSideBtn
                   toggle={writePractice}
-                  action={setStateFunction(setEnglishSide, (toggle) => !toggle)}
+                  action={
+                    cookies
+                      ? setStateFunction(setEnglishSide, (toggle) => !toggle)
+                      : undefined
+                  }
                 />
               </Link>
             </div>
@@ -355,6 +366,7 @@ export default function KanjiGrid() {
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <span>{game.question.toHTML(false)}</span>
               <ToggleFrequencyTermBtnMemo
+                disabled={!cookies}
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
                 hasReinforce={term_reinforce}
