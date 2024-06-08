@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 import { CookiePolicyMeta } from "./CookiePolicy";
 import { PrivacyPolicyMeta } from "./PrivacyPolicy";
+import { TermsAndConditionsMeta } from "./TermsAndConditions";
 import { allowedCookies } from "../../helper/cookieHelper";
 import { RootState } from "../../slices";
 import { Notice } from "../Form/Notice";
@@ -21,6 +22,7 @@ export function TermsNotice() {
   if (
     !cookieImportant ||
     [
+      TermsAndConditionsMeta.location,
       CookiePolicyMeta.location,
       PrivacyPolicyMeta.location,
       SettingsMeta.location,
@@ -42,17 +44,21 @@ export function TermsNotice() {
           <div>
             <p className="text-wrap fw-light">
               First time using our app? Before we continue please review the
-              topics below. All <strong>Terms</strong> will be accessible from
-              the &quot;Settings&quot; page.
+              topics below. All <strong>Guidelines</strong> will be accessible
+              from the &quot;Settings&quot; page.
             </p>
           </div>
         </div>
         <div className="pb-1">
-          <strong>Privacy Policy</strong>
+          <strong>Usage Guidelines</strong>
         </div>
         <div>
           <p className="text-wrap m-0 ps-2">
             Please take a moment to read our{" "}
+            <Link to={TermsAndConditionsMeta.location}>
+              Terms and Conditions
+            </Link>{" "}
+            and{" "}
             <Link to={PrivacyPolicyMeta.location}>Privacy Policy</Link>.
           </p>
         </div>

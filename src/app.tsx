@@ -19,6 +19,7 @@ import { SheetMeta } from "./components/Pages/Sheet";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
 import { CookiePolicyMeta } from "./components/Terms/CookiePolicy";
 import { PrivacyPolicyMeta } from "./components/Terms/PrivacyPolicy";
+import { TermsAndConditionsMeta } from "./components/Terms/TermsAndConditions";
 import { TermsNotice } from "./components/Terms/TermsNotice";
 import {
   SWMsgIncoming,
@@ -33,6 +34,9 @@ import { DebugLevel } from "./slices/settingHelper";
 import { getVersions } from "./slices/versionSlice";
 import "./css/styles.css";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
+const TermsAndConditions = lazy(
+  () => import("./components/Terms/TermsAndConditions")
+);
 const CookiePolicy = lazy(() => import("./components/Terms/CookiePolicy"));
 const PrivacyPolicy = lazy(() => import("./components/Terms/PrivacyPolicy"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
@@ -126,6 +130,10 @@ export default function App() {
           <Suspense fallback={<div />}>
             <Routes>
               <Route path="/" element={<Vocabulary />} />
+              <Route
+                path={TermsAndConditionsMeta.location}
+                element={<TermsAndConditions />}
+              />
               <Route
                 path={CookiePolicyMeta.location}
                 element={<CookiePolicy />}
