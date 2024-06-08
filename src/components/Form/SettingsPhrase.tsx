@@ -125,6 +125,7 @@ export default function SettingsPhrase() {
               options={TermSortByLabel}
               initial={phraseOrder}
               allowed={[
+                TermSortBy.DIFFICULTY,
                 TermSortBy.RANDOM,
                 TermSortBy.VIEW_DATE,
                 TermSortBy.RECALL,

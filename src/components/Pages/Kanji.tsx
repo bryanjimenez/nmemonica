@@ -72,10 +72,10 @@ import { AccuracySlider } from "../Form/AccuracySlider";
 import { type ConsoleMessage } from "../Form/Console";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
+import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
-import SimpleListMenu from "../Form/SimpleListMenu";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import { oneFromList, splitToList } from "../Games/KanjiGame";
@@ -752,39 +752,17 @@ export default function Kanji() {
   const prevUid = useRef<string | null>();
 
   if (recallGame === 0) {
-    const msg =
-      viewGoal === undefined ? (
-        "No goal set"
-      ) : goalPending.current > 0 ? (
-        <span>
-          <strong>{String(goalPending.current)}</strong> pending to meet daily
-          goal
-        </span>
-      ) : (
-        `Met the ${String(viewGoal)}${goalPending.current < 0 ? " goal (+" + Math.abs(goalPending.current) + ")" : ""}`
-      );
-
     return (
-      <div className="main-panel d-flex flex-column justify-content-center text-center h-100">
-        <div>
-          <span className="fs-3">{msg}</span>
-        </div>
-        <div className="mt-3 d-flex justify-content-center">
-          <div className="fs-4 mt-5">resume sorting by</div>
-          <SimpleListMenu
-            options={TermSortByLabel}
-            initial={-1}
-            allowed={[
-              TermSortBy.VIEW_DATE,
-              TermSortBy.DIFFICULTY,
-              TermSortBy.RANDOM,
-            ]}
-            onChange={(index) => {
-              setResumeSort(index);
-            }}
-          />
-        </div>
-      </div>
+      <GoalResumeMessage
+        viewGoal={viewGoal}
+        goalPending={goalPending.current}
+        setResumeSort={setResumeSort}
+        allowed={[
+          TermSortBy.VIEW_DATE,
+          TermSortBy.DIFFICULTY,
+          TermSortBy.RANDOM,
+        ]}
+      />
     );
   }
 
