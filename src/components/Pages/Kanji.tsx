@@ -667,25 +667,25 @@ export default function Kanji() {
           </StackNavButton>
 
           <div className="d-flex flex-column justify-content-around text-center">
-            <h1 className="pt-0">
+            <span className="fs-1 pt-0">
               <span>{term.kanji}</span>
-            </h1>
+            </span>
             {(term.on && (
-              <h4
-                className="pt-0"
+              <span
+                className="fs-4 pt-0"
                 onClick={setStateFunction(setShowOn, (toggle) => !toggle)}
               >
                 <span>{showOn ? term.on : "[On]"}</span>
-              </h4>
-            )) || <h4 className="pt-0">.</h4>}
+              </span>
+            )) || <span className="fs-4 pt-0">.</span>}
             {(term.kun && (
-              <h4
-                className="pt-2"
+              <span
+                className="fs-4 pt-2"
                 onClick={setStateFunction(setShowKun, (toggle) => !toggle)}
               >
                 <span>{showKun ? term.kun : "[Kun]"}</span>
-              </h4>
-            )) || <h4 className="pt-2 mb-0">.</h4>}
+              </span>
+            )) || <span className="fs-4 pt-2 mb-0">.</span>}
             <div className="d-flex flex-column">
               <span
                 className={classNames({
@@ -701,12 +701,12 @@ export default function Kanji() {
                 </span>
               </span>
 
-              <h4
-                className="align-self-center pt-2 clickable"
+              <span
+                className="fs-4 align-self-center pt-2 clickable"
                 onClick={setStateFunction(setShowMeaning, (toggle) => !toggle)}
               >
                 {showMeaning ? meaning : <span>{"[Meaning]"}</span>}
-              </h4>
+              </span>
             </div>
           </div>
           {/* <div className="right-info"></div> */}

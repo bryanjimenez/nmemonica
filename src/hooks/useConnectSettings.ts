@@ -3,34 +3,15 @@ import { shallowEqual, useSelector } from "react-redux";
 import type { RootState } from "../slices";
 
 export function useConnectSetting() {
-  const [
-    cookies,
-    darkMode,
-    swipeThreshold,
-    motionThreshold,
-    debug,
-    localServiceURL,
-  ] = useSelector<
-    RootState,
-    [boolean, boolean, number, number, number, string]
-  >(({ global }: RootState) => {
-    const {
-      cookies,
-      darkMode,
-      swipeThreshold,
-      motionThreshold,
-      debug,
-      localServiceURL,
-    } = global;
-    return [
-      cookies,
-      darkMode,
-      swipeThreshold,
-      motionThreshold,
-      debug,
-      localServiceURL,
-    ];
-  }, shallowEqual);
+  const [cookies, darkMode, swipeThreshold, motionThreshold, debug] =
+    useSelector<RootState, [boolean, boolean, number, number, number]>(
+      ({ global }: RootState) => {
+        const { cookies, darkMode, swipeThreshold, motionThreshold, debug } =
+          global;
+        return [cookies, darkMode, swipeThreshold, motionThreshold, debug];
+      },
+      shallowEqual
+    );
 
   const memory = useSelector(
     ({ global }: RootState) => {
@@ -61,7 +42,6 @@ export function useConnectSetting() {
     motionThreshold,
     memory,
     debug,
-    localServiceURL,
 
     oppositesQRomaji,
     oppositesARomaji,

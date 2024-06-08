@@ -15,24 +15,30 @@ export function getActiveSheet(workbook: Spreadsheet) {
   return { activeSheetName, activeSheetData: data };
 }
 
-export function removeLastRowIfBlank<T extends SheetData>(o: T) {
-  const rows = o.rows;
-  if (!o.rows || !rows) {
-    return o;
+/**
+ * Removes empty rows at the end of a sheet
+ * @param sheet A workbook sheet
+ */
+export function removeLastRowIfBlank<T extends SheetData>(sheet: T) {
+  const rows = sheet.rows;
+  if (!sheet.rows || !rows) {
+    return sheet;
   }
 
-  const clone = { ...o, rows };
+  const clone = { ...sheet, rows };
 
-  const last = getLastCellIdx(o.rows);
+  let last = getLastCellIdx(sheet.rows);
 
-  if (
-    Object.values(o.rows[last].cells).every(
-      (c) => c.text === undefined || c.text.length === 0 || c.text.trim() === ""
+  while (
+    Object.values(sheet.rows[last].cells).every(
+      (cell) => cell.text === undefined || cell.text.length === 0 || cell.text.trim() === ""
     )
   ) {
     delete clone.rows[last];
     // @ts-expect-error SheetData.rows.len
     clone.rows.len -= 1;
+
+    last = getLastCellIdx(clone.rows);
   }
 
   return clone;

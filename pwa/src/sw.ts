@@ -350,7 +350,7 @@ function messageEventHandler(event: ExtendableMessageEvent) {
     isMsgHardRefresh(message) &&
     message.type === SWMsgOutgoing.SW_REFRESH_HARD
   ) {
-    fetch(urlDataService + dataVerPath /** no credentials (net check) */)
+    fetch(urlAppUI + "/robots.txt" /** no credentials (net check) */)
       .then((res) => {
         if (res.status < 400) {
           return caches.delete(appStaticCache).then(() => {
@@ -524,7 +524,7 @@ function fetchEventHandler(e: FetchEvent) {
         e.respondWith(noCaching(req));
       }
 
-      e.respondWith(appVersionReq(urlDataService + dataVerPath));
+      e.respondWith(appVersionReq(req));
       break;
     }
 
@@ -549,9 +549,7 @@ function fetchEventHandler(e: FetchEvent) {
     case /* data */
     req.headers.has(SWRequestHeader.DATA_VERSION): {
       const version = req.headers.get(SWRequestHeader.DATA_VERSION);
-      const modReq = !url.startsWith(urlDataService) ? req : new Request(url);
-
-      e.respondWith(appDataReq(modReq, version));
+      e.respondWith(appDataReq(req, version));
       break;
     }
 
@@ -646,14 +644,14 @@ function clientLogger(msg: string, lvl: number) {
  * may return stale version
  * @returns a Promise with a cache response
  */
-function appVersionReq(url: string) {
+function appVersionReq(req: Request) {
   const fetchCheckP = isUserEditedData();
 
   return fetchCheckP.then((cacheOnly) => {
     // check if in cache
     const c = caches
       .open(appDataCache)
-      .then((cache) => cache.match(url))
+      .then((cache) => cache.match(req.url))
       .then((cacheRes) => {
         if (!cacheRes) {
           throw new Error("Not in cache");
@@ -668,14 +666,16 @@ function appVersionReq(url: string) {
     }
 
     // fetch new versions
-    const f = fetch(url).then((res) => {
+    const f = fetch(req).then((res) => {
       const resClone = res.clone();
       if (!res.ok) {
         throw new Error("Failed to fetch");
       }
 
       // update cache from new
-      void caches.open(appDataCache).then((cache) => cache.put(url, resClone));
+      void caches
+        .open(appDataCache)
+        .then((cache) => cache.put(req.url, resClone));
 
       return res;
     });

@@ -2,7 +2,6 @@ import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import type { MetaDataObj, RawKanji, SourceKanji } from "nmemonica";
 
-import { requiredAuth } from "./globalSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -80,7 +79,6 @@ export const getKanji = createAsyncThunk(
   "kanji/getKanji",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
     const version = state.version.kanji ?? "0";
 
     // if (version === "0") {
@@ -89,7 +87,7 @@ export const getKanji = createAsyncThunk(
 
     const value = (await fetch(dataServiceEndpoint + "/kanji.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
-      ...requiredAuth(url),
+      credentials: "include",
     }).then((res) => res.json())) as Record<string, SourceKanji>;
 
     return { value, version };

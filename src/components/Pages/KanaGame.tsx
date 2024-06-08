@@ -193,10 +193,10 @@ export default function KanaGame() {
                   "correct-color": correct,
                 })}
               >
-                <h1 className="clickable">{question}</h1>
+                <span className="clickable fs-1">{question}</span>
                 {easyMode.current && !practiceSide && (
                   <div className="d-flex justify-content-around">
-                    <h6>{swapKana(question)}</h6>
+                    <span className="fs-6">{swapKana(question)}</span>
                   </div>
                 )}
               </div>
@@ -612,12 +612,14 @@ export function buildChoiceButton({
     });
 
     const choiceH2CSS = classNames({
+      "fs-2": true,
       "mb-0": wideMode,
     });
 
     const hintDivCSS = "d-flex justify-content-around";
 
     const hintH6CSS = classNames({
+      "fs-6": true,
       "mb-0": true,
       invisible: !isWrong,
     });
@@ -641,8 +643,8 @@ export function buildChoiceButton({
         // kanaHints for mixed mode
         hintElement = (
           <div className={hintDivCSS}>
-            <h6 className={hintH6CSS}>{choices[index].hint}</h6>
-            <h6 className={hintH6CSS}>{swapKana(choices[index].val)}</h6>
+            <span className={hintH6CSS}>{choices[index].hint}</span>
+            <span className={hintH6CSS}>{swapKana(choices[index].val)}</span>
           </div>
         );
       }
@@ -651,11 +653,11 @@ export function buildChoiceButton({
         // the choices
         hintElement = (
           <div className={hintDivCSS}>
-            <h6 className={hintH6CSS}>
+            <span className={hintH6CSS}>
               {choices[index].cSet === answer.cSet
                 ? choices[index].hint
                 : swapKana(choices[index].hint)}
-            </h6>
+            </span>
           </div>
         );
       } else {
@@ -663,7 +665,9 @@ export function buildChoiceButton({
         // keep hint transparent to match spacing
         hintElement = (
           <div className={hintDivCSS}>
-            <h6 className="mb-0 invisible">{swapKana(choices[index].val)}</h6>
+            <span className="fs-6 mb-0 invisible">
+              {swapKana(choices[index].val)}
+            </span>
           </div>
         );
       }
@@ -673,23 +677,23 @@ export function buildChoiceButton({
         // the choices
         hintElement = (
           <div className={hintDivCSS}>
-            <h6 className={hintH6CSS}>
+            <span className={hintH6CSS}>
               {choices[index].cSet === KanaType.HIRAGANA
                 ? choices[index].hint
                 : swapKana(choices[index].hint)}
-            </h6>
-            <h6 className={hintH6CSS}>
+            </span>
+            <span className={hintH6CSS}>
               {choices[index].cSet === KanaType.HIRAGANA
                 ? swapKana(choices[index].hint)
                 : choices[index].hint}
-            </h6>
+            </span>
           </div>
         );
       } else {
         // the question
         hintElement = (
           <div className={hintDivCSS}>
-            <h6 className="mb-0">{swapKana(choices[index].val)}</h6>
+            <span className="fs-6 mb-0">{swapKana(choices[index].val)}</span>
           </div>
         );
       }
@@ -706,7 +710,7 @@ export function buildChoiceButton({
         className={choiceCSS}
         style={{ width }}
       >
-        <h2 className={choiceH2CSS}>{choices[index].val}</h2>
+        <span className={choiceH2CSS}>{choices[index].val}</span>
         {hintElement}
       </div>
     );

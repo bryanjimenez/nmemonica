@@ -2,6 +2,7 @@ import EventEmitter from "events";
 
 import { Badge, Fab, TextField } from "@mui/material";
 import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
+import { jtox } from "@nmemonica/snservice/src/helper/jsonHelper";
 import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import Spreadsheet from "@nmemonica/x-spreadsheet";
 import {
@@ -32,6 +33,7 @@ import {
 import {
   addExtraRow,
   getActiveSheet,
+  removeLastRowIfBlank,
   searchInSheet,
   touchScreenCheck,
 } from "../../helper/sheetHelper";
@@ -44,15 +46,10 @@ import { clearParticleGame } from "../../slices/particleSlice";
 import { clearPhrases } from "../../slices/phraseSlice";
 import {
   getDatasets,
-  saveSheetLocalService,
   saveSheetServiceWorker,
 } from "../../slices/sheetSlice";
 import { setSwVersions, setVersion } from "../../slices/versionSlice";
 import { clearVocabulary } from "../../slices/vocabularySlice";
-import {
-  ExternalSourceType,
-  getExternalSourceType,
-} from "../Form/ExtSourceInput";
 
 const SheetMeta = {
   location: "/sheet/",
@@ -91,10 +88,9 @@ export default function Sheet() {
   const resultIdx = useRef<number | null>(null);
   const searchValue = useRef<string | null>(null);
 
-  const { localServiceURL, cookies } = useSelector(
-    ({ global }: RootState) => global
-  );
-  const externalSource = getExternalSourceType(localServiceURL);
+  const { cookies } = useSelector(({ global }: RootState) => global);
+
+  const [uploadError, setUploadError] = useState<boolean>(false);
 
   useEffect(() => {
     const gridEl = document.createElement("div");
@@ -133,6 +129,17 @@ export default function Sheet() {
         }
 
         return dispatch(getDatasets()).unwrap();
+      })
+      .catch((err) => {
+        if (err.message === "Failed to fetch") {
+          return [
+            jtox({/** no data just headers */}, "Phrases"),
+            jtox({/** no data just headers */}, "Vocabulary"),
+            jtox({/** no data just headers */}, "Kanji"),
+          ];
+        }
+
+        throw err;
       })
       .then((obj) => {
         const data = addExtraRow(obj);
@@ -173,36 +180,31 @@ export default function Sheet() {
         c?.removeChild(gridEl);
       }
     };
-  }, [dispatch, externalSource]);
+  }, [dispatch]);
+
+  const onUploadErrorCB = useCallback((err: Error) => {
+    setUploadError(true);
+
+    setTimeout(() => {
+      setUploadError(false);
+    }, 2000);
+  }, []);
 
   const saveSheetCB = useCallback(() => {
-    let saveP;
-    switch (externalSource) {
-      case ExternalSourceType.Unset: {
-        saveP = saveSheetServiceWorker(wbRef.current);
-        break;
-      }
-      case ExternalSourceType.GitHubUserContent:
-        saveP = saveSheetServiceWorker(wbRef.current);
-        break;
+    // void saveSheetLocalService(wbRef.current, sheetService).catch(
+    //   onUploadErrorCB
+    // );
+    const saveP = saveSheetServiceWorker(wbRef.current);
 
-      case ExternalSourceType.LocalService: {
-        // backup to local service
-        void saveSheetLocalService(wbRef.current, localServiceURL);
-        // save in cache
-        saveP = saveSheetServiceWorker(wbRef.current);
-        break;
-      }
-      default:
-        throw new Error("Save Sheet unknown source");
-    }
+    const workbook = wbRef.current?.getData() as FilledSheetData[];
+    const trimmed = workbook.map((w) => removeLastRowIfBlank(w));
 
     // store workbook in indexedDB
     // (keep ordering and notes)
     void openIDB().then((db) =>
       putIDBItem(
         { db, store: IDBStores.WORKBOOK },
-        { key: "0", workbook: wbRef.current?.getData() as FilledSheetData[] }
+        { key: "0", workbook: trimmed }
       )
     );
 
@@ -232,7 +234,7 @@ export default function Sheet() {
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
-  }, [dispatch, externalSource, localServiceURL]);
+  }, [dispatch]);
 
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
@@ -294,10 +296,6 @@ export default function Sheet() {
       });
     }
   }, []);
-
-  // const pushSheetCB = useCallback(() => {
-  //   pushSheet(wbRef.current, localServiceURL);
-  // }, [localServiceURL]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -384,6 +382,7 @@ export default function Sheet() {
               onClick={saveSheetCB}
               className="m-0 z-index-unset"
               tabIndex={3}
+              color={uploadError ? "error" : undefined}
             >
               <ShareIcon size="small" />
             </Fab>

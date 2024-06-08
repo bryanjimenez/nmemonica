@@ -86,6 +86,7 @@ export default function XChoices(props: XChoicesProps) {
     });
 
     const choiceH2CSS = classNames({
+      "fs-2": true,
       "mb-0": wideMode,
     });
 
@@ -102,7 +103,7 @@ export default function XChoices(props: XChoicesProps) {
         className={choiceCSS}
         style={{ width }}
       >
-        <h2 className={choiceH2CSS}>{choices[index].toHTML()}</h2>
+        <span className={choiceH2CSS}>{choices[index].toHTML()}</span>
       </div>
     );
   };

@@ -103,7 +103,7 @@ export default function SettingsStale() {
         oldUidVocab.length > 0 ||
         oldUidKanji.length > 0) && (
         <div className="mb-4">
-          <h5>Stale Metadata UID</h5>
+          <span className="fs-5">Stale Metadata UID</span>
           <div className="d-flex flex-row justify-content-between">
             <div className="column-1"></div>
             <div className="column-2">
@@ -152,7 +152,7 @@ export default function SettingsStale() {
 
       <div className="mb-2">
         <div className="d-flex justify-content-between">
-          <h5>Stale Space Repetition</h5>
+          <span className="fs-5">Stale Space Repetition</span>
           {collapseExpandToggler(sectionStaleSpaceRep, setSectionStaleSpaceRep)}
         </div>
         <div>

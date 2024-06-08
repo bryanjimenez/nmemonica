@@ -1,4 +1,5 @@
 //@ts-check
+import fs from "node:fs";
 import rspack from "@rspack/core";
 import path, { sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,6 +29,8 @@ export default function rspackConfig(
   if (!isProduction && !ca.exists()) {
     ca.createServer();
   }
+
+  const appVersion = JSON.parse(fs.readFileSync('package.json','utf-8')).version;
 
   return {
     entry: {
@@ -80,6 +83,7 @@ export default function rspackConfig(
 
       // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
+        "process.env.APP_VERSION": `"${appVersion}"`,
         "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`, // only in env.development
       }),
 

@@ -76,13 +76,13 @@ export default function SettingsPhrase() {
     <div className="outer">
       <div className="d-flex flex-row justify-content-between">
         <div className="column-1">
-          <h4>
+          <span className="fs-5 fw-light">
             {labelOptions(phraseFilter, [
               "Phrases Group",
               "Frequency List",
               "NOT_USED_Tags",
             ])}
-          </h4>
+          </span>
           <div className="mb-2">
             <SettingsSwitch
               active={phraseFilter % 2 === 0}

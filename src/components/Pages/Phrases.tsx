@@ -12,10 +12,7 @@ import React, {
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import {
-  audioServicePath,
-  pronounceEndoint,
-} from "../../../environment.development";
+import { pronounceEndoint } from "../../../environment.development";
 import {
   daysSince,
   spaceRepLog,
@@ -74,10 +71,6 @@ import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
-import {
-  ExternalSourceType,
-  getExternalSourceType,
-} from "../Form/ExtSourceInput";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -97,9 +90,7 @@ const PhrasesMeta = {
 
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
-  const { localServiceURL, cookies } = useSelector(
-    ({ global }: RootState) => global
-  );
+  const { cookies } = useSelector(({ global }: RootState) => global);
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
@@ -407,11 +398,6 @@ export default function Phrases() {
     setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
-  const audioUrl =
-    getExternalSourceType(localServiceURL) === ExternalSourceType.LocalService
-      ? localServiceURL + audioServicePath
-      : pronounceEndoint;
-
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -421,7 +407,7 @@ export default function Phrases() {
     order,
     filteredPhrases,
     recacheAudio,
-    audioUrl
+    pronounceEndoint
   );
 
   // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -689,14 +675,14 @@ export default function Phrases() {
               {topValue}
             </Sizable>
             {romajiActive.current && romaji && (
-              <h5>
+              <span className="fs-5">
                 <span
                   onClick={setStateFunction(setShowRomaji, (romaji) => !romaji)}
                   className="clickable loop-no-interrupt"
                 >
                   {showRomaji ? romaji : "[Romaji]"}
                 </span>
-              </h5>
+              </span>
             )}
             <Sizable
               className={belowNoInterruptCss}

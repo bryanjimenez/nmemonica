@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { requiredAuth } from "./globalSlice";
 import { dataServiceEndpoint } from "../../environment.development";
 import type { RawOpposite } from "../components/Games/OppositesGame";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
@@ -30,7 +29,6 @@ export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
     const version = state.version.phrases ?? "0";
 
     // if (version === "0") {
@@ -38,7 +36,7 @@ export const getOpposite = createAsyncThunk(
     // }
     return fetch(dataServiceEndpoint + "/opposites.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
-      ...requiredAuth(url),
+      credentials: "include",
     }).then((res) =>
       res
         .json()

@@ -1,14 +1,8 @@
 import { useCallback } from "react";
 
 import { SWMsgOutgoing, SWVersionInfo } from "../helper/serviceWorkerHelper";
-import type { AppDispatch } from "../slices";
-import { logger } from "../slices/globalSlice";
-import { DebugLevel } from "../slices/settingHelper";
 
 export function useSWMessageVersionEventHandler(
-  dispatch: AppDispatch,
-  setSpin: React.Dispatch<React.SetStateAction<boolean>>,
-  setHardRefreshUnavailable: React.Dispatch<React.SetStateAction<boolean>>,
   setSwVersion: React.Dispatch<React.SetStateAction<string>>,
   setJsVersion: React.Dispatch<React.SetStateAction<string>>,
   setBundleVersion: React.Dispatch<React.SetStateAction<string>>
@@ -16,17 +10,8 @@ export function useSWMessageVersionEventHandler(
   /** swMessageEventListenerCB Callback*/
   const swMessageEventListenerCB = useCallback(
     (event: MessageEvent) => {
-      const { type, error } = event.data as { type: string; error: string };
-      if (type === SWMsgOutgoing.SW_REFRESH_HARD) {
-        if (error) {
-          dispatch(logger(error, DebugLevel.ERROR));
-        }
-
-        setTimeout(() => {
-          setSpin(false);
-          setHardRefreshUnavailable(true);
-        }, 2000);
-      } else if (type === SWMsgOutgoing.SW_GET_VERSIONS) {
+      const { type } = event.data as { type: string; error: string };
+      if (type === SWMsgOutgoing.SW_GET_VERSIONS) {
         const { swVersion, jsVersion, bundleVersion } =
           event.data as SWVersionInfo;
 
@@ -35,14 +20,7 @@ export function useSWMessageVersionEventHandler(
         setBundleVersion(bundleVersion);
       }
     },
-    [
-      dispatch,
-      setSpin,
-      setHardRefreshUnavailable,
-      setSwVersion,
-      setJsVersion,
-      setBundleVersion,
-    ]
+    [setSwVersion, setJsVersion, setBundleVersion]
   );
 
   return swMessageEventListenerCB;

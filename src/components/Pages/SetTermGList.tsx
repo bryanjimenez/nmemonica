@@ -18,7 +18,7 @@ interface SetTermGListProps {
 export function SetTermGList(props: SetTermGListProps) {
   return (
     <div>
-      <h5>Groups</h5>
+      <span className="fs-5 fw-light">Groups</span>
 
       {Object.keys(props.termsGroups).map((g) => {
         const grpActive = props.termsActive.includes(g);

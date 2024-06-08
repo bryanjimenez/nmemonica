@@ -93,7 +93,7 @@ export function SetTermGFList(props: SetTermGFListProps) {
 
   return (
     <div>
-      <h5>Frequency</h5>
+      <span className="fs-5 fw-light">Frequency</span>
       <div>
         {Object.keys(grplist).map((g) => {
           const grpActive = props.termsActive.includes(g);

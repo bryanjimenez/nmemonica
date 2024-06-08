@@ -15,10 +15,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
-import {
-  audioServicePath,
-  pronounceEndoint,
-} from "../../../environment.development";
+import { pronounceEndoint } from "../../../environment.development";
 import {
   daysSince,
   spaceRepLog,
@@ -81,10 +78,6 @@ import {
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
-import {
-  ExternalSourceType,
-  getExternalSourceType,
-} from "../Form/ExtSourceInput";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -107,9 +100,7 @@ const VocabularyMeta = {
 
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
-  const { localServiceURL, cookies } = useSelector(
-    ({ global }: RootState) => global
-  );
+  const { cookies } = useSelector(({ global }: RootState) => global);
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
     useState(false);
@@ -518,11 +509,6 @@ export default function Vocabulary() {
     setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
-  const audioUrl =
-    getExternalSourceType(localServiceURL) === ExternalSourceType.LocalService
-      ? localServiceURL + audioServicePath
-      : pronounceEndoint;
-
   const gameActionHandler = buildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
@@ -535,7 +521,7 @@ export default function Vocabulary() {
     recacheAudio,
     naFlip,
     setWasPlayed,
-    audioUrl
+    pronounceEndoint
   );
 
   const deviceMotionEvent = useDeviceMotionActions(motionThreshold);

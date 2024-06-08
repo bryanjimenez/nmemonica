@@ -7,7 +7,7 @@ import type {
   SourcePhrase,
 } from "nmemonica";
 
-import { logger, requiredAuth } from "./globalSlice";
+import { logger } from "./globalSlice";
 import {
   DebugLevel,
   TermFilterBy,
@@ -180,7 +180,6 @@ export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (arg, thunkAPI) => {
     const state = thunkAPI.getState() as RootState;
-    const { localServiceURL: url } = state.global;
     // TODO: rename state.phrases -> state.phrase
     const version = state.version.phrases ?? "0";
 
@@ -189,7 +188,7 @@ export const getPhrase = createAsyncThunk(
     // }
     const jsonValue = (await fetch(dataServiceEndpoint + "/phrases.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
-      ...requiredAuth(url),
+      credentials: "include",
     }).then((res) => res.json())) as Record<string, SourcePhrase>;
 
     const groups = buildGroupObject(jsonValue);
