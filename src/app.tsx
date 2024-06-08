@@ -6,19 +6,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import Console from "./components/Form/Console";
-import { CookieNotice } from "./components/Form/CookieNotice";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import { OppositesGameMeta } from "./components/Games/OppositesGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
 import Navigation from "./components/Navigation/Navigation";
-import { CookiePolicyMeta } from "./components/Pages/CookiePolicy";
 import { KanaGameMeta } from "./components/Pages/KanaGame";
 import { KanjiMeta } from "./components/Pages/Kanji";
 import { PhrasesMeta } from "./components/Pages/Phrases";
 import { SettingsMeta } from "./components/Pages/Settings";
 import { SheetMeta } from "./components/Pages/Sheet";
 import { VocabularyMeta } from "./components/Pages/Vocabulary";
+import { CookiePolicyMeta } from "./components/Terms/CookiePolicy";
+import { PrivacyPolicyMeta } from "./components/Terms/PrivacyPolicy";
+import { TermsNotice } from "./components/Terms/TermsNotice";
 import {
   SWMsgIncoming,
   SwMessage,
@@ -32,7 +33,8 @@ import { DebugLevel } from "./slices/settingHelper";
 import { getVersions } from "./slices/versionSlice";
 import "./css/styles.css";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
-const CookiePolicy = lazy(() => import("./components/Pages/CookiePolicy"));
+const CookiePolicy = lazy(() => import("./components/Terms/CookiePolicy"));
+const PrivacyPolicy = lazy(() => import("./components/Terms/PrivacyPolicy"));
 const Phrases = lazy(() => import("./components/Pages/Phrases"));
 const Vocabulary = lazy(() => import("./components/Pages/Vocabulary"));
 const OppositesGame = lazy(() => import("./components/Games/OppositesGame"));
@@ -119,7 +121,7 @@ export default function App() {
       <HashRouter basename="/">
         <div id="page-content" className={pClass}>
           <Console connected={true} />
-          <CookieNotice />
+          <TermsNotice />
           <Navigation />
           <Suspense fallback={<div />}>
             <Routes>
@@ -127,6 +129,10 @@ export default function App() {
               <Route
                 path={CookiePolicyMeta.location}
                 element={<CookiePolicy />}
+              />
+              <Route
+                path={PrivacyPolicyMeta.location}
+                element={<PrivacyPolicy />}
               />
 
               <Route path={PhrasesMeta.location} element={<Phrases />} />
