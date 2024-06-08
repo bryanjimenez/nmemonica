@@ -5,7 +5,12 @@ import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
 import { ca } from "@nmemonica/utils/signed-ca";
 import { config } from "@nmemonica/snservice";
+//@ts-expect-error js instead of ts file
 import { appendLicense } from "./license-writer.js";
+//@ts-expect-error js instead of ts file
+import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
+//@ts-expect-error js instead of ts file
+import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
 // https://www.rspack.dev/config/devtool.html
 // https://www.rspack.dev/guide/migrate-from-webpack.html
@@ -27,6 +32,16 @@ export default function rspackConfig(
   return {
     entry: {
       main: "./src/index.tsx",
+      ...(isProduction
+        ? {
+            sw: {
+              filename: "sw.js",
+              import: "./pwa/src/sw.ts",
+            },
+          }
+        : {
+            /** see rspack.config.sw.js */
+          }),
     },
     output: {
       filename: "[name].[chunkhash:8].js",
@@ -39,8 +54,8 @@ export default function rspackConfig(
       // copy static site files to dist
       new rspack.CopyRspackPlugin({
         patterns: [
-          ...(!isProduction ? [{ from: "./site-dev" }] : []),
-          { from: "./site" },
+          ...(!isProduction ? [{ from: "./site/dev" }] : []),
+          { from: "./site/prod" },
         ],
       }),
 
@@ -53,16 +68,27 @@ export default function rspackConfig(
             }),
           ]
         : []),
+      // For development only
       // index.html template
-      new rspack.HtmlRspackPlugin({
-        template: `index${isProduction ? ".production" : ""}.html`,
-      }),
+      ...(!isProduction
+        ? [
+            new rspack.HtmlRspackPlugin({
+              template: `index.html`,
+            }),
+          ]
+        : []),
 
       // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
-        "process.env.SERVICE_HOSTNAME": `"${config.service.hostname}"`, // only in env.development
-        "process.env.SERVICE_PORT": String(config.service.port), //        env.dev only
+        "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`, // only in env.development
       }),
+
+      // adds cache files to sw.js
+      ...(isProduction
+        ? [indexTagHelperPlugin, serviceWorkerCacheHelperPlugin]
+        : [
+            /** is ran from rspack.config.sw.js */
+          ]),
     ],
 
     // solution for
