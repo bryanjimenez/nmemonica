@@ -58,10 +58,8 @@ export default function AudioItem(props: AudioItemProps) {
   return (
     <div
       className="clickable"
-      // onMouseDown={props.visible ? clickEvHan0 : undefined}
-      onTouchStart={props.visible ? clickEvHan0 : undefined}
-      // onMouseUp={props.visible ? clickEvHan1 : undefined}
-      onTouchEnd={props.visible ? clickEvHan1 : undefined}
+      onPointerDown={props.visible ? clickEvHan0 : undefined}
+      onPointerUp={props.visible ? clickEvHan1 : undefined}
     >
       {props.visible && <UnmuteIcon size="medium" aria-label="pronunciation" />}
     </div>

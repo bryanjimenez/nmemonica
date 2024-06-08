@@ -1,7 +1,6 @@
 import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
 import type { RawVocabulary } from "nmemonica";
@@ -209,6 +208,8 @@ export default function Kanji() {
             accuracyP = 0,
             lastReview,
             daysBetweenReviews,
+            // metadata includes filtered in Recall sort
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           } = metadata.current[filtered[i].uid]!;
           const daysSinceReview = lastReview
             ? daysSince(lastReview)
@@ -474,7 +475,7 @@ export default function Kanji() {
 
       const k = getTerm(uid, filteredTerms);
 
-      let spaceRepUpdated: Promise<unknown> = Promise.resolve();
+      let spaceRepUpdated;
       if (
         metadata.current[uid]?.difficultyP &&
         accuracyModifiedRef.current
@@ -482,10 +483,18 @@ export default function Kanji() {
         // accuracyModifiedRef.current > 0
       ) {
         // when difficulty exists and accuracyP has been set
-        spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
+        spaceRepUpdated = dispatch(
+          setSpaceRepetitionMetadata({ uid })
+        ).unwrap();
       } else if (accuracyModifiedRef.current === null) {
         // when accuracyP is nulled
-        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
+        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }))
+          .unwrap()
+          .then(() => {
+            /** results not needed */
+          });
+      } else {
+        spaceRepUpdated = Promise.resolve();
       }
 
       if (recallGame && recallGame > 0 && selectedIndex === recallGame + 1) {
@@ -493,49 +502,44 @@ export default function Kanji() {
         dispatch(logger("No more pending items", DebugLevel.DEBUG));
       }
 
-      void spaceRepUpdated.then(
-        (
-          action: PayloadAction<{
-            newValue: Record<string, MetaDataObj>;
-            oldValue: Record<string, MetaDataObj>;
-          }>
-        ) => {
-          if (action && "payload" in action) {
-            const { newValue: meta, oldValue: oldMeta } = action.payload;
+      void spaceRepUpdated.then((payload) => {
+        if (payload && "newValue" in payload && "oldValue" in payload) {
+          const { newValue, oldValue } = payload;
+          const meta = newValue[uid];
+          const oldMeta = oldValue[uid];
 
-            recallDebugLogHelper(dispatch, uid, meta, oldMeta, k.english);
-          }
-
-          // after space rep updates
-
-          // prevent updates when quick scrolling
-          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-            // don't increment reinforced terms
-            const shouldIncrement = uid !== prevState.reinforcedUID;
-            const frequency = prevState.reinforcedUID !== null;
-
-            void dispatch(updateSpaceRepKanji({ uid, shouldIncrement }))
-              .unwrap()
-              .then((payload) => {
-                const { value, prevVal } = payload;
-
-                let prevDate;
-                if (accuracyModifiedRef.current && prevVal.lastReview) {
-                  // if term was reviewed
-                  prevDate = prevVal.lastReview;
-                } else {
-                  prevDate = prevVal.lastView ?? value.lastView;
-                }
-
-                const repStats = { [uid]: { ...value, lastView: prevDate } };
-                const messageLog = (m: string, l: number) =>
-                  dispatch(logger(m, l));
-
-                spaceRepLog(messageLog, k, repStats, { frequency });
-              });
-          }
+          recallDebugLogHelper(dispatch, meta, oldMeta, k.english);
         }
-      );
+
+        // after space rep updates
+
+        // prevent updates when quick scrolling
+        if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+          // don't increment reinforced terms
+          const shouldIncrement = uid !== prevState.reinforcedUID;
+          const frequency = prevState.reinforcedUID !== null;
+
+          void dispatch(updateSpaceRepKanji({ uid, shouldIncrement }))
+            .unwrap()
+            .then((payload) => {
+              const { value, prevVal } = payload;
+
+              let prevDate;
+              if (accuracyModifiedRef.current && prevVal.lastReview) {
+                // if term was reviewed
+                prevDate = prevVal.lastReview;
+              } else {
+                prevDate = prevVal.lastView ?? value.lastView;
+              }
+
+              const repStats = { [uid]: { ...value, lastView: prevDate } };
+              const messageLog = (m: string, l: number) =>
+                dispatch(logger(m, l));
+
+              spaceRepLog(messageLog, k, repStats, { frequency });
+            });
+        }
+      });
 
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
@@ -602,12 +606,11 @@ export default function Kanji() {
   //   })
   // );
 
-  // TODO: does it need to be active?
   const aGroupLevel =
-    term.tags
-      .find((t) => activeTags.includes(t) && isGroupLevel(t))
-      ?.replace("_", " ") ??
-    term.tags.find((t) => isGroupLevel(t))?.replace("_", " ") ??
+    term.tags.find(
+      (t) => activeTags.includes(t) && isGroupLevel(t) && term.grp !== t
+    ) ??
+    term.tags.find((t) => isGroupLevel(t) && term.grp !== t) ??
     "";
 
   const term_reinforce = repetition[term.uid]?.rein === true;
@@ -718,7 +721,7 @@ export default function Kanji() {
             <div className="d-flex justify-content-start"></div>
           </div>
           <div className="col">
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <Tooltip
                 className={classNames({
                   "question-color opacity-50":

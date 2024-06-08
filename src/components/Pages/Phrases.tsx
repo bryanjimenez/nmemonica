@@ -1,6 +1,5 @@
 import { LinearProgress } from "@mui/material";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
-import { PayloadAction } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
 import React, {
@@ -222,6 +221,8 @@ export default function Phrases() {
             accuracyP = 0,
             lastReview,
             daysBetweenReviews,
+            // metadata includes filtered in Recall sort
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           } = metadata.current[filtered[i].uid]!;
           const daysSinceReview = lastReview
             ? daysSince(lastReview)
@@ -459,59 +460,62 @@ export default function Phrases() {
 
       const p = getTerm(uid, filteredPhrases, phraseList);
 
-      let spaceRepUpdated: Promise<unknown> = Promise.resolve();
+      let spaceRepUpdated;
       if (metadata.current[uid]?.difficultyP && accuracyModifiedRef.current) {
         // when difficulty exists and accuracyP has been set
-        spaceRepUpdated = dispatch(setSpaceRepetitionMetadata({ uid }));
+        spaceRepUpdated = dispatch(
+          setSpaceRepetitionMetadata({ uid })
+        ).unwrap();
       } else if (accuracyModifiedRef.current === null) {
         // when accuracyP is nulled
-        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }));
+        spaceRepUpdated = dispatch(removeFromSpaceRepetition({ uid }))
+          .unwrap()
+          .then(() => {
+            /** results not needed */
+          });
+      } else {
+        spaceRepUpdated = Promise.resolve();
       }
 
-      void spaceRepUpdated.then(
-        (
-          action: PayloadAction<{
-            newValue: Record<string, MetaDataObj>;
-            oldValue: Record<string, MetaDataObj>;
-          }>
-        ) => {
-          if (action && "payload" in action) {
-            const { newValue: meta, oldValue: oldMeta } = action.payload;
+      void spaceRepUpdated.then((payload) => {
+        if (payload && "newValue" in payload && "oldValue" in payload) {
+          const { newValue, oldValue } = payload;
+          const meta = newValue[uid];
+          const oldMeta = oldValue[uid];
 
-            recallDebugLogHelper(dispatch, uid, meta, oldMeta, p.english);
-          }
-
-          // prevent updates when quick scrolling
-          if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-            // don't increment reinforced terms
-            const shouldIncrement = uid !== prevState.reinforcedUID;
-            const frequency = prevState.reinforcedUID !== null;
-
-            void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
-              .unwrap()
-              .then((payload) => {
-                const { value, prevVal } = payload;
-
-                let prevDate;
-                if (accuracyModifiedRef.current && prevVal.lastReview) {
-                  // if term was reviewed
-                  prevDate = prevVal.lastReview;
-                } else {
-                  prevDate = prevVal.lastView ?? value.lastView;
-                }
-
-                const repStats = { [uid]: { ...value, lastView: prevDate } };
-                const messageLog = (m: string, l: number) =>
-                  dispatch(logger(m, l));
-                // if (tpAnsweredREF.current !== undefined) {
-                //   timedPlayLog(messageLog, p, repStats, { frequency });
-                // } else {
-                spaceRepLog(messageLog, p, repStats, { frequency });
-                // }
-              });
-          }
+          recallDebugLogHelper(dispatch, meta, oldMeta, p.english);
         }
-      );
+
+        // prevent updates when quick scrolling
+        if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+          // don't increment reinforced terms
+          const shouldIncrement = uid !== prevState.reinforcedUID;
+          const frequency = prevState.reinforcedUID !== null;
+
+          void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
+            .unwrap()
+            .then((payload) => {
+              const { value, prevVal } = payload;
+
+              let prevDate;
+              if (accuracyModifiedRef.current && prevVal.lastReview) {
+                // if term was reviewed
+                prevDate = prevVal.lastReview;
+              } else {
+                prevDate = prevVal.lastView ?? value.lastView;
+              }
+
+              const repStats = { [uid]: { ...value, lastView: prevDate } };
+              const messageLog = (m: string, l: number) =>
+                dispatch(logger(m, l));
+              // if (tpAnsweredREF.current !== undefined) {
+              //   timedPlayLog(messageLog, p, repStats, { frequency });
+              // } else {
+              spaceRepLog(messageLog, p, repStats, { frequency });
+              // }
+            });
+        }
+      });
 
       // const wasReset = resetTimedPlay();
       // if (wasReset) {
@@ -724,7 +728,7 @@ export default function Phrases() {
             </div>
           </div>
           <div className="col">
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <Tooltip
                 className={classNames({
                   "question-color opacity-50":

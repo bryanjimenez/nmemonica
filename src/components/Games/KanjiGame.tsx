@@ -556,7 +556,7 @@ export default function KanjiGame() {
             </div>
           </div>
           <div className="col">
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <Tooltip idKey={kanji.uid}>
                 <DifficultySlider
                   difficulty={metadata.current[kanji.uid]?.difficultyP}

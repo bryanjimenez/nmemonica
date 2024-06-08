@@ -170,7 +170,7 @@ export default function KanaGame() {
 
   const choiceAreaCSS = classNames({
     "choices-row d-flex justify-content-around": true,
-    "w-100 w-sm-50": !wideMode.current,
+    "w-100": !wideMode.current,
     "w-100 h-100": wideMode.current,
   });
 
@@ -185,7 +185,7 @@ export default function KanaGame() {
             {!wideMode.current && (
               <div
                 className={classNames({
-                  "pt-3 d-flex flex-column justify-content-center text-center w-100 w-sm-50 h-100":
+                  "pt-3 d-flex flex-column justify-content-center text-center w-100 h-100":
                     true,
                   "correct-color": correct,
                 })}

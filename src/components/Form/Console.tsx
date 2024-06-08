@@ -102,7 +102,7 @@ export default function Console(props: ConsoleProps) {
       className={classNames({
         "console p-1": true,
         "position-absolute": props.connected === true,
-        "mw-50": props.connected === true,
+        "mw-75": props.connected === true,
         "text-break": true,
       })}
     >

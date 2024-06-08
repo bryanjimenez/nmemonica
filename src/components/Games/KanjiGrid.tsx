@@ -352,7 +352,7 @@ export default function KanjiGrid() {
             </div>
           </div>
           <div className="col">
-            <div className="d-flex justify-content-end">
+            <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <span>{game.question.toHTML(false)}</span>
               <ToggleFrequencyTermBtnMemo
                 addFrequencyTerm={addFrequencyTerm}
