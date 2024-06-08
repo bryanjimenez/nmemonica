@@ -3,10 +3,7 @@ import {
   jtox,
   sheetDataToJSON,
 } from "@nmemonica/snservice/src/helper/jsonHelper";
-import {
-  FilledSheetData,
-  isFilledSheetData,
-} from "@nmemonica/snservice/src/helper/sheetHelper";
+import { FilledSheetData } from "@nmemonica/snservice/src/helper/sheetHelper";
 import type Spreadsheet from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
@@ -23,7 +20,7 @@ import {
   sheetServicePath,
 } from "../../environment.development";
 import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
-import { getActiveSheet, removeLastRowIfBlank } from "../helper/sheetHelper";
+import { getActiveSheet } from "../helper/sheetHelper";
 
 import { AppDispatch } from ".";
 
@@ -258,25 +255,17 @@ function pushSheet(workbook: Spreadsheet | null, serviceBaseUrl: string) {
   });
 }
 
-export function saveSheetServiceWorker(workbook: Spreadsheet | null) {
-  if (!workbook) return Promise.reject(new Error("Missing workbook"));
-  const { activeSheetData, activeSheetName } = getActiveSheet(workbook);
-  if (!isFilledSheetData(activeSheetData)) {
-    throw new Error("Missing data");
-  }
+export function saveSheetServiceWorker(sheet: FilledSheetData) {
+  const { data, hash } = sheetDataToJSON(sheet);
 
-  const d = removeLastRowIfBlank(activeSheetData);
-
-  const { data, hash } = sheetDataToJSON(d);
-
-  const resource = activeSheetData.name.toLowerCase();
+  const resource = sheet.name.toLowerCase();
 
   return swMessageSaveDataJSON(
     dataServiceEndpoint + "/" + resource + ".json.v" + hash,
     data,
-    hash
+    ""
   ).then(() => ({
-    name: activeSheetName,
+    name: sheet.name,
     hash,
   }));
 }

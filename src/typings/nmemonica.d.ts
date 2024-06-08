@@ -27,6 +27,7 @@ declare module "nmemonica" {
     subGrp?: string;
 
     tags: string[];
+    opposite?: string[];
   }
 
   export type SourcePhrase = Omit<

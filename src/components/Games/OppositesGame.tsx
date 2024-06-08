@@ -1,15 +1,17 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
+import type { RawJapanese } from "nmemonica";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 import { FourChoicesWRef, type GameChoice } from "./FourChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { swapToRomaji } from "../../helper/kanaHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
-import { getOpposite } from "../../slices/oppositeSlice";
+import { type Opposite, getOpposite } from "../../slices/oppositeSlice";
 import { NotReady } from "../Form/NotReady";
 
 export interface RawOpposite {
@@ -124,11 +126,26 @@ export default function OppositesGame() {
   );
 }
 
+function deriveRomaji(obj: RawJapanese) {
+  return JapaneseText.parse(obj)
+    .getPronunciation()
+    .split("")
+    .map((mora) => swapToRomaji(mora))
+    .join("");
+}
+
 function prepareGame(
-  opposites: [RawOpposite, RawOpposite][],
+  opposites: [Opposite, Opposite][],
   order: number[],
   selectedIndex: number
 ) {
+  const minChoices = 4;
+  if (opposites.length < minChoices) {
+    throw new Error(
+      `Required ${minChoices} choices minimum. Found ${opposites.length}`
+    );
+  }
+
   let [questionObj, answerObj] = opposites[order[selectedIndex]];
   const q = JapaneseText.parse(questionObj);
   const a = JapaneseText.parse(answerObj);
@@ -155,16 +172,19 @@ function prepareGame(
   };
 
   let choices: GameChoice[] = [answer];
-  let antiHomophones: string[] = [answerObj.romaji, questionObj.romaji];
+  const answerRomaji = answerObj.romaji ?? deriveRomaji(answerObj);
+  const questionRomaji = questionObj.romaji ?? deriveRomaji(questionObj);
+  let antiHomophones: string[] = [answerRomaji, questionRomaji];
 
-  while (choices.length < 4) {
+  while (choices.length < minChoices) {
     const idx = Math.floor(Math.random() * opposites.length);
 
     const [wrongAnswer1, wrongAnswer2] = opposites[idx];
-
+    const wrongAns1Romaji = wrongAnswer1.romaji ?? deriveRomaji(wrongAnswer1);
+    const wrongAns2Romaji = wrongAnswer2.romaji ?? deriveRomaji(wrongAnswer2);
     if (
-      !antiHomophones.includes(wrongAnswer1.romaji) &&
-      !antiHomophones.includes(wrongAnswer2.romaji)
+      !antiHomophones.includes(wrongAns1Romaji) &&
+      !antiHomophones.includes(wrongAns2Romaji)
     ) {
       const headsOrTails = Math.floor(Math.random() * 2);
 
@@ -178,7 +198,7 @@ function prepareGame(
             toHTML: () => <span className={choiceCss}>{w1.toHTML()}</span>,
           },
         ];
-        antiHomophones = [...antiHomophones, wrongAnswer1.romaji];
+        antiHomophones = [...antiHomophones, wrongAns1Romaji];
       } else {
         const w2 = JapaneseText.parse(wrongAnswer2);
         choices = [
@@ -189,7 +209,7 @@ function prepareGame(
             toHTML: () => <span className={choiceCss}>{w2.toHTML()}</span>,
           },
         ];
-        antiHomophones = [...antiHomophones, wrongAnswer2.romaji];
+        antiHomophones = [...antiHomophones, wrongAns2Romaji];
       }
     }
   }

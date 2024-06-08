@@ -60,7 +60,7 @@ export function swMessageUnsubscribe(
  */
 export function swMessageSaveDataJSON(
   url: string,
-  dataset: Record<string, unknown>,
+  dataset: unknown,
   hash: string
 ) {
   if (navigator.serviceWorker) {

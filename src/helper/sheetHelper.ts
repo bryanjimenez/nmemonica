@@ -4,7 +4,7 @@ import { SheetData } from "@nmemonica/x-spreadsheet";
 
 export function getActiveSheet(workbook: Spreadsheet) {
   // TODO: fix SpreadSheet.getData type
-  const sheets = workbook.getData() as SheetData[];
+  const sheets = workbook.exportValues() as SheetData[];
 
   const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
   const activeSheetData =

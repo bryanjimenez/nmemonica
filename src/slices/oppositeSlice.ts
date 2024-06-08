@@ -1,14 +1,18 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import md5 from "md5";
+import type { SourceVocabulary } from "nmemonica";
 
-import { dataServiceEndpoint } from "../../environment.development";
-import type { RawOpposite } from "../components/Games/OppositesGame";
+import { getVocabulary } from "./vocabularySlice";
 import { localStoreAttrUpdate } from "../helper/localStorageHelper";
-import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 
-import type { RootState } from ".";
+export interface Opposite {
+  english: string;
+  japanese: string;
+  romaji?: string;
+}
 
 export interface OppositeInitSlice {
-  value: [RawOpposite, RawOpposite][];
+  value: [Opposite, Opposite][];
   version: string;
   aRomaji: boolean;
   qRomaji: boolean;
@@ -28,22 +32,49 @@ const oppositeInitState: OppositeInitSlice = {
 export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const version = state.version.phrases ?? "0";
-
-    // if (version === "0") {
-    //   console.error("fetching opposite: 0");
-    // }
-    return fetch(dataServiceEndpoint + "/opposites.json", {
-      headers: { [SWRequestHeader.DATA_VERSION]: version },
-      credentials: "include",
-    }).then((res) =>
-      res
-        .json()
-        .then((value: [RawOpposite, RawOpposite][]) => ({ value, version }))
-    );
+    // TODO: avoid fetch if vocabulary already in state
+    const { value: vocabulary } = await thunkAPI
+      .dispatch(getVocabulary())
+      .unwrap();
+    const { opposites, hash } = deriveOppositesFromVocabulary(vocabulary);
+    return { value: opposites, version: hash };
   }
 );
+
+export function deriveOppositesFromVocabulary(
+  data: Record<string, SourceVocabulary>
+) {
+  let opposites: [Opposite, Opposite][] = [];
+  Object.keys(data).forEach((uid) => {
+    const v = data[uid];
+    if (Array.isArray(v.opposite)) {
+      v.opposite.forEach((opp: string) => {
+        const o: Opposite = data[opp];
+
+        if (o) {
+          const a = {
+            english: v.english,
+            japanese: v.japanese,
+            romaji: v.romaji,
+          };
+          const b = {
+            english: o.english,
+            japanese: o.japanese,
+            romaji: o.romaji,
+          };
+
+          opposites.push([a, b]);
+        } else {
+          console.error(`No uid?? uid:${uid} e:${v.english} Opposite:${opp}`);
+        }
+      });
+    }
+  });
+
+  const hash = md5(JSON.stringify(opposites)).slice(0, 4);
+
+  return { hash, opposites };
+}
 
 export const oppositeFromLocalStorage = createAsyncThunk(
   "opposite/oppositeFromLocalStorage",

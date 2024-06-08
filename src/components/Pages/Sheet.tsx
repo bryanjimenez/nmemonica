@@ -44,10 +44,7 @@ import { clearKanji } from "../../slices/kanjiSlice";
 import { clearOpposites } from "../../slices/oppositeSlice";
 import { clearParticleGame } from "../../slices/particleSlice";
 import { clearPhrases } from "../../slices/phraseSlice";
-import {
-  getDatasets,
-  saveSheetServiceWorker,
-} from "../../slices/sheetSlice";
+import { getDatasets, saveSheetServiceWorker } from "../../slices/sheetSlice";
 import { setSwVersions, setVersion } from "../../slices/versionSlice";
 import { clearVocabulary } from "../../slices/vocabularySlice";
 
@@ -133,9 +130,24 @@ export default function Sheet() {
       .catch((err) => {
         if (err.message === "Failed to fetch") {
           return [
-            jtox({/** no data just headers */}, "Phrases"),
-            jtox({/** no data just headers */}, "Vocabulary"),
-            jtox({/** no data just headers */}, "Kanji"),
+            jtox(
+              {
+                /** no data just headers */
+              },
+              "Phrases"
+            ),
+            jtox(
+              {
+                /** no data just headers */
+              },
+              "Vocabulary"
+            ),
+            jtox(
+              {
+                /** no data just headers */
+              },
+              "Kanji"
+            ),
           ];
         }
 
@@ -194,10 +206,17 @@ export default function Sheet() {
     // void saveSheetLocalService(wbRef.current, sheetService).catch(
     //   onUploadErrorCB
     // );
-    const saveP = saveSheetServiceWorker(wbRef.current);
 
-    const workbook = wbRef.current?.getData() as FilledSheetData[];
-    const trimmed = workbook.map((w) => removeLastRowIfBlank(w));
+    const { activeSheetName } = getActiveSheet(wbRef.current);
+    const w = wbRef.current?.exportValues() as FilledSheetData[];
+    const trimmed = w.map((w) => removeLastRowIfBlank(w));
+    const sheet = trimmed.find((s) => s.name === activeSheetName);
+
+    if (!sheet) {
+      throw new Error("No Worksheet");
+    }
+
+    const saveP = saveSheetServiceWorker(sheet);
 
     // store workbook in indexedDB
     // (keep ordering and notes)
@@ -239,7 +258,7 @@ export default function Sheet() {
   const downloadSheetsCB = useCallback(() => {
     //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
 
-    const xObj = wbRef.current?.getData() as FilledSheetData[];
+    const xObj = wbRef.current?.exportValues() as FilledSheetData[];
     if (xObj) {
       const filesP = xObj.map((xObjSheet: FilledSheetData) => {
         const fileSim = new EventEmitter();

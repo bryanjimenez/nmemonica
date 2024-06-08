@@ -17,7 +17,6 @@ import {
   audioServicePath,
   dataServiceEndpoint,
   dataServicePath,
-  pronounceEndoint,
   uiEndpoint,
 } from "../../environment.development";
 
@@ -41,7 +40,6 @@ const bundleVersion = process.env.SW_BUNDLE_VERSION;
 
 let urlAppUI = uiEndpoint;
 let urlDataService = dataServiceEndpoint;
-let urlPronounceService = pronounceEndoint;
 let audioPath = audioServicePath;
 let dataPath = dataServicePath;
 
@@ -61,12 +59,7 @@ const NO_INDEXEDDB_SUPPORT =
   "Your browser doesn't support a stable version of IndexedDB.";
 
 const dataVerPath = "/cache.json";
-const dataSourcePath = [
-  "/phrases.json",
-  "/vocabulary.json",
-  "/opposites.json",
-  "/kanji.json",
-];
+const dataSourcePath = ["/phrases.json", "/vocabulary.json", "/kanji.json"];
 
 function getVersions() {
   // const main =
