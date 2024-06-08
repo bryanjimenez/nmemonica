@@ -11,7 +11,9 @@ import type {
   SourceVocabulary,
 } from "nmemonica";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -21,7 +23,10 @@ import {
 } from "./settingHelper";
 import { dataServiceEndpoint } from "../../environment.development";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
   removeAction,
@@ -54,13 +59,15 @@ export interface VocabularyInitSlice {
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
-    spaRepMaxReviewItem: number;
+    spaRepMaxReviewItem?: number;
     activeGroup: string[];
     autoVerbView: boolean;
     verbColSplit: number;
     verbFormsOrder: string[];
     includeNew: boolean;
     includeReviewed: boolean;
+
+    viewGoal?: number;
   };
 }
 export const vocabularyInitState: VocabularyInitSlice = {
@@ -80,13 +87,15 @@ export const vocabularyInitState: VocabularyInitSlice = {
     reinforce: false,
     repTID: -1,
     repetition: {},
-    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
+    spaRepMaxReviewItem: undefined,
     activeGroup: [],
     autoVerbView: false,
     verbColSplit: 0,
     verbFormsOrder: getVerbFormsArray().map((f) => f.name),
     includeNew: true,
     includeReviewed: true,
+
+    viewGoal: undefined,
   },
 };
 
@@ -96,12 +105,26 @@ export const vocabularyInitState: VocabularyInitSlice = {
 export const getVocabulary = createAsyncThunk(
   "vocabulary/getVocabulary",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const version = state.version.vocabulary ?? "0";
+    const initVersion = ["0", "ce0a"];
+    let version = "0";
+    let tries = 0;
+    while (tries < 3 && initVersion.includes(version)) {
+      const state = thunkAPI.getState() as RootState;
+      version = state.version.vocabulary ?? "0";
 
-    // if (version === "0") {
-    //   console.error("fetching vocabulary: 0");
-    // }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+      tries++;
+    }
+
+    thunkAPI.dispatch(
+      logger(
+        `getVocabulary ${version}`,
+        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
+      )
+    );
 
     const value = (await fetch(dataServiceEndpoint + "/vocabulary.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
@@ -252,7 +275,6 @@ const vocabularySlice = createSlice({
       const allowed = [
         TermSortBy.ALPHABETIC,
         TermSortBy.DIFFICULTY,
-        TermSortBy.GAME,
         TermSortBy.RANDOM,
         TermSortBy.VIEW_DATE,
         TermSortBy.RECALL,
@@ -456,132 +478,39 @@ const vocabularySlice = createSlice({
         payload: { uid, value },
       }),
     },
-    setWordTPCorrect: {
-      reducer: (
-        state: VocabularyInitSlice,
-        action: PayloadAction<{
-          uid: string;
-          tpElapsed: number;
-          pronunciation?: boolean;
-        }>
-      ) => {
-        const { uid, tpElapsed, pronunciation } = action.payload;
 
-        const spaceRep = state.setting.repetition;
-
-        let newPlayCount = 1;
-        let newAccuracy = 1.0;
-        let newCorrAvg = tpElapsed;
-
-        const uidData = spaceRep[uid];
-        if (uidData !== undefined) {
-          const playCount = uidData.tpPc;
-          const accuracy = uidData.tpAcc;
-          const correctAvg = uidData.tpCAvg ?? 0;
-
-          if (playCount !== undefined && accuracy !== undefined) {
-            newPlayCount = playCount + 1;
-
-            const scores = playCount * accuracy;
-            newAccuracy = (scores + 1.0) / newPlayCount;
-
-            const correctCount = scores;
-            const correctSum = correctAvg * correctCount;
-            newCorrAvg = (correctSum + tpElapsed) / (correctCount + 1);
-          }
-        }
-
-        const prevMisPron = pronunciation === true || (uidData?.pron ?? false);
-        const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 }),
-          pron: prevMisPron || undefined,
-          tpPc: newPlayCount,
-          tpAcc: newAccuracy,
-          tpCAvg: newCorrAvg,
-        };
-
-        const newValue = { ...spaceRep, [uid]: o };
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-      },
-      prepare: (
-        uid: string,
-        tpElapsed: number,
-        { pronunciation }: { pronunciation?: boolean } | undefined = {}
-      ) => ({
-        type: "string",
-        payload: { uid, tpElapsed, pronunciation },
-      }),
+    batchRepetitionUpdate(
+      state,
+      action: { payload: Record<string, MetaDataObj | undefined> }
+    ) {
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        {},
+        "/vocabulary/",
+        "repetition",
+        action.payload
+      );
     },
-    setWordTPIncorrect: {
-      reducer: (
-        state: VocabularyInitSlice,
-        action: PayloadAction<{ uid: string; pronunciation?: boolean }>
-      ) => {
-        const { uid, pronunciation } = action.payload;
 
-        const spaceRep = state.setting.repetition;
-
-        let newPlayCount = 1;
-        let newAccuracy = 0;
-
-        const uidData = spaceRep[uid];
-        if (uidData !== undefined) {
-          const playCount = uidData.tpPc;
-          const accuracy = uidData.tpAcc;
-
-          if (playCount !== undefined && accuracy !== undefined) {
-            newPlayCount = playCount + 1;
-
-            const scores = playCount * accuracy;
-            newAccuracy = (scores + 0) / newPlayCount;
-          }
-        }
-
-        const o: MetaDataObj = {
-          ...(spaceRep[uid] ?? { lastView: new Date().toJSON(), vC: 1 }),
-          tpPc: newPlayCount,
-          tpAcc: newAccuracy,
-          pron: pronunciation === true ? true : undefined,
-        };
-
-        const newValue = { ...spaceRep, [uid]: o };
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-      },
-      prepare: (
-        uid: string,
-        { pronunciation }: { pronunciation?: boolean } | undefined = {}
-      ) => ({
-        payload: { uid, pronunciation },
-      }),
-    },
     /**
      * Space Repetition maximum item review
      * per session
      */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
-      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+      const max = action.payload;
 
-      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "spaRepMaxReviewItem",
-        value
-      );
+      if (max === undefined) {
+        localStoreAttrDelete(new Date(), "/vocabulary/", "spaRepMaxReviewItem");
+        state.setting.spaRepMaxReviewItem = undefined;
+      } else {
+        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "spaRepMaxReviewItem",
+          Math.max(SR_MIN_REV_ITEMS, max)
+        );
+      }
     },
     setWordAccuracy: {
       reducer: (
@@ -627,6 +556,25 @@ const vocabularySlice = createSlice({
         "/vocabulary/",
         "includeReviewed"
       );
+    },
+    setGoal(
+      state,
+      action: PayloadAction<VocabularyInitSlice["setting"]["viewGoal"]>
+    ) {
+      const goal = action.payload;
+
+      if (goal !== undefined) {
+        state.setting.viewGoal = localStoreAttrUpdate(
+          new Date(),
+          { vocabulary: state.setting },
+          "/vocabulary/",
+          "viewGoal",
+          goal
+        );
+      } else {
+        state.setting.viewGoal = undefined;
+        localStoreAttrDelete(new Date(), "/vocabulary/", "viewGoal");
+      }
     },
   },
 
@@ -728,9 +676,9 @@ export const {
 
   setWordDifficulty,
   setMemorizedThreshold,
-  setWordTPCorrect,
-  setWordTPIncorrect,
   setSpaRepMaxItemReview,
   setWordAccuracy,
+  setGoal,
+  batchRepetitionUpdate,
 } = vocabularySlice.actions;
 export default vocabularySlice.reducer;

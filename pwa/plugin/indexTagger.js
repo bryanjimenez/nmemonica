@@ -1,6 +1,4 @@
-//@ts-check
 import * as fs from "node:fs";
-// import { /* type */ Compiler, Compilation } from "@rspack/core";
 import ts from "typescript";
 
 // https://webpack.js.org/contribute/writing-a-plugin/
@@ -10,13 +8,13 @@ import ts from "typescript";
  * Inject asset names into index.html
  * Inject meta tags
  *
- * @param {Compiler} compiler
+ * @param {import('@rspack/core').Compiler} compiler
  */
 export async function indexTagHelperPlugin(compiler) {
   const pluginName = "IndexTagHelperPlugin";
   compiler.hooks.thisCompilation.tap(
     pluginName,
-    (/** @type {Compilation} */ compilation) => {
+    (/** @type {import('@rspack/core').Compilation} */ compilation) => {
       const RawSource = compiler.webpack.sources.RawSource;
 
       compilation.hooks.processAssets.tapPromise(

@@ -1,4 +1,5 @@
 import { LinearProgress } from "@mui/material";
+import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
@@ -13,23 +14,21 @@ import React, {
 import { useDispatch, useSelector } from "react-redux";
 
 import { pronounceEndoint } from "../../../environment.development";
-import {
-  daysSince,
-  spaceRepLog,
-  // timedPlayLog,
-} from "../../helper/consoleHelper";
+import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
   getCacheUID,
   getTerm,
   getTermUID,
+  initGoalPending,
   japaneseLabel,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
   // minimumTimeForTimedPlay,
   play,
   termFilterByType,
+  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
@@ -45,6 +44,7 @@ import {
   randomOrder,
 } from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
+import { useBlast } from "../../hooks/useBlast";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -66,7 +66,11 @@ import {
   togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
-import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
+import {
+  DebugLevel,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
@@ -131,6 +135,7 @@ export default function Phrases() {
     romajiActive,
     filterType: filterTypeREF,
     sortMethod: sortMethodREF,
+    viewGoal,
   } = useConnectPhrase();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
@@ -141,11 +146,23 @@ export default function Phrases() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  const goalPending = useRef<number>(-1);
+  const [goalProgress, setGoalProgress] = useState<number | null>(null);
+
   useEffect(() => {
     if (phraseList.length === 0) {
       void dispatch(getPhrase());
     }
+
+    goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
+
+  const { blastElRef, anchorElRef, text, setText } = useBlast({
+    top: 10,
+    fontWeight: "normal",
+    fontSize: "xx-large",
+    color: amber[500],
+  });
 
   const filteredPhrases = useMemo(() => {
     const firstRepObject = metadata.current;
@@ -196,12 +213,21 @@ export default function Phrases() {
     switch (sortMethodREF.current) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
-        const { failed, overdue, overLimit } = spaceRepetitionOrder(
+        const {
+          failed,
+          overdue,
+          overLimit: leftOver,
+        } = spaceRepetitionOrder(
           filtered,
           metadata.current,
           repMinItemReviewREF.current
         );
-        const pending = [...failed, ...overdue];
+        // if *just one* overLimit then add to pending now
+        const overLimit = leftOver.length === 1 ? [] : leftOver;
+        const pending =
+          leftOver.length === 1
+            ? [...failed, ...overdue, ...leftOver]
+            : [...failed, ...overdue];
 
         if (pending.length > 0 && filtered.length !== pending.length) {
           // reduce filtered
@@ -233,7 +259,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 2 (${
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -281,10 +307,10 @@ export default function Phrases() {
 
   const { order, recallGame } = useMemo(() => {
     const repetition = metadata.current;
-    if (filteredPhrases.length === 0) return { order: [] };
+    if (filteredPhrases.length === 0) return { order: [], recallGame: -1 };
 
     let newOrder: number[];
-    let recallGame: number | undefined;
+    let recallGame = -1;
     switch (sortMethodREF.current) {
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredPhrases, repetition);
@@ -301,7 +327,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -330,7 +356,10 @@ export default function Phrases() {
         newOrder = randomOrder(filteredPhrases);
         setLog((l) => [
           ...l,
-          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+          {
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            lvl: DebugLevel.DEBUG,
+          },
         ]);
         break;
     }
@@ -447,6 +476,19 @@ export default function Phrases() {
 
       const p = getTerm(uid, filteredPhrases, phraseList);
 
+      updateDailyGoal({
+        viewGoal,
+        msg: "Phrase Goal Reached!",
+        lastView: metadata.current[uid]?.lastView,
+        selectedIndex,
+        prevSelectedIndex: prevState.selectedIndex,
+        prevTimestamp: prevState.lastNext,
+        progressTotal: filteredPhrases.length,
+        goalPending,
+        setGoalProgress,
+        setText,
+      });
+
       let spaceRepUpdated;
       if (metadata.current[uid]?.difficultyP && accuracyModifiedRef.current) {
         // when difficulty exists and accuracyP has been set
@@ -495,11 +537,8 @@ export default function Phrases() {
               const repStats = { [uid]: { ...value, lastView: prevDate } };
               const messageLog = (m: string, l: number) =>
                 dispatch(logger(m, l));
-              // if (tpAnsweredREF.current !== undefined) {
-              //   timedPlayLog(messageLog, p, repStats, { frequency });
-              // } else {
+
               spaceRepLog(messageLog, p, repStats, { frequency });
-              // }
             });
         }
       });
@@ -528,6 +567,8 @@ export default function Phrases() {
     filteredPhrases,
     order,
     recallGame,
+    setText,
+    viewGoal,
   ]);
 
   // Logger messages
@@ -647,9 +688,10 @@ export default function Phrases() {
   const romaji = phrase.romaji;
 
   const progress = ((selectedIndex + 1) / filteredPhrases.length) * 100;
-  const wasReviewed = metadata.current[uid]?.lastReview;
-  const reviewedToday =
-    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+  const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
+  const viewedToday = wasToday(metadata.current[uid]?.lastView);
+  /** Item reviewed in current game */
+  const alreadyReviewed = recallGame > 0 && viewedToday;
 
   const revNotification = recallNotificationHelper(
     metadata.current[uid]?.daysBetweenReviews,
@@ -658,7 +700,14 @@ export default function Phrases() {
 
   return (
     <React.Fragment>
-      <div className="phrases main-panel h-100">
+      <div
+        className={classNames({
+          "phrases main-panel h-100": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
+        <div className="tooltip-anchor" ref={anchorElRef}></div>
+        <div ref={blastElRef}>{text}</div>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -703,7 +752,7 @@ export default function Phrases() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies,
+          "disabled-color": !cookies || alreadyReviewed,
         })}
       >
         <div className="row opts-max-h">
@@ -785,14 +834,29 @@ export default function Phrases() {
           </div>
         </div>
       </div>
-      <div className="progress-line flex-shrink-1">
+      <div
+        className={classNames({
+          "progress-line flex-shrink-1": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <LinearProgress
-          variant="determinate"
+          // variant="determinate"
           // variant={tpAnimation === null ? "determinate" : "buffer"}
           // value={tpAnimation === null ? progress : 0}
           // valueBuffer={tpAnimation ?? undefined}
-          value={progress}
-          color={phrase_reinforce ? "secondary" : "primary"}
+          variant={goalProgress === null ? "determinate" : "buffer"}
+          value={goalProgress === null ? progress : 0}
+          valueBuffer={goalProgress ?? undefined}
+          // value={progress}
+          // color={phrase_reinforce ? "secondary" : "primary"}
+          color={
+            goalProgress === null
+              ? phrase_reinforce
+                ? "secondary"
+                : "primary"
+              : "warning"
+          }
         />
       </div>
     </React.Fragment>

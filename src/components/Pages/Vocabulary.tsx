@@ -1,7 +1,7 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
+import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import partition from "lodash/partition";
 import type { RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
@@ -16,21 +16,19 @@ import { useDispatch, useSelector } from "react-redux";
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 import { pronounceEndoint } from "../../../environment.development";
-import {
-  daysSince,
-  spaceRepLog,
-  timedPlayLog,
-} from "../../helper/consoleHelper";
+import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getCacheUID,
   getTerm,
   getTermUID,
+  initGoalPending,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
   play,
   termFilterByType,
   toggleFuriganaSettingHelper,
+  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { verbToTargetForm } from "../../helper/JapaneseVerb";
@@ -48,9 +46,9 @@ import {
   difficultyOrder,
   difficultySubFilter,
   randomOrder,
-  spaceRepOrder,
 } from "../../helper/sortHelper";
 import { addParam } from "../../helper/urlHelper";
+import { useBlast } from "../../hooks/useBlast";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -60,7 +58,11 @@ import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch, RootState } from "../../slices";
 import { fetchAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
-import { DebugLevel, TermSortBy } from "../../slices/settingHelper";
+import {
+  DebugLevel,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import {
   addFrequencyWord,
   flipVocabularyPracticeSide,
@@ -153,6 +155,8 @@ export default function Vocabulary() {
     verbForm,
     repetition,
     spaRepMaxReviewItem,
+
+    viewGoal,
   } = useConnectVocabulary();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
@@ -162,11 +166,23 @@ export default function Vocabulary() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  const goalPending = useRef<number>(-1);
+  const [goalProgress, setGoalProgress] = useState<number | null>(null);
+
   useEffect(() => {
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
+
+    goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
+
+  const { blastElRef, anchorElRef, text, setText } = useBlast({
+    top: 10,
+    fontWeight: "normal",
+    fontSize: "xx-large",
+    color: amber[500],
+  });
 
   const { filteredVocab } = useMemo(() => {
     if (vocabList.length === 0) return { filteredVocab: [] };
@@ -211,26 +227,23 @@ export default function Vocabulary() {
     }
 
     switch (sortMethodREF.current) {
-      case TermSortBy.GAME:
-        if (reinforceREF.current) {
-          // if reinforce, place reinforced/frequency terms
-          // at the end
-          const [freqTerms, nonFreqTerms] = partition(
-            filtered,
-            (o) => metadata.current[o.uid]?.rein === true
-          );
-
-          filtered = [...nonFreqTerms, ...freqTerms];
-        }
-        break;
       case TermSortBy.RECALL:
         // discard the nonPending terms
-        const { failed, overdue, overLimit } = spaceRepetitionOrder(
+        const {
+          failed,
+          overdue,
+          overLimit: leftOver,
+        } = spaceRepetitionOrder(
           filtered,
           metadata.current,
           repMinItemReviewREF.current
         );
-        const pending = [...failed, ...overdue];
+        // if *just one* overLimit then add to pending now
+        const overLimit = leftOver.length === 1 ? [] : leftOver;
+        const pending =
+          leftOver.length === 1
+            ? [...failed, ...overdue, ...leftOver]
+            : [...failed, ...overdue];
 
         if (pending.length > 0 && filtered.length !== pending.length) {
           // reduce filtered
@@ -264,7 +277,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 2 (${
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -302,7 +315,6 @@ export default function Vocabulary() {
     filterTypeREF,
     sortMethodREF,
     difficultyThresholdREF,
-    reinforceREF,
     vocabList,
     activeGroup,
     includeNew,
@@ -315,18 +327,21 @@ export default function Vocabulary() {
     jbare,
     recallGame,
   } = useMemo(() => {
-    if (filteredVocab.length === 0) return { newOrder: [] };
+    if (filteredVocab.length === 0) return { newOrder: [], recallGame: -1 };
 
     let newOrder: number[] = [];
     let jOrder: undefined | { uid: string; label: string; idx: number }[];
     let eOrder: undefined | { uid: string; label: string; idx: number }[];
-    let recallGame: number | undefined;
+    let recallGame = -1;
     switch (sortMethodREF.current) {
       case TermSortBy.RANDOM:
         newOrder = randomOrder(filteredVocab);
         setLog((l) => [
           ...l,
-          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+          {
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            lvl: DebugLevel.DEBUG,
+          },
         ]);
 
         break;
@@ -345,48 +360,11 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
 
-        break;
-      case TermSortBy.GAME:
-        if (reinforceREF.current) {
-          // search backwards for splitIdx where [...nonFreqTerms, ...freqTerms]
-          let splitIdx = -1;
-          for (let idx = filteredVocab.length - 1; idx > -1; idx--) {
-            const currEl = metadata.current[filteredVocab[idx].uid];
-            const prevIdx = idx - 1 > -1 ? idx - 1 : 0;
-            const prevEl = metadata.current[filteredVocab[prevIdx].uid];
-            if (currEl?.rein === true && !prevEl?.rein) {
-              splitIdx = idx;
-              break;
-            }
-          }
-
-          if (splitIdx !== -1) {
-            const nonFreqTerms = filteredVocab.slice(0, splitIdx);
-            const freqTerms = filteredVocab.slice(splitIdx);
-
-            const nonFreqOrder = spaceRepOrder(nonFreqTerms, metadata.current);
-            const freqOrder = freqTerms.map((f, i) => nonFreqTerms.length + i);
-            newOrder = [...nonFreqOrder, ...freqOrder];
-          }
-        }
-
-        // not reinforced or no reinforcement terms
-        if (newOrder.length === 0) {
-          newOrder = spaceRepOrder(filteredVocab, metadata.current);
-        }
-
-        setLog((l) => [
-          ...l,
-          {
-            msg: `Space Rep 1 (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
         break;
 
       case TermSortBy.DIFFICULTY:
@@ -396,7 +374,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Difficulty (${newOrder.length})`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -427,7 +405,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `Alphabetic (${newOrder.length})`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -440,7 +418,7 @@ export default function Vocabulary() {
     setScrollJOrder(true);
 
     return { newOrder, jbare: jOrder, ebare: eOrder, recallGame };
-  }, [reinforceREF, sortMethodREF, filteredVocab]);
+  }, [sortMethodREF, filteredVocab]);
 
   // Logger messages
   useEffect(() => {
@@ -533,7 +511,6 @@ export default function Vocabulary() {
 
     loopSettingBtn,
     loopActionBtn,
-    timedPlayVerifyBtn,
 
     timedPlayAnswerHandlerWrapper,
     gradeTimedPlayEvent,
@@ -574,6 +551,19 @@ export default function Vocabulary() {
 
       const vocabulary = getTerm(uid, filteredVocab, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
+
+      updateDailyGoal({
+        viewGoal,
+        msg: "Vocabulary Goal Reached!",
+        lastView: metadata.current[uid]?.lastView,
+        selectedIndex,
+        prevSelectedIndex: prevState.selectedIndex,
+        prevTimestamp: prevState.lastNext,
+        progressTotal: filteredVocab.length,
+        goalPending,
+        setGoalProgress,
+        setText,
+      });
 
       let spaceRepUpdated;
       if (
@@ -630,11 +620,11 @@ export default function Vocabulary() {
               const repStats = { [uid]: { ...value, lastView: prevDate } };
               const messageLog = (m: string, l: number) =>
                 dispatch(logger(m, l));
-              if (tpAnsweredREF.current !== undefined) {
-                timedPlayLog(messageLog, vocabulary, repStats, { frequency });
-              } else {
-                spaceRepLog(messageLog, vocabulary, repStats, { frequency });
-              }
+              // if (tpAnsweredREF.current !== undefined) {
+              //   timedPlayLog(messageLog, vocabulary, repStats, { frequency });
+              // } else {
+              spaceRepLog(messageLog, vocabulary, repStats, { frequency });
+              // }
             });
         }
       });
@@ -666,6 +656,9 @@ export default function Vocabulary() {
     filteredVocab,
     order,
     recallGame,
+
+    setText,
+    viewGoal,
   ]);
 
   // FIXME: implement error handling
@@ -691,8 +684,20 @@ export default function Vocabulary() {
   // }
 
   const getInnerPage = useCallback(
-    (uid: string, vocabulary: RawVocabulary, isVerb: boolean) => (
-      <div className="vocabulary main-panel h-100">
+    (
+      uid: string,
+      vocabulary: RawVocabulary,
+      isVerb: boolean,
+      alreadyReviewed: boolean
+    ) => (
+      <div
+        className={classNames({
+          "vocabulary main-panel h-100": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
+        <div className="tooltip-anchor" ref={anchorElRef}></div>
+        <div ref={blastElRef}>{text}</div>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -731,6 +736,9 @@ export default function Vocabulary() {
       recacheAudio,
       showHint,
       wasPlayed,
+      anchorElRef,
+      blastElRef,
+      text,
     ]
   );
 
@@ -743,12 +751,13 @@ export default function Vocabulary() {
       isHintable: boolean,
       vocabulary_reinforce: boolean,
       reviewedToday: boolean,
+      alreadyReviewed: boolean,
       revNotification?: string
     ) => (
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies,
+          "disabled-color": !cookies || alreadyReviewed,
         })}
       >
         <div className="row opts-max-h">
@@ -788,7 +797,7 @@ export default function Vocabulary() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
-              {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)}
+              {/* {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)} */}
               <Tooltip
                 disabled={!cookies}
                 className={classNames({
@@ -873,7 +882,6 @@ export default function Vocabulary() {
       reinforcedUID,
       resetTimedPlay,
       sortMethodREF,
-      timedPlayVerifyBtn,
     ]
   );
 
@@ -979,9 +987,10 @@ export default function Vocabulary() {
   const isHintable = showHint !== uid && englishSideUp ? hasJHint : hasEHint;
 
   const progress = ((selectedIndex + 1) / filteredVocab.length) * 100;
-  const wasReviewed = metadata.current[uid]?.lastReview;
-  const reviewedToday =
-    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+  const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
+  const viewedToday = wasToday(metadata.current[uid]?.lastView);
+  /** Item reviewed in current game */
+  const alreadyReviewed = recallGame > 0 && viewedToday;
 
   const revNotification = recallNotificationHelper(
     metadata.current[uid]?.daysBetweenReviews,
@@ -990,7 +999,10 @@ export default function Vocabulary() {
 
   const pageLinearProgress = (
     <div
-      className="progress-line flex-shrink-1"
+      className={classNames({
+        "progress-line flex-shrink-1": true,
+        "disabled-color": alreadyReviewed,
+      })}
       onClick={() => {
         if (sortMethodREF.current === TermSortBy.ALPHABETIC) {
           const delayTime = 4000;
@@ -1009,10 +1021,24 @@ export default function Vocabulary() {
       }}
     >
       <LinearProgress
-        variant={tpAnimation === null ? "determinate" : "buffer"}
-        value={tpAnimation === null ? progress : 0}
-        valueBuffer={tpAnimation ?? undefined}
-        color={vocabulary_reinforce ? "secondary" : "primary"}
+        // variant={tpAnimation === null ? "determinate" : "buffer"}
+        // value={tpAnimation === null ? progress : 0}
+        // valueBuffer={tpAnimation ?? undefined}
+        // color={vocabulary_reinforce ? "secondary" : "primary"}
+        variant={
+          goalProgress === null && tpAnimation === null
+            ? "determinate"
+            : "buffer"
+        }
+        value={goalProgress === null && tpAnimation === null ? progress : 0}
+        valueBuffer={tpAnimation ?? goalProgress ?? undefined}
+        color={
+          goalProgress === null
+            ? vocabulary_reinforce
+              ? "secondary"
+              : "primary"
+            : "warning"
+        }
       />
     </div>
   );
@@ -1021,7 +1047,7 @@ export default function Vocabulary() {
   if (!showPageMultiOrderScroller) {
     page = (
       <React.Fragment>
-        {getInnerPage(uid, vocabulary, isVerb)}
+        {getInnerPage(uid, vocabulary, isVerb, alreadyReviewed)}
         {pageOptionBar(
           uid,
           vocabulary,
@@ -1030,6 +1056,7 @@ export default function Vocabulary() {
           isHintable,
           vocabulary_reinforce,
           reviewedToday,
+          alreadyReviewed,
           revNotification
         )}
         {pageLinearProgress}
@@ -1038,7 +1065,7 @@ export default function Vocabulary() {
   } else {
     page = (
       <React.Fragment>
-        {getInnerPage(uid, vocabulary, isVerb)}
+        {getInnerPage(uid, vocabulary, isVerb, alreadyReviewed)}
         {pageMultiOrderScroller}
       </React.Fragment>
     );

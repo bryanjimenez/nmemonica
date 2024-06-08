@@ -1,6 +1,9 @@
-import { Suspense, lazy, useMemo } from "react";
+import classNames from "classnames";
+import { Suspense, lazy, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
+import PlusMinus from "./PlusMinus";
 import {
   getDifficultyCounts,
   getLastViewCounts,
@@ -10,6 +13,10 @@ import {
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { AppDispatch } from "../../slices";
+import { setGoal as setKanjiGoal } from "../../slices/kanjiSlice";
+import { setGoal as setPhraseGoal } from "../../slices/phraseSlice";
+import { setGoal as setVocabularyGoal } from "../../slices/vocabularySlice";
 
 const SettingsStale = lazy(() => import("../Form/SettingsStale"));
 const SettingsFailedFurigana = lazy(
@@ -17,9 +24,12 @@ const SettingsFailedFurigana = lazy(
 );
 
 export default function SettingsStats() {
-  const { repetition: phraseRep } = useConnectPhrase();
-  const { repetition: vocabRep } = useConnectVocabulary();
-  const { repetition: kanjiRep } = useConnectKanji();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { repetition: phraseRep, viewGoal: phraseGoal } = useConnectPhrase();
+  const { repetition: vocabRep, viewGoal: VocabularyGoal } =
+    useConnectVocabulary();
+  const { repetition: kanjiRep, viewGoal: KanjiGoal } = useConnectKanji();
 
   const numberOfDays = 5;
   const {
@@ -62,8 +72,77 @@ export default function SettingsStats() {
     });
   });
 
+  const [[pM, vM, kM], setMultiplier] = useState([1, 1, 1]);
+  const goals = useMemo(
+    () => [
+      {
+        value: phraseGoal,
+        mult: pM,
+        change: (value: number | undefined) => {
+          dispatch(setPhraseGoal(value));
+        },
+        title: "Phrases",
+      },
+      {
+        value: VocabularyGoal,
+        mult: vM,
+        change: (value: number | undefined) => {
+          dispatch(setVocabularyGoal(value));
+        },
+        title: "Vocabulary",
+      },
+      {
+        value: KanjiGoal,
+        mult: kM,
+        change: (value: number | undefined) => {
+          dispatch(setKanjiGoal(value));
+        },
+        title: "Kanji",
+      },
+    ],
+    [dispatch, pM, vM, kM, phraseGoal, VocabularyGoal, KanjiGoal]
+  );
+
   const el = (
     <div className="outer">
+      <h3 className="mt-3 mb-1 fw-light">Goals</h3>
+      <div className="d-flex flex-column flex-sm-row justify-content-between mb-2">
+        <div className="column-1 text-start ps-2 mw-75">
+          Set a goal for each section. A notification will appear when the daily
+          goal (number of items viewed) is reached.
+        </div>
+        <div className="column-2 setting-block">
+          {goals.map(({ value, mult, change, title }, i) => (
+            <div
+              key={title}
+              className="d-flex flex-row justify-content-end mb-3"
+            >
+              <PlusMinus value={value} multiplier={mult} onChange={change}>
+                <div className="fs-5">{title}</div>
+              </PlusMinus>
+              <div className="fs-4 d-flex align-items-center">
+                <div
+                  className={classNames({
+                    clickable: true,
+                    "fw-bold": mult === 10,
+                  })}
+                  onClick={() => {
+                    setMultiplier((m) => {
+                      const updateM: [number, number, number] = [...m];
+                      m[i] === 1 ? (updateM[i] = 10) : (updateM[i] = 1);
+                      return updateM;
+                    });
+                  }}
+                >
+                  {`x${mult}`}
+                  {mult === 1 && <span className="invisible">0</span>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <h3 className="mt-3 mb-1 fw-light">Metrics</h3>
       <div className="d-flex flex-column flex-sm-row justify-content-between">
         <div className="column-1 text-end">
           <table className="w-50">

@@ -2,7 +2,9 @@ import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import type { MetaDataObj, RawKanji, SourceKanji } from "nmemonica";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -11,7 +13,10 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { dataServiceEndpoint } from "../../environment.development";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
   removeAction,
@@ -36,11 +41,13 @@ export interface KanjiInitSlice {
     difficultyThreshold: number;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
-    spaRepMaxReviewItem: number;
+    spaRepMaxReviewItem?: number;
     activeGroup: string[];
     activeTags: string[];
     includeNew: boolean;
     includeReviewed: boolean;
+
+    viewGoal?: number;
 
     // Game
     choiceN: number;
@@ -60,11 +67,13 @@ export const kanjiInitState: KanjiInitSlice = {
     difficultyThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
-    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
+    spaRepMaxReviewItem: undefined,
     activeGroup: [],
     activeTags: [],
     includeNew: true,
     includeReviewed: true,
+
+    viewGoal: undefined,
 
     // Game
     choiceN: 32,
@@ -78,12 +87,26 @@ export const kanjiInitState: KanjiInitSlice = {
 export const getKanji = createAsyncThunk(
   "kanji/getKanji",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const version = state.version.kanji ?? "0";
+    const initVersion = ["0", "c059"];
+    let version = "0";
+    let tries = 0;
+    while (tries < 3 && initVersion.includes(version)) {
+      const state = thunkAPI.getState() as RootState;
+      version = state.version.kanji ?? "0";
 
-    // if (version === "0") {
-    //   console.error("fetching kanji: 0");
-    // }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+      tries++;
+    }
+
+    thunkAPI.dispatch(
+      logger(
+        `getKanji ${version}`,
+        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
+      )
+    );
 
     const value = (await fetch(dataServiceEndpoint + "/kanji.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
@@ -207,7 +230,6 @@ const kanjiSlice = createSlice({
       const allowed = [
         // TermSortBy.ALPHABETIC,
         TermSortBy.DIFFICULTY,
-        // TermSortBy.GAME,
         TermSortBy.RANDOM,
         TermSortBy.VIEW_DATE,
         TermSortBy.RECALL,
@@ -351,20 +373,37 @@ const kanjiSlice = createSlice({
         payload: { uid, value },
       }),
     },
+    batchRepetitionUpdate(
+      state,
+      action: { payload: Record<string, MetaDataObj | undefined> }
+    ) {
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        {},
+        "/kanji/",
+        "repetition",
+        action.payload
+      );
+    },
     /**
      * Space Repetition maximum item review
      * per session
      */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
-      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+      const max = action.payload;
 
-      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
-        new Date(),
-        { kanji: state.setting },
-        "/kanji/",
-        "spaRepMaxReviewItem",
-        value
-      );
+      if (max === undefined) {
+        localStoreAttrDelete(new Date(), "/kanji/", "spaRepMaxReviewItem");
+        state.setting.spaRepMaxReviewItem = undefined;
+      } else {
+        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "spaRepMaxReviewItem",
+          Math.max(SR_MIN_REV_ITEMS, max)
+        );
+      }
     },
     setKanjiBtnN(state, action: { payload: number }) {
       const number = action.payload;
@@ -438,6 +477,25 @@ const kanjiSlice = createSlice({
         "/kanji/",
         "includeReviewed"
       );
+    },
+    setGoal(
+      state,
+      action: PayloadAction<KanjiInitSlice["setting"]["viewGoal"]>
+    ) {
+      const goal = action.payload;
+
+      if (goal !== undefined) {
+        state.setting.viewGoal = localStoreAttrUpdate(
+          new Date(),
+          { kanji: state.setting },
+          "/kanji/",
+          "viewGoal",
+          goal
+        );
+      } else {
+        state.setting.viewGoal = undefined;
+        localStoreAttrDelete(new Date(), "/kanji/", "viewGoal");
+      }
     },
   },
 
@@ -553,6 +611,8 @@ export const {
 
   setKanjiBtnN,
   toggleKanjiFadeInAnswers,
+  setGoal,
+  batchRepetitionUpdate,
 } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;

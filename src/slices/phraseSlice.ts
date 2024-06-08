@@ -18,7 +18,10 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { dataServiceEndpoint } from "../../environment.development";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import {
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/localStorageHelper";
 import {
   SR_MIN_REV_ITEMS,
   removeAction,
@@ -43,13 +46,15 @@ export interface PhraseInitSlice {
     reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
-    spaRepMaxReviewItem: number;
+    spaRepMaxReviewItem?: number;
     frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
     difficultyThreshold: number;
     includeNew: boolean;
     includeReviewed: boolean;
+
+    viewGoal?: number;
   };
 }
 
@@ -65,13 +70,15 @@ export const phraseInitState: PhraseInitSlice = {
     reinforce: false,
     repTID: -1,
     repetition: {},
-    spaRepMaxReviewItem: SR_MIN_REV_ITEMS,
+    spaRepMaxReviewItem: undefined,
     frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
     difficultyThreshold: MEMORIZED_THRLD,
     includeNew: true,
     includeReviewed: true,
+
+    viewGoal: undefined,
   },
 };
 
@@ -179,13 +186,28 @@ export function buildPhraseArray<T extends SourcePhrase>(
 export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
     // TODO: rename state.phrases -> state.phrase
-    const version = state.version.phrases ?? "0";
+    const initVersion = ["0", "0ee3"];
+    let version = "0";
+    let tries = 0;
+    while (tries < 3 && initVersion.includes(version)) {
+      const state = thunkAPI.getState() as RootState;
+      version = state.version.phrases ?? "0";
 
-    // if (version === "0") {
-    //   console.error("fetching phrase: 0");
-    // }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+      tries++;
+    }
+
+    thunkAPI.dispatch(
+      logger(
+        `getPhrase ${version}`,
+        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
+      )
+    );
+
     const jsonValue = (await fetch(dataServiceEndpoint + "/phrases.json", {
       headers: { [SWRequestHeader.DATA_VERSION]: version },
       credentials: "include",
@@ -372,20 +394,37 @@ const phraseSlice = createSlice({
         payload: { uid, value },
       }),
     },
+    batchRepetitionUpdate(
+      state,
+      action: { payload: Record<string, MetaDataObj | undefined> }
+    ) {
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        {},
+        "/phrases/",
+        "repetition",
+        action.payload
+      );
+    },
     /**
      * Space Repetition maximum item review
      * per session
      */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number>) {
-      const value = Math.max(SR_MIN_REV_ITEMS, action.payload);
+    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+      const max = action.payload;
 
-      state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "spaRepMaxReviewItem",
-        value
-      );
+      if (max === undefined) {
+        localStoreAttrDelete(new Date(), "/phrases/", "spaRepMaxReviewItem");
+        state.setting.spaRepMaxReviewItem = undefined;
+      } else {
+        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+          new Date(),
+          { phrases: state.setting },
+          "/phrases/",
+          "spaRepMaxReviewItem",
+          Math.max(SR_MIN_REV_ITEMS, max)
+        );
+      }
     },
     setPhraseAccuracy: {
       reducer: (
@@ -543,6 +582,26 @@ const phraseSlice = createSlice({
         "includeReviewed"
       );
     },
+
+    setGoal(
+      state,
+      action: PayloadAction<PhraseInitSlice["setting"]["viewGoal"]>
+    ) {
+      const goal = action.payload;
+
+      if (goal !== undefined) {
+        state.setting.viewGoal = localStoreAttrUpdate(
+          new Date(),
+          { phrases: state.setting },
+          "/phrases/",
+          "viewGoal",
+          goal
+        );
+      } else {
+        state.setting.viewGoal = undefined;
+        localStoreAttrDelete(new Date(), "/phrases/", "viewGoal");
+      }
+    },
   },
 
   extraReducers: (builder) => {
@@ -638,8 +697,10 @@ export const {
   setPhraseAccuracy,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
+  setGoal,
 
   removeFrequencyPhrase,
   togglePhrasesOrdering,
+  batchRepetitionUpdate,
 } = phraseSlice.actions;
 export default phraseSlice.reducer;

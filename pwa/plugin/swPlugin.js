@@ -1,5 +1,3 @@
-//@ts-check
-// import { /* type */ Compiler, Compilation } from "@rspack/core";
 import md5 from "md5";
 import chalk from "chalk";
 
@@ -10,13 +8,13 @@ import chalk from "chalk";
  * (for caching)
  * at build time
  *
- * @param {Compiler} compiler
+ * @param {import('@rspack/core').Compiler} compiler
  */
 export function serviceWorkerCacheHelperPlugin(compiler) {
   const pluginName = "ServiceWorkerCacheHelperPlugin";
   compiler.hooks.thisCompilation.tap(
     pluginName,
-    (/** @type {Compilation} */ compilation) => {
+    (/** @type {import('@rspack/core').Compilation} */ compilation) => {
       const RawSource = compiler.webpack.sources.RawSource;
       compilation.hooks.processAssets.tapPromise(
         {

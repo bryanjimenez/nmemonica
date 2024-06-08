@@ -13,10 +13,10 @@ import { TimePlayVerifyBtns } from "../components/Form/OptionsBar";
 import { loopN, pause } from "../helper/gameHelper";
 import { setMediaSessionPlaybackState } from "../helper/mediaHelper";
 import type { AppDispatch } from "../slices";
-import {
-  setWordTPCorrect,
-  setWordTPIncorrect,
-} from "../slices/vocabularySlice";
+// import {
+//   setWordTPCorrect,
+//   setWordTPIncorrect,
+// } from "../slices/vocabularySlice";
 
 /* globals NodeJS */
 
@@ -336,24 +336,24 @@ export function useTimedGame(
         if (repetition[uid]?.pron === true) {
           // reset incorrect pronunciation
           if (tpElapsed.current !== undefined) {
-            dispatch(
-              setWordTPCorrect(uid, tpElapsed.current, {
-                pronunciation: undefined,
-              })
-            );
+            // dispatch(
+            //   setWordTPCorrect(uid, tpElapsed.current, {
+            //     pronunciation: undefined,
+            //   })
+            // );
           }
         }
         // else don't grade ... skip
       } else {
         if (tpAnswered.current) {
           if (tpElapsed.current !== undefined) {
-            dispatch(setWordTPCorrect(uid, tpElapsed.current));
+            // dispatch(setWordTPCorrect(uid, tpElapsed.current));
           }
         } else {
-          const reason = {
-            pronunciation: tpBtn === "pronunciation" || undefined,
-          };
-          dispatch(setWordTPIncorrect(uid, reason));
+          // const reason = {
+          //   pronunciation: tpBtn === "pronunciation" || undefined,
+          // };
+          // dispatch(setWordTPIncorrect(uid, reason));
         }
       }
     }

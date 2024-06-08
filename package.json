@@ -37,7 +37,7 @@
     "@floating-ui/react-dom": "^2.0.2",
     "@mui/material": "^5.11.5",
     "@nmemonica/snservice": "file:../nmemonica-snservice/nmemonica-snservice-0.0.1.tgz",
-    "@nmemonica/x-spreadsheet": "^1.0.5",
+    "@nmemonica/x-spreadsheet": "^0.1.1",
     "@popperjs/core": "^2.11.6",
     "@primer/octicons-react": "^19.8.0",
     "@reduxjs/toolkit": "^1.9.1",

@@ -68,7 +68,7 @@ export default function VerbMain(props: VerbMainProps) {
     const tenseRows = tense.map((t) => {
       const tenseClass = classNames({
         clickable: true,
-        // "font-weight-bold": this.props.verbForm === t.t,
+        // "fw-bold": this.props.verbForm === t.t,
       });
 
       const braketClass = classNames({

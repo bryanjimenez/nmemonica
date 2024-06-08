@@ -1,12 +1,20 @@
 import { getLastCellIdx } from "@nmemonica/snservice/src/helper/sheetHelper";
-import type Spreadsheet from "@nmemonica/x-spreadsheet";
-import { SheetData } from "@nmemonica/x-spreadsheet";
+import { type SheetData, type Spreadsheet } from "@nmemonica/x-spreadsheet";
 
 export function getActiveSheet(workbook: Spreadsheet) {
-  // TODO: fix SpreadSheet.getData type
-  const sheets = workbook.exportValues() as SheetData[];
+  const sheets = workbook.exportValues();
 
-  const activeSheetName: string = workbook.bottombar.activeEl.el.innerHTML;
+  if (sheets.length === 1) {
+    const name = sheets[0].name;
+    const data = removeLastRowIfBlank(sheets[0]);
+
+    return { activeSheetName: name, activeSheetData: data };
+  }
+
+  const activeSheetName = workbook.bottombar?.activeEl?.el.innerHTML;
+  if (activeSheetName === undefined) {
+    throw new Error("Expected Sheet name");
+  }
   const activeSheetData =
     sheets.find((sheet) => sheet.name === activeSheetName) ?? sheets[0];
 
@@ -21,21 +29,29 @@ export function getActiveSheet(workbook: Spreadsheet) {
  */
 export function removeLastRowIfBlank<T extends SheetData>(sheet: T) {
   const rows = sheet.rows;
-  if (!sheet.rows || !rows) {
+  if (!sheet.rows || !rows || rows.len === 0) {
     return sheet;
   }
 
   const clone = { ...sheet, rows };
 
+  if (clone.rows.len === undefined) {
+    // TODO: set row length?
+    throw new Error("Expected row length");
+  }
+
   let last = getLastCellIdx(sheet.rows);
 
   while (
     Object.values(sheet.rows[last].cells).every(
-      (cell) => cell.text === undefined || cell.text.length === 0 || cell.text.trim() === ""
+      (cell) =>
+        cell.text === undefined ||
+        cell.text.length === 0 ||
+        cell.text.trim() === ""
     )
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete clone.rows[last];
-    // @ts-expect-error SheetData.rows.len
     clone.rows.len -= 1;
 
     last = getLastCellIdx(clone.rows);
@@ -44,29 +60,30 @@ export function removeLastRowIfBlank<T extends SheetData>(sheet: T) {
   return clone;
 }
 
-export function addExtraRow(xObj: SheetData[]) {
-  const extraAdded = xObj.reduce<SheetData[]>((acc, o) => {
-    let rows = o.rows;
-    if (!rows) {
-      return [...acc, { rows: { "0": { cells: {} } }, len: 1 }];
-    }
+/**
+ * Appends an empty row to a sheet
+ * @param sheet
+ */
+export function sheetAddExtraRow(sheet: SheetData): SheetData {
+  let rows = sheet.rows;
+  if (!rows) {
+    const name = sheet.name ?? "sheet";
+    return { name, rows: { "0": { cells: {} }, len: 1 }, autofilter: {} };
+  }
 
-    const last = getLastCellIdx(rows);
+  const last = getLastCellIdx(rows);
 
-    const n = {
-      ...o,
-      rows: {
-        ...rows,
-        [String(last + 1)]: { cells: {} },
-        // @ts-expect-error SheetData.rows.len
-        len: rows.len + 1,
-      },
-    };
+  const withExtraRow = {
+    ...sheet,
+    rows: {
+      ...rows,
+      [String(last + 1)]: { cells: {} },
+      // @ts-expect-error SheetData.rows.len
+      len: rows.len + 1,
+    },
+  };
 
-    return [...acc, n];
-  }, []);
-
-  return extraAdded;
+  return withExtraRow;
 }
 
 export function searchInSheet(sheet: SheetData, query: string) {

@@ -174,7 +174,7 @@ export default function SettingsStale() {
         </div>
         <div className="px-4">
           <span>
-            {"keys: " + JSON.stringify(Array.from(staleSpaceRepKeys))}
+            {"keys: " + JSON.stringify(Array.from(staleSpaceRepKeys), null, 2)}
           </span>
         </div>
         {sectionStaleSpaceRep && (

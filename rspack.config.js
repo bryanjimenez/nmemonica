@@ -6,11 +6,8 @@ import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
 import { ca } from "@nmemonica/utils/signed-ca";
 import { config } from "@nmemonica/snservice";
-//@ts-expect-error js instead of ts file
 import { appendLicense } from "./license-writer.js";
-//@ts-expect-error js instead of ts file
 import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
-//@ts-expect-error js instead of ts file
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
 const isDev = process.env.NODE_ENV === "development";

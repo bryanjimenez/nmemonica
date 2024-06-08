@@ -21,11 +21,18 @@ export const TermFilterBy = Object.freeze({
 export const TermSortBy = Object.freeze({
   RANDOM: 0,
   ALPHABETIC: 1,
-  VIEW_DATE: 2,
-  GAME: 3,
-  DIFFICULTY: 4,
-  RECALL: 5,
+  DIFFICULTY: 2,
+  VIEW_DATE: 3,
+  RECALL: 4,
 });
+
+export const TermSortByLabel = [
+  "Randomized",
+  "Alphabetic",
+  "Difficulty",
+  "Viewed Date",
+  "Recall Interval",
+];
 
 // enum
 export const KanaType = Object.freeze({
@@ -33,15 +40,6 @@ export const KanaType = Object.freeze({
   KATAKANA: 1,
   MIXED: 2,
 });
-
-export const TermSortByLabel = [
-  "Randomized",
-  "Alphabetic",
-  "Staleness",
-  "Space Rep",
-  "Difficulty",
-  "Recall",
-];
 
 /**
  * Toggle a filter, or override. Skips non-allowed values

@@ -1,5 +1,6 @@
 import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
+import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
@@ -16,14 +17,16 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { daysSince, spaceRepLog } from "../../helper/consoleHelper";
+import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
+  initGoalPending,
   minimumTimeForSpaceRepUpdate,
   play,
   termFilterByType,
+  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import {
@@ -38,6 +41,8 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
+import { getLastViewCounts } from "../../helper/statsHelper";
+import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -59,6 +64,7 @@ import {
   DebugLevel,
   TermFilterBy,
   TermSortBy,
+  TermSortByLabel,
 } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
@@ -108,12 +114,16 @@ export default function Kanji() {
     includeReviewed,
 
     repetition,
+    viewGoal,
   } = useConnectKanji();
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);
 
   const { vocabList } = useConnectVocabulary();
+
+  const goalPending = useRef<number>(-1);
+  const [goalProgress, setGoalProgress] = useState<number | null>(null);
 
   // after initial render
   useEffect(() => {
@@ -123,7 +133,16 @@ export default function Kanji() {
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
+
+    goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
+
+  const { blastElRef, anchorElRef, text, setText } = useBlast({
+    top: 10,
+    fontWeight: "normal",
+    fontSize: "xx-large",
+    color: amber[500],
+  });
 
   /** metadata table ref */
   const metadata = useRef(repetition);
@@ -192,12 +211,21 @@ export default function Kanji() {
     switch (sortMethodREF.current) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
-        const { failed, overdue, overLimit } = spaceRepetitionOrder(
+        const {
+          failed,
+          overdue,
+          overLimit: leftOver,
+        } = spaceRepetitionOrder(
           filtered,
           metadata.current,
           repMinItemReviewREF.current
         );
-        const pending = [...failed, ...overdue];
+        // if *just one* overLimit then add to pending now
+        const overLimit = leftOver.length === 1 ? [] : leftOver;
+        const pending =
+          leftOver.length === 1
+            ? [...failed, ...overdue, ...leftOver]
+            : [...failed, ...overdue];
 
         if (pending.length > 0 && filtered.length !== pending.length) {
           // reduce filtered
@@ -229,7 +257,7 @@ export default function Kanji() {
         setLog((l) => [
           ...l,
           {
-            msg: `Space Rep 2 (${
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -274,17 +302,17 @@ export default function Kanji() {
   ]);
 
   const { order, recallGame } = useMemo(() => {
-    if (filteredTerms.length === 0) return { order: [] };
+    if (filteredTerms.length === 0) return { order: [], recallGame: -1 };
 
     let newOrder: number[];
-    let recallGame: number | undefined;
+    let recallGame = -1;
     switch (sortMethodREF.current) {
       case TermSortBy.DIFFICULTY:
         newOrder = difficultyOrder(filteredTerms, metadata.current);
         setLog((l) => [
           ...l,
           {
-            msg: `Difficulty (${newOrder.length})`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -305,7 +333,7 @@ export default function Kanji() {
         setLog((l) => [
           ...l,
           {
-            msg: `Date Viewed (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -333,7 +361,10 @@ export default function Kanji() {
         /*TermSortBy.RANDOM*/ newOrder = randomOrder(filteredTerms);
         setLog((l) => [
           ...l,
-          { msg: `Random (${newOrder.length})`, lvl: DebugLevel.DEBUG },
+          {
+            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            lvl: DebugLevel.DEBUG,
+          },
         ]);
 
         break;
@@ -476,6 +507,19 @@ export default function Kanji() {
 
       const k = getTerm(uid, filteredTerms);
 
+      updateDailyGoal({
+        viewGoal,
+        msg: "Kanji Goal Reached!",
+        lastView: metadata.current[uid]?.lastView,
+        selectedIndex,
+        prevSelectedIndex: prevState.selectedIndex,
+        prevTimestamp: prevState.lastNext,
+        progressTotal: filteredTerms.length,
+        goalPending,
+        setGoalProgress,
+        setText,
+      });
+
       let spaceRepUpdated;
       if (
         metadata.current[uid]?.difficultyP &&
@@ -498,7 +542,7 @@ export default function Kanji() {
         spaceRepUpdated = Promise.resolve();
       }
 
-      if (recallGame && recallGame > 0 && selectedIndex === recallGame + 1) {
+      if (recallGame > 0 && selectedIndex === recallGame + 1) {
         // just finished recall game
         dispatch(logger("No more pending items", DebugLevel.DEBUG));
       }
@@ -559,6 +603,8 @@ export default function Kanji() {
     filteredTerms,
     order,
     recallGame,
+    setText,
+    viewGoal,
   ]);
 
   // Logger messages
@@ -629,9 +675,10 @@ export default function Kanji() {
   const meaning = <span>{term.english}</span>;
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
-  const wasReviewed = metadata.current[uid]?.lastReview;
-  const reviewedToday =
-    wasReviewed !== undefined && daysSince(wasReviewed) === 0;
+  const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
+  const viewedToday = wasToday(metadata.current[uid]?.lastView);
+  /** Item reviewed in current game */
+  const alreadyReviewed = recallGame > 0 && viewedToday;
 
   const revNotification = recallNotificationHelper(
     metadata.current[uid]?.daysBetweenReviews,
@@ -640,7 +687,12 @@ export default function Kanji() {
 
   let page = (
     <React.Fragment>
-      <div className="kanji main-panel h-100">
+      <div
+        className={classNames({
+          "kanji main-panel h-100": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <div ref={refs.setReference} />
         <div
           ref={refs.setFloating}
@@ -658,6 +710,8 @@ export default function Kanji() {
             <div>{aGroupLevel}</div>
           </div>
         </div>
+        <div className="tooltip-anchor" ref={anchorElRef}></div>
+        <div ref={blastElRef}>{text}</div>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -719,7 +773,7 @@ export default function Kanji() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies,
+          "disabled-color": !cookies || alreadyReviewed,
         })}
       >
         <div className="row opts-max-h">
@@ -773,11 +827,26 @@ export default function Kanji() {
           </div>
         </div>
       </div>
-      <div className="progress-line flex-shrink-1">
+      <div
+        className={classNames({
+          "progress-line flex-shrink-1": true,
+          "disabled-color": alreadyReviewed,
+        })}
+      >
         <LinearProgress
-          variant="determinate"
-          value={progress}
-          color={term_reinforce ? "secondary" : "primary"}
+          // variant="determinate"
+          // value={progress}
+          // color={term_reinforce ? "secondary" : "primary"}
+          variant={goalProgress === null ? "determinate" : "buffer"}
+          value={goalProgress === null ? progress : 0}
+          valueBuffer={goalProgress ?? undefined}
+          color={
+            goalProgress === null
+              ? term_reinforce
+                ? "secondary"
+                : "primary"
+              : "warning"
+          }
         />
       </div>
     </React.Fragment>

@@ -38,9 +38,18 @@ export function useConnectVocabulary() {
     spaRepMaxReviewItem,
     includeNew,
     includeReviewed,
+    viewGoal,
   ] = useSelector<
     RootState,
-    [boolean, boolean, string, number, boolean, boolean]
+    [
+      boolean,
+      boolean,
+      string,
+      number | undefined,
+      boolean,
+      boolean,
+      number | undefined,
+    ]
   >(({ vocabulary }: RootState) => {
     const {
       englishSideUp,
@@ -48,6 +57,7 @@ export function useConnectVocabulary() {
       spaRepMaxReviewItem,
       includeNew,
       includeReviewed,
+      viewGoal,
     } = vocabulary.setting;
 
     const { verbForm } = vocabulary;
@@ -60,6 +70,7 @@ export function useConnectVocabulary() {
       spaRepMaxReviewItem,
       includeNew,
       includeReviewed,
+      viewGoal,
     ];
   }, shallowEqual);
 
@@ -163,6 +174,9 @@ export function useConnectVocabulary() {
     includeNew,
     /** dateViewOrder include terms previously reviewed */
     includeReviewed,
+
+    /** Goal of daily term views */
+    viewGoal,
 
     // Refs ()
     reinforce,

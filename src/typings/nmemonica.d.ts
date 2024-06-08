@@ -87,11 +87,7 @@ declare module "nmemonica" {
     /** Reinforce */ rein?: boolean;
     /** Pronunciation incorrect */ pron?: true;
 
-    /** Timed play play-count */ tpPc?: number;
-    /** Timed play accuracy [0,1] */ tpAcc?: number;
-    /** Timed play correct avg (ms) */ tpCAvg?: number;
-
-    // Space Repetition
+    // Recall Interval
     /**
      * Last date reviewed
      * (Date.toJSON '2020-01-01T01:01:01.001Z')

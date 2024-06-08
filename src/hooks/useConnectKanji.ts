@@ -38,6 +38,7 @@ export function useConnectKanji() {
     spaRepMaxReviewItem,
     includeNew,
     includeReviewed,
+    viewGoal,
   ] = useSelector<
     RootState,
     [
@@ -47,9 +48,10 @@ export function useConnectKanji() {
       number,
       number,
       boolean,
-      number,
+      number | undefined,
       boolean,
       boolean,
+      number | undefined,
     ]
   >(({ kanji }: RootState) => {
     const {
@@ -62,6 +64,7 @@ export function useConnectKanji() {
       spaRepMaxReviewItem,
       includeNew,
       includeReviewed,
+      viewGoal,
     } = kanji.setting;
 
     return [
@@ -74,6 +77,7 @@ export function useConnectKanji() {
       spaRepMaxReviewItem,
       includeNew,
       includeReviewed,
+      viewGoal,
     ];
   }, shallowEqual);
 
@@ -116,6 +120,9 @@ export function useConnectKanji() {
     includeNew,
     /** dateViewOrder include terms previously reviewed */
     includeReviewed,
+
+    /** Goal of daily term views */
+    viewGoal,
 
     // Refs ()
     reinforce,

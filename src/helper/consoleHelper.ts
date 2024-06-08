@@ -1,4 +1,4 @@
-import type { MetaDataObj, RawPhrase, RawVocabulary } from "nmemonica";
+import type { MetaDataObj } from "nmemonica";
 
 import { type ConsoleMessage } from "../components/Form/Console";
 import { DebugLevel } from "../slices/settingHelper";
@@ -15,6 +15,14 @@ export function msgInnerTrim(term: string, len: number) {
       : term.slice(0, split) + "..." + term.slice(-(len - split));
 
   return msg;
+}
+
+/**
+ * Whether the date is today
+ * @param rawDateString Date.toJSON string
+ */
+export function wasToday(rawDateString?: string) {
+  return rawDateString !== undefined && daysSince(rawDateString) === 0;
 }
 
 /**
@@ -73,54 +81,12 @@ export function spaceRepLog<T extends { uid: string; english: string }>(
 
     const views = spaceRepMap[term.uid]?.vC;
     const viewStr = ` ${views ?? 0}v`;
-    const accuracy = spaceRepMap[term.uid]?.tpAcc;
+    const accuracy = spaceRepMap[term.uid]?.accuracyP;
     const accStr =
-      accuracy !== undefined ? " " + (accuracy * 100).toFixed(0) + "%" : "";
+      accuracy !== undefined ? " " + accuracy.toFixed(0) + "%" : "";
 
     logger(
       "Space Rep [" + msg + "]" + freqStr + dayStr + viewStr + accStr,
-      DebugLevel.DEBUG
-    );
-  }
-}
-
-/**
- * UI logger, display timed play play count
- * instead of regular view count
- */
-export function timedPlayLog(
-  logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
-  term: RawVocabulary | RawPhrase,
-  spaceRepMap: Record<string, MetaDataObj | undefined>,
-  options: { frequency: boolean }
-) {
-  const lastDate = spaceRepMap[term.uid]?.lastView;
-  if (lastDate) {
-    const msg = msgInnerTrim(term.english, 30);
-
-    const freqStr = options?.frequency ? " F[w]" : "";
-
-    const diffDays = daysSince(lastDate);
-    const dayStr = ` ${diffDays}d`;
-
-    const views = spaceRepMap[term.uid]?.tpPc;
-    const viewStr = views !== undefined ? ` ${views}v` : "";
-    const accuracy = spaceRepMap[term.uid]?.tpAcc;
-    const accStr =
-      accuracy !== undefined ? " " + (accuracy * 100).toFixed(0) + "%" : "";
-    const correctAvg = spaceRepMap[term.uid]?.tpCAvg;
-    const corAvgStr =
-      correctAvg !== undefined ? " " + answerSeconds(correctAvg) + "s" : "";
-
-    logger(
-      "Timed Play [" +
-        msg +
-        "]" +
-        freqStr +
-        dayStr +
-        viewStr +
-        accStr +
-        corAvgStr,
       DebugLevel.DEBUG
     );
   }

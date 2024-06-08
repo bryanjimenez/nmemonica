@@ -1,3 +1,4 @@
+import { faPlayCircle } from "@fortawesome/free-regular-svg-icons";
 import {
   faBan,
   faDice,
@@ -258,7 +259,6 @@ export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
       className={classNames({
         clickable: true,
         "sm-icon-grp": true,
-        "disabled-color": active,
       })}
       onClick={
         disabled !== true
@@ -271,7 +271,16 @@ export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
       }
       aria-label="Override audio"
     >
-      <FontAwesomeIcon icon={faRecycle} />
+      <FontAwesomeIcon
+        icon={active ? faPlayCircle : faRecycle}
+        className={classNames({ "disabled-color": false })}
+      />
+      <span className="notification">
+        <FontAwesomeIcon
+          icon={active ? faRecycle : faPlayCircle}
+          className={classNames({ "disabled-color": true })}
+        />
+      </span>
     </div>
   );
 }

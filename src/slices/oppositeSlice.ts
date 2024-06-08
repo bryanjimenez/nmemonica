@@ -31,7 +31,7 @@ const oppositeInitState: OppositeInitSlice = {
  */
 export const getOpposite = createAsyncThunk(
   "opposite/getOpposite",
-  async (arg, thunkAPI) => {
+  async (_arg, thunkAPI) => {
     // TODO: avoid fetch if vocabulary already in state
     const { value: vocabulary } = await thunkAPI
       .dispatch(getVocabulary())
