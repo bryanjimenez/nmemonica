@@ -9,8 +9,8 @@ import {
   SWMsgOutgoing,
   SWRequestHeader,
 } from "../../src/helper/serviceWorkerHelper.js";
-import { green } from "@nmemonica/snservice/utils/consoleColor";
-import {config} from "@nmemonica/snservice/utils/config";
+import { green } from "@nmemonica/utils/console";
+import { config } from "@nmemonica/snservice";
 import { initServiceWorker } from "../src/sw.js";
 import { DebugLevel } from "../../src/slices/settingHelper.js";
 import {
@@ -30,8 +30,8 @@ import {
   putIDBItem,
 } from "../helper/idbHelper.js";
 
-const audioPath = config.route.audio
-const dataPath = config.route.data
+const audioPath = config.route.audio;
+const dataPath = config.route.data;
 
 /**
  * After app is built
@@ -42,6 +42,10 @@ const projectRoot = path.resolve();
 const swTemplate = projectRoot + "/pwa/src/sw.js";
 const outputDir = projectRoot + "/dist";
 const swOutFile = outputDir + "/" + path.basename(swTemplate);
+
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir);
+}
 
 const filesToCache = glob
   .sync(`${outputDir}/*.{html,js,css,jpeg,png,ico,webmanifest}`, {

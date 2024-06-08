@@ -1,34 +1,26 @@
 //@ts-check
-const rspack = require("@rspack/core");
-const path = require("path");
-
-const LicenseCheckerWebpackPlugin = require("license-checker-webpack-plugin");
-
-//@ts-expect-error rspack.conf outside of tsconfig
-const { lan } = require("@nmemonica/snservice/utils/host");
-//@ts-expect-error rspack.conf outside of tsconfig
-const { yellow, red } = require("@nmemonica/snservice/utils/consoleColor");
-//@ts-expect-error rspack.conf outside of tsconfig
-const {ca} = require("@nmemonica/snservice/utils/signed-ca");
-//@ts-expect-error rspack.conf outside of tsconfig
-const {config} = require("@nmemonica/snservice/utils/config");
-
-// import { fileURLToPath } from "url";
-// const fileURLToPath = require("url").fileURLToPath;
+import rspack from "@rspack/core";
+import path, { sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
+import { ca } from "@nmemonica/utils/signed-ca";
+import { config } from "@nmemonica/snservice";
 
 // https://www.rspack.dev/config/devtool.html
 // https://www.rspack.dev/guide/migrate-from-webpack.html
 
 // mimic CommonJS variables -- not needed if using CommonJS
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-module.exports = function (env, argv) {
+export default function rspackConfig(
+  /** @type string */ _env,
+  /** @type string[] */ argv
+) {
   const isProduction = process.env.NODE_ENV === "production";
 
-  if (!ca.exists()) {
-    console.log(yellow("Creating Certificate Authority"));
-    ca.create();
+  if (!isProduction && !ca.exists()) {
+    ca.createServer();
   }
 
   return {
@@ -58,13 +50,10 @@ module.exports = function (env, argv) {
         template: `index${isProduction ? ".production" : ""}.html`,
       }),
 
+      // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
-        "process.env.OS_EXT_FACE_IP_ADDRESS": `"${lan.hostname}"`,  // only in env.development
-        "process.env.isSelfSignedCA": `${ca.exists()}`,             // env.dev only
-        "process.env.SERVICE_PORT": ca.exists()                     // env.dev only
-          ? config.port.https
-          : config.port.http,
-        "process.env.UI_PORT": config.port.ui,                      // env.dev only
+        "process.env.SERVICE_HOSTNAME": `"${config.service.hostname}"`, // only in env.development
+        "process.env.SERVICE_PORT": String(config.service.port), //        env.dev only
       }),
     ],
 
@@ -90,9 +79,8 @@ module.exports = function (env, argv) {
               {
                 // https://rspack.org/guide/loader.html#using-a-custom-loader
                 test: /\.(jsx?|tsx?)$/i,
-                // loader: require.resolve('./normal-module-replacement.cjs'),
-                use: (info) => ({
-                  loader: require.resolve("./environment-dep-replace.cjs"),
+                use: (/** @type unknown*/ _info) => ({
+                  loader: "./environment-dep-replace.cjs",
                   options: {
                     loaderOptionParam: "paramValue",
                   },
@@ -116,15 +104,15 @@ module.exports = function (env, argv) {
             // https://webpack.js.org/configuration/dev-server/#devserverhttps
             type: "https",
             options: {
-              key: `${config.directory.ca}/${config.ca.server.key}`,
-              cert: `${config.directory.ca}/${config.ca.server.crt}`,
+              key: `${config.directory.ca}${sep}${config.ca.server.key}`,
+              cert: `${config.directory.ca}${sep}${config.ca.server.crt}`,
             },
           }
         : {},
 
-      port: config.port.ui || 8080, // Port Number
-      host: lan.hostname, //"0.0.0.0", //external facing server
+      port: config.ui.port || 8080, // Port Number
+      host: config.service.hostname, //"0.0.0.0", //external facing server
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };
-};
+}
