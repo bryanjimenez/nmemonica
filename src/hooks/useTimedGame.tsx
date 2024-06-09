@@ -330,7 +330,7 @@ export function useTimedGame(
   const getElapsedTimedPlay = useCallback(() => {
     let tpElapsed;
 
-    // FIXME: can't dispatch action to log here
+    // TODO: can't dispatch action to log here
 
     // const uid =
     //   this.state.reinforcedUID ||
