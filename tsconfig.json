@@ -12,7 +12,7 @@
   "include": [
     "./rspack.config.js",
     "./rspack.config.sw.js",
-    "./license-writer.js"
+    "./dep-license-writer.js"
   ],
   "references": [{ "path": "./src" }, { "path": "./pwa" }]
 }

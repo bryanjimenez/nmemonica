@@ -1,4 +1,7 @@
 import lineByLine from "n-readlines";
+/**
+ * LicenseCheckerWebpackPlugin.outputWriter implementation
+ */
 
 /**
  * @typedef {Object} DependencyBlock
@@ -45,8 +48,6 @@ export function appendLicense(lic /*:{dependencies:DependencyBlock[]}*/) {
  * @param {string} filePath
  */
 function fromComment(/** @type string */ filePath /*:string*/) {
-  // const input = fs.createReadStream(filePath, { encoding: "utf-8" });
-
   const l = new lineByLine(filePath);
   let line2;
   let lineNumber = 0;
@@ -69,7 +70,6 @@ function fromComment(/** @type string */ filePath /*:string*/) {
       } else if (reactSlickCodeLicense.length > 0) {
         header = false;
         l.close();
-        // resolve(reactSlickCodeLicense);
       }
     } else if (header === null) {
       throw new Error("Expected Software License");
@@ -77,37 +77,6 @@ function fromComment(/** @type string */ filePath /*:string*/) {
   }
 
   return reactSlickCodeLicense;
-
-  /*
-  const lineReader = createInterface({
-    input,
-    terminal: false,
-  });
-
-  return await new Promise<string>((resolve, reject) => {
-    let reactSlickCodeLicense = "";
-    let header:null|boolean = null;
-
-    lineReader.on("line", (line) => {
-      if (header === null && line.startsWith("/**")) {
-        header = true;
-      }
-
-      if (header === true) {
-        const space = line.startsWith(" * ") ? 3 : line === " *" ? 2 : 0;
-        if (space > 0) {
-          reactSlickCodeLicense += line.slice(space) + "\n";
-        } else if (reactSlickCodeLicense.length > 0) {
-          header = false;
-          lineReader.close();
-          resolve(reactSlickCodeLicense);
-        }
-      } else if (header === null) {
-        throw new Error("Expected Software License");
-      }
-    });
-  });
-  */
 }
 
 /**
