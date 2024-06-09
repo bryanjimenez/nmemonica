@@ -583,6 +583,14 @@ export default function Phrases() {
     // timedPlayAnswerHandlerWrapper
   );
 
+  const addFrequencyTermCB = useCallback(
+    (uid: string) => {
+      setFrequency((f) => [...f, uid]);
+      buildAction(dispatch, addFrequencyPhrase)(uid);
+    },
+    [dispatch]
+  );
+
   if (recallGame === 0)
     return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (filteredPhrases.length < 1 || order.length < 1)
@@ -784,13 +792,7 @@ export default function Phrases() {
               />
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
-                addFrequencyTerm={
-                  // TODO: memoize me
-                  (uid) => {
-                    setFrequency((f) => [...f, uid]);
-                    buildAction(dispatch, addFrequencyPhrase)(uid);
-                  }
-                }
+                addFrequencyTerm={addFrequencyTermCB}
                 removeFrequencyTerm={(uid) => {
                   setFrequency((f) => f.filter((id) => id !== uid));
                   buildAction(dispatch, removeFrequencyPhrase)(uid);
