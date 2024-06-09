@@ -113,8 +113,6 @@ export default function Vocabulary() {
   const prevSelectedIndex = useRef(0);
 
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
-  // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
-  // const [errorSkipIndex, setErrorSkipIndex] = useState(-1);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef<number>(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -431,10 +429,6 @@ export default function Vocabulary() {
     const l = filteredVocab.length;
     let newSel = (selectedIndex + 1) % l;
 
-    // if (newSel === errorSkipIndex) {
-    //   newSel = (l + newSel + 1) % l;
-    // }
-
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
     prevSelectedIndex.current = selectedIndex;
@@ -475,10 +469,6 @@ export default function Vocabulary() {
     } else {
       newSel = (l + i) % l;
     }
-
-    // if (newSel === errorSkipIndex) {
-    //   newSel = (l + newSel - 1) % l;
-    // }
 
     prevLastNext.current = lastNext;
     setLastNext(Date.now());
@@ -642,7 +632,6 @@ export default function Vocabulary() {
       }
 
       setShowHint(undefined);
-      // setErrorMsgs([]);
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
       accuracyModifiedRef.current = undefined;
@@ -666,28 +655,6 @@ export default function Vocabulary() {
     viewGoal,
     lastNext,
   ]);
-
-  // FIXME: implement error handling
-  // if (errorMsgs.length > 0) {
-  //   const minState = logify(this.state);
-  //   const minProps = logify(this.props);
-
-  //   const messages = [
-  //     ...errorMsgs,
-  //     { msg: "props:", lvl: DebugLevel.WARN, css: "px-2" },
-  //     { msg: minProps, lvl: DebugLevel.WARN, css: "px-4" },
-  //     { msg: "state:", lvl: DebugLevel.WARN, css: "px-2" },
-  //     { msg: minState, lvl: DebugLevel.WARN, css: "px-4" },
-  //   ];
-
-  //   return (
-  //     <MinimalUI next={gotoNext} prev={gotoPrev}>
-  //       <div className="d-flex flex-column justify-content-around">
-  //         <Console messages={messages} />
-  //       </div>
-  //     </MinimalUI>
-  //   );
-  // }
 
   const getInnerPage = useCallback(
     (

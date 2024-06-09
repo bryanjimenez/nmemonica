@@ -73,8 +73,6 @@ function componentDidCatch(dispatch: AppDispatch, error: Error) {
           )
         );
         dispatch(toggleVocabularyActiveGrp(stale));
-        // FIXME: componentDidCatch setState
-        // this.setState({ errorMsgs: [] });
       }
 
       break;
@@ -89,8 +87,6 @@ function componentDidCatch(dispatch: AppDispatch, error: Error) {
           )
         );
         dispatch(togglePhraseActiveGrp(stale));
-        // FIXME: componentDidCatch setState
-        // this.setState({ errorMsgs: [] });
       }
 
       break;
@@ -175,7 +171,6 @@ export default function Settings() {
   const [swVersion, setSwVersion] = useState("");
   const [jsVersion, setJsVersion] = useState("");
   const [bundleVersion, setBundleVersion] = useState("");
-  // const [errorMsgs, setErrorMsgs] = useState<ConsoleMessage[]>([]);
   const [shakeIntensity, setShakeIntensity] = useState<number | undefined>(0);
 
   useEffect(
@@ -256,27 +251,6 @@ export default function Settings() {
       : "";
 
   const version = process.env.APP_VERSION + hash;
-  // FIXME: errorMsgs component
-  // if (errorMsgs.length > 0) {
-  //   const minState = logify(this.state);
-  //   const minProps = logify(this.props);
-
-  //   const messages = [
-  //     ...errorMsgs,
-  //     { msg: "props:", lvl: DebugLevel.WARN, css: "px-2" },
-  //     { msg: minProps, lvl: DebugLevel.WARN, css: "px-4" },
-  //     { msg: "state:", lvl: DebugLevel.WARN, css: "px-2" },
-  //     { msg: minState, lvl: DebugLevel.WARN, css: "px-4" },
-  //   ];
-
-  //   return (
-  //     <div>
-  //       <div className="d-flex flex-column justify-content-around">
-  //         <Console messages={messages} />
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   const clickableSectionClass = classNames({
     "d-flex justify-content-between": true,
@@ -392,15 +366,16 @@ export default function Settings() {
                     className={classNames({
                       "px-2": true,
                       "correct-color":
-                        shakeIntensity &&
+                        typeof shakeIntensity === "number" &&
                         shakeIntensity > motionThreshold &&
                         shakeIntensity <= motionThreshold + 1,
                       "question-color":
-                        shakeIntensity &&
+                        typeof shakeIntensity === "number" &&
                         shakeIntensity > motionThreshold + 1 &&
                         shakeIntensity <= motionThreshold + 2,
                       "incorrect-color":
-                        shakeIntensity && shakeIntensity > motionThreshold + 2,
+                        typeof shakeIntensity === "number" &&
+                        shakeIntensity > motionThreshold + 2,
                     })}
                   >
                     {shakeIntensity ?? motionThreshold}
