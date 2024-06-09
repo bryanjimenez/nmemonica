@@ -1,9 +1,9 @@
 # [Nmemonica](https://bryanjimenez.github.io/nmemonica)
->English - Japanese language learning app  
+> English - Japanese language learning app  
 
->Note:
-Nmemonica is a PWA and uses the Service Worker API [(MDN docs)](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) which is only enabled over HTTPS.  
-Nmemonica uses local storage and indexedDB (cookie technologies) to store user app data.
+> [!Note]  
+> Nmemonica is a PWA and uses the Service Worker API [(MDN docs)](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) which is only enabled over HTTPS.  
+> Nmemonica uses local storage and indexedDB (cookie technologies) to store user app data.
 
 This repo contains the UI's source code for [Nmemonica](https://bryanjimenez.github.io/nmemonica). The service documentation can be found here ([snservice](https://github.com/bryanjimenez/snservice/blob/main/README.md)).
 
@@ -19,9 +19,10 @@ This repo contains the UI's source code for [Nmemonica](https://bryanjimenez.git
 1. `cd ./nmemonica`
 1. `npm install`
 
->Note: [@nmemonica/snservice](https://github.com/bryanjimenez/snservice) (local development service) is installed as a dependency which enables:  
-Testing and backing up your data locally.  
-Editing your datasets on a desktop and viewing the app on a mobile device. See [snservice README.md](https://github.com/bryanjimenez/snservice/blob/main/README.md)
+> [!Note]  
+> [@nmemonica/snservice](https://github.com/bryanjimenez/snservice) (local development service) is installed as a dependency which enables:
+> - Testing and backing up your data locally.  
+> - Editing your datasets on a desktop and viewing the app on a mobile device. See [snservice README.md](https://github.com/bryanjimenez/snservice/blob/main/README.md)
 
 ### Running locally
 1. `npm run service`
@@ -32,7 +33,7 @@ Editing your datasets on a desktop and viewing the app on a mobile device. See [
 After loading the application for the first time you will likely want to add study material (Phrases, Vocabulary and Kanji). Most parts of the app depend on user created study material with the exception of the Kana/Hiragana/Katakana game. To add study material see the [Edit](#Edit) section.
 
 ### Navigation
-The Navigation Menu is accessed by clicking the hamburger icon {% octicon "three-bars" %} located at the top right of the app. The Navigation Menu displays the different areas of the app that can be reached by clicking their corresponding icon. Some areas are grouped together under one icon. The items under a group can be accessed by clicking on the caption under the group's icon. For example under the Kanji icon the caption will either display "Kanji" or "Kanji Game".
+The Navigation Menu is accessed by clicking the hamburger icon ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/three-bars-24.svg "Menu Button") located at the top right of the app. The Navigation Menu displays the different areas of the app that can be reached by clicking their corresponding icon. Some areas are grouped together under one icon. The items under a group can be accessed by clicking on the caption under the group's icon. For example under the Kanji icon the caption will either display "Kanji" or "Kanji Game".
 
 | Group | Sections | Description |
 | ----- | -------- | ----------- |
@@ -55,7 +56,8 @@ This is a multiple choice game. A term is displayed and several options given. T
 
 Data for this game comes from the Vocabulary dataset. To add additional game entries in the Vocabulary dataset under the Opposites column add the uid of the term that is opposite word to the currently selected term.
 
-> **Note**: The term's uid is generated using the `md5` formula.
+> [!Note]  
+> The term's uid is generated using the `md5` formula.
 
 For example:
 
@@ -71,9 +73,9 @@ For example:
 URL: [/#/vocabulary](https://bryanjimenez.github.io/nmemonica/#/vocabulary)  
 This page will display a list of pairs of vocabulary words (English + Japanese) as if seen on a deck of cards. The order and filtering of the list can be configured from the settings page (under Vocabulary). In touch screen devices swiping horizontally will move through out the deck and vertically will play the pronunciation of the word.
 
-> **Note**: Vocabulary words can be tagged with basic categories or special indicators (indicated below by highlighted text under the Tags column).
-
-> **Note**: Vocabulary words in Japanese can be added with furigana by including the pronunciation followed by a new line then the kanji characters. To add a line break inside a cell type `\n`. 
+> [!Note]  
+> Vocabulary words can be tagged with basic categories or special indicators (indicated below by highlighted text under the Tags column).  
+> Furigana can be added to Vocabulary words in Japanese by including the pronunciation followed by a new line then the kanji characters. To add a line break inside a cell type `\n`. 
 
 ||A|B|C||
 | ------ | -------------- | ----------- | -------- | ------------- |
@@ -99,7 +101,8 @@ This page will display a list of pairs of vocabulary words (English + Japanese) 
 URL: [/#/phrases](https://bryanjimenez.github.io/nmemonica/#/phrases)  
 This page is nearly identical to the vocabulary page with the exception that it will display phrases.
 
-> **Note**: Phrases can be tagged with basic categories or special indicators. The special indicator for polite phrase is to include a `。` at the end of a phrase.
+> [!Note]  
+> Phrases can be tagged with basic categories or special indicators. The special indicator for polite phrase is to include a `。` at the end of a phrase.
 
 ### Particles Game
 URL: [/#/particles](https://bryanjimenez.github.io/nmemonica/#/particles)  
@@ -129,8 +132,8 @@ Kanji can be tagged with the basic categories or special indicators (indicated h
 
 
 ### Settings Page
-> Application and user settings will be found here.  
 URL: [/#/settings](https://bryanjimenez.github.io/nmemonica/#/settings)  
+Application and user settings will be found here.  
 
 - Application basic settings  
 - Game difficulty settings  
@@ -138,21 +141,23 @@ URL: [/#/settings](https://bryanjimenez.github.io/nmemonica/#/settings)
 - Usage Terms and Policies
 
 ### Edit
-> Your study material in spreadsheet format. Data entry/edit page and [Dataset Action Menu](#dataset-action-menu).  
 URL: [/#/sheet](https://bryanjimenez.github.io/nmemonica/#/sheet)  
+Your study material in spreadsheet format. Data entry/edit page and [Dataset Action Menu](#dataset-action-menu).  
 
-> **Note**: Datasets **won't** be saved **until** the save button is pressed.
+> [!Important]  
+> Datasets **won't** be saved **until** the save button is pressed.  
+> Inside a cell multiple tags need to be separated using a `;` or `\n` (line break)  
 
-> **Note**: To add a line break inside a cell use `\n` or multiple consecutive spaces.
+> [!Note]  
+> To add a line break inside a cell use `\n` or multiple consecutive spaces.  
+> To generate a term's uid use the `md5` formula providing the cell ref to the Japanese pronunciation. For example: `=md5(A6)`  
 
-> **Note**: To generate a term's uid use the `md5` formula providing the cell ref to the Japanese pronunciation. For example: `=md5(A6)`
 
-> **Note**: Inside a cell multiple tags need to be separated using a `;` or `\n` (line break)
-
-This page contains the phrases, vocabulary and kanji datasets. The user can edit these to include the desired items to study. Datasets can be saved and shared as CSV files and searched {% octicon "search" %} using the corresponding buttons. 
+This page contains the phrases, vocabulary and kanji datasets. The user can edit these to include the desired items to study. Datasets can be saved and shared as CSV files and searched ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/search-24.svg "Search Button")  using the corresponding buttons. 
 
 The Dataset structure can be downloaded and data can be entered using a spread sheet software.
-> **Note**: spread sheet must be saved as CSV file in order to imported once again.
+> [!Important]  
+> Spread sheet must be saved as CSV file in order to be imported once again.
 
 Minimal **spreadsheet formula knowledge** is required to tag terms.  
 For example:  
@@ -167,11 +172,11 @@ The Sync Service is a data relay between two users. Any user can share their UGC
 
 | Action | Description | Icon |
 | ----- | -------- | ----------- |
-| Save Changes | Saves your changes | {% octicon "database" %} |
-| Import from File | Import Datasets or settings from file system| {% octicon "file" %} |
-| Import from Sync | Import shared Datasets from Sync (need: share ID and Key)| {% octicon "cloud" %}|
-| Export to File | Backup your Datasets and settings to the file system | {% octicon "file-zip" %}|
-| Export to Sync | Export and share Datasets using Sync (provide the recipiant the share ID and Key) |{% octicon "cloud" %} |
+| Save Changes | Saves your changes | ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/database-24.svg "Save Button") |
+| Import from File | Import Datasets or settings from file system| ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/file-binary-24.svg "File Button") |
+| Import from Sync | Import shared Datasets from Sync (need: share ID and Key)| ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Import Button") |
+| Export to File | Backup your Datasets and settings to the file system | ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/file-zip-24.svg "Export Button")|
+| Export to Sync | Export and share Datasets using Sync (provide the recipiant the share ID and Key) |![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Export Button") |
 
 
 ## Credits
