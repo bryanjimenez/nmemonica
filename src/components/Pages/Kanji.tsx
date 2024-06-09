@@ -499,7 +499,8 @@ export default function Kanji() {
 
     if (
       reinforcedUID !== prevState.reinforcedUID ||
-      selectedIndex !== prevState.selectedIndex
+      selectedIndex !== prevState.selectedIndex ||
+      lastNext !== prevState.lastNext
     ) {
       const uid =
         prevState.reinforcedUID ??
@@ -540,11 +541,6 @@ export default function Kanji() {
           });
       } else {
         spaceRepUpdated = Promise.resolve();
-      }
-
-      if (recallGame > 0 && selectedIndex === recallGame + 1) {
-        // just finished recall game
-        dispatch(logger("No more pending items", DebugLevel.DEBUG));
       }
 
       void spaceRepUpdated.then((payload) => {
@@ -605,6 +601,7 @@ export default function Kanji() {
     recallGame,
     setText,
     viewGoal,
+    lastNext,
   ]);
 
   // Logger messages

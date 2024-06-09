@@ -468,7 +468,8 @@ export default function Phrases() {
 
     if (
       reinforcedUID !== prevState.reinforcedUID ||
-      selectedIndex !== prevState.selectedIndex
+      selectedIndex !== prevState.selectedIndex ||
+      lastNext !== prevState.lastNext
     ) {
       const uid =
         prevState.reinforcedUID ??
@@ -569,6 +570,7 @@ export default function Phrases() {
     recallGame,
     setText,
     viewGoal,
+    lastNext,
   ]);
 
   // Logger messages

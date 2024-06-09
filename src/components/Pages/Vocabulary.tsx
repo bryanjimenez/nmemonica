@@ -543,7 +543,8 @@ export default function Vocabulary() {
 
     if (
       reinforcedUID !== prevState.reinforcedUID ||
-      selectedIndex !== prevState.selectedIndex
+      selectedIndex !== prevState.selectedIndex ||
+      lastNext !== prevState.lastNext
     ) {
       const uid =
         prevState.reinforcedUID ??
@@ -659,6 +660,7 @@ export default function Vocabulary() {
 
     setText,
     viewGoal,
+    lastNext,
   ]);
 
   // FIXME: implement error handling
