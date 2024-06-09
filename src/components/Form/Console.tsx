@@ -1,5 +1,4 @@
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
@@ -125,8 +124,3 @@ export default function Console(props: ConsoleProps) {
     </div>
   );
 }
-
-Console.propTypes = {
-  connected: PropTypes.bool,
-  messages: PropTypes.array,
-};

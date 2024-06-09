@@ -8,7 +8,6 @@ import {
 } from "@mui/material";
 import { KebabHorizontalIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import React, { useEffect, useRef, useState } from "react";
 
 interface SimpleListMenuProps {
@@ -126,12 +125,3 @@ export default function SimpleListMenu(props: SimpleListMenuProps) {
     </div>
   );
 }
-
-SimpleListMenu.propTypes = {
-  disabled: PropTypes.bool,
-  flip: PropTypes.bool,
-  title: PropTypes.string,
-  options: PropTypes.arrayOf(PropTypes.string),
-  initial: PropTypes.number,
-  onChange: PropTypes.func,
-};

@@ -1,5 +1,4 @@
 import { UnmuteIcon } from "@primer/octicons-react";
-import PropTypes from "prop-types";
 
 import { pronounceEndoint } from "../../../environment.development";
 import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
@@ -53,17 +52,3 @@ export default function AudioItem(props: AudioItemProps) {
   );
 }
 
-AudioItem.defaultProps = {
-  visible: false,
-};
-
-AudioItem.propTypes = {
-  word: PropTypes.shape({
-    tl: PropTypes.string.isRequired, // target language used in req
-    q: PropTypes.string.isRequired, // query used in req
-    uid: PropTypes.string.isRequired, // index used in cache
-  }).isRequired,
-  reCache: PropTypes.bool,
-  onPushedPlay: PropTypes.func,
-  visible: PropTypes.bool,
-};

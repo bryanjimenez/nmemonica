@@ -1,5 +1,4 @@
 import { Button } from "@mui/material";
-import PropTypes from "prop-types";
 import React from "react";
 import "../../css/StackNavButton.css";
 
@@ -33,12 +32,5 @@ export function StackNavButton(props: StackNavButtonProps) {
     </Button>
   );
 }
-
-StackNavButton.propTypes = {
-  action: PropTypes.func.isRequired,
-  color: PropTypes.string,
-  ariaLabel: PropTypes.string.isRequired,
-  children: PropTypes.object.isRequired,
-};
 
 export default StackNavButton;

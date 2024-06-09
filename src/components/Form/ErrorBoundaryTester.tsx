@@ -1,6 +1,5 @@
 /* eslint-disable */
 
-import PropTypes from "prop-types";
 
 {
   /* <ErrorBoundaryTester
@@ -22,8 +21,3 @@ export function ErrorBoundaryTester(props: ErrorBoundaryTesterProps) {
   }
   return <span>ErrorBoundaryTester</span>;
 }
-
-ErrorBoundaryTester.propTypes = {
-  when: PropTypes.bool,
-  what: PropTypes.func,
-};

@@ -1,7 +1,6 @@
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 
 interface PlusMinusProps {
   children?: React.JSX.Element | React.JSX.Element[];
@@ -63,7 +62,3 @@ export default function PlusMinus(props: PlusMinusProps) {
     </div>
   );
 }
-
-PlusMinus.propTypes = {
-  value: PropTypes.number,
-};

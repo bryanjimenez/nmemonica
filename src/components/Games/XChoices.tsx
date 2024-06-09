@@ -1,6 +1,5 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import React, { useCallback, useReducer } from "react";
 
 import type { GameChoice, GameQuestion } from "./FourChoices";
@@ -137,12 +136,3 @@ export default function XChoices(props: XChoicesProps) {
     </div>
   );
 }
-
-XChoices.propTypes = {
-  question: PropTypes.object,
-  isCorrect: PropTypes.func.isRequired,
-  choices: PropTypes.array,
-
-  gotoNext: PropTypes.func.isRequired,
-  gotoPrev: PropTypes.func.isRequired,
-};

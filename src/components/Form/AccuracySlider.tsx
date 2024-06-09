@@ -1,5 +1,4 @@
 import { Slider } from "@mui/material";
-import PropTypes from "prop-types";
 import { useEffect, useRef, useState } from "react";
 
 import { SR_CORRECT_TRESHHOLD } from "../../helper/recallHelper";
@@ -77,9 +76,3 @@ export function AccuracySlider(props: AccuracySliderProps) {
     </div>
   );
 }
-
-AccuracySlider.propTypes = {
-  accuracy: PropTypes.number,
-  onChange: PropTypes.func,
-  resetOn: PropTypes.string,
-};

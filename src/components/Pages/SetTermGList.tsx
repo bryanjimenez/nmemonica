@@ -1,6 +1,5 @@
 import orderBy from "lodash/orderBy";
 import type { GroupListMap } from "nmemonica";
-import PropTypes from "prop-types";
 import React from "react";
 
 import { GroupItem } from "../Form/GroupItem";
@@ -58,9 +57,3 @@ export function SetTermGList(props: SetTermGListProps) {
     </div>
   );
 }
-
-SetTermGList.propTypes = {
-  termsGroups: PropTypes.object,
-  termsActive: PropTypes.array,
-  toggleTermActiveGrp: PropTypes.func,
-};

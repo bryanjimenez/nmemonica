@@ -1,5 +1,4 @@
 import { Slider } from "@mui/material";
-import PropTypes from "prop-types";
 import React, { useState } from "react";
 import "../../css/VocabularyOrderSlider.css";
 
@@ -44,9 +43,3 @@ export default function VocabularyOrderSlider(
     </div>
   );
 }
-
-VocabularyOrderSlider.propTypes = {
-  initial: PropTypes.number.isRequired,
-  list: PropTypes.array.isRequired,
-  setIndex: PropTypes.func.isRequired,
-};

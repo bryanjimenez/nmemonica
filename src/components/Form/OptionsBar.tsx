@@ -16,7 +16,6 @@ import {
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
-import PropTypes from "prop-types";
 import React, { memo, useEffect, useRef } from "react";
 
 import { useForceRender } from "../../hooks/useFade";
@@ -67,15 +66,6 @@ export function ToggleFuriganaBtn(props: ToggleFuriganaBtnProps) {
     </div>
   );
 }
-
-ToggleFuriganaBtn.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
-  toggle: PropTypes.bool,
-  toggleFurigana: PropTypes.func,
-  hasFurigana: PropTypes.bool,
-  vocabulary: PropTypes.object,
-};
 
 interface ToggleFrequencyTermBtnProps {
   disabled?: boolean;
@@ -160,16 +150,6 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
   );
 }
 
-ToggleFrequencyTermBtn.propTypes = {
-  visible: PropTypes.bool,
-  isReinforced: PropTypes.bool,
-  addFrequencyTerm: PropTypes.func,
-  removeFrequencyTerm: PropTypes.func,
-  hasReinforce: PropTypes.bool,
-  term: PropTypes.object,
-  count: PropTypes.number,
-};
-
 export const ToggleFrequencyTermBtnMemo = memo(ToggleFrequencyTermBtn);
 
 interface ShowHintBtnProps {
@@ -206,12 +186,6 @@ export function ShowHintBtn(props: ShowHintBtnProps) {
   );
 }
 
-ShowHintBtn.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
-  setShowHint: PropTypes.func,
-};
-
 interface ToggleAutoVerbViewBtnProps {
   disabled?: boolean;
   visible?: boolean;
@@ -236,13 +210,6 @@ export function ToggleAutoVerbViewBtn(props: ToggleAutoVerbViewBtnProps) {
     </div>
   );
 }
-
-ToggleAutoVerbViewBtn.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
-  toggleAutoVerbView: PropTypes.func,
-  autoVerbView: PropTypes.bool,
-};
 
 interface ReCacheAudioBtnProps {
   disabled?: boolean;
@@ -285,12 +252,6 @@ export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
   );
 }
 
-ReCacheAudioBtn.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
-  action: PropTypes.func,
-};
-
 interface TogglePracticeSideBtnProps {
   disabled?: boolean;
   visible?: boolean;
@@ -315,13 +276,6 @@ export function TogglePracticeSideBtn(props: TogglePracticeSideBtnProps) {
     </div>
   );
 }
-
-TogglePracticeSideBtn.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
-  toggle: PropTypes.bool,
-  action: PropTypes.func,
-};
 
 interface ToggleLiteralPhraseBtnProps {
   disabled?: boolean;
@@ -356,13 +310,6 @@ export function ToggleLiteralPhraseBtn(props: ToggleLiteralPhraseBtnProps) {
     </div>
   );
 }
-
-ToggleLiteralPhraseBtn.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
-  toggle: PropTypes.bool,
-  action: PropTypes.func,
-};
 
 interface TimePlayVerifyBtnsProps {
   visible: boolean;
@@ -441,13 +388,3 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
     </React.Fragment>
   );
 }
-
-TimePlayVerifyBtns.propTypes = {
-  visible: PropTypes.bool,
-  hover: PropTypes.string,
-  onClick: PropTypes.func,
-  onIncorrect: PropTypes.func,
-  onPronunciation: PropTypes.func,
-  onReset: PropTypes.func,
-  prevMissPronu: PropTypes.bool,
-};

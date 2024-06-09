@@ -1,5 +1,4 @@
 import type { RawVocabulary } from "nmemonica";
-import PropTypes from "prop-types";
 import React, { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
@@ -206,9 +205,3 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     </div>
   );
 }
-
-VocabularyMain.propTypes = {
-  vocabulary: PropTypes.object.isRequired,
-  reCache: PropTypes.bool,
-  showHint: PropTypes.bool,
-};

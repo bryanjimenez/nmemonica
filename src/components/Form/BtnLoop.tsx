@@ -5,7 +5,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GitCompareIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import React from "react";
 
 interface BtnLoopProps {
@@ -36,13 +35,6 @@ export function LoopSettingBtn(props: BtnLoopProps) {
     </div>
   );
 }
-
-LoopSettingBtn.propTypes = {
-  visible: PropTypes.bool,
-  active: PropTypes.bool,
-  loop: PropTypes.number,
-  onClick: PropTypes.func,
-};
 
 interface LoopStartBtn {
   visible?: boolean;
@@ -76,13 +68,6 @@ export function LoopStartBtn(props: LoopStartBtn) {
   );
 }
 
-LoopStartBtn.propTypes = {
-  visible: PropTypes.bool,
-  onClick: PropTypes.func,
-  className: PropTypes.object,
-  countDown: PropTypes.number,
-};
-
 interface LoopStopBtn {
   visible?: boolean;
   onClick?: () => void;
@@ -110,9 +95,3 @@ export function LoopStopBtn(props: LoopStopBtn) {
     </div>
   );
 }
-
-LoopStopBtn.propTypes = {
-  visible: PropTypes.bool,
-  onClick: PropTypes.func,
-  className: PropTypes.object,
-};

@@ -1,5 +1,4 @@
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import React from "react";
 
 // Conditinal css mapping
@@ -102,17 +101,3 @@ export default function Sizable(props: SizableProps) {
     <div className={rootClass}>{content}</div>
   );
 }
-
-Sizable.propTypes = {
-  fragment: PropTypes.bool,
-  breakPoint: PropTypes.string,
-  rootClassName: PropTypes.object,
-  className: PropTypes.object,
-  largeClassName: PropTypes.object,
-  smallClassName: PropTypes.object,
-
-  onClick: PropTypes.func,
-  children: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-  largeValue: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-  smallValue: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
-};

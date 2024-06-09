@@ -1,6 +1,5 @@
 import { Switch } from "@mui/material";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import React from "react";
 import "../../css/SettingsSwitch.css";
 
@@ -30,13 +29,5 @@ export function SettingsSwitch(props: SettingsSwitchProps) {
     </div>
   );
 }
-
-SettingsSwitch.propTypes = {
-  active: PropTypes.bool,
-  action: PropTypes.func.isRequired,
-  statusText: PropTypes.string.isRequired,
-  color: PropTypes.string,
-  disabled: PropTypes.bool,
-};
 
 export default SettingsSwitch;

@@ -3,7 +3,6 @@ import { faBullseye } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, ClickAwayListener } from "@mui/material";
 import classNames from "classnames";
-import PropTypes from "prop-types";
 import {
   PropsWithChildren,
   useCallback,
@@ -161,9 +160,3 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
     </>
   );
 }
-
-Tooltip.propTypes = {
-  value: PropTypes.number,
-  onChange: PropTypes.func,
-  manualUpdate: PropTypes.string,
-};
