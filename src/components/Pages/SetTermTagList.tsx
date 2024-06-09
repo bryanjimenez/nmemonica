@@ -1,6 +1,6 @@
 import orderBy from "lodash/orderBy";
 import partition from "lodash/partition";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import { GroupItem } from "../Form/GroupItem";
 

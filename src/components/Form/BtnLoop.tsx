@@ -5,7 +5,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { GitCompareIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import React from "react";
 
 interface BtnLoopProps {
   visible?: boolean;

@@ -1,5 +1,5 @@
 import type { RawVocabulary } from "nmemonica";
-import React, { useCallback, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { setStateFunction } from "../../helper/eventHandlerHelper";
@@ -89,7 +89,7 @@ export default function VocabularyMain(props: VocabularyMainProps) {
   const vObj = JapaneseText.parse(vocabulary);
   const inJapanese = vObj.toHTML(furiganaToggable);
 
-  const inEnglish = <React.Fragment>{vocabulary.english}</React.Fragment>;
+  const inEnglish = <>{vocabulary.english}</>;
   const romaji = vocabulary.romaji;
 
   const jValue = japaneseLabel(englishSideUp, vObj, inJapanese);

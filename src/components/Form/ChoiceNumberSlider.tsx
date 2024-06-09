@@ -1,5 +1,5 @@
 import { Slider, Typography } from "@mui/material";
-import React, { useState } from "react";
+import { useState } from "react";
 import "../../css/ChoiceNumberSlider.css";
 
 interface Marks {

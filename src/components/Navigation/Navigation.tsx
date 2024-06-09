@@ -5,13 +5,9 @@ import {
   faYinYang,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { TableIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, {
-  MouseEventHandler,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import { MouseEventHandler, useCallback, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
@@ -26,10 +22,9 @@ import { KanaGameMeta } from "../Pages/KanaGame";
 import { KanjiMeta } from "../Pages/Kanji";
 import { PhrasesMeta } from "../Pages/Phrases";
 import { SettingsMeta } from "../Pages/Settings";
+import { SheetMeta } from "../Pages/Sheet";
 import { VocabularyMeta } from "../Pages/Vocabulary";
 import "../../css/Navigation.css";
-import { TableIcon } from "@primer/octicons-react";
-import { SheetMeta } from "../Pages/Sheet";
 
 export default function Navigation() {
   const dispatch = useDispatch();
@@ -156,9 +151,9 @@ export default function Navigation() {
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
       },
       {
-        meta: {location: SheetMeta.location, label:"Edit"},
-        icon: <TableIcon size="medium"/>
-      }
+        meta: { location: SheetMeta.location, label: "Edit" },
+        icon: <TableIcon size="medium" />,
+      },
     ],
     [dispatch, charSet, kanjiType, vocabType]
   );

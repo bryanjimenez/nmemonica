@@ -1,6 +1,6 @@
 import { LinearProgress } from "@mui/material";
 import type { RawPhrase } from "nmemonica";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {

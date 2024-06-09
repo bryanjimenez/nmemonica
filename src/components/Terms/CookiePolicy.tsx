@@ -1,5 +1,3 @@
-import React from "react";
-
 import { cookieAcceptance } from "../../helper/cookieHelper";
 
 const CookiePolicyMeta = {
@@ -8,11 +6,11 @@ const CookiePolicyMeta = {
 };
 
 const headerCss = "py-2 pt-4";
-const topicCss = "py-2 pt-4"
+const topicCss = "py-2 pt-4";
 
 export default function CookiePolicy() {
   return (
-    <React.Fragment>
+    <>
       <div className="cookie-policy main-panel h-100">
         <div className="d-flex justify-content-between h-100 px-2">
           <div className="py-3">
@@ -135,8 +133,9 @@ export default function CookiePolicy() {
             <h3 className={topicCss}>Persistent Storage</h3>
             <p className="m-0 ps-2">
               Persistent Storage is a setting you can enable to prevent the
-              browser from deleting data from this application (without being asked) in the event storage quota nears it&apos;s limit.
-              Storage can always be cleared with explicit user action.
+              browser from deleting data from this application (without being
+              asked) in the event storage quota nears it&apos;s limit. Storage
+              can always be cleared with explicit user action.
             </p>
             <p className="m-0 ps-2 pt-2">
               To learn more, see{" "}
@@ -151,7 +150,7 @@ export default function CookiePolicy() {
           </div>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 }
 

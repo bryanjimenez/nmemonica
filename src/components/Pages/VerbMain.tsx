@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
-import React, { useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import {

@@ -583,7 +583,6 @@ export default function Phrases() {
     // timedPlayAnswerHandlerWrapper
   );
 
-
   if (recallGame === 0)
     return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (filteredPhrases.length < 1 || order.length < 1)
@@ -670,7 +669,7 @@ export default function Phrases() {
   );
 
   return (
-    <React.Fragment>
+    <>
       <div
         className={classNames({
           "phrases main-panel h-100": true,
@@ -830,7 +829,7 @@ export default function Phrases() {
           }
         />
       </div>
-    </React.Fragment>
+    </>
   );
 }
 

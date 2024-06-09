@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import React from "react";
+import type React from "react";
 
 // Conditinal css mapping
 interface CSSMap {
@@ -96,7 +96,7 @@ export default function Sizable(props: SizableProps) {
   );
 
   return props.fragment === true ? (
-    <React.Fragment>{content}</React.Fragment>
+    <>{content}</>
   ) : (
     <div className={rootClass}>{content}</div>
   );

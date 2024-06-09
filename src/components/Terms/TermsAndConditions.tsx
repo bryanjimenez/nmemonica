@@ -1,5 +1,3 @@
-import React from "react";
-
 const TermsAndConditionsMeta = {
   location: "/terms/",
   label: "TermsAndConditions",
@@ -9,7 +7,7 @@ const headerCss = "py-2 pt-4";
 
 export default function TermsAndConditions() {
   return (
-    <React.Fragment>
+    <>
       <div className="terms-and-conditions main-panel h-100">
         <div className="d-flex justify-content-between h-100 px-2">
           <div className="py-3">
@@ -75,7 +73,7 @@ export default function TermsAndConditions() {
           </div>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 }
 

@@ -1,5 +1,5 @@
 import { Slider, Typography } from "@mui/material";
-import React, { useState } from "react";
+import { useState } from "react";
 import "../../css/VerbFormSlider.css";
 
 interface Marks {

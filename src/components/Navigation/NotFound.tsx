@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "../../css/NotFound.css";
 
 import background from "../../../image/notfound/background.jpeg";

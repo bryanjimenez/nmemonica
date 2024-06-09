@@ -19,13 +19,7 @@ import {
   ShareIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -204,7 +198,9 @@ export default function Sheet() {
         grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
         // replace typed '\n' with newline inside cell
-        grid.on("cell-edited-done", (text:string, _ri:number, _ci:number) => {
+        grid.on(
+          "cell-edited-done",
+          (text: string, _ri: number, _ci: number) => {
             grid.sheet.data.setSelectedCellText(
               // characters to replace with \n
               //    literal '\n'
@@ -213,7 +209,8 @@ export default function Sheet() {
               text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
               "finished"
             );
-        });
+          }
+        );
 
         // reset search when switching sheet
         grid.bottombar?.menuEl.on("click", resetSearchCB);
@@ -495,7 +492,7 @@ export default function Sheet() {
   }, []);
 
   return (
-    <React.Fragment>
+    <>
       <div className="sheet main-panel pt-2">
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
@@ -606,7 +603,7 @@ export default function Sheet() {
           })}
         />
       </div>
-    </React.Fragment>
+    </>
   );
 }
 

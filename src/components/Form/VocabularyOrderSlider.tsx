@@ -1,5 +1,5 @@
 import { Slider } from "@mui/material";
-import React, { useState } from "react";
+import { useState } from "react";
 import "../../css/VocabularyOrderSlider.css";
 
 export interface BareIdx {

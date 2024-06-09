@@ -1,6 +1,5 @@
 import orderBy from "lodash/orderBy";
 import type { GroupListMap } from "nmemonica";
-import React from "react";
 
 import { GroupItem } from "../Form/GroupItem";
 

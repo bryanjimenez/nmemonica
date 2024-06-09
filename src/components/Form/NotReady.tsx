@@ -1,5 +1,4 @@
 import classNames from "classnames";
-import React from "react";
 
 export function NotReady(props: { addlStyle: string; text?: string }) {
   const css = classNames({

@@ -1,7 +1,7 @@
 import { PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { MouseEventHandler } from "react";
-import React from "react";
+import type React from "react";
 
 interface GroupItemProps {
   addlStyle?: string;

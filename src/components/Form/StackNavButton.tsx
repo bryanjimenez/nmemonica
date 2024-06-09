@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import React from "react";
+import type React from "react";
 import "../../css/StackNavButton.css";
 
 interface StackNavButtonProps {

@@ -323,7 +323,7 @@ interface TimePlayVerifyBtnsProps {
 
 export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
   return !props.visible ? null : (
-    <React.Fragment>
+    <>
       <div
         className="sm-icon-grp"
         onClick={() => {
@@ -385,6 +385,6 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
           0
         </span>
       </div>
-    </React.Fragment>
+    </>
   );
 }

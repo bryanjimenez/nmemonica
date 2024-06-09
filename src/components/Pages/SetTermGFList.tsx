@@ -1,6 +1,5 @@
 import { IssueDraftIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import React from "react";
 
 interface MinimunRawItem {
   uid: string;
