@@ -497,6 +497,10 @@ export default function Kanji() {
       lastNext: prevLastNext.current,
     };
 
+    // prevent entering the if when
+    // other dep change triggers useEffect
+    prevLastNext.current = lastNext;
+
     if (
       reinforcedUID !== prevState.reinforcedUID ||
       selectedIndex !== prevState.selectedIndex ||
