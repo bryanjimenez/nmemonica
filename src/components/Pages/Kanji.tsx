@@ -142,6 +142,34 @@ function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
           return spelling.includes(term.kanji);
         });
 
+  /** Filter example list above this */
+  const EX_LIST_LEN_MAX = 2;
+  /** Filter item with length exceeding this */
+  const EX_EL_LEN_MAX = 10;
+  /** Filter item with word length exceeding this */
+  const EX_EL_WORDS_MAX = 3;
+  let remainingEl = examples.length;
+
+  examples =
+    examples.length <= EX_LIST_LEN_MAX
+      ? examples
+      : examples.filter((ex) => {
+          if (
+            // english too many words
+            (ex.english.split(" ").length <= EX_EL_WORDS_MAX &&
+              // english too many characters
+              ex.english.length <= EX_EL_LEN_MAX) ||
+            // prevent discarding everything
+            remainingEl <= EX_LIST_LEN_MAX
+          ) {
+            return true;
+          } else {
+            remainingEl -= 1;
+          }
+
+          return false;
+        });
+
   return examples;
 }
 
