@@ -1,5 +1,4 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
-import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
@@ -186,11 +185,8 @@ export default function Vocabulary() {
     goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
 
-  const { blastElRef, anchorElRef, text, setText } = useBlast({
+  const { blastElRef, text, setText } = useBlast({
     top: 10,
-    fontWeight: "normal",
-    fontSize: "xx-large",
-    color: amber[500],
   });
 
   const { filteredVocab } = useMemo(() => {
@@ -713,17 +709,16 @@ export default function Vocabulary() {
               left: xOffset,
             }}
           >
-            <div>
-              <div
-                className="text-nowrap"
-                style={{ transform: "translate(-50%,0)" }}
-              >
-                {verbFormDescr}
-              </div>
+            <div className="text-nowrap translate-center-x">
+              {verbFormDescr}
             </div>
           </div>
-          <div className="tooltip-anchor" ref={anchorElRef}></div>
-          <div ref={blastElRef}>{text}</div>
+          <div
+            ref={blastElRef}
+            className="text-nowrap fs-display-6 question-color"
+          >
+            {text}
+          </div>
           <div
             ref={HTMLDivElementSwipeRef}
             className="d-flex justify-content-between h-100"
@@ -763,7 +758,6 @@ export default function Vocabulary() {
       recacheAudio,
       showHint,
       wasPlayed,
-      anchorElRef,
       blastElRef,
       text,
       verbForm,

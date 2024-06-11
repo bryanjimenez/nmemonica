@@ -204,7 +204,7 @@ export default function KanjiGrid() {
     const i = selectedIndex - 1;
 
     let newSel;
-    if (reinforcedUID) {
+    if (reinforcedUID !== null) {
       newSel = selectedIndex;
     } else {
       newSel = (l + i) % l;
@@ -227,7 +227,7 @@ export default function KanjiGrid() {
   ]);
 
   const fadeTimerRef = useRef(-1);
-  const { blastElRef, anchorElRef, text, setText } = useBlast();
+  const { blastElRef, text, setText } = useBlast();
 
   const addFrequencyTerm = useCallback(
     (uid: string) => {
@@ -278,14 +278,15 @@ export default function KanjiGrid() {
 
   const isCorrect = buildIsCorrect(game, text, setText, fadeTimerRef);
 
-  const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
+  const term_reinforce = repetition[kanji.uid]?.rein === true;
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
 
   return (
     <>
-      <div className="tooltip-anchor" ref={anchorElRef}></div>
-      <div ref={blastElRef}>{text}</div>
+      <div ref={blastElRef} className="text-wrap fs-display-6 fw-bolder">
+        {text}
+      </div>
       <XChoices
         question={game.question}
         isCorrect={isCorrect}

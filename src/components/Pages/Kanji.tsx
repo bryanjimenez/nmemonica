@@ -1,6 +1,4 @@
-import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import { LinearProgress } from "@mui/material";
-import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
@@ -254,11 +252,8 @@ export default function Kanji() {
     goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
 
-  const { blastElRef, anchorElRef, text, setText } = useBlast({
+  const { blastElRef, text, setText } = useBlast({
     top: 10,
-    fontWeight: "normal",
-    fontSize: "xx-large",
-    color: amber[500],
   });
 
   /** metadata table ref */
@@ -601,25 +596,23 @@ export default function Kanji() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
 
-  const ws = useWindowSize();
-  const halfWidth = ws.width !== undefined ? ws.width / 2 : 0;
-  const grpElW = useRef({ w: 0 });
-
-  const yOffset = ws.height !== undefined ? ws.height - 50 : 0; //    horizontal alignment spacing
-  const xOffset = halfWidth - grpElW.current.w / 2; //  vertical spacing
-  const { x, y, strategy, refs, update } = useFloating({
-    placement: "top-start",
-    middleware: [offset({ mainAxis: -yOffset, crossAxis: xOffset }), shift()],
+  const wSize = useWindowSize();
+  const [{ xOffset, yOffset }, setScreenOffset] = useState({
+    xOffset: 0,
+    yOffset: 0,
   });
-
-  const w = refs.floating.current?.firstElementChild?.clientWidth ?? 0;
-  grpElW.current = { w };
 
   useEffect(() => {
     // force a recalculate on
     // window resize
-    update();
-  }, [update, ws.height, ws.width]);
+    if (wSize.width !== undefined && wSize.height !== undefined) {
+      const halfWidth = wSize.width / 2;
+      const yOffset = wSize.height - 55; //   horizontal alignment spacing
+      const xOffset = halfWidth; //           vertical spacing
+
+      setScreenOffset({ xOffset, yOffset });
+    }
+  }, [wSize.height, wSize.width]);
 
   useLayoutEffect(() => {
     const prevState = {
@@ -853,24 +846,25 @@ export default function Kanji() {
           "disabled-color": alreadyReviewed,
         })}
       >
-        <div ref={refs.setReference} />
         <div
-          ref={refs.setFloating}
           style={{
-            //  height: "200px",
-            position: strategy,
-            top: y ?? 0,
-            left: x ?? 0,
+            position: "absolute",
+            top: yOffset,
+            left: xOffset,
             width: "max-content",
           }}
         >
-          <div>
+          <div className="translate-center-x">
             <div className="text-nowrap">{grp}</div>
             <div>{aGroupLevel}</div>
           </div>
         </div>
-        <div className="tooltip-anchor" ref={anchorElRef}></div>
-        <div ref={blastElRef}>{text}</div>
+        <div
+          ref={blastElRef}
+          className="text-nowrap fs-display-6 question-color"
+        >
+          {text}
+        </div>
         <DialogMsg
           open={similar !== undefined}
           onClose={closeSimilar}
