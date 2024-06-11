@@ -1179,22 +1179,25 @@ function useBuildGameActionsHandler(
             sayObj = {
               ...vocabulary,
               japanese: verb.toString(),
+              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
               pronounce: vocabulary.pronounce && verb.getPronunciation(),
               form: verbForm,
             };
           } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
             const naAdj = JapaneseText.parse(vocabulary).append(
+              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
               naFlip.current && "な"
             );
 
             sayObj = {
               ...vocabulary,
               japanese: naAdj.toString(),
+              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
               pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
               form: naFlip.current,
             };
 
-            naFlip.current = naFlip.current ? undefined : "-na";
+            naFlip.current = naFlip.current !== undefined ? undefined : "-na";
           } else {
             sayObj = vocabulary;
           }
