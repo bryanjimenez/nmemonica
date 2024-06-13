@@ -109,7 +109,7 @@ export function updateSpaceRepTerm(
   update: { count?: boolean; date?: boolean } = { count: true, date: true },
   options?: {
     toggle?: FilterKeysOfType<MetaDataObj, boolean>[];
-    set?: Record<string, unknown>;
+    set?: Partial<Record<keyof MetaDataObj, unknown>>;
   }
 ) {
   const uidData = spaceRep[uid];
@@ -138,23 +138,24 @@ export function updateSpaceRepTerm(
           val = spaceRep[uid]?.[attr];
         }
 
-        return { ...acc, [attr]: !val };
+        return { ...acc, [attr]: val === true ? false : true };
       }, {});
 
       uidChangedAttr = { ...uidChangedAttr, ...optToggled };
     }
 
     if (options.set !== undefined) {
-      const optSet = Object.keys(options.set).reduce((acc, k) => {
+      let optSet: Partial<MetaDataObj> = {};
+      let k: keyof MetaDataObj;
+      for (k in options.set) {
         if (options.set?.[k] !== undefined) {
           if (options.set[k] === null) {
-            acc = { ...acc, [k]: undefined };
+            optSet = { ...optSet, [k]: undefined };
           } else {
-            acc = { ...acc, [k]: options.set[k] };
+            optSet = { ...optSet, [k]: options.set[k] };
           }
         }
-        return acc;
-      }, {});
+      }
 
       uidChangedAttr = { ...uidChangedAttr, ...optSet };
     }

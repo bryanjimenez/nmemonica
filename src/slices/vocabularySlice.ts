@@ -250,6 +250,31 @@ const vocabularySlice = createSlice({
       );
     },
 
+    setPitchAccentData(
+      state,
+      action: { payload: { uid: string; value: true | null } }
+    ) {
+      const { uid, value } = action.payload;
+
+      const { record: newValue } = updateSpaceRepTerm(
+        uid,
+        state.setting.repetition,
+        { count: false, date: false },
+        {
+          set: { pron: value },
+        }
+      );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = localStoreAttrUpdate(
+        new Date(),
+        { vocabulary: state.setting },
+        "/vocabulary/",
+        "repetition",
+        newValue
+      );
+    },
+
     toggleVocabularyReinforcement(
       state,
       action: { payload: boolean | undefined }
@@ -658,6 +683,7 @@ export const {
   clearVocabulary,
   verbFormChanged,
   furiganaToggled,
+  setPitchAccentData,
   removeFrequencyWord,
   setVerbFormsOrder,
   toggleVocabularyOrdering,

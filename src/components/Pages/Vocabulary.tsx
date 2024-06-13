@@ -1,5 +1,10 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PulseIcon,
+  TrashIcon,
+} from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
 import React, {
@@ -65,11 +70,13 @@ import {
 } from "../../slices/settingHelper";
 import {
   addFrequencyWord,
+  deleteMetaVocab,
   flipVocabularyPracticeSide,
   furiganaToggled,
   getVocabulary,
   removeFrequencyWord,
   removeFromSpaceRepetition,
+  setPitchAccentData,
   setSpaceRepetitionMetadata,
   setWordAccuracy,
   setWordDifficulty,
@@ -588,7 +595,6 @@ export default function Vocabulary() {
       if (
         metadata.current[uid]?.difficultyP !== undefined &&
         typeof accuracyModifiedRef.current === "number"
-        // typeof accuracyModifiedRef.current === 'number' &&
         // accuracyModifiedRef.current > 0
       ) {
         // when difficulty exists and accuracyP has been set
@@ -822,6 +828,11 @@ export default function Vocabulary() {
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               {/* {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)} */}
+              {metadata.current[uid]?.pron === true && (
+                <div>
+                  <PulseIcon />
+                </div>
+              )}
               <Tooltip
                 disabled={!cookies}
                 className={classNames({
@@ -851,6 +862,32 @@ export default function Vocabulary() {
                 />
                 <div className="fs-xx-small me-2">
                   <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
+                <div className="h-100 d-flex flex-column justify-content-between me-2">
+                  <div
+                    className="clickable"
+                    onClick={() => {
+                      void dispatch(deleteMetaVocab([uid]));
+                    }}
+                  >
+                    <TrashIcon />
+                  </div>
+                  <div className="d-flex flex-column">
+                    <div
+                      className={classNames({
+                        clickable: true,
+                        "opacity-25": metadata.current[uid]?.pron !== true,
+                      })}
+                      onClick={() => {
+                        // null: set to undefined
+                        const v =
+                          metadata.current[uid]?.pron === true ? null : true;
+                        dispatch(setPitchAccentData({ uid, value: v }));
+                      }}
+                    >
+                      <PulseIcon />
+                    </div>
+                  </div>
                 </div>
               </Tooltip>
               <ShowHintBtn
