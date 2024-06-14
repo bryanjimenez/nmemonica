@@ -3,6 +3,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PulseIcon,
+  TagIcon,
   TrashIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -78,6 +79,7 @@ import {
   removeFromSpaceRepetition,
   setPitchAccentData,
   setSpaceRepetitionMetadata,
+  setVocabularyTags,
   setWordAccuracy,
   setWordDifficulty,
   toggleAutoVerbView,
@@ -99,6 +101,7 @@ import {
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
+import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import type { BareIdx } from "../Form/VocabularyOrderSlider";
@@ -179,6 +182,14 @@ export default function Vocabulary() {
   /** metadata table ref */
   const metadata = useRef(repetition);
   metadata.current = repetition;
+
+  const [tagMenu, setTagMenu] = useState(false);
+  const closeTagMenu = useCallback(() => {
+    setTagMenu(false);
+  }, []);
+  const openTagMenu = useCallback(() => {
+    setTagMenu(true);
+  }, []);
 
   /** Number of review items still pending (negative: goal already met)*/
   const goalPending = useRef<number>(-1);
@@ -725,6 +736,85 @@ export default function Vocabulary() {
           >
             {text}
           </div>
+          <TagEditMenu
+            visible={tagMenu}
+            close={closeTagMenu}
+            tags={[
+              {
+                name: "Keigo",
+                active: false,
+                toggle: () => {
+                  void dispatch(
+                    setVocabularyTags({
+                      query: vocabulary.japanese,
+                      tag: "keigo",
+                    })
+                  );
+                },
+              },
+              {
+                name: "Formal",
+                active: true,
+                toggle: () => {
+                  void dispatch(
+                    setVocabularyTags({
+                      query: vocabulary.japanese,
+                      tag: "formal",
+                    })
+                  );
+                },
+              },
+              {
+                name: "Polite",
+                active: true,
+                toggle: () => {
+                  void dispatch(
+                    setVocabularyTags({
+                      query: vocabulary.japanese,
+                      tag: "polite",
+                    })
+                  );
+                },
+              },
+              {
+                name: "Passive",
+                active: true,
+                toggle: () => {
+                  void dispatch(
+                    setVocabularyTags({
+                      query: vocabulary.japanese,
+                      tag: "passive",
+                    })
+                  );
+                },
+              },
+              {
+                name: "Colloquial",
+                active: true,
+                toggle: () => {
+                  void dispatch(
+                    setVocabularyTags({
+                      query: vocabulary.japanese,
+                      tag: "colloquial",
+                    })
+                  );
+                },
+              },
+              {
+                name: "Rude",
+                active: false,
+                toggle: () => {
+                  void dispatch(
+                    setVocabularyTags({
+                      query: vocabulary.japanese,
+                      tag: "rude",
+                    })
+                  );
+                },
+              },
+            ]}
+          />
+
           <div
             ref={HTMLDivElementSwipeRef}
             className="d-flex justify-content-between h-100"
@@ -757,8 +847,10 @@ export default function Vocabulary() {
       );
     },
     [
+      dispatch,
       gotoNextSlide,
       gotoPrev,
+      closeTagMenu,
       HTMLDivElementSwipeRef,
       autoVerbView,
       recacheAudio,
@@ -769,6 +861,7 @@ export default function Vocabulary() {
       verbForm,
       xOffset,
       yOffset,
+      tagMenu,
     ]
   );
 
@@ -911,6 +1004,9 @@ export default function Vocabulary() {
                   prev !== undefined ? undefined : uid
                 )}
               />
+              <div className="clickable sm-icon-grp" onClick={openTagMenu}>
+                <TagIcon />
+              </div>
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
                 term={vocabulary}
@@ -932,10 +1028,12 @@ export default function Vocabulary() {
       </div>
     ),
     [
-      cookies,
-      abortLoop,
-      autoVerbView,
       dispatch,
+      abortLoop,
+      resetTimedPlay,
+      openTagMenu,
+      cookies,
+      autoVerbView,
       englishSideUp,
       frequency.length,
       hintEnabledREF,
@@ -943,7 +1041,6 @@ export default function Vocabulary() {
       loopSettingBtn,
       recacheAudio,
       reinforcedUID,
-      resetTimedPlay,
       sort,
     ]
   );

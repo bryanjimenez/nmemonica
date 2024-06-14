@@ -243,6 +243,53 @@ export function searchInSheet(sheet: SheetData, query: string) {
 }
 
 /**
+ * Finds which row contains the query given a column index
+ */
+export function findInColumn(sheet: SheetData, column: number, query: string) {
+  if (!sheet.rows) {
+    return [];
+  }
+
+  const result = Object.values(sheet.rows).reduce<[number, number, string][]>(
+    (acc, row: RowData, rowIdx) => {
+      if (typeof row !== "number" && "cells" in row) {
+        const { text } = row.cells[column];
+        return text === query ? [...acc, [rowIdx, column, query]] : acc;
+      }
+
+      return acc;
+    },
+    []
+  );
+
+  return result;
+}
+
+/**
+ * Finds which column contains the query given a row index
+ */
+export function findInRow(sheet: SheetData, row: number, query: string) {
+  if (!sheet.rows) {
+    return [];
+  }
+
+  const r: RowData = Object.values(sheet.rows)[row];
+  if (r === undefined || !("cells" in r)) {
+    return [];
+  }
+  const { cells } = r;
+  const result = Object.keys(cells).reduce<[number, number, string][]>(
+    (acc, colIdx) => {
+      const { text } = cells[colIdx];
+      return text === query ? [...acc, [row, Number(colIdx), query]] : acc;
+    },
+    []
+  );
+
+  return result;
+}
+
+/**
  * Check if device has touch screen
  * [MDN mobile detection](https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent)
  * @returns

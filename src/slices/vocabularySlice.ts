@@ -14,6 +14,8 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
+import { getDatasets } from "./sheetSlice";
+import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { type Vocabulary, sheetDataToJSON } from "../helper/jsonHelper";
 import {
@@ -33,10 +35,11 @@ import {
   getWorkbookFromIndexDB,
   workbookSheetNames,
 } from "../helper/sheetHelper";
+import { findInColumn, findInRow } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
-import type { RootState } from ".";
+import type { AppDispatch, RootState } from ".";
 
 export interface VocabularyInitSlice {
   value: RawVocabulary[];
@@ -173,6 +176,79 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
     return updateAction(uid, spaceRep);
+  }
+);
+
+export const setVocabularyTags = createAsyncThunk(
+  "vocabulary/setVocabularyTags",
+  (arg: { query: string; tag: string }, thunkAPI) => {
+    const { query, tag } = arg;
+    const dispatch = thunkAPI.dispatch as AppDispatch;
+
+    return getWorkbookFromIndexDB().then((sheetArr) => {
+      // Get current tags for term
+      const vIdx = sheetArr.findIndex(
+        (s) => s.name.toLowerCase() === "vocabulary"
+      );
+      if (vIdx === -1) {
+        throw new Error("Expected to find Vocabulary sheet");
+      }
+      const s = sheetArr[vIdx];
+
+      const rHeaderJapanese = findInRow(s, 0, "Japanese");
+      const rHeaderTag = findInRow(s, 0, "Tags");
+      if (rHeaderJapanese.length !== 1 || rHeaderTag.length !== 1) {
+        throw new Error("Missing headers");
+      }
+      const [_jRow, japaneseCol] = rHeaderJapanese[0];
+      const [_tRow, tagCol] = rHeaderTag[0];
+
+      const rTerm = findInColumn(s, japaneseCol, query);
+      if (rTerm.length !== 1) {
+        throw new Error(`Expected to find this term ${query}`);
+      }
+      const [termRow] = rTerm[0];
+      if (s.rows === undefined) {
+        throw new Error("Expected a row for query result");
+      }
+
+      console.log(rTerm);
+      console.log(s.rows[termRow].cells[tagCol].text);
+
+      let prevTags: string[];
+      if (
+        s.rows[termRow].cells[tagCol].text === "" ||
+        s.rows[termRow].cells[tagCol].text === undefined
+      ) {
+        prevTags = [];
+      } else {
+        try {
+          prevTags = JSON.parse(s.rows[termRow].cells[tagCol].text);
+        } catch (err) {
+          throw new Error("Failed to parse tags from sheet cell");
+        }
+      }
+
+      // Edit tags
+      s.rows[termRow].cells[tagCol].text = JSON.stringify(
+        prevTags.includes(tag)
+          ? prevTags.filter((t) => t !== tag)
+          : [...prevTags, tag]
+      );
+
+      // Save to indexedDB
+      return openIDB()
+        .then((db) =>
+          putIDBItem(
+            { db, store: IDBStores.WORKBOOK },
+            { key: "0", workbook: sheetArr }
+          )
+        )
+        .then(() => {
+          // TODO: update json?
+          // TODO: update state
+        });
+    });
   }
 );
 
