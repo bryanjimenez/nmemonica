@@ -1,10 +1,19 @@
 import type { GroupListMap, RawVocabulary, SourceVocabulary } from "nmemonica";
 
 export function getPropsFromTags(tag: string | undefined) {
-  if (tag === undefined)
+  let tagList: string[] = [];
+  try {
+    if (tag !== undefined) {
+      const { tags } = JSON.parse(tag) as { tags: string[] };
+      tagList = tags;
+    }
+  } catch (err) {
+    // TODO: Return error obj?
+  }
+
+  if (tagList.length === 0)
     return { tags: [] as string[], similarKanji: [] as string[] };
 
-  const tagList = tag.split(/[\n;]+/);
   const h = "[\u3041-\u309F]{1,4}"; //  hiragana particle
   const commonK = "\u4E00-\u9FAF"; //   kanji
   const rareK = "\u3400-\u4DBF"; //     kanji

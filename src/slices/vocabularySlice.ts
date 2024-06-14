@@ -223,18 +223,18 @@ export const setVocabularyTags = createAsyncThunk(
         prevTags = [];
       } else {
         try {
-          prevTags = JSON.parse(s.rows[termRow].cells[tagCol].text);
+          prevTags = JSON.parse(s.rows[termRow].cells[tagCol].text).tags;
         } catch (err) {
           throw new Error("Failed to parse tags from sheet cell");
         }
       }
 
       // Edit tags
-      s.rows[termRow].cells[tagCol].text = JSON.stringify(
-        prevTags.includes(tag)
+      s.rows[termRow].cells[tagCol].text = JSON.stringify({
+        tags: prevTags.includes(tag)
           ? prevTags.filter((t) => t !== tag)
-          : [...prevTags, tag]
-      );
+          : [...prevTags, tag],
+      });
 
       // Save to indexedDB
       return openIDB()
