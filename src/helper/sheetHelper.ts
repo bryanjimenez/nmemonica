@@ -1,10 +1,33 @@
+import EventEmitter from "events";
+
 import { type SheetData, type Spreadsheet } from "@nmemonica/x-spreadsheet";
 import { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
 import { MetaDataObj } from "nmemonica";
 
 import { isNumber } from "./arrayHelper";
+import { objectToCSV } from "./csvHelper";
+import { jtox } from "./jsonHelper";
 import { getLastCellIdx } from "./sheetHelperImport";
+import {
+  IDBErrorCause,
+  IDBStores,
+  getIDBItem,
+  openIDB,
+} from "../../pwa/helper/idbHelper";
 import { deleteMetadata } from "../slices/settingHelper";
+
+/**
+ * Keep all naming and order
+ */
+export const workbookSheetNames = Object.freeze({
+  phrases: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
+  vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
+  kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
+});
+
+export const metaDataNames = Object.freeze({
+  settings: { file: "Settings.json", prettyName: "Settings" },
+});
 
 export function getActiveSheet(workbook: Spreadsheet) {
   const sheets = workbook.exportValues();
@@ -26,6 +49,100 @@ export function getActiveSheet(workbook: Spreadsheet) {
   const data = removeLastRowIfBlank(activeSheetData);
 
   return { activeSheetName, activeSheetData: data };
+}
+
+/**
+ * Retrieves worksheet from:
+ * indexedDB
+ * cache
+ * or creates placeholders
+ *
+ * @param dispatch
+ * @param getDatasets fetch action (if no indexedDB)
+ */
+export function getWorkbookFromIndexDB() {
+  return openIDB()
+    .then((db) => {
+      // if indexedDB has stored workbook
+      const stores = Array.from(db.objectStoreNames);
+
+      const ErrorWorkbookMissing = new Error("Workbook not stored", {
+        cause: { code: IDBErrorCause.NoResult },
+      });
+      if (!stores.includes("workbook")) {
+        throw ErrorWorkbookMissing;
+      }
+
+      // use stored workbook
+      return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
+        if (!res.workbook || res.workbook.length === 0) {
+          throw ErrorWorkbookMissing;
+        }
+
+        return res.workbook;
+      });
+    })
+    .catch(() => {
+      return [
+        jtox(
+          {
+            /** no data just headers */
+          },
+          workbookSheetNames.phrases.prettyName
+        ),
+        jtox(
+          {
+            /** no data just headers */
+          },
+          workbookSheetNames.vocabulary.prettyName
+        ),
+        jtox(
+          {
+            /** no data just headers */
+          },
+          workbookSheetNames.kanji.prettyName
+        ),
+      ];
+    });
+}
+
+/**
+ * Parse xObject into csv text
+ */
+export function xObjectToCsvText(xObj: SheetData[]) {
+  //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
+
+  const filesP = xObj.map((xObjSheet: SheetData) => {
+    const fileSim = new EventEmitter();
+
+    const fileWriterSimulator = {
+      write: (line: string) => {
+        fileSim.emit("write", line);
+      },
+      end: () => {
+        fileSim.emit("end");
+      },
+    };
+
+    const csvP = new Promise<{ name: string; text: string }>(
+      (resolve, _reject) => {
+        let file = "";
+        fileSim.on("write", (line) => {
+          file += line;
+        });
+
+        fileSim.on("end", () => {
+          resolve({ name: xObjSheet.name, text: file });
+        });
+      }
+    );
+
+    objectToCSV(xObjSheet, fileWriterSimulator);
+
+    return csvP;
+  });
+
+  return Promise.all(filesP);
 }
 
 /**

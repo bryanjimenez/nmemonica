@@ -1,5 +1,3 @@
-import EventEmitter from "events";
-
 import { Badge, Fab, TextField } from "@mui/material";
 import { Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
@@ -8,22 +6,14 @@ import {
   // RssIcon,
   SearchIcon,
 } from "@primer/octicons-react";
-import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import { MetaDataObj } from "nmemonica";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
-import {
-  IDBErrorCause,
-  IDBStores,
-  getIDBItem,
-  openIDB,
-  putIDBItem,
-} from "../../../pwa/helper/idbHelper";
+import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { localStorageKey } from "../../constants/paths";
-import { objectToCSV } from "../../helper/csvHelper";
 import { jtox, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getLocalStorageSettings,
@@ -31,11 +21,15 @@ import {
 } from "../../helper/localStorageHelper";
 import {
   getActiveSheet,
+  getWorkbookFromIndexDB,
+  metaDataNames,
   removeLastRowIfBlank,
   searchInSheet,
   sheetAddExtraRow,
   touchScreenCheck,
   updateEditedUID,
+  workbookSheetNames,
+  xObjectToCsvText,
 } from "../../helper/sheetHelper";
 import {
   type FilledSheetData,
@@ -76,19 +70,6 @@ const SheetMeta = {
   label: "Sheet",
 };
 
-/**
- * Keep all naming and order
- */
-export const workbookSheetNames = Object.freeze({
-  phrases: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
-  vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
-  kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
-});
-
-export const metaDataNames = Object.freeze({
-  settings: { file: "Settings.json", prettyName: "Settings" },
-});
-
 const defaultOp = {
   mode: "edit", // edit | read
   // showToolbar: true,
@@ -110,101 +91,6 @@ const defaultOp = {
     minWidth: 60,
   },
 } as const;
-
-/**
- * Retrieves worksheet from:
- * indexedDB
- * cache
- * or creates placeholders
- *
- * @param dispatch
- * @param getDatasets fetch action (if no indexedDB)
- */
-export function getWorkbookFromIndexDB() {
-  return openIDB()
-    .then((db) => {
-      // if indexedDB has stored workbook
-      const stores = Array.from(db.objectStoreNames);
-
-      const ErrorWorkbookMissing = new Error("Workbook not stored", {
-        cause: { code: IDBErrorCause.NoResult },
-      });
-      if (!stores.includes("workbook")) {
-        throw ErrorWorkbookMissing;
-      }
-
-      // use stored workbook
-      return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
-        if (!res.workbook || res.workbook.length === 0) {
-          throw ErrorWorkbookMissing;
-        }
-
-        return res.workbook;
-      });
-    })
-    .catch((err) => {
-        return [
-          jtox(
-            {
-              /** no data just headers */
-            },
-            workbookSheetNames.phrases.prettyName
-          ),
-          jtox(
-            {
-              /** no data just headers */
-            },
-            workbookSheetNames.vocabulary.prettyName
-          ),
-          jtox(
-            {
-              /** no data just headers */
-            },
-            workbookSheetNames.kanji.prettyName
-          ),
-        ];
-      }
-    );
-}
-
-/**
- * Parse xObject into csv text
- */
-export function xObjectToCsvText(xObj: FilledSheetData[]) {
-  //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
-
-  const filesP = xObj.map((xObjSheet: FilledSheetData) => {
-    const fileSim = new EventEmitter();
-
-    const fileWriterSimulator = {
-      write: (line: string) => {
-        fileSim.emit("write", line);
-      },
-      end: () => {
-        fileSim.emit("end");
-      },
-    };
-
-    const csvP = new Promise<{ name: string; text: string }>(
-      (resolve, _reject) => {
-        let file = "";
-        fileSim.on("write", (line) => {
-          file += line;
-        });
-
-        fileSim.on("end", () => {
-          resolve({ name: xObjSheet.name, text: file });
-        });
-      }
-    );
-
-    objectToCSV(xObjSheet, fileWriterSimulator);
-
-    return csvP;
-  });
-
-  return Promise.all(filesP);
-}
 
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
@@ -605,61 +491,57 @@ export default function Sheet() {
       }
 
       if (importWorkbook && importWorkbook.length > 0) {
-        const workbookP = getWorkbookFromIndexDB().then(
-          (dbWorkbook) => {
-            const trimmed = Object.values(workbookSheetNames).map((w) => {
-              const { prettyName: prettyName } = w;
+        const workbookP = getWorkbookFromIndexDB().then((dbWorkbook) => {
+          const trimmed = Object.values(workbookSheetNames).map((w) => {
+            const { prettyName: prettyName } = w;
 
-              const fileSheet = importWorkbook.find(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+            const fileSheet = importWorkbook.find(
+              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+            );
+            if (fileSheet) {
+              return removeLastRowIfBlank(fileSheet);
+            }
+
+            const dbSheet = dbWorkbook.find(
+              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+            );
+            if (dbSheet) {
+              return dbSheet;
+            }
+
+            // if it never existed add blank placeholder
+            return jtox(
+              {
+                /** no data just headers */
+              },
+              prettyName
+            );
+          });
+
+          // store workbook in indexedDB
+          // update cached json objects
+          return Promise.all([
+            openIDB().then((db) =>
+              putIDBItem(
+                { db, store: IDBStores.WORKBOOK },
+                { key: "0", workbook: trimmed }
+              )
+            ),
+            ...trimmed.map((sheet) => {
+              const { data, hash } = sheetDataToJSON(sheet as FilledSheetData);
+              return saveSheetServiceWorker(sheet.name, data, hash).then(() =>
+                updateStateAndCacheCB(sheet.name, hash)
               );
-              if (fileSheet) {
-                return removeLastRowIfBlank(fileSheet);
-              }
+            }),
+          ]).then(() => {
+            // reload workbook (update useEffect)
+            setWorkbookImported(Date.now());
 
-              const dbSheet = dbWorkbook.find(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-              );
-              if (dbSheet) {
-                return dbSheet;
-              }
-
-              // if it never existed add blank placeholder
-              return jtox(
-                {
-                  /** no data just headers */
-                },
-                prettyName
-              );
-            });
-
-            // store workbook in indexedDB
-            // update cached json objects
-            return Promise.all([
-              openIDB().then((db) =>
-                putIDBItem(
-                  { db, store: IDBStores.WORKBOOK },
-                  { key: "0", workbook: trimmed }
-                )
-              ),
-              ...trimmed.map((sheet) => {
-                const { data, hash } = sheetDataToJSON(
-                  sheet as FilledSheetData
-                );
-                return saveSheetServiceWorker(sheet.name, data, hash).then(() =>
-                  updateStateAndCacheCB(sheet.name, hash)
-                );
-              }),
-            ]).then(() => {
-              // reload workbook (update useEffect)
-              setWorkbookImported(Date.now());
-
-              // local data edited, do not fetch use cached cache.json
-              void dispatch(setLocalDataEdited(true));
-              return;
-            });
-          }
-        );
+            // local data edited, do not fetch use cached cache.json
+            void dispatch(setLocalDataEdited(true));
+            return;
+          });
+        });
 
         // eslint-disable-next-line
         importCompleteP = [...importCompleteP, workbookP];

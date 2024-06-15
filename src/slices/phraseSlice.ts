@@ -1,11 +1,6 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import type {
-  GroupListMap,
-  MetaDataObj,
-  RawPhrase,
-  SourcePhrase,
-} from "nmemonica";
+import type { GroupListMap, MetaDataObj, RawPhrase } from "nmemonica";
 
 import { logger } from "./globalSlice";
 import {
@@ -17,7 +12,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { dataServiceEndpoint } from "../../environment.development";
+import { type Phrase, sheetDataToJSON } from "../helper/jsonHelper";
 import {
   localStoreAttrDelete,
   localStoreAttrUpdate,
@@ -28,7 +23,10 @@ import {
   updateAction,
 } from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
-import { SWRequestHeader } from "../helper/serviceWorkerHelper";
+import {
+  getWorkbookFromIndexDB,
+  workbookSheetNames,
+} from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
@@ -86,7 +84,7 @@ export const phraseInitState: PhraseInitSlice = {
  * For inverse tagged phrases
  * Checks that an initial uid has atleast one pair
  */
-function inversePairCheck<T extends SourcePhrase>(
+function inversePairCheck<T extends { japanese: string; tag?: string }>(
   initial: string,
   object: Record<string, T>
 ) {
@@ -95,10 +93,10 @@ function inversePairCheck<T extends SourcePhrase>(
   let { inverse } = getPropsFromTags(object[initial].tag);
   let inversePair = inverse;
 
-  while (inversePair && inversePair !== initial) {
+  while (inversePair !== undefined && inversePair !== initial) {
     const { inverse } = getPropsFromTags(object[inversePair]?.tag);
 
-    if (inverse) {
+    if (inverse !== undefined) {
       inversePair = inverse;
     } else {
       // match failed
@@ -150,7 +148,7 @@ export function isPolitePhrase<T extends { japanese: string }>(o: T) {
   return polite;
 }
 
-export function buildPhraseArray<T extends SourcePhrase>(
+export function buildPhraseArray<T extends { japanese: string; tag?: string }>(
   object: Record<string, T>
 ): { values: RawPhrase[]; errors?: string[] } {
   let errors: undefined | string[];
@@ -185,43 +183,34 @@ export function buildPhraseArray<T extends SourcePhrase>(
  */
 export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
-  async (arg, thunkAPI) => {
+  async (_arg, thunkAPI) => {
     // TODO: rename state.phrases -> state.phrase
-    const initVersion = ["0", "0ee3"];
-    let version = "0";
-    let tries = 0;
-    while (tries < 3 && initVersion.includes(version)) {
-      const state = thunkAPI.getState() as RootState;
-      version = state.version.phrases ?? "0";
+    return getWorkbookFromIndexDB().then((workbook) => {
+      const sheet = workbook.find(
+        (s) =>
+          s.name.toLowerCase() ===
+          workbookSheetNames.phrases.prettyName.toLowerCase()
+      );
+      if (sheet === undefined) {
+        throw new Error("Expected to find Phases sheet in workbook");
+      }
+      const { data: jsonValue, hash: version } = sheetDataToJSON(sheet) as {
+        data: Record<string, Phrase>;
+        hash: string;
+      };
 
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => {
-        setTimeout(resolve, 250);
-      });
-      tries++;
-    }
+      // return { value: data, version: hash };
 
-    thunkAPI.dispatch(
-      logger(
-        `getPhrase ${version}`,
-        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
-      )
-    );
+      const groups = buildGroupObject(jsonValue);
+      const { values, errors } = buildPhraseArray(jsonValue);
+      if (errors) {
+        errors.forEach((e) => {
+          thunkAPI.dispatch(logger(e, DebugLevel.WARN));
+        });
+      }
 
-    const jsonValue = (await fetch(dataServiceEndpoint + "/phrases.json", {
-      headers: { [SWRequestHeader.DATA_VERSION]: version },
-      credentials: "include",
-    }).then((res) => res.json())) as Record<string, SourcePhrase>;
-
-    const groups = buildGroupObject(jsonValue);
-    const { values, errors } = buildPhraseArray(jsonValue);
-    if (errors) {
-      errors.forEach((e) => {
-        thunkAPI.dispatch(logger(e, DebugLevel.WARN));
-      });
-    }
-
-    return { version, value: jsonValue, values, groups };
+      return { version, value: jsonValue, values, groups };
+    });
   }
 );
 

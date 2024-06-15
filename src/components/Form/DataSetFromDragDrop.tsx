@@ -14,7 +14,7 @@ import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { LocalStorageState, RootState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
-import { metaDataNames, workbookSheetNames } from "../Pages/Sheet";
+import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import "../../css/DragDrop.css";
 
 export interface TransferObject {

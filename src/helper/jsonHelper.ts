@@ -11,15 +11,15 @@ import type {
 import { type FilledSheetData } from "./sheetHelperImport";
 import { Optional } from "../typings/utils";
 
-type Phrase = Omit<
+export type Phrase = Omit<
   RawPhrase,
   "uid" | "tags" | "particles" | "inverse" | "polite"
 > & {
   tag?: string;
 };
 
-type Vocabulary = Omit<RawVocabulary, "uid" | "tags"> & { tag?: string };
-type Kanji = Optional<RawKanji, "uid" | "tags"> & { tag?: string };
+export type Vocabulary = Omit<RawVocabulary, "uid" | "tags"> & { tag?: string };
+export type Kanji = Optional<RawKanji, "uid" | "tags"> & { tag?: string };
 
 const prettyHeaders = {
   english: ["English"],

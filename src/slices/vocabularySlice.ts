@@ -4,16 +4,9 @@ import {
   createSlice,
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import type {
-  GroupListMap,
-  MetaDataObj,
-  RawVocabulary,
-  SourceVocabulary,
-} from "nmemonica";
+import type { GroupListMap, MetaDataObj, RawVocabulary } from "nmemonica";
 
-import { logger } from "./globalSlice";
 import {
-  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -21,8 +14,8 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { dataServiceEndpoint } from "../../environment.development";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
+import { type Vocabulary, sheetDataToJSON } from "../helper/jsonHelper";
 import {
   localStoreAttrDelete,
   localStoreAttrUpdate,
@@ -36,7 +29,10 @@ import {
   buildGroupObject,
   buildVocabularyArray,
 } from "../helper/reducerHelper";
-import { SWRequestHeader } from "../helper/serviceWorkerHelper";
+import {
+  getWorkbookFromIndexDB,
+  workbookSheetNames,
+} from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
@@ -104,34 +100,23 @@ export const vocabularyInitState: VocabularyInitSlice = {
  */
 export const getVocabulary = createAsyncThunk(
   "vocabulary/getVocabulary",
-  async (arg, thunkAPI) => {
-    const initVersion = ["0", "ce0a"];
-    let version = "0";
-    let tries = 0;
-    while (tries < 3 && initVersion.includes(version)) {
-      const state = thunkAPI.getState() as RootState;
-      version = state.version.vocabulary ?? "0";
+  async () => {
+    return getWorkbookFromIndexDB().then((workbook) => {
+      const sheet = workbook.find(
+        (s) =>
+          s.name.toLowerCase() ===
+          workbookSheetNames.vocabulary.prettyName.toLowerCase()
+      );
+      if (sheet === undefined) {
+        throw new Error("Expected to find Vocabulary sheet in workbook");
+      }
+      const { data: value, hash: version } = sheetDataToJSON(sheet) as {
+        data: Record<string, Vocabulary>;
+        hash: string;
+      };
 
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => {
-        setTimeout(resolve, 250);
-      });
-      tries++;
-    }
-
-    thunkAPI.dispatch(
-      logger(
-        `getVocabulary ${version}`,
-        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
-      )
-    );
-
-    const value = (await fetch(dataServiceEndpoint + "/vocabulary.json", {
-      headers: { [SWRequestHeader.DATA_VERSION]: version },
-      credentials: "include",
-    }).then((res) => res.json())) as Record<string, SourceVocabulary>;
-
-    return { value, version };
+      return { value, version };
+    });
   }
 );
 

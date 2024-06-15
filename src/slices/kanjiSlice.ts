@@ -1,11 +1,9 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import md5 from "md5";
-import type { MetaDataObj, RawKanji, SourceKanji } from "nmemonica";
+import type { MetaDataObj, RawKanji } from "nmemonica";
 
-import { logger } from "./globalSlice";
 import {
-  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -13,7 +11,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { dataServiceEndpoint } from "../../environment.development";
+import { type Kanji, sheetDataToJSON } from "../helper/jsonHelper";
 import {
   localStoreAttrDelete,
   localStoreAttrUpdate,
@@ -28,7 +26,10 @@ import {
   buildTagObject,
   getPropsFromTags,
 } from "../helper/reducerHelper";
-import { SWRequestHeader } from "../helper/serviceWorkerHelper";
+import {
+  getWorkbookFromIndexDB,
+  workbookSheetNames,
+} from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
@@ -89,38 +90,24 @@ export const kanjiInitState: KanjiInitSlice = {
 /**
  * Fetch vocabulary
  */
-export const getKanji = createAsyncThunk(
-  "kanji/getKanji",
-  async (arg, thunkAPI) => {
-    const initVersion = ["0", "c059"];
-    let version = "0";
-    let tries = 0;
-    while (tries < 3 && initVersion.includes(version)) {
-      const state = thunkAPI.getState() as RootState;
-      version = state.version.kanji ?? "0";
-
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => {
-        setTimeout(resolve, 250);
-      });
-      tries++;
-    }
-
-    thunkAPI.dispatch(
-      logger(
-        `getKanji ${version}`,
-        initVersion.includes(version) ? DebugLevel.ERROR : DebugLevel.WARN
-      )
+export const getKanji = createAsyncThunk("kanji/getKanji", async () => {
+  return getWorkbookFromIndexDB().then((workbook) => {
+    const sheet = workbook.find(
+      (s) =>
+        s.name.toLowerCase() ===
+        workbookSheetNames.kanji.prettyName.toLowerCase()
     );
-
-    const value = (await fetch(dataServiceEndpoint + "/kanji.json", {
-      headers: { [SWRequestHeader.DATA_VERSION]: version },
-      credentials: "include",
-    }).then((res) => res.json())) as Record<string, SourceKanji>;
+    if (sheet === undefined) {
+      throw new Error("Expected to find Kanji sheet in workbook");
+    }
+    const { data: value, hash: version } = sheetDataToJSON(sheet) as {
+      data: Record<string, Kanji>;
+      hash: string;
+    };
 
     return { value, version };
-  }
-);
+  });
+});
 
 export const kanjiFromLocalStorage = createAsyncThunk(
   "kanji/kanjiFromLocalStorage",
@@ -301,10 +288,8 @@ const kanjiSlice = createSlice({
           newValue
         );
 
-        if (newValue) {
-          state.setting.repTID = Date.now();
-          state.setting.repetition = newValue;
-        }
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       }
     },
 
