@@ -1,16 +1,10 @@
-import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
-import {
-  dataServiceEndpoint,
-  sheetServicePath,
-} from "../../environment.development";
 import { csvToObject } from "../helper/csvHelper";
 import { jtox } from "../helper/jsonHelper";
-import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
 
 import { AppDispatch } from ".";
@@ -104,68 +98,6 @@ export const getDatasets = createAsyncThunk(
     return getCachedDataset(thunkAPI.dispatch as AppDispatch);
   }
 );
-
-export function saveSheetLocalService(
-  activeSheetData: SheetData,
-  serviceBaseUrl: string
-) {
-  if (!activeSheetData.name) return Promise.reject(new Error("Missing sheet"));
-
-  const activeSheetName = activeSheetData.name;
-
-  const container = new FormData();
-  const data = new Blob([JSON.stringify(activeSheetData)], {
-    type: "application/json",
-  });
-
-  container.append("sheetType", "xSheetObj");
-  container.append("sheetName", activeSheetName);
-  container.append("sheetData", data);
-
-  return fetch(serviceBaseUrl + sheetServicePath, {
-    method: "PUT",
-    credentials: "include",
-    body: container,
-  })
-    .then((res) => {
-      if (res.status === 307) {
-        // received an httpOnly cookie
-        return fetch(serviceBaseUrl + sheetServicePath, {
-          method: "PUT",
-          credentials: "include",
-          body: container,
-        }).then((res) => {
-          if (!res.ok) {
-            throw new Error("Redirected and failed to save sheet");
-          }
-          return res;
-        });
-      }
-
-      if (!res.ok) {
-        throw new Error("Failed to save sheet");
-      }
-      return res;
-    })
-    .then((res) => res.json())
-    .then(({ hash }: { hash: string }) => ({ hash, name: activeSheetName }));
-}
-
-export function saveSheetServiceWorker(
-  name: string,
-  data: Record<string, unknown>,
-  hash: string
-) {
-  const resource = name.toLowerCase();
-
-  return swMessageSaveDataJSON(
-    dataServiceEndpoint + "/" + resource + ".json.v" + hash,
-    data
-  ).then(() => ({
-    name: name,
-    hash,
-  }));
-}
 
 const sheetSlice = createSlice({
   name: "sheet",

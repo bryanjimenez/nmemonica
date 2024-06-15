@@ -53,8 +53,6 @@ import {
   clearPhrases,
   batchRepetitionUpdate as phraseBatchMetaUpdate,
 } from "../../slices/phraseSlice";
-import { getDatasets, saveSheetServiceWorker } from "../../slices/sheetSlice";
-import { setSwVersions, setVersion } from "../../slices/versionSlice";
 import {
   clearVocabulary,
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
@@ -192,19 +190,16 @@ export default function Sheet() {
   const updateStateAndCacheCB = useCallback(
     (
       name: string,
-      hash: string,
       metaUpdatedUids?: Record<string, MetaDataObj | undefined>
     ) => {
       switch (name) {
         case workbookSheetNames.kanji.prettyName:
-          dispatch(setVersion({ name: "kanji", hash }));
           dispatch(clearKanji());
           if (metaUpdatedUids) {
             dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
           }
           break;
         case workbookSheetNames.vocabulary.prettyName:
-          dispatch(setVersion({ name: "vocabulary", hash }));
           dispatch(clearVocabulary());
           dispatch(clearOpposites());
           if (metaUpdatedUids) {
@@ -212,7 +207,6 @@ export default function Sheet() {
           }
           break;
         case workbookSheetNames.phrases.prettyName:
-          dispatch(setVersion({ name: "phrases", hash }));
           dispatch(clearPhrases());
           dispatch(clearParticleGame());
           if (metaUpdatedUids) {
@@ -222,9 +216,6 @@ export default function Sheet() {
         default:
           throw new Error("Incorrect sheet name: " + name);
       }
-
-      // update service worker cache.json file with app state versions
-      void dispatch(setSwVersions());
     },
     [dispatch]
   );
@@ -267,8 +258,7 @@ export default function Sheet() {
       },
     };
     const { meta, list: oldList } = selectedData[name];
-    const { data, hash } = sheetDataToJSON(sheet) as {
-      hash: string;
+    const { data } = sheetDataToJSON(sheet) as {
       data: Record<string, { uid: string; english: string }>;
     };
 
@@ -282,20 +272,18 @@ export default function Sheet() {
     );
     // TODO: use changedUID to remove or update? audio assets
 
-    const saveP = saveSheetServiceWorker(sheet.name, data, hash);
-
     // store workbook in indexedDB
     // (keep ordering and notes)
-    void openIDB().then((db) =>
-      putIDBItem(
-        { db, store: IDBStores.WORKBOOK },
-        { key: "0", workbook: trimmed }
+    void openIDB()
+      .then((db) =>
+        putIDBItem(
+          { db, store: IDBStores.WORKBOOK },
+          { key: "0", workbook: trimmed }
+        )
       )
-    );
-
-    void saveP.then(({ hash, name }) =>
-      updateStateAndCacheCB(name, hash, metaUpdatedUids)
-    );
+      .then(() => {
+        updateStateAndCacheCB(name, metaUpdatedUids);
+      });
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
@@ -520,27 +508,24 @@ export default function Sheet() {
 
           // store workbook in indexedDB
           // update cached json objects
-          return Promise.all([
-            openIDB().then((db) =>
+          return openIDB()
+            .then((db) =>
               putIDBItem(
                 { db, store: IDBStores.WORKBOOK },
                 { key: "0", workbook: trimmed }
               )
-            ),
-            ...trimmed.map((sheet) => {
-              const { data, hash } = sheetDataToJSON(sheet as FilledSheetData);
-              return saveSheetServiceWorker(sheet.name, data, hash).then(() =>
-                updateStateAndCacheCB(sheet.name, hash)
-              );
-            }),
-          ]).then(() => {
-            // reload workbook (update useEffect)
-            setWorkbookImported(Date.now());
+            )
+            .then(() => {
+              // reload workbook (update useEffect)
+              setWorkbookImported(Date.now());
 
-            // local data edited, do not fetch use cached cache.json
-            void dispatch(setLocalDataEdited(true));
-            return;
-          });
+              trimmed.map((sheet) => {
+                updateStateAndCacheCB(sheet.name);
+              }),
+                // local data edited, do not fetch use cached cache.json
+                void dispatch(setLocalDataEdited(true));
+              return;
+            });
         });
 
         // eslint-disable-next-line

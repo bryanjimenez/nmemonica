@@ -199,8 +199,6 @@ export const getPhrase = createAsyncThunk(
         hash: string;
       };
 
-      // return { value: data, version: hash };
-
       const groups = buildGroupObject(jsonValue);
       const { values, errors } = buildPhraseArray(jsonValue);
       if (errors) {

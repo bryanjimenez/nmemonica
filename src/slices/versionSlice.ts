@@ -1,11 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-
-import { logger } from "./globalSlice";
-import { DebugLevel } from "./settingHelper";
-import { dataServiceEndpoint } from "../../environment.development";
-import { swMessageSaveDataJSON } from "../helper/serviceWorkerHelper";
-
-import { RootState } from ".";
+import { createSlice } from "@reduxjs/toolkit";
 
 export interface VersionInitSlice {
   vocabulary?: string;
@@ -22,35 +15,6 @@ const initialState: VersionInitSlice = {
   particles: undefined,
   suffixes: undefined,
 };
-
-/**
- * Get app data versions file
- */
-export const getVersions = createAsyncThunk(
-  "version/getVersions",
-  async (_arg, thunkAPI) => {
-    thunkAPI.dispatch(logger("getVersions", DebugLevel.WARN));
-
-    return fetch(dataServiceEndpoint + "/cache.json", {
-      credentials: "include",
-    }).then((res) => res.json());
-  }
-);
-
-/**
- * Update sw versions
- */
-export const setSwVersions = createAsyncThunk(
-  "version/setSwVersions",
-  async (arg, thunkAPI) => {
-    const state = thunkAPI.getState() as RootState;
-    const stateVersions = { ...state.version };
-
-    const url = dataServiceEndpoint + "/cache.json";
-
-    return swMessageSaveDataJSON(url, stateVersions);
-  }
-);
 
 const versionSlice = createSlice({
   name: "version",
@@ -71,21 +35,6 @@ const versionSlice = createSlice({
 
       state[name] = hash;
     },
-  },
-
-  extraReducers: (builder) => {
-    builder.addCase(
-      getVersions.fulfilled,
-      (state, action: { payload: VersionInitSlice }) => {
-        const { vocabulary, kanji, phrases, particles, suffixes } =
-          action.payload;
-        state.kanji = kanji;
-        state.vocabulary = vocabulary;
-        state.phrases = phrases;
-        state.particles = particles;
-        state.suffixes = suffixes;
-      }
-    );
   },
 });
 

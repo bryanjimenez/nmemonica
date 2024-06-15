@@ -15,7 +15,6 @@ import { DebugLevel } from "../../src/slices/settingHelper";
 import { getParam, removeParam } from "../../src/helper/urlHelper";
 import {
   audioServicePath,
-  dataServiceEndpoint,
   dataServicePath,
   pronounceEndoint,
   uiEndpoint,
@@ -40,10 +39,8 @@ const jsVersion = process.env.SW_MAIN_VERSION;
 const bundleVersion = process.env.SW_BUNDLE_VERSION;
 
 let urlAppUI = uiEndpoint;
-let urlDataService = dataServiceEndpoint;
 let urlPronounceService = pronounceEndoint;
 let audioPath = audioServicePath;
-let dataPath = dataServicePath;
 
 const swSelf = globalThis.self as unknown as ServiceWorkerGlobalScope;
 
@@ -59,35 +56,35 @@ const appMediaCache = "nmemonica-media";
 const NO_INDEXEDDB_SUPPORT =
   "Your browser doesn't support a stable version of IndexedDB.";
 
-const dataVerPath = "/cache.json";
-const dataSourcePath = ["/phrases.json", "/vocabulary.json", "/kanji.json"];
-
-function getVersions() {
+/**
+ * Calculate app source versions
+ */
+function getAppVersion() {
   return { swVersion, jsVersion, bundleVersion };
 }
 
 /**
  * Cache all data resources
  */
-function cacheAllDataResource(baseUrl: string) {
-  return caches
-    .open(appDataCache)
-    .then((cache) =>
-      cache.add(baseUrl + dataVerPath).then(() =>
-        Promise.all(
-          dataSourcePath.map((path) => {
-            const url = baseUrl + path;
-            return getVersionForData(new Request(url)).then((v) =>
-              cacheVerData(new Request(url), v)
-            );
-          })
-        )
-      )
-    )
-    .catch(() => {
-      console.log("[ServiceWorker] Data Prefech failed for some item");
-    });
-}
+// function cacheAllDataResource(baseUrl: string) {
+//   return caches
+//     .open(appDataCache)
+//     .then((cache) =>
+//       cache.add(baseUrl + dataVerPath).then(() =>
+//         Promise.all(
+//           dataSourcePath.map((path) => {
+//             const url = baseUrl + path;
+//             return getVersionForData(new Request(url)).then((v) =>
+//               cacheVerData(new Request(url), v)
+//             );
+//           })
+//         )
+//       )
+//     )
+//     .catch(() => {
+//       console.log("[ServiceWorker] Data Prefech failed for some item");
+//     });
+// }
 /**
  * Cache all static site assets
  */
@@ -116,7 +113,7 @@ function cacheAllRoot() {
 function installEventHandler(_e: ExtendableEvent) {
   void swSelf.skipWaiting();
 
-  const versions = getVersions();
+  const versions = getAppVersion();
   clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
 }
 
@@ -145,26 +142,12 @@ function activateEventHandler(e: ExtendableEvent) {
         return swSelf.clients.claim();
       })
       .then(() => {
-        const dataCacheP = isUserEditedData().then((isEdited) => {
-          if (isEdited) {
-            clientLogger("Datasets edited: Skipping recache", DebugLevel.WARN);
-          } else {
-            return cacheAllDataResource(urlDataService);
-          }
-          return;
-        });
         const rootCacheP = cacheAllRoot();
         const staticAssetCacheP = cacheAllStaticAssets();
 
-        return Promise.all([dataCacheP, rootCacheP, staticAssetCacheP]);
+        return Promise.all([rootCacheP, staticAssetCacheP]);
       })
   );
-}
-
-interface MsgSaveDataJSON {
-  type: string;
-  url: string;
-  dataset: Record<string, unknown>;
 }
 
 interface MsgHardRefresh {
@@ -177,10 +160,6 @@ interface MsgGetVersion {
 
 type AppSWMessage = MsgHardRefresh | MsgGetVersion;
 
-function isMsgSaveDataJSON(m: AppSWMessage): m is MsgSaveDataJSON {
-  return (m as MsgSaveDataJSON).type === SWMsgOutgoing.DATASET_JSON_SAVE;
-}
-
 function isMsgHardRefresh(m: AppSWMessage): m is MsgHardRefresh {
   return (m as MsgHardRefresh).type === SWMsgOutgoing.SW_REFRESH_HARD;
 }
@@ -191,24 +170,6 @@ function isMsgGetVersion(m: AppSWMessage): m is MsgGetVersion {
 
 function messageEventHandler(event: ExtendableMessageEvent) {
   const message = event.data as AppSWMessage;
-
-  if (
-    isMsgSaveDataJSON(message) &&
-    message.type === SWMsgOutgoing.DATASET_JSON_SAVE
-  ) {
-    // update data object
-    const dataP = caches.open(appDataCache).then((cache) => {
-      const blob = new Blob([JSON.stringify(message.dataset)], {
-        type: "application/json; charset=utf-8",
-      });
-
-      const d = new Response(blob);
-      return cache.put(message.url, d);
-    });
-
-    event.waitUntil(dataP);
-    return;
-  }
 
   if (
     isMsgHardRefresh(message) &&
@@ -241,7 +202,7 @@ function messageEventHandler(event: ExtendableMessageEvent) {
     isMsgGetVersion(message) &&
     message.type === SWMsgOutgoing.SW_GET_VERSIONS
   ) {
-    const versions = getVersions();
+    const versions = getAppVersion();
     clientMsg(SWMsgOutgoing.SW_GET_VERSIONS, versions);
     return;
   }
@@ -379,17 +340,6 @@ function fetchEventHandler(e: FetchEvent) {
   const path = url.slice(url.indexOf("/", protocol.length + 1));
 
   switch (true) {
-    case /* cache.json */
-    path.startsWith(dataPath + dataVerPath): {
-      if (req.headers.get("Cache-Control") === "no-store") {
-        // mTLS handshake in progress
-        e.respondWith(noCaching(req));
-      }
-
-      e.respondWith(appVersionReq(req));
-      break;
-    }
-
     case /* github user data */
     url.includes("githubusercontent") &&
       req.headers.has(SWRequestHeader.DATA_VERSION): {
@@ -408,12 +358,12 @@ function fetchEventHandler(e: FetchEvent) {
       break;
     }
 
-    case /* data */
-    req.headers.has(SWRequestHeader.DATA_VERSION): {
-      const version = req.headers.get(SWRequestHeader.DATA_VERSION);
-      e.respondWith(appDataReq(req, version));
-      break;
-    }
+    // case /* data */
+    // req.headers.has(SWRequestHeader.DATA_VERSION): {
+    //   const version = req.headers.get(SWRequestHeader.DATA_VERSION);
+    //   e.respondWith(appDataReq(req, version));
+    //   break;
+    // }
 
     case /* UI asset */
     url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
@@ -502,126 +452,6 @@ function clientLogger(msg: string, lvl: number) {
         console.log(err);
       });
   }
-}
-
-/**
- * respond with cache match always fetch and re-cache
- * may return stale version
- * @returns a Promise with a cache response
- */
-function appVersionReq(req: Request) {
-  const fetchCheckP = isUserEditedData();
-
-  return fetchCheckP.then((cacheOnly) => {
-    // check if in cache
-    const c = caches
-      .open(appDataCache)
-      .then((cache) => cache.match(req.url))
-      .then((cacheRes) => {
-        if (!cacheRes) {
-          throw new Error("Not in cache");
-        }
-        return cacheRes;
-      });
-
-    if (cacheOnly) {
-      // don't fetch when user in-app
-      // has edited datasets
-      return c;
-    }
-
-    // fetch new versions
-    const f = fetch(req).then((res) => {
-      const resClone = res.clone();
-      if (!res.ok) {
-        throw new Error("Failed to fetch");
-      }
-
-      // update cache from new
-      void caches
-        .open(appDataCache)
-        .then((cache) => cache.put(req.url, resClone));
-
-      return res;
-    });
-
-    // return whaterver is fastest
-    return Promise.any([f, c]).catch((errs: Error[]) =>
-      Promise.reject(errs[0])
-    );
-  });
-}
-
-/**
- * When request contains Data-Version != 0 the version is used otherwise
- * the version is searched in the cache
- * @returns a Promise that yieds a cached response
- */
-function appDataReq(req: Request, version: string | null) {
-  let response: Promise<Response>;
-  if (!version || version === "0") {
-    response = getVersionForData(req).then((v) => cacheVerData(req, v));
-  } else {
-    response = cacheVerData(req, version);
-  }
-
-  return response;
-}
-
-/**
- * @returns a Promise that yields the version on the cache for the provided request
- */
-function getVersionForData(req: Request) {
-  const url = req.url;
-  const authority = url.slice(0, url.indexOf("/", "https://".length));
-  const filename = url.split("/").pop() || url;
-  const [dName] = filename.split(".json");
-
-  /**
-   * get from cache on fail fetch and re-cache
-   * first match may be stale
-   * returns a Promise with a cached dataVersion response
-   */
-  return caches
-    .open(appDataCache)
-    .then((cache) =>
-      cache.match(authority + dataPath + dataVerPath).then((cacheRes) => {
-        if (cacheRes) {
-          return Promise.resolve(cacheRes);
-        } else {
-          return recache(
-            appDataCache,
-            new Request(authority + dataPath + dataVerPath, {
-              credentials: "include",
-            })
-          );
-        }
-      })
-    )
-    .then((res) => res && res.json())
-    .then((versions: { [k: string]: string }) => versions[dName]);
-}
-
-/**
- * when cache match fails fetch and re-cache (only good response)
- * @returns a Promise that yieds a cached response
- */
-function cacheVerData(req: Request, v: string) {
-  const urlVersion = req.url + ".v" + v;
-
-  return caches.open(appDataCache).then((cache) =>
-    cache.match(urlVersion).then((cacheRes) => {
-      return (
-        cacheRes ||
-        fetch(req).then((fetchRes) => {
-          if (fetchRes.status < 400) {
-            void cache.put(urlVersion, fetchRes.clone());
-          }
-          return fetchRes;
-        })
-      );
-    })
-  );
 }
 
 /**

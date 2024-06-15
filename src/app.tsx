@@ -35,7 +35,7 @@ import { clearParticleGame } from "./slices/particleSlice";
 import { clearPhrases, getPhrase } from "./slices/phraseSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
-import { clearVersions, getVersions } from "./slices/versionSlice";
+import { clearVersions } from "./slices/versionSlice";
 import { clearVocabulary, getVocabulary } from "./slices/vocabularySlice";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const TermsAndConditions = lazy(
@@ -93,9 +93,6 @@ export default function App() {
         .unwrap()
         .then((swStatus) => {
           dispatch(logger(`SW status: ${swStatus}`, DebugLevel.DEBUG));
-          if (swStatus === "activated") {
-            void dispatch(getVersions());
-          }
 
           // wait for old->new service worker change
           navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -106,15 +103,13 @@ export default function App() {
                 dispatch(clearVersions());
 
                 // clear versions
-                return dispatch(getVersions()).then(() =>
-                  Promise.all([
-                    dispatch(clearPhrases()),
-                    dispatch(clearParticleGame()),
-                    dispatch(clearVocabulary()),
-                    dispatch(clearOpposites()),
-                    dispatch(clearKanji()),
-                  ])
-                );
+                return Promise.all([
+                  dispatch(clearPhrases()),
+                  dispatch(clearParticleGame()),
+                  dispatch(clearVocabulary()),
+                  dispatch(clearOpposites()),
+                  dispatch(clearKanji()),
+                ]);
               })
               .then(() =>
                 // get cached versions
@@ -153,9 +148,6 @@ export default function App() {
           console.log("service worker not running");
           // eslint-disable-next-line no-console
           console.log(e.message);
-
-          // get uncached versions
-          void dispatch(getVersions());
         });
     } else {
       // eslint-disable-next-line no-console
