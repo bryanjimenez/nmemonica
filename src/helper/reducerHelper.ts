@@ -19,7 +19,7 @@ export function getPropsFromTags(tag: string | undefined) {
   const rareK = "\u3400-\u4DBF"; //     kanji
   const hasParticle = new RegExp("[pP]:" + h + "(?:," + h + ")*");
   const hasInverse = new RegExp("inv:[a-z0-9]{32}");
-  const isIntransitive = new RegExp("intr:[a-z0-9]{32}");
+  const isIntransitiveWPair = new RegExp("intr:[a-z0-9]{32}");
   const isAdjective = new RegExp("(i|na)-adj");
   const nonWhiteSpace = new RegExp(/\S/);
   const hasPhoneticKanji = new RegExp(
@@ -32,11 +32,16 @@ export function getPropsFromTags(tag: string | undefined) {
     "[sS]:[" + commonK + rareK + "]" + "(?:,[" + commonK + rareK + "])*"
   );
 
+  const isPolite = new RegExp(/^polite$/i);
+  const isKeigo = new RegExp(/^keigo$/i);
+  const isIntransitive = new RegExp(/^intr$/i);
+
   let remainingTags: string[] = [];
   let particles: string[] = [];
   let inverse: string | undefined;
   let slang: boolean | undefined;
   let keigo: boolean | undefined;
+  let polite: boolean | undefined;
   let exv: 1 | 2 | 3 | undefined;
   let intr: true | undefined;
   let trans: string | undefined;
@@ -53,16 +58,16 @@ export function getPropsFromTags(tag: string | undefined) {
       case "slang":
         slang = true;
         break;
-      case "keigo":
+      case isKeigo.test(t) && t:
         keigo = true;
         break;
       case "EV1":
         exv = 1;
         break;
-      case "intr":
+      case isIntransitive.test(t) && t:
         intr = true;
         break;
-      case isIntransitive.test(t) && t:
+      case isIntransitiveWPair.test(t) && t:
         trans = t.split(":")[1];
         break;
       case isAdjective.test(t) && t:
@@ -70,6 +75,9 @@ export function getPropsFromTags(tag: string | undefined) {
         break;
 
       // Phrases
+      case isPolite.test(t) && t:
+        polite = true;
+        break;
       case hasParticle.test(t) && t:
         particles = t.split(":")[1].split(",");
         break;
@@ -115,6 +123,7 @@ export function getPropsFromTags(tag: string | undefined) {
     adj,
 
     // Phrases
+    polite,
     inverse,
     particles,
 
@@ -136,11 +145,12 @@ export function buildVocabularyArray<T extends SourceVocabulary>(
 ) {
   let transitivity: Record<string, { trans?: string; intr: string }> = {};
   let value: RawVocabulary[] = Object.keys(original).map((k) => {
+    const iTerm = original[k];
     const { tags, slang, keigo, exv, intr, trans, adj } = getPropsFromTags(
-      original[k].tag
+      iTerm.tag
     );
 
-    if (trans) {
+    if (trans !== undefined) {
       const uid = trans;
       transitivity[uid] = {
         intr: k,
@@ -149,11 +159,14 @@ export function buildVocabularyArray<T extends SourceVocabulary>(
     }
 
     return {
-      ...original[k],
+      ...iTerm,
       uid: k,
 
-      // Not used after parsing
-      tag: undefined,
+      // Keep raw metadata
+      tag:
+        iTerm.tag !== undefined
+          ? (JSON.parse(iTerm.tag) as Record<string, string[]>)
+          : undefined,
 
       // Derived from tag
       tags,
@@ -168,7 +181,9 @@ export function buildVocabularyArray<T extends SourceVocabulary>(
   });
 
   value = value.map((v) => {
-    return transitivity[v.uid] ? { ...v, intr: transitivity[v.uid].intr } : v;
+    return transitivity[v.uid] !== undefined
+      ? { ...v, intr: transitivity[v.uid].intr }
+      : v;
   });
 
   return value;
@@ -185,15 +200,15 @@ export function buildGroupObject<T extends { grp?: string; subGrp?: string }>(
   const subGrp: keyof RawVocabulary = "subGrp";
 
   return Object.values(termObj).reduce<GroupListMap>((a, o) => {
-    if (o[mainGrp]) {
-      if (a[o[mainGrp]]) {
-        if (o[subGrp] && !a[o[mainGrp]].includes(o[subGrp])) {
+    if (o[mainGrp] !== undefined) {
+      if (a[o[mainGrp]] !== undefined) {
+        if (o[subGrp] !== undefined && !a[o[mainGrp]].includes(o[subGrp])) {
           return { ...a, [o[mainGrp]]: [...a[o[mainGrp]], o[subGrp]] };
         }
         return a;
       }
 
-      if (o[subGrp]) {
+      if (o[subGrp] !== undefined) {
         return { ...a, [o[mainGrp]]: [o[subGrp]] };
       }
 
@@ -213,7 +228,7 @@ export function buildTagObject<T extends { tags: string[] }>(termObj: T[]) {
   let tags: string[] = [];
 
   termObj.forEach((o) => {
-    if (o[tagK] && o[tagK]?.length > 0) {
+    if (o[tagK] !== undefined && o[tagK]?.length > 0) {
       tags = [...tags, ...o[tagK]];
     }
   });
