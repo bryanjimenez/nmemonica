@@ -22,12 +22,8 @@ import { encrypt } from "../../helper/cryptoHelper";
 import { getLocalStorageSettings } from "../../helper/localStorageHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppDispatch } from "../../slices";
-import { getDatasets } from "../../slices/sheetSlice";
-import {
-  getWorkbookFromIndexDB,
-  metaDataNames,
-  xObjectToCsvText,
-} from "../Pages/Sheet";
+import { getWorkbookFromIndexDB, metaDataNames, xObjectToCsvText } from "../../helper/sheetHelper";
+
 
 interface DataSetExportSyncProps {
   visible?: boolean;
@@ -186,7 +182,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
     const fromApp = fileData.filter((f) => f.origin === "AppCache");
     if (fromApp.length > 0) {
-      transferData = getWorkbookFromIndexDB(dispatch, getDatasets).then(
+      transferData = getWorkbookFromIndexDB().then(
         (xObj) => {
           const included = xObj.filter((o) =>
             fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())

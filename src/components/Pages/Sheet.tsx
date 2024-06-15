@@ -120,10 +120,7 @@ const defaultOp = {
  * @param dispatch
  * @param getDatasets fetch action (if no indexedDB)
  */
-export function getWorkbookFromIndexDB(
-  dispatch: AppDispatch,
-  getDatasets: AsyncThunk<FilledSheetData[], void, object>
-) {
+export function getWorkbookFromIndexDB() {
   return openIDB()
     .then((db) => {
       // if indexedDB has stored workbook
@@ -145,23 +142,7 @@ export function getWorkbookFromIndexDB(
         return res.workbook;
       });
     })
-    .catch((error) => {
-      // if not fetch and build spreadsheet
-      if (error instanceof Error) {
-        const errData = error.cause as { code: string };
-        if (errData?.code !== IDBErrorCause.NoResult) {
-          // eslint-disable-next-line no-console
-          console.log("Unknown error getting workbook from indexedDB");
-          // eslint-disable-next-line no-console
-          console.error(error);
-        }
-      }
-
-      return dispatch(getDatasets()).unwrap();
-    })
     .catch((err) => {
-      const { message } = err as { message: unknown };
-      if (typeof message === "string" && message === "Failed to fetch") {
         return [
           jtox(
             {
@@ -183,9 +164,7 @@ export function getWorkbookFromIndexDB(
           ),
         ];
       }
-
-      throw err;
-    });
+    );
 }
 
 /**
@@ -264,7 +243,7 @@ export default function Sheet() {
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void getWorkbookFromIndexDB(dispatch, getDatasets).then((sheetArr) => {
+    void getWorkbookFromIndexDB().then((sheetArr) => {
       const data = sheetArr.map((s) => sheetAddExtraRow(s));
 
       const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
@@ -626,7 +605,7 @@ export default function Sheet() {
       }
 
       if (importWorkbook && importWorkbook.length > 0) {
-        const workbookP = getWorkbookFromIndexDB(dispatch, getDatasets).then(
+        const workbookP = getWorkbookFromIndexDB().then(
           (dbWorkbook) => {
             const trimmed = Object.values(workbookSheetNames).map((w) => {
               const { prettyName: prettyName } = w;
