@@ -29,14 +29,8 @@ import {
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
 import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
-import { clearKanji, getKanji } from "./slices/kanjiSlice";
-import { clearOpposites } from "./slices/oppositeSlice";
-import { clearParticleGame } from "./slices/particleSlice";
-import { clearPhrases, getPhrase } from "./slices/phraseSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
-import { clearVersions } from "./slices/versionSlice";
-import { clearVocabulary, getVocabulary } from "./slices/vocabularySlice";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const TermsAndConditions = lazy(
   () => import("./components/Terms/TermsAndConditions")
@@ -93,54 +87,6 @@ export default function App() {
         .unwrap()
         .then((swStatus) => {
           dispatch(logger(`SW status: ${swStatus}`, DebugLevel.DEBUG));
-
-          // wait for old->new service worker change
-          navigator.serviceWorker.addEventListener("controllerchange", () => {
-            void navigator.serviceWorker.ready
-              .then(() => {
-                dispatch(logger(`SW controllerchange`, DebugLevel.DEBUG));
-
-                dispatch(clearVersions());
-
-                // clear versions
-                return Promise.all([
-                  dispatch(clearPhrases()),
-                  dispatch(clearParticleGame()),
-                  dispatch(clearVocabulary()),
-                  dispatch(clearOpposites()),
-                  dispatch(clearKanji()),
-                ]);
-              })
-              .then(() =>
-                // get cached versions
-                Promise.all([
-                  dispatch(getPhrase()).unwrap(),
-                  dispatch(getVocabulary()).unwrap(),
-                  dispatch(getKanji()).unwrap(),
-                ])
-              )
-              .then(([phrase, vocabulary, kanji]) => {
-                const dataset = { phrase, vocabulary, kanji };
-
-                for (const k in dataset) {
-                  const name = k as keyof typeof dataset;
-                  const { version } = dataset[name];
-                  if (version === "0") {
-                    dispatch(
-                      logger(
-                        `${properCase(k)} v:${version}`,
-                        version === "0" ? DebugLevel.ERROR : DebugLevel.DEBUG
-                      )
-                    );
-                  }
-                }
-              })
-              .catch((e) => {
-                if (e instanceof Error) {
-                  dispatch(logger(e.message, DebugLevel.ERROR));
-                }
-              });
-          });
         })
         .catch((e: Error) => {
           dispatch(logger(e.message, DebugLevel.ERROR));

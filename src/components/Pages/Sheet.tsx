@@ -182,7 +182,6 @@ export default function Sheet() {
   /**
    * Updates app state with incoming dataset
    * Updates metadata with incoming metadata
-   * Updates SW cache.json with state versions
    * @param name name of DataSet
    * @param hash
    * @param metaUpdateUids Record containing updated uids
