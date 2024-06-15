@@ -75,7 +75,7 @@ export function getWorkbookFromIndexDB() {
 
       // use stored workbook
       return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
-        if (!res.workbook || res.workbook.length === 0) {
+        if (!("workbook" in res) || res.workbook.length === 0) {
           throw ErrorWorkbookMissing;
         }
 
@@ -252,7 +252,12 @@ export function findInColumn(sheet: SheetData, column: number, query: string) {
 
   const result = Object.values(sheet.rows).reduce<[number, number, string][]>(
     (acc, row: RowData, rowIdx) => {
-      if (typeof row !== "number" && "cells" in row) {
+      if (
+        typeof row !== "number" &&
+        "cells" in row &&
+        row.cells[column] !== undefined &&
+        "text" in row.cells[column]
+      ) {
         const { text } = row.cells[column];
         return text === query ? [...acc, [rowIdx, column, query]] : acc;
       }
@@ -273,15 +278,18 @@ export function findInRow(sheet: SheetData, row: number, query: string) {
     return [];
   }
 
-  const r: RowData = Object.values(sheet.rows)[row];
+  const r = { ...sheet.rows[row] };
   if (r === undefined || !("cells" in r)) {
     return [];
   }
   const { cells } = r;
   const result = Object.keys(cells).reduce<[number, number, string][]>(
     (acc, colIdx) => {
-      const { text } = cells[colIdx];
-      return text === query ? [...acc, [row, Number(colIdx), query]] : acc;
+      if (cells[colIdx] !== undefined && "text" in cells[colIdx]) {
+        const { text } = cells[colIdx];
+        return text === query ? [...acc, [row, Number(colIdx), query]] : acc;
+      }
+      return acc;
     },
     []
   );
@@ -412,4 +420,127 @@ export function updateEditedUID<T extends { uid: string; english: string }>(
   });
 
   return { updatedMeta, changedUID: changed };
+}
+
+/*
+ * Toggles a tag for a term in a sheet (modifies workbook)
+ * @param sheet Sheet to search in
+ * @param query A search query to match on
+ * @param tag Tag to toggle
+ */
+export function setTagsFromSheet(sheet: SheetData, query: string, tag: string) {
+  const rHeaderJapanese = findInRow(sheet, 0, "Japanese");
+  const rHeaderTag = findInRow(sheet, 0, "Tags");
+  if (rHeaderJapanese.length !== 1 || rHeaderTag.length !== 1) {
+    throw new Error("Missing headers");
+  }
+  const [_jRow, japaneseCol] = rHeaderJapanese[0];
+  const [_tRow, tagCol] = rHeaderTag[0];
+
+  const rTerm = findInColumn(sheet, japaneseCol, query);
+  if (rTerm.length !== 1) {
+    throw new Error(`Expected to find this term ${query}`);
+  }
+  const [termRow] = rTerm[0];
+  if (sheet.rows === undefined) {
+    throw new Error("Expected a row for query result");
+  }
+
+  const prevTags = parseTagColumn(sheet, termRow, tagCol);
+
+  // Edit tags
+  const lCaseTag = tag.toLowerCase();
+  const newTags = {
+    tags: prevTags.tags.includes(lCaseTag)
+      ? prevTags.tags.filter((t) => t !== lCaseTag)
+      : [...prevTags.tags, lCaseTag],
+  };
+
+  // avoid adding empty arrays to tag column
+  const pCount = Object.keys(prevTags)
+    .filter((p) => p !== "tags")
+    .reduce((acc, k) => acc + prevTags[k].length, 0);
+  const nCount = newTags.tags.length;
+  const newTagContent = {
+    ...(pCount > 0 ? prevTags : {}),
+    ...(nCount > 0 ? newTags : {}),
+  };
+
+  sheet.rows[termRow].cells = {
+    ...sheet.rows[termRow].cells,
+    [tagCol]: {
+      text:
+        pCount > 0 || nCount > 0 ? JSON.stringify(newTagContent) : undefined,
+    },
+  };
+
+  return sheet;
+}
+/**
+ * Searches for a term in a sheet returns a parsed tag object
+ * @param sheet Sheet to search in
+ * @param query A search query to match on
+ */
+export function getTagsFromSheet(sheet: SheetData, query: string) {
+  const rHeaderJapanese = findInRow(sheet, 0, "Japanese");
+  const rHeaderTag = findInRow(sheet, 0, "Tags");
+  if (rHeaderJapanese.length !== 1 || rHeaderTag.length !== 1) {
+    throw new Error("Missing headers");
+  }
+  const [_jRow, japaneseCol] = rHeaderJapanese[0];
+  const [_tRow, tagCol] = rHeaderTag[0];
+
+  const rTerm = findInColumn(sheet, japaneseCol, query);
+  if (rTerm.length !== 1) {
+    throw new Error(`Expected to find this term ${query}`);
+  }
+  const [termRow] = rTerm[0];
+  if (sheet.rows === undefined) {
+    throw new Error("Expected a row for query result");
+  }
+
+  const prevTags = parseTagColumn(sheet, termRow, tagCol);
+
+  return prevTags.tags;
+}
+
+/**
+ * Parses the tag column of a specified row
+ * @param s
+ * @param termRow The index of the specified row
+ * @param tagCol The index of the 'Tags' column
+ */
+function parseTagColumn(s: SheetData, termRow: number, tagCol: number) {
+  if (s.rows === undefined) {
+    throw new Error("Expected a row for query result");
+  }
+
+  let prevTags: Record<string, string[]>;
+  if (
+    "cells" in s.rows[termRow] &&
+    s.rows[termRow].cells[tagCol] !== undefined
+  ) {
+    try {
+      prevTags = { tags: [] };
+
+      if (
+        s.rows[termRow] !== undefined &&
+        "cells" in s.rows[termRow] &&
+        s.rows[termRow].cells[tagCol] !== undefined &&
+        "text" in s.rows[termRow].cells[tagCol]
+      ) {
+        const { text } = s.rows[termRow].cells[tagCol];
+        prevTags =
+          text !== undefined
+            ? (JSON.parse(text.trim()) as Record<string, string[]>)
+            : { tags: [] };
+      }
+    } catch (err) {
+      throw new Error("Failed to parse tags from sheet cell");
+    }
+  } else {
+    prevTags = { tags: [] };
+  }
+
+  return prevTags;
 }

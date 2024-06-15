@@ -1,37 +1,73 @@
 import { Dialog, DialogContent } from "@mui/material";
+import { RawVocabulary } from "nmemonica";
+import { ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
 
 import SettingsSwitch from "./SettingsSwitch";
+import { AppDispatch } from "../../slices";
 
 interface TagEditMenuProps {
-  visible?: boolean;
+  visible: boolean;
   close: () => void;
-  tags: { name: string; active: boolean; toggle: () => void }[];
+  get: () => Promise<string[]>;
+  toggle: (tag: string) => Promise<void>;
+  term: RawVocabulary;
+  title?: ReactElement;
+  tags: string[];
 }
 
 export function TagEditMenu(props: TagEditMenuProps) {
-  const { visible, close, tags } = props;
+  const { visible, close, tags, term, title, get, toggle } = props;
+  const dispatch = useDispatch<AppDispatch>();
+
+  const [activeTags, setActiveTags] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (visible) {
+      void get().then((tags) => {
+        setActiveTags(tags);
+      });
+    }
+  }, [dispatch, get, visible, term.japanese]);
+
+  const toggleCB = useCallback(
+    (tag: string) => () => {
+      const lCaseTag = tag.toLowerCase();
+
+      void toggle(lCaseTag).then(() => {
+        setActiveTags((p) =>
+          p.includes(lCaseTag)
+            ? p.filter((t) => t !== lCaseTag)
+            : [...p, lCaseTag]
+        );
+      });
+    },
+    [toggle]
+  );
+
+  const tagElToggles = useMemo(
+    () =>
+      tags.map((tag) => (
+        <div key={tag} className="d-flex justify-content-between">
+          <div className="mt-2 me-4">{tag}</div>
+          <div>
+            <SettingsSwitch
+              active={activeTags.includes(tag.toLowerCase())}
+              action={toggleCB(tag)}
+              statusText={""}
+            />
+          </div>
+        </div>
+      )),
+    [tags, activeTags, toggleCB]
+  );
 
   return (
-    <Dialog
-      open={visible === true}
-      onClose={close}
-      aria-label={"Tag edit menu"}
-    >
+    <Dialog open={visible} onClose={close} aria-label={"Tag edit menu"}>
       <DialogContent className="py-2">
-        <div>Tags</div>
         <div className="d-flex flex-column">
-          {tags.map((el) => (
-            <div key={el.name} className="d-flex justify-content-between">
-              <div className="mt-2 me-4">{el.name}</div>
-              <div>
-                <SettingsSwitch
-                  active={el.active}
-                  action={el.toggle}
-                  statusText={""}
-                />
-              </div>
-            </div>
-          ))}
+          {title}
+          {tagElToggles}
         </div>
       </DialogContent>
     </Dialog>

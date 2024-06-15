@@ -75,15 +75,16 @@ import {
   flipVocabularyPracticeSide,
   furiganaToggled,
   getVocabulary,
+  getVocabularyTags,
   removeFrequencyWord,
   removeFromSpaceRepetition,
   setPitchAccentData,
   setSpaceRepetitionMetadata,
-  setVocabularyTags,
   setWordAccuracy,
   setWordDifficulty,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  toggleVocabularyTag,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
@@ -739,80 +740,27 @@ export default function Vocabulary() {
           <TagEditMenu
             visible={tagMenu}
             close={closeTagMenu}
-            tags={[
-              {
-                name: "Keigo",
-                active: false,
-                toggle: () => {
-                  void dispatch(
-                    setVocabularyTags({
-                      query: vocabulary.japanese,
-                      tag: "keigo",
-                    })
-                  );
-                },
-              },
-              {
-                name: "Formal",
-                active: true,
-                toggle: () => {
-                  void dispatch(
-                    setVocabularyTags({
-                      query: vocabulary.japanese,
-                      tag: "formal",
-                    })
-                  );
-                },
-              },
-              {
-                name: "Polite",
-                active: true,
-                toggle: () => {
-                  void dispatch(
-                    setVocabularyTags({
-                      query: vocabulary.japanese,
-                      tag: "polite",
-                    })
-                  );
-                },
-              },
-              {
-                name: "Passive",
-                active: true,
-                toggle: () => {
-                  void dispatch(
-                    setVocabularyTags({
-                      query: vocabulary.japanese,
-                      tag: "passive",
-                    })
-                  );
-                },
-              },
-              {
-                name: "Colloquial",
-                active: true,
-                toggle: () => {
-                  void dispatch(
-                    setVocabularyTags({
-                      query: vocabulary.japanese,
-                      tag: "colloquial",
-                    })
-                  );
-                },
-              },
-              {
-                name: "Rude",
-                active: false,
-                toggle: () => {
-                  void dispatch(
-                    setVocabularyTags({
-                      query: vocabulary.japanese,
-                      tag: "rude",
-                    })
-                  );
-                },
-              },
-            ]}
+            get={() =>
+              dispatch(
+                getVocabularyTags({ query: vocabulary.japanese })
+              ).unwrap()
+            }
+            toggle={(tag: string) =>
+              dispatch(
+                toggleVocabularyTag({
+                  query: vocabulary.japanese,
+                  tag,
+                })
+              ).unwrap()
+            }
+            term={vocabulary}
+            title={
+              <div className="d-flex justify-content-between">
+                <div>{JapaneseText.parse(vocabulary).toHTML()}</div>
+                <div>Tags</div>
+              </div>
+            }
+            tags={["Keigo", "Formal", "Colloquial", "Derogative"]}
           />
 
           <div

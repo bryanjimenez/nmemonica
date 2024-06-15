@@ -1,3 +1,4 @@
+import { SheetData } from "@nmemonica/x-spreadsheet";
 import {
   type PayloadAction,
   createAsyncThunk,
@@ -14,7 +15,6 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { getDatasets } from "./sheetSlice";
 import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { type Vocabulary, sheetDataToJSON } from "../helper/jsonHelper";
@@ -36,6 +36,8 @@ import {
   workbookSheetNames,
 } from "../helper/sheetHelper";
 import { findInColumn, findInRow } from "../helper/sheetHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
+import { getTagsFromSheet, setTagsFromSheet } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
@@ -179,76 +181,69 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
   }
 );
 
-export const setVocabularyTags = createAsyncThunk(
-  "vocabulary/setVocabularyTags",
-  (arg: { query: string; tag: string }, thunkAPI) => {
+export const toggleVocabularyTag = createAsyncThunk(
+  "vocabulary/toggleVocabularyTag",
+  (arg: { query: string; tag: string }) => {
     const { query, tag } = arg;
-    const dispatch = thunkAPI.dispatch as AppDispatch;
+    const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB().then((sheetArr) => {
-      // Get current tags for term
-      const vIdx = sheetArr.findIndex(
-        (s) => s.name.toLowerCase() === "vocabulary"
-      );
-      if (vIdx === -1) {
-        throw new Error("Expected to find Vocabulary sheet");
-      }
-      const s = sheetArr[vIdx];
-
-      const rHeaderJapanese = findInRow(s, 0, "Japanese");
-      const rHeaderTag = findInRow(s, 0, "Tags");
-      if (rHeaderJapanese.length !== 1 || rHeaderTag.length !== 1) {
-        throw new Error("Missing headers");
-      }
-      const [_jRow, japaneseCol] = rHeaderJapanese[0];
-      const [_tRow, tagCol] = rHeaderTag[0];
-
-      const rTerm = findInColumn(s, japaneseCol, query);
-      if (rTerm.length !== 1) {
-        throw new Error(`Expected to find this term ${query}`);
-      }
-      const [termRow] = rTerm[0];
-      if (s.rows === undefined) {
-        throw new Error("Expected a row for query result");
-      }
-
-      console.log(rTerm);
-      console.log(s.rows[termRow].cells[tagCol].text);
-
-      let prevTags: string[];
-      if (
-        s.rows[termRow].cells[tagCol].text === "" ||
-        s.rows[termRow].cells[tagCol].text === undefined
-      ) {
-        prevTags = [];
-      } else {
-        try {
-          prevTags = JSON.parse(s.rows[termRow].cells[tagCol].text).tags;
-        } catch (err) {
-          throw new Error("Failed to parse tags from sheet cell");
+    return getWorkbookFromIndexDB().then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
+        if (vIdx === -1) {
+          throw new Error(`Expected to find ${sheetName} sheet`);
         }
-      }
+        const s = { ...sheetArr[vIdx] };
 
-      // Edit tags
-      s.rows[termRow].cells[tagCol].text = JSON.stringify({
-        tags: prevTags.includes(tag)
-          ? prevTags.filter((t) => t !== tag)
-          : [...prevTags, tag],
-      });
+        const updatedSheet = setTagsFromSheet(s, query, tag);
 
-      // Save to indexedDB
-      return openIDB()
-        .then((db) =>
-          putIDBItem(
-            { db, store: IDBStores.WORKBOOK },
-            { key: "0", workbook: sheetArr }
+        const wb = [
+          ...sheetArr.filter(
+            (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
+          ),
+          updatedSheet,
+        ];
+
+        // Save to indexedDB
+        return openIDB()
+          .then((db) =>
+            putIDBItem(
+              { db, store: IDBStores.WORKBOOK },
+              { key: "0", workbook: wb }
+            )
           )
-        )
-        .then(() => {
-          // TODO: update json?
-          // TODO: update state
-        });
-    });
+          .then(() => {
+            // TODO: update json?
+            // TODO: update state
+          });
+      }
+    );
+  }
+);
+
+export const getVocabularyTags = createAsyncThunk(
+  "vocabulary/getVocabularyTags",
+  (arg: { query: string }) => {
+    const { query } = arg;
+    const sheetName = workbookSheetNames.vocabulary.prettyName;
+
+    return getWorkbookFromIndexDB().then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
+        if (vIdx === -1) {
+          throw new Error(`Expected to find ${sheetName} sheet`);
+        }
+        const s = { ...sheetArr[vIdx] };
+
+        return getTagsFromSheet(s, query);
+      }
+    );
   }
 );
 
