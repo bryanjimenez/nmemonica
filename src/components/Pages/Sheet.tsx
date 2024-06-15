@@ -1,5 +1,5 @@
 import { Badge, Fab, TextField } from "@mui/material";
-import { Spreadsheet } from "@nmemonica/x-spreadsheet";
+import { type SheetData, Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
   GearIcon,
   LinkExternalIcon,
@@ -128,7 +128,20 @@ export default function Sheet() {
     const gridEl = document.createElement("div");
 
     void getWorkbookFromIndexDB().then((sheetArr) => {
-      const data = sheetArr.map((s) => sheetAddExtraRow(s));
+      // Preserve display sheet ordering
+      const data = [
+        workbookSheetNames.phrases.prettyName,
+        workbookSheetNames.vocabulary.prettyName,
+        workbookSheetNames.kanji.prettyName,
+      ].reduce<SheetData[]>((acc, name) => {
+        const s = sheetArr.find(
+          (s) => s.name.toLowerCase() === name.toLowerCase()
+        );
+        if (s !== undefined) {
+          acc = [...acc, sheetAddExtraRow(s)];
+        }
+        return acc;
+      }, []);
 
       const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
 
@@ -165,7 +178,7 @@ export default function Sheet() {
 
     return () => {
       // cleanup
-      if (c?.contains(gridEl)) {
+      if (c !== null && c.contains(gridEl)) {
         c?.removeChild(gridEl);
       }
     };
@@ -432,9 +445,10 @@ export default function Sheet() {
     const hiddenCss = "display: none;";
     const hidden = menu?.getAttribute("style")?.includes(hiddenCss);
 
-    const css = hidden
-      ? `display: block; right: ${1}px; bottom: ${1}px;`
-      : hiddenCss;
+    const css =
+      hidden === true
+        ? `display: block; right: ${1}px; bottom: ${1}px;`
+        : hiddenCss;
     menu?.setAttribute("style", css);
   }, []);
 

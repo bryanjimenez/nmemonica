@@ -6,7 +6,7 @@ import { getVocabulary } from "./vocabularySlice";
 import { csvToObject } from "../helper/csvHelper";
 import { jtox } from "../helper/jsonHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
-
+import { workbookSheetNames } from "../helper/sheetHelper";
 import { AppDispatch } from ".";
 
 export interface SheetInitSlice {}
@@ -83,7 +83,11 @@ function getCachedDataset(dispatch: AppDispatch) {
   const phraseP = dispatch(getPhrase()).unwrap();
   const kanjiP = dispatch(getKanji()).unwrap();
 
-  const sheets = ["Phrases", "Vocabulary", "Kanji"];
+  const sheets = [
+    workbookSheetNames.phrases.prettyName,
+    workbookSheetNames.vocabulary.prettyName,
+    workbookSheetNames.kanji.prettyName,
+  ];
 
   return Promise.all([phraseP, vocabP, kanjiP]).then((arr) =>
     arr.reduce<FilledSheetData[]>((acc, { value }, i) => {
