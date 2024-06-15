@@ -4,6 +4,7 @@ import {
   ChevronRightIcon,
   MilestoneIcon,
   TrashIcon,
+  TagIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
@@ -63,11 +64,13 @@ import {
   deleteMetaPhrase,
   flipPhrasesPracticeSide,
   getPhrase,
+  getPhraseTags,
   removeFrequencyPhrase,
   removeFromSpaceRepetition,
   setPhraseAccuracy,
   setPhraseDifficulty,
   setSpaceRepetitionMetadata,
+  togglePhraseTag,
   togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
@@ -92,6 +95,7 @@ import {
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
 import StackNavButton from "../Form/StackNavButton";
+import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 
 const PhrasesMeta = {
@@ -158,6 +162,14 @@ export default function Phrases() {
   /** metadata table ref */
   const metadata = useRef(repetition);
   metadata.current = repetition;
+
+  const [tagMenu, setTagMenu] = useState(false);
+  const closeTagMenu = useCallback(() => {
+    setTagMenu(false);
+  }, []);
+  const openTagMenu = useCallback(() => {
+    setTagMenu(true);
+  }, []);
 
   /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
@@ -741,6 +753,30 @@ export default function Phrases() {
         >
           {phrase.lesson}
         </DialogMsg>
+        <TagEditMenu
+          visible={tagMenu}
+          close={closeTagMenu}
+          term={phrase}
+          get={() =>
+            dispatch(getPhraseTags({ query: phrase.japanese })).unwrap()
+          }
+          toggle={(tag: string) =>
+            dispatch(
+              togglePhraseTag({
+                query: phrase.japanese,
+                tag,
+              })
+            ).unwrap()
+          }
+          tags={[
+            "Keigo",
+            "Formal",
+            "Polite",
+            "Passive",
+            "Colloquial",
+            "Derogative",
+          ]}
+        />
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -866,6 +902,9 @@ export default function Phrases() {
                 toggle={showLit}
                 action={setStateFunction(setShowLit, (lit) => !lit)}
               />
+              <div className="clickable sm-icon-grp" onClick={openTagMenu}>
+                <TagIcon />
+              </div>
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
                 addFrequencyTerm={addFrequencyTermCB}

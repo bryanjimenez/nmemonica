@@ -1,3 +1,4 @@
+import { SheetData } from "@nmemonica/x-spreadsheet";
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import type { GroupListMap, MetaDataObj, RawPhrase } from "nmemonica";
@@ -13,6 +14,7 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { type Phrase, sheetDataToJSON } from "../helper/jsonHelper";
+import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import {
   localStoreAttrDelete,
   localStoreAttrUpdate,
@@ -27,10 +29,11 @@ import {
   getWorkbookFromIndexDB,
   workbookSheetNames,
 } from "../helper/sheetHelper";
+import { getTagsFromSheet, setTagsFromSheet } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
-import type { RootState } from ".";
+import type { AppDispatch, RootState } from ".";
 
 export interface PhraseInitSlice {
   value: RawPhrase[];
@@ -265,6 +268,74 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
     return updateAction(uid, spaceRep);
+  }
+);
+
+export const togglePhraseTag = createAsyncThunk(
+  "phrase/togglePhraseTag",
+  (arg: { query: string; tag: string }, thunkAPI) => {
+    const { query, tag } = arg;
+    const dispatch = thunkAPI.dispatch as AppDispatch;
+    const sheetName = "Phrases";
+
+    return getWorkbookFromIndexDB().then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
+        if (vIdx === -1) {
+          throw new Error(`Expected to find ${sheetName} sheet`);
+        }
+        const s = { ...sheetArr[vIdx] };
+
+        const updatedSheet = setTagsFromSheet(s, query, tag);
+
+        const wb = [
+          ...sheetArr.filter(
+            (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
+          ),
+          updatedSheet,
+        ];
+
+        // Save to indexedDB
+        return openIDB()
+          .then((db) =>
+            putIDBItem(
+              { db, store: IDBStores.WORKBOOK },
+              { key: "0", workbook: wb }
+            )
+          )
+          .then(() => {
+            // TODO: update json?
+            // TODO: update state
+          });
+      }
+    );
+  }
+);
+
+export const getPhraseTags = createAsyncThunk(
+  "phrase/getPhraseTags",
+  (arg: { query: string }, thunkAPI) => {
+    const { query } = arg;
+    const dispatch = thunkAPI.dispatch as AppDispatch;
+    const sheetName = "Phrases";
+
+    return getWorkbookFromIndexDB().then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
+        if (vIdx === -1) {
+          throw new Error(`Expected to find ${sheetName} sheet`);
+        }
+        const s = { ...sheetArr[vIdx] };
+
+        return getTagsFromSheet(s, query);
+      }
+    );
   }
 );
 
