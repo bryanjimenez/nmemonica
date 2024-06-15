@@ -1,15 +1,6 @@
 import EventEmitter from "events";
 
 import { Badge, Fab, TextField } from "@mui/material";
-import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
-import {
-  jtox,
-  sheetDataToJSON,
-} from "@nmemonica/snservice/src/helper/jsonHelper";
-import {
-  type FilledSheetData,
-  isFilledSheetData,
-} from "@nmemonica/snservice/src/helper/sheetHelper";
 import { Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
   GearIcon,
@@ -20,13 +11,7 @@ import {
 import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import { MetaDataObj } from "nmemonica";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -38,6 +23,8 @@ import {
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
 import { localStorageKey } from "../../constants/paths";
+import { objectToCSV } from "../../helper/csvHelper";
+import { jtox, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getLocalStorageSettings,
   setLocalStorage,
@@ -48,8 +35,12 @@ import {
   searchInSheet,
   sheetAddExtraRow,
   touchScreenCheck,
+  updateEditedUID,
 } from "../../helper/sheetHelper";
-import { updateEditedUID } from "../../helper/sheetHelperNoImport";
+import {
+  type FilledSheetData,
+  isFilledSheetData,
+} from "../../helper/sheetHelperImport";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -77,7 +68,7 @@ import {
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
 import { DataSetExportSync } from "../Form/DataSetExportSync";
 import { DataSetImportFile } from "../Form/DataSetImportFile";
-import { DataSetImportSync } from "../Form/DataSetImportSync";  
+import { DataSetImportSync } from "../Form/DataSetImportSync";
 import "../../css/Sheet.css";
 
 const SheetMeta = {
@@ -281,9 +272,9 @@ export default function Sheet() {
       // console.log(grid.bottombar.activeEl.el.innerHTML);
 
       grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
-   
+
       // replace typed '\n' with newline inside cell
-      grid.on("cell-edited-done", (text:string, _ri:number, _ci:number) => {
+      grid.on("cell-edited-done", (text: string, _ri: number, _ci: number) => {
         grid.sheet.data.setSelectedCellText(
           // characters to replace with \n
           //    literal '\n'
@@ -443,13 +434,7 @@ export default function Sheet() {
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
-  }, [
-    dispatch,
-    updateStateAndCacheCB,
-    phraseList,
-    vocabList,
-    kanjiList,
-  ]);
+  }, [dispatch, updateStateAndCacheCB, phraseList, vocabList, kanjiList]);
 
   const downloadFileHandlerCB = useCallback(
     (files: { fileName: string; text: string }[]) => {

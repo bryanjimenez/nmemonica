@@ -1,5 +1,4 @@
 import { Alert } from "@mui/material";
-import { FilledSheetData } from "@nmemonica/snservice";
 import {
   DatabaseIcon,
   DiamondIcon,
@@ -11,6 +10,7 @@ import classNames from "classnames";
 import React, { ReactElement, useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 
+import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { LocalStorageState, RootState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";

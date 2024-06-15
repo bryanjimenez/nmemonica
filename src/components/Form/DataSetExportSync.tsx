@@ -1,5 +1,4 @@
 import { Alert, Button, Dialog, DialogContent } from "@mui/material";
-import { FilledSheetData } from "@nmemonica/snservice";
 import {
   ArrowSwitchIcon,
   CheckCircleIcon,
@@ -21,6 +20,7 @@ import { syncService } from "../../../environment.development";
 import { localStorageKey } from "../../constants/paths";
 import { encrypt } from "../../helper/cryptoHelper";
 import { getLocalStorageSettings } from "../../helper/localStorageHelper";
+import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppDispatch } from "../../slices";
 import { getDatasets } from "../../slices/sheetSlice";
 import {
