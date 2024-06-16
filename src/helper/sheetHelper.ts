@@ -14,7 +14,22 @@ import {
   getIDBItem,
   openIDB,
 } from "../../pwa/helper/idbHelper";
+import { AppDispatch } from "../slices";
+import {
+  clearKanji,
+  batchRepetitionUpdate as kanjiBatchMetaUpdate,
+} from "../slices/kanjiSlice";
+import { clearOpposites } from "../slices/oppositeSlice";
+import { clearParticleGame } from "../slices/particleSlice";
+import {
+  clearPhrases,
+  batchRepetitionUpdate as phraseBatchMetaUpdate,
+} from "../slices/phraseSlice";
 import { deleteMetadata } from "../slices/settingHelper";
+import {
+  clearVocabulary,
+  batchRepetitionUpdate as vocabularyBatchMetaUpdate,
+} from "../slices/vocabularySlice";
 
 /**
  * Keep all naming and order
@@ -543,4 +558,41 @@ function parseTagColumn(s: SheetData, termRow: number, tagCol: number) {
   }
 
   return prevTags;
+}
+
+/**
+ * Updates app state with incoming dataset
+ * Updates metadata with incoming metadata
+ * @param name name of DataSet
+ * @param metaUpdateUids Record containing updated uids
+ */
+export function updateStateAfterWorkbookEdit(
+  dispatch: AppDispatch,
+  name: string,
+  metaUpdatedUids?: Record<string, MetaDataObj | undefined>
+) {
+  switch (name) {
+    case workbookSheetNames.kanji.prettyName:
+      dispatch(clearKanji());
+      if (metaUpdatedUids) {
+        dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
+      }
+      break;
+    case workbookSheetNames.vocabulary.prettyName:
+      dispatch(clearVocabulary());
+      dispatch(clearOpposites());
+      if (metaUpdatedUids) {
+        dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
+      }
+      break;
+    case workbookSheetNames.phrases.prettyName:
+      dispatch(clearPhrases());
+      dispatch(clearParticleGame());
+      if (metaUpdatedUids) {
+        dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
+      }
+      break;
+    default:
+      throw new Error("Incorrect sheet name: " + name);
+  }
 }

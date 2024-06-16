@@ -581,6 +581,19 @@ export function englishLabel(
   // rawObj only for phrases
   const showInverse = rawObj?.inverse;
   const showPolite = rawObj?.polite;
+  let showPassive = false;
+  if (
+    rawObj !== undefined &&
+    "tag" in rawObj &&
+    typeof rawObj.tag === "object" &&
+    rawObj.tag !== null &&
+    "tags" in rawObj.tag &&
+    Array.isArray(rawObj.tag.tags)
+  ) {
+    // TODO: passive is hardcoded
+    showPassive = rawObj.tag.tags.includes("passive");
+  }
+
   if (isOnTop && showInverse !== undefined) {
     let viewMyInverse = undefined;
     if (typeof jumpToTerm === "function") {
@@ -607,6 +620,12 @@ export function englishLabel(
     indicators = [
       ...indicators,
       <span key={indicators.length + 1}>polite</span>,
+    ];
+  }
+  if (isOnTop && showPassive) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>passive</span>,
     ];
   }
 
