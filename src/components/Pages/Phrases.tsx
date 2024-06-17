@@ -3,6 +3,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MilestoneIcon,
+  TrashIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
@@ -59,6 +60,7 @@ import { fetchAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyPhrase,
+  deleteMetaPhrase,
   flipPhrasesPracticeSide,
   getPhrase,
   removeFrequencyPhrase,
@@ -843,6 +845,17 @@ export default function Phrases() {
                 />
                 <div className="fs-xx-small me-2">
                   <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
+                <div className="h-100 d-flex flex-column justify-content-between me-2">
+                  <div
+                    className="clickable"
+                    onClick={() => {
+                      void dispatch(deleteMetaPhrase([uid]));
+                    }}
+                  >
+                    <TrashIcon />
+                  </div>
+                  <div className="d-flex flex-column"></div>
                 </div>
               </Tooltip>
               <ToggleLiteralPhraseBtn
