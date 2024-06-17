@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { Suspense, lazy, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
@@ -26,6 +26,17 @@ const SettingsFailedFurigana = lazy(
 export default function SettingsStats() {
   const dispatch = useDispatch<AppDispatch>();
 
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      setLoading(true);
+    }, 500);
+
+    return () => {
+      clearTimeout(loadingTimeout);
+    };
+  }, []);
+
   const { repetition: phraseRep, viewGoal: phraseGoal } = useConnectPhrase();
   const { repetition: vocabRep, viewGoal: VocabularyGoal } =
     useConnectVocabulary();
@@ -46,24 +57,34 @@ export default function SettingsStats() {
     vocabD,
     kanjiD,
   } = useMemo(() => {
+    let phraseMeta = phraseRep;
+    let vocabMeta = vocabRep;
+    let kanjiMeta = kanjiRep;
+    if (loading === false) {
+      // prevent locking up on mount
+      phraseMeta = {};
+      vocabMeta = {};
+      kanjiMeta = {};
+    }
+
     return {
-      phraseC: getLastViewCounts(phraseRep, numberOfDays),
-      vocabC: getLastViewCounts(vocabRep, numberOfDays),
-      kanjiC: getLastViewCounts(kanjiRep, numberOfDays),
+      phraseC: getLastViewCounts(phraseMeta, numberOfDays),
+      vocabC: getLastViewCounts(vocabMeta, numberOfDays),
+      kanjiC: getLastViewCounts(kanjiMeta, numberOfDays),
 
-      phraseR: getRecallCounts(phraseRep),
-      vocabR: getRecallCounts(vocabRep),
-      kanjiR: getRecallCounts(kanjiRep),
+      phraseR: getRecallCounts(phraseMeta),
+      vocabR: getRecallCounts(vocabMeta),
+      kanjiR: getRecallCounts(kanjiMeta),
 
-      phraseQ: getStalenessCounts(phraseRep),
-      vocabQ: getStalenessCounts(vocabRep),
-      kanjiQ: getStalenessCounts(kanjiRep),
+      phraseQ: getStalenessCounts(phraseMeta),
+      vocabQ: getStalenessCounts(vocabMeta),
+      kanjiQ: getStalenessCounts(kanjiMeta),
 
-      phraseD: getDifficultyCounts(phraseRep),
-      vocabD: getDifficultyCounts(vocabRep),
-      kanjiD: getDifficultyCounts(kanjiRep),
+      phraseD: getDifficultyCounts(phraseMeta),
+      vocabD: getDifficultyCounts(vocabMeta),
+      kanjiD: getDifficultyCounts(kanjiMeta),
     };
-  }, [phraseRep, vocabRep, kanjiRep]);
+  }, [loading, phraseRep, vocabRep, kanjiRep]);
 
   const oneDay = 1000 * 60 * 60 * 24;
   const daysOW = phraseC.map((v, i) => {
@@ -336,15 +357,17 @@ export default function SettingsStats() {
         <div className="column-2 setting-block"></div>
       </div>
 
-      <div>
-        <Suspense fallback={<NotReady addlStyle="failed-spacerep-view" />}>
-          <SettingsStale />
-        </Suspense>
+      {loading === true && (
+        <div>
+          <Suspense fallback={<NotReady addlStyle="failed-spacerep-view" />}>
+            <SettingsStale />
+          </Suspense>
 
-        <Suspense fallback={<NotReady addlStyle="failed-furigana-view" />}>
-          <SettingsFailedFurigana />
-        </Suspense>
-      </div>
+          <Suspense fallback={<NotReady addlStyle="failed-furigana-view" />}>
+            <SettingsFailedFurigana />
+          </Suspense>
+        </div>
+      )}
     </div>
   );
 
