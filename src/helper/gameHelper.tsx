@@ -42,7 +42,7 @@ export function play<RawItem extends { uid: string }>(
     const staleFreq = frequency.filter((fUid) => {
       const lastSeen = metadata[fUid]?.lastView;
 
-      return lastSeen && minsSince(lastSeen) > frequency.length;
+      return lastSeen !== undefined && minsSince(lastSeen) > frequency.length;
     });
     const max = staleFreq.length;
     const idx = Math.floor(Math.random() * (max - min) + min);
@@ -156,10 +156,6 @@ export function getTermUID<Term extends { uid: string }>(
     term = filteredTerms[selectedIndex];
   }
 
-  if (!term) {
-    throw new Error("No term found");
-  }
-
   return term.uid;
 }
 
@@ -212,12 +208,6 @@ export function termFilterByType<
 
   if (filterType === TermFilterBy.FREQUENCY) {
     // frequency filtering
-    if (!frequencyList) {
-      throw new TypeError("Filter type requires frequencyList");
-    }
-    // if (!toggleFilterType) {
-    //   throw new TypeError("Filter type requires toggleFilterType");
-    // }
 
     if (frequencyList.length > 0) {
       if (activeGrpList.length > 0) {
@@ -415,7 +405,7 @@ export function japaneseLabel(
   const showKeigo = jObj.isKeigo();
   const showInverse = rawObj?.inverse;
 
-  if (isOnTop && (showIntr || pairUID)) {
+  if (isOnTop && (showIntr || pairUID !== undefined)) {
     let viewMyPair = undefined;
     if (pairUID !== undefined && typeof jumpToTerm === "function") {
       const p = pairUID;
@@ -542,7 +532,7 @@ export function englishLabel(
   const showSlang = jObj.isSlang();
   const showKeigo = jObj.isKeigo();
 
-  if (isOnTop && (showIntr || pairUID)) {
+  if (isOnTop && (showIntr || pairUID !== undefined)) {
     let viewMyPair = undefined;
     if (pairUID !== undefined && typeof jumpToTerm === "function") {
       const p = pairUID;
@@ -582,6 +572,7 @@ export function englishLabel(
   const showInverse = rawObj?.inverse;
   const showPolite = rawObj?.polite;
   let showPassive = false;
+  let showFormal = false;
   if (
     rawObj !== undefined &&
     "tag" in rawObj &&
@@ -591,7 +582,9 @@ export function englishLabel(
     Array.isArray(rawObj.tag.tags)
   ) {
     // TODO: passive is hardcoded
-    showPassive = rawObj.tag.tags.includes("passive");
+    const tags = rawObj.tag.tags.map((t: string) => t.toLowerCase());
+    showPassive = tags.includes("passive");
+    showFormal = tags.includes("formal");
   }
 
   if (isOnTop && showInverse !== undefined) {
@@ -616,7 +609,7 @@ export function englishLabel(
       </span>,
     ];
   }
-  if (isOnTop && showPolite) {
+  if (isOnTop && showPolite !== undefined) {
     indicators = [
       ...indicators,
       <span key={indicators.length + 1}>polite</span>,
@@ -626,6 +619,12 @@ export function englishLabel(
     indicators = [
       ...indicators,
       <span key={indicators.length + 1}>passive</span>,
+    ];
+  }
+  if (isOnTop && showFormal) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>formal</span>,
     ];
   }
 
@@ -683,9 +682,10 @@ export function labelPlacementHelper(
 }
 
 export function getEnglishHint(vocabulary: RawVocabulary) {
-  return !vocabulary.grp || vocabulary.grp === "" ? undefined : (
+  return vocabulary.grp === undefined || vocabulary.grp === "" ? undefined : (
     <span className="hint">
-      {vocabulary.grp + (vocabulary.subGrp ? ", " + vocabulary.subGrp : "")}
+      {vocabulary.grp +
+        (vocabulary.subGrp !== undefined ? ", " + vocabulary.subGrp : "")}
     </span>
   );
 }
@@ -709,12 +709,7 @@ export function getJapaneseHint(japaneseObj: JapaneseText) {
 export function getCacheUID(word: RawVocabulary) {
   let { uid } = word;
 
-  if (!uid) {
-    console.warn(JSON.stringify(word));
-    throw new Error("Missing uid");
-  }
-
-  if (word.form) {
+  if (word.form !== undefined) {
     uid += word.form !== "dictionary" ? word.form.replace("-", ".") : "";
   }
 
