@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 import { NotReady } from "./NotReady";
@@ -53,13 +54,17 @@ export default function SettingsKanji() {
   const kanjiFilter = kanjiFilterREF.current;
   const kanjiOrder = kanjiOrderREF.current;
 
-  if (vocabulary.length === 0) {
-    void dispatch(getVocabulary());
-  }
+  useEffect(() => {
+    if (vocabulary.length === 0) {
+      void dispatch(getVocabulary());
+    }
 
-  if (Object.keys(kanjiTags).length === 0) {
-    void dispatch(getKanji());
-  }
+    if (Object.keys(kanjiTags).length === 0) {
+      void dispatch(getKanji());
+    }
+    // react-hooks/exhaustive-deps **mount only**
+    // eslint-disable-next-line
+  }, []);
 
   if (kanji.length < 1 || Object.keys(kanjiTags).length < 1)
     return <NotReady addlStyle="vocabulary-settings" />;
@@ -206,8 +211,9 @@ export default function SettingsKanji() {
                 kanjiOrder === TermSortBy.RECALL
               }
               statusText={
-                (kanjiReinforce ? `(+${kFreqExcluTagSelected.length} ) ` : "") +
-                "Reinforcement"
+                (kanjiReinforce.current
+                  ? `(+${kFreqExcluTagSelected.length} ) `
+                  : "") + "Reinforcement"
               }
             />
           </div>
