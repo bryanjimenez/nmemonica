@@ -76,7 +76,7 @@ describe("reducerHelper", function () {
       expect(tags).to.be.an("Array").of.length(0);
     });
     it("tags multiple", function () {
-      const expected = ["casual", "onomatopoetic", "negative"];
+      const expected = ["casual", "onomatopoetic", "negative", "keigo"];
       const initialTags = '{"tags":["onomatopoetic", "casual", "negative", "keigo"]}';
 
       const { tags, keigo } = getPropsFromTags(initialTags);
@@ -115,25 +115,27 @@ describe("reducerHelper", function () {
 
     describe("vocabulary", function () {
       it("na-adj", function () {
+        const expected = ["na-adj", "onomatopoetic", "Adjective"]
         const initialTags = '{"tags":["na-adj","onomatopoetic","Adjective"]}';
         const { tags, adj } = getPropsFromTags(initialTags);
 
         expect(adj).to.equal("na");
         expect(tags)
-          .to.be.length(2)
-          .and.include.members(["Adjective", "onomatopoetic"]);
+          .to.be.length(expected.length)
+          .and.include.members(expected);
       });
       it("i-adj", function () {
+        const expected = ["i-adj", "onomatopoetic", "Adjective"]
         const initialTags = '{"tags":["i-adj","onomatopoetic","Adjective"]}';
         const { tags, adj } = getPropsFromTags(initialTags);
 
         expect(adj).to.equal("i");
         expect(tags)
-          .to.be.length(2)
-          .and.include.members(["Adjective", "onomatopoetic"]);
+          .to.be.length(expected.length)
+          .and.include.members(expected);
       });
       it("keigo", function () {
-        const expected = ["casual", "negative"];
+        const expected = ["casual", "negative", "keigo"];
         const initialTags = '{"tags":["casual","negative","keigo"]}';
 
         const { tags, keigo } = getPropsFromTags(initialTags);
@@ -145,7 +147,7 @@ describe("reducerHelper", function () {
       });
 
       it("EV1", function () {
-        const expected = ["casual", "negative"];
+        const expected = ["casual", "negative", "keigo", "Exception Verb"];
         const initialTags = '{"tags":["casual","negative","keigo","EV1"]}';
 
         const { tags, exv } = getPropsFromTags(initialTags);
@@ -157,7 +159,7 @@ describe("reducerHelper", function () {
       });
 
       it("intransitive", function () {
-        const expected = ["casual", "negative"];
+        const expected = ["casual", "negative", "keigo", "Exception Verb", "intr"];
         const initialTags = '{"tags":["casual","negative","keigo","EV1","intr"]}';
 
         const { tags, intr } = getPropsFromTags(initialTags);
@@ -169,7 +171,7 @@ describe("reducerHelper", function () {
       });
 
       it("transitive (w/ intransitive pair)", function () {
-        const expected = ["casual", "negative"];
+        const expected = ["casual", "negative", "keigo", "Exception Verb", "intr"];
         const expectedUid = "00000000000000000000000000000000";
         const initialTags = `{"tags":["casual","negative","keigo","EV1","intr:${expectedUid}"]}`;
 

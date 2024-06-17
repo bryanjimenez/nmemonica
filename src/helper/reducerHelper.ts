@@ -57,26 +57,37 @@ export function getPropsFromTags(tag: string | undefined) {
       // Vocabulary
       case "slang":
         slang = true;
+        remainingTags = [...remainingTags, t];
         break;
       case isKeigo.test(t) && t:
         keigo = true;
+        remainingTags = [...remainingTags, t];
         break;
       case "EV1":
         exv = 1;
+        remainingTags = [...remainingTags, 'Exception Verb'];
         break;
       case isIntransitive.test(t) && t:
         intr = true;
+        remainingTags = [...remainingTags, t];
         break;
       case isIntransitiveWPair.test(t) && t:
         trans = t.split(":")[1];
+        remainingTags = [...remainingTags, 'intr'];
         break;
       case isAdjective.test(t) && t:
         adj = t.split("-")[0];
+        remainingTags = [...remainingTags, t];
         break;
 
       // Phrases
       case isPolite.test(t) && t:
         polite = true;
+        remainingTags = [...remainingTags, t];
+        break;
+      case isPolite.test(t) && t:
+        polite = true;
+        remainingTags = [...remainingTags, t];
         break;
       case hasParticle.test(t) && t:
         particles = t.split(":")[1].split(",");
@@ -103,11 +114,7 @@ export function getPropsFromTags(tag: string | undefined) {
       default:
         if (t && nonWhiteSpace.test(t)) {
           // don't add empty whitespace
-          if (remainingTags.length === 0) {
-            remainingTags = [t];
-          } else {
             remainingTags = [...remainingTags, t];
-          }
         }
     }
   });
