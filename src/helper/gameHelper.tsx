@@ -489,14 +489,14 @@ export function japaneseLabel(
     );
   } else if (showAsterix) {
     inJapaneseLbl = (
-      <span>
+      <span className="text-nowrap">
         {inJapanese}
         <span> {"*"}</span>
       </span>
     );
   } else if (showNaAdj) {
     inJapaneseLbl = (
-      <span>
+      <span className="text-nowrap">
         {inJapanese}
         <span className="opacity-25"> {"な"}</span>
       </span>
