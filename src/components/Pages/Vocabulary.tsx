@@ -941,8 +941,7 @@ export default function Vocabulary() {
   if (recallGame === 0) {
     return (
       <GoalResumeMessage
-        viewGoal={viewGoal}
-        goalPending={goalPending.current}
+        goal="Vocabulary"
         setResumeSort={setResumeSort}
         allowed={[
           TermSortBy.VIEW_DATE,

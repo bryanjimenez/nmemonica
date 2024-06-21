@@ -7,7 +7,7 @@ interface PlusMinusProps {
   label?: string;
   value: number | undefined;
   multiplier?: number;
-  onChange: (value?: number) => void;
+  onChange: (value: number | undefined, prevVal: number) => void;
 }
 
 const infinity = String.fromCharCode(parseInt("0x221e", 16));
@@ -29,9 +29,7 @@ export default function PlusMinus(props: PlusMinusProps) {
         <div
           className="clickable px-3 text-center"
           onClick={() => {
-            props.onChange(
-              value !== undefined ? value + Number(multiplier) : 0
-            );
+            props.onChange((value ?? 0) + Number(multiplier), value ?? 0);
           }}
         >
           <FontAwesomeIcon icon={faChevronUp} />
@@ -47,7 +45,8 @@ export default function PlusMinus(props: PlusMinusProps) {
           className="clickable px-3 text-center"
           onClick={() => {
             props.onChange(
-              value !== undefined ? Math.max(0, value - Number(multiplier)) : 0
+              value !== undefined ? Math.max(0, value - Number(multiplier)) : 0,
+              value ?? 0
             );
           }}
         >

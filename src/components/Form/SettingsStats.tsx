@@ -93,24 +93,39 @@ export default function SettingsStats() {
       {
         value: phraseGoal,
         mult: pM,
-        change: (value: number | undefined) => {
-          dispatch(setPhraseGoal(value));
+        change: (value: number | undefined, prevVal: number) => {
+          if (value === 0 && prevVal === 0) {
+            // substraction past 0
+            dispatch(setPhraseGoal(undefined));
+          } else {
+            dispatch(setPhraseGoal(value));
+          }
         },
         title: "Phrases",
       },
       {
         value: VocabularyGoal,
         mult: vM,
-        change: (value: number | undefined) => {
-          dispatch(setVocabularyGoal(value));
+        change: (value: number | undefined, prevVal: number) => {
+          if (value === 0 && prevVal === 0) {
+            // substraction past 0
+            dispatch(setVocabularyGoal(undefined));
+          } else {
+            dispatch(setVocabularyGoal(value));
+          }
         },
         title: "Vocabulary",
       },
       {
         value: KanjiGoal,
         mult: kM,
-        change: (value: number | undefined) => {
-          dispatch(setKanjiGoal(value));
+        change: (value: number | undefined, prevVal: number) => {
+          if (value === 0 && prevVal === 0) {
+            // substraction past 0
+            dispatch(setKanjiGoal(undefined));
+          } else {
+            dispatch(setKanjiGoal(value));
+          }
         },
         title: "Kanji",
       },

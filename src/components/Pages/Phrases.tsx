@@ -627,8 +627,7 @@ export default function Phrases() {
   if (recallGame === 0) {
     return (
       <GoalResumeMessage
-        viewGoal={viewGoal}
-        goalPending={goalPending.current}
+        goal="Phrases"
         setResumeSort={setResumeSort}
         allowed={[
           TermSortBy.VIEW_DATE,

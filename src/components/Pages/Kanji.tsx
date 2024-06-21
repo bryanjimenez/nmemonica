@@ -754,8 +754,7 @@ export default function Kanji() {
   if (recallGame === 0) {
     return (
       <GoalResumeMessage
-        viewGoal={viewGoal}
-        goalPending={goalPending.current}
+        goal="Kanji"
         setResumeSort={setResumeSort}
         allowed={[
           TermSortBy.VIEW_DATE,
