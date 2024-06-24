@@ -32,9 +32,9 @@ export default function SettingsStats() {
   }, []);
 
   const { repetition: phraseRep, viewGoal: phraseGoal } = useConnectPhrase();
-  const { repetition: vocabRep, viewGoal: VocabularyGoal } =
+  const { repetition: vocabRep, viewGoal: vocabularyGoal } =
     useConnectVocabulary();
-  const { repetition: kanjiRep, viewGoal: KanjiGoal } = useConnectKanji();
+  const { repetition: kanjiRep, viewGoal: kanjiGoal } = useConnectKanji();
 
   const numberOfDays = 5;
   const {
@@ -87,6 +87,8 @@ export default function SettingsStats() {
     });
   });
 
+  const [goalIndex, setGoalIndex] = useState(0);
+
   const [[pM, vM, kM], setMultiplier] = useState([1, 1, 1]);
   const goals = useMemo(
     () => [
@@ -104,7 +106,7 @@ export default function SettingsStats() {
         title: "Phrases",
       },
       {
-        value: VocabularyGoal,
+        value: vocabularyGoal,
         mult: vM,
         change: (value: number | undefined, prevVal: number) => {
           if (value === 0 && prevVal === 0) {
@@ -117,7 +119,7 @@ export default function SettingsStats() {
         title: "Vocabulary",
       },
       {
-        value: KanjiGoal,
+        value: kanjiGoal,
         mult: kM,
         change: (value: number | undefined, prevVal: number) => {
           if (value === 0 && prevVal === 0) {
@@ -130,46 +132,62 @@ export default function SettingsStats() {
         title: "Kanji",
       },
     ],
-    [dispatch, pM, vM, kM, phraseGoal, VocabularyGoal, KanjiGoal]
+    [dispatch, pM, vM, kM, phraseGoal, vocabularyGoal, kanjiGoal]
   );
 
   const el = (
     <div className="outer">
       <h3 className="mt-3 mb-1 fw-light">Goals</h3>
-      <div className="d-flex flex-column flex-sm-row justify-content-between mb-2">
-        <div className="column-1 text-start ps-2 mw-75">
+      <div className="d-flex flex-column justify-content-between mb-2">
+        <div className="text-start ps-2 px-sm-5">
           Set a goal for each section. A notification will appear when the daily
           goal (number of items viewed) is reached.
         </div>
-        <div className="column-2 setting-block">
-          {goals.map(({ value, mult, change, title }, i) => (
+        <div className="mt-4 d-flex w-100 justify-content-evenly">
+          {goals.map(({ value, title }, i) => (
             <div
               key={title}
-              className="d-flex flex-row justify-content-end mb-3"
+              className={classNames({
+                "d-flex flex-column p-2": true,
+                "border-bottom": i === goalIndex,
+              })}
+              onClick={() => {
+                setGoalIndex(i);
+                setMultiplier([1, 1, 1]);
+              }}
             >
-              <PlusMinus value={value} multiplier={mult} onChange={change}>
-                <div className="fs-5">{title}</div>
-              </PlusMinus>
-              <div className="fs-4 d-flex align-items-center">
-                <div
-                  className={classNames({
-                    clickable: true,
-                    "fw-bold": mult === 10,
-                  })}
-                  onClick={() => {
-                    setMultiplier((m) => {
-                      const updateM: [number, number, number] = [...m];
-                      m[i] === 1 ? (updateM[i] = 10) : (updateM[i] = 1);
-                      return updateM;
-                    });
-                  }}
-                >
-                  {`x${mult}`}
-                  {mult === 1 && <span className="invisible">0</span>}
-                </div>
-              </div>
+              <span>{title}</span>
+              <span>{value}</span>
             </div>
           ))}
+        </div>
+        <div className="mt-5 d-flex justify-content-center">
+          <div className="d-flex w-100">
+            <div className="fs-1 mt-2 me-2 text-end w-50">
+              <span
+                className="text-nowrap"
+                onClick={() => {
+                  setMultiplier((m) => {
+                    const updateM: [number, number, number] = [...m];
+                    m[goalIndex] === 1
+                      ? (updateM[goalIndex] = 10)
+                      : (updateM[goalIndex] = 1);
+                    return updateM;
+                  });
+                }}
+              >
+                {"x " + goals[goalIndex].mult}
+              </span>
+            </div>
+
+            <div className="ms-2">
+              <PlusMinus
+                value={goals[goalIndex].value}
+                multiplier={goals[goalIndex].mult}
+                onChange={goals[goalIndex].change}
+              />
+            </div>
+          </div>
         </div>
       </div>
       <h3 className="mt-3 mb-1 fw-light">Metrics</h3>
