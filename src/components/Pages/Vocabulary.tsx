@@ -831,6 +831,7 @@ export default function Vocabulary() {
               {metadata.current[uid]?.pron === true && (
                 <div>
                   <PulseIcon />
+                  <span className="notification">!</span>
                 </div>
               )}
               <Tooltip
@@ -873,6 +874,18 @@ export default function Vocabulary() {
                     <TrashIcon />
                   </div>
                   <div className="d-flex flex-column">
+                    <div>
+                      <ToggleFuriganaBtn
+                        disabled={!cookies}
+                        active={hasFurigana}
+                        toggle={
+                          toggleFuriganaSettingHelper(vocabulary.uid, metadata.current)
+                            .furigana.show
+                        }
+                        toggleFurigana={buildAction(dispatch, furiganaToggled)}
+                        vocabulary={vocabulary}
+                      />
+                    </div>
                     <div
                       className={classNames({
                         clickable: true,
@@ -897,16 +910,6 @@ export default function Vocabulary() {
                 setShowHint={setStateFunction(setShowHint, (prev) =>
                   prev !== undefined ? undefined : uid
                 )}
-              />
-              <ToggleFuriganaBtn
-                disabled={!cookies}
-                active={hasFurigana}
-                toggle={
-                  toggleFuriganaSettingHelper(vocabulary.uid, metadata.current)
-                    .furigana.show
-                }
-                toggleFurigana={buildAction(dispatch, furiganaToggled)}
-                vocabulary={vocabulary}
               />
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
