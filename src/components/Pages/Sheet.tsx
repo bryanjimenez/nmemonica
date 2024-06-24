@@ -405,7 +405,7 @@ export default function Sheet() {
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
     const workbook = wbRef.current;
-    if (!search || !workbook) return;
+    if (search === null || workbook === null || search.trim() === "") return;
 
     if (resultIdx.current === null) {
       const { activeSheetData } = getActiveSheet(workbook);
@@ -558,10 +558,7 @@ export default function Sheet() {
                   onChange={(event) => {
                     const { value } = event.target;
                     resetSearchCB();
-
-                    if (value && value.length > 0) {
-                      searchValue.current = value;
-                    }
+                    searchValue.current = value;
                   }}
                 />
               </form>
