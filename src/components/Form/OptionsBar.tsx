@@ -292,7 +292,6 @@ export function ToggleLiteralPhraseBtn(props: ToggleLiteralPhraseBtnProps) {
       className={classNames({
         clickable: true,
         "sm-icon-grp": true,
-        "info-color": toggle,
       })}
       onClick={
         disabled !== true
@@ -305,7 +304,16 @@ export function ToggleLiteralPhraseBtn(props: ToggleLiteralPhraseBtnProps) {
       }
       aria-label="Literal english translation"
     >
-      <ProjectIcon size="small" />
+      <div className={classNames({ "dash-border-small rounded px-1": toggle })}>
+        <div
+          className={classNames({
+            "disabled-color": toggle,
+            "px-1": !toggle,
+          })}
+        >
+          <ProjectIcon size="small" />
+        </div>
+      </div>
     </div>
   );
 }
