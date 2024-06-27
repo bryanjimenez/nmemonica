@@ -9,8 +9,9 @@ import {
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, { ReactElement, useCallback, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 
-import { LocalStorageState } from "../../slices";
+import { LocalStorageState, RootState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 import { metaDataNames, workbookSheetNames } from "../Pages/Sheet";
@@ -31,6 +32,7 @@ interface DataSetFromDragDropProps {
 
 export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
   const { updateDataHandler, data } = props;
+  const { darkMode } = useSelector(({ global }: RootState) => global);
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
   const [onHover, setOnHover] = useState<boolean>();
@@ -255,7 +257,9 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
       <div className="text-center m-0 mb-1">
         <div
           className={classNames({
+            "drag-area": true,
             "d-flex flex-column border rounded px-3": true,
+            "dark-mode": darkMode,
             "dash-border": onHover,
           })}
           onDragOver={overElHandler}
