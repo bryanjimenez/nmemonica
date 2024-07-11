@@ -476,7 +476,8 @@ export function japaneseLabel(
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
-              const separator = <span key={indicators.length + i}>, </span>;
+              const sepIdx = indicators.length + i;
+              const separator = <span key={"sep-" + sepIdx}>, </span>;
               return [...a, separator, c];
             } else {
               return [...a, c];
@@ -570,9 +571,12 @@ export function englishLabel(
 
   // rawObj only for phrases
   const showInverse = rawObj?.inverse;
-  const showPolite = rawObj?.polite;
+  let showPhraseKeigo = false;
+  let showPolite = rawObj?.polite ?? false;
   let showPassive = false;
   let showFormal = false;
+  let showColloquial = false;
+  let showDerrogative = false;
   if (
     rawObj !== undefined &&
     "tag" in rawObj &&
@@ -581,10 +585,14 @@ export function englishLabel(
     "tags" in rawObj.tag &&
     Array.isArray(rawObj.tag.tags)
   ) {
-    // TODO: passive is hardcoded
+    // TODO: these are hardcoded here
     const tags = rawObj.tag.tags.map((t: string) => t.toLowerCase());
-    showPassive = tags.includes("passive");
+    showPhraseKeigo = tags.includes("keigo");
+    showPolite = tags.includes("polite");
     showFormal = tags.includes("formal");
+    showPassive = tags.includes("passive");
+    showColloquial = tags.includes("colloquial");
+    showDerrogative = tags.includes("derrogative");
   }
 
   if (isOnTop && showInverse !== undefined) {
@@ -609,7 +617,20 @@ export function englishLabel(
       </span>,
     ];
   }
-  if (isOnTop && showPolite !== undefined) {
+
+  if (isOnTop && showPhraseKeigo) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>keigo</span>,
+    ];
+  }
+  if (isOnTop && showFormal) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>formal</span>,
+    ];
+  }
+  if (isOnTop && showPolite) {
     indicators = [
       ...indicators,
       <span key={indicators.length + 1}>polite</span>,
@@ -621,10 +642,16 @@ export function englishLabel(
       <span key={indicators.length + 1}>passive</span>,
     ];
   }
-  if (isOnTop && showFormal) {
+  if (isOnTop && showColloquial) {
     indicators = [
       ...indicators,
-      <span key={indicators.length + 1}>formal</span>,
+      <span key={indicators.length + 1}>colloq</span>,
+    ];
+  }
+  if (isOnTop && showDerrogative) {
+    indicators = [
+      ...indicators,
+      <span key={indicators.length + 1}>derrog</span>,
     ];
   }
 
@@ -637,7 +664,8 @@ export function englishLabel(
           <span> (</span>
           {indicators.reduce<React.JSX.Element[]>((a, c, i) => {
             if (i > 0 && i < indicators.length) {
-              const separator = <span key={indicators.length + i}>, </span>;
+              const sepIdx = indicators.length + i;
+              const separator = <span key={"sep-" + sepIdx}>, </span>;
               return [...a, separator, c];
             } else {
               return [...a, c];
