@@ -487,7 +487,7 @@ export default function Vocabulary() {
     setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
-  const gameActionHandler = buildGameActionsHandler(
+  const gameActionHandler = useBuildGameActionsHandler(
     gotoNextSlide,
     gotoPrev,
     reinforcedUID,
@@ -541,9 +541,14 @@ export default function Vocabulary() {
       lastNext: prevLastNext.current,
     };
 
+    // prevent entering the if when
+    // other dep change triggers useEffect
+    prevLastNext.current = lastNext;
+
     if (
       reinforcedUID !== prevState.reinforcedUID ||
-      selectedIndex !== prevState.selectedIndex
+      selectedIndex !== prevState.selectedIndex ||
+      lastNext !== prevState.lastNext
     ) {
       const uid =
         prevState.reinforcedUID ??
@@ -659,6 +664,7 @@ export default function Vocabulary() {
 
     setText,
     viewGoal,
+    lastNext,
   ]);
 
   // FIXME: implement error handling
@@ -1092,12 +1098,12 @@ function buildRecacheAudioHandler(
   };
 }
 
-function buildGameActionsHandler(
+function useBuildGameActionsHandler(
   gotoNextSlide: () => void,
   gotoPrev: () => void,
   reinforcedUID: string | null,
   selectedIndex: number,
-  vocab: RawVocabulary[],
+  vocabList: RawVocabulary[],
   verbForm: string,
   order: number[],
   filteredVocab: RawVocabulary[],
@@ -1106,96 +1112,109 @@ function buildGameActionsHandler(
   setWasPlayed: (value: boolean) => void,
   baseUrl: string
 ) {
-  return function gameActionHandler(
-    direction: string,
-    AbortController?: AbortController
-  ) {
-    let actionPromise;
+  return useCallback(
+    (direction: string, AbortController?: AbortController) => {
+      let actionPromise;
 
-    if (direction === "left") {
-      gotoNextSlide();
-      actionPromise = Promise.all([
-        Promise.resolve(/** Interrupt */),
-        Promise.resolve(/** Fetch */),
-      ]);
-    } else if (direction === "right") {
-      gotoPrev();
-      actionPromise = Promise.all([
-        Promise.resolve(/** Interrupt */),
-        Promise.resolve(/** Fetch */),
-      ]);
-    } else {
-      const uid =
-        reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
-      const vocabulary = getTerm(uid, vocab);
+      if (direction === "left") {
+        gotoNextSlide();
+        actionPromise = Promise.all([
+          Promise.resolve(/** Interrupt */),
+          Promise.resolve(/** Fetch */),
+        ]);
+      } else if (direction === "right") {
+        gotoPrev();
+        actionPromise = Promise.all([
+          Promise.resolve(/** Interrupt */),
+          Promise.resolve(/** Fetch */),
+        ]);
+      } else {
+        const uid =
+          reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
+        const vocabulary = getTerm(uid, vocabList);
 
-      const override = recacheAudio
-        ? { headers: SWRequestHeader.CACHE_RELOAD }
-        : {};
+        const override = recacheAudio
+          ? { headers: SWRequestHeader.CACHE_RELOAD }
+          : {};
 
-      setWasPlayed(true);
+        setWasPlayed(true);
 
-      if (direction === "up") {
-        setMediaSessionPlaybackState("playing");
+        if (direction === "up") {
+          setMediaSessionPlaybackState("playing");
 
-        let sayObj;
-        if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {
-          const verb = verbToTargetForm(vocabulary, verbForm);
+          let sayObj;
+          if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {
+            const verb = verbToTargetForm(vocabulary, verbForm);
 
-          sayObj = {
-            ...vocabulary,
-            japanese: verb.toString(),
-            pronounce: vocabulary.pronounce && verb.getPronunciation(),
-            form: verbForm,
-          };
-        } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
-          const naAdj = JapaneseText.parse(vocabulary).append(
-            naFlip.current && "な"
+            sayObj = {
+              ...vocabulary,
+              japanese: verb.toString(),
+              pronounce: vocabulary.pronounce && verb.getPronunciation(),
+              form: verbForm,
+            };
+          } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
+            const naAdj = JapaneseText.parse(vocabulary).append(
+              naFlip.current && "な"
+            );
+
+            sayObj = {
+              ...vocabulary,
+              japanese: naAdj.toString(),
+              pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
+              form: naFlip.current,
+            };
+
+            naFlip.current = naFlip.current ? undefined : "-na";
+          } else {
+            sayObj = vocabulary;
+          }
+
+          const audioUrl = addParam(baseUrl, {
+            tl: "ja",
+            q: audioPronunciation(sayObj),
+            uid: getCacheUID(sayObj),
+          });
+
+          actionPromise = fetchAudio(
+            new Request(audioUrl, override),
+            AbortController
           );
+        } else if (direction === "down") {
+          setMediaSessionPlaybackState("playing");
 
-          sayObj = {
-            ...vocabulary,
-            japanese: naAdj.toString(),
-            pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
-            form: naFlip.current,
-          };
+          const inEnglish = vocabulary.english;
+          const audioUrl = addParam(baseUrl, {
+            tl: "en",
+            q: inEnglish,
+            uid: vocabulary.uid + ".en",
+          });
 
-          naFlip.current = naFlip.current ? undefined : "-na";
-        } else {
-          sayObj = vocabulary;
+          actionPromise = fetchAudio(
+            new Request(audioUrl, override),
+            AbortController
+          );
         }
-
-        const audioUrl = addParam(baseUrl, {
-          tl: "ja",
-          q: audioPronunciation(sayObj),
-          uid: getCacheUID(sayObj),
-        });
-
-        actionPromise = fetchAudio(
-          new Request(audioUrl, override),
-          AbortController
-        );
-      } else if (direction === "down") {
-        setMediaSessionPlaybackState("playing");
-
-        const inEnglish = vocabulary.english;
-        const audioUrl = addParam(baseUrl, {
-          tl: "en",
-          q: inEnglish,
-          uid: vocabulary.uid + ".en",
-        });
-
-        actionPromise = fetchAudio(
-          new Request(audioUrl, override),
-          AbortController
-        );
       }
-    }
-    return (
-      actionPromise ??
-      Promise.reject(/** TODO: give direction a type to remove this */)
-    );
-  };
+      return (
+        actionPromise ??
+        Promise.reject(/** TODO: give direction a type to remove this */)
+      );
+    },
+    [
+      gotoNextSlide,
+      gotoPrev,
+      reinforcedUID,
+      selectedIndex,
+      vocabList,
+      verbForm,
+      order,
+      filteredVocab,
+      recacheAudio,
+      naFlip,
+      setWasPlayed,
+      baseUrl,
+    ]
+  );
 }
 
 export { VocabularyMeta };

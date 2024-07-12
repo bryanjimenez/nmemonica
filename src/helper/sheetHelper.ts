@@ -1,5 +1,8 @@
 import { getLastCellIdx } from "@nmemonica/snservice/src/helper/sheetHelper";
 import { type SheetData, type Spreadsheet } from "@nmemonica/x-spreadsheet";
+import { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
+
+import { isNumber } from "./arrayHelper";
 
 export function getActiveSheet(workbook: Spreadsheet) {
   const sheets = workbook.exportValues();
@@ -35,9 +38,11 @@ export function removeLastRowIfBlank<T extends SheetData>(sheet: T) {
 
   const clone = { ...sheet, rows };
 
-  if (clone.rows.len === undefined) {
-    // TODO: set row length?
-    throw new Error("Expected row length");
+  const calcLength = Object.keys(clone.rows).filter((r) => isNumber(r)).length;
+  if (clone.rows.len === undefined || clone.rows.len !== calcLength) {
+    // len mismatched
+    // fix it here
+    clone.rows.len = calcLength;
   }
 
   let last = getLastCellIdx(sheet.rows);
@@ -92,7 +97,7 @@ export function searchInSheet(sheet: SheetData, query: string) {
   }
 
   const result = Object.values(sheet.rows).reduce<[number, number, string][]>(
-    (acc, row, x) => {
+    (acc, row: RowData, x) => {
       if (typeof row !== "number" && "cells" in row) {
         const find = Object.keys(row.cells).find((c) =>
           row.cells[Number(c)].text?.toLowerCase().includes(query.toLowerCase())

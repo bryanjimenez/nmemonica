@@ -39,6 +39,7 @@ export interface MemoryDataObject {
 
 export interface GlobalInitSlice {
   cookies: boolean;
+  cookieRefresh: number;
   darkMode: boolean;
   memory: MemoryDataObject;
   debug: number;
@@ -50,6 +51,7 @@ export interface GlobalInitSlice {
 
 export const globalInitState: GlobalInitSlice = {
   cookies: allowedCookies(),
+  cookieRefresh: -1,
   darkMode: false,
   memory: { quota: 0, usage: 0, persistent: false },
   debug: 0,
@@ -90,7 +92,7 @@ export const setPersistentStorage = createAsyncThunk(
     return persistStorage()
       .then((resInfo) => {
         const { warning } = resInfo;
-        if (warning) {
+        if (typeof warning === "string") {
           thunkAPI.dispatch(logger(warning, DebugLevel.WARN));
         }
 
@@ -176,6 +178,7 @@ const globalSlice = createSlice({
       } else {
         state.cookies = !state.cookies;
       }
+      state.cookieRefresh = Date.now();
     },
     toggleDarkMode(state) {
       const path = "/global/";

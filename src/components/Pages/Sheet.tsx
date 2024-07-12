@@ -117,6 +117,11 @@ export default function Sheet() {
   const prevResult = useRef<[number, number, string][]>([]);
   const resultIdx = useRef<number | null>(null);
   const searchValue = useRef<string | null>(null);
+  const resetSearchCB = useCallback(() => {
+    prevResult.current = [];
+    resultIdx.current = null;
+    setResultBadge(0);
+  }, []);
 
   const { cookies } = useSelector(({ global }: RootState) => global);
 
@@ -210,6 +215,9 @@ export default function Sheet() {
             );
         });
 
+        // reset search when switching sheet
+        grid.bottombar?.menuEl.on("click", resetSearchCB);
+
         // TODO:
         // grid.setMaxCols(0, sheet1Cols);
         // grid.setMaxCols(1, sheet2Cols);
@@ -228,7 +236,7 @@ export default function Sheet() {
         c?.removeChild(gridEl);
       }
     };
-  }, [dispatch]);
+  }, [dispatch, resetSearchCB]);
 
   const onUploadErrorCB = useCallback((_err: Error) => {
     setUploadError(true);
@@ -397,7 +405,7 @@ export default function Sheet() {
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
     const workbook = wbRef.current;
-    if (!search || !workbook) return;
+    if (search === null || workbook === null || search.trim() === "") return;
 
     if (resultIdx.current === null) {
       const { activeSheetData } = getActiveSheet(workbook);
@@ -549,13 +557,8 @@ export default function Sheet() {
                   inputProps={{ tabIndex: 1 }}
                   onChange={(event) => {
                     const { value } = event.target;
-                    resultIdx.current = null;
-                    prevResult.current = [];
-                    setResultBadge(0);
-
-                    if (value && value.length > 0) {
-                      searchValue.current = value;
-                    }
+                    resetSearchCB();
+                    searchValue.current = value;
                   }}
                 />
               </form>

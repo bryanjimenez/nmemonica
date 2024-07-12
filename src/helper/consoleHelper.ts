@@ -30,12 +30,17 @@ export function wasToday(rawDateString?: string) {
  * @param rawDateString Date.toJSON string
  */
 export function daysSince(rawDateString: string) {
-  const [date] = rawDateString.split("T");
-  const dateThen = Date.parse(date);
-  const diffTime = Math.abs(Date.now() - dateThen);
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const tzOffset = 1000 * 60 * new Date().getTimezoneOffset();
 
-  return diffDays;
+  const [then] = new Date(new Date(rawDateString).valueOf() - tzOffset)
+    .toJSON()
+    .split("T");
+  const [now] = new Date(Date.now() - tzOffset).toJSON().split("T");
+
+  const dateThen = Date.parse(then);
+  const dateNow = Date.parse(now);
+
+  return Math.floor((dateNow - dateThen) / (1000 * 60 * 60 * 24));
 }
 
 /**
@@ -71,7 +76,7 @@ export function spaceRepLog<T extends { uid: string; english: string }>(
   options: { frequency: boolean }
 ) {
   const lastDate = spaceRepMap[term.uid]?.lastView;
-  if (lastDate) {
+  if (lastDate !== undefined) {
     const msg = msgInnerTrim(term.english, 30);
 
     const freqStr = options?.frequency ? " F[w]" : "";

@@ -33,3 +33,10 @@ export function invLerp(a: number, b: number, v: number) {
   const t = (v - a) / (a + b);
   return t;
 }
+
+export function isNumber(x: unknown): x is number {
+  return (
+    (typeof x === "number" || (typeof x === "string" && x.trim() !== "")) &&
+    !isNaN(x as number)
+  );
+}

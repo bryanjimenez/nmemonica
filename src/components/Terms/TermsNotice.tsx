@@ -17,7 +17,9 @@ export function TermsNotice() {
   const location = useLocation();
 
   const cookieImportant = !useMemo(allowedCookies, [location]);
-  const { cookies } = useSelector((state: RootState) => state.global);
+  const { cookies, cookieRefresh } = useSelector(
+    (state: RootState) => state.global
+  );
 
   if (
     !cookieImportant ||
@@ -34,7 +36,8 @@ export function TermsNotice() {
 
   return (
     <Notice
-      initShown={cookieImportant && !cookies}
+      initShown={cookieImportant && !cookies && cookieRefresh === -1}
+      refresh={cookieRefresh}
       timeout={1500}
       label="Terms Information"
       icon={<InfoIcon size="medium" />}
@@ -58,8 +61,7 @@ export function TermsNotice() {
             <Link to={TermsAndConditionsMeta.location}>
               Terms and Conditions
             </Link>{" "}
-            and{" "}
-            <Link to={PrivacyPolicyMeta.location}>Privacy Policy</Link>.
+            and <Link to={PrivacyPolicyMeta.location}>Privacy Policy</Link>.
           </p>
         </div>
         <div className="pb-1">

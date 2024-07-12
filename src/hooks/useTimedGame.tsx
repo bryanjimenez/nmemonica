@@ -55,6 +55,31 @@ export function useTimedGame(
     };
   }, []);
 
+  /**
+   * Resets all loop variables to starting position
+   */
+  const resetTimedPlay = useCallback(() => {
+    let wasReset = false;
+
+    if (loop > 0 && loopAbortControllers.current === undefined) {
+      loopQuitTimer.current?.forEach((t) => {
+        clearTimeout(t);
+      });
+      loopQuitTimer.current = null;
+
+      setLoopQuitCount(LOOP_QUIT_MS / 1000);
+      tpAnswered.current = undefined;
+      setTpBtn(undefined);
+      tpTimeStamp.current = undefined;
+      tpElapsed.current = undefined;
+      setTpAnimation(null);
+
+      wasReset = true;
+    }
+
+    return wasReset;
+  }, [loop]);
+
   const forceRender = useForceRender();
 
   let loopActionBtn;
@@ -155,7 +180,36 @@ export function useTimedGame(
     />
   );
 
-  function beginLoop() {
+  /**
+   * Returns false had it not been looping.
+   */
+  const abortLoop = useCallback(() => {
+    let wasLooping = false;
+
+    loopAbortControllers.current?.forEach((ac /*, idx, { length }*/) => {
+      wasLooping = true;
+      ac.abort();
+    });
+    loopAbortControllers.current = undefined;
+
+    return wasLooping;
+  }, [loopAbortControllers]);
+
+  /**
+   * For the loop
+   */
+  const looperSwipe = useCallback(
+    (direction: string, AbortController?: AbortController) => {
+      let promise;
+      if (loop > 0) {
+        promise = gameActionHandler(direction, AbortController);
+      }
+      return promise ?? Promise.reject(new Error("loop disabled"));
+    },
+    [gameActionHandler, loop]
+  );
+
+  const beginLoop = useCallback(() => {
     abortLoop(); // beginLoop
     const ac1 = new AbortController();
     const ac2 = new AbortController();
@@ -261,38 +315,19 @@ export function useTimedGame(
           endMotionEventListen();
         }
       });
-  }
-
-  /**
-   * Returns false had it not been looping.
-   */
-  const abortLoop = useCallback(() => {
-    let wasLooping = false;
-
-    loopAbortControllers.current?.forEach((ac /*, idx, { length }*/) => {
-      wasLooping = true;
-      ac.abort();
-    });
-    loopAbortControllers.current = undefined;
-
-    return wasLooping;
-  }, [loopAbortControllers]);
-
-  /**
-   * For the loop
-   */
-  function looperSwipe(direction: string, AbortController?: AbortController) {
-    let promise;
-    if (loop > 0) {
-      promise = gameActionHandler(direction, AbortController);
-    }
-    return promise ?? Promise.reject(new Error("loop disabled"));
-  }
+  }, [
+    abortLoop,
+    deviceMotionEvent,
+    englishSideUp,
+    loop,
+    looperSwipe,
+    resetTimedPlay,
+  ]);
 
   /**
    * During timed play interrupt
    */
-  function getElapsedTimedPlay() {
+  const getElapsedTimedPlay = useCallback(() => {
     let tpElapsed;
 
     // FIXME: can't dispatch action to log here
@@ -321,105 +356,83 @@ export function useTimedGame(
     }
 
     return { tpElapsed };
-  }
+  }, []);
 
   /**
    * Update Timed Play score for term on metadata object
    */
-  function gradeTimedPlayEvent(
-    dispatch: AppDispatch,
-    uid: string,
-    repetition: Record<string, MetaDataObj | undefined>
-  ) {
-    if (loop > 0 && tpAnswered.current !== undefined) {
-      if (tpBtn === "reset") {
-        if (repetition[uid]?.pron === true) {
-          // reset incorrect pronunciation
-          if (tpElapsed.current !== undefined) {
-            // dispatch(
-            //   setWordTPCorrect(uid, tpElapsed.current, {
-            //     pronunciation: undefined,
-            //   })
-            // );
+  const gradeTimedPlayEvent = useCallback(
+    (
+      dispatch: AppDispatch,
+      uid: string,
+      repetition: Record<string, MetaDataObj | undefined>
+    ) => {
+      if (loop > 0 && tpAnswered.current !== undefined) {
+        if (tpBtn === "reset") {
+          if (repetition[uid]?.pron === true) {
+            // reset incorrect pronunciation
+            if (tpElapsed.current !== undefined) {
+              // dispatch(
+              //   setWordTPCorrect(uid, tpElapsed.current, {
+              //     pronunciation: undefined,
+              //   })
+              // );
+            }
           }
-        }
-        // else don't grade ... skip
-      } else {
-        if (tpAnswered.current) {
-          if (tpElapsed.current !== undefined) {
-            // dispatch(setWordTPCorrect(uid, tpElapsed.current));
-          }
+          // else don't grade ... skip
         } else {
-          // const reason = {
-          //   pronunciation: tpBtn === "pronunciation" || undefined,
-          // };
-          // dispatch(setWordTPIncorrect(uid, reason));
+          if (tpAnswered.current) {
+            if (tpElapsed.current !== undefined) {
+              // dispatch(setWordTPCorrect(uid, tpElapsed.current));
+            }
+          } else {
+            // const reason = {
+            //   pronunciation: tpBtn === "pronunciation" || undefined,
+            // };
+            // dispatch(setWordTPIncorrect(uid, reason));
+          }
         }
       }
-    }
-  }
-
-  /**
-   * Resets all loop variables to starting position
-   */
-  function resetTimedPlay() {
-    let wasReset = false;
-
-    if (loop > 0 && loopAbortControllers.current === undefined) {
-      loopQuitTimer.current?.forEach((t) => {
-        clearTimeout(t);
-      });
-      loopQuitTimer.current = null;
-
-      setLoopQuitCount(LOOP_QUIT_MS / 1000);
-      tpAnswered.current = undefined;
-      setTpBtn(undefined);
-      tpTimeStamp.current = undefined;
-      tpElapsed.current = undefined;
-      setTpAnimation(null);
-
-      wasReset = true;
-    }
-
-    return wasReset;
-  }
+    },
+    [loop, tpBtn]
+  );
 
   /**
    * Handles Timed Play Game behavior during a move
    * @param direction Direction of move
    * @param handler
    */
-  function timedPlayAnswerHandlerWrapper(
-    direction: string,
-    handler: GameActionHandler
-  ) {
-    if (loop === 0) return handler;
+  const timedPlayAnswerHandlerWrapper = useCallback(
+    (direction: string, handler: GameActionHandler) => {
+      if (loop === 0) return handler;
 
-    let answerHandler = handler;
-    if (direction === "up" || direction === "down") {
-      // force incorrect direction to correct handler
-      const correctedDirection = englishSideUp ? "up" : "down";
-      answerHandler = (/*wrongDirection: string*/) =>
-        handler(correctedDirection);
-    }
+      let answerHandler = handler;
+      if (direction === "up" || direction === "down") {
+        // force incorrect direction to correct handler
+        const correctedDirection = englishSideUp ? "up" : "down";
+        answerHandler = (/*wrongDirection: string*/) =>
+          handler(correctedDirection);
+      }
 
-    const wrappedHandler = interruptTimedPlayToAnswer(
-      direction,
-      answerHandler,
-      setLoop,
-      tpAnimation,
-      setTpAnimation,
-      setLoopQuitCount,
-      loopQuitTimer,
-      tpTimeStamp,
-      abortLoop,
-      getElapsedTimedPlay,
-      tpAnswered,
-      tpElapsed
-    );
+      const wrappedHandler = interruptTimedPlayToAnswer(
+        direction,
+        answerHandler,
+        setLoop,
+        tpAnimation,
+        setTpAnimation,
+        setLoopQuitCount,
+        loopQuitTimer,
+        tpTimeStamp,
+        abortLoop,
+        getElapsedTimedPlay,
+        tpAnswered,
+        tpElapsed
+      );
 
-    return wrappedHandler;
-  }
+      return wrappedHandler;
+    },
+    [abortLoop, englishSideUp, getElapsedTimedPlay, loop, tpAnimation]
+  );
 
   return {
     beginLoop,

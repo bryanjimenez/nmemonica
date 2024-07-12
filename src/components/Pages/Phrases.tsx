@@ -466,9 +466,14 @@ export default function Phrases() {
       lastNext: prevLastNext.current,
     };
 
+    // prevent entering the if when
+    // other dep change triggers useEffect
+    prevLastNext.current = lastNext;
+
     if (
       reinforcedUID !== prevState.reinforcedUID ||
-      selectedIndex !== prevState.selectedIndex
+      selectedIndex !== prevState.selectedIndex ||
+      lastNext !== prevState.lastNext
     ) {
       const uid =
         prevState.reinforcedUID ??
@@ -569,6 +574,7 @@ export default function Phrases() {
     recallGame,
     setText,
     viewGoal,
+    lastNext,
   ]);
 
   // Logger messages
