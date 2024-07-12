@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
 import { ca } from "@nmemonica/utils/signed-ca";
 import { config } from "@nmemonica/snservice";
-import { appendLicense } from "./license-writer.js";
+import { appendLicense } from "./dep-license-writer.js";
 import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
