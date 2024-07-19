@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import PlusMinus from "./PlusMinus";
@@ -39,12 +39,7 @@ export default function SettingsStats() {
     kanjiList,
   } = useConnectKanji();
 
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const loadingTimeout = setTimeout(() => {
-      setLoading(true);
-    }, 500);
-
+  const populateDataSetsRef = useRef(() => {
     if (phraseList.length === 0) {
       void dispatch(getPhrase());
     }
@@ -56,6 +51,16 @@ export default function SettingsStats() {
     if (kanjiList.length === 0) {
       void dispatch(getKanji());
     }
+  });
+
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      setLoading(true);
+    }, 500);
+
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
 
     return () => {
       clearTimeout(loadingTimeout);
@@ -373,7 +378,38 @@ export default function SettingsStats() {
             </tbody>
           </table>
         </div>
-        <div className="column-2 setting-block"></div>
+        <div className="column-2 setting-block">
+          <div className="mb-2">
+            <table className="w-50">
+              <thead>
+                <tr>
+                  <th>{/** Counts */}</th>
+                  <td>Terms</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Phrases:</td>
+                  <td>{phraseList.length}</td>
+                </tr>
+                <tr>
+                  <td>Vocabulary:</td>
+                  <td>{vocabList.length}</td>
+                </tr>
+                <tr>
+                  <td>Kanji:</td>
+                  <td>{kanjiList.length}</td>
+                </tr>
+                <tr>
+                  <td>{/** Totals */}</td>
+                  <td>
+                    {phraseList.length + vocabList.length + kanjiList.length}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <div className="d-flex flex-column flex-sm-row justify-content-between mb-2">
         <div className="column-1 text-end">
