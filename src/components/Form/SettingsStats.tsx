@@ -13,12 +13,31 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch } from "../../slices";
-import { setGoal as setKanjiGoal } from "../../slices/kanjiSlice";
-import { setGoal as setPhraseGoal } from "../../slices/phraseSlice";
-import { setGoal as setVocabularyGoal } from "../../slices/vocabularySlice";
+import { getKanji, setGoal as setKanjiGoal } from "../../slices/kanjiSlice";
+import { getPhrase, setGoal as setPhraseGoal } from "../../slices/phraseSlice";
+import {
+  getVocabulary,
+  setGoal as setVocabularyGoal,
+} from "../../slices/vocabularySlice";
 
 export default function SettingsStats() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const {
+    repetition: phraseRep,
+    viewGoal: phraseGoal,
+    phraseList,
+  } = useConnectPhrase();
+  const {
+    repetition: vocabRep,
+    viewGoal: vocabularyGoal,
+    vocabList,
+  } = useConnectVocabulary();
+  const {
+    repetition: kanjiRep,
+    viewGoal: kanjiGoal,
+    kanjiList,
+  } = useConnectKanji();
 
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -26,15 +45,22 @@ export default function SettingsStats() {
       setLoading(true);
     }, 500);
 
+    if (phraseList.length === 0) {
+      void dispatch(getPhrase());
+    }
+
+    if (vocabList.length === 0) {
+      void dispatch(getVocabulary());
+    }
+
+    if (kanjiList.length === 0) {
+      void dispatch(getKanji());
+    }
+
     return () => {
       clearTimeout(loadingTimeout);
     };
   }, []);
-
-  const { repetition: phraseRep, viewGoal: phraseGoal } = useConnectPhrase();
-  const { repetition: vocabRep, viewGoal: vocabularyGoal } =
-    useConnectVocabulary();
-  const { repetition: kanjiRep, viewGoal: kanjiGoal } = useConnectKanji();
 
   const numberOfDays = 5;
   const {
@@ -70,15 +96,23 @@ export default function SettingsStats() {
       vocabR: getRecallCounts(vocabMeta),
       kanjiR: getRecallCounts(kanjiMeta),
 
-      phraseQ: getStalenessCounts(phraseMeta),
-      vocabQ: getStalenessCounts(vocabMeta),
-      kanjiQ: getStalenessCounts(kanjiMeta),
+      phraseQ: getStalenessCounts(phraseMeta, phraseList),
+      vocabQ: getStalenessCounts(vocabMeta, vocabList),
+      kanjiQ: getStalenessCounts(kanjiMeta, kanjiList),
 
       phraseD: getDifficultyCounts(phraseMeta),
       vocabD: getDifficultyCounts(vocabMeta),
       kanjiD: getDifficultyCounts(kanjiMeta),
     };
-  }, [loading, phraseRep, vocabRep, kanjiRep]);
+  }, [
+    loading,
+    phraseRep,
+    vocabRep,
+    kanjiRep,
+    phraseList,
+    vocabList,
+    kanjiList,
+  ]);
 
   const oneDay = 1000 * 60 * 60 * 24;
   const daysOW = phraseC.map((v, i) => {
