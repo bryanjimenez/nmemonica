@@ -19,12 +19,12 @@ import {
   ShieldSlashIcon,
   XCircleFillIcon,
 } from "@primer/octicons-react";
-import { ReactElement, useCallback, useState } from "react";
+import { ReactElement, useCallback, useRef, useState } from "react";
 
 import { SyncDataFile, SyncDataMsg } from "./DataSetExportSync";
 import { DataSetKeyInput } from "./DataSetKeyInput";
-import { syncService } from "../../../environment.development";
 import { decrypt } from "../../helper/cryptoHelper";
+import { webSocketPeerReceive } from "../../helper/peerShareHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { LocalStorageState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
@@ -75,11 +75,15 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
   >();
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
+  const connection = useRef<WebSocket | null>(null);
 
   const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
     setWarning([]);
     close();
+    if (connection.current) {
+      connection.current.close();
+    }
   }, [close]);
 
   const importFromSyncCB = useCallback(
@@ -87,7 +91,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
       e.preventDefault();
       e.stopPropagation();
 
-      if (!encryptKey) {
+      if (encryptKey === undefined) {
         if (
           warning.find((w) => w.key === "missing-encrypt-key") === undefined
         ) {
@@ -102,7 +106,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
 
       const form = e.currentTarget.elements;
 
-      if (form && "syncId" in form) {
+      if (/*form &&*/ "syncId" in form) {
         const shareId = form.syncId.value;
 
         if (shareId.length !== 5) {
@@ -110,31 +114,29 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
           return;
         }
 
-        const ws = new WebSocket(syncService);
-
-        ws.addEventListener("error", () => {
+        const onError = () => {
           setStatus("connectError");
-        });
+        };
 
-        ws.addEventListener("open", () => {
-          ws.send(
+        const onClose = () => {};
+
+        const onOpen = () => {
+          connection.current?.send(
             JSON.stringify({
-              eventName: "pull",
+              event_name: "pull",
               payload: { uid: shareId },
             })
           );
-        });
+        };
 
-        ws.addEventListener("message", (msg: MessageEvent<Blob | string>) => {
-          const { data: msgData } = msg;
-
-          ws.close();
+        const onMessage = (msgData: Blob) => {
+          connection.current?.close();
 
           if (msgData instanceof Blob === false) {
             let hasErr: string | undefined;
             try {
               const m = JSON.parse(msgData) as SyncDataMsg;
-              if (m.payload && "error" in m.payload) {
+              if (/*m.payload &&*/ "error" in m.payload) {
                 const { error } = m.payload;
                 hasErr = error as string;
               }
@@ -263,7 +265,14 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                 ]);
               });
           });
-        });
+        };
+
+        connection.current = webSocketPeerReceive(
+          onError,
+          onClose,
+          onOpen,
+          onMessage
+        );
       }
     },
     [
@@ -301,7 +310,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
         <DialogContent>
           <div className="d-flex justify-content-start">
             <div onClick={showKeyInputCB}>
-              {encryptKey ? <KeyIcon /> : <ShieldSlashIcon />}
+              {encryptKey !== undefined ? <KeyIcon /> : <ShieldSlashIcon />}
             </div>
           </div>
           <div className="d-flex justify-content-between">
