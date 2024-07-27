@@ -828,13 +828,14 @@ export default function Vocabulary() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies || alreadyReviewed,
+          "disabled-color": !cookies,
         })}
       >
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
               <TogglePracticeSideBtn
+                reviewed={alreadyReviewed}
                 toggle={englishSideUp}
                 action={
                   cookies
@@ -850,18 +851,30 @@ export default function Vocabulary() {
               <ReCacheAudioBtn
                 disabled={!cookies}
                 active={recacheAudio}
+                reviewed={alreadyReviewed}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
               <ToggleAutoVerbViewBtn
-                disabled={!cookies}
                 visible={isVerb}
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
                 toggleAutoVerbView={buildAction(dispatch, toggleAutoVerbView)}
                 autoVerbView={autoVerbView}
               />
-              <div className="sm-icon-grp">
+              <div
+                className={classNames({
+                  "sm-icon-grp": true,
+                  "disabled-color": alreadyReviewed,
+                })}
+              >
                 {!cookies ? null : loopSettingBtn}
               </div>
-              <div className="sm-icon-grp">
+              <div
+                className={classNames({
+                  "sm-icon-grp": true,
+                  "disabled-color": alreadyReviewed,
+                })}
+              >
                 {!cookies ? null : loopActionBtn}
               </div>
             </div>
@@ -870,17 +883,22 @@ export default function Vocabulary() {
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               {/* {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)} */}
               {metadata.current[uid]?.pron === true && (
-                <div>
+                <div
+                  className={classNames({
+                    "disabled-color": alreadyReviewed,
+                  })}
+                >
                   <PulseIcon />
                   <span className="notification">!</span>
                 </div>
               )}
               <Tooltip
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 className={classNames({
-                  "question-color opacity-50":
+                  "question-color":
                     sort === TermSortBy.RECALL && !reviewedToday,
-                  "done-color opacity-50": reviewedToday,
+                  "done-color": reviewedToday,
                 })}
                 idKey={uid}
                 notification={revNotification}
@@ -920,8 +938,10 @@ export default function Vocabulary() {
                         disabled={!cookies}
                         active={hasFurigana}
                         toggle={
-                          toggleFuriganaSettingHelper(vocabulary.uid, metadata.current)
-                            .furigana.show
+                          toggleFuriganaSettingHelper(
+                            vocabulary.uid,
+                            metadata.current
+                          ).furigana.show
                         }
                         toggleFurigana={buildAction(dispatch, furiganaToggled)}
                         vocabulary={vocabulary}
@@ -945,18 +965,26 @@ export default function Vocabulary() {
                 </div>
               </Tooltip>
               <ShowHintBtn
-                disabled={!cookies}
                 visible={hintEnabledREF.current}
+                disabled={!cookies}
                 active={isHintable}
+                reviewed={alreadyReviewed}
                 setShowHint={setStateFunction(setShowHint, (prev) =>
                   prev !== undefined ? undefined : uid
                 )}
               />
-              <div className="clickable sm-icon-grp" onClick={openTagMenu}>
+              <div
+                className={classNames({
+                  "clickable sm-icon-grp": true,
+                  "disabled-color": alreadyReviewed,
+                })}
+                onClick={openTagMenu}
+              >
                 <TagIcon />
               </div>
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 term={vocabulary}
                 count={frequency.length}
                 isReinforced={reinforcedUID !== null}

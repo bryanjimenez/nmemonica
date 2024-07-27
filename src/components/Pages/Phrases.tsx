@@ -3,8 +3,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MilestoneIcon,
-  TrashIcon,
   TagIcon,
+  TrashIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
@@ -821,7 +821,7 @@ export default function Phrases() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies || alreadyReviewed,
+          "disabled-color": !cookies,
         })}
       >
         <div className="row opts-max-h">
@@ -829,11 +829,13 @@ export default function Phrases() {
             <div className="d-flex justify-content-start">
               <TogglePracticeSideBtn
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 toggle={englishSideUp}
                 action={buildAction(dispatch, flipPhrasesPracticeSide)}
               />
               <ReCacheAudioBtn
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 active={recacheAudio}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
@@ -843,7 +845,10 @@ export default function Phrases() {
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               {phrase.lesson !== undefined && (
                 <div
-                  className="sm-icon-grp clickable"
+                  className={classNames({
+                    "sm-icon-grp clickable": true,
+                    "disabled-color": alreadyReviewed,
+                  })}
                   aria-label="Show lesson"
                   onClick={() => {
                     setLesson(true);
@@ -854,10 +859,11 @@ export default function Phrases() {
               )}
               <Tooltip
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 className={classNames({
-                  "question-color opacity-50":
+                  "question-color":
                     sort === TermSortBy.RECALL && !reviewedToday,
-                  "done-color opacity-50": reviewedToday,
+                  "done-color": reviewedToday,
                 })}
                 idKey={uid}
                 notification={revNotification}
@@ -895,18 +901,26 @@ export default function Phrases() {
                 </div>
               </Tooltip>
               <ToggleLiteralPhraseBtn
-                disabled={!cookies}
                 visible={
                   englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
                 }
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
                 toggle={showLit}
                 action={setStateFunction(setShowLit, (lit) => !lit)}
               />
-              <div className="clickable sm-icon-grp" onClick={openTagMenu}>
+              <div
+                className={classNames({
+                  "clickable sm-icon-grp": true,
+                  "disabled-color": alreadyReviewed,
+                })}
+                onClick={openTagMenu}
+              >
                 <TagIcon />
               </div>
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 addFrequencyTerm={addFrequencyTermCB}
                 removeFrequencyTerm={removeFrequencyTermCB}
                 hasReinforce={phrase_reinforce}

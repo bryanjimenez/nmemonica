@@ -1052,7 +1052,7 @@ export default function Kanji() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies || alreadyReviewed,
+          "disabled-color": !cookies,
         })}
       >
         <div className="row opts-max-h">
@@ -1062,10 +1062,11 @@ export default function Kanji() {
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <Tooltip
+                reviewed={alreadyReviewed}
                 className={classNames({
-                  "question-color opacity-50":
+                  "question-color":
                     sort === TermSortBy.RECALL && !reviewedToday,
-                  "done-color opacity-50": reviewedToday,
+                  "done-color": reviewedToday,
                 })}
                 disabled={!cookies}
                 idKey={uid}
@@ -1105,6 +1106,7 @@ export default function Kanji() {
               </Tooltip>
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
                 hasReinforce={term_reinforce}

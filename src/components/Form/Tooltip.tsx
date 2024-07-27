@@ -17,6 +17,8 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 
 interface TooltipProps {
   disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
   idKey: string;
   className?: string;
   notification?: string;
@@ -27,7 +29,7 @@ interface TooltipProps {
 const READY = -1;
 
 export function Tooltip(props: PropsWithChildren<TooltipProps>) {
-  const { children, idKey, timeout } = props;
+  const { children, idKey, timeout, reviewed } = props;
   const w = useWindowSize();
 
   const [showSlider, setShowSlider] = useState(false);
@@ -98,20 +100,24 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
         ref={refs.setReference}
         className={classNames({
           "sm-icon-grp": true,
+          "disabled-color": reviewed === true,
         })}
         aria-label="Set difficulty"
       >
         <div
           className={classNames({
             "d-inline": true,
+            "opacity-50": reviewed !== true,
             clickable: true,
-            ...(props.className ? { [props.className]: true } : {}),
+            ...(props.className !== undefined
+              ? { [props.className]: true }
+              : {}),
           })}
           onClick={props.disabled !== true ? onTooltipToggleCB : undefined}
         >
           <FontAwesomeIcon icon={faBullseye} />
         </div>
-        {props.notification && (
+        {props.notification !== undefined && (
           <span className="notification">{props.notification}</span>
         )}
       </div>
