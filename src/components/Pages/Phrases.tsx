@@ -85,8 +85,8 @@ import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
-  ReCacheAudioBtn,
   ApplyTagsBtn,
+  ReCacheAudioBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
@@ -174,18 +174,28 @@ export default function Phrases() {
   /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
+  const userSetGoal = useRef(viewGoal);
+
   const [lesson, setLesson] = useState(false);
 
   const closeLesson = useCallback(() => {
     setLesson(false);
   }, []);
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (phraseList.length === 0) {
       void dispatch(getPhrase());
     }
+  });
 
-    goalPending.current = initGoalPending(viewGoal, repetition);
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
+
+    goalPending.current = initGoalPending(
+      userSetGoal.current,
+      metadata.current
+    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({

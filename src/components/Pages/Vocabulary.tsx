@@ -92,10 +92,10 @@ import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
+  ApplyTagsBtn,
   PronunciationWarningBtn,
   ReCacheAudioBtn,
   ShowHintBtn,
-  ApplyTagsBtn,
   ToggleAutoVerbViewBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleFuriganaBtn,
@@ -196,13 +196,22 @@ export default function Vocabulary() {
   /** Number of review items still pending (negative: goal already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
+  const userSetGoal = useRef(viewGoal);
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
+  });
 
-    goalPending.current = initGoalPending(viewGoal, repetition);
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
+
+    goalPending.current = initGoalPending(
+      userSetGoal.current,
+      metadata.current
+    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({

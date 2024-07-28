@@ -244,17 +244,27 @@ export default function Kanji() {
   /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
+  const userSetGoal = useRef(viewGoal);
 
-  // after initial render
-  useEffect(() => {
-    if (kanjiList.length === 0) {
-      void dispatch(getKanji());
-    }
+  const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
 
-    goalPending.current = initGoalPending(viewGoal, repetition);
+    if (kanjiList.length === 0) {
+      void dispatch(getKanji());
+    }
+  });
+
+  // after initial render
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
+
+    goalPending.current = initGoalPending(
+      userSetGoal.current,
+      metadata.current
+    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
