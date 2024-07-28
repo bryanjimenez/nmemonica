@@ -2,8 +2,6 @@ import { LinearProgress } from "@mui/material";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  MilestoneIcon,
-  TagIcon,
   TrashIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -88,9 +86,11 @@ import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
+  ApplyTagsBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
+  ViewLessonsBtn,
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
@@ -843,20 +843,14 @@ export default function Phrases() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
-              {phrase.lesson !== undefined && (
-                <div
-                  className={classNames({
-                    "sm-icon-grp clickable": true,
-                    "disabled-color": alreadyReviewed,
-                  })}
-                  aria-label="Show lesson"
-                  onClick={() => {
-                    setLesson(true);
-                  }}
-                >
-                  <MilestoneIcon />
-                </div>
-              )}
+              <ViewLessonsBtn
+                visible={phrase.lesson !== undefined}
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
+                action={() => {
+                  setLesson(true);
+                }}
+              />
               <Tooltip
                 disabled={!cookies}
                 reviewed={alreadyReviewed}
@@ -909,15 +903,11 @@ export default function Phrases() {
                 toggle={showLit}
                 action={setStateFunction(setShowLit, (lit) => !lit)}
               />
-              <div
-                className={classNames({
-                  "clickable sm-icon-grp": true,
-                  "disabled-color": alreadyReviewed,
-                })}
-                onClick={openTagMenu}
-              >
-                <TagIcon />
-              </div>
+              <ApplyTagsBtn
+                disabled={!cookies}
+                action={openTagMenu}
+                reviewed={alreadyReviewed}
+              />
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
                 reviewed={alreadyReviewed}

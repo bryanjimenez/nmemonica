@@ -3,7 +3,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PulseIcon,
-  TagIcon,
   TrashIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -93,8 +92,10 @@ import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
+  PronunciationWarningBtn,
   ReCacheAudioBtn,
   ShowHintBtn,
+  ApplyTagsBtn,
   ToggleAutoVerbViewBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleFuriganaBtn,
@@ -882,16 +883,11 @@ export default function Vocabulary() {
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               {/* {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)} */}
-              {metadata.current[uid]?.pron === true && (
-                <div
-                  className={classNames({
-                    "disabled-color": alreadyReviewed,
-                  })}
-                >
-                  <PulseIcon />
-                  <span className="notification">!</span>
-                </div>
-              )}
+              <PronunciationWarningBtn
+                visible={metadata.current[uid]?.pron === true}
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
+              />
               <Tooltip
                 disabled={!cookies}
                 reviewed={alreadyReviewed}
@@ -973,15 +969,11 @@ export default function Vocabulary() {
                   prev !== undefined ? undefined : uid
                 )}
               />
-              <div
-                className={classNames({
-                  "clickable sm-icon-grp": true,
-                  "disabled-color": alreadyReviewed,
-                })}
-                onClick={openTagMenu}
-              >
-                <TagIcon />
-              </div>
+              <ApplyTagsBtn
+                disabled={!cookies}
+                action={openTagMenu}
+                reviewed={alreadyReviewed}
+              />
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
                 reviewed={alreadyReviewed}

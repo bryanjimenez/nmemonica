@@ -10,8 +10,11 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   GiftIcon,
+  MilestoneIcon,
   PlusCircleIcon,
   ProjectIcon,
+  PulseIcon,
+  TagIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -417,5 +420,79 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
         </span>
       </div>
     </>
+  );
+}
+
+interface TagTermBtnProps {
+  visible?: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
+  action: () => void;
+}
+
+export function ApplyTagsBtn(props: TagTermBtnProps) {
+  const { disabled, visible, action, reviewed } = props;
+
+  return visible === false ? null : (
+    <div
+      className={classNames({
+        "clickable sm-icon-grp": true,
+        "disabled disabled-color": disabled === true,
+        "disabled-color": reviewed,
+      })}
+      onClick={disabled !== true ? () => action() : undefined}
+    >
+      <TagIcon />
+    </div>
+  );
+}
+
+interface PronunciationWarningBtnProps {
+  visible: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
+}
+
+export function PronunciationWarningBtn(props: PronunciationWarningBtnProps) {
+  const { disabled, visible, reviewed } = props;
+
+  return visible === false ? null : (
+    <div
+      className={classNames({
+        "disabled disabled-color": disabled === true,
+        "disabled-color": reviewed,
+      })}
+    >
+      <PulseIcon />
+      <span className="notification">!</span>
+    </div>
+  );
+}
+
+interface ViewLessonsBtnProps {
+  visible: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
+  action: () => void;
+}
+
+export function ViewLessonsBtn(props: ViewLessonsBtnProps) {
+  const { disabled, visible, reviewed, action } = props;
+
+  return visible === false ? null : (
+    <div
+      className={classNames({
+        "sm-icon-grp clickable": true,
+        "disabled disabled-color": disabled === true,
+        "disabled-color": reviewed,
+      })}
+      aria-label="Show lesson"
+      onClick={disabled !== true ? () => action() : undefined}
+    >
+      <MilestoneIcon />
+    </div>
   );
 }
