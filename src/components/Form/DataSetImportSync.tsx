@@ -21,10 +21,10 @@ import {
 } from "@primer/octicons-react";
 import { ReactElement, useCallback, useRef, useState } from "react";
 
-import { SyncDataFile, SyncDataMsg } from "./DataSetExportSync";
+import { SyncDataFile } from "./DataSetExportSync";
 import { DataSetKeyInput } from "./DataSetKeyInput";
 import { decrypt } from "../../helper/cryptoHelper";
-import { webSocketPeerReceive } from "../../helper/peerShareHelper";
+import { RTCChannelStatus, importSignaling } from "../../helper/rtcHelperHttp";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppSettingState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
@@ -75,18 +75,18 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
   >();
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
-  const connection = useRef<WebSocket | null>(null);
+  const rtc = useRef<RTCDataChannel | null>(null);
 
   const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
     setWarning([]);
     close();
-    if (connection.current) {
-      connection.current.close();
+    if (rtc.current !== null) {
+      rtc.current.close();
     }
   }, [close]);
 
-  const importFromSyncCB = useCallback(
+  const importDataSetHandlerCB = useCallback(
     (e: React.FormEvent<CustomForm>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -105,42 +105,25 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
       }
 
       const form = e.currentTarget.elements;
+      if (/*form &&*/ "syncId" in form === false) {
+        return;
+      }
+      const shareId = form.syncId.value;
 
-      if (/*form &&*/ "syncId" in form) {
-        const shareId = form.syncId.value;
+      if (shareId.length !== 5) {
+        setStatus("inputError");
+        return;
+      }
 
-        if (shareId.length !== 5) {
-          setStatus("inputError");
-          return;
-        }
+      importSignaling(encryptKey, shareId)
+        .then((channel) => {
+          // signaling successful
+          // start messaging
+          rtc.current = channel;
+          setWarning([]);
 
-        const onError = () => {
-          setStatus("connectError");
-        };
-
-        const onClose = () => {};
-
-        const onOpen = () => {
-          connection.current?.send(
-            JSON.stringify({
-              event_name: "pull",
-              payload: { uid: shareId },
-            })
-          );
-        };
-
-        const onMessage = (msgData: Blob) => {
-          connection.current?.close();
-
-          if (msgData instanceof Blob === false) {
-            let hasErr: string | undefined;
-            try {
-              const m = JSON.parse(msgData) as SyncDataMsg;
-              if (/*m.payload &&*/ "error" in m.payload) {
-                const { error } = m.payload;
-                hasErr = error as string;
-              }
-            } catch (_err) {
+          channel.onmessage = (msg: { data: ArrayBuffer }) => {
+            if (msg.data instanceof ArrayBuffer === false) {
               setStatus("outputError");
               setWarning((w) => [
                 ...w,
@@ -149,18 +132,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
               return;
             }
 
-            if (typeof hasErr === "string") {
-              setStatus("outputError");
-              setWarning((w) => [
-                ...w,
-                <span key={`msg-error`}>{`Sync Error ${hasErr}`}</span>,
-              ]);
-            }
-            return;
-          }
-
-          void msgData.arrayBuffer().then((buff) => {
-            const msgAsText = new TextDecoder("utf-8").decode(buff);
+            const msgAsText = new TextDecoder("utf-8").decode(msg.data);
 
             let fileObj;
             try {
@@ -188,7 +160,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
             } catch (err) {
               setStatus("outputError");
               let errCode: string | undefined;
-              if (err instanceof Error) {
+              if (err instanceof Error && "cause" in err) {
                 const { code } = err.cause as { code?: string };
                 errCode = code;
               }
@@ -253,6 +225,8 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                 return updateDataHandler(d, settings).then(() => {
                   setStatus("successStatus");
                   setTimeout(closeHandlerCB, 1000);
+                  // send receive confirmation
+                  channel.send(RTCChannelStatus.Finalized);
                 });
               })
               .catch((_err) => {
@@ -264,16 +238,25 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                   >{`Failed to parse DataSet`}</span>,
                 ]);
               });
-          });
-        };
+          };
+        })
+        .catch((err) => {
+          if (
+            err.event_name === "error" &&
+            err.payload.error === "Invalid UID"
+          ) {
+            setWarning((w) => [
+              ...w,
+              <span
+                key={`user-bad-share-id-${shareId}`}
+              >{`Incorrect Share-ID`}</span>,
+            ]);
 
-        connection.current = webSocketPeerReceive(
-          onError,
-          onClose,
-          onOpen,
-          onMessage
-        );
-      }
+            return;
+          }
+
+          setStatus("connectError");
+        });
     },
     [
       closeHandlerCB,
@@ -347,7 +330,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
             </FormControl>
           </div>
 
-          <form onSubmit={importFromSyncCB}>
+          <form onSubmit={importDataSetHandlerCB}>
             <FormControl className="mt-2">
               {warning.length > 0 && (
                 <Alert severity="warning" className="py-0 mb-2">
