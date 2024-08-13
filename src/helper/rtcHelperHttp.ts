@@ -1,4 +1,4 @@
-import { decrypt, encrypt } from "./cryptoHelper";
+import { decrypt, encrypt, urlBase64ToUint8Array } from "./cryptoHelper";
 import { signalingService } from "../../environment.development";
 
 export const RTCChannelStatus = Object.freeze({
@@ -7,7 +7,19 @@ export const RTCChannelStatus = Object.freeze({
   Finalized: "0",
 });
 
-export function exportSignaling(
+export const RTCErrorCause = Object.freeze({
+  ExportInitSvcError: "ExportInitSvcError",
+  ExportFinalSvcError: "ExportFinalSvcError",
+  ImportInitSvcError: "ImportInitSvcError",
+  ImportFinalSvcError: "ImportFinalSvcError",
+});
+
+export const RTCSignalingMsgKey = Object.freeze({
+  Uid: "uid",
+  Payload: "payload",
+});
+
+export function rtcSignalingInitiate(
   encryptKey: string,
   onShareIdReady: (exchangeId: string) => void
 ) {
@@ -37,21 +49,30 @@ export function exportSignaling(
 
         const payload = { description, candidate };
         const data = new URLSearchParams();
-        // TODO: hardcoded payload
         data.set(
-          "payload",
+          RTCSignalingMsgKey.Payload,
           JSON.stringify(
             encrypt("aes-192-cbc", encryptKey, JSON.stringify(payload))
           )
         );
 
-        fetch(signalingService, {
+        fetch(`${signalingService}/set`, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: data,
           mode: "cors",
         })
-          .then((res) => res.text())
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("RTC Signaling Server Error", {
+                cause: {
+                  code: RTCErrorCause.ExportInitSvcError,
+                  status: res.status,
+                },
+              });
+            }
+            return res.text();
+          })
           .then((uid) => {
             resolve({ uid, peer, channel });
           })
@@ -66,9 +87,9 @@ export function exportSignaling(
 
     onShareIdReady(uid);
 
-    return new Promise<RTCDataChannel>((resolve, reject) => {
+    return new Promise<[string, RTCDataChannel]>((resolve, reject) => {
       setTimeout(() => {
-        exportSignalingDone(encryptKey, uid, peer, channel)
+        rtcSignalingInitiateDone(encryptKey, uid, peer, channel)
           .then(resolve)
           .catch(reject);
       }, 10000);
@@ -76,45 +97,51 @@ export function exportSignaling(
   });
 }
 
-function exportSignalingDone(
+function rtcSignalingInitiateDone(
   encryptKey: string,
   uid: string,
   peer: RTCPeerConnection,
   channel: RTCDataChannel
 ) {
-  const data = new URLSearchParams({ uid: `${uid}-finished` });
+  const doneKeyword = buildDoneKeyword(encryptKey);
+  const data = new URLSearchParams({ uid: `${uid}-${doneKeyword}` });
 
   return fetch(`${signalingService}/get`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: data,
   })
-    .then((res) => res.text())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("RTC Signaling Server Error", {
+          cause: {
+            code: RTCErrorCause.ExportFinalSvcError,
+            status: res.status,
+          },
+        });
+      }
+      return res.text();
+    })
     .then((info) => {
-      // TODO: try catch
-      const { encrypted: encryptedText, iv } = JSON.parse(info) as Record<
-        string,
-        string
-      >;
-      const { description, candidate } = JSON.parse(
-        decrypt("aes-192-cbc", encryptKey, iv, encryptedText)
-      ) as {
-        description: RTCSessionDescriptionInit;
-        candidate: RTCIceCandidate;
-      };
+      const { encrypted, iv } = parseSeviceResponse(info);
+      const { description, candidate } = decryptIntoDescriptionCandidate(
+        encryptKey,
+        iv,
+        encrypted
+      );
 
       return peer.setRemoteDescription(description).then(() =>
         peer.addIceCandidate(candidate).then(() => {
           // peer1 has to wait till peer2 is ready
-          return new Promise<RTCDataChannel>((resolve) => {
-            channel.onopen = () => resolve(channel);
+          return new Promise<[string, RTCDataChannel]>((resolve) => {
+            channel.onopen = () => resolve([encryptKey, channel]);
           });
         })
       );
     });
 }
 
-export function importSignaling(encryptKey: string, shareId: string) {
+export function rtcSignalingRespond(encryptKey: string, shareId: string) {
   const data = new URLSearchParams({ uid: shareId });
 
   return fetch(`${signalingService}/get`, {
@@ -122,19 +149,21 @@ export function importSignaling(encryptKey: string, shareId: string) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: data,
   })
-    .then((data) => data.text())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("RTC Signaling Server Error", {
+          cause: { code: RTCErrorCause.ImportInitSvcError, status: res.status },
+        });
+      }
+      return res.text();
+    })
     .then((payload) => {
-      // TODO: try catch
-      const { encrypted: encryptedText, iv } = JSON.parse(payload) as Record<
-        string,
-        string
-      >;
-      const { description, candidate } = JSON.parse(
-        decrypt("aes-192-cbc", encryptKey, iv, encryptedText)
-      ) as {
-        description: RTCSessionDescriptionInit;
-        candidate: RTCIceCandidate;
-      };
+      const { encrypted, iv } = parseSeviceResponse(payload);
+      const { description, candidate } = decryptIntoDescriptionCandidate(
+        encryptKey,
+        iv,
+        encrypted
+      );
 
       const msgP = new Promise<RTCDataChannel>(async (resolve, reject) => {
         let peer2 = new RTCPeerConnection();
@@ -162,7 +191,9 @@ export function importSignaling(encryptKey: string, shareId: string) {
             // send back via http
             const payload = { description: peer2Desc, candidate: peer2ice };
 
-            void importSignalingDone(encryptKey, shareId, payload);
+            void rtcSignalingRespondDone(encryptKey, shareId, payload).catch(
+              reject
+            );
           }
         };
 
@@ -175,7 +206,7 @@ export function importSignaling(encryptKey: string, shareId: string) {
     });
 }
 
-function importSignalingDone(
+function rtcSignalingRespondDone(
   encryptKey: string,
   uid: string,
   payload: {
@@ -184,16 +215,84 @@ function importSignalingDone(
   }
 ) {
   const data = new URLSearchParams();
-  data.set("uid", `${uid}-finished`);
-  // TODO: hardcoded payload
+  const doneKeyword = buildDoneKeyword(encryptKey);
+
+  data.set(RTCSignalingMsgKey.Uid, `${uid}-${doneKeyword}`);
   data.set(
-    "payload",
+    RTCSignalingMsgKey.Payload,
     JSON.stringify(encrypt("aes-192-cbc", encryptKey, JSON.stringify(payload)))
   );
 
-  return fetch(`${signalingService}`, {
+  return fetch(`${signalingService}/set`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: data,
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("RTC Signaling Server Error", {
+        cause: { code: RTCErrorCause.ImportFinalSvcError, status: res.status },
+      });
+    }
   });
+}
+
+function parseSeviceResponse(info: string) {
+  let initVector: string;
+  let cypherText: string;
+  try {
+    const { encrypted, iv } = JSON.parse(info) as Record<string, string>;
+    initVector = iv;
+    cypherText = encrypted;
+  } catch (err) {
+    // TODO: add catch code for signaling
+    throw new Error("RTC Signaling failed to parse service response", {
+      cause: { code: "" },
+    });
+  }
+  return { encrypted: cypherText, iv: initVector };
+}
+
+function decryptIntoDescriptionCandidate(
+  encryptKey: string,
+  iv: string,
+  encrypted: string
+) {
+  let description: RTCSessionDescriptionInit;
+  let candidate: RTCIceCandidate;
+
+  try {
+    const { description: desc, candidate: cand } = JSON.parse(
+      decrypt("aes-192-cbc", encryptKey, iv, encrypted)
+    ) as {
+      description: RTCSessionDescriptionInit;
+      candidate: RTCIceCandidate;
+    };
+    description = desc;
+    candidate = cand;
+  } catch (err) {
+    // TODO: add catch code for signaling
+    throw new Error("RTC Signaling failed to decrypt service response", {
+      cause: { code: "" },
+    });
+  }
+
+  return { description, candidate };
+}
+
+/**
+ * Build a secret based on `encryptKey` and a shared iv
+ * @param encryptKey
+ */
+function buildDoneKeyword(encryptKey: string) {
+  const sharedKeyWord = "finished";
+  const sharedIv = urlBase64ToUint8Array("+AFe6znQwUWh2avfJfB1cA==");
+
+  let { encrypted: doneKeyword } = encrypt(
+    "aes-192-cbc",
+    encryptKey,
+    sharedKeyWord,
+    sharedIv
+  );
+
+  return doneKeyword;
 }

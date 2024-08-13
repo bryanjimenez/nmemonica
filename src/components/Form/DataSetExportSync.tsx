@@ -15,16 +15,7 @@ import { ReactElement, useCallback, useRef, useState } from "react";
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
 import { DataSetKeyInput } from "./DataSetKeyInput";
-import { encrypt } from "../../helper/cryptoHelper";
-import {
-  getWorkbookFromIndexDB,
-  metaDataNames,
-  xObjectToCsvText,
-} from "../../helper/sheetHelper";
-import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { getUserSettings } from "../../helper/userSettingsHelper";
-import { exportSignaling, RTCChannelStatus } from "../../helper/rtcHelperHttp";
-import { signalingService } from "../../../environment.development";
+import { useDataSetExportSync } from "../../hooks/useDataSetExportSync";
 
 interface DataSetExportSyncProps {
   visible?: boolean;
@@ -95,180 +86,6 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     setFinished(true);
   }, []);
 
-  const exportDataSetHandlerCB = useCallback(() => {
-    if (encryptKey === undefined) {
-      if (
-        warning.find((w) => w.key === "missing-encrypt-key") === undefined
-      ) {
-        setWarning([
-          <span
-            key={`missing-encrypt-key`}
-          >{`Encrypt key required for sharing.`}</span>,
-        ]);
-      }
-      return;
-    }
-
-    let transferData = Promise.resolve(
-      fileData.map((f) => ({
-        name: f.name,
-        text: f.text,
-      }))
-    );
-
-    const fromApp = fileData.filter((f) => f.origin === "AppCache");
-    if (fromApp.length > 0) {
-      transferData = getWorkbookFromIndexDB()
-        .then((xObj) =>
-          getUserSettings().then((usrSets) => ({ xObj, usrSets }))
-        )
-        .then(({ xObj, usrSets }) => {
-          const included = xObj.filter((o) =>
-            fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
-          ) as FilledSheetData[];
-
-          // send AppCache UserSettings if selected
-          const appSettings = fileData.reduce<{ name: string; text: string }[]>(
-            (acc, f) => {
-              if (
-                f.origin === "AppCache" &&
-                f.name.toLowerCase() ===
-                  metaDataNames.settings.prettyName.toLowerCase()
-              ) {
-                if (usrSets) {
-                  return [
-                    ...acc,
-                    {
-                      name: metaDataNames.settings.prettyName,
-                      text: JSON.stringify(usrSets),
-                    },
-                  ];
-                }
-              }
-              return acc;
-            },
-            []
-          );
-
-          return xObjectToCsvText(included).then((dBtoCsv) => [
-            // any filesystem imports (already text)
-            ...fileData.filter((f) => f.origin === "FileSystem"),
-            // converted AppCache to csv text
-            ...dBtoCsv,
-            // converted UserSettings to json text
-            ...appSettings,
-          ]);
-        });
-    }
-
-    void exportSignaling(encryptKey, (signalId) => {
-      // display exchange id
-      setShareId(signalId);
-      setWarning([]);
-    })
-      .then((channel) => {
-        // signaling successful
-        // start messaging
-        rtc.current = channel;
-        setWarning([]);
-
-        channel.onmessage = (msg: { data: unknown }) => {
-          // expect confirmation msg
-          if (msg.data === RTCChannelStatus.Finalized) {
-            channel.close();
-            onClose();
-          }
-        };
-
-        let transferData = Promise.resolve(
-          fileData.map((f) => ({
-            name: f.name,
-            text: f.text,
-          }))
-        );
-
-        const fromApp = fileData.filter((f) => f.origin === "AppCache");
-        if (fromApp.length > 0) {
-          transferData = getWorkbookFromIndexDB()
-          .then((xObj)=>getUserSettings().then(usrSets=>({xObj,usrSets})))
-          .then(({xObj,usrSets}) => {
-            const included = xObj.filter((o) =>
-              fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
-            ) as FilledSheetData[];
-
-            // send AppCache UserSettings if selected
-            const appSettings = fileData.reduce<
-              { name: string; text: string }[]
-            >((acc, f) => {
-              if (
-                f.origin === "AppCache" &&
-                f.name.toLowerCase() ===
-                  metaDataNames.settings.prettyName.toLowerCase()
-              ) {
-                if (usrSets) {
-                  return [
-                    ...acc,
-                    {
-                      name: metaDataNames.settings.prettyName,
-                      text: JSON.stringify(usrSets),
-                    },
-                  ];
-                }
-              }
-              return acc;
-            }, []);
-
-            return xObjectToCsvText(included).then((dBtoCsv) => [
-              // any filesystem imports (already text)
-              ...fileData.filter((f) => f.origin === "FileSystem"),
-              // converted AppCache to csv text
-              ...dBtoCsv,
-              // converted UserSettings to json text
-              ...appSettings,
-            ]);
-          });
-        }
-
-        void transferData.then((d) => {
-          const m: SyncDataFile[] = d.map((p) => ({
-            fileName: `${p.name}.${p.name.toLowerCase() === metaDataNames.settings.prettyName.toLowerCase() ? "json" : "csv"}`,
-            text: p.text,
-          }));
-
-          const { encrypted: encryptedText, iv } = encrypt(
-            "aes-192-cbc",
-            encryptKey,
-            JSON.stringify(m)
-          );
-          const b = new TextEncoder().encode(
-            JSON.stringify({ payload: encryptedText, iv })
-          );
-          const blob = new Blob([b.buffer], {
-            type: "application/x-nmemonica-data",
-          });
-
-          return blob.arrayBuffer().then((b) => channel.send(b));
-        });
-      })
-      .catch((err) => {
-        if (
-          err instanceof Event &&
-          err.type === "error" &&
-          err.target instanceof WebSocket &&
-          err.currentTarget instanceof WebSocket &&
-          err.currentTarget?.url.startsWith(signalingService)
-        ) {
-          onSignalingConnectError();
-        } else {
-          setWarning((w) => [
-            ...w,
-            <span
-              key={`signaling-unexpected`}
-            >{`Sharing service unexpected error`}</span>,
-          ]);
-        }
-      });
-  }, [fileData, encryptKey, warning, onSignalingConnectError, onClose]);
 
   const fromAppCacheUpdateDataCB = useCallback((name: string) => {
     setFileData((prev) => {
@@ -299,6 +116,19 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
       }
     });
   }, []);
+
+  const { exportDataSetHandlerCB } = useDataSetExportSync(
+    fileData,
+    encryptKey,
+    warning,
+    onSignalingConnectError,
+    onClose,
+
+    setWarning,
+    setShareId,
+
+    rtc
+  );
 
   return (
     <>
@@ -357,10 +187,13 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
           <div className="d-flex justify-content-between">
             <div
-              className={classNames({ "d-flex": true, "opacity-25": finished })}
+              className={classNames({ "d-flex": true, "opacity-50": finished })}
             >
               {finished ? (
-                <CheckCircleIcon size="small" className="mt-1 pt-1 me-2" />
+                <CheckCircleIcon
+                  size="small"
+                  className="mt-1 pt-1 me-2 correct-color"
+                />
               ) : (
                 shareId !== undefined && (
                   <LinkIcon size="small" className="mt-1 pt-1 me-2" />
