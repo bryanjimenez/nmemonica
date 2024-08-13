@@ -51,6 +51,7 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
         }
         enterHandler(syncEncryptKey !== "" ? syncEncryptKey : undefined);
         setWarning([]);
+        closeHandler();
       }
     },
     [enterHandler]
