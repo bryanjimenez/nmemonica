@@ -125,11 +125,11 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
   );
 
   const { importDataSetHandlerCB } = useDataSetImportSync(
+    rtc,
     encryptKey,
+    destination,
     addWarning,
     setStatus,
-    rtc,
-    destination,
     saveToFileHandlerWStatus,
     updateDataHandlerWStatus
   );

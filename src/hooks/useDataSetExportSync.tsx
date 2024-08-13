@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback } from "react";
+import { useCallback } from "react";
 
 import { SyncDataFile } from "../components/Form/DataSetExportSync";
 import { TransferObject } from "../components/Form/DataSetFromDragDrop";
@@ -103,20 +103,13 @@ function encryptTransfer(encryptKey: string, data: SyncDataFile[]) {
  * DataSetExportSync callbacks
  */
 export function useDataSetExportSync(
-  fileData: TransferObject[],
+  rtc: React.MutableRefObject<RTCDataChannel | null>,
   encryptKey: string | undefined,
-  warning: ReactElement[],
-  onSignalingConnectError: () => void,
-  onClose: () => void,
+  fileData: TransferObject[],
 
-  setWarning: React.Dispatch<
-    React.SetStateAction<
-      ReactElement<any, string | React.JSXElementConstructor<any>>[]
-    >
-  >,
+  addWarning: (warnKey?: string, warnMsg?: string) => void,
   setShareId: React.Dispatch<React.SetStateAction<string | undefined>>,
-
-  rtc: React.MutableRefObject<RTCDataChannel | null>
+  showDoneConfirmation: () => void
 ) {
   /**
    * RTC Signaling handshake complete
@@ -128,13 +121,13 @@ export function useDataSetExportSync(
       // start messaging
       const [encryptKey, channel] = arg;
       rtc.current = channel;
-      setWarning([]);
+      addWarning();
 
       channel.onmessage = (msg: { data: unknown }) => {
         // expect confirmation msg
         if (msg.data === RTCChannelStatus.Finalized) {
           channel.close();
-          onClose();
+          showDoneConfirmation();
         }
       };
 
@@ -142,18 +135,12 @@ export function useDataSetExportSync(
         .then((msg) => encryptTransfer(encryptKey, msg))
         .then((encrypted) => channel.send(encrypted));
     },
-    [rtc, fileData, onClose, setWarning]
+    [rtc, fileData, showDoneConfirmation, addWarning]
   );
 
   const exportDataSetHandlerCB = useCallback(() => {
     if (encryptKey === undefined) {
-      if (warning.find((w) => w.key === "missing-encrypt-key") === undefined) {
-        setWarning([
-          <span
-            key={`missing-encrypt-key`}
-          >{`Encrypt key required for sharing.`}</span>,
-        ]);
-      }
+      addWarning("missing-encrypt-key", "Encrypt key required for sharing.");
       return;
     }
 
@@ -161,38 +148,30 @@ export function useDataSetExportSync(
     rtcSignalingInitiate(encryptKey, (signalId) => {
       // display exchange id
       setShareId(signalId);
-      setWarning([]);
+      addWarning();
     })
       .then(initiateTransferCB)
       .catch((err) => {
         if (err instanceof Error && "cause" in err) {
           const errData = err.cause as { code: string; status: string };
 
-          if (
-            errData.code === RTCErrorCause.ExportInitSvcError ||
-            errData.code === RTCErrorCause.ExportFinalSvcError
-          ) {
-            onSignalingConnectError();
+          if (errData.code === RTCErrorCause.ServiceError) {
+            addWarning(
+              `server-error-${errData.status ?? ""}`,
+              `${err.message} ${errData.status ?? ""}`
+            );
+            return;
+          }
+
+          if (errData.code === RTCErrorCause.RemotePeerFail) {
+            addWarning(`peer-connect-fail`, err.message);
             return;
           }
         }
 
-        setWarning((w) => [
-          ...w,
-          <span
-            key={`signaling-unexpected`}
-          >{`Sharing service unexpected error`}</span>,
-        ]);
+        addWarning("signaling-unexpected", "Possible network failure");
       });
-  }, [
-    encryptKey,
-    warning,
-    onSignalingConnectError,
-
-    initiateTransferCB,
-    setShareId,
-    setWarning,
-  ]);
+  }, [encryptKey, initiateTransferCB, setShareId, addWarning]);
 
   return { exportDataSetHandlerCB };
 }

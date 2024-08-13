@@ -72,17 +72,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     }
   }, [close]);
 
-  const onSignalingConnectError = useCallback(() => {
-    if (warning.find((w) => w.key === "connect-error") === undefined) {
-      setWarning([
-        <span
-          key={`connect-error`}
-        >{`Error connecting, service may be offline.`}</span>,
-      ]);
-    }
-  }, [warning]);
-
-  const onClose = useCallback(() => {
+  const showDoneConfirmation = useCallback(() => {
     setFinished(true);
   }, []);
 
@@ -117,17 +107,27 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
     });
   }, []);
 
+  const addWarning = useCallback(
+    (warnKey?: string, warnMsg?: string) => {
+      if (warnKey === undefined && warnMsg === undefined) {
+        setWarning([]);
+        return;
+      }
+
+      if (warning.find((w) => w.key === warnKey) === undefined) {
+        setWarning((w) => [...w, <span key={warnKey}>{warnMsg}</span>]);
+      }
+    },
+    [warning, setWarning]
+  );
+
   const { exportDataSetHandlerCB } = useDataSetExportSync(
-    fileData,
+    rtc,
     encryptKey,
-    warning,
-    onSignalingConnectError,
-    onClose,
-
-    setWarning,
+    fileData,
+    addWarning,
     setShareId,
-
-    rtc
+    showDoneConfirmation
   );
 
   return (

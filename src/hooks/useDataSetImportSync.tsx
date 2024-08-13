@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 
 import { SyncDataFile } from "../components/Form/DataSetExportSync";
 import { properCase } from "../components/Games/KanjiGame";
@@ -23,9 +23,11 @@ interface CustomForm extends HTMLFormElement {
  * DataSetExportSync callbacks
  */
 export function useDataSetImportSync(
+  rtc: React.MutableRefObject<RTCDataChannel | null>,
   encryptKey: string | undefined,
-  addWarning: (warnKey?: string, warnMsg?: string) => void,
+  destination: "import" | "save",
 
+  addWarning: (warnKey?: string, warnMsg?: string) => void,
   setStatus: React.Dispatch<
     React.SetStateAction<
       | "successStatus"
@@ -36,8 +38,6 @@ export function useDataSetImportSync(
     >
   >,
 
-  rtc: React.MutableRefObject<RTCDataChannel | null>,
-  destination: "import" | "save",
   saveToFileHandler: (
     files: {
       fileName: string;
@@ -195,7 +195,7 @@ export function useDataSetImportSync(
       }
 
       const form = e.currentTarget.elements;
-      if (/*form &&*/ "syncId" in form === false) {
+      if ("syncId" in form === false) {
         return;
       }
       const shareId = form.syncId.value;
@@ -217,9 +217,12 @@ export function useDataSetImportSync(
             (resolve, reject) => {
               channel.onmessage = (msg: { data: ArrayBuffer }) => {
                 if (msg.data instanceof ArrayBuffer === false) {
-                  setStatus("outputError");
-                  addWarning("msg-parse-error", "Failed to parse");
-                  return;
+                  // TODO: hardcoded msg-parse-error
+                  reject(
+                    new Error("Failed to parse", {
+                      cause: { code: "msg-parse-error" },
+                    })
+                  );
                 }
                 resolve([encryptKey, channel, msg.data]);
               };
@@ -231,21 +234,23 @@ export function useDataSetImportSync(
           if (err instanceof Error && "cause" in err) {
             const errData = err.cause as { code: string; status: string };
 
-            if (
-              errData.code === RTCErrorCause.ImportInitSvcError ||
-              errData.code === RTCErrorCause.ImportFinalSvcError
-            ) {
-              // onSignalingConnectError();
-              // TODO: connection errors
+            if (errData.code === RTCErrorCause.ServiceError) {
+              addWarning(
+                `server-error-${errData.status ?? ""}`,
+                `${err.message} ${errData.status ?? ""}`
+              );
+            }
+
+            if (errData.code === RTCErrorCause.BadUid) {
+              addWarning(`user-bad-share-id-${shareId}`, err.message);
               return;
             }
-          }
 
-          if (err instanceof TypeError) {
-            // TODO: this should be more specific
-            addWarning(`user-bad-share-id-${shareId}`, "Incorrect Share-ID");
-
-            return;
+            if (errData.code === "msg-parse-error") {
+              setStatus("outputError");
+              addWarning("msg-parse-error", "Failed to parse");
+              return;
+            }
           }
 
           setStatus("connectError");
