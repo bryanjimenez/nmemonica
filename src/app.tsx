@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes } from "react-router-dom";
 
 import Console from "./components/Form/Console";
-import { KanjiGameMeta, properCase } from "./components/Games/KanjiGame";
+import { KanjiGameMeta } from "./components/Games/KanjiGame";
 import { KanjiGridMeta } from "./components/Games/KanjiGrid";
 import { OppositesGameMeta } from "./components/Games/OppositesGame";
 import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
@@ -111,12 +111,31 @@ export default function App() {
     "dark-mode": darkMode,
   });
 
+  /**
+   * pages where cookie notification should display
+   */
+  const cookieNoticePages = [
+    PhrasesMeta.location,
+    VocabularyMeta.location,
+    OppositesGameMeta.location,
+    KanaGameMeta.location,
+    KanjiMeta.location,
+    KanjiGameMeta.location,
+    KanjiGridMeta.location,
+    ParticlesGameMeta.location,
+    SheetMeta.location,
+    // SettingsMeta.location,
+    // TermsAndConditionsMeta.location,
+    // CookiePolicyMeta.location,
+    // PrivacyPolicyMeta.location,
+  ];
+
   return (
     <ThemeProvider theme={muiDarkTheme}>
       <HashRouter basename="/">
         <div id="page-content" className={pClass}>
           <Console connected={true} />
-          <TermsNotice />
+          <TermsNotice showInPages={cookieNoticePages} />
           <Navigation />
           <Suspense fallback={<div />}>
             <Routes>

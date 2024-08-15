@@ -1,8 +1,7 @@
 import { InfoIcon } from "@primer/octicons-react";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { useLocation } from "react-router";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { CookiePolicyMeta } from "./CookiePolicy";
 import { PrivacyPolicyMeta } from "./PrivacyPolicy";
@@ -11,9 +10,13 @@ import { allowedCookies } from "../../helper/cookieHelper";
 import { RootState } from "../../slices";
 import { Notice } from "../Form/Notice";
 import { CookieOptions } from "../Form/SettingsCookies";
-import { SettingsMeta } from "../Pages/Settings";
 
-export function TermsNotice() {
+interface TermsNoticeProps {
+  showInPages: string[];
+}
+
+export function TermsNotice(props: TermsNoticeProps) {
+  const { showInPages } = props;
   const location = useLocation();
 
   const cookieImportant = !useMemo(allowedCookies, [location]);
@@ -21,15 +24,17 @@ export function TermsNotice() {
     (state: RootState) => state.global
   );
 
-  if (
-    !cookieImportant ||
-    [
-      TermsAndConditionsMeta.location,
-      CookiePolicyMeta.location,
-      PrivacyPolicyMeta.location,
-      SettingsMeta.location,
-    ].includes(location.pathname)
-  ) {
+  const path =
+    location.pathname.length > 1 && location.pathname.endsWith("/")
+      ? location.pathname.slice(0, -1)
+      : location.pathname;
+
+  const allowedPagesForNotice = [
+    "/",
+    ...showInPages.map((p) => (p.endsWith("/") ? p.slice(0, -1) : p)),
+  ];
+
+  if (!cookieImportant || !allowedPagesForNotice.includes(path)) {
     // Don't show if in Settings page or permission has been granted
     return null;
   }
