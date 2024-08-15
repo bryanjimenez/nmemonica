@@ -9,10 +9,13 @@ export const RTCChannelStatus = Object.freeze({
   Finalized: "0",
 });
 
+// Signaling errors
 export const RTCErrorCause = Object.freeze({
-  ServiceError: "ServiceError",
-  BadUid: "BadUid",
-  RemotePeerFail: "RemotePeerFail",
+  ServiceError: "signaling-server-error",
+  RemotePeerFail: "signaling-remote-peer-connection",
+  BadUid: "signaling-user-bad-uid",
+  BadCryptoKey: "signaling-user-bad-crypto-key",
+  BadPayload: "signaling-server-bad-payload",
 });
 
 export const RTCSignalingMsgKey = Object.freeze({
@@ -65,7 +68,7 @@ export function rtcSignalingInitiate(
         })
           .then((res) => {
             if (!res.ok) {
-              throw new Error("RTC Signaling Server Error", {
+              throw new Error("Server Error", {
                 cause: {
                   code: RTCErrorCause.ServiceError,
                   status: res.status,
@@ -117,10 +120,12 @@ function rtcSignalingInitiateDone(
       if (!res.ok) {
         if (res.status === 404) {
           throw new Error("Remote peer failed connection setup", {
-            cause: { code: RTCErrorCause.RemotePeerFail, status: res.status },
+            cause: {
+              code: RTCErrorCause.RemotePeerFail /*, status: res.status*/,
+            },
           });
         }
-        throw new Error("RTC Signaling Server Error", {
+        throw new Error("Server Error", {
           cause: {
             code: RTCErrorCause.ServiceError,
             status: res.status,
@@ -160,10 +165,10 @@ export function rtcSignalingRespond(encryptKey: string, shareId: string) {
       if (!res.ok) {
         if (res.status === 404) {
           throw new Error("Incorrect share id", {
-            cause: { code: RTCErrorCause.BadUid, status: res.status },
+            cause: { code: RTCErrorCause.BadUid /*, status: res.status*/ },
           });
         }
-        throw new Error("RTC Signaling Server Error", {
+        throw new Error("Server Error", {
           cause: { code: RTCErrorCause.ServiceError, status: res.status },
         });
       }
@@ -246,7 +251,7 @@ function rtcSignalingRespondDone(
     body: data,
   }).then((res) => {
     if (!res.ok) {
-      throw new Error("RTC Signaling Server Error", {
+      throw new Error("Server Error", {
         cause: { code: RTCErrorCause.ServiceError, status: res.status },
       });
     }
@@ -262,8 +267,8 @@ function parseSeviceResponse(info: string) {
     cypherText = encrypted;
   } catch (err) {
     // TODO: add catch code for signaling
-    throw new Error("RTC Signaling failed to parse service response", {
-      cause: { code: "" },
+    throw new Error("Failed to parse service response", {
+      cause: { code: RTCErrorCause.BadPayload },
     });
   }
   return { encrypted: cypherText, iv: initVector };
@@ -280,21 +285,20 @@ function decryptIntoDescriptionCandidate(
 
   try {
     const {
-      description: desc,
-      candidate: cand,
+      description: descriptionO,
+      candidate: candidateO,
       keyword: retrieveId,
     } = JSON.parse(decrypt("aes-192-cbc", encryptKey, iv, encrypted)) as {
       description: RTCSessionDescriptionInit;
       candidate: RTCIceCandidate;
       keyword: string;
     };
-    description = desc;
-    candidate = cand;
+    description = descriptionO;
+    candidate = candidateO;
     keyword = retrieveId;
   } catch (err) {
-    // TODO: add catch code for signaling
-    throw new Error("RTC Signaling failed to decrypt service response", {
-      cause: { code: "" },
+    throw new Error("Failed to decrypt service response", {
+      cause: { code: RTCErrorCause.BadCryptoKey },
     });
   }
 

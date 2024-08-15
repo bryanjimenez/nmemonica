@@ -155,17 +155,11 @@ export function useDataSetExportSync(
         if (err instanceof Error && "cause" in err) {
           const errData = err.cause as { code: string; status: string };
 
-          if (errData.code === RTCErrorCause.ServiceError) {
-            addWarning(
-              `server-error-${errData.status ?? ""}`,
-              `${err.message} ${errData.status ?? ""}`
-            );
-            return;
-          }
-
-          if (errData.code === RTCErrorCause.RemotePeerFail) {
-            addWarning(`peer-connect-fail`, err.message);
-            return;
+          if (Object.values<string>(RTCErrorCause).includes(errData.code)) {
+            addWarning(errData.code, `${err.message} ${errData.status ?? ""}`);
+            if (errData.code !== RTCErrorCause.ServiceError) {
+              return;
+            }
           }
         }
 

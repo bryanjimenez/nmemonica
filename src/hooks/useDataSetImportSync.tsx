@@ -19,6 +19,13 @@ interface CustomForm extends HTMLFormElement {
   elements: CustomElements;
 }
 
+export const SharingMessageErrorCause = Object.freeze({
+  BadCryptoKey: "message-user-bad-crypto-key",
+  BadPayload: "message-bad-payload",
+  BadFileName: "message-bad-filename",
+  BadFileContent: "message-bad-file-contents",
+});
+
 /**
  * DataSetExportSync callbacks
  */
@@ -54,46 +61,59 @@ export function useDataSetImportSync(
       const msgAsText = new TextDecoder("utf-8").decode(msgBuf);
 
       let fileObj: SyncDataFile[];
+      let payload: string;
+      let iv: string;
       try {
-        const { payload, iv } = JSON.parse(msgAsText) as {
+        const { payload: payloadO, iv: ivO } = JSON.parse(msgAsText) as {
           payload: string;
           iv: string;
         };
+        payload = payloadO;
+        iv = ivO;
+      } catch (err) {
+        throw new Error("Failed to parse message", {
+          cause: { code: SharingMessageErrorCause.BadPayload },
+        });
+      }
 
-        fileObj = JSON.parse(
-          decrypt("aes-192-cbc", encryptKey, iv, payload)
-        ) as SyncDataFile[];
+      let decryptedText: string;
+      try {
+        decryptedText = decrypt("aes-192-cbc", encryptKey, iv, payload);
+      } catch (err) {
+        throw new Error("Failed to decrypt message", {
+          cause: { code: SharingMessageErrorCause.BadCryptoKey },
+        });
+      }
+
+      try {
+        fileObj = JSON.parse(decryptedText) as SyncDataFile[];
 
         fileObj.forEach((f) => {
           if (!("fileName" in f) || typeof f.fileName !== "string") {
-            throw new Error("Expected filename", {
-              cause: { code: "BadFileName" },
+            throw new Error("Unexpected filename", {
+              cause: { code: SharingMessageErrorCause.BadFileName },
             });
           }
           if (!("text" in f) || typeof f.text !== "string") {
-            throw new Error("Expected filename", {
-              cause: { code: "BadText" },
+            throw new Error("Unexpected file content", {
+              cause: { code: SharingMessageErrorCause.BadFileContent },
             });
           }
         });
       } catch (err) {
         setStatus("outputError");
-        let errCode: string | undefined;
         if (err instanceof Error && "cause" in err) {
-          const { code } = err.cause as { code?: string };
-          errCode = code;
+          throw err;
         }
 
-        addWarning(
-          "msg-parse-error",
-          "Sync Message JSON.parse error" + errCode ? ` [${errCode}]` : ""
-        );
-        return [];
+        throw new Error("Failed to parse message contents", {
+          cause: { code: SharingMessageErrorCause.BadPayload },
+        });
       }
 
       return fileObj;
     },
-    [setStatus, addWarning]
+    [setStatus]
   );
 
   const toDataSetAndSettingsCB = useCallback(
@@ -117,7 +137,10 @@ export function useDataSetImportSync(
               return { ...acc, settings: s };
             } catch (err) {
               setStatus("outputError");
-              addWarning("msg-parse-error", "Failed to parse Settings");
+              addWarning(
+                SharingMessageErrorCause.BadPayload,
+                "Failed to parse Settings"
+              );
             }
           }
           return acc;
@@ -170,7 +193,10 @@ export function useDataSetImportSync(
         })
         .catch((_err) => {
           setStatus("outputError");
-          addWarning("msg-parse-error", "Failed to parse DataSet");
+          addWarning(
+            SharingMessageErrorCause.BadPayload,
+            "Failed to parse DataSet"
+          );
         });
     },
     [
@@ -217,10 +243,9 @@ export function useDataSetImportSync(
             (resolve, reject) => {
               channel.onmessage = (msg: { data: ArrayBuffer }) => {
                 if (msg.data instanceof ArrayBuffer === false) {
-                  // TODO: hardcoded msg-parse-error
                   reject(
-                    new Error("Failed to parse", {
-                      cause: { code: "msg-parse-error" },
+                    new Error("Unexpected Server response", {
+                      cause: { code: RTCErrorCause.BadPayload },
                     })
                   );
                 }
@@ -234,25 +259,27 @@ export function useDataSetImportSync(
           if (err instanceof Error && "cause" in err) {
             const errData = err.cause as { code: string; status: string };
 
-            if (errData.code === RTCErrorCause.ServiceError) {
+            if (Object.values<string>(RTCErrorCause).includes(errData.code)) {
               addWarning(
-                `server-error-${errData.status ?? ""}`,
+                errData.code,
                 `${err.message} ${errData.status ?? ""}`
               );
-            }
-
-            if (errData.code === RTCErrorCause.BadUid) {
-              addWarning(`user-bad-share-id-${shareId}`, err.message);
-              return;
-            }
-
-            if (errData.code === "msg-parse-error") {
+              if (errData.code !== RTCErrorCause.ServiceError) {
+                return;
+              }
+            } else if (
+              Object.values<string>(SharingMessageErrorCause).includes(
+                errData.code
+              )
+            ) {
+              addWarning(
+                errData.code,
+                `${err.message} ${errData.status ?? ""}`
+              );
               setStatus("outputError");
-              addWarning("msg-parse-error", "Failed to parse");
               return;
             }
           }
-
           setStatus("connectError");
         });
     },
