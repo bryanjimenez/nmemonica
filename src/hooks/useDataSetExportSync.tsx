@@ -4,8 +4,9 @@ import { SyncDataFile } from "../components/Form/DataSetExportSync";
 import { TransferObject } from "../components/Form/DataSetFromDragDrop";
 import { encrypt } from "../helper/cryptoHelper";
 import {
+  RTCChannelMessageHeader,
   RTCChannelStatus,
-  RTCErrorCause,
+  RTCSignalingErrorCause,
   rtcSignalingInitiate,
 } from "../helper/rtcHelperHttp";
 import {
@@ -99,6 +100,17 @@ function encryptTransfer(encryptKey: string, data: SyncDataFile[]) {
   return blob.arrayBuffer();
 }
 
+function buildChunkHeader(messageByteLength: number, chunkSize: number) {
+  const arr = new TextEncoder().encode(
+    JSON.stringify({
+      header: RTCChannelMessageHeader,
+      len: Math.ceil(messageByteLength / chunkSize),
+    })
+  );
+
+  return arr.buffer;
+}
+
 /**
  * DataSetExportSync callbacks
  */
@@ -123,17 +135,51 @@ export function useDataSetExportSync(
       rtc.current = channel;
       addWarning();
 
-      channel.onmessage = (msg: { data: unknown }) => {
-        // expect confirmation msg
-        if (msg.data === RTCChannelStatus.Finalized) {
-          channel.close();
-          showDoneConfirmation();
-        }
-      };
+      return new Promise<void>((resolve, reject) => {
+        channel.onerror = () => {
+          reject(new Error("Unexpected error during transmission"));
+        };
+        channel.onmessage = (msg: { data: string }) => {
+          // expect confirmation msg
 
-      void dataTransferAggregator(fileData)
-        .then((msg) => encryptTransfer(encryptKey, msg))
-        .then((encrypted) => channel.send(encrypted));
+          switch (msg.data) {
+            case RTCChannelStatus.Initialized:
+              void dataTransferAggregator(fileData)
+                .then((msg) => encryptTransfer(encryptKey, msg))
+                .then((encrypted) => {
+                  // TODO: chunkSize arbitrarily chosen
+                  const chunkSize = 1024 * 10;
+
+                  const chunkHeader = buildChunkHeader(
+                    encrypted.byteLength,
+                    chunkSize
+                  );
+                  channel.send(chunkHeader);
+
+                  let i = 0;
+                  while (i < encrypted.byteLength) {
+                    const j = i + chunkSize;
+                    const chunk = encrypted.slice(i, j);
+                    i = j;
+                    channel.send(chunk);
+                  }
+
+                  resolve();
+                });
+              break;
+
+            case RTCChannelStatus.Finalized:
+              channel.close();
+              showDoneConfirmation();
+              break;
+
+            default:
+              channel.close();
+              reject(new Error("Incorrect peer confirmation"));
+              break;
+          }
+        };
+      });
     },
     [rtc, fileData, showDoneConfirmation, addWarning]
   );
@@ -155,9 +201,11 @@ export function useDataSetExportSync(
         if (err instanceof Error && "cause" in err) {
           const errData = err.cause as { code: string; status: string };
 
-          if (Object.values<string>(RTCErrorCause).includes(errData.code)) {
+          if (
+            Object.values<string>(RTCSignalingErrorCause).includes(errData.code)
+          ) {
             addWarning(errData.code, `${err.message} ${errData.status ?? ""}`);
-            if (errData.code !== RTCErrorCause.ServiceError) {
+            if (errData.code !== RTCSignalingErrorCause.ServiceError) {
               return;
             }
           }

@@ -4,8 +4,9 @@ import { SyncDataFile } from "../components/Form/DataSetExportSync";
 import { properCase } from "../components/Games/KanjiGame";
 import { decrypt } from "../helper/cryptoHelper";
 import {
+  RTCChannelMessageHeader,
   RTCChannelStatus,
-  RTCErrorCause,
+  RTCSignalingErrorCause,
   rtcSignalingRespond,
 } from "../helper/rtcHelperHttp";
 import { FilledSheetData } from "../helper/sheetHelperImport";
@@ -239,32 +240,71 @@ export function useDataSetImportSync(
           rtc.current = channel;
           addWarning();
 
-          return new Promise<[string, RTCDataChannel, ArrayBuffer]>(
+          const aPromise = new Promise<[string, RTCDataChannel, ArrayBuffer]>(
             (resolve, reject) => {
+              channel.onerror = () => {
+                reject(new Error("Unexpected error during transmission"));
+              };
+
+              let remainingChunks = 0;
+              let buff: ArrayBuffer[] = [];
               channel.onmessage = (msg: { data: ArrayBuffer }) => {
-                if (msg.data instanceof ArrayBuffer === false) {
-                  reject(
-                    new Error("Unexpected Server response", {
-                      cause: { code: RTCErrorCause.BadPayload },
-                    })
+                // first msg is a header
+                if (buff.length === 0 && remainingChunks === 0) {
+                  const headerText = new TextDecoder("utf-8").decode(
+                    new Uint8Array(msg.data)
                   );
+                  try {
+                    const { header, len } = JSON.parse(
+                      headerText
+                    ) as RTCChannelMessageHeader;
+                    if (header === RTCChannelMessageHeader) {
+                      remainingChunks = len;
+                    }
+                  } catch (_err) {
+                    reject(new Error("Invalid msg header"));
+                  }
+
+                  return;
                 }
-                resolve([encryptKey, channel, msg.data]);
+
+                remainingChunks -= 1;
+                buff.push(msg.data);
+
+                if (remainingChunks === 0) {
+                  void new Blob(buff).arrayBuffer().then((combined) => {
+                    resolve([encryptKey, channel, combined]);
+                  });
+                }
+
+                if (msg.data instanceof ArrayBuffer === false) {
+                  reject(new Error("Unexpected peer response"));
+                }
               };
             }
           );
+
+          channel.onopen = () => {
+            channel.send(RTCChannelStatus.Initialized);
+          };
+
+          return aPromise;
         })
         .then(initiateTransferCB)
         .catch((err) => {
           if (err instanceof Error && "cause" in err) {
             const errData = err.cause as { code: string; status: string };
 
-            if (Object.values<string>(RTCErrorCause).includes(errData.code)) {
+            if (
+              Object.values<string>(RTCSignalingErrorCause).includes(
+                errData.code
+              )
+            ) {
               addWarning(
                 errData.code,
                 `${err.message} ${errData.status ?? ""}`
               );
-              if (errData.code !== RTCErrorCause.ServiceError) {
+              if (errData.code !== RTCSignalingErrorCause.ServiceError) {
                 return;
               }
             } else if (

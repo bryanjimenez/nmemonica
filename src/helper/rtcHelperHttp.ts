@@ -3,14 +3,20 @@ import { randomBytes } from "crypto";
 import { decrypt, encrypt } from "./cryptoHelper";
 import { signalingService } from "../../environment.development";
 
+export const RTCChannelMessageHeader = "RTCChannelMessageHeader";
+export interface RTCChannelMessageHeader {
+  header: string;
+  len: number;
+}
 export const RTCChannelStatus = Object.freeze({
   // value must be string
   // channel.send(string)
+  Initialized: "1",
   Finalized: "0",
 });
 
 // Signaling errors
-export const RTCErrorCause = Object.freeze({
+export const RTCSignalingErrorCause = Object.freeze({
   ServiceError: "signaling-server-error",
   RemotePeerFail: "signaling-remote-peer-connection",
   BadUid: "signaling-user-bad-uid",
@@ -39,6 +45,8 @@ export function rtcSignalingInitiate(
 
     // channel before offer
     const channel = peer.createDataChannel("data-share");
+    channel.binaryType = "arraybuffer";
+
     let description: RTCSessionDescriptionInit;
     try {
       description = await peer.createOffer();
@@ -70,7 +78,7 @@ export function rtcSignalingInitiate(
             if (!res.ok) {
               throw new Error("Server Error", {
                 cause: {
-                  code: RTCErrorCause.ServiceError,
+                  code: RTCSignalingErrorCause.ServiceError,
                   status: res.status,
                 },
               });
@@ -121,13 +129,13 @@ function rtcSignalingInitiateDone(
         if (res.status === 404) {
           throw new Error("Remote peer failed connection setup", {
             cause: {
-              code: RTCErrorCause.RemotePeerFail /*, status: res.status*/,
+              code: RTCSignalingErrorCause.RemotePeerFail /*, status: res.status*/,
             },
           });
         }
         throw new Error("Server Error", {
           cause: {
-            code: RTCErrorCause.ServiceError,
+            code: RTCSignalingErrorCause.ServiceError,
             status: res.status,
           },
         });
@@ -165,11 +173,16 @@ export function rtcSignalingRespond(encryptKey: string, shareId: string) {
       if (!res.ok) {
         if (res.status === 404) {
           throw new Error("Incorrect share id", {
-            cause: { code: RTCErrorCause.BadUid /*, status: res.status*/ },
+            cause: {
+              code: RTCSignalingErrorCause.BadUid /*, status: res.status*/,
+            },
           });
         }
         throw new Error("Server Error", {
-          cause: { code: RTCErrorCause.ServiceError, status: res.status },
+          cause: {
+            code: RTCSignalingErrorCause.ServiceError,
+            status: res.status,
+          },
         });
       }
       return res.text();
@@ -217,9 +230,13 @@ export function rtcSignalingRespond(encryptKey: string, shareId: string) {
           }
         };
 
-        await peer2.setLocalDescription(peer2Desc);
-        await peer2.addIceCandidate(candidate);
-        await peer2.setRemoteDescription(description);
+        try {
+          await peer2.setLocalDescription(peer2Desc);
+          await peer2.addIceCandidate(candidate);
+          await peer2.setRemoteDescription(description);
+        } catch (err) {
+          reject(err);
+        }
       });
 
       return msgP;
@@ -252,7 +269,10 @@ function rtcSignalingRespondDone(
   }).then((res) => {
     if (!res.ok) {
       throw new Error("Server Error", {
-        cause: { code: RTCErrorCause.ServiceError, status: res.status },
+        cause: {
+          code: RTCSignalingErrorCause.ServiceError,
+          status: res.status,
+        },
       });
     }
   });
@@ -266,9 +286,8 @@ function parseSeviceResponse(info: string) {
     initVector = iv;
     cypherText = encrypted;
   } catch (err) {
-    // TODO: add catch code for signaling
     throw new Error("Failed to parse service response", {
-      cause: { code: RTCErrorCause.BadPayload },
+      cause: { code: RTCSignalingErrorCause.BadPayload },
     });
   }
   return { encrypted: cypherText, iv: initVector };
@@ -298,7 +317,7 @@ function decryptIntoDescriptionCandidate(
     keyword = retrieveId;
   } catch (err) {
     throw new Error("Failed to decrypt service response", {
-      cause: { code: RTCErrorCause.BadCryptoKey },
+      cause: { code: RTCSignalingErrorCause.BadCryptoKey },
     });
   }
 
