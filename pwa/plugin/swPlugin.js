@@ -49,6 +49,7 @@ export function serviceWorkerCacheHelperPlugin(compiler) {
                 f.endsWith(".jpeg") ||
                 f.endsWith(".png") ||
                 f.endsWith(".ico") ||
+                f.endsWith(".woff2") ||
                 f.endsWith(".webmanifest"))
             );
           });

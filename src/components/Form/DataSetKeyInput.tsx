@@ -15,6 +15,8 @@ import {
   generateAES256GCMKey,
 } from "../../helper/cryptoHelper";
 
+import "../../css/DataSetKeyInput.css";
+
 interface CustomElements extends HTMLFormControlsCollection {
   syncEncryptKey: HTMLInputElement;
 }
@@ -133,7 +135,15 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
               variant="outlined"
               aria-label="Enter Sync Encryption Key"
               defaultValue={encryptKey}
+              sx={{
+                ".MuiInputBase-input": {
+                  fontFamily: "Ubuntu Mono",
+                  paddingLeft: "1.5em",
+                  paddingRight: ".5em",
+                },
+              }}
               InputProps={{
+                // style: {fontFamily: "monospace", minWidth: "360px"},
                 startAdornment: (
                   <InputAdornment position="start">{decoration}</InputAdornment>
                 ),

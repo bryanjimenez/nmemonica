@@ -67,7 +67,7 @@ export default function rspackConfig(
     module: {
       rules: [
         {
-          test: /\.(png|svg|jpe?g|gif)$/i,
+          test: /\.(png|svg|jpe?g|gif|woff|woff2)$/i,
           type: "asset/resource",
         },
         ...(isProduction
