@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 
-import { decrypt, encrypt } from "./cryptoHelper";
+import { decryptAES256GCM, encryptAES256GCM } from "./cryptoHelper";
 import { signalingService } from "../../environment.development";
 
 export const RTCChannelMessageHeader = "RTCChannelMessageHeader";
@@ -65,7 +65,7 @@ export function rtcSignalingInitiate(
         const payload = { description, candidate, keyword: retrieveId };
         const data = new URLSearchParams({
           [RTCSignalingMsgKey.Payload]: JSON.stringify(
-            encrypt("aes-192-cbc", encryptKey, JSON.stringify(payload))
+            encryptAES256GCM("aes-256-gcm", encryptKey, JSON.stringify(payload))
           ),
         });
 
@@ -143,10 +143,11 @@ function rtcSignalingInitiateDone(
       return res.text();
     })
     .then((info) => {
-      const { encrypted, iv } = parseSeviceResponse(info);
+      const { encrypted, iv, tag } = parseSeviceResponse(info);
       const { description, candidate } = decryptIntoDescriptionCandidate(
         encryptKey,
         iv,
+        tag,
         encrypted
       );
 
@@ -188,12 +189,12 @@ export function rtcSignalingRespond(encryptKey: string, shareId: string) {
       return res.text();
     })
     .then((payload) => {
-      const { encrypted, iv } = parseSeviceResponse(payload);
+      const { encrypted, iv, tag } = parseSeviceResponse(payload);
       const {
         description,
         candidate,
         keyword: retrieveId,
-      } = decryptIntoDescriptionCandidate(encryptKey, iv, encrypted);
+      } = decryptIntoDescriptionCandidate(encryptKey, iv, tag, encrypted);
 
       const msgP = new Promise<RTCDataChannel>(async (resolve, reject) => {
         let peer2 = new RTCPeerConnection();
@@ -258,7 +259,7 @@ function rtcSignalingRespondDone(
   const data = new URLSearchParams({
     [RTCSignalingMsgKey.Uid]: `${uid}-${doneKeyword}`,
     [RTCSignalingMsgKey.Payload]: JSON.stringify(
-      encrypt("aes-192-cbc", encryptKey, JSON.stringify(payload))
+      encryptAES256GCM("aes-256-gcm", encryptKey, JSON.stringify(payload))
     ),
   });
 
@@ -281,21 +282,24 @@ function rtcSignalingRespondDone(
 function parseSeviceResponse(info: string) {
   let initVector: string;
   let cypherText: string;
+  let authTag: string;
   try {
-    const { encrypted, iv } = JSON.parse(info) as Record<string, string>;
+    const { encrypted, iv, tag } = JSON.parse(info) as Record<string, string>;
     initVector = iv;
     cypherText = encrypted;
+    authTag = tag;
   } catch (err) {
     throw new Error("Failed to parse service response", {
       cause: { code: RTCSignalingErrorCause.BadPayload },
     });
   }
-  return { encrypted: cypherText, iv: initVector };
+  return { encrypted: cypherText, iv: initVector, tag: authTag };
 }
 
 function decryptIntoDescriptionCandidate(
   encryptKey: string,
   iv: string,
+  tag: string,
   encrypted: string
 ) {
   let description: RTCSessionDescriptionInit;
@@ -307,7 +311,9 @@ function decryptIntoDescriptionCandidate(
       description: descriptionO,
       candidate: candidateO,
       keyword: retrieveId,
-    } = JSON.parse(decrypt("aes-192-cbc", encryptKey, iv, encrypted)) as {
+    } = JSON.parse(
+      decryptAES256GCM("aes-256-gcm", encryptKey, iv, tag, encrypted)
+    ) as {
       description: RTCSessionDescriptionInit;
       candidate: RTCIceCandidate;
       keyword: string;

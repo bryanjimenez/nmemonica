@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 import { SyncDataFile } from "../components/Form/DataSetExportSync";
 import { properCase } from "../components/Games/KanjiGame";
-import { decrypt } from "../helper/cryptoHelper";
+import { decryptAES256GCM } from "../helper/cryptoHelper";
 import {
   RTCChannelMessageHeader,
   RTCChannelStatus,
@@ -26,6 +26,12 @@ export const SharingMessageErrorCause = Object.freeze({
   BadFileName: "message-bad-filename",
   BadFileContent: "message-bad-file-contents",
 });
+
+export interface CryptoMessage {
+  payload: string;
+  iv: string;
+  tag: string;
+}
 
 /**
  * DataSetExportSync callbacks
@@ -64,13 +70,16 @@ export function useDataSetImportSync(
       let fileObj: SyncDataFile[];
       let payload: string;
       let iv: string;
+      let tag: string;
       try {
-        const { payload: payloadO, iv: ivO } = JSON.parse(msgAsText) as {
-          payload: string;
-          iv: string;
-        };
+        const {
+          payload: payloadO,
+          iv: ivO,
+          tag: tagO,
+        } = JSON.parse(msgAsText) as CryptoMessage;
         payload = payloadO;
         iv = ivO;
+        tag = tagO;
       } catch (err) {
         throw new Error("Failed to parse message", {
           cause: { code: SharingMessageErrorCause.BadPayload },
@@ -79,7 +88,13 @@ export function useDataSetImportSync(
 
       let decryptedText: string;
       try {
-        decryptedText = decrypt("aes-192-cbc", encryptKey, iv, payload);
+        decryptedText = decryptAES256GCM(
+          "aes-256-gcm",
+          encryptKey,
+          iv,
+          tag,
+          payload
+        );
       } catch (err) {
         throw new Error("Failed to decrypt message", {
           cause: { code: SharingMessageErrorCause.BadCryptoKey },

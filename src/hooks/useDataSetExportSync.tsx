@@ -1,8 +1,9 @@
 import { useCallback } from "react";
 
+import { CryptoMessage } from "./useDataSetImportSync";
 import { SyncDataFile } from "../components/Form/DataSetExportSync";
 import { TransferObject } from "../components/Form/DataSetFromDragDrop";
-import { encrypt } from "../helper/cryptoHelper";
+import { encryptAES256GCM } from "../helper/cryptoHelper";
 import {
   RTCChannelMessageHeader,
   RTCChannelStatus,
@@ -85,14 +86,14 @@ function dataTransferAggregator(fileData: TransferObject[]) {
 }
 
 function encryptTransfer(encryptKey: string, data: SyncDataFile[]) {
-  const { encrypted: encryptedText, iv } = encrypt(
-    "aes-192-cbc",
-    encryptKey,
-    JSON.stringify(data)
-  );
-  const b = new TextEncoder().encode(
-    JSON.stringify({ payload: encryptedText, iv })
-  );
+  const {
+    encrypted: encryptedText,
+    iv,
+    tag,
+  } = encryptAES256GCM("aes-256-gcm", encryptKey, JSON.stringify(data));
+
+  const msgFields: CryptoMessage = { payload: encryptedText, iv, tag };
+  const b = new TextEncoder().encode(JSON.stringify(msgFields));
   const blob = new Blob([b.buffer], {
     type: "application/x-nmemonica-data",
   });

@@ -10,7 +10,10 @@ import {
 import { KeyIcon, PackageIcon, TrashIcon } from "@primer/octicons-react";
 import { ReactElement, useCallback, useMemo, useRef, useState } from "react";
 
-import { generateKey } from "../../helper/cryptoHelper";
+import {
+  AES256GCMStringKeyLength,
+  generateAES256GCMKey,
+} from "../../helper/cryptoHelper";
 
 interface CustomElements extends HTMLFormControlsCollection {
   syncEncryptKey: HTMLInputElement;
@@ -41,11 +44,11 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
       const form = e.currentTarget.elements;
       if ("syncEncryptKey" in form) {
         const syncEncryptKey = form.syncEncryptKey.value;
-        if (syncEncryptKey.length !== 32) {
+        if (syncEncryptKey.length !== AES256GCMStringKeyLength) {
           setWarning([
             <span
               key={`encrypt-key-length`}
-            >{`Encrypt key requires 32 characters`}</span>,
+            >{`Encrypt key requires ${AES256GCMStringKeyLength} characters`}</span>,
           ]);
           return;
         }
@@ -54,7 +57,7 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
         closeHandler();
       }
     },
-    [enterHandler]
+    [enterHandler, closeHandler]
   );
 
   const clearKeyCB = useCallback(() => {
@@ -67,7 +70,7 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
   }, [enterHandler]);
 
   const generateKeyCB = useCallback(() => {
-    const key = generateKey();
+    const key = generateAES256GCMKey();
     enterHandler(key);
 
     setWarning([]);
@@ -84,7 +87,7 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
           <PackageIcon />
         </div>
       );
-    } else if (encryptKey?.length === 32) {
+    } else if (encryptKey?.length === AES256GCMStringKeyLength) {
       return (
         <div className="clickable" onClick={clearKeyCB}>
           <TrashIcon />
