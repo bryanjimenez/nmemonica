@@ -8,7 +8,7 @@ import {
   TextField,
 } from "@mui/material";
 import { KeyIcon, PackageIcon, TrashIcon } from "@primer/octicons-react";
-import { ReactElement, useCallback, useMemo, useRef, useState } from "react";
+import { ReactElement, useCallback, useMemo, useState } from "react";
 
 import {
   AES256GCMStringKeyLength,
@@ -35,31 +35,37 @@ interface DataSetKeyInputProps {
 export function DataSetKeyInput(props: DataSetKeyInputProps) {
   const { visible, encryptKey, generate, enterHandler, closeHandler } = props;
 
-  const text = useRef<HTMLDivElement>(null);
   const [warning, setWarning] = useState<ReactElement[]>([]);
 
   const enterkeyCB = useCallback(
+    (syncEncryptKey: string) => {
+      if (syncEncryptKey.length !== AES256GCMStringKeyLength) {
+        setWarning([
+          <span
+            key={`encrypt-key-length`}
+          >{`Encrypt key requires ${AES256GCMStringKeyLength} characters`}</span>,
+        ]);
+        return;
+      }
+      enterHandler(syncEncryptKey !== "" ? syncEncryptKey : undefined);
+      setWarning([]);
+      closeHandler();
+    },
+    [enterHandler, closeHandler]
+  );
+
+  const formSubmitCB = useCallback(
     (e: React.FormEvent<CustomForm>) => {
       e.preventDefault();
       e.stopPropagation();
 
       const form = e.currentTarget.elements;
       if ("syncEncryptKey" in form) {
-        const syncEncryptKey = form.syncEncryptKey.value;
-        if (syncEncryptKey.length !== AES256GCMStringKeyLength) {
-          setWarning([
-            <span
-              key={`encrypt-key-length`}
-            >{`Encrypt key requires ${AES256GCMStringKeyLength} characters`}</span>,
-          ]);
-          return;
-        }
-        enterHandler(syncEncryptKey !== "" ? syncEncryptKey : undefined);
-        setWarning([]);
-        closeHandler();
+        const { value } = form.syncEncryptKey;
+        enterkeyCB(value);
       }
     },
-    [enterHandler, closeHandler]
+    [enterkeyCB]
   );
 
   const clearKeyCB = useCallback(() => {
@@ -118,23 +124,31 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
             </div>
           </Alert>
         )}
-        <div
-          className="my-1"
-          style={{ minWidth: "360px", fontFamily: "monospace" }}
-        >
-          {/*"key: "+(encryptKey??"")*/}
-        </div>
-        <form onSubmit={enterkeyCB}>
+        <form onSubmit={formSubmitCB}>
           <FormControl className="mt-2 w-100">
             <TextField
               id="syncEncryptKey"
-              ref={text}
               error={warning.length > 0}
               size="small"
               label="Sync Key"
               variant="outlined"
               aria-label="Enter Sync Encryption Key"
               defaultValue={encryptKey}
+              multiline
+              rows={4}
+              onKeyUp={(ev) => {
+                // NOTE: multiline mui = textarea (not input)
+                // textareas don't submit with enter key press
+
+                // @ts-expect-error value of textarea
+                const { value } = ev.target as { value: string };
+                // prevent \n inside key
+                const syncEncryptKey = value.replaceAll("\n", "").trim();
+
+                if (ev.code === "Enter" || ev.keyCode === 13) {
+                  enterkeyCB(syncEncryptKey);
+                }
+              }}
               sx={{
                 ".MuiInputBase-input": {
                   fontFamily: "Ubuntu Mono",
@@ -143,7 +157,7 @@ export function DataSetKeyInput(props: DataSetKeyInputProps) {
                 },
               }}
               InputProps={{
-                // style: {fontFamily: "monospace", minWidth: "360px"},
+                style: { /*fontFamily: "monospace",*/ width: "200px" },
                 startAdornment: (
                   <InputAdornment position="start">{decoration}</InputAdornment>
                 ),
