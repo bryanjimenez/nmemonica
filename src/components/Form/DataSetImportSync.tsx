@@ -20,11 +20,13 @@ import {
   XCircleFillIcon,
 } from "@primer/octicons-react";
 import { ReactElement, useCallback, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { DataSetKeyInput } from "./DataSetKeyInput";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { useDataSetImportSync } from "../../hooks/useDataSetImportSync";
-import { AppSettingState } from "../../slices";
+import { AppSettingState, RootState } from "../../slices";
+import { setEncryptKey } from "../../slices/globalSlice";
 
 interface DataSetImportSyncProps {
   visible?: boolean;
@@ -39,7 +41,17 @@ interface DataSetImportSyncProps {
 }
 
 export function DataSetImportSync(props: DataSetImportSyncProps) {
+  const dispatch = useDispatch();
   const { visible, close, updateDataHandler, downloadFileHandler } = props;
+
+  const { encryptKey } = useSelector(({ global }: RootState) => global);
+
+  const setEncryptKeyCB = useCallback(
+    (key?: string) => {
+      dispatch(setEncryptKey(key));
+    },
+    [dispatch]
+  );
 
   const [showKeyInput, setShowKeyInput] = useState(false);
   const showKeyInputCB = useCallback(() => {
@@ -48,8 +60,6 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
   const closeKeyInputCB = useCallback(() => {
     setShowKeyInput(false);
   }, []);
-
-  const [encryptKey, setEncryptKey] = useState<string>();
 
   const [destination, setDestination] = useState<"import" | "save">("import");
   const destinationImportCB = useCallback(() => {
@@ -139,7 +149,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
       <DataSetKeyInput
         visible={showKeyInput}
         encryptKey={encryptKey}
-        enterHandler={setEncryptKey}
+        enterHandler={setEncryptKeyCB}
         closeHandler={closeKeyInputCB}
       />
       <Dialog

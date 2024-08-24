@@ -11,11 +11,14 @@ import {
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import { ReactElement, useCallback, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
 import { DataSetKeyInput } from "./DataSetKeyInput";
 import { useDataSetExportSync } from "../../hooks/useDataSetExportSync";
+import { RootState } from "../../slices";
+import { setEncryptKey } from "../../slices/globalSlice";
 
 interface DataSetExportSyncProps {
   visible?: boolean;
@@ -33,7 +36,17 @@ export interface SyncDataMsg {
 }
 
 export function DataSetExportSync(props: DataSetExportSyncProps) {
+  const dispatch = useDispatch();
   const { visible, close } = props;
+
+  const { encryptKey } = useSelector(({ global }: RootState) => global);
+
+  const setEncryptKeyCB = useCallback(
+    (key: string | undefined) => {
+      dispatch(setEncryptKey(key));
+    },
+    [dispatch]
+  );
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
 
@@ -44,8 +57,6 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
   const closeKeyInputCB = useCallback(() => {
     setShowKeyInput(false);
   }, []);
-
-  const [encryptKey, setEncryptKey] = useState<string>();
 
   const [shareId, setShareId] = useState<string>();
   const [source, setSource] = useState<"FileSystem" | "AppCache">("AppCache");
@@ -136,7 +147,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
         visible={showKeyInput}
         generate={true}
         encryptKey={encryptKey}
-        enterHandler={setEncryptKey}
+        enterHandler={setEncryptKeyCB}
         closeHandler={closeKeyInputCB}
       />
       <Dialog
