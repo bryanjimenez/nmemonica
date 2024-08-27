@@ -165,7 +165,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/serialize v1.1.3 - undefined
+@emotion/serialize v1.1.4 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/serialize
 --------------------------------------------------------------------------------
 
@@ -219,7 +219,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/styled v11.11.0 - undefined
+@emotion/styled v11.11.5 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/styled
 --------------------------------------------------------------------------------
 
@@ -406,7 +406,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/react-dom v2.0.8 - atomiks
+@floating-ui/react-dom v2.1.1 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -578,7 +578,7 @@ Awesome, nor vice versa. **Please do not use brand logos for any purpose except
 to represent the company, product, or service to which they refer.**
 
 --------------------------------------------------------------------------------
-@fortawesome/react-fontawesome v0.1.19 - undefined
+@fortawesome/react-fontawesome v0.2.2 - undefined
 https://github.com/FortAwesome/react-fontawesome.git
 --------------------------------------------------------------------------------
 
@@ -630,7 +630,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/material v5.15.14 - MUI Team
+@mui/material v5.15.20 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -657,7 +657,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/private-theming v5.15.14 - MUI Team
+@mui/private-theming v5.15.20 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -711,7 +711,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/system v5.15.14 - MUI Team
+@mui/system v5.15.20 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -738,7 +738,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/utils v5.15.14 - MUI Team
+@mui/utils v5.15.20 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -765,7 +765,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@nmemonica/x-spreadsheet v0.1.1 - bryan
+@nmemonica/x-spreadsheet v0.1.2 - bryan
 git+https://github.com/bryanjimenez/x-spreadsheet.git
 --------------------------------------------------------------------------------
 
@@ -819,7 +819,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@primer/octicons-react v19.9.0 - GitHub, Inc.
+@primer/octicons-react v19.10.0 - GitHub, Inc.
 primer/octicons
 --------------------------------------------------------------------------------
 
@@ -846,7 +846,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@reduxjs/toolkit v1.9.7 - Mark Erikson <mark@isquaredsoftware.com>
+@reduxjs/toolkit v2.2.5 - Mark Erikson <mark@isquaredsoftware.com>
 git+https://github.com/reduxjs/redux-toolkit.git
 --------------------------------------------------------------------------------
 
@@ -873,7 +873,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@remix-run/router v1.15.3 - Remix Software <hello@remix.run>
+@remix-run/router v1.17.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -1654,7 +1654,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
-immer v9.0.21 - Michel Weststrate
+immer v10.1.1 - Michel Weststrate <info@michel.codes>
 https://github.com/immerjs/immer.git
 --------------------------------------------------------------------------------
 
@@ -2025,7 +2025,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react v18.2.0 - undefined
+react v18.3.1 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -2052,7 +2052,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-dom v18.2.0 - undefined
+react-dom v18.3.1 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -2106,7 +2106,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-redux v8.1.3 - Dan Abramov <dan.abramov@me.com> (https://github.com/gaearon)
+react-redux v9.1.2 - Dan Abramov <dan.abramov@me.com> (https://github.com/gaearon)
 github:reduxjs/react-redux
 --------------------------------------------------------------------------------
 
@@ -2133,7 +2133,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router v6.22.3 - Remix Software <hello@remix.run>
+react-router v6.24.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -2162,7 +2162,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router-dom v6.22.3 - Remix Software <hello@remix.run>
+react-router-dom v6.24.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -2281,7 +2281,7 @@ IN THE SOFTWARE.
 """
 
 --------------------------------------------------------------------------------
-redux v4.2.1 - undefined
+redux v5.0.1 - undefined
 github:reduxjs/redux
 --------------------------------------------------------------------------------
 
@@ -2308,7 +2308,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-redux-thunk v2.4.2 - Dan Abramov <dan.abramov@me.com>
+redux-thunk v3.1.0 - Dan Abramov <dan.abramov@me.com>
 github:reduxjs/redux-thunk
 --------------------------------------------------------------------------------
 
@@ -2335,7 +2335,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-reselect v4.1.8 - undefined
+reselect v5.1.1 - undefined
 https://github.com/reduxjs/reselect.git
 --------------------------------------------------------------------------------
 
@@ -2416,7 +2416,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-scheduler v0.23.0 - undefined
+scheduler v0.23.2 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
