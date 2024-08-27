@@ -135,15 +135,6 @@ export default function rspackConfig(
             }),
           ]
         : []),
-      // For development only
-      // index.html template
-      ...(!isProduction
-        ? [
-            new rspack.HtmlRspackPlugin({
-              template: `index.html`,
-            }),
-          ]
-        : []),
 
       // replacements in *code* (strings need "")
       new rspack.DefinePlugin({
@@ -152,9 +143,13 @@ export default function rspackConfig(
         // "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`, // only in env.development
       }),
 
+      // index.html template
+      // new rspack.HtmlRspackPlugin({ template: `index.html` }),
+      indexTagHelperPlugin,
+
       // adds cache files to sw.js
       ...(isProduction
-        ? [indexTagHelperPlugin, serviceWorkerCacheHelperPlugin]
+        ? [serviceWorkerCacheHelperPlugin]
         : [
             /** is ran from rspack.config.sw.js */
           ]),

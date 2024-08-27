@@ -4,7 +4,6 @@ import ts from "typescript";
 // https://webpack.js.org/contribute/writing-a-plugin/
 
 /**
- * Only for Production
  * Inject asset names into index.html
  * Inject meta tags
  *
@@ -36,10 +35,12 @@ export async function indexTagHelperPlugin(compiler) {
             throw new Error("Missing main.css");
           }
 
-          const envFile = fs.readFileSync(
-            "./environment.production.ts",
-            "utf8"
-          );
+          const isProduction = process.env.NODE_ENV === "production";
+          const envFileName = isProduction
+            ? "./environment.production.ts"
+            : "./environment.development.ts";
+          const envFile = fs.readFileSync(envFileName, "utf8");
+
           const { outputText: envSource } = ts.transpileModule(envFile, {
             compilerOptions: { module: ts.ModuleKind.ESNext },
           });
