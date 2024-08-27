@@ -39,10 +39,7 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch, LocalStorageState, RootState } from "../../slices";
-import {
-  localStorageSettingsInitialized,
-  setLocalDataEdited,
-} from "../../slices/globalSlice";
+import { localStorageSettingsInitialized } from "../../slices/globalSlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
 import { DataSetExportSync } from "../Form/DataSetExportSync";
 import { DataSetImportFile } from "../Form/DataSetImportFile";
@@ -108,8 +105,6 @@ export default function Sheet() {
 
   const { cookies } = useSelector(({ global }: RootState) => global);
 
-  const [uploadError, setUploadError] = useState<boolean>(false);
-
   useEffect(() => {
     const gridEl = document.createElement("div");
 
@@ -169,14 +164,6 @@ export default function Sheet() {
       }
     };
   }, [dispatch, resetSearchCB, workbookImported]);
-
-  const onUploadErrorCB = useCallback((_err: Error) => {
-    setUploadError(true);
-
-    setTimeout(() => {
-      setUploadError(false);
-    }, 2000);
-  }, []);
 
   const saveSheetHandlerCB = useCallback(() => {
     if (!wbRef.current) {
@@ -239,9 +226,6 @@ export default function Sheet() {
       .then(() => {
         updateStateAfterWorkbookEdit(dispatch, name, metaUpdatedUids);
       });
-
-    // local data edited, do not fetch use cached cache.json
-    void dispatch(setLocalDataEdited(true));
   }, [dispatch, phraseList, vocabList, kanjiList]);
 
   const downloadFileHandlerCB = useCallback(
@@ -477,9 +461,8 @@ export default function Sheet() {
 
               trimmed.forEach((sheet) => {
                 updateStateAfterWorkbookEdit(dispatch, sheet.name);
-              }),
-                // local data edited, do not fetch use cached cache.json
-                void dispatch(setLocalDataEdited(true));
+              });
+
               return;
             });
         });
