@@ -3,7 +3,7 @@ import merge from "lodash/fp/merge";
 
 import { KanaType } from "./settingHelper";
 import data from "../../data/json/kana.json";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { localStoreAttrUpdate } from "../helper/settingsStorageHelper";
 import type { ValuesOf } from "../typings/utils";
 
 export interface KanaInitSlice {
@@ -58,39 +58,47 @@ const kanaSlice = createSlice({
           : KanaType.HIRAGANA
       ) as ValuesOf<typeof KanaType>;
 
-      state.setting.charSet = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "charSet",
         newCharSet
-      );
+      ).then((charSet) => {
+        state.setting.charSet = charSet;
+      });
     },
     setKanaBtnN(state, action: PayloadAction<number>) {
       const number = action.payload;
-      state.setting.choiceN = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "choiceN",
         number
-      );
+      ).then((choiceN) => {
+        state.setting.choiceN = choiceN;
+      });
     },
     toggleKanaEasyMode(state) {
-      state.setting.easyMode = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "easyMode"
-      );
+      ).then((easyMode) => {
+        state.setting.easyMode = easyMode;
+      });
     },
     toggleKanaGameWideMode(state) {
-      state.setting.wideMode = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "wideMode"
-      );
+      ).then((wideMode) => {
+        state.setting.wideMode = wideMode;
+      });
     },
   },
   extraReducers: (builder) => {

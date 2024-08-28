@@ -19,10 +19,6 @@ import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { type Vocabulary, sheetDataToJSON } from "../helper/jsonHelper";
 import {
-  localStoreAttrDelete,
-  localStoreAttrUpdate,
-} from "../helper/localStorageHelper";
-import {
   SR_MIN_REV_ITEMS,
   removeAction,
   updateAction,
@@ -32,16 +28,19 @@ import {
   buildVocabularyArray,
 } from "../helper/reducerHelper";
 import {
+  localStoreAttrDelete,
+  localStoreAttrUpdate,
+} from "../helper/settingsStorageHelper";
+import {
+  getTagsFromSheet,
   getWorkbookFromIndexDB,
+  setTagsFromSheet,
   workbookSheetNames,
 } from "../helper/sheetHelper";
-import { findInColumn, findInRow } from "../helper/sheetHelper";
-import { SWRequestHeader } from "../helper/serviceWorkerHelper";
-import { getTagsFromSheet, setTagsFromSheet } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
-import type { AppDispatch, RootState } from ".";
+import type { RootState } from ".";
 
 export interface VocabularyInitSlice {
   value: RawVocabulary[];
@@ -187,40 +186,38 @@ export const toggleVocabularyTag = createAsyncThunk(
     const { query, tag } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB().then(
-      (sheetArr: SheetData[]) => {
-        // Get current tags for term
-        const vIdx = sheetArr.findIndex(
-          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
-        );
-        if (vIdx === -1) {
-          throw new Error(`Expected to find ${sheetName} sheet`);
-        }
-        const s = { ...sheetArr[vIdx] };
-
-        const updatedSheet = setTagsFromSheet(s, query, tag);
-
-        const wb = [
-          ...sheetArr.filter(
-            (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
-          ),
-          updatedSheet,
-        ];
-
-        // Save to indexedDB
-        return openIDB()
-          .then((db) =>
-            putIDBItem(
-              { db, store: IDBStores.WORKBOOK },
-              { key: "0", workbook: wb }
-            )
-          )
-          .then(() => {
-            // TODO: update json?
-            // TODO: update state
-          });
+    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
+      // Get current tags for term
+      const vIdx = sheetArr.findIndex(
+        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+      );
+      if (vIdx === -1) {
+        throw new Error(`Expected to find ${sheetName} sheet`);
       }
-    );
+      const s = { ...sheetArr[vIdx] };
+
+      const updatedSheet = setTagsFromSheet(s, query, tag);
+
+      const wb = [
+        ...sheetArr.filter(
+          (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
+        ),
+        updatedSheet,
+      ];
+
+      // Save to indexedDB
+      return openIDB()
+        .then((db) =>
+          putIDBItem(
+            { db, store: IDBStores.WORKBOOK },
+            { key: "0", workbook: wb }
+          )
+        )
+        .then(() => {
+          // TODO: update json?
+          // TODO: update state
+        });
+    });
   }
 );
 
@@ -230,20 +227,18 @@ export const getVocabularyTags = createAsyncThunk(
     const { query } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB().then(
-      (sheetArr: SheetData[]) => {
-        // Get current tags for term
-        const vIdx = sheetArr.findIndex(
-          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
-        );
-        if (vIdx === -1) {
-          throw new Error(`Expected to find ${sheetName} sheet`);
-        }
-        const s = { ...sheetArr[vIdx] };
-
-        return getTagsFromSheet(s, query);
+    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
+      // Get current tags for term
+      const vIdx = sheetArr.findIndex(
+        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+      );
+      if (vIdx === -1) {
+        throw new Error(`Expected to find ${sheetName} sheet`);
       }
-    );
+      const s = { ...sheetArr[vIdx] };
+
+      return getTagsFromSheet(s, query);
+    });
   }
 );
 
@@ -275,13 +270,15 @@ const vocabularySlice = createSlice({
       const groups = Array.isArray(grpName) ? grpName : [grpName];
       const newValue = grpParse(groups, activeGroup);
 
-      state.setting.activeGroup = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "activeGroup",
         newValue
-      );
+      ).then((activeGroup) => {
+        state.setting.activeGroup = activeGroup;
+      });
     },
 
     furiganaToggled(state, action: { payload: string }) {
@@ -297,13 +294,15 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      );
+      ).then((repetition) => {
+        state.setting.repetition = repetition;
+      });
     },
 
     setPitchAccentData(
@@ -322,28 +321,32 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      );
+      ).then((repetition) => {
+        state.setting.repetition = repetition;
+      });
     },
 
     toggleVocabularyReinforcement(
       state,
       action: { payload: boolean | undefined }
     ) {
-      const newValue = action.payload;
+      const newValue = action.payload ?? false;
 
-      state.setting.reinforce = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "reinforce",
         newValue
-      );
+      ).then((reinforce) => {
+        state.setting.reinforce = reinforce;
+      });
     },
 
     toggleVocabularyOrdering(
@@ -366,49 +369,59 @@ const vocabularySlice = createSlice({
         override
       ) as ValuesOf<typeof TermSortBy>;
 
-      state.setting.ordered = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "ordered",
         newOrdered
-      );
+      ).then((ordered) => {
+        state.setting.ordered = ordered;
+      });
     },
 
     flipVocabularyPracticeSide(state) {
-      state.setting.englishSideUp = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "englishSideUp"
-      );
+      ).then((englishSideUp: boolean) => {
+        state.setting.englishSideUp = englishSideUp;
+      });
     },
 
     toggleVocabularyRomaji(state) {
-      state.setting.romaji = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "romaji"
-      );
+      ).then((romaji) => {
+        state.setting.romaji = romaji;
+      });
     },
 
     toggleVocabularyBareKanji(state) {
-      state.setting.bareKanji = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "bareKanji"
-      );
+      ).then((bareKanji) => {
+        state.setting.bareKanji = bareKanji;
+      });
     },
 
     toggleVocabularyHint(state) {
-      state.setting.hintEnabled = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "hintEnabled"
-      );
+      ).then((hintEnabled) => {
+        state.setting.hintEnabled = hintEnabled;
+      });
     },
 
     toggleVocabularyFilter(
@@ -426,13 +439,15 @@ const vocabularySlice = createSlice({
         override
       ) as ValuesOf<typeof TermFilterBy>;
 
-      state.setting.filter = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "filter",
         newFilter
-      );
+      ).then((filter) => {
+        state.setting.filter = filter;
+      });
 
       if (newFilter !== 0 && reinforce) {
         state.setting.reinforce = false;
@@ -441,33 +456,39 @@ const vocabularySlice = createSlice({
 
     setVerbFormsOrder(state, action: { payload: string[] }) {
       const order = action.payload;
-      state.setting.verbFormsOrder = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "verbFormsOrder",
         order
-      );
+      ).then((verbFormsOrder) => {
+        state.setting.verbFormsOrder = verbFormsOrder;
+      });
     },
 
     toggleAutoVerbView(state) {
-      state.setting.autoVerbView = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "autoVerbView"
-      );
+      ).then((autoVerView) => {
+        state.setting.autoVerbView = autoVerView;
+      });
     },
 
     updateVerbColSplit(state, action: { payload: number }) {
       const split = action.payload;
-      state.setting.verbColSplit = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "verbColSplit",
         split
-      );
+      ).then((verbColSplit) => {
+        state.setting.verbColSplit = verbColSplit;
+      });
     },
 
     addFrequencyWord(state, action: { payload: string }) {
@@ -483,13 +504,15 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      );
+      ).then((repetition) => {
+        state.setting.repetition = repetition;
+      });
     },
 
     removeFrequencyWord(state, action: { payload: string }) {
@@ -508,26 +531,30 @@ const vocabularySlice = createSlice({
         );
 
         state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        );
+        ).then((repetition) => {
+          state.setting.repetition = repetition;
+        });
       }
     },
 
     setMemorizedThreshold(state, action: { payload: number }) {
       const threshold = action.payload;
 
-      state.setting.difficultyThreshold = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "difficultyThreshold",
         threshold
-      );
+      ).then((difficultyThreshold) => {
+        state.setting.difficultyThreshold = difficultyThreshold;
+      });
     },
 
     setWordDifficulty: {
@@ -547,13 +574,15 @@ const vocabularySlice = createSlice({
         );
 
         state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        );
+        ).then((repetition) => {
+          state.setting.repetition = repetition;
+        });
       },
       prepare: (uid: string, value: null | number) => ({
         payload: { uid, value },
@@ -564,13 +593,15 @@ const vocabularySlice = createSlice({
       state,
       action: { payload: Record<string, MetaDataObj | undefined> }
     ) {
-      state.setting.repetition = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         {},
         "/vocabulary/",
         "repetition",
         action.payload
-      );
+      ).then((repetition) => {
+        state.setting.repetition = repetition;
+      });
     },
 
     /**
@@ -584,13 +615,15 @@ const vocabularySlice = createSlice({
         localStoreAttrDelete(new Date(), "/vocabulary/", "spaRepMaxReviewItem");
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
-        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        void localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "spaRepMaxReviewItem",
           Math.max(SR_MIN_REV_ITEMS, max)
-        );
+        ).then((spaRepMaxReviewItem) => {
+          state.setting.spaRepMaxReviewItem = spaRepMaxReviewItem;
+        });
       }
     },
     setWordAccuracy: {
@@ -610,33 +643,39 @@ const vocabularySlice = createSlice({
         );
 
         state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        );
+        ).then((repetition) => {
+          state.setting.repetition = repetition;
+        });
       },
       prepare: (uid: string, value: null | number) => ({
         payload: { uid, value },
       }),
     },
     toggleIncludeNew(state) {
-      state.setting.includeNew = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "includeNew"
-      );
+      ).then((includeNew) => {
+        state.setting.includeNew = includeNew;
+      });
     },
     toggleIncludeReviewed(state) {
-      state.setting.includeReviewed = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "includeReviewed"
-      );
+      ).then((includeReviewed) => {
+        state.setting.includeReviewed = includeReviewed;
+      });
     },
     setGoal(
       state,
@@ -645,13 +684,15 @@ const vocabularySlice = createSlice({
       const goal = action.payload;
 
       if (goal !== undefined) {
-        state.setting.viewGoal = localStoreAttrUpdate(
+        void localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "viewGoal",
           goal
-        );
+        ).then((viewGoal) => {
+          state.setting.viewGoal = viewGoal;
+        });
       } else {
         state.setting.viewGoal = undefined;
         localStoreAttrDelete(new Date(), "/vocabulary/", "viewGoal");
@@ -684,39 +725,45 @@ const vocabularySlice = createSlice({
       const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      );
+      ).then((repetition) => {
+        state.setting.repetition = repetition;
+      });
     });
 
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
       state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      );
+      ).then((repetition) => {
+        state.setting.repetition = repetition;
+      });
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
         state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void localStoreAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        );
+        ).then((repetition) => {
+          state.setting.repetition = repetition;
+        });
       }
     });
 
@@ -724,13 +771,15 @@ const vocabularySlice = createSlice({
       const { record: newValue } = action.payload;
 
       state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      );
+      ).then((repetition) => {
+        state.setting.repetition = repetition;
+      });
     });
   },
 });

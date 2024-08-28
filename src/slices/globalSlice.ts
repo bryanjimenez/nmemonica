@@ -14,14 +14,13 @@ import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
 import { type ConsoleMessage } from "../components/Form/Console";
-import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
+import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
 import {
   getLocalStorageSettings,
   localStoreAttrUpdate,
-} from "../helper/localStorageHelper";
-import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
+} from "../helper/settingsStorageHelper";
 import type { ValuesOf } from "../typings/utils";
 
 export interface MemoryDataObject {
@@ -107,40 +106,45 @@ export const setPersistentStorage = createAsyncThunk(
 export const localStorageSettingsInitialized = createAsyncThunk(
   "setting/localStorageSettingsInitialized",
   (arg, thunkAPI) => {
-    let lsSettings = null;
     let mergedGlobalSettings = getGlobalInitState();
+    return getLocalStorageSettings()
+      .then((lsSettings) => {
+        if (lsSettings !== null) {
+          void thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
+          void thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
+          void thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
+          void thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
+          void thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
+          void thunkAPI.dispatch(
+            vocabularyFromLocalStorage(lsSettings.vocabulary)
+          );
 
-    try {
-      lsSettings = getLocalStorageSettings(localStorageKey);
-    } catch (e) {
-      void thunkAPI.dispatch(logger("localStorage not supported"));
-    }
+          const globalInitStateAndCookies = getGlobalInitState();
+          // use merge to prevent losing defaults not found in localStorage
+          mergedGlobalSettings = merge(globalInitStateAndCookies, {
+            ...lsSettings.global,
+          });
 
-    if (lsSettings !== null) {
-      void thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
-      void thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
-      void thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
-      void thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
-      void thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
-      void thunkAPI.dispatch(vocabularyFromLocalStorage(lsSettings.vocabulary));
+          // Batch update localstate settings
+          // setTimeout(()=>{
+          //   const now = new Date('2023-07-25T001:21:00.000Z');
+          //   void thunkAPI.dispatch(logger("Batch update ...", DebugLevel.ERROR));
+          //   const done = renameVocabularyLastView(lsSettings, now);
+          //   // const done = flipVocabularyDifficulty(lsSettings);
+          //   void thunkAPI.dispatch(logger("modified: "+done, DebugLevel.ERROR));
+          // }, 15000);
+        }
 
-      const globalInitStateAndCookies = getGlobalInitState();
-      // use merge to prevent losing defaults not found in localStorage
-      mergedGlobalSettings = merge(globalInitStateAndCookies, {
-        ...lsSettings.global,
+        return mergedGlobalSettings;
+      })
+      .catch(() => {
+        void thunkAPI.dispatch(logger("localStorage not supported"));
       });
-
-      // Batch update localstate settings
-      // setTimeout(()=>{
-      //   const now = new Date('2023-07-25T001:21:00.000Z');
-      //   void thunkAPI.dispatch(logger("Batch update ...", DebugLevel.ERROR));
-      //   const done = renameVocabularyLastView(lsSettings, now);
-      //   // const done = flipVocabularyDifficulty(lsSettings);
-      //   void thunkAPI.dispatch(logger("modified: "+done, DebugLevel.ERROR));
-      // }, 15000);
-    }
-
-    return mergedGlobalSettings;
+    // try {
+    //   lsSettings = getLocalStorageSettings(localStorageKey);
+    // } catch (e) {
+    //   void thunkAPI.dispatch(logger("localStorage not supported"));
+    // }
   }
 );
 
@@ -160,7 +164,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "darkMode";
       const time = new Date();
-      localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         time,
         { global: state },
         path,
@@ -175,13 +179,15 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "swipeThreshold";
       const time = new Date();
-      state.swipeThreshold = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         time,
         { global: state },
         path,
         attr,
         override
-      );
+      ).then((swipeThreshold) => {
+        state.swipeThreshold = swipeThreshold;
+      });
     },
     setMotionThreshold(state, action: { payload: number }) {
       let override = action.payload;
@@ -189,13 +195,15 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "motionThreshold";
       const time = new Date();
-      state.motionThreshold = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         time,
         { global: state },
         path,
         attr,
         override
-      );
+      ).then((motionThreshold) => {
+        state.motionThreshold = motionThreshold;
+      });
     },
 
     debugToggled: {
@@ -210,13 +218,15 @@ const globalSlice = createSlice({
           override
         );
 
-        state.debug = localStoreAttrUpdate(
+        void localStoreAttrUpdate(
           new Date(),
           { global: state },
           "/global/",
           "debug",
           newDebug
-        );
+        ).then((debug) => {
+          state.debug = debug;
+        });
       },
 
       prepare: (override: ValuesOf<typeof DebugLevel>) => ({
@@ -268,24 +278,27 @@ const globalSlice = createSlice({
       const attr = "lastImport";
       const time = new Date();
 
-      const storage = getLocalStorageSettings(localStorageKey);
-      let lastImport: string[] = [value];
-      if (storage?.global.lastImport) {
-        lastImport = [...storage.global.lastImport, value];
-      }
+      void getLocalStorageSettings().then((storage) => {
+        let lastImport: string[] = [value];
+        if (storage?.global.lastImport) {
+          lastImport = [...storage.global.lastImport, value];
+        }
 
-      // no more than 3 import events
-      if (lastImport.length > 3) {
-        lastImport = lastImport.slice(lastImport.length - 3);
-      }
+        // no more than 3 import events
+        if (lastImport.length > 3) {
+          lastImport = lastImport.slice(lastImport.length - 3);
+        }
 
-      state.lastImport = localStoreAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        lastImport
-      );
+        void localStoreAttrUpdate(
+          time,
+          { global: state },
+          path,
+          attr,
+          lastImport
+        ).then((lastImport) => {
+          state.lastImport = lastImport;
+        });
+      });
     },
   },
 

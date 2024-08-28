@@ -3,7 +3,7 @@ import md5 from "md5";
 import type { SourceVocabulary } from "nmemonica";
 
 import { getVocabulary } from "./vocabularySlice";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { localStoreAttrUpdate } from "../helper/settingsStorageHelper";
 
 export interface Opposite {
   english: string;
@@ -102,7 +102,9 @@ const oppositeSlice = createSlice({
       const partState = {
         opposite: state,
       };
-      state.aRomaji = localStoreAttrUpdate(time, partState, path, attr);
+      void localStoreAttrUpdate(time, partState, path, attr).then((aRomaji) => {
+        state.aRomaji = aRomaji;
+      });
     },
 
     setOppositesQRomaji(state) {
@@ -113,20 +115,22 @@ const oppositeSlice = createSlice({
       const partState = {
         opposite: state,
       };
-      localStoreAttrUpdate(time, partState, path, attr, !state.qRomaji);
+      void localStoreAttrUpdate(time, partState, path, attr, !state.qRomaji);
       state.qRomaji = !state.qRomaji;
     },
 
     toggleOppositeFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload;
+      const override = action.payload ?? false;
 
-      state.fadeInAnswers = localStoreAttrUpdate(
+      void localStoreAttrUpdate(
         new Date(),
         { opposite: state },
         "/opposite/",
         "fadeInAnswers",
         override
-      );
+      ).then((fadeInAnswers) => {
+        state.fadeInAnswers = fadeInAnswers;
+      });
     },
   },
 
