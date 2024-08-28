@@ -28,16 +28,16 @@ import {
   buildVocabularyArray,
 } from "../helper/reducerHelper";
 import {
-  localStoreAttrDelete,
-  localStoreAttrUpdate,
-} from "../helper/settingsStorageHelper";
-import {
   getTagsFromSheet,
   getWorkbookFromIndexDB,
   setTagsFromSheet,
   workbookSheetNames,
 } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
+import {
+  userSettingAttrDelete,
+  userSettingAttrUpdate,
+} from "../helper/userSettingsHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
@@ -270,15 +270,15 @@ const vocabularySlice = createSlice({
       const groups = Array.isArray(grpName) ? grpName : [grpName];
       const newValue = grpParse(groups, activeGroup);
 
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "activeGroup",
         newValue
-      ).then((activeGroup) => {
-        state.setting.activeGroup = activeGroup;
-      });
+      );
+
+      state.setting.activeGroup = newValue;
     },
 
     furiganaToggled(state, action: { payload: string }) {
@@ -293,16 +293,16 @@ const vocabularySlice = createSlice({
         }
       );
 
-      state.setting.repTID = Date.now();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      ).then((repetition) => {
-        state.setting.repetition = repetition;
-      });
+      );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     },
 
     setPitchAccentData(
@@ -320,16 +320,16 @@ const vocabularySlice = createSlice({
         }
       );
 
-      state.setting.repTID = Date.now();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      ).then((repetition) => {
-        state.setting.repetition = repetition;
-      });
+      );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     },
 
     toggleVocabularyReinforcement(
@@ -338,15 +338,15 @@ const vocabularySlice = createSlice({
     ) {
       const newValue = action.payload ?? false;
 
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "reinforce",
         newValue
-      ).then((reinforce) => {
-        state.setting.reinforce = reinforce;
-      });
+      );
+
+      state.setting.reinforce = newValue;
     },
 
     toggleVocabularyOrdering(
@@ -369,59 +369,59 @@ const vocabularySlice = createSlice({
         override
       ) as ValuesOf<typeof TermSortBy>;
 
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "ordered",
         newOrdered
-      ).then((ordered) => {
-        state.setting.ordered = ordered;
-      });
+      );
+
+      state.setting.ordered = newOrdered;
     },
 
     flipVocabularyPracticeSide(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "englishSideUp"
-      ).then((englishSideUp: boolean) => {
-        state.setting.englishSideUp = englishSideUp;
-      });
+      );
+
+      state.setting.englishSideUp = !state.setting.englishSideUp;
     },
 
     toggleVocabularyRomaji(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "romaji"
-      ).then((romaji) => {
-        state.setting.romaji = romaji;
-      });
+      );
+
+      state.setting.romaji = !state.setting.romaji;
     },
 
     toggleVocabularyBareKanji(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "bareKanji"
-      ).then((bareKanji) => {
-        state.setting.bareKanji = bareKanji;
-      });
+      );
+
+      state.setting.bareKanji = !state.setting.bareKanji;
     },
 
     toggleVocabularyHint(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "hintEnabled"
-      ).then((hintEnabled) => {
-        state.setting.hintEnabled = hintEnabled;
-      });
+      );
+
+      state.setting.hintEnabled = !state.setting.hintEnabled;
     },
 
     toggleVocabularyFilter(
@@ -439,15 +439,15 @@ const vocabularySlice = createSlice({
         override
       ) as ValuesOf<typeof TermFilterBy>;
 
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "filter",
         newFilter
-      ).then((filter) => {
-        state.setting.filter = filter;
-      });
+      );
+
+      state.setting.filter = newFilter;
 
       if (newFilter !== 0 && reinforce) {
         state.setting.reinforce = false;
@@ -456,39 +456,39 @@ const vocabularySlice = createSlice({
 
     setVerbFormsOrder(state, action: { payload: string[] }) {
       const order = action.payload;
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "verbFormsOrder",
         order
-      ).then((verbFormsOrder) => {
-        state.setting.verbFormsOrder = verbFormsOrder;
-      });
+      );
+
+      state.setting.verbFormsOrder = order;
     },
 
     toggleAutoVerbView(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "autoVerbView"
-      ).then((autoVerView) => {
-        state.setting.autoVerbView = autoVerView;
-      });
+      );
+
+      state.setting.autoVerbView = !state.setting.autoVerbView;
     },
 
     updateVerbColSplit(state, action: { payload: number }) {
       const split = action.payload;
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "verbColSplit",
         split
-      ).then((verbColSplit) => {
-        state.setting.verbColSplit = verbColSplit;
-      });
+      );
+
+      state.setting.verbColSplit = split;
     },
 
     addFrequencyWord(state, action: { payload: string }) {
@@ -503,16 +503,16 @@ const vocabularySlice = createSlice({
         }
       );
 
-      state.setting.repTID = Date.now();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      ).then((repetition) => {
-        state.setting.repetition = repetition;
-      });
+      );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     },
 
     removeFrequencyWord(state, action: { payload: string }) {
@@ -530,31 +530,31 @@ const vocabularySlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        void localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        ).then((repetition) => {
-          state.setting.repetition = repetition;
-        });
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       }
     },
 
     setMemorizedThreshold(state, action: { payload: number }) {
       const threshold = action.payload;
 
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "difficultyThreshold",
         threshold
-      ).then((difficultyThreshold) => {
-        state.setting.difficultyThreshold = difficultyThreshold;
-      });
+      );
+
+      state.setting.difficultyThreshold = threshold;
     },
 
     setWordDifficulty: {
@@ -573,16 +573,16 @@ const vocabularySlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        void localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        ).then((repetition) => {
-          state.setting.repetition = repetition;
-        });
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       },
       prepare: (uid: string, value: null | number) => ({
         payload: { uid, value },
@@ -593,15 +593,15 @@ const vocabularySlice = createSlice({
       state,
       action: { payload: Record<string, MetaDataObj | undefined> }
     ) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         {},
         "/vocabulary/",
         "repetition",
         action.payload
-      ).then((repetition) => {
-        state.setting.repetition = repetition;
-      });
+      );
+
+      state.setting.repetition = action.payload;
     },
 
     /**
@@ -612,18 +612,23 @@ const vocabularySlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        localStoreAttrDelete(new Date(), "/vocabulary/", "spaRepMaxReviewItem");
+        void userSettingAttrDelete(
+          new Date(),
+          "/vocabulary/",
+          "spaRepMaxReviewItem"
+        );
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
-        void localStoreAttrUpdate(
+        const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+        void userSettingAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "spaRepMaxReviewItem",
-          Math.max(SR_MIN_REV_ITEMS, max)
-        ).then((spaRepMaxReviewItem) => {
-          state.setting.spaRepMaxReviewItem = spaRepMaxReviewItem;
-        });
+          maxItems
+        );
+
+        state.setting.spaRepMaxReviewItem = maxItems;
       }
     },
     setWordAccuracy: {
@@ -642,40 +647,40 @@ const vocabularySlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        void localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        ).then((repetition) => {
-          state.setting.repetition = repetition;
-        });
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       },
       prepare: (uid: string, value: null | number) => ({
         payload: { uid, value },
       }),
     },
     toggleIncludeNew(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "includeNew"
-      ).then((includeNew) => {
-        state.setting.includeNew = includeNew;
-      });
+      );
+
+      state.setting.includeNew = !state.setting.includeNew;
     },
     toggleIncludeReviewed(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "includeReviewed"
-      ).then((includeReviewed) => {
-        state.setting.includeReviewed = includeReviewed;
-      });
+      );
+
+      state.setting.includeReviewed = !state.setting.includeReviewed;
     },
     setGoal(
       state,
@@ -684,18 +689,18 @@ const vocabularySlice = createSlice({
       const goal = action.payload;
 
       if (goal !== undefined) {
-        void localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "viewGoal",
           goal
-        ).then((viewGoal) => {
-          state.setting.viewGoal = viewGoal;
-        });
+        );
+
+        state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        localStoreAttrDelete(new Date(), "/vocabulary/", "viewGoal");
+        void userSettingAttrDelete(new Date(), "/vocabulary/", "viewGoal");
       }
     },
   },
@@ -724,62 +729,62 @@ const vocabularySlice = createSlice({
     builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      ).then((repetition) => {
-        state.setting.repetition = repetition;
-      });
+      );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
 
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      ).then((repetition) => {
-        state.setting.repetition = repetition;
-      });
+      );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        state.setting.repTID = Date.now();
-        void localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
           newValue
-        ).then((repetition) => {
-          state.setting.repetition = repetition;
-        });
+        );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       }
     });
 
     builder.addCase(deleteMetaVocab.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
         newValue
-      ).then((repetition) => {
-        state.setting.repetition = repetition;
-      });
+      );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
   },
 });

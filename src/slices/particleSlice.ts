@@ -11,7 +11,7 @@ import type {
 } from "../components/Games/ParticlesGame";
 import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
-import { localStoreAttrUpdate } from "../helper/settingsStorageHelper";
+import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
 
 import type { RootState } from ".";
 
@@ -185,28 +185,28 @@ const particleSlice = createSlice({
       state.particleGame.phrases = particleInitState.particleGame.phrases;
     },
     setParticlesARomaji(state) {
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { particle: state.setting },
         "/particle/",
         "aRomaji"
-      ).then((aRomaji) => {
-        state.setting.aRomaji = aRomaji;
-      });
+      );
+
+      state.setting.aRomaji = !state.setting.aRomaji;
     },
 
     toggleParticleFadeInAnswers(state, action: { payload?: boolean }) {
       const override = action.payload ?? false;
 
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { particle: state.setting },
         "/particle/",
         "fadeInAnswers",
         override
-      ).then((fadeInAnswers) => {
-        state.setting.fadeInAnswers = fadeInAnswers;
-      });
+      );
+
+      state.setting.fadeInAnswers = override;
     },
   },
 

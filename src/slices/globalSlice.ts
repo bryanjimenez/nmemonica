@@ -18,9 +18,9 @@ import { squashSeqMsgs } from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
 import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
 import {
-  getLocalStorageSettings,
-  localStoreAttrUpdate,
-} from "../helper/settingsStorageHelper";
+  getUserSettings,
+  userSettingAttrUpdate,
+} from "../helper/userSettingsHelper";
 import type { ValuesOf } from "../typings/utils";
 
 export interface MemoryDataObject {
@@ -107,7 +107,7 @@ export const localStorageSettingsInitialized = createAsyncThunk(
   "setting/localStorageSettingsInitialized",
   (arg, thunkAPI) => {
     let mergedGlobalSettings = getGlobalInitState();
-    return getLocalStorageSettings()
+    return getUserSettings()
       .then((lsSettings) => {
         if (lsSettings !== null) {
           void thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
@@ -164,7 +164,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "darkMode";
       const time = new Date();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         time,
         { global: state },
         path,
@@ -179,15 +179,15 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "swipeThreshold";
       const time = new Date();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         time,
         { global: state },
         path,
         attr,
         override
-      ).then((swipeThreshold) => {
-        state.swipeThreshold = swipeThreshold;
-      });
+      );
+
+      state.swipeThreshold = override;
     },
     setMotionThreshold(state, action: { payload: number }) {
       let override = action.payload;
@@ -195,15 +195,16 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "motionThreshold";
       const time = new Date();
-      void localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         time,
         { global: state },
         path,
         attr,
         override
-      ).then((motionThreshold) => {
-        state.motionThreshold = motionThreshold;
-      });
+      );
+      
+      state.motionThreshold = override;
+
     },
 
     debugToggled: {
@@ -218,15 +219,15 @@ const globalSlice = createSlice({
           override
         );
 
-        void localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { global: state },
           "/global/",
           "debug",
           newDebug
-        ).then((debug) => {
-          state.debug = debug;
-        });
+        );
+
+        state.debug = newDebug;
       },
 
       prepare: (override: ValuesOf<typeof DebugLevel>) => ({
@@ -278,7 +279,7 @@ const globalSlice = createSlice({
       const attr = "lastImport";
       const time = new Date();
 
-      void getLocalStorageSettings().then((storage) => {
+      void getUserSettings().then((storage) => {
         let lastImport: string[] = [value];
         if (storage?.global.lastImport) {
           lastImport = [...storage.global.lastImport, value];
@@ -289,15 +290,15 @@ const globalSlice = createSlice({
           lastImport = lastImport.slice(lastImport.length - 3);
         }
 
-        void localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           time,
           { global: state },
           path,
           attr,
           lastImport
-        ).then((lastImport) => {
-          state.lastImport = lastImport;
-        });
+        );
+
+        state.lastImport = lastImport;
       });
     },
   },
