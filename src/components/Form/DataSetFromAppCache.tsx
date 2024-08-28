@@ -5,11 +5,10 @@ import {
   XIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TransferObject } from "./DataSetFromDragDrop";
-import { localStorageKey } from "../../constants/paths";
-import { getLocalStorageSettings } from "../../helper/localStorageHelper";
+import { getUserSettings } from "../../helper/userSettingsHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 
 interface DataSetFromAppCacheProps {
@@ -20,9 +19,12 @@ interface DataSetFromAppCacheProps {
 export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
   const { updateDataHandler, data } = props;
 
-  const hasUsrSettings = useMemo(() => {
-    const ls = getLocalStorageSettings(localStorageKey);
-    return ls instanceof Object;
+  const [hasUsrSettings, setUserSettings] = useState(false);
+
+  useEffect(() => {
+    void getUserSettings().then((ls) => {
+      setUserSettings(ls instanceof Object);
+    });
   }, []);
 
   const addRemoveItemCB = useCallback(

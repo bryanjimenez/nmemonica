@@ -12,12 +12,11 @@ import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
-import { localStorageKey } from "../../constants/paths";
 import { jtox, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
-  getLocalStorageSettings,
-  setLocalStorage,
-} from "../../helper/localStorageHelper";
+  getUserSettings,
+  setUserSetting,
+} from "../../helper/userSettingsHelper";
 import {
   getActiveSheet,
   getWorkbookFromIndexDB,
@@ -207,7 +206,7 @@ export default function Sheet() {
     const newList: { uid: string; english: string }[] = Object.keys(data).map(
       (k) => ({ uid: k, english: data[k].english })
     );
-    const { updatedMeta: metaUpdatedUids, changedUID } = updateEditedUID(
+    const { updatedMeta: metaUpdatedUids } = updateEditedUID(
       meta,
       oldList,
       newList
@@ -266,24 +265,26 @@ export default function Sheet() {
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
 
     // send AppCache UserSettings
-    let appSettings: { fileName: string; name: string; text: string }[] = [];
-    const ls = getLocalStorageSettings(localStorageKey);
-    if (ls) {
-      appSettings = [
-        {
-          fileName: metaDataNames.settings.file,
-          name: metaDataNames.settings.prettyName,
-          text: JSON.stringify(ls),
-        },
-      ];
-    }
+    void getUserSettings().then((ls) => {
+      let appSettings: { fileName: string; name: string; text: string }[] = [];
 
-    void xObjectToCsvText(xObj).then((fileDataSet) =>
-      downloadFileHandlerCB([
-        ...fileDataSet.map((f) => ({ fileName: f.name + ".csv", ...f })),
-        ...appSettings,
-      ])
-    );
+      if (ls) {
+        appSettings = [
+          {
+            fileName: metaDataNames.settings.file,
+            name: metaDataNames.settings.prettyName,
+            text: JSON.stringify(ls),
+          },
+        ];
+      }
+
+      void xObjectToCsvText(xObj).then((fileDataSet) =>
+        downloadFileHandlerCB([
+          ...fileDataSet.map((f) => ({ fileName: f.name + ".csv", ...f })),
+          ...appSettings,
+        ])
+      );
+    });
   }, [downloadFileHandlerCB]);
 
   const doSearchCB = useCallback(() => {
@@ -409,7 +410,7 @@ export default function Sheet() {
       let importCompleteP: Promise<unknown>[] = [];
       if (importSettings && Object.keys(importSettings).length > 0) {
         // write to device's local storage
-        setLocalStorage(localStorageKey, importSettings);
+        void setUserSetting(importSettings);
 
         // initialize app setttings from local storage
         const settingsP = dispatch(localStorageSettingsInitialized());

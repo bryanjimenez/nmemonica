@@ -34,7 +34,7 @@ interface StateEntry {
 
 interface SettingsEntry {
   key: string;
-  value: boolean;
+  value: unknown; // LocalStorateState, but it's under ./src
 }
 
 interface WorkbookEntry {
