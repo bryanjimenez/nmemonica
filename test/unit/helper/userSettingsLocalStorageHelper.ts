@@ -1,19 +1,28 @@
 import { expect } from "chai";
 import sinon, { stub } from "sinon";
 import {
-  getLocalStorageSettings,
-  setLocalStorage,
-  localStoreAttrUpdate,
-} from "../../../src/helper/localStorageHelper";
+  getLocalStorageUserSettings,
+  setLocalStorageUserSettings,
+  localStoreUserSettingAttrUpdate,
+} from "../../../src/helper/userSettingsLocalStorageHelper";
 
 import * as theModule from "../../../src/helper/browserGlobal";
 
+type DescribableFn = {
+  data?: { usersettings: string };
+  (): {
+    localStorage: {
+      setItem: (key: any, val: any) => void;
+      getItem: (key: any) => any;
+    };
+  };
+};
 describe("localStorage", function () {
   let myStub;
   const userSettingsKey = "doesntmatter";
 
-  const lsMock = function mockLS() {
-    if (typeof mockLS.data == "undefined") {
+  const lsMock: DescribableFn = function mockLS() {
+    if (typeof mockLS.data === "undefined") {
       mockLS.data = { userSettings: null };
     }
 
@@ -36,21 +45,21 @@ describe("localStorage", function () {
     lsMock.data = undefined;
   });
 
-  describe("setLocalStorage", function () {
-    it("setLocalStorage", function () {
+  describe("setLocalStorageUserSettings", function () {
+    it("setLocalStorageUserSettings", function () {
       const expected = { a: 1, b: 2 };
-      setLocalStorage(userSettingsKey, expected);
-      // setLocalStorage does not return value
-      const r = getLocalStorageSettings(userSettingsKey);
+      setLocalStorageUserSettings(userSettingsKey, expected);
+      // setLocalStorageUserSettings does not return value
+      const r = getLocalStorageUserSettings(userSettingsKey);
       expect(r).to.deep.eq({ a: 1, b: 2 });
     });
 
-    it("setLocalStorage (unsupported)", function () {
+    it("setLocalStorageUserSettings (unsupported)", function () {
       // Window API: localStorage no supported
       // myStub.restore()
       // myStub = sinon.stub(theModule, "getWindow").callsFake(()=>({}));
 
-      // return setLocalStorage(userSettingsKey, 'someValue').catch((e) => {
+      // return setLocalStorageUserSettings(userSettingsKey, 'someValue').catch((e) => {
       //   expect(e)
       //     .be.an("error")
       //     .with.property("message", "Cannot read properties of undefined (reading 'setItem')");
@@ -59,26 +68,26 @@ describe("localStorage", function () {
     });
   });
 
-  describe("getLocalStorageSettings", function () {
+  describe("getLocalStorageUserSettings", function () {
     it("valid data", function () {
       const expected = { a: 1, b: 2 };
 
       // preload with expected value
       lsMock().localStorage.setItem(userSettingsKey, JSON.stringify(expected));
 
-      const r = getLocalStorageSettings(userSettingsKey);
+      const r = getLocalStorageUserSettings(userSettingsKey);
       expect(r).to.deep.eq(expected);
     });
 
     it("empty localStorage value", function () {
       const expected = null;
 
-      const r = getLocalStorageSettings(userSettingsKey);
+      const r = getLocalStorageUserSettings(userSettingsKey);
       expect(r).to.deep.eq(expected);
     });
   });
 
-  describe("localStoreAttrUpdate", function () {
+  describe("localStoreUserSettingAttrUpdate", function () {
     it("set", function () {
       const initialState = { a: { hint: true } };
       const time = new Date();
@@ -87,7 +96,13 @@ describe("localStorage", function () {
       const value = 8;
       const expected = { a: { choices: 8 }, lastModified: time };
 
-      const r = localStoreAttrUpdate(time, initialState, path, attr, value);
+      const r = localStoreUserSettingAttrUpdate(
+        time,
+        initialState,
+        path,
+        attr,
+        value
+      );
       expect(r).to.deep.equal(expected.a.choices);
     });
 
@@ -98,7 +113,7 @@ describe("localStorage", function () {
       const attr = "hint";
       const expected = { a: { hint: false }, lastModified: time };
 
-      const r = localStoreAttrUpdate(time, initialState, path, attr);
+      const r = localStoreUserSettingAttrUpdate(time, initialState, path, attr);
       expect(r).to.deep.equal(expected.a.hint);
     });
 
@@ -117,10 +132,20 @@ describe("localStorage", function () {
         lastModified: time,
       };
 
-      const r1 = localStoreAttrUpdate(time, initialState, "/a/", "hint");
+      const r1 = localStoreUserSettingAttrUpdate(
+        time,
+        initialState,
+        "/a/",
+        "hint"
+      );
       expect(r1).to.deep.equal(expected1.a.hint);
 
-      const r2 = localStoreAttrUpdate(time, initialState, "/b/", "order");
+      const r2 = localStoreUserSettingAttrUpdate(
+        time,
+        initialState,
+        "/b/",
+        "order"
+      );
       expect(r2).to.deep.equal(expected2.b.order);
     });
   });
