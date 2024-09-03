@@ -150,12 +150,13 @@ export default function Vocabulary() {
     difficultyThreshold,
 
     vocabList,
+    // not ref not modifiable during game
+    sortMethod,
 
     // Refs
     reinforce: reinforceREF,
     filterType: filterTypeREF,
     hintEnabled: hintEnabledREF,
-    sortMethod: sortMethodREF,
     activeGroup,
     includeNew,
     includeReviewed,
@@ -175,8 +176,8 @@ export default function Vocabulary() {
   const [resumeSort, setResumeSort] = useState<number>(-1);
   /** Alternate sort upon ending recall */
   const sort = useMemo(() => {
-    return resumeSort === -1 ? sortMethodREF.current : resumeSort;
-  }, [resumeSort, sortMethodREF]);
+    return resumeSort === -1 ? sortMethod : resumeSort;
+  }, [resumeSort, sortMethod]);
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);
@@ -719,8 +720,8 @@ export default function Vocabulary() {
       alreadyReviewed: boolean
     ) => {
       const verbFormDescr = isVerb
-        ? getVerbFormsArray(vocabulary).find((f) => f.name === verbForm)
-            ?.description ?? ""
+        ? (getVerbFormsArray(vocabulary).find((f) => f.name === verbForm)
+            ?.description ?? "")
         : "";
 
       return (

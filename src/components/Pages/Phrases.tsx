@@ -139,11 +139,12 @@ export default function Phrases() {
     includeNew,
     includeReviewed,
 
+    sortMethod,
+
     // Refs ()
     reinforce: reinforceREF,
     romajiActive,
     filterType: filterTypeREF,
-    sortMethod: sortMethodREF,
     viewGoal,
   } = useConnectPhrase();
 
@@ -152,8 +153,8 @@ export default function Phrases() {
   const [resumeSort, setResumeSort] = useState<number>(-1);
   /** Alternate sort upon ending recall */
   const sort = useMemo(() => {
-    return resumeSort === -1 ? sortMethodREF.current : resumeSort;
-  }, [resumeSort, sortMethodREF]);
+    return resumeSort === -1 ? sortMethod : resumeSort;
+  }, [resumeSort, sortMethod]);
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);

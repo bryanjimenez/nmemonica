@@ -36,7 +36,7 @@ export default function SettingsPhrase() {
   const {
     phraseList: phrases,
     phraseGroups,
-    sortMethod: phraseOrderRef,
+    sortMethod: phraseOrder,
     romajiActive: phraseRomajiRef,
     difficultyThreshold,
     activeGroup: phraseActive,
@@ -49,7 +49,6 @@ export default function SettingsPhrase() {
   } = useConnectPhrase();
 
   const phraseFilter = phraseFilterRef.current;
-  const phraseOrder = phraseOrderRef.current;
   const phraseRomaji = phraseRomajiRef.current;
   const phraseReinforce = phraseReinforceRef.current;
 

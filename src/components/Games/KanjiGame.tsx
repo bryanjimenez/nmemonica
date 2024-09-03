@@ -158,7 +158,7 @@ export default function KanjiGame() {
     difficultyThreshold,
 
     filterType: filterTypeREF,
-    orderType: orderTypeREF,
+    sortMethod,
     reinforce: reinforceREF,
   } = useConnectKanji();
 
@@ -251,7 +251,7 @@ export default function KanjiGame() {
     if (filteredTerms.length === 0) return [];
 
     let newOrder;
-    switch (orderTypeREF.current) {
+    switch (sortMethod) {
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredTerms, repetition);
         break;
@@ -264,7 +264,7 @@ export default function KanjiGame() {
     }
 
     return newOrder;
-  }, [orderTypeREF, filteredTerms]);
+  }, [sortMethod, filteredTerms]);
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
