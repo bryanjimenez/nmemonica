@@ -71,7 +71,7 @@ function prepareGame(
   const choices = createEnglishChoices(kanji, kanjiList, exampleList);
 
   /** Max number of examples to show */
-  const exMax = pronounce ? 2 : 5;
+  const exMax = pronounce !== undefined ? 2 : 5;
   /** Examples sorted and limited */
   const displayEx = orderBy(
     exampleList,
@@ -86,7 +86,7 @@ function prepareGame(
           <div className="position-absolute w-100">
             {correct && (
               <div className="d-flex flex-column fs-4">
-                {pronounce && (
+                {pronounce !== undefined && (
                   <div
                     key={pronounce}
                     className={classNames({
@@ -173,13 +173,18 @@ export default function KanjiGame() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (kanjiList.length === 0) {
       void dispatch(getKanji());
     }
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
+  });
+
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
   }, []);
 
   const filteredTerms: RawKanji[] = useMemo(() => {
@@ -401,7 +406,7 @@ export default function KanjiGame() {
     const i = selectedIndex - 1;
 
     let newSel;
-    if (reinforcedUID) {
+    if (reinforcedUID !== undefined) {
       newSel = selectedIndex;
     } else {
       newSel = (l + i) % l;
@@ -517,7 +522,7 @@ export default function KanjiGame() {
   //   })
   // );
 
-  const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
+  const term_reinforce = repetition[kanji.uid]?.rein === true;
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
 
@@ -643,7 +648,7 @@ export function createEnglishChoices<T extends { english: string }>(
   const noDuplicateChoices = new Set([
     ...aArr, // all posible answers
     // a.english, // the answer
-    ...(ansFirstLetter ? [ansFirstLetter] : []), // the answer's first letter
+    ...(ansFirstLetter !== undefined ? [ansFirstLetter] : []), // the answer's first letter
     ...examples,
   ]);
 
@@ -660,7 +665,7 @@ export function createEnglishChoices<T extends { english: string }>(
     const flArr = cArr.reduce<string[]>((acc, c) => {
       const { firstLetter } = choiceFadePrefix(c);
 
-      if (firstLetter) {
+      if (firstLetter !== undefined) {
         acc = [...acc, firstLetter];
       }
 
@@ -679,7 +684,7 @@ export function createEnglishChoices<T extends { english: string }>(
       const english = oneFromList(choice.english);
       noDuplicateChoices.add(english);
       const { firstLetter } = choiceFadePrefix(english);
-      if (firstLetter) {
+      if (firstLetter !== undefined) {
         noDuplicateChoices.add(firstLetter);
       }
       choices = [...choices, { ...choice, english }];
@@ -742,20 +747,25 @@ export function choiceToHtml<T extends { english: string }>(c: T) {
       c.english
     );
 
-    const element = !firstLetter ? (
-      <>
-        <span className={classNames(fadeCss)}>{c.english}</span>
-      </>
-    ) : (
-      <>
-        {nonAlpha && <span className={classNames(fadeCss)}>{nonAlpha}</span>}
-        {toDo && <span className={classNames(fadeCss)}>{toDo}</span>}
-        {firstLetter && <span className="fw-bold">{firstLetter}</span>}
-        {restLetters && (
-          <span className={classNames(fadeCss)}>{restLetters}</span>
-        )}
-      </>
-    );
+    const element =
+      firstLetter === undefined ? (
+        <>
+          <span className={classNames(fadeCss)}>{c.english}</span>
+        </>
+      ) : (
+        <>
+          {nonAlpha !== undefined && (
+            <span className={classNames(fadeCss)}>{nonAlpha}</span>
+          )}
+          {toDo !== undefined && (
+            <span className={classNames(fadeCss)}>{toDo}</span>
+          )}
+          <span className="fw-bold">{firstLetter}</span>
+          {restLetters !== undefined && (
+            <span className={classNames(fadeCss)}>{restLetters}</span>
+          )}
+        </>
+      );
 
     return element;
   };
