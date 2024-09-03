@@ -14,7 +14,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { LocalStorageState } from "../../slices";
+import { AppSettingState } from "../../slices";
 import "../../css/DragDrop.css";
 
 interface DataSetImportFileProps {
@@ -22,7 +22,7 @@ interface DataSetImportFileProps {
   close: () => void;
   updateDataHandler: (
     data?: FilledSheetData[],
-    settings?: Partial<LocalStorageState>
+    settings?: Partial<AppSettingState>
   ) => Promise<void>;
 }
 
@@ -61,7 +61,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       []
     );
 
-    const [settingObj] = fileData.reduce<Partial<LocalStorageState>[]>(
+    const [settingObj] = fileData.reduce<Partial<AppSettingState>[]>(
       (acc, el) => (el.setting ? [...acc, el.setting] : acc),
       []
     );

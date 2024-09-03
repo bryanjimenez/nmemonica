@@ -185,8 +185,8 @@ export const getPhrase = createAsyncThunk(
   }
 );
 
-export const phraseFromLocalStorage = createAsyncThunk(
-  "phrase/phraseFromLocalStorage",
+export const phraseSettingsFromAppStorage = createAsyncThunk(
+  "phrase/phraseSettingsFromAppStorage",
   (arg: typeof phraseInitState.setting) => {
     const initValues = arg;
 
@@ -674,9 +674,9 @@ const phraseSlice = createSlice({
       state.version = version;
     });
 
-    builder.addCase(phraseFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
-      const mergedSettings = merge(phraseInitState.setting, localStorageValue);
+    builder.addCase(phraseSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(phraseInitState.setting, storedValue);
 
       const phraseReinforceList = Object.keys(mergedSettings.repetition).filter(
         (k) => mergedSettings.repetition[k]?.rein === true

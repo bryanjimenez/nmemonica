@@ -28,7 +28,7 @@ import {
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
-import { localStorageSettingsInitialized, logger } from "./slices/globalSlice";
+import { appSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
@@ -79,7 +79,7 @@ export default function App() {
     };
 
     if (cookies) {
-      void dispatch(localStorageSettingsInitialized());
+      void dispatch(appSettingsInitialized());
 
       swMessageSubscribe(swMessageHandler);
 

@@ -76,8 +76,8 @@ export function deriveOppositesFromVocabulary(
   return { hash, opposites };
 }
 
-export const oppositeFromLocalStorage = createAsyncThunk(
-  "opposite/oppositeFromLocalStorage",
+export const oppositeSettingsFromAppStorage = createAsyncThunk(
+  "opposite/oppositeSettingsFromAppStorage",
   (arg: typeof oppositeInitState) => {
     const initValues = arg;
 
@@ -152,11 +152,11 @@ const oppositeSlice = createSlice({
       }
     );
 
-    builder.addCase(oppositeFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
+    builder.addCase(oppositeSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
       return {
         ...state,
-        ...localStorageValue,
+        ...storedValue,
       };
     });
   },

@@ -109,8 +109,8 @@ export const getKanji = createAsyncThunk("kanji/getKanji", async () => {
   });
 });
 
-export const kanjiFromLocalStorage = createAsyncThunk(
-  "kanji/kanjiFromLocalStorage",
+export const kanjiSettingsFromAppStorage = createAsyncThunk(
+  "kanji/kanjiSettingsFromAppStorage",
   (arg: typeof kanjiInitState.setting) => {
     const initValues = arg;
 
@@ -577,9 +577,9 @@ const kanjiSlice = createSlice({
       state.version = version;
     });
 
-    builder.addCase(kanjiFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
-      const mergedSettings = merge(kanjiInitState.setting, localStorageValue);
+    builder.addCase(kanjiSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(kanjiInitState.setting, storedValue);
 
       return {
         ...state,

@@ -97,8 +97,8 @@ export const getParticleGame = createAsyncThunk(
   }
 );
 
-export const particleFromLocalStorage = createAsyncThunk(
-  "particleGame/particleFromLocalStorage",
+export const particleSettingsFromAppStorage = createAsyncThunk(
+  "particleGame/particleSettingsFromAppStorage",
   (arg: typeof particleInitState.setting) => {
     const initValues = arg;
 
@@ -219,11 +219,11 @@ const particleSlice = createSlice({
       }
     });
 
-    builder.addCase(particleFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
+    builder.addCase(particleSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
       const mergedSettings = merge(
         particleInitState.setting,
-        localStorageValue
+        storedValue
       );
 
       return {

@@ -6,19 +6,19 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import { localStorageKey } from "../constants/paths";
-import { LocalStorageState } from "../slices";
+import { localStorageKey as indexDBKey } from "../constants/paths";
+import { AppSettingState } from "../slices";
 
 export function indexDBUserSettingAttrUpdate(
   time: Date,
-  state: Partial<LocalStorageState>,
+  state: Partial<AppSettingState>,
   path: string,
   attr: string
 ): Promise<boolean>;
 
 export function indexDBUserSettingAttrUpdate<T>(
   time: Date,
-  state: Partial<LocalStorageState>,
+  state: Partial<AppSettingState>,
   path: string,
   attr: string,
   value: T
@@ -33,18 +33,18 @@ export function indexDBUserSettingAttrUpdate<T>(
  */
 export function indexDBUserSettingAttrUpdate<T>(
   time: Date,
-  state: Partial<LocalStorageState>,
+  state: Partial<AppSettingState>,
   path: string,
   attr: string,
   value?: T
 ) {
   return getIndexDBUserSettings().then((res) => {
-    let locStoSettings = (res ?? {}) as LocalStorageState;
+    let initialState = (res ?? {}) as AppSettingState;
 
     const cleanPath = [
       ...path.split("/").filter((p) => p !== ""),
       attr,
-    ] as (keyof LocalStorageState)[];
+    ] as (keyof AppSettingState)[];
 
     let boolValue: boolean | undefined;
     if (value === undefined) {
@@ -52,15 +52,15 @@ export function indexDBUserSettingAttrUpdate<T>(
       boolValue = !usingPathRead<boolean>(state, cleanPath);
     }
 
-    const modifiedLocalStorage = usingPathWrite(
-      { ...locStoSettings },
+    const modifiedState = usingPathWrite(
+      { ...initialState },
       cleanPath,
       boolValue ?? value
     );
-    const modifiedValue = usingPathRead<T>(modifiedLocalStorage, cleanPath);
+    const modifiedValue = usingPathRead<T>(modifiedState, cleanPath);
 
     void setIndexDBUserSettings({
-      ...modifiedLocalStorage,
+      ...modifiedState,
       lastModified: time,
     });
 
@@ -77,20 +77,20 @@ export function indexDBUserSettingAttrDelete(
   attr: string
 ) {
   return getIndexDBUserSettings().then((res) => {
-    const locStoSettings = res ?? {};
+    const initialState = res ?? {};
     const cleanPath = [
       ...path.split("/").filter((p) => p !== ""),
       attr,
-    ] as (keyof LocalStorageState)[];
+    ] as (keyof AppSettingState)[];
 
-    const modifiedLocalStorage = usingPathWrite(
-      { ...locStoSettings },
+    const modifiedState = usingPathWrite(
+      { ...initialState },
       cleanPath,
       undefined
     );
 
     void setIndexDBUserSettings({
-      ...modifiedLocalStorage,
+      ...modifiedState,
       lastModified: time,
     });
   });
@@ -103,7 +103,7 @@ export function setIndexDBUserSettings(value: unknown) {
   return openIDB().then((db) =>
     putIDBItem(
       { db, store: IDBStores.SETTINGS },
-      { key: localStorageKey, value: value as LocalStorageState }
+      { key: indexDBKey, value: value as AppSettingState }
     )
   );
 }
@@ -126,19 +126,19 @@ export function getIndexDBUserSettings() {
 
       return getIDBItem(
         { db, store: IDBStores.SETTINGS },
-        localStorageKey
+        indexDBKey
       ).then((res) => {
-        let localStorageValue: LocalStorageState | null = null;
+        let initialState: AppSettingState | null = null;
 
         if (
           typeof res.value === "object" &&
           !Array.isArray(res.value) &&
           res.value !== null
         ) {
-          localStorageValue = res.value as LocalStorageState;
+          initialState = res.value as AppSettingState;
         }
 
-        return localStorageValue;
+        return initialState;
       });
     })
     .catch((err) => {

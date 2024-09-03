@@ -5,14 +5,14 @@ import {
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
-import { kanaFromLocalStorage } from "./kanaSlice";
-import { kanjiFromLocalStorage } from "./kanjiSlice";
-import { oppositeFromLocalStorage } from "./oppositeSlice";
-import { particleFromLocalStorage } from "./particleSlice";
-import { phraseFromLocalStorage } from "./phraseSlice";
+import { kanaSettingsFromAppStorage } from "./kanaSlice";
+import { kanjiSettingsFromAppStorage } from "./kanjiSlice";
+import { oppositeSettingsFromAppStorage } from "./oppositeSlice";
+import { particleSettingsFromAppStorage } from "./particleSlice";
+import { phraseSettingsFromAppStorage } from "./phraseSlice";
 import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
-import { vocabularyFromLocalStorage } from "./vocabularySlice";
+import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
 import { type ConsoleMessage } from "../components/Form/Console";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
@@ -103,26 +103,26 @@ export const setPersistentStorage = createAsyncThunk(
   }
 );
 
-export const localStorageSettingsInitialized = createAsyncThunk(
-  "setting/localStorageSettingsInitialized",
+export const appSettingsInitialized = createAsyncThunk(
+  "setting/appSettingsInitialized",
   (arg, thunkAPI) => {
     let mergedGlobalSettings = getGlobalInitState();
     return getUserSettings()
-      .then((lsSettings) => {
-        if (lsSettings !== null) {
-          void thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
-          void thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
-          void thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
-          void thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
-          void thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
+      .then((appSettings) => {
+        if (appSettings !== null) {
+          void thunkAPI.dispatch(oppositeSettingsFromAppStorage(appSettings.opposite));
+          void thunkAPI.dispatch(phraseSettingsFromAppStorage(appSettings.phrases));
+          void thunkAPI.dispatch(kanjiSettingsFromAppStorage(appSettings.kanji));
+          void thunkAPI.dispatch(kanaSettingsFromAppStorage(appSettings.kana));
+          void thunkAPI.dispatch(particleSettingsFromAppStorage(appSettings.particle));
           void thunkAPI.dispatch(
-            vocabularyFromLocalStorage(lsSettings.vocabulary)
+            vocabularySettingsFromAppStorage(appSettings.vocabulary)
           );
 
           const globalInitStateAndCookies = getGlobalInitState();
-          // use merge to prevent losing defaults not found in localStorage
+          // use merge to prevent losing defaults not found in App Storage
           mergedGlobalSettings = merge(globalInitStateAndCookies, {
-            ...lsSettings.global,
+            ...appSettings.global,
           });
 
           // Batch update localstate settings
@@ -138,13 +138,8 @@ export const localStorageSettingsInitialized = createAsyncThunk(
         return mergedGlobalSettings;
       })
       .catch(() => {
-        void thunkAPI.dispatch(logger("localStorage not supported"));
+        void thunkAPI.dispatch(logger("Storage not supported"));
       });
-    // try {
-    //   lsSettings = getLocalStorageSettings(localStorageKey);
-    // } catch (e) {
-    //   void thunkAPI.dispatch(logger("localStorage not supported"));
-    // }
   }
 );
 
@@ -305,7 +300,7 @@ const globalSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(
-      localStorageSettingsInitialized.fulfilled,
+      appSettingsInitialized.fulfilled,
       (state, action) => {
         const mergedSettings = action.payload;
         // mergedSettings is a multi-level deep object

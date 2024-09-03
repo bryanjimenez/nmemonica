@@ -37,8 +37,8 @@ import {
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import { AppDispatch, LocalStorageState, RootState } from "../../slices";
-import { localStorageSettingsInitialized } from "../../slices/globalSlice";
+import { AppDispatch, AppSettingState, RootState } from "../../slices";
+import { appSettingsInitialized } from "../../slices/globalSlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
 import { DataSetExportSync } from "../Form/DataSetExportSync";
 import { DataSetImportFile } from "../Form/DataSetImportFile";
@@ -405,7 +405,7 @@ export default function Sheet() {
   const importDataHandlerCB = useCallback(
     (
       importWorkbook?: FilledSheetData[],
-      importSettings?: Partial<LocalStorageState>
+      importSettings?: Partial<AppSettingState>
     ) => {
       let importCompleteP: Promise<unknown>[] = [];
       if (importSettings && Object.keys(importSettings).length > 0) {
@@ -413,7 +413,7 @@ export default function Sheet() {
         void setUserSetting(importSettings);
 
         // initialize app setttings from local storage
-        const settingsP = dispatch(localStorageSettingsInitialized());
+        const settingsP = dispatch(appSettingsInitialized());
 
         // eslint-disable-next-line
         importCompleteP = [...importCompleteP, settingsP];

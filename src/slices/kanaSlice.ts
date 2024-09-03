@@ -36,8 +36,8 @@ const kanaInitState: KanaInitSlice = {
   },
 };
 
-export const kanaFromLocalStorage = createAsyncThunk(
-  "kana/kanaFromLocalStorage",
+export const kanaSettingsFromAppStorage = createAsyncThunk(
+  "kana/kanaSettingsFromAppStorage",
   (arg: typeof kanaInitState.setting) => {
     const initValues = arg;
 
@@ -102,9 +102,9 @@ const kanaSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(kanaFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
-      const mergedSettings = merge(kanaInitState.setting, localStorageValue);
+    builder.addCase(kanaSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(kanaInitState.setting, storedValue);
 
       return {
         ...state,

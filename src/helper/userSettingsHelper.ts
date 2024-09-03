@@ -4,14 +4,14 @@ import {
   indexDBUserSettingAttrUpdate,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
-import { type LocalStorageState } from "../slices";
+import { type AppSettingState } from "../slices";
 
 /**
  * Reads a value from storage
  */
 export function usingPathRead<T>(
-  storage: Partial<LocalStorageState>,
-  path: (keyof LocalStorageState)[]
+  storage: Partial<AppSettingState>,
+  path: (keyof AppSettingState)[]
 ): T {
   if (path.length === 1) {
     const attr = path[0];
@@ -28,10 +28,10 @@ export function usingPathRead<T>(
  * Writes a value to storage
  */
 export function usingPathWrite(
-  storage: Partial<LocalStorageState>,
-  path: (keyof LocalStorageState)[],
+  storage: Partial<AppSettingState>,
+  path: (keyof AppSettingState)[],
   value: unknown
-): Partial<LocalStorageState> {
+): Partial<AppSettingState> {
   if (path.length === 1) {
     const attr = path[0];
     return { ...storage, [attr]: value };
@@ -48,14 +48,14 @@ export function usingPathWrite(
 
 export function userSettingAttrUpdate(
   time: Date,
-  state: Partial<LocalStorageState>,
+  state: Partial<AppSettingState>,
   path: string,
   attr: string
 ): Promise<boolean>;
 
 export function userSettingAttrUpdate<T>(
   time: Date,
-  state: Partial<LocalStorageState>,
+  state: Partial<AppSettingState>,
   path: string,
   attr: string,
   value: T
@@ -70,7 +70,7 @@ export function userSettingAttrUpdate<T>(
  */
 export function userSettingAttrUpdate<T>(
   time: Date,
-  state: Partial<LocalStorageState>,
+  state: Partial<AppSettingState>,
   path: string,
   attr: string,
   value?: T

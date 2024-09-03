@@ -11,7 +11,7 @@ import React, { ReactElement, useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { LocalStorageState, RootState } from "../../slices";
+import { AppSettingState, RootState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
@@ -22,7 +22,7 @@ export interface TransferObject {
   origin: "AppCache" | "FileSystem";
   text: string;
   sheet?: FilledSheetData;
-  setting?: Partial<LocalStorageState>;
+  setting?: Partial<AppSettingState>;
 }
 
 interface DataSetFromDragDropProps {
@@ -152,8 +152,8 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           void fileItem
             .text()
             .then((text) => {
-              const s = JSON.parse(text) as Partial<LocalStorageState>;
-              // TODO: settings.json verify is LocalStorageState
+              const s = JSON.parse(text) as Partial<AppSettingState>;
+              // TODO: settings.json verify is AppSettingState
 
               if (
                 data.find(

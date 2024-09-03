@@ -124,8 +124,8 @@ export const getVocabulary = createAsyncThunk(
   }
 );
 
-export const vocabularyFromLocalStorage = createAsyncThunk(
-  "vocabulary/vocabularyFromLocalStorage",
+export const vocabularySettingsFromAppStorage = createAsyncThunk(
+  "vocabulary/vocabularySettingsFromAppStorage",
   (arg: (typeof vocabularyInitState)["setting"]) => {
     const initValues = arg;
 
@@ -706,11 +706,11 @@ const vocabularySlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(vocabularyFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
+    builder.addCase(vocabularySettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
       const mergedSettings = merge(
         vocabularyInitState.setting,
-        localStorageValue
+        storedValue
       );
 
       return {
