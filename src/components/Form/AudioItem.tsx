@@ -3,7 +3,7 @@ import { UnmuteIcon } from "@primer/octicons-react";
 import { pronounceEndpoint } from "../../../environment.development";
 import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import { addParam } from "../../helper/urlHelper";
-import { fetchAudio } from "../../slices/audioHelper";
+import { getAudio } from "../../slices/audioHelper";
 
 interface AudioItemProps {
   visible: boolean;
@@ -33,12 +33,12 @@ export default function AudioItem(props: AudioItemProps) {
     const time = ~~(Date.now() - tStart);
 
     const override =
-      time < 500 && !props.reCache
+      time < 500 && props.reCache !== true
         ? {}
         : { headers: SWRequestHeader.CACHE_RELOAD };
 
     const url = addParam(pronounceEndpoint, touchPlayParam);
-    void fetchAudio(new Request(url, override));
+    void getAudio(new Request(url, override));
   };
 
   return (
@@ -51,4 +51,3 @@ export default function AudioItem(props: AudioItemProps) {
     </div>
   );
 }
-

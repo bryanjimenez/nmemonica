@@ -56,7 +56,7 @@ import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch, RootState } from "../../slices";
-import { fetchAudio } from "../../slices/audioHelper";
+import { getAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyPhrase,
@@ -1115,7 +1115,7 @@ function buildGameActionsHandler(
           uid,
         });
 
-        actionPromise = fetchAudio(
+        actionPromise = getAudio(
           new Request(audioUrl, override),
           AbortController
         );
@@ -1128,7 +1128,7 @@ function buildGameActionsHandler(
           uid: phrase.uid + ".en",
         });
 
-        actionPromise = fetchAudio(
+        actionPromise = getAudio(
           new Request(audioUrl, override),
           AbortController
         );

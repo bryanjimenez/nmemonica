@@ -62,7 +62,7 @@ import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch, RootState } from "../../slices";
-import { fetchAudio } from "../../slices/audioHelper";
+import { getAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import {
   DebugLevel,
@@ -1327,7 +1327,7 @@ function useBuildGameActionsHandler(
             uid: getCacheUID(sayObj),
           });
 
-          actionPromise = fetchAudio(
+          actionPromise = getAudio(
             new Request(audioUrl, override),
             AbortController
           );
@@ -1342,7 +1342,7 @@ function useBuildGameActionsHandler(
             uid: vocabulary.uid + ".en",
           });
 
-          actionPromise = fetchAudio(
+          actionPromise = getAudio(
             new Request(audioUrl, override),
             AbortController
           );

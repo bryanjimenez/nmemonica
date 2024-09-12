@@ -1,3 +1,7 @@
+import { buildSpeech } from "@nmemonica/voice-ja";
+
+import { getParam } from "../helper/urlHelper";
+
 const userAbortError = new Error("User interrupted audio playback.", {
   cause: { code: "UserAborted" },
 });
@@ -34,14 +38,9 @@ function fadeOut(audio: HTMLAudioElement) {
 let audioCtx: AudioContext | null = null;
 
 /**
- * Fetch audio
- *
- * Play using AudioContext
+ * Play an audio (can be interrupted)
  */
-export async function fetchAudio(
-  audioUrl: Request,
-  AbortController?: AbortController
-) {
+function playAudio(buffer: ArrayBuffer, AbortController?: AbortController) {
   if (audioCtx === null) {
     // To prevent:
     // An AudioContext was prevented from starting automatically.
@@ -52,10 +51,7 @@ export async function fetchAudio(
   const source = audioCtx.createBufferSource();
   const destination = audioCtx.destination;
 
-  const audioRes = await fetch(audioUrl, { credentials: "include" });
-  const audioBuf = await audioRes.arrayBuffer();
-
-  const playP = audioCtx.decodeAudioData(audioBuf).then((decodBuf) => {
+  const playP = audioCtx.decodeAudioData(buffer).then((decodBuf) => {
     source.buffer = decodBuf;
 
     // connect the AudioBufferSourceNode to the
@@ -77,7 +73,7 @@ export async function fetchAudio(
       resolve();
     });
 
-    if (AbortController?.signal.aborted) {
+    if (AbortController?.signal.aborted === true) {
       listener();
     }
 
@@ -85,6 +81,59 @@ export async function fetchAudio(
   });
 
   return Promise.all([interruptP, playP]);
+}
+
+export async function getAudio(
+  audioUrl: Request,
+  AbortController?: AbortController
+) {
+  // TODO: create settings for audio source
+  let internal = true;
+  if (internal) {
+    try {
+      // TODO: cache synthAudio?
+      return synthAudio(audioUrl, AbortController);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  } else {
+    return fetchAudio(audioUrl, AbortController);
+  }
+}
+
+/**
+ * Synthesize audio
+ *
+ * Play using AudioContext
+ */
+async function synthAudio(
+  audioUrl: Request,
+  AbortController?: AbortController
+) {
+  const language = getParam(audioUrl.url, "tl");
+  const query = getParam(audioUrl.url, "q");
+
+  if (language === "ja" && query !== null) {
+    const result = buildSpeech(query);
+    return playAudio(result.buffer, AbortController);
+  }
+
+  return Promise.resolve([undefined, undefined]);
+}
+
+/**
+ * Fetch audio
+ *
+ * Play using AudioContext
+ */
+async function fetchAudio(
+  audioUrl: Request,
+  AbortController?: AbortController
+) {
+  const audioRes = await fetch(audioUrl, { credentials: "include" });
+  const audioBuf = await audioRes.arrayBuffer();
+
+  return playAudio(audioBuf, AbortController);
 }
 
 /**
