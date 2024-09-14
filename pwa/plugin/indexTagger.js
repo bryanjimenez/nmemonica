@@ -57,6 +57,7 @@ export async function indexTagHelperPlugin(compiler) {
             `; script-src 'self' 'wasm-unsafe-eval'` +
             `; media-src ` +
             audioService +
+            `; img-src 'self' data: https:` +
             `; connect-src 'self' ` +
             " " +
             signalingService +
