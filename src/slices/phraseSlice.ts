@@ -306,6 +306,20 @@ export const getPhraseTags = createAsyncThunk(
   }
 );
 
+export const flipPhrasesPracticeSide = createAsyncThunk(
+  "phrase/flipPhrasesPracticeSide",
+  (arg: { query: string }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).phrases;
+
+    return userSettingAttrUpdate(
+      new Date(),
+      { phrases: state.setting },
+      "/phrases/",
+      "englishSideUp"
+    );
+  }
+);
+
 const phraseSlice = createSlice({
   name: "phrase",
   initialState: phraseInitState,
@@ -451,7 +465,11 @@ const phraseSlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        userSettingAttrDelete(new Date(), "/phrases/", "spaRepMaxReviewItem");
+        void userSettingAttrDelete(
+          new Date(),
+          "/phrases/",
+          "spaRepMaxReviewItem"
+        );
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
         const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
@@ -571,17 +589,6 @@ const phraseSlice = createSlice({
       }
     },
 
-    flipPhrasesPracticeSide(state) {
-      void userSettingAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "englishSideUp"
-      );
-
-      state.setting.englishSideUp = !state.setting.englishSideUp;
-    },
-
     togglePhrasesRomaji(state) {
       void userSettingAttrUpdate(
         new Date(),
@@ -661,7 +668,7 @@ const phraseSlice = createSlice({
         state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        userSettingAttrDelete(new Date(), "/phrases/", "viewGoal");
+        void userSettingAttrDelete(new Date(), "/phrases/", "viewGoal");
       }
     },
   },
@@ -750,12 +757,15 @@ const phraseSlice = createSlice({
       state.setting.repTID = Date.now();
       state.setting.repetition = newValue;
     });
+
+    builder.addCase(flipPhrasesPracticeSide.fulfilled, (state) => {
+      state.setting.englishSideUp = !state.setting.englishSideUp;
+    });
   },
 });
 
 export const {
   clearPhrases,
-  flipPhrasesPracticeSide,
   togglePhrasesRomaji,
   togglePhrasesFilter,
   togglePhraseActiveGrp,

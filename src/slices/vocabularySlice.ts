@@ -242,6 +242,20 @@ export const getVocabularyTags = createAsyncThunk(
   }
 );
 
+export const flipVocabularyPracticeSide = createAsyncThunk(
+  "vocabulary/flipVocabularyPracticeSide",
+  (arg: { query: string }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).vocabulary;
+
+    return userSettingAttrUpdate(
+      new Date(),
+      { vocabulary: state.setting },
+      "/vocabulary/",
+      "englishSideUp"
+    );
+  }
+);
+
 const vocabularySlice = createSlice({
   name: "vocabulary",
   initialState: vocabularyInitState,
@@ -378,17 +392,6 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.ordered = newOrdered;
-    },
-
-    flipVocabularyPracticeSide(state) {
-      void userSettingAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "englishSideUp"
-      );
-
-      state.setting.englishSideUp = !state.setting.englishSideUp;
     },
 
     toggleVocabularyRomaji(state) {
@@ -706,18 +709,18 @@ const vocabularySlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(vocabularySettingsFromAppStorage.fulfilled, (state, action) => {
-      const storedValue = action.payload;
-      const mergedSettings = merge(
-        vocabularyInitState.setting,
-        storedValue
-      );
+    builder.addCase(
+      vocabularySettingsFromAppStorage.fulfilled,
+      (state, action) => {
+        const storedValue = action.payload;
+        const mergedSettings = merge(vocabularyInitState.setting, storedValue);
 
-      return {
-        ...state,
-        setting: { ...mergedSettings, repTID: Date.now() },
-      };
-    });
+        return {
+          ...state,
+          setting: { ...mergedSettings, repTID: Date.now() },
+        };
+      }
+    );
 
     builder.addCase(getVocabulary.fulfilled, (state, action) => {
       const { value, version } = action.payload;
@@ -786,6 +789,10 @@ const vocabularySlice = createSlice({
       state.setting.repTID = Date.now();
       state.setting.repetition = newValue;
     });
+
+    builder.addCase(flipVocabularyPracticeSide.fulfilled, (state) => {
+      state.setting.englishSideUp = !state.setting.englishSideUp;
+    });
   },
 });
 
@@ -807,7 +814,6 @@ export const {
   toggleIncludeReviewed,
   updateVerbColSplit,
   toggleVocabularyBareKanji,
-  flipVocabularyPracticeSide,
   addFrequencyWord,
 
   setWordDifficulty,
