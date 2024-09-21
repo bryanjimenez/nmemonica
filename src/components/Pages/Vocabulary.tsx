@@ -15,7 +15,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
@@ -54,6 +54,7 @@ import {
 import { SwipeDirection } from "../../helper/TouchSwipe";
 import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
+import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -61,8 +62,9 @@ import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import type { AppDispatch, RootState } from "../../slices";
-import { getAudio } from "../../slices/audioHelper";
+import type { AppDispatch } from "../../slices";
+import { playAudio } from "../../slices/audioHelper";
+import { getAudio } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   DebugLevel,
@@ -116,7 +118,7 @@ const VocabularyMeta = {
 
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
-  const { cookies } = useSelector(({ global }: RootState) => global);
+  const { cookies } = useConnectSetting();
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
     useState(false);
@@ -515,6 +517,7 @@ export default function Vocabulary() {
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = useBuildGameActionsHandler(
+    dispatch,
     gotoNextSlide,
     gotoPrev,
     reinforcedUID,
@@ -1245,6 +1248,7 @@ function buildRecacheAudioHandler(
 }
 
 function useBuildGameActionsHandler(
+  dispatch: AppDispatch,
   gotoNextSlide: () => void,
   gotoPrev: () => void,
   reinforcedUID: string | null,
@@ -1327,10 +1331,10 @@ function useBuildGameActionsHandler(
             uid: getCacheUID(sayObj),
           });
 
-          actionPromise = getAudio(
-            new Request(audioUrl, override),
-            AbortController
-          );
+          actionPromise = dispatch(getAudio(new Request(audioUrl, override)))
+            .unwrap()
+            .then((blob) => blob.arrayBuffer())
+            .then((audioBuf) => playAudio(audioBuf, AbortController));
         } else {
           //if (direction === "down")
           setMediaSessionPlaybackState("playing");
@@ -1342,15 +1346,16 @@ function useBuildGameActionsHandler(
             uid: vocabulary.uid + ".en",
           });
 
-          actionPromise = getAudio(
-            new Request(audioUrl, override),
-            AbortController
-          );
+          actionPromise = dispatch(getAudio(new Request(audioUrl, override)))
+            .unwrap()
+            .then((blob) => blob.arrayBuffer())
+            .then((audioBuf) => playAudio(audioBuf, AbortController));
         }
       }
       return actionPromise;
     },
     [
+      dispatch,
       gotoNextSlide,
       gotoPrev,
       reinforcedUID,

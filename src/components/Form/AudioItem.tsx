@@ -1,9 +1,12 @@
 import { UnmuteIcon } from "@primer/octicons-react";
+import { useDispatch } from "react-redux";
 
 import { pronounceEndpoint } from "../../../environment.development";
 import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import { addParam } from "../../helper/urlHelper";
-import { getAudio } from "../../slices/audioHelper";
+import { AppDispatch } from "../../slices";
+import { playAudio } from "../../slices/audioHelper";
+import { getAudio } from "../../slices/audioSlice";
 
 interface AudioItemProps {
   visible: boolean;
@@ -13,6 +16,7 @@ interface AudioItemProps {
 }
 
 export default function AudioItem(props: AudioItemProps) {
+  const dispatch = useDispatch<AppDispatch>();
   // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
 
   let tStart: number;
@@ -38,7 +42,10 @@ export default function AudioItem(props: AudioItemProps) {
         : { headers: SWRequestHeader.CACHE_RELOAD };
 
     const url = addParam(pronounceEndpoint, touchPlayParam);
-    void getAudio(new Request(url, override));
+    void dispatch(getAudio(new Request(url, override)))
+      .unwrap()
+      .then((blob) => blob.arrayBuffer())
+      .then(playAudio);
   };
 
   return (

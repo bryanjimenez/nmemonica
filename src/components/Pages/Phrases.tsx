@@ -14,7 +14,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import { pronounceEndpoint } from "../../../environment.development";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
@@ -51,12 +51,14 @@ import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
+import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
-import type { AppDispatch, RootState } from "../../slices";
-import { getAudio } from "../../slices/audioHelper";
+import type { AppDispatch } from "../../slices";
+import { playAudio } from "../../slices/audioHelper";
+import { getAudio } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyPhrase,
@@ -106,7 +108,7 @@ const PhrasesMeta = {
 
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
-  const { cookies } = useSelector(({ global }: RootState) => global);
+  const { cookies } = useConnectSetting();
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
@@ -456,6 +458,7 @@ export default function Phrases() {
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = buildGameActionsHandler(
+    dispatch,
     gotoNextSlide,
     gotoPrev,
     reinforcedUID,
@@ -1068,6 +1071,7 @@ function buildRecacheAudioHandler(
 }
 
 function buildGameActionsHandler(
+  dispatch: AppDispatch,
   gotoNextSlide: () => void,
   gotoPrev: () => void,
   reinforcedUID: string | null,
@@ -1115,10 +1119,10 @@ function buildGameActionsHandler(
           uid,
         });
 
-        actionPromise = getAudio(
-          new Request(audioUrl, override),
-          AbortController
-        );
+        actionPromise = dispatch(getAudio(new Request(audioUrl, override)))
+          .unwrap()
+          .then((blob) => blob.arrayBuffer())
+          .then((audioBuf) => playAudio(audioBuf, AbortController));
       } else {
         //if (direction === "down")
         const inEnglish = phrase.english;
@@ -1128,10 +1132,10 @@ function buildGameActionsHandler(
           uid: phrase.uid + ".en",
         });
 
-        actionPromise = getAudio(
-          new Request(audioUrl, override),
-          AbortController
-        );
+        actionPromise = dispatch(getAudio(new Request(audioUrl, override)))
+          .unwrap()
+          .then((blob) => blob.arrayBuffer())
+          .then((audioBuf) => playAudio(audioBuf, AbortController));
       }
     }
     return actionPromise;

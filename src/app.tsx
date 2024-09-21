@@ -28,6 +28,7 @@ import {
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
+import { initAudioWorker } from "./slices/audioSlice";
 import { appSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
@@ -72,6 +73,9 @@ export default function App() {
         );
       }
     };
+
+    // init wasm for @nmemonica/voice-ja
+    void dispatch(initAudioWorker());
 
     if (cookies) {
       void dispatch(appSettingsInitialized()).then(

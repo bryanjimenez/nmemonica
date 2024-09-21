@@ -40,6 +40,10 @@ export default function rspackConfig(
         : {
             /** see rspack.config.sw.js */
           }),
+      "voice-worker": {
+        filename: "voice-worker.js",
+        import: "./src/worker/voiceWorker.ts",
+      },
     },
     output: {
       filename: "[name].[chunkhash:8].js",
