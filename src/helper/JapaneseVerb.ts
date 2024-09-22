@@ -2,7 +2,7 @@ import type { RawJapanese } from "nmemonica";
 
 import { JapaneseText } from "./JapaneseText";
 import { getConsonantVowel } from "./kanaHelper";
-import data from "../../data/json/kana.json";
+import data from "../../res/json/kana.json";
 
 export type VerbFormArray = {
   /** Verb form (tense label) */ name: string;

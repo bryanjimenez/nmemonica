@@ -1,6 +1,6 @@
 import { shallowEqual, useSelector } from "react-redux";
 
-import data from "../../data/json/kana.json";
+import data from "../../res/json/kana.json";
 import type { RootState } from "../slices";
 import { KanaType } from "../slices/settingHelper";
 import type { ValuesOf } from "../typings/utils";
