@@ -71,11 +71,6 @@ export default function App() {
           logger(data.msg, data.lvl, SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG)
         );
       }
-
-      // TODO: SERVICE_WORKER_NEW_TERMS_ADDED removed on hook refactor
-      // else if (event.data.type === SERVICE_WORKER_NEW_TERMS_ADDED) {
-      //   dispatch(serviceWorkerNewTermsAdded(event.data.msg));
-      // }
     };
 
     if (cookies) {

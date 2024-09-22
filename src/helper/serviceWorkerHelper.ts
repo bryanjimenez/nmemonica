@@ -24,7 +24,6 @@ export interface SWVersionInfo {
 export const SWMsgIncoming = Object.freeze({
   POST_INSTALL_ACTIVATE_DONE: "POST_INSTALL_ACTIVATE_DONE",
   SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
-  SERVICE_WORKER_NEW_TERMS_ADDED: "service_worker_new_terms",
 });
 
 export const SWMsgOutgoing = Object.freeze({
