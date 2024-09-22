@@ -25,4 +25,4 @@ environment.*
 *.xcf
 
 # lighthouse reports
-lighthouse/*.html
+test/lighthouse/*.html
