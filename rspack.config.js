@@ -5,7 +5,6 @@ import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import path, { sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
-import { ca } from "@nmemonica/utils/signed-ca";
 import { appendLicense } from "./dep-license-writer.js";
 import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
@@ -22,10 +21,6 @@ export default function rspackConfig(
   /** @type string[] */ argv
 ) {
   const isProduction = process.env.NODE_ENV === "production";
-
-  if (!isProduction && !ca.exists()) {
-    ca.createServer();
-  }
 
   const appVersion = JSON.parse(
     fs.readFileSync("package.json", "utf-8")
