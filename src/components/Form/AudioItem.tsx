@@ -17,7 +17,6 @@ interface AudioItemProps {
 
 export default function AudioItem(props: AudioItemProps) {
   const dispatch = useDispatch<AppDispatch>();
-  // https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=
 
   let tStart: number;
 

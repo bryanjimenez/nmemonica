@@ -48,10 +48,7 @@ export default function PrivacyPolicy() {
             <p className="m-0 ps-2">
               We do not collect personal information. The user generated
               content&apos;s purpose is self consumption in the form of study
-              material. Our app uses Google&apos;s translate service to generate
-              audio pronunciations. Aside from the text to be translated and the
-              target language no other user information is provided to the
-              google translate service.
+              material.
             </p>
 
             <h2 className={headerCss}>Sharing user generated content</h2>
