@@ -192,10 +192,15 @@ The Sync Service is a [WebRTC](webrtc.org) connection-information relay (Data is
 Thanks to:
  - The [Japanese Verb Conjugator](http://www.japaneseverbconjugator.com/) website for conjugation examples and reference.
  - The following projects for powering Nmemonica's audio/pronunciation:  
-   - [hts_engine](https://hts-engine.sourceforge.net/)
-   - [openjtalk](https://open-jtalk.sourceforge.net/)
-   - [jbonsai](https://github.com/jpreprocess/jbonsai)
-   - [jpreprocess](https://github.com/jpreprocess/jpreprocess)
+    + Software
+      - [hts_engine](https://hts-engine.sourceforge.net/)
+      - [openjtalk](https://open-jtalk.sourceforge.net/)
+      - [jbonsai](https://github.com/jpreprocess/jbonsai)
+      - [jpreprocess](https://github.com/jpreprocess/jpreprocess)
+    + Voices
+      - [hts_voice_nitech_jp_atr503_m001-1.05](http://open-jtalk.sourceforge.net)
+      - [tohoku-f01](https://github.com/icn-lab/htsvoice-tohoku-f01)
+
  - The [x-data-spreadsheet](https://github.com/myliang/x-spreadsheet) project created by [@myliang](https://github.com/myliang) and forked by Nmemonica for it's web spreadsheet component.
  - Several online sources for providing reference to spaced repetition algorithms, including:  
     - [A Better Spaced Repetition Learning Algorithm: SM2+](https://www.blueraja.com/blog/477/a-better-spaced-repetition-learning-algorithm-sm2) by blueraja
