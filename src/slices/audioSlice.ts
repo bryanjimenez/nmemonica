@@ -11,6 +11,7 @@ import {
 } from "../../pwa/helper/idbHelper";
 import { SWRequestHeader, hasHeader } from "../helper/serviceWorkerHelper";
 import { getParam } from "../helper/urlHelper";
+import { type VoiceWorkerMsgParam } from "../worker/voiceWorker";
 
 import { AppDispatch } from ".";
 
@@ -97,26 +98,29 @@ function getFromVoiceSynth(audioUrl: Request) {
 
     worker.addEventListener("message", workerHandler);
 
-    let tries = 0;
-    while (tries < 10 && initialized === false) {
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => {
-        setTimeout(resolve, 1000);
-      });
+    const message: VoiceWorkerMsgParam = {
+      audioUrl: { url: audioUrl.url },
+    };
 
-      worker.postMessage({
-        audioUrl: { url: audioUrl.url },
-      });
-
-      tries++;
-    }
-
-    if (initialized === false) {
-      reject(new Error("Could not load @nmemonica/voice-ja"));
+    if (initialized === true) {
+      worker.postMessage(message);
     } else {
-      worker.postMessage({
-        audioUrl: { url: audioUrl.url },
-      });
+      let tries = 0;
+      while (tries < 10 && initialized === false) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(resolve, 1000);
+        });
+        if (initialized === false) {
+          worker.postMessage(message);
+        }
+
+        tries++;
+      }
+
+      if (initialized === false) {
+        reject(new Error("Could not load @nmemonica/voice-ja"));
+      }
     }
   });
 }
