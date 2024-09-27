@@ -1,6 +1,10 @@
 import { buildSpeech } from "@nmemonica/voice-ja";
 
-import voice_model_default from "../../res/models/hts_voice_nitech_jp_atr503_m001-1.05/nitech_jp_atr503_m001.htsvoice";
+import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.htsvoice";
+import voice_model_angry from "../../res/models/tohoku-f01/tohoku-f01-angry.htsvoice";
+import voice_model_happy from "../../res/models/tohoku-f01/tohoku-f01-happy.htsvoice";
+import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice";
+import voice_model_deep from "../../res/models/hts_voice_nitech_jp_atr503_m001-1.05/nitech_jp_atr503_m001.htsvoice";
 import { getParam } from "../helper/urlHelper";
 import { type VOICE_KIND } from "../slices/audioSlice";
 import { type ValuesOf } from "../typings/utils";
@@ -23,9 +27,24 @@ function messageHandler(event: MessageEvent) {
   if (typeof synthAudio === "function") {
     let voice_model: URL;
     switch (voice) {
+      case "happy":
+        voice_model = voice_model_happy;
+        break;
 
+      case "angry":
+        voice_model = voice_model_angry;
+        break;
+
+      case "sad":
+        voice_model = voice_model_sad;
+        break;
+
+      case "deep":
+        voice_model = voice_model_deep;
+      break;
+      
       default:
-        voice_model = voice_model_default;
+        voice_model = voice_model_neutral;
         break;
     }
 

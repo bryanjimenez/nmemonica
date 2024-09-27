@@ -19,6 +19,13 @@ import { AppDispatch } from ".";
 let worker: Worker | null = null;
 let initialized = false;
 
+export const VOICE_KIND = Object.freeze({
+  HAPPY: "happy",
+  ANGRY: "angry",
+  SAD: "sad",
+  DEEP: "deep",
+});
+
 export const initAudioWorker = createAsyncThunk(
   "voice/initAudioWorker",
   (_arg, _thunkAPI) => {
@@ -100,6 +107,7 @@ function getFromVoiceSynth(audioUrl: Request) {
 
     const message: VoiceWorkerMsgParam = {
       audioUrl: { url: audioUrl.url },
+      // voice: VOICE_KIND.HAPPY,
     };
 
     if (initialized === true) {

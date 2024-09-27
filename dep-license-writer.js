@@ -1,4 +1,5 @@
 import lineByLine from "n-readlines";
+import { readFileSync } from "node:fs";
 /**
  * LicenseCheckerWebpackPlugin.outputWriter implementation
  */
@@ -37,7 +38,40 @@ export function appendLicense(lic /*:{dependencies:DependencyBlock[]}*/) {
     licenseText: fromComment("./src/helper/TouchSwipe.ts"),
   };
 
-  const appended = { dependencies: [...lic.dependencies, reactSlickBlock] };
+  const hts_voice_nitech_jp_atr503_m001_1_05_lic = readFileSync(
+    "./res/models/hts_voice_nitech_jp_atr503_m001-1.05/COPYING",
+    { encoding: "utf-8" }
+  );
+  const hts_voice_nitech_jp_atr503_m001_1_05 = {
+    name: "hts_voice_nitech_jp_atr503_m001-1.05",
+    version: "1.05",
+    author: "HTS Working Group",
+    repository: "http://open-jtalk.sourceforge.net/",
+    licenseName: "CC-BY-3.0",
+    licenseText: hts_voice_nitech_jp_atr503_m001_1_05_lic,
+  };
+
+  const tohoku_f01_lic = readFileSync("./res/models/tohoku-f01/COPYRIGHT.txt", {
+    encoding: "utf-8",
+  });
+  const htsvoice_tohoku_f01 = {
+    name: "htsvoice-tohoku-f01",
+    version: "8e33060",
+    author:
+      "2015 Intelligent Communication Network (Ito-Nose) Laboratory, Tohoku University",
+    repository: "https://github.com/icn-lab/htsvoice-tohoku-f01",
+    licenseName: "CC-BY-4.0",
+    licenseText: tohoku_f01_lic,
+  };
+
+  const appended = {
+    dependencies: [
+      ...lic.dependencies,
+      reactSlickBlock,
+      hts_voice_nitech_jp_atr503_m001_1_05,
+      htsvoice_tohoku_f01,
+    ],
+  };
 
   return licenseJsonToString(appended);
 }
