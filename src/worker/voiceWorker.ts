@@ -1,19 +1,18 @@
-import { buildSpeech } from "@nmemonica/voice-ja";
+import { buildSpeech as jBuildSpeech } from "@nmemonica/voice-ja";
 
-import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.htsvoice";
+import voice_model_deep from "../../res/models/hts_voice_nitech_jp_atr503_m001-1.05/nitech_jp_atr503_m001.htsvoice";
 import voice_model_angry from "../../res/models/tohoku-f01/tohoku-f01-angry.htsvoice";
 import voice_model_happy from "../../res/models/tohoku-f01/tohoku-f01-happy.htsvoice";
+import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.htsvoice";
 import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice";
-import voice_model_deep from "../../res/models/hts_voice_nitech_jp_atr503_m001-1.05/nitech_jp_atr503_m001.htsvoice";
 import { getParam } from "../helper/urlHelper";
-import { type VOICE_KIND } from "../slices/audioSlice";
-import { type ValuesOf } from "../typings/utils";
+import { type JapaneseVoiceType } from "../slices/audioSlice";
 
 const swSelf = globalThis.self as unknown as Worker;
 
 export interface VoiceWorkerMsgParam {
   audioUrl: { url: string };
-  voice?: ValuesOf<typeof VOICE_KIND>;
+  japaneseVoice?: JapaneseVoiceType;
   AbortController?: AbortController;
 }
 
@@ -22,11 +21,17 @@ swSelf.addEventListener("message", messageHandler);
 function messageHandler(event: MessageEvent) {
   const data = event.data as VoiceWorkerMsgParam;
 
-  const { audioUrl, AbortController, voice } = data;
+  const { audioUrl, AbortController, japaneseVoice } = data;
+  const language = getParam(audioUrl.url, "tl");
+  const query = getParam(audioUrl.url, "q");
 
-  if (typeof synthAudio === "function") {
+  if (
+    language === "ja" &&
+    query !== null &&
+    typeof jBuildSpeech === "function"
+  ) {
     let voice_model: URL;
-    switch (voice) {
+    switch (japaneseVoice) {
       case "happy":
         voice_model = voice_model_happy;
         break;
@@ -41,8 +46,8 @@ function messageHandler(event: MessageEvent) {
 
       case "deep":
         voice_model = voice_model_deep;
-      break;
-      
+        break;
+
       default:
         voice_model = voice_model_neutral;
         break;
@@ -51,27 +56,8 @@ function messageHandler(event: MessageEvent) {
     void fetch(voice_model)
       .then((res) => res.arrayBuffer())
       .then((model_buf) => {
-        const result = synthAudio(
-          audioUrl,
-          new Uint8Array(model_buf),
-          AbortController
-        );
+        const result = jBuildSpeech(query, new Uint8Array(model_buf));
         self.postMessage(result);
       });
   }
-}
-
-export function synthAudio(
-  audioUrl: VoiceWorkerMsgParam["audioUrl"],
-  voice_model: Uint8Array,
-  AbortController?: AbortController
-) {
-  const language = getParam(audioUrl.url, "tl");
-  const query = getParam(audioUrl.url, "q");
-
-  if (language === "ja" && query !== null) {
-    // TODO: voiceWorker use AbortController?
-    return buildSpeech(query, voice_model);
-  }
-  return undefined;
 }

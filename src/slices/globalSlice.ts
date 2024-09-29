@@ -5,6 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
+import { type JapaneseVoiceType } from "./audioSlice";
 import { kanaSettingsFromAppStorage } from "./kanaSlice";
 import { kanjiSettingsFromAppStorage } from "./kanjiSlice";
 import { oppositeSettingsFromAppStorage } from "./oppositeSlice";
@@ -41,6 +42,8 @@ export interface GlobalInitSlice {
   motionThreshold: number;
   lastImport: string[];
   encryptKey?: string;
+
+  japaneseVoice: JapaneseVoiceType;
 }
 
 export const globalInitState: GlobalInitSlice = {
@@ -53,6 +56,8 @@ export const globalInitState: GlobalInitSlice = {
   swipeThreshold: 0,
   motionThreshold: 0,
   lastImport: [],
+
+  japaneseVoice: "default",
 };
 
 /**
@@ -199,6 +204,16 @@ const globalSlice = createSlice({
 
       state.motionThreshold = override;
     },
+    setJapaneseVoice(state, action: { payload: JapaneseVoiceType }) {
+      let override = action.payload;
+
+      const path = "/global/";
+      const attr = "japaneseVoice";
+      const time = new Date();
+      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
+
+      state.japaneseVoice = override;
+    },
 
     debugToggled: {
       reducer: (
@@ -329,6 +344,7 @@ export const {
   setMotionThreshold,
   setSwipeThreshold,
   setLastImport,
+  setJapaneseVoice,
 
   debugToggled,
   logger,

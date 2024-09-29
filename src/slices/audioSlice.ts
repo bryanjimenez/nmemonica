@@ -11,14 +11,16 @@ import {
 } from "../../pwa/helper/idbHelper";
 import { SWRequestHeader, hasHeader } from "../helper/serviceWorkerHelper";
 import { getParam } from "../helper/urlHelper";
+import { type ValuesOf } from "../typings/utils";
 import { type VoiceWorkerMsgParam } from "../worker/voiceWorker";
 
-import { AppDispatch } from ".";
+import { AppDispatch, RootState } from ".";
 
 // global worker variable
 let worker: Worker | null = null;
 let initialized = false;
 
+export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND>;
 export const VOICE_KIND = Object.freeze({
   HAPPY: "happy",
   ANGRY: "angry",
@@ -47,6 +49,7 @@ export const dropAudioWorker = createAsyncThunk(
 export const getAudio = createAsyncThunk(
   "voice/getAudio",
   async (arg: Request, thunkAPI) => {
+    const { japaneseVoice } = (thunkAPI.getState() as RootState).global;
     const dispatch = thunkAPI.dispatch as AppDispatch;
     const req = arg;
 
@@ -58,12 +61,17 @@ export const getAudio = createAsyncThunk(
     }
 
     return override_cache
-      ? getFromVoiceSynth(req)
-      : getFromIndexedDB(uid, dispatch).catch(() => getFromVoiceSynth(req));
+      ? getFromVoiceSynth(req, japaneseVoice)
+      : getFromIndexedDB(uid, dispatch).catch(() =>
+          getFromVoiceSynth(req, japaneseVoice)
+        );
   }
 );
 
-function getFromVoiceSynth(audioUrl: Request) {
+function getFromVoiceSynth(
+  audioUrl: Request,
+  japaneseVoice: JapaneseVoiceType
+) {
   return new Promise<Blob>(async (resolve, reject) => {
     if (worker === null) {
       worker = new Worker("./voice-worker.js");
@@ -107,7 +115,7 @@ function getFromVoiceSynth(audioUrl: Request) {
 
     const message: VoiceWorkerMsgParam = {
       audioUrl: { url: audioUrl.url },
-      // voice: VOICE_KIND.HAPPY,
+      japaneseVoice,
     };
 
     if (initialized === true) {
