@@ -28,6 +28,9 @@ export const VOICE_KIND = Object.freeze({
   DEEP: "deep",
 });
 
+/**
+ * Initialize wasm for `@nmemonica/voice-ja`
+ */
 export const initAudioWorker = createAsyncThunk(
   "voice/initAudioWorker",
   (_arg, _thunkAPI) => {
@@ -37,11 +40,15 @@ export const initAudioWorker = createAsyncThunk(
   }
 );
 
+/**
+ * Terminate wasm for `@nmemonica/voice-ja`
+ */
 export const dropAudioWorker = createAsyncThunk(
   "voice/dropAudioWorker",
   (_arg, _thunkAPI) => {
     if (worker !== null) {
       worker.terminate();
+      worker = null;
     }
   }
 );
