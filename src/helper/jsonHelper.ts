@@ -451,6 +451,7 @@ export function sheets_sync_kanji(sheetName: string, sheetData: string[][]) {
       let kanji: Kanji = {
         kanji: row[h.kanji],
         english: row[h.english],
+        similarKanji: [],
       };
 
       if (!kanji.kanji) {

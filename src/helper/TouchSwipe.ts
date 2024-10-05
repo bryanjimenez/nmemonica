@@ -115,12 +115,7 @@ export function swipeStart(
 }
 
 export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
-  const verticalSwiping = spec.verticalSwiping,
-    touchThreshold = spec.touchThreshold,
-    swiped = spec.swiped,
-    swiping = spec.swiping,
-    touchObject = spec.touchObject,
-    swipeEvent = spec.swipeEvent;
+  const {verticalSwiping,touchThreshold,swiped, swiping, touchObject, swipeEvent} = spec;
 
   touchObject.curX = "touches" in e ? e.touches[0].pageX : e.clientX;
   touchObject.curY = "touches" in e ? e.touches[0].pageY : e.clientY;
@@ -129,7 +124,6 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
 
   if (!verticalSwiping && !swiping && verticalSwipeLength > 10) {
     return {
-      // TODO: added
       touchObject,
       touchThreshold,
       scrolling: true,
@@ -165,10 +159,7 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
 }
 
 export function swipeEnd(e: TouchEvent, spec: Spec) {
-  let touchObject = spec.touchObject,
-    touchThreshold = spec.touchThreshold,
-    verticalSwiping = spec.verticalSwiping,
-    onSwipe = spec.onSwipe;
+  let {touchObject, touchThreshold, verticalSwiping, onSwipe } = spec;
 
   const minSwipe = touchThreshold;
 

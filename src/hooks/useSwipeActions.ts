@@ -29,6 +29,7 @@ export function useSwipeActions(
     ({ global }: RootState) => global.swipeThreshold
   );
 
+  // @ts-expect-error swipe Spec ref init
   const swiping = useRef<Spec>({});
 
   /** HTMLElement ref */
