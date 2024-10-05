@@ -21,6 +21,10 @@ environment.*
 # notes
 *.txt
 
+# zips
+*.tar.gz
+*.zip
+
 # gimp files
 *.xcf
 
