@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import type { GameActionHandler } from "./useSwipeActions";
+import { SwipeDirection } from "../helper/TouchSwipe";
 
 /**
  * Attaches keyboard actions to component
@@ -9,7 +10,7 @@ export function useKeyboardActions(
   gameActionHandler: GameActionHandler,
   flipPhrasesPracticeSide: () => void,
   timedPlayAnswerHandlerWrapper?: (
-    direction: string,
+    direction: SwipeDirection,
     handler: GameActionHandler
   ) => GameActionHandler
 ) {
@@ -35,7 +36,7 @@ function buildArrowKeyPress(
   gameActionHandler: GameActionHandler,
   flipVocabularyPracticeSide: () => void,
   timedPlayAnswerHandlerWrapper?: (
-    direction: string,
+    direction: SwipeDirection,
     handler: GameActionHandler
   ) => GameActionHandler
 ) {
@@ -56,16 +57,17 @@ function buildArrowKeyPress(
         if (action !== " ") {
           // interrupt loop
 
-          if (typeof timedPlayAnswerHandlerWrapper === "function") {
-            const direction =
-              {
-                ArrowUp: "up",
-                ArrowDown: "down",
-                ArrowLeft: "left",
-                ArrowRight: "right",
-              }[action] || "";
-
-            const handlerWrapper = (correctedDirection: string) => {
+          const direction = {
+            ArrowUp: "up",
+            ArrowDown: "down",
+            ArrowLeft: "left",
+            ArrowRight: "right",
+          }[action] as "up" | "down" | "left" | "right" | undefined;
+          if (
+            typeof timedPlayAnswerHandlerWrapper === "function" &&
+            direction !== undefined
+          ) {
+            const handlerWrapper = (correctedDirection: SwipeDirection) => {
               if (correctedDirection) {
                 return gameActionHandler(correctedDirection);
               } else {

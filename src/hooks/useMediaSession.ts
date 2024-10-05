@@ -7,6 +7,7 @@ import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
 } from "../helper/mediaHelper";
+import { SwipeDirection } from "../helper/TouchSwipe";
 
 /**
  * Use browser's media session controls
@@ -16,7 +17,7 @@ export function useMediaSession(
   loop: number,
   beginLoop: () => void,
   abortLoop: () => boolean,
-  looperSwipe: (direction: string) => Promise<unknown>
+  looperSwipe: (direction: SwipeDirection) => Promise<unknown>
 ) {
   useEffect(() => {
     setMediaSessionMetadata(name);

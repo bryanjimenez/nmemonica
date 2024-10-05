@@ -25,14 +25,16 @@
 // https://github.com/akiran/react-slick
 export const TouchSwipeIgnoreCss = "slick-swipe-ignore";
 
+export type SwipeDirection = "left" | "right" | "up" | "down" | "vertical";
+
 export interface Spec {
   verticalSwiping?: boolean;
   touchThreshold: number;
   scrolling?: boolean;
   swiped?: boolean;
   swiping?: boolean;
-  onSwipe?: Function;
-  swipeEvent?: Function;
+  onSwipe?: (direction: SwipeDirection) => unknown;
+  swipeEvent?: (direction: SwipeDirection) => unknown;
   touchObject: TouchObject;
 }
 
@@ -59,7 +61,7 @@ function safePreventDefault(event: TouchEvent | MouseEvent) {
 export function getSwipeDirection(
   touchObject: TouchObject,
   verticalSwiping = false
-) {
+): SwipeDirection {
   let xDist, yDist, r, swipeAngle;
   xDist = touchObject.startX - touchObject.curX;
   yDist = touchObject.startY - touchObject.curY;
@@ -115,14 +117,25 @@ export function swipeStart(
 }
 
 export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
-  const {verticalSwiping,touchThreshold,swiped, swiping, touchObject, swipeEvent} = spec;
+  const {
+    verticalSwiping,
+    touchThreshold,
+    swiped,
+    swiping,
+    touchObject,
+    swipeEvent,
+  } = spec;
 
   touchObject.curX = "touches" in e ? e.touches[0].pageX : e.clientX;
   touchObject.curY = "touches" in e ? e.touches[0].pageY : e.clientY;
   touchObject.swipeLength = Math.abs(touchObject.curX - touchObject.startX);
   const verticalSwipeLength = Math.abs(touchObject.curY - touchObject.startY);
 
-  if (!verticalSwiping && !swiping && verticalSwipeLength > 10) {
+  if (
+    verticalSwiping !== true &&
+    swiping !== true &&
+    verticalSwipeLength > 10
+  ) {
     return {
       touchObject,
       touchThreshold,
@@ -130,7 +143,7 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
     };
   }
 
-  if (verticalSwiping) {
+  if (verticalSwiping === true) {
     touchObject.swipeLength = Math.sqrt(
       Math.pow(verticalSwipeLength, 2) + Math.pow(touchObject.swipeLength, 2)
     );
@@ -145,7 +158,7 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
     swiped: false,
     swiping: false,
   };
-  if (!swiped && swipeEvent) {
+  if (swiped !== true && swipeEvent) {
     swipeEvent(swipeDirection);
     state = { ...state, swiped: true };
   }
@@ -159,16 +172,18 @@ export function swipeMove(e: TouchEvent | MouseEvent, spec: Spec): Spec {
 }
 
 export function swipeEnd(e: TouchEvent, spec: Spec) {
-  let {touchObject, touchThreshold, verticalSwiping, onSwipe } = spec;
+  let { touchObject, touchThreshold, verticalSwiping, onSwipe } = spec;
 
   const minSwipe = touchThreshold;
 
-  let swipeDirection;
+  let swipeDirection: SwipeDirection | undefined;
   if (touchObject.swipeLength) {
     swipeDirection = getSwipeDirection(touchObject, verticalSwiping);
   }
 
   if (touchObject.swipeLength > minSwipe) {
+    swipeDirection = getSwipeDirection(touchObject, verticalSwiping);
+
     safePreventDefault(e);
 
     if (onSwipe) {

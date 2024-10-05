@@ -51,6 +51,7 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
+import { SwipeDirection } from "../../helper/TouchSwipe";
 import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -854,7 +855,7 @@ export default function Vocabulary() {
                         if (abortLoop()) {
                           resetTimedPlay();
                         }
-                        dispatch(flipVocabularyPracticeSide());
+                        void dispatch(flipVocabularyPracticeSide());
                       }
                     : undefined
                 }
@@ -1258,7 +1259,10 @@ function useBuildGameActionsHandler(
   baseUrl: string
 ) {
   return useCallback(
-    (direction: string, AbortController?: AbortController) => {
+    (direction: SwipeDirection, AbortController?: AbortController) => {
+      if (direction === "vertical") {
+        return Promise.reject(new Error("Unexpected swipe direction"));
+      }
       let actionPromise;
 
       if (direction === "left") {
@@ -1327,7 +1331,8 @@ function useBuildGameActionsHandler(
             new Request(audioUrl, override),
             AbortController
           );
-        } else if (direction === "down") {
+        } else {
+          //if (direction === "down")
           setMediaSessionPlaybackState("playing");
 
           const inEnglish = vocabulary.english;
@@ -1343,10 +1348,7 @@ function useBuildGameActionsHandler(
           );
         }
       }
-      return (
-        actionPromise ??
-        Promise.reject(/** TODO: give direction a type to remove this */)
-      );
+      return actionPromise;
     },
     [
       gotoNextSlide,

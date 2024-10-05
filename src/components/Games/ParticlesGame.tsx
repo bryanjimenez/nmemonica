@@ -1,7 +1,7 @@
 import { LinearProgress } from "@mui/material";
 import type { RawPhrase } from "nmemonica";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 import {
   FourChoicesWRef,
@@ -12,12 +12,12 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
 import { randomOrder } from "../../helper/sortHelper";
+import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { getParticleGame } from "../../slices/particleSlice";
 import { NotReady } from "../Form/NotReady";
 import "../../css/ParticlesGame.css";
-import { shallowEqual } from "react-redux";
 
 export interface ChoiceParticle {
   japanese: string;
@@ -56,13 +56,19 @@ export default function ParticlesGame() {
     ({ particle }: RootState) => {
       const { aRomaji, fadeInAnswers } = particle.setting;
       return [aRomaji, fadeInAnswers];
-    }, shallowEqual
+    },
+    shallowEqual
   );
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (phrases.length === 0) {
       void dispatch(getParticleGame());
     }
+  });
+
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
   }, []);
 
   const order = useRef<number[]>([]);
@@ -124,7 +130,7 @@ export default function ParticlesGame() {
   const game = prepareGame(selectedIndex, phrases, particles);
 
   const swipeHandler = useCallback(
-    (direction: string) => {
+    (direction: SwipeDirection) => {
       switch (direction) {
         case "right":
           gotoPrev();
