@@ -47,7 +47,7 @@ export const globalInitState: GlobalInitSlice = {
   cookieRefresh: -1,
   darkMode: false,
   memory: { quota: 0, usage: 0, persistent: false },
-  debug: 0,
+  debug: DebugLevel.OFF,
   console: [],
   swipeThreshold: 0,
   motionThreshold: 0,
@@ -110,11 +110,19 @@ export const appSettingsInitialized = createAsyncThunk(
     return getUserSettings()
       .then((appSettings) => {
         if (appSettings !== null) {
-          void thunkAPI.dispatch(oppositeSettingsFromAppStorage(appSettings.opposite));
-          void thunkAPI.dispatch(phraseSettingsFromAppStorage(appSettings.phrases));
-          void thunkAPI.dispatch(kanjiSettingsFromAppStorage(appSettings.kanji));
+          void thunkAPI.dispatch(
+            oppositeSettingsFromAppStorage(appSettings.opposite)
+          );
+          void thunkAPI.dispatch(
+            phraseSettingsFromAppStorage(appSettings.phrases)
+          );
+          void thunkAPI.dispatch(
+            kanjiSettingsFromAppStorage(appSettings.kanji)
+          );
           void thunkAPI.dispatch(kanaSettingsFromAppStorage(appSettings.kana));
-          void thunkAPI.dispatch(particleSettingsFromAppStorage(appSettings.particle));
+          void thunkAPI.dispatch(
+            particleSettingsFromAppStorage(appSettings.particle)
+          );
           void thunkAPI.dispatch(
             vocabularySettingsFromAppStorage(appSettings.vocabulary)
           );
@@ -174,13 +182,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "swipeThreshold";
       const time = new Date();
-      void userSettingAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        override
-      );
+      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
 
       state.swipeThreshold = override;
     },
@@ -190,16 +192,9 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "motionThreshold";
       const time = new Date();
-      void userSettingAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        override
-      );
-      
-      state.motionThreshold = override;
+      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
 
+      state.motionThreshold = override;
     },
 
     debugToggled: {
@@ -299,16 +294,13 @@ const globalSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(
-      appSettingsInitialized.fulfilled,
-      (state, action) => {
-        const mergedSettings = action.payload;
-        // mergedSettings is a multi-level deep object
-        return {
-          ...mergedSettings,
-        };
-      }
-    );
+    builder.addCase(appSettingsInitialized.fulfilled, (state, action) => {
+      const mergedSettings = action.payload;
+      // mergedSettings is a multi-level deep object
+      return {
+        ...mergedSettings,
+      };
+    });
     builder.addCase(getMemoryStorageStatus.fulfilled, (state, action) => {
       const { quota, usage, persistent } =
         action.payload as GlobalInitSlice["memory"];

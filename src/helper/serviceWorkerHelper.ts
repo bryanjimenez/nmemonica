@@ -35,27 +35,20 @@ export const SWMsgOutgoing = Object.freeze({
 
 const serviceWorkerNotAvailableErr = new Error("Service Worker not available");
 
-export function swMessageSubscribe(
-  swMessageEventListener: (e: MessageEvent) => void
-) {
-  if (navigator.serviceWorker) {
-    navigator.serviceWorker.addEventListener("message", swMessageEventListener);
+export function swMessageSubscribe(handler: (e: MessageEvent) => void) {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", handler);
   }
 }
 
-export function swMessageUnsubscribe(
-  swMessageEventListener: (e: MessageEvent) => void
-) {
-  if (navigator.serviceWorker) {
-    navigator.serviceWorker.removeEventListener(
-      "message",
-      swMessageEventListener
-    );
+export function swMessageUnsubscribe(handler: (e: MessageEvent) => void) {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.removeEventListener("message", handler);
   }
 }
 
 export function swMessageGetVersions() {
-  if (navigator.serviceWorker) {
+  if ("serviceWorker" in navigator) {
     return navigator.serviceWorker.ready.then(() => {
       navigator.serviceWorker.controller?.postMessage({
         type: SWMsgOutgoing.SW_GET_VERSIONS,
@@ -67,7 +60,7 @@ export function swMessageGetVersions() {
 }
 
 export function swMessageDoHardRefresh() {
-  if (navigator.serviceWorker) {
+  if ("serviceWorker" in navigator) {
     return navigator.serviceWorker.ready.then(() => {
       navigator.serviceWorker.controller?.postMessage({
         type: SWMsgOutgoing.SW_REFRESH_HARD,
