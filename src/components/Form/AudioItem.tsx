@@ -37,7 +37,7 @@ export default function AudioItem(props: AudioItemProps) {
         ? {}
         : { headers: SWRequestHeader.CACHE_RELOAD };
 
-    const url = addParam(pronounceEndoint, touchPlayParam);
+    const url = addParam(pronounceEndpoint, touchPlayParam);
     void fetchAudio(new Request(url, override));
   };
 
