@@ -2691,3 +2691,132 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+--------------------------------------------------------------------------------
+hts_voice_nitech_jp_atr503_m001-1.05 v1.05 - HTS Working Group
+http://open-jtalk.sourceforge.net/
+--------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------- #
+#           The Nitech Japanese Speech Database "NIT ATR503 M001"   #
+#           released by HTS Working Group                           #
+#           http://hts.sp.nitech.ac.jp/                             #
+# ----------------------------------------------------------------- #
+#                                                                   #
+#  Copyright (c) 2003-2012  Nagoya Institute of Technology          #
+#                           Department of Computer Science          #
+#                                                                   #
+# Some rights reserved.                                             #
+#                                                                   #
+# This work is licensed under the Creative Commons Attribution 3.0  #
+# license.                                                          #
+#                                                                   #
+# You are free:                                                     #
+#  * to Share - to copy, distribute and transmit the work           #
+#  * to Remix - to adapt the work                                   #
+# Under the following conditions:                                   #
+#  * Attribution - You must attribute the work in the manner        #
+#    specified by the author or licensor (but not in any way that   #
+#    suggests that they endorse you or your use of the work).       #
+# With the understanding that:                                      #
+#  * Waiver - Any of the above conditions can be waived if you get  #
+#    permission from the copyright holder.                          #
+#  * Public Domain - Where the work or any of its elements is in    #
+#    the public domain under applicable law, that status is in no   #
+#    way affected by the license.                                   #
+#  * Other Rights - In no way are any of the following rights       #
+#    affected by the license:                                       #
+#     - Your fair dealing or fair use rights, or other applicable   #
+#       copyright exceptions and limitations;                       #
+#     - The author's moral rights;                                  #
+#     - Rights other persons may have either in the work itself or  #
+#       in how the work is used, such as publicity or privacy       #
+#       rights.                                                     #
+#  * Notice - For any reuse or distribution, you must make clear to #
+#    others the license terms of this work. The best way to do this #
+#    is with a link to this web page.                               #
+#                                                                   #
+# See http://creativecommons.org/ for details.                      #
+# ----------------------------------------------------------------- #
+
+# ----------------------------------------------------------------- #
+#           HTS Voice "NIT ATR503 M001"                             #
+#           released by HTS Working Group                           #
+#           http://open-jtalk.sourceforge.net/                      #
+# ----------------------------------------------------------------- #
+#                                                                   #
+#  Copyright (c) 2003-2012  Nagoya Institute of Technology          #
+#                           Department of Computer Science          #
+#                                                                   #
+#                2003-2008  Tokyo Institute of Technology           #
+#                           Interdisciplinary Graduate School of    #
+#                           Science and Engineering                 #
+#                                                                   #
+# Some rights reserved.                                             #
+#                                                                   #
+# This work is licensed under the Creative Commons Attribution 3.0  #
+# license.                                                          #
+#                                                                   #
+# You are free:                                                     #
+#  * to Share - to copy, distribute and transmit the work           #
+#  * to Remix - to adapt the work                                   #
+# Under the following conditions:                                   #
+#  * Attribution - You must attribute the work in the manner        #
+#    specified by the author or licensor (but not in any way that   #
+#    suggests that they endorse you or your use of the work).       #
+# With the understanding that:                                      #
+#  * Waiver - Any of the above conditions can be waived if you get  #
+#    permission from the copyright holder.                          #
+#  * Public Domain - Where the work or any of its elements is in    #
+#    the public domain under applicable law, that status is in no   #
+#    way affected by the license.                                   #
+#  * Other Rights - In no way are any of the following rights       #
+#    affected by the license:                                       #
+#     - Your fair dealing or fair use rights, or other applicable   #
+#       copyright exceptions and limitations;                       #
+#     - The author's moral rights;                                  #
+#     - Rights other persons may have either in the work itself or  #
+#       in how the work is used, such as publicity or privacy       #
+#       rights.                                                     #
+#  * Notice - For any reuse or distribution, you must make clear to #
+#    others the license terms of this work. The best way to do this #
+#    is with a link to this web page.                               #
+#                                                                   #
+# See http://creativecommons.org/ for details.                      #
+# ----------------------------------------------------------------- #
+
+--------------------------------------------------------------------------------
+htsvoice-tohoku-f01 v8e33060 - 2015 Intelligent Communication Network (Ito-Nose) Laboratory, Tohoku University
+https://github.com/icn-lab/htsvoice-tohoku-f01
+--------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------
+HTS voice tohoku-f01-{angry,happy,neutral,sad}                                   
+Copyright(c) 2015 Intelligent Communication Network (Ito-Nose) Laboratory
+                  Tohoku University.
+
+tohoku-f01 is released by Intelligent Communication Network Laboratory, Tohoku University.
+Some rights reserved.                                                         
+
+This work is licensed under the Creative Commons Attribution 4.0 license (CC-BY 4.0).
+----------------------------------------------------------------------------------
+This is a human-readable summary of (and not a substitute for) the license.
+
+You are free to:
+
+Share — copy and redistribute the material in any medium or format
+Adapt — remix, transform, and build upon the material
+for any purpose, even commercially.
+The licensor cannot revoke these freedoms as long as you follow the license terms.
+
+
+Under the following terms:
+
+Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+
+
+Notices:
+
+You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.
+No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.
+
