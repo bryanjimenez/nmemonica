@@ -1,22 +1,30 @@
 import { UnmuteIcon } from "@primer/octicons-react";
+import { useRef } from "react";
 import { useDispatch } from "react-redux";
 
-import { pronounceEndpoint } from "../../../environment.development";
-import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
-import { addParam } from "../../helper/urlHelper";
+import {
+  AudioBufferRecord,
+  copyBufferToCacheStore,
+} from "../../helper/audioSynthPreCache";
 import { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
-import { getAudio } from "../../slices/audioSlice";
+import {
+  type AudioItemParams,
+  getAudio,
+  getSynthAudioWorkaroundNoAsync,
+} from "../../slices/audioSlice";
 
 interface AudioItemProps {
   visible: boolean;
-  reCache?: boolean;
-  word: { tl: string; q: string; uid: string };
+  word: AudioItemParams;
   onPushedPlay?: () => void;
+
+  reCache?: boolean;
 }
 
 export default function AudioItem(props: AudioItemProps) {
   const dispatch = useDispatch<AppDispatch>();
+  const audioCacheStore = useRef<AudioBufferRecord>({});
 
   let tStart: number;
 
@@ -30,21 +38,50 @@ export default function AudioItem(props: AudioItemProps) {
     }
   };
 
-  const clickEvHan1 = () => {
+  const clickEvHan1 = async () => {
     // ~~ double bitwise not
     // remove decimal and coerce to number
     const time = ~~(Date.now() - tStart);
 
-    const override =
-      time < 500 && props.reCache !== true
-        ? {}
-        : { headers: SWRequestHeader.CACHE_RELOAD };
+    const override = !(time < 500 && props.reCache !== true);
 
-    const url = addParam(pronounceEndpoint, touchPlayParam);
-    void dispatch(getAudio(new Request(url, override)))
-      .unwrap()
-      .then((blob) => blob.arrayBuffer())
-      .then(playAudio);
+    const { uid, tl, q } = touchPlayParam;
+
+    if (tl === "ja") {
+      // TODO: need selectedIndex here
+      const res = await dispatch(
+        getSynthAudioWorkaroundNoAsync({
+          key: uid,
+          index: undefined,
+          tl,
+          q,
+        })
+      ).unwrap();
+
+      void new Promise<{ uid: string; buffer: ArrayBuffer }>((resolve) => {
+        resolve({
+          uid: res.uid,
+          buffer: copyBufferToCacheStore(audioCacheStore, res.uid, res.buffer),
+        });
+      }).then((res) => {
+        if (uid === res.uid) {
+          return playAudio(res.buffer);
+        }
+        throw new Error("Incorrect uid");
+      });
+    } else {
+      void dispatch(
+        getAudio({
+          uid,
+          index: undefined,
+          tl,
+          q,
+          override,
+        })
+      )
+        .unwrap()
+        .then(({ buffer }) => playAudio(buffer));
+    }
   };
 
   return (

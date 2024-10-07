@@ -5,25 +5,41 @@ import voice_model_angry from "../../res/models/tohoku-f01/tohoku-f01-angry.htsv
 import voice_model_happy from "../../res/models/tohoku-f01/tohoku-f01-happy.htsvoice";
 import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.htsvoice";
 import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice";
-import { getParam } from "../helper/urlHelper";
 import { type JapaneseVoiceType } from "../slices/audioSlice";
 
 const swSelf = globalThis.self as unknown as Worker;
 
-export interface VoiceWorkerMsgParam {
-  audioUrl: { url: string };
+export interface VoiceWorkerQuery {
+  // TODO: uid & index to prevent swapping buffers incorrectly
+  uid: string;
+  index?: number;
+
+  tl: string;
+  q: string;
   japaneseVoice?: JapaneseVoiceType;
   AbortController?: AbortController;
+}
+
+export interface VoiceWorkerResponse {
+  uid: string;
+  index?: number;
+
+  buffer: Uint8Array;
 }
 
 swSelf.addEventListener("message", messageHandler);
 
 function messageHandler(event: MessageEvent) {
-  const data = event.data as VoiceWorkerMsgParam;
+  const data = event.data as VoiceWorkerQuery;
 
-  const { audioUrl, AbortController, japaneseVoice } = data;
-  const language = getParam(audioUrl.url, "tl");
-  const query = getParam(audioUrl.url, "q");
+  const {
+    uid,
+    index,
+    tl: language,
+    q: query,
+    AbortController,
+    japaneseVoice,
+  } = data;
 
   if (
     language === "ja" &&
@@ -56,8 +72,18 @@ function messageHandler(event: MessageEvent) {
     void fetch(voice_model)
       .then((res) => res.arrayBuffer())
       .then((model_buf) => {
-        const result = jBuildSpeech(query, new Uint8Array(model_buf));
-        self.postMessage(result);
+        const {
+          uid: resUid,
+          index: resIndex,
+          buffer: resBuffer,
+        } = jBuildSpeech(uid, index, query, new Uint8Array(model_buf));
+
+        const response: VoiceWorkerResponse = {
+          uid: resUid,
+          index: resIndex,
+          buffer: resBuffer,
+        };
+        self.postMessage(response);
       });
   }
 }

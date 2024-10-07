@@ -1,18 +1,22 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+import { fetchAudio } from "./audioHelper";
 import { logger } from "./globalSlice";
 import { DebugLevel } from "./settingHelper";
+import { pronounceEndpoint } from "../../environment.development";
 import {
   IDBErrorCause,
   IDBStores,
   getIDBItem,
   openIDB,
-  putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import { SWRequestHeader, hasHeader } from "../helper/serviceWorkerHelper";
-import { getParam } from "../helper/urlHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
+import { addParam } from "../helper/urlHelper";
 import { type ValuesOf } from "../typings/utils";
-import { type VoiceWorkerMsgParam } from "../worker/voiceWorker";
+import {
+  type VoiceWorkerQuery,
+  VoiceWorkerResponse,
+} from "../worker/voiceWorker";
 
 import { AppDispatch, RootState } from ".";
 
@@ -53,33 +57,102 @@ export const dropAudioWorker = createAsyncThunk(
   }
 );
 
+export type AudioItemParams = {
+  uid: string;
+  index?: number;
+  tl: "en" | "ja";
+  q: string;
+};
+
 export const getAudio = createAsyncThunk(
   "voice/getAudio",
-  async (arg: Request, thunkAPI) => {
-    const { japaneseVoice } = (thunkAPI.getState() as RootState).global;
+  async (
+    arg: {
+      uid: AudioItemParams["uid"];
+      index: AudioItemParams["index"] | undefined;
+      tl: AudioItemParams["tl"];
+      q: AudioItemParams["q"];
+      override?: boolean;
+    },
+    thunkAPI
+  ) => {
+    const { uid, index, tl, q, override } = arg;
+
     const dispatch = thunkAPI.dispatch as AppDispatch;
-    const req = arg;
+    const audioUrl = addParam(pronounceEndpoint, {
+      tl,
+      q,
+      uid,
+    });
 
-    const override_cache = hasHeader(req, SWRequestHeader.CACHE_RELOAD);
+    const headers =
+      override === true ? { headers: SWRequestHeader.CACHE_RELOAD } : {};
 
-    const uid = getParam(req.url, "uid");
-    if (uid === null) {
-      throw new Error("Expected an UID");
-    }
+    const fetchRequest = () =>
+      fetchAudio(new Request(audioUrl, headers))
+        .then((blob) => blob.arrayBuffer())
+        .then((buffer) => ({
+          uid,
+          index,
+          buffer,
+        }));
 
-    return override_cache
-      ? getFromVoiceSynth(req, japaneseVoice)
-      : getFromIndexedDB(uid, dispatch).catch(() =>
-          getFromVoiceSynth(req, japaneseVoice)
-        );
+    return override === true
+      ? fetchRequest()
+      : getFromIndexedDB(uid, dispatch)
+          .then((blob) => blob.arrayBuffer())
+          .then((buffer) => ({ buffer }))
+          .catch(fetchRequest);
   }
 );
 
-function getFromVoiceSynth(
-  audioUrl: Request,
-  japaneseVoice: JapaneseVoiceType
+// TODO: @nmemonica/voice-ja not async/parallel
+export const getSynthAudioWorkaroundNoAsync = createAsyncThunk(
+  "voice/getSynthAudioWorkaroundNoAsync",
+  getSynthAudioWorkaroundNoAsyncFn
+);
+
+async function getSynthAudioWorkaroundNoAsyncFn(
+  arg: {
+    key: AudioItemParams["uid"];
+    index: AudioItemParams["index"] | undefined;
+    tl: AudioItemParams["tl"];
+    q: AudioItemParams["q"];
+  },
+  thunkAPI: GetThunkAPI<unknown>
 ) {
-  return new Promise<Blob>(async (resolve, reject) => {
+  const { key, index, tl, q } = arg;
+  let resUid, resIndex, resBuffer;
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await getFromVoiceSynth(
+      { uid: key, index, tl, q },
+      thunkAPI
+    ).then(({ uid: resUid, index, blob }) =>
+      blob.arrayBuffer().then((buffer) => ({ uid: resUid, index, buffer }))
+    );
+    resUid = res.uid;
+    resBuffer = res.buffer;
+    resIndex = res.index;
+  } while (resUid !== key);
+
+  return { uid: resUid, buffer: resBuffer, index: resIndex };
+}
+
+type GetSynthAudioResult = { uid: string; index?: number; blob: Blob };
+async function getFromVoiceSynth(
+  arg: {
+    uid: AudioItemParams["uid"];
+    index: AudioItemParams["index"] | undefined;
+    tl: AudioItemParams["tl"];
+    q: AudioItemParams["q"];
+  },
+  thunkAPI: GetThunkAPI<unknown>
+): Promise<GetSynthAudioResult> {
+  const { uid, index, tl, q } = arg;
+  const { japaneseVoice } = (thunkAPI.getState() as RootState).global;
+
+  return new Promise<GetSynthAudioResult>(async (resolve, reject) => {
     if (worker === null) {
       worker = new Worker("./voice-worker.js");
     }
@@ -87,41 +160,32 @@ function getFromVoiceSynth(
     const removeHandler = () => {
       worker?.removeEventListener("message", workerHandler);
     };
-    const workerHandler = (event: MessageEvent<Uint8Array | undefined>) => {
+    const workerHandler = (
+      event: MessageEvent<VoiceWorkerResponse | undefined>
+    ) => {
       if (event.data === undefined) {
         reject(new Error("Could not synthesize query"));
         return;
       }
-      const audio = event.data;
-      const uid = getParam(audioUrl.url, "uid");
-      if (uid === null) {
-        throw new Error("Expected an UID");
-      }
+      const audio = event.data.buffer;
 
       const blob = new Blob([audio.buffer], {
         type: "audio/wav",
       });
 
-      void openIDB().then((db) =>
-        putIDBItem(
-          { db, store: IDBStores.MEDIA },
-          {
-            uid,
-            blob,
-          }
-        )
-      );
-
       initialized = true;
       removeHandler();
 
-      resolve(blob);
+      resolve({ uid: event.data.uid, index: event.data.index, blob });
     };
 
     worker.addEventListener("message", workerHandler);
 
-    const message: VoiceWorkerMsgParam = {
-      audioUrl: { url: audioUrl.url },
+    const message: VoiceWorkerQuery = {
+      uid,
+      index,
+      tl,
+      q,
       japaneseVoice,
     };
 

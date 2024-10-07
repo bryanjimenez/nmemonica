@@ -15,6 +15,7 @@ import {
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
+import { type AudioItemParams } from "../../slices/audioSlice";
 import { furiganaToggled } from "../../slices/vocabularySlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
@@ -95,7 +96,7 @@ export default function VocabularyMain(props: VocabularyMainProps) {
   const jValue = japaneseLabel(englishSideUp, vObj, inJapanese);
   const eValue = englishLabel(englishSideUp, vObj, inEnglish);
 
-  if (hintEnabled && showHint) {
+  if (hintEnabled.current && showHint) {
     if (englishSideUp) {
       const jHint = getJapaneseHint(vObj);
       jLabel = jHint ?? jLabel;
@@ -113,7 +114,7 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     jLabel
   );
 
-  const audioWords = useMemo(() => {
+  const audioWords: AudioItemParams = useMemo(() => {
     let sayObj = vocabulary;
     if (JapaneseText.parse(vocabulary).isNaAdj()) {
       const naAdj = JapaneseText.parse(vocabulary).append(naFlip && "な");
@@ -121,7 +122,10 @@ export default function VocabularyMain(props: VocabularyMainProps) {
       sayObj = {
         ...vocabulary,
         japanese: naAdj.toString(),
-        pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
+        pronounce:
+          vocabulary.pronounce === undefined
+            ? undefined
+            : naAdj.getPronunciation(),
         form: naFlip,
       };
     }
@@ -170,7 +174,7 @@ export default function VocabularyMain(props: VocabularyMainProps) {
       >
         {topValue}
       </Sizable>
-      {romajiEnabled && romaji && (
+      {romajiEnabled && romaji !== undefined && (
         <span className="fs-5">
           <span
             onClick={setStateFunction(setShowRomaji, (r) => !r)}
