@@ -5,6 +5,12 @@ import {
 } from "../slices/audioSlice";
 
 /**
+ * Max absolute difference to keep items cached
+ * from current index
+ */
+const MAX_CACHE_ITEM_IDX_RADIUS = 5;
+
+/**
  * To reduce response time.
  * Temporary pre cache for (slow) synthesized audio
  */
@@ -39,6 +45,24 @@ export async function getSynthVoiceBufferToCacheStore(
           q: pronunciation,
         })
       ).unwrap();
+
+      if (index !== undefined) {
+        // only check if incoming term has an index
+        const curIndex = index;
+
+        Object.keys(store.current).forEach((kUid) => {
+          const v = store.current[kUid];
+          const cacheIdx = v?.index;
+
+          if (v === undefined || cacheIdx === undefined) {
+            return;
+          }
+
+          if (Math.abs(curIndex - cacheIdx) > MAX_CACHE_ITEM_IDX_RADIUS) {
+            store.current[kUid] = undefined;
+          }
+        });
+      }
 
       store.current[res.uid] = { index: res.index, buffer: res.buffer };
     }
