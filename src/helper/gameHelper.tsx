@@ -514,7 +514,7 @@ export function japaneseLabel(
 export function englishLabel(
   isOnTop: boolean,
   jObj: JapaneseText | JapaneseVerb,
-  inEnglish: React.JSX.Element,
+  inEnglish: React.JSX.Element | string,
   jumpToTerm?: (uid: string) => void,
   rawObj?: RawPhrase
 ) {
@@ -687,10 +687,10 @@ export function englishLabel(
  */
 export function labelPlacementHelper(
   englishSideUp: boolean,
-  inEnglish: React.JSX.Element,
-  inJapanese: React.JSX.Element,
-  eLabel: React.JSX.Element,
-  jLabel: React.JSX.Element
+  inEnglish: React.JSX.Element | string,
+  inJapanese: React.JSX.Element | string,
+  eLabel: React.JSX.Element | string,
+  jLabel: React.JSX.Element | string
 ) {
   let topValue, bottomValue, topLabel, bottomLabel;
 

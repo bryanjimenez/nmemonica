@@ -718,13 +718,12 @@ export default function Phrases() {
   );
 
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
-  const englishPhrase = englishPhraseSubComp(phrase, showLit, setShowLit);
 
   /** Display inverse links and polite when available */
   const enDecorated = englishLabel(
     englishSideUp,
     jObj,
-    englishPhrase,
+    phrase.english,
     (uid) => setReinforcedUID(uid),
     phrase
   );
@@ -736,9 +735,22 @@ export default function Phrases() {
     phrase
   );
 
+  const { hasLiteral, englishWLiteral } =
+    phrase.lit === undefined || phrase.lit.trim() === ""
+      ? { hasLiteral: false, englishWLiteral: enDecorated }
+      : {
+          hasLiteral: true,
+          englishWLiteral: decorateEnglishWLiteral(
+            enDecorated,
+            phrase.lit,
+            showLit,
+            setShowLit
+          ),
+        };
+
   const { topValue, bottomValue, bottomLabel } = labelPlacementHelper(
     englishSideUp,
-    enDecorated,
+    englishWLiteral,
     jpDecorated,
     eLabelMemo,
     jLabelMemo
@@ -934,9 +946,7 @@ export default function Phrases() {
                 </div>
               </Tooltip>
               <ToggleLiteralPhraseBtn
-                visible={
-                  englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
-                }
+                visible={englishSideUp && hasLiteral}
                 disabled={!cookies}
                 reviewed={alreadyReviewed}
                 toggle={showLit}
@@ -998,24 +1008,33 @@ function getJapanesePhrase(
   return [jObj, jObj.toHTML()];
 }
 
-function englishPhraseSubComp(
-  phrase: RawPhrase,
+function decorateEnglishWLiteral(
+  enDecorated: React.JSX.Element | string,
+  literal: string,
   showLit: boolean,
   setShowLit: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   return (
-    <span
-      // className={classNames({"info-color":this.state.showLit})}
-      onClick={
-        phrase.lit !== undefined
-          ? () => {
-              setShowLit((lit) => !lit);
-            }
-          : undefined
-      }
-    >
-      {!showLit ? phrase.english : phrase.lit}
-    </span>
+    <div className="d-flex flex-column">
+      <span
+        className={classNames({
+          "px-2 pb-1 dash-border-small rounded": showLit,
+        })}
+        onClick={() => {
+          setShowLit((lit) => !lit);
+        }}
+      >
+        {!showLit ? enDecorated : literal}
+      </span>
+      <span
+        className={classNames({
+          "pt-1 fs-en-subscr fw-light": true,
+          invisible: showLit,
+        })}
+      >
+        {literal}
+      </span>
+    </div>
   );
 }
 
