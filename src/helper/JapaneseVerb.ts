@@ -183,6 +183,16 @@ export class JapaneseVerb extends JapaneseText {
       : undefined;
   }
 
+  isIrregularAru() {
+    let verb = super.getSpelling();
+    return verb === "ある" || verb === "有る";
+  }
+
+  isIrregularIru() {
+    let verb = super.getSpelling();
+    return verb === "いる" || verb === "居る";
+  }
+
   /**
    * @returns the class of verb 1,2,3 (godan,ichidan,irregular)
    */
@@ -317,7 +327,7 @@ export class JapaneseVerb extends JapaneseText {
         nai = new JapaneseText("しない");
         // } else if (verb === "だ") {
         //   nai = "de wa arimasen"; // FIXME: complete
-      } else if (verb === "ある") {
+      } else if (this.isIrregularAru()) {
         nai = new JapaneseText("ない");
       }
       // type 2
@@ -379,7 +389,7 @@ export class JapaneseVerb extends JapaneseText {
     } else if (type === 2) {
       // ru
       // type 2
-      if (verb === "居る" || verb === "いる") {
+      if (this.isIrregularIru()) {
         saseru = new JapaneseText("いる", "居る");
       }
 
@@ -395,7 +405,7 @@ export class JapaneseVerb extends JapaneseText {
         saseru = new JapaneseText("こさせる", "来させる");
       } else if (verb === "する") {
         saseru = new JapaneseText("させる");
-      } else if (verb === "ある") {
+      } else if (this.isIrregularAru()) {
         saseru = new JapaneseText("ある");
       } else if ("する" === verb.slice(-2)) {
         const kStem = super.getSpelling().slice(0, -2);
@@ -470,7 +480,7 @@ export class JapaneseVerb extends JapaneseText {
         } else {
           reru = new JapaneseText(kStem + "できる");
         }
-      } else if (verb === "ある" || verb === "いる") {
+      } else if (this.isIrregularAru() || this.isIrregularIru()) {
         reru = null;
       } else {
         throw new Error("Unknown exception verb type");
@@ -537,7 +547,7 @@ export class JapaneseVerb extends JapaneseText {
         } else {
           rareru = new JapaneseText(kStem + "される");
         }
-      } else if (verb === "ある" || verb === "いる") {
+      } else if (this.isIrregularAru() || this.isIrregularIru()) {
         rareru = null;
       } else {
         throw new Error("Unknown exception verb type");
@@ -752,7 +762,7 @@ export class JapaneseVerb extends JapaneseText {
         t_Con = JapaneseText.parse({ japanese: rule.g3.suru });
       } else if (verb === "だ") {
         t_Con = JapaneseText.parse({ japanese: rule.g3.da });
-      } else if (verb === "ある") {
+      } else if (this.isIrregularAru()) {
         t_Con = JapaneseText.parse({ japanese: rule.g3.aru });
       } else if ("する" === verb.slice(-2)) {
         const ending = rule.g3.suru;
