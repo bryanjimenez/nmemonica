@@ -32,16 +32,21 @@ export type AudioGetterFunction = (
 export async function getSynthVoiceBufferToCacheStore(
   dispatch: AppDispatch,
   store: React.MutableRefObject<AudioBufferRecord>,
-  terms: { uid: string; pronunciation: string; index?: number }[]
+  terms: {
+    uid: AudioItemParams["uid"];
+    pronunciation: AudioItemParams["q"];
+    index?: AudioItemParams["index"];
+    tl: AudioItemParams["tl"];
+  }[]
 ): Promise<void> {
-  for (const { uid, pronunciation, index } of terms) {
+  for (const { uid, pronunciation, index, tl } of terms) {
     if (store.current[uid] === undefined) {
       // eslint-disable-next-line no-await-in-loop
       const res = await dispatch(
         getSynthAudioWorkaroundNoAsync({
           key: uid,
           index,
-          tl: "ja",
+          tl,
           q: pronunciation,
         })
       ).unwrap();

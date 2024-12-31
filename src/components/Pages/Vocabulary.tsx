@@ -67,10 +67,7 @@ import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
-import {
-  getAudio,
-  getSynthAudioWorkaroundNoAsync,
-} from "../../slices/audioSlice";
+import { getSynthAudioWorkaroundNoAsync } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   DebugLevel,
@@ -625,7 +622,14 @@ export default function Vocabulary() {
         void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
           {
             uid: vUid,
+            tl: "ja",
             pronunciation: vQuery,
+            index: reinforcedUID !== null ? undefined : selectedIndex,
+          },
+          {
+            uid: vUid+".en",
+            tl: "en",
+            pronunciation: v.english,
             index: reinforcedUID !== null ? undefined : selectedIndex,
           },
         ]);
@@ -1369,17 +1373,32 @@ function useBuildGameActionsHandler(
 
           const inEnglish = vocabulary.english;
 
-          actionPromise = dispatch(
-            getAudio({
-              uid: vocabulary.uid + ".en",
-              index: selectedIndex,
+          const res = await dispatch(
+            getSynthAudioWorkaroundNoAsync({
+              key: vocabulary.uid + ".en",
+              index: reinforcedUID !== null ? undefined : selectedIndex,
               tl: "en",
               q: inEnglish,
-              override: recacheAudio,
             })
-          )
-            .unwrap()
-            .then(({ buffer }) => playAudio(buffer, AbortController));
+          ).unwrap();
+
+          actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+            (resolve) => {
+              resolve({
+                uid: res.uid,
+                buffer: copyBufferToCacheStore(
+                  audioCacheStore,
+                  res.uid,
+                  res.buffer
+                ),
+              });
+            }
+          ).then((res) => {
+            if (vocabulary.uid + ".en" === res.uid) {
+              return playAudio(res.buffer, AbortController);
+            }
+            throw new Error("Incorrect uid");
+          });
         }
       }
       return actionPromise;
@@ -1396,8 +1415,6 @@ function useBuildGameActionsHandler(
       filteredVocab,
       naFlip,
       setWasPlayed,
-
-      recacheAudio,
 
       audioCacheStore,
     ]

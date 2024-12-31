@@ -22,6 +22,7 @@ import { AppDispatch, RootState } from ".";
 
 // global worker variable
 let worker: Worker | null = null;
+let workerEn: Worker | null = null;
 let initialized = false;
 
 export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND>;
@@ -41,6 +42,9 @@ export const initAudioWorker = createAsyncThunk(
     if (worker === null) {
       worker = new Worker("./voice-worker.js");
     }
+    if (workerEn === null) {
+      workerEn = new Worker("./voice-worker-en.js");
+    }
   }
 );
 
@@ -53,6 +57,10 @@ export const dropAudioWorker = createAsyncThunk(
     if (worker !== null) {
       worker.terminate();
       worker = null;
+    }
+    if (workerEn !== null) {
+      workerEn.terminate();
+      workerEn = null;
     }
   }
 );
@@ -107,6 +115,7 @@ export const getAudio = createAsyncThunk(
 );
 
 // TODO: @nmemonica/voice-ja not async/parallel
+// TODO: @nmemonica/voice-en not async/parallel
 export const getSynthAudioWorkaroundNoAsync = createAsyncThunk(
   "voice/getSynthAudioWorkaroundNoAsync",
   getSynthAudioWorkaroundNoAsyncFn
@@ -152,13 +161,26 @@ async function getFromVoiceSynth(
   const { uid, index, tl, q } = arg;
   const { japaneseVoice } = (thunkAPI.getState() as RootState).global;
 
+  let w = { ja: worker, en: workerEn }[tl];
   return new Promise<GetSynthAudioResult>(async (resolve, reject) => {
-    if (worker === null) {
-      worker = new Worker("./voice-worker.js");
+    if (w === null) {
+      switch (tl) {
+        case "ja": {
+          worker = new Worker("./voice-worker.js");
+          w = worker;
+          break;
+        }
+
+        case "en": {
+          workerEn = new Worker("./voice-worker-en.js");
+          w = workerEn;
+          break;
+        }
+      }
     }
 
     const removeHandler = () => {
-      worker?.removeEventListener("message", workerHandler);
+      w?.removeEventListener("message", workerHandler);
     };
     const workerHandler = (
       event: MessageEvent<VoiceWorkerResponse | undefined>
@@ -179,7 +201,7 @@ async function getFromVoiceSynth(
       resolve({ uid: event.data.uid, index: event.data.index, blob });
     };
 
-    worker.addEventListener("message", workerHandler);
+    w.addEventListener("message", workerHandler);
 
     const message: VoiceWorkerQuery = {
       uid,
@@ -190,7 +212,7 @@ async function getFromVoiceSynth(
     };
 
     if (initialized === true) {
-      worker.postMessage(message);
+      w.postMessage(message);
     } else {
       let tries = 0;
       while (tries < 10 && initialized === false) {
@@ -199,7 +221,7 @@ async function getFromVoiceSynth(
           setTimeout(resolve, 1000);
         });
         if (initialized === false) {
-          worker.postMessage(message);
+          w.postMessage(message);
         }
 
         tries++;
