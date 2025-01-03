@@ -2,16 +2,18 @@ import { buildSpeech as eBuildSpeech } from "@nmemonica/voice-en";
 
 import { type JapaneseVoiceType } from "../slices/audioSlice";
 
+import { exceptionToError } from ".";
+
 const swSelf = globalThis.self as unknown as Worker;
 
-export interface VoiceWorkerQuery {
-  // TODO: uid & index to prevent swapping buffers incorrectly
+export interface JaVoiceWorkerQuery {
+  // uid & index to prevent swapping buffers incorrectly
   uid: string;
   index?: number;
 
   tl: string;
   q: string;
-  japaneseVoice?: JapaneseVoiceType;
+  englishVoice?: JapaneseVoiceType;
   AbortController?: AbortController;
 }
 
@@ -25,7 +27,7 @@ export interface VoiceWorkerResponse {
 swSelf.addEventListener("message", messageHandler);
 
 function messageHandler(event: MessageEvent) {
-  const data = event.data as VoiceWorkerQuery;
+  const data = event.data as JaVoiceWorkerQuery;
 
   const { uid, index, tl: language, q: query, AbortController } = data;
 
@@ -46,11 +48,11 @@ function messageHandler(event: MessageEvent) {
         index: resIndex,
         buffer: resBuffer,
       };
-      self.postMessage(response);
-    } catch (err) {
-      // TODO: voice-en proper err loggin
-      // eslint-disable-next-line no-console
-      console.error(err);
+      swSelf.postMessage(response);
+    } catch (exception) {
+      const error = exceptionToError(exception, "voice-worker-en");
+
+      swSelf.postMessage(error);
     }
   }
 }

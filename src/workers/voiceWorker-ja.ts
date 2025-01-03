@@ -9,8 +9,8 @@ import { type JapaneseVoiceType } from "../slices/audioSlice";
 
 const swSelf = globalThis.self as unknown as Worker;
 
-export interface VoiceWorkerQuery {
-  // TODO: uid & index to prevent swapping buffers incorrectly
+export interface JaVoiceWorkerQuery {
+  // uid & index to prevent swapping buffers incorrectly
   uid: string;
   index?: number;
 
@@ -30,7 +30,7 @@ export interface VoiceWorkerResponse {
 swSelf.addEventListener("message", messageHandler);
 
 function messageHandler(event: MessageEvent) {
-  const data = event.data as VoiceWorkerQuery;
+  const data = event.data as JaVoiceWorkerQuery;
 
   const {
     uid,

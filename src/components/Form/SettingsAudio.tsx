@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import { VOICE_KIND } from "../../slices/audioSlice";
+import { VOICE_KIND_JA } from "../../slices/audioSlice";
 import { setJapaneseVoice } from "../../slices/globalSlice";
 import { properCase } from "../Games/KanjiGame";
 
@@ -12,7 +12,7 @@ export default function SettingsAudio() {
 
   const { japaneseVoice } = useConnectSetting();
 
-  const jVoiceOptions = ["default", ...Object.values(VOICE_KIND)];
+  const jVoiceOptions = ["default", ...Object.values(VOICE_KIND_JA)];
 
   const el = (
     <div className="outer">

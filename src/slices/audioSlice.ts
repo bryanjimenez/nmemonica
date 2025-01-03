@@ -13,20 +13,21 @@ import {
 import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { addParam } from "../helper/urlHelper";
 import { type ValuesOf } from "../typings/utils";
+import { AUDIO_WORKER_EN_NAME, AUDIO_WORKER_JA_NAME } from "../workers";
 import {
-  type VoiceWorkerQuery,
+  type JaVoiceWorkerQuery,
   VoiceWorkerResponse,
-} from "../worker/voiceWorker";
+} from "../workers/voiceWorker-ja";
 
 import { AppDispatch, RootState } from ".";
 
 // global worker variable
-let worker: Worker | null = null;
+let workerJa: Worker | null = null;
 let workerEn: Worker | null = null;
 let initialized = false;
 
-export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND>;
-export const VOICE_KIND = Object.freeze({
+export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND_JA>;
+export const VOICE_KIND_JA = Object.freeze({
   HAPPY: "happy",
   ANGRY: "angry",
   SAD: "sad",
@@ -39,11 +40,11 @@ export const VOICE_KIND = Object.freeze({
 export const initAudioWorker = createAsyncThunk(
   "voice/initAudioWorker",
   (_arg, _thunkAPI) => {
-    if (worker === null) {
-      worker = new Worker("./voice-worker.js");
+    if (workerJa === null) {
+      workerJa = new Worker(AUDIO_WORKER_JA_NAME);
     }
     if (workerEn === null) {
-      workerEn = new Worker("./voice-worker-en.js");
+      workerEn = new Worker(AUDIO_WORKER_EN_NAME);
     }
   }
 );
@@ -54,9 +55,9 @@ export const initAudioWorker = createAsyncThunk(
 export const dropAudioWorker = createAsyncThunk(
   "voice/dropAudioWorker",
   (_arg, _thunkAPI) => {
-    if (worker !== null) {
-      worker.terminate();
-      worker = null;
+    if (workerJa !== null) {
+      workerJa.terminate();
+      workerJa = null;
     }
     if (workerEn !== null) {
       workerEn.terminate();
@@ -161,18 +162,18 @@ async function getFromVoiceSynth(
   const { uid, index, tl, q } = arg;
   const { japaneseVoice } = (thunkAPI.getState() as RootState).global;
 
-  let w = { ja: worker, en: workerEn }[tl];
+  let w = { ja: workerJa, en: workerEn }[tl];
   return new Promise<GetSynthAudioResult>(async (resolve, reject) => {
     if (w === null) {
       switch (tl) {
         case "ja": {
-          worker = new Worker("./voice-worker.js");
-          w = worker;
+          workerJa = new Worker(AUDIO_WORKER_JA_NAME);
+          w = workerJa;
           break;
         }
 
         case "en": {
-          workerEn = new Worker("./voice-worker-en.js");
+          workerEn = new Worker(AUDIO_WORKER_EN_NAME);
           w = workerEn;
           break;
         }
@@ -203,7 +204,7 @@ async function getFromVoiceSynth(
 
     w.addEventListener("message", workerHandler);
 
-    const message: VoiceWorkerQuery = {
+    const message: JaVoiceWorkerQuery = {
       uid,
       index,
       tl,
