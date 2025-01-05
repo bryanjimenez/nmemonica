@@ -200,6 +200,7 @@ Thanks to:
       - [openjtalk](https://open-jtalk.sourceforge.net/)
       - [jbonsai](https://github.com/jpreprocess/jbonsai)
       - [jpreprocess](https://github.com/jpreprocess/jpreprocess)
+      - [flite](https://github.com/festvox/flite)
     + Voices
       - [hts_voice_nitech_jp_atr503_m001-1.05](https://open-jtalk.sourceforge.net)
       - [tohoku-f01](https://github.com/icn-lab/htsvoice-tohoku-f01)
