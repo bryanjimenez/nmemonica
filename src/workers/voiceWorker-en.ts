@@ -4,7 +4,7 @@ import { type JapaneseVoiceType } from "../slices/audioSlice";
 
 import { exceptionToError } from ".";
 
-const swSelf = globalThis.self as unknown as Worker;
+const wSelf = globalThis.self as unknown as Worker;
 
 export interface JaVoiceWorkerQuery {
   // uid & index to prevent swapping buffers incorrectly
@@ -24,7 +24,7 @@ export interface VoiceWorkerResponse {
   buffer: Uint8Array;
 }
 
-swSelf.addEventListener("message", messageHandler);
+wSelf.addEventListener("message", messageHandler);
 
 function messageHandler(event: MessageEvent) {
   const data = event.data as JaVoiceWorkerQuery;
@@ -48,11 +48,11 @@ function messageHandler(event: MessageEvent) {
         index: resIndex,
         buffer: resBuffer,
       };
-      swSelf.postMessage(response);
+      wSelf.postMessage(response);
     } catch (exception) {
       const error = exceptionToError(exception, "voice-worker-en");
 
-      swSelf.postMessage(error);
+      wSelf.postMessage(error);
     }
   }
 }

@@ -7,7 +7,7 @@ import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.
 import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice";
 import { type JapaneseVoiceType } from "../slices/audioSlice";
 
-const swSelf = globalThis.self as unknown as Worker;
+const wSelf = globalThis.self as unknown as Worker;
 
 export interface JaVoiceWorkerQuery {
   // uid & index to prevent swapping buffers incorrectly
@@ -27,7 +27,39 @@ export interface VoiceWorkerResponse {
   buffer: Uint8Array;
 }
 
-swSelf.addEventListener("message", messageHandler);
+let voice: { name?: JapaneseVoiceType; buffer?: ArrayBuffer } = {
+  name: undefined,
+  buffer: undefined,
+};
+
+function getVoiceUrl(japaneseVoice?: JapaneseVoiceType) {
+  let voice_model: URL;
+  switch (japaneseVoice) {
+    case "happy":
+      voice_model = voice_model_happy;
+      break;
+
+    case "angry":
+      voice_model = voice_model_angry;
+      break;
+
+    case "sad":
+      voice_model = voice_model_sad;
+      break;
+
+    case "deep":
+      voice_model = voice_model_deep;
+      break;
+
+    default:
+      voice_model = voice_model_neutral;
+      break;
+  }
+
+  return { url: voice_model, name: japaneseVoice ?? "default" };
+}
+
+wSelf.addEventListener("message", messageHandler);
 
 function messageHandler(event: MessageEvent) {
   const data = event.data as JaVoiceWorkerQuery;
@@ -46,44 +78,43 @@ function messageHandler(event: MessageEvent) {
     query !== null &&
     typeof jBuildSpeech === "function"
   ) {
-    let voice_model: URL;
-    switch (japaneseVoice) {
-      case "happy":
-        voice_model = voice_model_happy;
-        break;
+    void new Promise<{ name: JapaneseVoiceType; buffer: ArrayBuffer }>(
+      (resolve, reject) => {
+        const { name, buffer } = voice;
 
-      case "angry":
-        voice_model = voice_model_angry;
-        break;
+        if (name !== japaneseVoice || buffer === undefined) {
+          const { url: voice_url, name: voice_name } =
+            getVoiceUrl(japaneseVoice);
 
-      case "sad":
-        voice_model = voice_model_sad;
-        break;
+          void fetch(voice_url)
+            .then((res) => res.arrayBuffer())
+            .then((voice_buffer) => {
+              resolve({ name: voice_name, buffer: voice_buffer });
+            });
+          return;
+        }
+        if (buffer === undefined || name === undefined) {
+          reject(`Could not fetch selected voice ${japaneseVoice}`);
+          return;
+        }
 
-      case "deep":
-        voice_model = voice_model_deep;
-        break;
+        resolve({ name, buffer });
+      }
+    ).then(({name, buffer}) => {
+      voice = {name, buffer};
 
-      default:
-        voice_model = voice_model_neutral;
-        break;
-    }
+      const {
+        uid: resUid,
+        index: resIndex,
+        buffer: resBuffer,
+      } = jBuildSpeech(uid, index, query, new Uint8Array(buffer));
 
-    void fetch(voice_model)
-      .then((res) => res.arrayBuffer())
-      .then((model_buf) => {
-        const {
-          uid: resUid,
-          index: resIndex,
-          buffer: resBuffer,
-        } = jBuildSpeech(uid, index, query, new Uint8Array(model_buf));
-
-        const response: VoiceWorkerResponse = {
-          uid: resUid,
-          index: resIndex,
-          buffer: resBuffer,
-        };
-        self.postMessage(response);
-      });
+      const response: VoiceWorkerResponse = {
+        uid: resUid,
+        index: resIndex,
+        buffer: resBuffer,
+      };
+      wSelf.postMessage(response);
+    });
   }
 }
