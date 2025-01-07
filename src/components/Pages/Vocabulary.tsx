@@ -627,7 +627,7 @@ export default function Vocabulary() {
             index: reinforcedUID !== null ? undefined : selectedIndex,
           },
           {
-            uid: vUid+".en",
+            uid: vUid + ".en",
             tl: "en",
             pronunciation: v.english,
             index: reinforcedUID !== null ? undefined : selectedIndex,
@@ -1373,32 +1373,43 @@ function useBuildGameActionsHandler(
 
           const inEnglish = vocabulary.english;
 
-          const res = await dispatch(
-            getSynthAudioWorkaroundNoAsync({
-              key: vocabulary.uid + ".en",
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-              tl: "en",
-              q: inEnglish,
-            })
-          ).unwrap();
+          const enUid = vocabulary.uid + ".en";
 
-          actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-            (resolve) => {
-              resolve({
-                uid: res.uid,
-                buffer: copyBufferToCacheStore(
-                  audioCacheStore,
-                  res.uid,
-                  res.buffer
-                ),
-              });
-            }
-          ).then((res) => {
-            if (vocabulary.uid + ".en" === res.uid) {
-              return playAudio(res.buffer, AbortController);
-            }
-            throw new Error("Incorrect uid");
-          });
+          const cachedAudioBuf = copyBufferFromCacheStore(
+            audioCacheStore,
+            enUid
+          );
+
+          if (cachedAudioBuf !== undefined) {
+            actionPromise = playAudio(cachedAudioBuf);
+          } else {
+            const res = await dispatch(
+              getSynthAudioWorkaroundNoAsync({
+                key: enUid,
+                index: reinforcedUID !== null ? undefined : selectedIndex,
+                tl: "en",
+                q: inEnglish,
+              })
+            ).unwrap();
+
+            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+              (resolve) => {
+                resolve({
+                  uid: res.uid,
+                  buffer: copyBufferToCacheStore(
+                    audioCacheStore,
+                    res.uid,
+                    res.buffer
+                  ),
+                });
+              }
+            ).then((res) => {
+              if (enUid === res.uid) {
+                return playAudio(res.buffer, AbortController);
+              }
+              throw new Error("Incorrect uid");
+            });
+          }
         }
       }
       return actionPromise;

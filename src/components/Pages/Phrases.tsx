@@ -1198,33 +1198,40 @@ function buildGameActionsHandler(
       } else {
         //if (direction === "down")
         const inEnglish = phrase.english;
+        const enUid = phrase.uid + ".en";
 
-        const res = await dispatch(
-          getSynthAudioWorkaroundNoAsync({
-            key: phrase.uid + ".en",
-            index: reinforcedUID !== null ? undefined : selectedIndex,
-            tl: "en",
-            q: inEnglish,
-          })
-        ).unwrap();
+        const cachedAudioBuf = copyBufferFromCacheStore(audioCacheStore, enUid);
 
-        actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-          (resolve) => {
-            resolve({
-              uid: res.uid,
-              buffer: copyBufferToCacheStore(
-                audioCacheStore,
-                res.uid,
-                res.buffer
-              ),
-            });
-          }
-        ).then((res) => {
-          if (phrase.uid + ".en" === res.uid) {
-            return playAudio(res.buffer, AbortController);
-          }
-          throw new Error("Incorrect uid");
-        });
+        if (cachedAudioBuf !== undefined) {
+          actionPromise = playAudio(cachedAudioBuf);
+        } else {
+          const res = await dispatch(
+            getSynthAudioWorkaroundNoAsync({
+              key: enUid,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+              tl: "en",
+              q: inEnglish,
+            })
+          ).unwrap();
+
+          actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+            (resolve) => {
+              resolve({
+                uid: res.uid,
+                buffer: copyBufferToCacheStore(
+                  audioCacheStore,
+                  res.uid,
+                  res.buffer
+                ),
+              });
+            }
+          ).then((res) => {
+            if (enUid === res.uid) {
+              return playAudio(res.buffer, AbortController);
+            }
+            throw new Error("Incorrect uid");
+          });
+        }
       }
     }
     return actionPromise;
