@@ -615,32 +615,33 @@ export default function Vocabulary() {
         const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
         const vUid = getCacheUID(sayObj);
         const vQuery = audioPronunciation(sayObj);
+        if (vQuery instanceof Error === false) {
+          void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
+            {
+              uid: vUid,
+              tl: "ja",
+              pronunciation: vQuery,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+            },
+            {
+              uid: vUid + ".en",
+              tl: "en",
+              pronunciation: v.english,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+            },
+          ]).catch((exception) => {
+            // likely getAudio failed
 
-        void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
-          {
-            uid: vUid,
-            tl: "ja",
-            pronunciation: vQuery,
-            index: reinforcedUID !== null ? undefined : selectedIndex,
-          },
-          {
-            uid: vUid + ".en",
-            tl: "en",
-            pronunciation: v.english,
-            index: reinforcedUID !== null ? undefined : selectedIndex,
-          },
-        ]).catch((exception) => {
-          // likely getAudio failed
-
-          if (exception instanceof Error) {
-            let msg = exception.message;
-            if (msg === "unreachable") {
-              const stack = "at " + getStackInitial(exception);
-              msg = `cache:${v.english} ${vQuery} ${stack}`;
+            if (exception instanceof Error) {
+              let msg = exception.message;
+              if (msg === "unreachable") {
+                const stack = "at " + getStackInitial(exception);
+                msg = `cache:${v.english} ${vQuery} ${stack}`;
+              }
+              dispatch(logger(msg, DebugLevel.ERROR));
             }
-            dispatch(logger(msg, DebugLevel.ERROR));
-          }
-        });
+          });
+        }
       }
 
       updateDailyGoal({
@@ -1318,7 +1319,10 @@ function useBuildGameActionsHandler(
             actionPromise = playAudio(cachedAudioBuf);
           } else {
             const vQuery = audioPronunciation(sayObj);
-
+            if (vQuery instanceof Error) {
+              dispatch(logger(vQuery.message, DebugLevel.ERROR));
+              return Promise.reject(vQuery);
+            }
             try {
               const res = await dispatch(
                 getSynthAudioWorkaroundNoAsync({

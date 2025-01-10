@@ -113,7 +113,12 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     jLabel
   );
 
-  const audioWords: AudioItemParams = useMemo(() => {
+  const onPushedPlay = useCallback(
+    () => setNaFlip((na) => (na ? undefined : "-na")),
+    []
+  );
+
+  const playButton = useMemo((): React.ReactNode | undefined => {
     let sayObj = vocabulary;
     if (JapaneseText.parse(vocabulary).isNaAdj()) {
       const naAdj = JapaneseText.parse(vocabulary).append(naFlip && "な");
@@ -129,27 +134,40 @@ export default function VocabularyMain(props: VocabularyMainProps) {
       };
     }
 
-    return englishSideUp
-      ? { tl: "en", q: vocabulary.english, uid: vocabulary.uid + ".en" }
-      : {
-          tl: "ja",
-          q: audioPronunciation(sayObj),
-          uid: getCacheUID(sayObj),
-        };
-  }, [vocabulary, englishSideUp, naFlip]);
+    let audioWords: AudioItemParams;
+    if (englishSideUp) {
+      audioWords = {
+        tl: "en",
+        q: vocabulary.english,
+        uid: vocabulary.uid + ".en",
+      };
+    } else {
+      const pronunciation = audioPronunciation(sayObj);
+      if (pronunciation instanceof Error) {
+        // TODO: visually show unavailable
+        return undefined;
+      }
+      audioWords = {
+        tl: "ja",
+        q: pronunciation,
+        uid: getCacheUID(sayObj),
+      };
+    }
 
-  const onPushedPlay = useCallback(
-    () => setNaFlip((na) => (na ? undefined : "-na")),
-    []
-  );
-
-  const playButton = (
-    <AudioItem
-      visible={swipeThreshold === 0}
-      word={audioWords}
-      onPushedPlay={onPushedPlay}
-    />
-  );
+    return (
+      <AudioItem
+        visible={swipeThreshold === 0}
+        word={audioWords}
+        onPushedPlay={onPushedPlay}
+      />
+    );
+  }, [
+    vocabulary,
+    englishSideUp,
+    naFlip,
+    onPushedPlay,
+    swipeThreshold,
+  ]);
 
   const shortEN = vocabulary.english.length < 55;
 

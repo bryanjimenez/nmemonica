@@ -175,19 +175,34 @@ export default function VerbMain(props: VerbMainProps) {
     [verb, japaneseObj, verbForm]
   );
 
-  const audioWords: AudioItemParams = useMemo(() => {
-    return englishSideUp
-      ? { tl: "en", q: verbJapanese.english, uid: verbJapanese.uid + ".en" }
-      : {
-          tl: "ja",
-          q: audioPronunciation(verbJapanese),
-          uid: getCacheUID(verbJapanese),
-        };
-  }, [englishSideUp, verbJapanese]);
+  const playButton = useMemo((): React.ReactNode | undefined => {
+    let audioWords: AudioItemParams;
+    if (englishSideUp) {
+      audioWords = {
+        tl: "en",
+        q: verbJapanese.english,
+        uid: verbJapanese.uid + ".en",
+      };
+    } else {
+      const pronunciation = audioPronunciation(verbJapanese);
+      if (pronunciation instanceof Error) {
+        // TODO: visually show unavailable
+        return undefined;
+      }
+      audioWords = {
+        tl: "ja",
+        q: pronunciation,
+        uid: getCacheUID(verbJapanese),
+      };
+    }
 
-  const playButton = (
-    <AudioItem visible={swipeThreshold === 0} word={audioWords} />
-  );
+    return (
+      <AudioItem
+        visible={swipeThreshold === 0}
+        word={audioWords}
+      />
+    );
+  }, [englishSideUp, verbJapanese, swipeThreshold]);
 
   return (
     <div className="row w-100">

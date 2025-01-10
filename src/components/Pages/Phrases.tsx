@@ -524,31 +524,33 @@ export default function Phrases() {
         const curP = getTerm(curUid, filteredPhrases, phraseList);
         const inJapanese = audioPronunciation(curP);
 
-        void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
-          {
-            uid: curP.uid,
-            tl: "ja",
-            pronunciation: inJapanese,
-            index: reinforcedUID !== null ? undefined : selectedIndex,
-          },
-          {
-            uid: curP.uid + ".en",
-            tl: "en",
-            pronunciation: curP.english,
-            index: reinforcedUID !== null ? undefined : selectedIndex,
-          },
-        ]).catch((exception) => {
-          // likely getAudio failed
+        if (inJapanese instanceof Error === false) {
+          void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
+            {
+              uid: curP.uid,
+              tl: "ja",
+              pronunciation: inJapanese,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+            },
+            {
+              uid: curP.uid + ".en",
+              tl: "en",
+              pronunciation: curP.english,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+            },
+          ]).catch((exception) => {
+            // likely getAudio failed
 
-          if (exception instanceof Error) {
-            let msg = exception.message;
-            if (msg === "unreachable") {
-              const stack = "at " + getStackInitial(exception);
-              msg = `cache:${curP.english} ${inJapanese} ${stack}`;
+            if (exception instanceof Error) {
+              let msg = exception.message;
+              if (msg === "unreachable") {
+                const stack = "at " + getStackInitial(exception);
+                msg = `cache:${curP.english} ${inJapanese} ${stack}`;
+              }
+              dispatch(logger(msg, DebugLevel.ERROR));
             }
-            dispatch(logger(msg, DebugLevel.ERROR));
-          }
-        });
+          });
+        }
       }
 
       updateDailyGoal({
@@ -1083,15 +1085,24 @@ function getPlayBtn(
   swipeThreshold: number,
   englishSideUp: boolean,
   phrase: RawPhrase,
-  loop: number
-) {
-  const audioWords: AudioItemParams = englishSideUp
-    ? { tl: "en", q: phrase.english, uid: phrase.uid + ".en" }
-    : {
-        tl: "ja",
-        q: audioPronunciation(phrase),
-        uid: getCacheUID(phrase),
-      };
+  loop: number,
+): React.ReactNode | undefined {
+  let audioWords: AudioItemParams;
+  if (englishSideUp) {
+    audioWords = { tl: "en", q: phrase.english, uid: phrase.uid + ".en" };
+  } else {
+    const pronunciation = audioPronunciation(phrase);
+    if (pronunciation instanceof Error) {
+      // TODO: visually show unavailable
+      return undefined;
+    }
+
+    audioWords = {
+      tl: "ja",
+      q: pronunciation,
+      uid: getCacheUID(phrase),
+    };
+  }
 
   return (
     <AudioItem visible={swipeThreshold === 0 && loop === 0} word={audioWords} />
@@ -1145,7 +1156,10 @@ function buildGameActionsHandler(
           actionPromise = playAudio(cachedAudioBuf);
         } else {
           const inJapanese = audioPronunciation(phrase);
-
+          if (inJapanese instanceof Error) {
+            dispatch(logger(inJapanese.message, DebugLevel.ERROR));
+            return Promise.reject(inJapanese);
+          }
           try {
             const res = await dispatch(
               getSynthAudioWorkaroundNoAsync({

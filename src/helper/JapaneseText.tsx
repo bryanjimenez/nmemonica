@@ -614,11 +614,9 @@ export function audioPronunciation(vocabulary: RawJapanese) {
     if (isAllKana) {
       q = vocabulary.pronounce;
     } else {
-      const error = new Error("No valid pronunciation", {
+      return new Error("No valid pronunciation", {
         cause: { code: "InvalidPronunciation", value: vocabulary },
       });
-
-      throw error;
     }
   } else {
     const w = JapaneseText.parse(vocabulary);
