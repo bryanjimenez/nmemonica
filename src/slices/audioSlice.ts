@@ -180,14 +180,17 @@ async function getFromVoiceSynth(
       }
     }
 
-    const removeHandler = () => {
-      w?.removeEventListener("message", workerHandler);
-    };
-    const workerHandler = (
-      event: MessageEvent<VoiceWorkerResponse | undefined>
-    ) => {
-      if (event.data === undefined) {
-        reject(new Error("Could not synthesize query"));
+    if (w === null) {
+      const err = `Failed to load worker voice-${tl}`;
+      reject(new Error(err));
+      return;
+    }
+
+    const aWorker = w;
+
+    const wMsgHandler = (event: MessageEvent<VoiceWorkerResponse | Error>) => {
+      if (event.data instanceof Error) {
+        reject(event.data);
         return;
       }
       const audio = event.data.buffer;
@@ -197,12 +200,10 @@ async function getFromVoiceSynth(
       });
 
       initialized = true;
-      removeHandler();
-
       resolve({ uid: event.data.uid, index: event.data.index, blob });
     };
 
-    w.addEventListener("message", workerHandler);
+    w.addEventListener("message", wMsgHandler, { once: true });
 
     const message: JaVoiceWorkerQuery = {
       uid,
@@ -213,7 +214,7 @@ async function getFromVoiceSynth(
     };
 
     if (initialized === true) {
-      w.postMessage(message);
+      aWorker.postMessage(message);
     } else {
       let tries = 0;
       while (tries < 10 && initialized === false) {
@@ -229,7 +230,8 @@ async function getFromVoiceSynth(
       }
 
       if (initialized === false) {
-        reject(new Error("Could not load @nmemonica/voice-ja"));
+        const err = `Could not initialize @nmemonica/voice-${tl} (${tries} tries)`;
+        reject(new Error(err));
       }
     }
   });

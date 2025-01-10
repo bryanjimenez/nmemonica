@@ -6,6 +6,7 @@ import voice_model_happy from "../../res/models/tohoku-f01/tohoku-f01-happy.htsv
 import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.htsvoice";
 import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice";
 import { type JapaneseVoiceType } from "../slices/audioSlice";
+import { exceptionToError } from ".";
 
 const wSelf = globalThis.self as unknown as Worker;
 
@@ -100,21 +101,27 @@ function messageHandler(event: MessageEvent) {
 
         resolve({ name, buffer });
       }
-    ).then(({name, buffer}) => {
-      voice = {name, buffer};
+    ).then(({ name, buffer }) => {
+      voice = { name, buffer };
 
-      const {
-        uid: resUid,
-        index: resIndex,
-        buffer: resBuffer,
-      } = jBuildSpeech(uid, index, query, new Uint8Array(buffer));
+      try {
+        const {
+          uid: resUid,
+          index: resIndex,
+          buffer: resBuffer,
+        } = jBuildSpeech(uid, index, query, new Uint8Array(buffer));
 
-      const response: VoiceWorkerResponse = {
-        uid: resUid,
-        index: resIndex,
-        buffer: resBuffer,
-      };
-      wSelf.postMessage(response);
+        const response: VoiceWorkerResponse = {
+          uid: resUid,
+          index: resIndex,
+          buffer: resBuffer,
+        };
+        wSelf.postMessage(response);
+      } catch (exception) {
+        const error = exceptionToError(exception, "voice-worker-ja");
+  
+        wSelf.postMessage(error);
+      }
     });
   }
 }

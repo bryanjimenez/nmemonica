@@ -92,6 +92,7 @@ import {
   toggleVocabularyTag,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
+import { getStackInitial } from "../../workers";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
@@ -597,7 +598,6 @@ export default function Vocabulary() {
     // prevent entering the if when
     // other dep change triggers useEffect
     prevLastNext.current = lastNext;
-
     if (
       reinforcedUID !== prevState.reinforcedUID ||
       selectedIndex !== prevState.selectedIndex ||
@@ -611,9 +611,9 @@ export default function Vocabulary() {
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
       if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const uid =
+        const curUid =
           reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
-        const v = getTerm(uid, filteredVocab, vocabList);
+        const v = getTerm(curUid, filteredVocab, vocabList);
 
         const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
         const vUid = getCacheUID(sayObj);
@@ -632,7 +632,18 @@ export default function Vocabulary() {
             pronunciation: v.english,
             index: reinforcedUID !== null ? undefined : selectedIndex,
           },
-        ]);
+        ]).catch((exception) => {
+          // likely getAudio failed
+
+          if (exception instanceof Error) {
+            let msg = exception.message;
+            if (msg === "unreachable") {
+              const stack = "at " + getStackInitial(exception);
+              msg = `cache:${v.english} ${vQuery} ${stack}`;
+            }
+            dispatch(logger(msg, DebugLevel.ERROR));
+          }
+        });
       }
 
       updateDailyGoal({
@@ -1340,32 +1351,45 @@ function useBuildGameActionsHandler(
           } else {
             const vQuery = audioPronunciation(sayObj);
 
-            const res = await dispatch(
-              getSynthAudioWorkaroundNoAsync({
-                key: vUid,
-                index: reinforcedUID !== null ? undefined : selectedIndex,
-                tl: "ja",
-                q: vQuery,
-              })
-            ).unwrap();
+            try {
+              const res = await dispatch(
+                getSynthAudioWorkaroundNoAsync({
+                  key: vUid,
+                  index: reinforcedUID !== null ? undefined : selectedIndex,
+                  tl: "ja",
+                  q: vQuery,
+                })
+              ).unwrap();
 
-            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-              (resolve) => {
-                resolve({
-                  uid: res.uid,
-                  buffer: copyBufferToCacheStore(
-                    audioCacheStore,
-                    res.uid,
-                    res.buffer
-                  ),
-                });
+              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+                (resolve) => {
+                  resolve({
+                    uid: res.uid,
+                    buffer: copyBufferToCacheStore(
+                      audioCacheStore,
+                      res.uid,
+                      res.buffer
+                    ),
+                  });
+                }
+              ).then((res) => {
+                if (vUid === res.uid) {
+                  return playAudio(res.buffer, AbortController);
+                }
+                throw new Error("Incorrect uid");
+              });
+            } catch (exception) {
+              if (exception instanceof Error) {
+                let msg = exception.message;
+                if (msg === "unreachable") {
+                  const stack = "at " + getStackInitial(exception);
+                  msg = `tts:${vQuery} ${stack}`;
+                }
+                dispatch(logger(msg, DebugLevel.ERROR));
               }
-            ).then((res) => {
-              if (vUid === res.uid) {
-                return playAudio(res.buffer, AbortController);
-              }
-              throw new Error("Incorrect uid");
-            });
+
+              return Promise.resolve();
+            }
           }
         } else {
           //if (direction === "down")
@@ -1383,32 +1407,45 @@ function useBuildGameActionsHandler(
           if (cachedAudioBuf !== undefined) {
             actionPromise = playAudio(cachedAudioBuf);
           } else {
-            const res = await dispatch(
-              getSynthAudioWorkaroundNoAsync({
-                key: enUid,
-                index: reinforcedUID !== null ? undefined : selectedIndex,
-                tl: "en",
-                q: inEnglish,
-              })
-            ).unwrap();
+            try {
+              const res = await dispatch(
+                getSynthAudioWorkaroundNoAsync({
+                  key: enUid,
+                  index: reinforcedUID !== null ? undefined : selectedIndex,
+                  tl: "en",
+                  q: inEnglish,
+                })
+              ).unwrap();
 
-            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-              (resolve) => {
-                resolve({
-                  uid: res.uid,
-                  buffer: copyBufferToCacheStore(
-                    audioCacheStore,
-                    res.uid,
-                    res.buffer
-                  ),
-                });
+              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+                (resolve) => {
+                  resolve({
+                    uid: res.uid,
+                    buffer: copyBufferToCacheStore(
+                      audioCacheStore,
+                      res.uid,
+                      res.buffer
+                    ),
+                  });
+                }
+              ).then((res) => {
+                if (enUid === res.uid) {
+                  return playAudio(res.buffer, AbortController);
+                }
+                throw new Error("Incorrect uid");
+              });
+            } catch (exception) {
+              if (exception instanceof Error) {
+                let msg = exception.message;
+                if (msg === "unreachable") {
+                  const stack = "at " + getStackInitial(exception);
+                  msg = `tts:${inEnglish} ${stack}`;
+                }
+                dispatch(logger(msg, DebugLevel.ERROR));
               }
-            ).then((res) => {
-              if (enUid === res.uid) {
-                return playAudio(res.buffer, AbortController);
-              }
-              throw new Error("Incorrect uid");
-            });
+
+              return Promise.resolve();
+            }
           }
         }
       }

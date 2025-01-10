@@ -86,6 +86,7 @@ import {
   TermSortBy,
   TermSortByLabel,
 } from "../../slices/settingHelper";
+import { getStackInitial } from "../../workers";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
@@ -539,7 +540,18 @@ export default function Phrases() {
             pronunciation: curP.english,
             index: reinforcedUID !== null ? undefined : selectedIndex,
           },
-        ]);
+        ]).catch((exception) => {
+          // likely getAudio failed
+
+          if (exception instanceof Error) {
+            let msg = exception.message;
+            if (msg === "unreachable") {
+              const stack = "at " + getStackInitial(exception);
+              msg = `cache:${curP.english} ${inJapanese} ${stack}`;
+            }
+            dispatch(logger(msg, DebugLevel.ERROR));
+          }
+        });
       }
 
       updateDailyGoal({
@@ -1168,32 +1180,44 @@ function buildGameActionsHandler(
         } else {
           const inJapanese = audioPronunciation(phrase);
 
-          const res = await dispatch(
-            getSynthAudioWorkaroundNoAsync({
-              key: phrase.uid,
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-              tl: "ja",
-              q: inJapanese,
-            })
-          ).unwrap();
+          try {
+            const res = await dispatch(
+              getSynthAudioWorkaroundNoAsync({
+                key: phrase.uid,
+                index: reinforcedUID !== null ? undefined : selectedIndex,
+                tl: "ja",
+                q: inJapanese,
+              })
+            ).unwrap();
 
-          actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-            (resolve) => {
-              resolve({
-                uid: res.uid,
-                buffer: copyBufferToCacheStore(
-                  audioCacheStore,
-                  res.uid,
-                  res.buffer
-                ),
-              });
+            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+              (resolve) => {
+                resolve({
+                  uid: res.uid,
+                  buffer: copyBufferToCacheStore(
+                    audioCacheStore,
+                    res.uid,
+                    res.buffer
+                  ),
+                });
+              }
+            ).then((res) => {
+              if (phrase.uid === res.uid) {
+                return playAudio(res.buffer, AbortController);
+              }
+              throw new Error("Incorrect uid");
+            });
+          } catch (exception) {
+            if (exception instanceof Error) {
+              let msg = exception.message;
+              if (msg === "unreachable") {
+                const stack = "at " + getStackInitial(exception);
+                msg = `tts:${inJapanese} ${stack}`;
+              }
+              dispatch(logger(msg, DebugLevel.ERROR));
             }
-          ).then((res) => {
-            if (phrase.uid === res.uid) {
-              return playAudio(res.buffer, AbortController);
-            }
-            throw new Error("Incorrect uid");
-          });
+            return Promise.resolve();
+          }
         }
       } else {
         //if (direction === "down")
@@ -1205,32 +1229,44 @@ function buildGameActionsHandler(
         if (cachedAudioBuf !== undefined) {
           actionPromise = playAudio(cachedAudioBuf);
         } else {
-          const res = await dispatch(
-            getSynthAudioWorkaroundNoAsync({
-              key: enUid,
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-              tl: "en",
-              q: inEnglish,
-            })
-          ).unwrap();
+          try {
+            const res = await dispatch(
+              getSynthAudioWorkaroundNoAsync({
+                key: enUid,
+                index: reinforcedUID !== null ? undefined : selectedIndex,
+                tl: "en",
+                q: inEnglish,
+              })
+            ).unwrap();
 
-          actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-            (resolve) => {
-              resolve({
-                uid: res.uid,
-                buffer: copyBufferToCacheStore(
-                  audioCacheStore,
-                  res.uid,
-                  res.buffer
-                ),
-              });
+            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+              (resolve) => {
+                resolve({
+                  uid: res.uid,
+                  buffer: copyBufferToCacheStore(
+                    audioCacheStore,
+                    res.uid,
+                    res.buffer
+                  ),
+                });
+              }
+            ).then((res) => {
+              if (enUid === res.uid) {
+                return playAudio(res.buffer, AbortController);
+              }
+              throw new Error("Incorrect uid");
+            });
+          } catch (exception) {
+            if (exception instanceof Error) {
+              let msg = exception.message;
+              if (msg === "unreachable") {
+                const stack = "at " + getStackInitial(exception);
+                msg = `tts:${inEnglish} ${stack}`;
+              }
+              dispatch(logger(msg, DebugLevel.ERROR));
             }
-          ).then((res) => {
-            if (enUid === res.uid) {
-              return playAudio(res.buffer, AbortController);
-            }
-            throw new Error("Incorrect uid");
-          });
+            return Promise.resolve();
+          }
         }
       }
     }
