@@ -84,7 +84,7 @@ export class JapaneseText {
   }
 
   hasFurigana() {
-    return this._kanji ? true : false;
+    return this._kanji !== undefined ? true : false;
   }
 
   /**
@@ -92,7 +92,7 @@ export class JapaneseText {
    * @returns {string} spelling may contain kanji
    */
   getSpellingRAW() {
-    if (this._kanji) {
+    if (this._kanji !== undefined) {
       return this._kanji;
     } else {
       return this._furigana;
@@ -104,7 +104,7 @@ export class JapaneseText {
    * @returns {string} spelling may contain kanji
    */
   getSpelling() {
-    if (this._kanji) {
+    if (this._kanji !== undefined) {
       return this._kanji.replaceAll(" ", "");
     } else {
       return this._furigana.replaceAll(" ", "");
@@ -157,7 +157,9 @@ export class JapaneseText {
   }
 
   toString(): string {
-    return this._furigana + (this._kanji ? "\n" + this._kanji : "");
+    return (
+      this._furigana + (this._kanji !== undefined ? "\n" + this._kanji : "")
+    );
   }
 
   /**
@@ -185,8 +187,9 @@ export class JapaneseText {
         try {
           furiganaParseRetry(pronunciation, orthography);
         } catch (e) {
+          // eslint-disable-next-line no-console
           console.log(e);
-          // logger...
+          // TODO: take a callback to log fail
           hint = false;
         }
       }
@@ -307,7 +310,9 @@ export class JapaneseText {
         );
       } catch (e) {
         if (options?.showError !== false) {
-          console.error(e);
+          // eslint-disable-next-line no-console
+          console.log(e);
+          // TODO: take a callback to log fail
         }
         htmlElement = fallBackHtml;
       }
@@ -334,13 +339,13 @@ function japaneseTextParse(
     jText = new JapaneseText(furigana, kanji);
   }
 
-  if (rawObj.slang && rawObj.slang) {
+  if (rawObj.slang === true) {
     jText.slang = true;
   }
-  if (rawObj.keigo && rawObj.keigo) {
+  if (rawObj.keigo === true) {
     jText.keigo = true;
   }
-  if (rawObj.adj && (rawObj.adj === "na" || rawObj.adj === "i")) {
+  if (rawObj?.adj === "na" || rawObj?.adj === "i") {
     jText.adj = rawObj.adj;
   }
 
@@ -618,7 +623,7 @@ export function validateParseFurigana(
  */
 export function audioPronunciation(vocabulary: RawJapanese) {
   let q;
-  if (vocabulary.pronounce) {
+  if (vocabulary.pronounce !== undefined) {
     const isAllKana = vocabulary.pronounce
       .split("")
       .every((c) => isHiragana(c) || isKatakana(c));
