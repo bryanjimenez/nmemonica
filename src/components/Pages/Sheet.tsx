@@ -14,10 +14,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { jtox, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
-  getUserSettings,
-  setUserSetting,
-} from "../../helper/userSettingsHelper";
-import {
   getActiveSheet,
   getWorkbookFromIndexDB,
   metaDataNames,
@@ -34,6 +30,10 @@ import {
   type FilledSheetData,
   isFilledSheetData,
 } from "../../helper/sheetHelperImport";
+import {
+  getUserSettings,
+  setUserSetting,
+} from "../../helper/userSettingsHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -165,10 +165,6 @@ export default function Sheet() {
   }, [dispatch, resetSearchCB, workbookImported]);
 
   const saveSheetHandlerCB = useCallback(() => {
-    if (!wbRef.current) {
-      throw new Error("No Workbook");
-    }
-
     if (wbRef.current === null) {
       throw new Error("Expected workbook");
     }
@@ -415,7 +411,6 @@ export default function Sheet() {
         // initialize app setttings from local storage
         const settingsP = dispatch(appSettingsInitialized());
 
-        // eslint-disable-next-line
         importCompleteP = [...importCompleteP, settingsP];
       }
 
@@ -468,7 +463,6 @@ export default function Sheet() {
             });
         });
 
-        // eslint-disable-next-line
         importCompleteP = [...importCompleteP, workbookP];
       }
 
