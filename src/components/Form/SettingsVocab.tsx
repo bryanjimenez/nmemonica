@@ -17,7 +17,9 @@ import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
+import { logger } from "../../slices/globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   TermSortByLabel,
@@ -110,7 +112,8 @@ export default function SettingsVocab() {
     const error = new Error("Stale vocabulary active group", {
       cause: { code: "StaleVocabActiveGrp", value: stale },
     });
-    throw error;
+    dispatch(logger(error.message, DebugLevel.ERROR));
+    dispatch(logger(JSON.stringify(stale), DebugLevel.ERROR));
   }
 
   const el = (

@@ -108,6 +108,9 @@ export default function OppositesGame() {
   if (order.length === 0) return <NotReady addlStyle="main-panel" />;
 
   const game = prepareGame(oppositeList, order, selectedIndex);
+  if (game instanceof Error) {
+    return <NotReady addlStyle="main-panel" text={game.message} />;
+  }
 
   const progress = ((selectedIndex + 1) / oppositeList.length) * 100;
 
@@ -153,7 +156,7 @@ function prepareGame(
 ) {
   const minChoices = 4;
   if (opposites.length < minChoices) {
-    throw new Error(
+    return new Error(
       `Required ${minChoices} choices minimum. Found ${opposites.length}`
     );
   }

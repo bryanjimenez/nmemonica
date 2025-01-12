@@ -9,6 +9,7 @@ import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups, labelOptions } from "../../helper/gameHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import type { AppDispatch } from "../../slices";
+import { logger } from "../../slices/globalSlice";
 import {
   getPhrase,
   removeFrequencyPhrase,
@@ -23,6 +24,7 @@ import {
   togglePhrasesRomaji,
 } from "../../slices/phraseSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   TermSortByLabel,
@@ -68,7 +70,8 @@ export default function SettingsPhrase() {
     const error = new Error("Stale phrases active group", {
       cause: { code: "StalePhraseActiveGrp", value: stale },
     });
-    throw error;
+    dispatch(logger(error.message, DebugLevel.ERROR));
+    dispatch(logger(JSON.stringify(stale), DebugLevel.ERROR));
   }
 
   const el = (

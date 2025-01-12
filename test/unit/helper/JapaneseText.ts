@@ -69,24 +69,26 @@ describe("JapanseText", function () {
   });
 
   describe("furiganaParse", function () {
-    it("non matching input should throw", function () {
+    it("non matching input returns Error", function () {
       // TODO: do more edge case testing
       const said = "きたな"; //い
       const written = "汚い";
 
-      const actual = () => furiganaParse(said, written);
+      const actual = furiganaParse(said, written);
 
-      expect(actual).to.throw(Error, "The two phrases do not match");
+      expect(actual).to.be.instanceOf(Error);
+      expect(actual.message).to.eq("The two phrases do not match");
     });
-    it("failed parse validation should throw", function () {
+    it("failed parse validation returns Error", function () {
       const said = "いつつ";
       const written = "五つ";
 
-      const actual = () => furiganaParse(said, written);
+      const actual = furiganaParse(said, written);
 
-      expect(actual).to.throw(Error, "Failed to parse text to build furigana");
+      expect(actual).to.be.instanceOf(Error);
+      expect(actual.message).to.eq("Failed to parse text to build furigana");
     });
-    it("failed parse validation w/ space workaround should not throw", function () {
+    it("failed parse validation w/ space workaround should not return Error", function () {
       const said = "いつ つ";
       const written = "五 つ";
 
@@ -97,16 +99,16 @@ describe("JapanseText", function () {
         startsWKana: false,
       };
 
-      const actual = () => furiganaParse(said, written);
+      const actual = furiganaParse(said, written);
 
-      expect(actual).to.not.throw(
-        Error,
-        "Failed to parse text to build furigana"
+      expect(actual).to.not.be.instanceOf(
+        Error
+        // "Failed to parse text to build furigana"
       );
-      expect(actual()).to.deep.equal(expected);
+      expect(actual).to.deep.equal(expected);
     });
 
-    it("failed parse validation RETRY should not throw", function () {
+    it("failed parse validation RETRY should not return Error", function () {
       const said = "いつつ";
       const written = "五つ";
 
@@ -117,13 +119,13 @@ describe("JapanseText", function () {
         startsWKana: false,
       };
 
-      const actual = () => furiganaParseRetry(said, written);
+      const actual = furiganaParseRetry(said, written);
 
-      expect(actual).to.not.throw(
-        Error,
-        "Failed to parse text to build furigana"
+      expect(actual).to.not.be.instanceOf(
+        Error
+        // "Failed to parse text to build furigana"
       );
-      expect(actual()).to.deep.equal(expected);
+      expect(actual).to.deep.equal(expected);
     });
 
     it("starting kanji ending hiragana", function () {
@@ -134,10 +136,8 @@ describe("JapanseText", function () {
 
       const said = "きたない";
       const written = "汚い";
-      const { kanjis, furiganas, okuriganas, startsWKana } = furiganaParse(
-        said,
-        written
-      );
+      const result = furiganaParse(said, written);
+      const { kanjis, furiganas, okuriganas, startsWKana } = result;
 
       expect(kanjis, "kanjis").to.deep.eq(expectedKanjis);
       expect(furiganas, "furiganas").to.deep.eq(expectedFuriganas);
