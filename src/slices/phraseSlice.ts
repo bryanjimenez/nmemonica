@@ -27,6 +27,7 @@ import {
 } from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import {
+  getSheetFromIndexDB,
   getTagsFromSheet,
   getWorkbookFromIndexDB,
   setTagsFromSheet,
@@ -158,15 +159,7 @@ export const getPhrase = createAsyncThunk(
   "phrase/getPhrase",
   async (_arg, thunkAPI) => {
     // TODO: rename state.phrases -> state.phrase
-    return getWorkbookFromIndexDB().then((workbook) => {
-      const sheet = workbook.find(
-        (s) =>
-          s.name.toLowerCase() ===
-          workbookSheetNames.phrases.prettyName.toLowerCase()
-      );
-      if (sheet === undefined) {
-        throw new Error("Expected to find Phases sheet in workbook");
-      }
+    return getSheetFromIndexDB("phrases").then((sheet) => {
       const { data: jsonValue, hash: version } = sheetDataToJSON(sheet) as {
         data: Record<string, SourcePhrase>;
         hash: string;
@@ -248,14 +241,12 @@ export const togglePhraseTag = createAsyncThunk(
     // const dispatch = thunkAPI.dispatch as AppDispatch;
     const sheetName = workbookSheetNames.phrases.prettyName;
 
-    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
+    return getWorkbookFromIndexDB(["phrases"]).then((sheetArr: SheetData[]) => {
       // Get current tags for term
       const vIdx = sheetArr.findIndex(
         (s) => s.name.toLowerCase() === sheetName.toLowerCase()
       );
-      if (vIdx === -1) {
-        throw new Error(`Expected to find ${sheetName} sheet`);
-      }
+
       const s = { ...sheetArr[vIdx] };
 
       const updatedSheet = setTagsFromSheet(s, query, tag);
@@ -291,14 +282,12 @@ export const getPhraseTags = createAsyncThunk(
     const { query } = arg;
     const sheetName = workbookSheetNames.phrases.prettyName;
 
-    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
+    return getWorkbookFromIndexDB(["phrases"]).then((sheetArr: SheetData[]) => {
       // Get current tags for term
       const vIdx = sheetArr.findIndex(
         (s) => s.name.toLowerCase() === sheetName.toLowerCase()
       );
-      if (vIdx === -1) {
-        throw new Error(`Expected to find ${sheetName} sheet`);
-      }
+
       const s = { ...sheetArr[vIdx] };
 
       return getTagsFromSheet(s, query);

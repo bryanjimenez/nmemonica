@@ -22,10 +22,7 @@ import {
   buildTagObject,
   getPropsFromTags,
 } from "../helper/reducerHelper";
-import {
-  getWorkbookFromIndexDB,
-  workbookSheetNames,
-} from "../helper/sheetHelper";
+import { getSheetFromIndexDB } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
@@ -91,15 +88,7 @@ export const kanjiInitState: KanjiInitSlice = {
  * Fetch vocabulary
  */
 export const getKanji = createAsyncThunk("kanji/getKanji", async () => {
-  return getWorkbookFromIndexDB().then((workbook) => {
-    const sheet = workbook.find(
-      (s) =>
-        s.name.toLowerCase() ===
-        workbookSheetNames.kanji.prettyName.toLowerCase()
-    );
-    if (sheet === undefined) {
-      throw new Error("Expected to find Kanji sheet in workbook");
-    }
+  return getSheetFromIndexDB("kanji").then((sheet) => {
     const { data: value, hash: version } = sheetDataToJSON(sheet) as {
       data: Record<string, Kanji>;
       hash: string;
@@ -258,7 +247,6 @@ const kanjiSlice = createSlice({
         }
       );
 
-
       void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
@@ -398,7 +386,11 @@ const kanjiSlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        userSettingAttrDelete(new Date(), "/kanji/", "spaRepMaxReviewItem");
+        void userSettingAttrDelete(
+          new Date(),
+          "/kanji/",
+          "spaRepMaxReviewItem"
+        );
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
         const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
@@ -516,7 +508,7 @@ const kanjiSlice = createSlice({
         state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        userSettingAttrDelete(new Date(), "/kanji/", "viewGoal");
+        void userSettingAttrDelete(new Date(), "/kanji/", "viewGoal");
       }
     },
   },

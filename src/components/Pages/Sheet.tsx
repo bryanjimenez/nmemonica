@@ -415,7 +415,8 @@ export default function Sheet() {
       }
 
       if (importWorkbook && importWorkbook.length > 0) {
-        const workbookP = getWorkbookFromIndexDB().then((dbWorkbook) => {
+        const allSheetRequired = Object.keys(workbookSheetNames).map(k=>k as keyof typeof workbookSheetNames)
+        const workbookP = getWorkbookFromIndexDB(allSheetRequired).then((dbWorkbook) => {
           const trimmed = Object.values(workbookSheetNames).map((w) => {
             const { prettyName: prettyName } = w;
 
@@ -426,20 +427,12 @@ export default function Sheet() {
               return removeLastRowIfBlank(fileSheet);
             }
 
-            const dbSheet = dbWorkbook.find(
+            // dbWorkbook guarantees to contain sheet
+            const dbSheetIdx = dbWorkbook.findIndex(
               (d) => d.name.toLowerCase() === prettyName.toLowerCase()
             );
-            if (dbSheet) {
-              return dbSheet;
-            }
-
-            // if it never existed add blank placeholder
-            return jtox(
-              {
-                /** no data just headers */
-              },
-              prettyName
-            );
+            // keep existing or blank placeholder
+            return dbWorkbook[dbSheetIdx];
           });
 
           // store workbook in indexedDB

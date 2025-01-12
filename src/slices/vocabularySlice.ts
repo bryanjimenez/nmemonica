@@ -28,6 +28,7 @@ import {
   buildVocabularyArray,
 } from "../helper/reducerHelper";
 import {
+  getSheetFromIndexDB,
   getTagsFromSheet,
   getWorkbookFromIndexDB,
   setTagsFromSheet,
@@ -105,15 +106,7 @@ export const vocabularyInitState: VocabularyInitSlice = {
 export const getVocabulary = createAsyncThunk(
   "vocabulary/getVocabulary",
   async () => {
-    return getWorkbookFromIndexDB().then((workbook) => {
-      const sheet = workbook.find(
-        (s) =>
-          s.name.toLowerCase() ===
-          workbookSheetNames.vocabulary.prettyName.toLowerCase()
-      );
-      if (sheet === undefined) {
-        throw new Error("Expected to find Vocabulary sheet in workbook");
-      }
+    return getSheetFromIndexDB("vocabulary").then((sheet) => {
       const { data: value, hash: version } = sheetDataToJSON(sheet) as {
         data: Record<string, Vocabulary>;
         hash: string;
@@ -186,38 +179,38 @@ export const toggleVocabularyTag = createAsyncThunk(
     const { query, tag } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
-      // Get current tags for term
-      const vIdx = sheetArr.findIndex(
-        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
-      );
-      if (vIdx === -1) {
-        throw new Error(`Expected to find ${sheetName} sheet`);
-      }
-      const s = { ...sheetArr[vIdx] };
+    return getWorkbookFromIndexDB(["vocabulary"]).then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
 
-      const updatedSheet = setTagsFromSheet(s, query, tag);
+        const s = { ...sheetArr[vIdx] };
 
-      const wb = [
-        ...sheetArr.filter(
-          (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
-        ),
-        updatedSheet,
-      ];
+        const updatedSheet = setTagsFromSheet(s, query, tag);
 
-      // Save to indexedDB
-      return openIDB()
-        .then((db) =>
-          putIDBItem(
-            { db, store: IDBStores.WORKBOOK },
-            { key: "0", workbook: wb }
+        const wb = [
+          ...sheetArr.filter(
+            (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
+          ),
+          updatedSheet,
+        ];
+
+        // Save to indexedDB
+        return openIDB()
+          .then((db) =>
+            putIDBItem(
+              { db, store: IDBStores.WORKBOOK },
+              { key: "0", workbook: wb }
+            )
           )
-        )
-        .then(() => {
-          // TODO: update json?
-          // TODO: update state
-        });
-    });
+          .then(() => {
+            // TODO: update json?
+            // TODO: update state
+          });
+      }
+    );
   }
 );
 
@@ -227,18 +220,18 @@ export const getVocabularyTags = createAsyncThunk(
     const { query } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
-      // Get current tags for term
-      const vIdx = sheetArr.findIndex(
-        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
-      );
-      if (vIdx === -1) {
-        throw new Error(`Expected to find ${sheetName} sheet`);
-      }
-      const s = { ...sheetArr[vIdx] };
+    return getWorkbookFromIndexDB(["vocabulary"]).then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
 
-      return getTagsFromSheet(s, query);
-    });
+        const s = { ...sheetArr[vIdx] };
+
+        return getTagsFromSheet(s, query);
+      }
+    );
   }
 );
 
