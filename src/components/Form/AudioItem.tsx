@@ -12,6 +12,8 @@ import {
   type AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
 } from "../../slices/audioSlice";
+import { logger } from "../../slices/globalSlice";
+import { DebugLevel } from "../../slices/settingHelper";
 
 interface AudioItemProps {
   visible: boolean;
@@ -44,17 +46,19 @@ export default function AudioItem(props: AudioItemProps) {
       })
     ).unwrap();
 
-    void new Promise<{ uid: string; buffer: ArrayBuffer }>((resolve) => {
-      resolve({
-        uid: res.uid,
-        buffer: copyBufferToCacheStore(audioCacheStore, res.uid, res.buffer),
+      void new Promise<{ uid: string; buffer: ArrayBuffer }>((resolve) => {
+        resolve({
+          uid: res.uid,
+          buffer: copyBufferToCacheStore(audioCacheStore, res.uid, res.buffer),
+        });
+      }).then((res) => {
+        if (uid !== res.uid) {
+          dispatch(
+            logger(`No Async Workaround: ${uid} ${res.uid}`, DebugLevel.ERROR)
+          );
+        }
+        void playAudio(res.buffer);
       });
-    }).then((res) => {
-      if (uid === res.uid) {
-        return playAudio(res.buffer);
-      }
-      throw new Error("Incorrect uid");
-    });
   };
 
   return (

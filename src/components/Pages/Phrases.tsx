@@ -1168,10 +1168,12 @@ function buildGameActionsHandler(
                 });
               }
             ).then((res) => {
-              if (phrase.uid === res.uid) {
-                return playAudio(res.buffer, AbortController);
+              if (phrase.uid !== res.uid) {
+                const msg = `No Async Workaround: ${phrase.uid} ${res.uid}`;
+                dispatch(logger(msg, DebugLevel.ERROR));
+                return Promise.reject(new Error(msg));
               }
-              throw new Error("Incorrect uid");
+              return playAudio(res.buffer, AbortController);
             });
           } catch (exception) {
             if (exception instanceof Error) {
@@ -1217,10 +1219,12 @@ function buildGameActionsHandler(
                 });
               }
             ).then((res) => {
-              if (enUid === res.uid) {
-                return playAudio(res.buffer, AbortController);
+              if (enUid !== res.uid) {
+                const msg = `No Async Workaround: ${enUid} ${res.uid}`;
+                dispatch(logger(msg, DebugLevel.ERROR));
+                return Promise.reject(new Error(msg));
               }
-              throw new Error("Incorrect uid");
+              return playAudio(res.buffer, AbortController);
             });
           } catch (exception) {
             if (exception instanceof Error) {
