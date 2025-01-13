@@ -1456,6 +1456,11 @@ function partOfSpeechPronunciation(
   if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {
     const verb = verbToTargetForm(vocabulary, verbForm);
 
+    if (verb instanceof Error) {
+      // when target form fails fall back to root
+      return vocabulary;
+    }
+
     sayObj = {
       ...vocabulary,
       japanese: verb.toString(),
