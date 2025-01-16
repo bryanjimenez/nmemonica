@@ -65,7 +65,7 @@
     "@types/eslint": "^8.44.6",
     "@types/glob": "^8.1.0",
     "@types/license-checker-webpack-plugin": "^0.2.4",
-    "@types/lodash": "^4.14.195",
+    "@types/lodash": "^4.17.14",
     "@types/md5": "^2.3.5",
     "@types/mocha": "^10.0.10",
     "@types/n-readlines": "^1.0.6",
