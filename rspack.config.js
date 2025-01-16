@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import rspack from "@rspack/core";
+import rspack, { experiments } from "@rspack/core";
 import refreshPlugin from "@rspack/plugin-react-refresh";
 import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import path, { sep } from "node:path";
@@ -44,6 +44,10 @@ export default function rspackConfig(
     output: {
       filename: "[name].[chunkhash:8].js",
       path: path.resolve(__dirname, "dist"),
+    },
+
+    experiments: {
+      css: true,
     },
 
     // devtool: isProduction ? false : "eval-cheap-module-source-map",
