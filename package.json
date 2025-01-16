@@ -93,7 +93,7 @@
     "mocha": "^11.0.1",
     "n-readlines": "^1.0.1",
     "node-polyfill-webpack-plugin": "^4.0.0",
-    "nyc": "^17.0.0",
+    "nyc": "^17.1.0",
     "prettier": "^3.0.3",
     "react-refresh": "^0.16.0",
     "sinon": "^18.0.0",
