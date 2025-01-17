@@ -2,17 +2,33 @@ import type { GroupListMap, RawVocabulary, SourceVocabulary } from "nmemonica";
 
 export function getPropsFromTags(tag: string | undefined) {
   let tagList: string[] = [];
+  let strokeN: number | undefined;
   try {
     if (tag !== undefined) {
-      const { tags } = JSON.parse(tag) as { tags: string[] };
-      tagList = tags;
+      const { tags, stroke } = JSON.parse(tag) as {
+        tags?: string[];
+        stroke?: number;
+      };
+      tagList = tags ?? [];
+
+      strokeN = Number(stroke);
+      strokeN = !Number.isNaN(strokeN) ? strokeN : undefined;
     }
-  } catch (err) {
+  } catch {
     // TODO: Return error obj?
   }
 
+  let remainingTags: string[] = [];
+  if (strokeN !== undefined) {
+    remainingTags = [...remainingTags, "Stroke_" + strokeN];
+  }
+
   if (tagList.length === 0)
-    return { tags: [] as string[], similarKanji: [] as string[] };
+    return {
+      tags: remainingTags,
+      similarKanji: [] as string[],
+      strokeN,
+    };
 
   const h = "[\u3041-\u309F]{1,4}"; //  hiragana particle
   const commonK = "\u4E00-\u9FAF"; //   kanji
@@ -36,7 +52,6 @@ export function getPropsFromTags(tag: string | undefined) {
   const isKeigo = new RegExp(/^keigo$/i);
   const isIntransitive = new RegExp(/^intr$/i);
 
-  let remainingTags: string[] = [];
   let particles: string[] = [];
   let inverse: string | undefined;
   let slang: boolean | undefined;
@@ -65,7 +80,7 @@ export function getPropsFromTags(tag: string | undefined) {
         break;
       case "EV1":
         exv = 1;
-        remainingTags = [...remainingTags, 'Exception Verb'];
+        remainingTags = [...remainingTags, "Exception Verb"];
         break;
       case isIntransitive.test(t) && t:
         intr = true;
@@ -73,7 +88,7 @@ export function getPropsFromTags(tag: string | undefined) {
         break;
       case isIntransitiveWPair.test(t) && t:
         trans = t.split(":")[1];
-        remainingTags = [...remainingTags, 'intr'];
+        remainingTags = [...remainingTags, "intr"];
         break;
       case isAdjective.test(t) && t:
         adj = t.split("-")[0];
@@ -114,7 +129,7 @@ export function getPropsFromTags(tag: string | undefined) {
       default:
         if (t && nonWhiteSpace.test(t)) {
           // don't add empty whitespace
-            remainingTags = [...remainingTags, t];
+          remainingTags = [...remainingTags, t];
         }
     }
   });
@@ -141,6 +156,8 @@ export function getPropsFromTags(tag: string | undefined) {
     radicalExample,
     /** Similar Kanji that can be confused with this Kanji */
     similarKanji,
+    /** Number of strokes */
+    strokeN,
   };
 }
 

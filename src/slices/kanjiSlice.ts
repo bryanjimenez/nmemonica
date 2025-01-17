@@ -3,7 +3,9 @@ import merge from "lodash/fp/merge";
 import md5 from "md5";
 import type { MetaDataObj, RawKanji } from "nmemonica";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -87,16 +89,27 @@ export const kanjiInitState: KanjiInitSlice = {
 /**
  * Fetch vocabulary
  */
-export const getKanji = createAsyncThunk("kanji/getKanji", async () => {
-  return getSheetFromIndexDB("kanji").then((sheet) => {
-    const { data: value, hash: version } = sheetDataToJSON(sheet) as {
-      data: Record<string, Kanji>;
-      hash: string;
-    };
+export const getKanji = createAsyncThunk(
+  "kanji/getKanji",
+  async (_, thunkAPI) => {
+    return getSheetFromIndexDB("kanji")
+      .then((sheet) => {
+        const { data: value, hash: version } = sheetDataToJSON(sheet) as {
+          data: Record<string, Kanji>;
+          hash: string;
+        };
 
-    return { value, version };
-  });
-});
+        return { value, version };
+      })
+      .catch((exception) => {
+        if (exception instanceof Error) {
+          thunkAPI.dispatch(logger(exception.message, DebugLevel.ERROR));
+        }
+
+        throw exception;
+      });
+  }
+);
 
 export const kanjiSettingsFromAppStorage = createAsyncThunk(
   "kanji/kanjiSettingsFromAppStorage",
@@ -521,7 +534,7 @@ const kanjiSlice = createSlice({
 
       let kanjiArr: RawKanji[] = Object.keys(v).map((k) => {
         const iKanji = v[k];
-        const { tags, radicalExample, phoneticKanji, similarKanji } =
+        const { tags, radicalExample, phoneticKanji, similarKanji, strokeN } =
           getPropsFromTags(iKanji.tag);
 
         const validSimilars = similarKanji.reduce<string[]>((acc, s) => {
@@ -547,6 +560,7 @@ const kanjiSlice = createSlice({
 
           // Derived from tag
           tags,
+          strokeN,
 
           radical: radicalExample ? { example: radicalExample } : undefined,
           phoneticKanji,

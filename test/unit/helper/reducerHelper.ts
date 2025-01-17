@@ -111,6 +111,28 @@ describe("reducerHelper", function () {
         expect(tags).to.be.length(expected.length).and.include.members(expected);
         expect(similarKanji).to.be.length(2).and.include.members(["反","友"]);
       });
+      it("stroke count missing", function () {
+        const initialTags = '{"tags":["s:反,友"]}';
+        const { strokeN } = getPropsFromTags(initialTags);
+        expect(strokeN).to.be.undefined;
+      });
+      it("stroke count not a number", function () {
+        const initialTags = '{"tags":["s:反,友"], "stroke":"x"}';
+        const { strokeN } = getPropsFromTags(initialTags);
+        expect(strokeN).to.be.undefined;
+      });
+      it("stroke count is a number", function () {
+        const initialTags = '{"stroke":1}';
+        const { strokeN, tags } = getPropsFromTags(initialTags);
+        expect(strokeN).to.eq(1);
+        expect(tags).to.contain("Stroke_1");
+      });
+      it('stroke count is a "number"', function () {
+        const initialTags = '{"tags":[], "stroke":"6"}';
+        const { strokeN, tags } = getPropsFromTags(initialTags);
+        expect(strokeN).to.eq(6);
+        expect(tags).to.contain("Stroke_6");
+      });
     })
 
     describe("vocabulary", function () {
