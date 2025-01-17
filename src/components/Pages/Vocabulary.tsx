@@ -142,14 +142,14 @@ export default function Vocabulary() {
 
   const [frequency, setFrequency] = useState<string[]>([]); // subset of frequency words within current active group
 
-  const naFlip = useRef();
+  const naFlip = useRef(undefined);
 
   const [wasPlayed, setWasPlayed] = useState(false);
 
   const [scrollJOrder, setScrollJOrder] = useState(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
-  const accuracyModifiedRef = useRef<undefined | null | number>();
+  const accuracyModifiedRef = useRef<number | null>(undefined);
 
   const {
     motionThreshold,

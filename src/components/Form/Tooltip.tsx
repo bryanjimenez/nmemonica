@@ -35,7 +35,7 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
   const [showSlider, setShowSlider] = useState(false);
   const arrowRef = useRef(null);
   const oldKey = useRef(idKey);
-  const hiding = useRef<NodeJS.Timeout | typeof READY | undefined>();
+  const hiding = useRef<NodeJS.Timeout | typeof READY>(undefined);
   const fadeTimeout = useRef(timeout);
 
   // https://floating-ui.com/docs/react

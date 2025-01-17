@@ -131,7 +131,7 @@ export default function Phrases() {
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
-  const accuracyModifiedRef = useRef<undefined | null | number>();
+  const accuracyModifiedRef = useRef<number | null>(undefined);
 
   const {
     // Changing during game
