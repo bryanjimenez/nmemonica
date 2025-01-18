@@ -7,7 +7,9 @@ import {
 import merge from "lodash/fp/merge";
 import type { GroupListMap, MetaDataObj, RawVocabulary } from "nmemonica";
 
+import { logger } from "./globalSlice";
 import {
+  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -216,12 +218,12 @@ export const toggleVocabularyTag = createAsyncThunk(
 
 export const getVocabularyTags = createAsyncThunk(
   "vocabulary/getVocabularyTags",
-  (arg: { query: string }) => {
+  (arg: { query: string }, thunkAPI) => {
     const { query } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB(["vocabulary"]).then(
-      (sheetArr: SheetData[]) => {
+    return getWorkbookFromIndexDB(["vocabulary"])
+      .then((sheetArr: SheetData[]) => {
         // Get current tags for term
         const vIdx = sheetArr.findIndex(
           (s) => s.name.toLowerCase() === sheetName.toLowerCase()
@@ -230,8 +232,14 @@ export const getVocabularyTags = createAsyncThunk(
         const s = { ...sheetArr[vIdx] };
 
         return getTagsFromSheet(s, query);
-      }
-    );
+      })
+      .catch((exception) => {
+        if (exception instanceof Error) {
+          thunkAPI.dispatch(logger(exception.message, DebugLevel.ERROR));
+        }
+
+        throw exception;
+      });
   }
 );
 
