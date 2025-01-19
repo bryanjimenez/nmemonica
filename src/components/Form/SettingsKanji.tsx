@@ -13,16 +13,13 @@ import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import {
   getKanji,
-  removeFrequencyKanji,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
   toggleIncludeNew,
   toggleIncludeReviewed,
-  toggleKanjiActiveGrp,
   toggleKanjiActiveTag,
   toggleKanjiFilter,
   toggleKanjiOrdering,
-  toggleKanjiReinforcement,
 } from "../../slices/kanjiSlice";
 import {
   TermFilterBy,
@@ -30,7 +27,6 @@ import {
   TermSortByLabel,
 } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import { SetTermGFList } from "../Pages/SetTermGFList";
 import { SetTermTagList } from "../Pages/SetTermTagList";
 
 export default function SettingsKanji() {
@@ -41,10 +37,8 @@ export default function SettingsKanji() {
     filterType: kanjiFilterREF,
     sortMethod,
     difficultyThreshold,
-    reinforce: kanjiReinforce,
     activeTags: kanjiActive,
     kanjiList: kanji,
-    repetition: kRepetition,
     kanjiTagObj: kanjiTags,
     spaRepMaxReviewItem,
     includeNew,
@@ -72,60 +66,32 @@ export default function SettingsKanji() {
   const kanjiSelectedTags = Object.values(kanji).filter((k) =>
     k.tags.some((aTag: string) => kanjiActive.includes(aTag))
   );
-  const kanjiSelectedUids = kanjiSelectedTags.map((k) => k.uid);
-
-  const kanjiFreq = Object.keys(kRepetition).filter(
-    (k) => kRepetition[k]?.rein === true
-  );
-
-  // kanjis in frequency list, but outside of current tag selection
-  const kFreqExcluTagSelected = kanjiFreq.filter(
-    (k) => !kanjiSelectedUids.includes(k)
-  );
 
   const el = (
     <div className="outer">
       <div className="d-flex flex-row justify-content-between">
         <div className="column-1">
           <span className="fs-5 fw-light">
-            {labelOptions(kanjiFilter, [
-              "Kanji Group",
-              "Frequency List",
-              "Tags",
-            ])}
+            {labelOptions(kanjiFilter, ["Kanji Group", "Tags"])}
           </span>
-          <div className="mb-2">
+          {/* <div className="mb-2">
             <SettingsSwitch
               active={kanjiFilter % 2 === 0}
               action={buildAction(dispatch, toggleKanjiFilter)}
               color="default"
               statusText={"Filter by"}
             />
-          </div>
-          {kanjiFilter === TermFilterBy.FREQUENCY && kanjiFreq.length === 0 && (
-            <div className="fst-italic">No words have been chosen</div>
-          )}
-          {kanjiFilter === TermFilterBy.TAGS && (
-            <SetTermTagList
-              selectedCount={
-                kanjiSelectedTags.length === 0
-                  ? Object.values(kanji).length
-                  : kanjiSelectedTags.length
-              }
-              termsTags={kanjiTags}
-              termsActive={kanjiActive}
-              toggleTermActive={buildAction(dispatch, toggleKanjiActiveTag)}
-            />
-          )}
-          {kanjiFilter === TermFilterBy.FREQUENCY && kanjiFreq.length > 0 && (
-            <SetTermGFList
-              termsActive={kanjiActive}
-              termsFreq={kanjiFreq}
-              terms={kanji}
-              removeFrequencyTerm={buildAction(dispatch, removeFrequencyKanji)}
-              toggleTermActiveGrp={buildAction(dispatch, toggleKanjiActiveGrp)}
-            />
-          )}
+          </div> */}
+          <SetTermTagList
+            selectedCount={
+              kanjiSelectedTags.length === 0
+                ? Object.values(kanji).length
+                : kanjiSelectedTags.length
+            }
+            termsTags={kanjiTags}
+            termsActive={kanjiActive}
+            toggleTermActive={buildAction(dispatch, toggleKanjiActiveTag)}
+          />
         </div>
         <div className="column-2 setting-block">
           <div className="mb-2">
@@ -140,9 +106,6 @@ export default function SettingsKanji() {
               ]}
               initial={kanjiOrder}
               onChange={(index) => {
-                if (TermSortBy.RECALL === index) {
-                  dispatch(toggleKanjiReinforcement(false));
-                }
                 return buildAction(dispatch, toggleKanjiOrdering)(index);
               }}
             />
@@ -202,21 +165,6 @@ export default function SettingsKanji() {
               </div>
             </>
           )}
-          <div className="mb-2">
-            <SettingsSwitch
-              active={kanjiReinforce.current}
-              action={buildAction(dispatch, toggleKanjiReinforcement)}
-              disabled={
-                kanjiFilter === TermFilterBy.FREQUENCY ||
-                kanjiOrder === TermSortBy.RECALL
-              }
-              statusText={
-                (kanjiReinforce.current
-                  ? `(+${kFreqExcluTagSelected.length} ) `
-                  : "") + "Reinforcement"
-              }
-            />
-          </div>
         </div>
       </div>
     </div>

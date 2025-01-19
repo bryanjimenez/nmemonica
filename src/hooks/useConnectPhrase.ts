@@ -39,11 +39,10 @@ export function useConnectPhrase() {
     shallowEqual
   );
 
-  const [r, ft, rm, difficultyThreshold, spaRepMaxReviewItem, viewGoal] =
+  const [ft, rm, difficultyThreshold, spaRepMaxReviewItem, viewGoal] =
     useSelector<
       RootState,
       [
-        boolean,
         ValuesOf<typeof TermFilterBy>,
         boolean,
         number,
@@ -52,7 +51,6 @@ export function useConnectPhrase() {
       ]
     >(({ phrases }: RootState) => {
       const {
-        reinforce,
         filter,
         romaji,
         difficultyThreshold,
@@ -60,7 +58,6 @@ export function useConnectPhrase() {
         viewGoal,
       } = phrases.setting;
       return [
-        reinforce,
         filter,
         romaji,
         difficultyThreshold,
@@ -84,9 +81,6 @@ export function useConnectPhrase() {
     shallowEqual
   );
 
-  /** setting to randomly re-quiz marked terms */
-  const reinforce = useRef(r);
-  reinforce.current = r;
   /** Settings menu selected filter method */
   const filterType = useRef(ft);
   filterType.current = ft;
@@ -123,7 +117,6 @@ export function useConnectPhrase() {
     sortMethod,
 
     // Refs ()
-    reinforce,
     romajiActive,
     filterType,
   };

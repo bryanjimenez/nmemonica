@@ -51,11 +51,9 @@ export interface PhraseInitSlice {
     ordered: ValuesOf<typeof TermSortBy>;
     englishSideUp: boolean;
     romaji: boolean;
-    reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
-    frequency: { uid?: string; count: number };
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
     difficultyThreshold: number;
@@ -75,11 +73,9 @@ export const phraseInitState: PhraseInitSlice = {
     ordered: 0,
     englishSideUp: false,
     romaji: false,
-    reinforce: false,
     repTID: -1,
     repetition: {},
     spaRepMaxReviewItem: undefined,
-    frequency: { uid: undefined, count: 0 },
     activeGroup: [],
     filter: 0,
     difficultyThreshold: MEMORIZED_THRLD,
@@ -326,39 +322,6 @@ const phraseSlice = createSlice({
       state.version = phraseInitState.version;
       state.grpObj = phraseInitState.grpObj;
     },
-    /**
-     * Toggle between group, frequency, and tags filtering
-     */
-    togglePhrasesFilter(
-      state,
-      action: { payload?: ValuesOf<typeof TermFilterBy> }
-    ) {
-      const override = action.payload;
-
-      const allowed = [TermFilterBy.FREQUENCY, TermFilterBy.GROUP];
-
-      const { filter, reinforce } = state.setting;
-
-      const newFilter = toggleAFilter(
-        filter + 1,
-        allowed,
-        override
-      ) as ValuesOf<typeof TermFilterBy>;
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "filter",
-        newFilter
-      );
-
-      state.setting.filter = newFilter;
-
-      if (newFilter !== TermFilterBy.GROUP && reinforce) {
-        state.setting.reinforce = false;
-      }
-    },
 
     togglePhraseActiveGrp(state, action: { payload: string }) {
       const grpName = action.payload;
@@ -377,22 +340,6 @@ const phraseSlice = createSlice({
       );
 
       state.setting.activeGroup = newValue;
-    },
-    togglePhrasesReinforcement(
-      state,
-      action: { payload: boolean | undefined }
-    ) {
-      const newValue = action.payload ?? false;
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "reinforce",
-        newValue
-      );
-
-      state.setting.reinforce = newValue;
     },
 
     setMemorizedThreshold(state, action: { payload: number }) {
@@ -513,79 +460,6 @@ const phraseSlice = createSlice({
       }),
     },
 
-    addFrequencyPhrase(state, action: PayloadAction<string>) {
-      const uid = action.payload;
-      const { record: newValue } = updateSpaceRepTerm(
-        uid,
-        state.setting.repetition,
-        { count: false, date: false },
-        {
-          set: { rein: true },
-        }
-      );
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
-
-      let frequency = { uid, count: state.setting.frequency.count + 1 };
-      void userSettingAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "frequency",
-        frequency
-      );
-
-      state.setting.frequency = frequency;
-    },
-
-    removeFrequencyPhrase(state, action: { payload: string }) {
-      const uid = action.payload;
-
-      const spaceRep = state.setting.repetition;
-      if (spaceRep[uid]?.rein === true) {
-        // null to delete
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          spaceRep,
-          { count: false, date: false },
-          {
-            set: { rein: null },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          new Date(),
-          { phrases: state.setting },
-          "/phrases/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-
-        let frequency = { uid, count: state.setting.frequency.count - 1 };
-        void userSettingAttrUpdate(
-          new Date(),
-          { phrases: state.setting },
-          "/phrases/",
-          "frequency",
-          frequency
-        );
-
-        state.setting.frequency = frequency;
-      }
-    },
-
     togglePhrasesRomaji(state) {
       void userSettingAttrUpdate(
         new Date(),
@@ -682,14 +556,6 @@ const phraseSlice = createSlice({
       const storedValue = action.payload;
       const mergedSettings = merge(phraseInitState.setting, storedValue);
 
-      const phraseReinforceList = Object.keys(mergedSettings.repetition).filter(
-        (k) => mergedSettings.repetition[k]?.rein === true
-      );
-      mergedSettings.frequency = {
-        uid: undefined,
-        count: phraseReinforceList.length,
-      };
-
       return {
         ...state,
         setting: { ...mergedSettings, repTID: Date.now() },
@@ -764,19 +630,15 @@ const phraseSlice = createSlice({
 export const {
   clearPhrases,
   togglePhrasesRomaji,
-  togglePhrasesFilter,
   togglePhraseActiveGrp,
-  togglePhrasesReinforcement,
   toggleIncludeNew,
   toggleIncludeReviewed,
-  addFrequencyPhrase,
   setPhraseDifficulty,
   setPhraseAccuracy,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
   setGoal,
 
-  removeFrequencyPhrase,
   togglePhrasesOrdering,
   batchRepetitionUpdate,
 } = phraseSlice.actions;

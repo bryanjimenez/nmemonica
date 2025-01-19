@@ -91,7 +91,6 @@ declare module "nmemonica" {
     /** View count */ vC: number;
 
     /** Furigana shown (yes:undefined|true) */ f?: boolean;
-    /** Reinforce */ rein?: boolean;
     /** Pronunciation incorrect */ pron?: true;
 
     // Recall Interval

@@ -20,14 +20,12 @@ import type { AppDispatch } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   DebugLevel,
-  TermFilterBy,
   TermSortBy,
   TermSortByLabel,
 } from "../../slices/settingHelper";
 import {
   vocabularyInitState as VOCABULARY_INIT,
   getVocabulary,
-  removeFrequencyWord,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
   setVerbFormsOrder,
@@ -36,14 +34,11 @@ import {
   toggleIncludeReviewed,
   toggleVocabularyActiveGrp,
   toggleVocabularyBareKanji,
-  toggleVocabularyFilter,
   toggleVocabularyHint,
   toggleVocabularyOrdering,
-  toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
   updateVerbColSplit,
 } from "../../slices/vocabularySlice";
-import { SetTermGFList } from "../Pages/SetTermGFList";
 import { SetTermGList } from "../Pages/SetTermGList";
 
 export default function SettingsVocab() {
@@ -59,29 +54,19 @@ export default function SettingsVocab() {
     activeGroup: vocabActive,
     autoVerbView,
     verbColSplit,
-    filterType: vocabFilterRef,
     difficultyThreshold,
-    repetition: vocabRep,
     spaRepMaxReviewItem,
-    reinforce: vocabReinforceRef,
     verbFormsOrder,
     includeNew,
     includeReviewed,
   } = useConnectVocabulary();
 
-  const vocabFilter = vocabFilterRef.current;
   const vocabOrder = sortMethod;
-  const vocabReinforce = vocabReinforceRef.current;
   const vocabHint = vocabHintRef.current;
 
   if (Object.keys(vocabGroups).length === 0) {
     void dispatch(getVocabulary());
   }
-
-  const vocabFreq = useMemo(
-    () => Object.keys(vocabRep).filter((k) => vocabRep[k]?.rein === true),
-    [vocabRep]
-  );
 
   const [shownForms, hiddenForms] = useMemo(() => {
     const allForms = VOCABULARY_INIT.setting.verbFormsOrder;
@@ -120,42 +105,14 @@ export default function SettingsVocab() {
     <div className="outer">
       <div className="d-flex flex-row justify-content-between">
         <div className="column-1">
-          <SimpleListMenu
-            flip={true}
-            title={"Filter by:"}
-            options={[
-              "Word Group",
-              "Frequency List",
-              // "NOT_USED_Tags",
-            ]}
-            initial={vocabFilter}
-            onChange={buildAction(dispatch, toggleVocabularyFilter)}
+          <SetTermGList
+            termsGroups={vocabGroups}
+            termsActive={vocabActive}
+            toggleTermActiveGrp={buildAction(
+              dispatch,
+              toggleVocabularyActiveGrp
+            )}
           />
-          {vocabFilter === TermFilterBy.GROUP && (
-            <SetTermGList
-              termsGroups={vocabGroups}
-              termsActive={vocabActive}
-              toggleTermActiveGrp={buildAction(
-                dispatch,
-                toggleVocabularyActiveGrp
-              )}
-            />
-          )}
-          {vocabFilter === TermFilterBy.FREQUENCY && vocabFreq.length === 0 && (
-            <div className="fst-italic">No words have been chosen</div>
-          )}
-          {vocabFilter === TermFilterBy.FREQUENCY && vocabFreq.length > 0 && (
-            <SetTermGFList
-              termsActive={vocabActive}
-              termsFreq={vocabFreq}
-              terms={vocabulary}
-              removeFrequencyTerm={buildAction(dispatch, removeFrequencyWord)}
-              toggleTermActiveGrp={buildAction(
-                dispatch,
-                toggleVocabularyActiveGrp
-              )}
-            />
-          )}
         </div>
 
         <div className="column-2 setting-block">
@@ -164,9 +121,6 @@ export default function SettingsVocab() {
             options={TermSortByLabel}
             initial={vocabOrder}
             onChange={(index) => {
-              if (TermSortBy.RECALL === index) {
-                dispatch(toggleVocabularyReinforcement(false));
-              }
               return buildAction(dispatch, toggleVocabularyOrdering)(index);
             }}
           />
@@ -226,17 +180,6 @@ export default function SettingsVocab() {
               </div>
             </>
           )}
-          <div className="mb-2">
-            <SettingsSwitch
-              active={vocabReinforce}
-              action={buildAction(dispatch, toggleVocabularyReinforcement)}
-              disabled={
-                vocabFilter === TermFilterBy.FREQUENCY ||
-                vocabOrder === TermSortBy.RECALL
-              }
-              statusText="Reinforcement"
-            />
-          </div>
           <div className="mb-2">
             <SettingsSwitch
               active={vocabRomaji}

@@ -59,7 +59,6 @@ export interface VocabularyInitSlice {
     hintEnabled: boolean;
     filter: ValuesOf<typeof TermFilterBy>;
     difficultyThreshold: number;
-    reinforce: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
@@ -87,7 +86,6 @@ export const vocabularyInitState: VocabularyInitSlice = {
     hintEnabled: false,
     filter: 0,
     difficultyThreshold: MEMORIZED_THRLD,
-    reinforce: false,
     repTID: -1,
     repetition: {},
     spaRepMaxReviewItem: undefined,
@@ -347,23 +345,6 @@ const vocabularySlice = createSlice({
       state.setting.repetition = newValue;
     },
 
-    toggleVocabularyReinforcement(
-      state,
-      action: { payload: boolean | undefined }
-    ) {
-      const newValue = action.payload ?? false;
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "reinforce",
-        newValue
-      );
-
-      state.setting.reinforce = newValue;
-    },
-
     toggleVocabularyOrdering(
       state,
       action: { payload: ValuesOf<typeof TermSortBy> }
@@ -428,36 +409,6 @@ const vocabularySlice = createSlice({
       state.setting.hintEnabled = !state.setting.hintEnabled;
     },
 
-    toggleVocabularyFilter(
-      state,
-      action: { payload: ValuesOf<typeof TermFilterBy> }
-    ) {
-      const allowed: number[] = [TermFilterBy.FREQUENCY, TermFilterBy.GROUP];
-
-      const override = action.payload;
-      const { filter, reinforce } = state.setting;
-
-      const newFilter = toggleAFilter(
-        filter + 1,
-        allowed,
-        override
-      ) as ValuesOf<typeof TermFilterBy>;
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "filter",
-        newFilter
-      );
-
-      state.setting.filter = newFilter;
-
-      if (newFilter !== 0 && reinforce) {
-        state.setting.reinforce = false;
-      }
-    },
-
     setVerbFormsOrder(state, action: { payload: string[] }) {
       const order = action.payload;
       void userSettingAttrUpdate(
@@ -493,58 +444,6 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.verbColSplit = split;
-    },
-
-    addFrequencyWord(state, action: { payload: string }) {
-      const uid = action.payload;
-
-      const { record: newValue } = updateSpaceRepTerm(
-        uid,
-        state.setting.repetition,
-        { count: false, date: false },
-        {
-          set: { rein: true },
-        }
-      );
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
-    },
-
-    removeFrequencyWord(state, action: { payload: string }) {
-      const uid = action.payload;
-      const spaceRep = state.setting.repetition;
-
-      if (spaceRep[uid]?.rein === true) {
-        // null to delete
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          spaceRep,
-          { count: false, date: false },
-          {
-            set: { rein: null },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          new Date(),
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      }
     },
 
     setMemorizedThreshold(state, action: { payload: number }) {
@@ -802,20 +701,16 @@ export const {
   verbFormChanged,
   furiganaToggled,
   setPitchAccentData,
-  removeFrequencyWord,
   setVerbFormsOrder,
   toggleVocabularyOrdering,
   toggleVocabularyActiveGrp,
   toggleAutoVerbView,
-  toggleVocabularyFilter,
   toggleVocabularyHint,
-  toggleVocabularyReinforcement,
   toggleVocabularyRomaji,
   toggleIncludeNew,
   toggleIncludeReviewed,
   updateVerbColSplit,
   toggleVocabularyBareKanji,
-  addFrequencyWord,
 
   setWordDifficulty,
   setMemorizedThreshold,

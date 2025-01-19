@@ -29,7 +29,6 @@ export function useConnectKanji() {
   );
 
   const [
-    r,
     ft,
     difficultyThreshold,
     choiceN,
@@ -41,7 +40,6 @@ export function useConnectKanji() {
   ] = useSelector<
     RootState,
     [
-      boolean,
       ValuesOf<typeof TermFilterBy>,
       number,
       number,
@@ -53,7 +51,6 @@ export function useConnectKanji() {
     ]
   >(({ kanji }: RootState) => {
     const {
-      reinforce,
       filter,
       difficultyThreshold,
       choiceN,
@@ -65,7 +62,6 @@ export function useConnectKanji() {
     } = kanji.setting;
 
     return [
-      reinforce,
       filter,
       difficultyThreshold,
       choiceN,
@@ -91,9 +87,6 @@ export function useConnectKanji() {
     shallowEqual
   );
 
-  /** Setting to randomly re-quiz marked terms */
-  const reinforce = useRef(r);
-  reinforce.current = r;
   /** Settings menu selected filter method */
   const filterType = useRef(ft);
   filterType.current = ft;
@@ -127,7 +120,6 @@ export function useConnectKanji() {
     sortMethod,
 
     // Refs ()
-    reinforce,
     filterType,
   };
 }

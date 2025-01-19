@@ -42,7 +42,6 @@ export interface KanjiInitSlice {
   setting: {
     filter: ValuesOf<typeof TermFilterBy>;
     ordered: ValuesOf<typeof TermSortBy>;
-    reinforce: boolean;
     difficultyThreshold: number;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
@@ -68,7 +67,6 @@ export const kanjiInitState: KanjiInitSlice = {
   setting: {
     filter: 2,
     ordered: 0,
-    reinforce: false,
     difficultyThreshold: MEMORIZED_THRLD,
     repTID: -1,
     repetition: {},
@@ -198,6 +196,7 @@ const kanjiSlice = createSlice({
       );
       state.setting.activeTags = newValue;
     },
+
     toggleKanjiActiveGrp: (state, action: { payload: string }) => {
       const grpName = action.payload;
 
@@ -246,59 +245,6 @@ const kanjiSlice = createSlice({
       );
 
       state.setting.ordered = newOrdered;
-    },
-
-    addFrequencyKanji(state, action: { payload: string }) {
-      const uid = action.payload;
-
-      const { record: newValue } = updateSpaceRepTerm(
-        uid,
-        state.setting.repetition,
-        { count: false, date: false },
-        {
-          set: { rein: true },
-        }
-      );
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { kanji: state.setting },
-        "/kanji/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
-    },
-
-    removeFrequencyKanji(state, action: { payload: string }) {
-      const uid = action.payload;
-
-      const spaceRep = state.setting.repetition;
-
-      if (spaceRep[uid]?.rein === true) {
-        // null to delete
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          spaceRep,
-          { count: false, date: false },
-          {
-            set: { rein: null },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          new Date(),
-          { kanji: state.setting },
-          "/kanji/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      }
     },
 
     setMemorizedThreshold(state, action: PayloadAction<number>) {
@@ -447,11 +393,11 @@ const kanjiSlice = createSlice({
 
     toggleKanjiFilter(state, action: { payload?: number }) {
       const override = action.payload;
-      const { filter, reinforce } = state.setting;
+      const { filter } = state.setting;
 
       const newFilter = toggleAFilter(
         filter + 1,
-        [TermFilterBy.FREQUENCY, TermFilterBy.TAGS],
+        [TermFilterBy.TAGS],
         override
       ) as ValuesOf<typeof TermFilterBy>;
 
@@ -464,25 +410,8 @@ const kanjiSlice = createSlice({
       );
 
       state.setting.filter = newFilter;
-
-      if (newFilter !== 0 && reinforce) {
-        state.setting.reinforce = false;
-      }
     },
 
-    toggleKanjiReinforcement(state, action: { payload: boolean | undefined }) {
-      const newValue = action.payload ?? false;
-
-      void userSettingAttrUpdate(
-        new Date(),
-        { kanji: state.setting },
-        "/kanji/",
-        "reinforce",
-        newValue
-      );
-
-      state.setting.reinforce = newValue;
-    },
     toggleIncludeNew(state) {
       void userSettingAttrUpdate(
         new Date(),
@@ -660,14 +589,11 @@ export const {
   toggleKanjiActiveTag,
   toggleKanjiActiveGrp,
   toggleKanjiOrdering,
-  addFrequencyKanji,
-  removeFrequencyKanji,
   setMemorizedThreshold,
   setKanjiDifficulty,
   setKanjiAccuracy,
   setSpaRepMaxItemReview,
   toggleKanjiFilter,
-  toggleKanjiReinforcement,
   toggleIncludeNew,
   toggleIncludeReviewed,
 

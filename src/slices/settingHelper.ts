@@ -13,7 +13,6 @@ export const DebugLevel = Object.freeze({
 // enum
 export const TermFilterBy = Object.freeze({
   GROUP: 0,
-  FREQUENCY: 1,
   TAGS: 2,
 });
 

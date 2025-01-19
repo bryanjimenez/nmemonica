@@ -213,7 +213,6 @@ describe("settingHelper", function () {
         lastView: new Date().toJSON(),
         difficultyP: 40,
         f: true,
-        rein: false,
         vC: 1,
       },
     };
@@ -223,9 +222,6 @@ describe("settingHelper", function () {
         "uid0",
         metaData,
         { count: true, date: false },
-        // {
-        //   set: { rein: true },
-        // }
         undefined
       );
 
@@ -233,35 +229,7 @@ describe("settingHelper", function () {
       expect(value.vC).to.eq(2);
       expect(record["uid0"].vC).to.eq(2);
     });
-    it("set reinforce", function () {
-      const { record, value, prevVal } = updateSpaceRepTerm(
-        "uid0",
-        metaData,
-        { count: false, date: false },
-        {
-          set: { rein: true },
-        }
-      );
 
-      expect(prevVal.rein).to.eq(false);
-      expect(value.rein).to.eq(true);
-      expect(record["uid0"].rein).to.eq(true);
-    });
-    it("toggle reinforce", function () {
-      const { record, value, prevVal } = updateSpaceRepTerm(
-        "uid0",
-        metaData,
-        { count: false, date: false },
-        {
-          toggle: ['rein'],
-        }
-      );
-
-      expect(prevVal.rein).to.eq(false);
-      expect(value.rein).to.eq(true);
-      expect(record["uid0"].rein).to.eq(true);
-    });
-   
     it("toggle furigana", function () {
 
       const { record, value, prevVal } = updateSpaceRepTerm(

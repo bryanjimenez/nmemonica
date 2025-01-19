@@ -72,14 +72,11 @@ export function answerSeconds(tpElapsed: number) {
 export function spaceRepLog<T extends { uid: string; english: string }>(
   logger: (message: string, level: ValuesOf<typeof DebugLevel>) => void,
   term: T,
-  spaceRepMap: Record<string, MetaDataObj | undefined>,
-  options: { frequency: boolean }
+  spaceRepMap: Record<string, MetaDataObj | undefined>
 ) {
   const lastDate = spaceRepMap[term.uid]?.lastView;
   if (lastDate !== undefined) {
     const msg = msgInnerTrim(term.english, 30);
-
-    const freqStr = options?.frequency ? " F[w]" : "";
 
     const diffDays = daysSince(lastDate);
     const dayStr = ` ${diffDays}d`;
@@ -91,7 +88,7 @@ export function spaceRepLog<T extends { uid: string; english: string }>(
       accuracy !== undefined ? " " + accuracy.toFixed(0) + "%" : "";
 
     logger(
-      "Space Rep [" + msg + "]" + freqStr + dayStr + viewStr + accStr,
+      "Space Rep [" + msg + "]" + dayStr + viewStr + accStr,
       DebugLevel.DEBUG
     );
   }

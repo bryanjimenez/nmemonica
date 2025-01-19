@@ -1,7 +1,6 @@
 import { faPlayCircle } from "@fortawesome/free-regular-svg-icons";
 import {
   faBan,
-  faDice,
   faGlasses,
   faPencilAlt,
   faRecycle,
@@ -11,23 +10,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   GiftIcon,
   MilestoneIcon,
-  PlusCircleIcon,
   ProjectIcon,
   PulseIcon,
   TagIcon,
-  XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
-import React, { memo, useEffect, useRef } from "react";
-
-import { useForceRender } from "../../hooks/useFade";
-
-interface MinimunRawItem {
-  uid: string;
-  english: string;
-  grp?: string;
-}
+import React from "react";
 
 interface ToggleFuriganaBtnProps {
   disabled?: boolean;
@@ -68,96 +57,6 @@ export function ToggleFuriganaBtn(props: ToggleFuriganaBtnProps) {
     </div>
   );
 }
-
-interface ToggleFrequencyTermBtnProps {
-  visible?: boolean;
-  disabled?: boolean;
-  /** Decrease opacity when marked reviewed (icon only) */
-  reviewed?: boolean;
-  term: MinimunRawItem;
-  /** Count of reinforced terms */
-  count?: number;
-  /** Is it **currently** being reinforced? */
-  isReinforced?: boolean;
-  /**
-   * Has it been marked for reinforcement
-   *
-   * toggle between add/remove
-   **/
-  hasReinforce: boolean;
-  addFrequencyTerm: (uid: string) => void;
-  removeFrequencyTerm: (uid: string) => void;
-}
-
-export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
-  const { disabled, visible, reviewed } = props;
-  const prevCount = useRef(0);
-
-  const {
-    isReinforced,
-    addFrequencyTerm,
-    removeFrequencyTerm,
-    hasReinforce,
-    term,
-    count = prevCount.current, // count is optional
-  } = props;
-  const forceRender = useForceRender();
-
-  const fade = prevCount.current === count;
-
-  useEffect(() => {
-    prevCount.current = count;
-
-    if (!fade) {
-      // fade this time
-      forceRender();
-    }
-  }, [count, fade, forceRender]);
-
-  return visible === false ? null : (
-    <div
-      aria-label={hasReinforce ? "Remove term" : "Add term"}
-      className={classNames({
-        "sm-icon-grp clickable": true,
-        "disabled-color": reviewed,
-      })}
-      onClick={
-        disabled !== true
-          ? () => {
-              if (hasReinforce) {
-                removeFrequencyTerm(term.uid);
-              } else {
-                addFrequencyTerm(term.uid);
-              }
-            }
-          : undefined
-      }
-    >
-      {hasReinforce ? (
-        <XCircleIcon size="small" />
-      ) : (
-        <PlusCircleIcon size="small" />
-      )}
-
-      {isReinforced === true ? (
-        <span className="notification">
-          <FontAwesomeIcon icon={faDice} />
-        </span>
-      ) : (
-        <span
-          className={classNames({
-            notification: true,
-            "notification-fade": fade,
-          })}
-        >
-          {count}
-        </span>
-      )}
-    </div>
-  );
-}
-
-export const ToggleFrequencyTermBtnMemo = memo(ToggleFrequencyTermBtn);
 
 interface ShowHintBtnProps {
   visible: boolean;

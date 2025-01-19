@@ -5,9 +5,7 @@ import { JapaneseText } from "../../../src/helper/JapaneseText";
 import {
   activeGroupIncludes,
   getJapaneseHint,
-  termFilterByType,
 } from "../../../src/helper/gameHelper";
-import { TermFilterBy } from "../../../src/slices/settingHelper";
 import type { Optional } from "../../../src/typings/utils";
 import type { RawVocabulary } from "nmemonica";
 
@@ -137,88 +135,6 @@ describe("gameHelper", function () {
         uid: "7c5086f337bdf69ef4cf924652fc7576",
       },
     ];
-    const verbGrpTerms = [
-      {
-        english: "to recall",
-        grp: "Verb",
-        japanese: "おもいだす\n思い出す",
-        romaji: "omoidasu",
-        subGrp: "Memory",
-        uid: "7b18c22af4c8f109f279fcdc66565f55",
-      },
-    ];
-    describe("TermFilterBy.FREQUENCY", function () {
-      const filterType = TermFilterBy.FREQUENCY;
-      const termList = [...terms, ...timeGrpTerms];
-      const toggleFilterType = () => {};
-
-      it("group not found", function () {
-        const frequencyList = ["0bc88148bb66adb1e530a045f8deb3b2"];
-        const activeGrpList = ["Verb"];
-
-        const expected = [];
-        const actual = termFilterByType(
-          filterType,
-          termList,
-          frequencyList,
-          activeGrpList,
-          toggleFilterType
-        );
-
-        expect(actual).to.deep.eq(expected);
-      });
-      it("group found", function () {
-        const expectedItem = timeGrpTerms[0];
-        const frequencyList = [expectedItem.uid];
-        const activeGrpList = ["Noun"];
-
-        const expected = [expectedItem];
-        const actual = termFilterByType(
-          filterType,
-          termList,
-          frequencyList,
-          activeGrpList,
-          toggleFilterType
-        );
-
-        expect(actual).to.deep.eq(expected);
-      });
-      it("sub group found", function () {
-        const expectedItem = timeGrpTerms[1];
-        const frequencyList = [expectedItem.uid];
-        const activeGrpList = ["Noun.Time"];
-
-        const expected = [expectedItem];
-        const actual = termFilterByType(
-          filterType,
-          termList,
-          frequencyList,
-          activeGrpList,
-          toggleFilterType
-        );
-
-        expect(actual).to.deep.eq(expected);
-      });
-      it("group and sub group found", function () {
-        const expectedItem1 = timeGrpTerms[1];
-        const expectedItem2 = verbGrpTerms[0];
-
-        const mixedGrpTermList = [...termList, ...verbGrpTerms];
-        const frequencyList = [expectedItem1.uid, expectedItem2.uid];
-        const activeGrpList = ["Noun.Time", "Verb"];
-
-        const expected = [expectedItem1, expectedItem2];
-        const actual = termFilterByType(
-          filterType,
-          mixedGrpTermList,
-          frequencyList,
-          activeGrpList,
-          toggleFilterType
-        );
-
-        expect(actual).to.deep.eq(expected);
-      });
-    });
   });
   describe("activeGroupIncludes", function () {
     it("empty");

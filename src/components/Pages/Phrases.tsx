@@ -33,8 +33,6 @@ import {
   japaneseLabel,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
-  // minimumTimeForTimedPlay,
-  play,
   termFilterByType,
   updateDailyGoal,
 } from "../../helper/gameHelper";
@@ -67,18 +65,15 @@ import {
 } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
-  addFrequencyPhrase,
   deleteMetaPhrase,
   flipPhrasesPracticeSide,
   getPhrase,
   getPhraseTags,
-  removeFrequencyPhrase,
   removeFromSpaceRepetition,
   setPhraseAccuracy,
   setPhraseDifficulty,
   setSpaceRepetitionMetadata,
   togglePhraseTag,
-  togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
 import {
@@ -96,7 +91,6 @@ import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
-  ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
   ViewLessonsBtn,
@@ -128,7 +122,6 @@ export default function Phrases() {
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
   const [showRomaji, setShowRomaji] = useState<boolean>(false);
   const [showLit, setShowLit] = useState<boolean>(false);
-  const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<number | null>(undefined);
@@ -152,7 +145,6 @@ export default function Phrases() {
     sortMethod,
 
     // Refs ()
-    reinforce: reinforceREF,
     romajiActive,
     filterType: filterTypeREF,
     viewGoal,
@@ -219,22 +211,10 @@ export default function Phrases() {
     if (Object.keys(firstRepObject).length === 0 && activeGroup.length === 0)
       return phraseList;
 
-    const allFrequency = Object.keys(firstRepObject).reduce<string[]>(
-      (acc, cur) => {
-        if (firstRepObject[cur]?.rein === true) {
-          acc = [...acc, cur];
-        }
-        return acc;
-      },
-      []
-    );
-
     let filtered = termFilterByType(
       filterTypeREF.current,
       phraseList,
-      allFrequency,
-      activeGroup,
-      buildAction(dispatch, togglePhrasesFilter)
+      activeGroup
     );
 
     // exclude terms with difficulty beyond difficultyThreshold
@@ -330,20 +310,11 @@ export default function Phrases() {
         break;
     }
 
-    const frequency = filtered.reduce<string[]>((acc, cur) => {
-      if (firstRepObject[cur.uid]?.rein === true) {
-        acc = [...acc, cur.uid];
-      }
-      return acc;
-    }, []);
-    setFrequency(frequency);
-
     return filtered;
   }, [
     filterTypeREF,
     sort,
     difficultyThresholdREF,
-    dispatch,
     phraseList,
     activeGroup,
     includeNew,
@@ -423,29 +394,6 @@ export default function Phrases() {
     setReinforcedUID(null);
   }, [filteredPhrases, selectedIndex, lastNext]);
 
-  const gotoNextSlide = useCallback(() => {
-    play(
-      reinforceREF.current,
-      filterTypeREF.current,
-      frequency,
-      filteredPhrases,
-      metadata.current,
-      reinforcedUID,
-      (value) => {
-        prevReinforcedUID.current = reinforcedUID;
-        setReinforcedUID(value);
-      },
-      gotoNext
-    );
-  }, [
-    filterTypeREF,
-    reinforceREF,
-    frequency,
-    filteredPhrases,
-    reinforcedUID,
-    gotoNext,
-  ]);
-
   const gotoPrev = useCallback(() => {
     const l = filteredPhrases.length;
     const i = selectedIndex - 1;
@@ -466,7 +414,7 @@ export default function Phrases() {
 
   const gameActionHandler = buildGameActionsHandler(
     dispatch,
-    gotoNextSlide,
+    gotoNext,
     gotoPrev,
     reinforcedUID,
     selectedIndex,
@@ -599,7 +547,6 @@ export default function Phrases() {
         if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
           // don't increment reinforced terms
           const shouldIncrement = uid !== prevState.reinforcedUID;
-          const frequency = prevState.reinforcedUID !== null;
 
           void dispatch(updateSpaceRepPhrase({ uid, shouldIncrement }))
             .unwrap()
@@ -621,7 +568,7 @@ export default function Phrases() {
               const messageLog = (m: string, l: number) =>
                 dispatch(logger(m, l));
 
-              spaceRepLog(messageLog, p, repStats, { frequency });
+              spaceRepLog(messageLog, p, repStats);
             });
         }
       });
@@ -674,22 +621,6 @@ export default function Phrases() {
     // timedPlayAnswerHandlerWrapper
   );
 
-  const addFrequencyTermCB = useCallback(
-    (uid: string) => {
-      setFrequency((f) => [...f, uid]);
-      buildAction(dispatch, addFrequencyPhrase)(uid);
-    },
-    [dispatch]
-  );
-
-  const removeFrequencyTermCB = useCallback(
-    (uid: string) => {
-      setFrequency((f) => f.filter((id) => id !== uid));
-      buildAction(dispatch, removeFrequencyPhrase)(uid);
-    },
-    [dispatch]
-  );
-
   if (recallGame === 0) {
     return (
       <GoalResumeMessage
@@ -712,13 +643,11 @@ export default function Phrases() {
 
   // console.log(
   //   JSON.stringify({
-  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
   //     idx: selectedIndex,
   //     uid: (uid && uid.slice(0, 6)) || "",
   //     p: phrases.length,
   //     ord: order.length,
   //     rep: Object.keys(metadata.current).length,
-  //     fre: frequency.length,
   //     filt: filteredPhrases.length,
   //   })
   // );
@@ -782,8 +711,6 @@ export default function Phrases() {
     belowSmallCss,
     belowLargeCss,
   } = getCssResizableSubComp(englishSideUp, shortJP, shortEN);
-
-  const phrase_reinforce = repetition[phrase.uid]?.rein === true;
 
   const romaji = phrase.romaji;
 
@@ -880,7 +807,7 @@ export default function Phrases() {
             </Sizable>
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>
-          <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
+          <StackNavButton ariaLabel="Next" action={gotoNext}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
@@ -967,16 +894,6 @@ export default function Phrases() {
                 action={openTagMenu}
                 reviewed={alreadyReviewed}
               />
-              <ToggleFrequencyTermBtnMemo
-                disabled={!cookies}
-                reviewed={alreadyReviewed}
-                addFrequencyTerm={addFrequencyTermCB}
-                removeFrequencyTerm={removeFrequencyTermCB}
-                hasReinforce={phrase_reinforce}
-                isReinforced={reinforcedUID !== null}
-                term={phrase}
-                count={frequency.length}
-              />
             </div>
           </div>
         </div>
@@ -997,13 +914,7 @@ export default function Phrases() {
           valueBuffer={goalProgress ?? undefined}
           // value={progress}
           // color={phrase_reinforce ? "secondary" : "primary"}
-          color={
-            goalProgress === null
-              ? phrase_reinforce
-                ? "secondary"
-                : "primary"
-              : "warning"
-          }
+          color={goalProgress === null ? "primary" : "warning"}
         />
       </div>
     </>
@@ -1111,7 +1022,7 @@ function getPlayBtn(
 
 function buildGameActionsHandler(
   dispatch: AppDispatch,
-  gotoNextSlide: () => void,
+  gotoNext: () => void,
   gotoPrev: () => void,
   reinforcedUID: string | null,
   selectedIndex: number,
@@ -1130,7 +1041,7 @@ function buildGameActionsHandler(
     let actionPromise;
 
     if (direction === "left") {
-      gotoNextSlide();
+      gotoNext();
       actionPromise = Promise.all([
         Promise.resolve(/** Interrupt */),
         Promise.resolve(/** Fetch */),

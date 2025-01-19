@@ -8,7 +8,7 @@ import type {
 } from "nmemonica";
 import React from "react";
 
-import { minsSince, wasToday } from "./consoleHelper";
+import { wasToday } from "./consoleHelper";
 import { JapaneseText } from "./JapaneseText";
 import { JapaneseVerb } from "./JapaneseVerb";
 import { isYoon, kanaHintBuilder } from "./kanaHelper";
@@ -16,49 +16,6 @@ import { furiganaHintBuilder } from "./kanjiHelper";
 import { getLastViewCounts } from "./statsHelper";
 import { TermFilterBy } from "../slices/settingHelper";
 import type { ValuesOf } from "../typings/utils";
-
-/**
- * Goes to the next term or selects one from the frequency list
- */
-export function play<RawItem extends { uid: string }>(
-  reinforce: boolean,
-  freqFilter: ValuesOf<typeof TermFilterBy>,
-  frequency: string[],
-  filteredTerms: RawItem[],
-  metadata: Record<string, MetaDataObj | undefined>,
-  reinforcedUID: string | null,
-  updateReinforcedUID: (uid: string) => void,
-  gotoNext: () => void
-) {
-  // some games will come from the reinforced list
-  // unless filtering from frequency list
-  const reinforced = reinforce && Math.random() < 1 / 3;
-  if (
-    freqFilter !== TermFilterBy.FREQUENCY &&
-    reinforced &&
-    frequency.length > 0
-  ) {
-    const min = 0;
-    const staleFreq = frequency.filter((fUid) => {
-      const lastSeen = metadata[fUid]?.lastView;
-
-      return lastSeen !== undefined && minsSince(lastSeen) > frequency.length;
-    });
-    const max = staleFreq.length;
-    const idx = Math.floor(Math.random() * (max - min) + min);
-    const vocabulary = filteredTerms.find((v) => staleFreq[idx] === v.uid);
-
-    if (vocabulary) {
-      // avoid repeating the same reinforced word
-      if (reinforcedUID !== vocabulary.uid) {
-        updateReinforcedUID(vocabulary.uid);
-        return;
-      }
-    }
-  }
-
-  gotoNext();
-}
 
 interface DailyGoal {
   lastView: string | undefined;
@@ -187,7 +144,7 @@ export function getTerm<Term extends { uid: string }>(
 
 /**
  * Filters terms (words or phrases) list
- * by groups, frequency, or tags
+ * by groups or tags
  * @param filterType
  * @param termList word or phrase list
  * @param frequencyList
@@ -200,32 +157,11 @@ export function termFilterByType<
 >(
   filterType: ValuesOf<typeof TermFilterBy>,
   termList: Term[],
-  frequencyList: string[] = [],
-  activeGrpList: string[],
-  toggleFilterType?: (override: number) => void
+  activeGrpList: string[]
 ) {
   let filteredTerms = termList;
 
-  if (filterType === TermFilterBy.FREQUENCY) {
-    // frequency filtering
-
-    if (frequencyList.length > 0) {
-      if (activeGrpList.length > 0) {
-        filteredTerms = termList.filter(
-          (t) =>
-            frequencyList.includes(t.uid) &&
-            activeGroupIncludes(activeGrpList, t)
-        );
-      } else {
-        filteredTerms = termList.filter((t) => frequencyList.includes(t.uid));
-      }
-    } else {
-      // last frequency word was just removed
-      if (typeof toggleFilterType === "function") {
-        toggleFilterType(TermFilterBy.GROUP);
-      }
-    }
-  } else if (filterType === TermFilterBy.TAGS) {
+  if (filterType === TermFilterBy.TAGS) {
     if (activeGrpList.length > 0) {
       filteredTerms = termList.filter((term) =>
         term.tags.some((aTag) => activeGrpList.includes(aTag))
@@ -304,7 +240,6 @@ export function getStaleSpaceRepKeys<
     lastView: null,
     vC: null,
     f: null,
-    rein: null,
     pron: null,
 
     // Space Repetition
@@ -338,7 +273,7 @@ export function getStaleSpaceRepKeys<
           }
         });
       }
-    } catch (err) {
+    } catch {
       term = { english: staleLabel };
       let staleInfo = { key: "uid", uid: srepUid, english: term.english };
       staleInfoList = [...staleInfoList, staleInfo];
@@ -841,8 +776,12 @@ export function loopN(
               resolve();
             })
           )
-          .catch((error) => {
-            reject(error);
+          .catch((exception) => {
+            if (exception instanceof Error) {
+              reject(exception);
+              return;
+            }
+            reject(new Error(JSON.stringify(exception)));
           });
       } else {
         signal?.removeEventListener("abort", listener);
