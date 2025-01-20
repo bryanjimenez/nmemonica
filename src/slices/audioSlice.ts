@@ -1,17 +1,5 @@
 import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { fetchAudio } from "./audioHelper";
-import { logger } from "./globalSlice";
-import { DebugLevel } from "./settingHelper";
-import { pronounceEndpoint } from "../../environment.development";
-import {
-  IDBErrorCause,
-  IDBStores,
-  getIDBItem,
-  openIDB,
-} from "../../pwa/helper/idbHelper";
-import { SWRequestHeader } from "../helper/serviceWorkerHelper";
-import { addParam } from "../helper/urlHelper";
 import { type ValuesOf } from "../typings/utils";
 import { AUDIO_WORKER_EN_NAME, AUDIO_WORKER_JA_NAME } from "../workers";
 import {
@@ -19,7 +7,7 @@ import {
   VoiceWorkerResponse,
 } from "../workers/voiceWorker-ja";
 
-import { AppDispatch, RootState } from ".";
+import { RootState } from ".";
 
 // global worker variable
 let workerJa: Worker | null = null;
@@ -72,48 +60,6 @@ export type AudioItemParams = {
   tl: "en" | "ja";
   q: string;
 };
-
-export const getAudio = createAsyncThunk(
-  "voice/getAudio",
-  async (
-    arg: {
-      uid: AudioItemParams["uid"];
-      index: AudioItemParams["index"] | undefined;
-      tl: AudioItemParams["tl"];
-      q: AudioItemParams["q"];
-      override?: boolean;
-    },
-    thunkAPI
-  ) => {
-    const { uid, index, tl, q, override } = arg;
-
-    const dispatch = thunkAPI.dispatch as AppDispatch;
-    const audioUrl = addParam(pronounceEndpoint, {
-      tl,
-      q,
-      uid,
-    });
-
-    const headers =
-      override === true ? { headers: SWRequestHeader.CACHE_RELOAD } : {};
-
-    const fetchRequest = () =>
-      fetchAudio(new Request(audioUrl, headers))
-        .then((blob) => blob.arrayBuffer())
-        .then((buffer) => ({
-          uid,
-          index,
-          buffer,
-        }));
-
-    return override === true
-      ? fetchRequest()
-      : getFromIndexedDB(uid, dispatch)
-          .then((blob) => blob.arrayBuffer())
-          .then((buffer) => ({ buffer }))
-          .catch(fetchRequest);
-  }
-);
 
 // TODO: @nmemonica/voice-ja not async/parallel
 // TODO: @nmemonica/voice-en not async/parallel
@@ -234,28 +180,6 @@ async function getFromVoiceSynth(
         reject(new Error(err));
       }
     }
-  });
-}
-
-function getFromIndexedDB(uid: string, dispatch: AppDispatch) {
-  return openIDB().then((db) => {
-    // if indexedDB has stored setttings
-    const stores = Array.from(db.objectStoreNames);
-
-    const ErrorMediaCacheMissing = new Error("No cached media available", {
-      cause: { code: IDBErrorCause.NoResult },
-    });
-    if (!stores.includes(IDBStores.MEDIA)) {
-      throw ErrorMediaCacheMissing;
-    }
-
-    return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
-      .then((dataO) => dataO.blob)
-      .catch(() => {
-        dispatch(logger("IDB.get [] ", DebugLevel.WARN));
-
-        throw new Error("Media not found in cache");
-      });
   });
 }
 

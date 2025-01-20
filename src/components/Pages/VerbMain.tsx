@@ -27,7 +27,6 @@ import Sizable from "../Form/Sizable";
 
 interface VerbMainProps {
   verb: RawVocabulary;
-  reCache: boolean;
   showHint: boolean;
   linkToOtherTerm: (uid: string) => void;
 }
@@ -35,7 +34,7 @@ interface VerbMainProps {
 export default function VerbMain(props: VerbMainProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { verb, reCache, linkToOtherTerm, showHint } = props;
+  const { verb, linkToOtherTerm, showHint } = props;
 
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
   const [showRomaji, setShowRomaji] = useState<boolean>(false);
@@ -187,11 +186,7 @@ export default function VerbMain(props: VerbMainProps) {
   }, [englishSideUp, verbJapanese]);
 
   const playButton = (
-    <AudioItem
-      visible={swipeThreshold === 0}
-      word={audioWords}
-      reCache={reCache}
-    />
+    <AudioItem visible={swipeThreshold === 0} word={audioWords} />
   );
 
   return (

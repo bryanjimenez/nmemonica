@@ -101,7 +101,6 @@ import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
   PronunciationWarningBtn,
-  ReCacheAudioBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
   ToggleFrequencyTermBtnMemo,
@@ -143,7 +142,6 @@ export default function Vocabulary() {
 
   const [frequency, setFrequency] = useState<string[]>([]); // subset of frequency words within current active group
 
-  const [recacheAudio, setRecacheAudio] = useState(false);
   const naFlip = useRef();
 
   const [wasPlayed, setWasPlayed] = useState(false);
@@ -532,7 +530,6 @@ export default function Vocabulary() {
     verbForm,
     order,
     filteredVocab,
-    recacheAudio,
     naFlip,
     setWasPlayed,
     audioCacheStore
@@ -832,14 +829,12 @@ export default function Vocabulary() {
             {isVerb && autoVerbView ? (
               <VerbMain
                 verb={vocabulary}
-                reCache={recacheAudio}
                 linkToOtherTerm={(uid) => setReinforcedUID(uid)}
                 showHint={showHint === uid}
               />
             ) : (
               <VocabularyMain
                 vocabulary={vocabulary}
-                reCache={recacheAudio}
                 showHint={showHint === uid}
                 wasPlayed={wasPlayed}
               />
@@ -859,7 +854,6 @@ export default function Vocabulary() {
       closeTagMenu,
       HTMLDivElementSwipeRef,
       autoVerbView,
-      recacheAudio,
       showHint,
       wasPlayed,
       blastElRef,
@@ -905,12 +899,6 @@ export default function Vocabulary() {
                       }
                     : undefined
                 }
-              />
-              <ReCacheAudioBtn
-                disabled={!cookies}
-                active={recacheAudio}
-                reviewed={alreadyReviewed}
-                action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
               <ToggleAutoVerbViewBtn
                 visible={isVerb}
@@ -1064,7 +1052,6 @@ export default function Vocabulary() {
       hintEnabledREF,
       loopActionBtn,
       loopSettingBtn,
-      recacheAudio,
       reinforcedUID,
       sort,
     ]
@@ -1272,24 +1259,6 @@ export default function Vocabulary() {
   return page;
 }
 
-function buildRecacheAudioHandler(
-  recacheAudio: boolean,
-  setRecacheAudio: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  return function recacheAudioHandler() {
-    if (!recacheAudio) {
-      const delayTime = 2000;
-      setRecacheAudio(true);
-
-      const delayToggle = () => {
-        setRecacheAudio(false);
-      };
-
-      setTimeout(delayToggle, delayTime);
-    }
-  };
-}
-
 function useBuildGameActionsHandler(
   dispatch: AppDispatch,
   gotoNextSlide: () => void,
@@ -1300,7 +1269,6 @@ function useBuildGameActionsHandler(
   verbForm: string,
   order: number[],
   filteredVocab: RawVocabulary[],
-  recacheAudio: boolean,
   naFlip: React.MutableRefObject<string | undefined>,
   setWasPlayed: (value: boolean) => void,
   audioCacheStore: React.MutableRefObject<AudioBufferRecord>

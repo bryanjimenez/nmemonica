@@ -3,20 +3,8 @@ import {
   SWMsgIncoming,
   SWRequestHeader,
 } from "../../src/helper/serviceWorkerHelper";
-import {
-  IDBStores,
-  openIDB,
-  addIDBItem,
-  getIDBItem,
-  putIDBItem,
-} from "../helper/idbHelper";
 import { DebugLevel } from "../../src/slices/settingHelper";
-import { getParam, removeParam } from "../../src/helper/urlHelper";
-import {
-  audioServicePath,
-  pronounceEndpoint,
-  uiEndpoint,
-} from "../../environment.development";
+import { uiEndpoint } from "../../environment.development";
 
 /**
  * FIXME: workaround to prevent ReferenceError: process is not defined (in dev)
@@ -37,8 +25,6 @@ const jsVersion = process.env.SW_MAIN_VERSION;
 const bundleVersion = process.env.SW_BUNDLE_VERSION;
 
 let urlAppUI = uiEndpoint;
-let urlPronounceService = pronounceEndpoint;
-let audioPath = audioServicePath;
 
 const swSelf = globalThis.self as unknown as ServiceWorkerGlobalScope;
 
@@ -50,9 +36,6 @@ swSelf.addEventListener("message", messageEventHandler);
 const appStaticCache = "nmemonica-static";
 const appDataCache = "nmemonica-data";
 const appMediaCache = "nmemonica-media";
-
-const NO_INDEXEDDB_SUPPORT =
-  "Your browser doesn't support a stable version of IndexedDB.";
 
 /**
  * Calculate app source versions
@@ -208,96 +191,6 @@ function messageEventHandler(event: ExtendableMessageEvent) {
   clientLogger("Unrecognized message", DebugLevel.ERROR);
 }
 
-/**
- * User overriding media cached asset
- */
-function pronounceOverride(uid: string, req: Request) {
-  console.log("[ServiceWorker] Overriding Asset in Cache");
-
-  if (!swSelf.indexedDB) {
-    // use cache
-    console.log(NO_INDEXEDDB_SUPPORT);
-    clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
-    return recache(appMediaCache, req);
-  } else {
-    // use indexedDB
-    clientLogger("IDB.override", DebugLevel.WARN);
-
-    const fetchP = fetch(req);
-    const dbOpenPromise = openIDB({ logger: clientLogger });
-
-    const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-      return fetchP
-        .then((res) => {
-          if (!res.ok) {
-            clientLogger("fetch", DebugLevel.ERROR);
-            throw new Error(
-              "Network response was not OK" +
-                (res.status ? " (" + res.status + ")" : "")
-            );
-          }
-          return res.blob();
-        })
-        .then((blob) =>
-          putIDBItem(
-            { db },
-            {
-              uid,
-              blob,
-            }
-          ).then((dataO) => toResponse(dataO))
-        );
-    });
-
-    return dbResults;
-  }
-}
-
-/**
- * Site media asset
- */
-function pronounce(uid: string, req: Request) {
-  if (!swSelf.indexedDB) {
-    // use cache
-    console.log(NO_INDEXEDDB_SUPPORT);
-    clientLogger(NO_INDEXEDDB_SUPPORT, DebugLevel.WARN);
-    return appMediaReq(req.url);
-  } else {
-    // use indexedDB
-    const dbOpenPromise = openIDB({ logger: clientLogger });
-
-    const dbResults = dbOpenPromise.then((db: IDBDatabase) => {
-      return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
-        .then((dataO) =>
-          //found
-          toResponse(dataO)
-        )
-        .catch(() => {
-          //not found
-          clientLogger("IDB.get [] ", DebugLevel.WARN);
-
-          return fetch(req)
-            .then((res) => {
-              if (!res.ok) {
-                clientLogger("fetch", DebugLevel.ERROR);
-                throw new Error(
-                  "Network response was not OK" +
-                    (res.status ? " (" + res.status + ")" : "")
-                );
-              }
-              return res.blob();
-            })
-            .then((blob) =>
-              addIDBItem({ db }, { uid, blob }).then((dataO) =>
-                toResponse(dataO)
-              )
-            );
-        });
-    });
-    return dbResults;
-  }
-}
-
 function noCaching(request: Request) {
   // for debugging purposes
   return fetch(request);
@@ -316,8 +209,6 @@ function fetchEventHandler(e: FetchEvent) {
 
   const req = e.request.clone();
   const url = e.request.url;
-  const protocol = "https://";
-  const path = url.slice(url.indexOf("/", protocol.length + 1));
 
   switch (true) {
     case /* github user data */
@@ -350,40 +241,11 @@ function fetchEventHandler(e: FetchEvent) {
       e.respondWith(appAssetReq(url));
       break;
 
-    case /* pronounce */
-    path.startsWith(audioPath): {
-      const uid = getParam(url, "uid");
-      if (!uid) {
-        throw new Error("Request missing uid");
-      }
-      const cleanUrl = removeParam(url, "uid");
-      const modRed = req.url.startsWith(urlPronounceService)
-        ? new Request(cleanUrl) //  remove everything for external
-        : req; //                   keep auth for local service
-
-      if (req.headers.get("Cache-Control") === "reload") {
-        e.respondWith(pronounceOverride(uid, modRed));
-      }
-
-      e.respondWith(pronounce(uid, modRed));
-      break;
-    }
-
     default:
       /* everything else */
       e.respondWith(noCaching(e.request));
       break;
   }
-}
-
-/**
- * Retrieved cache object to Response
- */
-function toResponse(obj: { uid: string; blob: Blob }) {
-  const status = 200,
-    statusText = "OK";
-  const init = { status, statusText };
-  return new Response(obj.blob, init);
 }
 
 /**
@@ -448,20 +310,6 @@ function appAssetReq(url: string) {
 }
 
 /**
- * Only used if no IndexedDB support
- * cache match first otherwise fetch then cache
- * @returns a Promise that yieds a cached response
- */
-function appMediaReq(url: string) {
-  return caches
-    .open(appMediaCache)
-    .then((cache) => cache.match(url))
-    .then((cachedRes) => {
-      return cachedRes || recache(appMediaCache, new Request(url));
-    });
-}
-
-/**
  * @returns a Promise that yields a response from the cache or a rejected Promise
  */
 function recache(cacheName: string, req: Request) {
@@ -482,8 +330,9 @@ function recache(cacheName: string, req: Request) {
         return urlRes;
       })
       .catch(() => {
-        console.log("[ServiceWorker] Network unavailable");
-        return Promise.reject();
+        const err = new Error("[ServiceWorker] Network unavailable");
+        console.log(err.message);
+        return Promise.reject(err);
       })
   );
 }

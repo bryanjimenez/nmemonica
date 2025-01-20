@@ -7,9 +7,6 @@ export interface SwMessage {
 }
 
 export const SWRequestHeader = Object.freeze({
-  CACHE_RELOAD: <const>{ ["Cache-Control"]: "reload" },
-  CACHE_NO_WRITE: <const>{ ["Cache-Control"]: "no-store" },
-
   DATA_VERSION: "Data-Version",
 });
 

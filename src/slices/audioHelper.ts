@@ -86,8 +86,9 @@ export function playAudio(
  * Fetch audio
  *
  * Play using AudioContext
+ * @deprecated use getSynthAudioWorkaroundNoAsync
  */
-export async function fetchAudio(audioUrl: Request) {
+async function fetchAudio(audioUrl: Request) {
   const audioRes = await fetch(audioUrl, { credentials: "include" });
   // const audioBuf = await audioRes.arrayBuffer();
 

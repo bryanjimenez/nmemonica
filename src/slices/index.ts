@@ -27,10 +27,7 @@ export const store = configureStore({
     getDefaultMiddleware({
       // https://redux-toolkit.js.org/usage/usage-guide#working-with-non-serializable-data
       serializableCheck: {
-        ignoredActions: [
-          "voice/getAudio/fulfilled",
-          "voice/getSynthAudioWorkaroundNoAsync/fulfilled",
-        ],
+        ignoredActions: ["voice/getSynthAudioWorkaroundNoAsync/fulfilled"],
       },
     }),
 });

@@ -96,7 +96,6 @@ import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
-  ReCacheAudioBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
@@ -130,7 +129,6 @@ export default function Phrases() {
   const [showRomaji, setShowRomaji] = useState<boolean>(false);
   const [showLit, setShowLit] = useState<boolean>(false);
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
-  const [recacheAudio, setRecacheAudio] = useState(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
@@ -475,7 +473,6 @@ export default function Phrases() {
     phraseList,
     order,
     filteredPhrases,
-    recacheAudio,
     audioCacheStore
   );
 
@@ -731,8 +728,7 @@ export default function Phrases() {
     englishSideUp,
     phrase,
     // loop
-    0,
-    recacheAudio
+    0
   );
 
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
@@ -901,12 +897,6 @@ export default function Phrases() {
                 reviewed={alreadyReviewed}
                 toggle={englishSideUp}
                 action={buildAction(dispatch, flipPhrasesPracticeSide)}
-              />
-              <ReCacheAudioBtn
-                disabled={!cookies}
-                reviewed={alreadyReviewed}
-                active={recacheAudio}
-                action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
             </div>
           </div>
@@ -1093,8 +1083,7 @@ function getPlayBtn(
   swipeThreshold: number,
   englishSideUp: boolean,
   phrase: RawPhrase,
-  loop: number,
-  recacheAudio: boolean
+  loop: number
 ) {
   const audioWords: AudioItemParams = englishSideUp
     ? { tl: "en", q: phrase.english, uid: phrase.uid + ".en" }
@@ -1105,30 +1094,8 @@ function getPlayBtn(
       };
 
   return (
-    <AudioItem
-      visible={swipeThreshold === 0 && loop === 0}
-      word={audioWords}
-      reCache={recacheAudio}
-    />
+    <AudioItem visible={swipeThreshold === 0 && loop === 0} word={audioWords} />
   );
-}
-
-function buildRecacheAudioHandler(
-  recacheAudio: boolean,
-  setRecacheAudio: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  return function recacheAudioHandler() {
-    if (!recacheAudio) {
-      const delayTime = 2000;
-      setRecacheAudio(true);
-
-      const delayToggle = () => {
-        setRecacheAudio(false);
-      };
-
-      setTimeout(delayToggle, delayTime);
-    }
-  };
 }
 
 function buildGameActionsHandler(
@@ -1140,7 +1107,6 @@ function buildGameActionsHandler(
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
-  recacheAudio: boolean,
   audioCacheStore: React.MutableRefObject<AudioBufferRecord>
 ) {
   return async function gameActionHandler(
