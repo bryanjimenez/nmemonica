@@ -1,5 +1,13 @@
 //@ts-check
 // https://rspack.org/api/loader-api.html
+
+const { readFileSync } = require("node:fs");
+const path = require("node:path");
+
+const red = "\x1b[31m";
+const green = "\x1b[32m";
+const reset = "\x1b[0m";
+
 /**
  * When in PRODUCTION
  * Replace all source imports from .development to .production
@@ -13,29 +21,66 @@ module.exports = function productionDependencyReplacement(content, map, meta) {
     return content;
   }
 
-  // console.log("context: "+JSON.stringify(this.context))
-  // console.log("options: "+JSON.stringify(this.getOptions()))
-  // console.log("mode: "+JSON.stringify(this.mode))
-  // console.log("path: "+JSON.stringify(this.resourcePath));
-  // console.log("reso: "+JSON.stringify(this.resource));
+  const envDependencies = getRequestQueryDetail(content);
 
-  const hasDevDep = /[\/\.\w]+?(?=\.development)/g;
-  const match = [...content.matchAll(hasDevDep)];
+  if (envDependencies.length > 0) {
+    const thisResourcePath = this.resourcePath
+      .replaceAll('"', "")
+      .replaceAll("'", "");
+    console.log(`\npath: ${JSON.stringify(thisResourcePath)}`);
 
-  // console.log(JSON.stringify(match))
-  if (match.length > 0) {
-    console.log(`\npath: ${JSON.stringify(this.resourcePath)}`);
-    const prodContent = match.reduce((acc, m) => {
-      const [matchText] = m;
-      const dep = `${matchText}.development`;
-      console.log(`dep: ${dep}`);
+    const prodContent = envDependencies.reduce((acc, d) => {
+      const dev = d.path;
+      const prod = dev.replace(".development", ".production");
+      // FIXME: assuming .ts file
+      const ext = ".ts";
 
-      return acc.replace(dep, `${matchText}.production`);
+      const a = path.dirname(thisResourcePath);
+      const prodAbsPath = path.normalize(a + path.sep + prod) + ext;
+      const prodFile = readFileSync(prodAbsPath, "utf-8");
+
+      if (d.name.every((devDep) => prodFile.includes(devDep))) {
+        // prod file contains all dev names
+        console.log(`  ${green}${d.name}${reset} from ${green}${dev}${reset}`);
+
+        return acc.replace(dev, prod);
+      } else {
+        // warn and keep development dependency
+        console.log(
+          `  ${red}${d.name}${reset} missing in ${red}${prod}${reset}`
+        );
+        return acc;
+      }
     }, content);
 
-    // console.log(`\n\n${c.slice(0,700)}`);
     return prodContent;
   }
 
   return content;
 };
+
+/**
+ * @returs A list of resources imported from .development files
+ * @param {string} content
+ */
+function getRequestQueryDetail(content) {
+  const pathReg = /[\/\.\w]+?(?=\.development)/g;
+  const nameReg = /import (.*) from .*[\/\.\w]+?(?=\.development)/g;
+  const paths = content.match(pathReg);
+
+  if (paths === null) {
+    return [];
+  }
+
+  const names = [...content.matchAll(nameReg)].map((r) => r[1]);
+  const resources = names.map((r) =>
+    r.replaceAll("{", "").replaceAll("}", "").replaceAll(" ", "").split(",")
+  );
+
+  const result = paths.map((q, i) => ({
+    name: resources[i],
+    path: `${q}.development`,
+  }));
+
+  return result;
+}
