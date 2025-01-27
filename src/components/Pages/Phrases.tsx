@@ -996,7 +996,7 @@ function getPlayBtn(
   swipeThreshold: number,
   englishSideUp: boolean,
   phrase: RawPhrase,
-  loop: number,
+  loop: number
 ): React.ReactNode | undefined {
   let audioWords: AudioItemParams;
   if (englishSideUp) {

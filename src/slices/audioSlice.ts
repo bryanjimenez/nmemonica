@@ -2,6 +2,7 @@ import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { type ValuesOf } from "../typings/utils";
 import { AUDIO_WORKER_EN_NAME, AUDIO_WORKER_JA_NAME } from "../workers";
+import { EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
 import {
   type JaVoiceWorkerQuery,
   VoiceWorkerResponse,
@@ -15,11 +16,17 @@ let workerEn: Worker | null = null;
 let initialized = false;
 
 export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND_JA>;
+export type EnglishVoiceType = "default" | ValuesOf<typeof VOICE_KIND_EN>;
 export const VOICE_KIND_JA = Object.freeze({
   HAPPY: "happy",
   ANGRY: "angry",
   SAD: "sad",
   DEEP: "deep",
+});
+
+export const VOICE_KIND_EN = Object.freeze({
+  HUMAN_FEMALE: "HumanFemale",
+  ROBOT_MALE: "RobotMale",
 });
 
 /**
@@ -106,7 +113,8 @@ async function getFromVoiceSynth(
   thunkAPI: GetThunkAPI<unknown>
 ): Promise<GetSynthAudioResult> {
   const { uid, index, tl, q } = arg;
-  const { japaneseVoice } = (thunkAPI.getState() as RootState).global;
+  const { japaneseVoice, englishVoice } = (thunkAPI.getState() as RootState)
+    .global;
 
   let w = { ja: workerJa, en: workerEn }[tl];
   return new Promise<GetSynthAudioResult>(async (resolve, reject) => {
@@ -151,12 +159,13 @@ async function getFromVoiceSynth(
 
     w.addEventListener("message", wMsgHandler, { once: true });
 
-    const message: JaVoiceWorkerQuery = {
+    const message: JaVoiceWorkerQuery | EnVoiceWorkerQuery = {
       uid,
       index,
       tl,
       q,
-      japaneseVoice,
+      englishVoice: tl === "en" ? englishVoice : undefined,
+      japaneseVoice: tl === "ja" ? japaneseVoice : undefined,
     };
 
     if (initialized === true) {
