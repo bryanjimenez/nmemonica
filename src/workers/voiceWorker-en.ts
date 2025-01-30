@@ -1,6 +1,9 @@
 import { EnglishVoice, buildSpeech as eBuildSpeech } from "@nmemonica/voice-en";
 
-import { type EnglishVoiceType } from "../slices/audioSlice";
+import {
+  type AudioItemParams,
+  type EnglishVoiceType,
+} from "../slices/audioSlice";
 
 import { exceptionToError } from ".";
 
@@ -8,11 +11,11 @@ const wSelf = globalThis.self as unknown as Worker;
 
 export interface EnVoiceWorkerQuery {
   // uid & index to prevent swapping buffers incorrectly
-  uid: string;
-  index?: number;
+  uid: AudioItemParams["uid"];
+  index?: AudioItemParams["index"];
 
-  tl: string;
-  q: string;
+  tl: AudioItemParams["tl"];
+  q: AudioItemParams["q"];
   englishVoice?: EnglishVoiceType;
   AbortController?: AbortController;
 }

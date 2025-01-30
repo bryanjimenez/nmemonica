@@ -13,7 +13,7 @@ import { RootState } from ".";
 // global worker variable
 let workerJa: Worker | null = null;
 let workerEn: Worker | null = null;
-let initialized = false;
+const workerQueue = { ja: new Set<string>(), en: new Set<string>() };
 
 export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND_JA>;
 export type EnglishVoiceType = "default" | ValuesOf<typeof VOICE_KIND_EN>;
@@ -116,8 +116,13 @@ async function getFromVoiceSynth(
   const { japaneseVoice, englishVoice } = (thunkAPI.getState() as RootState)
     .global;
 
+  if (workerQueue[tl].has(uid)) {
+    // console.log(`waiting ${tl} ${index} ${uid}`)
+    return Promise.reject(new Error("Request already queued"));
+  }
+
   let w = { ja: workerJa, en: workerEn }[tl];
-  return new Promise<GetSynthAudioResult>(async (resolve, reject) => {
+  return new Promise<GetSynthAudioResult>((resolve, reject) => {
     if (w === null) {
       switch (tl) {
         case "ja": {
@@ -148,16 +153,29 @@ async function getFromVoiceSynth(
         return;
       }
       const audio = event.data.buffer;
+      workerQueue[tl].delete(event.data.uid);
 
       const blob = new Blob([audio.buffer], {
         type: "audio/wav",
       });
 
-      initialized = true;
+      // console.log(`resolving ${tl} ${event.data.index} ${event.data.uid}`)
       resolve({ uid: event.data.uid, index: event.data.index, blob });
     };
 
-    w.addEventListener("message", wMsgHandler, { once: true });
+    const wMsgPost = (msg: VoiceWorkerQuery | EnVoiceWorkerQuery) => {
+      if (!workerQueue[msg.tl].has(msg.uid)) {
+        if (workerQueue[msg.tl].size > 0) {
+          // should delete oldest req if we had a pool of workers
+          workerQueue[msg.tl].clear();
+        }
+        // console.log(`fetching ${msg.tl} ${msg.index} ${msg.uid}`)
+        workerQueue[msg.tl].add(msg.uid);
+        aWorker.postMessage(msg);
+      }
+    };
+
+    aWorker.addEventListener("message", wMsgHandler, { once: true });
 
     const message: JaVoiceWorkerQuery | EnVoiceWorkerQuery = {
       uid,
@@ -168,27 +186,7 @@ async function getFromVoiceSynth(
       japaneseVoice: tl === "ja" ? japaneseVoice : undefined,
     };
 
-    if (initialized === true) {
-      aWorker.postMessage(message);
-    } else {
-      let tries = 0;
-      while (tries < 10 && initialized === false) {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => {
-          setTimeout(resolve, 1000);
-        });
-        if (initialized === false) {
-          w.postMessage(message);
-        }
-
-        tries++;
-      }
-
-      if (initialized === false) {
-        const err = `Could not initialize @nmemonica/voice-${tl} (${tries} tries)`;
-        reject(new Error(err));
-      }
-    }
+    wMsgPost(message);
   });
 }
 
@@ -197,6 +195,13 @@ const voiceSlice = createSlice({
   initialState: {},
 
   reducers: {},
+  extraReducers: (builder) => {
+    builder.addCase(getAudio.pending, (_state, _action) => {
+      // TODO: here display req progress to user
+    });
+    builder.addCase(getAudio.fulfilled, (_state, _action) => {});
+    builder.addCase(getAudio.rejected, (_state, _action) => {});
+  },
 });
 
 export const {} = voiceSlice.actions;

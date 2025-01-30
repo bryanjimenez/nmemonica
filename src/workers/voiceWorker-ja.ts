@@ -5,18 +5,22 @@ import voice_model_angry from "../../res/models/tohoku-f01/tohoku-f01-angry.htsv
 import voice_model_happy from "../../res/models/tohoku-f01/tohoku-f01-happy.htsvoice";
 import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.htsvoice";
 import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice";
-import { type JapaneseVoiceType } from "../slices/audioSlice";
+import {
+  type AudioItemParams,
+  type JapaneseVoiceType,
+} from "../slices/audioSlice";
+
 import { exceptionToError } from ".";
 
 const wSelf = globalThis.self as unknown as Worker;
 
 export interface JaVoiceWorkerQuery {
   // uid & index to prevent swapping buffers incorrectly
-  uid: string;
-  index?: number;
+  uid: AudioItemParams["uid"];
+  index?: AudioItemParams["index"];
 
-  tl: string;
-  q: string;
+  tl: AudioItemParams["tl"];
+  q: AudioItemParams["q"];
   japaneseVoice?: JapaneseVoiceType;
   AbortController?: AbortController;
 }
@@ -95,7 +99,7 @@ function messageHandler(event: MessageEvent) {
           return;
         }
         if (buffer === undefined || name === undefined) {
-          reject(`Could not fetch selected voice ${japaneseVoice}`);
+          reject(new Error(`Could not fetch selected voice ${japaneseVoice}`));
           return;
         }
 
@@ -119,7 +123,7 @@ function messageHandler(event: MessageEvent) {
         wSelf.postMessage(response);
       } catch (exception) {
         const error = exceptionToError(exception, "voice-worker-ja");
-  
+
         wSelf.postMessage(error);
       }
     });
