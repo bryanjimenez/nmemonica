@@ -1,6 +1,7 @@
 import { faPlayCircle } from "@fortawesome/free-regular-svg-icons";
 import {
   faBan,
+  faCircleNotch,
   faGlasses,
   faPencilAlt,
   faRecycle,
@@ -392,6 +393,32 @@ export function ViewLessonsBtn(props: ViewLessonsBtnProps) {
       onClick={disabled !== true ? () => action() : undefined}
     >
       <MilestoneIcon />
+    </div>
+  );
+}
+
+interface AudioLoadingIconProps {
+  visible?: boolean;
+  notification?: string;
+}
+
+export function AudioLoadingIcon(props: AudioLoadingIconProps) {
+  const { visible, notification } = props;
+  return visible !== true ? null : (
+    <div
+      className={classNames({
+        "sm-icon-grp": true,
+        "disabled-color": true,
+      })}
+      aria-label="Loading audio"
+    >
+      <FontAwesomeIcon
+        icon={faCircleNotch}
+        className={classNames({ "spin-a-bit": true })}
+      />
+      {notification !== undefined && (
+        <span className="notification">{notification}</span>
+      )}
     </div>
   );
 }

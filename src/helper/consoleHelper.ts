@@ -56,6 +56,24 @@ export function minsSince(rawDateString: string) {
 }
 
 /**
+ * Seconds since rawDateString
+ * @param rawDateString Date
+ */
+export function secsSince(rawDateString: number | string) {
+  let dateThen;
+  if (typeof rawDateString === "number") {
+    dateThen = new Date(rawDateString).valueOf();
+  } else {
+    dateThen = Date.parse(rawDateString);
+  }
+
+  const diffTime = Math.abs(Date.now() - dateThen);
+  const diffSecs = Math.ceil(diffTime / 1000);
+
+  return diffSecs;
+}
+
+/**
  * Console friendly string representation of elapsed
  * @param tpElapsed elapsed in ms
  */

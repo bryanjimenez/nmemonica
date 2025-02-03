@@ -56,6 +56,7 @@ import {
 } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
+import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
@@ -99,6 +100,7 @@ import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
+  AudioLoadingIcon,
   PronunciationWarningBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
@@ -120,6 +122,7 @@ const VocabularyMeta = {
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
   const { cookies } = useConnectSetting();
+  const { loadingAudio } = useConnectAudio();
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
     useState(false);
@@ -921,14 +924,20 @@ export default function Vocabulary() {
               >
                 {!cookies ? null : loopSettingBtn}
               </div>
-              <div
-                className={classNames({
-                  "sm-icon-grp": true,
-                  "disabled-color": alreadyReviewed,
-                })}
-              >
-                {!cookies ? null : loopActionBtn}
-              </div>
+              {loopActionBtn && (
+                <div
+                  className={classNames({
+                    "sm-icon-grp": true,
+                    "disabled-color": alreadyReviewed,
+                  })}
+                >
+                  {!cookies ? null : loopActionBtn}
+                </div>
+              )}
+              <AudioLoadingIcon
+                visible={loadingAudio.includes(uid)}
+                notification={loadingAudio.includes(uid + ".en") ? "EN" : "JA"}
+              />
             </div>
           </div>
           <div className="col">
@@ -1042,6 +1051,7 @@ export default function Vocabulary() {
       loopActionBtn,
       loopSettingBtn,
       sort,
+      loadingAudio,
     ]
   );
 

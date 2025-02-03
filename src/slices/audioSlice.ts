@@ -1,5 +1,6 @@
 import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+import { secsSince } from "../helper/consoleHelper";
 import { type ValuesOf } from "../typings/utils";
 import { AUDIO_WORKER_EN_NAME, AUDIO_WORKER_JA_NAME } from "../workers";
 import { EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
@@ -13,7 +14,10 @@ import { RootState } from ".";
 // global worker variable
 let workerJa: Worker | null = null;
 let workerEn: Worker | null = null;
-const workerQueue = { ja: new Set<string>(), en: new Set<string>() };
+const workerQueue = {
+  ja: new Map<string, { time: number }>(),
+  en: new Map<string, { time: number }>(),
+};
 
 export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND_JA>;
 export type EnglishVoiceType = "default" | ValuesOf<typeof VOICE_KIND_EN>;
@@ -86,18 +90,20 @@ async function getSynthAudioWorkaroundNoAsyncFn(
 ) {
   const { key, index, tl, q } = arg;
   let resUid, resIndex, resBuffer;
-  do {
-    // eslint-disable-next-line no-await-in-loop
-    const res = await getFromVoiceSynth(
-      { uid: key, index, tl, q },
-      thunkAPI
-    ).then(({ uid: resUid, index, blob }) =>
-      blob.arrayBuffer().then((buffer) => ({ uid: resUid, index, buffer }))
-    );
-    resUid = res.uid;
-    resBuffer = res.buffer;
-    resIndex = res.index;
-  } while (resUid !== key);
+
+  const res = await getFromVoiceSynth(
+    { uid: key, index, tl, q },
+    thunkAPI
+  ).then(({ uid: resUid, index, blob }) =>
+    blob.arrayBuffer().then((buffer) => ({ uid: resUid, index, buffer }))
+  );
+  resUid = res.uid;
+  resBuffer = res.buffer;
+  resIndex = res.index;
+
+  if (resUid !== key) {
+    throw new Error("wrong key");
+  }
 
   return { uid: resUid, buffer: resBuffer, index: resIndex };
 }
@@ -116,9 +122,15 @@ async function getFromVoiceSynth(
   const { japaneseVoice, englishVoice } = (thunkAPI.getState() as RootState)
     .global;
 
-  if (workerQueue[tl].has(uid)) {
-    // console.log(`waiting ${tl} ${index} ${uid}`)
-    return Promise.reject(new Error("Request already queued"));
+  const t = workerQueue[tl].get(uid)?.time;
+  if (t !== undefined) {
+    const seconds = secsSince(t);
+    if (seconds < 2) {
+      return Promise.reject(new Error("Request already queued"));
+    }
+
+    // allow addtl req if prev is too stale
+    workerQueue[tl].delete(uid);
   }
 
   let w = { ja: workerJa, en: workerEn }[tl];
@@ -163,14 +175,14 @@ async function getFromVoiceSynth(
       resolve({ uid: event.data.uid, index: event.data.index, blob });
     };
 
-    const wMsgPost = (msg: VoiceWorkerQuery | EnVoiceWorkerQuery) => {
+    const wMsgPost = (msg: JaVoiceWorkerQuery | EnVoiceWorkerQuery) => {
       if (!workerQueue[msg.tl].has(msg.uid)) {
         if (workerQueue[msg.tl].size > 0) {
           // should delete oldest req if we had a pool of workers
           workerQueue[msg.tl].clear();
         }
         // console.log(`fetching ${msg.tl} ${msg.index} ${msg.uid}`)
-        workerQueue[msg.tl].add(msg.uid);
+        workerQueue[msg.tl].set(msg.uid, { time: Date.now() });
         aWorker.postMessage(msg);
       }
     };
@@ -190,17 +202,37 @@ async function getFromVoiceSynth(
   });
 }
 
+export type AudioInitSlice = {
+  loading: string[];
+};
+
+export const audioInitialState: AudioInitSlice = {
+  loading: [],
+};
+
 const voiceSlice = createSlice({
   name: "voice",
-  initialState: {},
+  initialState: audioInitialState,
 
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(getAudio.pending, (_state, _action) => {
-      // TODO: here display req progress to user
+    builder.addCase(getSynthAudioWorkaroundNoAsync.pending, (state, action) => {
+      const { key: uidPlus } = action.meta.arg;
+      const [uid] = action.meta.arg.key.split(".");
+      state.loading = [...state.loading, uid, uidPlus];
     });
-    builder.addCase(getAudio.fulfilled, (_state, _action) => {});
-    builder.addCase(getAudio.rejected, (_state, _action) => {});
+    builder.addCase(
+      getSynthAudioWorkaroundNoAsync.fulfilled,
+      (state, action) => {
+        const { key: uidPlus } = action.meta.arg;
+        const [uid] = action.meta.arg.key.split(".");
+        const updated = state.loading.filter(
+          (id) => id !== uid && id !== uidPlus
+        );
+        state.loading = updated;
+      }
+    );
+    // builder.addCase(getAudio.rejected, (_state, _action) => {});
   },
 });
 
