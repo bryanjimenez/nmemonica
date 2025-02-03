@@ -1,3 +1,5 @@
+import partition from "lodash/partition";
+
 import { AppDispatch } from "../slices";
 import {
   AudioItemParams,
@@ -31,7 +33,7 @@ export type AudioGetterFunction = (
 
 export async function getSynthVoiceBufferToCacheStore(
   dispatch: AppDispatch,
-  store: React.MutableRefObject<AudioBufferRecord>,
+  store: React.RefObject<AudioBufferRecord>,
   terms: {
     uid: AudioItemParams["uid"];
     pronunciation: AudioItemParams["q"];
@@ -39,7 +41,33 @@ export async function getSynthVoiceBufferToCacheStore(
     tl: AudioItemParams["tl"];
   }[]
 ): Promise<void> {
-  for (const { uid, pronunciation, index, tl } of terms) {
+  const [en, ja] = partition(terms, (t) => t.tl === "en");
+
+  let nonParallel = ja;
+  let engP = Promise.resolve();
+
+  if (en.length === 1) {
+    const [{ uid, pronunciation, index, tl }] = en;
+    if (store.current[uid] === undefined) {
+      engP = dispatch(
+        getSynthAudioWorkaroundNoAsync({
+          key: uid,
+          index,
+          tl,
+          q: pronunciation,
+        })
+      )
+        .unwrap()
+        .then((res) => {
+          store.current[res.uid] = { index: res.index, buffer: res.buffer };
+        });
+    }
+  } else {
+    // more than one .. can't parallelize
+    nonParallel = [...ja, ...en];
+  }
+
+  for (const { uid, pronunciation, index, tl } of nonParallel) {
     if (store.current[uid] === undefined) {
       // eslint-disable-next-line no-await-in-loop
       const res = await dispatch(
@@ -55,25 +83,33 @@ export async function getSynthVoiceBufferToCacheStore(
         // only check if incoming term has an index
         const curIndex = index;
 
-        Object.keys(store.current).forEach((kUid) => {
-          const v = store.current[kUid];
-          const cacheIdx = v?.index;
-
-          if (v === undefined || cacheIdx === undefined) {
-            return;
-          }
-
-          if (Math.abs(curIndex - cacheIdx) > MAX_CACHE_ITEM_IDX_RADIUS) {
-            store.current[kUid] = undefined;
-          }
-        });
+        Object.keys(store.current).forEach((kUid) =>
+          cacheWindowTrim(store, kUid, curIndex)
+        );
       }
 
       store.current[res.uid] = { index: res.index, buffer: res.buffer };
     }
   }
 
-  return Promise.resolve();
+  return engP;
+}
+
+function cacheWindowTrim(
+  store: React.RefObject<AudioBufferRecord>,
+  kUid: string,
+  curIndex: number
+) {
+  const cacheItem = store.current[kUid];
+  const cacheIdx = cacheItem?.index;
+
+  if (cacheItem === undefined || cacheIdx === undefined) {
+    return;
+  }
+
+  if (Math.abs(curIndex - cacheIdx) > MAX_CACHE_ITEM_IDX_RADIUS) {
+    store.current[kUid] = undefined;
+  }
 }
 
 export function copyBufferFromCacheStore(

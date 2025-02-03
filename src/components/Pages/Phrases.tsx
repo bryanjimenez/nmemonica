@@ -831,8 +831,15 @@ export default function Phrases() {
                 action={buildAction(dispatch, flipPhrasesPracticeSide)}
               />
               <AudioLoadingIcon
-                visible={loadingAudio.includes(uid)}
-                notification={loadingAudio.includes(uid + ".en") ? "EN" : "JA"}
+                visible={loadingAudio.some((id) => id.startsWith(uid))}
+                notification={
+                  loadingAudio.includes(uid + ".en") &&
+                  loadingAudio.includes(uid)
+                    ? undefined // both
+                    : loadingAudio.includes(uid + ".en")
+                      ? "EN"
+                      : "JA"
+                }
               />
             </div>
           </div>

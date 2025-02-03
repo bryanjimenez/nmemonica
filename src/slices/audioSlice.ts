@@ -218,17 +218,13 @@ const voiceSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(getSynthAudioWorkaroundNoAsync.pending, (state, action) => {
       const { key: uidPlus } = action.meta.arg;
-      const [uid] = action.meta.arg.key.split(".");
-      state.loading = [...state.loading, uid, uidPlus];
+      state.loading = [...state.loading, uidPlus];
     });
     builder.addCase(
       getSynthAudioWorkaroundNoAsync.fulfilled,
       (state, action) => {
         const { key: uidPlus } = action.meta.arg;
-        const [uid] = action.meta.arg.key.split(".");
-        const updated = state.loading.filter(
-          (id) => id !== uid && id !== uidPlus
-        );
+        const updated = state.loading.filter((id) => id !== uidPlus);
         state.loading = updated;
       }
     );
