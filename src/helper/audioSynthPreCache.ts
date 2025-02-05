@@ -5,6 +5,9 @@ import {
   AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
 } from "../slices/audioSlice";
+import { logger } from "../slices/globalSlice";
+import { DebugLevel } from "../slices/settingHelper";
+import { getStackInitial } from "../workers";
 
 /**
  * Max absolute difference to keep items cached
@@ -60,6 +63,19 @@ export async function getSynthVoiceBufferToCacheStore(
         .unwrap()
         .then((res) => {
           store.current[res.uid] = { index: res.index, buffer: res.buffer };
+        })
+        .catch((exception) => {
+          // Handle exception here or will be uncaught
+          // (won't bubble bc await below)
+          let msg = JSON.stringify(exception);
+          if (exception instanceof Error) {
+            msg = exception.message;
+            if (msg === "unreachable") {
+              const stack = "at " + getStackInitial(exception);
+              msg = `cache: ${pronunciation} ${stack}`;
+            }
+          }
+          dispatch(logger(msg, DebugLevel.ERROR));
         });
     }
   } else {

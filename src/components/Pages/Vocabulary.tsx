@@ -646,15 +646,16 @@ export default function Vocabulary() {
         ]).catch((exception) => {
           // likely getAudio failed
 
+          let msg = JSON.stringify(exception);
           if (exception instanceof Error) {
-            let msg = exception.message;
+            msg = exception.message;
             if (msg === "unreachable") {
               const stack = "at " + getStackInitial(exception);
               const q = vQuery instanceof Error ? vQuery.toString() : vQuery;
               msg = `cache:${v.english} ${q} ${stack}`;
             }
-            dispatch(logger(msg, DebugLevel.ERROR));
           }
+          dispatch(logger(msg, DebugLevel.ERROR));
         });
       }
 
