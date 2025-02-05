@@ -1327,30 +1327,13 @@ function useBuildGameActionsHandler(
                 })
               ).unwrap();
 
-              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-                (resolve) => {
-                  resolve({
-                    uid: res.uid,
-                    buffer: copyBufferToCacheStore(
-                      audioCacheStore,
-                      res.uid,
-                      res.buffer
-                    ),
-                  });
-                }
-              ).then((res) => {
-                const cachedAudioBuf = copyBufferFromCacheStore(
-                  audioCacheStore,
-                  vUid
-                );
-                if (cachedAudioBuf !== undefined) {
-                  return playAudio(cachedAudioBuf);
-                }
+              const cachedAudioBuf = copyBufferToCacheStore(
+                audioCacheStore,
+                res.uid,
+                res.buffer
+              );
 
-                const msg = `No Async Workaround: ${vUid} ${res.uid}`;
-                dispatch(logger(msg, DebugLevel.ERROR));
-                return Promise.reject(new Error(msg));
-              });
+              return playAudio(cachedAudioBuf);
             } catch (exception) {
               if (exception instanceof Error) {
                 let msg = exception.message;
@@ -1390,30 +1373,13 @@ function useBuildGameActionsHandler(
                 })
               ).unwrap();
 
-              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-                (resolve) => {
-                  resolve({
-                    uid: res.uid,
-                    buffer: copyBufferToCacheStore(
-                      audioCacheStore,
-                      res.uid,
-                      res.buffer
-                    ),
-                  });
-                }
-              ).then((res) => {
-                const cachedAudioBuf = copyBufferFromCacheStore(
-                  audioCacheStore,
-                  enUid
-                );
-                if (cachedAudioBuf !== undefined) {
-                  return playAudio(cachedAudioBuf);
-                }
+              const cachedAudioBuf = copyBufferToCacheStore(
+                audioCacheStore,
+                res.uid,
+                res.buffer
+              );
 
-                const msg = `No Async Workaround: ${enUid} ${res.uid}`;
-                dispatch(logger(msg, DebugLevel.ERROR));
-                return Promise.reject(new Error(msg));
-              });
+              return playAudio(cachedAudioBuf);
             } catch (exception) {
               if (exception instanceof Error) {
                 let msg = exception.message;
