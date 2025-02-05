@@ -7,7 +7,7 @@ import {
 } from "../slices/audioSlice";
 import { logger } from "../slices/globalSlice";
 import { DebugLevel } from "../slices/settingHelper";
-import { getStackInitial } from "../workers";
+import { exceptionToError, getStackInitial } from "../workers";
 
 /**
  * Max absolute difference to keep items cached
@@ -67,14 +67,14 @@ export async function getSynthVoiceBufferToCacheStore(
         .catch((exception) => {
           // Handle exception here or will be uncaught
           // (won't bubble bc await below)
-          let msg = JSON.stringify(exception);
-          if (exception instanceof Error) {
-            msg = exception.message;
-            if (msg === "unreachable") {
-              const stack = "at " + getStackInitial(exception);
-              msg = `cache: ${pronunciation} ${stack}`;
-            }
+          const error = exceptionToError(exception, "cache-voice-en");
+
+          let msg = error.message;
+          if (msg === "unreachable") {
+            const stack = "at " + getStackInitial(error);
+            msg = `cache: ${pronunciation} ${stack}`;
           }
+
           dispatch(logger(msg, DebugLevel.ERROR));
         });
     }

@@ -1339,12 +1339,17 @@ function useBuildGameActionsHandler(
                   });
                 }
               ).then((res) => {
-                if (vUid !== res.uid) {
-                  const msg = `No Async Workaround: ${vUid} ${res.uid}`;
-                  dispatch(logger(msg, DebugLevel.ERROR));
-                  return Promise.reject(new Error(msg));
+                const cachedAudioBuf = copyBufferFromCacheStore(
+                  audioCacheStore,
+                  vUid
+                );
+                if (cachedAudioBuf !== undefined) {
+                  return playAudio(cachedAudioBuf);
                 }
-                return playAudio(res.buffer, AbortController);
+
+                const msg = `No Async Workaround: ${vUid} ${res.uid}`;
+                dispatch(logger(msg, DebugLevel.ERROR));
+                return Promise.reject(new Error(msg));
               });
             } catch (exception) {
               if (exception instanceof Error) {
@@ -1397,12 +1402,17 @@ function useBuildGameActionsHandler(
                   });
                 }
               ).then((res) => {
-                if (enUid !== res.uid) {
-                  const msg = `No Async Workaround: ${enUid} ${res.uid}`;
-                  dispatch(logger(msg, DebugLevel.ERROR));
-                  return Promise.reject(new Error(msg));
+                const cachedAudioBuf = copyBufferFromCacheStore(
+                  audioCacheStore,
+                  enUid
+                );
+                if (cachedAudioBuf !== undefined) {
+                  return playAudio(cachedAudioBuf);
                 }
-                return playAudio(res.buffer, AbortController);
+
+                const msg = `No Async Workaround: ${enUid} ${res.uid}`;
+                dispatch(logger(msg, DebugLevel.ERROR));
+                return Promise.reject(new Error(msg));
               });
             } catch (exception) {
               if (exception instanceof Error) {
