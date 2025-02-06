@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import {
-  DebugLevel,
   grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
 } from "../../../src/slices/settingHelper";
+import { DebugLevel } from "../../../src/helper/consoleHelper";
 
 describe("settingHelper", function () {
   describe("toggleAFilter", function () {

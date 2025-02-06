@@ -22,7 +22,13 @@ import {
   copyBufferToCacheStore,
   getSynthVoiceBufferToCacheStore,
 } from "../../helper/audioSynthPreCache";
-import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
+import {
+  type ConsoleMessage,
+  DebugLevel,
+  daysSince,
+  spaceRepLog,
+  wasToday,
+} from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
@@ -78,14 +84,9 @@ import {
   togglePhraseTag,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
-import {
-  DebugLevel,
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
+import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
-import type { ConsoleMessage } from "../Form/Console";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";

@@ -1,14 +1,13 @@
 import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { logger } from "./globalSlice";
-import { msgInnerTrim, secsSince } from "../helper/consoleHelper";
+import { DebugLevel, msgInnerTrim, secsSince } from "../helper/consoleHelper";
 import { type ValuesOf } from "../typings/utils";
 import {
   AUDIO_WORKER_EN_NAME,
   AUDIO_WORKER_JA_NAME,
   exceptionToError,
 } from "../workers";
-import { DebugLevel } from "./settingHelper";
 import { EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
 import {
   type JaVoiceWorkerQuery,

@@ -11,11 +11,14 @@ import { kanjiSettingsFromAppStorage } from "./kanjiSlice";
 import { oppositeSettingsFromAppStorage } from "./oppositeSlice";
 import { particleSettingsFromAppStorage } from "./particleSlice";
 import { phraseSettingsFromAppStorage } from "./phraseSlice";
-import { DebugLevel, toggleAFilter } from "./settingHelper";
+import { toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
-import { type ConsoleMessage } from "../components/Form/Console";
-import { squashSeqMsgs } from "../helper/consoleHelper";
+import {
+  type ConsoleMessage,
+  DebugLevel,
+  squashSeqMsgs,
+} from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
 import {
   getUserSettings,

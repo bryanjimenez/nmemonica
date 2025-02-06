@@ -3,14 +3,6 @@ import type { MetaDataObj } from "nmemonica";
 import type { FilterKeysOfType } from "../typings/utils";
 
 // enum
-export const DebugLevel = Object.freeze({
-  OFF: 0,
-  ERROR: 1,
-  WARN: 2,
-  DEBUG: 3,
-});
-
-// enum
 export const TermFilterBy = Object.freeze({
   GROUP: 0,
   TAGS: 2,

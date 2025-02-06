@@ -26,7 +26,7 @@
     "../src/constants/actionNames.ts",
     "../src/helper/urlHelper.ts",
     "../src/helper/serviceWorkerHelper.ts",
-    "../src/slices/settingHelper.ts"
+    "../src/helper/consoleHelper.ts"
   ],
 
   "ts-node": {

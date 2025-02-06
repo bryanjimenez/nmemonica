@@ -21,6 +21,7 @@ import { CookiePolicyMeta } from "./components/Terms/CookiePolicy";
 import { PrivacyPolicyMeta } from "./components/Terms/PrivacyPolicy";
 import { TermsAndConditionsMeta } from "./components/Terms/TermsAndConditions";
 import { TermsNotice } from "./components/Terms/TermsNotice";
+import { DebugLevel } from "./helper/consoleHelper";
 import {
   SwMessage,
   swMessageSubscribe,
@@ -30,7 +31,6 @@ import type { AppDispatch, RootState } from "./slices";
 import { dropAudioWorker, initAudioWorker } from "./slices/audioSlice";
 import { appSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
-import { DebugLevel } from "./slices/settingHelper";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const TermsAndConditions = lazy(
   () => import("./components/Terms/TermsAndConditions")

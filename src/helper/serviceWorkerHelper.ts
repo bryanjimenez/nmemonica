@@ -1,4 +1,4 @@
-import { DebugLevel } from "../slices/settingHelper";
+import { DebugLevel } from "./consoleHelper";
 import { ValuesOf } from "../typings/utils";
 
 export interface SwMessage {

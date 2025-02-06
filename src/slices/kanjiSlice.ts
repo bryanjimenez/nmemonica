@@ -5,7 +5,6 @@ import type { MetaDataObj, RawKanji } from "nmemonica";
 
 import { logger } from "./globalSlice";
 import {
-  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -13,6 +12,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
+import { DebugLevel } from "../helper/consoleHelper";
 import { type Kanji, sheetDataToJSON } from "../helper/jsonHelper";
 import {
   SR_MIN_REV_ITEMS,

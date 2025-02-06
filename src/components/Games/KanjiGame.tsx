@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { spaceRepLog } from "../../helper/consoleHelper";
+import { type ConsoleMessage, spaceRepLog } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
@@ -46,7 +46,6 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";

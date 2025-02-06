@@ -10,7 +10,6 @@ import type {
 
 import { logger } from "./globalSlice";
 import {
-  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -19,6 +18,7 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
+import { DebugLevel } from "../helper/consoleHelper";
 import { sheetDataToJSON } from "../helper/jsonHelper";
 import {
   SR_MIN_REV_ITEMS,
