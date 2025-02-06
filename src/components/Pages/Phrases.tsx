@@ -21,6 +21,7 @@ import {
   copyBufferFromCacheStore,
   copyBufferToCacheStore,
   getSynthVoiceBufferToCacheStore,
+  logCacheError,
 } from "../../helper/audioSynthPreCache";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
@@ -491,16 +492,7 @@ export default function Phrases() {
             },
           ]).catch((exception) => {
             // likely getAudio failed
-
-            let msg = JSON.stringify(exception);
-            if (exception instanceof Error) {
-              msg = exception.message;
-              if (msg === "unreachable") {
-                const stack = "at " + getStackInitial(exception);
-                msg = `cache:${curP.english} ${inJapanese} ${stack}`;
-              }
-            }
-            dispatch(logger(msg, DebugLevel.ERROR));
+            logCacheError(dispatch, exception, curP.english);
           });
         }
       }

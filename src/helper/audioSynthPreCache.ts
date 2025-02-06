@@ -8,6 +8,7 @@ import {
 import { logger } from "../slices/globalSlice";
 import { DebugLevel } from "../slices/settingHelper";
 import { exceptionToError, getStackInitial } from "../workers";
+import { msgInnerTrim } from "./consoleHelper";
 
 /**
  * Max absolute difference to keep items cached
@@ -67,15 +68,7 @@ export async function getSynthVoiceBufferToCacheStore(
         .catch((exception) => {
           // Handle exception here or will be uncaught
           // (won't bubble bc await below)
-          const error = exceptionToError(exception, "cache-voice-en");
-
-          let msg = error.message;
-          if (msg === "unreachable") {
-            const stack = "at " + getStackInitial(error);
-            msg = `cache: ${pronunciation} ${stack}`;
-          }
-
-          dispatch(logger(msg, DebugLevel.ERROR));
+          logCacheError(dispatch, exception, pronunciation);
         });
     }
   } else {
@@ -109,6 +102,23 @@ export async function getSynthVoiceBufferToCacheStore(
   }
 
   return engP;
+}
+
+export function logCacheError(
+  dispatch: AppDispatch,
+  exception: unknown,
+  pronunciation: string
+) {
+  const error = exceptionToError(exception, "audio-synth-pre-cache");
+
+  let msg = JSON.stringify(exception);
+
+  if (error.message === "unreachable") {
+    const stack = "at " + getStackInitial(error);
+    msg = `cache: ${msgInnerTrim(pronunciation, 20)} 'Unreachable' ${stack}`;
+  }
+
+  dispatch(logger(msg, DebugLevel.ERROR));
 }
 
 function cacheWindowTrim(

@@ -102,7 +102,20 @@ async function getSynthAudioWorkaroundNoAsyncFn(
   resIndex = res.index;
 
   if (resUid !== key) {
-    throw new Error("wrong key");
+    // voiceSynth isn't parallel and can fail
+    // when multiple req don't finish
+    const retry = await getFromVoiceSynth(
+      { uid: key, index, tl, q },
+      thunkAPI
+    ).then(({ uid: resUid, index, blob }) =>
+      blob.arrayBuffer().then((buffer) => ({ uid: resUid, index, buffer }))
+    );
+    resUid = retry.uid;
+    resBuffer = retry.buffer;
+    resIndex = retry.index;
+    if (resUid !== key) {
+      throw new Error("Previous failed. Retry failed.");
+    }
   }
 
   return { uid: resUid, buffer: resBuffer, index: resIndex };
