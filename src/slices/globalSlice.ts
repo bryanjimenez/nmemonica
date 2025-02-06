@@ -17,7 +17,6 @@ import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
 import { type ConsoleMessage } from "../components/Form/Console";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
-import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
 import {
   getUserSettings,
   userSettingAttrUpdate,
@@ -258,13 +257,13 @@ const globalSlice = createSlice({
     logger: {
       reducer: (state, action: PayloadAction<ConsoleMessage>) => {
         const { debug } = state;
-        const { msg, lvl, type } = action.payload;
+        const { msg, lvl, origin: type } = action.payload;
         if (debug !== 0 && lvl <= debug) {
           let m;
-          if (type === SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG) {
-            m = `SW: ${msg}`;
-          } else {
+          if (type === undefined) {
             m = `UI: ${msg}`;
+          } else {
+            m = `${type}: ${msg}`;
           }
 
           const begining = state.console.slice(0, -1);
@@ -286,10 +285,10 @@ const globalSlice = createSlice({
 
       prepare: (
         msg: string,
-        lvl: number = DebugLevel.DEBUG,
-        type: string = UIMsg.UI_LOGGER_MSG
+        lvl: ConsoleMessage["lvl"] = DebugLevel.DEBUG,
+        type?: ConsoleMessage["origin"]
       ) => ({
-        payload: { msg, lvl, type },
+        payload: { msg, lvl, origin: type },
       }),
     },
     setEncryptKey(state, action: PayloadAction<string | undefined>) {

@@ -22,7 +22,6 @@ import { PrivacyPolicyMeta } from "./components/Terms/PrivacyPolicy";
 import { TermsAndConditionsMeta } from "./components/Terms/TermsAndConditions";
 import { TermsNotice } from "./components/Terms/TermsNotice";
 import {
-  SWMsgIncoming,
   SwMessage,
   swMessageSubscribe,
   swMessageUnsubscribe,
@@ -67,10 +66,8 @@ export default function App() {
     const swMessageHandler = (event: MessageEvent) => {
       const data = event.data as SwMessage;
 
-      if (data.type === SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG) {
-        dispatch(
-          logger(data.msg, data.lvl, SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG)
-        );
+      if (data.type === "SW") {
+        dispatch(logger(data.msg, data.lvl, "SW"));
       }
     };
 
@@ -192,7 +189,7 @@ function ByLocationWorkerLifetime() {
         void dispatch(dropAudioWorker());
         break;
     }
-  }, [location]);
+  }, [dispatch, location]);
 
   return null;
 }

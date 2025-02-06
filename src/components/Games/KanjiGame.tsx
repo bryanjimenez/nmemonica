@@ -46,6 +46,7 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
@@ -268,7 +269,10 @@ export default function KanjiGame() {
 
             const prevDate = prevVal.lastView ?? value.lastView;
             const repStats = { [prevUid]: { ...value, lastView: prevDate } };
-            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
+            const messageLog = (
+              m: ConsoleMessage["msg"],
+              l: ConsoleMessage["lvl"]
+            ) => dispatch(logger(m, l));
 
             spaceRepLog(messageLog, prevTerm, repStats);
           });

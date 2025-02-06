@@ -661,8 +661,10 @@ export default function Kanji() {
               }
 
               const repStats = { [uid]: { ...value, lastView: prevDate } };
-              const messageLog = (m: string, l: number) =>
-                dispatch(logger(m, l));
+              const messageLog = (
+                m: ConsoleMessage["msg"],
+                l: ConsoleMessage["lvl"]
+              ) => dispatch(logger(m, l));
 
               spaceRepLog(messageLog, k, repStats);
             });

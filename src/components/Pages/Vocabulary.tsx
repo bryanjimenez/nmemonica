@@ -716,8 +716,10 @@ export default function Vocabulary() {
               }
 
               const repStats = { [uid]: { ...value, lastView: prevDate } };
-              const messageLog = (m: string, l: number) =>
-                dispatch(logger(m, l));
+              const messageLog = (
+                m: ConsoleMessage["msg"],
+                l: ConsoleMessage["lvl"]
+              ) => dispatch(logger(m, l));
               spaceRepLog(messageLog, vocabulary, repStats);
             });
         }

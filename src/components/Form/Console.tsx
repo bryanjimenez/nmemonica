@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 
 import type { RootState } from "../../slices";
 import { DebugLevel } from "../../slices/settingHelper";
+import { ValuesOf } from "../../typings/utils";
 
 const MAX_CONSOLE_MESSAGES = 6;
 const COLLAPSE_T = 3000;
@@ -11,10 +12,10 @@ const SCROLL_COLLAPSE_T = 10000;
 
 export interface ConsoleMessage {
   msg: string;
-  lvl: number;
+  lvl: ValuesOf<typeof DebugLevel>;
   css?: string;
   /** Used to distinguish between UI and SW msg */
-  type?: string;
+  origin?: "UI" | "SW" | "CACHE";
   time?: number;
 }
 
