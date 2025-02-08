@@ -8,6 +8,7 @@ import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice
 import {
   type AudioItemParams,
   type JapaneseVoiceType,
+  VoiceError,
 } from "../slices/audioSlice";
 
 import { exceptionToError } from ".";
@@ -122,7 +123,8 @@ function messageHandler(event: MessageEvent) {
         };
         wSelf.postMessage(response);
       } catch (exception) {
-        const error = exceptionToError(exception, "voice-worker-ja");
+        const error = exceptionToError(exception) as VoiceError;
+        error.cause.module = "voice-worker-ja";
 
         wSelf.postMessage(error);
       }

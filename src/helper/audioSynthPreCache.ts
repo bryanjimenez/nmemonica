@@ -3,13 +3,9 @@ import partition from "lodash/partition";
 import { AppDispatch } from "../slices";
 import {
   AudioItemParams,
-  VoiceModuleError,
   getSynthAudioWorkaroundNoAsync,
+  logAudioError,
 } from "../slices/audioSlice";
-import { logger } from "../slices/globalSlice";
-import { DebugLevel } from "../slices/settingHelper";
-import { exceptionToError, getStackInitial } from "../workers";
-import { msgInnerTrim } from "./consoleHelper";
 
 /**
  * Max absolute difference to keep items cached
@@ -69,7 +65,7 @@ export async function getSynthVoiceBufferToCacheStore(
         .catch((exception) => {
           // Handle exception here or will be uncaught
           // (won't bubble bc await below)
-          logCacheError(dispatch, exception, pronunciation);
+          logAudioError(dispatch, exception, pronunciation);
         });
     }
   } else {
@@ -103,37 +99,6 @@ export async function getSynthVoiceBufferToCacheStore(
   }
 
   return engP;
-}
-
-export function logCacheError(
-  dispatch: AppDispatch,
-  exception: unknown,
-  pronunciation: string
-) {
-  const error = exceptionToError(
-    exception,
-    "audio-synth-pre-cache"
-  ) as Error & { cause: { code?: string; module?: string } };
-
-  let msg = JSON.stringify(exception);
-
-  switch (error.cause?.code) {
-    case VoiceModuleError.MODULE_LOAD_ERROR:
-    case VoiceModuleError.DUPLICATE_REQUEST:
-    case VoiceModuleError.MAX_RETRY:
-      if ("code" in error.cause && "module" in error.cause) {
-        msg = `${error.cause.code} at ${error.cause.module}`;
-      }
-      break;
-
-    default:
-      if (error.message === "unreachable") {
-        const stack = "at " + getStackInitial(error);
-        msg = `${msgInnerTrim(pronunciation, 20)} 'Unreachable' ${stack}`;
-      }
-  }
-
-  dispatch(logger(msg, DebugLevel.ERROR));
 }
 
 function cacheWindowTrim(

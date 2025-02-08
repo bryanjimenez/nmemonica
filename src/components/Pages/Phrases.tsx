@@ -21,7 +21,6 @@ import {
   copyBufferFromCacheStore,
   copyBufferToCacheStore,
   getSynthVoiceBufferToCacheStore,
-  logCacheError,
 } from "../../helper/audioSynthPreCache";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
@@ -64,6 +63,7 @@ import { playAudio } from "../../slices/audioHelper";
 import {
   type AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
+  logAudioError,
 } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
@@ -83,7 +83,6 @@ import {
   TermSortBy,
   TermSortByLabel,
 } from "../../slices/settingHelper";
-import { getStackInitial } from "../../workers";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
@@ -492,7 +491,7 @@ export default function Phrases() {
             },
           ]).catch((exception) => {
             // likely getAudio failed
-            logCacheError(dispatch, exception, curP.english);
+            logAudioError(dispatch, exception, curP.english, "onPreCache");
           });
         }
       }
@@ -1096,14 +1095,7 @@ function buildGameActionsHandler(
 
             return playAudio(cachedAudioBuf);
           } catch (exception) {
-            if (exception instanceof Error) {
-              let msg = exception.message;
-              if (msg === "unreachable") {
-                const stack = "at " + getStackInitial(exception);
-                msg = `tts:${inJapanese} ${stack}`;
-              }
-              dispatch(logger(msg, DebugLevel.ERROR));
-            }
+            logAudioError(dispatch, exception, inJapanese, "onSwipe");
             return Promise.resolve();
           }
         }
@@ -1135,14 +1127,7 @@ function buildGameActionsHandler(
 
             return playAudio(cachedAudioBuf);
           } catch (exception) {
-            if (exception instanceof Error) {
-              let msg = exception.message;
-              if (msg === "unreachable") {
-                const stack = "at " + getStackInitial(exception);
-                msg = `tts:${inEnglish} ${stack}`;
-              }
-              dispatch(logger(msg, DebugLevel.ERROR));
-            }
+            logAudioError(dispatch, exception, inEnglish, "onSwipe");
             return Promise.resolve();
           }
         }

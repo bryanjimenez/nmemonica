@@ -1,15 +1,21 @@
 import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { secsSince } from "../helper/consoleHelper";
+import { logger } from "./globalSlice";
+import { msgInnerTrim, secsSince } from "../helper/consoleHelper";
 import { type ValuesOf } from "../typings/utils";
-import { AUDIO_WORKER_EN_NAME, AUDIO_WORKER_JA_NAME } from "../workers";
+import {
+  AUDIO_WORKER_EN_NAME,
+  AUDIO_WORKER_JA_NAME,
+  exceptionToError,
+} from "../workers";
+import { DebugLevel } from "./settingHelper";
 import { EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
 import {
   type JaVoiceWorkerQuery,
   VoiceWorkerResponse,
 } from "../workers/voiceWorker-ja";
 
-import { RootState } from ".";
+import { AppDispatch, RootState } from ".";
 
 // global worker variable
 let workerJa: Worker | null = null;
@@ -33,11 +39,44 @@ export const VOICE_KIND_EN = Object.freeze({
   ROBOT_MALE: "RobotMale",
 });
 
-export const VoiceModuleError = Object.freeze({
+export class VoiceError extends Error {
+  cause: { code: string; module: string };
+
+  constructor(name: string, code: string, module: string) {
+    super(name);
+    this.cause = { code, module };
+  }
+}
+
+export const VoiceErrorCode = Object.freeze({
   MODULE_LOAD_ERROR: "Failed to load module",
   MAX_RETRY: "Maximum retries exceeded",
   DUPLICATE_REQUEST: "This request has already been received",
+  UNREACHABLE: "Module panicked",
 });
+
+export function logAudioError(
+  dispatch: AppDispatch,
+  exception: unknown,
+  pronunciation: string,
+  caughtOrigin?: string
+) {
+  const error = exceptionToError(exception, caughtOrigin) as VoiceError;
+
+  let msg: string;
+  switch (error.cause?.code) {
+    case VoiceErrorCode.MODULE_LOAD_ERROR:
+    case VoiceErrorCode.UNREACHABLE:
+    case VoiceErrorCode.DUPLICATE_REQUEST:
+    case VoiceErrorCode.MAX_RETRY:
+      msg = `${error.cause.code} at ${error.cause.module} with ${msgInnerTrim(pronunciation, 20)}`;
+      break;
+    default:
+      msg = JSON.stringify(exception);
+  }
+
+  dispatch(logger(msg, DebugLevel.ERROR));
+}
 
 /**
  * Initialize wasm for `@nmemonica/voice-ja`
@@ -122,9 +161,11 @@ async function getSynthAudioWorkaroundNoAsyncFn(
     resBuffer = retry.buffer;
     resIndex = retry.index;
     if (resUid !== key) {
-      throw new Error("Previous failed. Retry failed.", {
-        cause: { code: VoiceModuleError.MAX_RETRY, module: `voice-${tl}` },
-      });
+      throw new VoiceError(
+        "Previous failed. Retry failed.",
+        VoiceErrorCode.MAX_RETRY,
+        `voice-${tl}`
+      );
     }
   }
 
@@ -150,12 +191,11 @@ async function getFromVoiceSynth(
     const seconds = secsSince(t);
     if (seconds < 2) {
       return Promise.reject(
-        new Error("Request already queued", {
-          cause: {
-            code: VoiceModuleError.DUPLICATE_REQUEST,
-            module: `voice-${tl}`,
-          },
-        })
+        new VoiceError(
+          "Request already queued",
+          VoiceErrorCode.DUPLICATE_REQUEST,
+          `voice-${tl}`
+        )
       );
     }
 
@@ -184,12 +224,7 @@ async function getFromVoiceSynth(
     if (w === null) {
       const err = `Failed to load worker voice-${tl}`;
       reject(
-        new Error(err, {
-          cause: {
-            code: VoiceModuleError.MODULE_LOAD_ERROR,
-            module: `voice-${tl}`,
-          },
-        })
+        new VoiceError(err, VoiceErrorCode.MODULE_LOAD_ERROR, `voice-${tl}`)
       );
       return;
     }
