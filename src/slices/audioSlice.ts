@@ -33,6 +33,12 @@ export const VOICE_KIND_EN = Object.freeze({
   ROBOT_MALE: "RobotMale",
 });
 
+export const VoiceModuleError = Object.freeze({
+  MODULE_LOAD_ERROR: "Failed to load module",
+  MAX_RETRY: "Maximum retries exceeded",
+  DUPLICATE_REQUEST: "This request has already been received",
+});
+
 /**
  * Initialize wasm for `@nmemonica/voice-ja`
  */
@@ -104,6 +110,8 @@ async function getSynthAudioWorkaroundNoAsyncFn(
   if (resUid !== key) {
     // voiceSynth isn't parallel and can fail
     // when multiple req don't finish
+    workerQueue[tl].delete(key);
+
     const retry = await getFromVoiceSynth(
       { uid: key, index, tl, q },
       thunkAPI
@@ -114,7 +122,9 @@ async function getSynthAudioWorkaroundNoAsyncFn(
     resBuffer = retry.buffer;
     resIndex = retry.index;
     if (resUid !== key) {
-      throw new Error("Previous failed. Retry failed.");
+      throw new Error("Previous failed. Retry failed.", {
+        cause: { code: VoiceModuleError.MAX_RETRY, module: `voice-${tl}` },
+      });
     }
   }
 
@@ -139,7 +149,14 @@ async function getFromVoiceSynth(
   if (t !== undefined) {
     const seconds = secsSince(t);
     if (seconds < 2) {
-      return Promise.reject(new Error("Request already queued"));
+      return Promise.reject(
+        new Error("Request already queued", {
+          cause: {
+            code: VoiceModuleError.DUPLICATE_REQUEST,
+            module: `voice-${tl}`,
+          },
+        })
+      );
     }
 
     // allow addtl req if prev is too stale
@@ -166,7 +183,14 @@ async function getFromVoiceSynth(
 
     if (w === null) {
       const err = `Failed to load worker voice-${tl}`;
-      reject(new Error(err));
+      reject(
+        new Error(err, {
+          cause: {
+            code: VoiceModuleError.MODULE_LOAD_ERROR,
+            module: `voice-${tl}`,
+          },
+        })
+      );
       return;
     }
 

@@ -3,6 +3,7 @@ import partition from "lodash/partition";
 import { AppDispatch } from "../slices";
 import {
   AudioItemParams,
+  VoiceModuleError,
   getSynthAudioWorkaroundNoAsync,
 } from "../slices/audioSlice";
 import { logger } from "../slices/globalSlice";
@@ -109,13 +110,27 @@ export function logCacheError(
   exception: unknown,
   pronunciation: string
 ) {
-  const error = exceptionToError(exception, "audio-synth-pre-cache");
+  const error = exceptionToError(
+    exception,
+    "audio-synth-pre-cache"
+  ) as Error & { cause: { code?: string; module?: string } };
 
   let msg = JSON.stringify(exception);
 
-  if (error.message === "unreachable") {
-    const stack = "at " + getStackInitial(error);
-    msg = `cache: ${msgInnerTrim(pronunciation, 20)} 'Unreachable' ${stack}`;
+  switch (error.cause?.code) {
+    case VoiceModuleError.MODULE_LOAD_ERROR:
+    case VoiceModuleError.DUPLICATE_REQUEST:
+    case VoiceModuleError.MAX_RETRY:
+      if ("code" in error.cause && "module" in error.cause) {
+        msg = `${error.cause.code} at ${error.cause.module}`;
+      }
+      break;
+
+    default:
+      if (error.message === "unreachable") {
+        const stack = "at " + getStackInitial(error);
+        msg = `${msgInnerTrim(pronunciation, 20)} 'Unreachable' ${stack}`;
+      }
   }
 
   dispatch(logger(msg, DebugLevel.ERROR));
