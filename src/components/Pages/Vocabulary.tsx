@@ -644,10 +644,7 @@ export default function Vocabulary() {
             pronunciation: v.english,
             index,
           },
-        ]).catch((exception) => {
-          // likely getAudio failed
-          logAudioError(dispatch, exception, v.english, "onPreCache");
-        });
+        ]);
       }
 
       updateDailyGoal({

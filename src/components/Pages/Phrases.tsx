@@ -490,10 +490,7 @@ export default function Phrases() {
               pronunciation: curP.english,
               index: reinforcedUID !== null ? undefined : selectedIndex,
             },
-          ]).catch((exception) => {
-            // likely getAudio failed
-            logAudioError(dispatch, exception, curP.english, "onPreCache");
-          });
+          ]);
         }
       }
 

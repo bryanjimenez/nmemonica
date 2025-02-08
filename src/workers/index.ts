@@ -34,6 +34,9 @@ export function exceptionToError(exception: unknown, origin?: string) {
     if ("stack" in exception) {
       error.stack = exception.stack as string;
     }
+    if ("cause" in exception) {
+      error.cause = exception.cause;
+    }
   }
 
   return error;

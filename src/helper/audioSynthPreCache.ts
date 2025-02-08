@@ -63,9 +63,7 @@ export async function getSynthVoiceBufferToCacheStore(
           store.current[res.uid] = { index: res.index, buffer: res.buffer };
         })
         .catch((exception) => {
-          // Handle exception here or will be uncaught
-          // (won't bubble bc await below)
-          logAudioError(dispatch, exception, pronunciation);
+          logAudioError(dispatch, exception, pronunciation, "onPreCache");
         });
     }
   } else {
@@ -74,27 +72,31 @@ export async function getSynthVoiceBufferToCacheStore(
   }
 
   for (const { uid, pronunciation, index, tl } of nonParallel) {
-    if (store.current[uid] === undefined) {
-      // eslint-disable-next-line no-await-in-loop
-      const res = await dispatch(
-        getSynthAudioWorkaroundNoAsync({
-          key: uid,
-          index,
-          tl,
-          q: pronunciation,
-        })
-      ).unwrap();
+    try {
+      if (store.current[uid] === undefined) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await dispatch(
+          getSynthAudioWorkaroundNoAsync({
+            key: uid,
+            index,
+            tl,
+            q: pronunciation,
+          })
+        ).unwrap();
 
-      if (index !== undefined) {
-        // only check if incoming term has an index
-        const curIndex = index;
+        if (index !== undefined) {
+          // only check if incoming term has an index
+          const curIndex = index;
 
-        Object.keys(store.current).forEach((kUid) =>
-          cacheWindowTrim(store, kUid, curIndex)
-        );
+          Object.keys(store.current).forEach((kUid) =>
+            cacheWindowTrim(store, kUid, curIndex)
+          );
+        }
+
+        store.current[res.uid] = { index: res.index, buffer: res.buffer };
       }
-
-      store.current[res.uid] = { index: res.index, buffer: res.buffer };
+    } catch (exception) {
+      logAudioError(dispatch, exception, pronunciation, "onPreCache");
     }
   }
 

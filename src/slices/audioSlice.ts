@@ -52,6 +52,7 @@ export const VoiceErrorCode = Object.freeze({
   MAX_RETRY: "Maximum retries exceeded",
   DUPLICATE_REQUEST: "This request has already been received",
   UNREACHABLE: "Module panicked",
+  BAD_INPUT: "Invalid Input",
 });
 
 export function logAudioError(
@@ -66,6 +67,7 @@ export function logAudioError(
   switch (error.cause?.code) {
     case VoiceErrorCode.MODULE_LOAD_ERROR:
     case VoiceErrorCode.UNREACHABLE:
+    case VoiceErrorCode.BAD_INPUT:
     case VoiceErrorCode.DUPLICATE_REQUEST:
     case VoiceErrorCode.MAX_RETRY:
       msg = `${error.cause.code} at ${error.cause.module} with ${msgInnerTrim(pronunciation, 20)}`;
