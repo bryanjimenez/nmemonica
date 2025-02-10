@@ -24,7 +24,6 @@ import { NotReady } from "../Form/NotReady";
 export interface RawOpposite {
   english: string;
   japanese: string;
-  romaji: string;
   toHTML: (correct: boolean) => React.JSX.Element;
 }
 
@@ -39,11 +38,11 @@ export default function OppositesGame() {
     ({ opposite }: RootState) => opposite,
     (before, after) => before.version === after.version
   );
-  const [qRomaji, aRomaji, fadeInAnswers] = useSelector<RootState, boolean[]>(
+  const [fadeInAnswers] = useSelector<RootState, boolean[]>(
     ({ opposite }: RootState) => {
-      const { qRomaji, aRomaji, fadeInAnswers } = opposite;
+      const { fadeInAnswers } = opposite;
 
-      return [qRomaji, aRomaji, fadeInAnswers];
+      return [fadeInAnswers];
     },
     shallowEqual
   );
@@ -125,8 +124,6 @@ export default function OppositesGame() {
           return correct;
         }}
         choices={game.choices}
-        qRomaji={qRomaji}
-        aRomaji={aRomaji}
         gotoPrev={gotoPrev}
         gotoNext={gotoNext}
         fadeInAnswers={fadeInAnswers}
@@ -184,16 +181,16 @@ function prepareGame(
   };
 
   let choices: GameChoice[] = [answer];
-  const answerRomaji = answerObj.romaji ?? deriveRomaji(answerObj);
-  const questionRomaji = questionObj.romaji ?? deriveRomaji(questionObj);
+  const answerRomaji = deriveRomaji(answerObj);
+  const questionRomaji = deriveRomaji(questionObj);
   let antiHomophones: string[] = [answerRomaji, questionRomaji];
 
   while (choices.length < minChoices) {
     const idx = Math.floor(Math.random() * opposites.length);
 
     const [wrongAnswer1, wrongAnswer2] = opposites[idx];
-    const wrongAns1Romaji = wrongAnswer1.romaji ?? deriveRomaji(wrongAnswer1);
-    const wrongAns2Romaji = wrongAnswer2.romaji ?? deriveRomaji(wrongAnswer2);
+    const wrongAns1Romaji = deriveRomaji(wrongAnswer1);
+    const wrongAns2Romaji = deriveRomaji(wrongAnswer2);
     if (
       !antiHomophones.includes(wrongAns1Romaji) &&
       !antiHomophones.includes(wrongAns2Romaji)

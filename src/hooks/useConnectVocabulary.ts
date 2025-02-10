@@ -74,29 +74,20 @@ export function useConnectVocabulary() {
     ];
   }, shallowEqual);
 
-  const [difficultyThreshold, ft, he, romajiEnabled, bareKanji, verbColSplit] =
-    useSelector<
-      RootState,
-      [number, ValuesOf<typeof TermFilterBy>, boolean, boolean, boolean, number]
-    >(({ vocabulary }: RootState) => {
-      const {
-        difficultyThreshold,
-        filter,
-        hintEnabled,
-        romaji,
-        bareKanji,
-        verbColSplit,
-      } = vocabulary.setting;
+  const [difficultyThreshold, ft, he, bareKanji, verbColSplit] = useSelector<
+    RootState,
+    [number, ValuesOf<typeof TermFilterBy>, boolean, boolean, number]
+  >(({ vocabulary }: RootState) => {
+    const {
+      difficultyThreshold,
+      filter,
+      hintEnabled,
+      bareKanji,
+      verbColSplit,
+    } = vocabulary.setting;
 
-      return [
-        difficultyThreshold,
-        filter,
-        hintEnabled,
-        romaji,
-        bareKanji,
-        verbColSplit,
-      ];
-    }, shallowEqual);
+    return [difficultyThreshold, filter, hintEnabled, bareKanji, verbColSplit];
+  }, shallowEqual);
 
   const sortMethod = useSelector(({ vocabulary }: RootState) => {
     const { ordered } = vocabulary.setting;
@@ -142,7 +133,6 @@ export function useConnectVocabulary() {
     motionThreshold,
     vocabList,
     vocabGroups,
-    romajiEnabled,
     bareKanji,
     verbFormsOrder,
     verbColSplit,

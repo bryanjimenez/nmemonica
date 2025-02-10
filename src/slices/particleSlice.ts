@@ -22,7 +22,6 @@ export interface ParticleInitSlice {
   };
 
   setting: {
-    aRomaji: boolean;
     fadeInAnswers: boolean;
   };
 }
@@ -34,7 +33,6 @@ export const particleInitState: ParticleInitSlice = {
   },
 
   setting: {
-    aRomaji: false,
     fadeInAnswers: false,
   },
 };
@@ -184,16 +182,6 @@ const particleSlice = createSlice({
       state.particleGame.particles = particleInitState.particleGame.particles;
       state.particleGame.phrases = particleInitState.particleGame.phrases;
     },
-    setParticlesARomaji(state) {
-      void userSettingAttrUpdate(
-        new Date(),
-        { particle: state.setting },
-        "/particle/",
-        "aRomaji"
-      );
-
-      state.setting.aRomaji = !state.setting.aRomaji;
-    },
 
     toggleParticleFadeInAnswers(state, action: { payload?: boolean }) {
       const override = action.payload ?? false;
@@ -234,9 +222,6 @@ const particleSlice = createSlice({
   },
 });
 
-export const {
-  clearParticleGame,
-  setParticlesARomaji,
-  toggleParticleFadeInAnswers,
-} = particleSlice.actions;
+export const { clearParticleGame, toggleParticleFadeInAnswers } =
+  particleSlice.actions;
 export default particleSlice.reducer;

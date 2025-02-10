@@ -21,7 +21,6 @@ declare module "nmemonica" {
     uid: string;
 
     english: string;
-    romaji?: string;
 
     grp?: string;
     subGrp?: string;
@@ -40,7 +39,6 @@ declare module "nmemonica" {
     english: string;
     lit?: string; // literal translation
     lesson?: string;
-    romaji?: string;
 
     japanese: string;
 

@@ -33,13 +33,11 @@ export default function VocabularyMain(props: VocabularyMainProps) {
   const { vocabulary, showHint, wasPlayed } = props;
 
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
-  const [showRomaji, setShowRomaji] = useState<boolean>(false);
   const [naFlip, setNaFlip] = useState<"-na" | undefined>(undefined);
 
   const {
     swipeThreshold,
     repetition,
-    romajiEnabled,
     englishSideUp,
     hintEnabled,
     bareKanji: showBareKanjiSetting,
@@ -47,7 +45,6 @@ export default function VocabularyMain(props: VocabularyMainProps) {
 
   useLayoutEffect(() => {
     setShowMeaning(false);
-    setShowRomaji(false);
   }, [vocabulary]);
 
   const toggleFuriganaCB = useCallback(
@@ -90,7 +87,6 @@ export default function VocabularyMain(props: VocabularyMainProps) {
   const inJapanese = vObj.toHTML(furiganaToggable);
 
   const inEnglish = <>{vocabulary.english}</>;
-  const romaji = vocabulary.romaji;
 
   const jValue = japaneseLabel(englishSideUp, vObj, inJapanese);
   const eValue = englishLabel(englishSideUp, vObj, inEnglish);
@@ -184,16 +180,6 @@ export default function VocabularyMain(props: VocabularyMainProps) {
       >
         {topValue}
       </Sizable>
-      {romajiEnabled && romaji !== undefined && (
-        <span className="fs-5">
-          <span
-            onClick={setStateFunction(setShowRomaji, (r) => !r)}
-            className="clickable loop-no-interrupt"
-          >
-            {showRomaji ? romaji : "[Romaji]"}
-          </span>
-        </span>
-      )}
       <Sizable
         className={{ "loop-no-interrupt": true }}
         breakPoint="md"

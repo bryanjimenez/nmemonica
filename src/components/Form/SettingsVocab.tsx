@@ -33,7 +33,6 @@ import {
   toggleVocabularyBareKanji,
   toggleVocabularyHint,
   toggleVocabularyOrdering,
-  toggleVocabularyRomaji,
   updateVerbColSplit,
 } from "../../slices/vocabularySlice";
 import { SetTermGList } from "../Pages/SetTermGList";
@@ -45,7 +44,6 @@ export default function SettingsVocab() {
     vocabList: vocabulary,
     vocabGroups,
     sortMethod,
-    romajiEnabled: vocabRomaji,
     bareKanji: showBareKanji,
     hintEnabled: vocabHintRef,
     activeGroup: vocabActive,
@@ -177,13 +175,6 @@ export default function SettingsVocab() {
               </div>
             </>
           )}
-          <div className="mb-2">
-            <SettingsSwitch
-              active={vocabRomaji}
-              action={buildAction(dispatch, toggleVocabularyRomaji)}
-              statusText="Romaji"
-            />
-          </div>
           <div className="mb-2">
             <SettingsSwitch
               active={showBareKanji}

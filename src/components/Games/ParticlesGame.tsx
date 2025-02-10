@@ -21,12 +21,10 @@ import "../../css/ParticlesGame.css";
 
 export interface ChoiceParticle {
   japanese: string;
-  romaji: string;
 }
 
 export interface AnswerParticle {
   japanese: string;
-  romaji: string;
   /** Starting index of particle in phrase */
   start: number;
   /** Ending index of particle in phrase */
@@ -52,10 +50,10 @@ export default function ParticlesGame() {
     ({ particle }: RootState) => particle.particleGame
   );
 
-  const [aRomaji, fadeInAnswers] = useSelector<RootState, boolean[]>(
+  const [fadeInAnswers] = useSelector<RootState, boolean[]>(
     ({ particle }: RootState) => {
-      const { aRomaji, fadeInAnswers } = particle.setting;
-      return [aRomaji, fadeInAnswers];
+      const { fadeInAnswers } = particle.setting;
+      return [fadeInAnswers];
     },
     shallowEqual
   );
@@ -162,7 +160,6 @@ export default function ParticlesGame() {
         isCorrect={(answered) => answered.japanese === game.answer.japanese}
         hint={game.literal}
         choices={game.choices}
-        aRomaji={aRomaji}
         gotoPrev={gotoPrev}
         gotoNext={gotoNext}
         fadeInAnswers={fadeInAnswers}

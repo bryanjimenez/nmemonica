@@ -124,7 +124,6 @@ export default function Phrases() {
   const prevLastNext = useRef(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
-  const [showRomaji, setShowRomaji] = useState<boolean>(false);
   const [showLit, setShowLit] = useState<boolean>(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
@@ -149,7 +148,6 @@ export default function Phrases() {
     sortMethod,
 
     // Refs ()
-    romajiActive,
     filterType: filterTypeREF,
     viewGoal,
   } = useConnectPhrase();
@@ -576,7 +574,6 @@ export default function Phrases() {
       // }
 
       setShowMeaning(false);
-      setShowRomaji(false);
       setShowLit(false);
 
       prevSelectedIndex.current = selectedIndex;
@@ -707,8 +704,6 @@ export default function Phrases() {
     belowLargeCss,
   } = getCssResizableSubComp(englishSideUp, shortJP, shortEN);
 
-  const romaji = phrase.romaji;
-
   const progress = ((selectedIndex + 1) / filteredPhrases.length) * 100;
   const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
   const viewedToday = wasToday(metadata.current[uid]?.lastView);
@@ -781,16 +776,6 @@ export default function Phrases() {
             >
               {topValue}
             </Sizable>
-            {romajiActive.current && romaji !== undefined && (
-              <span className="fs-5">
-                <span
-                  onClick={setStateFunction(setShowRomaji, (romaji) => !romaji)}
-                  className="clickable loop-no-interrupt"
-                >
-                  {showRomaji ? romaji : "[Romaji]"}
-                </span>
-              </span>
-            )}
             <Sizable
               className={belowNoInterruptCss}
               breakPoint="md"

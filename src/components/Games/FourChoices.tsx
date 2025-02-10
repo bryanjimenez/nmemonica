@@ -8,7 +8,6 @@ import StackNavButton from "../Form/StackNavButton";
 
 export interface GameQuestion {
   english?: string;
-  romaji?: string;
   toHTML: (correct: boolean) => React.JSX.Element;
 }
 
@@ -16,7 +15,6 @@ export interface GameChoice {
   compare: string;
   english?: string;
   japanese?: string;
-  romaji?: string;
   toHTML: (options?: {
     side?: boolean;
     correct?: boolean;
@@ -26,8 +24,6 @@ export interface GameChoice {
 
 interface FourChoicesProps {
   question: GameQuestion;
-  qRomaji?: boolean;
-  aRomaji?: boolean;
   hint?: string;
   choices: GameChoice[];
   isCorrect: (answered: GameChoice) => boolean;
@@ -137,13 +133,6 @@ export function FourChoices(
             })}
           >
             <div>{question.toHTML(state.correct)}</div>
-            <span
-              className={classNames({
-                invisible: !props.qRomaji,
-              })}
-            >
-              {question.romaji}
-            </span>
             {meaning !== undefined && (
               <span
                 className="clickable"
@@ -184,7 +173,6 @@ export function FourChoices(
                       i={i}
                       isRight={isRight}
                       isWrong={isWrong}
-                      aRomaji={props.aRomaji}
                     />
                   );
                 } else {
@@ -204,7 +192,6 @@ export function FourChoices(
                     isRight={isRight}
                     isWrong={isWrong}
                     checkAnswer={checkAnswer}
-                    aRomaji={props.aRomaji}
                     fadeIn={props.fadeInAnswers}
                     elapsed={elapsed}
                   />
@@ -230,15 +217,13 @@ interface AChoiceProps {
   isRight: boolean;
   isWrong: boolean;
   checkAnswer?: (answered: GameChoice, i: number) => void;
-  aRomaji?: boolean;
   fadeIn?: boolean;
   elapsed?: number;
 }
 
 function AChoice(props: AChoiceProps) {
   const FADE_IN_MS = 1000;
-  const { c, i, isRight, isWrong, checkAnswer, aRomaji, fadeIn, elapsed } =
-    props;
+  const { c, i, isRight, isWrong, checkAnswer, fadeIn, elapsed } = props;
 
   let delay = (i + 1) * FADE_IN_MS;
   if (elapsed) {
@@ -274,13 +259,6 @@ function AChoice(props: AChoiceProps) {
       <div className="d-flex flex-column">
         <div>{c.toHTML({ fadeIn: shown })}</div>
         {isRight && <div>{c.english}</div>}
-        <span
-          className={classNames({
-            invisible: !aRomaji,
-          })}
-        >
-          {c.romaji}
-        </span>
       </div>
     </div>
   );
