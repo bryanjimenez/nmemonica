@@ -104,11 +104,11 @@ export function FourChoices(
 
   let meaning = question.english !== undefined ? "[English]" : "";
   if (props.hint === undefined) {
-    if (state.showMeaning && question.english) {
+    if (state.showMeaning && question.english !== undefined) {
       meaning = question.english;
     }
   } else {
-    if (state.showMeaning && question.english) {
+    if (state.showMeaning && question.english !== undefined) {
       meaning = question.english;
     } else {
       meaning = props.hint;
@@ -157,7 +157,7 @@ export function FourChoices(
                 (timerStop.current ?? Date.now()) - timerStart.current
               );
 
-              if (props.fadeInAnswers && state.correct) {
+              if (props.fadeInAnswers === true && state.correct) {
                 // Don't check any more answers
                 // Don't show remaining options
 
@@ -226,7 +226,7 @@ function AChoice(props: AChoiceProps) {
   const { c, i, isRight, isWrong, checkAnswer, fadeIn, elapsed } = props;
 
   let delay = (i + 1) * FADE_IN_MS;
-  if (elapsed) {
+  if (elapsed !== undefined) {
     // A rerender mid fading will interrupt
     // Skip fade if interrupted
     const interruptFix = (i + 1) * 1000 - elapsed;
@@ -240,7 +240,7 @@ function AChoice(props: AChoiceProps) {
     "w-50 h-50 pt-3 text-center clickable": true,
     "text-break": true,
 
-    ...(!props.css ? {} : { [props.css]: true }),
+    ...(props.css === undefined ? {} : { [props.css]: true }),
 
     "correct-color": isRight,
     "incorrect-color": isWrong,

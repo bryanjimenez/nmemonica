@@ -44,9 +44,9 @@ export function deriveOppositesFromVocabulary(
     const v = data[uid];
     if (Array.isArray(v.opposite)) {
       v.opposite.forEach((opp: string) => {
-        const o: Opposite = data[opp];
+        const o: Opposite | undefined = data[opp];
 
-        if (o) {
+        if (o !== undefined) {
           const a = {
             english: v.english,
             japanese: v.japanese,
