@@ -38,19 +38,14 @@ export const VOICE_KIND_EN = Object.freeze({
   ROBOT_MALE: "RobotMale",
 });
 
-export class VoiceError extends Error {
+export interface VoiceError extends Error {
   cause: { code: string; module: string };
-
-  constructor(name: string, code: string, module: string) {
-    super(name);
-    this.cause = { code, module };
-  }
 }
 
 export const VoiceErrorCode = Object.freeze({
   MODULE_LOAD_ERROR: "Failed to load module",
   MAX_RETRY: "Maximum retries exceeded",
-  DUPLICATE_REQUEST: "This request has already been received",
+  DUPLICATE_REQUEST: "Duplicate request",
   UNREACHABLE: "Module panicked",
   BAD_INPUT: "Invalid Input",
 });
@@ -62,7 +57,6 @@ export function logAudioError(
   caughtOrigin?: string
 ) {
   const error = exceptionToError(exception, caughtOrigin) as VoiceError;
-
   let msg: string;
   switch (error.cause?.code) {
     case VoiceErrorCode.MODULE_LOAD_ERROR:
@@ -162,10 +156,15 @@ async function getSynthAudioWorkaroundNoAsyncFn(
     resBuffer = retry.buffer;
     resIndex = retry.index;
     if (resUid !== key) {
-      throw new VoiceError(
-        "Previous failed. Retry failed.",
-        VoiceErrorCode.MAX_RETRY,
-        `voice-${tl}`
+      /* eslint-disable-next-line @typescript-eslint/only-throw-error */
+      throw thunkAPI.rejectWithValue(
+        JSON.stringify({
+          name: "Previous failed. Retry failed.",
+          cause: {
+            code: VoiceErrorCode.MAX_RETRY,
+            module: `voice-${tl}`,
+          },
+        })
       );
     }
   }
@@ -191,12 +190,15 @@ async function getFromVoiceSynth(
   if (t !== undefined) {
     const seconds = secsSince(t);
     if (seconds < 2) {
-      return Promise.reject(
-        new VoiceError(
-          "Request already queued",
-          VoiceErrorCode.DUPLICATE_REQUEST,
-          `voice-${tl}`
-        )
+      /* eslint-disable-next-line @typescript-eslint/only-throw-error */
+      throw thunkAPI.rejectWithValue(
+        JSON.stringify({
+          name: "Request already queued",
+          cause: {
+            code: VoiceErrorCode.DUPLICATE_REQUEST,
+            module: `voice-${tl}`,
+          },
+        })
       );
     }
 
@@ -223,11 +225,16 @@ async function getFromVoiceSynth(
     }
 
     if (w === null) {
-      const err = `Failed to load worker voice-${tl}`;
-      reject(
-        new VoiceError(err, VoiceErrorCode.MODULE_LOAD_ERROR, `voice-${tl}`)
+      /* eslint-disable-next-line @typescript-eslint/only-throw-error */
+      throw thunkAPI.rejectWithValue(
+        JSON.stringify({
+          name: `Failed to load worker voice-${tl}`,
+          cause: {
+            code: VoiceErrorCode.MODULE_LOAD_ERROR,
+            module: `voice-${tl}`,
+          },
+        })
       );
-      return;
     }
 
     const aWorker = w;
