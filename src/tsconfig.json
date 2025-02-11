@@ -24,7 +24,6 @@
   "include": [
     ".",
     "../res/json/kana.json",
-    "../res/models",
     "../pwa/helper/idbHelper.ts",
     "../environment.development.ts",
     "../environment.production.ts"

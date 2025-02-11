@@ -8,11 +8,8 @@ import {
   AUDIO_WORKER_JA_NAME,
   exceptionToError,
 } from "../workers";
-import { EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
-import {
-  type JaVoiceWorkerQuery,
-  VoiceWorkerResponse,
-} from "../workers/voiceWorker-ja";
+import { type EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
+import { type JaVoiceWorkerQuery } from "../workers/voiceWorker-ja";
 
 import { AppDispatch, RootState } from ".";
 
@@ -30,13 +27,32 @@ export const VOICE_KIND_JA = Object.freeze({
   HAPPY: "happy",
   ANGRY: "angry",
   SAD: "sad",
-  DEEP: "deep",
+  NEUTRAL: "neutral",
+  // DEEP: "deep",
 });
 
 export const VOICE_KIND_EN = Object.freeze({
   HUMAN_FEMALE: "HumanFemale",
   ROBOT_MALE: "RobotMale",
 });
+
+export interface VoiceWorkerQuery {
+  // uid & index to prevent swapping buffers incorrectly
+  uid: AudioItemParams["uid"];
+  index?: AudioItemParams["index"];
+
+  tl: AudioItemParams["tl"];
+  q: AudioItemParams["q"];
+
+  AbortController?: AbortController;
+}
+
+export interface VoiceWorkerResponse {
+  uid: string;
+  index?: number;
+
+  buffer: Uint8Array;
+}
 
 export interface VoiceError extends Error {
   cause: { code: string; module: string };

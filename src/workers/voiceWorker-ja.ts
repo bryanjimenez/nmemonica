@@ -1,68 +1,22 @@
-import { buildSpeech as jBuildSpeech } from "@nmemonica/voice-ja";
-
-import voice_model_deep from "../../res/models/hts_voice_nitech_jp_atr503_m001-1.05/nitech_jp_atr503_m001.htsvoice";
-import voice_model_angry from "../../res/models/tohoku-f01/tohoku-f01-angry.htsvoice";
-import voice_model_happy from "../../res/models/tohoku-f01/tohoku-f01-happy.htsvoice";
-import voice_model_neutral from "../../res/models/tohoku-f01/tohoku-f01-neutral.htsvoice";
-import voice_model_sad from "../../res/models/tohoku-f01/tohoku-f01-sad.htsvoice";
 import {
-  type AudioItemParams,
+  JapaneseVoice,
+  buildSpeech as jBuildSpeech,
+} from "@nmemonica/voice-ja";
+
+import {
   type JapaneseVoiceType,
+  VOICE_KIND_JA,
   VoiceError,
+  type VoiceWorkerQuery,
+  type VoiceWorkerResponse,
 } from "../slices/voiceSlice";
 
 import { exceptionToError } from ".";
 
 const wSelf = globalThis.self as unknown as Worker;
 
-export interface JaVoiceWorkerQuery {
-  // uid & index to prevent swapping buffers incorrectly
-  uid: AudioItemParams["uid"];
-  index?: AudioItemParams["index"];
-
-  tl: AudioItemParams["tl"];
-  q: AudioItemParams["q"];
+export interface JaVoiceWorkerQuery extends VoiceWorkerQuery {
   japaneseVoice?: JapaneseVoiceType;
-  AbortController?: AbortController;
-}
-
-export interface VoiceWorkerResponse {
-  uid: string;
-  index?: number;
-
-  buffer: Uint8Array;
-}
-
-let voice: { name?: JapaneseVoiceType; buffer?: ArrayBuffer } = {
-  name: undefined,
-  buffer: undefined,
-};
-
-function getVoiceUrl(japaneseVoice?: JapaneseVoiceType) {
-  let voice_model: URL;
-  switch (japaneseVoice) {
-    case "happy":
-      voice_model = voice_model_happy;
-      break;
-
-    case "angry":
-      voice_model = voice_model_angry;
-      break;
-
-    case "sad":
-      voice_model = voice_model_sad;
-      break;
-
-    case "deep":
-      voice_model = voice_model_deep;
-      break;
-
-    default:
-      voice_model = voice_model_neutral;
-      break;
-  }
-
-  return { url: voice_model, name: japaneseVoice ?? "default" };
 }
 
 wSelf.addEventListener("message", messageHandler);
@@ -70,64 +24,41 @@ wSelf.addEventListener("message", messageHandler);
 function messageHandler(event: MessageEvent) {
   const data = event.data as JaVoiceWorkerQuery;
 
-  const {
-    uid,
-    index,
-    tl: language,
-    q: query,
-    AbortController,
-    japaneseVoice,
-  } = data;
+  const { uid, index, tl: language, q: query, japaneseVoice } = data;
 
   if (
     language === "ja" &&
     query !== null &&
     typeof jBuildSpeech === "function"
   ) {
-    void new Promise<{ name: JapaneseVoiceType; buffer: ArrayBuffer }>(
-      (resolve, reject) => {
-        const { name, buffer } = voice;
+    let voice_model: JapaneseVoice;
+    switch (japaneseVoice) {
+      case "default":
+      case undefined:
+        voice_model = VOICE_KIND_JA.NEUTRAL;
+        break;
 
-        if (name !== japaneseVoice || buffer === undefined) {
-          const { url: voice_url, name: voice_name } =
-            getVoiceUrl(japaneseVoice);
+      default:
+        voice_model = japaneseVoice;
+    }
 
-          void fetch(voice_url)
-            .then((res) => res.arrayBuffer())
-            .then((voice_buffer) => {
-              resolve({ name: voice_name, buffer: voice_buffer });
-            });
-          return;
-        }
-        if (buffer === undefined || name === undefined) {
-          reject(new Error(`Could not fetch selected voice ${japaneseVoice}`));
-          return;
-        }
+    try {
+      const {
+        uid: resUid,
+        index: resIndex,
+        buffer: resBuffer,
+      } = jBuildSpeech(uid, index, query, voice_model);
+      const response: VoiceWorkerResponse = {
+        uid: resUid,
+        index: resIndex,
+        buffer: resBuffer,
+      };
+      wSelf.postMessage(response);
+    } catch (exception) {
+      const error = exceptionToError(exception) as VoiceError;
+      error.cause.module = "voice-worker-ja";
 
-        resolve({ name, buffer });
-      }
-    ).then(({ name, buffer }) => {
-      voice = { name, buffer };
-
-      try {
-        const {
-          uid: resUid,
-          index: resIndex,
-          buffer: resBuffer,
-        } = jBuildSpeech(uid, index, query, new Uint8Array(buffer));
-
-        const response: VoiceWorkerResponse = {
-          uid: resUid,
-          index: resIndex,
-          buffer: resBuffer,
-        };
-        wSelf.postMessage(response);
-      } catch (exception) {
-        const error = exceptionToError(exception) as VoiceError;
-        error.cause.module = "voice-worker-ja";
-
-        wSelf.postMessage(error);
-      }
-    });
+      wSelf.postMessage(error);
+    }
   }
 }
