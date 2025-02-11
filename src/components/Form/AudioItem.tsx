@@ -9,11 +9,11 @@ import {
 import { DebugLevel } from "../../helper/consoleHelper";
 import { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
+import { logger } from "../../slices/globalSlice";
 import {
   type AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
-} from "../../slices/audioSlice";
-import { logger } from "../../slices/globalSlice";
+} from "../../slices/voiceSlice";
 
 interface AudioItemProps {
   visible: boolean;

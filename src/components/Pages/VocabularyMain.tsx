@@ -15,8 +15,8 @@ import {
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
-import { type AudioItemParams } from "../../slices/audioSlice";
 import { furiganaToggled } from "../../slices/vocabularySlice";
+import { type AudioItemParams } from "../../slices/voiceSlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 
@@ -161,13 +161,7 @@ export default function VocabularyMain(props: VocabularyMainProps) {
         onPushedPlay={onPushedPlay}
       />
     );
-  }, [
-    vocabulary,
-    englishSideUp,
-    naFlip,
-    onPushedPlay,
-    swipeThreshold,
-  ]);
+  }, [vocabulary, englishSideUp, naFlip, onPushedPlay, swipeThreshold]);
 
   const shortEN = vocabulary.english.length < 55;
 

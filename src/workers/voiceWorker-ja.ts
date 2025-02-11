@@ -9,7 +9,7 @@ import {
   type AudioItemParams,
   type JapaneseVoiceType,
   VoiceError,
-} from "../slices/audioSlice";
+} from "../slices/voiceSlice";
 
 import { exceptionToError } from ".";
 

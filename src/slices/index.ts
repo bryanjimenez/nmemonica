@@ -1,6 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
 
-import audioReducer from "./audioSlice";
 import globalReducer, { type GlobalInitSlice } from "./globalSlice";
 import kanaReducer, { type KanaInitSlice } from "./kanaSlice";
 import kanjiReducer, { type KanjiInitSlice } from "./kanjiSlice";
@@ -9,6 +8,7 @@ import particleGameReducer, { type ParticleInitSlice } from "./particleSlice";
 import phrasesReducer, { type PhraseInitSlice } from "./phraseSlice";
 import serviceWorkerReducer from "./serviceWorkerSlice";
 import vocabularyReducer, { type VocabularyInitSlice } from "./vocabularySlice";
+import audioReducer from "./voiceSlice";
 
 export const store = configureStore({
   reducer: {

@@ -4,7 +4,7 @@ import {
   type AudioItemParams,
   type EnglishVoiceType,
   VoiceError,
-} from "../slices/audioSlice";
+} from "../slices/voiceSlice";
 
 import { exceptionToError } from ".";
 
@@ -71,8 +71,6 @@ function messageHandler(event: MessageEvent) {
       };
       wSelf.postMessage(response);
     } catch (exception) {
-      console.log("vworker");
-      console.log(exception);
       const error = exceptionToError(exception) as VoiceError;
       error.cause.module = "voice-worker-en";
 

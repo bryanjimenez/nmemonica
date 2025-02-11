@@ -5,7 +5,6 @@ import {
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
-import { type EnglishVoiceType, type JapaneseVoiceType } from "./audioSlice";
 import { kanaSettingsFromAppStorage } from "./kanaSlice";
 import { kanjiSettingsFromAppStorage } from "./kanjiSlice";
 import { oppositeSettingsFromAppStorage } from "./oppositeSlice";
@@ -14,6 +13,7 @@ import { phraseSettingsFromAppStorage } from "./phraseSlice";
 import { toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
+import { type EnglishVoiceType, type JapaneseVoiceType } from "./voiceSlice";
 import {
   type ConsoleMessage,
   DebugLevel,
