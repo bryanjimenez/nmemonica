@@ -16,6 +16,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { type AudioItemParams } from "../../constants/voiceConstants";
 import {
   AudioBufferRecord,
   copyBufferFromCacheStore,
@@ -81,7 +82,6 @@ import {
 } from "../../slices/phraseSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import {
-  type AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";

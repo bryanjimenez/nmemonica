@@ -19,6 +19,7 @@ import { useDispatch } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
+import { type AudioItemParams } from "../../constants/voiceConstants";
 import {
   AudioBufferRecord,
   copyBufferFromCacheStore,
@@ -91,7 +92,6 @@ import {
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
 import {
-  AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";

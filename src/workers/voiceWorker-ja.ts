@@ -1,15 +1,15 @@
 import {
-  JapaneseVoice,
+  type JapaneseVoice,
   buildSpeech as jBuildSpeech,
 } from "@nmemonica/voice-ja";
 
 import {
   type JapaneseVoiceType,
   VOICE_KIND_JA,
-  VoiceError,
   type VoiceWorkerQuery,
   type VoiceWorkerResponse,
-} from "../slices/voiceSlice";
+} from "../constants/voiceConstants";
+import { VoiceError } from "../slices/voiceSlice";
 
 import { exceptionToError } from ".";
 

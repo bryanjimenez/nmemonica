@@ -1,10 +1,10 @@
 import { useDispatch } from "react-redux";
 
 import SimpleListMenu from "./SimpleListMenu";
+import { VOICE_KIND_EN, VOICE_KIND_JA } from "../../constants/voiceConstants";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { setEnglishVoice, setJapaneseVoice } from "../../slices/globalSlice";
-import { VOICE_KIND_EN, VOICE_KIND_JA } from "../../slices/voiceSlice";
 import { properCase } from "../Games/KanjiGame";
 
 export default function SettingsAudio() {
@@ -41,7 +41,9 @@ export default function SettingsAudio() {
           <div className="mb-2">
             <SimpleListMenu
               title={"Voice type:"}
-              options={eVoiceOptions.map(properCase)}
+              options={eVoiceOptions.map((v) =>
+                v.split(" ").map(properCase).join(" ")
+              )}
               initial={eVoiceOptions.indexOf(englishVoice)}
               onChange={(index) => {
                 const value = eVoiceOptions[index];

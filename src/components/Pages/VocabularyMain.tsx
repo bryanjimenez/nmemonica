@@ -2,6 +2,7 @@ import type { RawVocabulary } from "nmemonica";
 import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
+import { type AudioItemParams } from "../../constants/voiceConstants";
 import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
@@ -16,7 +17,6 @@ import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { furiganaToggled } from "../../slices/vocabularySlice";
-import { type AudioItemParams } from "../../slices/voiceSlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 

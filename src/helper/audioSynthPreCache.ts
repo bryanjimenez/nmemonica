@@ -1,8 +1,8 @@
 import partition from "lodash/partition";
 
+import { type AudioItemParams } from "../constants/voiceConstants";
 import { AppDispatch } from "../slices";
 import {
-  AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../slices/voiceSlice";

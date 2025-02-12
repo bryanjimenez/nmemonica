@@ -2,6 +2,7 @@ import { UnmuteIcon } from "@primer/octicons-react";
 import { useRef } from "react";
 import { useDispatch } from "react-redux";
 
+import { type AudioItemParams } from "../../constants/voiceConstants";
 import {
   AudioBufferRecord,
   copyBufferToCacheStore,
@@ -10,10 +11,7 @@ import { DebugLevel } from "../../helper/consoleHelper";
 import { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
-import {
-  type AudioItemParams,
-  getSynthAudioWorkaroundNoAsync,
-} from "../../slices/voiceSlice";
+import { getSynthAudioWorkaroundNoAsync } from "../../slices/voiceSlice";
 
 interface AudioItemProps {
   visible: boolean;

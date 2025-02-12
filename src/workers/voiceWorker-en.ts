@@ -1,11 +1,14 @@
-import { EnglishVoice, buildSpeech as eBuildSpeech } from "@nmemonica/voice-en";
-
 import {
-  type EnglishVoiceType,
-  VoiceError,
-  type VoiceWorkerQuery,
-  type VoiceWorkerResponse,
-} from "../slices/voiceSlice";
+  type EnglishVoice,
+  buildSpeech as eBuildSpeech,
+} from "@nmemonica/voice-en";
+
+import type {
+  EnglishVoiceType,
+  VoiceWorkerQuery,
+  VoiceWorkerResponse,
+} from "../constants/voiceConstants";
+import { VoiceError } from "../slices/voiceSlice";
 
 import { exceptionToError } from ".";
 
@@ -38,7 +41,7 @@ function messageHandler(event: MessageEvent) {
     switch (englishVoice) {
       case "default":
       case undefined:
-        voice_model = "RobotMale";
+        voice_model = "Robot Male";
         break;
 
       default:
