@@ -37,7 +37,7 @@ export interface CryptoMessage {
  * DataSetExportSync callbacks
  */
 export function useDataSetImportSync(
-  rtc: React.MutableRefObject<RTCDataChannel | null>,
+  rtc: React.RefObject<RTCDataChannel | null>,
   encryptKey: string | undefined,
   destination: "import" | "save",
 
@@ -59,8 +59,8 @@ export function useDataSetImportSync(
     }[]
   ) => Promise<void>,
   updateDataHandler: (
-    importWorkbook?: FilledSheetData[] | undefined,
-    importSettings?: Partial<AppSettingState> | undefined
+    importWorkbook?: FilledSheetData[],
+    importSettings?: Partial<AppSettingState>
   ) => Promise<void>
 ) {
   const decryptMsgIntoDecryptedFilesCB = useCallback(
@@ -80,7 +80,7 @@ export function useDataSetImportSync(
         payload = payloadO;
         iv = ivO;
         tag = tagO;
-      } catch (err) {
+      } catch {
         throw new Error("Failed to parse message", {
           cause: { code: SharingMessageErrorCause.BadPayload },
         });
@@ -95,7 +95,7 @@ export function useDataSetImportSync(
           tag,
           payload
         );
-      } catch (err) {
+      } catch {
         throw new Error("Failed to decrypt message", {
           cause: { code: SharingMessageErrorCause.BadCryptoKey },
         });
@@ -151,7 +151,7 @@ export function useDataSetImportSync(
               s = JSON.parse(o.text) as Partial<AppSettingState>;
               // TODO: settings.json verify is AppSettingState
               return { ...acc, settings: s };
-            } catch (err) {
+            } catch {
               setStatus("outputError");
               addWarning(
                 SharingMessageErrorCause.BadPayload,

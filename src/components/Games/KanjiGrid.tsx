@@ -327,7 +327,7 @@ function buildIsCorrect(
   game: { answer: string; choices: GameChoice[] },
   chosenAnswer: string,
   setAnswered: React.Dispatch<React.SetStateAction<string>>,
-  fadeRef: React.MutableRefObject<number>
+  fadeRef: React.RefObject<number>
 ) {
   function isCorrect(answered: KanjiGridChoice): [boolean, number] {
     const correct = answered.compare === game?.answer;

@@ -28,7 +28,7 @@ interface DailyGoal {
   /** User-set goal */
   viewGoal: number | undefined;
   /** pending goal items */
-  goalPending: React.MutableRefObject<number>;
+  goalPending: React.RefObject<number>;
 
   /** notification message */
   msg: string;

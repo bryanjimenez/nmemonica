@@ -1020,7 +1020,7 @@ function buildGameActionsHandler(
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
-  audioCacheStore: React.MutableRefObject<AudioBufferRecord>
+  audioCacheStore: React.RefObject<AudioBufferRecord>
 ) {
   return async function gameActionHandler(
     direction: SwipeDirection,

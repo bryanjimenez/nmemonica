@@ -42,11 +42,11 @@ interface FourChoicesState {
 
 export function FourChoices(
   props: FourChoicesProps,
-  // forParentRef: React.MutableRefObject<HTMLDivElement | null>
+  // forParentRef: React.RefObject<HTMLDivElement | null>
   forParentRef: React.ForwardedRef<HTMLDivElement | null>
 ) {
   if (typeof forParentRef === "function") {
-    throw new Error("Expected a forParentRef to be a React.MutableRefObject");
+    throw new Error("Expected a forParentRef to be a React.RefObject");
   }
 
   const [state, dispatch]: [

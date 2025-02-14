@@ -1254,9 +1254,9 @@ function useBuildGameActionsHandler(
   verbForm: string,
   order: number[],
   filteredVocab: RawVocabulary[],
-  naFlip: React.MutableRefObject<string | undefined>,
+  naFlip: React.RefObject<string | undefined>,
   setWasPlayed: (value: boolean) => void,
-  audioCacheStore: React.MutableRefObject<AudioBufferRecord>
+  audioCacheStore: React.RefObject<AudioBufferRecord>
 ) {
   return useCallback(
     async (direction: SwipeDirection, AbortController?: AbortController) => {
@@ -1394,7 +1394,7 @@ export { VocabularyMeta };
 function partOfSpeechPronunciation(
   vocabulary: RawVocabulary,
   verbForm: string,
-  naFlip: React.MutableRefObject<string | undefined>
+  naFlip: React.RefObject<string | undefined>
 ) {
   let sayObj;
   if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {

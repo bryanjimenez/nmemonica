@@ -34,45 +34,44 @@ function dataTransferAggregator(fileData: TransferObject[]) {
   const fromApp = fileData.filter((f) => f.origin === "AppCache");
   if (fromApp.length > 0) {
     transferData = getWorkbookFromIndexDB()
-    .then(xObj=>getUserSettings().then(usrSets=>({xObj,usrSets})))
-    .then(({xObj,usrSets}) => {
-      const included = xObj.filter((o) =>
-        fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
-      ) as FilledSheetData[];
+      .then((xObj) => getUserSettings().then((usrSets) => ({ xObj, usrSets })))
+      .then(({ xObj, usrSets }) => {
+        const included = xObj.filter((o) =>
+          fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
+        ) as FilledSheetData[];
 
-      // send AppCache UserSettings if selected
-      const appSettings = fileData.reduce<{ name: string; text: string }[]>(
-        (acc, f) => {
-          if (
-            f.origin === "AppCache" &&
-            f.name.toLowerCase() ===
-              metaDataNames.settings.prettyName.toLowerCase()
-          ) {
-
-            if (usrSets) {
-              return [
-                ...acc,
-                {
-                  name: metaDataNames.settings.prettyName,
-                  text: JSON.stringify(usrSets),
-                },
-              ];
+        // send AppCache UserSettings if selected
+        const appSettings = fileData.reduce<{ name: string; text: string }[]>(
+          (acc, f) => {
+            if (
+              f.origin === "AppCache" &&
+              f.name.toLowerCase() ===
+                metaDataNames.settings.prettyName.toLowerCase()
+            ) {
+              if (usrSets) {
+                return [
+                  ...acc,
+                  {
+                    name: metaDataNames.settings.prettyName,
+                    text: JSON.stringify(usrSets),
+                  },
+                ];
+              }
             }
-          }
-          return acc;
-        },
-        []
-      );
+            return acc;
+          },
+          []
+        );
 
-      return xObjectToCsvText(included).then((dBtoCsv) => [
-        // any filesystem imports (already text)
-        ...fileData.filter((f) => f.origin === "FileSystem"),
-        // converted AppCache to csv text
-        ...dBtoCsv,
-        // converted UserSettings to json text
-        ...appSettings,
-      ]);
-    });
+        return xObjectToCsvText(included).then((dBtoCsv) => [
+          // any filesystem imports (already text)
+          ...fileData.filter((f) => f.origin === "FileSystem"),
+          // converted AppCache to csv text
+          ...dBtoCsv,
+          // converted UserSettings to json text
+          ...appSettings,
+        ]);
+      });
   }
 
   return transferData.then((d) => {
@@ -116,7 +115,7 @@ function buildChunkHeader(messageByteLength: number, chunkSize: number) {
  * DataSetExportSync callbacks
  */
 export function useDataSetExportSync(
-  rtc: React.MutableRefObject<RTCDataChannel | null>,
+  rtc: React.RefObject<RTCDataChannel | null>,
   encryptKey: string | undefined,
   fileData: TransferObject[],
 
