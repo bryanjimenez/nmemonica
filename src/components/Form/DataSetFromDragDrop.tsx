@@ -263,8 +263,17 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           })}
           onDragOver={overElHandler}
           onDrop={dragDropHandler}
-          onClick={() => {
-            fileInputRef.current?.click();
+          onClick={(ev) => {
+            const { parentElement } = ev.target as HTMLInputElement;
+
+            if (
+              parentElement !== null &&
+              // "className" in parentElement &&
+              typeof parentElement.className === "string" &&
+              parentElement?.className.includes("drag-area")
+            ) {
+              fileInputRef.current?.click();
+            }
           }}
         >
           <div>
