@@ -7,6 +7,14 @@ export type AudioItemParams = {
   q: string;
 };
 
+export const VoiceErrorCode = Object.freeze({
+  MODULE_LOAD_ERROR: "Failed to load module",
+  MAX_RETRY: "Maximum retries exceeded",
+  DUPLICATE_REQUEST: "Duplicate request",
+  UNREACHABLE: "Module panicked",
+  BAD_INPUT: "Invalid Input",
+});
+
 export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND_JA>;
 export type EnglishVoiceType = "default" | ValuesOf<typeof VOICE_KIND_EN>;
 export const VOICE_KIND_JA = Object.freeze({

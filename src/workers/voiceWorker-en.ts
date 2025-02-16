@@ -3,14 +3,13 @@ import {
   buildSpeech as eBuildSpeech,
 } from "@nmemonica/voice-en";
 
-import type {
-  EnglishVoiceType,
-  VoiceWorkerQuery,
-  VoiceWorkerResponse,
+import {
+  type EnglishVoiceType,
+  type VoiceWorkerQuery,
+  type VoiceWorkerResponse,
 } from "../constants/voiceConstants";
-import { VoiceError } from "../slices/voiceSlice";
 
-import { exceptionToError } from ".";
+import { exceptionToErrorObj } from ".";
 
 const wSelf = globalThis.self as unknown as Worker;
 
@@ -61,8 +60,7 @@ function messageHandler(event: MessageEvent) {
       };
       wSelf.postMessage(response);
     } catch (exception) {
-      const error = exceptionToError(exception) as VoiceError;
-      error.cause.module = "voice-worker-en";
+      const error = exceptionToErrorObj(exception, "voice-worker-en");
 
       wSelf.postMessage(error);
     }
