@@ -405,6 +405,8 @@ export default function Phrases() {
     phraseList,
     order,
     filteredPhrases,
+    englishSideUp,
+    setShowMeaning,
     audioCacheStore
   );
 
@@ -1010,6 +1012,8 @@ function buildGameActionsHandler(
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
+  englishSideUp: boolean,
+  setShowMeaning: React.Dispatch<React.SetStateAction<boolean>>,
   audioCacheStore: React.RefObject<AudioBufferRecord>
 ) {
   return async function gameActionHandler(
@@ -1037,6 +1041,13 @@ function buildGameActionsHandler(
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
       const phrase = getTerm(uid, phrases);
+
+      if (
+        (englishSideUp && direction === "up") ||
+        (!englishSideUp && direction === "down")
+      ) {
+        setShowMeaning(true);
+      }
 
       if (direction === "up") {
         const cachedAudioBuf = copyBufferFromCacheStore(

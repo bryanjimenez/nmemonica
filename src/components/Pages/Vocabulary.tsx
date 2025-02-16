@@ -142,7 +142,7 @@ export default function Vocabulary() {
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef<number>(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
-
+  const [showMeaning, setShowMeaning] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<string | undefined>(undefined);
 
   const naFlip = useRef<"-na" | undefined>(undefined);
@@ -470,6 +470,8 @@ export default function Vocabulary() {
     filteredVocab,
     naFlip,
     setWasPlayed,
+    englishSideUp,
+    setShowMeaning,
     audioCacheStore
   );
 
@@ -714,6 +716,8 @@ export default function Vocabulary() {
       }
 
       setShowHint(undefined);
+      setShowMeaning(false);
+
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
       accuracyModifiedRef.current = undefined;
@@ -815,12 +819,14 @@ export default function Vocabulary() {
                 verb={vocabulary}
                 linkToOtherTerm={(uid) => setReinforcedUID(uid)}
                 showHint={showHint === uid}
+                showMeaningSwipe={showMeaning}
               />
             ) : (
               <VocabularyMain
                 vocabulary={vocabulary}
                 showHint={showHint === uid}
                 wasPlayed={wasPlayed}
+                showMeaningSwipe={showMeaning}
               />
             )}
 
@@ -839,6 +845,7 @@ export default function Vocabulary() {
       HTMLDivElementSwipeRef,
       autoVerbView,
       showHint,
+      showMeaning,
       wasPlayed,
       blastElRef,
       text,
@@ -1239,7 +1246,9 @@ function useBuildGameActionsHandler(
   filteredVocab: RawVocabulary[],
   naFlip: React.RefObject<string | undefined>,
   setWasPlayed: (value: boolean) => void,
-  audioCacheStore: React.RefObject<AudioBufferRecord>
+  englishSideUp: boolean,
+  setShowMeaning: React.Dispatch<React.SetStateAction<boolean>>,
+  audioCacheStore: React.RefObject<AudioBufferRecord>,
 ) {
   return useCallback(
     async (direction: SwipeDirection, AbortController?: AbortController) => {
@@ -1266,6 +1275,13 @@ function useBuildGameActionsHandler(
         const vocabulary = getTerm(uid, vocabList);
 
         setWasPlayed(true);
+
+        if (
+          (englishSideUp && direction === "up") ||
+          (!englishSideUp && direction === "down")
+        ) {
+          setShowMeaning(true);
+        }
 
         if (direction === "up") {
           setMediaSessionPlaybackState("playing");
@@ -1366,6 +1382,8 @@ function useBuildGameActionsHandler(
       filteredVocab,
       naFlip,
       setWasPlayed,
+      englishSideUp,
+      setShowMeaning,
 
       audioCacheStore,
     ]
