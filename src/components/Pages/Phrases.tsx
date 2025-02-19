@@ -30,10 +30,12 @@ import {
   spaceRepLog,
   wasToday,
 } from "../../helper/consoleHelper";
+import { recallSortLogSummary } from "../../helper/consoleSummaryHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
   getCacheUID,
+  getPendingReduceFiltered,
   getTerm,
   getTermUID,
   initGoalPending,
@@ -45,7 +47,6 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
-  getPercentOverdue,
   recallDebugLogHelper,
   recallNotificationHelper,
   spaceRepetitionOrder,
@@ -111,7 +112,8 @@ const PhrasesMeta = {
 
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
-  const { cookies } = useConnectSetting();
+  const { cookies, debug } = useConnectSetting();
+  const debugREF = useRef(debug);
   const { loadingAudio } = useConnectAudio();
 
   const prevReinforcedUID = useRef<string | null>(null);
@@ -207,183 +209,163 @@ export default function Phrases() {
     top: 10,
   });
 
-  const filteredPhrases = useMemo(() => {
-    const firstRepObject = metadata.current;
-    if (phraseList.length === 0) return [];
-    if (Object.keys(firstRepObject).length === 0 && activeGroup.length === 0)
-      return phraseList;
+  const { filtered: filteredPhrases, recallGame } = useMemo(
+    function filterMemo() {
+      const firstRepObject = metadata.current;
+      if (phraseList.length === 0) return { filtered: [], recallGame: -1 };
+      if (Object.keys(firstRepObject).length === 0 && activeGroup.length === 0)
+        return { filtered: phraseList, recallGame: -1 };
 
-    let filtered = termFilterByType(
-      filterTypeREF.current,
-      phraseList,
-      activeGroup
-    );
+      let recallGame = -1;
+      let filtered = termFilterByType(
+        filterTypeREF.current,
+        phraseList,
+        activeGroup
+      );
 
-    // exclude terms with difficulty beyond difficultyThreshold
-    const subFilter = difficultySubFilter(
-      difficultyThresholdREF.current,
-      filtered,
-      metadata.current
-    );
+      // exclude terms with difficulty beyond difficultyThreshold
+      const subFilter = difficultySubFilter(
+        difficultyThresholdREF.current,
+        filtered,
+        metadata.current
+      );
 
-    if (subFilter.length > 0) {
-      filtered = subFilter;
-    } else {
-      setLog((l) => [
-        ...l,
-        {
-          msg: "Excluded all terms. Discarding memorized subfiltering.",
-          lvl: DebugLevel.WARN,
-        },
-      ]);
-    }
+      if (subFilter.length > 0) {
+        filtered = subFilter;
+      } else {
+        setLog((l) => [
+          ...l,
+          {
+            msg: "Excluded all terms. Discarding memorized subfiltering.",
+            lvl: DebugLevel.WARN,
+          },
+        ]);
+      }
 
-    switch (sort) {
-      case TermSortBy.RECALL:
-        // discard the nonPending terms
-        const {
-          failed,
-          overdue,
-          overLimit: leftOver,
-        } = spaceRepetitionOrder(
-          filtered,
-          metadata.current,
-          repMinItemReviewREF.current
-        );
-        // if *just one* overLimit then add to pending now
-        const overLimit = leftOver.length === 1 ? [] : leftOver;
-        const pending =
-          leftOver.length === 1
-            ? [...failed, ...overdue, ...leftOver]
-            : [...failed, ...overdue];
-
-        if (pending.length > 0 && filtered.length !== pending.length) {
-          // reduce filtered
-          filtered = pending.map((p) => filtered[p]);
-        }
-
-        const overdueVals = pending.map((item, i) => {
+      switch (sort) {
+        case TermSortBy.RECALL:
+          // discard the nonPending terms
           const {
-            accuracyP = 0,
-            lastReview,
-            daysBetweenReviews,
-            // metadata includes filtered in Recall sort
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          } = metadata.current[filtered[i].uid]!;
-          const daysSinceReview =
-            lastReview !== undefined ? daysSince(lastReview) : undefined;
-          const p = getPercentOverdue({
-            accuracy: accuracyP / 100,
-            daysSinceReview,
-            daysBetweenReviews,
+            failed,
+            overdue,
+            overLimit: leftOver,
+            notPlayed,
+            todayDone,
+          } = spaceRepetitionOrder(
+            filtered,
+            metadata.current,
+            repMinItemReviewREF.current
+          );
+
+          const {
+            pending,
+            reducedFiltered,
+            recallGame: rGame,
+          } = getPendingReduceFiltered(
+            leftOver,
+            failed,
+            overdue,
+            notPlayed,
+            todayDone,
+            filtered
+          );
+          filtered = reducedFiltered;
+          recallGame = rGame;
+
+          if (debugREF.current > DebugLevel.WARN) {
+            const overLimit = leftOver.length === 1 ? [] : leftOver;
+            recallSortLogSummary(
+              pending,
+              metadata,
+              filtered,
+              overLimit,
+              setLog,
+              sort
+            );
+          }
+
+          break;
+        case TermSortBy.VIEW_DATE:
+          if (!includeNew) {
+            filtered = filtered.filter(
+              (el) => metadata.current[el.uid]?.lastView !== undefined
+            );
+          }
+
+          if (!includeReviewed) {
+            filtered = filtered.filter(
+              (el) => metadata.current[el.uid]?.lastReview === undefined
+            );
+          }
+
+          break;
+        default:
+          break;
+      }
+
+      return { filtered, recallGame };
+    },
+    [
+      filterTypeREF,
+      sort,
+      difficultyThresholdREF,
+      phraseList,
+      activeGroup,
+      includeNew,
+      includeReviewed,
+    ]
+  );
+
+  const order = useMemo(
+    function orderMemo() {
+      const repetition = metadata.current;
+      if (filteredPhrases.length === 0) return [];
+
+      let newOrder: number[];
+      switch (sort) {
+        case TermSortBy.VIEW_DATE:
+          newOrder = dateViewOrder(filteredPhrases, repetition);
+
+          let newN = 0;
+          let oldDt = NaN;
+          const views = newOrder.map((i) => {
+            const d = metadata.current[filteredPhrases[i].uid]?.lastView;
+            newN = d === undefined ? newN + 1 : newN;
+            oldDt =
+              d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+            return d !== undefined ? daysSince(d) : 0;
           });
 
-          return p.toFixed(2).replace(".00", "").replace("0.", ".");
-        });
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
 
-        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
+          break;
 
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${
-              overdueVals.length
-            })${more} [${overdueVals.toString()}]`,
-            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
-          },
-        ]);
+        case TermSortBy.RECALL:
+          newOrder = filteredPhrases.map((_p, i) => i);
+          break;
 
-        break;
-      case TermSortBy.VIEW_DATE:
-        if (!includeNew) {
-          filtered = filtered.filter(
-            (el) => metadata.current[el.uid]?.lastView !== undefined
-          );
-        }
+        default: //TermSortBy.RANDOM:
+          newOrder = randomOrder(filteredPhrases);
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
+          break;
+      }
 
-        if (!includeReviewed) {
-          filtered = filtered.filter(
-            (el) => metadata.current[el.uid]?.lastReview === undefined
-          );
-        }
-
-        break;
-      default:
-        break;
-    }
-
-    return filtered;
-  }, [
-    filterTypeREF,
-    sort,
-    difficultyThresholdREF,
-    phraseList,
-    activeGroup,
-    includeNew,
-    includeReviewed,
-  ]);
-
-  const { order, recallGame } = useMemo(() => {
-    const repetition = metadata.current;
-    if (filteredPhrases.length === 0) return { order: [], recallGame: -1 };
-
-    let newOrder: number[];
-    let recallGame = -1;
-    switch (sort) {
-      case TermSortBy.VIEW_DATE:
-        newOrder = dateViewOrder(filteredPhrases, repetition);
-
-        let newN = 0;
-        let oldDt = NaN;
-        const views = newOrder.map((i) => {
-          const d = metadata.current[filteredPhrases[i].uid]?.lastView;
-          newN = d === undefined ? newN + 1 : newN;
-          oldDt = d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
-          return d !== undefined ? daysSince(d) : 0;
-        });
-
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
-
-        break;
-
-      case TermSortBy.RECALL:
-        const {
-          failed,
-          overdue,
-          notPlayed: nonPending,
-          todayDone,
-        } = spaceRepetitionOrder(filteredPhrases, metadata.current);
-        const pending = [...failed, ...overdue];
-
-        if (pending.length > 0) {
-          newOrder = pending;
-        } else {
-          newOrder = [...nonPending, ...todayDone];
-        }
-        recallGame = pending.length;
-
-        break;
-
-      default: //TermSortBy.RANDOM:
-        newOrder = randomOrder(filteredPhrases);
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
-        break;
-    }
-
-    return { order: newOrder, recallGame };
-  }, [sort, filteredPhrases]);
+      return newOrder;
+    },
+    [sort, filteredPhrases]
+  );
 
   const gotoNext = useCallback(() => {
     const l = filteredPhrases.length;

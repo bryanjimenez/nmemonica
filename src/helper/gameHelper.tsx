@@ -180,6 +180,43 @@ export function termFilterByType<
 }
 
 /**
+ * Calculate `Pending` list and reduce `filtered` Term list
+ */
+export function getPendingReduceFiltered<Term>(
+  leftOver: number[],
+  failed: number[],
+  overdue: number[],
+  notPlayed: number[],
+  todayDone: number[],
+  filtered: Term[]
+) {
+  // if *just one* overLimit then add to pending now
+  const pending =
+    leftOver.length === 1
+      ? [...failed, ...overdue, ...leftOver]
+      : [...failed, ...overdue];
+
+  const recallGame = pending.length;
+
+  let result = pending;
+  if (pending.length === 0) {
+    result = [...notPlayed, ...todayDone];
+  }
+
+  // normalize indexes for pending and (trim) filtered
+  return {
+    ...result.reduce<{ pending: number[]; reducedFiltered: Term[] }>(
+      (acc, idx, i) => ({
+        pending: [...acc.pending, i],
+        reducedFiltered: [...acc.reducedFiltered, filtered[idx]],
+      }),
+      { pending: [], reducedFiltered: [] }
+    ),
+    recallGame,
+  };
+}
+
+/**
  * Active group filtering logic
  */
 export function activeGroupIncludes<
