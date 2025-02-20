@@ -5,7 +5,6 @@ import {
   DialogActions,
   DialogContent,
 } from "@mui/material";
-import { FilledSheetData } from "@nmemonica/snservice";
 import {
   AlertIcon,
   CheckCircleIcon,
@@ -14,6 +13,7 @@ import {
 import { useCallback, useRef, useState } from "react";
 
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
+import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { LocalStorageState } from "../../slices";
 import "../../css/DragDrop.css";
 

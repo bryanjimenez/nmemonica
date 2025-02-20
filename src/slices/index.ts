@@ -7,14 +7,12 @@ import oppositesReducer, { type OppositeInitSlice } from "./oppositeSlice";
 import particleGameReducer, { type ParticleInitSlice } from "./particleSlice";
 import phrasesReducer, { type PhraseInitSlice } from "./phraseSlice";
 import serviceWorkerReducer from "./serviceWorkerSlice";
-import versionsReducer from "./versionSlice";
 import vocabularyReducer, { type VocabularyInitSlice } from "./vocabularySlice";
 
 export const store = configureStore({
   reducer: {
     global: globalReducer,
     sw: serviceWorkerReducer,
-    version: versionsReducer,
 
     kana: kanaReducer,
     vocabulary: vocabularyReducer,

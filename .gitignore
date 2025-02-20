@@ -15,14 +15,8 @@ node_modules/
 dist/
 .tsc-dist/
 
-# Keys directory
-crypto/
-
 # environment variables file
 environment.*
-
-# service configuration file
-snservice.conf.json
 
 # notes
 *.txt

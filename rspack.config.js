@@ -5,8 +5,6 @@ import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import path, { sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
-import { ca } from "@nmemonica/utils/signed-ca";
-import { config } from "@nmemonica/snservice";
 import { appendLicense } from "./dep-license-writer.js";
 import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
@@ -23,10 +21,6 @@ export default function rspackConfig(
   /** @type string[] */ argv
 ) {
   const isProduction = process.env.NODE_ENV === "production";
-
-  if (!isProduction && !ca.exists()) {
-    ca.createServer();
-  }
 
   const appVersion = JSON.parse(
     fs.readFileSync("package.json", "utf-8")
@@ -155,7 +149,7 @@ export default function rspackConfig(
       new rspack.DefinePlugin({
         // "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
         "process.env.APP_VERSION": `"${appVersion}"`,
-        "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`, // only in env.development
+        // "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`, // only in env.development
       }),
 
       // adds cache files to sw.js
@@ -172,18 +166,18 @@ export default function rspackConfig(
     ].filter(Boolean),
 
     devServer: {
-      server: {
-        // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
-        // https://webpack.js.org/configuration/dev-server/#devserverhttps
-        type: "https",
-        options: {
-          key: `${config.directory.ca}${sep}${config.ca.server.key}`,
-          cert: `${config.directory.ca}${sep}${config.ca.server.crt}`,
-        },
-      },
+      // server: {
+      //   // https://stackoverflow.com/questions/26663404/webpack-dev-server-running-on-https-web-sockets-secure
+      //   // https://webpack.js.org/configuration/dev-server/#devserverhttps
+      //   type: "https",
+      //   options: {
+      //     key: `${config.directory.ca}${sep}${config.ca.server.key}`,
+      //     cert: `${config.directory.ca}${sep}${config.ca.server.crt}`,
+      //   },
+      // },
 
-      port: config.ui.port || 8080, // Port Number
-      host: config.service.hostname, //"0.0.0.0", //external facing server
+      port: 8080, // Port Number
+      // host: config.service.hostname, //"0.0.0.0", //external facing server
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };

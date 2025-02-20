@@ -10,7 +10,6 @@ import {
   RadioGroup,
   TextField,
 } from "@mui/material";
-import { FilledSheetData } from "@nmemonica/snservice";
 import {
   ArrowSwitchIcon,
   BlockedIcon,
@@ -26,6 +25,7 @@ import { SyncDataFile, SyncDataMsg } from "./DataSetExportSync";
 import { DataSetKeyInput } from "./DataSetKeyInput";
 import { syncService } from "../../../environment.development";
 import { decrypt } from "../../helper/cryptoHelper";
+import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { LocalStorageState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";

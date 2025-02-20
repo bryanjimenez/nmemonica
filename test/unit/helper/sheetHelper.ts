@@ -1,7 +1,7 @@
 import { expect } from "chai";
-import { updateEditedUID } from "../../../src/helper/sheetHelperNoImport";
+import { updateEditedUID } from "../../../src/helper/sheetHelper";
 
-describe("src/helper/sheetHelperNoImport", function () {
+describe("src/helper/sheetHelper", function () {
   describe("updateEditedUID", function () {
     describe("single english match", function () {
       it("single uid change from Japanese change", function () {

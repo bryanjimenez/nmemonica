@@ -10,7 +10,7 @@ import { useCallback, useMemo } from "react";
 import { TransferObject } from "./DataSetFromDragDrop";
 import { localStorageKey } from "../../constants/paths";
 import { getLocalStorageSettings } from "../../helper/localStorageHelper";
-import { metaDataNames, workbookSheetNames } from "../Pages/Sheet";
+import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 
 interface DataSetFromAppCacheProps {
   data: TransferObject[];

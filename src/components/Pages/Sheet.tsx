@@ -1,15 +1,4 @@
-import EventEmitter from "events";
-
 import { Badge, Fab, TextField } from "@mui/material";
-import { objectToCSV } from "@nmemonica/snservice/src/helper/csvHelper";
-import {
-  jtox,
-  sheetDataToJSON,
-} from "@nmemonica/snservice/src/helper/jsonHelper";
-import {
-  type FilledSheetData,
-  isFilledSheetData,
-} from "@nmemonica/snservice/src/helper/sheetHelper";
 import { Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
   GearIcon,
@@ -17,39 +6,35 @@ import {
   // RssIcon,
   SearchIcon,
 } from "@primer/octicons-react";
-import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
 import { MetaDataObj } from "nmemonica";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
-import {
-  IDBErrorCause,
-  IDBStores,
-  getIDBItem,
-  openIDB,
-  putIDBItem,
-} from "../../../pwa/helper/idbHelper";
+import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { localStorageKey } from "../../constants/paths";
+import { jtox, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getLocalStorageSettings,
   setLocalStorage,
 } from "../../helper/localStorageHelper";
 import {
   getActiveSheet,
+  getWorkbookFromIndexDB,
+  metaDataNames,
   removeLastRowIfBlank,
   searchInSheet,
   sheetAddExtraRow,
   touchScreenCheck,
+  updateEditedUID,
+  workbookSheetNames,
+  xObjectToCsvText,
 } from "../../helper/sheetHelper";
-import { updateEditedUID } from "../../helper/sheetHelperNoImport";
+import {
+  type FilledSheetData,
+  isFilledSheetData,
+} from "../../helper/sheetHelperImport";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -68,8 +53,6 @@ import {
   clearPhrases,
   batchRepetitionUpdate as phraseBatchMetaUpdate,
 } from "../../slices/phraseSlice";
-import { getDatasets, saveSheetServiceWorker } from "../../slices/sheetSlice";
-import { setSwVersions, setVersion } from "../../slices/versionSlice";
 import {
   clearVocabulary,
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
@@ -77,26 +60,13 @@ import {
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
 import { DataSetExportSync } from "../Form/DataSetExportSync";
 import { DataSetImportFile } from "../Form/DataSetImportFile";
-import { DataSetImportSync } from "../Form/DataSetImportSync";  
+import { DataSetImportSync } from "../Form/DataSetImportSync";
 import "../../css/Sheet.css";
 
 const SheetMeta = {
   location: "/sheet/",
   label: "Sheet",
 };
-
-/**
- * Keep all naming and order
- */
-export const workbookSheetNames = Object.freeze({
-  phrases: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
-  vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
-  kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
-});
-
-export const metaDataNames = Object.freeze({
-  settings: { file: "Settings.json", prettyName: "Settings" },
-});
 
 const defaultOp = {
   mode: "edit", // edit | read
@@ -119,122 +89,6 @@ const defaultOp = {
     minWidth: 60,
   },
 } as const;
-
-/**
- * Retrieves worksheet from:
- * indexedDB
- * cache
- * or creates placeholders
- *
- * @param dispatch
- * @param getDatasets fetch action (if no indexedDB)
- */
-export function getWorkbookFromIndexDB(
-  dispatch: AppDispatch,
-  getDatasets: AsyncThunk<FilledSheetData[], void, object>
-) {
-  return openIDB()
-    .then((db) => {
-      // if indexedDB has stored workbook
-      const stores = Array.from(db.objectStoreNames);
-
-      const ErrorWorkbookMissing = new Error("Workbook not stored", {
-        cause: { code: IDBErrorCause.NoResult },
-      });
-      if (!stores.includes("workbook")) {
-        throw ErrorWorkbookMissing;
-      }
-
-      // use stored workbook
-      return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
-        if (!res.workbook || res.workbook.length === 0) {
-          throw ErrorWorkbookMissing;
-        }
-
-        return res.workbook;
-      });
-    })
-    .catch((error) => {
-      // if not fetch and build spreadsheet
-      if (error instanceof Error) {
-        const errData = error.cause as { code: string };
-        if (errData?.code !== IDBErrorCause.NoResult) {
-          // eslint-disable-next-line no-console
-          console.log("Unknown error getting workbook from indexedDB");
-          // eslint-disable-next-line no-console
-          console.error(error);
-        }
-      }
-
-      return dispatch(getDatasets()).unwrap();
-    })
-    .catch((err) => {
-      const { message } = err as { message: unknown };
-      if (typeof message === "string" && message === "Failed to fetch") {
-        return [
-          jtox(
-            {
-              /** no data just headers */
-            },
-            workbookSheetNames.phrases.prettyName
-          ),
-          jtox(
-            {
-              /** no data just headers */
-            },
-            workbookSheetNames.vocabulary.prettyName
-          ),
-          jtox(
-            {
-              /** no data just headers */
-            },
-            workbookSheetNames.kanji.prettyName
-          ),
-        ];
-      }
-
-      throw err;
-    });
-}
-
-/**
- * Parse xObject into csv text
- */
-export function xObjectToCsvText(xObj: FilledSheetData[]) {
-  //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
-
-  const filesP = xObj.map((xObjSheet: FilledSheetData) => {
-    const fileSim = new EventEmitter();
-
-    const fileWriterSimulator = {
-      write: (line: string) => {
-        fileSim.emit("write", line);
-      },
-      end: () => {
-        fileSim.emit("end");
-      },
-    };
-
-    const csvP = new Promise<{ name: string; text: string }>(
-      (resolve, _reject) => {
-        let file = "";
-        fileSim.on("write", (line) => {
-          file += line;
-        });
-
-        fileSim.on("end", () => {
-          resolve({ name: xObjSheet.name, text: file });
-        });
-      }
-    );
-
-    objectToCSV(xObjSheet, fileWriterSimulator);
-
-    return csvP;
-  });
-
-  return Promise.all(filesP);
-}
 
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
@@ -273,7 +127,7 @@ export default function Sheet() {
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void getWorkbookFromIndexDB(dispatch, getDatasets).then((sheetArr) => {
+    void getWorkbookFromIndexDB().then((sheetArr) => {
       const data = sheetArr.map((s) => sheetAddExtraRow(s));
 
       const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
@@ -281,9 +135,9 @@ export default function Sheet() {
       // console.log(grid.bottombar.activeEl.el.innerHTML);
 
       grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
-   
+
       // replace typed '\n' with newline inside cell
-      grid.on("cell-edited-done", (text:string, _ri:number, _ci:number) => {
+      grid.on("cell-edited-done", (text: string, _ri: number, _ci: number) => {
         grid.sheet.data.setSelectedCellText(
           // characters to replace with \n
           //    literal '\n'
@@ -328,7 +182,6 @@ export default function Sheet() {
   /**
    * Updates app state with incoming dataset
    * Updates metadata with incoming metadata
-   * Updates SW cache.json with state versions
    * @param name name of DataSet
    * @param hash
    * @param metaUpdateUids Record containing updated uids
@@ -336,19 +189,16 @@ export default function Sheet() {
   const updateStateAndCacheCB = useCallback(
     (
       name: string,
-      hash: string,
       metaUpdatedUids?: Record<string, MetaDataObj | undefined>
     ) => {
       switch (name) {
         case workbookSheetNames.kanji.prettyName:
-          dispatch(setVersion({ name: "kanji", hash }));
           dispatch(clearKanji());
           if (metaUpdatedUids) {
             dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
           }
           break;
         case workbookSheetNames.vocabulary.prettyName:
-          dispatch(setVersion({ name: "vocabulary", hash }));
           dispatch(clearVocabulary());
           dispatch(clearOpposites());
           if (metaUpdatedUids) {
@@ -356,7 +206,6 @@ export default function Sheet() {
           }
           break;
         case workbookSheetNames.phrases.prettyName:
-          dispatch(setVersion({ name: "phrases", hash }));
           dispatch(clearPhrases());
           dispatch(clearParticleGame());
           if (metaUpdatedUids) {
@@ -366,9 +215,6 @@ export default function Sheet() {
         default:
           throw new Error("Incorrect sheet name: " + name);
       }
-
-      // update service worker cache.json file with app state versions
-      void dispatch(setSwVersions());
     },
     [dispatch]
   );
@@ -411,8 +257,7 @@ export default function Sheet() {
       },
     };
     const { meta, list: oldList } = selectedData[name];
-    const { data, hash } = sheetDataToJSON(sheet) as {
-      hash: string;
+    const { data } = sheetDataToJSON(sheet) as {
       data: Record<string, { uid: string; english: string }>;
     };
 
@@ -426,30 +271,22 @@ export default function Sheet() {
     );
     // TODO: use changedUID to remove or update? audio assets
 
-    const saveP = saveSheetServiceWorker(sheet.name, data, hash);
-
     // store workbook in indexedDB
     // (keep ordering and notes)
-    void openIDB().then((db) =>
-      putIDBItem(
-        { db, store: IDBStores.WORKBOOK },
-        { key: "0", workbook: trimmed }
+    void openIDB()
+      .then((db) =>
+        putIDBItem(
+          { db, store: IDBStores.WORKBOOK },
+          { key: "0", workbook: trimmed }
+        )
       )
-    );
-
-    void saveP.then(({ hash, name }) =>
-      updateStateAndCacheCB(name, hash, metaUpdatedUids)
-    );
+      .then(() => {
+        updateStateAndCacheCB(name, metaUpdatedUids);
+      });
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
-  }, [
-    dispatch,
-    updateStateAndCacheCB,
-    phraseList,
-    vocabList,
-    kanjiList,
-  ]);
+  }, [dispatch, updateStateAndCacheCB, phraseList, vocabList, kanjiList]);
 
   const downloadFileHandlerCB = useCallback(
     (files: { fileName: string; text: string }[]) => {
@@ -641,61 +478,54 @@ export default function Sheet() {
       }
 
       if (importWorkbook && importWorkbook.length > 0) {
-        const workbookP = getWorkbookFromIndexDB(dispatch, getDatasets).then(
-          (dbWorkbook) => {
-            const trimmed = Object.values(workbookSheetNames).map((w) => {
-              const { prettyName: prettyName } = w;
+        const workbookP = getWorkbookFromIndexDB().then((dbWorkbook) => {
+          const trimmed = Object.values(workbookSheetNames).map((w) => {
+            const { prettyName: prettyName } = w;
 
-              const fileSheet = importWorkbook.find(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-              );
-              if (fileSheet) {
-                return removeLastRowIfBlank(fileSheet);
-              }
+            const fileSheet = importWorkbook.find(
+              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+            );
+            if (fileSheet) {
+              return removeLastRowIfBlank(fileSheet);
+            }
 
-              const dbSheet = dbWorkbook.find(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-              );
-              if (dbSheet) {
-                return dbSheet;
-              }
+            const dbSheet = dbWorkbook.find(
+              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+            );
+            if (dbSheet) {
+              return dbSheet;
+            }
 
-              // if it never existed add blank placeholder
-              return jtox(
-                {
-                  /** no data just headers */
-                },
-                prettyName
-              );
-            });
+            // if it never existed add blank placeholder
+            return jtox(
+              {
+                /** no data just headers */
+              },
+              prettyName
+            );
+          });
 
-            // store workbook in indexedDB
-            // update cached json objects
-            return Promise.all([
-              openIDB().then((db) =>
-                putIDBItem(
-                  { db, store: IDBStores.WORKBOOK },
-                  { key: "0", workbook: trimmed }
-                )
-              ),
-              ...trimmed.map((sheet) => {
-                const { data, hash } = sheetDataToJSON(
-                  sheet as FilledSheetData
-                );
-                return saveSheetServiceWorker(sheet.name, data, hash).then(() =>
-                  updateStateAndCacheCB(sheet.name, hash)
-                );
-              }),
-            ]).then(() => {
+          // store workbook in indexedDB
+          // update cached json objects
+          return openIDB()
+            .then((db) =>
+              putIDBItem(
+                { db, store: IDBStores.WORKBOOK },
+                { key: "0", workbook: trimmed }
+              )
+            )
+            .then(() => {
               // reload workbook (update useEffect)
               setWorkbookImported(Date.now());
 
-              // local data edited, do not fetch use cached cache.json
-              void dispatch(setLocalDataEdited(true));
+              trimmed.map((sheet) => {
+                updateStateAndCacheCB(sheet.name);
+              }),
+                // local data edited, do not fetch use cached cache.json
+                void dispatch(setLocalDataEdited(true));
               return;
             });
-          }
-        );
+        });
 
         // eslint-disable-next-line
         importCompleteP = [...importCompleteP, workbookP];

@@ -2,7 +2,6 @@ import rspack from "@rspack/core";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
-import { config } from "@nmemonica/snservice";
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
 /**
@@ -81,9 +80,9 @@ export default function rspackConfig(
 
     plugins: [
       // replacements in *code* (strings need "")
-      new rspack.DefinePlugin({
-        "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`,
-      }),
+      // new rspack.DefinePlugin({
+      //   "process.env.LOCAL_SERVICE_URL": `"https://${config.service.hostname}:${config.service.port}"`,
+      // }),
 
       // adds cache files to sw.js
       serviceWorkerCacheHelperPlugin,

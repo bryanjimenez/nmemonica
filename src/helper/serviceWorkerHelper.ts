@@ -54,26 +54,6 @@ export function swMessageUnsubscribe(
   }
 }
 
-/**
- * User action
- * - save data
- */
-export function swMessageSaveDataJSON(
-  url: string,
-  dataset: unknown,
-) {
-  if (navigator.serviceWorker) {
-    return navigator.serviceWorker.ready.then(() => {
-      navigator.serviceWorker.controller?.postMessage({
-        type: SWMsgOutgoing.DATASET_JSON_SAVE,
-        url,
-        dataset,
-      });
-    });
-  }
-  return Promise.reject(serviceWorkerNotAvailableErr);
-}
-
 export function swMessageGetVersions() {
   if (navigator.serviceWorker) {
     return navigator.serviceWorker.ready.then(() => {
