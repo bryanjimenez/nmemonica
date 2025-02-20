@@ -15,7 +15,6 @@ import type { GameChoice, GameQuestion } from "./FourChoices";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
@@ -39,7 +38,7 @@ import {
 } from "../Form/OptionsBar";
 
 interface KanjiGridChoice extends GameChoice {
-  toString: (side: boolean) => string;
+  toString: () => string;
 }
 
 const KanjiGridMeta = {
@@ -50,52 +49,24 @@ const KanjiGridMeta = {
 /**
  * @param kanji
  * @param choices
- * @param writePractice
  * @param example current english example and next
  */
 function prepareGame(
   kanji: RawKanji,
   choices: RawKanji[],
-  writePractice: boolean,
   [currExmpl, nextExmpl]: [string, () => void]
 ) {
-  const { english, kanji: japanese, on, kun, uid } = kanji;
-  const isShortened = currExmpl !== english;
+  const { english, uid } = kanji;
+  const isShortened = currExmpl.toLowerCase() !== english.toLowerCase();
 
   const q: GameQuestion = {
     // english, not needed, shown as a choice
-    toHTML: (correct) => {
-      if (writePractice) {
-        return (
-          <div>
-            <div
-              className={classNames({
-                "correct-color": correct,
-              })}
-            >
-              <span>{japanese}</span>
-            </div>
-            {(on !== undefined || kun !== undefined) && (
-              <div
-                className={classNames({
-                  "d-flex flex-column mt-3 h4": true,
-                  "transparent-color": !correct,
-                  "correct-color": correct,
-                })}
-              >
-                <span>{on}</span>
-                <span>{kun}</span>
-              </div>
-            )}
-          </div>
-        );
-      } else {
-        return (
-          <div onClick={isShortened ? nextExmpl : undefined}>
-            {currExmpl + (isShortened ? "..." : "")}
-          </div>
-        );
-      }
+    toHTML: () => {
+      return (
+        <div onClick={isShortened ? nextExmpl : undefined}>
+          {currExmpl + (isShortened ? "..." : "")}
+        </div>
+      );
     },
   };
 
@@ -104,11 +75,8 @@ function prepareGame(
     answer: uid,
     choices: choices.map((c) => ({
       compare: c.uid,
-      toString: (side: boolean) =>
-        side ?? writePractice ? c.english : c.kanji,
-      toHTML: ({ side }: { side?: boolean } = {}) => (
-        <>{side ?? writePractice ? c.english : c.kanji}</>
-      ),
+      toString: () => c.english,
+      toHTML: () => <>{c.kanji}</>,
     })),
   };
 }
@@ -142,7 +110,6 @@ export default function KanjiGrid() {
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
 
   const prevUidRef = useRef<string | undefined>("");
-  const [writePractice, setEnglishSide] = useState(false);
   const choices = useRef<RawKanji[]>([]);
   const [currExmpl, setCurrExmpl] = useState<string | null>(null);
 
@@ -307,18 +274,9 @@ export default function KanjiGrid() {
 
   const nextExample = getNextExample(kanji, example, setCurrExmpl);
 
-  const game = prepareGame(kanji, choices.current, writePractice, [
-    example,
-    nextExample,
-  ]);
+  const game = prepareGame(kanji, choices.current, [example, nextExample]);
 
-  const isCorrect = buildIsCorrect(
-    writePractice,
-    game,
-    text,
-    setText,
-    fadeTimerRef
-  );
+  const isCorrect = buildIsCorrect(game, text, setText, fadeTimerRef);
 
   const term_reinforce = kanji && repetition[kanji.uid]?.rein === true;
 
@@ -344,21 +302,8 @@ export default function KanjiGrid() {
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
-              <Link
-                to={
-                  writePractice
-                    ? KanjiGridMeta.location
-                    : KanjiGameMeta.location
-                }
-              >
-                <TogglePracticeSideBtn
-                  toggle={writePractice}
-                  action={
-                    cookies
-                      ? setStateFunction(setEnglishSide, (toggle) => !toggle)
-                      : undefined
-                  }
-                />
+              <Link to={KanjiGameMeta.location}>
+                <TogglePracticeSideBtn toggle={false} />
               </Link>
             </div>
           </div>
@@ -460,14 +405,12 @@ function getNextExample(
 }
 
 /**
- * @param writePractice
  * @param game
  * @param chosenAnswer player's answer
  * @param setAnswered setter to clear (edit) answer
  * @param fadeRef
  */
 function buildIsCorrect(
-  writePractice: boolean,
   game: { answer: string; choices: GameChoice[] },
   chosenAnswer: string,
   setAnswered: React.Dispatch<React.SetStateAction<string>>,
@@ -482,9 +425,9 @@ function buildIsCorrect(
       if (fadeRef.current > -1 && chosenAnswer.length > 0) {
         clearTimeout(fadeRef.current);
         setAnswered("");
-        setTimeout(() => setAnswered(answered.toString(!writePractice)), 100);
+        setTimeout(() => setAnswered(answered.toString()), 100);
       } else {
-        setAnswered(answered.toString(!writePractice));
+        setAnswered(answered.toString());
         fadeRef.current = window.setTimeout(() => setAnswered(""), 2500);
       }
     }

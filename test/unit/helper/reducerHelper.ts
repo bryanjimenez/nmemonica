@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import {
   buildGroupObject,
+  buildSimilarityMap,
   buildTagObject,
   getPropsFromTags,
 } from "../../../src/helper/reducerHelper";
@@ -79,6 +80,35 @@ describe("reducerHelper", function () {
       expect(tags).to.be.length(expected.length).and.include.members(expected);
       expect(keigo).to.be.true;
     });
+    describe("kanji", function(){
+      it("p:XYZ (root pronunciation)", function () {
+        const expected  = [];
+        const initialTags = "p:火+ひ";
+        const { tags, phoneticKanji } = getPropsFromTags(initialTags);
+  
+        expect(tags).to.be.length(expected.length).and.include.members(expected);
+        expect(phoneticKanji).to.not.be.undefined;
+        expect(phoneticKanji).to.have.property('k',"火")
+        expect(phoneticKanji).to.have.property('p',"ひ")
+      });
+      it("e:XYZ (radical example)", function () {
+        const expected  = [];
+        const initialTags = "e:花,茶";
+        const { tags, radicalExample } = getPropsFromTags(initialTags);
+  
+        expect(tags).to.be.length(expected.length).and.include.members(expected);
+        expect(radicalExample).to.be.length(2).and.include.members(["花","茶"]);
+      });
+      it("s:XYZ (similar kanji)", function () {
+        const expected  = [];
+        const initialTags = "s:反,友";
+        const { tags, similarKanji } = getPropsFromTags(initialTags);
+  
+        expect(tags).to.be.length(expected.length).and.include.members(expected);
+        expect(similarKanji).to.be.length(2).and.include.members(["反","友"]);
+      });
+    })
+
     describe("vocabulary", function () {
       it("na-adj", function () {
         const initialTags = "na-adj; onomatopoetic; Adjective; ";
@@ -188,6 +218,29 @@ describe("reducerHelper", function () {
           .and.include.members(["は", "から", "を"]);
         expect(inverse, "inverse").to.equal(expectedUid);
       });
+    });
+  });
+  describe("buildSimilarityMap", function () {
+    it("adds itself and all similars", function () {
+      let allSimilars = new Map<string, Set<string>>();
+      const similarList = ["A", "aa"];
+      const thisKanji = "a";
+
+      const actual = buildSimilarityMap(allSimilars, thisKanji, similarList);
+
+      expect(actual.size).to.eq(3);
+      expect(actual.get("a")).to.deep.eq(new Set(["A", "aa"]));
+      expect(actual.get("A")).to.deep.eq(new Set(["a", "aa"]));
+      expect(actual.get("aa")).to.deep.eq(new Set(["A", "a"]));
+    });
+    it("does not add empty", function () {
+      let allSimilars = new Map<string, Set<string>>();
+      const similarList = [];
+      const thisKanji = "a";
+
+      const actual = buildSimilarityMap(allSimilars, thisKanji, similarList);
+
+      expect(actual.size).to.eq(0);
     });
   });
 });

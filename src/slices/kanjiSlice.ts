@@ -1,5 +1,6 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
+import md5 from "md5";
 import type { MetaDataObj, RawKanji, SourceKanji } from "nmemonica";
 
 import { logger } from "./globalSlice";
@@ -22,7 +23,11 @@ import {
   removeAction,
   updateAction,
 } from "../helper/recallHelper";
-import { buildTagObject, getPropsFromTags } from "../helper/reducerHelper";
+import {
+  buildSimilarityMap,
+  buildTagObject,
+  getPropsFromTags,
+} from "../helper/reducerHelper";
 import { SWRequestHeader } from "../helper/serviceWorkerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
@@ -502,15 +507,27 @@ const kanjiSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(getKanji.fulfilled, (state, action) => {
       const { value: v, version } = action.payload;
-      const kanjiArr: RawKanji[] = Object.keys(v).map((k) => {
-        const { tags } = getPropsFromTags(v[k].tag) as { tags: string[] };
 
-        const isRadical =
-          v[k].grp?.toLowerCase() === "radical" ||
-          tags.find((t) => t.toLowerCase() === "radical");
+      let allSimilars = new Map<string, Set<string>>();
+
+      let kanjiArr: RawKanji[] = Object.keys(v).map((k) => {
+        const iKanji = v[k];
+        const { tags, radicalExample, phoneticKanji, similarKanji } =
+          getPropsFromTags(iKanji.tag);
+
+        const validSimilars = similarKanji.reduce<string[]>((acc, s) => {
+          // ensure incoming kanji is in our list
+          const similarUID = md5(s);
+          if (v[similarUID] !== undefined) {
+            acc = [...acc, similarUID];
+          }
+          return acc;
+        }, []);
+
+        allSimilars = buildSimilarityMap(allSimilars, k, validSimilars);
 
         return {
-          ...v[k],
+          ...iKanji,
           uid: k,
           // Not used after parsing
           tag: undefined,
@@ -518,10 +535,20 @@ const kanjiSlice = createSlice({
           // Derived from tag
           tags,
 
-          radical: isRadical
-            ? { example: v[k].radex?.split("") ?? [] }
-            : undefined,
+          radical: radicalExample ? { example: radicalExample } : undefined,
+          phoneticKanji,
+          similarKanji: [], // set in second pass
         };
+      });
+
+      // second pass to set similars
+      kanjiArr = kanjiArr.map((k) => {
+        const s = allSimilars.get(k.uid);
+        if (s !== undefined && s?.size > 0) {
+          k.similarKanji = Array.from(s);
+        }
+
+        return k;
       });
 
       state.tagObj = buildTagObject(kanjiArr);

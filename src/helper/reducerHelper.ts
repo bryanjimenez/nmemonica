@@ -1,15 +1,27 @@
 import type { GroupListMap, RawVocabulary, SourceVocabulary } from "nmemonica";
 
 export function getPropsFromTags(tag: string | undefined) {
-  if (tag === undefined) return { tags: [] };
+  if (tag === undefined)
+    return { tags: [] as string[], similarKanji: [] as string[] };
 
   const tagList = tag.split(/[\n;]+/);
-  const h = "[\u3041-\u309F]{1,4}"; // hiragana particle
-  const hasParticle = new RegExp("p:" + h + "(," + h + ")*");
+  const h = "[\u3041-\u309F]{1,4}"; //  hiragana particle
+  const commonK = "\u4E00-\u9FAF"; //   kanji
+  const rareK = "\u3400-\u4DBF"; //     kanji
+  const hasParticle = new RegExp("[pP]:" + h + "(?:," + h + ")*");
   const hasInverse = new RegExp("inv:[a-z0-9]{32}");
   const isIntransitive = new RegExp("intr:[a-z0-9]{32}");
   const isAdjective = new RegExp("(i|na)-adj");
   const nonWhiteSpace = new RegExp(/\S/);
+  const hasPhoneticKanji = new RegExp(
+    "[pP]:[" + commonK + rareK + "][+][\u3041-\u309F]+"
+  );
+  const hasRadicalExample = new RegExp(
+    "[eE]:[" + commonK + rareK + "]" + "(?:,[" + commonK + rareK + "])*"
+  );
+  const hasSimilarKanji = new RegExp(
+    "[sS]:[" + commonK + rareK + "]" + "(?:,[" + commonK + rareK + "])*"
+  );
 
   let remainingTags: string[] = [];
   let particles: string[] = [];
@@ -20,6 +32,9 @@ export function getPropsFromTags(tag: string | undefined) {
   let intr: true | undefined;
   let trans: string | undefined;
   let adj: string | undefined;
+  let phoneticKanji: { k: string; p: string } | undefined;
+  let radicalExample: string[] | undefined;
+  let similarKanji: string[] = [];
 
   tagList.forEach((tagWSpace: string) => {
     const t = tagWSpace.trim();
@@ -53,6 +68,21 @@ export function getPropsFromTags(tag: string | undefined) {
         inverse = t.split(":")[1];
         break;
 
+      // Kanji
+      case hasPhoneticKanji.test(t) && t:
+        const [_p, ktag] = t.split(":");
+        const [k, p] = ktag.split("+");
+        phoneticKanji = { k, p };
+        break;
+      case hasRadicalExample.test(t) && t:
+        const [_e, example] = t.split(":");
+        radicalExample = example.split(",");
+        break;
+      case hasSimilarKanji.test(t) && t:
+        const [_s, similar] = t.split(":");
+        similarKanji = similar.split(",");
+        break;
+
       default:
         if (t && nonWhiteSpace.test(t)) {
           // don't add empty whitespace
@@ -78,6 +108,14 @@ export function getPropsFromTags(tag: string | undefined) {
     // Phrases
     inverse,
     particles,
+
+    // Kanji
+    /** Radical in this Kanji with common pronunciation */
+    phoneticKanji,
+    /** Example of Kanji containing this radical */
+    radicalExample,
+    /** Similar Kanji that can be confused with this Kanji */
+    similarKanji,
   };
 }
 
@@ -172,4 +210,39 @@ export function buildTagObject<T extends { tags: string[] }>(termObj: T[]) {
   });
 
   return Array.from(new Set(tags));
+}
+
+/**
+ * Build a map which key is a uid and value is a set of kanji's uids.
+ * Describes similarity relationship between Kanjis.
+ * @param allSimilars Map of relationship between a kanji(uid) and it's simliar kanji(uid[])
+ * @param kanjiUID
+ * @param kanjiSimilarList
+ */
+export function buildSimilarityMap(
+  allSimilars: Map<string, Set<string>>,
+  kanjiUID: string,
+  kanjiSimilarList: string[]
+) {
+  const s0 = allSimilars.get(kanjiUID) ?? new Set();
+
+  kanjiSimilarList.forEach((s) => {
+    s0.add(s);
+    const s1 = allSimilars.get(s) ?? new Set();
+    s1.add(kanjiUID);
+    kanjiSimilarList.forEach((ss) => {
+      if (ss !== s) {
+        s1.add(ss);
+      }
+    });
+    if (s1.size > 0) {
+      allSimilars.set(s, s1);
+    }
+  });
+
+  if (s0.size > 0) {
+    allSimilars.set(kanjiUID, s0);
+  }
+
+  return allSimilars;
 }

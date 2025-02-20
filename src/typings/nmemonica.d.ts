@@ -60,17 +60,21 @@ declare module "nmemonica" {
     uid: string;
 
     kanji: string;
-    on?: string;
-    kun?: string;
+    pronounce?: string;
     english: string;
 
-    grp?: string;
     tags: string[];
-    /** Radical shown in an example Kanji */
-    radex?: string;
 
-    /** Radical info (example Kanji) */
+    /** Example of Kanji containing this radical */
     radical?: { example: string[] };
+    /** Radical in this Kanji with common pronunciation */
+    phoneticKanji?: {
+      k: string;
+      p: string;
+    };
+
+    /** Similar Kanji(uid[]) that can be confused with this Kanji */
+    similarKanji: string[];
   }
 
   export type GroupListMap = Record<string, string[]>;

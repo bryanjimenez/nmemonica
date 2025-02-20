@@ -4,7 +4,7 @@ import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
-import type { RawVocabulary } from "nmemonica";
+import type { RawKanji, RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
   useEffect,
@@ -29,6 +29,7 @@ import {
   updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
+import { isKatakana } from "../../helper/kanaHelper";
 import {
   getPercentOverdue,
   recallDebugLogHelper,
@@ -41,10 +42,10 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
-import { getLastViewCounts } from "../../helper/statsHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch, RootState } from "../../slices";
@@ -69,18 +70,124 @@ import {
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { type ConsoleMessage } from "../Form/Console";
+import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
 import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
-import "../../css/Kanji.css";
 import { Tooltip } from "../Form/Tooltip";
+import { oneFromList, splitToList } from "../Games/KanjiGame";
 
 const KanjiMeta = {
   location: "/kanji/",
   label: "Kanji",
 };
+
+/** Pronunciations are comma delimited (Japanese) */
+const KanjiPronComma = "、";
+
+/**
+ * Finds a kanji in a list of terms. Filtering terms by strongest match.
+ * @param term
+ * @param vocabList
+ */
+function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
+  let examples: RawVocabulary[] = [];
+
+  // Radicals that are just katakana don't need examples;
+  if (isKatakana(term.kanji) && term.tags.includes("Radical")) {
+    return [];
+  }
+
+  // exact
+  examples = vocabList.filter((v) => {
+    const spelling = JapaneseText.parse(v).getSpelling();
+    return (
+      spelling.includes(term.kanji) &&
+      v.english.toLowerCase() === term.english.toLowerCase()
+    );
+  });
+
+  // exact or verb
+  examples =
+    examples.length > 0
+      ? examples
+      : vocabList.filter((v) => {
+          const spelling = JapaneseText.parse(v).getSpelling();
+          return (
+            spelling.includes(term.kanji) &&
+            v.english.toLowerCase().includes(term.english.toLowerCase()) &&
+            v.grp === "Verb"
+          );
+        });
+
+  // exact or similar
+  examples =
+    examples.length > 0
+      ? examples
+      : vocabList.filter((v) => {
+          const spelling = JapaneseText.parse(v).getSpelling();
+          return (
+            spelling.includes(term.kanji) &&
+            (v.english.toLowerCase().includes(term.english.toLowerCase()) ||
+              term.english.toLowerCase().includes(v.english.toLowerCase()))
+          );
+        });
+
+  // any matching
+  examples =
+    examples.length > 0
+      ? examples
+      : vocabList.filter((v) => {
+          const spelling = JapaneseText.parse(v).getSpelling();
+          return spelling.includes(term.kanji);
+        });
+
+  /** Filter example list above this */
+  const EX_LIST_LEN_MAX = 2;
+  /** Filter item with length exceeding this */
+  const EX_EL_LEN_MAX = 10;
+  /** Filter item with word length exceeding this */
+  const EX_EL_WORDS_MAX = 3;
+  let remainingEl = examples.length;
+
+  examples =
+    examples.length <= EX_LIST_LEN_MAX
+      ? examples
+      : examples.filter((ex) => {
+          if (
+            // english too many words
+            (ex.english.split(" ").length <= EX_EL_WORDS_MAX &&
+              // english too many characters
+              ex.english.length <= EX_EL_LEN_MAX) ||
+            // prevent discarding everything
+            remainingEl <= EX_LIST_LEN_MAX
+          ) {
+            return true;
+          } else {
+            remainingEl -= 1;
+          }
+
+          return false;
+        });
+
+  return examples;
+}
+
+function buildGameActionsHandler(
+  gotoNextSlide: () => void,
+  gotoPrev: () => void
+) {
+  return function gameActionHandler(direction: string) {
+    if (direction === "left") {
+      gotoNextSlide();
+    } else if (direction === "right") {
+      gotoPrev();
+    }
+    return Promise.resolve();
+  };
+}
 
 export default function Kanji() {
   const dispatch = useDispatch<AppDispatch>();
@@ -158,13 +265,16 @@ export default function Kanji() {
 
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
-  const [showKun, setShowKun] = useState(false);
   const [showEx, setShowEx] = useState(false);
   const [showMeaning, setShowMeaning] = useState(false);
 
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
+  const [similar, setSimilar] = useState<RawKanji | undefined>(undefined);
+  const closeSimilar = useCallback(() => {
+    setSimilar(undefined);
+  }, []);
 
   const filteredTerms = useMemo(() => {
     if (kanjiList.length === 0) return [];
@@ -443,6 +553,16 @@ export default function Kanji() {
     setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext]);
 
+  const gameActionHandler = buildGameActionsHandler(gotoNextSlide, gotoPrev);
+
+  useKeyboardActions(
+    gameActionHandler,
+    () => {
+      /** no English/Japanse flipping */
+    }
+    // timedPlayAnswerHandlerWrapper
+  );
+
   const swipeActionHandler = useCallback(
     (direction: string) => {
       // this.props.logger("swiped " + direction, 3);
@@ -453,7 +573,6 @@ export default function Kanji() {
         gotoPrev();
       } else {
         setShowOn(true);
-        setShowKun(true);
         setShowEx(true);
         setShowMeaning(true);
 
@@ -473,22 +592,25 @@ export default function Kanji() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
 
-  const w = useWindowSize();
-  const xPad = (w.width && w.height ? w.width > w.height : true) ? 0 : 70;
-  const halfWidth = w.width ? w.width / 2 : 0;
+  const ws = useWindowSize();
+  const halfWidth = ws.width ? ws.width / 2 : 0;
+  const grpElW = useRef({ w: 0 });
 
-  const yOffset = 0; // horizontal alignment spacing
-  const xOffset = 0 - halfWidth + xPad; // vertical spacing between tooltip and element
+  const yOffset = ws.height ? ws.height - 50 : 0; //    horizontal alignment spacing
+  const xOffset = halfWidth - grpElW.current.w / 2; //  vertical spacing
   const { x, y, strategy, refs, update } = useFloating({
-    placement: "bottom",
-    middleware: [offset({ mainAxis: yOffset, crossAxis: xOffset }), shift()],
+    placement: "top-start",
+    middleware: [offset({ mainAxis: -yOffset, crossAxis: xOffset }), shift()],
   });
+
+  const w = refs.floating.current?.firstElementChild?.clientWidth ?? 0;
+  grpElW.current = { w };
 
   useEffect(() => {
     // force a recalculate on
     // window resize
     update();
-  }, [update, w.height, w.width]);
+  }, [update, ws.height, ws.width]);
 
   useLayoutEffect(() => {
     const prevState = {
@@ -591,7 +713,6 @@ export default function Kanji() {
       accuracyModifiedRef.current = undefined;
 
       setShowOn(false);
-      setShowKun(false);
       setShowEx(false);
       setShowMeaning(false);
     }
@@ -615,6 +736,9 @@ export default function Kanji() {
     });
   }, [dispatch, log]);
 
+  const ex = useRef<{ el: RawVocabulary; en: string; jp: JSX.Element }[]>([]);
+  const prevUid = useRef<string | null>();
+
   if (recallGame === 0)
     return <NotReady addlStyle="main-panel" text="No pending items" />;
   if (order.length < 1) return <NotReady addlStyle="main-panel" />;
@@ -622,22 +746,22 @@ export default function Kanji() {
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
   const term = getTerm(uid, kanjiList);
 
-  const match = vocabList.filter(
-    (v) =>
-      (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-        v.english.toLowerCase() === term.english.toLowerCase()) ||
-      (JapaneseText.parse(v).getSpelling().includes(term.kanji) &&
-        v.english.toLowerCase().includes(term.english.toLowerCase()) &&
-        v.grp === "Verb") ||
-      (JapaneseText.parse(v).getSpelling() === term.kanji &&
-        (v.english.toLowerCase().includes(term.english.toLowerCase()) ||
-          term.english.toLowerCase().includes(v.english.toLowerCase())))
-  );
+  if (prevUid.current !== uid && vocabList.length > 0) {
+    const match = getKanjiExamples(term, vocabList);
+    prevUid.current = uid;
+    if (match.length > 0) {
+      const [first, ...theRest] = orderBy(match, (ex) => ex.japanese.length);
+      const examples = [first, ...shuffleArray(theRest)];
 
-  let examples: RawVocabulary[] = [];
-  if (match.length > 0) {
-    const [first, ...theRest] = orderBy(match, (ex) => ex.english.length);
-    examples = [first, ...shuffleArray(theRest)];
+      const maxShowEx = 5;
+      ex.current = examples.slice(0, maxShowEx).map((el) => ({
+        el,
+        en: oneFromList(el.english),
+        jp: JapaneseText.parse(el).toHTML(),
+      }));
+    } else {
+      ex.current = [];
+    }
   }
 
   // console.log(
@@ -655,25 +779,36 @@ export default function Kanji() {
   // );
 
   const aGroupLevel =
-    term.tags.find(
-      (t) => activeTags.includes(t) && isGroupLevel(t) && term.grp !== t
-    ) ??
-    term.tags.find((t) => isGroupLevel(t) && term.grp !== t) ??
-    "";
+    term.tags.find((t) => activeTags.includes(t) && isGroupLevel(t)) ??
+    term.tags.find((t) => isGroupLevel(t)) ??
+    null;
+  const grp =
+    aGroupLevel !== null
+      ? term.tags.find((t) => t !== aGroupLevel) ?? null
+      : term.tags.length > 0
+        ? term.tags[0]
+        : null;
 
   const term_reinforce = repetition[term.uid]?.rein === true;
 
-  const maxShowEx = 3;
-  const calcExamples = examples.slice(0, maxShowEx).map((el, k, arr) => (
-    <React.Fragment key={el.uid}>
-      {el.english + " "}
-      {JapaneseText.parse(el).toHTML()}
-      {k < arr.length - 1 ? "; " : ""}
-      <wbr />
-    </React.Fragment>
+  const examplesEl = ex.current.map(({ el, en, jp }) => (
+    <div
+      key={el.uid}
+      className={classNames({
+        "d-flex justify-content-between": true,
+        invisible: !showEx,
+      })}
+    >
+      <div className="fs-3 mw-50 text-nowrap text-start">{jp}</div>
+      <div className="pt-2 text-break text-end">{en}</div>
+    </div>
+    // <React.Fragment key={el.uid}>
+    //   {el.english + " "}
+    //   {JapaneseText.parse(el).toHTML()}
+    //   {k < arr.length - 1 ? "; " : ""}
+    //   <wbr />
+    // </React.Fragment>
   ));
-
-  const meaning = <span>{term.english}</span>;
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
   const reviewedToday = wasToday(metadata.current[uid]?.lastReview);
@@ -686,7 +821,7 @@ export default function Kanji() {
     metadata.current[uid]?.lastReview
   );
 
-  let page = (
+  return (
     <React.Fragment>
       <div
         className={classNames({
@@ -704,15 +839,33 @@ export default function Kanji() {
             left: x ?? 0,
             width: "max-content",
           }}
-          className="grp-info"
         >
           <div>
-            <div>{term.grp}</div>
+            <div className="text-nowrap">{grp}</div>
             <div>{aGroupLevel}</div>
           </div>
         </div>
         <div className="tooltip-anchor" ref={anchorElRef}></div>
         <div ref={blastElRef}>{text}</div>
+        <DialogMsg
+          open={similar !== undefined}
+          onClose={closeSimilar}
+          title="These Kanji look alike"
+          ariaLabel="Kanji Similarity Information"
+        >
+          <div className="row row-cols-1 row-cols-sm-2 h-100 text-center">
+            <div className="col d-flex flex-column">
+              <span className="fs-kanji-huge lh-1">{term.kanji}</span>
+              <span>{term.english}</span>
+            </div>
+            <div className="col d-flex flex-column">
+              <span className="fs-kanji-huge lh-1 opacity-25">
+                {similar?.kanji}
+              </span>
+              <span>{similar?.english}</span>
+            </div>
+          </div>
+        </DialogMsg>
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -720,52 +873,153 @@ export default function Kanji() {
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-
-          <div className="d-flex flex-column justify-content-around text-center">
-            <span className="fs-1 pt-0">
-              <span>{term.kanji}</span>
-            </span>
-            {(term.on && (
-              <span
-                className="fs-4 pt-0"
-                onClick={setStateFunction(setShowOn, (toggle) => !toggle)}
-              >
-                <span>{showOn ? term.on : "[On]"}</span>
-              </span>
-            )) || <span className="fs-4 pt-0">.</span>}
-            {(term.kun && (
-              <span
-                className="fs-4 pt-2"
-                onClick={setStateFunction(setShowKun, (toggle) => !toggle)}
-              >
-                <span>{showKun ? term.kun : "[Kun]"}</span>
-              </span>
-            )) || <span className="fs-4 pt-2 mb-0">.</span>}
-            <div className="d-flex flex-column">
-              <span
+          <div className="container">
+            <div className="row row-cols-1 row-cols-sm-2 h-100">
+              <div
                 className={classNames({
-                  "example-blk align-self-center clickable h6 pt-2": true,
-                  "disabled-color": calcExamples.length === 0,
+                  "col question d-flex flex-column justify-content-top text-center":
+                    true,
                 })}
-                onClick={setStateFunction(setShowEx, (toggle) => !toggle)}
               >
-                <span className="text-nowrap">
-                  {showEx && calcExamples.length > 0
-                    ? calcExamples
-                    : "[Examples]"}
-                </span>
-              </span>
+                <div className="d-flex ">
+                  <div className="d-flex flex-column w-100">
+                    {(term.pronounce && (
+                      <div
+                        style={{ minHeight: "66px" }}
+                        className="pronunciation fs-5 p-0 d-flex flex-wrap align-items-end justify-content-center clickable"
+                        onClick={setStateFunction(
+                          setShowOn,
+                          (toggle) => !toggle
+                        )}
+                      >
+                        {showOn ? (
+                          term.pronounce
+                            .split(KanjiPronComma)
+                            .flatMap((p, i, { length }) => [
+                              <span
+                                key={`item-${p}`}
+                                className={classNames({
+                                  "text-nowrap": true,
+                                  "fs-6": length > 3,
+                                })}
+                              >
+                                {p}
+                              </span>,
+                              i !== length - 1 ? (
+                                <span key={`comma-${p}`}>{KanjiPronComma}</span>
+                              ) : (
+                                [
+                                  /** no comma after last item */
+                                ]
+                              ),
+                              <wbr key={`wbr-${p}`} />,
+                            ])
+                        ) : (
+                          <span>{"[Pronounce]"}</span>
+                        )}
+                      </div>
+                    )) || (
+                      <div
+                        style={{ minHeight: "68px" }}
+                        className="fs-4 pt-0 invisible"
+                      >
+                        .
+                      </div>
+                    )}
 
-              <span
-                className="fs-4 align-self-center pt-2 clickable"
-                onClick={setStateFunction(setShowMeaning, (toggle) => !toggle)}
-              >
-                {showMeaning ? meaning : <span>{"[Meaning]"}</span>}
-              </span>
+                    <div className="row">
+                      <div className="col p-0 similar-k d-flex flex-column">
+                        {term.similarKanji.length > 0 && (
+                          <span className="pt-1 fs-xx-small">Similar</span>
+                        )}
+                        {term.similarKanji.map((k) => (
+                          <div
+                            key={`${k}`}
+                            className="clickable pt-2 fs-4"
+                            onClick={() => {
+                              const similar = kanjiList.find(
+                                (x) => x.uid === k
+                              );
+                              if (similar !== undefined) {
+                                setSimilar(similar);
+                              }
+                            }}
+                          >
+                            {kanjiList.find((x) => x.uid === k)?.kanji}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="col p-0 fs-kanji-huge lh-1 opacity-25">
+                        {term.kanji}
+                      </div>
+
+                      <div
+                        className={classNames({
+                          "col p-0 phonetic-radical d-flex flex-column justify-content-center":
+                            true,
+                          invisible:
+                            term.phoneticKanji?.p === undefined ||
+                            term.phoneticKanji.p === term.kanji,
+                        })}
+                      >
+                        <span className="fs-xx-small">Radical</span>
+                        <span className="fs-4">
+                          {term.phoneticKanji?.k ?? ""}
+                        </span>
+                        <span className="pt-2 fs-xx-small">Sound</span>
+                        {term.phoneticKanji?.p
+                          .split(KanjiPronComma)
+                          .map((p, i, { length }) => (
+                            <span
+                              key={`item-${p}`}
+                              className="text-nowrap fs-4"
+                            >
+                              {`${p}${i !== length - 1 ? KanjiPronComma : ""}`}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className="lh-1 align-self-center clickable"
+                  onClick={setStateFunction(
+                    setShowMeaning,
+                    (toggle) => !toggle
+                  )}
+                >
+                  {showMeaning ? (
+                    splitToList(term.english).map((el, i, { length }) => (
+                      <span
+                        key={el}
+                        className={classNames({
+                          "fs-2": i === 0,
+                          "fs-6 fw-light": i > 0,
+                        })}
+                      >
+                        {i === 1 ? <br /> : null}
+                        {i > 1 ? <span>{", "}</span> : null}
+                        <span
+                          className={classNames({ "text-nowrap": i === 0 })}
+                        >
+                          {el}
+                        </span>
+                        {i === 0 && length > 1 ? (
+                          <span className="fs-6">,</span>
+                        ) : null}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="fs-4">[Meaning]</span>
+                  )}
+                </div>
+              </div>
+              <div className="col choices d-flex flex-column justify-content-around text-center">
+                <div className="d-flex flex-column fs-4">{examplesEl}</div>
+              </div>
             </div>
           </div>
-          {/* <div className="right-info"></div> */}
-
           <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
@@ -852,8 +1106,6 @@ export default function Kanji() {
       </div>
     </React.Fragment>
   );
-
-  return page;
 }
 
 export { KanjiMeta };
