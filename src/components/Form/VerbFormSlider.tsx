@@ -1,6 +1,5 @@
 import { Slider, Typography } from "@mui/material";
-import PropTypes from "prop-types";
-import React, { useState } from "react";
+import { useState } from "react";
 import "../../css/VerbFormSlider.css";
 
 interface Marks {
@@ -94,10 +93,3 @@ export default function VerbFormSlider(props: VerbFormSliderProps) {
     </div>
   );
 }
-
-VerbFormSlider.propTypes = {
-  statusText: PropTypes.string,
-  initial: PropTypes.number.isRequired,
-  max: PropTypes.number.isRequired,
-  setChoiceN: PropTypes.func.isRequired,
-};

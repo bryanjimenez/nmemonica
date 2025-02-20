@@ -1,8 +1,7 @@
 import classNames from "classnames";
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import { NotReady } from "./NotReady";
 import PlusMinus from "./PlusMinus";
 import {
   getDifficultyCounts,
@@ -17,11 +16,6 @@ import { AppDispatch } from "../../slices";
 import { setGoal as setKanjiGoal } from "../../slices/kanjiSlice";
 import { setGoal as setPhraseGoal } from "../../slices/phraseSlice";
 import { setGoal as setVocabularyGoal } from "../../slices/vocabularySlice";
-
-const SettingsStale = lazy(() => import("../Form/SettingsStale"));
-const SettingsFailedFurigana = lazy(
-  () => import("../Form/SettingsFailedFurigana")
-);
 
 export default function SettingsStats() {
   const dispatch = useDispatch<AppDispatch>();
@@ -356,18 +350,6 @@ export default function SettingsStats() {
         </div>
         <div className="column-2 setting-block"></div>
       </div>
-
-      {loading === true && (
-        <div>
-          <Suspense fallback={<NotReady addlStyle="failed-spacerep-view" />}>
-            <SettingsStale />
-          </Suspense>
-
-          <Suspense fallback={<NotReady addlStyle="failed-furigana-view" />}>
-            <SettingsFailedFurigana />
-          </Suspense>
-        </div>
-      )}
     </div>
   );
 

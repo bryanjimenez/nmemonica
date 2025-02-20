@@ -1,7 +1,5 @@
 import { IssueDraftIcon, XCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import PropTypes from "prop-types";
-import React from "react";
 
 interface MinimunRawItem {
   uid: string;
@@ -132,11 +130,3 @@ export function SetTermGFList(props: SetTermGFListProps) {
     </div>
   );
 }
-
-SetTermGFList.propTypes = {
-  termsActive: PropTypes.array,
-  termsFreq: PropTypes.array,
-  terms: PropTypes.array,
-  removeFrequencyTerm: PropTypes.func,
-  toggleTermActiveGrp: PropTypes.func,
-};

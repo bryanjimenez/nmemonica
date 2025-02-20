@@ -1,5 +1,4 @@
 import { Slider } from "@mui/material";
-import PropTypes from "prop-types";
 import { useEffect, useRef, useState } from "react";
 
 import { heatMap } from "../../helper/colorHelper";
@@ -78,9 +77,3 @@ export function DifficultySlider(props: DifficultySliderProps) {
     </div>
   );
 }
-
-DifficultySlider.propTypes = {
-  difficulty: PropTypes.number,
-  onChange: PropTypes.func,
-  resetOn: PropTypes.string,
-};

@@ -1,5 +1,3 @@
-import React from "react";
-
 import data from "../../data/json/kana.json";
 
 /**
@@ -24,7 +22,6 @@ export function isHiragana(char: string) {
  */
 export function isKatakana(char: string) {
   const fullWidth = "\u30A0-\u30FF";
-  const halfWidth = "\uFF66-\uFF9F"; /*eslint-disable-line*/ // FIXME: is this needed?
   return new RegExp("[" + fullWidth + "]").test(char);
 }
 
@@ -67,13 +64,13 @@ export function swapKana(char: string) {
   let swap = char;
   if (isHiragana(char)) {
     const cpv = char.codePointAt(0);
-    if (cpv) {
+    if (typeof cpv === "number") {
       const katakana = cpv + 96;
       swap = String.fromCharCode(katakana);
     }
   } else if (isKatakana(char)) {
     const cpv = char.codePointAt(0);
-    if (cpv) {
+    if (typeof cpv === "number") {
       const hiragana = cpv - 96;
       swap = String.fromCharCode(hiragana);
     }
@@ -120,7 +117,7 @@ export function swapToRomaji(kana: string) {
     swap = data.consonants[iConsonant] + data.vowels[iVowel];
   } else if (isKatakana(kana)) {
     const cpv = kana.codePointAt(0);
-    if (cpv) {
+    if (typeof cpv === "number") {
       const hiragana = cpv - 96;
       const h = String.fromCharCode(hiragana);
       const { iConsonant, iVowel } = getConsonantVowel(h);
@@ -139,7 +136,7 @@ export function toEnglishNumber(char: string) {
   let swap = Number.NaN;
   if (isFullWNumber(char)) {
     const cpv = char.codePointAt(0);
-    if (cpv) {
+    if (typeof cpv === "number") {
       const katakana = cpv - 65248;
       swap = Number.parseInt(String.fromCharCode(katakana));
     }

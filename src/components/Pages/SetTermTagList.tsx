@@ -1,7 +1,6 @@
 import orderBy from "lodash/orderBy";
 import partition from "lodash/partition";
-import PropTypes from "prop-types";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import { GroupItem } from "../Form/GroupItem";
 
@@ -89,10 +88,3 @@ export function SetTermTagList(props: SetTermTagListProps) {
     </div>
   );
 }
-
-SetTermTagList.propTypes = {
-  termsTags: PropTypes.array,
-  termsActive: PropTypes.array,
-  toggleTermActive: PropTypes.func,
-  selectedCount: PropTypes.number,
-};

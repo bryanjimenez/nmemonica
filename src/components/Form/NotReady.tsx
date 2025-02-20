@@ -1,6 +1,4 @@
 import classNames from "classnames";
-import PropTypes from "prop-types";
-import React from "react";
 
 export function NotReady(props: { addlStyle: string; text?: string }) {
   const css = classNames({
@@ -13,7 +11,3 @@ export function NotReady(props: { addlStyle: string; text?: string }) {
     </div>
   );
 }
-
-NotReady.propTypes = {
-  addlStyle: PropTypes.string,
-};

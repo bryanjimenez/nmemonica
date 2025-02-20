@@ -1,6 +1,5 @@
 import { Slider, Typography } from "@mui/material";
-import PropTypes from "prop-types";
-import React, { useState } from "react";
+import { useState } from "react";
 import "../../css/ChoiceNumberSlider.css";
 
 interface Marks {
@@ -93,10 +92,3 @@ export default function ChoiceNumberSlider(props: ChoiceNumberSliderProps) {
     </div>
   );
 }
-
-ChoiceNumberSlider.propTypes = {
-  initial: PropTypes.number,
-  wideMode: PropTypes.bool,
-  setChoiceN: PropTypes.func,
-  toggleWide: PropTypes.func,
-};

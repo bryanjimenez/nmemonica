@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 
 import { CookiePolicyMeta } from "./CookiePolicy";
@@ -18,7 +17,7 @@ const headerCss = "py-2 pt-4";
 
 export default function PrivacyPolicy() {
   return (
-    <React.Fragment>
+    <>
       <div className="privacy-policy main-panel h-100">
         <div className="d-flex justify-content-between h-100 px-2">
           <div className="py-3">
@@ -93,7 +92,7 @@ export default function PrivacyPolicy() {
           </div>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 }
 

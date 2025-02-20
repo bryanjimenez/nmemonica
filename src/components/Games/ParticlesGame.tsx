@@ -1,6 +1,6 @@
 import { LinearProgress } from "@mui/material";
 import type { RawPhrase } from "nmemonica";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -17,6 +17,7 @@ import type { AppDispatch, RootState } from "../../slices";
 import { getParticleGame } from "../../slices/particleSlice";
 import { NotReady } from "../Form/NotReady";
 import "../../css/ParticlesGame.css";
+import { shallowEqual } from "react-redux";
 
 export interface ChoiceParticle {
   japanese: string;
@@ -55,7 +56,7 @@ export default function ParticlesGame() {
     ({ particle }: RootState) => {
       const { aRomaji, fadeInAnswers } = particle.setting;
       return [aRomaji, fadeInAnswers];
-    }
+    }, shallowEqual
   );
 
   useEffect(() => {
@@ -67,39 +68,41 @@ export default function ParticlesGame() {
   const order = useRef<number[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // TODO: memoize?
-  function prepareGame(
-    selectedIndex: number,
-    phrases: ParticleGamePhrase[],
-    particles: ChoiceParticle[]
-  ) {
-    if (phrases.length === 0 || particles.length === 0) return null;
+  const prepareGame = useCallback(
+    (
+      selectedIndex: number,
+      phrases: ParticleGamePhrase[],
+      particles: ChoiceParticle[]
+    ) => {
+      if (phrases.length === 0 || particles.length === 0) return null;
 
-    if (order.current.length === 0) {
-      order.current = randomOrder(phrases);
-    }
+      if (order.current.length === 0) {
+        order.current = randomOrder(phrases);
+      }
 
-    const phrase = phrases[order.current[selectedIndex]];
-    const { answer: a, question: q, english, literal } = phrase;
-    const answer = { ...a, toHTML: () => <>{a.japanese}</> };
-    particles = particles.map((p) => ({
-      ...p,
-      toHTML: () => <>{p.japanese}</>,
-    }));
+      const phrase = phrases[order.current[selectedIndex]];
+      const { answer: a, question: q, english, literal } = phrase;
+      const answer = { ...a, toHTML: () => <>{a.japanese}</> };
+      particles = particles.map((p) => ({
+        ...p,
+        toHTML: () => <>{p.japanese}</>,
+      }));
 
-    const choices = createChoices(answer, particles);
+      const choices = createChoices(answer, particles);
 
-    const question: GameQuestion = {
-      english: english,
-      toHTML: (correct: boolean) => (
-        <div className="fs-1">
-          {buildQuestionElement(JapaneseText.parse(q), answer, correct)}
-        </div>
-      ),
-    };
+      const question: GameQuestion = {
+        english: english,
+        toHTML: (correct: boolean) => (
+          <div className="fs-1">
+            {buildQuestionElement(JapaneseText.parse(q), answer, correct)}
+          </div>
+        ),
+      };
 
-    return { question, answer, choices, literal };
-  }
+      return { question, answer, choices, literal };
+    },
+    []
+  );
 
   const gotoNext = useCallback(() => {
     // function gotoNext() {

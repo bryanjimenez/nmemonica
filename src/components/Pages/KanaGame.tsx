@@ -178,7 +178,7 @@ export default function KanaGame() {
   });
 
   return (
-    <React.Fragment>
+    <>
       <div className={mainPanel}>
         <div className="d-flex justify-content-between w-100 h-100">
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
@@ -233,7 +233,7 @@ export default function KanaGame() {
           <div className="col"></div>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 }
 

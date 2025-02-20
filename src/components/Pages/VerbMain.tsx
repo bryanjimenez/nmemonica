@@ -1,7 +1,6 @@
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
-import PropTypes from "prop-types";
-import React, { useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import {
@@ -288,10 +287,3 @@ function getVerbLabelItems(
 
   return { inJapanese, inEnglish, romaji, japaneseObj };
 }
-
-VerbMain.propTypes = {
-  verb: PropTypes.object.isRequired,
-  reCache: PropTypes.bool,
-  linkToOtherTerm: PropTypes.func,
-  showHint: PropTypes.bool,
-};

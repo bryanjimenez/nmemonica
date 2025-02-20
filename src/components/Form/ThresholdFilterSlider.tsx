@@ -1,6 +1,5 @@
 import { Slider } from "@mui/material";
 import { SortAscIcon, SortDescIcon } from "@primer/octicons-react";
-import PropTypes from "prop-types";
 import { useCallback, useState } from "react";
 
 import { heatMap } from "../../helper/colorHelper";
@@ -63,8 +62,3 @@ export function ThresholdFilterSlider(props: ThresholdFilterSliderProps) {
     </>
   );
 }
-
-ThresholdFilterSlider.propTypes = {
-  threshold: PropTypes.number,
-  setThreshold: PropTypes.func,
-};
