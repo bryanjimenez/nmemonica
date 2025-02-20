@@ -80,6 +80,7 @@ import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
+import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -141,6 +142,14 @@ export default function Phrases() {
     viewGoal,
   } = useConnectPhrase();
 
+  // after recall complete
+  // resume with alternate sorting
+  const [resumeSort, setResumeSort] = useState<number>(-1);
+  /** Alternate sort upon ending recall */
+  const sort = useMemo(() => {
+    return resumeSort === -1 ? sortMethodREF.current : resumeSort;
+  }, [resumeSort, sortMethodREF]);
+
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);
 
@@ -149,6 +158,7 @@ export default function Phrases() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
   const [lesson, setLesson] = useState(false);
@@ -215,7 +225,7 @@ export default function Phrases() {
       ]);
     }
 
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
         const {
@@ -247,9 +257,8 @@ export default function Phrases() {
             // metadata includes filtered in Recall sort
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           } = metadata.current[filtered[i].uid]!;
-          const daysSinceReview = lastReview
-            ? daysSince(lastReview)
-            : undefined;
+          const daysSinceReview =
+            lastReview !== undefined ? daysSince(lastReview) : undefined;
           const p = getPercentOverdue({
             accuracy: accuracyP / 100,
             daysSinceReview,
@@ -264,7 +273,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${
+            msg: `${TermSortByLabel[sort]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -301,7 +310,7 @@ export default function Phrases() {
     return filtered;
   }, [
     filterTypeREF,
-    sortMethodREF,
+    sort,
     difficultyThresholdREF,
     dispatch,
     phraseList,
@@ -316,7 +325,7 @@ export default function Phrases() {
 
     let newOrder: number[];
     let recallGame = -1;
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.VIEW_DATE:
         newOrder = dateViewOrder(filteredPhrases, repetition);
 
@@ -324,15 +333,15 @@ export default function Phrases() {
         let oldDt = NaN;
         const views = newOrder.map((i) => {
           const d = metadata.current[filteredPhrases[i].uid]?.lastView;
-          newN = !d ? newN + 1 : newN;
-          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
-          return d ? daysSince(d) : 0;
+          newN = d === undefined ? newN + 1 : newN;
+          oldDt = d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d !== undefined ? daysSince(d) : 0;
         });
 
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -362,7 +371,7 @@ export default function Phrases() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -370,7 +379,7 @@ export default function Phrases() {
     }
 
     return { order: newOrder, recallGame };
-  }, [sortMethodREF, filteredPhrases]);
+  }, [sort, filteredPhrases]);
 
   const gotoNext = useCallback(() => {
     const l = filteredPhrases.length;
@@ -411,7 +420,7 @@ export default function Phrases() {
     const i = selectedIndex - 1;
 
     let newSel;
-    if (reinforcedUID) {
+    if (reinforcedUID !== null) {
       newSel = selectedIndex;
     } else {
       newSel = (l + i) % l;
@@ -492,7 +501,10 @@ export default function Phrases() {
       });
 
       let spaceRepUpdated;
-      if (metadata.current[uid]?.difficultyP && accuracyModifiedRef.current) {
+      if (
+        metadata.current[uid]?.difficultyP !== undefined &&
+        typeof accuracyModifiedRef.current === "number"
+      ) {
         // when difficulty exists and accuracyP has been set
         spaceRepUpdated = dispatch(
           setSpaceRepetitionMetadata({ uid })
@@ -529,7 +541,10 @@ export default function Phrases() {
               const { value, prevVal } = payload;
 
               let prevDate;
-              if (accuracyModifiedRef.current && prevVal.lastReview) {
+              if (
+                typeof accuracyModifiedRef.current === "number" &&
+                prevVal.lastReview !== undefined
+              ) {
                 // if term was reviewed
                 prevDate = prevVal.lastReview;
               } else {
@@ -601,8 +616,28 @@ export default function Phrases() {
     [dispatch]
   );
 
-  if (recallGame === 0)
-    return <NotReady addlStyle="main-panel" text="No pending items" />;
+  const removeFrequencyTermCB = useCallback(
+    (uid: string) => {
+      setFrequency((f) => f.filter((id) => id !== uid));
+      buildAction(dispatch, removeFrequencyPhrase)(uid);
+    },
+    [dispatch]
+  );
+
+  if (recallGame === 0) {
+    return (
+      <GoalResumeMessage
+        goal="Phrases"
+        setResumeSort={setResumeSort}
+        allowed={[
+          TermSortBy.VIEW_DATE,
+          TermSortBy.DIFFICULTY,
+          TermSortBy.RANDOM,
+        ]}
+      />
+    );
+  }
+
   if (filteredPhrases.length < 1 || order.length < 1)
     return <NotReady addlStyle="main-panel" />;
 
@@ -719,7 +754,7 @@ export default function Phrases() {
             >
               {topValue}
             </Sizable>
-            {romajiActive.current && romaji && (
+            {romajiActive.current && romaji !== undefined && (
               <span className="fs-5">
                 <span
                   onClick={setStateFunction(setShowRomaji, (romaji) => !romaji)}
@@ -768,7 +803,7 @@ export default function Phrases() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
-              {phrase.lesson && (
+              {phrase.lesson !== undefined && (
                 <div
                   className="sm-icon-grp clickable"
                   aria-label="Show lesson"
@@ -783,8 +818,7 @@ export default function Phrases() {
                 disabled={!cookies}
                 className={classNames({
                   "question-color opacity-50":
-                    sortMethodREF.current === TermSortBy.RECALL &&
-                    !reviewedToday,
+                    sort === TermSortBy.RECALL && !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
                 idKey={uid}
@@ -822,10 +856,7 @@ export default function Phrases() {
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
                 addFrequencyTerm={addFrequencyTermCB}
-                removeFrequencyTerm={(uid) => {
-                  setFrequency((f) => f.filter((id) => id !== uid));
-                  buildAction(dispatch, removeFrequencyPhrase)(uid);
-                }}
+                removeFrequencyTerm={removeFrequencyTermCB}
                 hasReinforce={phrase_reinforce}
                 isReinforced={reinforcedUID !== null}
                 term={phrase}
@@ -881,7 +912,7 @@ function englishPhraseSubComp(
     <span
       // className={classNames({"info-color":this.state.showLit})}
       onClick={
-        phrase.lit
+        phrase.lit !== undefined
           ? () => {
               setShowLit((lit) => !lit);
             }

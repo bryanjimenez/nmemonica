@@ -80,6 +80,7 @@ import {
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
+import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ReCacheAudioBtn,
@@ -157,6 +158,14 @@ export default function Vocabulary() {
     viewGoal,
   } = useConnectVocabulary();
 
+  // after recall complete
+  // resume with alternate sorting
+  const [resumeSort, setResumeSort] = useState<number>(-1);
+  /** Alternate sort upon ending recall */
+  const sort = useMemo(() => {
+    return resumeSort === -1 ? sortMethodREF.current : resumeSort;
+  }, [resumeSort, sortMethodREF]);
+
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);
 
@@ -164,6 +173,7 @@ export default function Vocabulary() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  /** Number of review items still pending (negative: goal already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
 
@@ -224,7 +234,7 @@ export default function Vocabulary() {
       ]);
     }
 
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.RECALL:
         // discard the nonPending terms
         const {
@@ -257,9 +267,8 @@ export default function Vocabulary() {
             // metadata includes filtered in Recall sort
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           } = metadata.current[filtered[i].uid]!;
-          const daysSinceReview = lastReview
-            ? daysSince(lastReview)
-            : undefined;
+          const daysSinceReview =
+            lastReview !== undefined ? daysSince(lastReview) : undefined;
           const p = getPercentOverdue({
             accuracy: accuracyP,
             daysSinceReview,
@@ -275,7 +284,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${
+            msg: `${TermSortByLabel[sort]} (${
               overdueVals.length
             })${more} [${overdueVals.toString()}]`,
             lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
@@ -311,7 +320,7 @@ export default function Vocabulary() {
   }, [
     dispatch,
     filterTypeREF,
-    sortMethodREF,
+    sort,
     difficultyThresholdREF,
     vocabList,
     activeGroup,
@@ -331,13 +340,13 @@ export default function Vocabulary() {
     let jOrder: undefined | { uid: string; label: string; idx: number }[];
     let eOrder: undefined | { uid: string; label: string; idx: number }[];
     let recallGame = -1;
-    switch (sortMethodREF.current) {
+    switch (sort) {
       case TermSortBy.RANDOM:
         newOrder = randomOrder(filteredVocab);
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -350,15 +359,15 @@ export default function Vocabulary() {
         let oldDt = NaN;
         const views = newOrder.map((i) => {
           const d = metadata.current[filteredVocab[i].uid]?.lastView;
-          newN = !d ? newN + 1 : newN;
-          oldDt = d && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
-          return d ? daysSince(d) : 0;
+          newN = d === undefined ? newN + 1 : newN;
+          oldDt = d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+          return d !== undefined ? daysSince(d) : 0;
         });
 
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${views.length}) New:${newN} Old:${oldDt}d`,
+            msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -372,7 +381,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -403,7 +412,7 @@ export default function Vocabulary() {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sortMethodREF.current]} (${newOrder.length})`,
+            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
             lvl: DebugLevel.DEBUG,
           },
         ]);
@@ -416,7 +425,7 @@ export default function Vocabulary() {
     setScrollJOrder(true);
 
     return { newOrder, jbare: jOrder, ebare: eOrder, recallGame };
-  }, [sortMethodREF, filteredVocab]);
+  }, [sort, filteredVocab]);
 
   // Logger messages
   useEffect(() => {
@@ -464,7 +473,7 @@ export default function Vocabulary() {
     const i = selectedIndex - 1;
 
     let newSel;
-    if (reinforcedUID) {
+    if (reinforcedUID !== null) {
       newSel = selectedIndex;
     } else {
       newSel = (l + i) % l;
@@ -562,8 +571,8 @@ export default function Vocabulary() {
 
       let spaceRepUpdated;
       if (
-        metadata.current[uid]?.difficultyP &&
-        accuracyModifiedRef.current
+        metadata.current[uid]?.difficultyP !== undefined &&
+        typeof accuracyModifiedRef.current === "number"
         // typeof accuracyModifiedRef.current === 'number' &&
         // accuracyModifiedRef.current > 0
       ) {
@@ -605,7 +614,10 @@ export default function Vocabulary() {
               const { value, prevVal } = payload;
 
               let prevDate;
-              if (accuracyModifiedRef.current && prevVal.lastReview) {
+              if (
+                typeof accuracyModifiedRef.current === "number" &&
+                prevVal.lastReview !== undefined
+              ) {
                 // if term was reviewed
                 prevDate = prevVal.lastReview;
               } else {
@@ -775,8 +787,7 @@ export default function Vocabulary() {
                 disabled={!cookies}
                 className={classNames({
                   "question-color opacity-50":
-                    sortMethodREF.current === TermSortBy.RECALL &&
-                    !reviewedToday,
+                    sort === TermSortBy.RECALL && !reviewedToday,
                   "done-color opacity-50": reviewedToday,
                 })}
                 idKey={uid}
@@ -808,7 +819,7 @@ export default function Vocabulary() {
                 visible={hintEnabledREF.current}
                 active={isHintable}
                 setShowHint={setStateFunction(setShowHint, (prev) =>
-                  prev ? undefined : uid
+                  prev !== undefined ? undefined : uid
                 )}
               />
               <ToggleFuriganaBtn
@@ -854,7 +865,7 @@ export default function Vocabulary() {
       recacheAudio,
       reinforcedUID,
       resetTimedPlay,
-      sortMethodREF,
+      sort,
     ]
   );
 
@@ -927,8 +938,21 @@ export default function Vocabulary() {
     [ebare, pIdx, pList, scrollJOrder, showPageMultiOrderScroller]
   );
 
-  if (recallGame === 0)
-    return <NotReady addlStyle="main-panel" text="No pending items" />;
+  if (recallGame === 0) {
+    return (
+      <GoalResumeMessage
+        goal="Vocabulary"
+        setResumeSort={setResumeSort}
+        allowed={[
+          TermSortBy.VIEW_DATE,
+          TermSortBy.DIFFICULTY,
+          TermSortBy.ALPHABETIC,
+          TermSortBy.RANDOM,
+        ]}
+      />
+    );
+  }
+
   if (filteredVocab.length < 1 || order.length < 1)
     return <NotReady addlStyle="main-panel" />;
 
@@ -977,7 +1001,7 @@ export default function Vocabulary() {
         "disabled-color": alreadyReviewed,
       })}
       onClick={() => {
-        if (sortMethodREF.current === TermSortBy.ALPHABETIC) {
+        if (sort === TermSortBy.ALPHABETIC) {
           const delayTime = 4000;
           setShowPageMultiOrderScroller(true);
 

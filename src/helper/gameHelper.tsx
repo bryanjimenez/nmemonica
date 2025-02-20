@@ -95,7 +95,7 @@ export function initGoalPending(
   // get todays viewed total
   const [alreadyViewedToday] = getLastViewCounts(repetition, 1);
   // set goalPending to countdown if goal not yet reached
-  if (viewGoal !== undefined && alreadyViewedToday < viewGoal) {
+  if (viewGoal !== undefined) {
     return viewGoal - alreadyViewedToday;
   }
 
