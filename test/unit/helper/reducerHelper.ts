@@ -58,22 +58,26 @@ describe("reducerHelper", function () {
 
   describe("getPropsFromTags", function () {
     it("empty", function () {
-      const initialTags = "";
+      const initialTags = undefined;
+      const { tags } = getPropsFromTags(initialTags);
 
+      expect(tags).to.be.an("Array").of.length(0);
+    });
+    it("malformed json", function () {
+      const initialTags = "undefined";
       const { tags } = getPropsFromTags(initialTags);
 
       expect(tags).to.be.an("Array").of.length(0);
     });
     it("space", function () {
       const initialTags = " \t \t";
-
       const { tags } = getPropsFromTags(initialTags);
 
       expect(tags).to.be.an("Array").of.length(0);
     });
     it("tags multiple", function () {
-      const expected = ["casual", "onomatopoetic", "negative"];
-      const initialTags = "onomatopoetic\ncasual; negative\nkeigo";
+      const expected = ["casual", "onomatopoetic", "negative", "keigo"];
+      const initialTags = '{"tags":["onomatopoetic", "casual", "negative", "keigo"]}';
 
       const { tags, keigo } = getPropsFromTags(initialTags);
 
@@ -83,7 +87,7 @@ describe("reducerHelper", function () {
     describe("kanji", function(){
       it("p:XYZ (root pronunciation)", function () {
         const expected  = [];
-        const initialTags = "p:火+ひ";
+        const initialTags = '{"tags":["p:火+ひ"]}';
         const { tags, phoneticKanji } = getPropsFromTags(initialTags);
   
         expect(tags).to.be.length(expected.length).and.include.members(expected);
@@ -93,7 +97,7 @@ describe("reducerHelper", function () {
       });
       it("e:XYZ (radical example)", function () {
         const expected  = [];
-        const initialTags = "e:花,茶";
+        const initialTags = '{"tags":["e:花,茶"]}';
         const { tags, radicalExample } = getPropsFromTags(initialTags);
   
         expect(tags).to.be.length(expected.length).and.include.members(expected);
@@ -101,7 +105,7 @@ describe("reducerHelper", function () {
       });
       it("s:XYZ (similar kanji)", function () {
         const expected  = [];
-        const initialTags = "s:反,友";
+        const initialTags = '{"tags":["s:反,友"]}';
         const { tags, similarKanji } = getPropsFromTags(initialTags);
   
         expect(tags).to.be.length(expected.length).and.include.members(expected);
@@ -111,26 +115,28 @@ describe("reducerHelper", function () {
 
     describe("vocabulary", function () {
       it("na-adj", function () {
-        const initialTags = "na-adj; onomatopoetic; Adjective; ";
+        const expected = ["na-adj", "onomatopoetic", "Adjective"]
+        const initialTags = '{"tags":["na-adj","onomatopoetic","Adjective"]}';
         const { tags, adj } = getPropsFromTags(initialTags);
 
         expect(adj).to.equal("na");
         expect(tags)
-          .to.be.length(2)
-          .and.include.members(["Adjective", "onomatopoetic"]);
+          .to.be.length(expected.length)
+          .and.include.members(expected);
       });
       it("i-adj", function () {
-        const initialTags = "i-adj; onomatopoetic; Adjective; ";
+        const expected = ["i-adj", "onomatopoetic", "Adjective"]
+        const initialTags = '{"tags":["i-adj","onomatopoetic","Adjective"]}';
         const { tags, adj } = getPropsFromTags(initialTags);
 
         expect(adj).to.equal("i");
         expect(tags)
-          .to.be.length(2)
-          .and.include.members(["Adjective", "onomatopoetic"]);
+          .to.be.length(expected.length)
+          .and.include.members(expected);
       });
       it("keigo", function () {
-        const expected = ["casual", "negative"];
-        const initialTags = "casual; negative\nkeigo";
+        const expected = ["casual", "negative", "keigo"];
+        const initialTags = '{"tags":["casual","negative","keigo"]}';
 
         const { tags, keigo } = getPropsFromTags(initialTags);
 
@@ -141,8 +147,8 @@ describe("reducerHelper", function () {
       });
 
       it("EV1", function () {
-        const expected = ["casual", "negative"];
-        const initialTags = "casual;negative\nkeigo; \n EV1";
+        const expected = ["casual", "negative", "keigo", "Exception Verb"];
+        const initialTags = '{"tags":["casual","negative","keigo","EV1"]}';
 
         const { tags, exv } = getPropsFromTags(initialTags);
 
@@ -153,8 +159,8 @@ describe("reducerHelper", function () {
       });
 
       it("intransitive", function () {
-        const expected = ["casual", "negative"];
-        const initialTags = "casual\nnegative\nkeigo; EV1; intr";
+        const expected = ["casual", "negative", "keigo", "Exception Verb", "intr"];
+        const initialTags = '{"tags":["casual","negative","keigo","EV1","intr"]}';
 
         const { tags, intr } = getPropsFromTags(initialTags);
 
@@ -165,9 +171,9 @@ describe("reducerHelper", function () {
       });
 
       it("transitive (w/ intransitive pair)", function () {
-        const expected = ["casual", "negative"];
+        const expected = ["casual", "negative", "keigo", "Exception Verb", "intr"];
         const expectedUid = "00000000000000000000000000000000";
-        const initialTags = `casual; negative\nkeigo EV1 intr:${expectedUid}`;
+        const initialTags = `{"tags":["casual","negative","keigo","EV1","intr:${expectedUid}"]}`;
 
         const { tags, trans } = getPropsFromTags(initialTags);
 
@@ -179,7 +185,7 @@ describe("reducerHelper", function () {
     });
     describe("phrases", function () {
       it("particles", function () {
-        const initialTags = "p:は,から,を";
+        const initialTags = '{"tags":["p:は,から,を"]}';
 
         const { tags, particles } = getPropsFromTags(initialTags);
 
@@ -191,7 +197,7 @@ describe("reducerHelper", function () {
 
       it("particles and tags", function () {
         const expected = ["casual", "negative"];
-        const initialTags = "casual\n negative\np:は,から,を";
+        const initialTags = '{"tags":["casual","negative","p:は,から,を"]}';
 
         const { tags, particles } = getPropsFromTags(initialTags);
 
@@ -206,7 +212,7 @@ describe("reducerHelper", function () {
       it("inverse", function () {
         const expected = ["casual", "negative"];
         const expectedUid = "4f3b0dffa85324487e7130022fa2a87c";
-        const initialTags = `casual; negative\np:は,から,を; inv:${expectedUid}`;
+        const initialTags = `{"tags":["casual","negative","p:は,から,を","inv:${expectedUid}"]}`;
 
         const { tags, particles, inverse } = getPropsFromTags(initialTags);
 

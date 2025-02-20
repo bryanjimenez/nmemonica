@@ -10,8 +10,11 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   GiftIcon,
+  MilestoneIcon,
   PlusCircleIcon,
   ProjectIcon,
+  PulseIcon,
+  TagIcon,
   XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -67,8 +70,10 @@ export function ToggleFuriganaBtn(props: ToggleFuriganaBtnProps) {
 }
 
 interface ToggleFrequencyTermBtnProps {
-  disabled?: boolean;
   visible?: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
   term: MinimunRawItem;
   /** Count of reinforced terms */
   count?: number;
@@ -85,7 +90,7 @@ interface ToggleFrequencyTermBtnProps {
 }
 
 export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
-  const { disabled, visible } = props;
+  const { disabled, visible, reviewed } = props;
   const prevCount = useRef(0);
 
   const {
@@ -112,7 +117,10 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
   return visible === false ? null : (
     <div
       aria-label={hasReinforce ? "Remove term" : "Add term"}
-      className="sm-icon-grp clickable"
+      className={classNames({
+        "sm-icon-grp clickable": true,
+        "disabled-color": reviewed,
+      })}
       onClick={
         disabled !== true
           ? () => {
@@ -131,7 +139,7 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
         <PlusCircleIcon size="small" />
       )}
 
-      {isReinforced ? (
+      {isReinforced === true ? (
         <span className="notification">
           <FontAwesomeIcon icon={faDice} />
         </span>
@@ -152,24 +160,27 @@ export function ToggleFrequencyTermBtn(props: ToggleFrequencyTermBtnProps) {
 export const ToggleFrequencyTermBtnMemo = memo(ToggleFrequencyTermBtn);
 
 interface ShowHintBtnProps {
+  visible: boolean;
   disabled?: boolean;
-  visible?: boolean;
   active: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
   setShowHint: (showHintValue: boolean) => void;
 }
 
 export function ShowHintBtn(props: ShowHintBtnProps) {
-  const { disabled, active, setShowHint } = props;
+  const { disabled, active, setShowHint, reviewed } = props;
 
-  return !props.visible ? null : (
+  return props.visible === false ? null : (
     <div
       className={classNames({
         "sm-icon-grp": true,
         clickable: active,
         "disabled disabled-color": !active,
+        "disabled-color": reviewed,
       })}
       onClick={
-        active && !disabled
+        active && disabled !== true
           ? () => {
               setShowHint(true);
               setTimeout(() => {
@@ -186,19 +197,25 @@ export function ShowHintBtn(props: ShowHintBtnProps) {
 }
 
 interface ToggleAutoVerbViewBtnProps {
+  visible: boolean;
   disabled?: boolean;
-  visible?: boolean;
   active?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
   toggleAutoVerbView: () => void;
   autoVerbView: boolean;
 }
 
 export function ToggleAutoVerbViewBtn(props: ToggleAutoVerbViewBtnProps) {
-  const { disabled, visible, toggleAutoVerbView, autoVerbView } = props;
+  const { disabled, visible, toggleAutoVerbView, autoVerbView, reviewed } =
+    props;
 
-  return !visible ? null : (
+  return visible === false ? null : (
     <div
-      className="sm-icon-grp clickable"
+      className={classNames({
+        "sm-icon-grp clickable": true,
+        "disabled-color": reviewed,
+      })}
       onClick={disabled !== true ? () => toggleAutoVerbView() : undefined}
       aria-label="Toggle auto verb view"
     >
@@ -211,20 +228,23 @@ export function ToggleAutoVerbViewBtn(props: ToggleAutoVerbViewBtnProps) {
 }
 
 interface ReCacheAudioBtnProps {
-  disabled?: boolean;
   visible?: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
   active?: boolean;
   action: () => void;
 }
 
 export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
-  const { disabled, active, action } = props;
+  const { disabled, active, action, reviewed } = props;
 
   return props.visible === false ? null : (
     <div
       className={classNames({
         clickable: true,
         "sm-icon-grp": true,
+        "disabled-color": reviewed,
       })}
       onClick={
         disabled !== true
@@ -238,12 +258,12 @@ export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
       aria-label="Override audio"
     >
       <FontAwesomeIcon
-        icon={active ? faPlayCircle : faRecycle}
+        icon={active === true ? faPlayCircle : faRecycle}
         className={classNames({ "disabled-color": false })}
       />
       <span className="notification">
         <FontAwesomeIcon
-          icon={active ? faRecycle : faPlayCircle}
+          icon={active === true ? faRecycle : faPlayCircle}
           className={classNames({ "disabled-color": true })}
         />
       </span>
@@ -252,20 +272,24 @@ export function ReCacheAudioBtn(props: ReCacheAudioBtnProps) {
 }
 
 interface TogglePracticeSideBtnProps {
-  disabled?: boolean;
   visible?: boolean;
+  disabled?: boolean;
   active?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
   action?: React.MouseEventHandler;
   toggle: boolean;
 }
 
 export function TogglePracticeSideBtn(props: TogglePracticeSideBtnProps) {
-  const { disabled, visible, action, toggle } = props;
+  const { disabled, visible, action, toggle, reviewed } = props;
 
   return visible === false ? null : (
-    <div aria-label="Toggle practice side">
+    <div
+      aria-label="Toggle practice side"
+      className={classNames({ clickable: true, "disabled-color": reviewed })}
+    >
       <FontAwesomeIcon
-        className="clickable"
         onClick={disabled !== true ? action : undefined}
         icon={toggle ? faGlasses : faPencilAlt}
       />
@@ -277,22 +301,24 @@ export function TogglePracticeSideBtn(props: TogglePracticeSideBtnProps) {
 }
 
 interface ToggleLiteralPhraseBtnProps {
-  disabled?: boolean;
   visible: boolean;
+  disabled?: boolean;
   active?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
   action: () => void;
   toggle: boolean;
 }
 
 export function ToggleLiteralPhraseBtn(props: ToggleLiteralPhraseBtnProps) {
-  const { disabled, visible, action, toggle } = props;
+  const { disabled, visible, action, toggle, reviewed } = props;
 
-  return !visible ? null : (
+  return visible === false ? null : (
     <div
       className={classNames({
         clickable: true,
         "sm-icon-grp": true,
-        "info-color": toggle,
+        "disabled-color": reviewed,
       })}
       onClick={
         disabled !== true
@@ -305,7 +331,16 @@ export function ToggleLiteralPhraseBtn(props: ToggleLiteralPhraseBtnProps) {
       }
       aria-label="Literal english translation"
     >
-      <ProjectIcon size="small" />
+      <div className={classNames({ "dash-border-small rounded px-1": toggle })}>
+        <div
+          className={classNames({
+            "disabled-color": toggle,
+            "px-1": !toggle,
+          })}
+        >
+          <ProjectIcon size="small" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -385,5 +420,79 @@ export function TimePlayVerifyBtns(props: TimePlayVerifyBtnsProps) {
         </span>
       </div>
     </>
+  );
+}
+
+interface TagTermBtnProps {
+  visible?: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
+  action: () => void;
+}
+
+export function ApplyTagsBtn(props: TagTermBtnProps) {
+  const { disabled, visible, action, reviewed } = props;
+
+  return visible === false ? null : (
+    <div
+      className={classNames({
+        "clickable sm-icon-grp": true,
+        "disabled disabled-color": disabled === true,
+        "disabled-color": reviewed,
+      })}
+      onClick={disabled !== true ? () => action() : undefined}
+    >
+      <TagIcon />
+    </div>
+  );
+}
+
+interface PronunciationWarningBtnProps {
+  visible: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
+}
+
+export function PronunciationWarningBtn(props: PronunciationWarningBtnProps) {
+  const { disabled, visible, reviewed } = props;
+
+  return visible === false ? null : (
+    <div
+      className={classNames({
+        "disabled disabled-color": disabled === true,
+        "disabled-color": reviewed,
+      })}
+    >
+      <PulseIcon />
+      <span className="notification">!</span>
+    </div>
+  );
+}
+
+interface ViewLessonsBtnProps {
+  visible: boolean;
+  disabled?: boolean;
+  /** Decrease opacity when marked reviewed (icon only) */
+  reviewed?: boolean;
+  action: () => void;
+}
+
+export function ViewLessonsBtn(props: ViewLessonsBtnProps) {
+  const { disabled, visible, reviewed, action } = props;
+
+  return visible === false ? null : (
+    <div
+      className={classNames({
+        "sm-icon-grp clickable": true,
+        "disabled disabled-color": disabled === true,
+        "disabled-color": reviewed,
+      })}
+      aria-label="Show lesson"
+      onClick={disabled !== true ? () => action() : undefined}
+    >
+      <MilestoneIcon />
+    </div>
   );
 }

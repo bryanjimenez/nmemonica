@@ -244,17 +244,27 @@ export default function Kanji() {
   /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
+  const userSetGoal = useRef(viewGoal);
 
-  // after initial render
-  useEffect(() => {
-    if (kanjiList.length === 0) {
-      void dispatch(getKanji());
-    }
+  const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
 
-    goalPending.current = initGoalPending(viewGoal, repetition);
+    if (kanjiList.length === 0) {
+      void dispatch(getKanji());
+    }
+  });
+
+  // after initial render
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
+
+    goalPending.current = initGoalPending(
+      userSetGoal.current,
+      metadata.current
+    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
@@ -1052,7 +1062,7 @@ export default function Kanji() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies || alreadyReviewed,
+          "disabled-color": !cookies,
         })}
       >
         <div className="row opts-max-h">
@@ -1062,10 +1072,11 @@ export default function Kanji() {
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <Tooltip
+                reviewed={alreadyReviewed}
                 className={classNames({
-                  "question-color opacity-50":
+                  "question-color":
                     sort === TermSortBy.RECALL && !reviewedToday,
-                  "done-color opacity-50": reviewedToday,
+                  "done-color": reviewedToday,
                 })}
                 disabled={!cookies}
                 idKey={uid}
@@ -1105,6 +1116,7 @@ export default function Kanji() {
               </Tooltip>
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 addFrequencyTerm={addFrequencyTerm}
                 removeFrequencyTerm={removeFrequencyTerm}
                 hasReinforce={term_reinforce}

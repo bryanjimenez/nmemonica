@@ -1,5 +1,5 @@
 import { Badge, Fab, TextField } from "@mui/material";
-import { Spreadsheet } from "@nmemonica/x-spreadsheet";
+import { type SheetData, Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
   GearIcon,
   LinkExternalIcon,
@@ -7,7 +7,6 @@ import {
   SearchIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { MetaDataObj } from "nmemonica";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,6 +27,7 @@ import {
   sheetAddExtraRow,
   touchScreenCheck,
   updateEditedUID,
+  updateStateAfterWorkbookEdit,
   workbookSheetNames,
   xObjectToCsvText,
 } from "../../helper/sheetHelper";
@@ -39,24 +39,7 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch, LocalStorageState, RootState } from "../../slices";
-import {
-  localStorageSettingsInitialized,
-  setLocalDataEdited,
-} from "../../slices/globalSlice";
-import {
-  clearKanji,
-  batchRepetitionUpdate as kanjiBatchMetaUpdate,
-} from "../../slices/kanjiSlice";
-import { clearOpposites } from "../../slices/oppositeSlice";
-import { clearParticleGame } from "../../slices/particleSlice";
-import {
-  clearPhrases,
-  batchRepetitionUpdate as phraseBatchMetaUpdate,
-} from "../../slices/phraseSlice";
-import {
-  clearVocabulary,
-  batchRepetitionUpdate as vocabularyBatchMetaUpdate,
-} from "../../slices/vocabularySlice";
+import { localStorageSettingsInitialized } from "../../slices/globalSlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
 import { DataSetExportSync } from "../Form/DataSetExportSync";
 import { DataSetImportFile } from "../Form/DataSetImportFile";
@@ -122,13 +105,24 @@ export default function Sheet() {
 
   const { cookies } = useSelector(({ global }: RootState) => global);
 
-  const [uploadError, setUploadError] = useState<boolean>(false);
-
   useEffect(() => {
     const gridEl = document.createElement("div");
 
     void getWorkbookFromIndexDB().then((sheetArr) => {
-      const data = sheetArr.map((s) => sheetAddExtraRow(s));
+      // Preserve display sheet ordering
+      const data = [
+        workbookSheetNames.phrases.prettyName,
+        workbookSheetNames.vocabulary.prettyName,
+        workbookSheetNames.kanji.prettyName,
+      ].reduce<SheetData[]>((acc, name) => {
+        const s = sheetArr.find(
+          (s) => s.name.toLowerCase() === name.toLowerCase()
+        );
+        if (s !== undefined) {
+          acc = [...acc, sheetAddExtraRow(s)];
+        }
+        return acc;
+      }, []);
 
       const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
 
@@ -165,59 +159,11 @@ export default function Sheet() {
 
     return () => {
       // cleanup
-      if (c?.contains(gridEl)) {
+      if (c !== null && c.contains(gridEl)) {
         c?.removeChild(gridEl);
       }
     };
   }, [dispatch, resetSearchCB, workbookImported]);
-
-  const onUploadErrorCB = useCallback((_err: Error) => {
-    setUploadError(true);
-
-    setTimeout(() => {
-      setUploadError(false);
-    }, 2000);
-  }, []);
-
-  /**
-   * Updates app state with incoming dataset
-   * Updates metadata with incoming metadata
-   * @param name name of DataSet
-   * @param hash
-   * @param metaUpdateUids Record containing updated uids
-   */
-  const updateStateAndCacheCB = useCallback(
-    (
-      name: string,
-      metaUpdatedUids?: Record<string, MetaDataObj | undefined>
-    ) => {
-      switch (name) {
-        case workbookSheetNames.kanji.prettyName:
-          dispatch(clearKanji());
-          if (metaUpdatedUids) {
-            dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
-          }
-          break;
-        case workbookSheetNames.vocabulary.prettyName:
-          dispatch(clearVocabulary());
-          dispatch(clearOpposites());
-          if (metaUpdatedUids) {
-            dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
-          }
-          break;
-        case workbookSheetNames.phrases.prettyName:
-          dispatch(clearPhrases());
-          dispatch(clearParticleGame());
-          if (metaUpdatedUids) {
-            dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
-          }
-          break;
-        default:
-          throw new Error("Incorrect sheet name: " + name);
-      }
-    },
-    [dispatch]
-  );
 
   const saveSheetHandlerCB = useCallback(() => {
     if (!wbRef.current) {
@@ -243,17 +189,14 @@ export default function Sheet() {
       Phrases: {
         meta: pMeta.current,
         list: phraseList,
-        update: phraseBatchMetaUpdate,
       },
       Vocabulary: {
         meta: vMeta.current,
         list: vocabList,
-        update: vocabularyBatchMetaUpdate,
       },
       Kanji: {
         meta: kMeta.current,
         list: kanjiList,
-        update: kanjiBatchMetaUpdate,
       },
     };
     const { meta, list: oldList } = selectedData[name];
@@ -281,12 +224,9 @@ export default function Sheet() {
         )
       )
       .then(() => {
-        updateStateAndCacheCB(name, metaUpdatedUids);
+        updateStateAfterWorkbookEdit(dispatch, name, metaUpdatedUids);
       });
-
-    // local data edited, do not fetch use cached cache.json
-    void dispatch(setLocalDataEdited(true));
-  }, [dispatch, updateStateAndCacheCB, phraseList, vocabList, kanjiList]);
+  }, [dispatch, phraseList, vocabList, kanjiList]);
 
   const downloadFileHandlerCB = useCallback(
     (files: { fileName: string; text: string }[]) => {
@@ -432,9 +372,10 @@ export default function Sheet() {
     const hiddenCss = "display: none;";
     const hidden = menu?.getAttribute("style")?.includes(hiddenCss);
 
-    const css = hidden
-      ? `display: block; right: ${1}px; bottom: ${1}px;`
-      : hiddenCss;
+    const css =
+      hidden === true
+        ? `display: block; right: ${1}px; bottom: ${1}px;`
+        : hiddenCss;
     menu?.setAttribute("style", css);
   }, []);
 
@@ -518,11 +459,10 @@ export default function Sheet() {
               // reload workbook (update useEffect)
               setWorkbookImported(Date.now());
 
-              trimmed.map((sheet) => {
-                updateStateAndCacheCB(sheet.name);
-              }),
-                // local data edited, do not fetch use cached cache.json
-                void dispatch(setLocalDataEdited(true));
+              trimmed.forEach((sheet) => {
+                updateStateAfterWorkbookEdit(dispatch, sheet.name);
+              });
+
               return;
             });
         });
@@ -533,7 +473,7 @@ export default function Sheet() {
 
       return Promise.all(importCompleteP).then(() => Promise.resolve());
     },
-    [dispatch, updateStateAndCacheCB]
+    [dispatch]
   );
 
   return (

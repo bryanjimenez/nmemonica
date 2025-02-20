@@ -11,19 +11,20 @@ import {
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import { ReactElement, useCallback, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
 
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
 import { DataSetKeyInput } from "./DataSetKeyInput";
-import { syncService } from "../../../environment.development";
 import { localStorageKey } from "../../constants/paths";
 import { encrypt } from "../../helper/cryptoHelper";
 import { getLocalStorageSettings } from "../../helper/localStorageHelper";
+import { webSocketPeerSend } from "../../helper/peerShareHelper";
+import {
+  getWorkbookFromIndexDB,
+  metaDataNames,
+  xObjectToCsvText,
+} from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { AppDispatch } from "../../slices";
-import { getWorkbookFromIndexDB, metaDataNames, xObjectToCsvText } from "../../helper/sheetHelper";
-
 
 interface DataSetExportSyncProps {
   visible?: boolean;
@@ -36,12 +37,11 @@ export interface SyncDataFile {
 }
 
 export interface SyncDataMsg {
-  eventName: string;
+  event_name: string;
   payload: object;
 }
 
 export function DataSetExportSync(props: DataSetExportSyncProps) {
-  const dispatch = useDispatch<AppDispatch>();
   const { visible, close } = props;
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
@@ -99,10 +99,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
         return;
       }
 
-      const ws = new WebSocket(syncService);
-      ws.binaryType = "arraybuffer";
-
-      ws.addEventListener("error", () => {
+      const onError = () => {
         if (warning.find((w) => w.key === "connect-error") === undefined) {
           setWarning([
             <span
@@ -110,13 +107,12 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
             >{`Error connecting, service may be offline.`}</span>,
           ]);
         }
-      });
-
-      ws.addEventListener("close", () => {
+      };
+      const onClose = () => {
         setFinished(true);
-      });
+      };
 
-      ws.addEventListener("open", () => {
+      const onOpen = () => {
         const { encrypted: encryptedText, iv } = encrypt(
           "aes-192-cbc",
           encryptKey,
@@ -129,26 +125,15 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
           type: "application/x-nmemonica-data",
         });
 
-        void blob.arrayBuffer().then((b) => ws.send(b));
-      });
+        void blob.arrayBuffer().then((b) => connection.current?.send(b));
+      };
 
-      ws.addEventListener("message", (msg: MessageEvent<Blob | string>) => {
-        const { data: msgData } = msg;
-        if (msgData instanceof Blob === true) {
-          setWarning((w) => [
-            ...w,
-            <span key={`no-share-id`}>{`Expected a share ID`}</span>,
-          ]);
-
-          ws.close();
-          return;
-        }
-
+      const onMessage = (msgData: string) => {
         let uid: unknown;
         try {
           const p = JSON.parse(msgData) as SyncDataMsg;
 
-          if (p.eventName === "pushSuccess" && "uid" in p.payload) {
+          if (p.event_name === "push_success" && "uid" in p.payload) {
             uid = p.payload.uid;
           }
 
@@ -160,14 +145,20 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
             ...w,
             <span key={`bad-share-id`}>{`Failed to parse share ID`}</span>,
           ]);
-          ws.close();
+          connection.current?.close();
           return;
         }
 
         setShareId(uid);
         setWarning([]);
-        connection.current = ws;
-      });
+      };
+
+      connection.current = webSocketPeerSend(
+        onError,
+        onClose,
+        onOpen,
+        onMessage
+      );
     },
     [encryptKey, warning]
   );
@@ -182,46 +173,44 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
     const fromApp = fileData.filter((f) => f.origin === "AppCache");
     if (fromApp.length > 0) {
-      transferData = getWorkbookFromIndexDB().then(
-        (xObj) => {
-          const included = xObj.filter((o) =>
-            fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
-          ) as FilledSheetData[];
+      transferData = getWorkbookFromIndexDB().then((xObj) => {
+        const included = xObj.filter((o) =>
+          fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
+        ) as FilledSheetData[];
 
-          // send AppCache UserSettings if selected
-          const appSettings = fileData.reduce<{ name: string; text: string }[]>(
-            (acc, f) => {
-              if (
-                f.origin === "AppCache" &&
-                f.name.toLowerCase() ===
-                  metaDataNames.settings.prettyName.toLowerCase()
-              ) {
-                const ls = getLocalStorageSettings(localStorageKey);
-                if (ls) {
-                  return [
-                    ...acc,
-                    {
-                      name: metaDataNames.settings.prettyName,
-                      text: JSON.stringify(ls),
-                    },
-                  ];
-                }
+        // send AppCache UserSettings if selected
+        const appSettings = fileData.reduce<{ name: string; text: string }[]>(
+          (acc, f) => {
+            if (
+              f.origin === "AppCache" &&
+              f.name.toLowerCase() ===
+                metaDataNames.settings.prettyName.toLowerCase()
+            ) {
+              const ls = getLocalStorageSettings(localStorageKey);
+              if (ls) {
+                return [
+                  ...acc,
+                  {
+                    name: metaDataNames.settings.prettyName,
+                    text: JSON.stringify(ls),
+                  },
+                ];
               }
-              return acc;
-            },
-            []
-          );
+            }
+            return acc;
+          },
+          []
+        );
 
-          return xObjectToCsvText(included).then((dBtoCsv) => [
-            // any filesystem imports (already text)
-            ...fileData.filter((f) => f.origin === "FileSystem"),
-            // converted AppCache to csv text
-            ...dBtoCsv,
-            // converted UserSettings to json text
-            ...appSettings,
-          ]);
-        }
-      );
+        return xObjectToCsvText(included).then((dBtoCsv) => [
+          // any filesystem imports (already text)
+          ...fileData.filter((f) => f.origin === "FileSystem"),
+          // converted AppCache to csv text
+          ...dBtoCsv,
+          // converted UserSettings to json text
+          ...appSettings,
+        ]);
+      });
     }
 
     void transferData.then((d) => {
@@ -231,7 +220,7 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
       }));
       return sendMessageSyncCB(m);
     });
-  }, [dispatch, fileData, sendMessageSyncCB]);
+  }, [fileData, sendMessageSyncCB]);
 
   const fromAppCacheUpdateDataCB = useCallback((name: string) => {
     setFileData((prev) => {

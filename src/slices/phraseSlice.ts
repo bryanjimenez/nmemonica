@@ -1,6 +1,12 @@
+import { SheetData } from "@nmemonica/x-spreadsheet";
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
-import type { GroupListMap, MetaDataObj, RawPhrase } from "nmemonica";
+import type {
+  GroupListMap,
+  MetaDataObj,
+  RawPhrase,
+  SourcePhrase,
+} from "nmemonica";
 
 import { logger } from "./globalSlice";
 import {
@@ -12,7 +18,8 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { type Phrase, sheetDataToJSON } from "../helper/jsonHelper";
+import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
+import { sheetDataToJSON } from "../helper/jsonHelper";
 import {
   localStoreAttrDelete,
   localStoreAttrUpdate,
@@ -24,13 +31,15 @@ import {
 } from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import {
+  getTagsFromSheet,
   getWorkbookFromIndexDB,
+  setTagsFromSheet,
   workbookSheetNames,
 } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
-import type { RootState } from ".";
+import type { AppDispatch, RootState } from ".";
 
 export interface PhraseInitSlice {
   value: RawPhrase[];
@@ -111,67 +120,31 @@ function inversePairCheck<T extends { japanese: string; tag?: string }>(
   return errors;
 }
 
-/**
- * Determine if a phrase is polite.
- *
- * **When** they contain multiple periods or commas; polite phrases are left **unedited**.
- *
- * *Otherwise* the period is *removed*.
- *
- * @param o
- * @returns
- */
-export function isPolitePhrase<T extends { japanese: string }>(o: T) {
-  let polite: { japanese?: string; polite: boolean } = { polite: false };
-  if (o.japanese.endsWith("。")) {
-    const [furigana, phrase] = o.japanese.split("\n");
-
-    let withoutDot;
-    if (
-      furigana.indexOf("。") !== furigana.lastIndexOf("。") ||
-      furigana.includes("、")
-    ) {
-      // multiple 。or 、
-      // japanese is not defined. withoutDot is not used.
-      polite = { polite: true };
-    } else {
-      if (phrase?.endsWith("。") && furigana.endsWith("。")) {
-        withoutDot = `${furigana.slice(0, -1)}\n${phrase.slice(0, -1)}`;
-      } else {
-        withoutDot = o.japanese.slice(0, -1);
-      }
-
-      polite = { japanese: withoutDot, polite: true };
-    }
-  }
-
-  return polite;
-}
-
-export function buildPhraseArray<T extends { japanese: string; tag?: string }>(
+export function buildPhraseArray<T extends SourcePhrase>(
   object: Record<string, T>
 ): { values: RawPhrase[]; errors?: string[] } {
   let errors: undefined | string[];
   const values = Object.keys(object).map((k) => {
-    let { tags, particles, inverse } = getPropsFromTags(object[k].tag);
+    const iPhrase = object[k];
+    let { tags, particles, inverse, polite } = getPropsFromTags(iPhrase.tag);
 
     errors = inversePairCheck(k, object);
 
-    const o = object[k];
-    const polite = isPolitePhrase(o);
-
     return {
-      ...object[k],
+      ...iPhrase,
       uid: k,
 
-      // Not used after parsing
-      tag: undefined,
+      // Keep raw metadata
+      tag:
+        iPhrase.tag !== undefined
+          ? (JSON.parse(iPhrase.tag) as Record<string, string[]>)
+          : undefined,
 
       // Derived from tag
       tags,
       particles,
       inverse,
-      ...polite,
+      polite,
     };
   });
 
@@ -195,7 +168,7 @@ export const getPhrase = createAsyncThunk(
         throw new Error("Expected to find Phases sheet in workbook");
       }
       const { data: jsonValue, hash: version } = sheetDataToJSON(sheet) as {
-        data: Record<string, Phrase>;
+        data: Record<string, SourcePhrase>;
         hash: string;
       };
 
@@ -265,6 +238,71 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
     return updateAction(uid, spaceRep);
+  }
+);
+
+export const togglePhraseTag = createAsyncThunk(
+  "phrase/togglePhraseTag",
+  (arg: { query: string; tag: string }, thunkAPI) => {
+    const { query, tag } = arg;
+    const dispatch = thunkAPI.dispatch as AppDispatch;
+    const sheetName = workbookSheetNames.phrases.prettyName;
+
+    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
+      // Get current tags for term
+      const vIdx = sheetArr.findIndex(
+        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+      );
+      if (vIdx === -1) {
+        throw new Error(`Expected to find ${sheetName} sheet`);
+      }
+      const s = { ...sheetArr[vIdx] };
+
+      const updatedSheet = setTagsFromSheet(s, query, tag);
+
+      const wb = [
+        ...sheetArr.filter(
+          (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
+        ),
+        updatedSheet,
+      ];
+
+      // Save to indexedDB
+      return openIDB()
+        .then((db) =>
+          putIDBItem(
+            { db, store: IDBStores.WORKBOOK },
+            { key: "0", workbook: wb }
+          )
+        )
+        .then(() => {
+          // TODO: update state
+          // wb.forEach(s=>{
+          //   refreshAfterUpdate(dispatch,s.name)
+          // })
+        });
+    });
+  }
+);
+
+export const getPhraseTags = createAsyncThunk(
+  "phrase/getPhraseTags",
+  (arg: { query: string }) => {
+    const { query } = arg;
+    const sheetName = workbookSheetNames.phrases.prettyName;
+
+    return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
+      // Get current tags for term
+      const vIdx = sheetArr.findIndex(
+        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+      );
+      if (vIdx === -1) {
+        throw new Error(`Expected to find ${sheetName} sheet`);
+      }
+      const s = { ...sheetArr[vIdx] };
+
+      return getTagsFromSheet(s, query);
+    });
   }
 );
 

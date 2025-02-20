@@ -74,6 +74,7 @@ import {
   flipVocabularyPracticeSide,
   furiganaToggled,
   getVocabulary,
+  getVocabularyTags,
   removeFrequencyWord,
   removeFromSpaceRepetition,
   setPitchAccentData,
@@ -82,6 +83,7 @@ import {
   setWordDifficulty,
   toggleAutoVerbView,
   toggleVocabularyFilter,
+  toggleVocabularyTag,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
@@ -90,6 +92,8 @@ import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
+  ApplyTagsBtn,
+  PronunciationWarningBtn,
   ReCacheAudioBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
@@ -99,6 +103,7 @@ import {
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
+import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import type { BareIdx } from "../Form/VocabularyOrderSlider";
@@ -180,16 +185,33 @@ export default function Vocabulary() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  const [tagMenu, setTagMenu] = useState(false);
+  const closeTagMenu = useCallback(() => {
+    setTagMenu(false);
+  }, []);
+  const openTagMenu = useCallback(() => {
+    setTagMenu(true);
+  }, []);
+
   /** Number of review items still pending (negative: goal already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
+  const userSetGoal = useRef(viewGoal);
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
       void dispatch(getVocabulary());
     }
+  });
 
-    goalPending.current = initGoalPending(viewGoal, repetition);
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
+
+    goalPending.current = initGoalPending(
+      userSetGoal.current,
+      metadata.current
+    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
@@ -725,6 +747,32 @@ export default function Vocabulary() {
           >
             {text}
           </div>
+          <TagEditMenu
+            visible={tagMenu}
+            close={closeTagMenu}
+            get={() =>
+              dispatch(
+                getVocabularyTags({ query: vocabulary.japanese })
+              ).unwrap()
+            }
+            toggle={(tag: string) =>
+              dispatch(
+                toggleVocabularyTag({
+                  query: vocabulary.japanese,
+                  tag,
+                })
+              ).unwrap()
+            }
+            term={vocabulary}
+            title={
+              <div className="d-flex justify-content-between">
+                <div>{JapaneseText.parse(vocabulary).toHTML()}</div>
+                <div>Tags</div>
+              </div>
+            }
+            tags={["Keigo", "Formal", "Colloquial", "Derogative"]}
+          />
+
           <div
             ref={HTMLDivElementSwipeRef}
             className="d-flex justify-content-between h-100"
@@ -757,8 +805,10 @@ export default function Vocabulary() {
       );
     },
     [
+      dispatch,
       gotoNextSlide,
       gotoPrev,
+      closeTagMenu,
       HTMLDivElementSwipeRef,
       autoVerbView,
       recacheAudio,
@@ -769,6 +819,7 @@ export default function Vocabulary() {
       verbForm,
       xOffset,
       yOffset,
+      tagMenu,
     ]
   );
 
@@ -787,13 +838,14 @@ export default function Vocabulary() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies || alreadyReviewed,
+          "disabled-color": !cookies,
         })}
       >
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
               <TogglePracticeSideBtn
+                reviewed={alreadyReviewed}
                 toggle={englishSideUp}
                 action={
                   cookies
@@ -809,18 +861,30 @@ export default function Vocabulary() {
               <ReCacheAudioBtn
                 disabled={!cookies}
                 active={recacheAudio}
+                reviewed={alreadyReviewed}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
               <ToggleAutoVerbViewBtn
-                disabled={!cookies}
                 visible={isVerb}
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
                 toggleAutoVerbView={buildAction(dispatch, toggleAutoVerbView)}
                 autoVerbView={autoVerbView}
               />
-              <div className="sm-icon-grp">
+              <div
+                className={classNames({
+                  "sm-icon-grp": true,
+                  "disabled-color": alreadyReviewed,
+                })}
+              >
                 {!cookies ? null : loopSettingBtn}
               </div>
-              <div className="sm-icon-grp">
+              <div
+                className={classNames({
+                  "sm-icon-grp": true,
+                  "disabled-color": alreadyReviewed,
+                })}
+              >
                 {!cookies ? null : loopActionBtn}
               </div>
             </div>
@@ -828,18 +892,18 @@ export default function Vocabulary() {
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               {/* {timedPlayVerifyBtn(metadata.current[uid]?.pron === true)} */}
-              {metadata.current[uid]?.pron === true && (
-                <div>
-                  <PulseIcon />
-                  <span className="notification">!</span>
-                </div>
-              )}
+              <PronunciationWarningBtn
+                visible={metadata.current[uid]?.pron === true}
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
+              />
               <Tooltip
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 className={classNames({
-                  "question-color opacity-50":
+                  "question-color":
                     sort === TermSortBy.RECALL && !reviewedToday,
-                  "done-color opacity-50": reviewedToday,
+                  "done-color": reviewedToday,
                 })}
                 idKey={uid}
                 notification={revNotification}
@@ -879,8 +943,10 @@ export default function Vocabulary() {
                         disabled={!cookies}
                         active={hasFurigana}
                         toggle={
-                          toggleFuriganaSettingHelper(vocabulary.uid, metadata.current)
-                            .furigana.show
+                          toggleFuriganaSettingHelper(
+                            vocabulary.uid,
+                            metadata.current
+                          ).furigana.show
                         }
                         toggleFurigana={buildAction(dispatch, furiganaToggled)}
                         vocabulary={vocabulary}
@@ -904,15 +970,22 @@ export default function Vocabulary() {
                 </div>
               </Tooltip>
               <ShowHintBtn
-                disabled={!cookies}
                 visible={hintEnabledREF.current}
+                disabled={!cookies}
                 active={isHintable}
+                reviewed={alreadyReviewed}
                 setShowHint={setStateFunction(setShowHint, (prev) =>
                   prev !== undefined ? undefined : uid
                 )}
               />
+              <ApplyTagsBtn
+                disabled={!cookies}
+                action={openTagMenu}
+                reviewed={alreadyReviewed}
+              />
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 term={vocabulary}
                 count={frequency.length}
                 isReinforced={reinforcedUID !== null}
@@ -932,10 +1005,12 @@ export default function Vocabulary() {
       </div>
     ),
     [
-      cookies,
-      abortLoop,
-      autoVerbView,
       dispatch,
+      abortLoop,
+      resetTimedPlay,
+      openTagMenu,
+      cookies,
+      autoVerbView,
       englishSideUp,
       frequency.length,
       hintEnabledREF,
@@ -943,7 +1018,6 @@ export default function Vocabulary() {
       loopSettingBtn,
       recacheAudio,
       reinforcedUID,
-      resetTimedPlay,
       sort,
     ]
   );

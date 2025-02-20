@@ -56,12 +56,13 @@ export function getRecallCounts(
       metaData[el] ?? {};
 
     /** Don't review items seen today  */
-    const viewedToday = lastView && daysSince(lastView) === 0 ? true : false;
+    const viewedToday =
+      lastView !== undefined && daysSince(lastView) === 0 ? true : false;
     const reviewedToday =
-      lastReview && daysSince(lastReview) === 0 ? true : false;
+      lastReview !== undefined && daysSince(lastReview) === 0 ? true : false;
 
     if (
-      lastReview &&
+      lastReview !== undefined &&
       !reviewedToday &&
       !viewedToday &&
       typeof accuracyP === "number"
@@ -106,12 +107,13 @@ export function getRecallCounts(
  * Get basic stats about lastView
  * @param metaData
  */
-export function getStalenessCounts(
-  metaData: Record<string, MetaDataObj | undefined>
+export function getStalenessCounts<T extends { uid: string }>(
+  metaData: Record<string, MetaDataObj | undefined>,
+  termList: T[]
 ) {
   const numbers = {
     range: 0,
-    unPlayed: 0,
+    unPlayed: termList.length,
     min: Number.MAX_SAFE_INTEGER,
     max: -1,
     mean: Number.NaN,
@@ -121,13 +123,19 @@ export function getStalenessCounts(
   };
   let sum = 0;
   const valueList = Object.keys(metaData).reduce<number[]>((acc, el) => {
+    // count items which meta uid is in the term list
+    const termIsInList = termList.find((tel) => tel.uid === el) !== undefined;
+    if (termIsInList === false) {
+      return acc;
+    }
+
     const lastView = metaData[el]?.lastView;
-    if (lastView === undefined) {
-      numbers.unPlayed += 1;
-    } else {
+    if (lastView !== undefined) {
       const n = daysSince(lastView);
       numbers.min = numbers.min > n ? n : numbers.min;
       numbers.max = numbers.max < n ? n : numbers.max;
+      numbers.unPlayed -= 1;
+
       sum += n;
 
       return [...acc, n];

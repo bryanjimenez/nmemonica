@@ -5,7 +5,6 @@ import {
 } from "../../src/helper/serviceWorkerHelper";
 import {
   IDBStores,
-  IDBKeys,
   openIDB,
   addIDBItem,
   getIDBItem,
@@ -15,7 +14,6 @@ import { DebugLevel } from "../../src/slices/settingHelper";
 import { getParam, removeParam } from "../../src/helper/urlHelper";
 import {
   audioServicePath,
-  dataServicePath,
   pronounceEndoint,
   uiEndpoint,
 } from "../../environment.development";
@@ -208,24 +206,6 @@ function messageEventHandler(event: ExtendableMessageEvent) {
   }
 
   clientLogger("Unrecognized message", DebugLevel.ERROR);
-}
-
-/**
- * User has edited datasets
- * -  do not fetch cache.json
- * -  do not overwrite caches on install
- */
-function isUserEditedData() {
-  const fetchCheckP = openIDB({ logger: clientLogger }).then((db) =>
-    getIDBItem({ db, store: IDBStores.STATE }, IDBKeys.State.EDITED)
-      .then((v) => v.value)
-      .catch(() => {
-        // doesn't exist
-        return false;
-      })
-  );
-
-  return fetchCheckP;
 }
 
 /**

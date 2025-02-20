@@ -6,7 +6,7 @@ import {
   getRecallCounts,
   getStalenessCounts,
   getStats,
-} from "../.././../src/helper/statsHelper";
+} from "../../../src/helper/statsHelper";
 import { SR_CORRECT_TRESHHOLD } from "../../../src/helper/recallHelper";
 
 describe("statsHelper", function () {
@@ -77,34 +77,44 @@ describe("statsHelper", function () {
       
         }
         /* eslint-enable */
+        const termListMock = [
+          {uid:"uid0"},{uid:"uid1"},{uid:"uid2"},{uid:"uid3"},{uid:"uid4"},
+          {uid:"uid5"},{uid:"uid6"},{uid:"uid7"},{uid:"uid8"},{uid:"uid9"},
+          {uid:"uid_unPlayed0"},{uid:"uid_unPlayed1"}
+        ];
 
     it("unPlayed", function () {
-      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata);
+      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata, termListMock);
       expect(unPlayed).to.equal(2);
     });
+    it("unPlayed and new", function () {
+      const listWithNew = [...termListMock, {uid:'uid_w_no_metadata'}];
+      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata, listWithNew);
+      expect(unPlayed).to.equal(3);
+    });
     it("min", function () {
-      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata);
+      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata, termListMock);
       expect(min).to.equal(3);
     });
     it("q1", function () {
-      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata);
+      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata, termListMock);
       expect(q1).to.equal(7);
     });
     it("q2", function () {
       const { unPlayed, min, max, mean, q1, q2, q3 } =
-        getStalenessCounts(metadata);
+        getStalenessCounts(metadata, termListMock);
       expect(q2).to.equal(9);
     });
     it("mean", function () {
-      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata);
+      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata, termListMock);
       expect(mean).to.equal(10.6);
     });
     it("q3", function () {
-      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata);
+      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata, termListMock);
       expect(q3).to.equal(15);
     });
     it("max", function () {
-      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata);
+      const { unPlayed, min, max, mean, q1, q3 } = getStalenessCounts(metadata, termListMock);
       expect(max).to.equal(20);
     });
   }); //getStalenessCounts

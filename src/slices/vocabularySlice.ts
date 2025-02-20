@@ -1,3 +1,4 @@
+import { SheetData } from "@nmemonica/x-spreadsheet";
 import {
   type PayloadAction,
   createAsyncThunk,
@@ -14,6 +15,7 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
+import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { type Vocabulary, sheetDataToJSON } from "../helper/jsonHelper";
 import {
@@ -33,10 +35,13 @@ import {
   getWorkbookFromIndexDB,
   workbookSheetNames,
 } from "../helper/sheetHelper";
+import { findInColumn, findInRow } from "../helper/sheetHelper";
+import { SWRequestHeader } from "../helper/serviceWorkerHelper";
+import { getTagsFromSheet, setTagsFromSheet } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import type { ValuesOf } from "../typings/utils";
 
-import type { RootState } from ".";
+import type { AppDispatch, RootState } from ".";
 
 export interface VocabularyInitSlice {
   value: RawVocabulary[];
@@ -173,6 +178,72 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
 
     const spaceRep = state.setting.repetition;
     return updateAction(uid, spaceRep);
+  }
+);
+
+export const toggleVocabularyTag = createAsyncThunk(
+  "vocabulary/toggleVocabularyTag",
+  (arg: { query: string; tag: string }) => {
+    const { query, tag } = arg;
+    const sheetName = workbookSheetNames.vocabulary.prettyName;
+
+    return getWorkbookFromIndexDB().then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
+        if (vIdx === -1) {
+          throw new Error(`Expected to find ${sheetName} sheet`);
+        }
+        const s = { ...sheetArr[vIdx] };
+
+        const updatedSheet = setTagsFromSheet(s, query, tag);
+
+        const wb = [
+          ...sheetArr.filter(
+            (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
+          ),
+          updatedSheet,
+        ];
+
+        // Save to indexedDB
+        return openIDB()
+          .then((db) =>
+            putIDBItem(
+              { db, store: IDBStores.WORKBOOK },
+              { key: "0", workbook: wb }
+            )
+          )
+          .then(() => {
+            // TODO: update json?
+            // TODO: update state
+          });
+      }
+    );
+  }
+);
+
+export const getVocabularyTags = createAsyncThunk(
+  "vocabulary/getVocabularyTags",
+  (arg: { query: string }) => {
+    const { query } = arg;
+    const sheetName = workbookSheetNames.vocabulary.prettyName;
+
+    return getWorkbookFromIndexDB().then(
+      (sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
+        if (vIdx === -1) {
+          throw new Error(`Expected to find ${sheetName} sheet`);
+        }
+        const s = { ...sheetArr[vIdx] };
+
+        return getTagsFromSheet(s, query);
+      }
+    );
   }
 );
 

@@ -514,8 +514,12 @@ const kanjiSlice = createSlice({
         return {
           ...iKanji,
           uid: k,
-          // Not used after parsing
-          tag: undefined,
+
+          // Keep raw metadata
+          tag:
+            iKanji.tag !== undefined
+              ? (JSON.parse(iKanji.tag) as Record<string, string[]>)
+              : undefined,
 
           // Derived from tag
           tags,

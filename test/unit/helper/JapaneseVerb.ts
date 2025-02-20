@@ -52,7 +52,7 @@ const rawVocabularyObj = {
     japanese: "つなげる\n繋げる",
     romaji: "tsunageru",
     subGrp: "attachment",
-    tag: "attachment",
+    tag: '{"tags":["attachment"]}',
   },
   fc5b75bb8f15bc9db8be7bc7afb9ee0a: {
     english: "to link, connect with, join",
@@ -60,14 +60,14 @@ const rawVocabularyObj = {
     japanese: "つながる\n繋がる",
     romaji: "tsunagaru",
     subGrp: "attachment",
-    tag: "attachment; intr:976ce81d844617d03eea831337a0ca07",
+    tag: '{"tags":["attachment; intr:976ce81d844617d03eea831337a0ca07"]}',
   },
   "4f3b0dffa85324487e7130022fa2a87c": {
     english: "to be woken",
     grp: "Verb",
     japanese: "おきる\n起きる",
     romaji: "okiru",
-    tag: "intr:f7503726a6887a94a61f0797bfc8c1c2",
+    tag: '{"tags":["intr:f7503726a6887a94a61f0797bfc8c1c2"]}',
   },
   f7503726a6887a94a61f0797bfc8c1c2: {
     english: "to wake",
@@ -81,7 +81,7 @@ const rawVocabularyObj = {
     japanese: "わかる\n分かる",
     romaji: "wakaru",
     subGrp: "Memory",
-    tag: "intr",
+    tag: '{"tags":["intr"]}',
   },
   "07a2a0e1eafc403c7cb4d45e4f787ed0": {
     english: "to cut, shut off (power)",
@@ -89,7 +89,7 @@ const rawVocabularyObj = {
     japanese: "きる\n切る",
     romaji: "kiru",
     subGrp: "Activities",
-    tag: "auxiliar; EV1",
+    tag: '{"tags":["auxiliar", "EV1"]}',
   },
 };
 

@@ -13,12 +13,6 @@ import { phraseFromLocalStorage } from "./phraseSlice";
 import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularyFromLocalStorage } from "./vocabularySlice";
-import {
-  IDBKeys,
-  IDBStores,
-  openIDB,
-  putIDBItem,
-} from "../../pwa/helper/idbHelper";
 import { type ConsoleMessage } from "../components/Form/Console";
 import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
@@ -147,24 +141,6 @@ export const localStorageSettingsInitialized = createAsyncThunk(
     }
 
     return mergedGlobalSettings;
-  }
-);
-
-/**
- * After user edits or imports a dataset
- * - mark cached data as edited or untouched
- */
-export const setLocalDataEdited = createAsyncThunk(
-  "setting/setLocalDataEdited",
-  async (arg: boolean) => {
-    const override = arg;
-
-    return openIDB().then((db) =>
-      putIDBItem(
-        { db, store: IDBStores.STATE },
-        { key: IDBKeys.State.EDITED, value: override }
-      )
-    );
   }
 );
 

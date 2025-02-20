@@ -74,28 +74,41 @@ This page will display a list of pairs of vocabulary words (English + Japanese) 
 | ------ | -------------- | ----------- | -------- | ------------- |
 |        | **Japanese**   | **English** | **Tags** | *(Explanation)* |
 | ...
-| **A6** | にんげん`\n`<br/>人間   | Human    | `="inv:" & md5(A8)` | We tagged Human and Monster inverse words.
+| **A6** | にんげん`\n`<br/>人間   | Human    | {"tags":[`"inv:" & md5(A8)`"]} | We tagged Human and Monster inverse words.
 | ...
-| **A8** | ばけもの`\n`<br/>化け物 | Monster  | `="inv:" & md5(A6)` |
+| **A8** | ばけもの`\n`<br/>化け物 | Monster  | {"tags":[`"inv:" & md5(A6)`"]} |
 | ...
 | **A12** | こわい`\n`<br/>怖い   | Scary, Frightening | Appearance; Beginner-Words; | Scary is tagged with some extra categories.
-| **A13** | きれい`\n`<br/>綺麗   | Beautiful, Clean | `na-adj` | We tagged Beautiful a na-adjective.
+| **A13** | きれい`\n`<br/>綺麗   | Beautiful, Clean | {"tags":["`na-adj`"]} | We tagged Beautiful a na-adjective.
 | ...
-| **A25** | おわる`\n`<br/>終わる | to be finished | `="intr:" & md5(A26)` | We tagged **終わる** intransitive with **終える** as it's transitive pair.
+| **A25** | おわる`\n`<br/>終わる | to be finished | {"tags":[`"intr:" & md5(A26)`"]} | We tagged **終わる** intransitive with **終える** as it's transitive pair.
 | **A26** | おえる`\n`<br/>終える | to finish | |
 | ...
-| **A25** | おれる`\n`<br/>折れる | to snap, fracture | `intr` | We tagged **折れる** an intransitive verb.
+| **A25** | おれる`\n`<br/>折れる | to snap, fracture | {"tags":["`intr`"]} | We tagged **折れる** an intransitive verb.
 | ...
-| **A30** | おまえ`\n`<br/>お前 | you | `slang` | We tagged **お前** as a slang term.
-| **A31** | わたくし`\n`<br/>私 | example | `keigo` | We tagged **私** as a keigo term.
+| **A30** | おまえ`\n`<br/>お前 | you | {"tags":["`slang`"]} | We tagged **お前** as a slang term.
+| **A31** | わたくし`\n`<br/>私 | example | {"tags":["`keigo`"]} | We tagged **私** as a keigo term.
 
 
 ### Phrases
 URL: [/#/phrases](https://bryanjimenez.github.io/nmemonica/#/phrases)  
-This page is nearly identical to the vocabulary page with the exception that it will display phrases.
+This page is nearly identical to the vocabulary page with the exception that it will display phrases. Additionally Phrases can be tagged with the following special indicators:
+
+
+||A|B|C||
+| ------ | -------------- | ----------- | -------- | ------------- |
+|        | **Japanese**   | **English** | **Tags** | *(Explanation)* |
+| ... 
+| **A25** | ... | ... | {"tags":["`keigo`"]} | We tagged ... as Keigo.
+| **A30** | ... | ... | {"tags":["`formal`"]} | We tagged ... as Formal.
+| **A31** | ... | ... | {"tags":["`polite`"]} | We tagged ... as Polite.
+| **A32** | ... | ... | {"tags":["`passive`"]} | We tagged ... as Passive.
+| **A33** | ... | ... | {"tags":["`colloquial`"]} | We tagged ... as Colloquial.
+| **A34** | ... | ... | {"tags":["`derrogative`"]} | We tagged ... as Derrogative.
+
 
 > [!Note]  
-> Phrases can be tagged with basic categories or special indicators. The special indicator for polite phrase is to include a `。` at the end of a phrase.
+> Phrases can be tagged with basic categories or special indicators. 
 
 ### Particles Game
 URL: [/#/particles](https://bryanjimenez.github.io/nmemonica/#/particles)  
@@ -105,11 +118,11 @@ To include phrases in the game, tag the phrase indicating the particles wanted t
 
 |        | Japanese   | English  | Tags   | *(Explanation)* |
 | ------ | ---------- | -------- | ------ | ------------- |
-| **A6** | やさい**は**すき`\n`<br/>野菜**は**好き   | I like vegetables | `p:は` | We want the**は**particle to be included in the game.
-| **A7** | くだもの**は**すき`\n`果物**は**好き   | I like fruits | `P:は` | The CasE of the tag's identifier is not important.
+| **A6** | やさい**は**すき`\n`<br/>野菜**は**好き   | I like vegetables | {"tags":["`p:は`"]} | We want the**は**particle to be included in the game.
+| **A7** | くだもの**は**すき`\n`果物**は**好き   | I like fruits | {"tags":["`P:は`"]} | The CasE of the tag's identifier is not important.
 | ...
-| **A10** | かんぺき**が**もの**は**いない`\n`,br/>完璧**が**もの**は**いない  | Nothing is perfect | `p:は,が` | We want **both** the **は** and **が** particles to be included in the game.
-| **A11** | にわ**には**にわにわとりがいる`\n`<br/>庭**には**二羽鶏がいる  | There are two chickens in the garden | `p:には` | We want the **には** particle to be included in the game.
+| **A10** | かんぺき**が**もの**は**いない`\n`,br/>完璧**が**もの**は**いない  | Nothing is perfect | {"tags":["`p:は,が`"]} | We want **both** the **は** and **が** particles to be included in the game.
+| **A11** | にわ**には**にわにわとりがいる`\n`<br/>庭**には**二羽鶏がいる  | There are two chickens in the garden | {"tags":["`p:には`"]} | We want the **には** particle to be included in the game.
 
 ### Kanji
 URL: [/#/kanji](https://bryanjimenez.github.io/nmemonica/#/kanji)  
@@ -119,9 +132,9 @@ Kanji can be tagged with the basic categories or special indicators (indicated h
 
 |        | Kanji       | English | Tags | *(Explanation)* |
 | ------ | ----------- | ------- | ---- | ------------- |
-| **P**honetic Kanji<br/>`P:kanji+sounds`<br/>`p:kanji+sounds` | 訪   | visit    | `p:方+ほう、ぼう` | We indicate that **訪** contains the phonetic radical **方** which may sound like **ほう** or **ぼう**.
-| **E**xample Kanji<br/>`E:kanji,kanji`<br/>`e:kanji,kanji`| 艹   | flowers    | `e:花,茶` | We indicate that radical **艹** can be found in **花** and **茶**.
-| **S**imilar Kanji<br/>`S:kanji,kanji`<br/>`s:kanji,kanji`| 斤   | axe    | `s:反,友` | We indicate that kanji **斤** is similar to **反** and **友**.
+| **P**honetic Kanji<br/>`P:kanji+sounds`<br/>`p:kanji+sounds` | 訪   | visit    | {"tags":["`p:方+ほう、ぼう`"]} | We indicate that **訪** contains the phonetic radical **方** which may sound like **ほう** or **ぼう**.
+| **E**xample Kanji<br/>`E:kanji,kanji`<br/>`e:kanji,kanji`| 艹   | flowers    | {"tags":["`e:花,茶`"]} | We indicate that radical **艹** can be found in **花** and **茶**.
+| **S**imilar Kanji<br/>`S:kanji,kanji`<br/>`s:kanji,kanji`| 斤   | axe    | {"tags":["`s:反,友`"]} | We indicate that kanji **斤** is similar to **反** and **友**.
 
 
 ### Settings Page

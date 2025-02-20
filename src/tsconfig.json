@@ -27,6 +27,5 @@
     "../pwa/helper/idbHelper.ts",
     "../environment.development.ts",
     "../environment.production.ts",
-    "../image/notfound/*"
   ]
 }

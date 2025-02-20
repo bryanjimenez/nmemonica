@@ -2,7 +2,6 @@ import { LinearProgress } from "@mui/material";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  MilestoneIcon,
   TrashIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
@@ -63,11 +62,13 @@ import {
   deleteMetaPhrase,
   flipPhrasesPracticeSide,
   getPhrase,
+  getPhraseTags,
   removeFrequencyPhrase,
   removeFromSpaceRepetition,
   setPhraseAccuracy,
   setPhraseDifficulty,
   setSpaceRepetitionMetadata,
+  togglePhraseTag,
   togglePhrasesFilter,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
@@ -84,14 +85,17 @@ import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
+  ApplyTagsBtn,
   ReCacheAudioBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
+  ViewLessonsBtn,
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
 import StackNavButton from "../Form/StackNavButton";
+import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 
 const PhrasesMeta = {
@@ -159,21 +163,39 @@ export default function Phrases() {
   const metadata = useRef(repetition);
   metadata.current = repetition;
 
+  const [tagMenu, setTagMenu] = useState(false);
+  const closeTagMenu = useCallback(() => {
+    setTagMenu(false);
+  }, []);
+  const openTagMenu = useCallback(() => {
+    setTagMenu(true);
+  }, []);
+
   /** Number of review items still pending (-1: no goal or already met)*/
   const goalPending = useRef<number>(-1);
   const [goalProgress, setGoalProgress] = useState<number | null>(null);
+  const userSetGoal = useRef(viewGoal);
+
   const [lesson, setLesson] = useState(false);
 
   const closeLesson = useCallback(() => {
     setLesson(false);
   }, []);
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (phraseList.length === 0) {
       void dispatch(getPhrase());
     }
+  });
 
-    goalPending.current = initGoalPending(viewGoal, repetition);
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
+
+    goalPending.current = initGoalPending(
+      userSetGoal.current,
+      metadata.current
+    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
@@ -741,6 +763,30 @@ export default function Phrases() {
         >
           {phrase.lesson}
         </DialogMsg>
+        <TagEditMenu
+          visible={tagMenu}
+          close={closeTagMenu}
+          term={phrase}
+          get={() =>
+            dispatch(getPhraseTags({ query: phrase.japanese })).unwrap()
+          }
+          toggle={(tag: string) =>
+            dispatch(
+              togglePhraseTag({
+                query: phrase.japanese,
+                tag,
+              })
+            ).unwrap()
+          }
+          tags={[
+            "Keigo",
+            "Formal",
+            "Polite",
+            "Passive",
+            "Colloquial",
+            "Derogative",
+          ]}
+        />
         <div
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
@@ -785,7 +831,7 @@ export default function Phrases() {
       <div
         className={classNames({
           "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies || alreadyReviewed,
+          "disabled-color": !cookies,
         })}
       >
         <div className="row opts-max-h">
@@ -793,11 +839,13 @@ export default function Phrases() {
             <div className="d-flex justify-content-start">
               <TogglePracticeSideBtn
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 toggle={englishSideUp}
                 action={buildAction(dispatch, flipPhrasesPracticeSide)}
               />
               <ReCacheAudioBtn
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 active={recacheAudio}
                 action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
@@ -805,23 +853,21 @@ export default function Phrases() {
           </div>
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
-              {phrase.lesson !== undefined && (
-                <div
-                  className="sm-icon-grp clickable"
-                  aria-label="Show lesson"
-                  onClick={() => {
-                    setLesson(true);
-                  }}
-                >
-                  <MilestoneIcon />
-                </div>
-              )}
+              <ViewLessonsBtn
+                visible={phrase.lesson !== undefined}
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
+                action={() => {
+                  setLesson(true);
+                }}
+              />
               <Tooltip
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 className={classNames({
-                  "question-color opacity-50":
+                  "question-color":
                     sort === TermSortBy.RECALL && !reviewedToday,
-                  "done-color opacity-50": reviewedToday,
+                  "done-color": reviewedToday,
                 })}
                 idKey={uid}
                 notification={revNotification}
@@ -859,15 +905,22 @@ export default function Phrases() {
                 </div>
               </Tooltip>
               <ToggleLiteralPhraseBtn
-                disabled={!cookies}
                 visible={
                   englishSideUp && phrase.lit !== undefined && phrase.lit !== ""
                 }
+                disabled={!cookies}
+                reviewed={alreadyReviewed}
                 toggle={showLit}
                 action={setStateFunction(setShowLit, (lit) => !lit)}
               />
+              <ApplyTagsBtn
+                disabled={!cookies}
+                action={openTagMenu}
+                reviewed={alreadyReviewed}
+              />
               <ToggleFrequencyTermBtnMemo
                 disabled={!cookies}
+                reviewed={alreadyReviewed}
                 addFrequencyTerm={addFrequencyTermCB}
                 removeFrequencyTerm={removeFrequencyTermCB}
                 hasReinforce={phrase_reinforce}
