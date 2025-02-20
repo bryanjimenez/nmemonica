@@ -1,5 +1,9 @@
 import { LinearProgress } from "@mui/material";
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  TrashIcon,
+} from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
 import type { RawKanji, RawVocabulary } from "nmemonica";
@@ -50,6 +54,7 @@ import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyKanji,
+  deleteMetaKanji,
   getKanji,
   removeFrequencyKanji,
   removeFromSpaceRepetition,
@@ -1085,6 +1090,17 @@ export default function Kanji() {
                 />
                 <div className="fs-xx-small me-2">
                   <RecallIntervalPreviewInfo metadata={metadata.current[uid]} />
+                </div>
+                <div className="h-100 d-flex flex-column justify-content-between me-2">
+                  <div
+                    className="clickable"
+                    onClick={() => {
+                      void dispatch(deleteMetaKanji([uid]));
+                    }}
+                  >
+                    <TrashIcon />
+                  </div>
+                  <div className="d-flex flex-column"></div>
                 </div>
               </Tooltip>
               <ToggleFrequencyTermBtnMemo

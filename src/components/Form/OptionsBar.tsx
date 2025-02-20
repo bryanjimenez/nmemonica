@@ -43,7 +43,6 @@ export function ToggleFuriganaBtn(props: ToggleFuriganaBtnProps) {
     <div
       className={classNames({
         clickable: active,
-        "sm-icon-grp": true,
         "sm-kanji": active,
       })}
       onClick={
