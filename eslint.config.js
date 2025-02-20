@@ -186,6 +186,9 @@ export default [
       // disable unsafe autofixing '?' optional chaining
       "@typescript-eslint/no-unnecessary-condition": "off",
 
+      // warn nullish/zero/NaN cases in if()
+      "@typescript-eslint/strict-boolean-expressions": "warn",
+
       "@typescript-eslint/no-floating-promises": "warn",
       "react/no-array-index-key": "warn",
       "react/button-has-type": "warn",

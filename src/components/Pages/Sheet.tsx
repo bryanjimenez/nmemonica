@@ -12,14 +12,21 @@ import {
 } from "@nmemonica/snservice/src/helper/sheetHelper";
 import { Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
-  DesktopDownloadIcon,
+  GearIcon,
   LinkExternalIcon,
   // RssIcon,
   SearchIcon,
-  ShareIcon,
 } from "@primer/octicons-react";
+import { AsyncThunk } from "@reduxjs/toolkit";
 import classNames from "classnames";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MetaDataObj } from "nmemonica";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -30,6 +37,11 @@ import {
   openIDB,
   putIDBItem,
 } from "../../../pwa/helper/idbHelper";
+import { localStorageKey } from "../../constants/paths";
+import {
+  getLocalStorageSettings,
+  setLocalStorage,
+} from "../../helper/localStorageHelper";
 import {
   getActiveSheet,
   removeLastRowIfBlank,
@@ -41,9 +53,11 @@ import { updateEditedUID } from "../../helper/sheetHelperNoImport";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import { AppDispatch, RootState } from "../../slices";
-import "../../css/Sheet.css";
-import { setLocalDataEdited } from "../../slices/globalSlice";
+import { AppDispatch, LocalStorageState, RootState } from "../../slices";
+import {
+  localStorageSettingsInitialized,
+  setLocalDataEdited,
+} from "../../slices/globalSlice";
 import {
   clearKanji,
   batchRepetitionUpdate as kanjiBatchMetaUpdate,
@@ -60,11 +74,29 @@ import {
   clearVocabulary,
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
 } from "../../slices/vocabularySlice";
+import { DataSetActionMenu } from "../Form/DataSetActionMenu";
+import { DataSetExportSync } from "../Form/DataSetExportSync";
+import { DataSetImportFile } from "../Form/DataSetImportFile";
+import { DataSetImportSync } from "../Form/DataSetImportSync";  
+import "../../css/Sheet.css";
 
 const SheetMeta = {
   location: "/sheet/",
   label: "Sheet",
 };
+
+/**
+ * Keep all naming and order
+ */
+export const workbookSheetNames = Object.freeze({
+  phrases: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
+  vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
+  kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
+});
+
+export const metaDataNames = Object.freeze({
+  settings: { file: "Settings.json", prettyName: "Settings" },
+});
 
 const defaultOp = {
   mode: "edit", // edit | read
@@ -88,6 +120,122 @@ const defaultOp = {
   },
 } as const;
 
+/**
+ * Retrieves worksheet from:
+ * indexedDB
+ * cache
+ * or creates placeholders
+ *
+ * @param dispatch
+ * @param getDatasets fetch action (if no indexedDB)
+ */
+export function getWorkbookFromIndexDB(
+  dispatch: AppDispatch,
+  getDatasets: AsyncThunk<FilledSheetData[], void, object>
+) {
+  return openIDB()
+    .then((db) => {
+      // if indexedDB has stored workbook
+      const stores = Array.from(db.objectStoreNames);
+
+      const ErrorWorkbookMissing = new Error("Workbook not stored", {
+        cause: { code: IDBErrorCause.NoResult },
+      });
+      if (!stores.includes("workbook")) {
+        throw ErrorWorkbookMissing;
+      }
+
+      // use stored workbook
+      return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
+        if (!res.workbook || res.workbook.length === 0) {
+          throw ErrorWorkbookMissing;
+        }
+
+        return res.workbook;
+      });
+    })
+    .catch((error) => {
+      // if not fetch and build spreadsheet
+      if (error instanceof Error) {
+        const errData = error.cause as { code: string };
+        if (errData?.code !== IDBErrorCause.NoResult) {
+          // eslint-disable-next-line no-console
+          console.log("Unknown error getting workbook from indexedDB");
+          // eslint-disable-next-line no-console
+          console.error(error);
+        }
+      }
+
+      return dispatch(getDatasets()).unwrap();
+    })
+    .catch((err) => {
+      const { message } = err as { message: unknown };
+      if (typeof message === "string" && message === "Failed to fetch") {
+        return [
+          jtox(
+            {
+              /** no data just headers */
+            },
+            workbookSheetNames.phrases.prettyName
+          ),
+          jtox(
+            {
+              /** no data just headers */
+            },
+            workbookSheetNames.vocabulary.prettyName
+          ),
+          jtox(
+            {
+              /** no data just headers */
+            },
+            workbookSheetNames.kanji.prettyName
+          ),
+        ];
+      }
+
+      throw err;
+    });
+}
+
+/**
+ * Parse xObject into csv text
+ */
+export function xObjectToCsvText(xObj: FilledSheetData[]) {
+  //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
+
+  const filesP = xObj.map((xObjSheet: FilledSheetData) => {
+    const fileSim = new EventEmitter();
+
+    const fileWriterSimulator = {
+      write: (line: string) => {
+        fileSim.emit("write", line);
+      },
+      end: () => {
+        fileSim.emit("end");
+      },
+    };
+
+    const csvP = new Promise<{ name: string; text: string }>(
+      (resolve, _reject) => {
+        let file = "";
+        fileSim.on("write", (line) => {
+          file += line;
+        });
+
+        fileSim.on("end", () => {
+          resolve({ name: xObjSheet.name, text: file });
+        });
+      }
+    );
+
+    objectToCSV(xObjSheet, fileWriterSimulator);
+
+    return csvP;
+  });
+
+  return Promise.all(filesP);
+}
+
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -106,6 +254,7 @@ export default function Sheet() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
+  const [workbookImported, setWorkbookImported] = useState<number>();
 
   const [resultBadge, setResultBadge] = useState(0);
   const prevResult = useRef<[number, number, string][]>([]);
@@ -124,104 +273,37 @@ export default function Sheet() {
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void openIDB()
-      .then((db) => {
-        // if indexedDB has stored workbook
-        const stores = Array.from(db.objectStoreNames);
+    void getWorkbookFromIndexDB(dispatch, getDatasets).then((sheetArr) => {
+      const data = sheetArr.map((s) => sheetAddExtraRow(s));
 
-        const ErrorWorkbookMissing = new Error("Workbook not stored", {
-          cause: { code: IDBErrorCause.NoResult },
-        });
-        if (!stores.includes("workbook")) {
-          throw ErrorWorkbookMissing;
-        }
+      const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
 
-        // use stored workbook
-        return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then(
-          (res) => {
-            if (!res.workbook || res.workbook.length === 0) {
-              throw ErrorWorkbookMissing;
-            }
+      // console.log(grid.bottombar.activeEl.el.innerHTML);
 
-            return res.workbook;
-          }
+      grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
+   
+      // replace typed '\n' with newline inside cell
+      grid.on("cell-edited-done", (text:string, _ri:number, _ci:number) => {
+        grid.sheet.data.setSelectedCellText(
+          // characters to replace with \n
+          //    literal '\n'
+          //    two or more japanese spaces
+          //    two or more english spaces
+          text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
+          "finished"
         );
-      })
-      .catch((error) => {
-        // if not fetch and build spreadsheet
-        if (error instanceof Error) {
-          const errData = error.cause as { code: string };
-          if (errData?.code !== IDBErrorCause.NoResult) {
-            // eslint-disable-next-line no-console
-            console.log("Unknown error getting workbook from indexedDB");
-            // eslint-disable-next-line no-console
-            console.error(error);
-          }
-        }
-
-        return dispatch(getDatasets()).unwrap();
-      })
-      .catch((err) => {
-        const { message } = err as { message: unknown };
-        if (typeof message === "string" && message === "Failed to fetch") {
-          return [
-            jtox(
-              {
-                /** no data just headers */
-              },
-              "Phrases"
-            ),
-            jtox(
-              {
-                /** no data just headers */
-              },
-              "Vocabulary"
-            ),
-            jtox(
-              {
-                /** no data just headers */
-              },
-              "Kanji"
-            ),
-          ];
-        }
-
-        throw err;
-      })
-      .then((sheetArr) => {
-        const data = sheetArr.map((s) => sheetAddExtraRow(s));
-
-        const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
-
-        // console.log(grid.bottombar.activeEl.el.innerHTML);
-
-        grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
-
-        // replace typed '\n' with newline inside cell
-        grid.on(
-          "cell-edited-done",
-          (text: string, _ri: number, _ci: number) => {
-            grid.sheet.data.setSelectedCellText(
-              // characters to replace with \n
-              //    literal '\n'
-              //    two or more japanese spaces
-              //    two or more english spaces
-              text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
-              "finished"
-            );
-          }
-        );
-
-        // reset search when switching sheet
-        grid.bottombar?.menuEl.on("click", resetSearchCB);
-
-        // TODO:
-        // grid.setMaxCols(0, sheet1Cols);
-        // grid.setMaxCols(1, sheet2Cols);
-        // grid.setMaxCols(2, sheet3Cols);
-
-        wbRef.current = grid;
       });
+
+      // reset search when switching sheet
+      grid.bottombar?.menuEl.on("click", resetSearchCB);
+
+      // TODO: x-spreadsheet grid.setMaxCols()
+      // grid.setMaxCols(0, sheet1Cols);
+      // grid.setMaxCols(1, sheet2Cols);
+      // grid.setMaxCols(2, sheet3Cols);
+
+      wbRef.current = grid;
+    });
 
     containerRef.current?.appendChild(gridEl);
 
@@ -233,7 +315,7 @@ export default function Sheet() {
         c?.removeChild(gridEl);
       }
     };
-  }, [dispatch, resetSearchCB]);
+  }, [dispatch, resetSearchCB, workbookImported]);
 
   const onUploadErrorCB = useCallback((_err: Error) => {
     setUploadError(true);
@@ -243,10 +325,58 @@ export default function Sheet() {
     }, 2000);
   }, []);
 
-  const saveSheetCB = useCallback(() => {
-    // void saveSheetLocalService(wbRef.current, sheetService).catch(
-    //   onUploadErrorCB
-    // );
+  /**
+   * Updates app state with incoming dataset
+   * Updates metadata with incoming metadata
+   * Updates SW cache.json with state versions
+   * @param name name of DataSet
+   * @param hash
+   * @param metaUpdateUids Record containing updated uids
+   */
+  const updateStateAndCacheCB = useCallback(
+    (
+      name: string,
+      hash: string,
+      metaUpdatedUids?: Record<string, MetaDataObj | undefined>
+    ) => {
+      switch (name) {
+        case workbookSheetNames.kanji.prettyName:
+          dispatch(setVersion({ name: "kanji", hash }));
+          dispatch(clearKanji());
+          if (metaUpdatedUids) {
+            dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
+          }
+          break;
+        case workbookSheetNames.vocabulary.prettyName:
+          dispatch(setVersion({ name: "vocabulary", hash }));
+          dispatch(clearVocabulary());
+          dispatch(clearOpposites());
+          if (metaUpdatedUids) {
+            dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
+          }
+          break;
+        case workbookSheetNames.phrases.prettyName:
+          dispatch(setVersion({ name: "phrases", hash }));
+          dispatch(clearPhrases());
+          dispatch(clearParticleGame());
+          if (metaUpdatedUids) {
+            dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
+          }
+          break;
+        default:
+          throw new Error("Incorrect sheet name: " + name);
+      }
+
+      // update service worker cache.json file with app state versions
+      void dispatch(setSwVersions());
+    },
+    [dispatch]
+  );
+
+  const saveSheetHandlerCB = useCallback(() => {
+    if (!wbRef.current) {
+      throw new Error("No Workbook");
+    }
 
     if (wbRef.current === null) {
       throw new Error("Expected workbook");
@@ -296,7 +426,7 @@ export default function Sheet() {
     );
     // TODO: use changedUID to remove or update? audio assets
 
-    const saveP = saveSheetServiceWorker(sheet, data, hash);
+    const saveP = saveSheetServiceWorker(sheet.name, data, hash);
 
     // store workbook in indexedDB
     // (keep ordering and notes)
@@ -307,97 +437,77 @@ export default function Sheet() {
       )
     );
 
-    void saveP.then(({ hash, name }) => {
-      switch (name) {
-        case "Kanji":
-          dispatch(setVersion({ name: "kanji", hash }));
-          dispatch(clearKanji());
-          dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
-          break;
-        case "Vocabulary":
-          dispatch(setVersion({ name: "vocabulary", hash }));
-          dispatch(clearVocabulary());
-          dispatch(clearOpposites());
-          dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
-          break;
-        case "Phrases":
-          dispatch(setVersion({ name: "phrases", hash }));
-          dispatch(clearPhrases());
-          dispatch(clearParticleGame());
-          dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
-          break;
-        default:
-          throw new Error("Incorrect sheet name: " + name);
-      }
-
-      // update service worker cache.json file with app state versions
-      void dispatch(setSwVersions());
-    });
+    void saveP.then(({ hash, name }) =>
+      updateStateAndCacheCB(name, hash, metaUpdatedUids)
+    );
 
     // local data edited, do not fetch use cached cache.json
     void dispatch(setLocalDataEdited(true));
-  }, [dispatch, phraseList, vocabList, kanjiList]);
+  }, [
+    dispatch,
+    updateStateAndCacheCB,
+    phraseList,
+    vocabList,
+    kanjiList,
+  ]);
 
-  const downloadSheetsCB = useCallback(() => {
-    //https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Working_with_files
+  const downloadFileHandlerCB = useCallback(
+    (files: { fileName: string; text: string }[]) => {
+      files.forEach(({ fileName, text }) => {
+        const file = new Blob([text], {
+          type: "application/plaintext; charset=utf-8",
+        });
+        // const file = new Blob(['csv.file'],{type:"octet/stream"})
+        // const f = new File([file], './file.csv', {type:"octet/stream"})
 
+        const dlUrl = URL.createObjectURL(file);
+        // window.location.assign(dlUrl)
+
+        // URL.revokeObjectURL()
+        // browser.downloads.download(URL.createObjectURL(file))
+        const a = document.createElement("a");
+        a.download = fileName;
+        a.href = dlUrl;
+        // document.body.appendChild(a)
+        a.click();
+
+        setTimeout(() => {
+          // document.body.removeChild(a)
+          URL.revokeObjectURL(dlUrl);
+        }, 0);
+      });
+
+      return Promise.resolve();
+    },
+    []
+  );
+
+  const exportAppDataToFileHandlerCB = useCallback(() => {
+    // TODO: should zip and include settings?
+
+    // TODO: should be from indexedDB (what's saved) unless nothing avail
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
-    if (xObj) {
-      const filesP = xObj.map((xObjSheet: FilledSheetData) => {
-        const fileSim = new EventEmitter();
 
-        const fileWriterSimulator = {
-          write: (line: string) => {
-            fileSim.emit("write", line);
-          },
-          end: () => {
-            fileSim.emit("end");
-          },
-        };
-
-        const csvP = new Promise<[string, string]>((resolve, _reject) => {
-          let file = "";
-          fileSim.on("write", (line) => {
-            file += line;
-          });
-
-          fileSim.on("end", () => {
-            resolve([xObjSheet.name, file]);
-          });
-        });
-
-        objectToCSV(xObjSheet, fileWriterSimulator);
-
-        return csvP;
-      });
-
-      void Promise.all(filesP).then((data1) => {
-        data1.forEach(([name, data]) => {
-          const file = new Blob([data], {
-            type: "application/plaintext; charset=utf-8",
-          });
-          // const file = new Blob(['csv.file'],{type:"octet/stream"})
-          // const f = new File([file], './file.csv', {type:"octet/stream"})
-
-          const dlUrl = URL.createObjectURL(file);
-          // window.location.assign(dlUrl)
-
-          // URL.revokeObjectURL()
-          // browser.downloads.download(URL.createObjectURL(file))
-          const a = document.createElement("a");
-          a.download = `${name}.csv`;
-          a.href = dlUrl;
-          // document.body.appendChild(a)
-          a.click();
-
-          setTimeout(() => {
-            // document.body.removeChild(a)
-            URL.revokeObjectURL(dlUrl);
-          }, 0);
-        });
-      });
+    // send AppCache UserSettings
+    let appSettings: { fileName: string; name: string; text: string }[] = [];
+    const ls = getLocalStorageSettings(localStorageKey);
+    if (ls) {
+      appSettings = [
+        {
+          fileName: metaDataNames.settings.file,
+          name: metaDataNames.settings.prettyName,
+          text: JSON.stringify(ls),
+        },
+      ];
     }
-  }, []);
+
+    void xObjectToCsvText(xObj).then((fileDataSet) =>
+      downloadFileHandlerCB([
+        ...fileDataSet.map((f) => ({ fileName: f.name + ".csv", ...f })),
+        ...appSettings,
+      ])
+    );
+  }, [downloadFileHandlerCB]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -454,7 +564,7 @@ export default function Sheet() {
     // const e = new Event("contextmenu")
     // document.querySelector('.x-spreadsheet-table').dispatchEvent(e)
 
-    // TODO: find better way to do this
+    // TODO: show context-menu hack
     const menu = document.querySelector(".x-spreadsheet-contextmenu");
     const items = menu?.children;
     /**
@@ -491,35 +601,152 @@ export default function Sheet() {
     menu?.setAttribute("style", css);
   }, []);
 
+  const [dataAction, setDataAction] = useState<
+    "menu" | "importSync" | "exportSync" | "importFile"
+  >();
+  const closeDataAction = useCallback(() => {
+    setDataAction(undefined);
+  }, []);
+  const openDataActionMenuCB = useCallback(() => {
+    setDataAction("menu");
+  }, []);
+  const openImportFileCB = useCallback(() => {
+    setDataAction("importFile");
+  }, []);
+  const openImportSyncCB = useCallback(() => {
+    setDataAction("importSync");
+  }, []);
+  const openExportSyncCB = useCallback(() => {
+    setDataAction("exportSync");
+  }, []);
+
+  /**
+   * Imports datasets and settings to app
+   */
+  const importDataHandlerCB = useCallback(
+    (
+      importWorkbook?: FilledSheetData[],
+      importSettings?: Partial<LocalStorageState>
+    ) => {
+      let importCompleteP: Promise<unknown>[] = [];
+      if (importSettings && Object.keys(importSettings).length > 0) {
+        // write to device's local storage
+        setLocalStorage(localStorageKey, importSettings);
+
+        // initialize app setttings from local storage
+        const settingsP = dispatch(localStorageSettingsInitialized());
+
+        // eslint-disable-next-line
+        importCompleteP = [...importCompleteP, settingsP];
+      }
+
+      if (importWorkbook && importWorkbook.length > 0) {
+        const workbookP = getWorkbookFromIndexDB(dispatch, getDatasets).then(
+          (dbWorkbook) => {
+            const trimmed = Object.values(workbookSheetNames).map((w) => {
+              const { prettyName: prettyName } = w;
+
+              const fileSheet = importWorkbook.find(
+                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+              );
+              if (fileSheet) {
+                return removeLastRowIfBlank(fileSheet);
+              }
+
+              const dbSheet = dbWorkbook.find(
+                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+              );
+              if (dbSheet) {
+                return dbSheet;
+              }
+
+              // if it never existed add blank placeholder
+              return jtox(
+                {
+                  /** no data just headers */
+                },
+                prettyName
+              );
+            });
+
+            // store workbook in indexedDB
+            // update cached json objects
+            return Promise.all([
+              openIDB().then((db) =>
+                putIDBItem(
+                  { db, store: IDBStores.WORKBOOK },
+                  { key: "0", workbook: trimmed }
+                )
+              ),
+              ...trimmed.map((sheet) => {
+                const { data, hash } = sheetDataToJSON(
+                  sheet as FilledSheetData
+                );
+                return saveSheetServiceWorker(sheet.name, data, hash).then(() =>
+                  updateStateAndCacheCB(sheet.name, hash)
+                );
+              }),
+            ]).then(() => {
+              // reload workbook (update useEffect)
+              setWorkbookImported(Date.now());
+
+              // local data edited, do not fetch use cached cache.json
+              void dispatch(setLocalDataEdited(true));
+              return;
+            });
+          }
+        );
+
+        // eslint-disable-next-line
+        importCompleteP = [...importCompleteP, workbookP];
+      }
+
+      return Promise.all(importCompleteP).then(() => Promise.resolve());
+    },
+    [dispatch, updateStateAndCacheCB]
+  );
+
   return (
     <>
       <div className="sheet main-panel pt-2">
+        <DataSetActionMenu
+          visible={dataAction === "menu"}
+          close={closeDataAction}
+          saveChanges={saveSheetHandlerCB}
+          importFromFile={openImportFileCB}
+          importFromSync={openImportSyncCB}
+          exportToFile={exportAppDataToFileHandlerCB}
+          exportToSync={openExportSyncCB}
+        />
+        <DataSetImportFile
+          visible={dataAction === "importFile"}
+          close={closeDataAction}
+          updateDataHandler={importDataHandlerCB}
+        />
+        <DataSetExportSync
+          visible={dataAction === "exportSync"}
+          close={closeDataAction}
+        />
+        <DataSetImportSync
+          visible={dataAction === "importSync"}
+          close={closeDataAction}
+          downloadFileHandler={downloadFileHandlerCB}
+          updateDataHandler={importDataHandlerCB}
+        />
+
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
             <Fab
-              aria-label="Save Sheet"
+              aria-label="DataSet Actions"
               aria-disabled={!cookies}
               variant="extended"
               size="small"
               disabled={!cookies}
-              onClick={saveSheetCB}
+              onClick={openDataActionMenuCB}
               className="m-0 z-index-unset"
               tabIndex={3}
-              color={uploadError ? "error" : undefined}
             >
-              <ShareIcon size="small" />
-            </Fab>
-          </div>
-          <div className="pt-1 pe-1">
-            <Fab
-              aria-label="Download Sheet"
-              variant="extended"
-              size="small"
-              onClick={downloadSheetsCB}
-              className="m-0 z-index-unset"
-              tabIndex={4}
-            >
-              <DesktopDownloadIcon size="small" />
+              <GearIcon size="small" />
             </Fab>
           </div>
           {/* {externalSource === ExternalSourceType.LocalService &&

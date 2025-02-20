@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import rspack from "@rspack/core";
 import refreshPlugin from "@rspack/plugin-react-refresh";
+import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import path, { sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
@@ -15,6 +16,7 @@ const isDev = process.env.NODE_ENV === "development";
 // mimic CommonJS variables -- not needed if using CommonJS
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const nodeModulesDir = path.resolve(__dirname, "node_modules");
 
 export default function rspackConfig(
   /** @type string */ _env,
@@ -55,9 +57,14 @@ export default function rspackConfig(
       // solution for
       // 'npm link ../child-module'
       // with peerDependency
-      modules: [path.resolve(__dirname, "node_modules"), "node_modules"],
+      modules: [nodeModulesDir, "node_modules"],
 
       extensions: ["...", ".ts", ".tsx"],
+      fallback: {
+        fs: false,
+        crypto: path.normalize(nodeModulesDir + path.sep + "crypto-browserify"),
+        stream: path.normalize(nodeModulesDir + path.sep + "stream-browserify"),
+      },
     },
     module: {
       rules: [
@@ -129,7 +136,7 @@ export default function rspackConfig(
       ...(isProduction
         ? [
             new LicenseCheckerWebpackPlugin({
-              allow: "MIT OR BSD-3-Clause OR CC-BY-4.0",
+              allow: "MIT OR BSD-3-Clause OR CC-BY-4.0 OR ISC",
               outputWriter: appendLicense,
             }),
           ]
@@ -160,6 +167,8 @@ export default function rspackConfig(
 
       new rspack.ProgressPlugin({}),
       isDev ? new refreshPlugin() : null,
+
+      new NodePolyfillPlugin(),
     ].filter(Boolean),
 
     devServer: {
