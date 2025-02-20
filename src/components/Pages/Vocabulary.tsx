@@ -1,5 +1,4 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
-import { amber } from "@mui/material/colors";
 import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
@@ -31,7 +30,7 @@ import {
   updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
-import { verbToTargetForm } from "../../helper/JapaneseVerb";
+import { getVerbFormsArray, verbToTargetForm } from "../../helper/JapaneseVerb";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import {
   getPercentOverdue,
@@ -55,6 +54,7 @@ import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
+import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch, RootState } from "../../slices";
 import { fetchAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
@@ -185,11 +185,8 @@ export default function Vocabulary() {
     goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
 
-  const { blastElRef, anchorElRef, text, setText } = useBlast({
+  const { blastElRef, text, setText } = useBlast({
     top: 10,
-    fontWeight: "normal",
-    fontSize: "xx-large",
-    color: amber[500],
   });
 
   const { filteredVocab } = useMemo(() => {
@@ -531,6 +528,24 @@ export default function Vocabulary() {
     timedPlayAnswerHandlerWrapper
   );
 
+  const wSize = useWindowSize();
+  const [{ xOffset, yOffset }, setScreenOffset] = useState({
+    xOffset: 0,
+    yOffset: 0,
+  });
+
+  useEffect(() => {
+    // force a recalculate on
+    // window resize
+    if (wSize.width !== undefined && wSize.height !== undefined) {
+      const halfWidth = wSize.width / 2;
+      const yOffset = wSize.height - 60; //   horizontal alignment spacing
+      const xOffset = halfWidth; //           vertical spacing
+
+      setScreenOffset({ xOffset, yOffset });
+    }
+  }, [wSize.height, wSize.width]);
+
   useMediaSession("Vocabulary Loop", loop, beginLoop, abortLoop, looperSwipe);
 
   useLayoutEffect(() => {
@@ -674,45 +689,67 @@ export default function Vocabulary() {
       vocabulary: RawVocabulary,
       isVerb: boolean,
       alreadyReviewed: boolean
-    ) => (
-      <div
-        className={classNames({
-          "vocabulary main-panel h-100": true,
-          "disabled-color": alreadyReviewed,
-        })}
-      >
-        <div className="tooltip-anchor" ref={anchorElRef}></div>
-        <div ref={blastElRef}>{text}</div>
+    ) => {
+      const verbFormDescr = isVerb
+        ? getVerbFormsArray(vocabulary).find((f) => f.name === verbForm)
+            ?.description ?? ""
+        : "";
+
+      return (
         <div
-          ref={HTMLDivElementSwipeRef}
-          className="d-flex justify-content-between h-100"
+          className={classNames({
+            "vocabulary main-panel h-100": true,
+            "disabled-color": alreadyReviewed,
+          })}
         >
-          <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-            <ChevronLeftIcon size={16} />
-          </StackNavButton>
+          <div
+            style={{
+              position: "absolute",
+              top: yOffset,
+              left: xOffset,
+            }}
+          >
+            <div className="text-nowrap translate-center-x">
+              {verbFormDescr}
+            </div>
+          </div>
+          <div
+            ref={blastElRef}
+            className="text-nowrap fs-display-6 question-color"
+          >
+            {text}
+          </div>
+          <div
+            ref={HTMLDivElementSwipeRef}
+            className="d-flex justify-content-between h-100"
+          >
+            <StackNavButton ariaLabel="Previous" action={gotoPrev}>
+              <ChevronLeftIcon size={16} />
+            </StackNavButton>
 
-          {isVerb && autoVerbView ? (
-            <VerbMain
-              verb={vocabulary}
-              reCache={recacheAudio}
-              linkToOtherTerm={(uid) => setReinforcedUID(uid)}
-              showHint={showHint === uid}
-            />
-          ) : (
-            <VocabularyMain
-              vocabulary={vocabulary}
-              reCache={recacheAudio}
-              showHint={showHint === uid}
-              wasPlayed={wasPlayed}
-            />
-          )}
+            {isVerb && autoVerbView ? (
+              <VerbMain
+                verb={vocabulary}
+                reCache={recacheAudio}
+                linkToOtherTerm={(uid) => setReinforcedUID(uid)}
+                showHint={showHint === uid}
+              />
+            ) : (
+              <VocabularyMain
+                vocabulary={vocabulary}
+                reCache={recacheAudio}
+                showHint={showHint === uid}
+                wasPlayed={wasPlayed}
+              />
+            )}
 
-          <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
-            <ChevronRightIcon size={16} />
-          </StackNavButton>
+            <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
+              <ChevronRightIcon size={16} />
+            </StackNavButton>
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
     [
       gotoNextSlide,
       gotoPrev,
@@ -721,9 +758,11 @@ export default function Vocabulary() {
       recacheAudio,
       showHint,
       wasPlayed,
-      anchorElRef,
       blastElRef,
       text,
+      verbForm,
+      xOffset,
+      yOffset,
     ]
   );
 
@@ -1140,22 +1179,25 @@ function useBuildGameActionsHandler(
             sayObj = {
               ...vocabulary,
               japanese: verb.toString(),
+              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
               pronounce: vocabulary.pronounce && verb.getPronunciation(),
               form: verbForm,
             };
           } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
             const naAdj = JapaneseText.parse(vocabulary).append(
+              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
               naFlip.current && "な"
             );
 
             sayObj = {
               ...vocabulary,
               japanese: naAdj.toString(),
+              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
               pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
               form: naFlip.current,
             };
 
-            naFlip.current = naFlip.current ? undefined : "-na";
+            naFlip.current = naFlip.current !== undefined ? undefined : "-na";
           } else {
             sayObj = vocabulary;
           }

@@ -1,106 +1,69 @@
-import { offset, shift, useFloating } from "@floating-ui/react-dom";
 import classNames from "classnames";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useWindowSize } from "./useWindowSize";
 
 interface BlastDefaults {
   top?: number;
-  fontWeight?: "bold" | "bolder" | "normal" | "lighter";
-  fontSize?: "xxx-large" | "xx-large" | "x-large" | "large" | "medium";
-  color?: string;
 }
 /**
  * Display a fading text on the center of the screen
  */
-export function useBlast({
-  top,
-  fontWeight,
-  fontSize,
-  color,
-}: BlastDefaults = {}) {
+export function useBlast({ top }: BlastDefaults = {}) {
   const [text, setText] = useState("");
+  const floating = useRef<HTMLDivElement>(null);
 
-  const [floatDim, setOffset] = useState({ w: 0, h: 0 });
-  const w = useWindowSize();
-  const { x, y, strategy, refs, update } = useFloating({
-    placement: "bottom",
-    middleware: [
-      offset({
-        mainAxis: w.height === undefined ? 0 : w.height / 2 - floatDim.h,
-        crossAxis: 0,
-      }),
-      shift(),
-    ],
+  const wSize = useWindowSize();
+  const [{ xOffset, yOffset }, setScreenOffset] = useState({
+    xOffset: 0,
+    yOffset: top ?? 0,
   });
 
-  // get wrong answer float dimensions
   useEffect(() => {
-    const floatW = refs.floating.current?.clientWidth;
-    const floatH = refs.floating.current?.clientHeight;
+    // force a recalculate on
+    // window resize
+    if (wSize.width !== undefined && wSize.height !== undefined) {
+      const yOffset = top ?? wSize.height / 2; //   horizontal alignment spacing
+      const xOffset = wSize.width / 2; //   vertical spacing
 
-    if (text.length > 0 && floatW && floatW > 0 && floatH && floatH > 0) {
-      setOffset({
-        w: floatW,
-        h: floatH,
-      });
-      update();
+      setScreenOffset({ xOffset, yOffset });
     }
-  }, [text, setOffset, refs.floating, update]);
+  }, [wSize.height, wSize.width, top]);
 
-  if (refs.floating.current !== null) {
-    refs.floating.current.style.top = "";
-    const style = {
-      position: strategy,
-      top: `${top ?? y ?? 0}px`,
-      left: `${x ?? 0}px`,
-      // width: "max-content",  // breaks vertical view \w long text
-
-      fontWeight: fontWeight ?? "bold",
-      fontSize: fontSize ?? "xxx-large",
-      color: color,
+  const style = useMemo(() => {
+    return {
+      position: "absolute",
+      top: `${yOffset}px`,
+      left: `${xOffset}px`,
+      transform:
+        top !== undefined ? "translate(-50%,0)" : "translate(-50%,-50%)",
     };
+  }, [xOffset, yOffset, top]);
 
-    refs.floating.current.className = classNames({
+  if (floating.current !== null) {
+    const inlineClasses = floating.current.className
+      .split(" ")
+      .reduce((acc, c) => {
+        return { ...acc, [c]: true };
+      }, {});
+    floating.current.className = classNames({
+      ...inlineClasses,
       "dark-mode-color": true,
       "notification-fade": text.length > 0,
-      "text-center text-wrap": true,
+      "text-center": true,
     });
 
     Object.keys(style).forEach((k) => {
       const key = k as keyof typeof style;
       const propStyle = style[key];
-      if (refs.floating.current !== null && propStyle) {
-        refs.floating.current.style[key] = propStyle;
+      if (floating.current !== null && propStyle !== undefined) {
+        floating.current.style[key] = propStyle;
       }
     });
   }
 
-  // const blastEl = (
-  //   <div
-  //     ref={refs.setFloating}
-  //     style={{
-  //       position: strategy,
-  //       top: y ?? 0,
-  //       left: x ?? 0,
-  //       width: "max-content",
-
-  //       fontWeight: "bold",
-  //       fontSize: "xxx-large",
-  //     }}
-  //     className={classNames({
-  //       "dark-mode-color": true,
-  //       "notification-fade": text.length > 0,
-  //     })}
-  //   >
-  //     {text}
-  //   </div>
-  // );
-
   return {
-    /*blastEl,*/
-    blastElRef: refs.setFloating,
-    anchorElRef: refs.setReference,
+    blastElRef: floating,
     text,
     setText,
   };

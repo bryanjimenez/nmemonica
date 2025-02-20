@@ -57,7 +57,7 @@ export default function VerbMain(props: VerbMainProps) {
 
   const buildTenseElement = (key: number, tense: VerbFormArray) => {
     const columnClass = classNames({
-      "pt-3 flex-shrink-1 d-flex flex-column justify-content-around text-nowrap":
+      "col pt-3 d-flex flex-column justify-content-around text-nowrap":
         true,
       "ps-sm-3": key === 0,
       "pe-sm-3": key !== 0,
@@ -140,7 +140,7 @@ export default function VerbMain(props: VerbMainProps) {
       />
     );
 
-    if (hintEnabled && showHint) {
+    if (hintEnabled.current && showHint) {
       if (englishSideUp) {
         const jHint = getJapaneseHint(japaneseObj);
         if (jHint) {
@@ -169,6 +169,7 @@ export default function VerbMain(props: VerbMainProps) {
     () => ({
       ...verb,
       japanese: japaneseObj.toString(),
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       pronounce: verb.pronounce && japaneseObj.getPronunciation(),
       form: verbForm,
     }),
@@ -194,9 +195,9 @@ export default function VerbMain(props: VerbMainProps) {
   );
 
   return (
-    <>
+    <div className="row w-100">
       {buildTenseElement(0, t1)}
-      <div className="pt-3 w-100 d-flex flex-column justify-content-around text-center">
+      <div className="col-4 col-sm-7 pt-3 px-0 d-flex flex-column justify-content-around text-center">
         <Sizable
           breakPoint="md"
           smallClassName={{
@@ -233,7 +234,7 @@ export default function VerbMain(props: VerbMainProps) {
       </div>
 
       {buildTenseElement(2, t2)}
-    </>
+    </div>
   );
 }
 

@@ -245,6 +245,14 @@ a {
   transform: rotate(270deg);
 }
 
+.translate-center-y {
+  transform: translate(0, -50%);
+}
+
+.translate-center-x {
+  transform: translate(-50%, 0);
+}
+
 .notification {
   width: 0;
   display: inline-block;

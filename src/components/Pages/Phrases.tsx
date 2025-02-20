@@ -1,5 +1,4 @@
 import { LinearProgress } from "@mui/material";
-import { amber } from "@mui/material/colors";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -175,11 +174,8 @@ export default function Phrases() {
     goalPending.current = initGoalPending(viewGoal, repetition);
   }, []);
 
-  const { blastElRef, anchorElRef, text, setText } = useBlast({
+  const { blastElRef, text, setText } = useBlast({
     top: 10,
-    fontWeight: "normal",
-    fontSize: "xx-large",
-    color: amber[500],
   });
 
   const filteredPhrases = useMemo(() => {
@@ -729,8 +725,12 @@ export default function Phrases() {
           "disabled-color": alreadyReviewed,
         })}
       >
-        <div className="tooltip-anchor" ref={anchorElRef}></div>
-        <div ref={blastElRef}>{text}</div>
+        <div
+          ref={blastElRef}
+          className="text-nowrap fs-display-6 question-color"
+        >
+          {text}
+        </div>
         <DialogMsg
           open={lesson}
           onClose={closeLesson}
