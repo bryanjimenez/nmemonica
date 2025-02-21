@@ -16,7 +16,7 @@ import React, {
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { pronounceEndoint } from "../../../environment.development";
+import { pronounceEndpoint } from "../../../environment.development";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
@@ -462,7 +462,7 @@ export default function Phrases() {
     order,
     filteredPhrases,
     recacheAudio,
-    pronounceEndoint
+    pronounceEndpoint
   );
 
   // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);

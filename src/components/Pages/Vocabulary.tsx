@@ -19,7 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
-import { pronounceEndoint } from "../../../environment.development";
+import { pronounceEndpoint } from "../../../environment.development";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
@@ -524,7 +524,7 @@ export default function Vocabulary() {
     recacheAudio,
     naFlip,
     setWasPlayed,
-    pronounceEndoint
+    pronounceEndpoint
   );
 
   const deviceMotionEvent = useDeviceMotionActions(motionThreshold);

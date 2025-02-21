@@ -1,6 +1,6 @@
 import { UnmuteIcon } from "@primer/octicons-react";
 
-import { pronounceEndoint } from "../../../environment.development";
+import { pronounceEndpoint } from "../../../environment.development";
 import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import { addParam } from "../../helper/urlHelper";
 import { fetchAudio } from "../../slices/audioHelper";
