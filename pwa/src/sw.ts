@@ -14,7 +14,7 @@ import { DebugLevel } from "../../src/slices/settingHelper";
 import { getParam, removeParam } from "../../src/helper/urlHelper";
 import {
   audioServicePath,
-  pronounceEndoint,
+  pronounceEndpoint,
   uiEndpoint,
 } from "../../environment.development";
 
@@ -37,7 +37,7 @@ const jsVersion = process.env.SW_MAIN_VERSION;
 const bundleVersion = process.env.SW_BUNDLE_VERSION;
 
 let urlAppUI = uiEndpoint;
-let urlPronounceService = pronounceEndoint;
+let urlPronounceService = pronounceEndpoint;
 let audioPath = audioServicePath;
 
 const swSelf = globalThis.self as unknown as ServiceWorkerGlobalScope;
