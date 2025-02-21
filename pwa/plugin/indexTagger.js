@@ -46,19 +46,18 @@ export async function indexTagHelperPlugin(compiler) {
           });
 
           const dataUri = "data:text/javascript;charset=utf-8,";
-          const { dataService, audioService } = await import(
+          const { audioService } = await import(
             dataUri + encodeURIComponent(envSource)
           );
 
           const ContentSecurityPolicy = "<!--Content-Security-Policy-->";
           const ContentSecurityPolicyTag =
-            `<meta http-equiv="Content-Security-Policy" content="default-src 'self' ` +
-            dataService +
-            `; script-src 'self'` +
+            `<meta http-equiv="Content-Security-Policy" content="default-src 'self'` +
+            // wasm-unsafe-eval https://github.com/WebAssembly/content-security-policy/issues/7
+            `; script-src 'self' 'wasm-unsafe-eval'` +
             `; media-src ` +
             audioService +
             `; connect-src 'self' ` +
-            dataService +
             " " +
             audioService +
             `; style-src 'self' 'unsafe-inline';" />`;
@@ -74,9 +73,9 @@ export async function indexTagHelperPlugin(compiler) {
           const XFrameOptions = "<!--X-Frame-Options-->";
           const XFrameOptionsTag = `<meta http-equiv="X-Frame-Options" content="DENY" />`;
 
-          const PreConnect = "<!--PreConnect-->";
-          const PreConnectTag =
-            `<link rel="preconnect" href="` + dataService + `">`;
+          // const PreConnect = "<!--PreConnect-->";
+          // const PreConnectTag =
+          //   `<link rel="preconnect" href="` + data Service + `">`;
 
           const dependencies = `
     <link href="${mainCss.name}" rel="stylesheet" />
@@ -93,8 +92,8 @@ export async function indexTagHelperPlugin(compiler) {
             .join(XContentTypeOptionsTag)
             .split(XFrameOptions)
             .join(XFrameOptionsTag)
-            .split(PreConnect)
-            .join(PreConnectTag)
+            // .split(PreConnect)
+            // .join(PreConnectTag)
             .split("</head>")
             .join(dependencies);
 
