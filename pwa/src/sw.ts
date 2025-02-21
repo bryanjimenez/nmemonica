@@ -1,8 +1,5 @@
-import {
-  SWMsgOutgoing,
-  SWRequestHeader,
-} from "../../src/helper/serviceWorkerHelper";
 import { uiEndpoint } from "../../environment.development";
+import { SWMsgOutgoing } from "../../src/helper/serviceWorkerHelper";
 import { DebugLevel } from "../../src/helper/consoleHelper";
 
 /**
@@ -43,28 +40,6 @@ function getAppVersion() {
   return { swVersion, jsVersion, bundleVersion };
 }
 
-/**
- * Cache all data resources
- */
-// function cacheAllDataResource(baseUrl: string) {
-//   return caches
-//     .open(appDataCache)
-//     .then((cache) =>
-//       cache.add(baseUrl + dataVerPath).then(() =>
-//         Promise.all(
-//           dataSourcePath.map((path) => {
-//             const url = baseUrl + path;
-//             return getVersionForData(new Request(url)).then((v) =>
-//               cacheVerData(new Request(url), v)
-//             );
-//           })
-//         )
-//       )
-//     )
-//     .catch(() => {
-//       console.log("[ServiceWorker] Data Prefech failed for some item");
-//     });
-// }
 /**
  * Cache all static site assets
  */
@@ -206,35 +181,9 @@ function fetchEventHandler(e: FetchEvent) {
     return;
   }
 
-  const req = e.request.clone();
   const url = e.request.url;
 
   switch (true) {
-    case /* github user data */
-    url.includes("githubusercontent") &&
-      req.headers.has(SWRequestHeader.DATA_VERSION): {
-      const version = e.request.headers.get(SWRequestHeader.DATA_VERSION);
-
-      const cacheP = caches
-        .open(appDataCache)
-        .then((cache) => cache.match(url + ".v" + version))
-        .then((v) => {
-          if (v === undefined) {
-            throw new Error(`Missing ${url + ".v" + version}`);
-          }
-          return v;
-        });
-      e.respondWith(cacheP);
-      break;
-    }
-
-    // case /* data */
-    // req.headers.has(SWRequestHeader.DATA_VERSION): {
-    //   const version = req.headers.get(SWRequestHeader.DATA_VERSION);
-    //   e.respondWith(appDataReq(req, version));
-    //   break;
-    // }
-
     case /* UI asset */
     url.startsWith(urlAppUI) && !url.endsWith(".hot-update.json"):
       e.respondWith(appAssetReq(url));

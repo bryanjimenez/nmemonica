@@ -46,7 +46,7 @@ export async function indexTagHelperPlugin(compiler) {
           });
 
           const dataUri = "data:text/javascript;charset=utf-8,";
-          const { audioService, signalingService } = await import(
+          const { signalingService } = await import(
             dataUri + encodeURIComponent(envSource)
           );
 
@@ -55,14 +55,10 @@ export async function indexTagHelperPlugin(compiler) {
             `<meta http-equiv="Content-Security-Policy" content="default-src 'self'` +
             // wasm-unsafe-eval https://github.com/WebAssembly/content-security-policy/issues/7
             `; script-src 'self' 'wasm-unsafe-eval'` +
-            `; media-src ` +
-            audioService +
             `; img-src 'self' data: https:` +
             `; connect-src 'self' ` +
             " " +
             signalingService +
-            " " +
-            audioService +
             `; style-src 'self' 'unsafe-inline';" />`;
 
           // FIXME: remove unsafe-inline ^^^

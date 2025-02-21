@@ -7,19 +7,6 @@ export interface SwMessage {
   type: string;
 }
 
-export const SWRequestHeader = Object.freeze({
-  DATA_VERSION: "Data-Version",
-});
-
-export function hasHeader(
-  request: Request,
-  header: ValuesOf<typeof SWRequestHeader>
-) {
-  const [k, v] = Object.entries(header)[0];
-
-  return request.headers.get(k) === v;
-}
-
 export interface SWVersionInfo {
   swVersion: string;
   jsVersion: string;
