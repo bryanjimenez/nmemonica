@@ -1,9 +1,8 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, { useCallback, useReducer } from "react";
 
 import type { GameChoice, GameQuestion } from "./FourChoices";
-import StackNavButton from "../Form/StackNavButton";
+import ClickNavBtn from "../Form/ClickNavBtn";
 
 interface XChoicesProps {
   question: GameQuestion;
@@ -107,12 +106,12 @@ export default function XChoices(props: XChoicesProps) {
     );
   };
 
-  const gotoPrevLogic: React.MouseEventHandler = useCallback(() => {
+  const gotoPrevLogic = useCallback(() => {
     clearAnswers();
     gotoPrev();
   }, [clearAnswers, gotoPrev]);
 
-  const gotoNextLogic: React.MouseEventHandler = useCallback(() => {
+  const gotoNextLogic = useCallback(() => {
     clearAnswers();
     gotoNext();
   }, [clearAnswers, gotoNext]);
@@ -123,15 +122,11 @@ export default function XChoices(props: XChoicesProps) {
   return (
     <div className={mainPanel}>
       <div className="d-flex justify-content-between h-100">
-        <StackNavButton ariaLabel="Previous" action={gotoPrevLogic}>
-          <ChevronLeftIcon size={16} />
-        </StackNavButton>
+        <ClickNavBtn direction="previous" action={gotoPrevLogic} />
         <div className="choices d-flex justify-content-around flex-wrap w-100">
           {choices.map((c, i) => choiceButton(i))}
         </div>
-        <StackNavButton ariaLabel="Next" action={gotoNextLogic}>
-          <ChevronRightIcon size={16} />
-        </StackNavButton>
+        <ClickNavBtn direction="next" action={gotoNextLogic} />
       </div>
     </div>
   );

@@ -1,10 +1,5 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PulseIcon,
-  TrashIcon,
-} from "@primer/octicons-react";
+import { PulseIcon, TrashIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
 import React, {
@@ -97,6 +92,7 @@ import {
   logAudioError,
 } from "../../slices/voiceSlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
+import ClickNavBtn from "../Form/ClickNavBtn";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
@@ -110,7 +106,6 @@ import {
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
-import StackNavButton from "../Form/StackNavButton";
 import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
@@ -810,10 +805,7 @@ export default function Vocabulary() {
             ref={HTMLDivElementSwipeRef}
             className="d-flex justify-content-between h-100"
           >
-            <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-              <ChevronLeftIcon size={16} />
-            </StackNavButton>
-
+            <ClickNavBtn direction="previous" action={gotoPrev} />
             {isVerb && autoVerbView ? (
               <VerbMain
                 verb={vocabulary}
@@ -829,10 +821,7 @@ export default function Vocabulary() {
                 showMeaningSwipe={showMeaning}
               />
             )}
-
-            <StackNavButton ariaLabel="Next" action={gotoNext}>
-              <ChevronRightIcon size={16} />
-            </StackNavButton>
+            <ClickNavBtn direction="next" action={gotoNext} />
           </div>
         </div>
       );
@@ -1248,7 +1237,7 @@ function useBuildGameActionsHandler(
   setWasPlayed: (value: boolean) => void,
   englishSideUp: boolean,
   setShowMeaning: React.Dispatch<React.SetStateAction<boolean>>,
-  audioCacheStore: React.RefObject<AudioBufferRecord>,
+  audioCacheStore: React.RefObject<AudioBufferRecord>
 ) {
   return useCallback(
     async (direction: SwipeDirection, AbortController?: AbortController) => {

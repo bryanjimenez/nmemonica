@@ -56,7 +56,7 @@ Module._extensions[".js"] = function (module, filename) {
     if (filename.endsWith(".css")) {
       /**
        * From: https://github.com/TypeStrong/ts-node/issues/175
-       * /media/bryan/work/Node/jobs/nmemonica/src/css/StackNavButton.css:1
+       * /media/bryan/work/Node/jobs/nmemonica/src/css/ClickNavBtn.css:1
        * .main-panel .MuiButton {
        * ^
        * SyntaxError: Unexpected token '.'

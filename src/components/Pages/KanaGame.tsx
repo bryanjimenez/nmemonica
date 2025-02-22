@@ -1,4 +1,3 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -11,9 +10,9 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 import { RootState } from "../../slices";
 import { KanaType } from "../../slices/settingHelper";
 import type { ValuesOf } from "../../typings/utils";
+import ClickNavBtn from "../Form/ClickNavBtn";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
-import StackNavButton from "../Form/StackNavButton";
 
 interface Choice {
   val: string;
@@ -182,9 +181,7 @@ export default function KanaGame() {
     <>
       <div className={mainPanel}>
         <div className="d-flex justify-content-between w-100 h-100">
-          <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-            <ChevronLeftIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="previous" action={gotoPrev} />
           <div className="d-flex flex-column flex-sm-row justify-content-around w-100">
             {!wideMode.current && (
               <div
@@ -208,9 +205,7 @@ export default function KanaGame() {
               </div>
             </div>
           </div>
-          <StackNavButton ariaLabel="Next" action={gotoNext}>
-            <ChevronRightIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="next" action={gotoNext} />
         </div>
       </div>
       <div

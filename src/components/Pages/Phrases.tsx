@@ -1,9 +1,5 @@
 import { LinearProgress } from "@mui/material";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  TrashIcon,
-} from "@primer/octicons-react";
+import { TrashIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
 import React, {
@@ -88,6 +84,7 @@ import {
 } from "../../slices/voiceSlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
+import ClickNavBtn from "../Form/ClickNavBtn";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
@@ -101,7 +98,6 @@ import {
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
-import StackNavButton from "../Form/StackNavButton";
 import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 
@@ -751,9 +747,8 @@ export default function Phrases() {
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
         >
-          <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-            <ChevronLeftIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="previous" action={gotoPrev} />
+
           <div
             className={classNames({
               "pt-3 d-flex flex-column justify-content-around text-center":
@@ -779,9 +774,7 @@ export default function Phrases() {
             </Sizable>
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>
-          <StackNavButton ariaLabel="Next" action={gotoNext}>
-            <ChevronRightIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="next" action={gotoNext} />
         </div>
       </div>
       <div
