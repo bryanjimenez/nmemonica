@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { NotReady } from "./NotReady";
 import SimpleListMenu from "./SimpleListMenu";
-import { initGoalPending } from "../../helper/gameHelper";
+import { calcGoalPending } from "../../helper/gameHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -11,7 +11,7 @@ import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { ValuesOf } from "../../typings/utils";
 
 interface GoalResumeMessageProps {
-  goal: "Phrases" | "Vocabulary" | "Kanji";
+  goal: string;
   setResumeSort: (i: number) => void;
   allowed: ValuesOf<typeof TermSortBy>[];
 }
@@ -61,6 +61,9 @@ export function partialProgress(goal: number | undefined, pending: number) {
 
 export function GoalResumeMessage(props: GoalResumeMessageProps) {
   const { goal, setResumeSort, allowed } = props;
+  if (!["Phrases", "Vocabulary", "Kanji"].includes(goal)) {
+    throw new Error(`Unexpected goal: ${goal}`);
+  }
 
   const { viewGoal: kanjiGoal, repetition: kanjiMeta } = useConnectKanji();
   const { viewGoal: vocabGoal, repetition: vocabMeta } = useConnectVocabulary();
@@ -69,9 +72,9 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
   const timer = useRef<number | undefined>(-1);
 
   const { kPend, vPend, pPend, viewGoal, goalPending } = useMemo(() => {
-    const kPend = initGoalPending(kanjiGoal, kanjiMeta);
-    const vPend = initGoalPending(vocabGoal, vocabMeta);
-    const pPend = initGoalPending(phraseGoal, phraseMeta);
+    const kPend = calcGoalPending(kanjiGoal, kanjiMeta);
+    const vPend = calcGoalPending(vocabGoal, vocabMeta);
+    const pPend = calcGoalPending(phraseGoal, phraseMeta);
 
     let viewGoal, goalPending;
     switch (goal) {
@@ -83,23 +86,30 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
         viewGoal = vocabGoal;
         goalPending = vPend;
         break;
-      case "Kanji":
+      default:
+        // case "Kanji":
         viewGoal = kanjiGoal;
         goalPending = kPend;
-        break;
-      default:
         break;
     }
 
     return { kPend, vPend, pPend, viewGoal, goalPending };
-  }, [kanjiGoal, kanjiMeta, phraseGoal, phraseMeta, vocabGoal, vocabMeta]);
+  }, [
+    goal,
+    kanjiGoal,
+    kanjiMeta,
+    phraseGoal,
+    phraseMeta,
+    vocabGoal,
+    vocabMeta,
+  ]);
 
   const total = (kanjiGoal ?? 0) + (vocabGoal ?? 0) + (phraseGoal ?? 0);
   const totalPending =
     total -
-    ((kPend < 1 ? kanjiGoal ?? 0 : 0) +
-      (vPend < 1 ? vocabGoal ?? 0 : 0) +
-      (pPend < 1 ? phraseGoal ?? 0 : 0));
+    ((kPend < 1 ? (kanjiGoal ?? 0) : 0) +
+      (vPend < 1 ? (vocabGoal ?? 0) : 0) +
+      (pPend < 1 ? (phraseGoal ?? 0) : 0));
 
   const k = partialProgress(kanjiGoal, kPend);
   const v = partialProgress(vocabGoal, vPend);
@@ -109,19 +119,17 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
     if (typeof timer.current === "number") {
       clearTimeout(timer.current);
 
-      if (goalPending !== undefined) {
-        //@ts-expect-error NodeJS.timer
-        timer.current = setTimeout(() => {
-          clearTimeout(timer.current);
+      //@ts-expect-error NodeJS.timer
+      timer.current = setTimeout(() => {
+        clearTimeout(timer.current);
 
-          // goalPending can be negative (denotes goal exceeded by)
-          const g = partialGoal(viewGoal, goalPending, totalPending);
-          const t = ((k + v + p) / total) * 100;
+        // goalPending can be negative (denotes goal exceeded by)
+        const g = partialGoal(viewGoal, goalPending, totalPending);
+        const t = ((k + v + p) / total) * 100;
 
-          setGoalProgress(g);
-          setTotalProgress(t);
-        }, 2000);
-      }
+        setGoalProgress(g);
+        setTotalProgress(t);
+      }, 2000);
     }
   });
 
@@ -167,7 +175,7 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
       </div>
       <LinearProgress
         variant="buffer"
-        color="warning"
+        color={goalPending > 0 ? "warning" : "success"}
         value={goalProgress}
         valueBuffer={totalProgress}
       />

@@ -34,7 +34,6 @@ import {
   getPendingReduceFiltered,
   getTerm,
   getTermUID,
-  initGoalPending,
   japaneseLabel,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
@@ -58,6 +57,7 @@ import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
+import { useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -174,10 +174,8 @@ export default function Phrases() {
     setTagMenu(true);
   }, []);
 
-  /** Number of review items still pending (-1: no goal or already met)*/
-  const goalPending = useRef<number>(-1);
-  const [goalProgress, setGoalProgress] = useState<number | null>(null);
-  const userSetGoal = useRef(viewGoal);
+  const { goalPendingREF, progressBarColor, goalProgress, setGoalProgress } =
+    useGoalProgress(viewGoal, metadata);
 
   const [lesson, setLesson] = useState(false);
 
@@ -194,11 +192,6 @@ export default function Phrases() {
   useEffect(() => {
     const { current: populateDataSets } = populateDataSetsRef;
     populateDataSets();
-
-    goalPending.current = initGoalPending(
-      userSetGoal.current,
-      metadata.current
-    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
@@ -480,7 +473,7 @@ export default function Phrases() {
         prevSelectedIndex: prevState.selectedIndex,
         prevTimestamp: prevState.lastNext,
         progressTotal: filteredPhrases.length,
-        goalPending,
+        goalPending: goalPendingREF,
         setGoalProgress,
         setText,
       });
@@ -571,6 +564,9 @@ export default function Phrases() {
     setText,
     viewGoal,
     lastNext,
+
+    goalPendingREF,
+    setGoalProgress,
   ]);
 
   // Logger messages
@@ -707,7 +703,7 @@ export default function Phrases() {
       >
         <div
           ref={blastElRef}
-          className="text-nowrap fs-display-6 question-color"
+          className="text-nowrap fs-display-6 correct-color"
         >
           {text}
         </div>

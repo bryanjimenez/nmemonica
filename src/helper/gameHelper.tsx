@@ -41,11 +41,27 @@ interface DailyGoal {
 
 /**
  * Initialize goalPending with count of items pending till goal
- * @note returns `-1` when no goal is set or already met
+ * @returns
+ * -1: no goal
+ * -2: met goal
  * @param viewGoal User-set goal
  * @param repetition
  */
 export function initGoalPending(
+  viewGoal: number | undefined,
+  repetition: Record<string, MetaDataObj | undefined>
+) {
+  // get todays viewed total
+  const [alreadyViewedToday] = getLastViewCounts(repetition, 1);
+  // set goalPending to countdown if goal not yet reached
+  if (viewGoal !== undefined) {
+    return Math.max(-2, viewGoal - alreadyViewedToday);
+  }
+
+  return -1;
+}
+
+export function calcGoalPending(
   viewGoal: number | undefined,
   repetition: Record<string, MetaDataObj | undefined>
 ) {
@@ -58,6 +74,7 @@ export function initGoalPending(
 
   return -1;
 }
+
 /**
  * Logic to show progress and notification for set-goals
  */
@@ -75,7 +92,7 @@ export function updateDailyGoal({
 }: DailyGoal) {
   if (goalPending.current === 0) {
     setText(`${viewGoal} ${msg}`);
-    goalPending.current = -1;
+    goalPending.current = -2;
   } else if (
     viewGoal !== undefined &&
     goalPending.current > 0 &&

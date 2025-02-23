@@ -29,7 +29,6 @@ import {
   getPendingReduceFiltered,
   getTerm,
   getTermUID,
-  initGoalPending,
   minimumTimeForSpaceRepUpdate,
   termFilterByType,
   updateDailyGoal,
@@ -51,6 +50,7 @@ import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
@@ -241,10 +241,12 @@ export default function Kanji() {
 
   const { vocabList } = useConnectVocabulary();
 
-  /** Number of review items still pending (-1: no goal or already met)*/
-  const goalPending = useRef<number>(-1);
-  const [goalProgress, setGoalProgress] = useState<number | null>(null);
-  const userSetGoal = useRef(viewGoal);
+  /** metadata table ref */
+  const metadata = useRef(repetition);
+  metadata.current = repetition;
+
+  const { goalPendingREF, progressBarColor, goalProgress, setGoalProgress } =
+    useGoalProgress(viewGoal, metadata);
 
   const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
@@ -260,20 +262,11 @@ export default function Kanji() {
   useEffect(() => {
     const { current: populateDataSets } = populateDataSetsRef;
     populateDataSets();
-
-    goalPending.current = initGoalPending(
-      userSetGoal.current,
-      metadata.current
-    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
     top: 10,
   });
-
-  /** metadata table ref */
-  const metadata = useRef(repetition);
-  metadata.current = repetition;
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
@@ -570,7 +563,7 @@ export default function Kanji() {
         prevSelectedIndex: prevState.selectedIndex,
         prevTimestamp: prevState.lastNext,
         progressTotal: filteredTerms.length,
-        goalPending,
+        goalPending: goalPendingREF,
         setGoalProgress,
         setText,
       });
@@ -659,6 +652,9 @@ export default function Kanji() {
     setText,
     viewGoal,
     lastNext,
+
+    goalPendingREF,
+    setGoalProgress,
   ]);
 
   // Logger messages
@@ -793,7 +789,7 @@ export default function Kanji() {
         </div>
         <div
           ref={blastElRef}
-          className="text-nowrap fs-display-6 question-color"
+          className="text-nowrap fs-display-6 correct-color"
         >
           {text}
         </div>

@@ -35,7 +35,6 @@ import {
   getPendingReduceFiltered,
   getTerm,
   getTermUID,
-  initGoalPending,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
   termFilterByType,
@@ -63,6 +62,7 @@ import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
+import { useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -198,10 +198,8 @@ export default function Vocabulary() {
     setTagMenu(true);
   }, []);
 
-  /** Number of review items still pending (negative: goal already met)*/
-  const goalPending = useRef<number>(-1);
-  const [goalProgress, setGoalProgress] = useState<number | null>(null);
-  const userSetGoal = useRef(viewGoal);
+  const { goalPendingREF, progressBarColor, goalProgress, setGoalProgress } =
+    useGoalProgress(viewGoal, metadata);
 
   const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
@@ -212,11 +210,6 @@ export default function Vocabulary() {
   useEffect(() => {
     const { current: populateDataSets } = populateDataSetsRef;
     populateDataSets();
-
-    goalPending.current = initGoalPending(
-      userSetGoal.current,
-      metadata.current
-    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
@@ -635,7 +628,7 @@ export default function Vocabulary() {
         prevSelectedIndex: prevState.selectedIndex,
         prevTimestamp: prevState.lastNext,
         progressTotal: filteredVocab.length,
-        goalPending,
+        goalPending: goalPendingREF,
         setGoalProgress,
         setText,
       });
@@ -737,6 +730,8 @@ export default function Vocabulary() {
     lastNext,
 
     verbForm,
+    goalPendingREF,
+    setGoalProgress,
   ]);
 
   const getInnerPage = useCallback(
@@ -771,7 +766,7 @@ export default function Vocabulary() {
           </div>
           <div
             ref={blastElRef}
-            className="text-nowrap fs-display-6 question-color"
+            className="text-nowrap fs-display-6 correct-color"
           >
             {text}
           </div>
