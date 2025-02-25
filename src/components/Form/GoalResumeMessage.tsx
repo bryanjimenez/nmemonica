@@ -18,17 +18,17 @@ interface GoalResumeMessageProps {
 
 /**
  * Calculate the partial goal progress (0-100)
+ * @param totalPending Total goal minus already completed goals (Only pending total)
  * @param partialGoal Goal for **current** dataset
  * @param partialPending Pending for **current** dataset (negative denotes past complete)
- * @param totalPending Total goal minus already completed goals (Only pending total)
  */
 export function partialGoal(
-  partialGoal: number | undefined,
-  partialPending: number,
-  totalPending: number
+  totalPending: number,
+  partialGoal?: number,
+  partialPending?: number
 ) {
   // goal complete
-  if (partialPending < 1) {
+  if (partialPending === undefined) {
     return 100;
   }
 
@@ -45,9 +45,9 @@ export function partialGoal(
  * @param goal
  * @param pending
  */
-export function partialProgress(goal: number | undefined, pending: number) {
+export function partialProgress(goal?: number, pending?: number) {
   // goal complete
-  if (pending < 0) {
+  if (pending === undefined) {
     return goal ?? 0;
   }
 
@@ -107,9 +107,9 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
   const total = (kanjiGoal ?? 0) + (vocabGoal ?? 0) + (phraseGoal ?? 0);
   const totalPending =
     total -
-    ((kPend < 1 ? (kanjiGoal ?? 0) : 0) +
-      (vPend < 1 ? (vocabGoal ?? 0) : 0) +
-      (pPend < 1 ? (phraseGoal ?? 0) : 0));
+    ((kPend === undefined && kanjiGoal !== undefined ? kanjiGoal : 0) +
+      (vPend === undefined && vocabGoal !== undefined ? vocabGoal : 0) +
+      (pPend === undefined && phraseGoal !== undefined ? phraseGoal : 0));
 
   const k = partialProgress(kanjiGoal, kPend);
   const v = partialProgress(vocabGoal, vPend);
@@ -124,7 +124,7 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
         clearTimeout(timer.current);
 
         // goalPending can be negative (denotes goal exceeded by)
-        const g = partialGoal(viewGoal, goalPending, totalPending);
+        const g = partialGoal(totalPending, viewGoal, goalPending);
         const t = ((k + v + p) / total) * 100;
 
         setGoalProgress(g);

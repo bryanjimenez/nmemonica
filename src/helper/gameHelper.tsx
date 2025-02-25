@@ -65,14 +65,13 @@ export function calcGoalPending(
   viewGoal: number | undefined,
   repetition: Record<string, MetaDataObj | undefined>
 ) {
+  if (viewGoal === undefined) {
+    return undefined;
+  }
   // get todays viewed total
   const [alreadyViewedToday] = getLastViewCounts(repetition, 1);
   // set goalPending to countdown if goal not yet reached
-  if (viewGoal !== undefined) {
-    return viewGoal - alreadyViewedToday;
-  }
-
-  return -1;
+  return viewGoal - alreadyViewedToday;
 }
 
 /**

@@ -8,7 +8,7 @@ import {
 describe("GoalResumeMessage", function () {
   describe("partialGoal", function () {
     it("no goal", function () {
-      const actual = partialGoal(undefined, 4, 0);
+      const actual = partialGoal(0, undefined, 4);
       expect(actual).to.equal(1);
     });
   });
