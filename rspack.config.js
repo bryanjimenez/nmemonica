@@ -143,7 +143,7 @@ export default function rspackConfig(
       ...(isProduction
         ? [
             new LicenseCheckerWebpackPlugin({
-              allow: "MIT OR BSD-3-Clause OR CC-BY-4.0 OR ISC",
+              allow: "MIT OR BSD-3-Clause OR Apache-2.0 OR CC-BY-4.0 OR ISC",
               outputWriter: appendLicense,
             }),
           ]

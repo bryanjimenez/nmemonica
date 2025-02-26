@@ -1,6 +1,7 @@
 import { Button, Dialog, DialogContent } from "@mui/material";
 import {
   ArrowDownLeftIcon,
+  ArrowSwitchIcon,
   ArrowUpRightIcon,
   CloudIcon,
   DatabaseIcon,
@@ -18,6 +19,7 @@ interface DataSetActionMenuProps {
   importFromSync: () => void;
   exportToFile: () => void;
   exportToSync: () => void;
+  signaling: ()=> void;
 }
 
 export function DataSetActionMenu(props: DataSetActionMenuProps) {
@@ -29,6 +31,7 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
     importFromSync,
     exportToFile,
     exportToSync,
+    signaling,
   } = props;
 
   const saveChangesCB = useCallback(() => {
@@ -52,6 +55,10 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
   const exportToSyncCB = useCallback(() => {
     exportToSync();
   }, [exportToSync]);
+
+  const signalingCB = useCallback(() => {
+    signaling();
+  }, [signaling]);
 
   return (
     <Dialog
@@ -95,6 +102,13 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
               handler: exportToSyncCB,
               icon0: (p: Record<string, string>) => <CloudIcon {...p} />,
               icon1: (p: Record<string, string>) => <ArrowUpRightIcon {...p} />,
+            },
+            {
+              name: "Connection",
+              handler: signalingCB,
+              icon0: (p: Record<string, string>) => <ArrowSwitchIcon {...p} />,
+              icon1: ()=>null,
+              // icon1: (p: Record<string, string>) => <ArrowUpRightIcon {...p} />,
             },
           ].map((el) => {
             const primaryIcoProps = {
