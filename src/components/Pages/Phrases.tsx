@@ -38,7 +38,6 @@ import {
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
   termFilterByType,
-  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
@@ -57,7 +56,7 @@ import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import { useGoalProgress } from "../../hooks/useGoalProgress";
+import { updateDailyGoal, useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -886,7 +885,7 @@ export default function Phrases() {
           valueBuffer={goalProgress ?? undefined}
           // value={progress}
           // color={phrase_reinforce ? "secondary" : "primary"}
-          color={goalProgress === null ? "primary" : "warning"}
+          color={progressBarColor}
         />
       </div>
     </>

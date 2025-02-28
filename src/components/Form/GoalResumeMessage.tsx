@@ -1,9 +1,10 @@
 import { LinearProgress } from "@mui/material";
+import { type MetaDataObj } from "nmemonica";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { NotReady } from "./NotReady";
 import SimpleListMenu from "./SimpleListMenu";
-import { calcGoalPending } from "../../helper/gameHelper";
+import { getLastViewCounts } from "../../helper/statsHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -47,7 +48,7 @@ export function partialGoal(
  */
 export function partialProgress(goal?: number, pending?: number) {
   // goal complete
-  if (pending === undefined) {
+  if (pending === undefined || pending < 1) {
     return goal ?? 0;
   }
 
@@ -71,7 +72,20 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
 
   const timer = useRef<number | undefined>(-1);
 
-  const { kPend, vPend, pPend, viewGoal, goalPending } = useMemo(() => {
+  const {
+    kPend,
+    vPend,
+    pPend,
+    viewGoal,
+    goalPending,
+  }: {
+    kPend?: number;
+    vPend?: number;
+    pPend?: number;
+    viewGoal?: number;
+    /** undefined: calculation not finished */
+    goalPending?: number;
+  } = useMemo(() => {
     const kPend = calcGoalPending(kanjiGoal, kanjiMeta);
     const vPend = calcGoalPending(vocabGoal, vocabMeta);
     const pPend = calcGoalPending(phraseGoal, phraseMeta);
@@ -127,7 +141,8 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
         const g = partialGoal(totalPending, viewGoal, goalPending);
         const t = ((k + v + p) / total) * 100;
 
-        setGoalProgress(g);
+        // hide partial goal when all goals met
+        setGoalProgress(t === 100 ? 0 : g);
         setTotalProgress(t);
       }, 2000);
     }
@@ -181,4 +196,17 @@ export function GoalResumeMessage(props: GoalResumeMessageProps) {
       />
     </>
   );
+}
+
+function calcGoalPending(
+  viewGoal: number | undefined,
+  repetition: Record<string, MetaDataObj | undefined>
+) {
+  if (viewGoal === undefined) {
+    return undefined;
+  }
+  // get todays viewed total
+  const [alreadyViewedToday] = getLastViewCounts(repetition, 1);
+
+  return viewGoal - alreadyViewedToday;
 }

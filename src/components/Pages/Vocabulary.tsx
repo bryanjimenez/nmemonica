@@ -39,7 +39,6 @@ import {
   minimumTimeForTimedPlay,
   termFilterByType,
   toggleFuriganaSettingHelper,
-  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { getVerbFormsArray, verbToTargetForm } from "../../helper/JapaneseVerb";
@@ -62,7 +61,7 @@ import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
-import { useGoalProgress } from "../../hooks/useGoalProgress";
+import { updateDailyGoal, useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -1183,7 +1182,7 @@ export default function Vocabulary() {
         }
         value={goalProgress === null && tpAnimation === null ? progress : 0}
         valueBuffer={tpAnimation ?? goalProgress ?? undefined}
-        color={goalProgress === null ? "primary" : "warning"}
+        color={progressBarColor}
       />
     </div>
   );

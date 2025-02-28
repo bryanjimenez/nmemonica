@@ -31,7 +31,6 @@ import {
   getTermUID,
   minimumTimeForSpaceRepUpdate,
   termFilterByType,
-  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
@@ -50,7 +49,7 @@ import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import { useGoalProgress } from "../../hooks/useGoalProgress";
+import { updateDailyGoal, useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
@@ -1040,7 +1039,7 @@ export default function Kanji() {
           variant={goalProgress === null ? "determinate" : "buffer"}
           value={goalProgress === null ? progress : 0}
           valueBuffer={goalProgress ?? undefined}
-          color={goalProgress === null ? "primary" : "warning"}
+          color={progressBarColor}
         />
       </div>
     </React.Fragment>
