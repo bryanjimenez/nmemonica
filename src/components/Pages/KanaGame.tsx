@@ -163,7 +163,7 @@ export default function KanaGame() {
     }
   }, [selectedIndex, practiceSide, charSet, prepareGameCB]);
 
-  if (!question) return <NotReady addlStyle="kana" />;
+  if (question === undefined) return <NotReady addlStyle="kana" />;
 
   // console.log(question);
   // console.log(answer);
@@ -419,7 +419,7 @@ export function usePrepareGame({
   reinforce: Choice[];
   selectedIndex: number;
 }) {
-  const [question, setQuestion] = useState("undefined");
+  const [question, setQuestion] = useState<string>();
   const [answer, setAnswer] = useState<Choice>({
     val: "",
     hint: "",
