@@ -45,7 +45,6 @@ export interface GlobalInitSlice {
   console: ConsoleMessage[];
   swipeThreshold: number;
   motionThreshold: number;
-  lastImport: string[];
   encryptKey?: string;
 
   japaneseVoice: JapaneseVoiceType;
@@ -61,7 +60,6 @@ export const globalInitState: GlobalInitSlice = {
   console: [],
   swipeThreshold: 0,
   motionThreshold: 0,
-  lastImport: [],
 
   japaneseVoice: "default",
   englishVoice: "default",
@@ -300,35 +298,6 @@ const globalSlice = createSlice({
     setEncryptKey(state, action: PayloadAction<string | undefined>) {
       state.encryptKey = action.payload;
     },
-    setLastImport(state, action: PayloadAction<string>) {
-      const value = action.payload;
-
-      const path = "/global/";
-      const attr = "lastImport";
-      const time = new Date();
-
-      void getUserSettings().then((storage) => {
-        let lastImport: string[] = [value];
-        if (storage?.global.lastImport) {
-          lastImport = [...storage.global.lastImport, value];
-        }
-
-        // no more than 3 import events
-        if (lastImport.length > 3) {
-          lastImport = lastImport.slice(lastImport.length - 3);
-        }
-
-        void userSettingAttrUpdate(
-          time,
-          { global: state },
-          path,
-          attr,
-          lastImport
-        );
-
-        state.lastImport = lastImport;
-      });
-    },
   },
 
   extraReducers: (builder) => {
@@ -360,7 +329,6 @@ export const {
   toggleDarkMode,
   setMotionThreshold,
   setSwipeThreshold,
-  setLastImport,
   setJapaneseVoice,
   setEnglishVoice,
 
