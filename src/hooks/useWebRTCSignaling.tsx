@@ -21,7 +21,8 @@ export function useWebRTCSignaling(
   log?: (msg: string) => void
 ) {
 
-  const pc = useRef(new RTCPeerConnection());
+  // @ts-expect-error RTCPeerConnection sdpSemantics
+  const pc = useRef(new RTCPeerConnection({ sdpSemantics: "unified-plan" }));
   const [status, setStatus] = useState<RTCPeerConnection["iceConnectionState"]>(
     pc.current.iceConnectionState
   );
