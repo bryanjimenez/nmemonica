@@ -45,7 +45,6 @@ export interface GlobalInitSlice {
   console: ConsoleMessage[];
   swipeThreshold: number;
   motionThreshold: number;
-  encryptKey?: string;
 
   japaneseVoice: JapaneseVoiceType;
   englishVoice: EnglishVoiceType;
@@ -295,9 +294,6 @@ const globalSlice = createSlice({
         payload: { msg, lvl, origin: type },
       }),
     },
-    setEncryptKey(state, action: PayloadAction<string | undefined>) {
-      state.encryptKey = action.payload;
-    },
   },
 
   extraReducers: (builder) => {
@@ -334,6 +330,5 @@ export const {
 
   debugToggled,
   logger,
-  setEncryptKey,
 } = globalSlice.actions;
 export default globalSlice.reducer;
