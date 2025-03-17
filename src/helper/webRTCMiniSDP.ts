@@ -2,34 +2,75 @@
  * WebRTC Signaling helper functions
  */
 
-// TODO: create enum with field abbreviations (reuse fields)
 // TODO: a=setup actpass/active get from context (remove from msg)
 
-export interface MiniSDP {
-  cn: string;
-  o: string;
-  app: string;
-  fr: string;
-  pw: string;
-  fp: string;
-  s: string;
-  p: string;
+const SDP_MINI_SEP = "\u001E";
+const CAN_GROUP_SEP = "\u001D";
+
+export const enum MiniSDPFields {
+  /** Candidate Block */
+  canBlk = "candidateBlock",
+  o = "o",
+  app = "application",
+  ufrag = "ufrag",
+  pw = "password",
+  finger = "finger",
+  setup = "setup",
+  port = "port",
+  maxSize = "maxSize",
 }
 
+export interface MiniSDP {
+  [MiniSDPFields.canBlk]: string;
+  [MiniSDPFields.o]: string;
+  [MiniSDPFields.app]: string;
+  [MiniSDPFields.ufrag]: string;
+  [MiniSDPFields.pw]: string;
+  [MiniSDPFields.finger]: string;
+  [MiniSDPFields.setup]: string;
+  [MiniSDPFields.port]: string;
+  [MiniSDPFields.maxSize]: string;
+}
+
+export type MiniSDPString = string;
 /**
  * Transform a mini sdp object to mini sdp string
  */
-export function assembleSDPMiniString({
-  cn,
-  o,
-  app,
-  fr,
-  pw,
-  fp,
-  s,
-  p,
-}: MiniSDP) {
-  return `cn:${candidateAbbr(cn)}[o:${o}[app:${app}[fr:${fr}[pw:${pw}[fp:${fp}[s:${s}[p:${p}`;
+export function assembleSDPMiniString(sdp: MiniSDP): MiniSDPString {
+  return `\
+${candidateAbbr(sdp[MiniSDPFields.canBlk])}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.o]}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.app]}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.ufrag]}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.pw]}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.finger]}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.setup]}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.port]}${SDP_MINI_SEP}\
+${sdp[MiniSDPFields.maxSize]}`;
+}
+
+/**
+ * Transform a mini sdp object to plain sdp string
+ */
+export function assembleSDPPlain(sdp: MiniSDP) {
+  return `v=0
+o=${sdp[MiniSDPFields.o]}
+s=-
+t=0 0
+a=group:BUNDLE 0
+a=extmap-allow-mixed
+a=msid-semantic: WMS
+m=application ${sdp[MiniSDPFields.app]} UDP/DTLS/SCTP webrtc-datachannel
+${candidateExp(sdp[MiniSDPFields.canBlk])}
+a=ice-ufrag:${sdp[MiniSDPFields.ufrag]}
+a=ice-pwd:${sdp[MiniSDPFields.pw]}
+a=ice-options:trickle
+a=fingerprint:${sdp[MiniSDPFields.finger]}
+a=setup:${sdp[MiniSDPFields.setup]}
+a=mid:0
+a=sctp-port:${sdp[MiniSDPFields.port]}
+a=max-message-size:${sdp[MiniSDPFields.maxSize]}
+`;
 }
 
 const enum Abbreviations {
@@ -37,22 +78,25 @@ const enum Abbreviations {
   A_1 = "typ host generation",
   A_2 = "network-cost",
   A_3 = "network-id",
+  A_4 = "\na=candidate:",
 }
 
 function candidateAbbr(candidate: string) {
   return candidate
-    .replaceAll(Abbreviations.A_0, "A_0")
-    .replaceAll(Abbreviations.A_1, "A_1")
-    .replaceAll(Abbreviations.A_2, "A_2")
-    .replaceAll(Abbreviations.A_3, "A_3");
+    .replaceAll(Abbreviations.A_0, `${CAN_GROUP_SEP}0`)
+    .replaceAll(Abbreviations.A_1, `${CAN_GROUP_SEP}1`)
+    .replaceAll(Abbreviations.A_2, `${CAN_GROUP_SEP}2`)
+    .replaceAll(Abbreviations.A_3, `${CAN_GROUP_SEP}3`)
+    .replaceAll(Abbreviations.A_4, `${CAN_GROUP_SEP}4`);
 }
 
-function candidateExp(candidate: string) {
+export function candidateExp(candidate: string) {
   return candidate
-    .replaceAll("A_0", Abbreviations.A_0)
-    .replaceAll("A_1", Abbreviations.A_1)
-    .replaceAll("A_2", Abbreviations.A_2)
-    .replaceAll("A_3", Abbreviations.A_3);
+    .replaceAll(`${CAN_GROUP_SEP}0`, Abbreviations.A_0)
+    .replaceAll(`${CAN_GROUP_SEP}1`, Abbreviations.A_1)
+    .replaceAll(`${CAN_GROUP_SEP}2`, Abbreviations.A_2)
+    .replaceAll(`${CAN_GROUP_SEP}3`, Abbreviations.A_3)
+    .replaceAll(`${CAN_GROUP_SEP}4`, Abbreviations.A_4);
 }
 
 export function sdpShrink(plainSDP: string) {
@@ -67,11 +111,11 @@ export function sdpShrink(plainSDP: string) {
     .find((str) => str.startsWith("m=application"))
     ?.split(" ")[1];
 
-  const cn = sdp
+  const canBlk = sdp
     .split("\n")
     .filter((str) => str.startsWith("c=IN") || str.startsWith("a=candidate"))
     .join("\n");
-  const fr = sdp
+  const ufrag = sdp
     .split("\n")
     .find((str) => str.startsWith("a=ice-ufrag"))
     ?.split("ice-ufrag:")[1];
@@ -79,95 +123,99 @@ export function sdpShrink(plainSDP: string) {
     .split("\n")
     .find((str) => str.startsWith("a=ice-pw"))
     ?.split("ice-pwd:")[1];
-  const fp = sdp
+  const finger = sdp
     .split("\n")
     .find((str) => str.startsWith("a=fingerprint"))
     ?.split("fingerprint:")[1];
-  const s = sdp
+  const setup = sdp
     .split("\n")
     .find((str) => str.startsWith("a=setup"))
     ?.split("setup:")[1];
-  const p = sdp
+  const port = sdp
     .split("\n")
     .find((str) => str.startsWith("a=sctp-port"))
     ?.split("sctp-port:")[1];
 
-  const sdpObj = sdpMiniParamValidate({ cn, o, app, fr, pw, fp, s, p });
+  const maxSize = sdp
+    .split("\n")
+    .find((str) => str.startsWith("a=max-message-size"))
+    ?.split("max-message-size:")[1];
+
+  const sdpObj = sdpMiniParamValidate({
+    [MiniSDPFields.canBlk]: canBlk,
+    [MiniSDPFields.o]: o,
+    [MiniSDPFields.app]: app,
+    [MiniSDPFields.ufrag]: ufrag,
+    [MiniSDPFields.pw]: pw,
+    [MiniSDPFields.finger]: finger,
+    [MiniSDPFields.setup]: setup,
+    [MiniSDPFields.port]: port,
+    [MiniSDPFields.maxSize]: maxSize,
+  });
 
   return assembleSDPMiniString(sdpObj);
 }
 
-export function sdpExpand(minifiedSDP: string) {
-  const fields = minifiedSDP.split("[");
+export function sdpExpand(minifiedSDP: MiniSDPString) {
+  const [canBlk, o, app, ufrag, pw, finger, setup, port, maxSize] =
+    minifiedSDP.split(SDP_MINI_SEP);
 
-  const cn = fields.find((el) => el.startsWith("cn:"))?.replace("cn:", "");
-  const o = fields.find((el) => el.startsWith("o:"))?.replace("o:", "");
-  const app = fields.find((el) => el.startsWith("app:"))?.replace("app:", "");
-  const fr = fields.find((el) => el.startsWith("fr:"))?.replace("fr:", "");
-  const pw = fields.find((el) => el.startsWith("pw:"))?.replace("pw:", "");
-  const fp = fields.find((el) => el.startsWith("fp:"))?.replace("fp:", "");
-  const s = fields.find((el) => el.startsWith("s:"))?.replace("s:", "");
-  const p = fields.find((el) => el.startsWith("p:"))?.replace("p:", "");
+  const sdp = sdpMiniParamValidate({
+    [MiniSDPFields.canBlk]: canBlk,
+    [MiniSDPFields.o]: o,
+    [MiniSDPFields.app]: app,
+    [MiniSDPFields.ufrag]: ufrag,
+    [MiniSDPFields.pw]: pw,
+    [MiniSDPFields.finger]: finger,
+    [MiniSDPFields.setup]: setup,
+    [MiniSDPFields.port]: port,
+    [MiniSDPFields.maxSize]: maxSize,
+  });
 
-  const sdp = sdpMiniParamValidate({ cn, o, app, fr, pw, fp, s, p });
-
-  return `v=0
-o=${sdp.o}
-s=-
-t=0 0
-a=group:BUNDLE 0
-a=extmap-allow-mixed
-a=msid-semantic: WMS
-m=application ${sdp.app} UDP/DTLS/SCTP webrtc-datachannel
-${candidateExp(sdp.cn)}
-a=ice-ufrag:${sdp.fr}
-a=ice-pwd:${sdp.pw}
-a=ice-options:trickle
-a=fingerprint:${sdp.fp}
-a=setup:${sdp.s}
-a=mid:0
-a=sctp-port:${sdp.p}
-a=max-message-size:262144`;
+  return assembleSDPPlain(sdp);
 }
 
 /**
  * Ensure all required params are present
  * @throws if any parameter is missing
  */
-export function sdpMiniParamValidate({
-  cn,
-  o,
-  app,
-  fr,
-  pw,
-  fp,
-  s,
-  p,
-}: Partial<MiniSDP>) {
+export function sdpMiniParamValidate(sdp: Partial<MiniSDP>) {
   if (
-    cn === undefined ||
-    o === undefined ||
-    app === undefined ||
-    fr === undefined ||
-    pw === undefined ||
-    fp === undefined ||
-    s === undefined ||
-    p === undefined
+    sdp[MiniSDPFields.canBlk] === undefined ||
+    sdp[MiniSDPFields.o] === undefined ||
+    sdp[MiniSDPFields.app] === undefined ||
+    sdp[MiniSDPFields.ufrag] === undefined ||
+    sdp[MiniSDPFields.pw] === undefined ||
+    sdp[MiniSDPFields.finger] === undefined ||
+    sdp[MiniSDPFields.setup] === undefined ||
+    sdp[MiniSDPFields.port] === undefined ||
+    sdp[MiniSDPFields.maxSize] === undefined
   ) {
     const missing = [
-      { k: "cn", v: cn },
-      { k: "o", v: o },
-      { k: "app", v: app },
-      { k: "fr", v: fr },
-      { k: "pw", v: pw },
-      { k: "fp", v: fp },
-      { k: "s", v: s },
-      { k: "p", v: p },
+      { k: MiniSDPFields.canBlk, v: sdp[MiniSDPFields.canBlk] },
+      { k: MiniSDPFields.o, v: sdp[MiniSDPFields.o] },
+      { k: MiniSDPFields.app, v: sdp[MiniSDPFields.app] },
+      { k: MiniSDPFields.ufrag, v: sdp[MiniSDPFields.ufrag] },
+      { k: MiniSDPFields.pw, v: sdp[MiniSDPFields.pw] },
+      { k: MiniSDPFields.finger, v: sdp[MiniSDPFields.finger] },
+      { k: MiniSDPFields.setup, v: sdp[MiniSDPFields.setup] },
+      { k: MiniSDPFields.port, v: sdp[MiniSDPFields.port] },
+      { k: MiniSDPFields.maxSize, v: sdp[MiniSDPFields.maxSize] },
     ].filter((el) => el.v === undefined);
     throw new Error(
       `Required fields missing: ${missing.map((el) => el.k).toString()}`
     );
   }
 
-  return { cn, o, app, fr, pw, fp, s, p } as MiniSDP;
+  return {
+    [MiniSDPFields.canBlk]: sdp[MiniSDPFields.canBlk],
+    [MiniSDPFields.o]: sdp[MiniSDPFields.o],
+    [MiniSDPFields.app]: sdp[MiniSDPFields.app],
+    [MiniSDPFields.ufrag]: sdp[MiniSDPFields.ufrag],
+    [MiniSDPFields.pw]: sdp[MiniSDPFields.pw],
+    [MiniSDPFields.finger]: sdp[MiniSDPFields.finger],
+    [MiniSDPFields.setup]: sdp[MiniSDPFields.setup],
+    [MiniSDPFields.port]: sdp[MiniSDPFields.port],
+    [MiniSDPFields.maxSize]: sdp[MiniSDPFields.maxSize],
+  } as MiniSDP;
 }

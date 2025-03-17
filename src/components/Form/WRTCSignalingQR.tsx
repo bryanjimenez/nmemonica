@@ -326,8 +326,7 @@ async function qrToSDP(qrMsgBase64: string) {
   const sdpStr = Buffer.from(bytesBuf).toString();
   // FIXME: validate the sdp string
 
-  // TODO: add \n to sdp
-  const sdp = sdpExpand(sdpStr) + "\n";
+  const sdp = sdpExpand(sdpStr);
 
   return sdp;
 }
