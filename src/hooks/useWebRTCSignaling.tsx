@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+
+import { WebRTCContext } from "../context/webRTC";
+import { getSDPMaxSize } from "../helper/webRTCMiniSDP";
 
 function initDataChannel(
   channel: React.RefObject<RTCDataChannel | null>,
@@ -28,6 +31,8 @@ export function useWebRTCSignaling(
   const logREF = useRef(log);
 
   const msgHandlerRef = useRef(msgHandler);
+
+  const { setMaxMsgSize } = useContext(WebRTCContext);
 
   useEffect(
     () => {
@@ -74,13 +79,18 @@ export function useWebRTCSignaling(
     initDataChannel(dcChannel, msgHandler);
     void pc.current
       .createOffer()
-      .then((d) => pc.current.setLocalDescription(d))
+      .then((sdp) => pc.current.setLocalDescription(sdp))
       .catch(writeLog);
 
     const iceHandler = (e: RTCPeerConnectionIceEvent) => {
       if (e.candidate) return;
 
       if (pc.current.localDescription !== null) {
+        const { sdp } = pc.current.localDescription;
+
+        const maxSize = getSDPMaxSize(sdp);
+        setMaxMsgSize(Number(maxSize));
+
         handleOffer(pc.current.localDescription.sdp);
       }
     };
@@ -88,7 +98,7 @@ export function useWebRTCSignaling(
     pcPrevRef.current.removeEventListener("icecandidate", iceHandler);
     pcPrevRef.current = pc.current;
     pc.current.addEventListener("icecandidate", iceHandler);
-  }, [handleOffer, msgHandler]);
+  }, [handleOffer, msgHandler, setMaxMsgSize]);
 
   const offerReadyHandler = useCallback(
     (sdp: string, answer: (sdp: string) => void) => {

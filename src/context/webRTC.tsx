@@ -9,12 +9,16 @@ export const WebRTCContext = createContext<{
   direction: "incoming" | "outgoing";
   setDirection: React.Dispatch<React.SetStateAction<"incoming" | "outgoing">>;
   pushMsg: (m: MessageEvent<string>) => void;
+  maxMsgSize: number;
+  setMaxMsgSize: React.Dispatch<React.SetStateAction<number>>;
 }>({
   rtcChannel: null,
   setRtcChannel: () => {},
   direction: "outgoing",
   setDirection: () => {},
   pushMsg: () => {},
+  maxMsgSize: 0,
+  setMaxMsgSize: () => {},
 });
 
 export function WebRTCProvider(props: React.PropsWithChildren) {
@@ -24,6 +28,7 @@ export function WebRTCProvider(props: React.PropsWithChildren) {
   const [direction, setDirection] = useState<"incoming" | "outgoing">(
     "outgoing"
   );
+  const [maxMsgSize, setMaxMsgSize] = useState<number>(0);
 
   const [_msg, setMsg] = useState<MessageEvent<string>[]>([]);
 
@@ -36,7 +41,15 @@ export function WebRTCProvider(props: React.PropsWithChildren) {
 
   return (
     <WebRTCContext.Provider
-      value={{ rtcChannel, setRtcChannel, direction, setDirection, pushMsg }}
+      value={{
+        rtcChannel,
+        setRtcChannel,
+        direction,
+        setDirection,
+        pushMsg,
+        maxMsgSize,
+        setMaxMsgSize,
+      }}
     >
       {children}
     </WebRTCContext.Provider>

@@ -8,9 +8,8 @@ import {
 import { FilledSheetData } from "../helper/sheetHelperImport";
 import { getUserSettings } from "../helper/userSettingsHelper";
 
-// FIXME: chunkSize arbitrarily chosen
-// a=max-message-size:262144
-const MAX_MESSAGE_SIZE = 1024 * 256;
+/** Default size if not set */
+const DEFAULT_MAX_MESSAGE_SIZE = 1024 * 10;
 
 export const enum SharingMessageErrorCause {
   BadCryptoKey = "message-user-bad-crypto-key",
@@ -118,10 +117,9 @@ export function dataTransferAggregator(fileData: TransferObject[]) {
 
 export function sendChunkedMessage(
   channel: RTCDataChannel,
-  buffer: ArrayBuffer
+  buffer: ArrayBuffer,
+  chunkSize = DEFAULT_MAX_MESSAGE_SIZE
 ) {
-  const chunkSize = MAX_MESSAGE_SIZE;
-
   const chunkHeader = buildChunkHeader(buffer.byteLength, chunkSize);
   channel.send(chunkHeader);
 
@@ -174,7 +172,6 @@ export function receiveChunkedMessageBuilder(
         buff = [];
       });
     }
-
   };
 }
 

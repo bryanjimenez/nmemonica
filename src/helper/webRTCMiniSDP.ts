@@ -28,8 +28,8 @@ export interface MiniSDP {
   [MiniSDPFields.pw]: string;
   [MiniSDPFields.finger]: string;
   [MiniSDPFields.setup]: string;
-  [MiniSDPFields.port]: string;
-  [MiniSDPFields.maxSize]: string;
+  [MiniSDPFields.port]: number;
+  [MiniSDPFields.maxSize]: number;
 }
 
 export type MiniSDPString = string;
@@ -102,44 +102,15 @@ export function candidateExp(candidate: string) {
 export function sdpShrink(plainSDP: string) {
   const sdp = plainSDP.replaceAll("\r", "");
 
-  const o = sdp
-    .split("\n")
-    .find((str) => str.startsWith("o="))
-    ?.split("=")[1];
-  const app = sdp
-    .split("\n")
-    .find((str) => str.startsWith("m=application"))
-    ?.split(" ")[1];
-
-  const canBlk = sdp
-    .split("\n")
-    .filter((str) => str.startsWith("c=IN") || str.startsWith("a=candidate"))
-    .join("\n");
-  const ufrag = sdp
-    .split("\n")
-    .find((str) => str.startsWith("a=ice-ufrag"))
-    ?.split("ice-ufrag:")[1];
-  const pw = sdp
-    .split("\n")
-    .find((str) => str.startsWith("a=ice-pw"))
-    ?.split("ice-pwd:")[1];
-  const finger = sdp
-    .split("\n")
-    .find((str) => str.startsWith("a=fingerprint"))
-    ?.split("fingerprint:")[1];
-  const setup = sdp
-    .split("\n")
-    .find((str) => str.startsWith("a=setup"))
-    ?.split("setup:")[1];
-  const port = sdp
-    .split("\n")
-    .find((str) => str.startsWith("a=sctp-port"))
-    ?.split("sctp-port:")[1];
-
-  const maxSize = sdp
-    .split("\n")
-    .find((str) => str.startsWith("a=max-message-size"))
-    ?.split("max-message-size:")[1];
+  const o = getSDPObject(sdp);
+  const app = getSDPApplication(sdp);
+  const canBlk = getSDPCandidateBlock(sdp);
+  const ufrag = getSDPIceUfrag(sdp);
+  const pw = getSDPPassword(sdp);
+  const finger = getSDPFingerprint(sdp);
+  const setup = getSDPSetup(sdp);
+  const port = getSDPSCTPPort(sdp);
+  const maxSize = getSDPMaxSize(sdp);
 
   const sdpObj = sdpMiniParamValidate({
     [MiniSDPFields.canBlk]: canBlk,
@@ -168,8 +139,8 @@ export function sdpExpand(minifiedSDP: MiniSDPString) {
     [MiniSDPFields.pw]: pw,
     [MiniSDPFields.finger]: finger,
     [MiniSDPFields.setup]: setup,
-    [MiniSDPFields.port]: port,
-    [MiniSDPFields.maxSize]: maxSize,
+    [MiniSDPFields.port]: Number(port),
+    [MiniSDPFields.maxSize]: Number(maxSize),
   });
 
   return assembleSDPPlain(sdp);
@@ -218,4 +189,117 @@ export function sdpMiniParamValidate(sdp: Partial<MiniSDP>) {
     [MiniSDPFields.port]: sdp[MiniSDPFields.port],
     [MiniSDPFields.maxSize]: sdp[MiniSDPFields.maxSize],
   } as MiniSDP;
+}
+
+export function getSDPObject(sdp: string) {
+  const o = sdp
+    .split("\n")
+    .find((str) => str.startsWith("o="))
+    ?.split("=")[1];
+
+  if (o === undefined) {
+    throw new Error("Expected an object");
+  }
+
+  return o;
+}
+
+export function getSDPApplication(sdp: string) {
+  const app = sdp
+    .split("\n")
+    .find((str) => str.startsWith("m=application"))
+    ?.split(" ")[1];
+
+  if (app === undefined) {
+    throw new Error("Expected an application");
+  }
+
+  return app;
+}
+
+export function getSDPCandidateBlock(sdp: string) {
+  const canBlk = sdp
+    .split("\n")
+    .filter((str) => str.startsWith("c=IN") || str.startsWith("a=candidate"))
+    .join("\n");
+
+  if (canBlk === undefined) {
+    throw new Error("Expected a candidate block");
+  }
+
+  return canBlk;
+}
+
+export function getSDPIceUfrag(sdp: string) {
+  const ufrag = sdp
+    .split("\n")
+    .find((str) => str.startsWith("a=ice-ufrag"))
+    ?.split("ice-ufrag:")[1];
+
+  if (ufrag === undefined) {
+    throw new Error("Expected an ice-ufrag");
+  }
+
+  return ufrag;
+}
+export function getSDPPassword(sdp: string) {
+  const pw = sdp
+    .split("\n")
+    .find((str) => str.startsWith("a=ice-pw"))
+    ?.split("ice-pwd:")[1];
+
+  if (pw === undefined) {
+    throw new Error("Expected a password");
+  }
+
+  return pw;
+}
+export function getSDPFingerprint(sdp: string) {
+  const finger = sdp
+    .split("\n")
+    .find((str) => str.startsWith("a=fingerprint"))
+    ?.split("fingerprint:")[1];
+
+  if (finger === undefined) {
+    throw new Error("Expected a fingerprint");
+  }
+
+  return finger;
+}
+export function getSDPSetup(sdp: string) {
+  const setup = sdp
+    .split("\n")
+    .find((str) => str.startsWith("a=setup"))
+    ?.split("setup:")[1];
+
+  if (setup === undefined) {
+    throw new Error("Expected a setup");
+  }
+
+  return setup;
+}
+export function getSDPSCTPPort(sdp: string) {
+  const port = sdp
+    .split("\n")
+    .find((str) => str.startsWith("a=sctp-port"))
+    ?.split("sctp-port:")[1];
+
+  if (port === undefined) {
+    throw new Error("Expected an sctp port");
+  }
+
+  return Number(port);
+}
+
+export function getSDPMaxSize(sdp: string) {
+  const maxSize = sdp
+    .split("\n")
+    .find((str) => str.startsWith("a=max-message-size"))
+    ?.split("max-message-size:")[1];
+
+  if (maxSize === undefined) {
+    throw new Error("Expected a max size value");
+  }
+
+  return Number(maxSize);
 }

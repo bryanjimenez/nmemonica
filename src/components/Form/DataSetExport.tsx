@@ -38,7 +38,7 @@ function errorHandler() {
 export function DataSetExport(props: DataSetExportProps) {
   const { close } = props;
 
-  const { rtcChannel, direction } = useContext(WebRTCContext);
+  const { rtcChannel, direction, maxMsgSize } = useContext(WebRTCContext);
   const channelREF = useRef(rtcChannel);
 
   useEffect(
@@ -121,11 +121,11 @@ export function DataSetExport(props: DataSetExportProps) {
     void dataTransferAggregator(fileData)
       // .then((msg) => encryptTransfer(TEMP_FAKE_KEY, msg))
       .then((msg) => plainTransfer(msg))
-      .then((buffer) => sendChunkedMessage(channel, buffer))
+      .then((buffer) => sendChunkedMessage(channel, buffer, maxMsgSize))
       .then(() => {
         setFinished(true);
       });
-  }, [fileData]);
+  }, [fileData, maxMsgSize]);
 
   if (direction === "incoming") {
     return null;
