@@ -6,10 +6,6 @@ import {
   Typography,
 } from "@mui/material";
 import { GearIcon, XIcon } from "@primer/octicons-react";
-import {
-  QRCodeDecoderErrorCorrectionLevel,
-  QRCodeEncoder,
-} from "@zxing/library";
 import brotli from "brotli-wasm";
 import classNames from "classnames";
 import {
@@ -44,6 +40,7 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
     setRtcChannel,
     setDirection,
     pushMsg: onMessage,
+    closeWebRTC,
   } = useContext(WebRTCContext);
 
   const [transaction, setTransaction] = useState<
@@ -126,11 +123,6 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
     setWarning([]);
   }, [stopCapture]);
 
-  const closeHandlerCB = useCallback(() => {
-    resetCB();
-    close();
-  }, [close, resetCB]);
-
   const {
     status,
     createOffer,
@@ -138,6 +130,16 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
     answerReadyHandler,
     dcChannel,
   } = useWebRTCSignaling(onMessage, handleOffer);
+
+  const closeHandlerCB = useCallback(() => {
+    resetCB();
+    close();
+
+    // when connected, dialog "hides"
+    if (status !== "connected") {
+      closeWebRTC();
+    }
+  }, [status, close, resetCB, closeWebRTC]);
 
   useEffect(() => {
     if (status === "connected") {

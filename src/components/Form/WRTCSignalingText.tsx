@@ -43,14 +43,10 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
     setRtcChannel,
     setDirection,
     pushMsg: onMessage,
+    closeWebRTC,
   } = useContext(WebRTCContext);
 
   // const [warning, setWarning] = useState<ReactElement[]>([]);
-
-  const closeHandlerCB = useCallback(() => {
-    // setWarning([]);
-    close();
-  }, [close]);
 
   const offerEl = useRef<HTMLTextAreaElement>(null);
   const answerEl = useRef<HTMLTextAreaElement>(null);
@@ -92,6 +88,15 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
     answerReadyHandler,
     dcChannel,
   } = useWebRTCSignaling(onMessage, onOffer);
+
+  const closeHandlerCB = useCallback(() => {
+    // setWarning([]);
+    close();
+    // when connected, dialog "hides"
+    if (status !== "connected") {
+      closeWebRTC();
+    }
+  }, [status, close, closeWebRTC]);
 
   useEffect(() => {
     if (status === "connected") {
@@ -232,6 +237,18 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
                       }}
                     />
                   </>
+                )}
+                {status === "connected" && (
+                  <div>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      className="m-0"
+                      onClick={closeWebRTC}
+                    >
+                      Disconnect
+                    </Button>
+                  </div>
                 )}
                 <div>.</div>
                 <form onSubmit={chatKHandl}>

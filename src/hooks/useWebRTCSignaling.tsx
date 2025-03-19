@@ -10,17 +10,20 @@ function initDataChannel(
   channel.current?.addEventListener("message", messageHandler);
 }
 
+function writeLog() {
+  // placeholder for logging/warnings
+}
+
 /**
  * Hook for WebRTC Signaling (no service)
  */
 export function useWebRTCSignaling(
   msgHandler: (m: MessageEvent<string>) => void,
 
-  handleOffer: (sdp: string) => void,
+  handleOffer: (sdp: string) => void
 
-  log?: (msg: string) => void
+  // log?: (msg: string) => void
 ) {
-
   // @ts-expect-error RTCPeerConnection sdpSemantics
   const pc = useRef(new RTCPeerConnection({ sdpSemantics: "unified-plan" }));
   const [status, setStatus] = useState<RTCPeerConnection["iceConnectionState"]>(
@@ -29,11 +32,12 @@ export function useWebRTCSignaling(
   const pcPrevRef = useRef(pc.current);
   const dcChannel = useRef<RTCDataChannel>(null);
 
-  const logREF = useRef(log);
+  // const logREF = useRef(log);
 
   const msgHandlerRef = useRef(msgHandler);
 
-  const { setMaxMsgSize } = useContext(WebRTCContext);
+  const { setMaxMsgSize, peer } = useContext(WebRTCContext);
+  peer.current = pc.current;
 
   useEffect(
     () => {
@@ -74,7 +78,7 @@ export function useWebRTCSignaling(
   );
 
   const createOffer = useCallback(() => {
-    const { current: writeLog } = logREF;
+    // const { current: writeLog } = logREF;
 
     dcChannel.current = pc.current.createDataChannel("data");
     initDataChannel(dcChannel, msgHandler);
@@ -103,7 +107,7 @@ export function useWebRTCSignaling(
 
   const offerReadyHandler = useCallback(
     (sdp: string, answer: (sdp: string) => void) => {
-      const { current: writeLog } = logREF;
+      // const { current: writeLog } = logREF;
 
       if (pc.current.signalingState !== "stable") return;
 
@@ -134,7 +138,7 @@ export function useWebRTCSignaling(
   const answerReadyHandler = useCallback((sdp: string) => {
     if (pc.current.signalingState !== "have-local-offer") return;
 
-    const { current: writeLog } = logREF;
+    // const { current: writeLog } = logREF;
 
     const desc = new RTCSessionDescription({
       type: "answer",

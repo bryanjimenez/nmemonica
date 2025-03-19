@@ -26,7 +26,14 @@ interface DataSetExportProps extends DataSetSharingAction {
   close: () => void;
 }
 
-function errorHandler() {
+function errorHandler(ev: RTCErrorEvent) {
+  const { message } = ev.error;
+
+  // OperationError
+  if (message === "User-Initiated Abort, reason=Close called") {
+    return;
+  }
+
   throw new Error("Unexpected error during transmission");
 }
 
@@ -38,18 +45,30 @@ function errorHandler() {
 export function DataSetExport(props: DataSetExportProps) {
   const { close } = props;
 
-  const { rtcChannel, direction, maxMsgSize } = useContext(WebRTCContext);
-  const channelREF = useRef(rtcChannel);
+  const { peer, rtcChannel, direction, maxMsgSize, closeWebRTC } =
+    useContext(WebRTCContext);
+  const connection = useRef({ channel: rtcChannel, peer: peer.current });
 
   useEffect(
     () => {
-      const { current: copyChannel } = channelREF;
-      if (copyChannel === null) {
+      const { channel: copyChannel, peer: copyPeer } = connection.current;
+
+      if (copyChannel === null || copyPeer === null) {
         return () => {};
       }
 
       copyChannel.addEventListener("error", errorHandler);
       // copyChannel.addEventListener("message", messageHandler);
+
+      const closeHandler = (ev: Event) => {
+        const { iceConnectionState: iceStatus } =
+          ev.currentTarget as RTCPeerConnection;
+
+        if (iceStatus === "closed" || iceStatus === "disconnected") {
+          closeHandlerCB();
+        }
+      };
+      copyPeer.addEventListener("connectionstatechange", closeHandler);
 
       return () => {
         if (copyChannel === null) {
@@ -57,6 +76,7 @@ export function DataSetExport(props: DataSetExportProps) {
         }
 
         copyChannel.removeEventListener("error", errorHandler);
+        copyPeer.removeEventListener("connectionstatechange", closeHandler);
         // copyChannel.removeEventListener("message", messageHandler);
       };
     },
@@ -80,7 +100,8 @@ export function DataSetExport(props: DataSetExportProps) {
     setFileData([]);
     close();
     setFinished(false);
-  }, [close]);
+    closeWebRTC();
+  }, [close, closeWebRTC]);
 
   const fromAppCacheUpdateDataCB = useCallback((name: string) => {
     setFileData((prev) => {
@@ -113,7 +134,7 @@ export function DataSetExport(props: DataSetExportProps) {
   }, []);
 
   const exportDataCB = useCallback(() => {
-    const { current: channel } = channelREF;
+    const { channel } = connection.current;
     if (channel === null) {
       throw new Error(RTCTransferRequired.channel);
     }

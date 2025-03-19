@@ -51,15 +51,23 @@ interface DataSetImportProps extends DataSetSharingAction {
   ) => Promise<void>;
 }
 
-function errorHandler() {
+function errorHandler(ev: RTCErrorEvent) {
+  const { message } = ev.error;
+
+  // OperationError
+  if (message === "User-Initiated Abort, reason=Close called") {
+    return;
+  }
+
   throw new Error("Unexpected error during transmission");
 }
 
 export function DataSetImport(props: DataSetImportProps) {
   const { close, updateDataHandler, downloadFileHandler } = props;
 
-  const { rtcChannel, direction } = useContext(WebRTCContext);
-  const channelREF = useRef(rtcChannel);
+  const { peer, rtcChannel, direction, closeWebRTC } =
+    useContext(WebRTCContext);
+  const connection = useRef({ channel: rtcChannel, peer: peer.current });
 
   const [destination, setDestination] = useState<"import" | "save">("import");
   const destinationImportCB = useCallback(() => {
@@ -69,7 +77,7 @@ export function DataSetImport(props: DataSetImportProps) {
     setDestination("save");
   }, []);
 
-  const [status, setStatus] = useState<
+  const [_status, setStatus] = useState<
     "successStatus" | "connectError" | "inputError" | "outputError"
   >();
 
@@ -94,22 +102,30 @@ export function DataSetImport(props: DataSetImportProps) {
     close();
     setMsgBuffer(null);
 
-    const { current: channel } = channelREF;
+    closeWebRTC();
+  }, [close, closeWebRTC]);
 
-    channel?.close();
-  }, [close]);
-
-  // const incomingBuf = useRef<ArrayBuffer | null>(null);
   const [msgBuffer, setMsgBuffer] = useState<ArrayBuffer | null>(null);
 
   useEffect(
     () => {
-      const { current: copyChannel } = channelREF;
-      if (copyChannel === null) {
+      const { channel: copyChannel, peer: copyPeer } = connection.current;
+
+      if (copyChannel === null || copyPeer === null) {
         return () => {};
       }
 
       copyChannel.addEventListener("error", errorHandler);
+
+      const closeHandler = (ev: Event) => {
+        const { iceConnectionState: iceStatus } =
+          ev.currentTarget as RTCPeerConnection;
+
+        if (iceStatus === "closed" || iceStatus === "disconnected") {
+          closeHandlerCB();
+        }
+      };
+      copyPeer.addEventListener("connectionstatechange", closeHandler);
 
       const messageHandler = receiveChunkedMessageBuilder(setMsgBuffer);
       copyChannel.addEventListener("message", messageHandler);
@@ -120,6 +136,7 @@ export function DataSetImport(props: DataSetImportProps) {
         }
 
         copyChannel.removeEventListener("error", errorHandler);
+        copyPeer.removeEventListener("connectionstatechange", closeHandler);
         copyChannel.removeEventListener("message", messageHandler);
       };
     },
