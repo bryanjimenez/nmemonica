@@ -72,7 +72,7 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
   //   chatEl.current?.focus();
   // }, []);
 
-  const onMsgChatHandler = useCallback((m: MessageEvent<string>) => {
+  const _onMsgChatHandler = useCallback((m: MessageEvent<string>) => {
     setMessages((prev) => [
       ...prev,
       <div key={md5(String(m.timeStamp))} className="text-start">
@@ -86,7 +86,7 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
     createOffer,
     offerReadyHandler,
     answerReadyHandler,
-    dcChannel,
+    dataChannel,
   } = useWebRTCSignaling(onMessage, onOffer);
 
   const closeHandlerCB = useCallback(() => {
@@ -100,12 +100,12 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
 
   useEffect(() => {
     if (status === "connected") {
-      const channel = dcChannel.current;
+      const channel = dataChannel.current;
       if (channel !== null) {
         setRtcChannel(channel);
       }
     }
-  }, [status, dcChannel, setRtcChannel]);
+  }, [status, dataChannel, setRtcChannel]);
 
   const offerKHandl: KeyboardEventHandler<HTMLDivElement> = useCallback(
     (e) => {
@@ -147,7 +147,7 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
 
       if (chatEl.current && chatEl.current.value) {
         const m = chatEl.current?.value;
-        dcChannel.current?.send(m);
+        dataChannel.current?.send(m);
 
         updateChat(
           setMessages,
@@ -161,7 +161,7 @@ export function WRTCSignalingText(props: WRTCSignalingTextProps) {
         chatEl.current.value = "";
       }
     },
-    [dcChannel]
+    [dataChannel]
   );
 
   return (

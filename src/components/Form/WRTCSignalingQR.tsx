@@ -128,7 +128,7 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
     createOffer,
     offerReadyHandler,
     answerReadyHandler,
-    dcChannel,
+    dataChannel,
   } = useWebRTCSignaling(onMessage, handleOffer);
 
   const closeHandlerCB = useCallback(() => {
@@ -143,13 +143,13 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
 
   useEffect(() => {
     if (status === "connected") {
-      const channel = dcChannel.current;
+      const channel = dataChannel.current;
       if (channel !== null) {
         resetCB();
         setRtcChannel(channel);
       }
     }
-  }, [status, dcChannel, setRtcChannel, resetCB]);
+  }, [status, dataChannel, setRtcChannel, resetCB]);
 
   const decodeQRCB = useCallback(() => {
     void decode()

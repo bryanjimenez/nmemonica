@@ -30,7 +30,7 @@ export function useWebRTCSignaling(
     pc.current.iceConnectionState
   );
   const pcPrevRef = useRef(pc.current);
-  const dcChannel = useRef<RTCDataChannel>(null);
+  const dataChannel = useRef<RTCDataChannel>(null);
 
   // const logREF = useRef(log);
 
@@ -45,19 +45,19 @@ export function useWebRTCSignaling(
 
       const pcCopy = pc.current;
       const dataChanHandl = (e: RTCDataChannelEvent) => {
-        dcChannel.current = e.channel;
+        dataChannel.current = e.channel;
 
         if (pc.current.iceConnectionState === "connected") {
           setStatus(pc.current.iceConnectionState);
         }
 
-        initDataChannel(dcChannel, messageHandl);
+        initDataChannel(dataChannel, messageHandl);
       };
       const connStateHandl = (ev: Event) => {
         const { iceConnectionState: iceStatus } =
           ev.currentTarget as RTCPeerConnection;
 
-        if (dcChannel.current === null && iceStatus === "connected") {
+        if (dataChannel.current === null && iceStatus === "connected") {
           return;
         }
 
@@ -80,8 +80,8 @@ export function useWebRTCSignaling(
   const createOffer = useCallback(() => {
     // const { current: writeLog } = logREF;
 
-    dcChannel.current = pc.current.createDataChannel("data");
-    initDataChannel(dcChannel, msgHandler);
+    dataChannel.current = pc.current.createDataChannel("data");
+    initDataChannel(dataChannel, msgHandler);
     void pc.current
       .createOffer()
       .then((sdp) => pc.current.setLocalDescription(sdp))
@@ -148,7 +148,7 @@ export function useWebRTCSignaling(
   }, []);
 
   return {
-    dcChannel,
+    dataChannel,
     status,
 
     createOffer,
