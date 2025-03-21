@@ -5,7 +5,7 @@ import {
   DialogContent,
   Typography,
 } from "@mui/material";
-import { GearIcon, XIcon } from "@primer/octicons-react";
+import { DeviceCameraVideoIcon } from "@primer/octicons-react";
 import brotli from "brotli-wasm";
 import classNames from "classnames";
 import {
@@ -18,7 +18,7 @@ import {
 } from "react";
 import { useDispatch } from "react-redux";
 
-import { VideoDevicesMenu } from "./VideoDevicesMenu";
+import { VideoDevicesPermission } from "./VideoDevicesPermission";
 import { WebRTCContext } from "../../context/webRTC";
 import { DebugLevel } from "../../helper/consoleHelper";
 import { urlBase64ToUint8Array } from "../../helper/cryptoHelper";
@@ -26,8 +26,8 @@ import { sdpExpand, sdpShrink } from "../../helper/webRTCMiniSDP";
 import { useQRCode } from "../../hooks/useQRCode";
 import { useWebRTCSignaling } from "../../hooks/useWebRTCSignaling";
 import { logger } from "../../slices/globalSlice";
-import "../../css/WRTCSignalingQR.css";
 import { ValuesOf } from "../../typings/utils";
+import "../../css/WRTCSignalingQR.css";
 
 interface WRTCSignalingQRProps {
   close: () => void;
@@ -58,16 +58,6 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
 
   const [showAvailableDevicesMenu, setShowAvailableDevicesMenu] =
     useState(false);
-  const showKeyInputCB = useCallback(() => {
-    setShowAvailableDevicesMenu(true);
-  }, []);
-  const closeDeviceMenuCB = useCallback(() => {
-    setShowAvailableDevicesMenu(false);
-  }, []);
-
-  // const showDoneConfirmation = useCallback(() => {
-  //   // setFinished(true);
-  // }, []);
 
   // const addWarning = useCallback(
   //   (warnKey?: string, warnMsg?: string) => {
@@ -94,6 +84,17 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
   );
   const { encode, decode, getDevices, selectDevice, view, stopCapture } =
     useQRCode({ w: 300, h: 300, loggerCB });
+
+  const declinePermission = useCallback(() => {
+    if (transaction === "readOffer") {
+      setTransaction(null);
+    } else if (transaction === "readAnswer") {
+      setTransaction("genOffer");
+    }
+    setActiveDevice(null);
+    stopCapture();
+    setShowAvailableDevicesMenu(false);
+  }, [transaction, setActiveDevice, stopCapture]);
 
   const handleOffer = (sdp: string) => {
     // after create offer
@@ -187,6 +188,7 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
       void selectDevice(id)
         .then(() => {
           setActiveDevice(id);
+          setShowAvailableDevicesMenu(false);
         })
         .catch((err) => {
           setActiveDevice(null);
@@ -200,42 +202,28 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
 
   return (
     <>
-      <VideoDevicesMenu
+      <VideoDevicesPermission
         visible={showAvailableDevicesMenu}
         getDevices={getDevices}
         activeDevice={activeDevice}
-        selectDeviceHandler={selectDeviceHandlerCB}
-        closeHandler={closeDeviceMenuCB}
+        accept={selectDeviceHandlerCB}
+        decline={declinePermission}
       />
       <Dialog
         open={status !== "connected"}
         onClose={closeHandlerCB}
         aria-label="WebRTC Session Description Exchange"
-        fullWidth={true}
       >
         <DialogContent className="p-0 m-0">
           <div className="d-flex justify-content-between">
-            <div className="d-flex flex-column">
-              <div className="p-2 clickable" onClick={closeHandlerCB}>
-                <XIcon />
-              </div>
-              {/* {(transaction === "genOffer" || transaction === "genAnswer") && (
-                <div className="pt-4 p-2">
-                  <span>
-                    {(transaction === "genOffer" && "Offer:") ||
-                      transaction === "genAnswer" ||
-                      "Answer:"}
-                  </span>
-                </div>
-              )} */}
-            </div>
-            {(transaction === "readOffer" || transaction === "readAnswer") && (
-              <div className="position-relative" onClick={decodeQRCB}>
+            {(transaction === null ||
+              transaction === "readOffer" ||
+              transaction === "readAnswer") && (
+              <div className="position-relative">
                 <Button
-                  variant="outlined"
-                  size="small"
+                  variant="text"
                   color="error"
-                  className="p-0 m-1"
+                  className="p-0 m-0 mx-2"
                   disabled={activeDevice === null}
                   onClick={decodeQRCB}
                 >
@@ -251,14 +239,28 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
               </div>
             )}
             {(transaction === "genOffer" || transaction === "genAnswer") && (
-              <div className="bg-light">{qrCodeEl}</div>
+              <Button
+                variant="text"
+                color="success"
+                className="p-0 m-0 mx-2"
+                // onClick={TODO: downloadQr}
+              >
+                <div className="bg-light">{qrCodeEl}</div>
+              </Button>
             )}
 
             <div className="d-flex flex-column p-2">
-              <div className="text-end" onClick={showKeyInputCB}>
-                <GearIcon className="me-1" />
+              <div
+                className={classNames({
+                  "pt-0 px-1 clickable text-end": true,
+                  "incorrect-color": activeDevice !== null,
+                  invisible:
+                    transaction !== "readAnswer" && transaction !== "readOffer",
+                })}
+                onClick={() => setShowAvailableDevicesMenu(true)}
+              >
+                <DeviceCameraVideoIcon className="mirror-x" />
               </div>
-
               <div className="d-flex flex-column pt-3 text-end">
                 <div
                   className={classNames({

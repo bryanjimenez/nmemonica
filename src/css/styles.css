@@ -257,6 +257,10 @@ a {
   transform: translate(-50%, 0);
 }
 
+.mirror-x {
+  transform: scale(-1, 1);
+}
+
 .notification {
   width: 0;
   display: inline-block;
