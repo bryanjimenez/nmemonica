@@ -112,7 +112,6 @@ export function useQRCode(props: QRCodeProps) {
           throw new Error("Unexpected QR format");
         }
 
-        // TODO: validate text
         return text;
       })
       .then((text) => {

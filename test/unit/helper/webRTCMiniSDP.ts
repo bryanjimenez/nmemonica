@@ -21,12 +21,12 @@ a=candidate:3712093996 1 tcp 1518285567 0000:1111:2222:3:4444:5555:6666:7777 9 t
     [MiniSDPFields.finger]:
       "sha-256 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
     [MiniSDPFields.setup]: "actpass",
-    [MiniSDPFields.port]: "5000",
-    [MiniSDPFields.maxSize]: "262144",
+    [MiniSDPFields.port]: 5000,
+    [MiniSDPFields.maxSize]: 262144,
   };
 
   const sample = `v=0
-o=${expected.o}
+o=${expected[MiniSDPFields.o]}
 s=-
 t=0 0
 a=group:BUNDLE 0
@@ -44,17 +44,68 @@ a=sctp-port:${expected[MiniSDPFields.port]}
 a=max-message-size:${expected[MiniSDPFields.maxSize]}
 `;
 
-  it("sdpShrink", function () {
-    const actual = sdpShrink(sample);
+  describe("sdpShrink", function () {
+    it("sdpShrink", function () {
+      const actual = sdpShrink(sample);
 
-    expect(actual).to.eq(assembleSDPMiniString(expected));
+      expect(actual).to.eq(assembleSDPMiniString(expected));
+    });
   });
 
-  it("sdpExpand", function () {
-    const minimized = assembleSDPMiniString(expected);
+  describe("sdpExpand", function () {
+    describe("throws on", function () {
+      it("missing field", function () {
+        const missing = { ...expected, [MiniSDPFields.o]: undefined };
+        // @ts-expect-error incompatible type
+        const minimized = assembleSDPMiniString(missing);
 
-    const actual = sdpExpand(minimized);
+        const actual = () => sdpExpand(minimized);
 
-    expect(actual).to.deep.eq(sample);
+        expect(actual).to.throw(Error, "Required fields missing: object");
+      });
+      it("incorrect field type (num)", function () {
+        const missing = { ...expected, [MiniSDPFields.port]: "a" };
+        // @ts-expect-error incompatible type
+        const minimized = assembleSDPMiniString(missing);
+
+        const actual = () => sdpExpand(minimized);
+
+        expect(actual).to.throw(Error, "Required fields missing: port");
+      });
+      it("incorrect field type (alpha)", function () {
+        // \u001D is candidate block separator
+        const missing = { ...expected, [MiniSDPFields.pw]: "\u001D" };
+
+        const minimized = assembleSDPMiniString(missing);
+
+        const actual = () => sdpExpand(minimized);
+
+        expect(actual).to.throw(Error, "Required fields missing: password");
+      });
+    });
+
+    describe("parses", function () {
+      it("sdpExpand", function () {
+        const minimized = assembleSDPMiniString(expected);
+
+        const actual = sdpExpand(minimized);
+
+        expect(actual).to.deep.eq(sample);
+      });
+      it("candidate block separator", function () {
+        // \u001D is candidate block separator
+        const missing = {
+          ...expected,
+          [MiniSDPFields.canBlk]:
+            "some stuff some number 123 and symbols +=. \u001D",
+        };
+
+        const minimized = assembleSDPMiniString(missing);
+
+        const actual = () => sdpExpand(minimized);
+
+        expect(actual).to.not.throw(Error, "Required fields missing: candidateBlock");
+      });
+    });
   });
 });

@@ -2,15 +2,41 @@
  * WebRTC Signaling helper functions
  */
 
+import { isNumber } from "./arrayHelper";
+
 // TODO: a=setup actpass/active get from context (remove from msg)
 
 const SDP_MINI_SEP = "\u001E";
 const CAN_GROUP_SEP = "\u001D";
 
+/**
+ * Allowed characters when parsing SDP string
+ * @param char
+ */
+export function isValidSDPCharacter(char: string) {
+  const printables = "\u0020-\u007E";
+  const newLine = "\n";
+
+  return new RegExp("[" + printables + newLine + "]").test(char);
+}
+
+/**
+ * Allowed characters when parsing SDP string (candidate block)
+ * @param char
+ */
+export function isValidSDPCharacterWBlockSep(char: string) {
+  const printables = "\u0020-\u007E";
+  const newLine = "\n";
+
+  return new RegExp("[" + printables + CAN_GROUP_SEP + newLine + "]").test(
+    char
+  );
+}
+
 export const enum MiniSDPFields {
   /** Candidate Block */
   canBlk = "candidateBlock",
-  o = "o",
+  o = "object",
   app = "application",
   ufrag = "ufrag",
   pw = "password",
@@ -151,30 +177,33 @@ export function sdpExpand(minifiedSDP: MiniSDPString) {
  * @throws if any parameter is missing
  */
 export function sdpMiniParamValidate(sdp: Partial<MiniSDP>) {
-  if (
-    sdp[MiniSDPFields.canBlk] === undefined ||
-    sdp[MiniSDPFields.o] === undefined ||
-    sdp[MiniSDPFields.app] === undefined ||
-    sdp[MiniSDPFields.ufrag] === undefined ||
-    sdp[MiniSDPFields.pw] === undefined ||
-    sdp[MiniSDPFields.finger] === undefined ||
-    sdp[MiniSDPFields.setup] === undefined ||
-    sdp[MiniSDPFields.port] === undefined ||
-    sdp[MiniSDPFields.maxSize] === undefined
-  ) {
-    const missing = [
-      { k: MiniSDPFields.canBlk, v: sdp[MiniSDPFields.canBlk] },
-      { k: MiniSDPFields.o, v: sdp[MiniSDPFields.o] },
-      { k: MiniSDPFields.app, v: sdp[MiniSDPFields.app] },
-      { k: MiniSDPFields.ufrag, v: sdp[MiniSDPFields.ufrag] },
-      { k: MiniSDPFields.pw, v: sdp[MiniSDPFields.pw] },
-      { k: MiniSDPFields.finger, v: sdp[MiniSDPFields.finger] },
-      { k: MiniSDPFields.setup, v: sdp[MiniSDPFields.setup] },
-      { k: MiniSDPFields.port, v: sdp[MiniSDPFields.port] },
-      { k: MiniSDPFields.maxSize, v: sdp[MiniSDPFields.maxSize] },
-    ].filter((el) => el.v === undefined);
+  // strings
+  const missing = [
+    // { k: MiniSDPFields.canBlk, v: sdp[MiniSDPFields.canBlk] },
+    { k: MiniSDPFields.o, v: sdp[MiniSDPFields.o] },
+    { k: MiniSDPFields.app, v: sdp[MiniSDPFields.app] },
+    { k: MiniSDPFields.ufrag, v: sdp[MiniSDPFields.ufrag] },
+    { k: MiniSDPFields.pw, v: sdp[MiniSDPFields.pw] },
+    { k: MiniSDPFields.finger, v: sdp[MiniSDPFields.finger] },
+    { k: MiniSDPFields.setup, v: sdp[MiniSDPFields.setup] },
+  ].filter(
+    (el) =>
+      el.v === undefined ||
+      el.v.length === 0 ||
+      el.v === "undefined" ||
+      el.v.split("").some((c) => !isValidSDPCharacter(c)) ||
+      (el.k === MiniSDPFields.canBlk &&
+        el.v.split("").some((c) => !isValidSDPCharacterWBlockSep(c)))
+  );
+
+  const numeric = [
+    { k: MiniSDPFields.port, v: sdp[MiniSDPFields.port] },
+    { k: MiniSDPFields.maxSize, v: sdp[MiniSDPFields.maxSize] },
+  ].filter((el) => !isNumber(el.v));
+
+  if (missing.length > 0 || numeric.length > 0) {
     throw new Error(
-      `Required fields missing: ${missing.map((el) => el.k).toString()}`
+      `Required fields missing: ${[...missing, ...numeric].map((el) => el.k).toString()}`
     );
   }
 

@@ -328,7 +328,6 @@ async function qrToSDP(qrMsgBase64: string) {
   const compressedBuf = urlBase64ToUint8Array(qrMsgBase64);
   const bytesBuf = (await brotli).decompress(Buffer.from(compressedBuf));
   const sdpStr = Buffer.from(bytesBuf).toString();
-  // FIXME: validate the sdp string
 
   const sdp = sdpExpand(sdpStr);
 
