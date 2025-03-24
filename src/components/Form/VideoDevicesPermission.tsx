@@ -9,14 +9,14 @@ import {
 } from "@mui/material";
 import { DeviceCameraVideoIcon } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface VideoDevicesPermissionProps {
   visible: boolean;
   getDevices: () => Promise<MediaDeviceInfo[]>;
   activeDevice: string | null;
   accept: (id: string) => void;
-  decline: () => void;
+  decline: (msd: string) => void;
 }
 
 export function VideoDevicesPermission(props: VideoDevicesPermissionProps) {
@@ -34,10 +34,14 @@ export function VideoDevicesPermission(props: VideoDevicesPermissionProps) {
     }
   }, [visible, activeDevice, devices.length, getDevices]);
 
+  const declinePermission = useCallback(() => {
+    decline("Video device permission required");
+  }, [decline]);
+
   return (
     <Dialog
       open={visible === true}
-      onClose={decline}
+      onClose={declinePermission}
       aria-label="Video Device Permission Request"
     >
       <DialogContent className="p-0 m-0">
@@ -111,7 +115,7 @@ export function VideoDevicesPermission(props: VideoDevicesPermissionProps) {
               color="error"
               className="p-0 m-1"
               style={{ textTransform: "none" }}
-              onClick={decline}
+              onClick={declinePermission}
             >
               Decline
             </Button>

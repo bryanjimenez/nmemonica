@@ -8,14 +8,7 @@ import {
 import { DeviceCameraVideoIcon } from "@primer/octicons-react";
 import brotli from "brotli-wasm";
 import classNames from "classnames";
-import {
-  JSX,
-  ReactElement,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { JSX, useCallback, useContext, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import { VideoDevicesPermission } from "./VideoDevicesPermission";
@@ -26,7 +19,6 @@ import { sdpExpand, sdpShrink } from "../../helper/webRTCMiniSDP";
 import { useQRCode } from "../../hooks/useQRCode";
 import { useWebRTCSignaling } from "../../hooks/useWebRTCSignaling";
 import { logger } from "../../slices/globalSlice";
-import { ValuesOf } from "../../typings/utils";
 import "../../css/WRTCSignalingQR.css";
 
 interface WRTCSignalingQRProps {
@@ -54,47 +46,50 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
     }
   }, []);
 
-  const [warning, setWarning] = useState<ReactElement[]>([]);
+  const [warning, setWarning] = useState<{ key?: string; msg?: string }[]>([]);
 
   const [showAvailableDevicesMenu, setShowAvailableDevicesMenu] =
     useState(false);
 
-  // const addWarning = useCallback(
-  //   (warnKey?: string, warnMsg?: string) => {
-  //     if (warnKey === undefined && warnMsg === undefined) {
-  //       setWarning([]);
-  //       return;
-  //     }
+  const addWarning = useCallback(
+    (warnKey?: string, warnMsg?: string) => {
+      if (warnKey === undefined && warnMsg === undefined) {
+        setWarning([]);
+        return;
+      }
 
-  //     if (warning.find((w) => w.key === warnKey) === undefined) {
-  //       setWarning((w) => [...w, <span key={warnKey}>{warnMsg}</span>]);
-  //     }
-  //   },
-  //   [warning, setWarning]
-  // );
+      setWarning((w) => {
+        if (w.find((w) => w.key === warnKey) === undefined) {
+          return [...w, { key: warnKey, msg: warnMsg }];
+        }
+
+        return w;
+      });
+    },
+    [setWarning]
+  );
 
   const [qrCodeEl, setQrCodeEl] = useState<JSX.Element | null>(null);
 
   const [activeDevice, setActiveDevice] = useState<string | null>(null);
 
-  const loggerCB = useCallback(
-    (msg: string, lvl?: ValuesOf<typeof DebugLevel>) =>
-      dispatch(logger(msg, lvl)),
-    [dispatch]
-  );
   const { encode, decode, getDevices, selectDevice, view, stopCapture } =
-    useQRCode({ w: 300, h: 300, loggerCB });
+    useQRCode({ w: 300, h: 300 });
 
-  const declinePermission = useCallback(() => {
-    if (transaction === "readOffer") {
-      setTransaction(null);
-    } else if (transaction === "readAnswer") {
-      setTransaction("genOffer");
-    }
-    setActiveDevice(null);
-    stopCapture();
-    setShowAvailableDevicesMenu(false);
-  }, [transaction, setActiveDevice, stopCapture]);
+  const declinePermission = useCallback(
+    (msg: string) => {
+      if (transaction === "readOffer") {
+        setTransaction(null);
+      } else if (transaction === "readAnswer") {
+        setTransaction("genOffer");
+      }
+      setActiveDevice(null);
+      stopCapture();
+      setShowAvailableDevicesMenu(false);
+      addWarning("Video device:" + msg, msg);
+    },
+    [transaction, setActiveDevice, stopCapture, addWarning]
+  );
 
   const handleOffer = (sdp: string) => {
     // after create offer
@@ -132,6 +127,11 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
     dataChannel,
   } = useWebRTCSignaling(onMessage, handleOffer);
 
+  const displayOfferQR = useCallback(() => {
+    createOffer();
+    setWarning([]);
+  }, [createOffer]);
+
   const closeHandlerCB = useCallback(() => {
     resetCB();
     close();
@@ -165,13 +165,18 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
             answerReadyHandler(sdp);
           }
         });
+        addWarning(/** clear */);
       })
-      .catch(({ message }) => {
-        dispatch(logger("decode failed", 1));
-
-        const msg =
-          typeof message === "string" ? message : JSON.stringify(message);
-        dispatch(logger(msg, DebugLevel.ERROR));
+      .catch((err) => {
+        if (err instanceof Error && err.message) {
+          addWarning("QR decode", err.message);
+        } else {
+          addWarning("QR decode", "QR Code decode failed, try again");
+          const aMsg = JSON.stringify(err);
+          if (aMsg !== "{}") {
+            dispatch(logger(JSON.stringify(err), DebugLevel.ERROR));
+          }
+        }
       });
   }, [
     dispatch,
@@ -181,6 +186,7 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
     answerReadyHandler,
     transaction,
     setDirection,
+    addWarning,
   ]);
 
   const selectDeviceHandlerCB = useCallback(
@@ -189,15 +195,18 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
         .then(() => {
           setActiveDevice(id);
           setShowAvailableDevicesMenu(false);
+          addWarning(/** clear */);
         })
         .catch((err) => {
-          setActiveDevice(null);
-
-          dispatch(logger("select failed:", DebugLevel.ERROR));
+          if (err instanceof Error) {
+            declinePermission(err.message);
+          } else {
+            declinePermission("Failed to select video device");
+          }
           dispatch(logger(JSON.stringify(err), DebugLevel.ERROR));
         });
     },
-    [dispatch, selectDevice]
+    [dispatch, selectDevice, declinePermission, addWarning]
   );
 
   return (
@@ -215,6 +224,17 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
         aria-label="WebRTC Session Description Exchange"
       >
         <DialogContent className="p-0 m-0">
+          {warning.length > 0 && (
+            <Alert severity="warning" className="py-0 mb-1">
+              <div className="p-0 d-flex flex-column">
+                <ul className="mb-0">
+                  {warning.map((el) => (
+                    <li key={el.key}>{el.msg}</li>
+                  ))}
+                </ul>
+              </div>
+            </Alert>
+          )}
           <div className="container">
             <div className="row row-cols-1 row-cols-sm-2">
               <div className="col p-0">
@@ -232,7 +252,9 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
                     {activeDevice !== null && (
                       <div className="position-absolute bottom-15 end-5">
                         <Typography color="error">
-                          <span className="fs-x-small">Capture</span>
+                          <span className="fs-x-small fw-bolder opacity-50">
+                            Capture
+                          </span>
                         </Typography>
                       </div>
                     )}
@@ -275,7 +297,7 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
                       variant="outlined"
                       size="small"
                       disabled={transaction !== null}
-                      onClick={createOffer}
+                      onClick={displayOfferQR}
                     >
                       Make Offer
                     </Button>
@@ -313,17 +335,6 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
               </div>
             </div>
           </div>
-          {warning.length > 0 && (
-            <Alert severity="warning" className="py-0 mb-1">
-              <div className="p-0 d-flex flex-column">
-                <ul className="mb-0">
-                  {warning.map((el) => (
-                    <li key={el.key}>{el}</li>
-                  ))}
-                </ul>
-              </div>
-            </Alert>
-          )}
         </DialogContent>
       </Dialog>
     </>

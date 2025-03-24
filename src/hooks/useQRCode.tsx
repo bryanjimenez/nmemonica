@@ -2,13 +2,9 @@ import { BrowserQRCodeReader, BrowserQRCodeSvgWriter } from "@zxing/browser";
 import classNames from "classnames";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { DebugLevel } from "../helper/consoleHelper";
-import { ValuesOf } from "../typings/utils";
-
 interface QRCodeProps {
   w: number;
   h: number;
-  loggerCB?: (msg: string, lvl?: ValuesOf<typeof DebugLevel>) => void;
 }
 
 /**
