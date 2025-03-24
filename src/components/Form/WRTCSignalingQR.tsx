@@ -215,95 +215,101 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
         aria-label="WebRTC Session Description Exchange"
       >
         <DialogContent className="p-0 m-0">
-          <div className="d-flex justify-content-between">
-            {(transaction === null ||
-              transaction === "readOffer" ||
-              transaction === "readAnswer") && (
-              <div className="position-relative">
-                <Button
-                  variant="text"
-                  color="error"
-                  className="p-0 m-0 mx-2"
-                  disabled={activeDevice === null}
-                  onClick={decodeQRCB}
-                >
-                  {view}
-                </Button>
-                {activeDevice !== null && (
-                  <div className="position-absolute bottom-15 end-5 color-error">
-                    <Typography color="error">
-                      <span className="fs-x-small">Capture</span>
-                    </Typography>
-                  </div>
+          <div className="container">
+            <div className="row row-cols-1 row-cols-sm-2">
+              <div className="col p-0">
+                {(transaction === null ||
+                  transaction === "readOffer" ||
+                  transaction === "readAnswer") && (
+                  <Button
+                    variant="text"
+                    color="error"
+                    className="p-0 m-0 mx-1 position-relative"
+                    disabled={activeDevice === null}
+                    onClick={decodeQRCB}
+                  >
+                    {view}
+                    {activeDevice !== null && (
+                      <div className="position-absolute bottom-15 end-5">
+                        <Typography color="error">
+                          <span className="fs-x-small">Capture</span>
+                        </Typography>
+                      </div>
+                    )}
+                  </Button>
+                )}
+                {(transaction === "genOffer" ||
+                  transaction === "genAnswer") && (
+                  <Button
+                    variant="text"
+                    color="success"
+                    className="p-0 m-0 mx-1"
+                    // onClick={TODO: downloadQr}
+                  >
+                    <div className="bg-light">{qrCodeEl}</div>
+                  </Button>
                 )}
               </div>
-            )}
-            {(transaction === "genOffer" || transaction === "genAnswer") && (
-              <Button
-                variant="text"
-                color="success"
-                className="p-0 m-0 mx-2"
-                // onClick={TODO: downloadQr}
-              >
-                <div className="bg-light">{qrCodeEl}</div>
-              </Button>
-            )}
 
-            <div className="d-flex flex-column p-2">
-              <div
-                className={classNames({
-                  "pt-0 px-1 clickable text-end": true,
-                  "incorrect-color": activeDevice !== null,
-                  invisible:
-                    transaction !== "readAnswer" && transaction !== "readOffer",
-                })}
-                onClick={() => setShowAvailableDevicesMenu(true)}
-              >
-                <DeviceCameraVideoIcon className="mirror-x" />
-              </div>
-              <div className="d-flex flex-column pt-3 text-end">
+              <div className="col d-flex flex-column p-2">
                 <div
                   className={classNames({
-                    "pb-3": true,
-                    "opacity-50": transaction === "readOffer",
+                    "pt-0 px-1 clickable text-end": true,
+                    "incorrect-color": activeDevice !== null,
+                    invisible:
+                      transaction !== "readAnswer" &&
+                      transaction !== "readOffer",
                   })}
+                  onClick={() => setShowAvailableDevicesMenu(true)}
                 >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    disabled={transaction !== null}
-                    onClick={createOffer}
-                  >
-                    Make Offer
-                  </Button>
+                  <DeviceCameraVideoIcon className="mirror-x" />
                 </div>
-                <div
-                  className={classNames({
-                    "pb-3": true,
-                    "opacity-50": transaction === "genOffer",
-                  })}
-                >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    disabled={transaction !== null}
-                    onClick={() => {
-                      changeTrans("readOffer");
-                    }}
+                <div className="d-flex flex-column pt-0 pt-sm-3 text-start text-sm-end">
+                  <div
+                    className={classNames({
+                      "pb-3": true,
+                      "opacity-50": transaction === "readOffer",
+                    })}
                   >
-                    Read Offer
-                  </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      disabled={transaction !== null}
+                      onClick={createOffer}
+                    >
+                      Make Offer
+                    </Button>
+                  </div>
+                  <div
+                    className={classNames({
+                      "pb-3": true,
+                      "opacity-50": transaction === "genOffer",
+                    })}
+                  >
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      disabled={transaction !== null}
+                      onClick={() => {
+                        changeTrans("readOffer");
+                      }}
+                    >
+                      Read Offer
+                    </Button>
+                  </div>
+                  <div>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      disabled={transaction !== "genOffer"}
+                      onClick={() => {
+                        changeTrans("readAnswer");
+                      }}
+                    >
+                      Read Answer
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  disabled={transaction !== "genOffer"}
-                  onClick={() => {
-                    changeTrans("readAnswer");
-                  }}
-                >
-                  Read Answer
-                </Button>
               </div>
             </div>
           </div>
