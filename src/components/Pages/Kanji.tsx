@@ -181,17 +181,6 @@ function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
   return examples;
 }
 
-function buildGameActionsHandler(gotoNext: () => void, gotoPrev: () => void) {
-  return function gameActionHandler(direction: SwipeDirection) {
-    if (direction === "left") {
-      gotoNext();
-    } else if (direction === "right") {
-      gotoPrev();
-    }
-    return Promise.resolve();
-  };
-}
-
 /**
  * Comparison info for:
  *
@@ -500,16 +489,6 @@ export default function Kanji() {
     setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext]);
 
-  const gameActionHandler = buildGameActionsHandler(gotoNext, gotoPrev);
-
-  useKeyboardActions(
-    gameActionHandler,
-    () => {
-      /** no English/Japanse flipping */
-    }
-    // timedPlayAnswerHandlerWrapper
-  );
-
   const swipeActionHandler = useCallback(
     (direction: SwipeDirection) => {
       // this.props.logger("swiped " + direction, 3);
@@ -535,6 +514,14 @@ export default function Kanji() {
       return Promise.resolve(/** interrupt, fetch */);
     },
     [gotoNext, gotoPrev]
+  );
+
+  useKeyboardActions(
+    swipeActionHandler,
+    () => {
+      /** no English/Japanse flipping */
+    }
+    // timedPlayAnswerHandlerWrapper
   );
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
