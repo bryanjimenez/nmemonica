@@ -16,11 +16,11 @@ import {
   togglePhrasesOrdering,
 } from "../../slices/phraseSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
-import { NotReady } from "../Form/NotReady";
 import SimpleListMenu from "../Form/SimpleListMenu";
 import PlusMinus from "../Input/PlusMinus";
 import SettingsSwitch from "../Input/SettingsSwitch";
 import { ThresholdFilterSlider } from "../Input/ThresholdFilterSlider";
+import { NotReady } from "../Pages/NotReady";
 import { SetTermGList } from "../Pages/SetTermGList";
 
 export default function SettingsPhrase() {

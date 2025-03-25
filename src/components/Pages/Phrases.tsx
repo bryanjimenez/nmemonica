@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { NotReady } from "./NotReady";
 import { type AudioItemParams } from "../../constants/voiceConstants";
 import {
   AudioBufferRecord,
@@ -85,7 +86,6 @@ import {
 import DialogMsg from "../Dialog/DialogMsg";
 import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
-import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
   AudioLoadingIcon,

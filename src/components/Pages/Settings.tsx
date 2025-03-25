@@ -11,6 +11,7 @@ import React, {
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 
+import { NotReady } from "./NotReady";
 import { DebugLevel } from "../../helper/consoleHelper";
 import { allowedCookies } from "../../helper/cookieHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
@@ -35,7 +36,6 @@ import {
 } from "../../slices/globalSlice";
 import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
-import { NotReady } from "../Form/NotReady";
 import SettingsSwitch from "../Input/SettingsSwitch";
 import SettingsCookies from "../Settings/SettingsCookies";
 import "../../css/Settings.css";

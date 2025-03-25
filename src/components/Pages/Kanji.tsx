@@ -14,6 +14,7 @@ import React, {
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
+import { NotReady } from "./NotReady";
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
 import {
@@ -72,7 +73,6 @@ import {
 import { getVocabulary } from "../../slices/vocabularySlice";
 import DialogMsg from "../Dialog/DialogMsg";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
-import { NotReady } from "../Form/NotReady";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import { Tooltip } from "../Form/Tooltip";
 import { oneFromList, splitToList } from "../Games/KanjiGame";

@@ -15,16 +15,13 @@ import {
   toggleKanjiActiveTag,
   toggleKanjiOrdering,
 } from "../../slices/kanjiSlice";
-import {
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
+import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import { NotReady } from "../Form/NotReady";
 import SimpleListMenu from "../Form/SimpleListMenu";
 import PlusMinus from "../Input/PlusMinus";
 import SettingsSwitch from "../Input/SettingsSwitch";
 import { ThresholdFilterSlider } from "../Input/ThresholdFilterSlider";
+import { NotReady } from "../Pages/NotReady";
 import { SetTermTagList } from "../Pages/SetTermTagList";
 
 export default function SettingsKanji() {

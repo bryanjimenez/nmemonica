@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { NotReady } from "./NotReady";
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 import { type AudioItemParams } from "../../constants/voiceConstants";
@@ -93,7 +94,6 @@ import {
 } from "../../slices/voiceSlice";
 import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
-import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
   AudioLoadingIcon,
