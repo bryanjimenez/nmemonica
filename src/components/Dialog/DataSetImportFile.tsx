@@ -12,7 +12,7 @@ import {
 } from "@primer/octicons-react";
 import { useCallback, useRef, useState } from "react";
 
-import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
+import { DataSetFromDragDrop, TransferObject } from "../Form/DataSetFromDragDrop";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppSettingState } from "../../slices";
 import "../../css/DragDrop.css";

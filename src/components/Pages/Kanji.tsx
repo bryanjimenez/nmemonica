@@ -72,7 +72,7 @@ import {
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import ClickNavBtn from "../Form/ClickNavBtn";
-import DialogMsg from "../Form/DialogMsg";
+import DialogMsg from "../Dialog/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";

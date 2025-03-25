@@ -3,7 +3,7 @@ import { RawVocabulary } from "nmemonica";
 import { ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import SettingsSwitch from "./SettingsSwitch";
+import SettingsSwitch from "../Form/SettingsSwitch";
 import { AppDispatch } from "../../slices";
 
 interface TagEditMenuProps {

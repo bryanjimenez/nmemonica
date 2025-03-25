@@ -85,7 +85,7 @@ import {
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import ClickNavBtn from "../Form/ClickNavBtn";
-import DialogMsg from "../Form/DialogMsg";
+import DialogMsg from "../Dialog/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
@@ -98,7 +98,7 @@ import {
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
-import { TagEditMenu } from "../Form/TagEditMenu";
+import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 
 const PhrasesMeta = {

@@ -21,7 +21,7 @@ import {
   useState,
 } from "react";
 
-import { type DataSetSharingAction } from "./DataSetSharingActions";
+import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { WebRTCContext } from "../../context/webRTC";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";

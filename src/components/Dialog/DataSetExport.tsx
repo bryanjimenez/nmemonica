@@ -9,12 +9,12 @@ import {
 } from "@primer/octicons-react";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
-import { DataSetFromAppCache } from "./DataSetFromAppCache";
-import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
+import { DataSetFromAppCache } from "../Form/DataSetFromAppCache";
+import { DataSetFromDragDrop, TransferObject } from "../Form/DataSetFromDragDrop";
 import {
   type DataSetSharingAction,
   RTCTransferRequired,
-} from "./DataSetSharingActions";
+} from "../Form/DataSetSharingActions";
 import { WebRTCContext } from "../../context/webRTC";
 import {
   dataTransferAggregator,

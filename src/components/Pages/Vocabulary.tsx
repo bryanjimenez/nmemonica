@@ -107,7 +107,7 @@ import {
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
-import { TagEditMenu } from "../Form/TagEditMenu";
+import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
 import type { BareIdx } from "../Form/VocabularyOrderSlider";
