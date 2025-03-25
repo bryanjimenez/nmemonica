@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
 
-import ChoiceNumberSlider from "./ChoiceNumberSlider";
-import SettingsSwitch from "./SettingsSwitch";
+import ChoiceNumberSlider from "../Form/ChoiceNumberSlider";
+import SettingsSwitch from "../Form/SettingsSwitch";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKana } from "../../hooks/useConnectKana";

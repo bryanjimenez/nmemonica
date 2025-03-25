@@ -1,96 +1,66 @@
-import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
-import { NotReady } from "./NotReady";
-import PlusMinus from "./PlusMinus";
-import SettingsSwitch from "./SettingsSwitch";
-import SimpleListMenu from "./SimpleListMenu";
-import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
+import { NotReady } from "../Form/NotReady";
+import PlusMinus from "../Form/PlusMinus";
+import SettingsSwitch from "../Form/SettingsSwitch";
+import SimpleListMenu from "../Form/SimpleListMenu";
+import { ThresholdFilterSlider } from "../Form/ThresholdFilterSlider";
+import { DebugLevel } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
-import { labelOptions } from "../../helper/gameHelper";
-import { useConnectKanji } from "../../hooks/useConnectKanji";
-import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { getStaleGroups } from "../../helper/gameHelper";
+import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import type { AppDispatch } from "../../slices";
+import { logger } from "../../slices/globalSlice";
 import {
-  getKanji,
+  getPhrase,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
   toggleIncludeNew,
   toggleIncludeReviewed,
-  toggleKanjiActiveTag,
-  toggleKanjiFilter,
-  toggleKanjiOrdering,
-} from "../../slices/kanjiSlice";
-import {
-  TermFilterBy,
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
-import { getVocabulary } from "../../slices/vocabularySlice";
-import { SetTermTagList } from "../Pages/SetTermTagList";
+  togglePhraseActiveGrp,
+  togglePhrasesOrdering,
+} from "../../slices/phraseSlice";
+import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import { SetTermGList } from "../Pages/SetTermGList";
 
-export default function SettingsKanji() {
+export default function SettingsPhrase() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { vocabList: vocabulary } = useConnectVocabulary();
   const {
-    filterType: kanjiFilterREF,
-    sortMethod,
+    phraseList: phrases,
+    phraseGroups,
+    sortMethod: phraseOrder,
     difficultyThreshold,
-    activeTags: kanjiActive,
-    kanjiList: kanji,
-    kanjiTagObj: kanjiTags,
+    activeGroup: phraseActive,
     spaRepMaxReviewItem,
     includeNew,
     includeReviewed,
-  } = useConnectKanji();
+  } = useConnectPhrase();
 
-  const kanjiFilter = kanjiFilterREF.current;
-  const kanjiOrder = sortMethod;
+  if (phrases.length === 0) {
+    void dispatch(getPhrase());
+  }
 
-  useEffect(() => {
-    if (vocabulary.length === 0) {
-      void dispatch(getVocabulary());
-    }
+  if (phrases.length < 1 || Object.keys(phraseGroups).length < 1)
+    return <NotReady addlStyle="phrases-settings" />;
 
-    if (Object.keys(kanjiTags).length === 0) {
-      void dispatch(getKanji());
-    }
-    // react-hooks/exhaustive-deps **mount only**
-    // eslint-disable-next-line
-  }, []);
-
-  if (kanji.length < 1 || Object.keys(kanjiTags).length < 1)
-    return <NotReady addlStyle="vocabulary-settings" />;
-
-  const kanjiSelectedTags = Object.values(kanji).filter((k) =>
-    k.tags.some((aTag: string) => kanjiActive.includes(aTag))
-  );
+  const stale = getStaleGroups(phraseGroups, phraseActive);
+  if (stale.length > 0) {
+    const error = new Error("Stale phrases active group", {
+      cause: { code: "StalePhraseActiveGrp", value: stale },
+    });
+    dispatch(logger(error.message, DebugLevel.ERROR));
+    dispatch(logger(JSON.stringify(stale), DebugLevel.ERROR));
+  }
 
   const el = (
     <div className="outer">
       <div className="d-flex flex-row justify-content-between">
         <div className="column-1">
-          <span className="fs-5 fw-light">
-            {labelOptions(kanjiFilter, ["Kanji Group", "Tags"])}
-          </span>
-          {/* <div className="mb-2">
-            <SettingsSwitch
-              active={kanjiFilter % 2 === 0}
-              action={buildAction(dispatch, toggleKanjiFilter)}
-              color="default"
-              statusText={"Filter by"}
-            />
-          </div> */}
-          <SetTermTagList
-            selectedCount={
-              kanjiSelectedTags.length === 0
-                ? Object.values(kanji).length
-                : kanjiSelectedTags.length
-            }
-            termsTags={kanjiTags}
-            termsActive={kanjiActive}
-            toggleTermActive={buildAction(dispatch, toggleKanjiActiveTag)}
+          <SetTermGList
+            termsGroups={phraseGroups}
+            termsActive={phraseActive}
+            toggleTermActiveGrp={(grp) => dispatch(togglePhraseActiveGrp(grp))}
           />
         </div>
         <div className="column-2 setting-block">
@@ -98,19 +68,19 @@ export default function SettingsKanji() {
             <SimpleListMenu
               title={"Sort by:"}
               options={TermSortByLabel}
+              initial={phraseOrder}
               allowed={[
                 TermSortBy.DIFFICULTY,
                 TermSortBy.RANDOM,
                 TermSortBy.VIEW_DATE,
                 TermSortBy.RECALL,
               ]}
-              initial={kanjiOrder}
               onChange={(index) => {
-                return buildAction(dispatch, toggleKanjiOrdering)(index);
+                return buildAction(dispatch, togglePhrasesOrdering)(index);
               }}
             />
           </div>
-          {kanjiOrder === TermSortBy.RECALL && (
+          {phraseOrder === TermSortBy.RECALL && (
             <div className="mb-2">
               <PlusMinus
                 value={spaRepMaxReviewItem}
@@ -147,7 +117,7 @@ export default function SettingsKanji() {
               setThreshold={buildAction(dispatch, setMemorizedThreshold)}
             />
           </div>
-          {kanjiOrder === TermSortBy.VIEW_DATE && (
+          {phraseOrder === TermSortBy.VIEW_DATE && (
             <>
               <div className="mb-2">
                 <SettingsSwitch

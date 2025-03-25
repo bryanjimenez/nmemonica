@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 
-import SettingsSwitch from "./SettingsSwitch";
+import SettingsSwitch from "../Form/SettingsSwitch";
 import {
   cookieAcceptance,
   deleteCookie,

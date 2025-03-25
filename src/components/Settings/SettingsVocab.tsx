@@ -7,12 +7,12 @@ import classNames from "classnames";
 import { useMemo } from "react";
 import { useDispatch } from "react-redux";
 
-import { NotReady } from "./NotReady";
-import PlusMinus from "./PlusMinus";
-import SettingsSwitch from "./SettingsSwitch";
-import SimpleListMenu from "./SimpleListMenu";
-import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
-import VerbFormSlider from "./VerbFormSlider";
+import { NotReady } from "../Form/NotReady";
+import PlusMinus from "../Form/PlusMinus";
+import SettingsSwitch from "../Form/SettingsSwitch";
+import SimpleListMenu from "../Form/SimpleListMenu";
+import { ThresholdFilterSlider } from "../Form/ThresholdFilterSlider";
+import VerbFormSlider from "../Form/VerbFormSlider";
 import { DebugLevel } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";

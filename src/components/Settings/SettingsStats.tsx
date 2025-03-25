@@ -2,7 +2,7 @@ import classNames from "classnames";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import PlusMinus from "./PlusMinus";
+import PlusMinus from "../Form/PlusMinus";
 import {
   getDifficultyCounts,
   getLastViewCounts,

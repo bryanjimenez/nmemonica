@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 
-import SimpleListMenu from "./SimpleListMenu";
+import SimpleListMenu from "../Form/SimpleListMenu";
 import { VOICE_KIND_EN, VOICE_KIND_JA } from "../../constants/voiceConstants";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";

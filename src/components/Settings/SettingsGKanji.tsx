@@ -1,8 +1,8 @@
 import { useDispatch } from "react-redux";
 
-import ChoiceNumberSlider from "./ChoiceNumberSlider";
-import SettingsSwitch from "./SettingsSwitch";
-import SimpleListMenu from "./SimpleListMenu";
+import ChoiceNumberSlider from "../Form/ChoiceNumberSlider";
+import SettingsSwitch from "../Form/SettingsSwitch";
+import SimpleListMenu from "../Form/SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch } from "../../slices";

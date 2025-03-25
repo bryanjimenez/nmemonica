@@ -36,21 +36,21 @@ import {
 import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
 import { NotReady } from "../Form/NotReady";
-import SettingsCookies from "../Form/SettingsCookies";
+import SettingsCookies from "../Settings/SettingsCookies";
 import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
 import { PrivacyPolicyMeta } from "../Terms/PrivacyPolicy";
 import { TermsAndConditionsMeta } from "../Terms/TermsAndConditions";
-const SettingsAudio = lazy(() => import("../Form/SettingsAudio"));
-const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
-const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
-const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
-const SettingsOppositeGame = lazy(() => import("../Form/SettingsGOpposite"));
-const SettingsKanaGame = lazy(() => import("../Form/SettingsGKana"));
-const SettingsKanjiGame = lazy(() => import("../Form/SettingsGKanji"));
-const SettingsParticleGame = lazy(() => import("../Form/SettingsGParticle"));
-const SettingsStats = lazy(() => import("../Form/SettingsStats"));
+const SettingsAudio = lazy(() => import("../Settings/SettingsAudio"));
+const SettingsKanji = lazy(() => import("../Settings/SettingsKanji"));
+const SettingsPhrase = lazy(() => import("../Settings/SettingsPhrase"));
+const SettingsVocab = lazy(() => import("../Settings/SettingsVocab"));
+const SettingsOppositeGame = lazy(() => import("../Settings/SettingsGOpposite"));
+const SettingsKanaGame = lazy(() => import("../Settings/SettingsGKana"));
+const SettingsKanjiGame = lazy(() => import("../Settings/SettingsGKanji"));
+const SettingsParticleGame = lazy(() => import("../Settings/SettingsGParticle"));
+const SettingsStats = lazy(() => import("../Settings/SettingsStats"));
 
 const SettingsMeta = {
   location: "/settings/",
