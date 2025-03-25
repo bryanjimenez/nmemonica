@@ -1,10 +1,10 @@
 import { useDispatch } from "react-redux";
 
-import SettingsSwitch from "../Form/SettingsSwitch";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import type { AppDispatch } from "../../slices";
 import { toggleOppositeFadeInAnswers } from "../../slices/oppositeSlice";
+import SettingsSwitch from "../Input/SettingsSwitch";
 
 export default function SettingsOppositeGame() {
   const dispatch = useDispatch<AppDispatch>();

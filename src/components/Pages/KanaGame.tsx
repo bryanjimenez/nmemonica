@@ -10,9 +10,9 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 import { RootState } from "../../slices";
 import { KanaType } from "../../slices/settingHelper";
 import type { ValuesOf } from "../../typings/utils";
-import ClickNavBtn from "../Form/ClickNavBtn";
 import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
+import ClickNavBtn from "../Input/ClickNavBtn";
 
 interface Choice {
   val: string;

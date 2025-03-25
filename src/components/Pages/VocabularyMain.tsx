@@ -18,8 +18,8 @@ import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { furiganaToggled } from "../../slices/vocabularySlice";
-import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
+import AudioItem from "../Input/AudioItem";
 
 interface VocabularyMainProps {
   vocabulary: RawVocabulary;

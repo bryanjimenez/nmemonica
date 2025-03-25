@@ -22,8 +22,8 @@ import {
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { furiganaToggled, verbFormChanged } from "../../slices/vocabularySlice";
-import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
+import AudioItem from "../Input/AudioItem";
 
 interface VerbMainProps {
   verb: RawVocabulary;

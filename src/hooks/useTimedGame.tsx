@@ -4,12 +4,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { useDeviceMotionActions } from "./useDeviceMotionActions";
 import { useForceRender } from "./useFade";
 import type { GameActionHandler } from "./useSwipeActions";
+import { TimePlayVerifyBtns } from "../components/Form/OptionsBar";
 import {
   LoopSettingBtn,
   LoopStartBtn,
   LoopStopBtn,
-} from "../components/Form/BtnLoop";
-import { TimePlayVerifyBtns } from "../components/Form/OptionsBar";
+} from "../components/Input/BtnLoop";
 import { loopN, pause } from "../helper/gameHelper";
 import { setMediaSessionPlaybackState } from "../helper/mediaHelper";
 import { SwipeDirection } from "../helper/TouchSwipe";

@@ -70,15 +70,15 @@ import {
   TermSortByLabel,
 } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import { AccuracySlider } from "../Form/AccuracySlider";
-import ClickNavBtn from "../Form/ClickNavBtn";
 import DialogMsg from "../Dialog/DialogMsg";
-import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import { Tooltip } from "../Form/Tooltip";
 import { oneFromList, splitToList } from "../Games/KanjiGame";
+import { AccuracySlider } from "../Input/AccuracySlider";
+import ClickNavBtn from "../Input/ClickNavBtn";
+import { DifficultySlider } from "../Input/DifficultySlider";
 
 const KanjiMeta = {
   location: "/kanji/",

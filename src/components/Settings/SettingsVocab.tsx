@@ -7,12 +7,6 @@ import classNames from "classnames";
 import { useMemo } from "react";
 import { useDispatch } from "react-redux";
 
-import { NotReady } from "../Form/NotReady";
-import PlusMinus from "../Form/PlusMinus";
-import SettingsSwitch from "../Form/SettingsSwitch";
-import SimpleListMenu from "../Form/SimpleListMenu";
-import { ThresholdFilterSlider } from "../Form/ThresholdFilterSlider";
-import VerbFormSlider from "../Form/VerbFormSlider";
 import { DebugLevel } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
@@ -35,6 +29,12 @@ import {
   toggleVocabularyOrdering,
   updateVerbColSplit,
 } from "../../slices/vocabularySlice";
+import { NotReady } from "../Form/NotReady";
+import SimpleListMenu from "../Form/SimpleListMenu";
+import PlusMinus from "../Input/PlusMinus";
+import SettingsSwitch from "../Input/SettingsSwitch";
+import { ThresholdFilterSlider } from "../Input/ThresholdFilterSlider";
+import VerbFormSlider from "../Input/VerbFormSlider";
 import { SetTermGList } from "../Pages/SetTermGList";
 
 export default function SettingsVocab() {

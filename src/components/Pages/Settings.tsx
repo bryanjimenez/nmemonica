@@ -36,8 +36,8 @@ import {
 import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
 import { NotReady } from "../Form/NotReady";
+import SettingsSwitch from "../Input/SettingsSwitch";
 import SettingsCookies from "../Settings/SettingsCookies";
-import SettingsSwitch from "../Form/SettingsSwitch";
 import "../../css/Settings.css";
 import "../../css/spin.css";
 import { PrivacyPolicyMeta } from "../Terms/PrivacyPolicy";
@@ -46,10 +46,14 @@ const SettingsAudio = lazy(() => import("../Settings/SettingsAudio"));
 const SettingsKanji = lazy(() => import("../Settings/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Settings/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Settings/SettingsVocab"));
-const SettingsOppositeGame = lazy(() => import("../Settings/SettingsGOpposite"));
+const SettingsOppositeGame = lazy(
+  () => import("../Settings/SettingsGOpposite")
+);
 const SettingsKanaGame = lazy(() => import("../Settings/SettingsGKana"));
 const SettingsKanjiGame = lazy(() => import("../Settings/SettingsGKanji"));
-const SettingsParticleGame = lazy(() => import("../Settings/SettingsGParticle"));
+const SettingsParticleGame = lazy(
+  () => import("../Settings/SettingsGParticle")
+);
 const SettingsStats = lazy(() => import("../Settings/SettingsStats"));
 
 const SettingsMeta = {

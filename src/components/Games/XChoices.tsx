@@ -2,7 +2,7 @@ import classNames from "classnames";
 import React, { useCallback, useReducer } from "react";
 
 import type { GameChoice, GameQuestion } from "./FourChoices";
-import ClickNavBtn from "../Form/ClickNavBtn";
+import ClickNavBtn from "../Input/ClickNavBtn";
 
 interface XChoicesProps {
   question: GameQuestion;

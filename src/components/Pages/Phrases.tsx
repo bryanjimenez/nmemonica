@@ -82,11 +82,8 @@ import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";
-import { AccuracySlider } from "../Form/AccuracySlider";
-import AudioItem from "../Form/AudioItem";
-import ClickNavBtn from "../Form/ClickNavBtn";
 import DialogMsg from "../Dialog/DialogMsg";
-import { DifficultySlider } from "../Form/DifficultySlider";
+import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
@@ -98,8 +95,11 @@ import {
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
-import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
+import { AccuracySlider } from "../Input/AccuracySlider";
+import AudioItem from "../Input/AudioItem";
+import ClickNavBtn from "../Input/ClickNavBtn";
+import { DifficultySlider } from "../Input/DifficultySlider";
 
 const PhrasesMeta = {
   location: "/phrases/",
