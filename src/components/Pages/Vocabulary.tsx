@@ -20,6 +20,7 @@ import {
   copyBufferFromCacheStore,
   copyBufferToCacheStore,
   getSynthVoiceBufferToCacheStore,
+  hasBufferFromCacheStore,
 } from "../../helper/audioSynthPreCache";
 import {
   type ConsoleMessage,
@@ -90,6 +91,7 @@ import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";
+import { ValuesOf } from "../../typings/utils";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import ClickNavBtn from "../Form/ClickNavBtn";
 import { DifficultySlider } from "../Form/DifficultySlider";
@@ -533,91 +535,6 @@ export default function Vocabulary() {
 
       const vocabulary = getTerm(uid, filteredVocab, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
-
-      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const curUid =
-          reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
-        const v = getTerm(curUid, filteredVocab, vocabList);
-
-        const index = reinforcedUID !== null ? undefined : selectedIndex;
-
-        let vUid: string;
-        let vQuery: string | Error;
-
-        type QueryT = {
-          uid: AudioItemParams["uid"];
-          pronunciation: AudioItemParams["q"];
-          index?: AudioItemParams["index"];
-          tl: AudioItemParams["tl"];
-        };
-
-        let optionalNonAdjQuery: QueryT[] = [];
-        let optionalAdjQuery: QueryT[] = [];
-
-        if (JapaneseText.parse(v).isNaAdj()) {
-          const naObj = partOfSpeechPronunciation(
-            v,
-            verbForm,
-            naFlip.current !== undefined
-              ? { current: "-na" }
-              : { current: undefined }
-          );
-          const naObjWNa = partOfSpeechPronunciation(
-            v,
-            verbForm,
-            naFlip.current === undefined
-              ? { current: "-na" }
-              : { current: undefined }
-          );
-          const naPron = audioPronunciation(naObj);
-          const naPronWNa = audioPronunciation(naObjWNa);
-
-          optionalAdjQuery = [
-            { o: naObj, p: naPron },
-            { o: naObjWNa, p: naPronWNa },
-          ].reduce<QueryT[]>((acc, el) => {
-            if (el.p instanceof Error === false) {
-              return [
-                ...acc,
-                {
-                  uid: getCacheUID(el.o),
-                  tl: "ja",
-                  pronunciation: el.p,
-                  index,
-                },
-              ];
-            }
-            return acc;
-          }, []);
-        } else {
-          // verb, noun, ..
-          const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
-
-          vUid = getCacheUID(sayObj);
-          vQuery = audioPronunciation(sayObj);
-          if (vQuery instanceof Error === false) {
-            optionalNonAdjQuery = [
-              {
-                uid: vUid,
-                tl: "ja",
-                pronunciation: vQuery,
-                index,
-              },
-            ];
-          }
-        }
-
-        void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
-          ...optionalNonAdjQuery,
-          ...optionalAdjQuery,
-          {
-            uid: v.uid + ".en",
-            tl: "en",
-            pronunciation: v.english,
-            index,
-          },
-        ]);
-      }
 
       updateDailyGoal({
         viewGoal,
@@ -1305,7 +1222,7 @@ function useBuildGameActionsHandler(
                 res.buffer
               );
 
-              return playAudio(cachedAudioBuf);
+              actionPromise = playAudio(cachedAudioBuf);
             } catch (exception) {
               logAudioError(dispatch, exception, vQuery, "onSwipe");
               return Promise.resolve();
@@ -1343,7 +1260,7 @@ function useBuildGameActionsHandler(
                 res.buffer
               );
 
-              return playAudio(cachedAudioBuf);
+              actionPromise = playAudio(cachedAudioBuf);
             } catch (exception) {
               logAudioError(dispatch, exception, inEnglish, "onSwipe");
               return Promise.resolve();
@@ -1351,7 +1268,21 @@ function useBuildGameActionsHandler(
           }
         }
       }
-      return actionPromise;
+      return actionPromise.then(() => {
+        if (direction === "up" || direction === "down") {
+          preCacheAudioForNextTerm(
+            dispatch,
+            reinforcedUID,
+            selectedIndex,
+            vocabList,
+            verbForm,
+            order,
+            filteredVocab,
+            naFlip,
+            audioCacheStore
+          );
+        }
+      });
     },
     [
       dispatch,
@@ -1416,4 +1347,128 @@ function partOfSpeechPronunciation(
   }
 
   return sayObj;
+}
+
+function preCacheAudioForNextTerm(
+  dispatch: AppDispatch,
+  reinforcedUID: string | null,
+  selectedIndex: number,
+  vocabList: RawVocabulary[],
+  verbForm: string,
+  order: number[],
+  filteredVocab: RawVocabulary[],
+  naFlip: React.RefObject<string | undefined>,
+  audioCacheStore: React.RefObject<AudioBufferRecord>
+) {
+  const nextSelectedIndex = (selectedIndex + 1) % order.length;
+
+  const nextUid =
+    reinforcedUID ?? getTermUID(nextSelectedIndex, filteredVocab, order);
+  const v = getTerm(nextUid, filteredVocab, vocabList);
+
+  const isJACached = hasBufferFromCacheStore(audioCacheStore, nextUid);
+  const isJANaCached = hasBufferFromCacheStore(
+    audioCacheStore,
+    nextUid + ".na"
+  );
+  const isENCached = hasBufferFromCacheStore(audioCacheStore, nextUid + ".en");
+
+  if (isJACached && isENCached && isJANaCached) {
+    return;
+  }
+
+  const index = reinforcedUID !== null ? undefined : nextSelectedIndex;
+
+  let vUid: string;
+  let vQuery: string | Error;
+
+  type QueryT = {
+    uid: AudioItemParams["uid"];
+    pronunciation: AudioItemParams["q"];
+    index?: AudioItemParams["index"];
+    tl: AudioItemParams["tl"];
+  };
+
+  let optionalNonAdjQuery: QueryT[] = [];
+  let optionalAdjQuery: QueryT[] = [];
+  let englishQuery: QueryT[] = [];
+
+  if (!isENCached) {
+    englishQuery = [
+      {
+        uid: v.uid + ".en",
+        tl: "en",
+        pronunciation: v.english,
+        index,
+      },
+    ];
+  }
+
+  if (JapaneseText.parse(v).isNaAdj()) {
+    let adjQueries: { o: RawVocabulary; p: string | Error }[] = [];
+    if (!isJANaCached) {
+      const naObjWNa = partOfSpeechPronunciation(
+        v,
+        verbForm,
+        naFlip.current === undefined
+          ? { current: "-na" }
+          : { current: undefined }
+      );
+      const naPronWNa = audioPronunciation(naObjWNa);
+
+      adjQueries = [...adjQueries, { o: naObjWNa, p: naPronWNa }];
+    }
+
+    if (!isJACached) {
+      const naObj = partOfSpeechPronunciation(
+        v,
+        verbForm,
+        naFlip.current !== undefined
+          ? { current: "-na" }
+          : { current: undefined }
+      );
+      const naPron = audioPronunciation(naObj);
+
+      adjQueries = [...adjQueries, { o: naObj, p: naPron }];
+    }
+
+    optionalAdjQuery = adjQueries.reduce<QueryT[]>((acc, el) => {
+      if (el.p instanceof Error === false) {
+        return [
+          ...acc,
+          {
+            uid: getCacheUID(el.o),
+            tl: "ja",
+            pronunciation: el.p,
+            index,
+          },
+        ];
+      }
+      return acc;
+    }, []);
+  } else {
+    // verb, noun, ..
+    if (!isJACached) {
+      const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
+
+      vUid = getCacheUID(sayObj);
+      vQuery = audioPronunciation(sayObj);
+      if (vQuery instanceof Error === false) {
+        optionalNonAdjQuery = [
+          {
+            uid: vUid,
+            tl: "ja",
+            pronunciation: vQuery,
+            index,
+          },
+        ];
+      }
+    }
+  }
+
+  void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
+    ...optionalNonAdjQuery,
+    ...optionalAdjQuery,
+    ...englishQuery,
+  ]);
 }
