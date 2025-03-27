@@ -1,0 +1,12 @@
+[book]
+authors = ["bryanjimenez"]
+language = "en"
+multilingual = false
+src = "src"
+title = "nmemonica Documentation"
+
+[build]
+build-dir = "../dist/docs"
+
+[output.html]
+git-repository-url = "https://github.com/bryanjimenez/nmemonica"

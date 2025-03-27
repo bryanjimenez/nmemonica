@@ -21,6 +21,10 @@ environment.*
 # notes
 *.txt
 
+
+# executables
+docs/mdbook
+
 # zips
 *.tar.gz
 *.zip
