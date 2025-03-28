@@ -456,7 +456,7 @@ export default function SettingsStats() {
             <thead>
               <tr>
                 <th>{/** Counts */}</th>
-                <td>Terms</td>
+                <td>Datasets</td>
               </tr>
             </thead>
             <tbody>
