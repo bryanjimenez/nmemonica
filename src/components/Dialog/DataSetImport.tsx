@@ -21,9 +21,9 @@ import {
   useState,
 } from "react";
 
-import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { WebRTCContext } from "../../context/webRTC";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
+import { CSVErrorCause } from "../../helper/csvHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   SharingMessageErrorCause,
@@ -32,6 +32,7 @@ import {
 } from "../../helper/webRTCDataTrans";
 import { AppSettingState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
+import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
 export interface CryptoMessage {
@@ -77,9 +78,7 @@ export function DataSetImport(props: DataSetImportProps) {
     setDestination("save");
   }, []);
 
-  const [_status, setStatus] = useState<
-    "successStatus" | "connectError" | "inputError" | "outputError"
-  >();
+  const [status, setStatus] = useState<"successStatus" | "dataError">();
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
   const addWarning = useCallback(
@@ -184,9 +183,9 @@ export function DataSetImport(props: DataSetImportProps) {
               o.fileName.slice(0, dot > -1 ? dot : undefined)
             );
 
-            const csvFile = readCsvToSheet(o.text, sheetName);
+              const csvFile = readCsvToSheet(o.text, sheetName);
 
-            return { ...acc, data: [...(acc.data ?? []), csvFile] };
+              return { ...acc, data: [...(acc.data ?? []), csvFile] };
           } else {
             let s;
             try {
@@ -194,7 +193,7 @@ export function DataSetImport(props: DataSetImportProps) {
               // TODO: settings.json verify is AppSettingState
               return { ...acc, settings: s };
             } catch {
-              setStatus("outputError");
+              setStatus("dataError");
               addWarning(
                 SharingMessageErrorCause.BadPayload,
                 "Failed to parse Settings"
@@ -271,8 +270,7 @@ export function DataSetImport(props: DataSetImportProps) {
   const initiateTransferCB = useCallback(() => {
     const msgBuf = msgBuffer;
     if (msgBuf === null) {
-      // TODO: show error wasn't ready
-      return;
+      throw new Error("Initiate button enabled without receiving data");
     }
 
     // const fileObj = decryptMsgIntoDecryptedFilesCB(TEMP_FAKE_KEY, msgBuf);
@@ -287,12 +285,32 @@ export function DataSetImport(props: DataSetImportProps) {
 
         return importToAppHandlerCB(dataObj, settings);
       })
-      .catch((_err) => {
-        setStatus("outputError");
-        addWarning(
-          SharingMessageErrorCause.BadPayload,
-          "Failed to parse DataSet"
-        );
+      .catch((exception) => {
+        let key: string = SharingMessageErrorCause.BadPayload;
+        let msg = "Failed to parse DataSet";
+
+        if (exception instanceof Error && "cause" in exception) {
+          const errData = exception.cause as {
+            code: CSVErrorCause;
+            details: Set<string>;
+            sheetName: string;
+          };
+
+          if (errData.code === CSVErrorCause.BadFileContent) {
+            // failed csv character sanitize
+            let details: string[] = [];
+            errData.details.forEach((d) => {
+              const { u } = JSON.parse(d) as { u: string };
+              details = [...details, "u" + u];
+            });
+
+            key = `${errData.sheetName}-sanitize`;
+            msg = `${errData.sheetName}.csv contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
+          }
+        }
+
+        setStatus("dataError");
+        addWarning(key, msg);
       });
   }, [
     destination,
@@ -376,22 +394,24 @@ export function DataSetImport(props: DataSetImportProps) {
               variant="outlined"
               size="small"
               style={{ textTransform: "none" }}
-              disabled={msgBuffer === null}
+              disabled={msgBuffer === null || status === "dataError"}
               onClick={initiateTransferCB}
             >
               {properCase(destination)}
             </Button>
 
-            <FormHelperText>
-              {destination === "import" ? (
-                <span>
-                  Import and <strong>overwrite</strong> local data{" "}
-                  <strong>!</strong>
-                </span>
-              ) : (
-                <span>Save to file system</span>
-              )}
-            </FormHelperText>
+            {status !== "dataError" && (
+              <FormHelperText>
+                {destination === "import" ? (
+                  <span>
+                    Import and <strong>overwrite</strong> local data{" "}
+                    <strong>!</strong>
+                  </span>
+                ) : (
+                  <span>Save to file system</span>
+                )}
+              </FormHelperText>
+            )}
           </FormControl>
         </DialogContent>
       </Dialog>
@@ -407,13 +427,7 @@ export function DataSetImport(props: DataSetImportProps) {
 function parseFileObject(
   msgAsText: string,
   setErrorStatus: Dispatch<
-    SetStateAction<
-      | "successStatus"
-      | "connectError"
-      | "inputError"
-      | "outputError"
-      | undefined
-    >
+    SetStateAction<"successStatus" | "dataError" | undefined>
   >
 ) {
   let fileObj: SyncDataFile[];
@@ -434,7 +448,7 @@ function parseFileObject(
       }
     });
   } catch (err) {
-    setErrorStatus("outputError");
+    setErrorStatus("dataError");
     if (err instanceof Error && "cause" in err) {
       throw err;
     }
