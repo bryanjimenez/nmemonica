@@ -850,8 +850,7 @@ export default function Kanji() {
               >
                 <div className="d-flex ">
                   <div className="d-flex flex-column w-100">
-                    {(term.pronounce !== undefined && (
-                      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                    {term.pronounce !== undefined ? (
                       <div
                         style={{ minHeight: "66px" }}
                         className="pronunciation fs-5 p-0 d-flex flex-wrap align-items-end justify-content-center clickable"
@@ -886,7 +885,7 @@ export default function Kanji() {
                           <span>{"[Pronounce]"}</span>
                         )}
                       </div>
-                    )) || (
+                    ) : (
                       <div
                         style={{ minHeight: "68px" }}
                         className="fs-4 pt-0 invisible"

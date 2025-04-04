@@ -697,6 +697,8 @@ export default function Phrases() {
     metadata.current[uid]?.lastReview
   );
 
+  const hidden = swipeThreshold > 0;
+
   return (
     <>
       <div
@@ -750,7 +752,13 @@ export default function Phrases() {
           <StackNavButton ariaLabel="Previous" action={gotoPrev}>
             <ChevronLeftIcon size={16} />
           </StackNavButton>
-          <div className="pt-3 d-flex flex-column justify-content-around text-center">
+          <div
+            className={classNames({
+              "pt-3 d-flex flex-column justify-content-around text-center":
+                true,
+              "px-3": hidden,
+            })}
+          >
             <Sizable
               breakPoint="md"
               largeClassName={aboveLargeCss}

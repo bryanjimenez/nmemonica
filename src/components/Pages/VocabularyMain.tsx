@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
 import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -161,8 +162,15 @@ export default function VocabularyMain(props: VocabularyMainProps) {
 
   const shortEN = vocabulary.english.length < 55;
 
+  const hidden = swipeThreshold > 0;
+
   return (
-    <div className="pt-3 d-flex flex-column justify-content-around text-center">
+    <div
+      className={classNames({
+        "pt-3 d-flex flex-column justify-content-around text-center": true,
+        "px-3": hidden,
+      })}
+    >
       <Sizable
         breakPoint="md"
         largeClassName={{ "fs-display-5": true }}
