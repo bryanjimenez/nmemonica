@@ -3,15 +3,19 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
-import { csvToObject } from "../helper/csvHelper";
+import {
+  CSVErrorCause,
+  csvToObject,
+  validateCSVSheet,
+} from "../helper/csvHelper";
 import { jtox } from "../helper/jsonHelper";
-import { type FilledSheetData } from "../helper/sheetHelperImport";
 import { workbookSheetNames } from "../helper/sheetHelper";
+import { type FilledSheetData } from "../helper/sheetHelperImport";
+import { unusualApostrophe } from "../helper/unicodeHelper";
+
 import { AppDispatch } from ".";
 
-export interface SheetInitSlice {}
-
-const initialState: SheetInitSlice = {};
+const initialState = {};
 
 class LineReadSimulator extends EventTarget {
   line(value: string) {
@@ -52,6 +56,25 @@ class LineReadSimulator extends EventTarget {
  * @param sheetName name of sheet
  */
 export function readCsvToSheet(text: string, sheetName: string) {
+  // replace unsual, but valid symbols with common ones
+  text = text.replaceAll(unusualApostrophe, "'");
+
+  const invalidInput = validateCSVSheet(text);
+  // TODO: check csv contains correct headers
+  // TODO: check csv column contains expected datatypes
+
+  if (invalidInput.size > 0) {
+    return Promise.reject(
+      new Error("CSV contains invalid characters", {
+        cause: {
+          code: CSVErrorCause.BadFileContent,
+          details: invalidInput,
+          sheetName,
+        },
+      })
+    );
+  }
+
   const lrSimulator = new LineReadSimulator();
   lrSimulator.addEventListener("line", () => {});
 

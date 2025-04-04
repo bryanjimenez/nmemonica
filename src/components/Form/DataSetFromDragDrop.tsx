@@ -16,6 +16,7 @@ import React, {
 } from "react";
 import { useSelector } from "react-redux";
 
+import { CSVErrorCause } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppSettingState, RootState } from "../../slices";
@@ -105,14 +106,36 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                   sheet: xObj,
                 });
               }
-            } catch {
-              w = [
-                ...w,
+            } catch (exception) {
+              // default message
+              let errMsg = (
                 <span
                   key={`${fileItem.name}-parse`}
-                >{`Failed to parse (${fileItem.name})`}</span>,
-              ];
-              setWarning((warn) => [...warn, ...w]);
+                >{`Failed to parse (${fileItem.name})`}</span>
+              );
+
+              if (exception instanceof Error && "cause" in exception) {
+                const errData = exception.cause as {
+                  code: CSVErrorCause;
+                  details: Set<string>;
+                };
+
+                if (errData.code === CSVErrorCause.BadFileContent) {
+                  // failed csv character sanitize
+                  let details: string[] = [];
+                  errData.details.forEach((d) => {
+                    const { u } = JSON.parse(d) as { u: string };
+                    details = [...details, "u" + u];
+                  });
+                  errMsg = (
+                    <span
+                      key={`${fileItem.name}-sanitize`}
+                    >{`${fileItem.name} contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`}</span>
+                  );
+                }
+              }
+
+              setWarning((warn) => [...warn, ...w, errMsg]);
             }
           };
 

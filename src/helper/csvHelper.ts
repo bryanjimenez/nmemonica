@@ -1,4 +1,21 @@
-import { type FilledSheetData } from "./sheetHelperImport.js";
+import { type FilledSheetData } from "./sheetHelperImport";
+import {
+  carRet,
+  eLetter,
+  eNumber,
+  eSymbol,
+  hiragana,
+  jFP,
+  jHP,
+  kanji,
+  kanjirare,
+  katakana,
+  newLine,
+  noma,
+  printables,
+  vowelPhonetics,
+  yoon,
+} from "./unicodeHelper";
 
 export interface CSVOptions {
   delimiter?: string;
@@ -13,6 +30,56 @@ const doubleQuoteToken = "\u0002";
 const singleQuoteValue = '"';
 const singleQuoteToken = '"';
 const lineEndToken = "\r\n";
+
+export const enum CSVErrorCause {
+  BadFileContent = "message-bad-file-contents",
+}
+
+/**
+ * Allowed characters when parsing CSV string
+ * @param char
+ */
+function isValidCSVCharacter(char: string) {
+  return new RegExp(
+    "[" +
+      printables +
+      newLine +
+      carRet +
+      vowelPhonetics +
+      kanji +
+      kanjirare +
+      hiragana +
+      katakana +
+      yoon +
+      eSymbol +
+      eLetter +
+      eNumber +
+      jFP +
+      noma +
+      jHP +
+      "]"
+  ).test(char);
+}
+
+/**
+ * Validate each character against a whitelist
+ * @param text full or partial csv file as text
+ * @returns a set with the invalid characters found
+ */
+export function validateCSVSheet(text: string) {
+  let invalidInput = new Set();
+
+  text.split("").forEach((c) => {
+    const valid = isValidCSVCharacter(c);
+    if (!valid) {
+      const badChar = c;
+      const badUnicode = c.charCodeAt(0).toString(16).padStart(4, "0");
+      invalidInput.add(JSON.stringify({ c: badChar, u: badUnicode }));
+    }
+  });
+
+  return invalidInput;
+}
 
 export function csvToObject<
   T extends { on: (p: string, fn: (line: string) => void) => void },
@@ -126,9 +193,10 @@ export function objectToCSV<
         const text = row.cells[u]?.text;
 
         switch (true) {
-          case text?.includes(delimiter) ||
-            text?.includes("\n") ||
-            text?.includes(singleQuoteToken):
+          case text !== undefined &&
+            (text.includes(delimiter) ||
+              text.includes("\n") ||
+              text.includes(singleQuoteToken)):
             // quoted cell
             rowData +=
               singleQuoteValue +
