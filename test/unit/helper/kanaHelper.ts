@@ -205,9 +205,15 @@ describe("kanaHelper", function () {
 
   describe("isPunctuation", function () {
     const punctuation = ["。", "、", "？", "！", "「", "」"];
+    const noma = ["々"];
     it("punctuation", function () {
       const expected = punctuation.map(() => true);
       const actual = punctuation.map((p) => isPunctuation(p));
+      expect(actual).to.deep.equal(expected);
+    });
+    it("noma is excluded", function () {
+      const expected = noma.map(() => false);
+      const actual = noma.map((p) => isPunctuation(p));
       expect(actual).to.deep.equal(expected);
     });
   });
@@ -330,8 +336,8 @@ describe("kanaHelper", function () {
       expect(iVowel).to.equal(-1);
     });
   });
-  describe("toEnglishNumber", function(){
-    it("is a digit", function(){
+  describe("toEnglishNumber", function () {
+    it("is a digit", function () {
       //０１２３４５６７８９
 
       const zero = toEnglishNumber("０");
@@ -342,6 +348,6 @@ describe("kanaHelper", function () {
 
       const two = toEnglishNumber("２");
       expect(two).to.eq(2);
-    })
+    });
   });
 });

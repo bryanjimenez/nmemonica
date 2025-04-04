@@ -1,5 +1,7 @@
 import type { GroupListMap, RawVocabulary, SourceVocabulary } from "nmemonica";
 
+import { hiragana, kanji, kanjirare } from "./unicodeHelper";
+
 export function getPropsFromTags(tag: string | undefined) {
   let tagList: string[] = [];
   let strokeN: number | undefined;
@@ -30,22 +32,20 @@ export function getPropsFromTags(tag: string | undefined) {
       strokeN,
     };
 
-  const h = "[\u3041-\u309F]{1,4}"; //  hiragana particle
-  const commonK = "\u4E00-\u9FAF"; //   kanji
-  const rareK = "\u3400-\u4DBF"; //     kanji
+  const h = "[" + hiragana + "]{1,4}"; //  hiragana particle
   const hasParticle = new RegExp("[pP]:" + h + "(?:," + h + ")*");
   const hasInverse = new RegExp("inv:[a-z0-9]{32}");
   const isIntransitiveWPair = new RegExp("intr:[a-z0-9]{32}");
   const isAdjective = new RegExp("(i|na)-adj");
   const nonWhiteSpace = new RegExp(/\S/);
   const hasPhoneticKanji = new RegExp(
-    "[pP]:[" + commonK + rareK + "][+][\u3041-\u309F]+"
+    "[pP]:[" + kanji + kanjirare + "][+][" + hiragana + "]+"
   );
   const hasRadicalExample = new RegExp(
-    "[eE]:[" + commonK + rareK + "]" + "(?:,[" + commonK + rareK + "])*"
+    "[eE]:[" + kanji + kanjirare + "]" + "(?:,[" + kanji + kanjirare + "])*"
   );
   const hasSimilarKanji = new RegExp(
-    "[sS]:[" + commonK + rareK + "]" + "(?:,[" + commonK + rareK + "])*"
+    "[sS]:[" + kanji + kanjirare + "]" + "(?:,[" + kanji + kanjirare + "])*"
   );
 
   const isPolite = new RegExp(/^polite$/i);

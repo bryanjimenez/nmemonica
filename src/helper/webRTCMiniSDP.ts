@@ -3,6 +3,7 @@
  */
 
 import { isNumber } from "./arrayHelper";
+import { newLine, printables } from "./unicodeHelper";
 
 // TODO: a=setup actpass/active get from context (remove from msg)
 
@@ -14,9 +15,6 @@ const CAN_GROUP_SEP = "\u001D";
  * @param char
  */
 export function isValidSDPCharacter(char: string) {
-  const printables = "\u0020-\u007E";
-  const newLine = "\n";
-
   return new RegExp("[" + printables + newLine + "]").test(char);
 }
 
@@ -25,9 +23,6 @@ export function isValidSDPCharacter(char: string) {
  * @param char
  */
 export function isValidSDPCharacterWBlockSep(char: string) {
-  const printables = "\u0020-\u007E";
-  const newLine = "\n";
-
   return new RegExp("[" + printables + CAN_GROUP_SEP + newLine + "]").test(
     char
   );
