@@ -1,6 +1,11 @@
 import { Badge, Fab, TextField } from "@mui/material";
-import { type SheetData, Spreadsheet } from "@nmemonica/x-spreadsheet";
 import {
+  type CellStyle,
+  type SheetData,
+  Spreadsheet,
+} from "@nmemonica/x-spreadsheet";
+import {
+  BlockedIcon,
   GearIcon,
   LinkExternalIcon,
   // RssIcon,
@@ -13,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { WebRTCProvider } from "../../context/webRTC";
+import { validateCSVSheet } from "../../helper/csvHelper";
 import { sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getActiveSheet,
@@ -44,8 +50,8 @@ import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
 import { DataSetExport } from "../Dialog/DataSetExport";
 import { DataSetImport } from "../Dialog/DataSetImport";
 import { DataSetImportFile } from "../Dialog/DataSetImportFile";
-import { DataSetSharingActions } from "../Form/DataSetSharingActions";
 import { WRTCSignalingQR } from "../Dialog/WRTCSignalingQR";
+import { DataSetSharingActions } from "../Form/DataSetSharingActions";
 import "../../css/Sheet.css";
 
 const SheetMeta = {
@@ -74,6 +80,22 @@ const defaultOp = {
     minWidth: 60,
   },
 } as const;
+
+enum cellStyleNames {
+  warn = "warn",
+}
+
+const cellStyles: Record<cellStyleNames, CellStyle> = {
+  warn: {
+    bgcolor: "#fa9696",
+    border: {
+      top: ["dashed", "#FF0000"],
+      bottom: ["dashed", "#FF0000"],
+      left: ["dashed", "#FF0000"],
+      right: ["dashed", "#FF0000"],
+    },
+  },
+};
 
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
@@ -105,6 +127,11 @@ export default function Sheet() {
     setResultBadge(0);
   }, []);
 
+  const [hasError, setHasError] = useState<
+    { ri: number; ci: number; name: string }[]
+  >([]);
+  const selectedCell = useRef<{ ri: number; ci: number }>({ ri: 0, ci: 0 });
+
   const { cookies } = useSelector(({ global }: RootState) => global);
 
   useEffect(() => {
@@ -121,6 +148,8 @@ export default function Sheet() {
           (s) => s.name.toLowerCase() === name.toLowerCase()
         );
         if (s !== undefined) {
+          //@ts-expect-error nmemonica/x-spreadsheet todo
+          s.styles = cellStyles;
           acc = [...acc, sheetAddExtraRow(s)];
         }
         return acc;
@@ -133,7 +162,7 @@ export default function Sheet() {
       grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
       // replace typed '\n' with newline inside cell
-      grid.on("cell-edited-done", (text: string, _ri: number, _ci: number) => {
+      grid.on("cell-edited-done", (text, _ri, _ci) => {
         grid.sheet.data.setSelectedCellText(
           // characters to replace with \n
           //    literal '\n'
@@ -142,6 +171,40 @@ export default function Sheet() {
           text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
           "finished"
         );
+      });
+
+      grid.on("cell-selected", (_cell, ri, ci) => {
+        selectedCell.current = { ri, ci };
+      });
+
+      //@ts-expect-error nmemonica/x-spreadsheet todo
+      grid.on("change", (sheet: SheetData) => {
+        let errorStyle: cellStyleNames | undefined = undefined;
+        const { ri, ci } = selectedCell.current;
+
+        const { text } = sheet.rows[ri].cells[ci];
+        if (text !== undefined) {
+          const invalid = validateCSVSheet(text);
+          if (invalid.size > 0) {
+            // grid.sheet.data.addStyle()
+            errorStyle = cellStyleNames.warn;
+          }
+        }
+
+        if (errorStyle === undefined) {
+          setHasError((prev) =>
+            prev.filter(
+              (e) => !(e.ri === ri && e.ci === ci && e.name === sheet.name)
+            )
+          );
+        } else {
+          setHasError((prev) => [...prev, { ri, ci, name: sheet.name }]);
+        }
+
+        //@ts-expect-error nmemonica/x-spreadsheet todo
+        sheet.rows[ri].cells[ci].style = errorStyle;
+        // TODO: grid.change should be able to take undefined
+        grid.change(() => {});
       });
 
       // reset search when switching sheet
@@ -393,6 +456,22 @@ export default function Sheet() {
   const openDataActionMenuCB = useCallback(() => {
     setDataAction("menu");
   }, []);
+  const showErrorCB = useCallback(() => {
+    const workbook = wbRef.current;
+
+    if (workbook === null) {
+      return;
+    }
+    const { activeSheetName } = getActiveSheet(workbook);
+
+    // TODO: cycle through errors in the sheet...
+    const first = hasError.find((err) => err.name === activeSheetName);
+
+    if (first !== undefined) {
+      const xOffset = defaultOp.row.height * (first.ri - 1);
+      workbook.sheet.verticalScrollbar.move({ top: xOffset });
+    }
+  }, [hasError]);
   const openImportFileCB = useCallback(() => {
     setDataAction("importFile");
   }, []);
@@ -508,18 +587,30 @@ export default function Sheet() {
 
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
-            <Fab
-              aria-label="DataSet Actions"
-              aria-disabled={!cookies}
-              variant="extended"
-              size="small"
-              disabled={!cookies}
-              onClick={openDataActionMenuCB}
-              className="m-0 z-index-unset"
-              tabIndex={3}
+            <Badge
+              badgeContent={hasError.length}
+              color={hasError.length > 0 ? "error" : "success"}
             >
-              <GearIcon size="small" />
-            </Fab>
+              <Fab
+                aria-label="DataSet Actions"
+                aria-disabled={!cookies}
+                variant="extended"
+                size="small"
+                color={hasError.length > 0 ? "warning" : undefined}
+                disabled={!cookies}
+                onClick={
+                  hasError.length > 0 ? showErrorCB : openDataActionMenuCB
+                }
+                className="m-0 z-index-unset"
+                tabIndex={3}
+              >
+                {hasError.length > 0 ? (
+                  <BlockedIcon size="small" />
+                ) : (
+                  <GearIcon size="small" />
+                )}
+              </Fab>
+            </Badge>
           </div>
           <div className="d-flex">
             <div>
