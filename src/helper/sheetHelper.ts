@@ -306,6 +306,46 @@ export function searchInSheet(
 }
 
 /**
+ * Validate a sheet cell by cell with a validator function
+ * @param sheet
+ * @param validator
+ */
+export function validateInSheet(
+  sheet: SheetData,
+  validator: (text: string) => Set<unknown>
+): { ri: number; ci: number; invalid: Set<unknown> }[] {
+  if (!sheet.rows) {
+    return [];
+  }
+
+  const result = Object.values(sheet.rows).reduce<
+    { ri: number; ci: number; invalid: Set<unknown> }[]
+  >((acc, row: RowData, y) => {
+    if (typeof row !== "number" && "cells" in row) {
+      const failedCells = Object.keys(row.cells).reduce<
+        { ri: number; ci: number; invalid: Set<unknown> }[]
+      >((acc, c) => {
+        const x = Number(c);
+        const { text } = row.cells[x];
+        if (text !== undefined) {
+          const invalid = validator(text);
+          if (invalid.size > 0) {
+            return [...acc, { ri: y, ci: x, invalid }];
+          }
+        }
+        return acc;
+      }, []);
+
+      acc = [...acc, ...failedCells];
+    }
+
+    return acc;
+  }, []);
+
+  return result;
+}
+
+/**
  * Finds which row contains the query given a column index
  */
 export function findInColumn(sheet: SheetData, column: number, query: string) {

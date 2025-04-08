@@ -30,6 +30,7 @@ import {
   touchScreenCheck,
   updateEditedUID,
   updateStateAfterWorkbookEdit,
+  validateInSheet,
   workbookSheetNames,
   xObjectToCsvText,
 } from "../../helper/sheetHelper";
@@ -120,6 +121,7 @@ export default function Sheet() {
   const [resultBadge, setResultBadge] = useState(0);
   const prevResult = useRef<{ ri: number; ci: number; text: string }[]>([]);
   const resultIdx = useRef<number | null>(null);
+  const warningIdx = useRef<number>(undefined);
   const searchValue = useRef<string | null>(null);
   const resetSearchCB = useCallback(() => {
     prevResult.current = [];
@@ -173,38 +175,68 @@ export default function Sheet() {
         );
       });
 
+      // store the coordinates
       grid.on("cell-selected", (_cell, ri, ci) => {
         selectedCell.current = { ri, ci };
       });
 
-      //@ts-expect-error nmemonica/x-spreadsheet todo
+      // validate input
       grid.on("change", (sheet: SheetData) => {
         let errorStyle: cellStyleNames | undefined = undefined;
         const { ri, ci } = selectedCell.current;
 
-        const { text } = sheet.rows[ri].cells[ci];
-        if (text !== undefined) {
-          const invalid = validateCSVSheet(text);
-          if (invalid.size > 0) {
-            // grid.sheet.data.addStyle()
-            errorStyle = cellStyleNames.warn;
+        let cell = undefined;
+        if (
+          sheet.rows !== undefined &&
+          sheet.rows[ri] !== undefined &&
+          sheet.rows[ri].cells[ci] !== undefined
+        ) {
+          cell = sheet.rows[ri].cells[ci];
+        }
+
+        if (cell !== undefined) {
+          // some cell input change event
+          // validate cell
+
+          const { text } = cell;
+          if (text !== undefined) {
+            const invalid = validateCSVSheet(text);
+
+            if (invalid.size > 0) {
+              errorStyle = cellStyleNames.warn;
+            }
           }
-        }
 
-        if (errorStyle === undefined) {
-          setHasError((prev) =>
-            prev.filter(
+          const thisError =
+            errorStyle !== undefined
+              ? [{ ri, ci, name: sheet.name }]
+              : [
+                  /** no error found */
+                ];
+          setHasError((prev) => [
+            ...prev.filter(
               (e) => !(e.ri === ri && e.ci === ci && e.name === sheet.name)
-            )
-          );
+            ),
+            ...thisError,
+          ]);
+
+          // TODO: implement like grid.sheet.data.addStyle()
+          //@ts-expect-error nmemonica/x-spreadsheet todo
+          cell.style = errorStyle;
         } else {
-          setHasError((prev) => [...prev, { ri, ci, name: sheet.name }]);
+          // some non cell input change event
+          // validate whole sheet
+
+          const { name } = sheet;
+          const invalid = validateInSheet(sheet, validateCSVSheet);
+          setHasError((prev) => [
+            ...prev.filter((e) => e.name !== name),
+            ...invalid.map(({ ri, ci }) => ({ ri, ci, name })),
+          ]);
         }
 
-        //@ts-expect-error nmemonica/x-spreadsheet todo
-        sheet.rows[ri].cells[ci].style = errorStyle;
-        // TODO: grid.change should be able to take undefined
-        grid.change(() => {});
+        resetSearchCB();
+        grid.reRender();
       });
 
       // reset search when switching sheet
@@ -386,8 +418,9 @@ export default function Sheet() {
     }
 
     const { ri } = result[resultIdx.current];
-    const xOffset = defaultOp.row.height * (ri - 1);
-    workbook.sheet.verticalScrollbar.move({ top: xOffset });
+
+    // first row is frozen for headers
+    workbook.focusOnCell(ri - 1, 0);
   }, []);
 
   const probablyMobile = useMemo(() => {
@@ -456,21 +489,23 @@ export default function Sheet() {
   const openDataActionMenuCB = useCallback(() => {
     setDataAction("menu");
   }, []);
-  const showErrorCB = useCallback(() => {
+  /** Cycle through validation failures */
+  const validationFailedCB = useCallback(() => {
     const workbook = wbRef.current;
 
-    if (workbook === null) {
+    if (workbook === null || hasError.length === 0) {
       return;
     }
-    const { activeSheetName } = getActiveSheet(workbook);
 
-    // TODO: cycle through errors in the sheet...
-    const first = hasError.find((err) => err.name === activeSheetName);
+    const index =
+      warningIdx.current !== undefined && warningIdx.current < hasError.length
+        ? warningIdx.current
+        : 0;
+    const errorCell = hasError[index];
+    // first row is frozen for headers
+    workbook.focusOn(errorCell.name, errorCell.ri - 1, errorCell.ci);
 
-    if (first !== undefined) {
-      const xOffset = defaultOp.row.height * (first.ri - 1);
-      workbook.sheet.verticalScrollbar.move({ top: xOffset });
-    }
+    warningIdx.current = (index + 1) % hasError.length;
   }, [hasError]);
   const openImportFileCB = useCallback(() => {
     setDataAction("importFile");
@@ -599,7 +634,9 @@ export default function Sheet() {
                 color={hasError.length > 0 ? "warning" : undefined}
                 disabled={!cookies}
                 onClick={
-                  hasError.length > 0 ? showErrorCB : openDataActionMenuCB
+                  hasError.length > 0
+                    ? validationFailedCB
+                    : openDataActionMenuCB
                 }
                 className="m-0 z-index-unset"
                 tabIndex={3}
