@@ -39,7 +39,7 @@
     "@popperjs/core": "^2.11.6",
     "@primer/octicons-react": "^19.14.0",
     "@reduxjs/toolkit": "^2.5.0",
-    "bootstrap": "^5.2.1",
+    "bootstrap": "^5.3.5",
     "classnames": "^2.3.1",
     "core-js": "^3.40.0",
     "crypto-browserify": "^3.12.1",
