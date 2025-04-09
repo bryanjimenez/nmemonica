@@ -118,7 +118,7 @@ export default function Sheet() {
   const [workbookImported, setWorkbookImported] = useState<number>();
 
   const [resultBadge, setResultBadge] = useState(0);
-  const prevResult = useRef<[number, number, string][]>([]);
+  const prevResult = useRef<{ ri: number; ci: number; text: string }[]>([]);
   const resultIdx = useRef<number | null>(null);
   const searchValue = useRef<string | null>(null);
   const resetSearchCB = useCallback(() => {
@@ -385,8 +385,8 @@ export default function Sheet() {
       setResultBadge(resultIdx.current + 1);
     }
 
-    const [x] = result[resultIdx.current];
-    const xOffset = defaultOp.row.height * (x - 1);
+    const { ri } = result[resultIdx.current];
+    const xOffset = defaultOp.row.height * (ri - 1);
     workbook.sheet.verticalScrollbar.move({ top: xOffset });
   }, []);
 

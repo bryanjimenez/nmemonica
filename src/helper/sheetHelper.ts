@@ -271,30 +271,36 @@ export function sheetAddExtraRow(sheet: SheetData): SheetData {
   return withExtraRow;
 }
 
-export function searchInSheet(sheet: SheetData, query: string) {
+export function searchInSheet(
+  sheet: SheetData,
+  query: string
+): { ri: number; ci: number; text: string }[] {
   if (!sheet.rows) {
     return [];
   }
 
-  const result = Object.values(sheet.rows).reduce<[number, number, string][]>(
-    (acc, row: RowData, x) => {
-      if (typeof row !== "number" && "cells" in row) {
-        const find = Object.keys(row.cells).find((c) =>
-          row.cells[Number(c)].text?.toLowerCase().includes(query.toLowerCase())
-        );
-        if (find === undefined) return acc;
+  const result = Object.values(sheet.rows).reduce<
+    { ri: number; ci: number; text: string }[]
+  >((acc, row: RowData, y) => {
+    if (typeof row !== "number" && "cells" in row) {
+      const find = Object.keys(row.cells).find((c) => {
+        const { text } = row.cells[Number(c)];
+        if (text === undefined) {
+          return false;
+        }
+        return text.toLowerCase().includes(query.toLowerCase());
+      });
+      if (find === undefined) return acc;
 
-        const text = row.cells[Number(find)].text;
-        if (text === undefined) return acc;
+      const text = row.cells[Number(find)].text;
+      if (text === undefined) return acc;
 
-        const y = Number(find);
-        acc = [...acc, [x, y, text]];
-      }
+      const x = Number(find);
+      acc = [...acc, { ri: y, ci: x, text }];
+    }
 
-      return acc;
-    },
-    []
-  );
+    return acc;
+  }, []);
 
   return result;
 }
@@ -592,7 +598,7 @@ function parseTagColumn(s: SheetData, termRow: number, tagCol: number) {
             ? (JSON.parse(text.trim()) as Record<string, string[]>)
             : { tags: [] };
       }
-    } catch (err) {
+    } catch {
       throw new Error("Failed to parse tags from sheet cell");
     }
   } else {
