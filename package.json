@@ -39,7 +39,7 @@
     "@mui/material": "^5.11.5",
     "@nmemonica/voice-en": "file:../nmemonica-wasm-voice-en/pkg/nmemonica-voice-en-0.0.1.tgz",
     "@nmemonica/voice-ja": "^0.1.0",
-    "@nmemonica/x-spreadsheet": "^0.1.2",
+    "@nmemonica/x-spreadsheet": "^0.1.3",
     "@popperjs/core": "^2.11.6",
     "@primer/octicons-react": "^19.14.0",
     "@reduxjs/toolkit": "^2.5.0",
