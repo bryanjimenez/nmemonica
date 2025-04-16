@@ -35,6 +35,12 @@ export const enum CSVErrorCause {
   BadFileContent = "message-bad-file-contents",
 }
 
+export const enum SettingsErrorCause {
+  BadFileContent = "settings-bad-file-contents",
+  InvalidSettings = "settings-bad-unrecognized",
+  InvalidJSONStructure = "settings-bad-json-structure",
+}
+
 /**
  * Allowed characters when parsing CSV string
  * @param char
@@ -62,6 +68,16 @@ function isValidCSVCharacter(char: string) {
 }
 
 /**
+ * Allowed characters when parsing CSV string
+ * @param char
+ */
+function isValidSettingsCharacter(char: string) {
+  return new RegExp(
+    "[" + printables + newLine + carRet + vowelPhonetics + "]"
+  ).test(char);
+}
+
+/**
  * Validate each character against a whitelist
  * @param text full or partial csv file as text
  * @returns a set with the invalid characters found
@@ -71,6 +87,26 @@ export function validateCSVSheet(text: string) {
 
   text.split("").forEach((c) => {
     const valid = isValidCSVCharacter(c);
+    if (!valid) {
+      const badChar = c;
+      const badUnicode = c.charCodeAt(0).toString(16).padStart(4, "0");
+      invalidInput.add(JSON.stringify({ c: badChar, u: badUnicode }));
+    }
+  });
+
+  return invalidInput;
+}
+
+/**
+ * Validate each character against a whitelist
+ * @param text full or partial csv file as text
+ * @returns a set with the invalid characters found
+ */
+export function validateJSONSettings(text: string) {
+  let invalidInput = new Set();
+
+  text.split("").forEach((c) => {
+    const valid = isValidSettingsCharacter(c);
     if (!valid) {
       const badChar = c;
       const badUnicode = c.charCodeAt(0).toString(16).padStart(4, "0");

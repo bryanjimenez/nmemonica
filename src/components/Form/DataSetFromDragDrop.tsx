@@ -20,7 +20,7 @@ import { CSVErrorCause } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppSettingState, RootState } from "../../slices";
-import { readCsvToSheet } from "../../slices/sheetSlice";
+import { readCsvToSheet, readJsonSettings } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 import "../../css/DragDrop.css";
 
@@ -89,8 +89,6 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 fileItem.name.slice(0, dot > -1 ? dot : undefined)
               );
               const xObj = await readCsvToSheet(text, sheetName);
-              // TODO: verify xObj (headers) prevent bad data sharing
-              // sheetDataToJSON()
 
               if (
                 data.find(
@@ -141,28 +139,9 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
 
           reader.readAsText(fileItem);
         } else if (isSettings && w.length === 0) {
-          void fileItem
-            .text()
-            .then((text) => {
-              const s = JSON.parse(text) as Partial<AppSettingState>;
-              // TODO: settings.json verify is AppSettingState
-
-              if (
-                data.find(
-                  (to) =>
-                    to.name === metaDataNames.settings.prettyName &&
-                    JSON.stringify(to.setting) === JSON.stringify(s)
-                ) === undefined
-              ) {
-                updateDataHandler({
-                  name: metaDataNames.settings.prettyName,
-                  origin: "FileSystem",
-                  text,
-                  setting: s,
-                });
-              }
-            })
-            .catch(() => {
+          void fileItem.text().then((text) => {
+            const s = readJsonSettings(text);
+            if (s instanceof Error) {
               w = [
                 ...w,
                 <span
@@ -170,7 +149,24 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 >{`Failed to parse (${fileItem.name})`}</span>,
               ];
               setWarning((warn) => [...warn, ...w]);
-            });
+              return;
+            }
+
+            if (
+              data.find(
+                (to) =>
+                  to.name === metaDataNames.settings.prettyName &&
+                  JSON.stringify(to.setting) === JSON.stringify(s)
+              ) === undefined
+            ) {
+              updateDataHandler({
+                name: metaDataNames.settings.prettyName,
+                origin: "FileSystem",
+                text,
+                setting: s,
+              });
+            }
+          });
         } else {
           setWarning((warn) => [...warn, ...w]);
         }

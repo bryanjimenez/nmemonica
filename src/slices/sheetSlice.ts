@@ -5,15 +5,17 @@ import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
 import {
   CSVErrorCause,
+  SettingsErrorCause,
   csvToObject,
   validateCSVSheet,
+  validateJSONSettings,
 } from "../helper/csvHelper";
 import { jtox } from "../helper/jsonHelper";
 import { workbookSheetNames } from "../helper/sheetHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
 import { unusualApostrophe } from "../helper/unicodeHelper";
 
-import { AppDispatch } from ".";
+import { AppDispatch, AppSettingState, isValidAppSettingsState } from ".";
 
 const initialState = {};
 
@@ -89,6 +91,39 @@ export function readCsvToSheet(text: string, sheetName: string) {
   lrSimulator.close();
 
   return objP;
+}
+
+/**
+ * Settings text to json parser
+ * @param text settings
+ * @throws when text contains invalid characters or if json is malformed
+ */
+export function readJsonSettings(text: string) {
+  try {
+    const invalidInput = validateJSONSettings(text);
+
+    if (invalidInput.size > 0) {
+      return new Error("Settings contains invalid characters", {
+        cause: {
+          code: SettingsErrorCause.BadFileContent,
+          details: invalidInput,
+        },
+      });
+    }
+
+    const settingsObject = JSON.parse(text) as Partial<AppSettingState>;
+    if (!isValidAppSettingsState(settingsObject)) {
+      return new Error("Unrecognized Settings", {
+        cause: { code: SettingsErrorCause.InvalidSettings },
+      });
+    }
+
+    return settingsObject;
+  } catch {
+    return new Error("Malformed JSON", {
+      cause: { code: SettingsErrorCause.InvalidJSONStructure },
+    });
+  }
 }
 
 export const importDatasets = createAsyncThunk(

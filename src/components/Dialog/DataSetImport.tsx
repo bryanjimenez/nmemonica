@@ -31,7 +31,7 @@ import {
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
 import { AppSettingState } from "../../slices";
-import { readCsvToSheet } from "../../slices/sheetSlice";
+import { readCsvToSheet, readJsonSettings } from "../../slices/sheetSlice";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
@@ -183,22 +183,20 @@ export function DataSetImport(props: DataSetImportProps) {
               o.fileName.slice(0, dot > -1 ? dot : undefined)
             );
 
-              const csvFile = readCsvToSheet(o.text, sheetName);
+            const csvFile = readCsvToSheet(o.text, sheetName);
 
-              return { ...acc, data: [...(acc.data ?? []), csvFile] };
+            return { ...acc, data: [...(acc.data ?? []), csvFile] };
           } else {
-            let s;
-            try {
-              s = JSON.parse(o.text) as Partial<AppSettingState>;
-              // TODO: settings.json verify is AppSettingState
+            let s = readJsonSettings(o.text);
+            if (!(s instanceof Error)) {
               return { ...acc, settings: s };
-            } catch {
-              setStatus("dataError");
-              addWarning(
-                SharingMessageErrorCause.BadPayload,
-                "Failed to parse Settings"
-              );
             }
+
+            setStatus("dataError");
+            addWarning(
+              SharingMessageErrorCause.BadPayload,
+              "Failed to parse Settings"
+            );
           }
           return acc;
         },
