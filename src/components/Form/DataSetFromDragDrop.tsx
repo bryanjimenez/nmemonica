@@ -106,11 +106,8 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               }
             } catch (exception) {
               // default message
-              let errMsg = (
-                <span
-                  key={`${fileItem.name}-parse`}
-                >{`Failed to parse (${fileItem.name})`}</span>
-              );
+              let key = `${fileItem.name}-parse`;
+              let msg = `Failed to parse (${fileItem.name})`;
 
               if (exception instanceof Error && "cause" in exception) {
                 const errData = exception.cause as {
@@ -125,13 +122,19 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                     const { u } = JSON.parse(d) as { u: string };
                     details = [...details, "u" + u];
                   });
-                  errMsg = (
-                    <span
-                      key={`${fileItem.name}-sanitize`}
-                    >{`${fileItem.name} contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`}</span>
-                  );
+
+                  key = `${fileItem.name}-sanitize`;
+                  msg = `${fileItem.name} contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
+                } else if (
+                  errData.code === CSVErrorCause.MissingRequiredHeader
+                ) {
+                  // missing required header
+                  key = `${fileItem.name}-header`;
+                  msg = exception.message;
                 }
               }
+
+              const errMsg = <span key={key}>{msg}</span>;
 
               setWarning((warn) => [...warn, ...w, errMsg]);
             }

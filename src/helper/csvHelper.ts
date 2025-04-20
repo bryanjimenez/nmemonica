@@ -33,6 +33,8 @@ const lineEndToken = "\r\n";
 
 export const enum CSVErrorCause {
   BadFileContent = "message-bad-file-contents",
+  MissingRequiredHeader = "csv-missing-required-header",
+  MissingFirstCell = "csv-missing-first-cell",
 }
 
 export const enum SettingsErrorCause {
@@ -190,6 +192,7 @@ export function csvToObject<
         resolve(sheet);
       });
     } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       reject(e);
     }
   });

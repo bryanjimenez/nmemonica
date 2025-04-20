@@ -10,7 +10,7 @@ import {
   validateCSVSheet,
   validateJSONSettings,
 } from "../helper/csvHelper";
-import { jtox } from "../helper/jsonHelper";
+import { jtox, sheetDataToJSON } from "../helper/jsonHelper";
 import { workbookSheetNames } from "../helper/sheetHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
 import { unusualApostrophe } from "../helper/unicodeHelper";
@@ -62,8 +62,6 @@ export function readCsvToSheet(text: string, sheetName: string) {
   text = text.replaceAll(unusualApostrophe, "'");
 
   const invalidInput = validateCSVSheet(text);
-  // TODO: check csv contains correct headers
-  // TODO: check csv column contains expected datatypes
 
   if (invalidInput.size > 0) {
     return Promise.reject(
@@ -90,7 +88,11 @@ export function readCsvToSheet(text: string, sheetName: string) {
 
   lrSimulator.close();
 
-  return objP;
+  return objP.then((sheet) => {
+    sheetDataToJSON(sheet);
+    // TODO: check csv column contains expected datatypes
+    return sheet;
+  });
 }
 
 /**

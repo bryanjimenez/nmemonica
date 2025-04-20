@@ -304,6 +304,10 @@ export function DataSetImport(props: DataSetImportProps) {
 
             key = `${errData.sheetName}-sanitize`;
             msg = `${errData.sheetName}.csv contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
+          } else if (errData.code === CSVErrorCause.MissingRequiredHeader) {
+            // missing required header
+            key = `${errData.sheetName}-header`;
+            msg = `${exception.message}`;
           }
         }
 

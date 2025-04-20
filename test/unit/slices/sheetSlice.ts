@@ -21,8 +21,49 @@ describe("sheetSlice", function () {
           expect(err.message).to.eq("CSV contains invalid characters");
         }
       });
-      it.skip("invalid headers");
-      it.skip("missing required headers");
+      it("invalid headers", async function () {
+        const text = `Kanji,English,Pronounced,Tag
+        四,Four,シ、よつ、よ、よん,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_1""], ""stroke"":5}"
+        六,Six,ロク、むつ、む,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_3""], ""stroke"":4}"`;
+        try {
+          const actual = await readCsvToSheet(text, "Kanji");
+          expect(false, "invalid character throws").to.be.true;
+        } catch (err) {
+          expect(err).to.be.instanceOf(Error);
+          expect(err.message).to.eq(
+            "Missing or incorrect header 'Tags' in Kanji.csv"
+          );
+        }
+      });
+      // it.skip("missing required headers");
+      it("missing required headers", async function () {
+        const text = `Kanji,English,Pronounced
+        四,Four,シ、よつ、よ、よん
+        六,Six,ロク、むつ、む`;
+        try {
+          const actual = await readCsvToSheet(text, "Kanji");
+          expect(false, "invalid character throws").to.be.true;
+        } catch (err) {
+          expect(err).to.be.instanceOf(Error);
+          expect(err.message).to.eq(
+            "Missing or incorrect header 'Tags' in Kanji.csv"
+          );
+        }
+      });
+      it("missing required headers (multiple)", async function () {
+        const text = `Kanji,English
+        四,Four
+        六,Six`;
+        try {
+          const actual = await readCsvToSheet(text, "Kanji");
+          expect(false, "invalid character throws").to.be.true;
+        } catch (err) {
+          expect(err).to.be.instanceOf(Error);
+          expect(err.message).to.eq(
+            "Missing or incorrect header 'Pronounced, Tags' in Kanji.csv"
+          );
+        }
+      });
       it.skip("exceeds maximum cols");
       it.skip("unexpected column types");
     });
@@ -89,6 +130,7 @@ describe("sheetSlice", function () {
 
         expect(actual).to.deep.eq(expected);
       });
+      it.skip("trims unrecognized settings");
     });
   });
 });
