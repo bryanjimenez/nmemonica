@@ -6,6 +6,8 @@ import {
 } from "./userSettingsIndexDBHelper";
 import { type AppSettingState } from "../slices";
 
+export const localStorageKey = "userSettings";
+
 /**
  * Reads a value from storage
  */
