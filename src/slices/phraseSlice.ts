@@ -39,6 +39,7 @@ import {
   userSettingAttrUpdate,
   userStudyStateAttrUpdate,
 } from "../helper/userSettingsHelper";
+import { getIndexDBStudyState } from "../helper/userSettingsIndexDBHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
@@ -49,11 +50,12 @@ export interface PhraseInitSlice {
   version: string;
   grpObj: GroupListMap;
 
+  metadata: Record<string, MetaDataObj | undefined>;
+  metadataID: number;
+
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
     englishSideUp: boolean;
-    repTID: number;
-    repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
@@ -70,11 +72,12 @@ export const phraseInitState: PhraseInitSlice = {
   version: "",
   grpObj: {},
 
+  metadata: {},
+  metadataID: -1,
+
   setting: {
     ordered: 0,
     englishSideUp: false,
-    repTID: -1,
-    repetition: {},
     spaRepMaxReviewItem: undefined,
     activeGroup: [],
     filter: 0,
@@ -169,6 +172,18 @@ export const getPhrase = createAsyncThunk(
       }
 
       return { version, value: jsonValue, values, groups };
+    });
+  }
+);
+
+/**
+ * Pull Phrase metadata from indexedDB
+ */
+export const getPhraseMeta = createAsyncThunk(
+  `${SLICE_NAME}/getPhraseMeta`,
+  async () => {
+    return getIndexDBStudyState(SLICE_NAME).then((data) => {
+      return data ?? {};
     });
   }
 );
@@ -271,7 +286,7 @@ export const setPhraseAccuracy = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         set: { accuracyP: accuracy },
@@ -292,7 +307,7 @@ export const setPhraseDifficulty = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         set: { difficultyP: difficulty },
@@ -309,7 +324,7 @@ export const updateSpaceRepPhrase = createAsyncThunk(
     const { uid, shouldIncrement } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
 
     const value = updateSpaceRepTerm(uid, spaceRep, {
       count: shouldIncrement,
@@ -326,7 +341,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const { uid } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
     const value = updateAction(uid, spaceRep);
 
     return userStudyStateAttrUpdate(SLICE_NAME, value.newValue).then(
@@ -341,7 +356,7 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const { uid } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
     const newValue = removeAction(uid, spaceRep);
 
     if (newValue) {
@@ -364,7 +379,7 @@ export const deleteMetaPhrase = createAsyncThunk(
   `${SLICE_NAME}/deleteMetaPhrase`,
   (uidList: string[], thunkAPI) => {
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
 
     const newValue = deleteMetadata(uidList, spaceRep);
 
@@ -513,6 +528,12 @@ const phraseSlice = createSlice({
       state.value = values;
       state.version = version;
     });
+    builder.addCase(getPhraseMeta.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
 
     builder.addCase(phraseSettingsFromAppStorage.fulfilled, (state, action) => {
       const storedValue = action.payload;
@@ -531,46 +552,46 @@ const phraseSlice = createSlice({
     builder.addCase(setPhraseAccuracy.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setPhraseDifficulty.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(updateSpaceRepPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
+        state.metadataID = Date.now();
+        state.metadata = newValue;
       }
     });
     builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      // state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      // state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(deleteMetaPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
   },
 });

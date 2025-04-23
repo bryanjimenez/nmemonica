@@ -23,9 +23,9 @@ export function useConnectKanji() {
     shallowEqual
   );
 
-  const { repetition } = useSelector(
-    ({ kanji }: RootState) => kanji.setting,
-    (before, after) => before.repTID === after.repTID
+  const { metadata: repetition } = useSelector(
+    ({ kanji }: RootState) => kanji,
+    (before, after) => before.metadataID === after.metadataID
   );
 
   const [

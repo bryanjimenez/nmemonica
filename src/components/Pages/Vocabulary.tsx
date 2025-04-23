@@ -78,6 +78,7 @@ import {
   flipVocabularyPracticeSide,
   furiganaToggled,
   getVocabulary,
+  getVocabularyMeta,
   getVocabularyTags,
   removeFromSpaceRepetition,
   setPitchAccentData,
@@ -203,9 +204,11 @@ export default function Vocabulary() {
     useGoalProgress(viewGoal, metadata);
 
   const populateDataSetsRef = useRef(() => {
-    if (vocabList.length === 0) {
-      void dispatch(getVocabulary());
-    }
+    void dispatch(getVocabularyMeta()).then(() => {
+      if (vocabList.length === 0) {
+        void dispatch(getVocabulary());
+      }
+    });
   });
 
   useEffect(() => {

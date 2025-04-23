@@ -70,6 +70,7 @@ import {
   deleteMetaPhrase,
   flipPhrasesPracticeSide,
   getPhrase,
+  getPhraseMeta,
   getPhraseTags,
   removeFromSpaceRepetition,
   setPhraseAccuracy,
@@ -184,9 +185,11 @@ export default function Phrases() {
   }, []);
 
   const populateDataSetsRef = useRef(() => {
-    if (phraseList.length === 0) {
-      void dispatch(getPhrase());
-    }
+    void dispatch(getPhraseMeta()).then(() => {
+      if (phraseList.length === 0) {
+        void dispatch(getPhrase());
+      }
+    });
   });
 
   useEffect(() => {

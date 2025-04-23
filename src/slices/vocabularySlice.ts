@@ -42,6 +42,7 @@ import {
   userSettingAttrUpdate,
   userStudyStateAttrUpdate,
 } from "../helper/userSettingsHelper";
+import { getIndexDBStudyState } from "../helper/userSettingsIndexDBHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
@@ -53,6 +54,9 @@ export interface VocabularyInitSlice {
   grpObj: GroupListMap;
   verbForm: string;
 
+  metadata: Record<string, MetaDataObj | undefined>;
+  metadataID: number;
+
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
     englishSideUp: boolean;
@@ -60,8 +64,6 @@ export interface VocabularyInitSlice {
     hintEnabled: boolean;
     filter: ValuesOf<typeof TermFilterBy>;
     difficultyThreshold: number;
-    repTID: number;
-    repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
     autoVerbView: boolean;
@@ -79,6 +81,9 @@ export const vocabularyInitState: VocabularyInitSlice = {
   grpObj: {},
   verbForm: "dictionary",
 
+  metadata: {},
+  metadataID: -1,
+
   setting: {
     ordered: 0,
     englishSideUp: false,
@@ -86,8 +91,6 @@ export const vocabularyInitState: VocabularyInitSlice = {
     hintEnabled: false,
     filter: 0,
     difficultyThreshold: MEMORIZED_THRLD,
-    repTID: -1,
-    repetition: {},
     spaRepMaxReviewItem: undefined,
     activeGroup: [],
     autoVerbView: false,
@@ -113,6 +116,18 @@ export const getVocabulary = createAsyncThunk(
       };
 
       return { value, version };
+    });
+  }
+);
+
+/**
+ * Pull Vocabulary metadata from indexedDB
+ */
+export const getVocabularyMeta = createAsyncThunk(
+  `${SLICE_NAME}/getVocabularyMeta`,
+  async () => {
+    return getIndexDBStudyState(SLICE_NAME).then((data) => {
+      return data ?? {};
     });
   }
 );
@@ -214,7 +229,7 @@ export const setWordAccuracy = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         set: { accuracyP: accuracy },
@@ -235,7 +250,7 @@ export const setWordDifficulty = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         set: { difficultyP: difficulty },
@@ -253,7 +268,7 @@ export const furiganaToggled = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         toggle: ["f"],
@@ -271,7 +286,7 @@ export const setPitchAccentData = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         set: { pron: value },
@@ -288,7 +303,7 @@ export const updateSpaceRepWord = createAsyncThunk(
     const { uid, shouldIncrement } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
 
     const value = updateSpaceRepTerm(uid, spaceRep, {
       count: shouldIncrement,
@@ -305,7 +320,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const { uid } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
     const value = updateAction(uid, spaceRep);
 
     return userStudyStateAttrUpdate(SLICE_NAME, value.newValue).then(
@@ -320,7 +335,7 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const { uid } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
     const newValue = removeAction(uid, spaceRep);
 
     if (newValue) {
@@ -343,7 +358,7 @@ export const deleteMetaVocab = createAsyncThunk(
   `${SLICE_NAME}/deleteMetaVocab`,
   (uidList: string[], thunkAPI) => {
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
 
     const newValue = deleteMetadata(uidList, spaceRep);
 
@@ -570,6 +585,12 @@ const vocabularySlice = createSlice({
       state.value = buildVocabularyArray(value);
       state.version = version;
     });
+    builder.addCase(getVocabularyMeta.fulfilled, (state, action) => {
+      const value = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = value;
+    });
     builder.addCase(flipVocabularyPracticeSide.fulfilled, (state) => {
       state.setting.englishSideUp = !state.setting.englishSideUp;
     });
@@ -577,58 +598,58 @@ const vocabularySlice = createSlice({
     builder.addCase(setWordAccuracy.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setWordDifficulty.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(furiganaToggled.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setPitchAccentData.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
+        state.metadataID = Date.now();
+        state.metadata = newValue;
       }
     });
     builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      // state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      // state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(deleteMetaVocab.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
   },
 });

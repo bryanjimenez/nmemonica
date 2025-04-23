@@ -59,6 +59,7 @@ import { logger } from "../../slices/globalSlice";
 import {
   deleteMetaKanji,
   getKanji,
+  getKanjiMeta,
   removeFromSpaceRepetition,
   setKanjiAccuracy,
   setKanjiDifficulty,
@@ -252,9 +253,11 @@ export default function Kanji() {
       void dispatch(getVocabulary());
     }
 
-    if (kanjiList.length === 0) {
-      void dispatch(getKanji());
-    }
+    void dispatch(getKanjiMeta()).then(() => {
+      if (kanjiList.length === 0) {
+        void dispatch(getKanji());
+      }
+    });
   });
 
   // after initial render

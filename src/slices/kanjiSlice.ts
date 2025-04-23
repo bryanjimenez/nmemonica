@@ -31,6 +31,7 @@ import {
   userSettingAttrUpdate,
   userStudyStateAttrUpdate,
 } from "../helper/userSettingsHelper";
+import { getIndexDBStudyState } from "../helper/userSettingsIndexDBHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
@@ -41,12 +42,13 @@ export interface KanjiInitSlice {
   version: string;
   tagObj: string[];
 
+  metadata: Record<string, MetaDataObj | undefined>;
+  metadataID: number;
+
   setting: {
     filter: ValuesOf<typeof TermFilterBy>;
     ordered: ValuesOf<typeof TermSortBy>;
     difficultyThreshold: number;
-    repTID: number;
-    repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
     activeTags: string[];
@@ -66,12 +68,13 @@ export const kanjiInitState: KanjiInitSlice = {
   version: "",
   tagObj: [],
 
+  metadata: {},
+  metadataID: -1,
+
   setting: {
     filter: 2,
     ordered: 0,
     difficultyThreshold: MEMORIZED_THRLD,
-    repTID: -1,
-    repetition: {},
     spaRepMaxReviewItem: undefined,
     activeGroup: [],
     activeTags: [],
@@ -111,6 +114,18 @@ export const getKanji = createAsyncThunk(
   }
 );
 
+/**
+ * Pull Kanji metadata from indexedDB
+ */
+export const getKanjiMeta = createAsyncThunk(
+  `${SLICE_NAME}/getKanjiMeta`,
+  async () => {
+    return getIndexDBStudyState(SLICE_NAME).then((data) => {
+      return data ?? {};
+    });
+  }
+);
+
 export const kanjiSettingsFromAppStorage = createAsyncThunk(
   `${SLICE_NAME}/kanjiSettingsFromAppStorage`,
   (arg: typeof kanjiInitState.setting) => {
@@ -127,7 +142,7 @@ export const setKanjiAccuracy = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         set: { accuracyP: accuracy },
@@ -148,7 +163,7 @@ export const setKanjiDifficulty = createAsyncThunk(
 
     const { record: newValue } = updateSpaceRepTerm(
       uid,
-      state.setting.repetition,
+      state.metadata,
       { count: false, date: false },
       {
         set: { difficultyP: difficulty },
@@ -165,7 +180,7 @@ export const updateSpaceRepKanji = createAsyncThunk(
     const { uid, shouldIncrement } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
 
     const value = updateSpaceRepTerm(uid, spaceRep, {
       count: shouldIncrement,
@@ -182,7 +197,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const { uid } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
     const value = updateAction(uid, spaceRep);
 
     return userStudyStateAttrUpdate(SLICE_NAME, value.newValue).then(
@@ -197,7 +212,7 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const { uid } = arg;
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
     const newValue = removeAction(uid, spaceRep);
 
     if (newValue) {
@@ -220,7 +235,7 @@ export const deleteMetaKanji = createAsyncThunk(
   `${SLICE_NAME}/deleteMetaKanji`,
   (uidList: string[], thunkAPI) => {
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
-    const spaceRep = state.setting.repetition;
+    const spaceRep = state.metadata;
 
     const newValue = deleteMetadata(uidList, spaceRep);
 
@@ -485,6 +500,13 @@ const kanjiSlice = createSlice({
       state.version = version;
     });
 
+    builder.addCase(getKanjiMeta.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
+
     builder.addCase(kanjiSettingsFromAppStorage.fulfilled, (state, action) => {
       const storedValue = action.payload;
       const mergedSettings = merge(kanjiInitState.setting, storedValue);
@@ -498,46 +520,46 @@ const kanjiSlice = createSlice({
     builder.addCase(setKanjiAccuracy.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setKanjiDifficulty.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
+        state.metadataID = Date.now();
+        state.metadata = newValue;
       }
     });
     builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
       const newValue = action.payload;
 
-      // state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      // state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(deleteMetaKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
   },
 });
