@@ -851,7 +851,7 @@ export default function Vocabulary() {
                   difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
-                    dispatch(setWordDifficulty(uid, difficulty));
+                    void dispatch(setWordDifficulty({ uid, difficulty }));
                   }}
                 />
                 <AccuracySlider
@@ -859,7 +859,7 @@ export default function Vocabulary() {
                   resetOn={uid}
                   onChange={(accuracy: number | null) => {
                     if (accuracy !== undefined) {
-                      dispatch(setWordAccuracy(uid, accuracy));
+                      void dispatch(setWordAccuracy({ uid, accuracy }));
                       accuracyModifiedRef.current = accuracy;
                     }
                   }}
@@ -900,7 +900,7 @@ export default function Vocabulary() {
                         // null: set to undefined
                         const v =
                           metadata.current[uid]?.pron === true ? null : true;
-                        dispatch(setPitchAccentData({ uid, value: v }));
+                        void dispatch(setPitchAccentData({ uid, value: v }));
                       }}
                     >
                       <PulseIcon />

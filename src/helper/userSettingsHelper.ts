@@ -2,12 +2,14 @@ import {
   getIndexDBUserSettings,
   indexDBUserSettingAttrDelete,
   indexDBUserSettingAttrUpdate,
+  indexDBUserStudyStateAttrUpdate,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
 import { type AppSettingState } from "../slices";
 import { localStoreUserSettingAttrUpdate } from "./userSettingsLocalStorageHelper";
 
 export const localStorageKey = "userSettings";
+export const studyStateKey = "studyState";
 
 /**
  * Reads a value from storage
@@ -80,6 +82,13 @@ export function userSettingAttrUpdate<T>(
   }
 
   return indexDBUserSettingAttrUpdate(state, path, attr, value);
+}
+
+export function userStudyStateAttrUpdate<T>(
+  path: "kanji" | "vocabulary" | "phrases",
+  value: T
+) {
+  return indexDBUserStudyStateAttrUpdate(path, value);
 }
 
 /**

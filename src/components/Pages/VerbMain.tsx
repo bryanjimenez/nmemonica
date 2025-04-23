@@ -105,7 +105,7 @@ export default function VerbMain(props: VerbMainProps) {
     repetition,
     englishSideUp,
     () => {
-      dispatch(furiganaToggled(verb.uid));
+      void dispatch(furiganaToggled(verb.uid));
     }
   );
 

@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import type { MetaDataObj } from "nmemonica";
 
 import globalReducer, { type GlobalInitSlice } from "./globalSlice";
 import kanaReducer, { type KanaInitSlice } from "./kanaSlice";
@@ -45,6 +46,12 @@ export interface AppSettingState {
 
   opposite: OppositeInitSlice;
   particle: ParticleInitSlice["setting"];
+}
+
+export interface AppStudyState {
+  vocabulary: Record<string, MetaDataObj>;
+  phrases: Record<string, MetaDataObj>;
+  kanji: Record<string, MetaDataObj>;
 }
 
 /**

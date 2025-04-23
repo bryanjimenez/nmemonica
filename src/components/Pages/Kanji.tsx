@@ -994,7 +994,7 @@ export default function Kanji() {
                 <DifficultySlider
                   difficulty={metadata.current[uid]?.difficultyP}
                   onChange={(difficulty: number | null) => {
-                    dispatch(setKanjiDifficulty(uid, difficulty));
+                    void dispatch(setKanjiDifficulty({ uid, difficulty }));
                   }}
                   resetOn={uid}
                 />
@@ -1003,7 +1003,7 @@ export default function Kanji() {
                   resetOn={uid}
                   onChange={(accuracy: number | null) => {
                     if (accuracy !== undefined) {
-                      dispatch(setKanjiAccuracy(uid, accuracy));
+                      void dispatch(setKanjiAccuracy({ uid, accuracy }));
                       accuracyModifiedRef.current = accuracy;
                     }
                   }}

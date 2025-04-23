@@ -29,11 +29,13 @@ import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
   userSettingAttrUpdate,
+  userStudyStateAttrUpdate,
 } from "../helper/userSettingsHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 
+const SLICE_NAME = "kanji";
 export interface KanjiInitSlice {
   value: RawKanji[];
   version: string;
@@ -88,9 +90,9 @@ export const kanjiInitState: KanjiInitSlice = {
  * Fetch vocabulary
  */
 export const getKanji = createAsyncThunk(
-  "kanji/getKanji",
+  `${SLICE_NAME}/getKanji`,
   async (_, thunkAPI) => {
-    return getSheetFromIndexDB("kanji")
+    return getSheetFromIndexDB(SLICE_NAME)
       .then((sheet) => {
         const { data: value, hash: version } = sheetDataToJSON(sheet) as {
           data: Record<string, Kanji>;
@@ -110,7 +112,7 @@ export const getKanji = createAsyncThunk(
 );
 
 export const kanjiSettingsFromAppStorage = createAsyncThunk(
-  "kanji/kanjiSettingsFromAppStorage",
+  `${SLICE_NAME}/kanjiSettingsFromAppStorage`,
   (arg: typeof kanjiInitState.setting) => {
     const initValues = arg;
 
@@ -118,55 +120,118 @@ export const kanjiSettingsFromAppStorage = createAsyncThunk(
   }
 );
 
-export const deleteMetaKanji = createAsyncThunk(
-  "kanji/deleteMetaKanji",
-  (uidList: string[], thunkAPI) => {
-    const state = (thunkAPI.getState() as RootState).kanji;
-    const spaceRep = state.setting.repetition;
+export const setKanjiAccuracy = createAsyncThunk(
+  `${SLICE_NAME}/setKanjiAccuracy`,
+  ({ uid, accuracy }: { uid: string; accuracy: number | null }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    return deleteMetadata(uidList, spaceRep);
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.setting.repetition,
+      { count: false, date: false },
+      {
+        set: { accuracyP: accuracy },
+      }
+    );
+
+    return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(() => newValue);
+  }
+);
+
+export const setKanjiDifficulty = createAsyncThunk(
+  `${SLICE_NAME}/setKanjiDifficulty`,
+  (
+    { uid, difficulty }: { uid: string; difficulty: number | null },
+    thunkAPI
+  ) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.setting.repetition,
+      { count: false, date: false },
+      {
+        set: { difficultyP: difficulty },
+      }
+    );
+
+    return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(() => newValue);
   }
 );
 
 export const updateSpaceRepKanji = createAsyncThunk(
-  "kanji/updateSpaceRepKanji",
+  `${SLICE_NAME}/updateSpaceRepKanji`,
   (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
     const { uid, shouldIncrement } = arg;
-    const state = (thunkAPI.getState() as RootState).kanji;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
     const spaceRep = state.setting.repetition;
 
-    return updateSpaceRepTerm(uid, spaceRep, {
+    const value = updateSpaceRepTerm(uid, spaceRep, {
       count: shouldIncrement,
       date: true,
     });
-  }
-);
 
-export const removeFromSpaceRepetition = createAsyncThunk(
-  "kanji/removeFromSpaceRepetition",
-  (arg: { uid: string }, thunkAPI) => {
-    const { uid } = arg;
-    const state = (thunkAPI.getState() as RootState).kanji;
-
-    const spaceRep = state.setting.repetition;
-    return removeAction(uid, spaceRep);
+    return userStudyStateAttrUpdate(SLICE_NAME, value.record).then(() => value);
   }
 );
 
 export const setSpaceRepetitionMetadata = createAsyncThunk(
-  "kanji/setSpaceRepetitionMetadata",
+  `${SLICE_NAME}/setSpaceRepetitionMetadata`,
   (arg: { uid: string }, thunkAPI) => {
     const { uid } = arg;
-    const state = (thunkAPI.getState() as RootState).kanji;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
     const spaceRep = state.setting.repetition;
-    return updateAction(uid, spaceRep);
+    const value = updateAction(uid, spaceRep);
+
+    return userStudyStateAttrUpdate(SLICE_NAME, value.newValue).then(
+      () => value
+    );
+  }
+);
+
+export const removeFromSpaceRepetition = createAsyncThunk(
+  `${SLICE_NAME}/removeFromSpaceRepetition`,
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const spaceRep = state.setting.repetition;
+    const newValue = removeAction(uid, spaceRep);
+
+    if (newValue) {
+      return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(
+        () => newValue
+      );
+    } else {
+      return Promise.resolve(newValue);
+    }
+  }
+);
+
+export const batchRepetitionUpdate = createAsyncThunk(
+  `${SLICE_NAME}/batchRepetitionUpdate`,
+  (payload: Record<string, MetaDataObj | undefined>, _thunkAPI) =>
+    userStudyStateAttrUpdate(SLICE_NAME, payload).then(() => payload)
+);
+
+export const deleteMetaKanji = createAsyncThunk(
+  `${SLICE_NAME}/deleteMetaKanji`,
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+    const spaceRep = state.setting.repetition;
+
+    const newValue = deleteMetadata(uidList, spaceRep);
+
+    return userStudyStateAttrUpdate(SLICE_NAME, newValue.record).then(
+      () => newValue
+    );
   }
 );
 
 const kanjiSlice = createSlice({
-  name: "kanji",
+  name: SLICE_NAME,
   initialState: kanjiInitState,
   reducers: {
     clearKanji(state) {
@@ -255,75 +320,6 @@ const kanjiSlice = createSlice({
       );
 
       state.setting.difficultyThreshold = threshold;
-    },
-
-    setKanjiDifficulty: {
-      reducer: (
-        state: KanjiInitSlice,
-        action: { payload: { uid: string; value: number | null } }
-      ) => {
-        const { uid, value } = action.payload;
-
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          state.setting.repetition,
-          { count: false, date: false },
-          {
-            set: { difficultyP: value },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          { kanji: state.setting },
-          "/kanji/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      },
-      prepare: (uid: string, value: number | null) => ({
-        payload: { uid, value },
-      }),
-    },
-    setKanjiAccuracy: {
-      reducer: (
-        state: KanjiInitSlice,
-        action: { payload: { uid: string; value: number | null } }
-      ) => {
-        const { uid, value } = action.payload;
-
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          state.setting.repetition,
-          { count: false, date: false },
-          {
-            set: { accuracyP: value },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          { kanji: state.setting },
-          "/kanji/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      },
-      prepare: (uid: string, value: number | null) => ({
-        payload: { uid, value },
-      }),
-    },
-    batchRepetitionUpdate(
-      state,
-      action: { payload: Record<string, MetaDataObj | undefined> }
-    ) {
-      void userSettingAttrUpdate({}, "/kanji/", "repetition", action.payload);
-
-      state.setting.repetition = action.payload;
     },
     /**
      * Space Repetition maximum item review
@@ -499,29 +495,26 @@ const kanjiSlice = createSlice({
       };
     });
 
-    builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
-      const { record: newValue } = action.payload;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "repetition",
-        newValue
-      );
+    builder.addCase(setKanjiAccuracy.fulfilled, (state, action) => {
+      const newValue = action.payload;
 
       state.setting.repTID = Date.now();
       state.setting.repetition = newValue;
     });
+    builder.addCase(setKanjiDifficulty.fulfilled, (state, action) => {
+      const newValue = action.payload;
 
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
+    });
+    builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
+      const { record: newValue } = action.payload;
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
+    });
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "repetition",
-        newValue
-      );
 
       state.setting.repTID = Date.now();
       state.setting.repetition = newValue;
@@ -530,26 +523,18 @@ const kanjiSlice = createSlice({
       const newValue = action.payload;
 
       if (newValue) {
-        void userSettingAttrUpdate(
-          { kanji: state.setting },
-          "/kanji/",
-          "repetition",
-          newValue
-        );
-
         state.setting.repTID = Date.now();
         state.setting.repetition = newValue;
       }
     });
+    builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      // state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
+    });
     builder.addCase(deleteMetaKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "repetition",
-        newValue
-      );
 
       state.setting.repTID = Date.now();
       state.setting.repetition = newValue;
@@ -563,8 +548,7 @@ export const {
   toggleKanjiActiveGrp,
   toggleKanjiOrdering,
   setMemorizedThreshold,
-  setKanjiDifficulty,
-  setKanjiAccuracy,
+
   setSpaRepMaxItemReview,
   toggleKanjiFilter,
   toggleIncludeNew,
@@ -573,7 +557,6 @@ export const {
   setKanjiBtnN,
   toggleKanjiFadeInAnswers,
   setGoal,
-  batchRepetitionUpdate,
 } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;

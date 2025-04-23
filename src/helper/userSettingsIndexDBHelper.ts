@@ -1,3 +1,5 @@
+import type { MetaDataObj } from "nmemonica";
+
 import {
   localStorageKey as indexDBKey,
   usingPathRead,
@@ -10,7 +12,7 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import { AppSettingState } from "../slices";
+import type { AppSettingState } from "../slices";
 
 export function indexDBUserSettingAttrUpdate(
   state: Partial<AppSettingState>,
@@ -66,6 +68,19 @@ export function indexDBUserSettingAttrUpdate<T>(
   });
 }
 
+export function indexDBUserStudyStateAttrUpdate<T>(
+  path: "kanji" | "vocabulary" | "phrases",
+  value: T
+) {
+  return getIndexDBStudyState(path).then((res) => {
+    let initialState = res ?? {};
+
+    return setIndexDBStudyState(path, {
+      ...initialState,
+      ...value,
+    });
+  });
+}
 /**
  * Modifies an attribute or toggles the existing value
  */
@@ -98,6 +113,18 @@ export function setIndexDBUserSettings(value: unknown) {
       { db, store: IDBStores.SETTINGS },
       { key: indexDBKey, value: value as AppSettingState }
     )
+  );
+}
+
+/**
+ * Store a whole study-state object
+ */
+export function setIndexDBStudyState(
+  path: "kanji" | "vocabulary" | "phrases",
+  value: Record<string, MetaDataObj>
+) {
+  return openIDB().then((db) =>
+    putIDBItem({ db, store: IDBStores.STATE }, { key: path, value: value })
   );
 }
 
@@ -138,6 +165,53 @@ export function getIndexDBUserSettings() {
         const errData = err.cause as { code: string };
         if (errData.code === "IDBNoResults") {
           // user settings not yet initialized
+          return null;
+        }
+      }
+
+      // all else ...
+
+      // eslint-disable-next-line
+      console.log(err);
+      throw err;
+    });
+}
+
+/**
+ * Retrieve the study state object stored in IndexDB
+ */
+export function getIndexDBStudyState(path: "kanji" | "vocabulary" | "phrases") {
+  return openIDB()
+    .then((db) => {
+      // if indexedDB has stored
+      const stores = Array.from(db.objectStoreNames);
+
+      const ErrorSettingsMissing = new Error("Study State not stored", {
+        cause: { code: IDBErrorCause.NoResult },
+      });
+      if (!stores.includes(IDBStores.STATE)) {
+        throw ErrorSettingsMissing;
+      }
+
+      return getIDBItem({ db, store: IDBStores.STATE }, path).then((res) => {
+        let initialState: Record<string, MetaDataObj> | null = null;
+
+        if (
+          typeof res.value === "object" &&
+          !Array.isArray(res.value) &&
+          res.value !== null
+        ) {
+          initialState = res.value as Record<string, MetaDataObj>;
+        }
+
+        return initialState;
+      });
+    })
+    .catch((err) => {
+      if (err instanceof Error && "cause" in err) {
+        const errData = err.cause as { code: string };
+        if (errData.code === "IDBNoResults") {
+          // study state not yet initialized
           return null;
         }
       }
