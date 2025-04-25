@@ -32,16 +32,26 @@ import {
 } from "../slices/vocabularySlice";
 
 /**
+ * Dataset names
+ */
+export const dataSetNames = ["phrases", "vocabulary", "kanji"] as const;
+
+/**
  * Keep all naming and order
  */
 export const workbookSheetNames = Object.freeze({
-  phrases: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
-  vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
-  kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
+  [dataSetNames[0]]: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
+  [dataSetNames[1]]: {
+    index: 1,
+    file: "Vocabulary.csv",
+    prettyName: "Vocabulary",
+  },
+  [dataSetNames[2]]: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
 });
 
 export const metaDataNames = Object.freeze({
   settings: { file: "Settings.json", prettyName: "Settings" },
+  studyMeta: { file: "StudyState.json", prettyName: "StudyState" },
 });
 
 export function getActiveSheet(workbook: Spreadsheet) {
@@ -663,21 +673,21 @@ export function updateStateAfterWorkbookEdit(
     case workbookSheetNames.kanji.prettyName:
       dispatch(clearKanji());
       if (metaUpdatedUids) {
-        dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
+        void dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
       }
       break;
     case workbookSheetNames.vocabulary.prettyName:
       dispatch(clearVocabulary());
       dispatch(clearOpposites());
       if (metaUpdatedUids) {
-        dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
+        void dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
       }
       break;
     case workbookSheetNames.phrases.prettyName:
       dispatch(clearPhrases());
       dispatch(clearParticleGame());
       if (metaUpdatedUids) {
-        dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
+        void dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
       }
       break;
     default:

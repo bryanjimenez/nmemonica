@@ -1,4 +1,7 @@
+import type { MetaDataObj } from "nmemonica";
+
 import {
+  getIndexDBStudyState,
   getIndexDBUserSettings,
   indexDBUserSettingAttrDelete,
   indexDBUserSettingAttrUpdate,
@@ -6,6 +9,7 @@ import {
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
 import { type AppSettingState } from "../slices";
+import { dataSetNames } from "./sheetHelper";
 import { localStoreUserSettingAttrUpdate } from "./userSettingsLocalStorageHelper";
 
 export const localStorageKey = "userSettings";
@@ -110,4 +114,24 @@ export function setUserSetting(value: unknown) {
  */
 export function getUserSettings() {
   return getIndexDBUserSettings();
+}
+
+/**
+ * Retrieve study state
+ */
+export function getStudyState() {
+  return Promise.all(
+    dataSetNames.map((name) => getIndexDBStudyState(name))
+  ).then((states) =>
+    states.reduce(
+      (acc, state, i) => {
+        if (state !== null) {
+          return { ...acc, [dataSetNames[i]]: state };
+        }
+
+        return acc;
+      },
+      {} as Record<keyof typeof dataSetNames, Record<string, MetaDataObj>>
+    )
+  );
 }

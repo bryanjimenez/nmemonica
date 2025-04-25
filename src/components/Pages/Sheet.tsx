@@ -39,6 +39,7 @@ import {
   isFilledSheetData,
 } from "../../helper/sheetHelperImport";
 import {
+  getStudyState,
   getUserSettings,
   setUserSetting,
 } from "../../helper/userSettingsHelper";
@@ -357,26 +358,37 @@ export default function Sheet() {
     // TODO: should be from indexedDB (what's saved) unless nothing avail
     const xObj = wbRef.current?.exportValues() as FilledSheetData[];
 
-    // send AppCache UserSettings
-    void getUserSettings().then((ls) => {
+    void Promise.all([
+      getUserSettings(),
+      xObjectToCsvText(xObj),
+      getStudyState(),
+    ]).then(([settings, data, study]) => {
+      // json app settings
       let appSettings: { fileName: string; name: string; text: string }[] = [];
 
-      if (ls) {
+      if (settings) {
         appSettings = [
           {
             fileName: metaDataNames.settings.file,
             name: metaDataNames.settings.prettyName,
-            text: JSON.stringify(ls),
+            text: JSON.stringify(settings, null, 2),
           },
         ];
       }
 
-      void xObjectToCsvText(xObj).then((fileDataSet) =>
-        downloadFileHandlerCB([
-          ...fileDataSet.map((f) => ({ fileName: f.name + ".csv", ...f })),
-          ...appSettings,
-        ])
-      );
+      // json study state
+      const studyState = [
+        {
+          fileName: metaDataNames.studyMeta.file,
+          name: metaDataNames.studyMeta.prettyName,
+          text: JSON.stringify(study, null, 2),
+        },
+      ];
+
+      // csv datasets
+      const dataSets = data.map((f) => ({ fileName: f.name + ".csv", ...f }));
+
+      void downloadFileHandlerCB([...appSettings, ...studyState, ...dataSets]);
     });
   }, [downloadFileHandlerCB]);
 
