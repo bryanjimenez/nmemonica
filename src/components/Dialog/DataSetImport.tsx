@@ -31,7 +31,7 @@ import {
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
 import { AppSettingState } from "../../slices";
-import { readCsvToSheet, readJsonSettings } from "../../slices/sheetSlice";
+import { readCsvToSheet, readSettings } from "../../slices/sheetSlice";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
@@ -187,7 +187,7 @@ export function DataSetImport(props: DataSetImportProps) {
 
             return { ...acc, data: [...(acc.data ?? []), csvFile] };
           } else {
-            let s = readJsonSettings(o.text);
+            let s = readSettings(o.text);
             if (!(s instanceof Error)) {
               return { ...acc, settings: s };
             }

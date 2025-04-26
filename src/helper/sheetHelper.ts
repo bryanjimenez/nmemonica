@@ -51,7 +51,7 @@ export const workbookSheetNames = Object.freeze({
 
 export const metaDataNames = Object.freeze({
   settings: { file: "Settings.json", prettyName: "Settings" },
-  studyMeta: { file: "StudyState.json", prettyName: "StudyState" },
+  studyMeta: { file: "Progress.json", prettyName: "Progress" },
 });
 
 export function getActiveSheet(workbook: Spreadsheet) {

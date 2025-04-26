@@ -14,7 +14,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { AppSettingState, AppStudyState } from "../../slices";
+import { AppProgressState, AppSettingState } from "../../slices";
 import {
   DataSetFromDragDrop,
   TransferObject,
@@ -27,7 +27,7 @@ interface DataSetImportFileProps {
   updateDataHandler: (
     data?: FilledSheetData[],
     settings?: Partial<AppSettingState>,
-    studyState?: Partial<AppStudyState>
+    studyProgress?: Partial<AppProgressState>
   ) => Promise<void>;
 }
 
@@ -67,7 +67,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
     );
 
     const [settingObj] = fileData.reduce<
-      Partial<AppSettingState | AppStudyState>[]
+      Partial<AppSettingState | AppProgressState>[]
     >(
       (acc, el) =>
         el.setting && el.name === metaDataNames.settings.prettyName
@@ -76,17 +76,17 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       []
     ) as Partial<AppSettingState>[];
 
-    const [studyStateObj] = fileData.reduce<
-      Partial<AppSettingState | AppStudyState>[]
+    const [StudyProgressObj] = fileData.reduce<
+      Partial<AppSettingState | AppProgressState>[]
     >(
       (acc, el) =>
         el.setting && el.name === metaDataNames.studyMeta.prettyName
           ? [...acc, el.setting]
           : acc,
       []
-    ) as Partial<AppStudyState>[];
+    ) as Partial<AppProgressState>[];
 
-    updateDataHandler(xObj, settingObj, studyStateObj)
+    updateDataHandler(xObj, settingObj, StudyProgressObj)
       .then(() => {
         setImportStatus(true);
         setTimeout(closeHandlerCB, 1000);

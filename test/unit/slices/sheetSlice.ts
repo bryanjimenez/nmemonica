@@ -2,7 +2,7 @@ import "jsdom-global/register";
 import { expect } from "chai";
 import {
   readCsvToSheet,
-  readJsonSettings,
+  readSettings,
 } from "../../../src/slices/sheetSlice";
 import { unusualApostrophe } from "../../../src/helper/unicodeHelper";
 
@@ -90,10 +90,10 @@ describe("sheetSlice", function () {
     });
   });
 
-  describe("readJsonSettings", function () {
+  describe("readSettings", function () {
     describe("throws", function () {
       it("invalid character", function () {
-        const actual = readJsonSettings(
+        const actual = readSettings(
           '{"global":{"debug":3,"touchSwipe":"\u200b"}}'
         ) as Error; // zerp-width-space
 
@@ -102,7 +102,7 @@ describe("sheetSlice", function () {
       });
 
       it("unrecognized root setting", function () {
-        const actual = readJsonSettings(
+        const actual = readSettings(
           '{"local":{"debug":3,"touchSwipe":true}}'
         ) as Error; // local isn't a valid field
 
@@ -113,7 +113,7 @@ describe("sheetSlice", function () {
       it.skip("unrecognized child setting");
 
       it("malformed JSON", function () {
-        const actual = readJsonSettings(
+        const actual = readSettings(
           '{"global":{"debug":3,"touchSwipe":true *}}'
         ) as Error;
 
@@ -124,7 +124,7 @@ describe("sheetSlice", function () {
     describe("parses", function () {
       it("valid settings", function () {
         const expected = { global: { debug: 3, touchSwipe: true } };
-        const actual = readJsonSettings(
+        const actual = readSettings(
           '{"global":{"debug":3,"touchSwipe":true }}'
         );
 

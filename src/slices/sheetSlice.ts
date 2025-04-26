@@ -17,10 +17,10 @@ import { unusualApostrophe } from "../helper/unicodeHelper";
 
 import {
   AppDispatch,
+  type AppProgressState,
   type AppSettingState,
-  type AppStudyState,
   isValidAppSettingsState,
-  isValidStudyState,
+  isValidStudyProgress,
 } from ".";
 
 const initialState = {};
@@ -102,13 +102,13 @@ export function readCsvToSheet(text: string, sheetName: string) {
 }
 
 /**
- * Settings text to json parser
- * @param text settings
+ * Settings text to object parser
+ * @param jsonText settings in json format
  * @throws when text contains invalid characters or if json is malformed
  */
-export function readJsonSettings(text: string) {
+export function readSettings(jsonText: string) {
   try {
-    const invalidInput = validateJSONSettings(text);
+    const invalidInput = validateJSONSettings(jsonText);
 
     if (invalidInput.size > 0) {
       return new Error("Settings contains invalid characters", {
@@ -119,7 +119,7 @@ export function readJsonSettings(text: string) {
       });
     }
 
-    const settingsObject = JSON.parse(text) as Partial<AppSettingState>;
+    const settingsObject = JSON.parse(jsonText) as Partial<AppSettingState>;
     if (!isValidAppSettingsState(settingsObject)) {
       return new Error("Unrecognized Settings", {
         cause: { code: SettingsErrorCause.InvalidSettings },
@@ -135,16 +135,16 @@ export function readJsonSettings(text: string) {
 }
 
 /**
- * Study Meta text to json parser
- * @param text study metadata
+ * Study Progress text to object parser
+ * @param jsonText study progress in json format
  * @throws when text contains invalid characters or if json is malformed
  */
-export function readJsonStudyMeta(text: string) {
+export function readStudyProgress(jsonText: string) {
   try {
-    const invalidInput = validateJSONSettings(text);
+    const invalidInput = validateJSONSettings(jsonText);
 
     if (invalidInput.size > 0) {
-      return new Error("Study State contains invalid characters", {
+      return new Error("Progress contains invalid characters", {
         cause: {
           code: SettingsErrorCause.BadFileContent,
           details: invalidInput,
@@ -152,14 +152,16 @@ export function readJsonStudyMeta(text: string) {
       });
     }
 
-    const studyStateObject = JSON.parse(text) as Partial<AppStudyState>;
-    if (!isValidStudyState(studyStateObject)) {
-      return new Error("Unrecognized StudyState", {
+    const studyProgressObject = JSON.parse(
+      jsonText
+    ) as Partial<AppProgressState>;
+    if (!isValidStudyProgress(studyProgressObject)) {
+      return new Error("Unrecognized StudyProgress", {
         cause: { code: SettingsErrorCause.InvalidSettings },
       });
     }
 
-    return studyStateObject;
+    return studyProgressObject;
   } catch {
     return new Error("Malformed JSON", {
       cause: { code: SettingsErrorCause.InvalidJSONStructure },

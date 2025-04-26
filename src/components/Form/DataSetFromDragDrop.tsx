@@ -20,14 +20,14 @@ import { CSVErrorCause } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
+  type AppProgressState,
   type AppSettingState,
-  type AppStudyState,
   type RootState,
 } from "../../slices";
 import {
   readCsvToSheet,
-  readJsonSettings,
-  readJsonStudyMeta,
+  readSettings,
+  readStudyProgress,
 } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 import "../../css/DragDrop.css";
@@ -37,7 +37,7 @@ export interface TransferObject {
   origin: "AppCache" | "FileSystem";
   text: string;
   sheet?: FilledSheetData;
-  setting?: Partial<AppSettingState> | Partial<AppStudyState>;
+  setting?: Partial<AppSettingState> | Partial<AppProgressState>;
 }
 
 interface DataSetFromDragDropProps {
@@ -137,7 +137,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               let name: string | undefined;
               let parsed:
                 | Partial<AppSettingState>
-                | Partial<AppStudyState>
+                | Partial<AppProgressState>
                 | Error
                 | undefined;
 
@@ -146,13 +146,13 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 metaDataNames.settings.file.toLowerCase()
               ) {
                 name = metaDataNames.settings.prettyName;
-                parsed = readJsonSettings(text);
+                parsed = readSettings(text);
               } else if (
                 fileItem.name.toLowerCase() ===
                 metaDataNames.studyMeta.file.toLowerCase()
               ) {
                 name = metaDataNames.studyMeta.prettyName;
-                parsed = readJsonStudyMeta(text);
+                parsed = readStudyProgress(text);
               }
 
               if (

@@ -68,14 +68,14 @@ export function indexDBUserSettingAttrUpdate<T>(
   });
 }
 
-export function indexDBUserStudyStateAttrUpdate<T>(
+export function indexDBUserStudyProgressAttrUpdate<T>(
   path: "kanji" | "vocabulary" | "phrases",
   value: T
 ) {
-  return getIndexDBStudyState(path).then((res) => {
+  return getIndexDBStudyProgress(path).then((res) => {
     let initialState = res ?? {};
 
-    return setIndexDBStudyState(path, {
+    return setIndexDBStudyProgress(path, {
       ...initialState,
       ...value,
     });
@@ -119,7 +119,7 @@ export function setIndexDBUserSettings(value: unknown) {
 /**
  * Store a whole study-state object
  */
-export function setIndexDBStudyState(
+export function setIndexDBStudyProgress(
   path: "kanji" | "vocabulary" | "phrases",
   value: Record<string, MetaDataObj>
 ) {
@@ -178,15 +178,17 @@ export function getIndexDBUserSettings() {
 }
 
 /**
- * Retrieve the study state object stored in IndexDB
+ * Retrieve the study progress object stored in IndexDB
  */
-export function getIndexDBStudyState(path: "kanji" | "vocabulary" | "phrases") {
+export function getIndexDBStudyProgress(
+  path: "kanji" | "vocabulary" | "phrases"
+) {
   return openIDB()
     .then((db) => {
       // if indexedDB has stored
       const stores = Array.from(db.objectStoreNames);
 
-      const ErrorSettingsMissing = new Error("Study State not stored", {
+      const ErrorSettingsMissing = new Error("Progress not stored", {
         cause: { code: IDBErrorCause.NoResult },
       });
       if (!stores.includes(IDBStores.STATE)) {
@@ -211,7 +213,7 @@ export function getIndexDBStudyState(path: "kanji" | "vocabulary" | "phrases") {
       if (err instanceof Error && "cause" in err) {
         const errData = err.cause as { code: string };
         if (errData.code === "IDBNoResults") {
-          // study state not yet initialized
+          // study progress not yet initialized
           return null;
         }
       }

@@ -48,7 +48,7 @@ export interface AppSettingState {
   particle: ParticleInitSlice["setting"];
 }
 
-export interface AppStudyState {
+export interface AppProgressState {
   vocabulary: Record<string, MetaDataObj>;
   phrases: Record<string, MetaDataObj>;
   kanji: Record<string, MetaDataObj>;
@@ -77,13 +77,13 @@ export function isValidAppSettingsState(
 }
 
 /**
- * Validator for AppStudyState Object
+ * Validator for AppProgressState Object
  */
-export function isValidStudyState(
-  studyStateObj: object
-): studyStateObj is Partial<AppStudyState> {
+export function isValidStudyProgress(
+  studyProgressObj: object
+): studyProgressObj is Partial<AppProgressState> {
   // TODO: require deeper checks
-  return Object.keys(studyStateObj).every((key) =>
+  return Object.keys(studyProgressObj).every((key) =>
     ["vocabulary", "phrases", "kanji"].includes(key)
   );
 }

@@ -39,9 +39,9 @@ import {
   isFilledSheetData,
 } from "../../helper/sheetHelperImport";
 import {
-  getStudyState,
+  getStudyProgress,
   getUserSettings,
-  setStudyState,
+  setStudyProgress,
   setUserSetting,
 } from "../../helper/userSettingsHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
@@ -49,8 +49,8 @@ import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import {
   AppDispatch,
+  AppProgressState,
   AppSettingState,
-  AppStudyState,
   RootState,
 } from "../../slices";
 import { appSettingsInitialized } from "../../slices/globalSlice";
@@ -367,7 +367,7 @@ export default function Sheet() {
     void Promise.all([
       getUserSettings(),
       xObjectToCsvText(xObj),
-      getStudyState(),
+      getStudyProgress(),
     ]).then(([settings, data, study]) => {
       // json app settings
       let appSettings: { fileName: string; name: string; text: string }[] = [];
@@ -382,8 +382,8 @@ export default function Sheet() {
         ];
       }
 
-      // json study state
-      const studyState = [
+      // json study progress
+      const studyProgress = [
         {
           fileName: metaDataNames.studyMeta.file,
           name: metaDataNames.studyMeta.prettyName,
@@ -394,7 +394,11 @@ export default function Sheet() {
       // csv datasets
       const dataSets = data.map((f) => ({ fileName: f.name + ".csv", ...f }));
 
-      void downloadFileHandlerCB([...appSettings, ...studyState, ...dataSets]);
+      void downloadFileHandlerCB([
+        ...appSettings,
+        ...studyProgress,
+        ...dataSets,
+      ]);
     });
   }, [downloadFileHandlerCB]);
 
@@ -539,7 +543,7 @@ export default function Sheet() {
     (
       importWorkbook?: FilledSheetData[],
       importSettings?: Partial<AppSettingState>,
-      importStudyState?: Partial<AppStudyState>
+      importProgress?: Partial<AppProgressState>
     ) => {
       let importCompleteP: Promise<unknown>[] = [];
       if (importSettings && Object.keys(importSettings).length > 0) {
@@ -552,11 +556,11 @@ export default function Sheet() {
         importCompleteP = [...importCompleteP, settingsP];
       }
       if (
-        importStudyState !== undefined &&
-        Object.keys(importStudyState).length > 0
+        importProgress !== undefined &&
+        Object.keys(importProgress).length > 0
       ) {
         // write to device's local storage
-        void setStudyState(importStudyState);
+        void setStudyProgress(importProgress);
       }
       if (importWorkbook && importWorkbook.length > 0) {
         const allSheetRequired = Object.keys(workbookSheetNames).map(

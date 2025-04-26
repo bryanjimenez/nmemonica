@@ -40,9 +40,9 @@ import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
   userSettingAttrUpdate,
-  userStudyStateAttrUpdate,
+  userStudyProgressAttrUpdate,
 } from "../helper/userSettingsHelper";
-import { getIndexDBStudyState } from "../helper/userSettingsIndexDBHelper";
+import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
@@ -126,7 +126,7 @@ export const getVocabulary = createAsyncThunk(
 export const getVocabularyMeta = createAsyncThunk(
   `${SLICE_NAME}/getVocabularyMeta`,
   async () => {
-    return getIndexDBStudyState(SLICE_NAME).then((data) => {
+    return getIndexDBStudyProgress(SLICE_NAME).then((data) => {
       return data ?? {};
     });
   }
@@ -236,7 +236,9 @@ export const setWordAccuracy = createAsyncThunk(
       }
     );
 
-    return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(() => newValue);
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
   }
 );
 
@@ -257,7 +259,9 @@ export const setWordDifficulty = createAsyncThunk(
       }
     );
 
-    return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(() => newValue);
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
   }
 );
 
@@ -275,7 +279,9 @@ export const furiganaToggled = createAsyncThunk(
       }
     );
 
-    return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(() => newValue);
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
   }
 );
 
@@ -293,7 +299,9 @@ export const setPitchAccentData = createAsyncThunk(
       }
     );
 
-    return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(() => newValue);
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
   }
 );
 
@@ -310,7 +318,9 @@ export const updateSpaceRepWord = createAsyncThunk(
       date: true,
     });
 
-    return userStudyStateAttrUpdate(SLICE_NAME, value.record).then(() => value);
+    return userStudyProgressAttrUpdate(SLICE_NAME, value.record).then(
+      () => value
+    );
   }
 );
 
@@ -323,7 +333,7 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const spaceRep = state.metadata;
     const value = updateAction(uid, spaceRep);
 
-    return userStudyStateAttrUpdate(SLICE_NAME, value.newValue).then(
+    return userStudyProgressAttrUpdate(SLICE_NAME, value.newValue).then(
       () => value
     );
   }
@@ -339,7 +349,7 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const newValue = removeAction(uid, spaceRep);
 
     if (newValue) {
-      return userStudyStateAttrUpdate(SLICE_NAME, newValue).then(
+      return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
         () => newValue
       );
     } else {
@@ -351,7 +361,7 @@ export const removeFromSpaceRepetition = createAsyncThunk(
 export const batchRepetitionUpdate = createAsyncThunk(
   `${SLICE_NAME}/batchRepetitionUpdate`,
   (payload: Record<string, MetaDataObj | undefined>, _thunkAPI) =>
-    userStudyStateAttrUpdate(SLICE_NAME, payload).then(() => payload)
+    userStudyProgressAttrUpdate(SLICE_NAME, payload).then(() => payload)
 );
 
 export const deleteMetaVocab = createAsyncThunk(
@@ -362,7 +372,7 @@ export const deleteMetaVocab = createAsyncThunk(
 
     const newValue = deleteMetadata(uidList, spaceRep);
 
-    return userStudyStateAttrUpdate(SLICE_NAME, newValue.record).then(
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue.record).then(
       () => newValue
     );
   }

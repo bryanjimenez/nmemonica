@@ -1,20 +1,19 @@
 import type { MetaDataObj } from "nmemonica";
 
 import {
-  getIndexDBStudyState,
+  getIndexDBStudyProgress,
   getIndexDBUserSettings,
   indexDBUserSettingAttrDelete,
   indexDBUserSettingAttrUpdate,
-  indexDBUserStudyStateAttrUpdate,
-  setIndexDBStudyState,
+  indexDBUserStudyProgressAttrUpdate,
+  setIndexDBStudyProgress,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
-import { type AppSettingState, AppStudyState } from "../slices";
+import { AppProgressState, type AppSettingState } from "../slices";
 import { dataSetNames } from "./sheetHelper";
 import { localStoreUserSettingAttrUpdate } from "./userSettingsLocalStorageHelper";
 
 export const localStorageKey = "userSettings";
-export const studyStateKey = "studyState";
 
 /**
  * Reads a value from storage
@@ -89,11 +88,11 @@ export function userSettingAttrUpdate<T>(
   return indexDBUserSettingAttrUpdate(state, path, attr, value);
 }
 
-export function userStudyStateAttrUpdate<T>(
+export function userStudyProgressAttrUpdate<T>(
   path: "kanji" | "vocabulary" | "phrases",
   value: T
 ) {
-  return indexDBUserStudyStateAttrUpdate(path, value);
+  return indexDBUserStudyProgressAttrUpdate(path, value);
 }
 
 /**
@@ -118,13 +117,13 @@ export function getUserSettings() {
 }
 
 /**
- * Store a whole study state
+ * Store a whole study progress object
  */
-export function setStudyState(value: Partial<AppStudyState>) {
+export function setStudyProgress(value: Partial<AppProgressState>) {
   return Promise.all(
     dataSetNames.reduce((acc, name) => {
       if (value[name] !== undefined) {
-        return [...acc, setIndexDBStudyState(name, value[name])];
+        return [...acc, setIndexDBStudyProgress(name, value[name])];
       }
       return acc;
     }, [] as Promise<unknown>[])
@@ -132,11 +131,11 @@ export function setStudyState(value: Partial<AppStudyState>) {
 }
 
 /**
- * Retrieve study state
+ * Retrieve study progress
  */
-export function getStudyState() {
+export function getStudyProgress() {
   return Promise.all(
-    dataSetNames.map((name) => getIndexDBStudyState(name))
+    dataSetNames.map((name) => getIndexDBStudyProgress(name))
   ).then((states) =>
     states.reduce(
       (acc, state, i) => {
