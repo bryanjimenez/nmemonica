@@ -88,9 +88,9 @@ export function userSettingAttrUpdate<T>(
   return indexDBUserSettingAttrUpdate(state, path, attr, value);
 }
 
-export function userStudyProgressAttrUpdate<T>(
-  path: "kanji" | "vocabulary" | "phrases",
-  value: T
+export function userStudyProgressAttrUpdate(
+  path: (typeof dataSetNames)[number],
+  value: Record<string, MetaDataObj | undefined>
 ) {
   return indexDBUserStudyProgressAttrUpdate(path, value);
 }
@@ -105,7 +105,7 @@ export function userSettingAttrDelete(path: string, attr: string) {
 /**
  * Store a whole settings object
  */
-export function setUserSetting(value: unknown) {
+export function setUserSetting(value: Partial<AppSettingState>) {
   return setIndexDBUserSettings(value);
 }
 
@@ -145,7 +145,7 @@ export function getStudyProgress() {
 
         return acc;
       },
-      {} as Record<keyof typeof dataSetNames, Record<string, MetaDataObj>>
+      {} as Record<(typeof dataSetNames)[number], Record<string, MetaDataObj>>
     )
   );
 }

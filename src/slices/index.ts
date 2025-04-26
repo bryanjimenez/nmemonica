@@ -54,6 +54,16 @@ export interface AppProgressState {
   kanji: Record<string, MetaDataObj>;
 }
 
+export const settingsKeys = [
+  "global",
+  "vocabulary",
+  "phrases",
+  "kanji",
+  "kana",
+  "opposite",
+  "particle",
+] as const;
+
 /**
  * Validator for AppSettingState Object
  */
@@ -61,18 +71,10 @@ export function isValidAppSettingsState(
   settingObj: object
 ): settingObj is Partial<AppSettingState> {
   // TODO: require deeper checks
-  return Object.keys(settingObj).every((key) =>
-    [
-      "global",
-      "vocabulary",
-      "phrases",
-      "kanji",
-      "kana",
-      "opposites",
-      "particle",
 
-      "lastModified",
-    ].includes(key)
+  return Object.keys(settingObj).every((key) =>
+    // @ts-expect-error key is string settingsKeys is const
+    settingsKeys.includes(key)
   );
 }
 

@@ -1,10 +1,6 @@
 import type { MetaDataObj } from "nmemonica";
 
-import {
-  localStorageKey as indexDBKey,
-  usingPathRead,
-  usingPathWrite,
-} from "./userSettingsHelper";
+import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
 import {
   IDBErrorCause,
   IDBStores,
@@ -12,7 +8,9 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import type { AppSettingState } from "../slices";
+import { type AppSettingState, settingsKeys } from "../slices";
+import { dataSetNames } from "./sheetHelper";
+import type { ValuesOf } from "../typings/utils";
 
 export function indexDBUserSettingAttrUpdate(
   state: Partial<AppSettingState>,
@@ -40,7 +38,7 @@ export function indexDBUserSettingAttrUpdate<T>(
   value?: T
 ) {
   return getIndexDBUserSettings().then((res) => {
-    let initialState = (res ?? {}) as AppSettingState;
+    let initialState = res ?? {};
 
     const cleanPath = [
       ...path.split("/").filter((p) => p !== ""),
@@ -68,9 +66,9 @@ export function indexDBUserSettingAttrUpdate<T>(
   });
 }
 
-export function indexDBUserStudyProgressAttrUpdate<T>(
-  path: "kanji" | "vocabulary" | "phrases",
-  value: T
+export function indexDBUserStudyProgressAttrUpdate(
+  path: (typeof dataSetNames)[number],
+  value: Record<string, MetaDataObj | undefined>
 ) {
   return getIndexDBStudyProgress(path).then((res) => {
     let initialState = res ?? {};
@@ -107,21 +105,25 @@ export function indexDBUserSettingAttrDelete(path: string, attr: string) {
 /**
  * Store a whole settings object
  */
-export function setIndexDBUserSettings(value: unknown) {
-  return openIDB().then((db) =>
-    putIDBItem(
-      { db, store: IDBStores.SETTINGS },
-      { key: indexDBKey, value: value as AppSettingState }
+export function setIndexDBUserSettings(value: Partial<AppSettingState>) {
+  return Promise.all(
+    (Object.keys(value) as (keyof AppSettingState)[]).map((key) =>
+      openIDB().then((db) =>
+        putIDBItem(
+          { db, store: IDBStores.SETTINGS },
+          { key, value: value[key] }
+        )
+      )
     )
-  );
+  ).then(() => {});
 }
 
 /**
  * Store a whole study-state object
  */
 export function setIndexDBStudyProgress(
-  path: "kanji" | "vocabulary" | "phrases",
-  value: Record<string, MetaDataObj>
+  path: (typeof dataSetNames)[number],
+  value: Record<string, MetaDataObj | undefined>
 ) {
   return openIDB().then((db) =>
     putIDBItem({ db, store: IDBStores.STATE }, { key: path, value: value })
@@ -131,58 +133,52 @@ export function setIndexDBStudyProgress(
 /**
  * Retrieve the settings object stored in IndexDB
  */
-export function getIndexDBUserSettings() {
-  return openIDB()
-    .then((db) => {
-      // if indexedDB has stored setttings
-      const stores = Array.from(db.objectStoreNames);
+export function getIndexDBUserSettings(): Promise<Partial<AppSettingState>> {
+  return Promise.allSettled(
+    settingsKeys.map((key) =>
+      openIDB().then((db) => {
+        // if indexedDB has stored setttings
+        const stores = Array.from(db.objectStoreNames);
 
-      const ErrorSettingsMissing = new Error("User settings not stored", {
-        cause: { code: IDBErrorCause.NoResult },
-      });
-      if (!stores.includes(IDBStores.SETTINGS)) {
-        throw ErrorSettingsMissing;
-      }
+        const ErrorSettingsMissing = new Error("User settings not stored", {
+          cause: { code: IDBErrorCause.NoResult },
+        });
+        if (!stores.includes(IDBStores.SETTINGS)) {
+          throw ErrorSettingsMissing;
+        }
 
-      return getIDBItem({ db, store: IDBStores.SETTINGS }, indexDBKey).then(
-        (res) => {
-          let initialState: AppSettingState | null = null;
+        return getIDBItem({ db, store: IDBStores.SETTINGS }, key).then(
+          (res) => {
+            let initialState: ValuesOf<AppSettingState> | null = null;
 
-          if (
-            typeof res.value === "object" &&
-            !Array.isArray(res.value) &&
-            res.value !== null
-          ) {
-            initialState = res.value as AppSettingState;
+            if (
+              typeof res.value === "object" &&
+              !Array.isArray(res.value) &&
+              res.value !== null
+            ) {
+              initialState = res.value as ValuesOf<AppSettingState>;
+            }
+
+            return initialState;
           }
-
-          return initialState;
-        }
-      );
-    })
-    .catch((err) => {
-      if (err instanceof Error && "cause" in err) {
-        const errData = err.cause as { code: string };
-        if (errData.code === "IDBNoResults") {
-          // user settings not yet initialized
-          return null;
-        }
+        );
+      })
+    )
+  ).then((keyValues) =>
+    settingsKeys.reduce<Partial<AppSettingState>>((acc, key, i) => {
+      if (keyValues[i].status === "fulfilled") {
+        return { ...acc, [key]: keyValues[i].value };
       }
 
-      // all else ...
-
-      // eslint-disable-next-line
-      console.log(err);
-      throw err;
-    });
+      return acc;
+    }, {})
+  );
 }
 
 /**
  * Retrieve the study progress object stored in IndexDB
  */
-export function getIndexDBStudyProgress(
-  path: "kanji" | "vocabulary" | "phrases"
-) {
+export function getIndexDBStudyProgress(path: (typeof dataSetNames)[number]) {
   return openIDB()
     .then((db) => {
       // if indexedDB has stored
@@ -196,14 +192,14 @@ export function getIndexDBStudyProgress(
       }
 
       return getIDBItem({ db, store: IDBStores.STATE }, path).then((res) => {
-        let initialState: Record<string, MetaDataObj> | null = null;
+        let initialState: Record<string, MetaDataObj | undefined> = {};
 
         if (
           typeof res.value === "object" &&
           !Array.isArray(res.value) &&
           res.value !== null
         ) {
-          initialState = res.value as Record<string, MetaDataObj>;
+          initialState = res.value as Record<string, MetaDataObj | undefined>;
         }
 
         return initialState;
@@ -214,7 +210,7 @@ export function getIndexDBStudyProgress(
         const errData = err.cause as { code: string };
         if (errData.code === "IDBNoResults") {
           // study progress not yet initialized
-          return null;
+          return {} as Record<string, MetaDataObj | undefined>;
         }
       }
 
