@@ -60,6 +60,7 @@ export interface AppStudyState {
 export function isValidAppSettingsState(
   settingObj: object
 ): settingObj is Partial<AppSettingState> {
+  // TODO: require deeper checks
   return Object.keys(settingObj).every((key) =>
     [
       "global",
@@ -72,6 +73,18 @@ export function isValidAppSettingsState(
 
       "lastModified",
     ].includes(key)
+  );
+}
+
+/**
+ * Validator for AppStudyState Object
+ */
+export function isValidStudyState(
+  studyStateObj: object
+): studyStateObj is Partial<AppStudyState> {
+  // TODO: require deeper checks
+  return Object.keys(studyStateObj).every((key) =>
+    ["vocabulary", "phrases", "kanji"].includes(key)
   );
 }
 

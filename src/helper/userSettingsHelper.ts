@@ -6,9 +6,10 @@ import {
   indexDBUserSettingAttrDelete,
   indexDBUserSettingAttrUpdate,
   indexDBUserStudyStateAttrUpdate,
+  setIndexDBStudyState,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
-import { type AppSettingState } from "../slices";
+import { type AppSettingState, AppStudyState } from "../slices";
 import { dataSetNames } from "./sheetHelper";
 import { localStoreUserSettingAttrUpdate } from "./userSettingsLocalStorageHelper";
 
@@ -114,6 +115,20 @@ export function setUserSetting(value: unknown) {
  */
 export function getUserSettings() {
   return getIndexDBUserSettings();
+}
+
+/**
+ * Store a whole study state
+ */
+export function setStudyState(value: Partial<AppStudyState>) {
+  return Promise.all(
+    dataSetNames.reduce((acc, name) => {
+      if (value[name] !== undefined) {
+        return [...acc, setIndexDBStudyState(name, value[name])];
+      }
+      return acc;
+    }, [] as Promise<unknown>[])
+  ).then(() => {});
 }
 
 /**

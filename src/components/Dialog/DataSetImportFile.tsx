@@ -12,9 +12,13 @@ import {
 } from "@primer/octicons-react";
 import { useCallback, useRef, useState } from "react";
 
-import { DataSetFromDragDrop, TransferObject } from "../Form/DataSetFromDragDrop";
+import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { AppSettingState } from "../../slices";
+import { AppSettingState, AppStudyState } from "../../slices";
+import {
+  DataSetFromDragDrop,
+  TransferObject,
+} from "../Form/DataSetFromDragDrop";
 import "../../css/DragDrop.css";
 
 interface DataSetImportFileProps {
@@ -22,7 +26,8 @@ interface DataSetImportFileProps {
   close: () => void;
   updateDataHandler: (
     data?: FilledSheetData[],
-    settings?: Partial<AppSettingState>
+    settings?: Partial<AppSettingState>,
+    studyState?: Partial<AppStudyState>
   ) => Promise<void>;
 }
 
@@ -61,12 +66,27 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       []
     );
 
-    const [settingObj] = fileData.reduce<Partial<AppSettingState>[]>(
-      (acc, el) => (el.setting ? [...acc, el.setting] : acc),
+    const [settingObj] = fileData.reduce<
+      Partial<AppSettingState | AppStudyState>[]
+    >(
+      (acc, el) =>
+        el.setting && el.name === metaDataNames.settings.prettyName
+          ? [...acc, el.setting]
+          : acc,
       []
-    );
+    ) as Partial<AppSettingState>[];
 
-    updateDataHandler(xObj, settingObj)
+    const [studyStateObj] = fileData.reduce<
+      Partial<AppSettingState | AppStudyState>[]
+    >(
+      (acc, el) =>
+        el.setting && el.name === metaDataNames.studyMeta.prettyName
+          ? [...acc, el.setting]
+          : acc,
+      []
+    ) as Partial<AppStudyState>[];
+
+    updateDataHandler(xObj, settingObj, studyStateObj)
       .then(() => {
         setImportStatus(true);
         setTimeout(closeHandlerCB, 1000);

@@ -41,12 +41,18 @@ import {
 import {
   getStudyState,
   getUserSettings,
+  setStudyState,
   setUserSetting,
 } from "../../helper/userSettingsHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import { AppDispatch, AppSettingState, RootState } from "../../slices";
+import {
+  AppDispatch,
+  AppSettingState,
+  AppStudyState,
+  RootState,
+} from "../../slices";
 import { appSettingsInitialized } from "../../slices/globalSlice";
 import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
 import { DataSetExport } from "../Dialog/DataSetExport";
@@ -532,7 +538,8 @@ export default function Sheet() {
   const importDataHandlerCB = useCallback(
     (
       importWorkbook?: FilledSheetData[],
-      importSettings?: Partial<AppSettingState>
+      importSettings?: Partial<AppSettingState>,
+      importStudyState?: Partial<AppStudyState>
     ) => {
       let importCompleteP: Promise<unknown>[] = [];
       if (importSettings && Object.keys(importSettings).length > 0) {
@@ -544,7 +551,13 @@ export default function Sheet() {
 
         importCompleteP = [...importCompleteP, settingsP];
       }
-
+      if (
+        importStudyState !== undefined &&
+        Object.keys(importStudyState).length > 0
+      ) {
+        // write to device's local storage
+        void setStudyState(importStudyState);
+      }
       if (importWorkbook && importWorkbook.length > 0) {
         const allSheetRequired = Object.keys(workbookSheetNames).map(
           (k) => k as keyof typeof workbookSheetNames

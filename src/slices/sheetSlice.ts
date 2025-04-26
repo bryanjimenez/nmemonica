@@ -15,7 +15,13 @@ import { workbookSheetNames } from "../helper/sheetHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
 import { unusualApostrophe } from "../helper/unicodeHelper";
 
-import { AppDispatch, AppSettingState, isValidAppSettingsState } from ".";
+import {
+  AppDispatch,
+  type AppSettingState,
+  type AppStudyState,
+  isValidAppSettingsState,
+  isValidStudyState,
+} from ".";
 
 const initialState = {};
 
@@ -121,6 +127,39 @@ export function readJsonSettings(text: string) {
     }
 
     return settingsObject;
+  } catch {
+    return new Error("Malformed JSON", {
+      cause: { code: SettingsErrorCause.InvalidJSONStructure },
+    });
+  }
+}
+
+/**
+ * Study Meta text to json parser
+ * @param text study metadata
+ * @throws when text contains invalid characters or if json is malformed
+ */
+export function readJsonStudyMeta(text: string) {
+  try {
+    const invalidInput = validateJSONSettings(text);
+
+    if (invalidInput.size > 0) {
+      return new Error("Study State contains invalid characters", {
+        cause: {
+          code: SettingsErrorCause.BadFileContent,
+          details: invalidInput,
+        },
+      });
+    }
+
+    const studyStateObject = JSON.parse(text) as Partial<AppStudyState>;
+    if (!isValidStudyState(studyStateObject)) {
+      return new Error("Unrecognized StudyState", {
+        cause: { code: SettingsErrorCause.InvalidSettings },
+      });
+    }
+
+    return studyStateObject;
   } catch {
     return new Error("Malformed JSON", {
       cause: { code: SettingsErrorCause.InvalidJSONStructure },
