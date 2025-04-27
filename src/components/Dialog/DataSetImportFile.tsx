@@ -25,7 +25,7 @@ interface DataSetImportFileProps {
   visible?: boolean;
   close: () => void;
   updateDataHandler: (
-    data?: FilledSheetData[],
+    workbook?: FilledSheetData[],
     settings?: Partial<AppSettingState>,
     studyProgress?: Partial<AppProgressState>
   ) => Promise<void>;
@@ -61,12 +61,12 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
   const importDatasetCB = useCallback(() => {
     setImportStatus(undefined);
 
-    const xObj = fileData.reduce<FilledSheetData[]>(
+    const workbook = fileData.reduce<FilledSheetData[]>(
       (acc, el) => (el.sheet ? [...acc, el.sheet] : acc),
       []
     );
 
-    const [settingObj] = fileData.reduce<
+    const [settings] = fileData.reduce<
       Partial<AppSettingState | AppProgressState>[]
     >(
       (acc, el) =>
@@ -76,17 +76,17 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       []
     ) as Partial<AppSettingState>[];
 
-    const [StudyProgressObj] = fileData.reduce<
+    const [progress] = fileData.reduce<
       Partial<AppSettingState | AppProgressState>[]
     >(
       (acc, el) =>
-        el.setting && el.name === metaDataNames.studyMeta.prettyName
+        el.setting && el.name === metaDataNames.progress.prettyName
           ? [...acc, el.setting]
           : acc,
       []
     ) as Partial<AppProgressState>[];
 
-    updateDataHandler(xObj, settingObj, StudyProgressObj)
+    updateDataHandler(workbook, settings, progress)
       .then(() => {
         setImportStatus(true);
         setTimeout(closeHandlerCB, 1000);

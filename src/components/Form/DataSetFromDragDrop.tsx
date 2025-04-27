@@ -16,7 +16,7 @@ import React, {
 } from "react";
 import { useSelector } from "react-redux";
 
-import { CSVErrorCause } from "../../helper/csvHelper";
+import { FileErrorCause, buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
@@ -83,20 +83,20 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 const sheetName = properCase(
                   fileItem.name.slice(0, dot > -1 ? dot : undefined)
                 );
-                const xObj = await readCsvToSheet(text, sheetName);
+                const sheet = await readCsvToSheet(text, sheetName);
 
                 if (
                   data.find(
                     (to) =>
-                      to.name === xObj.name &&
-                      JSON.stringify(to.sheet) === JSON.stringify(xObj)
+                      to.name === sheet.name &&
+                      JSON.stringify(to.sheet) === JSON.stringify(sheet)
                   ) === undefined
                 ) {
                   updateDataHandler({
-                    name: xObj.name,
+                    name: sheet.name,
                     origin: "FileSystem",
                     text,
-                    sheet: xObj,
+                    sheet,
                   });
                 }
               } catch (exception) {
@@ -105,28 +105,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 let msg = `Failed to parse (${fileItem.name})`;
 
                 if (exception instanceof Error && "cause" in exception) {
-                  const errData = exception.cause as {
-                    code: CSVErrorCause;
-                    details: Set<string>;
-                  };
-
-                  if (errData.code === CSVErrorCause.BadFileContent) {
-                    // failed csv character sanitize
-                    let details: string[] = [];
-                    errData.details.forEach((d) => {
-                      const { u } = JSON.parse(d) as { u: string };
-                      details = [...details, "u" + u];
-                    });
-
-                    key = `${fileItem.name}-sanitize`;
-                    msg = `${fileItem.name} contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
-                  } else if (
-                    errData.code === CSVErrorCause.MissingRequiredHeader
-                  ) {
-                    // missing required header
-                    key = `${fileItem.name}-header`;
-                    msg = exception.message;
-                  }
+                  ({ key, msg } = buildMsgCSVError(fileItem.name, exception));
                 }
 
                 const errMsg = <span key={key}>{msg}</span>;
@@ -138,8 +117,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               let parsed:
                 | Partial<AppSettingState>
                 | Partial<AppProgressState>
-                | Error
-                | undefined;
+                | Error;
 
               if (
                 fileItem.name.toLowerCase() ===
@@ -149,23 +127,23 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 parsed = readSettings(text);
               } else if (
                 fileItem.name.toLowerCase() ===
-                metaDataNames.studyMeta.file.toLowerCase()
+                metaDataNames.progress.file.toLowerCase()
               ) {
-                name = metaDataNames.studyMeta.prettyName;
+                name = metaDataNames.progress.prettyName;
                 parsed = readStudyProgress(text);
+              } else {
+                name = fileItem.name;
+                parsed = new Error(`Unknown file ${fileItem.name}`, {
+                  cause: {
+                    code: FileErrorCause.UnexpectedFile,
+                    details: fileItem.name,
+                  },
+                });
               }
 
-              if (
-                parsed instanceof Error ||
-                name === undefined ||
-                parsed === undefined
-              ) {
-                w = [
-                  ...w,
-                  <span
-                    key={`${fileItem.name}-parse`}
-                  >{`Failed to parse (${fileItem.name})`}</span>,
-                ];
+              if (parsed instanceof Error) {
+                const { key, msg } = buildMsgCSVError(fileItem.name, parsed);
+                w = [...w, <span key={key}>{msg}</span>];
                 setWarning((warn) => [...warn, ...w]);
                 return;
               }

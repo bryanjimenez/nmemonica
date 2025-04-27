@@ -370,23 +370,19 @@ export default function Sheet() {
       getStudyProgress(),
     ]).then(([settings, data, study]) => {
       // json app settings
-      let appSettings: { fileName: string; name: string; text: string }[] = [];
-
-      if (settings) {
-        appSettings = [
-          {
-            fileName: metaDataNames.settings.file,
-            name: metaDataNames.settings.prettyName,
-            text: JSON.stringify(settings, null, 2),
-          },
-        ];
-      }
+      const appSettings = [
+        {
+          fileName: metaDataNames.settings.file,
+          name: metaDataNames.settings.prettyName,
+          text: JSON.stringify(settings, null, 2),
+        },
+      ];
 
       // json study progress
       const studyProgress = [
         {
-          fileName: metaDataNames.studyMeta.file,
-          name: metaDataNames.studyMeta.prettyName,
+          fileName: metaDataNames.progress.file,
+          name: metaDataNames.progress.prettyName,
           text: JSON.stringify(study, null, 2),
         },
       ];

@@ -32,15 +32,18 @@ const singleQuoteToken = '"';
 const lineEndToken = "\r\n";
 
 export const enum CSVErrorCause {
-  BadFileContent = "message-bad-file-contents",
   MissingRequiredHeader = "csv-missing-required-header",
   MissingFirstCell = "csv-missing-first-cell",
 }
 
-export const enum SettingsErrorCause {
-  BadFileContent = "settings-bad-file-contents",
-  InvalidSettings = "settings-bad-unrecognized",
-  InvalidJSONStructure = "settings-bad-json-structure",
+export const enum JSONErrorCause {
+  InvalidJSONStructure = "json-malformed",
+}
+
+export const enum FileErrorCause {
+  UnexpectedFile = "file-unexpected-file",
+  InvalidCharacters = "file-invalid-characters",
+  InvalidContents = "file-invalid-contents",
 }
 
 /**
@@ -117,6 +120,49 @@ export function validateJSONSettings(text: string) {
   });
 
   return invalidInput;
+}
+
+/**
+ * Build user readable messages from parsing errors
+ * @param exception
+ * @param fileName
+ */
+export function buildMsgCSVError(fileName: string, exception: Error) {
+  let key = `${fileName}-parse`;
+  let msg = `Failed to parse (${fileName})`;
+
+  const errData = exception.cause as {
+    code: FileErrorCause | CSVErrorCause | JSONErrorCause;
+    details?: Set<string> | string; // available when FileErrorCause
+  };
+
+  if (
+    errData.code === FileErrorCause.UnexpectedFile ||
+    errData.code === FileErrorCause.InvalidContents ||
+    errData.code === JSONErrorCause.InvalidJSONStructure
+  ) {
+    key = `${fileName}-${errData.code}`;
+    msg = exception.message;
+  } else if (
+    errData.code === FileErrorCause.InvalidCharacters &&
+    errData.details instanceof Set
+  ) {
+    // failed csv character sanitize
+    let details: string[] = [];
+    errData.details.forEach((d) => {
+      const { u } = JSON.parse(d) as { u: string };
+      details = [...details, "u" + u];
+    });
+
+    key = `${fileName}-${errData.code}`;
+    msg = `${fileName} contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
+  } else if (errData.code === CSVErrorCause.MissingRequiredHeader) {
+    // missing required header
+    key = `${fileName}-${errData.code}`;
+    msg = exception.message;
+  }
+
+  return { key, msg };
 }
 
 export function csvToObject<

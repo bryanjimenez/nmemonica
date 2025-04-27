@@ -23,15 +23,20 @@ import {
 
 import { WebRTCContext } from "../../context/webRTC";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
-import { CSVErrorCause } from "../../helper/csvHelper";
+import { buildMsgCSVError } from "../../helper/csvHelper";
+import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   SharingMessageErrorCause,
   type SyncDataFile,
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
-import { AppSettingState } from "../../slices";
-import { readCsvToSheet, readSettings } from "../../slices/sheetSlice";
+import { type AppProgressState, type AppSettingState } from "../../slices";
+import {
+  readCsvToSheet,
+  readSettings,
+  readStudyProgress,
+} from "../../slices/sheetSlice";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
@@ -47,8 +52,9 @@ interface DataSetImportProps extends DataSetSharingAction {
     files: { fileName: string; text: string }[]
   ) => Promise<void>;
   updateDataHandler: (
-    importWorkbook?: FilledSheetData[],
-    importSettings?: Partial<AppSettingState>
+    workbook?: FilledSheetData[],
+    settings?: Partial<AppSettingState>,
+    progress?: Partial<AppProgressState>
   ) => Promise<void>;
 }
 
@@ -161,52 +167,17 @@ export function DataSetImport(props: DataSetImportProps) {
   const importToAppHandlerCB = useCallback(
     (
       dataObj: FilledSheetData[],
-      settings: Partial<AppSettingState> | undefined
+      settings: Partial<AppSettingState>,
+      progress: Partial<AppProgressState>
     ) => {
-      const d = dataObj.length === 0 ? undefined : dataObj;
+      const workbook = dataObj.length === 0 ? undefined : dataObj;
 
-      return updateDataHandler(d, settings).then(() => {
+      return updateDataHandler(workbook, settings, progress).then(() => {
         setStatus("successStatus");
         setTimeout(closeHandlerCB, 1000);
       });
     },
     [updateDataHandler, setStatus, closeHandlerCB]
-  );
-
-  const toDataSetAndSettingsCB = useCallback(
-    (fileObj: SyncDataFile[]) => {
-      return fileObj.reduce(
-        (acc, o) => {
-          if (o.fileName.toLowerCase().endsWith(".csv")) {
-            const dot = o.fileName.indexOf(".");
-            const sheetName = properCase(
-              o.fileName.slice(0, dot > -1 ? dot : undefined)
-            );
-
-            const csvFile = readCsvToSheet(o.text, sheetName);
-
-            return { ...acc, data: [...(acc.data ?? []), csvFile] };
-          } else {
-            let s = readSettings(o.text);
-            if (!(s instanceof Error)) {
-              return { ...acc, settings: s };
-            }
-
-            setStatus("dataError");
-            addWarning(
-              SharingMessageErrorCause.BadPayload,
-              "Failed to parse Settings"
-            );
-          }
-          return acc;
-        },
-        { data: [] } as {
-          data: Promise<FilledSheetData>[];
-          settings?: Partial<AppSettingState>;
-        }
-      );
-    },
-    [setStatus, addWarning]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -273,53 +244,104 @@ export function DataSetImport(props: DataSetImportProps) {
 
     // const fileObj = decryptMsgIntoDecryptedFilesCB(TEMP_FAKE_KEY, msgBuf);
     const fileObj = parseMsgIntoPlainFilesCB(msgBuf);
-    const { data: dataP, settings } = toDataSetAndSettingsCB(fileObj);
 
-    Promise.all(dataP)
-      .then((dataObj) => {
-        if (destination === "save") {
-          return saveToFileHandlerWStatus(fileObj);
-        }
+    if (destination === "save") {
+      void saveToFileHandlerWStatus(fileObj);
+      return;
+    }
 
-        return importToAppHandlerCB(dataObj, settings);
-      })
-      .catch((exception) => {
-        let key: string = SharingMessageErrorCause.BadPayload;
-        let msg = "Failed to parse DataSet";
+    const data = fileObj.filter((file) =>
+      file.fileName.toLowerCase().endsWith(".csv")
+    );
+    const meta = fileObj.filter((file) =>
+      file.fileName.toLowerCase().endsWith(".json")
+    );
 
-        if (exception instanceof Error && "cause" in exception) {
-          const errData = exception.cause as {
-            code: CSVErrorCause;
-            details: Set<string>;
-            sheetName: string;
-          };
+    const { settings, progress } = meta.reduce<{
+      settings: Partial<AppSettingState>;
+      progress: Partial<AppProgressState>;
+    }>(
+      (acc, m) => {
+        const { fileName, text } = m;
 
-          if (errData.code === CSVErrorCause.BadFileContent) {
-            // failed csv character sanitize
-            let details: string[] = [];
-            errData.details.forEach((d) => {
-              const { u } = JSON.parse(d) as { u: string };
-              details = [...details, "u" + u];
-            });
+        if (
+          fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
+        ) {
+          const parsed = readSettings(text);
 
-            key = `${errData.sheetName}-sanitize`;
-            msg = `${errData.sheetName}.csv contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
-          } else if (errData.code === CSVErrorCause.MissingRequiredHeader) {
-            // missing required header
-            key = `${errData.sheetName}-header`;
-            msg = `${exception.message}`;
+          if (parsed instanceof Error) {
+            setStatus("dataError");
+            const { key, msg } = buildMsgCSVError(fileName, parsed);
+            addWarning(key, msg);
+            return acc;
           }
+
+          return { ...acc, settings: parsed };
+        } else if (
+          fileName.toLowerCase() === metaDataNames.progress.file.toLowerCase()
+        ) {
+          const parsed = readStudyProgress(text);
+
+          if (parsed instanceof Error) {
+            setStatus("dataError");
+            const { key, msg } = buildMsgCSVError(fileName, parsed);
+            addWarning(key, msg);
+
+            return acc;
+          }
+
+          return { ...acc, progress: parsed };
         }
 
-        setStatus("dataError");
-        addWarning(key, msg);
-      });
+        return acc;
+      },
+      { settings: {}, progress: {} }
+    );
+
+    void Promise.allSettled(
+      data.map((fileItem) =>
+        new Promise<SyncDataFile>((resolve) => resolve(fileItem)).then(
+          async ({ text, fileName }) => {
+            try {
+              const dot = fileName.indexOf(".");
+              const sheetName = properCase(
+                fileName.slice(0, dot > -1 ? dot : undefined)
+              );
+
+              const sheet = await readCsvToSheet(text, sheetName);
+              return sheet;
+            } catch (exception) {
+              // default message
+              let key = `${fileName}-parse`;
+              let msg = `Failed to parse (${fileName})`;
+
+              if (exception instanceof Error && "cause" in exception) {
+                ({ key, msg } = buildMsgCSVError(fileName, exception));
+              }
+
+              setStatus("dataError");
+              addWarning(key, msg);
+              return undefined;
+            }
+          }
+        )
+      )
+    )
+      .then((sheetPromiseArr) =>
+        sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
+          if (r.status === "fulfilled" && r.value !== undefined) {
+            return [...acc, r.value];
+          }
+
+          return acc;
+        }, [])
+      )
+      .then((workbook) => importToAppHandlerCB(workbook, settings, progress));
   }, [
     destination,
     saveToFileHandlerWStatus,
     setStatus,
     addWarning,
-    toDataSetAndSettingsCB,
     parseMsgIntoPlainFilesCB,
     importToAppHandlerCB,
     msgBuffer,

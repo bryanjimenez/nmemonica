@@ -9,7 +9,7 @@ import {
   setIndexDBStudyProgress,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
-import { AppProgressState, type AppSettingState } from "../slices";
+import { type AppProgressState, type AppSettingState } from "../slices";
 import { dataSetNames } from "./sheetHelper";
 import {
   localStoreUserSettingAttrUpdate,
