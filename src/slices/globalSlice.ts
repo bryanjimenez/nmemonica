@@ -13,7 +13,6 @@ import { phraseSettingsFromAppStorage } from "./phraseSlice";
 import { toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
-import { localStorageKey } from "../helper/userSettingsHelper";
 import type {
   EnglishVoiceType,
   JapaneseVoiceType,
@@ -26,6 +25,7 @@ import {
 import { allowedCookies } from "../helper/cookieHelper";
 import {
   getUserSettings,
+  localStorageKey,
   userSettingAttrUpdate,
 } from "../helper/userSettingsHelper";
 import { getLocalStorageUserSettings } from "../helper/userSettingsLocalStorageHelper";
@@ -202,10 +202,8 @@ const globalSlice = createSlice({
     toggleDarkMode(state) {
       const path = "/global/";
       const attr = "darkMode";
-      const time = new Date();
 
       void userSettingAttrUpdate(
-        time,
         { global: state },
         path,
         attr,
@@ -218,9 +216,8 @@ const globalSlice = createSlice({
 
       const path = "/global/";
       const attr = "swipeThreshold";
-      const time = new Date();
 
-      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
+      void userSettingAttrUpdate({ global: state }, path, attr, override);
 
       state.swipeThreshold = override;
     },
@@ -229,9 +226,8 @@ const globalSlice = createSlice({
 
       const path = "/global/";
       const attr = "motionThreshold";
-      const time = new Date();
 
-      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
+      void userSettingAttrUpdate({ global: state }, path, attr, override);
 
       state.motionThreshold = override;
     },
@@ -240,9 +236,8 @@ const globalSlice = createSlice({
 
       const path = "/global/";
       const attr = "japaneseVoice";
-      const time = new Date();
 
-      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
+      void userSettingAttrUpdate({ global: state }, path, attr, override);
 
       state.japaneseVoice = override;
     },
@@ -251,9 +246,8 @@ const globalSlice = createSlice({
 
       const path = "/global/";
       const attr = "englishVoice";
-      const time = new Date();
 
-      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
+      void userSettingAttrUpdate({ global: state }, path, attr, override);
 
       state.englishVoice = override;
     },
@@ -263,7 +257,6 @@ const globalSlice = createSlice({
         state,
         action: PayloadAction<ValuesOf<typeof DebugLevel> | undefined>
       ) => {
-        const time = new Date();
         const path = "/global/";
         const attr = "debug";
 
@@ -274,13 +267,7 @@ const globalSlice = createSlice({
           override
         );
 
-        void userSettingAttrUpdate(
-          time,
-          { global: state },
-          path,
-          attr,
-          newDebug
-        );
+        void userSettingAttrUpdate({ global: state }, path, attr, newDebug);
 
         state.debug = newDebug;
       },

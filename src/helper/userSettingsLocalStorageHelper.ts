@@ -1,20 +1,21 @@
 import { getWindow } from "./browserGlobal";
-import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
-import { localStorageKey } from "./userSettingsHelper";
+import {
+  localStorageKey,
+  usingPathRead,
+  usingPathWrite,
+} from "./userSettingsHelper";
 import type { AppSettingState } from "../slices";
 
 // TODO: implement using promises to match userSettingsIndexDBHelper (fallback method)
 
 /**
  * Modifies an attribute or toggles the existing value
- * @param time
  * @param state required when toggling `attr` for prev value
  * @param path
  * @param attr
  * @param value optional if absent `attr` will be toggled
  */
 export function localStoreUserSettingAttrUpdate<T>(
-  time: Date,
   state: Partial<AppSettingState>,
   path: string,
   attr: string,
@@ -43,7 +44,6 @@ export function localStoreUserSettingAttrUpdate<T>(
 
   setLocalStorageUserSettings(localStorageKey, {
     ...modifiedLocalStorage,
-    lastModified: time,
   });
 
   return modifiedValue;
@@ -52,11 +52,7 @@ export function localStoreUserSettingAttrUpdate<T>(
 /**
  * Modifies an attribute or toggles the existing value
  */
-export function localStoreUserSettingAttrDelete(
-  time: Date,
-  path: string,
-  attr: string
-) {
+export function localStoreUserSettingAttrDelete(path: string, attr: string) {
   const locStoSettings = getLocalStorageUserSettings(localStorageKey) ?? {};
   const cleanPath = [
     ...path.split("/").filter((p) => p !== ""),
@@ -71,7 +67,6 @@ export function localStoreUserSettingAttrDelete(
 
   setLocalStorageUserSettings(localStorageKey, {
     ...modifiedLocalStorage,
-    lastModified: time,
   });
 }
 

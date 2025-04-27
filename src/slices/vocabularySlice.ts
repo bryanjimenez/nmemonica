@@ -245,7 +245,6 @@ export const flipVocabularyPracticeSide = createAsyncThunk(
     const state = (thunkAPI.getState() as RootState).vocabulary;
 
     return userSettingAttrUpdate(
-      new Date(),
       { vocabulary: state.setting },
       "/vocabulary/",
       "englishSideUp"
@@ -282,7 +281,6 @@ const vocabularySlice = createSlice({
       const newValue = grpParse(groups, activeGroup);
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "activeGroup",
@@ -305,7 +303,6 @@ const vocabularySlice = createSlice({
       );
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
@@ -332,7 +329,6 @@ const vocabularySlice = createSlice({
       );
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
@@ -364,7 +360,6 @@ const vocabularySlice = createSlice({
       ) as ValuesOf<typeof TermSortBy>;
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "ordered",
@@ -376,7 +371,6 @@ const vocabularySlice = createSlice({
 
     toggleVocabularyBareKanji(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "bareKanji"
@@ -387,7 +381,6 @@ const vocabularySlice = createSlice({
 
     toggleVocabularyHint(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "hintEnabled"
@@ -399,7 +392,6 @@ const vocabularySlice = createSlice({
     setVerbFormsOrder(state, action: { payload: string[] }) {
       const order = action.payload;
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "verbFormsOrder",
@@ -411,7 +403,6 @@ const vocabularySlice = createSlice({
 
     toggleAutoVerbView(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "autoVerbView"
@@ -423,7 +414,6 @@ const vocabularySlice = createSlice({
     updateVerbColSplit(state, action: { payload: number }) {
       const split = action.payload;
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "verbColSplit",
@@ -437,7 +427,6 @@ const vocabularySlice = createSlice({
       const threshold = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "difficultyThreshold",
@@ -464,7 +453,6 @@ const vocabularySlice = createSlice({
         );
 
         void userSettingAttrUpdate(
-          new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
@@ -484,7 +472,6 @@ const vocabularySlice = createSlice({
       action: { payload: Record<string, MetaDataObj | undefined> }
     ) {
       void userSettingAttrUpdate(
-        new Date(),
         {},
         "/vocabulary/",
         "repetition",
@@ -502,16 +489,11 @@ const vocabularySlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        void userSettingAttrDelete(
-          new Date(),
-          "/vocabulary/",
-          "spaRepMaxReviewItem"
-        );
+        void userSettingAttrDelete("/vocabulary/", "spaRepMaxReviewItem");
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
         const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
         void userSettingAttrUpdate(
-          new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "spaRepMaxReviewItem",
@@ -538,7 +520,6 @@ const vocabularySlice = createSlice({
         );
 
         void userSettingAttrUpdate(
-          new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
@@ -554,7 +535,6 @@ const vocabularySlice = createSlice({
     },
     toggleIncludeNew(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "includeNew"
@@ -564,7 +544,6 @@ const vocabularySlice = createSlice({
     },
     toggleIncludeReviewed(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "includeReviewed"
@@ -580,7 +559,6 @@ const vocabularySlice = createSlice({
 
       if (goal !== undefined) {
         void userSettingAttrUpdate(
-          new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "viewGoal",
@@ -590,7 +568,7 @@ const vocabularySlice = createSlice({
         state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        void userSettingAttrDelete(new Date(), "/vocabulary/", "viewGoal");
+        void userSettingAttrDelete("/vocabulary/", "viewGoal");
       }
     },
   },
@@ -620,7 +598,6 @@ const vocabularySlice = createSlice({
       const { record: newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
@@ -635,7 +612,6 @@ const vocabularySlice = createSlice({
       const { newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",
@@ -650,7 +626,6 @@ const vocabularySlice = createSlice({
 
       if (newValue) {
         void userSettingAttrUpdate(
-          new Date(),
           { vocabulary: state.setting },
           "/vocabulary/",
           "repetition",
@@ -666,7 +641,6 @@ const vocabularySlice = createSlice({
       const { record: newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { vocabulary: state.setting },
         "/vocabulary/",
         "repetition",

@@ -59,7 +59,6 @@ const kanaSlice = createSlice({
       ) as ValuesOf<typeof KanaType>;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kana: state.setting },
         "/kana/",
         "charSet",
@@ -71,7 +70,6 @@ const kanaSlice = createSlice({
     setKanaBtnN(state, action: PayloadAction<number>) {
       const number = action.payload;
       void userSettingAttrUpdate(
-        new Date(),
         { kana: state.setting },
         "/kana/",
         "choiceN",
@@ -81,22 +79,12 @@ const kanaSlice = createSlice({
       state.setting.choiceN = number;
     },
     toggleKanaEasyMode(state) {
-      void userSettingAttrUpdate(
-        new Date(),
-        { kana: state.setting },
-        "/kana/",
-        "easyMode"
-      );
+      void userSettingAttrUpdate({ kana: state.setting }, "/kana/", "easyMode");
 
       state.setting.easyMode = !state.setting.easyMode;
     },
     toggleKanaGameWideMode(state) {
-      void userSettingAttrUpdate(
-        new Date(),
-        { kana: state.setting },
-        "/kana/",
-        "wideMode"
-      );
+      void userSettingAttrUpdate({ kana: state.setting }, "/kana/", "wideMode");
 
       state.setting.wideMode = !state.setting.wideMode;
     },

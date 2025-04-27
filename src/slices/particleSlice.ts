@@ -187,7 +187,6 @@ const particleSlice = createSlice({
       const override = action.payload ?? false;
 
       void userSettingAttrUpdate(
-        new Date(),
         { particle: state.setting },
         "/particle/",
         "fadeInAnswers",

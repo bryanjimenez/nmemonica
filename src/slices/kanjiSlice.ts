@@ -188,7 +188,6 @@ const kanjiSlice = createSlice({
       }
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "activeTags",
@@ -206,7 +205,6 @@ const kanjiSlice = createSlice({
       const newValue = grpParse(groups, activeGroup);
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "activeGroup",
@@ -237,7 +235,6 @@ const kanjiSlice = createSlice({
       ) as ValuesOf<typeof TermSortBy>;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "ordered",
@@ -251,7 +248,6 @@ const kanjiSlice = createSlice({
       const threshold = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "difficultyThreshold",
@@ -278,7 +274,6 @@ const kanjiSlice = createSlice({
         );
 
         void userSettingAttrUpdate(
-          new Date(),
           { kanji: state.setting },
           "/kanji/",
           "repetition",
@@ -309,7 +304,6 @@ const kanjiSlice = createSlice({
         );
 
         void userSettingAttrUpdate(
-          new Date(),
           { kanji: state.setting },
           "/kanji/",
           "repetition",
@@ -327,13 +321,7 @@ const kanjiSlice = createSlice({
       state,
       action: { payload: Record<string, MetaDataObj | undefined> }
     ) {
-      void userSettingAttrUpdate(
-        new Date(),
-        {},
-        "/kanji/",
-        "repetition",
-        action.payload
-      );
+      void userSettingAttrUpdate({}, "/kanji/", "repetition", action.payload);
 
       state.setting.repetition = action.payload;
     },
@@ -345,16 +333,11 @@ const kanjiSlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        void userSettingAttrDelete(
-          new Date(),
-          "/kanji/",
-          "spaRepMaxReviewItem"
-        );
+        void userSettingAttrDelete("/kanji/", "spaRepMaxReviewItem");
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
         const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
         void userSettingAttrUpdate(
-          new Date(),
           { kanji: state.setting },
           "/kanji/",
           "spaRepMaxReviewItem",
@@ -368,7 +351,6 @@ const kanjiSlice = createSlice({
       const number = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "choiceN",
@@ -381,7 +363,6 @@ const kanjiSlice = createSlice({
       const override = action.payload ?? false;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "fadeInAnswers",
@@ -402,7 +383,6 @@ const kanjiSlice = createSlice({
       ) as ValuesOf<typeof TermFilterBy>;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "filter",
@@ -414,7 +394,6 @@ const kanjiSlice = createSlice({
 
     toggleIncludeNew(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "includeNew"
@@ -424,7 +403,6 @@ const kanjiSlice = createSlice({
     },
     toggleIncludeReviewed(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "includeReviewed"
@@ -440,7 +418,6 @@ const kanjiSlice = createSlice({
 
       if (goal !== undefined) {
         void userSettingAttrUpdate(
-          new Date(),
           { kanji: state.setting },
           "/kanji/",
           "viewGoal",
@@ -450,7 +427,7 @@ const kanjiSlice = createSlice({
         state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        void userSettingAttrDelete(new Date(), "/kanji/", "viewGoal");
+        void userSettingAttrDelete("/kanji/", "viewGoal");
       }
     },
   },
@@ -526,7 +503,6 @@ const kanjiSlice = createSlice({
       const { record: newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",
@@ -541,7 +517,6 @@ const kanjiSlice = createSlice({
       const { newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",
@@ -556,7 +531,6 @@ const kanjiSlice = createSlice({
 
       if (newValue) {
         void userSettingAttrUpdate(
-          new Date(),
           { kanji: state.setting },
           "/kanji/",
           "repetition",
@@ -571,7 +545,6 @@ const kanjiSlice = createSlice({
       const { record: newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",

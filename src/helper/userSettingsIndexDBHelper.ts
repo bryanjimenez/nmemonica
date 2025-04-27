@@ -1,4 +1,8 @@
-import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
+import {
+  localStorageKey as indexDBKey,
+  usingPathRead,
+  usingPathWrite,
+} from "./userSettingsHelper";
 import {
   IDBErrorCause,
   IDBStores,
@@ -6,18 +10,15 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import { localStorageKey as indexDBKey } from "./userSettingsHelper";
 import { AppSettingState } from "../slices";
 
 export function indexDBUserSettingAttrUpdate(
-  time: Date,
   state: Partial<AppSettingState>,
   path: string,
   attr: string
 ): Promise<boolean>;
 
 export function indexDBUserSettingAttrUpdate<T>(
-  time: Date,
   state: Partial<AppSettingState>,
   path: string,
   attr: string,
@@ -25,14 +26,12 @@ export function indexDBUserSettingAttrUpdate<T>(
 ): Promise<T>;
 /**
  * Modifies an attribute or toggles the existing value
- * @param time
  * @param state required when toggling `attr` for prev value
  * @param path
  * @param attr
  * @param value optional if absent `attr` will be toggled
  */
 export function indexDBUserSettingAttrUpdate<T>(
-  time: Date,
   state: Partial<AppSettingState>,
   path: string,
   attr: string,
@@ -61,7 +60,6 @@ export function indexDBUserSettingAttrUpdate<T>(
 
     void setIndexDBUserSettings({
       ...modifiedState,
-      lastModified: time,
     });
 
     return modifiedValue;
@@ -71,11 +69,7 @@ export function indexDBUserSettingAttrUpdate<T>(
 /**
  * Modifies an attribute or toggles the existing value
  */
-export function indexDBUserSettingAttrDelete(
-  time: Date,
-  path: string,
-  attr: string
-) {
+export function indexDBUserSettingAttrDelete(path: string, attr: string) {
   return getIndexDBUserSettings().then((res) => {
     const initialState = res ?? {};
     const cleanPath = [
@@ -91,7 +85,6 @@ export function indexDBUserSettingAttrDelete(
 
     void setIndexDBUserSettings({
       ...modifiedState,
-      lastModified: time,
     });
   });
 }
@@ -124,22 +117,21 @@ export function getIndexDBUserSettings() {
         throw ErrorSettingsMissing;
       }
 
-      return getIDBItem(
-        { db, store: IDBStores.SETTINGS },
-        indexDBKey
-      ).then((res) => {
-        let initialState: AppSettingState | null = null;
+      return getIDBItem({ db, store: IDBStores.SETTINGS }, indexDBKey).then(
+        (res) => {
+          let initialState: AppSettingState | null = null;
 
-        if (
-          typeof res.value === "object" &&
-          !Array.isArray(res.value) &&
-          res.value !== null
-        ) {
-          initialState = res.value as AppSettingState;
+          if (
+            typeof res.value === "object" &&
+            !Array.isArray(res.value) &&
+            res.value !== null
+          ) {
+            initialState = res.value as AppSettingState;
+          }
+
+          return initialState;
         }
-
-        return initialState;
-      });
+      );
     })
     .catch((err) => {
       if (err instanceof Error && "cause" in err) {

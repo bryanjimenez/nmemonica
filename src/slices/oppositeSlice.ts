@@ -92,7 +92,6 @@ const oppositeSlice = createSlice({
       const override = action.payload ?? false;
 
       void userSettingAttrUpdate(
-        new Date(),
         { opposite: state },
         "/opposite/",
         "fadeInAnswers",
