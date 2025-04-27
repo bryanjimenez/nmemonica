@@ -107,7 +107,7 @@ describe("sheetSlice", function () {
         ) as Error; // local isn't a valid field
 
         expect(actual).to.be.instanceOf(Error);
-        expect(actual.message).to.eq("Unrecognized Settings");
+        expect(actual.message).to.eq("Unrecognized settings in Settings");
       });
 
       it.skip("unrecognized child setting");
@@ -118,7 +118,7 @@ describe("sheetSlice", function () {
         ) as Error;
 
         expect(actual).to.be.instanceOf(Error);
-        expect(actual.message).to.eq("Malformed JSON");
+        expect(actual.message).to.eq("Malformed JSON Settings");
       });
     });
     describe("parses", function () {

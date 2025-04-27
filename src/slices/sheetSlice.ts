@@ -4,14 +4,14 @@ import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
 import {
-  CSVErrorCause,
-  SettingsErrorCause,
+  FileErrorCause,
+  JSONErrorCause,
   csvToObject,
   validateCSVSheet,
   validateJSONSettings,
 } from "../helper/csvHelper";
 import { jtox, sheetDataToJSON } from "../helper/jsonHelper";
-import { workbookSheetNames } from "../helper/sheetHelper";
+import { metaDataNames, workbookSheetNames } from "../helper/sheetHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
 import { unusualApostrophe } from "../helper/unicodeHelper";
 
@@ -73,7 +73,7 @@ export function readCsvToSheet(text: string, sheetName: string) {
     return Promise.reject(
       new Error("CSV contains invalid characters", {
         cause: {
-          code: CSVErrorCause.BadFileContent,
+          code: FileErrorCause.InvalidCharacters,
           details: invalidInput,
           sheetName,
         },
@@ -113,7 +113,7 @@ export function readSettings(jsonText: string) {
     if (invalidInput.size > 0) {
       return new Error("Settings contains invalid characters", {
         cause: {
-          code: SettingsErrorCause.BadFileContent,
+          code: FileErrorCause.InvalidCharacters,
           details: invalidInput,
         },
       });
@@ -121,15 +121,21 @@ export function readSettings(jsonText: string) {
 
     const settingsObject = JSON.parse(jsonText) as Partial<AppSettingState>;
     if (!isValidAppSettingsState(settingsObject)) {
-      return new Error("Unrecognized Settings", {
-        cause: { code: SettingsErrorCause.InvalidSettings },
-      });
+      return new Error(
+        `Unrecognized settings in ${metaDataNames.settings.prettyName}`,
+        {
+          cause: {
+            code: FileErrorCause.InvalidContents,
+            details: metaDataNames.settings.prettyName,
+          },
+        }
+      );
     }
 
     return settingsObject;
   } catch {
-    return new Error("Malformed JSON", {
-      cause: { code: SettingsErrorCause.InvalidJSONStructure },
+    return new Error(`Malformed JSON ${metaDataNames.settings.prettyName}`, {
+      cause: { code: JSONErrorCause.InvalidJSONStructure },
     });
   }
 }
@@ -146,7 +152,7 @@ export function readStudyProgress(jsonText: string) {
     if (invalidInput.size > 0) {
       return new Error("Progress contains invalid characters", {
         cause: {
-          code: SettingsErrorCause.BadFileContent,
+          code: FileErrorCause.InvalidCharacters,
           details: invalidInput,
         },
       });
@@ -156,15 +162,21 @@ export function readStudyProgress(jsonText: string) {
       jsonText
     ) as Partial<AppProgressState>;
     if (!isValidStudyProgress(studyProgressObject)) {
-      return new Error("Unrecognized StudyProgress", {
-        cause: { code: SettingsErrorCause.InvalidSettings },
-      });
+      return new Error(
+        `Unrecognized values in ${metaDataNames.progress.prettyName}`,
+        {
+          cause: {
+            code: FileErrorCause.InvalidContents,
+            details: metaDataNames.progress.prettyName,
+          },
+        }
+      );
     }
 
     return studyProgressObject;
   } catch {
-    return new Error("Malformed JSON", {
-      cause: { code: SettingsErrorCause.InvalidJSONStructure },
+    return new Error(`Malformed JSON ${metaDataNames.progress.prettyName}`, {
+      cause: { code: JSONErrorCause.InvalidJSONStructure },
     });
   }
 }
