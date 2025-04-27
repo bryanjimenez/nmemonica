@@ -145,13 +145,15 @@ export function getStudyProgress() {
   ).then((states) =>
     states.reduce(
       (acc, state, i) => {
-        if (state !== null) {
+        if (state !== null && Object.keys(state).length > 0) {
           return { ...acc, [dataSetNames[i]]: state };
         }
 
         return acc;
       },
-      {} as Record<(typeof dataSetNames)[number], Record<string, MetaDataObj>>
+      {} as Partial<
+        Record<(typeof dataSetNames)[number], Record<string, MetaDataObj>>
+      >
     )
   );
 }

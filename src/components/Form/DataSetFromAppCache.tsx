@@ -8,8 +8,15 @@ import classNames from "classnames";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TransferObject } from "./DataSetFromDragDrop";
-import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
-import { getUserSettings } from "../../helper/userSettingsHelper";
+import {
+  getWorkbookFromIndexDB,
+  metaDataNames,
+  workbookSheetNames,
+} from "../../helper/sheetHelper";
+import {
+  getStudyProgress,
+  getUserSettings,
+} from "../../helper/userSettingsHelper";
 
 interface DataSetFromAppCacheProps {
   data: TransferObject[];
@@ -19,24 +26,48 @@ interface DataSetFromAppCacheProps {
 export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
   const { updateDataHandler, data } = props;
 
-  const [hasSettings, setSettings] = useState(false);
+  const [available, setAvailable] = useState<string[]>([]);
 
   useEffect(() => {
-    void getUserSettings().then((ls) => {
-      setSettings(ls instanceof Object);
+    void getUserSettings().then((settings) => {
+      const name = metaDataNames.settings.prettyName.toLowerCase();
+      if (settings instanceof Object && Object.keys(settings).length > 0) {
+        setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
+      }
+    });
+
+    void getStudyProgress().then((progress) => {
+      const name = metaDataNames.progress.prettyName.toLowerCase();
+      if (progress instanceof Object && Object.keys(progress).length > 0) {
+        setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
+      }
+    });
+
+    void getWorkbookFromIndexDB().then((workbook) => {
+      if (workbook.length > 0) {
+        setAvailable((prev) => [
+          ...prev.filter(
+            (p) => !workbook.map((w) => w.name.toLowerCase()).includes(p)
+          ),
+          ...workbook
+            .filter((w) => w.rows?.len !== undefined && w.rows?.len > 1)
+            .map((w) => w.name.toLowerCase()),
+        ]);
+      }
     });
   }, []);
 
   const addRemoveItemCB = useCallback(
     (name: string, prettyName: string) => () => {
       if (
-        name !== metaDataNames.settings.prettyName.toLowerCase() ||
-        hasSettings
+        (name !== metaDataNames.progress.prettyName.toLowerCase() &&
+          name !== metaDataNames.settings.prettyName.toLowerCase()) ||
+        available.includes(name)
       ) {
         updateDataHandler(prettyName);
       }
     },
-    [updateDataHandler, hasSettings]
+    [updateDataHandler, available]
   );
 
   const items = useMemo(
@@ -81,10 +112,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
                     <DiamondIcon
                       className={classNames({
                         "rotate-45 px-0": true,
-                        "disabled opacity-25":
-                          name ===
-                            metaDataNames.settings.prettyName.toLowerCase() &&
-                          !hasSettings,
+                        "disabled opacity-25": !available.includes(name),
                       })}
                     />
                   )}
@@ -94,7 +122,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
           </div>
         );
       }),
-    [data, hasSettings, addRemoveItemCB]
+    [data, addRemoveItemCB, available]
   );
 
   return (
