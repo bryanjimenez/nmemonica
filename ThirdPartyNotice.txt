@@ -2,7 +2,7 @@ THIRD PARTY SOFTWARE NOTICES AND INFORMATION
 Do Not Translate or Localize
 
 --------------------------------------------------------------------------------
-@babel/runtime v7.24.1 - The Babel Team (https://babel.dev/team)
+@babel/runtime v7.27.0 - The Babel Team (https://babel.dev/team)
 https://github.com/babel/babel.git
 --------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/cache v11.13.1 - undefined
+@emotion/cache v11.14.0 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/cache
 --------------------------------------------------------------------------------
 
@@ -84,7 +84,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/is-prop-valid v1.3.0 - undefined
+@emotion/is-prop-valid v1.3.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/is-prop-valid
 --------------------------------------------------------------------------------
 
@@ -138,7 +138,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/react v11.13.3 - Emotion Contributors
+@emotion/react v11.14.0 - Emotion Contributors
 https://github.com/emotion-js/emotion/tree/main/packages/react
 --------------------------------------------------------------------------------
 
@@ -165,7 +165,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/serialize v1.3.1 - undefined
+@emotion/serialize v1.3.3 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/serialize
 --------------------------------------------------------------------------------
 
@@ -219,7 +219,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/styled v11.13.0 - undefined
+@emotion/styled v11.14.0 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/styled
 --------------------------------------------------------------------------------
 
@@ -273,7 +273,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/use-insertion-effect-with-fallbacks v1.1.0 - undefined
+@emotion/use-insertion-effect-with-fallbacks v1.2.0 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/use-insertion-effect-with-fallbacks
 --------------------------------------------------------------------------------
 
@@ -300,7 +300,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/utils v1.4.0 - undefined
+@emotion/utils v1.4.2 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/utils
 --------------------------------------------------------------------------------
 
@@ -406,7 +406,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/react-dom v2.1.1 - atomiks
+@floating-ui/react-dom v2.1.2 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -603,7 +603,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/material v5.16.7 - MUI Team
+@mui/material v5.16.14 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -630,7 +630,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/private-theming v5.16.6 - MUI Team
+@mui/private-theming v5.16.14 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -657,7 +657,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/styled-engine v5.16.6 - MUI Team
+@mui/styled-engine v5.16.14 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -684,7 +684,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/system v5.16.7 - MUI Team
+@mui/system v5.16.14 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -711,7 +711,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@mui/utils v5.16.6 - MUI Team
+@mui/utils v5.16.14 - MUI Team
 https://github.com/mui/material-ui.git
 --------------------------------------------------------------------------------
 
@@ -738,13 +738,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@nmemonica/voice-ja v0.1.0 - undefined
-undefined
---------------------------------------------------------------------------------
-
-
---------------------------------------------------------------------------------
-@nmemonica/x-spreadsheet v0.1.2 - bryan
+@nmemonica/x-spreadsheet v0.1.3 - bryan
 git+https://github.com/bryanjimenez/x-spreadsheet.git
 --------------------------------------------------------------------------------
 
@@ -798,13 +792,13 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@primer/octicons-react v19.11.0 - GitHub, Inc.
+@primer/octicons-react v19.15.1 - GitHub, Inc.
 primer/octicons
 --------------------------------------------------------------------------------
 
 MIT License
 
-Copyright (c) 2024 GitHub Inc.
+Copyright (c) 2025 GitHub Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -825,42 +819,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@reduxjs/toolkit v2.2.7 - Mark Erikson <mark@isquaredsoftware.com>
+@reduxjs/toolkit v2.6.1 - Mark Erikson <mark@isquaredsoftware.com>
 git+https://github.com/reduxjs/redux-toolkit.git
 --------------------------------------------------------------------------------
 
 MIT License
 
 Copyright (c) 2018 Mark Erikson
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
---------------------------------------------------------------------------------
-@remix-run/router v1.19.1 - Remix Software <hello@remix.run>
-https://github.com/remix-run/react-router
---------------------------------------------------------------------------------
-
-MIT License
-
-Copyright (c) React Training LLC 2015-2019
-Copyright (c) Remix Software Inc. 2020-2021
-Copyright (c) Shopify Inc. 2022-2023
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1099,7 +1064,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 --------------------------------------------------------------------------------
-buffer v6.0.3 - Feross Aboukhadijeh
+buffer v5.7.1 - Feross Aboukhadijeh
 git://github.com/feross/buffer.git
 --------------------------------------------------------------------------------
 
@@ -1266,6 +1231,36 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
+cookie v0.7.1 - Roman Shtylman <shtylman@gmail.com>
+jshttp/cookie
+--------------------------------------------------------------------------------
+
+(The MIT License)
+
+Copyright (c) 2012-2014 Roman Shtylman <shtylman@gmail.com>
+Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+--------------------------------------------------------------------------------
 create-ecdh v4.0.4 - Calvin Metcalf
 https://github.com/crypto-browserify/createECDH.git
 --------------------------------------------------------------------------------
@@ -1380,8 +1375,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
-crypto-browserify v3.12.0 - Dominic Tarr <dominic.tarr@gmail.com> (dominictarr.com)
-git://github.com/crypto-browserify/crypto-browserify.git
+crypto-browserify v3.12.1 - Dominic Tarr <dominic.tarr@gmail.com> (dominictarr.com)
+git://github.com/browserify/crypto-browserify.git
 --------------------------------------------------------------------------------
 
 The MIT License
@@ -1466,7 +1461,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 --------------------------------------------------------------------------------
-elliptic v6.5.5 - Fedor Indutny <fedor@indutny.com>
+elliptic v6.6.1 - Fedor Indutny <fedor@indutny.com>
 git@github.com:indutny/elliptic
 --------------------------------------------------------------------------------
 
@@ -2004,13 +1999,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react v18.3.1 - undefined
+react v19.0.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
 MIT License
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2031,13 +2026,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-dom v18.3.1 - undefined
+react-dom v19.0.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
 MIT License
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2058,13 +2053,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-is v18.3.1 - undefined
+react-is v19.0.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
 MIT License
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2085,7 +2080,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-redux v9.1.2 - Dan Abramov <dan.abramov@me.com> (https://github.com/gaearon)
+react-redux v9.2.0 - Dan Abramov <dan.abramov@me.com> (https://github.com/gaearon)
 github:reduxjs/react-redux
 --------------------------------------------------------------------------------
 
@@ -2112,7 +2107,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router v6.26.1 - Remix Software <hello@remix.run>
+react-router v7.4.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -2141,7 +2136,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router-dom v6.26.1 - Remix Software <hello@remix.run>
+react-router-dom v7.4.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -2395,13 +2390,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-scheduler v0.23.2 - undefined
+scheduler v0.25.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
 MIT License
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2420,6 +2415,33 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+--------------------------------------------------------------------------------
+set-cookie-parser v2.7.1 - Nathan Friedly
+nfriedly/set-cookie-parser
+--------------------------------------------------------------------------------
+
+The MIT License (MIT)
+
+Copyright (c) 2015 Nathan Friedly <nathan@nfriedly.com> (http://nfriedly.com/)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 sha.js v2.4.11 - Dominic Tarr <dominic.tarr@gmail.com> (dominictarr.com)
@@ -2584,13 +2606,38 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-use-sync-external-store v1.2.0 - undefined
+turbo-stream v2.4.0 - Jacob Ebey <jacob.ebey@live.com>
+https://github.com/jacob-ebey/turbo-stream.git
+--------------------------------------------------------------------------------
+
+Copyright (c) 2018-19 [these
+people](https://github.com/rich-harris/devalue/graphs/contributors)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+--------------------------------------------------------------------------------
+use-sync-external-store v1.4.0 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
 MIT License
 
-Copyright (c) Facebook, Inc. and its affiliates.
+Copyright (c) Meta Platforms, Inc. and affiliates.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2690,133 +2737,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
---------------------------------------------------------------------------------
-hts_voice_nitech_jp_atr503_m001-1.05 v1.05 - HTS Working Group
-http://open-jtalk.sourceforge.net/
---------------------------------------------------------------------------------
-
-# ----------------------------------------------------------------- #
-#           The Nitech Japanese Speech Database "NIT ATR503 M001"   #
-#           released by HTS Working Group                           #
-#           http://hts.sp.nitech.ac.jp/                             #
-# ----------------------------------------------------------------- #
-#                                                                   #
-#  Copyright (c) 2003-2012  Nagoya Institute of Technology          #
-#                           Department of Computer Science          #
-#                                                                   #
-# Some rights reserved.                                             #
-#                                                                   #
-# This work is licensed under the Creative Commons Attribution 3.0  #
-# license.                                                          #
-#                                                                   #
-# You are free:                                                     #
-#  * to Share - to copy, distribute and transmit the work           #
-#  * to Remix - to adapt the work                                   #
-# Under the following conditions:                                   #
-#  * Attribution - You must attribute the work in the manner        #
-#    specified by the author or licensor (but not in any way that   #
-#    suggests that they endorse you or your use of the work).       #
-# With the understanding that:                                      #
-#  * Waiver - Any of the above conditions can be waived if you get  #
-#    permission from the copyright holder.                          #
-#  * Public Domain - Where the work or any of its elements is in    #
-#    the public domain under applicable law, that status is in no   #
-#    way affected by the license.                                   #
-#  * Other Rights - In no way are any of the following rights       #
-#    affected by the license:                                       #
-#     - Your fair dealing or fair use rights, or other applicable   #
-#       copyright exceptions and limitations;                       #
-#     - The author's moral rights;                                  #
-#     - Rights other persons may have either in the work itself or  #
-#       in how the work is used, such as publicity or privacy       #
-#       rights.                                                     #
-#  * Notice - For any reuse or distribution, you must make clear to #
-#    others the license terms of this work. The best way to do this #
-#    is with a link to this web page.                               #
-#                                                                   #
-# See http://creativecommons.org/ for details.                      #
-# ----------------------------------------------------------------- #
-
-# ----------------------------------------------------------------- #
-#           HTS Voice "NIT ATR503 M001"                             #
-#           released by HTS Working Group                           #
-#           http://open-jtalk.sourceforge.net/                      #
-# ----------------------------------------------------------------- #
-#                                                                   #
-#  Copyright (c) 2003-2012  Nagoya Institute of Technology          #
-#                           Department of Computer Science          #
-#                                                                   #
-#                2003-2008  Tokyo Institute of Technology           #
-#                           Interdisciplinary Graduate School of    #
-#                           Science and Engineering                 #
-#                                                                   #
-# Some rights reserved.                                             #
-#                                                                   #
-# This work is licensed under the Creative Commons Attribution 3.0  #
-# license.                                                          #
-#                                                                   #
-# You are free:                                                     #
-#  * to Share - to copy, distribute and transmit the work           #
-#  * to Remix - to adapt the work                                   #
-# Under the following conditions:                                   #
-#  * Attribution - You must attribute the work in the manner        #
-#    specified by the author or licensor (but not in any way that   #
-#    suggests that they endorse you or your use of the work).       #
-# With the understanding that:                                      #
-#  * Waiver - Any of the above conditions can be waived if you get  #
-#    permission from the copyright holder.                          #
-#  * Public Domain - Where the work or any of its elements is in    #
-#    the public domain under applicable law, that status is in no   #
-#    way affected by the license.                                   #
-#  * Other Rights - In no way are any of the following rights       #
-#    affected by the license:                                       #
-#     - Your fair dealing or fair use rights, or other applicable   #
-#       copyright exceptions and limitations;                       #
-#     - The author's moral rights;                                  #
-#     - Rights other persons may have either in the work itself or  #
-#       in how the work is used, such as publicity or privacy       #
-#       rights.                                                     #
-#  * Notice - For any reuse or distribution, you must make clear to #
-#    others the license terms of this work. The best way to do this #
-#    is with a link to this web page.                               #
-#                                                                   #
-# See http://creativecommons.org/ for details.                      #
-# ----------------------------------------------------------------- #
-
---------------------------------------------------------------------------------
-htsvoice-tohoku-f01 v8e33060 - 2015 Intelligent Communication Network (Ito-Nose) Laboratory, Tohoku University
-https://github.com/icn-lab/htsvoice-tohoku-f01
---------------------------------------------------------------------------------
-
-----------------------------------------------------------------------------------
-HTS voice tohoku-f01-{angry,happy,neutral,sad}                                   
-Copyright(c) 2015 Intelligent Communication Network (Ito-Nose) Laboratory
-                  Tohoku University.
-
-tohoku-f01 is released by Intelligent Communication Network Laboratory, Tohoku University.
-Some rights reserved.                                                         
-
-This work is licensed under the Creative Commons Attribution 4.0 license (CC-BY 4.0).
-----------------------------------------------------------------------------------
-This is a human-readable summary of (and not a substitute for) the license.
-
-You are free to:
-
-Share — copy and redistribute the material in any medium or format
-Adapt — remix, transform, and build upon the material
-for any purpose, even commercially.
-The licensor cannot revoke these freedoms as long as you follow the license terms.
-
-
-Under the following terms:
-
-Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
-
-
-Notices:
-
-You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.
-No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.
 
