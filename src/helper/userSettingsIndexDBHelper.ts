@@ -126,7 +126,7 @@ export function setIndexDBStudyProgress(
   value: Record<string, MetaDataObj | undefined>
 ) {
   return openIDB().then((db) =>
-    putIDBItem({ db, store: IDBStores.STATE }, { key: path, value: value })
+    putIDBItem({ db, store: IDBStores.PROGRESS }, { key: path, value: value })
   );
 }
 
@@ -187,11 +187,11 @@ export function getIndexDBStudyProgress(path: (typeof dataSetNames)[number]) {
       const ErrorSettingsMissing = new Error("Progress not stored", {
         cause: { code: IDBErrorCause.NoResult },
       });
-      if (!stores.includes(IDBStores.STATE)) {
+      if (!stores.includes(IDBStores.PROGRESS)) {
         throw ErrorSettingsMissing;
       }
 
-      return getIDBItem({ db, store: IDBStores.STATE }, path).then((res) => {
+      return getIDBItem({ db, store: IDBStores.PROGRESS }, path).then((res) => {
         let initialState: Record<string, MetaDataObj | undefined> = {};
 
         if (
