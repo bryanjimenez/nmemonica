@@ -124,12 +124,25 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
               <ul className="mb-0">
                 {fileData.find((f) => f.sheet !== undefined) && (
                   <li>
-                    User <strong>Datasets</strong> will be overwritten!
+                    <strong>Datasets</strong> will be overwritten!
                   </li>
                 )}
-                {fileData.find((f) => f.setting !== undefined) && (
+                {fileData.find(
+                  (f) =>
+                    f.name.toLowerCase() ===
+                    metaDataNames.settings.prettyName.toLowerCase()
+                ) && (
                   <li>
-                    User <strong>Settings</strong> will be overwritten!
+                    <strong>Settings</strong> will be overwritten!
+                  </li>
+                )}
+                {fileData.find(
+                  (f) =>
+                    f.name.toLowerCase() ===
+                    metaDataNames.progress.prettyName.toLowerCase()
+                ) && (
+                  <li>
+                    <strong>Progress</strong> will be overwritten!
                   </li>
                 )}
               </ul>
