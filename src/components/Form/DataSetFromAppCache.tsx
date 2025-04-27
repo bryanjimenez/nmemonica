@@ -8,8 +8,8 @@ import classNames from "classnames";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { TransferObject } from "./DataSetFromDragDrop";
-import { getUserSettings } from "../../helper/userSettingsHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
+import { getUserSettings } from "../../helper/userSettingsHelper";
 
 interface DataSetFromAppCacheProps {
   data: TransferObject[];
@@ -19,11 +19,11 @@ interface DataSetFromAppCacheProps {
 export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
   const { updateDataHandler, data } = props;
 
-  const [hasUsrSettings, setUserSettings] = useState(false);
+  const [hasSettings, setSettings] = useState(false);
 
   useEffect(() => {
     void getUserSettings().then((ls) => {
-      setUserSettings(ls instanceof Object);
+      setSettings(ls instanceof Object);
     });
   }, []);
 
@@ -31,12 +31,12 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
     (name: string, prettyName: string) => () => {
       if (
         name !== metaDataNames.settings.prettyName.toLowerCase() ||
-        hasUsrSettings
+        hasSettings
       ) {
         updateDataHandler(prettyName);
       }
     },
-    [updateDataHandler, hasUsrSettings]
+    [updateDataHandler, hasSettings]
   );
 
   const items = useMemo(
@@ -84,7 +84,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
                         "disabled opacity-25":
                           name ===
                             metaDataNames.settings.prettyName.toLowerCase() &&
-                          !hasUsrSettings,
+                          !hasSettings,
                       })}
                     />
                   )}
@@ -94,7 +94,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
           </div>
         );
       }),
-    [data, hasUsrSettings, addRemoveItemCB]
+    [data, hasSettings, addRemoveItemCB]
   );
 
   return (

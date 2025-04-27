@@ -11,9 +11,10 @@ import {
 } from "./userSettingsIndexDBHelper";
 import { AppProgressState, type AppSettingState } from "../slices";
 import { dataSetNames } from "./sheetHelper";
-import { localStoreUserSettingAttrUpdate } from "./userSettingsLocalStorageHelper";
-
-export const localStorageKey = "userSettings";
+import {
+  localStoreUserSettingAttrUpdate,
+  setLocalStorageUserSettings,
+} from "./userSettingsLocalStorageHelper";
 
 /**
  * Reads a value from storage
@@ -106,6 +107,11 @@ export function userSettingAttrDelete(path: string, attr: string) {
  * Store a whole settings object
  */
 export function setUserSetting(value: Partial<AppSettingState>) {
+  const _localStoreMirror = new Promise<void>((resolve) => {
+    setLocalStorageUserSettings(value);
+    resolve();
+  });
+
   return setIndexDBUserSettings(value);
 }
 

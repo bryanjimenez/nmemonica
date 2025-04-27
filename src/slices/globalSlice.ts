@@ -25,7 +25,6 @@ import {
 import { allowedCookies } from "../helper/cookieHelper";
 import {
   getUserSettings,
-  localStorageKey,
   userSettingAttrUpdate,
 } from "../helper/userSettingsHelper";
 import { getLocalStorageUserSettings } from "../helper/userSettingsLocalStorageHelper";
@@ -124,7 +123,7 @@ export const appSettingsInitializedLocalStorage = createAsyncThunk(
   (_arg, _thunkAPI) => {
     let globalInitStateAndCookies = getGlobalInitState();
     let tempSettings = globalInitStateAndCookies;
-    const appSettings = getLocalStorageUserSettings(localStorageKey);
+    const appSettings = getLocalStorageUserSettings();
 
     if (appSettings !== null) {
       // use merge to prevent losing defaults not found in App Storage
