@@ -48,10 +48,10 @@ export interface CryptoMessage {
 
 interface DataSetImportProps extends DataSetSharingAction {
   close: () => void;
-  downloadFileHandler: (
+  downloadHandler: (
     files: { fileName: string; text: string }[]
   ) => Promise<void>;
-  updateDataHandler: (
+  importHandler: (
     workbook?: FilledSheetData[],
     settings?: Partial<AppSettingState>,
     progress?: Partial<AppProgressState>
@@ -70,7 +70,7 @@ function errorHandler(ev: RTCErrorEvent) {
 }
 
 export function DataSetImport(props: DataSetImportProps) {
-  const { close, updateDataHandler, downloadFileHandler } = props;
+  const { close, importHandler, downloadHandler } = props;
 
   const { peer, rtcChannel, direction, closeWebRTC } =
     useContext(WebRTCContext);
@@ -157,11 +157,11 @@ export function DataSetImport(props: DataSetImportProps) {
         text: string;
       }[]
     ) =>
-      downloadFileHandler(files).then(() => {
+      downloadHandler(files).then(() => {
         setStatus("successStatus");
         setTimeout(closeHandlerCB, 1000);
       }),
-    [downloadFileHandler, setStatus, closeHandlerCB]
+    [downloadHandler, setStatus, closeHandlerCB]
   );
 
   const importToAppHandlerCB = useCallback(
@@ -172,12 +172,12 @@ export function DataSetImport(props: DataSetImportProps) {
     ) => {
       const workbook = dataObj.length === 0 ? undefined : dataObj;
 
-      return updateDataHandler(workbook, settings, progress).then(() => {
+      return importHandler(workbook, settings, progress).then(() => {
         setStatus("successStatus");
         setTimeout(closeHandlerCB, 1000);
       });
     },
-    [updateDataHandler, setStatus, closeHandlerCB]
+    [importHandler, setStatus, closeHandlerCB]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

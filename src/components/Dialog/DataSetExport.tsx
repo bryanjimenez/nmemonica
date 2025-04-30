@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogContent } from "@mui/material";
+import { Alert, Button, Dialog, DialogContent } from "@mui/material";
 import {
   ArrowSwitchIcon,
   ArrowUpIcon,
@@ -7,7 +7,14 @@ import {
   FileDirectoryIcon,
   UploadIcon,
 } from "@primer/octicons-react";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  ReactElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { WebRTCContext } from "../../context/webRTC";
 import {
@@ -18,8 +25,8 @@ import {
   plainTransfer,
   sendChunkedMessage,
 } from "../../helper/webRTCDataTrans";
-import { DataSetFromAppCache } from "../Form/DataSetFromAppCache";
-import { DataSetFromDragDrop } from "../Form/DataSetFromDragDrop";
+import { DataSelectFromCache } from "../Form/DataSelectFromCache";
+import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import {
   type DataSetSharingAction,
   RTCTransferRequired,
@@ -45,12 +52,36 @@ function errorHandler(ev: RTCErrorEvent) {
 //   console.log(msg);
 // }
 
+export function Warnings(props: {
+  fileWarning: ReactElement[];
+  clearWarnings: React.Dispatch<React.SetStateAction<React.JSX.Element[]>>;
+}) {
+  const { fileWarning, clearWarnings } = props;
+
+  return fileWarning.length > 0 ? (
+    <Alert
+      severity="warning"
+      variant="outlined"
+      className="py-0 mb-1"
+      onClose={() => clearWarnings([])}
+    >
+      <div className="p-0 d-flex flex-column">
+        {fileWarning.map((el) => (
+          <span key={el.key}>{el}</span>
+        ))}
+      </div>
+    </Alert>
+  ) : null;
+}
+
 export function DataSetExport(props: DataSetExportProps) {
   const { close } = props;
 
   const { peer, rtcChannel, direction, maxMsgSize, closeWebRTC } =
     useContext(WebRTCContext);
   const connection = useRef({ channel: rtcChannel, peer: peer.current });
+
+  const [fileWarning, setFileWarning] = useState<ReactElement[]>([]);
 
   useEffect(
     () => {
@@ -181,16 +212,23 @@ export function DataSetExport(props: DataSetExportProps) {
             )}
           </div>
           {source === "AppCache" && (
-            <DataSetFromAppCache
+            <DataSelectFromCache
               data={fileData}
               updateDataHandler={fromAppCacheUpdateDataCB}
             />
           )}
           {source === "FileSystem" && (
-            <DataSetFromDragDrop
-              data={fileData}
-              updateDataHandler={fromFileSysUpdateDataCB}
-            />
+            <>
+              <Warnings
+                fileWarning={fileWarning}
+                clearWarnings={setFileWarning}
+              />
+              <DataSelectFromFile
+                data={fileData}
+                addWarning={setFileWarning}
+                updateDataHandler={fromFileSysUpdateDataCB}
+              />
+            </>
           )}
 
           <div className="d-flex justify-content-end">

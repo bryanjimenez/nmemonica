@@ -592,7 +592,7 @@ export default function Sheet() {
         <DataSetImportFile
           visible={dataAction === "importFile"}
           close={closeDataAction}
-          updateDataHandler={importDataHandlerCB}
+          importHandler={importDataHandlerCB}
         />
 
         {dataAction === "signaling" && (
@@ -604,8 +604,8 @@ export default function Sheet() {
               <DataSetImport
                 action="import"
                 close={closeDataAction}
-                downloadFileHandler={downloadFileHandlerCB}
-                updateDataHandler={importDataHandlerCB}
+                downloadHandler={downloadFileHandlerCB}
+                importHandler={importDataHandlerCB}
               />
             </DataSetSharingActions>
           </WebRTCProvider>

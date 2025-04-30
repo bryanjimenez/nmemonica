@@ -1,4 +1,3 @@
-import { Alert } from "@mui/material";
 import {
   DatabaseIcon,
   DiamondIcon,
@@ -32,16 +31,16 @@ import {
 import { properCase } from "../Games/KanjiGame";
 import "../../css/DragDrop.css";
 
-interface DataSetFromDragDropProps {
+interface DataSelectFromFileProps {
   data: TransferObject[];
+  addWarning: React.Dispatch<React.SetStateAction<React.JSX.Element[]>>;
   updateDataHandler: (data: TransferObject) => void;
 }
 
-export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
-  const { updateDataHandler, data } = props;
+export function DataSelectFromFile(props: DataSelectFromFileProps) {
+  const { updateDataHandler, data, addWarning } = props;
   const { darkMode } = useSelector(({ global }: RootState) => global);
 
-  const [warning, setWarning] = useState<ReactElement[]>([]);
   const [onHover, setOnHover] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,7 +101,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
 
                 const errMsg = <span key={key}>{msg}</span>;
 
-                setWarning((warn) => [...warn, ...w, errMsg]);
+                addWarning((warn) => [...warn, ...w, errMsg]);
               }
             } else if (fileItem.name.toLowerCase().endsWith(".json")) {
               let name: string | undefined;
@@ -136,7 +135,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
               if (parsed instanceof Error) {
                 const { key, msg } = buildMsgCSVError(fileItem.name, parsed);
                 w = [...w, <span key={key}>{msg}</span>];
-                setWarning((warn) => [...warn, ...w]);
+                addWarning((warn) => [...warn, ...w]);
                 return;
               }
 
@@ -158,11 +157,11 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
             }
           });
         } else {
-          setWarning((warn) => [...warn, ...w]);
+          addWarning((warn) => [...warn, ...w]);
         }
       }
     },
-    [data, updateDataHandler]
+    [data, updateDataHandler, addWarning]
   );
 
   const dragDropHandler = useCallback(
@@ -240,18 +239,6 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
 
   return (
     <>
-      {warning.length > 0 && (
-        <Alert severity="warning" className="py-0 mb-1">
-          <div className="p-0 d-flex flex-column">
-            <ul className="mb-0">
-              {warning.map((el) => (
-                <li key={el.key}>{el}</li>
-              ))}
-            </ul>
-          </div>
-        </Alert>
-      )}
-
       <input
         type="file"
         ref={fileInputRef}

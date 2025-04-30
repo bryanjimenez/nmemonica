@@ -10,30 +10,33 @@ import {
   CheckCircleIcon,
   DownloadIcon,
 } from "@primer/octicons-react";
-import { useCallback, useRef, useState } from "react";
+import { ReactElement, useCallback, useRef, useState } from "react";
 
+import { Warnings } from "./DataSetExport";
 import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { TransferObject } from "../../helper/transferHelper";
 import { AppProgressState, AppSettingState } from "../../slices";
-import { DataSetFromDragDrop } from "../Form/DataSetFromDragDrop";
+import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import "../../css/DragDrop.css";
 
 interface DataSetImportFileProps {
   visible?: boolean;
   close: () => void;
-  updateDataHandler: (
+  importHandler: (
     workbook?: FilledSheetData[],
     settings?: Partial<AppSettingState>,
-    studyProgress?: Partial<AppProgressState>
+    progress?: Partial<AppProgressState>
   ) => Promise<void>;
 }
 
 export function DataSetImportFile(props: DataSetImportFileProps) {
-  const { visible, close, updateDataHandler } = props;
+  const { visible, close, importHandler } = props;
 
   const [fileData, setFileData] = useState<TransferObject[]>([]);
   const [importStatus, setImportStatus] = useState<boolean>();
+
+  const [fileWarning, setFileWarning] = useState<ReactElement[]>([]);
 
   const [confirm, setConfirm] = useState(false);
   const cancelCB = useCallback(() => {
@@ -84,7 +87,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       []
     ) as Partial<AppProgressState>[];
 
-    updateDataHandler(workbook, settings, progress)
+    importHandler(workbook, settings, progress)
       .then(() => {
         setImportStatus(true);
         setTimeout(closeHandlerCB, 1000);
@@ -92,7 +95,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
       .catch(() => {
         setImportStatus(false);
       });
-  }, [fileData, updateDataHandler, closeHandlerCB]);
+  }, [fileData, importHandler, closeHandlerCB]);
 
   const fromDragDropUpdateDataCB = useCallback((item: TransferObject) => {
     setFileData((prev) => {
@@ -159,8 +162,10 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
         fullWidth={true}
       >
         <DialogContent className="p-2 m-0">
-          <DataSetFromDragDrop
+          <Warnings fileWarning={fileWarning} clearWarnings={setFileWarning} />
+          <DataSelectFromFile
             data={fileData}
+            addWarning={setFileWarning}
             updateDataHandler={fromDragDropUpdateDataCB}
           />
 

@@ -15,12 +15,12 @@ import {
 } from "../../helper/transferHelper";
 import { properCase } from "../Games/KanjiGame";
 
-interface DataSetFromAppCacheProps {
+interface DataSelectFromCacheProps {
   data: TransferObject[];
   updateDataHandler: (names: string) => void;
 }
 
-export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
+export function DataSelectFromCache(props: DataSelectFromCacheProps) {
   const { updateDataHandler, data } = props;
 
   const [available, setAvailable] = useState<string[]>([]);
