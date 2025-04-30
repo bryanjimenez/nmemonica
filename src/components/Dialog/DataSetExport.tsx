@@ -10,16 +10,16 @@ import {
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { WebRTCContext } from "../../context/webRTC";
-import { dataTransferAggregator } from "../../helper/transferHelper";
+import {
+  TransferObject,
+  dataTransferAggregator,
+} from "../../helper/transferHelper";
 import {
   plainTransfer,
   sendChunkedMessage,
 } from "../../helper/webRTCDataTrans";
 import { DataSetFromAppCache } from "../Form/DataSetFromAppCache";
-import {
-  DataSetFromDragDrop,
-  TransferObject,
-} from "../Form/DataSetFromDragDrop";
+import { DataSetFromDragDrop } from "../Form/DataSetFromDragDrop";
 import {
   type DataSetSharingAction,
   RTCTransferRequired,

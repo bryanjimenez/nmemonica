@@ -23,7 +23,6 @@ import { sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getActiveSheet,
   getWorkbookFromIndexDB,
-  metaDataNames,
   removeLastRowIfBlank,
   searchInSheet,
   sheetAddExtraRow,
@@ -32,15 +31,16 @@ import {
   updateStateAfterWorkbookEdit,
   validateInSheet,
   workbookSheetNames,
-  xObjectToCsvText,
 } from "../../helper/sheetHelper";
 import {
   type FilledSheetData,
   isFilledSheetData,
 } from "../../helper/sheetHelperImport";
 import {
-  getStudyProgress,
-  getUserSettings,
+  SyncDataFile,
+  dataTransferAggregator,
+} from "../../helper/transferHelper";
+import {
   setStudyProgress,
   setUserSetting,
 } from "../../helper/userSettingsHelper";
@@ -327,75 +327,41 @@ export default function Sheet() {
       });
   }, [dispatch, phraseList, vocabList, kanjiList]);
 
-  const downloadFileHandlerCB = useCallback(
-    (files: { fileName: string; text: string }[]) => {
-      files.forEach(({ fileName, text }) => {
-        const file = new Blob([text], {
-          type: "application/plaintext; charset=utf-8",
-        });
-        // const file = new Blob(['csv.file'],{type:"octet/stream"})
-        // const f = new File([file], './file.csv', {type:"octet/stream"})
-
-        const dlUrl = URL.createObjectURL(file);
-        // window.location.assign(dlUrl)
-
-        // URL.revokeObjectURL()
-        // browser.downloads.download(URL.createObjectURL(file))
-        const a = document.createElement("a");
-        a.download = fileName;
-        a.href = dlUrl;
-        // document.body.appendChild(a)
-        a.click();
-
-        setTimeout(() => {
-          // document.body.removeChild(a)
-          URL.revokeObjectURL(dlUrl);
-        }, 0);
+  const downloadFileHandlerCB = useCallback((files: SyncDataFile[]) => {
+    files.forEach(({ fileName, text }) => {
+      const file = new Blob([text], {
+        type: "application/plaintext; charset=utf-8",
       });
+      // const file = new Blob(['csv.file'],{type:"octet/stream"})
+      // const f = new File([file], './file.csv', {type:"octet/stream"})
 
-      return Promise.resolve();
-    },
-    []
-  );
+      const dlUrl = URL.createObjectURL(file);
+      // window.location.assign(dlUrl)
 
-  const exportAppDataToFileHandlerCB = useCallback(() => {
+      // URL.revokeObjectURL()
+      // browser.downloads.download(URL.createObjectURL(file))
+      const a = document.createElement("a");
+      a.download = fileName;
+      a.href = dlUrl;
+      // document.body.appendChild(a)
+      a.click();
+
+      setTimeout(() => {
+        // document.body.removeChild(a)
+        URL.revokeObjectURL(dlUrl);
+      }, 0);
+    });
+
+    return Promise.resolve();
+  }, []);
+
+  /**
+   * Export data, settings, and progress to file system
+   */
+  const exportToFileHandlerCB = useCallback(() => {
     // TODO: should zip and include settings?
 
-    // TODO: should be from indexedDB (what's saved) unless nothing avail
-    const xObj = wbRef.current?.exportValues() as FilledSheetData[];
-
-    void Promise.all([
-      getUserSettings(),
-      xObjectToCsvText(xObj),
-      getStudyProgress(),
-    ]).then(([settings, data, study]) => {
-      // json app settings
-      const appSettings = [
-        {
-          fileName: metaDataNames.settings.file,
-          name: metaDataNames.settings.prettyName,
-          text: JSON.stringify(settings, null, 2),
-        },
-      ];
-
-      // json study progress
-      const studyProgress = [
-        {
-          fileName: metaDataNames.progress.file,
-          name: metaDataNames.progress.prettyName,
-          text: JSON.stringify(study, null, 2),
-        },
-      ];
-
-      // csv datasets
-      const dataSets = data.map((f) => ({ fileName: f.name + ".csv", ...f }));
-
-      void downloadFileHandlerCB([
-        ...appSettings,
-        ...studyProgress,
-        ...dataSets,
-      ]);
-    });
+    void dataTransferAggregator().then(downloadFileHandlerCB);
   }, [downloadFileHandlerCB]);
 
   const doSearchCB = useCallback(() => {
@@ -620,7 +586,7 @@ export default function Sheet() {
           close={closeDataAction}
           saveChanges={saveSheetHandlerCB}
           importFromFile={openImportFileCB}
-          exportToFile={exportAppDataToFileHandlerCB}
+          exportToFile={exportToFileHandlerCB}
           signaling={openSignalingCB}
         />
         <DataSetImportFile

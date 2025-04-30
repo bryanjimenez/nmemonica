@@ -20,8 +20,21 @@ import {
 import { FilledSheetData } from "./sheetHelperImport";
 import { unusualApostrophe } from "./unicodeHelper";
 import { getStudyProgress, getUserSettings } from "./userSettingsHelper";
-import { TransferObject } from "../components/Form/DataSetFromDragDrop";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
+
+export interface TransferRequest {
+  name: string;
+  origin: "AppCache" | "FileSystem";
+  file?: string;
+}
+
+export interface TransferObject {
+  name: string;
+  origin: "AppCache" | "FileSystem";
+  text: string;
+  sheet?: FilledSheetData;
+  setting?: Partial<AppSettingState> | Partial<AppProgressState>;
+}
 
 export interface SyncDataFile {
   fileName: string;
@@ -146,16 +159,37 @@ export function parseJSONToStudyProgress(jsonText: string) {
  * @returns returns an array of files
  */
 export function dataTransferAggregator(
-  fileData: TransferObject[]
+  fileData?: TransferRequest[]
 ): Promise<SyncDataFile[]> {
-  const fromFileSystem: SyncDataFile[] = fileData
-    .filter((f) => f.origin === "FileSystem")
-    .map(({ name, text }) => ({
-      fileName: `${name}.${Object.keys(workbookSheetNames).includes(name.toLowerCase()) ? "csv" : "json"}`,
-      text: text,
-    }));
+  // get everything if left unspecified
+  if (fileData === undefined) {
+    fileData = [
+      { name: workbookSheetNames.kanji.prettyName, origin: "AppCache" },
+      { name: workbookSheetNames.vocabulary.prettyName, origin: "AppCache" },
+      { name: workbookSheetNames.phrases.prettyName, origin: "AppCache" },
+      { name: metaDataNames.settings.prettyName, origin: "AppCache" },
+      { name: metaDataNames.progress.prettyName, origin: "AppCache" },
+    ];
+  }
 
-  const fromApp = fileData.filter((f) => f.origin === "AppCache");
+  const fromFileSystem: SyncDataFile[] = fileData.reduce<SyncDataFile[]>(
+    (acc, { name, file }) => {
+      if (file !== undefined) {
+        return [
+          ...acc,
+          {
+            fileName: `${name}.${Object.keys(workbookSheetNames).includes(name.toLowerCase()) ? "csv" : "json"}`,
+            text: file,
+          },
+        ];
+      }
+
+      return acc;
+    },
+    []
+  );
+
+  const fromApp = fileData.filter((f) => f.file === undefined);
 
   return new Promise<SyncDataFile[]>((transferResolve) => {
     if (fromApp.length === 0) {
@@ -195,7 +229,7 @@ export function dataTransferAggregator(
               .then((d) =>
                 d.map(({ name, text }) => ({
                   fileName: `${name}.csv`,
-                  text: text,
+                  text,
                 }))
               )
               .then(bookResolve)

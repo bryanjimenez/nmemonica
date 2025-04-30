@@ -7,16 +7,13 @@ import {
 import classNames from "classnames";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { TransferObject } from "./DataSetFromDragDrop";
+import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
-  getWorkbookFromIndexDB,
-  metaDataNames,
-  workbookSheetNames,
-} from "../../helper/sheetHelper";
-import {
-  getStudyProgress,
-  getUserSettings,
-} from "../../helper/userSettingsHelper";
+  type TransferObject,
+  dataTransferAggregator,
+  parseCsvToSheet,
+} from "../../helper/transferHelper";
+import { properCase } from "../Games/KanjiGame";
 
 interface DataSetFromAppCacheProps {
   data: TransferObject[];
@@ -27,38 +24,32 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
   const { updateDataHandler, data } = props;
 
   const [available, setAvailable] = useState<string[]>([]);
+  const [rows, setRows] = useState<Partial<Record<string, number>>>({});
 
   useEffect(() => {
-    void getUserSettings().then((settings) => {
-      const name = metaDataNames.settings.prettyName.toLowerCase();
-      if (settings instanceof Object && Object.keys(settings).length > 0) {
-        setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
-      }
-    });
+    void dataTransferAggregator().then((files) => {
+      files.forEach((fileItem) => {
+        const dot = fileItem.fileName.indexOf(".");
+        const name = fileItem.fileName
+          .slice(0, dot > -1 ? dot : undefined)
+          .toLowerCase();
+        const prettyName = properCase(name);
 
-    void getStudyProgress().then((progress) => {
-      const name = metaDataNames.progress.prettyName.toLowerCase();
-      if (progress instanceof Object && Object.keys(progress).length > 0) {
-        setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
-      }
-    });
+        // if user clears out the calc rows gets wiped (1st render calc)
+        if (Object.keys(workbookSheetNames).includes(name)) {
+          void parseCsvToSheet(fileItem.text, prettyName).then((sheet) => {
+            setRows((prev) => ({ ...prev, [name]: sheet.rows.len }));
+          });
+        }
 
-    void getWorkbookFromIndexDB().then((workbook) => {
-      if (workbook.length > 0) {
-        setAvailable((prev) => [
-          ...prev.filter(
-            (p) => !workbook.map((w) => w.name.toLowerCase()).includes(p)
-          ),
-          ...workbook
-            .filter((w) => w.rows?.len !== undefined && w.rows?.len > 1)
-            .map((w) => w.name.toLowerCase()),
-        ]);
-      }
+        setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
+      });
     });
   }, []);
 
   const addRemoveItemCB = useCallback(
-    (name: string, prettyName: string) => () => {
+    (prettyName: string) => () => {
+      const name = prettyName.toLowerCase();
       if (
         (name !== metaDataNames.progress.prettyName.toLowerCase() &&
           name !== metaDataNames.settings.prettyName.toLowerCase()) ||
@@ -95,7 +86,8 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
             <div>
               <div className="row">
                 <span className="col px-1">
-                  {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
+                  {dataItem?.origin === "AppCache" &&
+                    rows[dataItem.name.toLowerCase()]}
                 </span>
                 <div className="col px-1">
                   {dataItem?.origin === "AppCache" && <DatabaseIcon />}
@@ -104,7 +96,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
 
                 <div
                   className="col px-1 clickable"
-                  onClick={addRemoveItemCB(name, prettyName)}
+                  onClick={addRemoveItemCB(prettyName)}
                 >
                   {dataItem ? (
                     <XIcon />
@@ -122,7 +114,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
           </div>
         );
       }),
-    [data, addRemoveItemCB, available]
+    [data, available, rows, addRemoveItemCB]
   );
 
   return (

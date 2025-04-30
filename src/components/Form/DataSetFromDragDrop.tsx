@@ -18,8 +18,8 @@ import { useSelector } from "react-redux";
 
 import { FileErrorCause, buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
-import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
+  TransferObject,
   parseCsvToSheet,
   parseJSONToStudyProgress,
   parseJSONToUserSettings,
@@ -31,14 +31,6 @@ import {
 } from "../../slices";
 import { properCase } from "../Games/KanjiGame";
 import "../../css/DragDrop.css";
-
-export interface TransferObject {
-  name: string;
-  origin: "AppCache" | "FileSystem";
-  text: string;
-  sheet?: FilledSheetData;
-  setting?: Partial<AppSettingState> | Partial<AppProgressState>;
-}
 
 interface DataSetFromDragDropProps {
   data: TransferObject[];
@@ -227,7 +219,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                     "opacity-25": !dataItem,
                   })}
                   onClick={() => {
-                    if (dataItem) {
+                    if (dataItem !== undefined) {
                       updateDataHandler(dataItem);
                     }
                   }}

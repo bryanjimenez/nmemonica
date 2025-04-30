@@ -14,11 +14,9 @@ import { useCallback, useRef, useState } from "react";
 
 import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
+import { TransferObject } from "../../helper/transferHelper";
 import { AppProgressState, AppSettingState } from "../../slices";
-import {
-  DataSetFromDragDrop,
-  TransferObject,
-} from "../Form/DataSetFromDragDrop";
+import { DataSetFromDragDrop } from "../Form/DataSetFromDragDrop";
 import "../../css/DragDrop.css";
 
 interface DataSetImportFileProps {
