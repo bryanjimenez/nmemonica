@@ -20,15 +20,15 @@ import { FileErrorCause, buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
+  parseCsvToSheet,
+  parseJSONToStudyProgress,
+  parseJSONToUserSettings,
+} from "../../helper/transferHelper";
+import {
   type AppProgressState,
   type AppSettingState,
   type RootState,
 } from "../../slices";
-import {
-  readCsvToSheet,
-  readSettings,
-  readStudyProgress,
-} from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 import "../../css/DragDrop.css";
 
@@ -83,7 +83,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 const sheetName = properCase(
                   fileItem.name.slice(0, dot > -1 ? dot : undefined)
                 );
-                const sheet = await readCsvToSheet(text, sheetName);
+                const sheet = await parseCsvToSheet(text, sheetName);
 
                 if (
                   data.find(
@@ -124,13 +124,13 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 metaDataNames.settings.file.toLowerCase()
               ) {
                 name = metaDataNames.settings.prettyName;
-                parsed = readSettings(text);
+                parsed = parseJSONToUserSettings(text);
               } else if (
                 fileItem.name.toLowerCase() ===
                 metaDataNames.progress.file.toLowerCase()
               ) {
                 name = metaDataNames.progress.prettyName;
-                parsed = readStudyProgress(text);
+                parsed = parseJSONToStudyProgress(text);
               } else {
                 name = fileItem.name;
                 parsed = new Error(`Unknown file ${fileItem.name}`, {

@@ -9,18 +9,21 @@ import {
 } from "@primer/octicons-react";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
+import { WebRTCContext } from "../../context/webRTC";
+import { dataTransferAggregator } from "../../helper/transferHelper";
+import {
+  plainTransfer,
+  sendChunkedMessage,
+} from "../../helper/webRTCDataTrans";
 import { DataSetFromAppCache } from "../Form/DataSetFromAppCache";
-import { DataSetFromDragDrop, TransferObject } from "../Form/DataSetFromDragDrop";
+import {
+  DataSetFromDragDrop,
+  TransferObject,
+} from "../Form/DataSetFromDragDrop";
 import {
   type DataSetSharingAction,
   RTCTransferRequired,
 } from "../Form/DataSetSharingActions";
-import { WebRTCContext } from "../../context/webRTC";
-import {
-  dataTransferAggregator,
-  plainTransfer,
-  sendChunkedMessage,
-} from "../../helper/webRTCDataTrans";
 
 interface DataSetExportProps extends DataSetSharingAction {
   close: () => void;

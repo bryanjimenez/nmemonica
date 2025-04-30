@@ -1,20 +1,20 @@
 import "jsdom-global/register";
 import { expect } from "chai";
 import {
-  readCsvToSheet,
-  readSettings,
-} from "../../../src/slices/sheetSlice";
+  parseCsvToSheet,
+  parseJSONToUserSettings,
+} from "../../../src/helper/transferHelper";
 import { unusualApostrophe } from "../../../src/helper/unicodeHelper";
 
-describe("sheetSlice", function () {
-  describe("readCsvToSheet", function () {
+describe("transferHelper", function () {
+  describe("parseCsvToSheet", function () {
     describe("throws", function () {
       it("invalid character", async function () {
         const text = `Kanji,English,Pronounced,Tags
         四,Four,シ、よつ、よ、よん,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_1""], ""stroke"":5}"
         六,Six,\u200bロク、むつ、む,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_3""], ""stroke"":4}"`;
         try {
-          const actual = await readCsvToSheet(text, "Kanji");
+          const actual = await parseCsvToSheet(text, "Kanji");
           expect(false, "invalid character throws").to.be.true;
         } catch (err) {
           expect(err).to.be.instanceOf(Error);
@@ -26,7 +26,7 @@ describe("sheetSlice", function () {
         四,Four,シ、よつ、よ、よん,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_1""], ""stroke"":5}"
         六,Six,ロク、むつ、む,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_3""], ""stroke"":4}"`;
         try {
-          const actual = await readCsvToSheet(text, "Kanji");
+          const actual = await parseCsvToSheet(text, "Kanji");
           expect(false, "invalid character throws").to.be.true;
         } catch (err) {
           expect(err).to.be.instanceOf(Error);
@@ -41,7 +41,7 @@ describe("sheetSlice", function () {
         四,Four,シ、よつ、よ、よん
         六,Six,ロク、むつ、む`;
         try {
-          const actual = await readCsvToSheet(text, "Kanji");
+          const actual = await parseCsvToSheet(text, "Kanji");
           expect(false, "invalid character throws").to.be.true;
         } catch (err) {
           expect(err).to.be.instanceOf(Error);
@@ -55,7 +55,7 @@ describe("sheetSlice", function () {
         四,Four
         六,Six`;
         try {
-          const actual = await readCsvToSheet(text, "Kanji");
+          const actual = await parseCsvToSheet(text, "Kanji");
           expect(false, "invalid character throws").to.be.true;
         } catch (err) {
           expect(err).to.be.instanceOf(Error);
@@ -72,7 +72,7 @@ describe("sheetSlice", function () {
         const text = `Kanji,English,Pronounced,Tags
       四,Four,シ、よつ、よ、よん,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_1""], ""stroke"":5}"
       六,Six,ロク、むつ、む,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_3""], ""stroke"":4}"`;
-        const actual = await readCsvToSheet(text, "Kanji");
+        const actual = await parseCsvToSheet(text, "Kanji");
 
         expect(actual).to.have.keys(["name", "rows", "autofilter"]);
       });
@@ -80,7 +80,7 @@ describe("sheetSlice", function () {
         const text = `Kanji,English,Pronounced,Tags
       四,Four,シ、よつ、よ、よん,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_1""], ""stroke"":5}"
       六,Six${unusualApostrophe},ロク、むつ、む,"{""tags"":[""JLPTN5"",""Number"","" Jōyō_1_3""], ""stroke"":4}"`;
-        const actual = await readCsvToSheet(text, "Kanji");
+        const actual = await parseCsvToSheet(text, "Kanji");
 
         expect(actual).to.have.keys(["name", "rows", "autofilter"]);
 
@@ -90,10 +90,10 @@ describe("sheetSlice", function () {
     });
   });
 
-  describe("readSettings", function () {
+  describe("parseJSONToUserSettings", function () {
     describe("throws", function () {
       it("invalid character", function () {
-        const actual = readSettings(
+        const actual = parseJSONToUserSettings(
           '{"global":{"debug":3,"touchSwipe":"\u200b"}}'
         ) as Error; // zerp-width-space
 
@@ -102,7 +102,7 @@ describe("sheetSlice", function () {
       });
 
       it("unrecognized root setting", function () {
-        const actual = readSettings(
+        const actual = parseJSONToUserSettings(
           '{"local":{"debug":3,"touchSwipe":true}}'
         ) as Error; // local isn't a valid field
 
@@ -113,7 +113,7 @@ describe("sheetSlice", function () {
       it.skip("unrecognized child setting");
 
       it("malformed JSON", function () {
-        const actual = readSettings(
+        const actual = parseJSONToUserSettings(
           '{"global":{"debug":3,"touchSwipe":true *}}'
         ) as Error;
 
@@ -124,7 +124,7 @@ describe("sheetSlice", function () {
     describe("parses", function () {
       it("valid settings", function () {
         const expected = { global: { debug: 3, touchSwipe: true } };
-        const actual = readSettings(
+        const actual = parseJSONToUserSettings(
           '{"global":{"debug":3,"touchSwipe":true }}'
         );
 

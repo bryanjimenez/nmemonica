@@ -27,16 +27,16 @@ import { buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
-  SharingMessageErrorCause,
   type SyncDataFile,
+  parseCsvToSheet,
+  parseJSONToStudyProgress,
+  parseJSONToUserSettings,
+} from "../../helper/transferHelper";
+import {
+  SharingMessageErrorCause,
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
 import { type AppProgressState, type AppSettingState } from "../../slices";
-import {
-  readCsvToSheet,
-  readSettings,
-  readStudyProgress,
-} from "../../slices/sheetSlice";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
@@ -267,7 +267,7 @@ export function DataSetImport(props: DataSetImportProps) {
         if (
           fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
         ) {
-          const parsed = readSettings(text);
+          const parsed = parseJSONToUserSettings(text);
 
           if (parsed instanceof Error) {
             setStatus("dataError");
@@ -280,7 +280,7 @@ export function DataSetImport(props: DataSetImportProps) {
         } else if (
           fileName.toLowerCase() === metaDataNames.progress.file.toLowerCase()
         ) {
-          const parsed = readStudyProgress(text);
+          const parsed = parseJSONToStudyProgress(text);
 
           if (parsed instanceof Error) {
             setStatus("dataError");
@@ -308,7 +308,7 @@ export function DataSetImport(props: DataSetImportProps) {
                 fileName.slice(0, dot > -1 ? dot : undefined)
               );
 
-              const sheet = await readCsvToSheet(text, sheetName);
+              const sheet = await parseCsvToSheet(text, sheetName);
               return sheet;
             } catch (exception) {
               // default message
