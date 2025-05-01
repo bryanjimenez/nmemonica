@@ -9,14 +9,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
-  type TransferObject,
+  type SyncDataFile,
   dataTransferAggregator,
   parseCsvToSheet,
 } from "../../helper/transferHelper";
 import { properCase } from "../Games/KanjiGame";
 
 interface DataSelectFromCacheProps {
-  data: TransferObject[];
+  data: SyncDataFile[];
   updateDataHandler: (names: string) => void;
 }
 
@@ -37,7 +37,7 @@ export function DataSelectFromCache(props: DataSelectFromCacheProps) {
 
         // if user clears out the calc rows gets wiped (1st render calc)
         if (Object.keys(workbookSheetNames).includes(name)) {
-          void parseCsvToSheet(fileItem.text, prettyName).then((sheet) => {
+          void parseCsvToSheet(fileItem.file, prettyName).then((sheet) => {
             setRows((prev) => ({ ...prev, [name]: sheet.rows.len }));
           });
         }

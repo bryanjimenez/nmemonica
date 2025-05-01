@@ -328,7 +328,7 @@ export default function Sheet() {
   }, [dispatch, phraseList, vocabList, kanjiList]);
 
   const downloadFileHandlerCB = useCallback((files: SyncDataFile[]) => {
-    files.forEach(({ fileName, text }) => {
+    files.forEach(({ fileName, file: text }) => {
       const file = new Blob([text], {
         type: "application/plaintext; charset=utf-8",
       });

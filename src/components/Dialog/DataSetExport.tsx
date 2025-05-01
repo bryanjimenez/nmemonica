@@ -17,8 +17,9 @@ import {
 } from "react";
 
 import { WebRTCContext } from "../../context/webRTC";
+import { workbookSheetNames } from "../../helper/sheetHelper";
 import {
-  TransferObject,
+  SyncDataFile,
   dataTransferAggregator,
 } from "../../helper/transferHelper";
 import {
@@ -31,6 +32,7 @@ import {
   type DataSetSharingAction,
   RTCTransferRequired,
 } from "../Form/DataSetSharingActions";
+import { properCase } from "../Games/KanjiGame";
 
 interface DataSetExportProps extends DataSetSharingAction {
   close: () => void;
@@ -81,7 +83,9 @@ export function DataSetExport(props: DataSetExportProps) {
     useContext(WebRTCContext);
   const connection = useRef({ channel: rtcChannel, peer: peer.current });
 
+  const [fileData, setFileData] = useState<SyncDataFile[]>([]);
   const [fileWarning, setFileWarning] = useState<ReactElement[]>([]);
+  const [finished, setFinished] = useState(false);
 
   useEffect(
     () => {
@@ -127,9 +131,6 @@ export function DataSetExport(props: DataSetExportProps) {
     setSource("AppCache");
   }, []);
 
-  const [fileData, setFileData] = useState<TransferObject[]>([]);
-  const [finished, setFinished] = useState(false);
-
   const closeHandlerCB = useCallback(() => {
     setFileData([]);
     close();
@@ -139,31 +140,27 @@ export function DataSetExport(props: DataSetExportProps) {
 
   const fromAppCacheUpdateDataCB = useCallback((name: string) => {
     setFileData((prev) => {
-      let newPrev: TransferObject[] = [];
+      let newPrev: SyncDataFile[] = [];
       // if is not in state add it
       if (prev.find((p) => p.name === name) === undefined) {
+        const ext = Object.keys(workbookSheetNames).includes(name.toLowerCase())
+          ? "csv"
+          : "json";
         // text is added for all on final action trigger (btn)
-        newPrev = [...prev, { name, origin: "AppCache", text: "" }];
+        newPrev = [
+          ...prev,
+          {
+            name,
+            fileName: `${properCase(name)}.${ext}`,
+            origin: "AppCache",
+            file: "",
+          },
+        ];
       } else {
         newPrev = prev.filter((p) => p.name !== name);
       }
 
       return newPrev;
-    });
-  }, []);
-
-  const fromFileSysUpdateDataCB = useCallback((item: TransferObject) => {
-    setFileData((prev) => {
-      if (
-        prev.find((p) => p.name.toLowerCase() === item.name.toLowerCase()) ===
-        undefined
-      ) {
-        return [...prev, item];
-      } else {
-        return prev.filter(
-          (p) => p.name.toLowerCase() !== item.name.toLowerCase()
-        );
-      }
     });
   }, []);
 
@@ -211,6 +208,7 @@ export function DataSetExport(props: DataSetExportProps) {
               </div>
             )}
           </div>
+          <Warnings fileWarning={fileWarning} clearWarnings={setFileWarning} />
           {source === "AppCache" && (
             <DataSelectFromCache
               data={fileData}
@@ -218,17 +216,11 @@ export function DataSetExport(props: DataSetExportProps) {
             />
           )}
           {source === "FileSystem" && (
-            <>
-              <Warnings
-                fileWarning={fileWarning}
-                clearWarnings={setFileWarning}
-              />
-              <DataSelectFromFile
-                data={fileData}
-                addWarning={setFileWarning}
-                updateDataHandler={fromFileSysUpdateDataCB}
-              />
-            </>
+            <DataSelectFromFile
+              data={fileData}
+              addWarning={setFileWarning}
+              updateDataHandler={setFileData}
+            />
           )}
 
           <div className="d-flex justify-content-end">

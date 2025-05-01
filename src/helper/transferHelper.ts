@@ -22,23 +22,11 @@ import { unusualApostrophe } from "./unicodeHelper";
 import { getStudyProgress, getUserSettings } from "./userSettingsHelper";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
 
-export interface TransferRequest {
-  name: string;
-  origin: "AppCache" | "FileSystem";
-  file?: string;
-}
-
-export interface TransferObject {
-  name: string;
-  origin: "AppCache" | "FileSystem";
-  text: string;
-  sheet?: FilledSheetData;
-  setting?: Partial<AppSettingState> | Partial<AppProgressState>;
-}
-
 export interface SyncDataFile {
+  name: string;
+  origin: "AppCache" | "FileSystem";
   fileName: string;
-  text: string;
+  file: string;
 }
 
 /**
@@ -158,38 +146,51 @@ export function parseJSONToStudyProgress(jsonText: string) {
  * @param fileData file descriptor object (w/ info about location)
  * @returns returns an array of files
  */
-export function dataTransferAggregator(
-  fileData?: TransferRequest[]
-): Promise<SyncDataFile[]> {
+export function dataTransferAggregator<
+  T extends {
+    name: string;
+    origin: "AppCache" | "FileSystem";
+    file: string | undefined;
+  },
+>(fileData?: T[]): Promise<SyncDataFile[]> {
   // get everything if left unspecified
-  if (fileData === undefined) {
-    fileData = [
-      { name: workbookSheetNames.kanji.prettyName, origin: "AppCache" },
-      { name: workbookSheetNames.vocabulary.prettyName, origin: "AppCache" },
-      { name: workbookSheetNames.phrases.prettyName, origin: "AppCache" },
-      { name: metaDataNames.settings.prettyName, origin: "AppCache" },
-      { name: metaDataNames.progress.prettyName, origin: "AppCache" },
-    ];
-  }
-
-  const fromFileSystem: SyncDataFile[] = fileData.reduce<SyncDataFile[]>(
-    (acc, { name, file }) => {
-      if (file !== undefined) {
-        return [
-          ...acc,
+  let req: { name: string; origin: SyncDataFile["origin"]; file?: string }[] =
+    fileData !== undefined
+      ? fileData
+      : [
           {
-            fileName: `${name}.${Object.keys(workbookSheetNames).includes(name.toLowerCase()) ? "csv" : "json"}`,
-            text: file,
+            name: workbookSheetNames.kanji.prettyName,
+            origin: "AppCache",
+            file: undefined,
           },
+          {
+            name: workbookSheetNames.vocabulary.prettyName,
+            origin: "AppCache",
+          },
+          { name: workbookSheetNames.phrases.prettyName, origin: "AppCache" },
+          { name: metaDataNames.settings.prettyName, origin: "AppCache" },
+          { name: metaDataNames.progress.prettyName, origin: "AppCache" },
         ];
-      }
 
-      return acc;
-    },
-    []
+  const fromFileSystem = req.reduce<SyncDataFile[]>((acc, { name, file }) => {
+    if (file !== undefined) {
+      return [
+        ...acc,
+        {
+          name: name.toLowerCase(),
+          origin: "FileSystem",
+          fileName: `${name}.${Object.keys(workbookSheetNames).includes(name.toLowerCase()) ? "csv" : "json"}`,
+          file: file,
+        },
+      ];
+    }
+
+    return acc;
+  }, []);
+
+  const fromApp = req.filter(
+    ({ file, origin }) => origin === "AppCache" || file === undefined
   );
-
-  const fromApp = fileData.filter((f) => f.file === undefined);
 
   return new Promise<SyncDataFile[]>((transferResolve) => {
     if (fromApp.length === 0) {
@@ -213,7 +214,7 @@ export function dataTransferAggregator(
           metaDataNames.progress.prettyName.toLowerCase()
       );
 
-      const workbookText = new Promise<{ fileName: string; text: string }[]>(
+      const workbookText = new Promise<SyncDataFile[]>(
         (bookResolve, bookReject) => {
           if (workbookReq.length > 0) {
             getWorkbookFromIndexDB()
@@ -227,10 +228,15 @@ export function dataTransferAggregator(
               )
               .then((selectedSheets) => xObjectToCsvText(selectedSheets))
               .then((d) =>
-                d.map(({ name, text }) => ({
-                  fileName: `${name}.csv`,
-                  text,
-                }))
+                d.map(
+                  ({ name, text }) =>
+                    ({
+                      name: name.toLowerCase(),
+                      origin: "AppCache",
+                      fileName: `${name}.csv`,
+                      file: text,
+                    }) as SyncDataFile
+                )
               )
               .then(bookResolve)
               .catch(bookReject);
@@ -240,15 +246,17 @@ export function dataTransferAggregator(
         }
       );
 
-      const settingText = new Promise<{ fileName: string; text: string }[]>(
+      const settingText = new Promise<SyncDataFile[]>(
         (settingResolve, settingReject) => {
           if (settingReq.length > 0) {
             getUserSettings()
               .then((setting) => [
                 {
+                  name: metaDataNames.settings.prettyName.toLowerCase(),
+                  origin: "AppCache",
                   fileName: `${metaDataNames.settings.prettyName}.json`,
-                  text: JSON.stringify(setting),
-                },
+                  file: JSON.stringify(setting),
+                } as SyncDataFile,
               ])
               .then(settingResolve)
               .catch(settingReject);
@@ -259,15 +267,17 @@ export function dataTransferAggregator(
         }
       );
 
-      const progressText = new Promise<{ fileName: string; text: string }[]>(
+      const progressText = new Promise<SyncDataFile[]>(
         (progResolve, progReject) => {
           if (progressReq.length > 0) {
             getStudyProgress()
               .then((progress) => [
                 {
+                  name: metaDataNames.progress.prettyName.toLowerCase(),
+                  origin: "AppCache",
                   fileName: `${metaDataNames.progress.prettyName}.json`,
-                  text: JSON.stringify(progress),
-                },
+                  file: JSON.stringify(progress),
+                } as SyncDataFile,
               ])
               .then(progResolve)
               .catch(progReject);

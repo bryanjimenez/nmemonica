@@ -18,7 +18,7 @@ import { useSelector } from "react-redux";
 import { FileErrorCause, buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
-  TransferObject,
+  SyncDataFile,
   parseCsvToSheet,
   parseJSONToStudyProgress,
   parseJSONToUserSettings,
@@ -32,9 +32,9 @@ import { properCase } from "../Games/KanjiGame";
 import "../../css/DragDrop.css";
 
 interface DataSelectFromFileProps {
-  data: TransferObject[];
+  data: SyncDataFile[];
   addWarning: React.Dispatch<React.SetStateAction<React.JSX.Element[]>>;
-  updateDataHandler: (data: TransferObject) => void;
+  updateDataHandler: React.Dispatch<React.SetStateAction<SyncDataFile[]>>;
 }
 
 export function DataSelectFromFile(props: DataSelectFromFileProps) {
@@ -52,8 +52,53 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
     return false;
   }, []);
 
+  const removeHandler = useCallback(
+    (item: SyncDataFile) => {
+      updateDataHandler((prev) => {
+        if (
+          prev.find((p) => p.name.toLowerCase() === item.name.toLowerCase()) ===
+          undefined
+        ) {
+          // add it
+          return [...prev, item];
+        } else {
+          // remove it
+          return prev.filter(
+            (p) => p.name.toLowerCase() !== item.name.toLowerCase()
+          );
+        }
+      });
+    },
+    [updateDataHandler]
+  );
+
+  const updateHandler = useCallback(
+    (item: SyncDataFile) => {
+      updateDataHandler((prev) => {
+        if (
+          prev.find((p) => p.name.toLowerCase() === item.name.toLowerCase()) ===
+          undefined
+        ) {
+          // add it
+          return [...prev, item];
+        } else {
+          // update it
+          return [
+            ...prev.filter(
+              (p) => p.name.toLowerCase() !== item.name.toLowerCase()
+            ),
+            item,
+          ];
+        }
+      });
+    },
+    [updateDataHandler]
+  );
+
   const previewSelFiles = useCallback(
     (files: File[]) => {
+      addWarning([]);
+
       const allowedFiles = Object.values({
         ...workbookSheetNames,
         ...metaDataNames,
@@ -80,14 +125,14 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
                   data.find(
                     (to) =>
                       to.name === sheet.name &&
-                      JSON.stringify(to.sheet) === JSON.stringify(sheet)
+                      to.file === JSON.stringify(sheet)
                   ) === undefined
                 ) {
-                  updateDataHandler({
-                    name: sheet.name,
+                  updateHandler({
+                    name: sheet.name.toLowerCase(),
+                    fileName: `${sheet.name}.csv`,
                     origin: "FileSystem",
-                    text,
-                    sheet,
+                    file: text,
                   });
                 }
               } catch (exception) {
@@ -141,17 +186,15 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
 
               if (
                 data.find(
-                  (to) =>
-                    to.name === name &&
-                    JSON.stringify(to.setting) === JSON.stringify(parsed)
+                  (to) => to.name === name && to.file === JSON.stringify(parsed)
                 ) === undefined
               ) {
                 // only append if missing
-                updateDataHandler({
-                  name,
+                updateHandler({
+                  name: name.toLowerCase(),
+                  fileName: `${name}.json`,
                   origin: "FileSystem",
-                  text,
-                  setting: parsed,
+                  file: text,
                 });
               }
             }
@@ -159,9 +202,9 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
         } else {
           addWarning((warn) => [...warn, ...w]);
         }
-      }
+      } // loop
     },
-    [data, updateDataHandler, addWarning]
+    [data, updateHandler, addWarning]
   );
 
   const dragDropHandler = useCallback(
@@ -206,7 +249,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
             <div>
               <div className="row">
                 <span className="col px-1">
-                  {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
+                  {/* {dataItem?.sheet ? dataItem.sheet.rows.len : ""} */}
                 </span>
                 <div className="col px-1">
                   {dataItem?.origin === "AppCache" && <DatabaseIcon />}
@@ -219,7 +262,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
                   })}
                   onClick={() => {
                     if (dataItem !== undefined) {
-                      updateDataHandler(dataItem);
+                      removeHandler(dataItem);
                     }
                   }}
                 >
@@ -234,7 +277,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
           </div>
         );
       }),
-    [data, updateDataHandler]
+    [data, removeHandler]
   );
 
   return (

@@ -15,10 +15,16 @@ import { ReactElement, useCallback, useRef, useState } from "react";
 import { Warnings } from "./DataSetExport";
 import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { TransferObject } from "../../helper/transferHelper";
+import {
+  SyncDataFile,
+  parseCsvToSheet,
+  parseJSONToStudyProgress,
+  parseJSONToUserSettings,
+} from "../../helper/transferHelper";
 import { AppProgressState, AppSettingState } from "../../slices";
 import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import "../../css/DragDrop.css";
+import { properCase } from "../Games/KanjiGame";
 
 interface DataSetImportFileProps {
   visible?: boolean;
@@ -33,7 +39,7 @@ interface DataSetImportFileProps {
 export function DataSetImportFile(props: DataSetImportFileProps) {
   const { visible, close, importHandler } = props;
 
-  const [fileData, setFileData] = useState<TransferObject[]>([]);
+  const [fileData, setFileData] = useState<SyncDataFile[]>([]);
   const [importStatus, setImportStatus] = useState<boolean>();
 
   const [fileWarning, setFileWarning] = useState<ReactElement[]>([]);
@@ -62,55 +68,102 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
   const importDatasetCB = useCallback(() => {
     setImportStatus(undefined);
 
-    const workbook = fileData.reduce<FilledSheetData[]>(
-      (acc, el) => (el.sheet ? [...acc, el.sheet] : acc),
-      []
+    const fileObj = fileData;
+
+    const data = fileObj.filter((file) =>
+      file.fileName.toLowerCase().endsWith(".csv")
+    );
+    const meta = fileObj.filter((file) =>
+      file.fileName.toLowerCase().endsWith(".json")
     );
 
-    const [settings] = fileData.reduce<
-      Partial<AppSettingState | AppProgressState>[]
-    >(
-      (acc, el) =>
-        el.setting && el.name === metaDataNames.settings.prettyName
-          ? [...acc, el.setting]
-          : acc,
-      []
-    ) as Partial<AppSettingState>[];
+    const { settings, progress } = meta.reduce<{
+      settings: Partial<AppSettingState>;
+      progress: Partial<AppProgressState>;
+    }>(
+      (acc, m) => {
+        const { fileName, file: text } = m;
 
-    const [progress] = fileData.reduce<
-      Partial<AppSettingState | AppProgressState>[]
-    >(
-      (acc, el) =>
-        el.setting && el.name === metaDataNames.progress.prettyName
-          ? [...acc, el.setting]
-          : acc,
-      []
-    ) as Partial<AppProgressState>[];
+        if (
+          fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
+        ) {
+          const parsed = parseJSONToUserSettings(text);
 
-    importHandler(workbook, settings, progress)
-      .then(() => {
-        setImportStatus(true);
-        setTimeout(closeHandlerCB, 1000);
-      })
-      .catch(() => {
-        setImportStatus(false);
-      });
+          if (parsed instanceof Error) {
+            // const { key, msg } = buildMsgCSVError(fileName, parsed);
+            // addWarning(key, msg);
+            return acc;
+          }
+
+          return { ...acc, settings: parsed };
+        } else if (
+          fileName.toLowerCase() === metaDataNames.progress.file.toLowerCase()
+        ) {
+          const parsed = parseJSONToStudyProgress(text);
+
+          if (parsed instanceof Error) {
+            // const { key, msg } = buildMsgCSVError(fileName, parsed);
+            // addWarning(key, msg);
+
+            return acc;
+          }
+
+          return { ...acc, progress: parsed };
+        }
+
+        return acc;
+      },
+      { settings: {}, progress: {} }
+    );
+
+    void Promise.allSettled(
+      data.map((fileItem) =>
+        new Promise<SyncDataFile>((resolve) => resolve(fileItem)).then(
+          async ({ file: text, fileName }) => {
+            try {
+              const dot = fileName.indexOf(".");
+              const sheetName = properCase(
+                fileName.slice(0, dot > -1 ? dot : undefined)
+              );
+
+              const sheet = await parseCsvToSheet(text, sheetName);
+              return sheet;
+            } catch (exception) {
+              // default message
+              // let key = `${fileName}-parse`;
+              // let msg = `Failed to parse (${fileName})`;
+
+              if (exception instanceof Error && "cause" in exception) {
+                // ({ key, msg } = buildMsgCSVError(fileName, exception));
+              }
+
+              // addWarning(key, msg);
+              return undefined;
+            }
+          }
+        )
+      )
+    )
+      .then((sheetPromiseArr) =>
+        sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
+          if (r.status === "fulfilled" && r.value !== undefined) {
+            return [...acc, r.value];
+          }
+
+          return acc;
+        }, [])
+      )
+      .then((workbook) =>
+        importHandler(workbook, settings, progress)
+          .then(() => {
+            setImportStatus(true);
+            setTimeout(closeHandlerCB, 1000);
+          })
+          .catch(() => {
+            setImportStatus(false);
+          })
+      );
   }, [fileData, importHandler, closeHandlerCB]);
-
-  const fromDragDropUpdateDataCB = useCallback((item: TransferObject) => {
-    setFileData((prev) => {
-      if (
-        prev.find((p) => p.name.toLowerCase() === item.name.toLowerCase()) ===
-        undefined
-      ) {
-        return [...prev, item];
-      } else {
-        return prev.filter(
-          (p) => p.name.toLowerCase() !== item.name.toLowerCase()
-        );
-      }
-    });
-  }, []);
 
   return (
     <>
@@ -123,7 +176,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
           <Alert severity="warning" className="py-0 mb-1">
             <div className="p-0 d-flex flex-column">
               <ul className="mb-0">
-                {fileData.find((f) => f.sheet !== undefined) && (
+                {fileData.find((f) => f.fileName.endsWith(".csv")) && (
                   <li>
                     <strong>Datasets</strong> will be overwritten!
                   </li>
@@ -166,7 +219,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
           <DataSelectFromFile
             data={fileData}
             addWarning={setFileWarning}
-            updateDataHandler={fromDragDropUpdateDataCB}
+            updateDataHandler={setFileData}
           />
 
           <div className="d-flex justify-content-between">

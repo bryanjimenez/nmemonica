@@ -48,9 +48,7 @@ export interface CryptoMessage {
 
 interface DataSetImportProps extends DataSetSharingAction {
   close: () => void;
-  downloadHandler: (
-    files: { fileName: string; text: string }[]
-  ) => Promise<void>;
+  downloadHandler: (files: SyncDataFile[]) => Promise<void>;
   importHandler: (
     workbook?: FilledSheetData[],
     settings?: Partial<AppSettingState>,
@@ -151,12 +149,7 @@ export function DataSetImport(props: DataSetImportProps) {
   );
 
   const saveToFileHandlerWStatus = useCallback(
-    (
-      files: {
-        fileName: string;
-        text: string;
-      }[]
-    ) =>
+    (files: SyncDataFile[]) =>
       downloadHandler(files).then(() => {
         setStatus("successStatus");
         setTimeout(closeHandlerCB, 1000);
@@ -262,7 +255,7 @@ export function DataSetImport(props: DataSetImportProps) {
       progress: Partial<AppProgressState>;
     }>(
       (acc, m) => {
-        const { fileName, text } = m;
+        const { fileName, file: text } = m;
 
         if (
           fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
@@ -301,7 +294,7 @@ export function DataSetImport(props: DataSetImportProps) {
     void Promise.allSettled(
       data.map((fileItem) =>
         new Promise<SyncDataFile>((resolve) => resolve(fileItem)).then(
-          async ({ text, fileName }) => {
+          async ({ file: text, fileName }) => {
             try {
               const dot = fileName.indexOf(".");
               const sheetName = properCase(
@@ -465,7 +458,7 @@ function parseFileObject(
           cause: { code: SharingMessageErrorCause.BadFileName },
         });
       }
-      if (!("text" in f) || typeof f.text !== "string") {
+      if (!("text" in f) || typeof f.file !== "string") {
         throw new Error("Unexpected file content", {
           cause: { code: SharingMessageErrorCause.BadFileContent },
         });
