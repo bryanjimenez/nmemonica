@@ -4,6 +4,7 @@ import {
   isValidAppSettingsState,
   isValidStudyProgress,
 } from "../slices";
+import { toMemorySize } from "./consoleHelper";
 import {
   FileErrorCause,
   JSONErrorCause,
@@ -27,6 +28,7 @@ export interface SyncDataFile {
   origin: "AppCache" | "FileSystem";
   fileName: string;
   file: string;
+  size: string;
 }
 
 /**
@@ -143,54 +145,78 @@ export function parseJSONToStudyProgress(jsonText: string) {
 
 /**
  * Gathers datasets from file system or app memory
- * @param fileData file descriptor object (w/ info about location)
- * @returns returns an array of files
  */
 export function dataTransferAggregator<
-  T extends {
-    name: string;
-    origin: "AppCache" | "FileSystem";
-    file: string | undefined;
-  },
+  T extends { name: string; file?: string },
 >(fileData?: T[]): Promise<SyncDataFile[]> {
+  const makeFileName = (name: string) =>
+    `${name}.${Object.keys(workbookSheetNames).includes(name.toLowerCase()) ? "csv" : "json"}`;
+
+  const calculateFileSize = (name: string, file: string) => {
+    // TODO: properly calculateFileSize
+    const ext = Object.keys(workbookSheetNames).includes(name.toLowerCase())
+      ? "csv"
+      : "json";
+
+    if (ext === "json") {
+      return `~${toMemorySize(file.length)}`;
+    } else {
+      // convertcsvtoobj and get row len
+      return "0";
+    }
+  };
+
   // get everything if left unspecified
-  let req: { name: string; origin: SyncDataFile["origin"]; file?: string }[] =
+  let req: SyncDataFile[] =
     fileData !== undefined
-      ? fileData
+      ? fileData.map(({ name, file }) => ({
+          name: name.toLowerCase(),
+          origin: file === undefined ? "AppCache" : "FileSystem",
+          file: file === undefined ? "" : file,
+          size: file === undefined ? "0" : calculateFileSize(name, file),
+          fileName: makeFileName(name),
+        }))
       : [
           {
             name: workbookSheetNames.kanji.prettyName,
             origin: "AppCache",
-            file: undefined,
+            file: "",
+            size: "0",
+            fileName: workbookSheetNames.kanji.file,
           },
           {
             name: workbookSheetNames.vocabulary.prettyName,
             origin: "AppCache",
+            file: "",
+            size: "0",
+            fileName: workbookSheetNames.vocabulary.file,
           },
-          { name: workbookSheetNames.phrases.prettyName, origin: "AppCache" },
-          { name: metaDataNames.settings.prettyName, origin: "AppCache" },
-          { name: metaDataNames.progress.prettyName, origin: "AppCache" },
+          {
+            name: workbookSheetNames.phrases.prettyName,
+            origin: "AppCache",
+            file: "",
+            size: "0",
+            fileName: workbookSheetNames.phrases.file,
+          },
+          {
+            name: metaDataNames.settings.prettyName,
+            origin: "AppCache",
+            file: "",
+            size: "0",
+            fileName: metaDataNames.settings.file,
+          },
+          {
+            name: metaDataNames.progress.prettyName,
+            origin: "AppCache",
+            file: "",
+            size: "0",
+            fileName: metaDataNames.progress.file,
+          },
         ];
 
-  const fromFileSystem = req.reduce<SyncDataFile[]>((acc, { name, file }) => {
-    if (file !== undefined) {
-      return [
-        ...acc,
-        {
-          name: name.toLowerCase(),
-          origin: "FileSystem",
-          fileName: `${name}.${Object.keys(workbookSheetNames).includes(name.toLowerCase()) ? "csv" : "json"}`,
-          file: file,
-        },
-      ];
-    }
+  const fromFileSystem = req.filter(({ origin }) => origin === "FileSystem");
 
-    return acc;
-  }, []);
-
-  const fromApp = req.filter(
-    ({ file, origin }) => origin === "AppCache" || file === undefined
-  );
+  const fromApp = req.filter(({ origin }) => origin === "AppCache");
 
   return new Promise<SyncDataFile[]>((transferResolve) => {
     if (fromApp.length === 0) {
@@ -303,7 +329,7 @@ export function dataTransferAggregator<
         )
         .then((fromAppCache) => [
           ...fromAppCache,
-          // append any filesystem requests (already text)
+          // append any filesystem requests (already include text)
           ...fromFileSystem,
         ])
         .then(transferResolve);

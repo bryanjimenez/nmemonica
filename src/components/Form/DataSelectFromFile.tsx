@@ -15,6 +15,7 @@ import React, {
 } from "react";
 import { useSelector } from "react-redux";
 
+import { toMemorySize } from "../../helper/consoleHelper";
 import { FileErrorCause, buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
@@ -133,6 +134,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
                     fileName: `${sheet.name}.csv`,
                     origin: "FileSystem",
                     file: text,
+                    size: String(sheet.rows.len),
                   });
                 }
               } catch (exception) {
@@ -195,6 +197,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
                   fileName: `${name}.json`,
                   origin: "FileSystem",
                   file: text,
+                  size: `~${toMemorySize(text.length)}`,
                 });
               }
             }
@@ -248,9 +251,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
             </div>
             <div>
               <div className="row">
-                <span className="col px-1">
-                  {/* {dataItem?.sheet ? dataItem.sheet.rows.len : ""} */}
-                </span>
+                <span className="col px-1">{dataItem?.size ?? ""}</span>
                 <div className="col px-1">
                   {dataItem?.origin === "AppCache" && <DatabaseIcon />}
                   {dataItem?.origin === "FileSystem" && <FileDirectoryIcon />}

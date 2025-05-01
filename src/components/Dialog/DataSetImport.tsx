@@ -22,6 +22,7 @@ import {
 } from "react";
 
 import { WebRTCContext } from "../../context/webRTC";
+import { toMemorySize } from "../../helper/consoleHelper";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
 import { buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames } from "../../helper/sheetHelper";
@@ -404,7 +405,7 @@ export function DataSetImport(props: DataSetImportProps) {
             )}
 
             {msgBuffer !== null && (
-              <div className="fw-bold mb-2">{`Data Received: ${msgBuffer.byteLength}`}</div>
+              <div className="fw-bold mb-2">{`Data Received: ~${toMemorySize(msgBuffer.byteLength)}`}</div>
             )}
 
             <Button
@@ -458,7 +459,7 @@ function parseFileObject(
           cause: { code: SharingMessageErrorCause.BadFileName },
         });
       }
-      if (!("text" in f) || typeof f.file !== "string") {
+      if (!("file" in f) || typeof f.file !== "string") {
         throw new Error("Unexpected file content", {
           cause: { code: SharingMessageErrorCause.BadFileContent },
         });

@@ -154,6 +154,7 @@ export function DataSetExport(props: DataSetExportProps) {
             fileName: `${properCase(name)}.${ext}`,
             origin: "AppCache",
             file: "",
+            size: "0",
           },
         ];
       } else {

@@ -32,6 +32,30 @@ export function msgInnerTrim(term: string, len: number) {
   return msg;
 }
 
+export function toMemorySize(value: number) {
+  const units = ["b", "kb", "mb", "gb", "tb"];
+
+  if (isNaN(value)) {
+    throw new Error("Expected a numerical value");
+  }
+  if (!isFinite(value)) {
+    throw new Error("Expected a finite value");
+  }
+  if (value < 0) {
+    throw new Error("Expected a positive value");
+  }
+
+  const exp = value.toExponential();
+  const [man, exponent] = exp.split("e+").map((str) => Number(str));
+  const rem = exponent % 3;
+
+  const unit = (exponent - rem) / 3;
+  const val = Math.round(man * Math.pow(10, rem));
+  const result = `${val}${units[unit]}`;
+
+  return result;
+}
+
 /**
  * Whether the date is today
  * @param rawDateString Date.toJSON string

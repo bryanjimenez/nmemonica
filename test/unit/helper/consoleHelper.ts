@@ -1,5 +1,9 @@
 import { expect } from "chai";
-import { daysSince, squashSeqMsgs } from "../../../src/helper/consoleHelper";
+import {
+  daysSince,
+  squashSeqMsgs,
+  toMemorySize,
+} from "../../../src/helper/consoleHelper";
 
 describe("consoleHelper", function () {
   describe("squashSeqMsgs", function () {
@@ -49,6 +53,22 @@ describe("consoleHelper", function () {
 
       const actual = daysSince(yesterday);
       expect(actual).to.equal(1);
+    });
+  });
+
+  describe("toMemorySize", function () {
+    it("throws if negative", function () {
+      const actual = () => toMemorySize(-3000);
+      expect(actual).to.throw(Error, "Expected a positive value");
+    });
+    it("throws if NaN", function () {
+      const actual = () => toMemorySize(NaN);
+      expect(actual).to.throw(Error, "Expected a numerical value");
+    });
+    it("3kb", function () {
+      const expected = "3kb";
+      const actual = toMemorySize(3000);
+      expect(actual).to.eq(expected);
     });
   });
 });
