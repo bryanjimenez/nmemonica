@@ -40,18 +40,18 @@ export const dataSetNames = ["phrases", "vocabulary", "kanji"] as const;
  * Keep all naming and order
  */
 export const workbookSheetNames = Object.freeze({
-  [dataSetNames[0]]: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
+  [dataSetNames[0]]: { index: 0, fileName: "Phrases.csv", prettyName: "Phrases" },
   [dataSetNames[1]]: {
     index: 1,
-    file: "Vocabulary.csv",
+    fileName: "Vocabulary.csv",
     prettyName: "Vocabulary",
   },
-  [dataSetNames[2]]: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
+  [dataSetNames[2]]: { index: 2, fileName: "Kanji.csv", prettyName: "Kanji" },
 });
 
 export const metaDataNames = Object.freeze({
-  settings: { file: "Settings.json", prettyName: "Settings" },
-  progress: { file: "Progress.json", prettyName: "Progress" },
+  settings: { fileName: "Settings.json", prettyName: "Settings" },
+  progress: { fileName: "Progress.json", prettyName: "Progress" },
 });
 
 export function getActiveSheet(workbook: Spreadsheet) {

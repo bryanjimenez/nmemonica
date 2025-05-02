@@ -198,7 +198,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
   const items = useMemo(
     () =>
       Object.values({ ...workbookSheetNames, ...metaDataNames }).map((el) => {
-        const { prettyName, file } = el;
+        const { prettyName, fileName } = el;
         const name = prettyName.toLowerCase();
         const dataItem = data.find((d) => d.name.toLowerCase() === name);
 
@@ -211,7 +211,7 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
                   "opacity-25": dataItem?.name.toLowerCase() !== name,
                 })}
               >
-                {file}
+                {fileName}
               </span>
             </div>
             <div>

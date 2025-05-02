@@ -112,7 +112,7 @@ export function parseSettingsAndProgress<
       const { fileName, file: text } = m;
 
       if (
-        fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
+        fileName.toLowerCase() === metaDataNames.settings.fileName.toLowerCase()
       ) {
         const settings = parseJSONToUserSettings(text);
 
@@ -127,7 +127,7 @@ export function parseSettingsAndProgress<
 
         acc.settings = settings;
       } else if (
-        fileName.toLowerCase() === metaDataNames.progress.file.toLowerCase()
+        fileName.toLowerCase() === metaDataNames.progress.fileName.toLowerCase()
       ) {
         const progress = parseJSONToStudyProgress(text);
 
@@ -271,12 +271,12 @@ export function dataTransferAggregator(
   let req: SyncDataFile[] =
     fileData !== undefined
       ? fileData
-      : Object.values({...workbookSheetNames, ...metaDataNames}).map(({ prettyName, file }) => ({
+      : Object.values({...workbookSheetNames, ...metaDataNames}).map(({ prettyName, fileName }) => ({
           name: prettyName,
           origin: "AppCache",
           file: "",
           size: "0",
-          fileName: file,
+          fileName,
         }));
 
   const fromFileSystem = req.filter(({ origin }) => origin === "FileSystem");
@@ -348,7 +348,7 @@ export function dataTransferAggregator(
                   {
                     name: metaDataNames.settings.prettyName.toLowerCase(),
                     origin: "AppCache" as SyncDataFile["origin"],
-                    fileName: metaDataNames.settings.file,
+                    fileName: metaDataNames.settings.fileName,
                     file,
                     size: `~${toMemorySize(file.length)}`,
                   },
@@ -376,7 +376,7 @@ export function dataTransferAggregator(
                   {
                     name: metaDataNames.progress.prettyName.toLowerCase(),
                     origin: "AppCache" as SyncDataFile["origin"],
-                    fileName: metaDataNames.progress.file,
+                    fileName: metaDataNames.progress.fileName,
                     file,
                     size: `~${toMemorySize(file.length)}`,
                   },
