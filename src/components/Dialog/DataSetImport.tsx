@@ -24,14 +24,11 @@ import {
 import { WebRTCContext } from "../../context/webRTC";
 import { toMemorySize } from "../../helper/consoleHelper";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
-import { buildMsgCSVError } from "../../helper/csvHelper";
-import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   type SyncDataFile,
-  parseCsvToSheet,
-  parseJSONToStudyProgress,
-  parseJSONToUserSettings,
+  parseSettingsAndProgress,
+  parseSheet,
 } from "../../helper/transferHelper";
 import {
   SharingMessageErrorCause,
@@ -103,10 +100,9 @@ export function DataSetImport(props: DataSetImportProps) {
   const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
     setWarning([]);
-    close();
     setMsgBuffer(null);
-
     closeWebRTC();
+    close();
   }, [close, closeWebRTC]);
 
   const [msgBuffer, setMsgBuffer] = useState<ArrayBuffer | null>(null);
@@ -161,8 +157,8 @@ export function DataSetImport(props: DataSetImportProps) {
   const importToAppHandlerCB = useCallback(
     (
       dataObj: FilledSheetData[],
-      settings: Partial<AppSettingState>,
-      progress: Partial<AppProgressState>
+      settings?: Partial<AppSettingState>,
+      progress?: Partial<AppProgressState>
     ) => {
       const workbook = dataObj.length === 0 ? undefined : dataObj;
 
@@ -244,90 +240,27 @@ export function DataSetImport(props: DataSetImportProps) {
       return;
     }
 
-    const data = fileObj.filter((file) =>
-      file.fileName.toLowerCase().endsWith(".csv")
-    );
-    const meta = fileObj.filter((file) =>
-      file.fileName.toLowerCase().endsWith(".json")
-    );
+    const { settings, progress, errors } = parseSettingsAndProgress(fileObj);
 
-    const { settings, progress } = meta.reduce<{
-      settings: Partial<AppSettingState>;
-      progress: Partial<AppProgressState>;
-    }>(
-      (acc, m) => {
-        const { fileName, file: text } = m;
+    errors.forEach((error) => {
+      const { key, msg } = error.cause;
+      setStatus("dataError");
+      addWarning(key, msg);
+    });
 
-        if (
-          fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
-        ) {
-          const parsed = parseJSONToUserSettings(text);
-
-          if (parsed instanceof Error) {
-            setStatus("dataError");
-            const { key, msg } = buildMsgCSVError(fileName, parsed);
-            addWarning(key, msg);
-            return acc;
-          }
-
-          return { ...acc, settings: parsed };
-        } else if (
-          fileName.toLowerCase() === metaDataNames.progress.file.toLowerCase()
-        ) {
-          const parsed = parseJSONToStudyProgress(text);
-
-          if (parsed instanceof Error) {
-            setStatus("dataError");
-            const { key, msg } = buildMsgCSVError(fileName, parsed);
-            addWarning(key, msg);
-
-            return acc;
-          }
-
-          return { ...acc, progress: parsed };
-        }
-
-        return acc;
-      },
-      { settings: {}, progress: {} }
-    );
-
-    void Promise.allSettled(
-      data.map((fileItem) =>
-        new Promise<SyncDataFile>((resolve) => resolve(fileItem)).then(
-          async ({ file: text, fileName }) => {
-            try {
-              const dot = fileName.indexOf(".");
-              const sheetName = properCase(
-                fileName.slice(0, dot > -1 ? dot : undefined)
-              );
-
-              const sheet = await parseCsvToSheet(text, sheetName);
-              return sheet;
-            } catch (exception) {
-              // default message
-              let key = `${fileName}-parse`;
-              let msg = `Failed to parse (${fileName})`;
-
-              if (exception instanceof Error && "cause" in exception) {
-                ({ key, msg } = buildMsgCSVError(fileName, exception));
-              }
-
-              setStatus("dataError");
-              addWarning(key, msg);
-              return undefined;
-            }
-          }
-        )
-      )
-    )
+    void parseSheet(fileObj)
       .then((sheetPromiseArr) =>
         sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
-          if (r.status === "fulfilled" && r.value !== undefined) {
-            return [...acc, r.value];
+          if (r.status !== "fulfilled") {
+            return acc;
           }
 
-          return acc;
+          if (r.value instanceof Error) {
+            return acc;
+          }
+
+          const { sheet } = r.value;
+          return [...acc, sheet];
         }, [])
       )
       .then((workbook) => importToAppHandlerCB(workbook, settings, progress));

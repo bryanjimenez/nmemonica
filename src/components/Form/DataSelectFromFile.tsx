@@ -6,30 +6,17 @@ import {
   XIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, {
-  ReactElement,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { toMemorySize } from "../../helper/consoleHelper";
-import { FileErrorCause, buildMsgCSVError } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
   SyncDataFile,
-  parseCsvToSheet,
-  parseJSONToStudyProgress,
-  parseJSONToUserSettings,
+  parseSettingsAndProgress,
+  parseSheet,
 } from "../../helper/transferHelper";
-import {
-  type AppProgressState,
-  type AppSettingState,
-  type RootState,
-} from "../../slices";
-import { properCase } from "../Games/KanjiGame";
+import { type RootState } from "../../slices";
 import "../../css/DragDrop.css";
 
 interface DataSelectFromFileProps {
@@ -100,112 +87,90 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
     (files: File[]) => {
       addWarning([]);
 
-      const allowedFiles = Object.values({
-        ...workbookSheetNames,
-        ...metaDataNames,
-      }).map((e) => e.file);
+      void Promise.all(
+        files.reduce<Promise<{ fileName: string; file: string }>[]>(
+          (acc, fileItem) => {
+            if (fileItem === null) {
+              return acc;
+            }
+            const f = fileItem
+              .text()
+              .then((text) => ({ fileName: fileItem.name, file: text }));
+            return [...acc, f];
+          },
+          []
+        )
+      ).then((fileObj) => {
+        const {
+          settings,
+          progress,
+          errors: metaWarns,
+        } = parseSettingsAndProgress(fileObj);
 
-      for (const fileItem of files) {
-        if (fileItem === null) {
-          continue;
-        }
+        metaWarns.forEach(({ cause: { key, msg } }) => {
+          const errMsg = <span key={key}>{msg}</span>;
+          addWarning((warn) => [...warn, errMsg]);
+        });
 
-        let w = initWarnings(fileItem, allowedFiles);
+        const s =
+          settings === undefined
+            ? []
+            : [{ name: metaDataNames.settings.prettyName, value: settings }];
+        const p =
+          progress === undefined
+            ? []
+            : [{ name: metaDataNames.progress.prettyName, value: progress }];
 
-        if (w.length === 0) {
-          void fileItem.text().then(async (text) => {
-            if (fileItem.name.toLowerCase().endsWith(".csv")) {
-              try {
-                const dot = fileItem.name.indexOf(".");
-                const sheetName = properCase(
-                  fileItem.name.slice(0, dot > -1 ? dot : undefined)
-                );
-                const sheet = await parseCsvToSheet(text, sheetName);
+        [...s, ...p].forEach(({ name, value }) => {
+          const text = JSON.stringify(value);
+          if (
+            data.find(
+              (to) => to.name === name && to.file === JSON.stringify(value)
+            ) === undefined
+          ) {
+            // only append if missing
+            updateHandler({
+              name: name.toLowerCase(),
+              fileName: `${name}.json`,
+              origin: "FileSystem",
+              file: text,
+              size: `~${toMemorySize(text.length)}`,
+            });
+          }
+        });
 
-                if (
-                  data.find(
-                    (to) =>
-                      to.name === sheet.name &&
-                      to.file === JSON.stringify(sheet)
-                  ) === undefined
-                ) {
-                  updateHandler({
-                    name: sheet.name.toLowerCase(),
-                    fileName: `${sheet.name}.csv`,
-                    origin: "FileSystem",
-                    file: text,
-                    size: String(sheet.rows.len),
-                  });
-                }
-              } catch (exception) {
-                // default message
-                let key = `${fileItem.name}-parse`;
-                let msg = `Failed to parse (${fileItem.name})`;
+        void parseSheet(fileObj).then((sheetPromiseArr) => {
+          sheetPromiseArr.forEach((r) => {
+            if (r.status !== "fulfilled") {
+              return;
+            }
 
-                if (exception instanceof Error && "cause" in exception) {
-                  ({ key, msg } = buildMsgCSVError(fileItem.name, exception));
-                }
+            if (r.value instanceof Error) {
+              const { key, msg } = r.value.cause;
 
-                const errMsg = <span key={key}>{msg}</span>;
+              const sheetWarns = <span key={key}>{msg}</span>;
+              addWarning((warn) => [...warn, sheetWarns]);
+              return;
+            }
 
-                addWarning((warn) => [...warn, ...w, errMsg]);
-              }
-            } else if (fileItem.name.toLowerCase().endsWith(".json")) {
-              let name: string | undefined;
-              let parsed:
-                | Partial<AppSettingState>
-                | Partial<AppProgressState>
-                | Error;
-
-              if (
-                fileItem.name.toLowerCase() ===
-                metaDataNames.settings.file.toLowerCase()
-              ) {
-                name = metaDataNames.settings.prettyName;
-                parsed = parseJSONToUserSettings(text);
-              } else if (
-                fileItem.name.toLowerCase() ===
-                metaDataNames.progress.file.toLowerCase()
-              ) {
-                name = metaDataNames.progress.prettyName;
-                parsed = parseJSONToStudyProgress(text);
-              } else {
-                name = fileItem.name;
-                parsed = new Error(`Unknown file ${fileItem.name}`, {
-                  cause: {
-                    code: FileErrorCause.UnexpectedFile,
-                    details: fileItem.name,
-                  },
-                });
-              }
-
-              if (parsed instanceof Error) {
-                const { key, msg } = buildMsgCSVError(fileItem.name, parsed);
-                w = [...w, <span key={key}>{msg}</span>];
-                addWarning((warn) => [...warn, ...w]);
-                return;
-              }
-
-              if (
-                data.find(
-                  (to) => to.name === name && to.file === JSON.stringify(parsed)
-                ) === undefined
-              ) {
-                // only append if missing
-                updateHandler({
-                  name: name.toLowerCase(),
-                  fileName: `${name}.json`,
-                  origin: "FileSystem",
-                  file: text,
-                  size: `~${toMemorySize(text.length)}`,
-                });
-              }
+            const { sheet, file } = r.value;
+            if (
+              data.find(
+                (to) =>
+                  to.name === sheet.name && to.file === JSON.stringify(sheet)
+              ) === undefined
+            ) {
+              updateHandler({
+                name: sheet.name.toLowerCase(),
+                fileName: `${sheet.name}.csv`,
+                origin: "FileSystem",
+                file,
+                size: String(sheet.rows.len),
+              });
             }
           });
-        } else {
-          addWarning((warn) => [...warn, ...w]);
-        }
-      } // loop
+        });
+      });
     },
     [data, updateHandler, addWarning]
   );
@@ -352,45 +317,4 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
       </div>
     </>
   );
-}
-
-function initWarnings(fileItem: File, allowedFiles: string[]) {
-  let w: ReactElement[] = [];
-
-  if (
-    allowedFiles.find(
-      (allowed) => allowed.toLowerCase() === fileItem.name.toLowerCase()
-    ) === undefined
-  ) {
-    w = [
-      ...w,
-      <span
-        key={`${fileItem.name}-name`}
-      >{`File (${fileItem.name}) is not correctly named`}</span>,
-    ];
-  }
-  if (
-    fileItem.name.toLowerCase().endsWith(".csv") &&
-    fileItem.type !== "text/csv"
-  ) {
-    w = [
-      ...w,
-      <span
-        key={`${fileItem.name}-type`}
-      >{`${fileItem.name} is not a proper csv file.`}</span>,
-    ];
-  }
-  if (
-    fileItem.name.toLowerCase().endsWith(".json") &&
-    fileItem.type !== "application/json"
-  ) {
-    w = [
-      ...w,
-      <span
-        key={`${fileItem.name}-type`}
-      >{`${fileItem.name} is not a proper json file.`}</span>,
-    ];
-  }
-
-  return w;
 }

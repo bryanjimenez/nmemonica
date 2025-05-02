@@ -191,7 +191,7 @@ export function xObjectToCsvText(xObj: SheetData[]) {
       },
     };
 
-    const csvP = new Promise<{ name: string; text: string }>(
+    const csvP = new Promise<{ name: string; text: string; len: number }>(
       (resolve, _reject) => {
         let file = "";
         fileSim.on("write", (line) => {
@@ -199,7 +199,11 @@ export function xObjectToCsvText(xObj: SheetData[]) {
         });
 
         fileSim.on("end", () => {
-          resolve({ name: xObjSheet.name, text: file });
+          resolve({
+            name: xObjSheet.name,
+            text: file,
+            len: xObjSheet.rows?.len ?? 0,
+          });
         });
       }
     );

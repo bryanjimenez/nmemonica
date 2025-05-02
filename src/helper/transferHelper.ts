@@ -8,6 +8,7 @@ import { toMemorySize } from "./consoleHelper";
 import {
   FileErrorCause,
   JSONErrorCause,
+  buildMsgCSVError,
   validateCSVSheet,
   validateJSONSettings,
 } from "./csvHelper";
@@ -21,6 +22,7 @@ import {
 import { FilledSheetData } from "./sheetHelperImport";
 import { unusualApostrophe } from "./unicodeHelper";
 import { getStudyProgress, getUserSettings } from "./userSettingsHelper";
+import { properCase } from "../components/Games/KanjiGame";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
 
 export interface SyncDataFile {
@@ -33,9 +35,128 @@ export interface SyncDataFile {
 
 /**
  * Parse and construct sheet object
- * @param text whole csv text file
- * @param sheetName name of sheet
+ * @param file whole csv text file
+ * @param fileName name of sheet
  */
+export function parseSheet<
+  T extends { fileName: string; file: string },
+  E extends Error & { cause: { key: string; msg: string } },
+>(csvFiles: T[]) {
+  const data = csvFiles.filter((file) =>
+    file.fileName.toLowerCase().endsWith(".csv")
+  );
+
+  return Promise.allSettled(
+    data.map((fileItem) =>
+      new Promise<T>((resolve) => resolve(fileItem)).then(
+        async ({ fileName, file }) => {
+          try {
+            const dot = fileName.indexOf(".");
+            const name = fileName
+              .slice(0, dot > -1 ? dot : undefined)
+              .toLowerCase();
+
+            const sheetName = properCase(name);
+            if (!Object.keys(workbookSheetNames).includes(name)) {
+              let key = `${fileName}-unknown`;
+              let msg = `Incorrectly named file ${fileName}`;
+
+              return new Error(msg, { cause: { key, msg } }) as E;
+            }
+
+            const sheet = await parseCsvToSheet(file, sheetName);
+            return { sheet, file };
+          } catch (exception) {
+            // default message
+            let key = `${fileName}-parse`;
+            let msg = `Failed to parse (${fileName})`;
+
+            if (exception instanceof Error && "cause" in exception) {
+              ({ key, msg } = buildMsgCSVError(fileName, exception));
+            }
+
+            return new Error(msg, { cause: { key, msg } }) as E;
+          }
+        }
+      )
+    )
+  );
+}
+
+/**
+ * Settings and Progress files to object parser
+ *
+ * returns Error when text contains invalid characters or if json is malformed
+ * @param jsonFiles list of settings and progress in json format
+ */
+export function parseSettingsAndProgress<
+  T extends { fileName: string; file: string },
+  E extends Error & { cause: { key: string; msg: string } },
+>(
+  jsonFiles: T[]
+): {
+  settings?: Partial<AppSettingState>;
+  progress?: Partial<AppProgressState>;
+  errors: E[];
+} {
+  const meta = jsonFiles.filter((file) =>
+    file.fileName.toLowerCase().endsWith(".json")
+  );
+
+  return meta.reduce<{
+    settings?: Partial<AppSettingState>;
+    progress?: Partial<AppProgressState>;
+    errors: E[];
+  }>(
+    (acc, m) => {
+      const { fileName, file: text } = m;
+
+      if (
+        fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
+      ) {
+        const settings = parseJSONToUserSettings(text);
+
+        if (settings instanceof Error) {
+          const { key, msg } = buildMsgCSVError(fileName, settings);
+          acc.errors = [
+            ...acc.errors,
+            new Error(msg, { cause: { key, msg } }) as E,
+          ];
+          return acc;
+        }
+
+        acc.settings = settings;
+      } else if (
+        fileName.toLowerCase() === metaDataNames.progress.file.toLowerCase()
+      ) {
+        const progress = parseJSONToStudyProgress(text);
+
+        if (progress instanceof Error) {
+          const { key, msg } = buildMsgCSVError(fileName, progress);
+          acc.errors = [
+            ...acc.errors,
+            new Error(msg, { cause: { key, msg } }) as E,
+          ];
+          return acc;
+        }
+
+        acc.progress = progress;
+      } else {
+        let key = `${fileName}-unknown`;
+        let msg = `Incorrectly named file ${fileName}`;
+
+        acc.errors = [
+          ...acc.errors,
+          new Error(msg, { cause: { key, msg } }) as E,
+        ];
+      }
+
+      return acc;
+    },
+    { errors: [] }
+  );
+}
+
 export function parseCsvToSheet(text: string, sheetName: string) {
   // replace unsual, but valid symbols with common ones
   text = text.replaceAll(unusualApostrophe, "'");
@@ -54,6 +175,7 @@ export function parseCsvToSheet(text: string, sheetName: string) {
     );
   }
 
+  // TODO: replace w/ external csv parser
   const objP = readCsvToSheet_INTERNAL(text, sheetName);
 
   return objP.then((sheet) => {
@@ -63,11 +185,6 @@ export function parseCsvToSheet(text: string, sheetName: string) {
   });
 }
 
-/**
- * Settings text to object parser
- * @param jsonText settings in json format
- * @throws when text contains invalid characters or if json is malformed
- */
 export function parseJSONToUserSettings(jsonText: string) {
   try {
     const invalidInput = validateJSONSettings(jsonText);
@@ -96,17 +213,15 @@ export function parseJSONToUserSettings(jsonText: string) {
 
     return settingsObject;
   } catch {
-    return new Error(`Malformed JSON ${metaDataNames.settings.prettyName}`, {
-      cause: { code: JSONErrorCause.InvalidJSONStructure },
-    });
+    return new Error(
+      `Invalid JSON in ${metaDataNames.settings.prettyName}.json`,
+      {
+        cause: { code: JSONErrorCause.InvalidJSONStructure },
+      }
+    );
   }
 }
 
-/**
- * Study Progress text to object parser
- * @param jsonText study progress in json format
- * @throws when text contains invalid characters or if json is malformed
- */
 export function parseJSONToStudyProgress(jsonText: string) {
   try {
     const invalidInput = validateJSONSettings(jsonText);
@@ -137,82 +252,32 @@ export function parseJSONToStudyProgress(jsonText: string) {
 
     return studyProgressObject;
   } catch {
-    return new Error(`Malformed JSON ${metaDataNames.progress.prettyName}`, {
-      cause: { code: JSONErrorCause.InvalidJSONStructure },
-    });
+    return new Error(
+      `Invalid JSON in ${metaDataNames.progress.prettyName},json`,
+      {
+        cause: { code: JSONErrorCause.InvalidJSONStructure },
+      }
+    );
   }
 }
 
 /**
  * Gathers datasets from file system or app memory
  */
-export function dataTransferAggregator<
-  T extends { name: string; file?: string },
->(fileData?: T[]): Promise<SyncDataFile[]> {
-  const makeFileName = (name: string) =>
-    `${name}.${Object.keys(workbookSheetNames).includes(name.toLowerCase()) ? "csv" : "json"}`;
-
-  const calculateFileSize = (name: string, file: string) => {
-    // TODO: properly calculateFileSize
-    const ext = Object.keys(workbookSheetNames).includes(name.toLowerCase())
-      ? "csv"
-      : "json";
-
-    if (ext === "json") {
-      return `~${toMemorySize(file.length)}`;
-    } else {
-      // convertcsvtoobj and get row len
-      return "0";
-    }
-  };
-
+export function dataTransferAggregator(
+  fileData?: SyncDataFile[]
+): Promise<SyncDataFile[]> {
   // get everything if left unspecified
   let req: SyncDataFile[] =
     fileData !== undefined
-      ? fileData.map(({ name, file }) => ({
-          name: name.toLowerCase(),
-          origin: file === undefined ? "AppCache" : "FileSystem",
-          file: file === undefined ? "" : file,
-          size: file === undefined ? "0" : calculateFileSize(name, file),
-          fileName: makeFileName(name),
-        }))
-      : [
-          {
-            name: workbookSheetNames.kanji.prettyName,
-            origin: "AppCache",
-            file: "",
-            size: "0",
-            fileName: workbookSheetNames.kanji.file,
-          },
-          {
-            name: workbookSheetNames.vocabulary.prettyName,
-            origin: "AppCache",
-            file: "",
-            size: "0",
-            fileName: workbookSheetNames.vocabulary.file,
-          },
-          {
-            name: workbookSheetNames.phrases.prettyName,
-            origin: "AppCache",
-            file: "",
-            size: "0",
-            fileName: workbookSheetNames.phrases.file,
-          },
-          {
-            name: metaDataNames.settings.prettyName,
-            origin: "AppCache",
-            file: "",
-            size: "0",
-            fileName: metaDataNames.settings.file,
-          },
-          {
-            name: metaDataNames.progress.prettyName,
-            origin: "AppCache",
-            file: "",
-            size: "0",
-            fileName: metaDataNames.progress.file,
-          },
-        ];
+      ? fileData
+      : Object.values({...workbookSheetNames, ...metaDataNames}).map(({ prettyName, file }) => ({
+          name: prettyName,
+          origin: "AppCache",
+          file: "",
+          size: "0",
+          fileName: file,
+        }));
 
   const fromFileSystem = req.filter(({ origin }) => origin === "FileSystem");
 
@@ -253,16 +318,14 @@ export function dataTransferAggregator<
                   ) as FilledSheetData[]
               )
               .then((selectedSheets) => xObjectToCsvText(selectedSheets))
-              .then((d) =>
-                d.map(
-                  ({ name, text }) =>
-                    ({
-                      name: name.toLowerCase(),
-                      origin: "AppCache",
-                      fileName: `${name}.csv`,
-                      file: text,
-                    }) as SyncDataFile
-                )
+              .then((f) =>
+                f.map(({ name, text, len }) => ({
+                  name: name.toLowerCase(),
+                  origin: "AppCache" as SyncDataFile["origin"],
+                  fileName: `${name}.csv`,
+                  file: text,
+                  size: String(len),
+                }))
               )
               .then(bookResolve)
               .catch(bookReject);
@@ -276,14 +339,21 @@ export function dataTransferAggregator<
         (settingResolve, settingReject) => {
           if (settingReq.length > 0) {
             getUserSettings()
-              .then((setting) => [
-                {
-                  name: metaDataNames.settings.prettyName.toLowerCase(),
-                  origin: "AppCache",
-                  fileName: `${metaDataNames.settings.prettyName}.json`,
-                  file: JSON.stringify(setting),
-                } as SyncDataFile,
-              ])
+              .then((setting) => {
+                if (Object.keys(setting).length === 0) {
+                  return [];
+                }
+                const file = JSON.stringify(setting);
+                return [
+                  {
+                    name: metaDataNames.settings.prettyName.toLowerCase(),
+                    origin: "AppCache" as SyncDataFile["origin"],
+                    fileName: metaDataNames.settings.file,
+                    file,
+                    size: `~${toMemorySize(file.length)}`,
+                  },
+                ];
+              })
               .then(settingResolve)
               .catch(settingReject);
             return;
@@ -297,14 +367,21 @@ export function dataTransferAggregator<
         (progResolve, progReject) => {
           if (progressReq.length > 0) {
             getStudyProgress()
-              .then((progress) => [
-                {
-                  name: metaDataNames.progress.prettyName.toLowerCase(),
-                  origin: "AppCache",
-                  fileName: `${metaDataNames.progress.prettyName}.json`,
-                  file: JSON.stringify(progress),
-                } as SyncDataFile,
-              ])
+              .then((progress) => {
+                if (Object.keys(progress).length === 0) {
+                  return [];
+                }
+                const file = JSON.stringify(progress);
+                return [
+                  {
+                    name: metaDataNames.progress.prettyName.toLowerCase(),
+                    origin: "AppCache" as SyncDataFile["origin"],
+                    fileName: metaDataNames.progress.file,
+                    file,
+                    size: `~${toMemorySize(file.length)}`,
+                  },
+                ];
+              })
               .then(progResolve)
               .catch(progReject);
             return;

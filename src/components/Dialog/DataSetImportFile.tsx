@@ -17,14 +17,12 @@ import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   SyncDataFile,
-  parseCsvToSheet,
-  parseJSONToStudyProgress,
-  parseJSONToUserSettings,
+  parseSettingsAndProgress,
+  parseSheet,
 } from "../../helper/transferHelper";
 import { AppProgressState, AppSettingState } from "../../slices";
 import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import "../../css/DragDrop.css";
-import { properCase } from "../Games/KanjiGame";
 
 interface DataSetImportFileProps {
   visible?: boolean;
@@ -59,6 +57,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
   const closeHandlerCB = useCallback(() => {
     setConfirm(false);
     setFileData([]);
+    setFileWarning([]);
     setShareId(undefined);
     setImportStatus(undefined);
     socket.current?.close();
@@ -67,90 +66,24 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
 
   const importDatasetCB = useCallback(() => {
     setImportStatus(undefined);
-
     const fileObj = fileData;
 
-    const data = fileObj.filter((file) =>
-      file.fileName.toLowerCase().endsWith(".csv")
-    );
-    const meta = fileObj.filter((file) =>
-      file.fileName.toLowerCase().endsWith(".json")
-    );
+    const { settings, progress } = parseSettingsAndProgress(fileObj);
 
-    const { settings, progress } = meta.reduce<{
-      settings: Partial<AppSettingState>;
-      progress: Partial<AppProgressState>;
-    }>(
-      (acc, m) => {
-        const { fileName, file: text } = m;
-
-        if (
-          fileName.toLowerCase() === metaDataNames.settings.file.toLowerCase()
-        ) {
-          const parsed = parseJSONToUserSettings(text);
-
-          if (parsed instanceof Error) {
-            // const { key, msg } = buildMsgCSVError(fileName, parsed);
-            // addWarning(key, msg);
-            return acc;
-          }
-
-          return { ...acc, settings: parsed };
-        } else if (
-          fileName.toLowerCase() === metaDataNames.progress.file.toLowerCase()
-        ) {
-          const parsed = parseJSONToStudyProgress(text);
-
-          if (parsed instanceof Error) {
-            // const { key, msg } = buildMsgCSVError(fileName, parsed);
-            // addWarning(key, msg);
-
-            return acc;
-          }
-
-          return { ...acc, progress: parsed };
-        }
-
-        return acc;
-      },
-      { settings: {}, progress: {} }
-    );
-
-    void Promise.allSettled(
-      data.map((fileItem) =>
-        new Promise<SyncDataFile>((resolve) => resolve(fileItem)).then(
-          async ({ file: text, fileName }) => {
-            try {
-              const dot = fileName.indexOf(".");
-              const sheetName = properCase(
-                fileName.slice(0, dot > -1 ? dot : undefined)
-              );
-
-              const sheet = await parseCsvToSheet(text, sheetName);
-              return sheet;
-            } catch (exception) {
-              // default message
-              // let key = `${fileName}-parse`;
-              // let msg = `Failed to parse (${fileName})`;
-
-              if (exception instanceof Error && "cause" in exception) {
-                // ({ key, msg } = buildMsgCSVError(fileName, exception));
-              }
-
-              // addWarning(key, msg);
-              return undefined;
-            }
-          }
-        )
-      )
-    )
+    void parseSheet(fileObj)
       .then((sheetPromiseArr) =>
         sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
-          if (r.status === "fulfilled" && r.value !== undefined) {
-            return [...acc, r.value];
+          if (r.status !== "fulfilled") {
+            return acc;
           }
 
-          return acc;
+          if (r.value instanceof Error) {
+            // const { key, msg } = r.value.cause as { key: string; msg: string };
+            return acc;
+          }
+
+          const { sheet } = r.value;
+          return [...acc, sheet];
         }, [])
       )
       .then((workbook) =>

@@ -133,9 +133,10 @@ export function DataSetExport(props: DataSetExportProps) {
 
   const closeHandlerCB = useCallback(() => {
     setFileData([]);
-    close();
+    setFileWarning([]);
     setFinished(false);
     closeWebRTC();
+    close();
   }, [close, closeWebRTC]);
 
   const fromAppCacheUpdateDataCB = useCallback((name: string) => {

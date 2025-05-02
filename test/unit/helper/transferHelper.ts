@@ -118,7 +118,7 @@ describe("transferHelper", function () {
         ) as Error;
 
         expect(actual).to.be.instanceOf(Error);
-        expect(actual.message).to.eq("Malformed JSON Settings");
+        expect(actual.message).to.eq("Invalid JSON in Settings.json");
       });
     });
     describe("parses", function () {
