@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Dialog,
   DialogContent,
@@ -21,6 +20,7 @@ import {
   useState,
 } from "react";
 
+import { Warnings } from "./DialogMsg";
 import { WebRTCContext } from "../../context/webRTC";
 import { toMemorySize } from "../../helper/consoleHelper";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
@@ -325,18 +325,7 @@ export function DataSetImport(props: DataSetImportProps) {
           </div>
 
           <FormControl className="mt-2 w-100">
-            {warning.length > 0 && (
-              <Alert severity="warning" className="py-0 mb-2">
-                <div className="p-0 d-flex flex-column">
-                  <ul className="mb-0">
-                    {warning.map((el) => (
-                      <li key={el.key}>{el}</li>
-                    ))}
-                  </ul>
-                </div>
-              </Alert>
-            )}
-
+            <Warnings fileWarning={warning} clearWarnings={setWarning} />
             {msgBuffer !== null && (
               <div className="fw-bold mb-2">{`Data Received: ~${toMemorySize(msgBuffer.byteLength)}`}</div>
             )}

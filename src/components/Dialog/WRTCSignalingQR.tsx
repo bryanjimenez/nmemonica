@@ -1,16 +1,11 @@
-import {
-  Alert,
-  Button,
-  Dialog,
-  DialogContent,
-  Typography,
-} from "@mui/material";
+import { Button, Dialog, DialogContent, Typography } from "@mui/material";
 import { DeviceCameraVideoIcon } from "@primer/octicons-react";
 import brotli from "brotli-wasm";
 import classNames from "classnames";
 import { JSX, useCallback, useContext, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 
+import { Warnings } from "./DialogMsg";
 import { VideoDevicesPermission } from "./VideoDevicesPermission";
 import { WebRTCContext } from "../../context/webRTC";
 import { DebugLevel } from "../../helper/consoleHelper";
@@ -224,17 +219,12 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
         aria-label="WebRTC Session Description Exchange"
       >
         <DialogContent className="p-0 m-0">
-          {warning.length > 0 && (
-            <Alert severity="warning" className="py-0 mb-1">
-              <div className="p-0 d-flex flex-column">
-                <ul className="mb-0">
-                  {warning.map((el) => (
-                    <li key={el.key}>{el.msg}</li>
-                  ))}
-                </ul>
-              </div>
-            </Alert>
-          )}
+          <Warnings
+            fileWarning={warning.map((el) => (
+              <span key={el.key}>{el.msg}</span>
+            ))}
+            clearWarnings={setWarning}
+          />
           <div className="container">
             <div className="row row-cols-1 row-cols-sm-2">
               <div className="col p-0">

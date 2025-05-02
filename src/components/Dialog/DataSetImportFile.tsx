@@ -12,7 +12,7 @@ import {
 } from "@primer/octicons-react";
 import { ReactElement, useCallback, useRef, useState } from "react";
 
-import { Warnings } from "./DataSetExport";
+import { Warnings } from "./DialogMsg";
 import { metaDataNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {

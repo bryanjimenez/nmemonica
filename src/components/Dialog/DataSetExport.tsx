@@ -1,4 +1,4 @@
-import { Alert, Button, Dialog, DialogContent } from "@mui/material";
+import { Button, Dialog, DialogContent } from "@mui/material";
 import {
   ArrowSwitchIcon,
   ArrowUpIcon,
@@ -16,6 +16,7 @@ import {
   useState,
 } from "react";
 
+import { Warnings } from "./DialogMsg";
 import { WebRTCContext } from "../../context/webRTC";
 import { workbookSheetNames } from "../../helper/sheetHelper";
 import {
@@ -53,28 +54,6 @@ function errorHandler(ev: RTCErrorEvent) {
 //   console.log("got a message");
 //   console.log(msg);
 // }
-
-export function Warnings(props: {
-  fileWarning: ReactElement[];
-  clearWarnings: React.Dispatch<React.SetStateAction<React.JSX.Element[]>>;
-}) {
-  const { fileWarning, clearWarnings } = props;
-
-  return fileWarning.length > 0 ? (
-    <Alert
-      severity="warning"
-      variant="outlined"
-      className="py-0 mb-1"
-      onClose={() => clearWarnings([])}
-    >
-      <div className="p-0 d-flex flex-column">
-        {fileWarning.map((el) => (
-          <span key={el.key}>{el}</span>
-        ))}
-      </div>
-    </Alert>
-  ) : null;
-}
 
 export function DataSetExport(props: DataSetExportProps) {
   const { close } = props;
