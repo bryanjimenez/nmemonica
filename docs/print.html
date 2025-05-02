@@ -1,0 +1,479 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>nmemonica Documentation</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="nmemonica/getting_started.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="nmemonica/navigation.html"><strong aria-hidden="true">1.1.</strong> Navigation</a></li><li class="chapter-item expanded "><a href="nmemonica/edit.html"><strong aria-hidden="true">1.2.</strong> Edit</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="nmemonica/datasets.html"><strong aria-hidden="true">1.2.1.</strong> Datasets</a></li><li class="chapter-item expanded "><a href="nmemonica/actions.html"><strong aria-hidden="true">1.2.2.</strong> Action Menu</a></li></ol></li><li class="chapter-item expanded "><a href="nmemonica/settings.html"><strong aria-hidden="true">1.3.</strong> Settings</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="nmemonica/settings/audio.html"><strong aria-hidden="true">1.3.1.</strong> Audio</a></li><li class="chapter-item expanded "><a href="nmemonica/settings/decks.html"><strong aria-hidden="true">1.3.2.</strong> Decks</a></li><li class="chapter-item expanded "><a href="nmemonica/settings/games.html"><strong aria-hidden="true">1.3.3.</strong> Games</a></li><li class="chapter-item expanded "><a href="nmemonica/settings/statistics.html"><strong aria-hidden="true">1.3.4.</strong> Statistics</a></li><li class="chapter-item expanded "><a href="nmemonica/settings/guidelines.html"><strong aria-hidden="true">1.3.5.</strong> Guidelines</a></li></ol></li></ol></li><li class="chapter-item expanded "><div><strong aria-hidden="true">2.</strong> Decks</div></li><li><ol class="section"><li class="chapter-item expanded "><a href="nmemonica/kanji.html"><strong aria-hidden="true">2.1.</strong> Kanji</a></li><li class="chapter-item expanded "><a href="nmemonica/vocabulary.html"><strong aria-hidden="true">2.2.</strong> Vocabulary</a></li><li class="chapter-item expanded "><a href="nmemonica/phrases.html"><strong aria-hidden="true">2.3.</strong> Phrases</a></li></ol></li><li class="chapter-item expanded "><div><strong aria-hidden="true">3.</strong> Games</div></li><li><ol class="section"><li class="chapter-item expanded "><a href="nmemonica/games/kana.html"><strong aria-hidden="true">3.1.</strong> Kana</a></li><li class="chapter-item expanded "><a href="nmemonica/games/opposites.html"><strong aria-hidden="true">3.2.</strong> Opposites</a></li><li class="chapter-item expanded "><a href="nmemonica/games/particles.html"><strong aria-hidden="true">3.3.</strong> Particles</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">nmemonica Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/bryanjimenez/nmemonica" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- <img width="200" src="https://raw.githubusercontent.com/bryanjimenez/nmemonica/gh-pages/maskable512.png"/> -->
+<h2 id="a-japanese---english-language-learning-app"><a class="header" href="#a-japanese---english-language-learning-app">A Japanese - English language learning app</a></h2>
+<p>As you learn Japanese <strong>Kanji</strong>, <strong>Vocabulary</strong> and <strong>Phrases</strong> you can use nmemonica to store your study material. The data you input is turned into decks and word games. </p>
+<h3 id="study-decks"><a class="header" href="#study-decks">Study Decks</a></h3>
+<p>Filter, sort and customize your study decks. Study using <strong>spaced repetition</strong> to study those difficult terms more frequently while encountering easier terms less often. Listen to pronunciations of phrases and vocabulary to help you remember.</p>
+<h3 id="word-games"><a class="header" href="#word-games">Word Games</a></h3>
+<p>Study Hiragana, Katakana and grammar particles with simple memory games.</p>
+<h3 id="your-data"><a class="header" href="#your-data">Your Data</a></h3>
+<p>No cloud or external service just your data in your device.
+Creating your study material is simple and organized using a spreadsheet-like interface. 
+Your data is stored as <strong>text file</strong> sheets that can be shared with any other browser enabled device (Laptop, Mobile, etc.)</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+<p>After loading the application for the first time and reading the <a href="nmemonica/./settings/guidelines.html">guidelines</a> you will likely want to add study material (Phrases, Vocabulary and Kanji). Most parts of the app depend on user created study material with the exception of the Kana/Hiragana/Katakana game. </p>
+<p>Study material (UGC<sup class="footnote-reference"><a href="#UGC">1</a></sup>) can be imported or entered directly. </p>
+<h3 id="entering-data"><a class="header" href="#entering-data">Entering Data</a></h3>
+<p>To begin entering data click the hamburger menu <img src="https://raw.githubusercontent.com/primer/octicons/main/icons/three-bars-16.svg" alt="Image" title="Menu Button" /> and then the <a href="nmemonica/./edit.html">Edit</a> icon. This will navigate you to the data entry/edit page where the Kanji, Vocabulary and Phrases are stored (in CSV<sup class="footnote-reference"><a href="#CSV">2</a></sup> format).</p>
+<h3 id="importing-data"><a class="header" href="#importing-data">Importing Data</a></h3>
+<p>See the <strong>Connection</strong> action in the <a href="nmemonica/./actions.html#connection">Action Menu</a> section.</p>
+<div class="footnote-definition" id="UGC"><sup class="footnote-definition-label">1</sup>
+<p>User Generated Content</p>
+</div>
+<div class="footnote-definition" id="CSV"><sup class="footnote-definition-label">2</sup>
+<p>Comma separated values</p>
+</div>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="navigation"><a class="header" href="#navigation">Navigation</a></h1>
+<p>The Navigation Menu is accessed by clicking the hamburger icon <img src="https://raw.githubusercontent.com/primer/octicons/main/icons/three-bars-16.svg" alt="Image" title="Menu Button" /> located at the top right of the app. The Navigation Menu displays the different areas of the app that can be reached by clicking their corresponding icon. Some areas are grouped together under one icon. The items under a group can be accessed by clicking on the caption under the group's icon. For example under the Kanji icon the caption will either display &quot;Kanji&quot; or &quot;Kanji Game&quot;.</p>
+<h2 id="menu-section-layout"><a class="header" href="#menu-section-layout">Menu Section Layout</a></h2>
+<div class="table-wrapper"><table><thead><tr><th></th><th></th><th></th></tr></thead><tbody>
+<tr><td>A</td><td>B</td><td>C</td></tr>
+<tr><td>D</td><td>E</td><td>F</td></tr>
+<tr><td></td><td>G</td><td></td></tr>
+</tbody></table>
+</div><br/>
+<div class="table-wrapper"><table><thead><tr><th>Group</th><th>Sections</th><th>Description</th></tr></thead><tbody>
+<tr><td>A</td><td><a href="nmemonica/./games/kana.html#kana-game">Kana Game</a><br/> Hiragana Game<br/> Katakana Game</td><td>Kana games. Match the sound (romaji) to the character.</td></tr>
+<tr><td>B</td><td><a href="nmemonica/./games/opposites.html#opposites-game">Opposites Game</a></td><td>Multiple choice game. Find the opposites.</td></tr>
+<tr><td>C</td><td><a href="nmemonica/./vocabulary.html#vocabulary">Vocabulary</a><br/> <a href="nmemonica/./phrases.html#phrases">Phrases</a></td><td>Study list of Vocabulary / Phrases.</td></tr>
+<tr><td>D</td><td><a href="nmemonica/./games/particles.html#particles-game">Particle Game</a></td><td>Multiple choice game. Choose the particle that makes the phrase grammatically correct.</td></tr>
+<tr><td>E</td><td><a href="nmemonica/./kanji.html#kanji">Kanji</a><br/> <a href="nmemonica/navigation.html#kanji-game">Kanji Game</a></td><td>Study list of Kanji and multiple choice Kanji game.</td></tr>
+<tr><td>F</td><td><a href="nmemonica/./settings.html#settings-page">Settings</a></td><td>Contains user settings, Regulatory and additional App information.</td></tr>
+<tr><td>G</td><td><a href="nmemonica/./edit.html#edit">Edit</a></td><td>Dataset entry/edit/import/export page (spreadsheet).</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="edit"><a class="header" href="#edit">Edit</a></h1>
+<p>URL: <code>/#/sheet</code></p>
+<p>Your study material in spreadsheet format. Data entry/edit page and <a href="nmemonica/./actions.html#dataset-action-menu">Dataset Action Menu</a>.</p>
+<div class="warning">
+<p>Datasets <strong>won't</strong> be saved <strong>until</strong> the save button is pressed<br />
+<strong>or</strong><br />
+after importing datasets from file or via peer-to-peer.</p>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="datasets"><a class="header" href="#datasets">Datasets</a></h1>
+<p>This page contains the Phrases, Vocabulary and Kanji datasets. The user can edit these to include the desired items to study. Datasets can be saved and shared as CSV<sup class="footnote-reference"><a href="#CSV">1</a></sup> files and searched <img src="https://raw.githubusercontent.com/primer/octicons/main/icons/search-16.svg" alt="Image" title="Search Button" />  using the corresponding buttons. </p>
+<p>The Dataset structure can be downloaded and data can be entered using a spread sheet software.</p>
+<p>Minimal <strong>spreadsheet formula knowledge</strong> is required to tag terms.<br />
+For example:</p>
+<ul>
+<li>How to start a formula statement in a cell (use the <code>=</code> symbol followed by your formula).</li>
+<li>How to call a formula with a cell's reference (<code>=CoolFormula(B3)</code>).</li>
+<li>How to concatenate a string inside a cell (<code>=&quot;first part&quot; &amp; &quot;second part&quot;</code>).</li>
+</ul>
+<blockquote>
+<p><strong>Note</strong></p>
+<ul>
+<li>To add a line break inside a cell use <code>\n</code> or multiple consecutive spaces.</li>
+<li>Inside a cell multiple tags need to be separated using a <code>;</code> or <code>\n</code> (line break)</li>
+<li>To generate a term's uid use the <code>md5</code> formula providing the cell ref to the Japanese pronunciation. For example: <code>=md5(A6)</code></li>
+</ul>
+</blockquote>
+<div class="footnote-definition" id="CSV"><sup class="footnote-definition-label">1</sup>
+<p>Comma separated values</p>
+</div>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="dataset-action-menu"><a class="header" href="#dataset-action-menu">Dataset Action Menu</a></h1>
+<p>In the Edit page the Dataset Action Menu <img src="https://raw.githubusercontent.com/primer/octicons/main/icons/gear-16.svg" alt="Image" title="Dataset Action Menu Button" /> opens a menu with sevaral actions.</p>
+<div class="table-wrapper"><table><thead><tr><th>Action</th><th>Description</th><th>Icon</th></tr></thead><tbody>
+<tr><td>Save Changes</td><td>Saves your changes</td><td><img src="https://raw.githubusercontent.com/primer/octicons/main/icons/database-24.svg" alt="Image" title="Save Button" /></td></tr>
+<tr><td>Import from File</td><td>Import Datasets or settings from file system</td><td><img src="https://raw.githubusercontent.com/primer/octicons/main/icons/file-binary-24.svg" alt="Image" title="File Button" /></td></tr>
+<tr><td>Export to File</td><td>Backup your Datasets and settings to the file system</td><td><img src="https://raw.githubusercontent.com/primer/octicons/main/icons/file-zip-24.svg" alt="Image" title="Export Button" /></td></tr>
+<tr><td>Connection</td><td>Share UGC<sup class="footnote-reference"><a href="#UGC">1</a></sup> with a peer (Import/Export)</td><td><img src="https://raw.githubusercontent.com/primer/octicons/main/icons/arrow-switch-24.svg" alt="Image" title="Connect Button" /></td></tr>
+</tbody></table>
+</div>
+<h2 id="connection"><a class="header" href="#connection">Connection</a></h2>
+<p>Users can share their UGC<sup class="footnote-reference"><a href="#UGC">1</a></sup> or backup to another device by linking the two devices. Selecting the <strong>Connection</strong> action and exchanging QR Codes with a peer (the receiving user) will temporarily link the devices. Once devices are linked UGC<sup class="footnote-reference"><a href="#UGC">1</a></sup> can be exchanged via a secure peer-to-peer WebRTC<sup class="footnote-reference"><a href="#WebRTC">2</a></sup> connection.</p>
+<div class="footnote-definition" id="UGC"><sup class="footnote-definition-label">1</sup>
+<p>User Generated Content</p>
+</div>
+<div class="footnote-definition" id="WebRTC"><sup class="footnote-definition-label">2</sup>
+<p>Web Real Time Connection <a href="https://webrtc.org">WebRTC</a></p>
+</div>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="settings-page"><a class="header" href="#settings-page">Settings Page</a></h1>
+<p>URL: <code>/#/settings</code></p>
+<p>Application and user settings will be found here.</p>
+<ul>
+<li>Application basic settings</li>
+<li>Game difficulty settings</li>
+<li>Study list filtering and sorting</li>
+<li>Usage Terms and Policies</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="audio-settings"><a class="header" href="#audio-settings">Audio Settings</a></h1>
+<p>Different available voice options can be set here.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="kanji-vocabulary-and-phrases-settings"><a class="header" href="#kanji-vocabulary-and-phrases-settings">Kanji, Vocabulary and Phrases Settings</a></h1>
+<p>Different available filtering, sorting, and other options can be set from here. Each deck has it's own independent settings section.</p>
+<h2 id="filter-by"><a class="header" href="#filter-by">Filter by</a></h2>
+<p>On the left side each deck's setting section has a list of Tags or Groups that the deck can be filtered by. Selecting no items will cancel any filtering and all terms will be displayed. Making a selection of Tags or Groups will filter and narrow the deck to only contain those within the selection.</p>
+<h2 id="sort-by"><a class="header" href="#sort-by">Sort by</a></h2>
+<p>On the top right side there is a list of available sorting options.</p>
+<ul>
+<li>Randomized</li>
+<li>Alphabetic (Japanese)</li>
+<li>Difficulty (adjust w/ slider)</li>
+<li>Viewed Date (oldest terms first)</li>
+<li>Recall Interval</li>
+</ul>
+<blockquote>
+<p><strong>Recall Interval</strong></p>
+<p>A <em>space repetition algorithm</em> based on the <em>difficulty</em> and <em>accuracy</em> which has been previously set for a term. The algorithm will calculate a recall value for each term in the set. Terms then will be sorted by that value. To set the maximum number of terms to be shown each day use the <em>Max review items</em> option.</p>
+<p>When this sorting option is chosen items that are <strong>due today</strong><sup class="footnote-reference"><a href="#recallint">1</a></sup> will be selected from the set.</p>
+<p>During a study session the user can do the following to a term</p>
+<ul>
+<li>mark as remembered by giving a high <em>accuracy</em> (blue)</li>
+<li>mark as not remembered with a low <em>accuracy</em> (red)</li>
+<li>change the <em>difficulty</em> in recalling the term</li>
+<li>remove (<img src="https://raw.githubusercontent.com/primer/octicons/main/icons/trash-16.svg" alt="Image" title="Remove from Recall Interval" />) the term from the Recall Interval set</li>
+</ul>
+<p>After a study session or any other time viewing terms any term can be added to the set by setting a <em>difficulty</em> and an <em>accuracy</em>.</p>
+<p><em>Additional Options</em>:<br />
+<strong>Max Review Items</strong> - Cutoff value for what is <strong>due today</strong><sup class="footnote-reference"><a href="#recallint">1</a></sup>.</p>
+</blockquote>
+<h2 id="difficulty-filter"><a class="header" href="#difficulty-filter">Difficulty Filter</a></h2>
+<p>Filter terms by desired difficulty value. Set the desired value using the slider.</p>
+<h2 id="verb-options"><a class="header" href="#verb-options">Verb Options</a></h2>
+<p><em>Options relevant only for Vocabulary terms</em>.</p>
+<p><strong>Auto Verb View</strong> - Display available verb forms when Vocabulary term is verb.<br />
+<strong>Verb Forms</strong> - Select desired verb forms to be displayed and their order.<br />
+<strong>Verb Forms Column Layout</strong> - Select desired split point for verb forms.</p>
+<div class="footnote-definition" id="recallint"><sup class="footnote-definition-label">1</sup>
+<p>Due today: based on the calculated recall value and maximum review item number.</p>
+</div>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="opposites-kana-kanji-particles-settings"><a class="header" href="#opposites-kana-kanji-particles-settings">Opposites, Kana, Kanji, Particles Settings</a></h1>
+<p>Different available game options can be set from here. Each game has it's own separate settings page.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="study-statistics"><a class="header" href="#study-statistics">Study Statistics</a></h1>
+<h2 id="goals"><a class="header" href="#goals">Goals</a></h2>
+<p>Users can set daily goals for each deck. When goals are met during the study session a notification will be displayed.</p>
+<h2 id="metrics"><a class="header" href="#metrics">Metrics</a></h2>
+<p>Users can keep track of their daily study habits. </p>
+<blockquote>
+<p><strong>Recall</strong><br />
+<code>(0,1)</code>: Not yet pending<br />
+<code>[1,2)</code>: Pending<br />
+<code>2.0</code>: Overdue<br />
+<code>-1</code>:  Not yet viewed</p>
+</blockquote>
+<blockquote>
+<p><strong>Viewed</strong><br />
+How many viewed terms per day.</p>
+</blockquote>
+<blockquote>
+<p><strong>Last View</strong><br />
+Days since last seen and not yet seen (new) counts. </p>
+</blockquote>
+<blockquote>
+<p><strong>Difficulty</strong><br />
+Difficulty broken down by ranges (0-10, 11-20, etc..)</p>
+</blockquote>
+<blockquote>
+<p><strong>Dataset (Counts)</strong><br />
+Total datasets for each deck.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="guidelines"><a class="header" href="#guidelines">Guidelines</a></h1>
+<p>Terms and Conditions<br />
+URL: <code>/#/terms/</code></p>
+<p>Privacy Policy<br />
+URL: <code>/#/privacy/</code></p>
+<p>Cookies<br />
+URL: <code>/#/cookies/</code>  </p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="kanji"><a class="header" href="#kanji">Kanji</a></h1>
+<p>URL: <code>/#/kanji</code></p>
+<p>This page is similar to the vocabulary and phrases. The list of Kanji each has (if available) a kunyomi and onyomi reading, the symbol's meaning and example usage.</p>
+<p>Kanji can be tagged with the basic categories or special indicators (indicated here by highlighted text under the Tags column):</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th>Kanji</th><th>English</th><th>Tags</th><th><em>(Explanation)</em></th></tr></thead><tbody>
+<tr><td><strong>P</strong>honetic Kanji<br/><code>P:kanji+sounds</code><br/><code>p:kanji+sounds</code></td><td>訪</td><td>visit</td><td>{&quot;tags&quot;:[&quot;<code>p:方+ほう、ぼう</code>&quot;]}</td><td><em>We indicate that <strong>訪</strong> contains the phonetic radical <strong>方</strong> which may sound like <strong>ほう</strong> or <strong>ぼう</strong>.</em></td></tr>
+<tr><td><strong>E</strong>xample Kanji<br/><code>E:kanji,kanji</code><br/><code>e:kanji,kanji</code></td><td>艹</td><td>flowers</td><td>{&quot;tags&quot;:[&quot;<code>e:花,茶</code>&quot;]}</td><td><em>We indicate that radical <strong>艹</strong> can be found in <strong>花</strong> and <strong>茶</strong>.</em></td></tr>
+<tr><td><strong>S</strong>imilar Kanji<br/><code>S:kanji,kanji</code><br/><code>s:kanji,kanji</code></td><td>斤</td><td>axe</td><td>{&quot;tags&quot;:[&quot;<code>s:反,友</code>&quot;]}</td><td><em>We indicate that kanji <strong>斤</strong> is similar to <strong>反</strong> and <strong>友</strong>.</em></td></tr>
+<tr><td><strong>Stroke</strong> Number</td><td>六</td><td>six</td><td>{&quot;tags&quot;:[], &quot;<code>stroke</code>&quot;:<code>4</code>}</td><td><em>We indicate that <strong>六</strong> is a four stroke kanji</em></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="vocabulary"><a class="header" href="#vocabulary">Vocabulary</a></h1>
+<p>URL: <code>/#/vocabulary</code></p>
+<p>This page will display a list of pairs of vocabulary words (English + Japanese) as if seen on a deck of cards. The order and filtering of the list can be configured from the settings page (under Vocabulary). In touch screen devices swiping horizontally will move through out the deck and vertically will play the pronunciation of the word.</p>
+<blockquote>
+<p><strong>Note</strong></p>
+<p>Vocabulary words can be tagged with basic categories or special indicators (indicated below by highlighted text under the Tags column).<br />
+Furigana can be added to Vocabulary words in Japanese by including the pronunciation followed by a new line then the kanji characters. To add a line break inside a cell type <code>\n</code>. </p>
+</blockquote>
+<div class="table-wrapper"><table><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th></th></tr></thead><tbody>
+<tr><td></td><td><strong>Japanese</strong></td><td><strong>English</strong></td><td><strong>Tags</strong></td><td><em>(Explanation)</em></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A6</strong></td><td>にんげん<code>\n</code><br/>人間</td><td>Human</td><td>{&quot;tags&quot;:[<code>&quot;inv:&quot; &amp; md5(A8)</code>&quot;]}</td><td><em>We tagged Human and Monster inverse words.</em></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A8</strong></td><td>ばけもの<code>\n</code><br/>化け物</td><td>Monster</td><td>{&quot;tags&quot;:[<code>&quot;inv:&quot; &amp; md5(A6)</code>&quot;]}</td><td></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A12</strong></td><td>こわい<code>\n</code><br/>怖い</td><td>Scary, Frightening</td><td>Appearance; Beginner-Words;</td><td><em>Scary is tagged with some extra categories.</em></td></tr>
+<tr><td><strong>A13</strong></td><td>きれい<code>\n</code><br/>綺麗</td><td>Beautiful, Clean</td><td>{&quot;tags&quot;:[&quot;<code>na-adj</code>&quot;]}</td><td><em>We tagged Beautiful a na-adjective.</em></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A25</strong></td><td>おわる<code>\n</code><br/>終わる</td><td>to be finished</td><td>{&quot;tags&quot;:[<code>&quot;intr:&quot; &amp; md5(A26)</code>&quot;]}</td><td><em>We tagged <strong>終わる</strong> intransitive with <strong>終える</strong> as it's transitive pair.</em></td></tr>
+<tr><td><strong>A26</strong></td><td>おえる<code>\n</code><br/>終える</td><td>to finish</td><td></td><td></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A25</strong></td><td>おれる<code>\n</code><br/>折れる</td><td>to snap, fracture</td><td>{&quot;tags&quot;:[&quot;<code>intr</code>&quot;]}</td><td><em>We tagged <strong>折れる</strong> an intransitive verb.</em></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A30</strong></td><td>おまえ<code>\n</code><br/>お前</td><td>you</td><td>{&quot;tags&quot;:[&quot;<code>slang</code>&quot;]}</td><td><em>We tagged <strong>お前</strong> as a slang term.</em></td></tr>
+<tr><td><strong>A31</strong></td><td>わたくし<code>\n</code><br/>私</td><td>example</td><td>{&quot;tags&quot;:[&quot;<code>keigo</code>&quot;]}</td><td><em>We tagged <strong>私</strong> as a keigo term.</em></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="phrases"><a class="header" href="#phrases">Phrases</a></h1>
+<p>URL: <code>/#/phrases</code></p>
+<p>This page is nearly identical to the vocabulary page with the exception that it will display phrases. Additionally Phrases can be tagged with the following special indicators:</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th></th></tr></thead><tbody>
+<tr><td></td><td><strong>Japanese</strong></td><td><strong>English</strong></td><td><strong>Tags</strong></td><td><em>(Explanation)</em></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A25</strong></td><td>...</td><td>...</td><td>{&quot;tags&quot;:[&quot;<code>keigo</code>&quot;]}</td><td><em>We tagged ... as Keigo.</em></td></tr>
+<tr><td><strong>A30</strong></td><td>...</td><td>...</td><td>{&quot;tags&quot;:[&quot;<code>formal</code>&quot;]}</td><td><em>We tagged ... as Formal.</em></td></tr>
+<tr><td><strong>A31</strong></td><td>...</td><td>...</td><td>{&quot;tags&quot;:[&quot;<code>polite</code>&quot;]}</td><td><em>We tagged ... as Polite.</em></td></tr>
+<tr><td><strong>A32</strong></td><td>...</td><td>...</td><td>{&quot;tags&quot;:[&quot;<code>passive</code>&quot;]}</td><td><em>We tagged ... as Passive.</em></td></tr>
+<tr><td><strong>A33</strong></td><td>...</td><td>...</td><td>{&quot;tags&quot;:[&quot;<code>colloquial</code>&quot;]}</td><td><em>We tagged ... as Colloquial.</em></td></tr>
+<tr><td><strong>A34</strong></td><td>...</td><td>...</td><td>{&quot;tags&quot;:[&quot;<code>derrogative</code>&quot;]}</td><td><em>We tagged ... as Derrogative.</em></td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p><strong>Note</strong></p>
+<p>Phrases can be tagged with basic categories or special indicators. </p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="kana-game"><a class="header" href="#kana-game">Kana Game</a></h1>
+<p>URL: <code>/#/kana</code></p>
+<p>This game will display a character (kana) or the corresponding pronunciation and the goal is to correctly match the pronunciation and the character. There are varying levels of difficulty (more choices) options for which to play depending on the configuration in the settings page (under Kana Game).</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="opposites-game"><a class="header" href="#opposites-game">Opposites Game</a></h1>
+<p>URL: <code>/#/opposites</code></p>
+<p>This is a multiple choice game. A term is displayed and several options given. The goal is to choose the term that is opposite from the options.</p>
+<p>Data for this game comes from the Vocabulary dataset. To add additional game entries in the Vocabulary dataset under the Opposites column add the uid of the term that is opposite word to the currently selected term.</p>
+<blockquote>
+<p><strong>Note</strong></p>
+<p>The term's uid is generated using the <code>md5</code> formula.</p>
+</blockquote>
+<p>For example:</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th>Japanese</th><th>English</th><th>Opposites</th><th><em>(Explanation)</em></th></tr></thead><tbody>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A6</strong></td><td>にんげん<code>\n</code><br/>人間</td><td>Human</td><td><code>=md5(A8)</code></td><td><em>We marked Human and Monster as a pair to be added to the game.</em></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A8</strong></td><td>ばけもの<code>\n</code><br/>化け物</td><td>Monster</td><td><code>=md5(A6)</code></td><td></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="particles-game"><a class="header" href="#particles-game">Particles Game</a></h1>
+<p>URL: <code>/#/particles</code></p>
+<p>This game is another multiple choice game. The goal of the game is to choose the correct particle that makes the phrase grammatically correct.</p>
+<p>To include phrases in the game, tag the phrase indicating the particles wanted to be tested.</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th>Japanese</th><th>English</th><th>Tags</th><th><em>(Explanation)</em></th></tr></thead><tbody>
+<tr><td><strong>A6</strong></td><td>やさい<strong>は</strong>すき<code>\n</code><br/>野菜<strong>は</strong>好き</td><td>I like vegetables</td><td>{&quot;tags&quot;:[&quot;<code>p:は</code>&quot;]}</td><td><em>We want the <strong>は</strong> particle to be included in the game.</em></td></tr>
+<tr><td><strong>A7</strong></td><td>くだもの<strong>は</strong>すき<code>\n</code>果物<strong>は</strong>好き</td><td>I like fruits</td><td>{&quot;tags&quot;:[&quot;<code>P:は</code>&quot;]}</td><td><em>The CasE of the tag's identifier is not important.</em></td></tr>
+<tr><td>...</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><strong>A10</strong></td><td>かんぺき<strong>が</strong>もの<strong>は</strong>いない<code>\n</code>,br/&gt;完璧<strong>が</strong>もの<strong>は</strong>いない</td><td>Nothing is perfect</td><td>{&quot;tags&quot;:[&quot;<code>p:は,が</code>&quot;]}</td><td><em>We want <strong>both</strong> the <strong>は</strong> and <strong>が</strong> particles to be included in the game.</em></td></tr>
+<tr><td><strong>A11</strong></td><td>にわ<strong>には</strong>にわにわとりがいる<code>\n</code><br/>庭<strong>には</strong>二羽鶏がいる</td><td>There are two chickens in the garden</td><td>{&quot;tags&quot;:[&quot;<code>p:には</code>&quot;]}</td><td><em>We want the <strong>には</strong> particle to be included in the game.</em></td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>
