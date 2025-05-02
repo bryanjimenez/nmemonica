@@ -1,3 +1,5 @@
+import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   DatabaseIcon,
   DiamondIcon,
@@ -5,15 +7,13 @@ import {
   XIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
   type SyncDataFile,
   dataTransferAggregator,
-  parseCsvToSheet,
 } from "../../helper/transferHelper";
-import { properCase } from "../Games/KanjiGame";
 
 interface DataSelectFromCacheProps {
   data: SyncDataFile[];
@@ -24,27 +24,31 @@ export function DataSelectFromCache(props: DataSelectFromCacheProps) {
   const { updateDataHandler, data } = props;
 
   const [available, setAvailable] = useState<string[]>([]);
-  const [rows, setRows] = useState<Partial<Record<string, number>>>({});
+  const [rows, setRows] = useState<Partial<Record<string, string>>>({});
+
+  const dataLen = useRef(data.length);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void dataTransferAggregator().then((files) => {
-      files.forEach((fileItem) => {
-        const dot = fileItem.fileName.indexOf(".");
-        const name = fileItem.fileName
-          .slice(0, dot > -1 ? dot : undefined)
-          .toLowerCase();
-        const prettyName = properCase(name);
+    // TODO: compare what is in data vs what needs estimates
+    if (dataLen.current > 0) {
+      setLoading(false);
+      return;
+    }
 
-        // if user clears out the calc rows gets wiped (1st render calc)
-        if (Object.keys(workbookSheetNames).includes(name)) {
-          void parseCsvToSheet(fileItem.file, prettyName).then((sheet) => {
-            setRows((prev) => ({ ...prev, [name]: sheet.rows.len }));
-          });
-        }
+    void dataTransferAggregator()
+      .then((files) => {
+        files.forEach((fileItem) => {
+          const dot = fileItem.fileName.indexOf(".");
+          const name = fileItem.fileName
+            .slice(0, dot > -1 ? dot : undefined)
+            .toLowerCase();
 
-        setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
-      });
-    });
+          setRows((prev) => ({ ...prev, [name]: fileItem.size }));
+          setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
+        });
+      })
+      .then(() => setLoading(false));
   }, []);
 
   const addRemoveItemCB = useCallback(
@@ -119,6 +123,16 @@ export function DataSelectFromCache(props: DataSelectFromCacheProps) {
 
   return (
     <div className="text-center m-0 mb-1">
+      {loading && (
+        <FontAwesomeIcon
+          className="position-absolute top-50 end-50 opacity-50"
+          aria-labelledby="processing"
+          icon={faCircleNotch}
+          spin={true}
+          size="2x"
+        />
+      )}
+
       <div
         className={classNames({
           "d-flex flex-column border rounded px-3": true,
