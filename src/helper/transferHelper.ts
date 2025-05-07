@@ -451,8 +451,18 @@ export function dataTransferAggregator(
   });
 }
 
-export function downloadFileHandler(files: SyncDataFile[]) {
-  files.forEach(({ fileName, file: text }) => {
+// TODO: should zip and include settings?
+export async function downloadFileHandler(fileObj: SyncDataFile[]) {
+  const { errors: metaErrors } = parseSettingsAndProgress(fileObj);
+  const { errors: dataErrors } = await parseWorkbook(fileObj);
+
+  let errors = [...metaErrors, ...dataErrors];
+
+  if (errors.length > 0) {
+    return Promise.resolve(errors);
+  }
+
+  fileObj.forEach(({ fileName, file: text }) => {
     const file = new Blob([text], {
       type: "application/plaintext; charset=utf-8",
     });
@@ -476,5 +486,5 @@ export function downloadFileHandler(files: SyncDataFile[]) {
     }, 0);
   });
 
-  return Promise.resolve();
+  return Promise.resolve(undefined);
 }

@@ -301,6 +301,9 @@ export default function Sheet() {
     };
   }, [dispatch, resetSearchCB, workbookImported]);
 
+  /**
+   * Save workbook to app
+   */
   const saveSheetHandlerCB = useCallback(() => {
     if (wbRef.current === null) {
       throw new Error("Expected workbook");
@@ -330,17 +333,79 @@ export default function Sheet() {
           ({ key, msg } = buildMsgCSVError(activeSheetName, exception));
         }
 
-        setWarnings([<span key={key}>{msg}</span>]);
+        setWarnings((prev) => [...prev, <span key={key}>{msg}</span>]);
       });
   }, [dispatch]);
 
   /**
-   * Export data, settings, and progress to file system
+   * Imports workbook, settings, and progress to app
+   */
+  const importDataHandlerCB = useCallback(
+    async (fileObj: SyncDataFile[]) => {
+      const {
+        settings,
+        progress,
+        errors: metaErrors,
+      } = parseSettingsAndProgress(fileObj);
+      const { workbook: dataObj, errors: dataErrors } =
+        await parseWorkbook(fileObj);
+      const workbook = dataObj.length === 0 ? undefined : dataObj;
+
+      let errors = [...metaErrors, ...dataErrors];
+
+      if (errors.length > 0) {
+        // provide errors to other displayed component
+        return Promise.resolve(errors);
+      }
+
+      let importCompleteP: Promise<unknown>[] = [];
+      if (settings && Object.keys(settings).length > 0) {
+        // write to device's local storage
+        void setUserSetting(settings);
+
+        // initialize app setttings from local storage
+        const settingsP = dispatch(appSettingsInitialized());
+
+        importCompleteP = [...importCompleteP, settingsP];
+      }
+      if (progress !== undefined && Object.keys(progress).length > 0) {
+        // write to device's local storage
+        const progressP = setStudyProgress(progress);
+
+        importCompleteP = [...importCompleteP, progressP];
+      }
+      if (workbook && workbook.length > 0) {
+        const workbookP = dispatch(importWorkbook(workbook))
+          .unwrap()
+          .then(() => {
+            // reload workbook (update useEffect)
+            setWorkbookImported(Date.now());
+          });
+
+        importCompleteP = [...importCompleteP, workbookP];
+      }
+
+      return Promise.all(importCompleteP).then(() =>
+        Promise.resolve(undefined)
+      );
+    },
+    [dispatch]
+  );
+
+  /**
+   * Export workbook, settings, and progress to file system
    */
   const exportToFileHandlerCB = useCallback(() => {
-    // TODO: should zip and include settings?
-
-    void dataTransferAggregator().then(downloadFileHandler);
+    void dataTransferAggregator()
+      .then(downloadFileHandler)
+      .then((result) => {
+        if (Array.isArray(result)) {
+          result.forEach((exception) => {
+            const { key, msg } = exception.cause;
+            setWarnings((prev) => [...prev, <span key={key}>{msg}</span>]);
+          });
+        }
+      });
   }, []);
 
   const doSearchCB = useCallback(() => {
@@ -479,61 +544,6 @@ export default function Sheet() {
   const openSignalingCB = useCallback(() => {
     setDataAction("signaling");
   }, []);
-
-  /**
-   * Imports datasets and settings to app
-   */
-  const importDataHandlerCB = useCallback(
-    async (fileObj: SyncDataFile[]) => {
-      const {
-        settings,
-        progress,
-        errors: metaErrors,
-      } = parseSettingsAndProgress(fileObj);
-      const { workbook: dataObj, errors: dataErrors } =
-        await parseWorkbook(fileObj);
-      const workbook = dataObj.length === 0 ? undefined : dataObj;
-
-      let errors = [...metaErrors, ...dataErrors];
-
-      if (errors.length > 0) {
-        // provide errors to other displayed component
-        return Promise.resolve(errors);
-      }
-
-      let importCompleteP: Promise<unknown>[] = [];
-      if (settings && Object.keys(settings).length > 0) {
-        // write to device's local storage
-        void setUserSetting(settings);
-
-        // initialize app setttings from local storage
-        const settingsP = dispatch(appSettingsInitialized());
-
-        importCompleteP = [...importCompleteP, settingsP];
-      }
-      if (progress !== undefined && Object.keys(progress).length > 0) {
-        // write to device's local storage
-        const progressP = setStudyProgress(progress);
-
-        importCompleteP = [...importCompleteP, progressP];
-      }
-      if (workbook && workbook.length > 0) {
-        const workbookP = dispatch(importWorkbook(workbook))
-          .unwrap()
-          .then(() => {
-            // reload workbook (update useEffect)
-            setWorkbookImported(Date.now());
-          });
-
-        importCompleteP = [...importCompleteP, workbookP];
-      }
-
-      return Promise.all(importCompleteP).then(() =>
-        Promise.resolve(undefined)
-      );
-    },
-    [dispatch]
-  );
 
   return (
     <>

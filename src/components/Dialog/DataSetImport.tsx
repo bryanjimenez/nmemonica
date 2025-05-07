@@ -82,24 +82,24 @@ export function DataSetImport(props: DataSetImportProps) {
 
   const [status, setStatus] = useState<"successStatus" | "dataError">();
 
-  const [warning, setWarning] = useState<ReactElement[]>([]);
+  const [warnings, setWarnings] = useState<ReactElement[]>([]);
   const addWarning = useCallback(
     (warnKey?: string, warnMsg?: string) => {
       if (warnKey === undefined && warnMsg === undefined) {
-        setWarning([]);
+        setWarnings([]);
         return;
       }
 
-      if (warning.find((w) => w.key === warnKey) === undefined) {
-        setWarning((w) => [...w, <span key={warnKey}>{warnMsg}</span>]);
+      if (warnings.find((w) => w.key === warnKey) === undefined) {
+        setWarnings((w) => [...w, <span key={warnKey}>{warnMsg}</span>]);
       }
     },
-    [warning, setWarning]
+    [warnings, setWarnings]
   );
 
   const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
-    setWarning([]);
+    setWarnings([]);
     setMsgBuffer(null);
     closeWebRTC();
     close();
@@ -143,15 +143,6 @@ export function DataSetImport(props: DataSetImportProps) {
     [
       /** only on mount dismount */
     ]
-  );
-
-  const saveToFileHandlerWStatus = useCallback(
-    (files: SyncDataFile[]) =>
-      downloadFileHandler(files).then(() => {
-        setStatus("successStatus");
-        setTimeout(closeHandlerCB, 1000);
-      }),
-    [setStatus, closeHandlerCB]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -220,34 +211,44 @@ export function DataSetImport(props: DataSetImportProps) {
     const fileObj = parseMsgIntoPlainFilesCB(msgBuf);
 
     if (destination === "save") {
-      // TODO: do validataion here. on catch display warns
-      void saveToFileHandlerWStatus(fileObj);
-      return;
-    }
-
-    void importHandler(fileObj).then((result) => {
-      if (!Array.isArray(result)) {
-        setStatus("successStatus");
-        setTimeout(closeHandlerCB, 1000);
-      } else {
-        const errors = result;
-        errors.forEach((error) => {
-          const { key, msg } = error.cause;
+      void downloadFileHandler(fileObj).then((result) => {
+        if (!Array.isArray(result)) {
+          setStatus("successStatus");
+          setTimeout(closeHandlerCB, 1000);
+        } else {
           setStatus("dataError");
-          addWarning(key, msg);
-        });
-      }
+          result.forEach((exception) => {
+            const { key, msg } = exception.cause;
+            addWarning(key, msg);
+          });
+        }
+      });
+    } else {
+      void importHandler(fileObj).then((result) => {
+        if (!Array.isArray(result)) {
+          setStatus("successStatus");
+          setTimeout(closeHandlerCB, 1000);
+        } else {
+          const errors = result;
+          errors.forEach((error) => {
+            const { key, msg } = error.cause;
+            setStatus("dataError");
+            addWarning(key, msg);
+          });
+        }
 
-      return result;
-    });
+        return result;
+      });
+    }
   }, [
+    msgBuffer,
+    parseMsgIntoPlainFilesCB,
+
     destination,
-    saveToFileHandlerWStatus,
+    importHandler,
+
     setStatus,
     addWarning,
-    parseMsgIntoPlainFilesCB,
-    importHandler,
-    msgBuffer,
     closeHandlerCB,
   ]);
 
@@ -302,7 +303,7 @@ export function DataSetImport(props: DataSetImportProps) {
           </div>
 
           <FormControl className="mt-2 w-100">
-            <Warnings fileWarning={warning} clearWarnings={setWarning} />
+            <Warnings fileWarning={warnings} />
             {msgBuffer !== null && (
               <div className="fw-bold mb-2">{`Data Received: ~${toMemorySize(msgBuffer.byteLength)}`}</div>
             )}
