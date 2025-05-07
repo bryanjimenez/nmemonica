@@ -156,7 +156,9 @@ export function buildMsgCSVError(fileName: string, exception: Error) {
 
     key = `${fileName}-${errData.code}`;
     msg = `${fileName} contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
-  } else if (errData.code === CSVErrorCause.MissingRequiredHeader) {
+  } else if (
+    Object.values(CSVErrorCause).includes(errData.code as CSVErrorCause)
+  ) {
     // missing required header
     key = `${fileName}-${errData.code}`;
     msg = exception.message;

@@ -80,12 +80,13 @@ export const saveSheet = createAsyncThunk(
   (
     arg: {
       activeSheetName: string;
-      // sheet: FilledSheetData;
       workbook: SheetData[];
     },
     thunkAPI
   ) => {
     const { activeSheetName, workbook } = arg;
+    const trimmed = workbook.map((w) => removeLastRowIfBlank(w));
+
     const sheet = workbook.find((s) => s.name === activeSheetName);
     if (!sheet || !isFilledSheetData(sheet)) {
       throw new Error("No Worksheet");
@@ -138,7 +139,7 @@ export const saveSheet = createAsyncThunk(
       .then((db) =>
         putIDBItem(
           { db, store: IDBStores.WORKBOOK },
-          { key: "0", workbook: workbook }
+          { key: "0", workbook: trimmed }
         )
       )
       .then(() => {

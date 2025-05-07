@@ -12,29 +12,36 @@ import {
   SearchIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
 import { WebRTCProvider } from "../../context/webRTC";
-import { validateCSVSheet } from "../../helper/csvHelper";
+import { buildMsgCSVError, validateCSVSheet } from "../../helper/csvHelper";
 import { furiganaParse } from "../../helper/JapaneseText";
 import { prettyHeaders } from "../../helper/jsonHelper";
 import {
   dataProxyToSheet,
   getActiveSheet,
   getWorkbookFromIndexDB,
-  removeLastRowIfBlank,
   searchInSheet,
   sheetAddExtraRow,
   touchScreenCheck,
   validateInSheet,
   workbookSheetNames,
+  xObjectToCsvText,
 } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   dataTransferAggregator,
   downloadFileHandler,
+  parseCsvToSheet,
 } from "../../helper/transferHelper";
 import {
   setStudyProgress,
@@ -303,30 +310,30 @@ export default function Sheet() {
     }
 
     const activeSheetName = getActiveSheet(wbRef.current);
-    const w = wbRef.current.exportValues();
-    const trimmed = w.map((w) => removeLastRowIfBlank(w));
+    const workbook = wbRef.current.exportValues();
 
-    void dispatch(
-      saveSheet({
-        activeSheetName,
-        workbook: trimmed,
+    // validation
+    xObjectToCsvText(workbook)
+      .then((result) =>
+        Promise.all(result.map(({ text, name }) => parseCsvToSheet(text, name)))
+      )
+      .then(() => {
+        void dispatch(
+          saveSheet({
+            activeSheetName,
+            workbook,
+          })
+        );
       })
-    )
-      .unwrap()
       .catch((exception) => {
-        if (
-          typeof exception === "object" &&
-          exception !== null &&
-          "name" in exception &&
-          "message" in exception &&
-          typeof exception?.name === "string" &&
-          exception.name === "Error"
-        ) {
-          setWarnings((prev) => [
-            ...prev,
-            <span key={exception.message}>{exception.message}</span>,
-          ]);
+        let key = `${activeSheetName}-parse`;
+        let msg = `Failed to parse (${activeSheetName})`;
+
+        if (exception instanceof Error && "cause" in exception) {
+          ({ key, msg } = buildMsgCSVError(activeSheetName, exception));
         }
+
+        setWarnings([<span key={key}>{msg}</span>]);
       });
   }, [dispatch]);
 
@@ -550,19 +557,14 @@ export default function Sheet() {
         )}
         <DialogMsg
           open={warnings.length > 0}
-          title={""}
           onClose={clearWarningsHandler}
           ariaLabelledby="warning"
         >
           <div className="pb-2">
             <span>Could not continue</span>
           </div>
-          <Warnings
-            fileWarning={warnings}
-            clearWarnings={clearWarningsHandler}
-          />
+          <Warnings fileWarning={warnings} />
         </DialogMsg>
-
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
             <Badge

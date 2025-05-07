@@ -177,6 +177,11 @@ export function parseSettingsAndProgress<
   );
 }
 
+/**
+ * Parse a CSV file to sheet object
+ *
+ * **Data validation** occurs here
+ */
 export function parseCsvToSheet(text: string, sheetName: string) {
   // replace unsual, but valid symbols with common ones
   text = text.replaceAll(unusualApostrophe, "'");
@@ -205,6 +210,11 @@ export function parseCsvToSheet(text: string, sheetName: string) {
   });
 }
 
+/**
+ * Parse a JSON file to user settings object
+ *
+ * **Data validation** occurs here
+ */
 export function parseJSONToUserSettings(jsonText: string) {
   try {
     const invalidInput = validateJSONSettings(jsonText);
@@ -242,6 +252,11 @@ export function parseJSONToUserSettings(jsonText: string) {
   }
 }
 
+/**
+ * Parse a JSON file to study progress object
+ *
+ * **Data validation** occurs here
+ */
 export function parseJSONToStudyProgress(jsonText: string) {
   try {
     const invalidInput = validateJSONSettings(jsonText);
