@@ -411,3 +411,31 @@ export function dataTransferAggregator(
     }
   });
 }
+
+export function downloadFileHandler(files: SyncDataFile[]) {
+  files.forEach(({ fileName, file: text }) => {
+    const file = new Blob([text], {
+      type: "application/plaintext; charset=utf-8",
+    });
+    // const file = new Blob(['csv.file'],{type:"octet/stream"})
+    // const f = new File([file], './file.csv', {type:"octet/stream"})
+
+    const dlUrl = URL.createObjectURL(file);
+    // window.location.assign(dlUrl)
+
+    // URL.revokeObjectURL()
+    // browser.downloads.download(URL.createObjectURL(file))
+    const a = document.createElement("a");
+    a.download = fileName;
+    a.href = dlUrl;
+    // document.body.appendChild(a)
+    a.click();
+
+    setTimeout(() => {
+      // document.body.removeChild(a)
+      URL.revokeObjectURL(dlUrl);
+    }, 0);
+  });
+
+  return Promise.resolve();
+}

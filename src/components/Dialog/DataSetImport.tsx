@@ -27,6 +27,7 @@ import { decryptAES256GCM } from "../../helper/cryptoHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   type SyncDataFile,
+  downloadFileHandler,
   parseSettingsAndProgress,
   parseSheet,
 } from "../../helper/transferHelper";
@@ -46,7 +47,6 @@ export interface CryptoMessage {
 
 interface DataSetImportProps extends DataSetSharingAction {
   close: () => void;
-  downloadHandler: (files: SyncDataFile[]) => Promise<void>;
   importHandler: (
     workbook?: FilledSheetData[],
     settings?: Partial<AppSettingState>,
@@ -66,7 +66,7 @@ function errorHandler(ev: RTCErrorEvent) {
 }
 
 export function DataSetImport(props: DataSetImportProps) {
-  const { close, importHandler, downloadHandler } = props;
+  const { close, importHandler } = props;
 
   const { peer, rtcChannel, direction, closeWebRTC } =
     useContext(WebRTCContext);
@@ -147,11 +147,11 @@ export function DataSetImport(props: DataSetImportProps) {
 
   const saveToFileHandlerWStatus = useCallback(
     (files: SyncDataFile[]) =>
-      downloadHandler(files).then(() => {
+      downloadFileHandler(files).then(() => {
         setStatus("successStatus");
         setTimeout(closeHandlerCB, 1000);
       }),
-    [downloadHandler, setStatus, closeHandlerCB]
+    [setStatus, closeHandlerCB]
   );
 
   const importToAppHandlerCB = useCallback(

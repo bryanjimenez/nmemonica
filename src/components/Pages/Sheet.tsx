@@ -33,8 +33,8 @@ import {
 } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
-  SyncDataFile,
   dataTransferAggregator,
+  downloadFileHandler,
 } from "../../helper/transferHelper";
 import {
   setStudyProgress,
@@ -330,42 +330,14 @@ export default function Sheet() {
       });
   }, [dispatch]);
 
-  const downloadFileHandlerCB = useCallback((files: SyncDataFile[]) => {
-    files.forEach(({ fileName, file: text }) => {
-      const file = new Blob([text], {
-        type: "application/plaintext; charset=utf-8",
-      });
-      // const file = new Blob(['csv.file'],{type:"octet/stream"})
-      // const f = new File([file], './file.csv', {type:"octet/stream"})
-
-      const dlUrl = URL.createObjectURL(file);
-      // window.location.assign(dlUrl)
-
-      // URL.revokeObjectURL()
-      // browser.downloads.download(URL.createObjectURL(file))
-      const a = document.createElement("a");
-      a.download = fileName;
-      a.href = dlUrl;
-      // document.body.appendChild(a)
-      a.click();
-
-      setTimeout(() => {
-        // document.body.removeChild(a)
-        URL.revokeObjectURL(dlUrl);
-      }, 0);
-    });
-
-    return Promise.resolve();
-  }, []);
-
   /**
    * Export data, settings, and progress to file system
    */
   const exportToFileHandlerCB = useCallback(() => {
     // TODO: should zip and include settings?
 
-    void dataTransferAggregator().then(downloadFileHandlerCB);
-  }, [downloadFileHandlerCB]);
+    void dataTransferAggregator().then(downloadFileHandler);
+  }, []);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -571,7 +543,6 @@ export default function Sheet() {
               <DataSetImport
                 action="import"
                 close={closeDataAction}
-                downloadHandler={downloadFileHandlerCB}
                 importHandler={importDataHandlerCB}
               />
             </DataSetSharingActions>
