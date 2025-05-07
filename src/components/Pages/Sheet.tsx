@@ -16,11 +16,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
-import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { WebRTCProvider } from "../../context/webRTC";
-import { CSVErrorCause, validateCSVSheet } from "../../helper/csvHelper";
+import { validateCSVSheet } from "../../helper/csvHelper";
 import { furiganaParse } from "../../helper/JapaneseText";
-import { prettyHeaders, sheetDataToJSON } from "../../helper/jsonHelper";
+import { prettyHeaders } from "../../helper/jsonHelper";
 import {
   dataProxyToSheet,
   getActiveSheet,
@@ -29,15 +28,10 @@ import {
   searchInSheet,
   sheetAddExtraRow,
   touchScreenCheck,
-  updateEditedUID,
-  updateStateAfterWorkbookEdit,
   validateInSheet,
   workbookSheetNames,
 } from "../../helper/sheetHelper";
-import {
-  type FilledSheetData,
-  isFilledSheetData,
-} from "../../helper/sheetHelperImport";
+import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   SyncDataFile,
   dataTransferAggregator,
@@ -46,10 +40,8 @@ import {
   setStudyProgress,
   setUserSetting,
 } from "../../helper/userSettingsHelper";
-import { useConnectKanji } from "../../hooks/useConnectKanji";
-import { useConnectPhrase } from "../../hooks/useConnectPhrase";
-import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { appSettingsInitialized } from "../../slices/globalSlice";
+import { importWorkbook, saveSheet } from "../../slices/sheetSlice";
 import type {
   AppDispatch,
   AppProgressState,
@@ -110,19 +102,6 @@ const cellStyles: Record<cellStyleNames, CellStyle> = {
 
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
-
-  const { phraseList, repetition: pRep } = useConnectPhrase();
-  const { vocabList, repetition: vRep } = useConnectVocabulary();
-  const { kanjiList, repetition: kRep } = useConnectKanji();
-
-  const pMeta = useRef(pRep);
-  pMeta.current = pRep;
-
-  const vMeta = useRef(vRep);
-  vMeta.current = vRep;
-
-  const kMeta = useRef(kRep);
-  kMeta.current = kRep;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
@@ -326,83 +305,30 @@ export default function Sheet() {
     const activeSheetName = getActiveSheet(wbRef.current);
     const w = wbRef.current.exportValues();
     const trimmed = w.map((w) => removeLastRowIfBlank(w));
-    const sheet = trimmed.find((s) => s.name === activeSheetName);
 
-    if (!sheet || !isFilledSheetData(sheet)) {
-      throw new Error("No Worksheet");
-    }
-
-    // update metadata for existing, but edited records (uid)
-    const name = sheet.name as keyof typeof selectedData;
-    const selectedData = {
-      Phrases: {
-        meta: pMeta.current,
-        list: phraseList,
-      },
-      Vocabulary: {
-        meta: vMeta.current,
-        list: vocabList,
-      },
-      Kanji: {
-        meta: kMeta.current,
-        list: kanjiList,
-      },
-    };
-    const { meta, list: oldList } = selectedData[name];
-    let data: Record<
-      string,
-      {
-        uid: string;
-        english: string;
-      }
-    > = {};
-
-    try {
-      const { data: d } = sheetDataToJSON(sheet) as {
-        data: Record<string, { uid: string; english: string }>;
-      };
-
-      data = d;
-    } catch (exception) {
-      if (
-        exception instanceof Error &&
-        typeof exception.cause === "object" &&
-        exception.cause !== null &&
-        "code" in exception.cause &&
-        typeof exception.cause.code === "string" &&
-        Object.values(CSVErrorCause).includes(
-          exception.cause.code as CSVErrorCause
-        )
-      ) {
-        setWarnings((prev) => [
-          ...prev,
-          <span key={exception.message}>{exception.message}</span>,
-        ]);
-      }
-    }
-
-    const newList: { uid: string; english: string }[] = Object.keys(data).map(
-      (k) => ({ uid: k, english: data[k].english })
-    );
-    const { updatedMeta: metaUpdatedUids } = updateEditedUID(
-      meta,
-      oldList,
-      newList
-    );
-
-    // store workbook in indexedDB
-    // (keep ordering and notes)
-    void openIDB()
-      .then((db) =>
-        putIDBItem(
-          { db, store: IDBStores.WORKBOOK },
-          { key: "0", workbook: trimmed }
-        )
-      )
-      .then(() => {
-        updateStateAfterWorkbookEdit(dispatch, name, metaUpdatedUids);
+    void dispatch(
+      saveSheet({
+        activeSheetName,
+        workbook: trimmed,
+      })
+    )
+      .unwrap()
+      .catch((exception) => {
+        if (
+          typeof exception === "object" &&
+          exception !== null &&
+          "name" in exception &&
+          "message" in exception &&
+          typeof exception?.name === "string" &&
+          exception.name === "Error"
+        ) {
+          setWarnings((prev) => [
+            ...prev,
+            <span key={exception.message}>{exception.message}</span>,
+          ]);
+        }
       });
-  }, [dispatch, phraseList, vocabList, kanjiList]);
+  }, [dispatch]);
 
   const downloadFileHandlerCB = useCallback((files: SyncDataFile[]) => {
     files.forEach(({ fileName, file: text }) => {
@@ -583,72 +509,33 @@ export default function Sheet() {
    */
   const importDataHandlerCB = useCallback(
     (
-      importWorkbook?: FilledSheetData[],
-      importSettings?: Partial<AppSettingState>,
-      importProgress?: Partial<AppProgressState>
+      workbook?: FilledSheetData[],
+      settings?: Partial<AppSettingState>,
+      progress?: Partial<AppProgressState>
     ) => {
       let importCompleteP: Promise<unknown>[] = [];
-      if (importSettings && Object.keys(importSettings).length > 0) {
+      if (settings && Object.keys(settings).length > 0) {
         // write to device's local storage
-        void setUserSetting(importSettings);
+        void setUserSetting(settings);
 
         // initialize app setttings from local storage
         const settingsP = dispatch(appSettingsInitialized());
 
         importCompleteP = [...importCompleteP, settingsP];
       }
-      if (
-        importProgress !== undefined &&
-        Object.keys(importProgress).length > 0
-      ) {
+      if (progress !== undefined && Object.keys(progress).length > 0) {
         // write to device's local storage
-        void setStudyProgress(importProgress);
+        const progressP = setStudyProgress(progress);
+
+        importCompleteP = [...importCompleteP, progressP];
       }
-      if (importWorkbook && importWorkbook.length > 0) {
-        const allSheetRequired = Object.keys(workbookSheetNames).map(
-          (k) => k as keyof typeof workbookSheetNames
-        );
-        const workbookP = getWorkbookFromIndexDB(allSheetRequired).then(
-          (dbWorkbook) => {
-            const trimmed = Object.values(workbookSheetNames).map((w) => {
-              const { prettyName: prettyName } = w;
-
-              const fileSheet = importWorkbook.find(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-              );
-              if (fileSheet) {
-                return removeLastRowIfBlank(fileSheet);
-              }
-
-              // dbWorkbook guarantees to contain sheet
-              const dbSheetIdx = dbWorkbook.findIndex(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-              );
-              // keep existing or blank placeholder
-              return dbWorkbook[dbSheetIdx];
-            });
-
-            // store workbook in indexedDB
-            // update cached json objects
-            return openIDB()
-              .then((db) =>
-                putIDBItem(
-                  { db, store: IDBStores.WORKBOOK },
-                  { key: "0", workbook: trimmed }
-                )
-              )
-              .then(() => {
-                // reload workbook (update useEffect)
-                setWorkbookImported(Date.now());
-
-                trimmed.forEach((sheet) => {
-                  updateStateAfterWorkbookEdit(dispatch, sheet.name);
-                });
-
-                return;
-              });
-          }
-        );
+      if (workbook && workbook.length > 0) {
+        const workbookP = dispatch(importWorkbook(workbook))
+          .unwrap()
+          .then(() => {
+            // reload workbook (update useEffect)
+            setWorkbookImported(Date.now());
+          });
 
         importCompleteP = [...importCompleteP, workbookP];
       }
