@@ -107,6 +107,12 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
           errors: metaErrors,
         } = parseSettingsAndProgress(fileObj);
 
+        const {
+          workbook,
+          files,
+          errors: dataErrors,
+        } = await parseWorkbook(fileObj);
+
         const s =
           settings === undefined
             ? []
@@ -133,12 +139,6 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
             });
           }
         });
-
-        const {
-          workbook,
-          files,
-          errors: dataErrors,
-        } = await parseWorkbook(fileObj);
 
         const errors = [...dataErrors, ...metaErrors];
         errors.forEach(({ cause: { key, msg } }) => {

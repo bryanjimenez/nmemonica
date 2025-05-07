@@ -24,18 +24,14 @@ import { Warnings } from "./DialogMsg";
 import { WebRTCContext } from "../../context/webRTC";
 import { toMemorySize } from "../../helper/consoleHelper";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
-import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   type SyncDataFile,
   downloadFileHandler,
-  parseSettingsAndProgress,
-  parseWorkbook,
 } from "../../helper/transferHelper";
 import {
   SharingMessageErrorCause,
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
-import type { AppProgressState, AppSettingState } from "../../typings/slices";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
@@ -47,11 +43,15 @@ export interface CryptoMessage {
 
 interface DataSetImportProps extends DataSetSharingAction {
   close: () => void;
-  importHandler: (
-    workbook?: FilledSheetData[],
-    settings?: Partial<AppSettingState>,
-    progress?: Partial<AppProgressState>
-  ) => Promise<void>;
+  importHandler: (fileObj: SyncDataFile[]) => Promise<
+    | undefined
+    | (Error & {
+        cause: {
+          key: string;
+          msg: string;
+        };
+      })[]
+  >;
 }
 
 function errorHandler(ev: RTCErrorEvent) {
@@ -154,22 +154,6 @@ export function DataSetImport(props: DataSetImportProps) {
     [setStatus, closeHandlerCB]
   );
 
-  const importToAppHandlerCB = useCallback(
-    (
-      dataObj: FilledSheetData[],
-      settings?: Partial<AppSettingState>,
-      progress?: Partial<AppProgressState>
-    ) => {
-      const workbook = dataObj.length === 0 ? undefined : dataObj;
-
-      return importHandler(workbook, settings, progress).then(() => {
-        setStatus("successStatus");
-        setTimeout(closeHandlerCB, 1000);
-      });
-    },
-    [importHandler, setStatus, closeHandlerCB]
-  );
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const decryptMsgIntoDecryptedFilesCB = useCallback(
     (encryptKey: string, msgBuf: ArrayBuffer) => {
@@ -226,7 +210,7 @@ export function DataSetImport(props: DataSetImportProps) {
    * RTC Signaling handshake complete
    * Begin messaging
    */
-  const initiateTransferCB = useCallback(async () => {
+  const initiateTransferCB = useCallback(() => {
     const msgBuf = msgBuffer;
     if (msgBuf === null) {
       throw new Error("Initiate button enabled without receiving data");
@@ -236,36 +220,35 @@ export function DataSetImport(props: DataSetImportProps) {
     const fileObj = parseMsgIntoPlainFilesCB(msgBuf);
 
     if (destination === "save") {
+      // TODO: do validataion here. on catch display warns
       void saveToFileHandlerWStatus(fileObj);
       return;
     }
 
-    const {
-      settings,
-      progress,
-      errors: metaErrors,
-    } = parseSettingsAndProgress(fileObj);
-    const { workbook, errors: dataErrors } = await parseWorkbook(fileObj);
+    void importHandler(fileObj).then((result) => {
+      if (!Array.isArray(result)) {
+        setStatus("successStatus");
+        setTimeout(closeHandlerCB, 1000);
+      } else {
+        const errors = result;
+        errors.forEach((error) => {
+          const { key, msg } = error.cause;
+          setStatus("dataError");
+          addWarning(key, msg);
+        });
+      }
 
-    let errors = [...metaErrors, ...dataErrors];
-
-    errors.forEach((error) => {
-      const { key, msg } = error.cause;
-      setStatus("dataError");
-      addWarning(key, msg);
+      return result;
     });
-
-    if (errors.length === 0) {
-      void importToAppHandlerCB(workbook, settings, progress);
-    }
   }, [
     destination,
     saveToFileHandlerWStatus,
     setStatus,
     addWarning,
     parseMsgIntoPlainFilesCB,
-    importToAppHandlerCB,
+    importHandler,
     msgBuffer,
+    closeHandlerCB,
   ]);
 
   if (direction === "outgoing") {

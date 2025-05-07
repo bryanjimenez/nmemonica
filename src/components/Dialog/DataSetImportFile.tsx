@@ -14,24 +14,22 @@ import { ReactElement, useCallback, useRef, useState } from "react";
 
 import { Warnings } from "./DialogMsg";
 import { metaDataNames } from "../../helper/sheetHelper";
-import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import {
-  SyncDataFile,
-  parseSettingsAndProgress,
-  parseWorkbook,
-} from "../../helper/transferHelper";
-import { AppProgressState, AppSettingState } from "../../typings/slices";
+import { SyncDataFile } from "../../helper/transferHelper";
 import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import "../../css/DragDrop.css";
 
 interface DataSetImportFileProps {
   visible?: boolean;
   close: () => void;
-  importHandler: (
-    workbook?: FilledSheetData[],
-    settings?: Partial<AppSettingState>,
-    progress?: Partial<AppProgressState>
-  ) => Promise<void>;
+  importHandler: (fileObj: SyncDataFile[]) => Promise<
+    | undefined
+    | (Error & {
+        cause: {
+          key: string;
+          msg: string;
+        };
+      })[]
+  >;
 }
 
 export function DataSetImportFile(props: DataSetImportFileProps) {
@@ -64,22 +62,19 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
     close();
   }, [close]);
 
-  const importDatasetCB = useCallback(async () => {
+  const importDatasetCB = useCallback(() => {
     setImportStatus(undefined);
     const fileObj = fileData;
 
     // error checking is done at file picker component (DataSelectFromFile)
-    const { settings, progress } = parseSettingsAndProgress(fileObj);
-    const { workbook } = await parseWorkbook(fileObj);
-
-    void importHandler(workbook, settings, progress)
-      .then(() => {
+    void importHandler(fileObj).then((result) => {
+      if (!Array.isArray(result)) {
         setImportStatus(true);
         setTimeout(closeHandlerCB, 1000);
-      })
-      .catch(() => {
+      } else {
         setImportStatus(false);
-      });
+      }
+    });
   }, [fileData, importHandler, closeHandlerCB]);
 
   return (

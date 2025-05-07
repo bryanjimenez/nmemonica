@@ -37,11 +37,13 @@ import {
   workbookSheetNames,
   xObjectToCsvText,
 } from "../../helper/sheetHelper";
-import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
+  SyncDataFile,
   dataTransferAggregator,
   downloadFileHandler,
   parseCsvToSheet,
+  parseSettingsAndProgress,
+  parseWorkbook,
 } from "../../helper/transferHelper";
 import {
   setStudyProgress,
@@ -49,12 +51,7 @@ import {
 } from "../../helper/userSettingsHelper";
 import { appSettingsInitialized } from "../../slices/globalSlice";
 import { importWorkbook, saveSheet } from "../../slices/sheetSlice";
-import type {
-  AppDispatch,
-  AppProgressState,
-  AppSettingState,
-  RootState,
-} from "../../typings/slices";
+import type { AppDispatch, RootState } from "../../typings/slices";
 import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
 import { DataSetExport } from "../Dialog/DataSetExport";
 import { DataSetImport } from "../Dialog/DataSetImport";
@@ -487,11 +484,23 @@ export default function Sheet() {
    * Imports datasets and settings to app
    */
   const importDataHandlerCB = useCallback(
-    (
-      workbook?: FilledSheetData[],
-      settings?: Partial<AppSettingState>,
-      progress?: Partial<AppProgressState>
-    ) => {
+    async (fileObj: SyncDataFile[]) => {
+      const {
+        settings,
+        progress,
+        errors: metaErrors,
+      } = parseSettingsAndProgress(fileObj);
+      const { workbook: dataObj, errors: dataErrors } =
+        await parseWorkbook(fileObj);
+      const workbook = dataObj.length === 0 ? undefined : dataObj;
+
+      let errors = [...metaErrors, ...dataErrors];
+
+      if (errors.length > 0) {
+        // provide errors to other displayed component
+        return Promise.resolve(errors);
+      }
+
       let importCompleteP: Promise<unknown>[] = [];
       if (settings && Object.keys(settings).length > 0) {
         // write to device's local storage
@@ -519,7 +528,9 @@ export default function Sheet() {
         importCompleteP = [...importCompleteP, workbookP];
       }
 
-      return Promise.all(importCompleteP).then(() => Promise.resolve());
+      return Promise.all(importCompleteP).then(() =>
+        Promise.resolve(undefined)
+      );
     },
     [dispatch]
   );
