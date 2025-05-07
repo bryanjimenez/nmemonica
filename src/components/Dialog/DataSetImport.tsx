@@ -29,7 +29,7 @@ import {
   type SyncDataFile,
   downloadFileHandler,
   parseSettingsAndProgress,
-  parseSheet,
+  parseWorkbook,
 } from "../../helper/transferHelper";
 import {
   SharingMessageErrorCause,
@@ -226,7 +226,7 @@ export function DataSetImport(props: DataSetImportProps) {
    * RTC Signaling handshake complete
    * Begin messaging
    */
-  const initiateTransferCB = useCallback(() => {
+  const initiateTransferCB = useCallback(async () => {
     const msgBuf = msgBuffer;
     if (msgBuf === null) {
       throw new Error("Initiate button enabled without receiving data");
@@ -240,35 +240,24 @@ export function DataSetImport(props: DataSetImportProps) {
       return;
     }
 
-    const { settings, progress, errors } = parseSettingsAndProgress(fileObj);
-    let parseFailed = [...errors];
+    const {
+      settings,
+      progress,
+      errors: metaErrors,
+    } = parseSettingsAndProgress(fileObj);
+    const { workbook, errors: dataErrors } = await parseWorkbook(fileObj);
 
-    void parseSheet(fileObj).then((sheetPromiseArr) => {
-      let workbook: FilledSheetData[] = [];
-      sheetPromiseArr.forEach((r) => {
-        if (r.status !== "fulfilled") {
-          return;
-        }
+    let errors = [...metaErrors, ...dataErrors];
 
-        if (r.value instanceof Error) {
-          parseFailed = [...parseFailed, r.value];
-          return;
-        }
-
-        const { sheet } = r.value;
-        workbook = [...workbook, sheet];
-      });
-
-      parseFailed.forEach((error) => {
-        const { key, msg } = error.cause;
-        setStatus("dataError");
-        addWarning(key, msg);
-      });
-
-      if (parseFailed.length === 0) {
-        void importToAppHandlerCB(workbook, settings, progress);
-      }
+    errors.forEach((error) => {
+      const { key, msg } = error.cause;
+      setStatus("dataError");
+      addWarning(key, msg);
     });
+
+    if (errors.length === 0) {
+      void importToAppHandlerCB(workbook, settings, progress);
+    }
   }, [
     destination,
     saveToFileHandlerWStatus,

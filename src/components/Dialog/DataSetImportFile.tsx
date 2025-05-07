@@ -18,7 +18,7 @@ import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   SyncDataFile,
   parseSettingsAndProgress,
-  parseSheet,
+  parseWorkbook,
 } from "../../helper/transferHelper";
 import { AppProgressState, AppSettingState } from "../../typings/slices";
 import { DataSelectFromFile } from "../Form/DataSelectFromFile";
@@ -64,38 +64,22 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
     close();
   }, [close]);
 
-  const importDatasetCB = useCallback(() => {
+  const importDatasetCB = useCallback(async () => {
     setImportStatus(undefined);
     const fileObj = fileData;
 
+    // error checking is done at file picker component (DataSelectFromFile)
     const { settings, progress } = parseSettingsAndProgress(fileObj);
+    const { workbook } = await parseWorkbook(fileObj);
 
-    void parseSheet(fileObj)
-      .then((sheetPromiseArr) =>
-        sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
-          if (r.status !== "fulfilled") {
-            return acc;
-          }
-
-          if (r.value instanceof Error) {
-            // const { key, msg } = r.value.cause as { key: string; msg: string };
-            return acc;
-          }
-
-          const { sheet } = r.value;
-          return [...acc, sheet];
-        }, [])
-      )
-      .then((workbook) =>
-        importHandler(workbook, settings, progress)
-          .then(() => {
-            setImportStatus(true);
-            setTimeout(closeHandlerCB, 1000);
-          })
-          .catch(() => {
-            setImportStatus(false);
-          })
-      );
+    void importHandler(workbook, settings, progress)
+      .then(() => {
+        setImportStatus(true);
+        setTimeout(closeHandlerCB, 1000);
+      })
+      .catch(() => {
+        setImportStatus(false);
+      });
   }, [fileData, importHandler, closeHandlerCB]);
 
   return (

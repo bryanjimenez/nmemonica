@@ -30,11 +30,11 @@ export interface SyncDataFile {
 }
 
 /**
- * Parse and construct sheet object
+ * Parse and construct a workbook from csv files
  * @param file whole csv text file
  * @param fileName name of sheet
  */
-export function parseSheet<
+export function parseWorkbook<
   T extends { fileName: string; file: string },
   E extends Error & { cause: { key: string; msg: string } },
 >(csvFiles: T[]) {
@@ -75,6 +75,30 @@ export function parseSheet<
           }
         }
       )
+    )
+  ).then((sheetPromiseArr) =>
+    sheetPromiseArr.reduce<{
+      workbook: FilledSheetData[];
+      files: string[];
+      errors: E[];
+    }>(
+      (acc, r) => {
+        if (r.status !== "fulfilled") {
+          return acc;
+        }
+
+        if (r.value instanceof Error) {
+          return { ...acc, errors: [...acc.errors, r.value] };
+        }
+
+        const { sheet, file } = r.value;
+        return {
+          ...acc,
+          workbook: [...acc.workbook, sheet],
+          files: [...acc.files, file],
+        };
+      },
+      { workbook: [], files: [], errors: [] }
     )
   );
 }

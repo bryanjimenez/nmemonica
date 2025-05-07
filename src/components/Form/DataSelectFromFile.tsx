@@ -14,7 +14,7 @@ import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
   SyncDataFile,
   parseSettingsAndProgress,
-  parseSheet,
+  parseWorkbook,
 } from "../../helper/transferHelper";
 import type { RootState } from "../../typings/slices";
 import "../../css/DragDrop.css";
@@ -100,17 +100,12 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
           },
           []
         )
-      ).then((fileObj) => {
+      ).then(async (fileObj) => {
         const {
           settings,
           progress,
-          errors: metaWarns,
+          errors: metaErrors,
         } = parseSettingsAndProgress(fileObj);
-
-        metaWarns.forEach(({ cause: { key, msg } }) => {
-          const errMsg = <span key={key}>{msg}</span>;
-          addWarning((warn) => [...warn, errMsg]);
-        });
 
         const s =
           settings === undefined
@@ -139,36 +134,35 @@ export function DataSelectFromFile(props: DataSelectFromFileProps) {
           }
         });
 
-        void parseSheet(fileObj).then((sheetPromiseArr) => {
-          sheetPromiseArr.forEach((r) => {
-            if (r.status !== "fulfilled") {
-              return;
-            }
+        const {
+          workbook,
+          files,
+          errors: dataErrors,
+        } = await parseWorkbook(fileObj);
 
-            if (r.value instanceof Error) {
-              const { key, msg } = r.value.cause;
+        const errors = [...dataErrors, ...metaErrors];
+        errors.forEach(({ cause: { key, msg } }) => {
+          const errMsg = <span key={key}>{msg}</span>;
+          addWarning((warn) => [...warn, errMsg]);
+        });
 
-              const sheetWarns = <span key={key}>{msg}</span>;
-              addWarning((warn) => [...warn, sheetWarns]);
-              return;
-            }
+        workbook.forEach((sheet, i) => {
+          const file = files[i];
 
-            const { sheet, file } = r.value;
-            if (
-              data.find(
-                (to) =>
-                  to.name === sheet.name && to.file === JSON.stringify(sheet)
-              ) === undefined
-            ) {
-              updateHandler({
-                name: sheet.name.toLowerCase(),
-                fileName: `${sheet.name}.csv`,
-                origin: "FileSystem",
-                file,
-                size: String(sheet.rows.len),
-              });
-            }
-          });
+          if (
+            data.find(
+              (to) =>
+                to.name === sheet.name && to.file === JSON.stringify(sheet)
+            ) === undefined
+          ) {
+            updateHandler({
+              name: sheet.name.toLowerCase(),
+              fileName: `${sheet.name}.csv`,
+              origin: "FileSystem",
+              file,
+              size: String(sheet.rows.len),
+            });
+          }
         });
       });
     },
