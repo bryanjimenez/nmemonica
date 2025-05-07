@@ -241,29 +241,34 @@ export function DataSetImport(props: DataSetImportProps) {
     }
 
     const { settings, progress, errors } = parseSettingsAndProgress(fileObj);
+    let parseFailed = [...errors];
 
-    errors.forEach((error) => {
-      const { key, msg } = error.cause;
-      setStatus("dataError");
-      addWarning(key, msg);
+    void parseSheet(fileObj).then((sheetPromiseArr) => {
+      let workbook: FilledSheetData[] = [];
+      sheetPromiseArr.forEach((r) => {
+        if (r.status !== "fulfilled") {
+          return;
+        }
+
+        if (r.value instanceof Error) {
+          parseFailed = [...parseFailed, r.value];
+          return;
+        }
+
+        const { sheet } = r.value;
+        workbook = [...workbook, sheet];
+      });
+
+      parseFailed.forEach((error) => {
+        const { key, msg } = error.cause;
+        setStatus("dataError");
+        addWarning(key, msg);
+      });
+
+      if (parseFailed.length === 0) {
+        void importToAppHandlerCB(workbook, settings, progress);
+      }
     });
-
-    void parseSheet(fileObj)
-      .then((sheetPromiseArr) =>
-        sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
-          if (r.status !== "fulfilled") {
-            return acc;
-          }
-
-          if (r.value instanceof Error) {
-            return acc;
-          }
-
-          const { sheet } = r.value;
-          return [...acc, sheet];
-        }, [])
-      )
-      .then((workbook) => importToAppHandlerCB(workbook, settings, progress));
   }, [
     destination,
     saveToFileHandlerWStatus,
