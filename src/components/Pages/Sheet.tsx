@@ -126,6 +126,7 @@ export default function Sheet() {
     setResultBadge(0);
   }, []);
 
+  const [isSaved, setIsSaved] = useState(true);
   const [hasError, setHasError] = useState<
     { ri: number; ci: number; name: string }[]
   >([]);
@@ -274,6 +275,7 @@ export default function Sheet() {
           ]);
         }
 
+        setIsSaved(false);
         resetSearchCB();
         grid.reRender();
       });
@@ -317,14 +319,15 @@ export default function Sheet() {
       .then((result) =>
         Promise.all(result.map(({ text, name }) => parseCsvToSheet(text, name)))
       )
-      .then(() => {
-        void dispatch(
+      .then(() =>
+        dispatch(
           saveSheet({
             activeSheetName,
             workbook,
           })
-        );
-      })
+        )
+      )
+      .then(() => setIsSaved(true))
       .catch((exception) => {
         let key = `${activeSheetName}-parse`;
         let msg = `Failed to parse (${activeSheetName})`;
@@ -547,7 +550,12 @@ export default function Sheet() {
 
   return (
     <>
-      <div className="sheet main-panel pt-2">
+      <div
+        className={classNames({
+          "sheet main-panel pt-2": true,
+          "sheet-no-save-state": !isSaved,
+        })}
+      >
         <DataSetActionMenu
           visible={dataAction === "menu"}
           close={closeDataAction}

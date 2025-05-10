@@ -3,6 +3,18 @@
   color: black;
 }
 
+/** Hint sheet is saved or edited*/
+.dark-mode .sheet-container > div {
+  border-top: 1px solid var(--bs-dark);
+}
+.sheet-container > div {
+  border: 1px solid var(--bs-light);
+  border-bottom: unset;
+}
+.sheet-no-save-state .sheet-container > div {
+  border: 1px solid var(--bs-pink);
+}
+
 /** Fit the menu in narrow views*/
 .x-spreadsheet-menu > li:first-child {
   padding: 0;
