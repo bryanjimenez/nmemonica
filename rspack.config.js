@@ -1,8 +1,9 @@
 import fs from "node:fs";
-import rspack, { experiments } from "@rspack/core";
+import rspack from "@rspack/core";
+// import { Configuration } from "@rspack/cli";
 import refreshPlugin from "@rspack/plugin-react-refresh";
 import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
-import path, { sep } from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
 import { appendLicense } from "./dep-license-writer.js";
@@ -101,7 +102,6 @@ export default function rspackConfig(
             {
               loader: "builtin:swc-loader",
               options: {
-                sourceMap: true,
                 jsc: {
                   parser: {
                     syntax: "typescript",
