@@ -11,13 +11,34 @@
   border: 1px solid var(--bs-light);
   border-bottom: unset;
 }
+
 .sheet-no-save-state .sheet-container > div {
   border: 1px solid var(--bs-pink);
+}
+
+@keyframes animation-sheet-no-save-vertical {
+  0% {
+    opacity: 1;
+    background-position: -23px 0;
+  }
+  60% {
+    opacity: 0;
+    background-position: -23px 0;
+  }
+  100% {
+    opacity: 1;
+    background-position: -23px -200px;
+  }
 }
 
 /** Fit the menu in narrow views*/
 .x-spreadsheet-menu > li:first-child {
   padding: 0;
+}
+
+/** Not-yet-saved border animation */
+.z-index-1 {
+  z-index: 1;
 }
 
 /** Fabs pop above app nav menu */

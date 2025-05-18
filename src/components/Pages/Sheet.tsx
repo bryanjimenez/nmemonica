@@ -1,4 +1,5 @@
-import { Badge, Fab, TextField } from "@mui/material";
+import { Badge, Fab, LinearProgress, TextField } from "@mui/material";
+import { linearProgressClasses } from "@mui/material/LinearProgress";
 import {
   type CellStyle,
   type SheetData,
@@ -680,14 +681,17 @@ export default function Sheet() {
             )}
           </div>
         </div>
-
-        <div
-          ref={containerRef}
-          className={classNames({
-            "sheet-container pt-2": true,
-            "disabled-color": !cookies,
-          })}
-        />
+        <div className="pt-2">
+          <NotSavedWarningBorder isSaved={isSaved}>
+            <div
+              ref={containerRef}
+              className={classNames({
+                "sheet-container": true,
+                "disabled-color": !cookies,
+              })}
+            />
+          </NotSavedWarningBorder>
+        </div>
       </div>
     </>
   );
@@ -749,6 +753,94 @@ function validateFuriganaParse(
   }
 
   return hasError;
+}
+
+/**
+ * Display a warning border around `children` 
+ */
+function NotSavedWarningBorder({
+  children,
+  isSaved,
+}: {
+  children: React.ReactNode;
+  isSaved: boolean;
+}) {
+  return (
+    <div className="position-relative">
+      <HighlightBorder isSaved={isSaved} position="top" />
+      <HighlightBorder isSaved={isSaved} position="left" />
+      <HighlightBorder isSaved={isSaved} position="right" />
+      <HighlightBorder isSaved={isSaved} position="bottom" />
+
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Use mui LinearProgress as a border (4 orientations)
+ */
+function HighlightBorder({
+  isSaved,
+  position,
+  thickness = 4,
+}: {
+  isSaved: boolean;
+  position: "top" | "bottom" | "left" | "right";
+  thickness?: number;
+}) {
+  let transform: string | undefined;
+  switch (position) {
+    case "bottom":
+      // modify animation direction
+      // modify y offset (move up)
+      transform = "rotate(180deg) translateY(2px)";
+      break;
+
+    case "left":
+      // modify animation direction
+      transform = "rotate(180deg)";
+      break;
+
+    default:
+      break;
+  }
+
+  const horizontal = position === "top" || position === "bottom";
+  const vertical = !horizontal;
+
+  return (
+    <div
+      className={classNames({
+        "position-absolute z-index-1": true,
+        "w-100": horizontal,
+        "h-100": vertical,
+        "bottom-0": position === "bottom",
+        "end-0": position === "right",
+        invisible: isSaved,
+      })}
+    >
+      <LinearProgress
+        variant="buffer"
+        color="error"
+        value={0}
+        valueBuffer={0}
+        sx={{
+          height: horizontal ? thickness : "100%",
+          width: vertical ? thickness : "100%",
+          transform: transform,
+          [`& .${linearProgressClasses.dashed}`]: horizontal
+            ? {
+                animationDuration: "8s",
+              }
+            : {
+                animation:
+                  "animation-sheet-no-save-vertical 8s infinite linear",
+              },
+        }}
+      />
+    </div>
+  );
 }
 
 export { SheetNav };

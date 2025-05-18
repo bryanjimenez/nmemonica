@@ -1,15 +1,14 @@
-import { Button, Dialog, DialogContent } from "@mui/material";
+import { Button, CircularProgress, Dialog, DialogContent } from "@mui/material";
 import {
   ArrowDownLeftIcon,
   ArrowSwitchIcon,
   ArrowUpRightIcon,
-  CloudIcon,
   DatabaseIcon,
   FileBinaryIcon,
   FileZipIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 interface DataSetActionMenuProps {
   visible?: boolean;
@@ -17,7 +16,7 @@ interface DataSetActionMenuProps {
   saveChanges: () => void;
   importFromFile: () => void;
   exportToFile: () => void;
-  signaling: ()=> void;
+  signaling: () => void;
 }
 
 export function DataSetActionMenu(props: DataSetActionMenuProps) {
@@ -30,9 +29,16 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
     signaling,
   } = props;
 
+  const [loading, setLoading] = useState(false);
+
   const saveChangesCB = useCallback(() => {
-    saveChanges();
-    close();
+    setLoading(true);
+    // prevent animation locking
+    setTimeout(() => {
+      saveChanges();
+      setLoading(false);
+      close();
+    }, 0);
   }, [close, saveChanges]);
 
   const importFromFileCB = useCallback(() => {
@@ -80,8 +86,10 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
             {
               name: "Connection",
               handler: signalingCB,
-              icon0: (p: Record<string, string>) => <ArrowSwitchIcon {...p} />,
-              icon1: ()=>null,
+              icon0: (p: Record<string, string>) => (
+                <ArrowSwitchIcon {...p} className="rotate-135" size={24} />
+              ),
+              icon1: () => null,
               // icon1: (p: Record<string, string>) => <ArrowUpRightIcon {...p} />,
             },
           ].map((el) => {
@@ -111,7 +119,17 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
                   <span className="mt-2">{el.name}</span>
                   <div className="position-relative">
                     {el.icon0(primaryIcoProps)}
-                    {el.icon1(secondaryIcoProps)}
+                    {loading && el.name === "Save Changes" ? (
+                      <div className="position-absolute me-4 top-0 end-0">
+                        <CircularProgress
+                          color="primary"
+                          size={10}
+                          disableShrink
+                        />
+                      </div>
+                    ) : (
+                      el.icon1(secondaryIcoProps)
+                    )}
                   </div>
                 </div>
               </Button>
