@@ -197,7 +197,7 @@ function buildGameActionsHandler(
 
 /**
  * Comparison info for:
- * 
+ *
  * a **Radical with examples**
  *      or
  * a **Kanji with similar other kanjis**
@@ -323,7 +323,7 @@ export default function Kanji() {
 
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
-  const accuracyModifiedRef = useRef<undefined | null | number>();
+  const accuracyModifiedRef = useRef<number | null>(undefined);
   const [compare, setCompare] = useState<RawKanji | undefined>(undefined);
   const closeCompare = useCallback(() => {
     setCompare(undefined);
@@ -789,8 +789,10 @@ export default function Kanji() {
     });
   }, [dispatch, log]);
 
-  const ex = useRef<{ el: RawVocabulary; en: string; jp: JSX.Element }[]>([]);
-  const prevUid = useRef<string | null>();
+  const ex = useRef<{ el: RawVocabulary; en: string; jp: React.ReactNode }[]>(
+    []
+  );
+  const prevUid = useRef<string | null>(undefined);
 
   if (recallGame === 0) {
     return (

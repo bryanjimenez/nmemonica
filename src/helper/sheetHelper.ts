@@ -72,10 +72,11 @@ export function getActiveSheet(workbook: Spreadsheet) {
  * cache
  * or creates placeholders
  *
- * @param dispatch
- * @param getDatasets fetch action (if no indexedDB)
+ * @param required List of required sheets in workbook. Any missing are created (placeholders).
  */
-export function getWorkbookFromIndexDB() {
+export function getWorkbookFromIndexDB(
+  required?: (keyof typeof workbookSheetNames)[]
+) {
   return openIDB()
     .then((db) => {
       // if indexedDB has stored workbook
@@ -93,6 +94,25 @@ export function getWorkbookFromIndexDB() {
         if (!(IDBStores.WORKBOOK in res) || res.workbook.length === 0) {
           throw ErrorWorkbookMissing;
         }
+
+        required?.forEach((sheetName) => {
+          const sheet = res.workbook.find(
+            (s) =>
+              s.name.toLowerCase() ===
+              workbookSheetNames[sheetName].prettyName.toLowerCase()
+          );
+          if (sheet === undefined) {
+            // insert an empty required sheet
+            res.workbook.push(
+              jtox(
+                {
+                  /** no data just headers */
+                },
+                workbookSheetNames[sheetName].prettyName
+              )
+            );
+          }
+        });
 
         return res.workbook;
       });
@@ -119,6 +139,28 @@ export function getWorkbookFromIndexDB() {
         ),
       ];
     });
+}
+
+/**
+ * Retrieves worksheet from:
+ * indexedDB
+ * cache
+ * or creates placeholders
+ */
+export function getSheetFromIndexDB(
+  sheetName: keyof typeof workbookSheetNames
+) {
+  return getWorkbookFromIndexDB().then((workbook) => {
+    const sheet = workbook.find(
+      (s) =>
+        s.name.toLowerCase() ===
+        workbookSheetNames[sheetName].prettyName.toLowerCase()
+    );
+    if (sheet === undefined) {
+      throw new Error(`Expected to find ${sheetName} sheet in workbook`);
+    }
+    return sheet;
+  });
 }
 
 /**

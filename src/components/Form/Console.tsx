@@ -47,7 +47,7 @@ export default function Console(props: ConsoleProps) {
 
   const [window, setWindow] = useState(MAX_CONSOLE_MESSAGES); // Max number of messages to display
   const [scroll, setScroll] = useState(0); // Number of lines to scroll up
-  const collapse = useRef<number | undefined>();
+  const collapse = useRef<number>(undefined);
 
   useEffect(() => {
     if (debug === DebugLevel.OFF) {
@@ -109,7 +109,7 @@ export default function Console(props: ConsoleProps) {
         const key = `${e.time}+${e.msg}+${e.lvl}`;
         const mClass = classNames({
           "app-sm-fs-xx-small": true,
-          ...(e.css ? { [e.css]: true } : {}),
+          ...(e.css !== undefined ? { [e.css]: true } : {}),
           "correct-color": e.lvl === DebugLevel.DEBUG,
           "question-color": e.lvl === DebugLevel.WARN,
           "incorrect-color": e.lvl === DebugLevel.ERROR,

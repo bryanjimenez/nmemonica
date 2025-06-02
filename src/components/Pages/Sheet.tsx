@@ -14,10 +14,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { jtox, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
-  getUserSettings,
-  setUserSetting,
-} from "../../helper/userSettingsHelper";
-import {
   getActiveSheet,
   getWorkbookFromIndexDB,
   metaDataNames,
@@ -34,6 +30,10 @@ import {
   type FilledSheetData,
   isFilledSheetData,
 } from "../../helper/sheetHelperImport";
+import {
+  getUserSettings,
+  setUserSetting,
+} from "../../helper/userSettingsHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -165,10 +165,6 @@ export default function Sheet() {
   }, [dispatch, resetSearchCB, workbookImported]);
 
   const saveSheetHandlerCB = useCallback(() => {
-    if (!wbRef.current) {
-      throw new Error("No Workbook");
-    }
-
     if (wbRef.current === null) {
       throw new Error("Expected workbook");
     }
@@ -415,12 +411,12 @@ export default function Sheet() {
         // initialize app setttings from local storage
         const settingsP = dispatch(appSettingsInitialized());
 
-        // eslint-disable-next-line
         importCompleteP = [...importCompleteP, settingsP];
       }
 
       if (importWorkbook && importWorkbook.length > 0) {
-        const workbookP = getWorkbookFromIndexDB().then((dbWorkbook) => {
+        const allSheetRequired = Object.keys(workbookSheetNames).map(k=>k as keyof typeof workbookSheetNames)
+        const workbookP = getWorkbookFromIndexDB(allSheetRequired).then((dbWorkbook) => {
           const trimmed = Object.values(workbookSheetNames).map((w) => {
             const { prettyName: prettyName } = w;
 
@@ -431,20 +427,12 @@ export default function Sheet() {
               return removeLastRowIfBlank(fileSheet);
             }
 
-            const dbSheet = dbWorkbook.find(
+            // dbWorkbook guarantees to contain sheet
+            const dbSheetIdx = dbWorkbook.findIndex(
               (d) => d.name.toLowerCase() === prettyName.toLowerCase()
             );
-            if (dbSheet) {
-              return dbSheet;
-            }
-
-            // if it never existed add blank placeholder
-            return jtox(
-              {
-                /** no data just headers */
-              },
-              prettyName
-            );
+            // keep existing or blank placeholder
+            return dbWorkbook[dbSheetIdx];
           });
 
           // store workbook in indexedDB
@@ -468,7 +456,6 @@ export default function Sheet() {
             });
         });
 
-        // eslint-disable-next-line
         importCompleteP = [...importCompleteP, workbookP];
       }
 

@@ -37,7 +37,7 @@ export function Notice(props: PropsWithChildren<NoticeProps>) {
   const [showNotice, setShowNotice] = useState(() => props.initShown === true);
   const prevVal = useRef(-1);
   const arrowRef = useRef(null);
-  const hiding = useRef<NodeJS.Timeout | typeof READY | undefined>();
+  const hiding = useRef<NodeJS.Timeout | typeof READY>(undefined);
   const fadeTimeout = useRef(timeout);
 
   // https://floating-ui.com/docs/react
@@ -107,13 +107,15 @@ export function Notice(props: PropsWithChildren<NoticeProps>) {
         <div
           className={classNames({
             "position-absolute pt-2 clickable": true,
-            ...(props.className ? { [props.className]: true } : {}),
+            ...(props.className !== undefined
+              ? { [props.className]: true }
+              : {}),
           })}
           onClick={props.disabled !== true ? onNoticeToggleCB : undefined}
         >
           {props.icon}
         </div>
-        {props.notification && (
+        {props.notification !== undefined && (
           <span className="notification">{props.notification}</span>
         )}
       </div>
@@ -136,7 +138,9 @@ export function Notice(props: PropsWithChildren<NoticeProps>) {
             "notice-fade": !showNotice,
             [TouchSwipeIgnoreCss]: true,
             "d-flex mx-2": true,
-            ...(props.className ? { [props.className]: true } : {}),
+            ...(props.className !== undefined
+              ? { [props.className]: true }
+              : {}),
           })}
           boxShadow={3}
         >

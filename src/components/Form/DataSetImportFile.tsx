@@ -42,7 +42,7 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
   }, []);
 
   const [shareId, setShareId] = useState<string>();
-  const socket = useRef<WebSocket>();
+  const socket = useRef<WebSocket>(undefined);
 
   const closeHandlerCB = useCallback(() => {
     setConfirm(false);
@@ -102,12 +102,12 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
           <Alert severity="warning" className="py-0 mb-1">
             <div className="p-0 d-flex flex-column">
               <ul className="mb-0">
-                {fileData.find((f) => f.sheet) && (
+                {fileData.find((f) => f.sheet !== undefined) && (
                   <li>
                     User <strong>Datasets</strong> will be overwritten!
                   </li>
                 )}
-                {fileData.find((f) => f.setting) && (
+                {fileData.find((f) => f.setting !== undefined) && (
                   <li>
                     User <strong>Settings</strong> will be overwritten!
                   </li>

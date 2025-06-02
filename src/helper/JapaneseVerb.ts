@@ -108,19 +108,16 @@ export function getVerbFormsArray(
   }
 }
 
-/**
- * @throws {Error} if the target form is not valid
- */
 export function verbToTargetForm(
   rawVerb: RawJapanese,
   targetForm: string
-): JapaneseText {
+): Error | JapaneseText {
   const theForm = getVerbFormsArray(rawVerb).find(
     (form) => form.name === targetForm
   );
 
   if (!theForm) {
-    throw new Error("Invalid targetForm");
+    return new Error("Invalid targetForm");
   }
 
   return theForm.value;
@@ -292,7 +289,7 @@ export class JapaneseVerb extends JapaneseText {
         stem = [fStem];
       }
     } else {
-      throw new Error("Unknown verb type");
+      return new Error(`Unknown stem rule ${super.toString()}`);
     }
 
     return stem;
@@ -334,7 +331,11 @@ export class JapaneseVerb extends JapaneseText {
       }
     } else if (type === 2) {
       // ru
-      const [fStem, kStem] = this.getStem();
+      const result = this.getStem();
+      if (result instanceof Error) {
+        return result;
+      }
+      const [fStem, kStem] = result;
 
       if (kStem) {
         nai = new JapaneseText(fStem + ending, kStem + ending);
@@ -365,7 +366,7 @@ export class JapaneseVerb extends JapaneseText {
           nai = new JapaneseText(kStem + "しない");
         }
       } else {
-        throw new Error("Unknown exception verb type");
+        return new Error(`Unknown nai rule ${super.toString()}`);
       }
     }
 
@@ -414,7 +415,11 @@ export class JapaneseVerb extends JapaneseText {
         saseru = new JapaneseText("いる", "居る");
       }
 
-      const [fStem, kStem] = this.getStem();
+      const result = this.getStem();
+      if (result instanceof Error) {
+        return result;
+      }
+      const [fStem, kStem] = result;
 
       if (hasKanji) {
         saseru = new JapaneseText(fStem + "さ" + ending, kStem + "さ" + ending);
@@ -438,7 +443,7 @@ export class JapaneseVerb extends JapaneseText {
           saseru = new JapaneseText(kStem + "させる");
         }
       } else {
-        throw new Error("Unknown exception verb type");
+        return new Error(`Unknown saseru rule ${super.toString()}`);
       }
     }
 
@@ -482,7 +487,11 @@ export class JapaneseVerb extends JapaneseText {
     } else if (type === 2) {
       // ru Ichidan
 
-      const [fStem, kStem] = this.getStem();
+      const result = this.getStem();
+      if (result instanceof Error) {
+        return result;
+      }
+      const [fStem, kStem] = result;
 
       if (hasKanji) {
         reru = new JapaneseText(fStem + "られる", kStem + "られる");
@@ -504,7 +513,7 @@ export class JapaneseVerb extends JapaneseText {
       } else if (this.isIrregularAru() || this.isIrregularIru()) {
         reru = null;
       } else {
-        throw new Error("Unknown exception verb type");
+        return new Error(`Unknown reru rule ${super.toString()}`);
       }
     }
 
@@ -549,7 +558,11 @@ export class JapaneseVerb extends JapaneseText {
     } else if (type === 2) {
       // ru Ichidan
 
-      const [fStem, kStem] = this.getStem();
+      const result = this.getStem();
+      if (result instanceof Error) {
+        return result;
+      }
+      const [fStem, kStem] = result;
 
       if (hasKanji) {
         rareru = new JapaneseText(fStem + "られる", kStem + "られる");
@@ -571,7 +584,7 @@ export class JapaneseVerb extends JapaneseText {
       } else if (this.isIrregularAru() || this.isIrregularIru()) {
         rareru = null;
       } else {
-        throw new Error("Unknown exception verb type");
+        return new Error(`Unknown rareru rule ${super.toString()}`);
       }
     }
 
@@ -611,7 +624,11 @@ export class JapaneseVerb extends JapaneseText {
 
     if (!masu) {
       // not irregular
-      const [furiganaStem, kanjiStem] = this.getStem();
+      const result = this.getStem();
+      if (result instanceof Error) {
+        return result;
+      }
+      const [furiganaStem, kanjiStem] = result;
       if (kanjiStem) {
         masu = new JapaneseText(furiganaStem + ending, kanjiStem + ending);
       } else {
@@ -656,7 +673,11 @@ export class JapaneseVerb extends JapaneseText {
 
     if (!mashou) {
       // not irregular
-      const [furiganaStem, kanjiStem] = this.getStem();
+      const result = this.getStem();
+      if (result instanceof Error) {
+        return result;
+      }
+      const [furiganaStem, kanjiStem] = result;
       if (kanjiStem) {
         mashou = new JapaneseText(furiganaStem + ending, kanjiStem + ending);
       } else {
@@ -698,7 +719,9 @@ export class JapaneseVerb extends JapaneseText {
     }
 
     const ta = this.t_Form(taRule);
-
+    if (ta instanceof Error) {
+      return ta;
+    }
     return new JapaneseText(
       ta.getPronunciation().slice(0, -1) + ending,
       ta.getSpelling().slice(0, -1) + ending
@@ -796,7 +819,7 @@ export class JapaneseVerb extends JapaneseText {
           t_Con = new JapaneseText(kstem + ending);
         }
       } else {
-        throw new Error("Unknown exception verb type");
+        return new Error(`Unknown t rule ${super.toString()}`);
       }
     }
 

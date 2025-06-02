@@ -142,14 +142,14 @@ export default function Vocabulary() {
 
   const [frequency, setFrequency] = useState<string[]>([]); // subset of frequency words within current active group
 
-  const naFlip = useRef();
+  const naFlip = useRef(undefined);
 
   const [wasPlayed, setWasPlayed] = useState(false);
 
   const [scrollJOrder, setScrollJOrder] = useState(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
-  const accuracyModifiedRef = useRef<undefined | null | number>();
+  const accuracyModifiedRef = useRef<number | null>(undefined);
 
   const {
     motionThreshold,
@@ -615,32 +615,33 @@ export default function Vocabulary() {
         const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
         const vUid = getCacheUID(sayObj);
         const vQuery = audioPronunciation(sayObj);
+        if (vQuery instanceof Error === false) {
+          void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
+            {
+              uid: vUid,
+              tl: "ja",
+              pronunciation: vQuery,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+            },
+            {
+              uid: vUid + ".en",
+              tl: "en",
+              pronunciation: v.english,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+            },
+          ]).catch((exception) => {
+            // likely getAudio failed
 
-        void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
-          {
-            uid: vUid,
-            tl: "ja",
-            pronunciation: vQuery,
-            index: reinforcedUID !== null ? undefined : selectedIndex,
-          },
-          {
-            uid: vUid + ".en",
-            tl: "en",
-            pronunciation: v.english,
-            index: reinforcedUID !== null ? undefined : selectedIndex,
-          },
-        ]).catch((exception) => {
-          // likely getAudio failed
-
-          if (exception instanceof Error) {
-            let msg = exception.message;
-            if (msg === "unreachable") {
-              const stack = "at " + getStackInitial(exception);
-              msg = `cache:${v.english} ${vQuery} ${stack}`;
+            if (exception instanceof Error) {
+              let msg = exception.message;
+              if (msg === "unreachable") {
+                const stack = "at " + getStackInitial(exception);
+                msg = `cache:${v.english} ${vQuery} ${stack}`;
+              }
+              dispatch(logger(msg, DebugLevel.ERROR));
             }
-            dispatch(logger(msg, DebugLevel.ERROR));
-          }
-        });
+          });
+        }
       }
 
       updateDailyGoal({
@@ -1318,7 +1319,10 @@ function useBuildGameActionsHandler(
             actionPromise = playAudio(cachedAudioBuf);
           } else {
             const vQuery = audioPronunciation(sayObj);
-
+            if (vQuery instanceof Error) {
+              dispatch(logger(vQuery.message, DebugLevel.ERROR));
+              return Promise.reject(vQuery);
+            }
             try {
               const res = await dispatch(
                 getSynthAudioWorkaroundNoAsync({
@@ -1341,10 +1345,12 @@ function useBuildGameActionsHandler(
                   });
                 }
               ).then((res) => {
-                if (vUid === res.uid) {
-                  return playAudio(res.buffer, AbortController);
+                if (vUid !== res.uid) {
+                  const msg = `No Async Workaround: ${vUid} ${res.uid}`;
+                  dispatch(logger(msg, DebugLevel.ERROR));
+                  return Promise.reject(new Error(msg));
                 }
-                throw new Error("Incorrect uid");
+                return playAudio(res.buffer, AbortController);
               });
             } catch (exception) {
               if (exception instanceof Error) {
@@ -1397,10 +1403,12 @@ function useBuildGameActionsHandler(
                   });
                 }
               ).then((res) => {
-                if (enUid === res.uid) {
-                  return playAudio(res.buffer, AbortController);
+                if (enUid !== res.uid) {
+                  const msg = `No Async Workaround: ${enUid} ${res.uid}`;
+                  dispatch(logger(msg, DebugLevel.ERROR));
+                  return Promise.reject(new Error(msg));
                 }
-                throw new Error("Incorrect uid");
+                return playAudio(res.buffer, AbortController);
               });
             } catch (exception) {
               if (exception instanceof Error) {
@@ -1447,6 +1455,11 @@ function partOfSpeechPronunciation(
   let sayObj;
   if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {
     const verb = verbToTargetForm(vocabulary, verbForm);
+
+    if (verb instanceof Error) {
+      // when target form fails fall back to root
+      return vocabulary;
+    }
 
     sayObj = {
       ...vocabulary,
