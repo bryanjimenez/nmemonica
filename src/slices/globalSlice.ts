@@ -40,6 +40,7 @@ export interface GlobalInitSlice {
   swipeThreshold: number;
   motionThreshold: number;
   lastImport: string[];
+  encryptKey?: string;
 }
 
 export const globalInitState: GlobalInitSlice = {
@@ -262,6 +263,9 @@ const globalSlice = createSlice({
         payload: { msg, lvl, type },
       }),
     },
+    setEncryptKey(state, action: PayloadAction<string | undefined>) {
+      state.encryptKey = action.payload;
+    },
     setLastImport(state, action: PayloadAction<string>) {
       const value = action.payload;
 
@@ -326,5 +330,6 @@ export const {
 
   debugToggled,
   logger,
+  setEncryptKey,
 } = globalSlice.actions;
 export default globalSlice.reducer;

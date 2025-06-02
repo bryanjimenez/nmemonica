@@ -46,7 +46,7 @@ export async function indexTagHelperPlugin(compiler) {
           });
 
           const dataUri = "data:text/javascript;charset=utf-8,";
-          const { audioService } = await import(
+          const { audioService, signalingService } = await import(
             dataUri + encodeURIComponent(envSource)
           );
 
@@ -57,7 +57,10 @@ export async function indexTagHelperPlugin(compiler) {
             `; script-src 'self' 'wasm-unsafe-eval'` +
             `; media-src ` +
             audioService +
+            `; img-src 'self' data: https:` +
             `; connect-src 'self' ` +
+            " " +
+            signalingService +
             " " +
             audioService +
             `; style-src 'self' 'unsafe-inline';" />`;

@@ -174,15 +174,18 @@ For example:
 #### Dataset Action Menu
 > Dataset save and share actions can be found here.  
 
-The Sync Service is a data relay between two users. Any user can share their UGC (User Generated Content) by providing a one-time share id and an encryption key to the receiving user.
+> [!Important]  
+> Sync Service under development. Sharing currently possible only among geographically local peers (dependent on Wasmer Edge hosting service).
+
+The Sync Service is a [WebRTC](webrtc.org) connection-information relay (Data is not exchanged over the service) between two users. Any user can share their UGC (User Generated Content) by providing a one-time share id and an encryption key to the receiving user.
 
 | Action | Description | Icon |
 | ----- | -------- | ----------- |
 | Save Changes | Saves your changes | ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/database-24.svg "Save Button") |
 | Import from File | Import Datasets or settings from file system| ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/file-binary-24.svg "File Button") |
-| Import from Sync | Import shared Datasets from Sync (need: share ID and Key)| ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Import Button") |
+| Import from Sync | Import shared Datasets from Peer (need: share ID and Key)| ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Import Button") |
 | Export to File | Backup your Datasets and settings to the file system | ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/file-zip-24.svg "Export Button")|
-| Export to Sync | Export and share Datasets using Sync (provide the recipiant the share ID and Key) |![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Export Button") |
+| Export to Sync | Export and share Datasets with Peer (provide the recipiant the share ID and Key) |![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Export Button") |
 
 
 ## Credits
