@@ -63,7 +63,6 @@ import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
 import {
   type AudioItemParams,
-  getAudio,
   getSynthAudioWorkaroundNoAsync,
 } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
@@ -87,6 +86,7 @@ import {
   TermSortBy,
   TermSortByLabel,
 } from "../../slices/settingHelper";
+import { getStackInitial } from "../../workers";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
@@ -96,7 +96,6 @@ import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
-  ReCacheAudioBtn,
   ToggleFrequencyTermBtnMemo,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
@@ -130,7 +129,6 @@ export default function Phrases() {
   const [showRomaji, setShowRomaji] = useState<boolean>(false);
   const [showLit, setShowLit] = useState<boolean>(false);
   const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
-  const [recacheAudio, setRecacheAudio] = useState(false);
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
@@ -475,7 +473,6 @@ export default function Phrases() {
     phraseList,
     order,
     filteredPhrases,
-    recacheAudio,
     audioCacheStore
   );
 
@@ -530,10 +527,28 @@ export default function Phrases() {
         void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
           {
             uid: curP.uid,
+            tl: "ja",
             pronunciation: inJapanese,
             index: reinforcedUID !== null ? undefined : selectedIndex,
           },
-        ]);
+          {
+            uid: curP.uid + ".en",
+            tl: "en",
+            pronunciation: curP.english,
+            index: reinforcedUID !== null ? undefined : selectedIndex,
+          },
+        ]).catch((exception) => {
+          // likely getAudio failed
+
+          if (exception instanceof Error) {
+            let msg = exception.message;
+            if (msg === "unreachable") {
+              const stack = "at " + getStackInitial(exception);
+              msg = `cache:${curP.english} ${inJapanese} ${stack}`;
+            }
+            dispatch(logger(msg, DebugLevel.ERROR));
+          }
+        });
       }
 
       updateDailyGoal({
@@ -713,8 +728,7 @@ export default function Phrases() {
     englishSideUp,
     phrase,
     // loop
-    0,
-    recacheAudio
+    0
   );
 
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
@@ -883,12 +897,6 @@ export default function Phrases() {
                 reviewed={alreadyReviewed}
                 toggle={englishSideUp}
                 action={buildAction(dispatch, flipPhrasesPracticeSide)}
-              />
-              <ReCacheAudioBtn
-                disabled={!cookies}
-                reviewed={alreadyReviewed}
-                active={recacheAudio}
-                action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
             </div>
           </div>
@@ -1075,8 +1083,7 @@ function getPlayBtn(
   swipeThreshold: number,
   englishSideUp: boolean,
   phrase: RawPhrase,
-  loop: number,
-  recacheAudio: boolean
+  loop: number
 ) {
   const audioWords: AudioItemParams = englishSideUp
     ? { tl: "en", q: phrase.english, uid: phrase.uid + ".en" }
@@ -1087,30 +1094,8 @@ function getPlayBtn(
       };
 
   return (
-    <AudioItem
-      visible={swipeThreshold === 0 && loop === 0}
-      word={audioWords}
-      reCache={recacheAudio}
-    />
+    <AudioItem visible={swipeThreshold === 0 && loop === 0} word={audioWords} />
   );
-}
-
-function buildRecacheAudioHandler(
-  recacheAudio: boolean,
-  setRecacheAudio: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  return function recacheAudioHandler() {
-    if (!recacheAudio) {
-      const delayTime = 2000;
-      setRecacheAudio(true);
-
-      const delayToggle = () => {
-        setRecacheAudio(false);
-      };
-
-      setTimeout(delayToggle, delayTime);
-    }
-  };
 }
 
 function buildGameActionsHandler(
@@ -1122,7 +1107,6 @@ function buildGameActionsHandler(
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
-  recacheAudio: boolean,
   audioCacheStore: React.MutableRefObject<AudioBufferRecord>
 ) {
   return async function gameActionHandler(
@@ -1162,48 +1146,94 @@ function buildGameActionsHandler(
         } else {
           const inJapanese = audioPronunciation(phrase);
 
-          const res = await dispatch(
-            getSynthAudioWorkaroundNoAsync({
-              key: phrase.uid,
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-              tl: "ja",
-              q: inJapanese,
-            })
-          ).unwrap();
+          try {
+            const res = await dispatch(
+              getSynthAudioWorkaroundNoAsync({
+                key: phrase.uid,
+                index: reinforcedUID !== null ? undefined : selectedIndex,
+                tl: "ja",
+                q: inJapanese,
+              })
+            ).unwrap();
 
-          actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-            (resolve) => {
-              resolve({
-                uid: res.uid,
-                buffer: copyBufferToCacheStore(
-                  audioCacheStore,
-                  res.uid,
-                  res.buffer
-                ),
-              });
+            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+              (resolve) => {
+                resolve({
+                  uid: res.uid,
+                  buffer: copyBufferToCacheStore(
+                    audioCacheStore,
+                    res.uid,
+                    res.buffer
+                  ),
+                });
+              }
+            ).then((res) => {
+              if (phrase.uid === res.uid) {
+                return playAudio(res.buffer, AbortController);
+              }
+              throw new Error("Incorrect uid");
+            });
+          } catch (exception) {
+            if (exception instanceof Error) {
+              let msg = exception.message;
+              if (msg === "unreachable") {
+                const stack = "at " + getStackInitial(exception);
+                msg = `tts:${inJapanese} ${stack}`;
+              }
+              dispatch(logger(msg, DebugLevel.ERROR));
             }
-          ).then((res) => {
-            if (phrase.uid === res.uid) {
-              return playAudio(res.buffer, AbortController);
-            }
-            throw new Error("Incorrect uid");
-          });
+            return Promise.resolve();
+          }
         }
       } else {
         //if (direction === "down")
         const inEnglish = phrase.english;
+        const enUid = phrase.uid + ".en";
 
-        actionPromise = dispatch(
-          getAudio({
-            uid: phrase.uid + ".en",
-            index: selectedIndex,
-            tl: "en",
-            q: inEnglish,
-            override: recacheAudio,
-          })
-        )
-          .unwrap()
-          .then(({ buffer }) => playAudio(buffer, AbortController));
+        const cachedAudioBuf = copyBufferFromCacheStore(audioCacheStore, enUid);
+
+        if (cachedAudioBuf !== undefined) {
+          actionPromise = playAudio(cachedAudioBuf);
+        } else {
+          try {
+            const res = await dispatch(
+              getSynthAudioWorkaroundNoAsync({
+                key: enUid,
+                index: reinforcedUID !== null ? undefined : selectedIndex,
+                tl: "en",
+                q: inEnglish,
+              })
+            ).unwrap();
+
+            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+              (resolve) => {
+                resolve({
+                  uid: res.uid,
+                  buffer: copyBufferToCacheStore(
+                    audioCacheStore,
+                    res.uid,
+                    res.buffer
+                  ),
+                });
+              }
+            ).then((res) => {
+              if (enUid === res.uid) {
+                return playAudio(res.buffer, AbortController);
+              }
+              throw new Error("Incorrect uid");
+            });
+          } catch (exception) {
+            if (exception instanceof Error) {
+              let msg = exception.message;
+              if (msg === "unreachable") {
+                const stack = "at " + getStackInitial(exception);
+                msg = `tts:${inEnglish} ${stack}`;
+              }
+              dispatch(logger(msg, DebugLevel.ERROR));
+            }
+            return Promise.resolve();
+          }
+        }
       }
     }
     return actionPromise;

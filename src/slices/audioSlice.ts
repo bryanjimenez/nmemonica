@@ -1,31 +1,21 @@
 import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { fetchAudio } from "./audioHelper";
-import { logger } from "./globalSlice";
-import { DebugLevel } from "./settingHelper";
-import { pronounceEndpoint } from "../../environment.development";
-import {
-  IDBErrorCause,
-  IDBStores,
-  getIDBItem,
-  openIDB,
-} from "../../pwa/helper/idbHelper";
-import { SWRequestHeader } from "../helper/serviceWorkerHelper";
-import { addParam } from "../helper/urlHelper";
 import { type ValuesOf } from "../typings/utils";
+import { AUDIO_WORKER_EN_NAME, AUDIO_WORKER_JA_NAME } from "../workers";
 import {
-  type VoiceWorkerQuery,
+  type JaVoiceWorkerQuery,
   VoiceWorkerResponse,
-} from "../worker/voiceWorker";
+} from "../workers/voiceWorker-ja";
 
-import { AppDispatch, RootState } from ".";
+import { RootState } from ".";
 
 // global worker variable
-let worker: Worker | null = null;
+let workerJa: Worker | null = null;
+let workerEn: Worker | null = null;
 let initialized = false;
 
-export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND>;
-export const VOICE_KIND = Object.freeze({
+export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND_JA>;
+export const VOICE_KIND_JA = Object.freeze({
   HAPPY: "happy",
   ANGRY: "angry",
   SAD: "sad",
@@ -38,8 +28,11 @@ export const VOICE_KIND = Object.freeze({
 export const initAudioWorker = createAsyncThunk(
   "voice/initAudioWorker",
   (_arg, _thunkAPI) => {
-    if (worker === null) {
-      worker = new Worker("./voice-worker.js");
+    if (workerJa === null) {
+      workerJa = new Worker(AUDIO_WORKER_JA_NAME);
+    }
+    if (workerEn === null) {
+      workerEn = new Worker(AUDIO_WORKER_EN_NAME);
     }
   }
 );
@@ -50,9 +43,13 @@ export const initAudioWorker = createAsyncThunk(
 export const dropAudioWorker = createAsyncThunk(
   "voice/dropAudioWorker",
   (_arg, _thunkAPI) => {
-    if (worker !== null) {
-      worker.terminate();
-      worker = null;
+    if (workerJa !== null) {
+      workerJa.terminate();
+      workerJa = null;
+    }
+    if (workerEn !== null) {
+      workerEn.terminate();
+      workerEn = null;
     }
   }
 );
@@ -64,49 +61,8 @@ export type AudioItemParams = {
   q: string;
 };
 
-export const getAudio = createAsyncThunk(
-  "voice/getAudio",
-  async (
-    arg: {
-      uid: AudioItemParams["uid"];
-      index: AudioItemParams["index"] | undefined;
-      tl: AudioItemParams["tl"];
-      q: AudioItemParams["q"];
-      override?: boolean;
-    },
-    thunkAPI
-  ) => {
-    const { uid, index, tl, q, override } = arg;
-
-    const dispatch = thunkAPI.dispatch as AppDispatch;
-    const audioUrl = addParam(pronounceEndpoint, {
-      tl,
-      q,
-      uid,
-    });
-
-    const headers =
-      override === true ? { headers: SWRequestHeader.CACHE_RELOAD } : {};
-
-    const fetchRequest = () =>
-      fetchAudio(new Request(audioUrl, headers))
-        .then((blob) => blob.arrayBuffer())
-        .then((buffer) => ({
-          uid,
-          index,
-          buffer,
-        }));
-
-    return override === true
-      ? fetchRequest()
-      : getFromIndexedDB(uid, dispatch)
-          .then((blob) => blob.arrayBuffer())
-          .then((buffer) => ({ buffer }))
-          .catch(fetchRequest);
-  }
-);
-
 // TODO: @nmemonica/voice-ja not async/parallel
+// TODO: @nmemonica/voice-en not async/parallel
 export const getSynthAudioWorkaroundNoAsync = createAsyncThunk(
   "voice/getSynthAudioWorkaroundNoAsync",
   getSynthAudioWorkaroundNoAsyncFn
@@ -152,19 +108,35 @@ async function getFromVoiceSynth(
   const { uid, index, tl, q } = arg;
   const { japaneseVoice } = (thunkAPI.getState() as RootState).global;
 
+  let w = { ja: workerJa, en: workerEn }[tl];
   return new Promise<GetSynthAudioResult>(async (resolve, reject) => {
-    if (worker === null) {
-      worker = new Worker("./voice-worker.js");
+    if (w === null) {
+      switch (tl) {
+        case "ja": {
+          workerJa = new Worker(AUDIO_WORKER_JA_NAME);
+          w = workerJa;
+          break;
+        }
+
+        case "en": {
+          workerEn = new Worker(AUDIO_WORKER_EN_NAME);
+          w = workerEn;
+          break;
+        }
+      }
     }
 
-    const removeHandler = () => {
-      worker?.removeEventListener("message", workerHandler);
-    };
-    const workerHandler = (
-      event: MessageEvent<VoiceWorkerResponse | undefined>
-    ) => {
-      if (event.data === undefined) {
-        reject(new Error("Could not synthesize query"));
+    if (w === null) {
+      const err = `Failed to load worker voice-${tl}`;
+      reject(new Error(err));
+      return;
+    }
+
+    const aWorker = w;
+
+    const wMsgHandler = (event: MessageEvent<VoiceWorkerResponse | Error>) => {
+      if (event.data instanceof Error) {
+        reject(event.data);
         return;
       }
       const audio = event.data.buffer;
@@ -174,14 +146,12 @@ async function getFromVoiceSynth(
       });
 
       initialized = true;
-      removeHandler();
-
       resolve({ uid: event.data.uid, index: event.data.index, blob });
     };
 
-    worker.addEventListener("message", workerHandler);
+    w.addEventListener("message", wMsgHandler, { once: true });
 
-    const message: VoiceWorkerQuery = {
+    const message: JaVoiceWorkerQuery = {
       uid,
       index,
       tl,
@@ -190,7 +160,7 @@ async function getFromVoiceSynth(
     };
 
     if (initialized === true) {
-      worker.postMessage(message);
+      aWorker.postMessage(message);
     } else {
       let tries = 0;
       while (tries < 10 && initialized === false) {
@@ -199,38 +169,17 @@ async function getFromVoiceSynth(
           setTimeout(resolve, 1000);
         });
         if (initialized === false) {
-          worker.postMessage(message);
+          w.postMessage(message);
         }
 
         tries++;
       }
 
       if (initialized === false) {
-        reject(new Error("Could not load @nmemonica/voice-ja"));
+        const err = `Could not initialize @nmemonica/voice-${tl} (${tries} tries)`;
+        reject(new Error(err));
       }
     }
-  });
-}
-
-function getFromIndexedDB(uid: string, dispatch: AppDispatch) {
-  return openIDB().then((db) => {
-    // if indexedDB has stored setttings
-    const stores = Array.from(db.objectStoreNames);
-
-    const ErrorMediaCacheMissing = new Error("No cached media available", {
-      cause: { code: IDBErrorCause.NoResult },
-    });
-    if (!stores.includes(IDBStores.MEDIA)) {
-      throw ErrorMediaCacheMissing;
-    }
-
-    return getIDBItem({ db, store: IDBStores.MEDIA }, uid)
-      .then((dataO) => dataO.blob)
-      .catch(() => {
-        dispatch(logger("IDB.get [] ", DebugLevel.WARN));
-
-        throw new Error("Media not found in cache");
-      });
   });
 }
 

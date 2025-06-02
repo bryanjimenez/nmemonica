@@ -67,10 +67,7 @@ import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
-import {
-  getAudio,
-  getSynthAudioWorkaroundNoAsync,
-} from "../../slices/audioSlice";
+import { getSynthAudioWorkaroundNoAsync } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   DebugLevel,
@@ -95,6 +92,7 @@ import {
   toggleVocabularyTag,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
+import { getStackInitial } from "../../workers";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
@@ -103,7 +101,6 @@ import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
   PronunciationWarningBtn,
-  ReCacheAudioBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
   ToggleFrequencyTermBtnMemo,
@@ -145,7 +142,6 @@ export default function Vocabulary() {
 
   const [frequency, setFrequency] = useState<string[]>([]); // subset of frequency words within current active group
 
-  const [recacheAudio, setRecacheAudio] = useState(false);
   const naFlip = useRef();
 
   const [wasPlayed, setWasPlayed] = useState(false);
@@ -534,7 +530,6 @@ export default function Vocabulary() {
     verbForm,
     order,
     filteredVocab,
-    recacheAudio,
     naFlip,
     setWasPlayed,
     audioCacheStore
@@ -600,7 +595,6 @@ export default function Vocabulary() {
     // prevent entering the if when
     // other dep change triggers useEffect
     prevLastNext.current = lastNext;
-
     if (
       reinforcedUID !== prevState.reinforcedUID ||
       selectedIndex !== prevState.selectedIndex ||
@@ -614,9 +608,9 @@ export default function Vocabulary() {
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
 
       if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const uid =
+        const curUid =
           reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
-        const v = getTerm(uid, filteredVocab, vocabList);
+        const v = getTerm(curUid, filteredVocab, vocabList);
 
         const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
         const vUid = getCacheUID(sayObj);
@@ -625,10 +619,28 @@ export default function Vocabulary() {
         void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
           {
             uid: vUid,
+            tl: "ja",
             pronunciation: vQuery,
             index: reinforcedUID !== null ? undefined : selectedIndex,
           },
-        ]);
+          {
+            uid: vUid + ".en",
+            tl: "en",
+            pronunciation: v.english,
+            index: reinforcedUID !== null ? undefined : selectedIndex,
+          },
+        ]).catch((exception) => {
+          // likely getAudio failed
+
+          if (exception instanceof Error) {
+            let msg = exception.message;
+            if (msg === "unreachable") {
+              const stack = "at " + getStackInitial(exception);
+              msg = `cache:${v.english} ${vQuery} ${stack}`;
+            }
+            dispatch(logger(msg, DebugLevel.ERROR));
+          }
+        });
       }
 
       updateDailyGoal({
@@ -817,14 +829,12 @@ export default function Vocabulary() {
             {isVerb && autoVerbView ? (
               <VerbMain
                 verb={vocabulary}
-                reCache={recacheAudio}
                 linkToOtherTerm={(uid) => setReinforcedUID(uid)}
                 showHint={showHint === uid}
               />
             ) : (
               <VocabularyMain
                 vocabulary={vocabulary}
-                reCache={recacheAudio}
                 showHint={showHint === uid}
                 wasPlayed={wasPlayed}
               />
@@ -844,7 +854,6 @@ export default function Vocabulary() {
       closeTagMenu,
       HTMLDivElementSwipeRef,
       autoVerbView,
-      recacheAudio,
       showHint,
       wasPlayed,
       blastElRef,
@@ -890,12 +899,6 @@ export default function Vocabulary() {
                       }
                     : undefined
                 }
-              />
-              <ReCacheAudioBtn
-                disabled={!cookies}
-                active={recacheAudio}
-                reviewed={alreadyReviewed}
-                action={buildRecacheAudioHandler(recacheAudio, setRecacheAudio)}
               />
               <ToggleAutoVerbViewBtn
                 visible={isVerb}
@@ -1049,7 +1052,6 @@ export default function Vocabulary() {
       hintEnabledREF,
       loopActionBtn,
       loopSettingBtn,
-      recacheAudio,
       reinforcedUID,
       sort,
     ]
@@ -1257,24 +1259,6 @@ export default function Vocabulary() {
   return page;
 }
 
-function buildRecacheAudioHandler(
-  recacheAudio: boolean,
-  setRecacheAudio: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  return function recacheAudioHandler() {
-    if (!recacheAudio) {
-      const delayTime = 2000;
-      setRecacheAudio(true);
-
-      const delayToggle = () => {
-        setRecacheAudio(false);
-      };
-
-      setTimeout(delayToggle, delayTime);
-    }
-  };
-}
-
 function useBuildGameActionsHandler(
   dispatch: AppDispatch,
   gotoNextSlide: () => void,
@@ -1285,7 +1269,6 @@ function useBuildGameActionsHandler(
   verbForm: string,
   order: number[],
   filteredVocab: RawVocabulary[],
-  recacheAudio: boolean,
   naFlip: React.MutableRefObject<string | undefined>,
   setWasPlayed: (value: boolean) => void,
   audioCacheStore: React.MutableRefObject<AudioBufferRecord>
@@ -1336,32 +1319,45 @@ function useBuildGameActionsHandler(
           } else {
             const vQuery = audioPronunciation(sayObj);
 
-            const res = await dispatch(
-              getSynthAudioWorkaroundNoAsync({
-                key: vUid,
-                index: reinforcedUID !== null ? undefined : selectedIndex,
-                tl: "ja",
-                q: vQuery,
-              })
-            ).unwrap();
+            try {
+              const res = await dispatch(
+                getSynthAudioWorkaroundNoAsync({
+                  key: vUid,
+                  index: reinforcedUID !== null ? undefined : selectedIndex,
+                  tl: "ja",
+                  q: vQuery,
+                })
+              ).unwrap();
 
-            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-              (resolve) => {
-                resolve({
-                  uid: res.uid,
-                  buffer: copyBufferToCacheStore(
-                    audioCacheStore,
-                    res.uid,
-                    res.buffer
-                  ),
-                });
+              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+                (resolve) => {
+                  resolve({
+                    uid: res.uid,
+                    buffer: copyBufferToCacheStore(
+                      audioCacheStore,
+                      res.uid,
+                      res.buffer
+                    ),
+                  });
+                }
+              ).then((res) => {
+                if (vUid === res.uid) {
+                  return playAudio(res.buffer, AbortController);
+                }
+                throw new Error("Incorrect uid");
+              });
+            } catch (exception) {
+              if (exception instanceof Error) {
+                let msg = exception.message;
+                if (msg === "unreachable") {
+                  const stack = "at " + getStackInitial(exception);
+                  msg = `tts:${vQuery} ${stack}`;
+                }
+                dispatch(logger(msg, DebugLevel.ERROR));
               }
-            ).then((res) => {
-              if (vUid === res.uid) {
-                return playAudio(res.buffer, AbortController);
-              }
-              throw new Error("Incorrect uid");
-            });
+
+              return Promise.resolve();
+            }
           }
         } else {
           //if (direction === "down")
@@ -1369,17 +1365,56 @@ function useBuildGameActionsHandler(
 
           const inEnglish = vocabulary.english;
 
-          actionPromise = dispatch(
-            getAudio({
-              uid: vocabulary.uid + ".en",
-              index: selectedIndex,
-              tl: "en",
-              q: inEnglish,
-              override: recacheAudio,
-            })
-          )
-            .unwrap()
-            .then(({ buffer }) => playAudio(buffer, AbortController));
+          const enUid = vocabulary.uid + ".en";
+
+          const cachedAudioBuf = copyBufferFromCacheStore(
+            audioCacheStore,
+            enUid
+          );
+
+          if (cachedAudioBuf !== undefined) {
+            actionPromise = playAudio(cachedAudioBuf);
+          } else {
+            try {
+              const res = await dispatch(
+                getSynthAudioWorkaroundNoAsync({
+                  key: enUid,
+                  index: reinforcedUID !== null ? undefined : selectedIndex,
+                  tl: "en",
+                  q: inEnglish,
+                })
+              ).unwrap();
+
+              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+                (resolve) => {
+                  resolve({
+                    uid: res.uid,
+                    buffer: copyBufferToCacheStore(
+                      audioCacheStore,
+                      res.uid,
+                      res.buffer
+                    ),
+                  });
+                }
+              ).then((res) => {
+                if (enUid === res.uid) {
+                  return playAudio(res.buffer, AbortController);
+                }
+                throw new Error("Incorrect uid");
+              });
+            } catch (exception) {
+              if (exception instanceof Error) {
+                let msg = exception.message;
+                if (msg === "unreachable") {
+                  const stack = "at " + getStackInitial(exception);
+                  msg = `tts:${inEnglish} ${stack}`;
+                }
+                dispatch(logger(msg, DebugLevel.ERROR));
+              }
+
+              return Promise.resolve();
+            }
+          }
         }
       }
       return actionPromise;
@@ -1396,8 +1431,6 @@ function useBuildGameActionsHandler(
       filteredVocab,
       naFlip,
       setWasPlayed,
-
-      recacheAudio,
 
       audioCacheStore,
     ]

@@ -40,9 +40,13 @@ export default function rspackConfig(
         : {
             /** see rspack.config.sw.js */
           }),
-      "voice-worker": {
-        filename: "voice-worker.js",
-        import: "./src/worker/voiceWorker.ts",
+      "voice-worker-ja": {
+        filename: "voice-worker-ja.js",
+        import: "./src/workers/voiceWorker-ja.ts",
+      },
+      "voice-worker-en": {
+        filename: "voice-worker-en.js",
+        import: "./src/workers/voiceWorker-en.ts",
       },
     },
     output: {

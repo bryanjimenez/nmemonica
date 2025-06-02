@@ -23,7 +23,6 @@ import Sizable from "../Form/Sizable";
 interface VocabularyMainProps {
   vocabulary: RawVocabulary;
   showHint: boolean;
-  reCache: boolean;
   /** was audio played? */
   wasPlayed: boolean;
 }
@@ -31,7 +30,7 @@ interface VocabularyMainProps {
 export default function VocabularyMain(props: VocabularyMainProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { vocabulary, reCache, showHint, wasPlayed } = props;
+  const { vocabulary, showHint, wasPlayed } = props;
 
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
   const [showRomaji, setShowRomaji] = useState<boolean>(false);
@@ -148,7 +147,6 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     <AudioItem
       visible={swipeThreshold === 0}
       word={audioWords}
-      reCache={reCache}
       onPushedPlay={onPushedPlay}
     />
   );
