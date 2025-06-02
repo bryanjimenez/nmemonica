@@ -3,7 +3,7 @@ import classNames from "classnames";
 // import CssBaseline from '@mui/material/CssBaseline';
 import { Suspense, lazy, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import Console from "./components/Form/Console";
 import { KanjiGameMeta } from "./components/Games/KanjiGame";
@@ -28,6 +28,7 @@ import {
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
+import { dropAudioWorker, initAudioWorker } from "./slices/audioSlice";
 import { appSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { DebugLevel } from "./slices/settingHelper";
@@ -129,6 +130,7 @@ export default function App() {
   return (
     <ThemeProvider theme={muiDarkTheme}>
       <HashRouter basename="/">
+        <ByLocationWorkerLifetime />
         <div id="page-content" className={pClass}>
           <Console connected={true} />
           <TermsNotice showInPages={cookieNoticePages} />
@@ -172,4 +174,25 @@ export default function App() {
       </HashRouter>
     </ThemeProvider>
   );
+}
+
+function ByLocationWorkerLifetime() {
+  const dispatch = useDispatch<AppDispatch>();
+  const location = useLocation();
+
+  useEffect(() => {
+    switch (location.pathname) {
+      // where @nmemonica/voice-ja should be initialized
+      case VocabularyMeta.location:
+      case PhrasesMeta.location:
+        void dispatch(initAudioWorker());
+        break;
+
+      default:
+        void dispatch(dropAudioWorker());
+        break;
+    }
+  }, [location]);
+
+  return null;
 }

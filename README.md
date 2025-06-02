@@ -5,7 +5,7 @@
 > Nmemonica is a PWA and uses the Service Worker API [(MDN docs)](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) which is only enabled over HTTPS.  
 > Nmemonica uses local storage and indexedDB (cookie technologies) to store user app data.
 
-This repo contains the UI's source code for [Nmemonica](https://bryanjimenez.github.io/nmemonica). The service documentation can be found here ([snservice](https://github.com/bryanjimenez/snservice/blob/main/README.md)).
+This repo contains the UI's source code for [Nmemonica](https://bryanjimenez.github.io/nmemonica).
 
 
 ## Installation (for development)
@@ -23,6 +23,8 @@ This repo contains the UI's source code for [Nmemonica](https://bryanjimenez.git
 1. Open a browser to https://localhost:8080
 
 ## Getting Started
+<details><summary>Basic Usage Guide</summary>
+
 After loading the application for the first time you will likely want to add study material (Phrases, Vocabulary and Kanji). Most parts of the app depend on user created study material with the exception of the Kana/Hiragana/Katakana game. Study material (UGC User Generated Content) can be imported or entered directly. For more details see the [Edit](#Edit) section.
 
 ### Navigation
@@ -187,11 +189,21 @@ The Sync Service is a [WebRTC](webrtc.org) connection-information relay (Data is
 | Export to File | Backup your Datasets and settings to the file system | ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/file-zip-24.svg "Export Button")|
 | Export to Sync | Export and share Datasets with Peer (provide the recipiant the share ID and Key) |![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Export Button") |
 
+</details>
 
 ## Credits
 Thanks to:
- - The [Japanese Verb Conjugator](http://www.japaneseverbconjugator.com/) website for conjugation examples and reference.
- - [Google Translate](https://translate.google.com/) for powering Nmemonica's audio/pronunciation.
+ - The [Japanese Verb Conjugator](https://www.japaneseverbconjugator.com/) website for conjugation examples and reference.
+ - The following projects for powering Nmemonica's audio/pronunciation:  
+    + Software
+      - [hts_engine](https://hts-engine.sourceforge.net/)
+      - [openjtalk](https://open-jtalk.sourceforge.net/)
+      - [jbonsai](https://github.com/jpreprocess/jbonsai)
+      - [jpreprocess](https://github.com/jpreprocess/jpreprocess)
+    + Voices
+      - [hts_voice_nitech_jp_atr503_m001-1.05](https://open-jtalk.sourceforge.net)
+      - [tohoku-f01](https://github.com/icn-lab/htsvoice-tohoku-f01)
+
  - The [x-data-spreadsheet](https://github.com/myliang/x-spreadsheet) project created by [@myliang](https://github.com/myliang) and forked by Nmemonica for it's web spreadsheet component.
  - Several online sources for providing reference to spaced repetition algorithms, including:  
     - [A Better Spaced Repetition Learning Algorithm: SM2+](https://www.blueraja.com/blog/477/a-better-spaced-repetition-learning-algorithm-sm2) by blueraja

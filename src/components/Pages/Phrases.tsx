@@ -14,9 +14,14 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
-import { pronounceEndpoint } from "../../../environment.development";
+import {
+  AudioBufferRecord,
+  copyBufferFromCacheStore,
+  copyBufferToCacheStore,
+  getSynthVoiceBufferToCacheStore,
+} from "../../helper/audioSynthPreCache";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
@@ -40,23 +45,27 @@ import {
   recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
-import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import {
   dateViewOrder,
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
-import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
+import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
-import type { AppDispatch, RootState } from "../../slices";
-import { fetchAudio } from "../../slices/audioHelper";
+import type { AppDispatch } from "../../slices";
+import { playAudio } from "../../slices/audioHelper";
+import {
+  type AudioItemParams,
+  getAudio,
+  getSynthAudioWorkaroundNoAsync,
+} from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   addFrequencyPhrase,
@@ -106,10 +115,12 @@ const PhrasesMeta = {
 
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
-  const { cookies } = useSelector(({ global }: RootState) => global);
+  const { cookies } = useConnectSetting();
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
+
+  const audioCacheStore = useRef<AudioBufferRecord>({});
 
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
@@ -456,6 +467,7 @@ export default function Phrases() {
   }, [filteredPhrases, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = buildGameActionsHandler(
+    dispatch,
     gotoNextSlide,
     gotoPrev,
     reinforcedUID,
@@ -464,7 +476,7 @@ export default function Phrases() {
     order,
     filteredPhrases,
     recacheAudio,
-    pronounceEndpoint
+    audioCacheStore
   );
 
   // const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -508,6 +520,21 @@ export default function Phrases() {
         getTermUID(prevState.selectedIndex, filteredPhrases, order);
 
       const p = getTerm(uid, filteredPhrases, phraseList);
+
+      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+        const curUid =
+          reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
+        const curP = getTerm(curUid, filteredPhrases, phraseList);
+        const inJapanese = audioPronunciation(curP);
+
+        void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
+          {
+            uid: curP.uid,
+            pronunciation: inJapanese,
+            index: reinforcedUID !== null ? undefined : selectedIndex,
+          },
+        ]);
+      }
 
       updateDailyGoal({
         viewGoal,
@@ -685,9 +712,9 @@ export default function Phrases() {
     swipeThreshold,
     englishSideUp,
     phrase,
-    recacheAudio,
     // loop
-    0
+    0,
+    recacheAudio
   );
 
   const [jObj, japanesePhrase] = getJapanesePhrase(phrase);
@@ -1029,10 +1056,10 @@ function getPlayBtn(
   swipeThreshold: number,
   englishSideUp: boolean,
   phrase: RawPhrase,
-  recacheAudio: boolean,
-  loop: number
+  loop: number,
+  recacheAudio: boolean
 ) {
-  const audioWords = englishSideUp
+  const audioWords: AudioItemParams = englishSideUp
     ? { tl: "en", q: phrase.english, uid: phrase.uid + ".en" }
     : {
         tl: "ja",
@@ -1068,6 +1095,7 @@ function buildRecacheAudioHandler(
 }
 
 function buildGameActionsHandler(
+  dispatch: AppDispatch,
   gotoNextSlide: () => void,
   gotoPrev: () => void,
   reinforcedUID: string | null,
@@ -1076,9 +1104,9 @@ function buildGameActionsHandler(
   order: number[],
   filteredPhrases: RawPhrase[],
   recacheAudio: boolean,
-  baseUrl: string
+  audioCacheStore: React.MutableRefObject<AudioBufferRecord>
 ) {
-  return function gameActionHandler(
+  return async function gameActionHandler(
     direction: SwipeDirection,
     AbortController?: AbortController
   ) {
@@ -1103,35 +1131,60 @@ function buildGameActionsHandler(
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
       const phrase = getTerm(uid, phrases);
-      const override = recacheAudio
-        ? { headers: SWRequestHeader.CACHE_RELOAD }
-        : {};
 
       if (direction === "up") {
-        const inJapanese = audioPronunciation(phrase);
-        const audioUrl = addParam(baseUrl, {
-          tl: "ja",
-          q: inJapanese,
-          uid,
-        });
-
-        actionPromise = fetchAudio(
-          new Request(audioUrl, override),
-          AbortController
+        const cachedAudioBuf = copyBufferFromCacheStore(
+          audioCacheStore,
+          phrase.uid
         );
+
+        if (cachedAudioBuf !== undefined) {
+          actionPromise = playAudio(cachedAudioBuf);
+        } else {
+          const inJapanese = audioPronunciation(phrase);
+
+          const res = await dispatch(
+            getSynthAudioWorkaroundNoAsync({
+              key: phrase.uid,
+              index: reinforcedUID !== null ? undefined : selectedIndex,
+              tl: "ja",
+              q: inJapanese,
+            })
+          ).unwrap();
+
+          actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+            (resolve) => {
+              resolve({
+                uid: res.uid,
+                buffer: copyBufferToCacheStore(
+                  audioCacheStore,
+                  res.uid,
+                  res.buffer
+                ),
+              });
+            }
+          ).then((res) => {
+            if (phrase.uid === res.uid) {
+              return playAudio(res.buffer, AbortController);
+            }
+            throw new Error("Incorrect uid");
+          });
+        }
       } else {
         //if (direction === "down")
         const inEnglish = phrase.english;
-        const audioUrl = addParam(baseUrl, {
-          tl: "en",
-          q: inEnglish,
-          uid: phrase.uid + ".en",
-        });
 
-        actionPromise = fetchAudio(
-          new Request(audioUrl, override),
-          AbortController
-        );
+        actionPromise = dispatch(
+          getAudio({
+            uid: phrase.uid + ".en",
+            index: selectedIndex,
+            tl: "en",
+            q: inEnglish,
+            override: recacheAudio,
+          })
+        )
+          .unwrap()
+          .then(({ buffer }) => playAudio(buffer, AbortController));
       }
     }
     return actionPromise;

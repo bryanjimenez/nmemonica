@@ -15,11 +15,16 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
-import { pronounceEndpoint } from "../../../environment.development";
+import {
+  AudioBufferRecord,
+  copyBufferFromCacheStore,
+  copyBufferToCacheStore,
+  getSynthVoiceBufferToCacheStore,
+} from "../../helper/audioSynthPreCache";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
@@ -43,7 +48,6 @@ import {
   recallNotificationHelper,
   spaceRepetitionOrder,
 } from "../../helper/recallHelper";
-import { SWRequestHeader } from "../../helper/serviceWorkerHelper";
 import {
   alphaOrder,
   dateViewOrder,
@@ -52,8 +56,8 @@ import {
   randomOrder,
 } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
-import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
+import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -61,8 +65,12 @@ import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import type { AppDispatch, RootState } from "../../slices";
-import { fetchAudio } from "../../slices/audioHelper";
+import type { AppDispatch } from "../../slices";
+import { playAudio } from "../../slices/audioHelper";
+import {
+  getAudio,
+  getSynthAudioWorkaroundNoAsync,
+} from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   DebugLevel,
@@ -116,7 +124,7 @@ const VocabularyMeta = {
 
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
-  const { cookies } = useSelector(({ global }: RootState) => global);
+  const { cookies } = useConnectSetting();
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
     useState(false);
@@ -125,6 +133,8 @@ export default function Vocabulary() {
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
+
+  const audioCacheStore = useRef<AudioBufferRecord>({});
 
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
@@ -515,6 +525,7 @@ export default function Vocabulary() {
   }, [filteredVocab, selectedIndex, reinforcedUID, lastNext]);
 
   const gameActionHandler = useBuildGameActionsHandler(
+    dispatch,
     gotoNextSlide,
     gotoPrev,
     reinforcedUID,
@@ -526,7 +537,7 @@ export default function Vocabulary() {
     recacheAudio,
     naFlip,
     setWasPlayed,
-    pronounceEndpoint
+    audioCacheStore
   );
 
   const deviceMotionEvent = useDeviceMotionActions(motionThreshold);
@@ -601,6 +612,24 @@ export default function Vocabulary() {
 
       const vocabulary = getTerm(uid, filteredVocab, vocabList);
       gradeTimedPlayEvent(dispatch, uid, metadata.current);
+
+      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
+        const uid =
+          reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
+        const v = getTerm(uid, filteredVocab, vocabList);
+
+        const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
+        const vUid = getCacheUID(sayObj);
+        const vQuery = audioPronunciation(sayObj);
+
+        void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
+          {
+            uid: vUid,
+            pronunciation: vQuery,
+            index: reinforcedUID !== null ? undefined : selectedIndex,
+          },
+        ]);
+      }
 
       updateDailyGoal({
         viewGoal,
@@ -711,6 +740,8 @@ export default function Vocabulary() {
     setText,
     viewGoal,
     lastNext,
+
+    verbForm,
   ]);
 
   const getInnerPage = useCallback(
@@ -1245,6 +1276,7 @@ function buildRecacheAudioHandler(
 }
 
 function useBuildGameActionsHandler(
+  dispatch: AppDispatch,
   gotoNextSlide: () => void,
   gotoPrev: () => void,
   reinforcedUID: string | null,
@@ -1256,10 +1288,10 @@ function useBuildGameActionsHandler(
   recacheAudio: boolean,
   naFlip: React.MutableRefObject<string | undefined>,
   setWasPlayed: (value: boolean) => void,
-  baseUrl: string
+  audioCacheStore: React.MutableRefObject<AudioBufferRecord>
 ) {
   return useCallback(
-    (direction: SwipeDirection, AbortController?: AbortController) => {
+    async (direction: SwipeDirection, AbortController?: AbortController) => {
       if (direction === "vertical") {
         return Promise.reject(new Error("Unexpected swipe direction"));
       }
@@ -1282,75 +1314,78 @@ function useBuildGameActionsHandler(
           reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
         const vocabulary = getTerm(uid, vocabList);
 
-        const override = recacheAudio
-          ? { headers: SWRequestHeader.CACHE_RELOAD }
-          : {};
-
         setWasPlayed(true);
 
         if (direction === "up") {
           setMediaSessionPlaybackState("playing");
 
-          let sayObj;
-          if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {
-            const verb = verbToTargetForm(vocabulary, verbForm);
-
-            sayObj = {
-              ...vocabulary,
-              japanese: verb.toString(),
-              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-              pronounce: vocabulary.pronounce && verb.getPronunciation(),
-              form: verbForm,
-            };
-          } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
-            const naAdj = JapaneseText.parse(vocabulary).append(
-              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-              naFlip.current && "な"
-            );
-
-            sayObj = {
-              ...vocabulary,
-              japanese: naAdj.toString(),
-              // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-              pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
-              form: naFlip.current,
-            };
-
-            naFlip.current = naFlip.current !== undefined ? undefined : "-na";
-          } else {
-            sayObj = vocabulary;
-          }
-
-          const audioUrl = addParam(baseUrl, {
-            tl: "ja",
-            q: audioPronunciation(sayObj),
-            uid: getCacheUID(sayObj),
-          });
-
-          actionPromise = fetchAudio(
-            new Request(audioUrl, override),
-            AbortController
+          const sayObj = partOfSpeechPronunciation(
+            vocabulary,
+            verbForm,
+            naFlip
           );
+          const vUid = getCacheUID(sayObj);
+
+          const cachedAudioBuf = copyBufferFromCacheStore(
+            audioCacheStore,
+            vUid
+          );
+
+          if (cachedAudioBuf !== undefined) {
+            actionPromise = playAudio(cachedAudioBuf);
+          } else {
+            const vQuery = audioPronunciation(sayObj);
+
+            const res = await dispatch(
+              getSynthAudioWorkaroundNoAsync({
+                key: vUid,
+                index: reinforcedUID !== null ? undefined : selectedIndex,
+                tl: "ja",
+                q: vQuery,
+              })
+            ).unwrap();
+
+            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
+              (resolve) => {
+                resolve({
+                  uid: res.uid,
+                  buffer: copyBufferToCacheStore(
+                    audioCacheStore,
+                    res.uid,
+                    res.buffer
+                  ),
+                });
+              }
+            ).then((res) => {
+              if (vUid === res.uid) {
+                return playAudio(res.buffer, AbortController);
+              }
+              throw new Error("Incorrect uid");
+            });
+          }
         } else {
           //if (direction === "down")
           setMediaSessionPlaybackState("playing");
 
           const inEnglish = vocabulary.english;
-          const audioUrl = addParam(baseUrl, {
-            tl: "en",
-            q: inEnglish,
-            uid: vocabulary.uid + ".en",
-          });
 
-          actionPromise = fetchAudio(
-            new Request(audioUrl, override),
-            AbortController
-          );
+          actionPromise = dispatch(
+            getAudio({
+              uid: vocabulary.uid + ".en",
+              index: selectedIndex,
+              tl: "en",
+              q: inEnglish,
+              override: recacheAudio,
+            })
+          )
+            .unwrap()
+            .then(({ buffer }) => playAudio(buffer, AbortController));
         }
       }
       return actionPromise;
     },
     [
+      dispatch,
       gotoNextSlide,
       gotoPrev,
       reinforcedUID,
@@ -1359,12 +1394,52 @@ function useBuildGameActionsHandler(
       verbForm,
       order,
       filteredVocab,
-      recacheAudio,
       naFlip,
       setWasPlayed,
-      baseUrl,
+
+      recacheAudio,
+
+      audioCacheStore,
     ]
   );
 }
 
 export { VocabularyMeta };
+
+function partOfSpeechPronunciation(
+  vocabulary: RawVocabulary,
+  verbForm: string,
+  naFlip: React.MutableRefObject<string | undefined>
+) {
+  let sayObj;
+  if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {
+    const verb = verbToTargetForm(vocabulary, verbForm);
+
+    sayObj = {
+      ...vocabulary,
+      japanese: verb.toString(),
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      pronounce: vocabulary.pronounce && verb.getPronunciation(),
+      form: verbForm,
+    };
+  } else if (JapaneseText.parse(vocabulary).isNaAdj()) {
+    const naAdj = JapaneseText.parse(vocabulary).append(
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      naFlip.current && "な"
+    );
+
+    sayObj = {
+      ...vocabulary,
+      japanese: naAdj.toString(),
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      pronounce: vocabulary.pronounce && naAdj.getPronunciation(),
+      form: naFlip.current,
+    };
+
+    naFlip.current = naFlip.current !== undefined ? undefined : "-na";
+  } else {
+    sayObj = vocabulary;
+  }
+
+  return sayObj;
+}

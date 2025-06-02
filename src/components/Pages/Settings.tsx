@@ -42,6 +42,7 @@ import "../../css/Settings.css";
 import "../../css/spin.css";
 import { PrivacyPolicyMeta } from "../Terms/PrivacyPolicy";
 import { TermsAndConditionsMeta } from "../Terms/TermsAndConditions";
+const SettingsAudio = lazy(() => import("../Form/SettingsAudio"));
 const SettingsKanji = lazy(() => import("../Form/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Form/SettingsPhrase"));
 const SettingsVocab = lazy(() => import("../Form/SettingsVocab"));
@@ -163,6 +164,7 @@ export default function Settings() {
 
   const [sectionTerms, setSectionTerms] = useState(false);
 
+  const [sectionAudio, setSectionAudio] = useState(false);
   const [sectionKanji, setSectionKanji] = useState(false);
   const [sectionVocabulary, setSectionVocabulary] = useState(false);
   const [sectionPhrase, setSectionPhrase] = useState(false);
@@ -436,7 +438,21 @@ export default function Settings() {
             </div>
           </div>
         </div>
-
+        <div className={pageClassName}>
+          <div className={clickableSectionClass}>
+            <h2>Audio</h2>
+            {collapseExpandToggler(sectionAudio, setSectionAudio, cookies)}
+          </div>
+          {sectionAudio && (
+            <Suspense
+              fallback={
+                <NotReady addlStyle="audio-settings" text="Loading..." />
+              }
+            >
+              <SettingsAudio />
+            </Suspense>
+          )}
+        </div>
         <div className={pageClassName}>
           <div className={clickableSectionClass}>
             <h2>Phrases</h2>

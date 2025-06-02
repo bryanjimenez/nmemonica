@@ -33,6 +33,7 @@ export default function rspackConfig(
     },
 
     experiments: {
+      asyncWebAssembly: true,
       css: true,
     },
 

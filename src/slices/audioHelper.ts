@@ -34,12 +34,10 @@ function fadeOut(audio: HTMLAudioElement) {
 let audioCtx: AudioContext | null = null;
 
 /**
- * Fetch audio
- *
- * Play using AudioContext
+ * Play an audio (can be interrupted)
  */
-export async function fetchAudio(
-  audioUrl: Request,
+export function playAudio(
+  buffer: ArrayBuffer,
   AbortController?: AbortController
 ) {
   if (audioCtx === null) {
@@ -52,10 +50,7 @@ export async function fetchAudio(
   const source = audioCtx.createBufferSource();
   const destination = audioCtx.destination;
 
-  const audioRes = await fetch(audioUrl, { credentials: "include" });
-  const audioBuf = await audioRes.arrayBuffer();
-
-  const playP = audioCtx.decodeAudioData(audioBuf).then((decodBuf) => {
+  const playP = audioCtx.decodeAudioData(buffer).then((decodBuf) => {
     source.buffer = decodBuf;
 
     // connect the AudioBufferSourceNode to the
@@ -77,7 +72,7 @@ export async function fetchAudio(
       resolve();
     });
 
-    if (AbortController?.signal.aborted) {
+    if (AbortController?.signal.aborted === true) {
       listener();
     }
 
@@ -85,6 +80,18 @@ export async function fetchAudio(
   });
 
   return Promise.all([interruptP, playP]);
+}
+
+/**
+ * Fetch audio
+ *
+ * Play using AudioContext
+ */
+export async function fetchAudio(audioUrl: Request) {
+  const audioRes = await fetch(audioUrl, { credentials: "include" });
+  // const audioBuf = await audioRes.arrayBuffer();
+
+  return audioRes.blob();
 }
 
 /**

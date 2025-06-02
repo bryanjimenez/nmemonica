@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 
+import audioReducer from "./audioSlice";
 import globalReducer, { type GlobalInitSlice } from "./globalSlice";
 import kanaReducer, { type KanaInitSlice } from "./kanaSlice";
 import kanjiReducer, { type KanjiInitSlice } from "./kanjiSlice";
@@ -13,6 +14,7 @@ export const store = configureStore({
   reducer: {
     global: globalReducer,
     sw: serviceWorkerReducer,
+    audio: audioReducer,
 
     kana: kanaReducer,
     vocabulary: vocabularyReducer,
@@ -21,6 +23,16 @@ export const store = configureStore({
     kanji: kanjiReducer,
     particle: particleGameReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      // https://redux-toolkit.js.org/usage/usage-guide#working-with-non-serializable-data
+      serializableCheck: {
+        ignoredActions: [
+          "voice/getAudio/fulfilled",
+          "voice/getSynthAudioWorkaroundNoAsync/fulfilled",
+        ],
+      },
+    }),
 });
 
 // https://redux-toolkit.js.org/tutorials/typescript#define-root-state-and-dispatch-types

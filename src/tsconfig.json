@@ -19,13 +19,14 @@
     "allowJs": true,
     "checkJs": true,
     "sourceMap": true,
-    "jsx": "react-jsx", // missing import React
+    "jsx": "react-jsx" // missing import React
   },
   "include": [
     ".",
     "../res/json/kana.json",
+    "../res/models",
     "../pwa/helper/idbHelper.ts",
     "../environment.development.ts",
-    "../environment.production.ts",
+    "../environment.production.ts"
   ]
 }

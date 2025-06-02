@@ -20,6 +20,7 @@ import {
 } from "../../helper/JapaneseVerb";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
+import { type AudioItemParams } from "../../slices/audioSlice";
 import { furiganaToggled, verbFormChanged } from "../../slices/vocabularySlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
@@ -57,8 +58,7 @@ export default function VerbMain(props: VerbMainProps) {
 
   const buildTenseElement = (key: number, tense: VerbFormArray) => {
     const columnClass = classNames({
-      "col pt-3 d-flex flex-column justify-content-around text-nowrap":
-        true,
+      "col pt-3 d-flex flex-column justify-content-around text-nowrap": true,
       "ps-sm-3": key === 0,
       "pe-sm-3": key !== 0,
       "text-end": key !== 0,
@@ -176,7 +176,7 @@ export default function VerbMain(props: VerbMainProps) {
     [verb, japaneseObj, verbForm]
   );
 
-  const audioWords = useMemo(() => {
+  const audioWords: AudioItemParams = useMemo(() => {
     return englishSideUp
       ? { tl: "en", q: verbJapanese.english, uid: verbJapanese.uid + ".en" }
       : {

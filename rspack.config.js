@@ -40,6 +40,10 @@ export default function rspackConfig(
         : {
             /** see rspack.config.sw.js */
           }),
+      "voice-worker": {
+        filename: "voice-worker.js",
+        import: "./src/worker/voiceWorker.ts",
+      },
     },
     output: {
       filename: "[name].[chunkhash:8].js",
@@ -47,6 +51,7 @@ export default function rspackConfig(
     },
 
     experiments: {
+      asyncWebAssembly: true,
       css: true,
     },
 
@@ -67,7 +72,7 @@ export default function rspackConfig(
     module: {
       rules: [
         {
-          test: /\.(png|svg|jpe?g|gif|woff|woff2)$/i,
+          test: /\.(png|svg|jpe?g|gif|woff|woff2|htsvoice)$/i,
           type: "asset/resource",
         },
         ...(isProduction
