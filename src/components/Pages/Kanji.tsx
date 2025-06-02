@@ -6,6 +6,7 @@ import {
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
+import md5 from "md5";
 import type { RawKanji, RawVocabulary } from "nmemonica";
 import React, {
   useCallback,
@@ -194,6 +195,37 @@ function buildGameActionsHandler(
   };
 }
 
+/**
+ * Comparison info for:
+ * 
+ * a **Radical with examples**
+ *      or
+ * a **Kanji with similar other kanjis**
+ */
+function buildCompareInformation(term: RawKanji) {
+  let compareColHeader = "Similar";
+  let comparePopTitle = "These Kanji look alike";
+  let comparePopAriaLabel = "Kanji Similarity Information";
+  let compareKanji = term.similarKanji;
+  if (
+    term.similarKanji.length === 0 &&
+    term.radical !== undefined &&
+    term.radical.example.length > 0
+  ) {
+    compareColHeader = "w/ Radical";
+    comparePopTitle = "The Radical appears in";
+    comparePopAriaLabel = "Radical examples";
+    compareKanji = term.radical.example.map((k) => md5(k));
+  }
+
+  return {
+    compareColHeader,
+    comparePopTitle,
+    comparePopAriaLabel,
+    compareKanji,
+  };
+}
+
 export default function Kanji() {
   const dispatch = useDispatch<AppDispatch>();
   const { cookies } = useSelector(({ global }: RootState) => global);
@@ -292,9 +324,9 @@ export default function Kanji() {
   const [log, setLog] = useState<ConsoleMessage[]>([]);
   /** Is not undefined after user modifies accuracyP value */
   const accuracyModifiedRef = useRef<undefined | null | number>();
-  const [similar, setSimilar] = useState<RawKanji | undefined>(undefined);
-  const closeSimilar = useCallback(() => {
-    setSimilar(undefined);
+  const [compare, setCompare] = useState<RawKanji | undefined>(undefined);
+  const closeCompare = useCallback(() => {
+    setCompare(undefined);
   }, []);
 
   const filteredTerms = useMemo(() => {
@@ -779,6 +811,13 @@ export default function Kanji() {
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
   const term = getTerm(uid, kanjiList);
 
+  const {
+    compareColHeader,
+    comparePopTitle,
+    comparePopAriaLabel,
+    compareKanji,
+  } = buildCompareInformation(term);
+
   if (prevUid.current !== uid && vocabList.length > 0) {
     const match = getKanjiExamples(term, vocabList);
     prevUid.current = uid;
@@ -882,10 +921,10 @@ export default function Kanji() {
           {text}
         </div>
         <DialogMsg
-          open={similar !== undefined}
-          onClose={closeSimilar}
-          title="These Kanji look alike"
-          ariaLabel="Kanji Similarity Information"
+          open={compare !== undefined}
+          onClose={closeCompare}
+          title={comparePopTitle}
+          ariaLabel={comparePopAriaLabel}
         >
           <div className="row row-cols-1 row-cols-sm-2 h-100 text-center">
             <div className="col d-flex flex-column">
@@ -894,9 +933,9 @@ export default function Kanji() {
             </div>
             <div className="col d-flex flex-column">
               <span className="fs-kanji-huge lh-1 opacity-25">
-                {similar?.kanji}
+                {compare?.kanji}
               </span>
-              <span>{similar?.english}</span>
+              <span>{compare?.english}</span>
             </div>
           </div>
         </DialogMsg>
@@ -964,10 +1003,12 @@ export default function Kanji() {
 
                     <div className="row">
                       <div className="col p-0 similar-k d-flex flex-column">
-                        {term.similarKanji.length > 0 && (
-                          <span className="pt-1 fs-xx-small">Similar</span>
+                        {compareKanji.length > 0 && (
+                          <span className="pt-1 fs-xx-small">
+                            {compareColHeader}
+                          </span>
                         )}
-                        {term.similarKanji.map((k) => (
+                        {compareKanji.map((k) => (
                           <div
                             key={`${k}`}
                             className="clickable pt-2 fs-4"
@@ -976,7 +1017,7 @@ export default function Kanji() {
                                 (x) => x.uid === k
                               );
                               if (similar !== undefined) {
-                                setSimilar(similar);
+                                setCompare(similar);
                               }
                             }}
                           >
