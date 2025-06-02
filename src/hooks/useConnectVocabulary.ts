@@ -74,46 +74,29 @@ export function useConnectVocabulary() {
     ];
   }, shallowEqual);
 
-  const [
-    difficultyThreshold,
-    r,
-    ft,
-    he,
-    romajiEnabled,
-    bareKanji,
-    verbColSplit,
-  ] = useSelector<
-    RootState,
-    [
-      number,
-      boolean,
-      ValuesOf<typeof TermFilterBy>,
-      boolean,
-      boolean,
-      boolean,
-      number,
-    ]
-  >(({ vocabulary }: RootState) => {
-    const {
-      difficultyThreshold,
-      reinforce,
-      filter,
-      hintEnabled,
-      romaji,
-      bareKanji,
-      verbColSplit,
-    } = vocabulary.setting;
+  const [difficultyThreshold, ft, he, romajiEnabled, bareKanji, verbColSplit] =
+    useSelector<
+      RootState,
+      [number, ValuesOf<typeof TermFilterBy>, boolean, boolean, boolean, number]
+    >(({ vocabulary }: RootState) => {
+      const {
+        difficultyThreshold,
+        filter,
+        hintEnabled,
+        romaji,
+        bareKanji,
+        verbColSplit,
+      } = vocabulary.setting;
 
-    return [
-      difficultyThreshold,
-      reinforce,
-      filter,
-      hintEnabled,
-      romaji,
-      bareKanji,
-      verbColSplit,
-    ];
-  }, shallowEqual);
+      return [
+        difficultyThreshold,
+        filter,
+        hintEnabled,
+        romaji,
+        bareKanji,
+        verbColSplit,
+      ];
+    }, shallowEqual);
 
   const sortMethod = useSelector(({ vocabulary }: RootState) => {
     const { ordered } = vocabulary.setting;
@@ -137,9 +120,6 @@ export function useConnectVocabulary() {
     shallowEqual
   );
 
-  /** setting to randomly re-quiz marked terms */
-  const reinforce = useRef(r);
-  reinforce.current = r;
   /** Settings menu selected filter method */
   const filterType = useRef(ft);
   filterType.current = ft;
@@ -181,7 +161,6 @@ export function useConnectVocabulary() {
     sortMethod,
 
     // Refs ()
-    reinforce,
     hintEnabled,
     filterType,
   };

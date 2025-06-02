@@ -21,13 +21,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
-import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
+import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
   getTermUID,
   initGoalPending,
   minimumTimeForSpaceRepUpdate,
-  play,
   termFilterByType,
   updateDailyGoal,
 } from "../../helper/gameHelper";
@@ -55,15 +54,12 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
-  addFrequencyKanji,
   deleteMetaKanji,
   getKanji,
-  removeFrequencyKanji,
   removeFromSpaceRepetition,
   setKanjiAccuracy,
   setKanjiDifficulty,
   setSpaceRepetitionMetadata,
-  toggleKanjiFilter,
   updateSpaceRepKanji,
 } from "../../slices/kanjiSlice";
 import {
@@ -79,7 +75,6 @@ import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
-import { ToggleFrequencyTermBtnMemo } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
@@ -181,13 +176,10 @@ function getKanjiExamples(term: RawKanji, vocabList: RawVocabulary[]) {
   return examples;
 }
 
-function buildGameActionsHandler(
-  gotoNextSlide: () => void,
-  gotoPrev: () => void
-) {
+function buildGameActionsHandler(gotoNext: () => void, gotoPrev: () => void) {
   return function gameActionHandler(direction: SwipeDirection) {
     if (direction === "left") {
-      gotoNextSlide();
+      gotoNext();
     } else if (direction === "right") {
       gotoPrev();
     }
@@ -230,26 +222,10 @@ export default function Kanji() {
   const dispatch = useDispatch<AppDispatch>();
   const { cookies } = useSelector(({ global }: RootState) => global);
 
-  const addFrequencyTerm = useCallback(
-    (uid: string) => {
-      setFrequency((f) => [...f, uid]);
-      dispatch(addFrequencyKanji(uid));
-    },
-    [dispatch]
-  );
-  const removeFrequencyTerm = useCallback(
-    (uid: string) => {
-      setFrequency((f) => f.filter((id) => id !== uid));
-      dispatch(removeFrequencyKanji(uid));
-    },
-    [dispatch]
-  );
-
   const {
     kanjiList,
 
     filterType: filterTypeREF,
-    reinforce: reinforceREF,
     difficultyThreshold,
     activeTags,
     sortMethod,
@@ -316,7 +292,6 @@ export default function Kanji() {
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
 
-  const [frequency, setFrequency] = useState<string[]>([]); //subset of frequency words within current active group
   const [showOn, setShowOn] = useState(false);
   const [showEx, setShowEx] = useState(false);
   const [showMeaning, setShowMeaning] = useState(false);
@@ -334,22 +309,10 @@ export default function Kanji() {
     if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
       return kanjiList;
 
-    const allFrequency = Object.keys(metadata.current).reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur]?.rein === true) {
-          acc = [...acc, cur];
-        }
-        return acc;
-      },
-      []
-    );
-
     let filtered = termFilterByType(
       filterTypeREF.current,
       kanjiList,
-      allFrequency,
-      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : [],
-      buildAction(dispatch, toggleKanjiFilter)
+      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : []
     );
 
     // exclude terms with difficulty beyond difficultyThreshold
@@ -443,17 +406,8 @@ export default function Kanji() {
         break;
     }
 
-    const frequency = filtered.reduce<string[]>((acc, cur) => {
-      if (metadata.current[cur.uid]?.rein === true) {
-        acc = [...acc, cur.uid];
-      }
-      return acc;
-    }, []);
-    setFrequency(frequency);
-
     return filtered;
   }, [
-    dispatch,
     filterTypeREF,
     difficultyThresholdREF,
     sort,
@@ -547,51 +501,6 @@ export default function Kanji() {
     setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext]);
 
-  const gotoNextSlide = useCallback(() => {
-    let filtered = filteredTerms;
-    // include frequency terms outside of filtered set
-    if (reinforceREF.current && filterTypeREF.current === TermFilterBy.TAGS) {
-      const allFrequency = Object.keys(repetition).reduce<string[]>(
-        (acc, cur) => {
-          if (repetition[cur]?.rein === true) {
-            acc = [...acc, cur];
-          }
-          return acc;
-        },
-        []
-      );
-
-      const additional = kanjiList.filter((k) => allFrequency.includes(k.uid));
-      filtered = [...filteredTerms, ...additional];
-    }
-
-    play(
-      reinforceREF.current,
-      filterTypeREF.current,
-      frequency,
-      // filteredTerms,
-      filtered,
-      repetition, //metadata,
-      reinforcedUID,
-      (uid) => {
-        prevReinforcedUID.current = reinforcedUID;
-        setReinforcedUID(uid);
-      },
-      gotoNext
-    );
-  }, [
-    gotoNext,
-
-    kanjiList,
-    filteredTerms,
-    frequency,
-    reinforcedUID,
-    repetition,
-
-    reinforceREF,
-    filterTypeREF,
-  ]);
-
   const gotoPrev = useCallback(() => {
     const l = filteredTerms.length;
     const i = selectedIndex - 1;
@@ -605,7 +514,7 @@ export default function Kanji() {
     setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext]);
 
-  const gameActionHandler = buildGameActionsHandler(gotoNextSlide, gotoPrev);
+  const gameActionHandler = buildGameActionsHandler(gotoNext, gotoPrev);
 
   useKeyboardActions(
     gameActionHandler,
@@ -620,7 +529,7 @@ export default function Kanji() {
       // this.props.logger("swiped " + direction, 3);
 
       if (direction === "left") {
-        gotoNextSlide();
+        gotoNext();
       } else if (direction === "right") {
         gotoPrev();
       } else {
@@ -639,7 +548,7 @@ export default function Kanji() {
 
       return Promise.resolve(/** interrupt, fetch */);
     },
-    [gotoNextSlide, gotoPrev]
+    [gotoNext, gotoPrev]
   );
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeActionHandler);
@@ -734,7 +643,6 @@ export default function Kanji() {
         if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
           // don't increment reinforced terms
           const shouldIncrement = uid !== prevState.reinforcedUID;
-          const frequency = prevState.reinforcedUID !== null;
 
           void dispatch(updateSpaceRepKanji({ uid, shouldIncrement }))
             .unwrap()
@@ -756,7 +664,7 @@ export default function Kanji() {
               const messageLog = (m: string, l: number) =>
                 dispatch(logger(m, l));
 
-              spaceRepLog(messageLog, k, repStats, { frequency });
+              spaceRepLog(messageLog, k, repStats);
             });
         }
       });
@@ -840,14 +748,12 @@ export default function Kanji() {
 
   // console.log(
   //   JSON.stringify({
-  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
   //     idx: selectedIndex,
   //     uid: (uid && uid.slice(0, 6)) || "",
   //     k: kanjiList.length,
   //     v: vocabList.length,
   //     ord: order.length,
   //     rep: Object.keys(repetition).length,
-  //     fre: frequency.length,
   //     filt: filteredTerms.length,
   //   })
   // );
@@ -862,8 +768,6 @@ export default function Kanji() {
       : term.tags.length > 0
         ? term.tags[0]
         : null;
-
-  const term_reinforce = repetition[term.uid]?.rein === true;
 
   const examplesEl = ex.current.map(({ el, en, jp }) => (
     <div
@@ -1098,7 +1002,7 @@ export default function Kanji() {
               </div>
             </div>
           </div>
-          <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
+          <StackNavButton ariaLabel="Next" action={gotoNext}>
             <ChevronRightIcon size={16} />
           </StackNavButton>
         </div>
@@ -1158,16 +1062,6 @@ export default function Kanji() {
                   <div className="d-flex flex-column"></div>
                 </div>
               </Tooltip>
-              <ToggleFrequencyTermBtnMemo
-                disabled={!cookies}
-                reviewed={alreadyReviewed}
-                addFrequencyTerm={addFrequencyTerm}
-                removeFrequencyTerm={removeFrequencyTerm}
-                hasReinforce={term_reinforce}
-                term={term}
-                count={frequency.length}
-                isReinforced={reinforcedUID !== null}
-              />
             </div>
           </div>
         </div>
@@ -1181,17 +1075,10 @@ export default function Kanji() {
         <LinearProgress
           // variant="determinate"
           // value={progress}
-          // color={term_reinforce ? "secondary" : "primary"}
           variant={goalProgress === null ? "determinate" : "buffer"}
           value={goalProgress === null ? progress : 0}
           valueBuffer={goalProgress ?? undefined}
-          color={
-            goalProgress === null
-              ? term_reinforce
-                ? "secondary"
-                : "primary"
-              : "warning"
-          }
+          color={goalProgress === null ? "primary" : "warning"}
         />
       </div>
     </React.Fragment>

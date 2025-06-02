@@ -15,27 +15,15 @@ import type { GameChoice, GameQuestion } from "./FourChoices";
 import { KanjiGameMeta, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
-import {
-  getTerm,
-  getTermUID,
-  play,
-  termFilterByType,
-} from "../../helper/gameHelper";
+import { getTerm, getTermUID, termFilterByType } from "../../helper/gameHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch, RootState } from "../../slices";
-import {
-  addFrequencyKanji,
-  getKanji,
-  removeFrequencyKanji,
-} from "../../slices/kanjiSlice";
+import { getKanji } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
 import { NotReady } from "../Form/NotReady";
-import {
-  ToggleFrequencyTermBtnMemo,
-  TogglePracticeSideBtn,
-} from "../Form/OptionsBar";
+import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 
 interface KanjiGridChoice extends GameChoice {
   toString: () => string;
@@ -91,20 +79,22 @@ export default function KanjiGrid() {
     repetition,
 
     filterType: filterTypeRef,
-    reinforce: reinforceRef,
     choiceN,
   } = useConnectKanji();
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (kanjiList.length === 0) {
       void dispatch(getKanji());
     }
+  });
+
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
   }, []);
 
   const metadata = useRef(repetition);
   metadata.current = repetition;
-
-  const [frequency, setFrequency] = useState<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
@@ -118,46 +108,21 @@ export default function KanjiGrid() {
     if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
       return kanjiList;
 
-    const allFrequency = Object.keys(metadata.current).reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur]?.rein === true) {
-          acc = [...acc, cur];
-        }
-        return acc;
-      },
-      []
-    );
-
     let filtered = termFilterByType(
       filterTypeRef.current,
       kanjiList,
-      allFrequency,
-      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : [],
-      () => {
-        /** Don't toggle filter if last freq is removed */
-      }
+      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : []
     );
 
-    if (reinforceRef.current && filterTypeRef.current === TermFilterBy.TAGS) {
+    if (filterTypeRef.current === TermFilterBy.TAGS) {
       const filteredList = filtered.map((k) => k.uid);
-      const additional = kanjiList.filter(
-        (k) => allFrequency.includes(k.uid) && !filteredList.includes(k.uid)
-      );
+      const additional = kanjiList.filter((k) => !filteredList.includes(k.uid));
 
       filtered = [...filtered, ...additional];
     }
 
-    const initialFrequency = filtered.reduce<string[]>((acc, cur) => {
-      if (metadata.current[cur.uid]?.rein === true) {
-        return [...acc, cur.uid];
-      }
-      return acc;
-    }, []);
-
-    setFrequency(initialFrequency);
-
     return filtered;
-  }, [kanjiList, activeTags, reinforceRef, filterTypeRef]);
+  }, [kanjiList, activeTags, filterTypeRef]);
 
   const order = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 
@@ -176,28 +141,6 @@ export default function KanjiGrid() {
     setReinforcedUID(null);
     setCurrExmpl(null);
   }, [filteredTerms, selectedIndex /* lastNext, errorSkipIndex*/]);
-
-  const gotoNextSlide = useCallback(() => {
-    play(
-      reinforceRef.current,
-      filterTypeRef.current,
-      frequency,
-      filteredTerms,
-      metadata.current,
-      reinforcedUID,
-      (value) => {
-        setReinforcedUID(value);
-      },
-      gotoNext
-    );
-  }, [
-    frequency,
-    filteredTerms,
-    reinforcedUID,
-    gotoNext,
-    reinforceRef,
-    filterTypeRef,
-  ]);
 
   const gotoPrev = useCallback(() => {
     const l = filteredTerms.length;
@@ -229,21 +172,6 @@ export default function KanjiGrid() {
   const fadeTimerRef = useRef(-1);
   const { blastElRef, text, setText } = useBlast();
 
-  const addFrequencyTerm = useCallback(
-    (uid: string) => {
-      setFrequency((p) => [...p, uid]);
-      dispatch(addFrequencyKanji(uid));
-    },
-    [dispatch]
-  );
-  const removeFrequencyTerm = useCallback(
-    (uid: string) => {
-      setFrequency((p) => p.filter((pUid) => pUid !== uid));
-      dispatch(removeFrequencyKanji(uid));
-    },
-    [dispatch]
-  );
-
   if (order.length === 0) return <NotReady addlStyle="main-panel" />;
 
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
@@ -251,12 +179,10 @@ export default function KanjiGrid() {
 
   // console.log(
   //   JSON.stringify({
-  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
   //     idx: selectedIndex,
   //     uid: (uid && uid.slice(0, 6)) || "",
   //     ord: order.length,
   //     rep: Object.keys(metadata.current).length,
-  //     fre: frequency.length,
   //     filt: filteredTerms.length,
   //   })
   // );
@@ -278,8 +204,6 @@ export default function KanjiGrid() {
 
   const isCorrect = buildIsCorrect(game, text, setText, fadeTimerRef);
 
-  const term_reinforce = repetition[kanji.uid]?.rein === true;
-
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
 
   return (
@@ -292,7 +216,7 @@ export default function KanjiGrid() {
         isCorrect={isCorrect}
         choices={game.choices}
         gotoPrev={gotoPrev}
-        gotoNext={gotoNextSlide}
+        gotoNext={gotoNext}
       />
       <div
         className={classNames({
@@ -311,24 +235,12 @@ export default function KanjiGrid() {
           <div className="col">
             <div className="d-flex justify-content-end pe-2 pe-sm-0">
               <span>{game.question.toHTML(false)}</span>
-              <ToggleFrequencyTermBtnMemo
-                disabled={!cookies}
-                addFrequencyTerm={addFrequencyTerm}
-                removeFrequencyTerm={removeFrequencyTerm}
-                hasReinforce={term_reinforce}
-                term={kanji}
-                isReinforced={reinforcedUID !== null}
-              />
             </div>
           </div>
         </div>
       </div>
       <div className="progress-line flex-shrink-1">
-        <LinearProgress
-          variant="determinate"
-          value={progress}
-          color={term_reinforce ? "secondary" : "primary"}
-        />
+        <LinearProgress variant="determinate" value={progress} />
       </div>
     </>
   );

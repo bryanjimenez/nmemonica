@@ -22,7 +22,6 @@ import {
   getTerm,
   getTermUID,
   minimumTimeForSpaceRepUpdate,
-  play,
   termFilterByType,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
@@ -41,9 +40,7 @@ import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
-  addFrequencyKanji,
   getKanji,
-  removeFrequencyKanji,
   setKanjiDifficulty,
   updateSpaceRepKanji,
 } from "../../slices/kanjiSlice";
@@ -51,10 +48,7 @@ import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { NotReady } from "../Form/NotReady";
-import {
-  ToggleFrequencyTermBtnMemo,
-  TogglePracticeSideBtn,
-} from "../Form/OptionsBar";
+import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import { Tooltip } from "../Form/Tooltip";
 
 const KanjiGameMeta = {
@@ -160,7 +154,6 @@ export default function KanjiGame() {
 
     filterType: filterTypeREF,
     sortMethod,
-    reinforce: reinforceREF,
   } = useConnectKanji();
 
   const difficultyThresholdREF = useRef(difficultyThreshold);
@@ -168,8 +161,6 @@ export default function KanjiGame() {
 
   const metadata = useRef(repetition);
   metadata.current = repetition;
-
-  const frequency = useRef<string[]>([]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
@@ -193,29 +184,15 @@ export default function KanjiGame() {
     if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
       return kanjiList;
 
-    const allFrequency = Object.keys(metadata.current).reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur]?.rein === true) {
-          acc = [...acc, cur];
-        }
-        return acc;
-      },
-      []
-    );
-
     let filtered = termFilterByType(
       filterTypeREF.current,
       kanjiList,
-      allFrequency,
-      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : [],
-      undefined // Don't toggle filter if last freq is removed
+      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : []
     );
 
-    if (reinforceREF.current && filterTypeREF.current === TermFilterBy.TAGS) {
+    if (filterTypeREF.current === TermFilterBy.TAGS) {
       const filteredList = filtered.map((k) => k.uid);
-      const additional = kanjiList.filter(
-        (k) => allFrequency.includes(k.uid) && !filteredList.includes(k.uid)
-      );
+      const additional = kanjiList.filter((k) => !filteredList.includes(k.uid));
 
       filtered = [...filtered, ...additional];
     }
@@ -234,23 +211,8 @@ export default function KanjiGame() {
       // console.warn("Excluded all terms. Discarding memorized subfiltering.");
     }
 
-    const initialFrequency = filtered.reduce<string[]>((acc, cur) => {
-      if (metadata.current[cur.uid]?.rein === true) {
-        return [...acc, cur.uid];
-      }
-      return acc;
-    }, []);
-
-    frequency.current = initialFrequency;
-
     return filtered;
-  }, [
-    filterTypeREF,
-    reinforceREF,
-    difficultyThresholdREF,
-    kanjiList,
-    activeTags,
-  ]);
+  }, [filterTypeREF, difficultyThresholdREF, kanjiList, activeTags]);
 
   const order = useMemo(() => {
     const repetition = metadata.current;
@@ -298,7 +260,6 @@ export default function KanjiGame() {
 
         // don't increment reinforced terms
         const shouldIncrement = prevUid !== prevState.reinforcedUID;
-        const frequency = prevState.reinforcedUID !== null;
 
         void dispatch(updateSpaceRepKanji({ uid: prevUid, shouldIncrement }))
           .unwrap()
@@ -309,7 +270,7 @@ export default function KanjiGame() {
             const repStats = { [prevUid]: { ...value, lastView: prevDate } };
             const messageLog = (m: string, l: number) => dispatch(logger(m, l));
 
-            spaceRepLog(messageLog, prevTerm, repStats, { frequency });
+            spaceRepLog(messageLog, prevTerm, repStats);
           });
       }
 
@@ -380,28 +341,6 @@ export default function KanjiGame() {
     setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext /*, errorSkipIndex*/]);
 
-  const gotoNextSlide = useCallback(() => {
-    play(
-      reinforceREF.current,
-      filterTypeREF.current,
-      frequency.current,
-      filteredTerms,
-      metadata.current,
-      reinforcedUID,
-      (value) => {
-        setReinforcedUID(value);
-      },
-      gotoNext
-    );
-  }, [
-    frequency,
-    filteredTerms,
-    reinforcedUID,
-    gotoNext,
-    reinforceREF,
-    filterTypeREF,
-  ]);
-
   const gotoPrev = useCallback(() => {
     const l = filteredTerms.length;
     const i = selectedIndex - 1;
@@ -428,21 +367,6 @@ export default function KanjiGame() {
     reinforcedUID,
     lastNext /*, errorSkipIndex*/,
   ]);
-
-  const addFrequencyTerm = useCallback(
-    (uid: string) => {
-      frequency.current = [...frequency.current, uid];
-      dispatch(addFrequencyKanji(uid));
-    },
-    [dispatch]
-  );
-  const removeFrequencyTerm = useCallback(
-    (uid: string) => {
-      frequency.current = frequency.current.filter((pUid) => pUid !== uid);
-      dispatch(removeFrequencyKanji(uid));
-    },
-    [dispatch]
-  );
 
   const { kanji, game } = useMemo(() => {
     if (order.length === 0 || exampleList.length === 0) return {};
@@ -484,7 +408,7 @@ export default function KanjiGame() {
           gotoPrev();
           break;
         case "left":
-          gotoNextSlide();
+          gotoNext();
           break;
 
         default:
@@ -493,7 +417,7 @@ export default function KanjiGame() {
 
       return Promise.resolve(/** interrupt, fetch */);
     },
-    [gotoPrev, gotoNextSlide]
+    [gotoPrev, gotoNext]
   );
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
@@ -513,17 +437,13 @@ export default function KanjiGame() {
 
   // console.log(
   //   JSON.stringify({
-  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) ?? "",
   //     idx: selectedIndex,
   //     uid: (kanji.uid && kanji.uid.slice(0, 6)) ?? "",
   //     ord: order.length,
   //     rep: Object.keys(metadata.current).length,
-  //     fre: frequency.length,
   //     filt: filteredTerms.length,
   //   })
   // );
-
-  const term_reinforce = repetition[kanji.uid]?.rein === true;
 
   const progress = ((selectedIndex + 1) / filteredTerms.length) * 100;
 
@@ -535,7 +455,7 @@ export default function KanjiGame() {
         isCorrect={checkAnswer}
         choices={game.choices}
         gotoPrev={gotoPrev}
-        gotoNext={gotoNextSlide}
+        gotoNext={gotoNext}
         fadeInAnswers={fadeInAnswers}
       />
       <div
@@ -563,25 +483,13 @@ export default function KanjiGame() {
                   resetOn={kanji.uid}
                 />
               </Tooltip>
-              <ToggleFrequencyTermBtnMemo
-                disabled={!cookies}
-                addFrequencyTerm={addFrequencyTerm}
-                removeFrequencyTerm={removeFrequencyTerm}
-                hasReinforce={term_reinforce}
-                term={kanji}
-                isReinforced={reinforcedUID !== null}
-              />
             </div>
           </div>
         </div>
       </div>
 
       <div className="progress-line flex-shrink-1">
-        <LinearProgress
-          variant="determinate"
-          value={progress}
-          color={term_reinforce ? "secondary" : "primary"}
-        />
+        <LinearProgress variant="determinate" value={progress} />
       </div>
     </>
   );

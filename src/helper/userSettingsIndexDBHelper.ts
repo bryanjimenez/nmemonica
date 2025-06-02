@@ -6,7 +6,7 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import { localStorageKey as indexDBKey } from "../constants/paths";
+import { localStorageKey as indexDBKey } from "./userSettingsHelper";
 import { AppSettingState } from "../slices";
 
 export function indexDBUserSettingAttrUpdate(

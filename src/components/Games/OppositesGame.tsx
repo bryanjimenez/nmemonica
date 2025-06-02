@@ -121,9 +121,6 @@ export default function OppositesGame() {
         question={game.question}
         isCorrect={(answered) => {
           const correct = answered.compare === game.answer.compare;
-          if (correct) {
-            // TODO: update frequency timestamps
-          }
 
           return correct;
         }}

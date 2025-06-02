@@ -34,7 +34,6 @@ import {
   initGoalPending,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
-  play,
   termFilterByType,
   toggleFuriganaSettingHelper,
   updateDailyGoal,
@@ -78,20 +77,17 @@ import {
   TermSortByLabel,
 } from "../../slices/settingHelper";
 import {
-  addFrequencyWord,
   deleteMetaVocab,
   flipVocabularyPracticeSide,
   furiganaToggled,
   getVocabulary,
   getVocabularyTags,
-  removeFrequencyWord,
   removeFromSpaceRepetition,
   setPitchAccentData,
   setSpaceRepetitionMetadata,
   setWordAccuracy,
   setWordDifficulty,
   toggleAutoVerbView,
-  toggleVocabularyFilter,
   toggleVocabularyTag,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
@@ -106,7 +102,6 @@ import {
   PronunciationWarningBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
-  ToggleFrequencyTermBtnMemo,
   ToggleFuriganaBtn,
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
@@ -143,8 +138,6 @@ export default function Vocabulary() {
 
   const [showHint, setShowHint] = useState<string | undefined>(undefined);
 
-  const [frequency, setFrequency] = useState<string[]>([]); // subset of frequency words within current active group
-
   const naFlip = useRef<"-na" | undefined>(undefined);
 
   const [wasPlayed, setWasPlayed] = useState(false);
@@ -164,7 +157,6 @@ export default function Vocabulary() {
     sortMethod,
 
     // Refs
-    reinforce: reinforceREF,
     filterType: filterTypeREF,
     hintEnabled: hintEnabledREF,
     activeGroup,
@@ -234,22 +226,10 @@ export default function Vocabulary() {
     if (Object.keys(metadata.current).length === 0 && activeGroup.length === 0)
       return { filteredVocab: vocabList };
 
-    const allFrequency = Object.keys(metadata.current).reduce<string[]>(
-      (acc, cur) => {
-        if (metadata.current[cur]?.rein === true) {
-          acc = [...acc, cur];
-        }
-        return acc;
-      },
-      []
-    );
-
     let filtered = termFilterByType(
       filterTypeREF.current,
       vocabList,
-      allFrequency,
-      activeGroup,
-      buildAction(dispatch, toggleVocabularyFilter)
+      activeGroup
     );
 
     // exclude terms with difficulty beyond difficultyThreshold
@@ -345,17 +325,8 @@ export default function Vocabulary() {
         break;
     }
 
-    const frequency = filtered.reduce<string[]>((acc, cur) => {
-      if (metadata.current[cur.uid]?.rein === true) {
-        acc = [...acc, cur.uid];
-      }
-      return acc;
-    }, []);
-    setFrequency(frequency);
-
     return { filteredVocab: filtered };
   }, [
-    dispatch,
     filterTypeREF,
     sort,
     difficultyThresholdREF,
@@ -482,29 +453,6 @@ export default function Vocabulary() {
     setReinforcedUID(null);
   }, [filteredVocab, selectedIndex, lastNext]);
 
-  const gotoNextSlide = useCallback(() => {
-    play(
-      reinforceREF.current,
-      filterTypeREF.current,
-      frequency,
-      filteredVocab,
-      metadata.current,
-      reinforcedUID,
-      (value) => {
-        prevReinforcedUID.current = reinforcedUID;
-        setReinforcedUID(value);
-      },
-      gotoNext
-    );
-  }, [
-    filterTypeREF,
-    reinforceREF,
-    frequency,
-    filteredVocab,
-    reinforcedUID,
-    gotoNext,
-  ]);
-
   const gotoPrev = useCallback(() => {
     const l = filteredVocab.length;
     const i = selectedIndex - 1;
@@ -525,7 +473,7 @@ export default function Vocabulary() {
 
   const gameActionHandler = useBuildGameActionsHandler(
     dispatch,
-    gotoNextSlide,
+    gotoNext,
     gotoPrev,
     reinforcedUID,
     selectedIndex,
@@ -756,7 +704,6 @@ export default function Vocabulary() {
         if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
           // don't increment reinforced terms
           const shouldIncrement = uid !== prevState.reinforcedUID;
-          const frequency = prevState.reinforcedUID !== null;
 
           void dispatch(updateSpaceRepWord({ uid, shouldIncrement }))
             .unwrap()
@@ -777,11 +724,7 @@ export default function Vocabulary() {
               const repStats = { [uid]: { ...value, lastView: prevDate } };
               const messageLog = (m: string, l: number) =>
                 dispatch(logger(m, l));
-              // if (tpAnsweredREF.current !== undefined) {
-              //   timedPlayLog(messageLog, vocabulary, repStats, { frequency });
-              // } else {
-              spaceRepLog(messageLog, vocabulary, repStats, { frequency });
-              // }
+              spaceRepLog(messageLog, vocabulary, repStats);
             });
         }
       });
@@ -904,7 +847,7 @@ export default function Vocabulary() {
               />
             )}
 
-            <StackNavButton ariaLabel="Next" action={gotoNextSlide}>
+            <StackNavButton ariaLabel="Next" action={gotoNext}>
               <ChevronRightIcon size={16} />
             </StackNavButton>
           </div>
@@ -913,7 +856,7 @@ export default function Vocabulary() {
     },
     [
       dispatch,
-      gotoNextSlide,
+      gotoNext,
       gotoPrev,
       closeTagMenu,
       HTMLDivElementSwipeRef,
@@ -936,7 +879,6 @@ export default function Vocabulary() {
       isVerb: boolean,
       hasFurigana: boolean,
       isHintable: boolean,
-      vocabulary_reinforce: boolean,
       reviewedToday: boolean,
       alreadyReviewed: boolean,
       revNotification?: string
@@ -1083,22 +1025,6 @@ export default function Vocabulary() {
                 action={openTagMenu}
                 reviewed={alreadyReviewed}
               />
-              <ToggleFrequencyTermBtnMemo
-                disabled={!cookies}
-                reviewed={alreadyReviewed}
-                term={vocabulary}
-                count={frequency.length}
-                isReinforced={reinforcedUID !== null}
-                hasReinforce={vocabulary_reinforce}
-                addFrequencyTerm={(uid) => {
-                  setFrequency((f) => [...f, uid]);
-                  buildAction(dispatch, addFrequencyWord)(uid);
-                }}
-                removeFrequencyTerm={(uid) => {
-                  setFrequency((f) => f.filter((id) => id !== uid));
-                  buildAction(dispatch, removeFrequencyWord)(uid);
-                }}
-              />
             </div>
           </div>
         </div>
@@ -1112,7 +1038,6 @@ export default function Vocabulary() {
       cookies,
       autoVerbView,
       englishSideUp,
-      frequency.length,
       hintEnabledREF,
       loopActionBtn,
       loopSettingBtn,
@@ -1212,20 +1137,16 @@ export default function Vocabulary() {
 
   // console.log(
   //   JSON.stringify({
-  //     rein: (reinforcedUID && reinforcedUID.slice(0, 6)) || "",
   //     idx: selectedIndex,
   //     uid: (uid && uid.slice(0, 6)) || "",
   //     v: vocabList.length,
   //     ord: order.length,
   //     rep: Object.keys(metadata.current).length,
-  //     fre: frequency.length,
   //     filt: filteredVocab.length,
   //   })
   // );
 
   const vocabulary = getTerm(uid, filteredVocab, vocabList);
-  const vocabulary_reinforce = metadata.current[vocabulary.uid]?.rein === true;
-
   const isVerb = vocabulary.grp === "Verb";
 
   const jText = JapaneseText.parse(vocabulary);
@@ -1281,13 +1202,7 @@ export default function Vocabulary() {
         }
         value={goalProgress === null && tpAnimation === null ? progress : 0}
         valueBuffer={tpAnimation ?? goalProgress ?? undefined}
-        color={
-          goalProgress === null
-            ? vocabulary_reinforce
-              ? "secondary"
-              : "primary"
-            : "warning"
-        }
+        color={goalProgress === null ? "primary" : "warning"}
       />
     </div>
   );
@@ -1303,7 +1218,6 @@ export default function Vocabulary() {
           isVerb,
           hasFurigana,
           isHintable,
-          vocabulary_reinforce,
           reviewedToday,
           alreadyReviewed,
           revNotification
@@ -1325,7 +1239,7 @@ export default function Vocabulary() {
 
 function useBuildGameActionsHandler(
   dispatch: AppDispatch,
-  gotoNextSlide: () => void,
+  gotoNext: () => void,
   gotoPrev: () => void,
   reinforcedUID: string | null,
   selectedIndex: number,
@@ -1345,7 +1259,7 @@ function useBuildGameActionsHandler(
       let actionPromise;
 
       if (direction === "left") {
-        gotoNextSlide();
+        gotoNext();
         actionPromise = Promise.all([
           Promise.resolve(/** Interrupt */),
           Promise.resolve(/** Fetch */),
@@ -1492,7 +1406,7 @@ function useBuildGameActionsHandler(
     },
     [
       dispatch,
-      gotoNextSlide,
+      gotoNext,
       gotoPrev,
       reinforcedUID,
       selectedIndex,
