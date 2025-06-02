@@ -1,46 +1,9 @@
 import { getWindow } from "./browserGlobal";
+import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
 import { localStorageKey } from "../constants/paths";
-import type { LocalStorageState } from "../slices";
+import type { AppSettingState } from "../slices";
 
-/**
- * Reads a value from storage
- */
-function usingPathRead<T>(
-  storage: Partial<LocalStorageState>,
-  path: (keyof LocalStorageState)[]
-): T {
-  if (path.length === 1) {
-    const attr = path[0];
-    return storage[attr] as T;
-  }
-
-  const [first, ...rest] = path;
-  const child = storage[first] ?? {};
-
-  return usingPathRead(child, rest);
-}
-
-/**
- * Writes a value to storage
- */
-function usingPathWrite(
-  storage: Partial<LocalStorageState>,
-  path: (keyof LocalStorageState)[],
-  value: unknown
-): Partial<LocalStorageState> {
-  if (path.length === 1) {
-    const attr = path[0];
-    return { ...storage, [attr]: value };
-  }
-
-  const [first, ...rest] = path;
-  const child = storage[first] ?? {};
-
-  return {
-    ...storage,
-    [first]: usingPathWrite(child, rest, value),
-  };
-}
+// TODO: implement using promises to match userSettingsIndexDBHelper (fallback method)
 
 /**
  * Modifies an attribute or toggles the existing value
@@ -50,20 +13,20 @@ function usingPathWrite(
  * @param attr
  * @param value optional if absent `attr` will be toggled
  */
-export function localStoreAttrUpdate<T>(
+export function localStoreUserSettingAttrUpdate<T>(
   time: Date,
-  state: Partial<LocalStorageState>,
+  state: Partial<AppSettingState>,
   path: string,
   attr: string,
   value?: T
 ) {
-  let locStoSettings = (getLocalStorageSettings(localStorageKey) ??
-    {}) as LocalStorageState;
+  let locStoSettings = (getLocalStorageUserSettings(localStorageKey) ??
+    {}) as AppSettingState;
 
   const cleanPath = [
     ...path.split("/").filter((p) => p !== ""),
     attr,
-  ] as (keyof LocalStorageState)[];
+  ] as (keyof AppSettingState)[];
 
   let boolValue: boolean | undefined;
   if (value === undefined) {
@@ -78,7 +41,7 @@ export function localStoreAttrUpdate<T>(
   );
   const modifiedValue = usingPathRead<T>(modifiedLocalStorage, cleanPath);
 
-  setLocalStorage(localStorageKey, {
+  setLocalStorageUserSettings(localStorageKey, {
     ...modifiedLocalStorage,
     lastModified: time,
   });
@@ -89,12 +52,16 @@ export function localStoreAttrUpdate<T>(
 /**
  * Modifies an attribute or toggles the existing value
  */
-export function localStoreAttrDelete(time: Date, path: string, attr: string) {
-  const locStoSettings = getLocalStorageSettings(localStorageKey) ?? {};
+export function localStoreUserSettingAttrDelete(
+  time: Date,
+  path: string,
+  attr: string
+) {
+  const locStoSettings = getLocalStorageUserSettings(localStorageKey) ?? {};
   const cleanPath = [
     ...path.split("/").filter((p) => p !== ""),
     attr,
-  ] as (keyof LocalStorageState)[];
+  ] as (keyof AppSettingState)[];
 
   const modifiedLocalStorage = usingPathWrite(
     { ...locStoSettings },
@@ -102,7 +69,7 @@ export function localStoreAttrDelete(time: Date, path: string, attr: string) {
     undefined
   );
 
-  setLocalStorage(localStorageKey, {
+  setLocalStorageUserSettings(localStorageKey, {
     ...modifiedLocalStorage,
     lastModified: time,
   });
@@ -111,7 +78,10 @@ export function localStoreAttrDelete(time: Date, path: string, attr: string) {
 /**
  * Store a whole settings object to the localStorage
  */
-export function setLocalStorage(localStorageKey: string, value: unknown) {
+export function setLocalStorageUserSettings(
+  localStorageKey: string,
+  value: unknown
+) {
   const { localStorage } = getWindow();
 
   return localStorage.setItem(localStorageKey, JSON.stringify(value));
@@ -120,17 +90,17 @@ export function setLocalStorage(localStorageKey: string, value: unknown) {
 /**
  * Retrieve the settings object stored in localStorage
  */
-export function getLocalStorageSettings(localStorageKey: string) {
-  let localStorageValue: LocalStorageState | null = null;
+export function getLocalStorageUserSettings(localStorageKey: string) {
+  let localStorageValue: AppSettingState | null = null;
 
   const { localStorage } = getWindow();
 
   const textSettings = localStorage.getItem(localStorageKey);
 
-  let resultObj: LocalStorageState | null = null;
+  let resultObj: AppSettingState | null = null;
 
   if (textSettings !== null) {
-    resultObj = JSON.parse(textSettings) as LocalStorageState;
+    resultObj = JSON.parse(textSettings) as AppSettingState;
   }
 
   if (

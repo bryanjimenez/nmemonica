@@ -21,10 +21,6 @@ import {
 import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { sheetDataToJSON } from "../helper/jsonHelper";
 import {
-  localStoreAttrDelete,
-  localStoreAttrUpdate,
-} from "../helper/localStorageHelper";
-import {
   SR_MIN_REV_ITEMS,
   removeAction,
   updateAction,
@@ -37,9 +33,13 @@ import {
   workbookSheetNames,
 } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
+import {
+  userSettingAttrDelete,
+  userSettingAttrUpdate,
+} from "../helper/userSettingsHelper";
 import type { ValuesOf } from "../typings/utils";
 
-import type { AppDispatch, RootState } from ".";
+import type { RootState } from ".";
 
 export interface PhraseInitSlice {
   value: RawPhrase[];
@@ -185,8 +185,8 @@ export const getPhrase = createAsyncThunk(
   }
 );
 
-export const phraseFromLocalStorage = createAsyncThunk(
-  "phrase/phraseFromLocalStorage",
+export const phraseSettingsFromAppStorage = createAsyncThunk(
+  "phrase/phraseSettingsFromAppStorage",
   (arg: typeof phraseInitState.setting) => {
     const initValues = arg;
 
@@ -243,9 +243,9 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
 
 export const togglePhraseTag = createAsyncThunk(
   "phrase/togglePhraseTag",
-  (arg: { query: string; tag: string }, thunkAPI) => {
+  (arg: { query: string; tag: string }, _thunkAPI) => {
     const { query, tag } = arg;
-    const dispatch = thunkAPI.dispatch as AppDispatch;
+    // const dispatch = thunkAPI.dispatch as AppDispatch;
     const sheetName = workbookSheetNames.phrases.prettyName;
 
     return getWorkbookFromIndexDB().then((sheetArr: SheetData[]) => {
@@ -306,6 +306,20 @@ export const getPhraseTags = createAsyncThunk(
   }
 );
 
+export const flipPhrasesPracticeSide = createAsyncThunk(
+  "phrase/flipPhrasesPracticeSide",
+  (arg: { query: string }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState).phrases;
+
+    return userSettingAttrUpdate(
+      new Date(),
+      { phrases: state.setting },
+      "/phrases/",
+      "englishSideUp"
+    );
+  }
+);
+
 const phraseSlice = createSlice({
   name: "phrase",
   initialState: phraseInitState,
@@ -334,13 +348,15 @@ const phraseSlice = createSlice({
         override
       ) as ValuesOf<typeof TermFilterBy>;
 
-      state.setting.filter = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "filter",
         newFilter
       );
+
+      state.setting.filter = newFilter;
 
       if (newFilter !== TermFilterBy.GROUP && reinforce) {
         state.setting.reinforce = false;
@@ -355,39 +371,45 @@ const phraseSlice = createSlice({
       const groups = Array.isArray(grpName) ? grpName : [grpName];
       const newValue: string[] = grpParse(groups, activeGroup);
 
-      state.setting.activeGroup = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "activeGroup",
         newValue
       );
+
+      state.setting.activeGroup = newValue;
     },
     togglePhrasesReinforcement(
       state,
       action: { payload: boolean | undefined }
     ) {
-      const newValue = action.payload;
+      const newValue = action.payload ?? false;
 
-      state.setting.reinforce = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "reinforce",
         newValue
       );
+
+      state.setting.reinforce = newValue;
     },
 
     setMemorizedThreshold(state, action: { payload: number }) {
       const threshold = action.payload;
 
-      state.setting.difficultyThreshold = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "difficultyThreshold",
         threshold
       );
+
+      state.setting.difficultyThreshold = threshold;
     },
 
     setPhraseDifficulty: {
@@ -406,14 +428,16 @@ const phraseSlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { phrases: state.setting },
           "/phrases/",
           "repetition",
           newValue
         );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       },
       prepare: (uid: string, value: number | null) => ({
         payload: { uid, value },
@@ -423,13 +447,15 @@ const phraseSlice = createSlice({
       state,
       action: { payload: Record<string, MetaDataObj | undefined> }
     ) {
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         {},
         "/phrases/",
         "repetition",
         action.payload
       );
+
+      state.setting.repetition = action.payload;
     },
     /**
      * Space Repetition maximum item review
@@ -439,16 +465,23 @@ const phraseSlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        localStoreAttrDelete(new Date(), "/phrases/", "spaRepMaxReviewItem");
+        void userSettingAttrDelete(
+          new Date(),
+          "/phrases/",
+          "spaRepMaxReviewItem"
+        );
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
-        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+        void userSettingAttrUpdate(
           new Date(),
           { phrases: state.setting },
           "/phrases/",
           "spaRepMaxReviewItem",
-          Math.max(SR_MIN_REV_ITEMS, max)
+          maxItems
         );
+
+        state.setting.spaRepMaxReviewItem = maxItems;
       }
     },
     setPhraseAccuracy: {
@@ -467,14 +500,16 @@ const phraseSlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { phrases: state.setting },
           "/phrases/",
           "repetition",
           newValue
         );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       },
       prepare: (uid: string, value: number | null) => ({
         payload: { uid, value },
@@ -492,8 +527,7 @@ const phraseSlice = createSlice({
         }
       );
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
@@ -501,14 +535,19 @@ const phraseSlice = createSlice({
         newValue
       );
 
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
+
       let frequency = { uid, count: state.setting.frequency.count + 1 };
-      state.setting.frequency = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "frequency",
         frequency
       );
+
+      state.setting.frequency = frequency;
     },
 
     removeFrequencyPhrase(state, action: { payload: string }) {
@@ -526,8 +565,7 @@ const phraseSlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { phrases: state.setting },
           "/phrases/",
@@ -535,33 +573,31 @@ const phraseSlice = createSlice({
           newValue
         );
 
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
+
         let frequency = { uid, count: state.setting.frequency.count - 1 };
-        state.setting.frequency = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { phrases: state.setting },
           "/phrases/",
           "frequency",
           frequency
         );
+
+        state.setting.frequency = frequency;
       }
     },
 
-    flipPhrasesPracticeSide(state) {
-      state.setting.englishSideUp = localStoreAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "englishSideUp"
-      );
-    },
-
     togglePhrasesRomaji(state) {
-      state.setting.romaji = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "romaji"
       );
+
+      state.setting.romaji = !state.setting.romaji;
     },
 
     togglePhrasesOrdering(
@@ -583,29 +619,35 @@ const phraseSlice = createSlice({
         override
       ) as ValuesOf<typeof TermSortBy>;
 
-      state.setting.ordered = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "ordered",
         newOrdered
       );
+
+      state.setting.ordered = newOrdered;
     },
     toggleIncludeNew(state) {
-      state.setting.includeNew = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "includeNew"
       );
+
+      state.setting.includeNew = !state.setting.includeNew;
     },
     toggleIncludeReviewed(state) {
-      state.setting.includeReviewed = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "includeReviewed"
       );
+
+      state.setting.includeReviewed = !state.setting.includeReviewed;
     },
 
     setGoal(
@@ -615,16 +657,18 @@ const phraseSlice = createSlice({
       const goal = action.payload;
 
       if (goal !== undefined) {
-        state.setting.viewGoal = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { phrases: state.setting },
           "/phrases/",
           "viewGoal",
           goal
         );
+
+        state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        localStoreAttrDelete(new Date(), "/phrases/", "viewGoal");
+        void userSettingAttrDelete(new Date(), "/phrases/", "viewGoal");
       }
     },
   },
@@ -637,9 +681,9 @@ const phraseSlice = createSlice({
       state.version = version;
     });
 
-    builder.addCase(phraseFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
-      const mergedSettings = merge(phraseInitState.setting, localStorageValue);
+    builder.addCase(phraseSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(phraseInitState.setting, storedValue);
 
       const phraseReinforceList = Object.keys(mergedSettings.repetition).filter(
         (k) => mergedSettings.repetition[k]?.rein === true
@@ -657,60 +701,71 @@ const phraseSlice = createSlice({
     builder.addCase(updateSpaceRepPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "repetition",
         newValue
       );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "repetition",
         newValue
       );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { phrases: state.setting },
           "/phrases/",
           "repetition",
           newValue
         );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       }
     });
 
     builder.addCase(deleteMetaPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { phrases: state.setting },
         "/phrases/",
         "repetition",
         newValue
       );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
+    });
+
+    builder.addCase(flipPhrasesPracticeSide.fulfilled, (state) => {
+      state.setting.englishSideUp = !state.setting.englishSideUp;
     });
   },
 });
 
 export const {
   clearPhrases,
-  flipPhrasesPracticeSide,
   togglePhrasesRomaji,
   togglePhrasesFilter,
   togglePhraseActiveGrp,

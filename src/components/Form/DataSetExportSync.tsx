@@ -15,9 +15,7 @@ import { ReactElement, useCallback, useRef, useState } from "react";
 import { DataSetFromAppCache } from "./DataSetFromAppCache";
 import { DataSetFromDragDrop, TransferObject } from "./DataSetFromDragDrop";
 import { DataSetKeyInput } from "./DataSetKeyInput";
-import { localStorageKey } from "../../constants/paths";
 import { encrypt } from "../../helper/cryptoHelper";
-import { getLocalStorageSettings } from "../../helper/localStorageHelper";
 import { webSocketPeerSend } from "../../helper/peerShareHelper";
 import {
   getWorkbookFromIndexDB,
@@ -25,6 +23,7 @@ import {
   xObjectToCsvText,
 } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
+import { getUserSettings } from "../../helper/userSettingsHelper";
 
 interface DataSetExportSyncProps {
   visible?: boolean;
@@ -173,44 +172,47 @@ export function DataSetExportSync(props: DataSetExportSyncProps) {
 
     const fromApp = fileData.filter((f) => f.origin === "AppCache");
     if (fromApp.length > 0) {
-      transferData = getWorkbookFromIndexDB().then((xObj) => {
-        const included = xObj.filter((o) =>
-          fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
-        ) as FilledSheetData[];
+      transferData = getWorkbookFromIndexDB()
+        .then((xObj) =>
+          getUserSettings().then((usrSets) => ({ xObj, usrSets }))
+        )
+        .then(({ xObj, usrSets }) => {
+          const included = xObj.filter((o) =>
+            fromApp.find((a) => a.name.toLowerCase() === o.name.toLowerCase())
+          ) as FilledSheetData[];
 
-        // send AppCache UserSettings if selected
-        const appSettings = fileData.reduce<{ name: string; text: string }[]>(
-          (acc, f) => {
-            if (
-              f.origin === "AppCache" &&
-              f.name.toLowerCase() ===
-                metaDataNames.settings.prettyName.toLowerCase()
-            ) {
-              const ls = getLocalStorageSettings(localStorageKey);
-              if (ls) {
-                return [
-                  ...acc,
-                  {
-                    name: metaDataNames.settings.prettyName,
-                    text: JSON.stringify(ls),
-                  },
-                ];
+          // send AppCache UserSettings if selected
+          const appSettings = fileData.reduce<{ name: string; text: string }[]>(
+            (acc, f) => {
+              if (
+                f.origin === "AppCache" &&
+                f.name.toLowerCase() ===
+                  metaDataNames.settings.prettyName.toLowerCase()
+              ) {
+                if (usrSets) {
+                  return [
+                    ...acc,
+                    {
+                      name: metaDataNames.settings.prettyName,
+                      text: JSON.stringify(usrSets),
+                    },
+                  ];
+                }
               }
-            }
-            return acc;
-          },
-          []
-        );
+              return acc;
+            },
+            []
+          );
 
-        return xObjectToCsvText(included).then((dBtoCsv) => [
-          // any filesystem imports (already text)
-          ...fileData.filter((f) => f.origin === "FileSystem"),
-          // converted AppCache to csv text
-          ...dBtoCsv,
-          // converted UserSettings to json text
-          ...appSettings,
-        ]);
-      });
+          return xObjectToCsvText(included).then((dBtoCsv) => [
+            // any filesystem imports (already text)
+            ...fileData.filter((f) => f.origin === "FileSystem"),
+            // converted AppCache to csv text
+            ...dBtoCsv,
+            // converted UserSettings to json text
+            ...appSettings,
+          ]);
+        });
     }
 
     void transferData.then((d) => {

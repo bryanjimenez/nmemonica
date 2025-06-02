@@ -39,7 +39,7 @@ export default function SettingsKanji() {
   const { vocabList: vocabulary } = useConnectVocabulary();
   const {
     filterType: kanjiFilterREF,
-    orderType: kanjiOrderREF,
+    sortMethod,
     difficultyThreshold,
     reinforce: kanjiReinforce,
     activeTags: kanjiActive,
@@ -52,7 +52,7 @@ export default function SettingsKanji() {
   } = useConnectKanji();
 
   const kanjiFilter = kanjiFilterREF.current;
-  const kanjiOrder = kanjiOrderREF.current;
+  const kanjiOrder = sortMethod;
 
   useEffect(() => {
     if (vocabulary.length === 0) {

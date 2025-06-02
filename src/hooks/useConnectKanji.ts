@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
-import type { TermFilterBy, TermSortBy } from "../slices/settingHelper";
+import type { TermFilterBy } from "../slices/settingHelper";
 import { ValuesOf } from "../typings/utils";
 
 /**
@@ -31,7 +31,6 @@ export function useConnectKanji() {
   const [
     r,
     ft,
-    or,
     difficultyThreshold,
     choiceN,
     fadeInAnswers,
@@ -44,7 +43,6 @@ export function useConnectKanji() {
     [
       boolean,
       ValuesOf<typeof TermFilterBy>,
-      ValuesOf<typeof TermSortBy>,
       number,
       number,
       boolean,
@@ -57,7 +55,6 @@ export function useConnectKanji() {
     const {
       reinforce,
       filter,
-      ordered,
       difficultyThreshold,
       choiceN,
       fadeInAnswers,
@@ -70,7 +67,6 @@ export function useConnectKanji() {
     return [
       reinforce,
       filter,
-      ordered,
       difficultyThreshold,
       choiceN,
       fadeInAnswers,
@@ -80,6 +76,12 @@ export function useConnectKanji() {
       viewGoal,
     ];
   }, shallowEqual);
+
+  const sortMethod = useSelector(({ kanji }: RootState) => {
+    const { ordered } = kanji.setting;
+
+    return ordered;
+  });
 
   const activeTags = useSelector<RootState, string[]>(
     ({ kanji }: RootState) => {
@@ -95,8 +97,6 @@ export function useConnectKanji() {
   /** Settings menu selected filter method */
   const filterType = useRef(ft);
   filterType.current = ft;
-  const orderType = useRef(or);
-  orderType.current = or;
 
   return {
     // Changing during game
@@ -124,9 +124,10 @@ export function useConnectKanji() {
     /** Goal of daily term views */
     viewGoal,
 
+    sortMethod,
+
     // Refs ()
     reinforce,
     filterType,
-    orderType,
   };
 }

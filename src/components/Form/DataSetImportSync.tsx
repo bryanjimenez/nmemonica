@@ -26,7 +26,7 @@ import { DataSetKeyInput } from "./DataSetKeyInput";
 import { decrypt } from "../../helper/cryptoHelper";
 import { webSocketPeerReceive } from "../../helper/peerShareHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import { LocalStorageState } from "../../slices";
+import { AppSettingState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 
@@ -45,7 +45,7 @@ interface DataSetImportSyncProps {
   ) => Promise<void>;
   updateDataHandler: (
     importWorkbook?: FilledSheetData[],
-    importSettings?: Partial<LocalStorageState>
+    importSettings?: Partial<AppSettingState>
   ) => Promise<void>;
 }
 
@@ -218,7 +218,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
                 } else {
                   let s;
                   try {
-                    s = JSON.parse(o.text) as Partial<LocalStorageState>;
+                    s = JSON.parse(o.text) as Partial<AppSettingState>;
                     // TODO: settings.json verify is LocalStorageState
                     return { ...acc, settings: s };
                   } catch (err) {
@@ -235,7 +235,7 @@ export function DataSetImportSync(props: DataSetImportSyncProps) {
               },
               { data: [] } as {
                 data: Promise<FilledSheetData>[];
-                settings?: Partial<LocalStorageState>;
+                settings?: Partial<AppSettingState>;
               }
             );
 

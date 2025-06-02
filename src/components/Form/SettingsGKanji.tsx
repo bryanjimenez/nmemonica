@@ -17,7 +17,7 @@ export default function SettingsKanjiGame() {
   const dispatch = useDispatch<AppDispatch>();
 
   const {
-    orderType: kanjiOrder,
+    sortMethod,
     fadeInAnswers: kanjiFadeInAnswers,
     choiceN: kanjiChoiceN,
   } = useConnectKanji();
@@ -36,7 +36,7 @@ export default function SettingsKanjiGame() {
                 TermSortBy.RANDOM,
                 TermSortBy.VIEW_DATE,
               ]}
-              initial={kanjiOrder.current}
+              initial={sortMethod}
               onChange={buildAction(dispatch, toggleKanjiOrdering)}
             />
           </div>

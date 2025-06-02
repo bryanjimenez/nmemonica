@@ -11,7 +11,7 @@ import type {
 } from "../components/Games/ParticlesGame";
 import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
 
 import type { RootState } from ".";
 
@@ -97,8 +97,8 @@ export const getParticleGame = createAsyncThunk(
   }
 );
 
-export const particleFromLocalStorage = createAsyncThunk(
-  "particleGame/particleFromLocalStorage",
+export const particleSettingsFromAppStorage = createAsyncThunk(
+  "particleGame/particleSettingsFromAppStorage",
   (arg: typeof particleInitState.setting) => {
     const initValues = arg;
 
@@ -185,24 +185,28 @@ const particleSlice = createSlice({
       state.particleGame.phrases = particleInitState.particleGame.phrases;
     },
     setParticlesARomaji(state) {
-      state.setting.aRomaji = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { particle: state.setting },
         "/particle/",
         "aRomaji"
       );
+
+      state.setting.aRomaji = !state.setting.aRomaji;
     },
 
     toggleParticleFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload;
+      const override = action.payload ?? false;
 
-      state.setting.fadeInAnswers = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { particle: state.setting },
         "/particle/",
         "fadeInAnswers",
         override
       );
+
+      state.setting.fadeInAnswers = override;
     },
   },
 
@@ -215,11 +219,11 @@ const particleSlice = createSlice({
       }
     });
 
-    builder.addCase(particleFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
+    builder.addCase(particleSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
       const mergedSettings = merge(
         particleInitState.setting,
-        localStorageValue
+        storedValue
       );
 
       return {

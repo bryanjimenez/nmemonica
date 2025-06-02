@@ -5,23 +5,22 @@ import {
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
-import { kanaFromLocalStorage } from "./kanaSlice";
-import { kanjiFromLocalStorage } from "./kanjiSlice";
-import { oppositeFromLocalStorage } from "./oppositeSlice";
-import { particleFromLocalStorage } from "./particleSlice";
-import { phraseFromLocalStorage } from "./phraseSlice";
+import { kanaSettingsFromAppStorage } from "./kanaSlice";
+import { kanjiSettingsFromAppStorage } from "./kanjiSlice";
+import { oppositeSettingsFromAppStorage } from "./oppositeSlice";
+import { particleSettingsFromAppStorage } from "./particleSlice";
+import { phraseSettingsFromAppStorage } from "./phraseSlice";
 import { DebugLevel, toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
-import { vocabularyFromLocalStorage } from "./vocabularySlice";
+import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
 import { type ConsoleMessage } from "../components/Form/Console";
-import { localStorageKey } from "../constants/paths";
 import { squashSeqMsgs } from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
-import {
-  getLocalStorageSettings,
-  localStoreAttrUpdate,
-} from "../helper/localStorageHelper";
 import { SWMsgIncoming, UIMsg } from "../helper/serviceWorkerHelper";
+import {
+  getUserSettings,
+  userSettingAttrUpdate,
+} from "../helper/userSettingsHelper";
 import type { ValuesOf } from "../typings/utils";
 
 export interface MemoryDataObject {
@@ -48,7 +47,7 @@ export const globalInitState: GlobalInitSlice = {
   cookieRefresh: -1,
   darkMode: false,
   memory: { quota: 0, usage: 0, persistent: false },
-  debug: 0,
+  debug: DebugLevel.OFF,
   console: [],
   swipeThreshold: 0,
   motionThreshold: 0,
@@ -104,43 +103,51 @@ export const setPersistentStorage = createAsyncThunk(
   }
 );
 
-export const localStorageSettingsInitialized = createAsyncThunk(
-  "setting/localStorageSettingsInitialized",
+export const appSettingsInitialized = createAsyncThunk(
+  "setting/appSettingsInitialized",
   (arg, thunkAPI) => {
-    let lsSettings = null;
     let mergedGlobalSettings = getGlobalInitState();
+    return getUserSettings()
+      .then((appSettings) => {
+        if (appSettings !== null) {
+          void thunkAPI.dispatch(
+            oppositeSettingsFromAppStorage(appSettings.opposite)
+          );
+          void thunkAPI.dispatch(
+            phraseSettingsFromAppStorage(appSettings.phrases)
+          );
+          void thunkAPI.dispatch(
+            kanjiSettingsFromAppStorage(appSettings.kanji)
+          );
+          void thunkAPI.dispatch(kanaSettingsFromAppStorage(appSettings.kana));
+          void thunkAPI.dispatch(
+            particleSettingsFromAppStorage(appSettings.particle)
+          );
+          void thunkAPI.dispatch(
+            vocabularySettingsFromAppStorage(appSettings.vocabulary)
+          );
 
-    try {
-      lsSettings = getLocalStorageSettings(localStorageKey);
-    } catch (e) {
-      void thunkAPI.dispatch(logger("localStorage not supported"));
-    }
+          const globalInitStateAndCookies = getGlobalInitState();
+          // use merge to prevent losing defaults not found in App Storage
+          mergedGlobalSettings = merge(globalInitStateAndCookies, {
+            ...appSettings.global,
+          });
 
-    if (lsSettings !== null) {
-      void thunkAPI.dispatch(oppositeFromLocalStorage(lsSettings.opposite));
-      void thunkAPI.dispatch(phraseFromLocalStorage(lsSettings.phrases));
-      void thunkAPI.dispatch(kanjiFromLocalStorage(lsSettings.kanji));
-      void thunkAPI.dispatch(kanaFromLocalStorage(lsSettings.kana));
-      void thunkAPI.dispatch(particleFromLocalStorage(lsSettings.particle));
-      void thunkAPI.dispatch(vocabularyFromLocalStorage(lsSettings.vocabulary));
+          // Batch update localstate settings
+          // setTimeout(()=>{
+          //   const now = new Date('2023-07-25T001:21:00.000Z');
+          //   void thunkAPI.dispatch(logger("Batch update ...", DebugLevel.ERROR));
+          //   const done = renameVocabularyLastView(lsSettings, now);
+          //   // const done = flipVocabularyDifficulty(lsSettings);
+          //   void thunkAPI.dispatch(logger("modified: "+done, DebugLevel.ERROR));
+          // }, 15000);
+        }
 
-      const globalInitStateAndCookies = getGlobalInitState();
-      // use merge to prevent losing defaults not found in localStorage
-      mergedGlobalSettings = merge(globalInitStateAndCookies, {
-        ...lsSettings.global,
+        return mergedGlobalSettings;
+      })
+      .catch(() => {
+        void thunkAPI.dispatch(logger("Storage not supported"));
       });
-
-      // Batch update localstate settings
-      // setTimeout(()=>{
-      //   const now = new Date('2023-07-25T001:21:00.000Z');
-      //   void thunkAPI.dispatch(logger("Batch update ...", DebugLevel.ERROR));
-      //   const done = renameVocabularyLastView(lsSettings, now);
-      //   // const done = flipVocabularyDifficulty(lsSettings);
-      //   void thunkAPI.dispatch(logger("modified: "+done, DebugLevel.ERROR));
-      // }, 15000);
-    }
-
-    return mergedGlobalSettings;
   }
 );
 
@@ -160,7 +167,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "darkMode";
       const time = new Date();
-      localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         time,
         { global: state },
         path,
@@ -175,13 +182,9 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "swipeThreshold";
       const time = new Date();
-      state.swipeThreshold = localStoreAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        override
-      );
+      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
+
+      state.swipeThreshold = override;
     },
     setMotionThreshold(state, action: { payload: number }) {
       let override = action.payload;
@@ -189,13 +192,9 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "motionThreshold";
       const time = new Date();
-      state.motionThreshold = localStoreAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        override
-      );
+      void userSettingAttrUpdate(time, { global: state }, path, attr, override);
+
+      state.motionThreshold = override;
     },
 
     debugToggled: {
@@ -210,13 +209,15 @@ const globalSlice = createSlice({
           override
         );
 
-        state.debug = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { global: state },
           "/global/",
           "debug",
           newDebug
         );
+
+        state.debug = newDebug;
       },
 
       prepare: (override: ValuesOf<typeof DebugLevel>) => ({
@@ -268,38 +269,38 @@ const globalSlice = createSlice({
       const attr = "lastImport";
       const time = new Date();
 
-      const storage = getLocalStorageSettings(localStorageKey);
-      let lastImport: string[] = [value];
-      if (storage?.global.lastImport) {
-        lastImport = [...storage.global.lastImport, value];
-      }
+      void getUserSettings().then((storage) => {
+        let lastImport: string[] = [value];
+        if (storage?.global.lastImport) {
+          lastImport = [...storage.global.lastImport, value];
+        }
 
-      // no more than 3 import events
-      if (lastImport.length > 3) {
-        lastImport = lastImport.slice(lastImport.length - 3);
-      }
+        // no more than 3 import events
+        if (lastImport.length > 3) {
+          lastImport = lastImport.slice(lastImport.length - 3);
+        }
 
-      state.lastImport = localStoreAttrUpdate(
-        time,
-        { global: state },
-        path,
-        attr,
-        lastImport
-      );
+        void userSettingAttrUpdate(
+          time,
+          { global: state },
+          path,
+          attr,
+          lastImport
+        );
+
+        state.lastImport = lastImport;
+      });
     },
   },
 
   extraReducers: (builder) => {
-    builder.addCase(
-      localStorageSettingsInitialized.fulfilled,
-      (state, action) => {
-        const mergedSettings = action.payload;
-        // mergedSettings is a multi-level deep object
-        return {
-          ...mergedSettings,
-        };
-      }
-    );
+    builder.addCase(appSettingsInitialized.fulfilled, (state, action) => {
+      const mergedSettings = action.payload;
+      // mergedSettings is a multi-level deep object
+      return {
+        ...mergedSettings,
+      };
+    });
     builder.addCase(getMemoryStorageStatus.fulfilled, (state, action) => {
       const { quota, usage, persistent } =
         action.payload as GlobalInitSlice["memory"];

@@ -3,7 +3,7 @@ import merge from "lodash/fp/merge";
 
 import { KanaType } from "./settingHelper";
 import data from "../../data/json/kana.json";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
 import type { ValuesOf } from "../typings/utils";
 
 export interface KanaInitSlice {
@@ -36,8 +36,8 @@ const kanaInitState: KanaInitSlice = {
   },
 };
 
-export const kanaFromLocalStorage = createAsyncThunk(
-  "kana/kanaFromLocalStorage",
+export const kanaSettingsFromAppStorage = createAsyncThunk(
+  "kana/kanaSettingsFromAppStorage",
   (arg: typeof kanaInitState.setting) => {
     const initValues = arg;
 
@@ -58,45 +58,53 @@ const kanaSlice = createSlice({
           : KanaType.HIRAGANA
       ) as ValuesOf<typeof KanaType>;
 
-      state.setting.charSet = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "charSet",
         newCharSet
       );
+
+      state.setting.charSet = newCharSet;
     },
     setKanaBtnN(state, action: PayloadAction<number>) {
       const number = action.payload;
-      state.setting.choiceN = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "choiceN",
         number
       );
+
+      state.setting.choiceN = number;
     },
     toggleKanaEasyMode(state) {
-      state.setting.easyMode = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "easyMode"
       );
+
+      state.setting.easyMode = !state.setting.easyMode;
     },
     toggleKanaGameWideMode(state) {
-      state.setting.wideMode = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kana: state.setting },
         "/kana/",
         "wideMode"
       );
+
+      state.setting.wideMode = !state.setting.wideMode;
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(kanaFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
-      const mergedSettings = merge(kanaInitState.setting, localStorageValue);
+    builder.addCase(kanaSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(kanaInitState.setting, storedValue);
 
       return {
         ...state,

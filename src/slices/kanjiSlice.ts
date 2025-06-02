@@ -13,10 +13,6 @@ import {
 } from "./settingHelper";
 import { type Kanji, sheetDataToJSON } from "../helper/jsonHelper";
 import {
-  localStoreAttrDelete,
-  localStoreAttrUpdate,
-} from "../helper/localStorageHelper";
-import {
   SR_MIN_REV_ITEMS,
   removeAction,
   updateAction,
@@ -31,6 +27,10 @@ import {
   workbookSheetNames,
 } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
+import {
+  userSettingAttrDelete,
+  userSettingAttrUpdate,
+} from "../helper/userSettingsHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
@@ -109,8 +109,8 @@ export const getKanji = createAsyncThunk("kanji/getKanji", async () => {
   });
 });
 
-export const kanjiFromLocalStorage = createAsyncThunk(
-  "kanji/kanjiFromLocalStorage",
+export const kanjiSettingsFromAppStorage = createAsyncThunk(
+  "kanji/kanjiSettingsFromAppStorage",
   (arg: typeof kanjiInitState.setting) => {
     const initValues = arg;
 
@@ -187,13 +187,14 @@ const kanjiSlice = createSlice({
         newValue = [...activeTags, tagName];
       }
 
-      state.setting.activeTags = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "activeTags",
         newValue
       );
+      state.setting.activeTags = newValue;
     },
     toggleKanjiActiveGrp: (state, action: { payload: string }) => {
       const grpName = action.payload;
@@ -203,13 +204,15 @@ const kanjiSlice = createSlice({
       const groups = Array.isArray(grpName) ? grpName : [grpName];
       const newValue = grpParse(groups, activeGroup);
 
-      state.setting.activeGroup = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "activeGroup",
         newValue
       );
+
+      state.setting.activeGroup = newValue;
     },
 
     toggleKanjiOrdering(
@@ -232,13 +235,15 @@ const kanjiSlice = createSlice({
         override
       ) as ValuesOf<typeof TermSortBy>;
 
-      state.setting.ordered = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "ordered",
         newOrdered
       );
+
+      state.setting.ordered = newOrdered;
     },
 
     addFrequencyKanji(state, action: { payload: string }) {
@@ -253,15 +258,17 @@ const kanjiSlice = createSlice({
         }
       );
 
-      state.setting.repTID = Date.now();
 
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",
         newValue
       );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     },
 
     removeFrequencyKanji(state, action: { payload: string }) {
@@ -280,7 +287,7 @@ const kanjiSlice = createSlice({
           }
         );
 
-        localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { kanji: state.setting },
           "/kanji/",
@@ -296,13 +303,15 @@ const kanjiSlice = createSlice({
     setMemorizedThreshold(state, action: PayloadAction<number>) {
       const threshold = action.payload;
 
-      state.setting.difficultyThreshold = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "difficultyThreshold",
         threshold
       );
+
+      state.setting.difficultyThreshold = threshold;
     },
 
     setKanjiDifficulty: {
@@ -321,14 +330,16 @@ const kanjiSlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { kanji: state.setting },
           "/kanji/",
           "repetition",
           newValue
         );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       },
       prepare: (uid: string, value: number | null) => ({
         payload: { uid, value },
@@ -350,14 +361,16 @@ const kanjiSlice = createSlice({
           }
         );
 
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { kanji: state.setting },
           "/kanji/",
           "repetition",
           newValue
         );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       },
       prepare: (uid: string, value: number | null) => ({
         payload: { uid, value },
@@ -367,13 +380,15 @@ const kanjiSlice = createSlice({
       state,
       action: { payload: Record<string, MetaDataObj | undefined> }
     ) {
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         {},
         "/kanji/",
         "repetition",
         action.payload
       );
+
+      state.setting.repetition = action.payload;
     },
     /**
      * Space Repetition maximum item review
@@ -383,39 +398,46 @@ const kanjiSlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        localStoreAttrDelete(new Date(), "/kanji/", "spaRepMaxReviewItem");
+        userSettingAttrDelete(new Date(), "/kanji/", "spaRepMaxReviewItem");
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
-        state.setting.spaRepMaxReviewItem = localStoreAttrUpdate(
+        const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+        void userSettingAttrUpdate(
           new Date(),
           { kanji: state.setting },
           "/kanji/",
           "spaRepMaxReviewItem",
-          Math.max(SR_MIN_REV_ITEMS, max)
+          maxItems
         );
+
+        state.setting.spaRepMaxReviewItem = maxItems;
       }
     },
     setKanjiBtnN(state, action: { payload: number }) {
       const number = action.payload;
 
-      state.setting.choiceN = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "choiceN",
         number
       );
+
+      state.setting.choiceN = number;
     },
     toggleKanjiFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload;
+      const override = action.payload ?? false;
 
-      state.setting.fadeInAnswers = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "fadeInAnswers",
         override
       );
+
+      state.setting.fadeInAnswers = override;
     },
 
     toggleKanjiFilter(state, action: { payload?: number }) {
@@ -428,7 +450,7 @@ const kanjiSlice = createSlice({
         override
       ) as ValuesOf<typeof TermFilterBy>;
 
-      state.setting.filter = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
@@ -436,37 +458,45 @@ const kanjiSlice = createSlice({
         newFilter
       );
 
+      state.setting.filter = newFilter;
+
       if (newFilter !== 0 && reinforce) {
         state.setting.reinforce = false;
       }
     },
 
     toggleKanjiReinforcement(state, action: { payload: boolean | undefined }) {
-      const newValue = action.payload;
+      const newValue = action.payload ?? false;
 
-      state.setting.reinforce = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "reinforce",
         newValue
       );
+
+      state.setting.reinforce = newValue;
     },
     toggleIncludeNew(state) {
-      state.setting.includeNew = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "includeNew"
       );
+
+      state.setting.includeNew = !state.setting.includeNew;
     },
     toggleIncludeReviewed(state) {
-      state.setting.includeReviewed = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "includeReviewed"
       );
+
+      state.setting.includeReviewed = !state.setting.includeReviewed;
     },
     setGoal(
       state,
@@ -475,16 +505,18 @@ const kanjiSlice = createSlice({
       const goal = action.payload;
 
       if (goal !== undefined) {
-        state.setting.viewGoal = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { kanji: state.setting },
           "/kanji/",
           "viewGoal",
           goal
         );
+
+        state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        localStoreAttrDelete(new Date(), "/kanji/", "viewGoal");
+        userSettingAttrDelete(new Date(), "/kanji/", "viewGoal");
       }
     },
   },
@@ -545,9 +577,9 @@ const kanjiSlice = createSlice({
       state.version = version;
     });
 
-    builder.addCase(kanjiFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
-      const mergedSettings = merge(kanjiInitState.setting, localStorageValue);
+    builder.addCase(kanjiSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(kanjiInitState.setting, storedValue);
 
       return {
         ...state,
@@ -558,53 +590,61 @@ const kanjiSlice = createSlice({
     builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",
         newValue
       );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
 
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",
         newValue
       );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        state.setting.repTID = Date.now();
-        state.setting.repetition = localStoreAttrUpdate(
+        void userSettingAttrUpdate(
           new Date(),
           { kanji: state.setting },
           "/kanji/",
           "repetition",
           newValue
         );
+
+        state.setting.repTID = Date.now();
+        state.setting.repetition = newValue;
       }
     });
     builder.addCase(deleteMetaKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      state.setting.repTID = Date.now();
-      state.setting.repetition = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { kanji: state.setting },
         "/kanji/",
         "repetition",
         newValue
       );
+
+      state.setting.repTID = Date.now();
+      state.setting.repetition = newValue;
     });
   },
 });

@@ -39,13 +39,12 @@ export function useConnectPhrase() {
     shallowEqual
   );
 
-  const [r, ft, sm, rm, difficultyThreshold, spaRepMaxReviewItem, viewGoal] =
+  const [r, ft, rm, difficultyThreshold, spaRepMaxReviewItem, viewGoal] =
     useSelector<
       RootState,
       [
         boolean,
         ValuesOf<typeof TermFilterBy>,
-        number,
         boolean,
         number,
         number | undefined,
@@ -55,7 +54,6 @@ export function useConnectPhrase() {
       const {
         reinforce,
         filter,
-        ordered,
         romaji,
         difficultyThreshold,
         spaRepMaxReviewItem,
@@ -64,13 +62,18 @@ export function useConnectPhrase() {
       return [
         reinforce,
         filter,
-        ordered,
         romaji,
         difficultyThreshold,
         spaRepMaxReviewItem,
         viewGoal,
       ];
     }, shallowEqual);
+
+  const sortMethod = useSelector(({ phrases }: RootState) => {
+    const { ordered } = phrases.setting;
+
+    return ordered;
+  });
 
   const activeGroup = useSelector<RootState, string[]>(
     ({ phrases }: RootState) => {
@@ -87,9 +90,6 @@ export function useConnectPhrase() {
   /** Settings menu selected filter method */
   const filterType = useRef(ft);
   filterType.current = ft;
-  /** Settings menu selected sort method */
-  const sortMethod = useRef(sm);
-  sortMethod.current = sm;
 
   const romajiActive = useRef(rm);
   romajiActive.current = rm;
@@ -119,10 +119,12 @@ export function useConnectPhrase() {
     /** Goal of daily term views */
     viewGoal,
 
+    /** Settings menu selected sort method */
+    sortMethod,
+
     // Refs ()
     reinforce,
     romajiActive,
     filterType,
-    sortMethod,
   };
 }

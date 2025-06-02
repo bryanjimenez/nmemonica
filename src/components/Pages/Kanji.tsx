@@ -219,7 +219,7 @@ export default function Kanji() {
     reinforce: reinforceREF,
     difficultyThreshold,
     activeTags,
-    orderType: sortMethodREF,
+    sortMethod,
     spaRepMaxReviewItem,
     includeNew,
     includeReviewed,
@@ -233,8 +233,8 @@ export default function Kanji() {
   const [resumeSort, setResumeSort] = useState<number>(-1);
   /** Alternate sort upon ending recall */
   const sort = useMemo(() => {
-    return resumeSort === -1 ? sortMethodREF.current : resumeSort;
-  }, [resumeSort, sortMethodREF]);
+    return resumeSort === -1 ? sortMethod : resumeSort;
+  }, [resumeSort, sortMethod]);
 
   const repMinItemReviewREF = useRef(spaRepMaxReviewItem);
   const difficultyThresholdREF = useRef(difficultyThreshold);
@@ -816,7 +816,7 @@ export default function Kanji() {
     null;
   const grp =
     aGroupLevel !== null
-      ? term.tags.find((t) => t !== aGroupLevel) ?? null
+      ? (term.tags.find((t) => t !== aGroupLevel) ?? null)
       : term.tags.length > 0
         ? term.tags[0]
         : null;

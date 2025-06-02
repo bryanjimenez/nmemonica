@@ -50,7 +50,7 @@ export default function SettingsVocab() {
   const {
     vocabList: vocabulary,
     vocabGroups,
-    sortMethod: vocabOrderRef,
+    sortMethod,
     romajiEnabled: vocabRomaji,
     bareKanji: showBareKanji,
     hintEnabled: vocabHintRef,
@@ -68,7 +68,7 @@ export default function SettingsVocab() {
   } = useConnectVocabulary();
 
   const vocabFilter = vocabFilterRef.current;
-  const vocabOrder = vocabOrderRef.current;
+  const vocabOrder = sortMethod;
   const vocabReinforce = vocabReinforceRef.current;
   const vocabHint = vocabHintRef.current;
 

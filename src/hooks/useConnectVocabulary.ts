@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
-import { TermFilterBy, TermSortBy } from "../slices/settingHelper";
+import { TermFilterBy } from "../slices/settingHelper";
 import type { ValuesOf } from "../typings/utils";
 
 /**
@@ -82,7 +82,6 @@ export function useConnectVocabulary() {
     romajiEnabled,
     bareKanji,
     verbColSplit,
-    sm,
   ] = useSelector<
     RootState,
     [
@@ -93,7 +92,6 @@ export function useConnectVocabulary() {
       boolean,
       boolean,
       number,
-      ValuesOf<typeof TermSortBy>,
     ]
   >(({ vocabulary }: RootState) => {
     const {
@@ -104,7 +102,6 @@ export function useConnectVocabulary() {
       romaji,
       bareKanji,
       verbColSplit,
-      ordered,
     } = vocabulary.setting;
 
     return [
@@ -115,9 +112,14 @@ export function useConnectVocabulary() {
       romaji,
       bareKanji,
       verbColSplit,
-      ordered,
     ];
   }, shallowEqual);
+
+  const sortMethod = useSelector(({ vocabulary }: RootState) => {
+    const { ordered } = vocabulary.setting;
+
+    return ordered;
+  });
 
   const verbFormsOrder = useSelector<RootState, string[]>(
     ({ vocabulary }: RootState) => {
@@ -143,9 +145,6 @@ export function useConnectVocabulary() {
   filterType.current = ft;
   const hintEnabled = useRef(he);
   hintEnabled.current = he;
-  /** Settings menu selected sort method */
-  const sortMethod = useRef(sm);
-  sortMethod.current = sm;
 
   return {
     // Changing during game
@@ -178,10 +177,12 @@ export function useConnectVocabulary() {
     /** Goal of daily term views */
     viewGoal,
 
+    /** Settings menu selected sort method */
+    sortMethod,
+
     // Refs ()
     reinforce,
     hintEnabled,
     filterType,
-    sortMethod,
   };
 }

@@ -3,7 +3,7 @@ import md5 from "md5";
 import type { SourceVocabulary } from "nmemonica";
 
 import { getVocabulary } from "./vocabularySlice";
-import { localStoreAttrUpdate } from "../helper/localStorageHelper";
+import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
 
 export interface Opposite {
   english: string;
@@ -76,8 +76,8 @@ export function deriveOppositesFromVocabulary(
   return { hash, opposites };
 }
 
-export const oppositeFromLocalStorage = createAsyncThunk(
-  "opposite/oppositeFromLocalStorage",
+export const oppositeSettingsFromAppStorage = createAsyncThunk(
+  "opposite/oppositeSettingsFromAppStorage",
   (arg: typeof oppositeInitState) => {
     const initValues = arg;
 
@@ -102,7 +102,9 @@ const oppositeSlice = createSlice({
       const partState = {
         opposite: state,
       };
-      state.aRomaji = localStoreAttrUpdate(time, partState, path, attr);
+      void userSettingAttrUpdate(time, partState, path, attr);
+
+      state.aRomaji = !state.aRomaji;
     },
 
     setOppositesQRomaji(state) {
@@ -113,20 +115,22 @@ const oppositeSlice = createSlice({
       const partState = {
         opposite: state,
       };
-      localStoreAttrUpdate(time, partState, path, attr, !state.qRomaji);
+      void userSettingAttrUpdate(time, partState, path, attr, !state.qRomaji);
       state.qRomaji = !state.qRomaji;
     },
 
     toggleOppositeFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload;
+      const override = action.payload ?? false;
 
-      state.fadeInAnswers = localStoreAttrUpdate(
+      void userSettingAttrUpdate(
         new Date(),
         { opposite: state },
         "/opposite/",
         "fadeInAnswers",
         override
       );
+
+      state.fadeInAnswers = override;
     },
   },
 
@@ -148,11 +152,11 @@ const oppositeSlice = createSlice({
       }
     );
 
-    builder.addCase(oppositeFromLocalStorage.fulfilled, (state, action) => {
-      const localStorageValue = action.payload;
+    builder.addCase(oppositeSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
       return {
         ...state,
-        ...localStorageValue,
+        ...storedValue,
       };
     });
   },
