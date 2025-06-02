@@ -7,11 +7,11 @@ import {
   swipeMove,
   swipeStart,
 } from "../helper/TouchSwipe";
-import type { Spec } from "../helper/TouchSwipe";
+import type { Spec, SwipeDirection } from "../helper/TouchSwipe";
 import type { RootState } from "../slices";
 
 export type GameActionHandler = (
-  direction: string,
+  direction: SwipeDirection,
   ab?: AbortController
 ) => Promise<unknown>;
 /**
@@ -21,7 +21,7 @@ export type GameActionHandler = (
 export function useSwipeActions(
   gameActionHandler: GameActionHandler,
   timedPlayAnswerHandlerWrapper?: (
-    direction: string,
+    direction: SwipeDirection,
     handler: GameActionHandler
   ) => GameActionHandler
 ) {
@@ -29,6 +29,7 @@ export function useSwipeActions(
     ({ global }: RootState) => global.swipeThreshold
   );
 
+  // @ts-expect-error swipe Spec ref init
   const swiping = useRef<Spec>({});
 
   /** HTMLElement ref */
@@ -90,9 +91,7 @@ function buildStartMove(
  */
 function buildInMove(swiping: React.MutableRefObject<Spec>) {
   return function inMove(e: TouchEvent) {
-    if (swiping.current) {
-      swiping.current = swipeMove(e, swiping.current);
-    }
+    swiping.current = swipeMove(e, swiping.current);
   };
 }
 
@@ -107,7 +106,7 @@ function buildEndMove(
   swipeEnd: (e: TouchEvent, spec: Spec) => void,
   gameActionHandler: GameActionHandler,
   timedPlayAnswerHandlerWrapper?: (
-    direction: string,
+    direction: SwipeDirection,
     handler: GameActionHandler
   ) => GameActionHandler
 ) {

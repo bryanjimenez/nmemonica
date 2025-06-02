@@ -244,7 +244,7 @@ export const getVocabularyTags = createAsyncThunk(
 
 export const flipVocabularyPracticeSide = createAsyncThunk(
   "vocabulary/flipVocabularyPracticeSide",
-  (arg: { query: string }, thunkAPI) => {
+  (_arg, thunkAPI) => {
     const state = (thunkAPI.getState() as RootState).vocabulary;
 
     return userSettingAttrUpdate(

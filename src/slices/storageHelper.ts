@@ -29,7 +29,12 @@ export function memoryStorageStatus(): Promise<
 /**
  * sets persistent storage bit (if browser supports it)
  */
-export function persistStorage() {
+export function persistStorage(): Promise<
+  StorageEstimate & {
+    persistent: boolean;
+    warning: string | undefined;
+  }
+> {
   const e = new Error("Browser does not support persistent storage", {
     cause: { code: "PersistentStorageUnsupported" },
   });
@@ -75,6 +80,7 @@ export function persistStorage() {
 export function getStorageUsage(): Promise<StorageEstimate> {
   return new Promise((resolve, reject) => {
     if ("webkitTemporaryStorage" in navigator) {
+      // @ts-expect-error webkitTemporaryStorage unkown type
       navigator.webkitTemporaryStorage.queryUsageAndQuota(
         (usedBytes: number, grantedBytes: number) => {
           resolve({ quota: grantedBytes, usage: usedBytes });

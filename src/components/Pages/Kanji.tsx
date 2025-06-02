@@ -44,6 +44,7 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
+import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
@@ -183,7 +184,7 @@ function buildGameActionsHandler(
   gotoNextSlide: () => void,
   gotoPrev: () => void
 ) {
-  return function gameActionHandler(direction: string) {
+  return function gameActionHandler(direction: SwipeDirection) {
     if (direction === "left") {
       gotoNextSlide();
     } else if (direction === "right") {
@@ -583,7 +584,7 @@ export default function Kanji() {
   );
 
   const swipeActionHandler = useCallback(
-    (direction: string) => {
+    (direction: SwipeDirection) => {
       // this.props.logger("swiped " + direction, 3);
 
       if (direction === "left") {

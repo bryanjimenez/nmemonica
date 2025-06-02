@@ -46,6 +46,7 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
+import { SwipeDirection } from "../../helper/TouchSwipe";
 import { addParam } from "../../helper/urlHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
@@ -1078,9 +1079,12 @@ function buildGameActionsHandler(
   baseUrl: string
 ) {
   return function gameActionHandler(
-    direction: string,
+    direction: SwipeDirection,
     AbortController?: AbortController
   ) {
+    if (direction === "vertical") {
+      return Promise.reject(new Error("Unexpected swipe direction"));
+    }
     let actionPromise;
 
     if (direction === "left") {
@@ -1115,7 +1119,8 @@ function buildGameActionsHandler(
           new Request(audioUrl, override),
           AbortController
         );
-      } else if (direction === "down") {
+      } else {
+        //if (direction === "down")
         const inEnglish = phrase.english;
         const audioUrl = addParam(baseUrl, {
           tl: "en",
@@ -1129,10 +1134,7 @@ function buildGameActionsHandler(
         );
       }
     }
-    return (
-      actionPromise ??
-      Promise.reject(/** TODO: give direction a type to remove this */)
-    );
+    return actionPromise;
   };
 }
 

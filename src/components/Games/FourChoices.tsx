@@ -46,8 +46,13 @@ interface FourChoicesState {
 
 export function FourChoices(
   props: FourChoicesProps,
-  forParentRef: React.MutableRefObject<HTMLDivElement | null>
+  // forParentRef: React.MutableRefObject<HTMLDivElement | null>
+  forParentRef: React.ForwardedRef<HTMLDivElement | null>
 ) {
+  if (typeof forParentRef === "function") {
+    throw new Error("Expected a forParentRef to be a React.MutableRefObject");
+  }
+
   const [state, dispatch]: [
     FourChoicesState,
     React.Dispatch<Partial<FourChoicesState>>,
@@ -116,7 +121,7 @@ export function FourChoices(
 
   // optional forwardRef by default undefined
   const optionalRef =
-    forParentRef.current === undefined ? undefined : forParentRef;
+    forParentRef?.current === undefined ? undefined : forParentRef;
 
   return (
     <div ref={optionalRef} className="pick4game main-panel h-100 d-flex">

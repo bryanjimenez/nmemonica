@@ -84,13 +84,13 @@ export function getWorkbookFromIndexDB() {
       const ErrorWorkbookMissing = new Error("Workbook not stored", {
         cause: { code: IDBErrorCause.NoResult },
       });
-      if (!stores.includes("workbook")) {
+      if (!stores.includes(IDBStores.WORKBOOK)) {
         throw ErrorWorkbookMissing;
       }
 
       // use stored workbook
       return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
-        if (!("workbook" in res) || res.workbook.length === 0) {
+        if (!(IDBStores.WORKBOOK in res) || res.workbook.length === 0) {
           throw ErrorWorkbookMissing;
         }
 

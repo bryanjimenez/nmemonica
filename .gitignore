@@ -21,8 +21,12 @@ environment.*
 # notes
 *.txt
 
+# zips
+*.tar.gz
+*.zip
+
 # gimp files
 *.xcf
 
 # lighthouse reports
-lighthouse/*.html
+test/lighthouse/*.html

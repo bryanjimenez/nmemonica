@@ -136,7 +136,11 @@ export function collapseExpandToggler(
 
   return (
     <h2
-      onClick={disabled === true ? () => toggleSection((t) => !t) : undefined}
+      onClick={
+        disabled === true || disabled === undefined
+          ? () => toggleSection((t) => !t)
+          : undefined
+      }
     >
       {icon}
     </h2>
@@ -175,6 +179,7 @@ export default function Settings() {
 
   useEffect(
     () => {
+      const swMessageEventListenerCB = swMessageEventListenerCBRef.current;
       swMessageSubscribe(swMessageEventListenerCB);
       void swMessageGetVersions();
 
@@ -241,6 +246,8 @@ export default function Settings() {
     setJsVersion,
     setBundleVersion
   );
+
+  const swMessageEventListenerCBRef = useRef(swMessageEventListenerCB);
 
   const hash =
     swVersion !== ""

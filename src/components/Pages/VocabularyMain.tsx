@@ -129,7 +129,7 @@ export default function VocabularyMain(props: VocabularyMainProps) {
     return englishSideUp
       ? { tl: "en", q: vocabulary.english, uid: vocabulary.uid + ".en" }
       : {
-          tl: englishSideUp ? "en" : "ja",
+          tl: "ja",
           q: audioPronunciation(sayObj),
           uid: getCacheUID(sayObj),
         };

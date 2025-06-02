@@ -1,4 +1,4 @@
-import data from "../../data/json/kana.json";
+import data from "../../res/json/kana.json";
 
 /**
  * @param char the character to check against the Kanji table

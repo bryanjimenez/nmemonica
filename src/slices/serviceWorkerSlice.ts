@@ -1,10 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-// import {
-//   ADD_FREQUENCY_PHRASE,
-//   ADD_FREQUENCY_WORD,
-// } from "../constants/actionNames";
-
 const serviceWorkerInitState = {
   registered: false,
 };
@@ -26,37 +21,7 @@ const serviceWorkerSlice = createSlice({
   name: "serviceWorker",
   initialState: serviceWorkerInitState,
 
-  reducers: {
-    serviceWorkerNewTermsAdded(
-      state,
-      action: {
-        payload: {
-          newestWords: Record<string, { freq: string[]; dic: unknown }>;
-        };
-      }
-    ) {
-      // const getState = () => ({ settings: state });
-      const { newestWords } = action.payload;
-      for (let termType in newestWords) {
-        const { freq: uidArr /*, dic: termObj*/ } = newestWords[termType];
-
-        // if (termType === "vocabulary")
-        // let actType = ADD_FREQUENCY_WORD;
-        // let type = "GET_VOCABULARY";
-
-        // if (termType === "phrases") {
-        // actType = ADD_FREQUENCY_PHRASE;
-        // type = "GET_PHRASES";
-        // }
-
-        console.warn("serviceWorkerNewTermsAdded Disabled");
-        console.warn(`${uidArr.length} new ${termType}`);
-        // addFrequencyTerm(actType, uidArr)(getState).then(()=>{
-        //trigger getVocab or getPhrases
-        // })
-      }
-    },
-  },
+  reducers: {},
 
   extraReducers: (builder) => {
     builder.addCase(serviceWorkerRegistered.fulfilled, (state) => {
@@ -64,10 +29,10 @@ const serviceWorkerSlice = createSlice({
     });
     builder.addCase(serviceWorkerRegistered.rejected, (state, action) => {
       state.registered = false;
-      throw action.error
+      throw action.error;
     });
   },
 });
 
-export const { serviceWorkerNewTermsAdded } = serviceWorkerSlice.actions;
+export const {} = serviceWorkerSlice.actions;
 export default serviceWorkerSlice.reducer;

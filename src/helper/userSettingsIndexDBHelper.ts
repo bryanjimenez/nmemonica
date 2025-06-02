@@ -120,7 +120,7 @@ export function getIndexDBUserSettings() {
       const ErrorSettingsMissing = new Error("User settings not stored", {
         cause: { code: IDBErrorCause.NoResult },
       });
-      if (!stores.includes("settings")) {
+      if (!stores.includes(IDBStores.SETTINGS)) {
         throw ErrorSettingsMissing;
       }
 

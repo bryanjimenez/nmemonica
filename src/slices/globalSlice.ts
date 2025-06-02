@@ -147,7 +147,9 @@ export const appSettingsInitialized = createAsyncThunk(
         return mergedGlobalSettings;
       })
       .catch(() => {
-        void thunkAPI.dispatch(logger("Storage not supported"));
+        const errMsg = "Storage not supported";
+        void thunkAPI.dispatch(logger(errMsg));
+        throw new Error(errMsg);
       });
   }
 );

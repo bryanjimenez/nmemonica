@@ -12,6 +12,7 @@ import {
 import { TimePlayVerifyBtns } from "../components/Form/OptionsBar";
 import { loopN, pause } from "../helper/gameHelper";
 import { setMediaSessionPlaybackState } from "../helper/mediaHelper";
+import { SwipeDirection } from "../helper/TouchSwipe";
 import type { AppDispatch } from "../slices";
 // import {
 //   setWordTPCorrect,
@@ -199,7 +200,7 @@ export function useTimedGame(
    * For the loop
    */
   const looperSwipe = useCallback(
-    (direction: string, AbortController?: AbortController) => {
+    (direction: SwipeDirection, AbortController?: AbortController) => {
       let promise;
       if (loop > 0) {
         promise = gameActionHandler(direction, AbortController);
@@ -403,7 +404,7 @@ export function useTimedGame(
    * @param handler
    */
   const timedPlayAnswerHandlerWrapper = useCallback(
-    (direction: string, handler: GameActionHandler) => {
+    (direction: SwipeDirection, handler: GameActionHandler) => {
       if (loop === 0) return handler;
 
       let answerHandler = handler;
@@ -457,7 +458,7 @@ export function useTimedGame(
  * Logic during Timed Play swipe or key action
  */
 function interruptTimedPlayToAnswer(
-  direction: string,
+  direction: SwipeDirection,
   answerHandler: GameActionHandler,
   setLoop: React.Dispatch<React.SetStateAction<0 | 1 | 2 | 3>>,
   tpAnimation: number | null,

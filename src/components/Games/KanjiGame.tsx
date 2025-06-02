@@ -33,6 +33,7 @@ import {
   difficultySubFilter,
   randomOrder,
 } from "../../helper/sortHelper";
+import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
@@ -477,7 +478,7 @@ export default function KanjiGame() {
   ]);
 
   const swipeHandler = useCallback(
-    (direction: string) => {
+    (direction: SwipeDirection) => {
       switch (direction) {
         case "right":
           gotoPrev();

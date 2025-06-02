@@ -23,7 +23,7 @@
   },
   "include": [
     ".",
-    "../data/json/kana.json",
+    "../res/json/kana.json",
     "../pwa/helper/idbHelper.ts",
     "../environment.development.ts",
     "../environment.production.ts",

@@ -1,7 +1,13 @@
 import { LinearProgress } from "@mui/material";
 import classNames from "classnames";
 import type { RawJapanese } from "nmemonica";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 import { FourChoicesWRef, type GameChoice } from "./FourChoices";
@@ -9,6 +15,7 @@ import { shuffleArray } from "../../helper/arrayHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { swapToRomaji } from "../../helper/kanaHelper";
 import { randomOrder } from "../../helper/sortHelper";
+import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { type Opposite, getOpposite } from "../../slices/oppositeSlice";
@@ -41,10 +48,15 @@ export default function OppositesGame() {
     shallowEqual
   );
 
-  useEffect(() => {
+  const populateDataSetsRef = useRef(() => {
     if (oppositeList.length === 0) {
       void dispatch(getOpposite());
     }
+  });
+
+  useEffect(() => {
+    const { current: populateDataSets } = populateDataSetsRef;
+    populateDataSets();
   }, []);
 
   const order = useMemo(() => {
@@ -73,7 +85,7 @@ export default function OppositesGame() {
   }, [selectedIndex, oppositeList]);
 
   const swipeHandler = useCallback(
-    (direction: string) => {
+    (direction: SwipeDirection) => {
       switch (direction) {
         case "right":
           gotoPrev();
