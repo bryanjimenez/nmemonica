@@ -150,11 +150,11 @@ export class JapaneseVerb extends JapaneseText {
 
     const jVerb = JapaneseText.parser(dataObj, constructorFn) as JapaneseVerb;
 
-    if (dataObj.intr) {
+    if (dataObj.intr !== undefined) {
       jVerb.intr = dataObj.intr;
     }
 
-    if (dataObj.trans) {
+    if (dataObj.trans !== undefined && dataObj.trans.length > 0) {
       jVerb.trans = dataObj.trans;
     }
 
@@ -174,13 +174,45 @@ export class JapaneseVerb extends JapaneseText {
   }
 
   getTransitivePair() {
-    return this.isIntransitive() && this.trans ? this.trans : undefined;
+    return this.isIntransitive() && this.trans !== undefined
+      ? this.trans
+      : undefined;
   }
 
   getIntransitivePair() {
     return !this.isIntransitive() && typeof this.intr === "string"
       ? this.intr
       : undefined;
+  }
+
+  isIrregularAru() {
+    let verb = super.getSpelling();
+    return verb === "ある" || verb === "有る";
+  }
+
+  isIrregularIru() {
+    let verb = super.getSpelling();
+    return verb === "いる" || verb === "居る";
+  }
+
+  isCopulaDa() {
+    let verb = super.getSpelling();
+    return verb === "だ";
+  }
+
+  isIrregularSuru() {
+    let verb = super.getSpelling();
+    return verb === "する";
+  }
+
+  isSuruVerb() {
+    let verb = super.getSpelling();
+    return verb.endsWith("する");
+  }
+
+  isIrregularKuru() {
+    let verb = super.getSpelling();
+    return verb === "くる\n来る" || verb === "来る" || verb === "くる";
   }
 
   /**
@@ -190,7 +222,6 @@ export class JapaneseVerb extends JapaneseText {
     const pronunciation = super.getPronunciation();
 
     // verb class 1 exceptions
-    const spelling = super.getSpelling();
     if (this.exv && this.isExceptionVerb()) {
       return this.exv;
     }
@@ -205,10 +236,10 @@ export class JapaneseVerb extends JapaneseText {
       getConsonantVowel(beforeLastChar);
 
     if (
-      spelling.endsWith("する") ||
-      pronunciation === "くる" ||
-      pronunciation === "だ" ||
-      pronunciation === "ある"
+      this.isSuruVerb() ||
+      this.isIrregularKuru() ||
+      this.isCopulaDa() ||
+      this.isIrregularAru()
     ) {
       return 3;
     } else if (
@@ -243,7 +274,7 @@ export class JapaneseVerb extends JapaneseText {
       const iVowel = 1; // i
       const { iConsonant } = getConsonantVowel(lastChar);
 
-      if (kStem) {
+      if (kStem !== undefined) {
         stem = [
           fStem + hiragana[iConsonant][iVowel],
           kStem + hiragana[iConsonant][iVowel],
@@ -255,7 +286,7 @@ export class JapaneseVerb extends JapaneseText {
       // ru-verbs
 
       // つくる\n作る
-      if (kStem) {
+      if (kStem !== undefined) {
         stem = [fStem, kStem];
       } else {
         stem = [fStem];
@@ -311,20 +342,20 @@ export class JapaneseVerb extends JapaneseText {
         nai = new JapaneseText(fStem + ending);
       }
     } /*if (type === 3)*/ else {
-      if (verb === "来る" || verb === "くる") {
+      if (this.isIrregularKuru()) {
         nai = new JapaneseText("こない", "来ない");
-      } else if (verb === "する") {
+      } else if (this.isIrregularSuru()) {
         nai = new JapaneseText("しない");
         // } else if (verb === "だ") {
         //   nai = "de wa arimasen"; // FIXME: complete
-      } else if (verb === "ある") {
+      } else if (this.isIrregularAru()) {
         nai = new JapaneseText("ない");
       }
       // type 2
       //  else if (verb === "居る" || verb === "いる") {
       //   nai = "いない\n居ない";
       // }
-      else if ("する" === verb.slice(-2)) {
+      else if (this.isSuruVerb()) {
         const kStem = super.getSpelling().slice(0, -2);
 
         if (hasKanji) {
@@ -379,7 +410,7 @@ export class JapaneseVerb extends JapaneseText {
     } else if (type === 2) {
       // ru
       // type 2
-      if (verb === "居る" || verb === "いる") {
+      if (this.isIrregularIru()) {
         saseru = new JapaneseText("いる", "居る");
       }
 
@@ -391,13 +422,13 @@ export class JapaneseVerb extends JapaneseText {
         saseru = new JapaneseText(fStem + "さ" + ending);
       }
     } /*if (type === 3)*/ else {
-      if (verb === "来る" || verb === "くる") {
+      if (this.isIrregularKuru()) {
         saseru = new JapaneseText("こさせる", "来させる");
-      } else if (verb === "する") {
+      } else if (this.isIrregularSuru()) {
         saseru = new JapaneseText("させる");
-      } else if (verb === "ある") {
+      } else if (this.isIrregularAru()) {
         saseru = new JapaneseText("ある");
-      } else if ("する" === verb.slice(-2)) {
+      } else if (this.isSuruVerb()) {
         const kStem = super.getSpelling().slice(0, -2);
 
         if (hasKanji) {
@@ -459,9 +490,9 @@ export class JapaneseVerb extends JapaneseText {
         reru = new JapaneseText(fStem + "られる");
       }
     } /*if (type === 3)*/ else {
-      if (verb === "来る" || verb === "くる") {
+      if (this.isIrregularKuru()) {
         reru = new JapaneseText("こられる", "来られる");
-      } else if (verb.endsWith("する")) {
+      } else if (this.isSuruVerb()) {
         const kStem = super.getSpelling().slice(0, -2);
 
         if (hasKanji) {
@@ -470,7 +501,7 @@ export class JapaneseVerb extends JapaneseText {
         } else {
           reru = new JapaneseText(kStem + "できる");
         }
-      } else if (verb === "ある" || verb === "いる") {
+      } else if (this.isIrregularAru() || this.isIrregularIru()) {
         reru = null;
       } else {
         throw new Error("Unknown exception verb type");
@@ -526,9 +557,9 @@ export class JapaneseVerb extends JapaneseText {
         rareru = new JapaneseText(fStem + "られる");
       }
     } /*if (type === 3)*/ else {
-      if (verb === "来る" || verb === "くる") {
+      if (this.isIrregularKuru()) {
         rareru = new JapaneseText("こられる", "来られる");
-      } else if (verb.endsWith("する")) {
+      } else if (this.isSuruVerb()) {
         const kStem = super.getSpelling().slice(0, -2);
 
         if (hasKanji) {
@@ -537,7 +568,7 @@ export class JapaneseVerb extends JapaneseText {
         } else {
           rareru = new JapaneseText(kStem + "される");
         }
-      } else if (verb === "ある" || verb === "いる") {
+      } else if (this.isIrregularAru() || this.isIrregularIru()) {
         rareru = null;
       } else {
         throw new Error("Unknown exception verb type");
@@ -554,19 +585,19 @@ export class JapaneseVerb extends JapaneseText {
     const ending = "ます";
     // irregulars
     let masu;
-    switch (this.toString()) {
-      case "くる\n来る":
+    switch (true) {
+      case this.isIrregularKuru():
         masu = new JapaneseText("きます", "来ます");
         break;
-      case "ある":
+      case this.isIrregularAru():
         masu = new JapaneseText("あります");
         break;
-      case "だ":
+      case this.isCopulaDa():
         masu = new JapaneseText("です");
         break;
     }
 
-    if ("する" === super.getSpelling().slice(-2)) {
+    if (this.isSuruVerb()) {
       const ending = "します";
       const fstem = super.getPronunciation().slice(0, -2);
       const kstem = super.getSpelling().slice(0, -2);
@@ -599,19 +630,19 @@ export class JapaneseVerb extends JapaneseText {
     const ending = "ましょう";
     // irregulars
     let mashou;
-    switch (this.toString()) {
-      case "くる\n来る":
+    switch (true) {
+      case this.isIrregularKuru():
         mashou = new JapaneseText("きましょう", "来ましょう");
         break;
-      case "ある":
+      case this.isIrregularAru():
         mashou = new JapaneseText("ありましょう");
         break;
-      case "だ":
+      case this.isCopulaDa():
         mashou = new JapaneseText("でしょう");
         break;
     }
 
-    if ("する" === super.getSpelling().slice(-2)) {
+    if (this.isSuruVerb()) {
       const ending = "しましょう";
       const fstem = super.getPronunciation().slice(0, -2);
       const kstem = super.getSpelling().slice(0, -2);
@@ -692,7 +723,7 @@ export class JapaneseVerb extends JapaneseText {
     let hiragana;
     let ending;
 
-    if (this.hasFurigana() && this.kanji) {
+    if (this.hasFurigana() && this.kanji !== undefined) {
       // has kanji
       hiragana = this.furigana;
       verb = this.kanji;
@@ -726,7 +757,7 @@ export class JapaneseVerb extends JapaneseText {
             break;
         }
 
-        if (hiragana) {
+        if (hiragana !== undefined) {
           t_Con = new JapaneseText(
             `${hiragana.slice(0, -1)}${ending ?? ""}`,
             `${verb.slice(0, -1)}${ending ?? ""}`
@@ -737,7 +768,7 @@ export class JapaneseVerb extends JapaneseText {
       }
     } else if (type === 2) {
       ending = rule.g2.ru;
-      if (hiragana) {
+      if (hiragana !== undefined) {
         t_Con = new JapaneseText(
           hiragana.slice(0, -1) + ending,
           verb.slice(0, -1) + ending
@@ -746,19 +777,19 @@ export class JapaneseVerb extends JapaneseText {
         t_Con = new JapaneseText(verb.slice(0, -1) + ending);
       }
     } /*if (type === 3)*/ else {
-      if (verb === "来る" || verb === "くる") {
+      if (this.isIrregularKuru()) {
         t_Con = JapaneseText.parse({ japanese: rule.g3.kuru });
-      } else if (verb === "する") {
+      } else if (this.isIrregularSuru()) {
         t_Con = JapaneseText.parse({ japanese: rule.g3.suru });
-      } else if (verb === "だ") {
+      } else if (this.isCopulaDa()) {
         t_Con = JapaneseText.parse({ japanese: rule.g3.da });
-      } else if (verb === "ある") {
+      } else if (this.isIrregularAru()) {
         t_Con = JapaneseText.parse({ japanese: rule.g3.aru });
-      } else if ("する" === verb.slice(-2)) {
+      } else if (this.isSuruVerb()) {
         const ending = rule.g3.suru;
         const kstem = verb.slice(0, -2);
 
-        if (hiragana) {
+        if (hiragana !== undefined) {
           const fstem = hiragana.slice(0, -2);
           t_Con = new JapaneseText(fstem + ending, kstem + ending);
         } else {
