@@ -54,6 +54,7 @@ declare module "nmemonica" {
   }
 
   export type SourceKanji = Omit<RawKanji, "uid" | "tags" | "radical"> & {
+    // TODO: rename tag to metadata?
     tag?: string;
   };
   export interface RawKanji {
@@ -64,6 +65,8 @@ declare module "nmemonica" {
     english: string;
 
     tags: string[];
+    /** Number of strokes */
+    strokeN?: number;
 
     /** Example of Kanji containing this radical */
     radical?: { example: string[] };

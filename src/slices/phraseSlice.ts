@@ -278,20 +278,28 @@ export const togglePhraseTag = createAsyncThunk(
 
 export const getPhraseTags = createAsyncThunk(
   "phrase/getPhraseTags",
-  (arg: { query: string }) => {
+  (arg: { query: string }, thunkAPI) => {
     const { query } = arg;
     const sheetName = workbookSheetNames.phrases.prettyName;
 
-    return getWorkbookFromIndexDB(["phrases"]).then((sheetArr: SheetData[]) => {
-      // Get current tags for term
-      const vIdx = sheetArr.findIndex(
-        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
-      );
+    return getWorkbookFromIndexDB(["phrases"])
+      .then((sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
 
-      const s = { ...sheetArr[vIdx] };
+        const s = { ...sheetArr[vIdx] };
 
-      return getTagsFromSheet(s, query);
-    });
+        return getTagsFromSheet(s, query);
+      })
+      .catch((exception) => {
+        if (exception instanceof Error) {
+          thunkAPI.dispatch(logger(exception.message, DebugLevel.ERROR));
+        }
+
+        throw exception;
+      });
   }
 );
 
