@@ -67,7 +67,10 @@ import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
-import { getSynthAudioWorkaroundNoAsync } from "../../slices/audioSlice";
+import {
+  AudioItemParams,
+  getSynthAudioWorkaroundNoAsync,
+} from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   DebugLevel,
@@ -142,7 +145,7 @@ export default function Vocabulary() {
 
   const [frequency, setFrequency] = useState<string[]>([]); // subset of frequency words within current active group
 
-  const naFlip = useRef(undefined);
+  const naFlip = useRef<"-na" | undefined>(undefined);
 
   const [wasPlayed, setWasPlayed] = useState(false);
 
@@ -612,36 +615,96 @@ export default function Vocabulary() {
           reinforcedUID ?? getTermUID(selectedIndex, filteredVocab, order);
         const v = getTerm(curUid, filteredVocab, vocabList);
 
-        const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
-        const vUid = getCacheUID(sayObj);
-        const vQuery = audioPronunciation(sayObj);
-        if (vQuery instanceof Error === false) {
-          void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
-            {
-              uid: vUid,
-              tl: "ja",
-              pronunciation: vQuery,
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-            },
-            {
-              uid: vUid + ".en",
-              tl: "en",
-              pronunciation: v.english,
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-            },
-          ]).catch((exception) => {
-            // likely getAudio failed
+        const index = reinforcedUID !== null ? undefined : selectedIndex;
 
-            if (exception instanceof Error) {
-              let msg = exception.message;
-              if (msg === "unreachable") {
-                const stack = "at " + getStackInitial(exception);
-                msg = `cache:${v.english} ${vQuery} ${stack}`;
-              }
-              dispatch(logger(msg, DebugLevel.ERROR));
+        let vUid: string;
+        let vQuery: string | Error;
+
+        type QueryT = {
+          uid: AudioItemParams["uid"];
+          pronunciation: AudioItemParams["q"];
+          index?: AudioItemParams["index"];
+          tl: AudioItemParams["tl"];
+        };
+
+        let optionalNonAdjQuery: QueryT[] = [];
+        let optionalAdjQuery: QueryT[] = [];
+
+        if (JapaneseText.parse(v).isNaAdj()) {
+          const naObj = partOfSpeechPronunciation(
+            v,
+            verbForm,
+            naFlip.current !== undefined
+              ? { current: "-na" }
+              : { current: undefined }
+          );
+          const naObjWNa = partOfSpeechPronunciation(
+            v,
+            verbForm,
+            naFlip.current === undefined
+              ? { current: "-na" }
+              : { current: undefined }
+          );
+          const naPron = audioPronunciation(naObj);
+          const naPronWNa = audioPronunciation(naObjWNa);
+
+          optionalAdjQuery = [
+            { o: naObj, p: naPron },
+            { o: naObjWNa, p: naPronWNa },
+          ].reduce<QueryT[]>((acc, el) => {
+            if (el.p instanceof Error === false) {
+              return [
+                ...acc,
+                {
+                  uid: getCacheUID(el.o),
+                  tl: "ja",
+                  pronunciation: el.p,
+                  index,
+                },
+              ];
             }
-          });
+            return acc;
+          }, []);
+        } else {
+          // verb, noun, ..
+          const sayObj = partOfSpeechPronunciation(v, verbForm, naFlip);
+
+          vUid = getCacheUID(sayObj);
+          vQuery = audioPronunciation(sayObj);
+          if (vQuery instanceof Error === false) {
+            optionalNonAdjQuery = [
+              {
+                uid: vUid,
+                tl: "ja",
+                pronunciation: vQuery,
+                index,
+              },
+            ];
+          }
         }
+
+        void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
+          ...optionalNonAdjQuery,
+          ...optionalAdjQuery,
+          {
+            uid: v.uid + ".en",
+            tl: "en",
+            pronunciation: v.english,
+            index,
+          },
+        ]).catch((exception) => {
+          // likely getAudio failed
+
+          if (exception instanceof Error) {
+            let msg = exception.message;
+            if (msg === "unreachable") {
+              const stack = "at " + getStackInitial(exception);
+              const q = vQuery instanceof Error ? vQuery.toString() : vQuery;
+              msg = `cache:${v.english} ${q} ${stack}`;
+            }
+            dispatch(logger(msg, DebugLevel.ERROR));
+          }
+        });
       }
 
       updateDailyGoal({
