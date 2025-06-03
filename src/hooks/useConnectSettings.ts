@@ -1,7 +1,7 @@
 import { shallowEqual, useSelector } from "react-redux";
 
 import type { RootState } from "../slices";
-import { JapaneseVoiceType } from "../slices/audioSlice";
+import { EnglishVoiceType, JapaneseVoiceType } from "../slices/audioSlice";
 
 export function useConnectSetting() {
   const [
@@ -11,9 +11,18 @@ export function useConnectSetting() {
     motionThreshold,
     debug,
     japaneseVoice,
+    englishVoice,
   ] = useSelector<
     RootState,
-    [boolean, boolean, number, number, number, JapaneseVoiceType]
+    [
+      boolean,
+      boolean,
+      number,
+      number,
+      number,
+      JapaneseVoiceType,
+      EnglishVoiceType,
+    ]
   >(({ global }: RootState) => {
     const {
       cookies,
@@ -22,6 +31,7 @@ export function useConnectSetting() {
       motionThreshold,
       debug,
       japaneseVoice,
+      englishVoice,
     } = global;
     return [
       cookies,
@@ -30,6 +40,7 @@ export function useConnectSetting() {
       motionThreshold,
       debug,
       japaneseVoice,
+      englishVoice,
     ];
   }, shallowEqual);
 
@@ -63,6 +74,7 @@ export function useConnectSetting() {
     memory,
     debug,
     japaneseVoice,
+    englishVoice,
 
     oppositesQRomaji,
     oppositesARomaji,
