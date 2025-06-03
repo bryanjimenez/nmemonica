@@ -1041,7 +1041,6 @@ export default function Vocabulary() {
       hintEnabledREF,
       loopActionBtn,
       loopSettingBtn,
-      reinforcedUID,
       sort,
     ]
   );
