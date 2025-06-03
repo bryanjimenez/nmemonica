@@ -23,7 +23,12 @@ export function exceptionToError(exception: unknown, origin?: string) {
   if (exception instanceof Error) {
     error = exception;
   } else if (typeof exception === "string" && exception.length > 0) {
-    error.message = exception;
+    try {
+      // parse a serialized error
+      error = JSON.parse(exception) as Error;
+    } catch {
+      error.message = exception;
+    }
   } else if (typeof exception === "object" && exception !== null) {
     if ("name" in exception) {
       error.name = (exception.name as string) ?? "Unknown error";
