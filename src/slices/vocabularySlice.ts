@@ -9,7 +9,6 @@ import type { GroupListMap, MetaDataObj, RawVocabulary } from "nmemonica";
 
 import { logger } from "./globalSlice";
 import {
-  DebugLevel,
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
@@ -18,6 +17,7 @@ import {
   updateSpaceRepTerm,
 } from "./settingHelper";
 import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
+import { DebugLevel } from "../helper/consoleHelper";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { type Vocabulary, sheetDataToJSON } from "../helper/jsonHelper";
 import {

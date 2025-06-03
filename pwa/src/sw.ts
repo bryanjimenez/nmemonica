@@ -1,10 +1,9 @@
 import {
   SWMsgOutgoing,
-  SWMsgIncoming,
   SWRequestHeader,
 } from "../../src/helper/serviceWorkerHelper";
-import { DebugLevel } from "../../src/slices/settingHelper";
 import { uiEndpoint } from "../../environment.development";
+import { DebugLevel } from "../../src/helper/consoleHelper";
 
 /**
  * FIXME: workaround to prevent ReferenceError: process is not defined (in dev)
@@ -283,7 +282,7 @@ function clientLogger(msg: string, lvl: number) {
       .then((client) => {
         if (client && client.length) {
           return client[0].postMessage({
-            type: SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG,
+            type: "SW",
             msg,
             lvl,
           });

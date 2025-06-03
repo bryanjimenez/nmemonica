@@ -2,10 +2,9 @@ import clamp from "lodash/clamp";
 import orderBy from "lodash/orderBy";
 import type { MetaDataObj } from "nmemonica";
 
-import { daysSince, msgInnerTrim } from "./consoleHelper";
+import { DebugLevel, daysSince, msgInnerTrim } from "./consoleHelper";
 import { AppDispatch } from "../slices";
 import { logger } from "../slices/globalSlice";
-import { DebugLevel } from "../slices/settingHelper";
 
 /** Cutoff value between right/wrong
  *
@@ -171,12 +170,16 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
 
     /** Don't review items seen today  */
     const viewedToday =
-      oMeta?.lastView && daysSince(oMeta.lastView) === 0 ? true : false;
+      oMeta?.lastView !== undefined && daysSince(oMeta.lastView) === 0
+        ? true
+        : false;
     const reviewedToday =
-      oMeta?.lastReview && daysSince(oMeta.lastReview) === 0 ? true : false;
+      oMeta?.lastReview !== undefined && daysSince(oMeta.lastReview) === 0
+        ? true
+        : false;
 
     if (
-      oMeta?.lastReview &&
+      oMeta?.lastReview !== undefined &&
       !reviewedToday &&
       !viewedToday &&
       typeof oMeta.accuracyP === "number"
@@ -267,7 +270,7 @@ export function spaceRepetitionOrder<T extends { uid: string }>(
  * @param maxReviews number of maximum items to review
  */
 export function overLimitSlice(f: number[], o: number[], maxReviews?: number) {
-  if (!maxReviews) return { failed: f, overdue: o, overLimit: [] };
+  if (maxReviews === undefined) return { failed: f, overdue: o, overLimit: [] };
 
   const idxEnd = Math.max(0, maxReviews - f.length);
   const failed = f.slice(0, Math.max(idxEnd, maxReviews));
@@ -297,7 +300,8 @@ export function recallInfoTable<T extends { uid: string; english: string }>(
       accuracyP = 0,
     } = metadata[item.uid];
 
-    if (!lastReview || !daysBetweenReviews) return acc;
+    if (lastReview === undefined || daysBetweenReviews === undefined)
+      return acc;
 
     const daysSinceReview = daysSince(lastReview);
     const percentOverdueCalc = getPercentOverdue({
@@ -416,7 +420,8 @@ export function recallDebugLogHelper(
   english: string
 ) {
   const lastReviewDate = oldMeta?.lastReview;
-  const lastReview = lastReviewDate ? `${daysSince(lastReviewDate)}d` : "";
+  const lastReview =
+    lastReviewDate !== undefined ? `${daysSince(lastReviewDate)}d` : "";
 
   const reviewEvery = meta?.daysBetweenReviews?.toFixed(0);
   const w = msgInnerTrim(english, 30);

@@ -4,11 +4,11 @@ import type { RawPhrase } from "nmemonica";
 
 import { logger } from "./globalSlice";
 import { getPhrase } from "./phraseSlice";
-import { DebugLevel } from "./settingHelper";
 import type {
   ChoiceParticle,
   ParticleGamePhrase,
 } from "../components/Games/ParticlesGame";
+import { DebugLevel } from "../helper/consoleHelper";
 import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
 import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
@@ -219,18 +219,18 @@ const particleSlice = createSlice({
       }
     });
 
-    builder.addCase(particleSettingsFromAppStorage.fulfilled, (state, action) => {
-      const storedValue = action.payload;
-      const mergedSettings = merge(
-        particleInitState.setting,
-        storedValue
-      );
+    builder.addCase(
+      particleSettingsFromAppStorage.fulfilled,
+      (state, action) => {
+        const storedValue = action.payload;
+        const mergedSettings = merge(particleInitState.setting, storedValue);
 
-      return {
-        ...state,
-        setting: { ...mergedSettings },
-      };
-    });
+        return {
+          ...state,
+          setting: { ...mergedSettings },
+        };
+      }
+    );
   },
 });
 

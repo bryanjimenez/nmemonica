@@ -1,8 +1,9 @@
+import { DebugLevel } from "./consoleHelper";
 import { ValuesOf } from "../typings/utils";
 
 export interface SwMessage {
   msg: string;
-  lvl: number;
+  lvl: ValuesOf<typeof DebugLevel>;
   type: string;
 }
 
@@ -19,20 +20,11 @@ export function hasHeader(
   return request.headers.get(k) === v;
 }
 
-export const UIMsg = Object.freeze({
-  UI_LOGGER_MSG: "ui_logger_msg",
-});
-
 export interface SWVersionInfo {
   swVersion: string;
   jsVersion: string;
   bundleVersion: string;
 }
-
-export const SWMsgIncoming = Object.freeze({
-  POST_INSTALL_ACTIVATE_DONE: "POST_INSTALL_ACTIVATE_DONE",
-  SERVICE_WORKER_LOGGER_MSG: "service_worker_logger_msg",
-});
 
 export const SWMsgOutgoing = Object.freeze({
   SW_GET_VERSIONS: "SW_GET_VERSIONS",

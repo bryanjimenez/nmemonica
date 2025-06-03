@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
 import { KanjiGridMeta } from "./KanjiGrid";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { spaceRepLog } from "../../helper/consoleHelper";
+import { type ConsoleMessage, spaceRepLog } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
@@ -268,7 +268,10 @@ export default function KanjiGame() {
 
             const prevDate = prevVal.lastView ?? value.lastView;
             const repStats = { [prevUid]: { ...value, lastView: prevDate } };
-            const messageLog = (m: string, l: number) => dispatch(logger(m, l));
+            const messageLog = (
+              m: ConsoleMessage["msg"],
+              l: ConsoleMessage["lvl"]
+            ) => dispatch(logger(m, l));
 
             spaceRepLog(messageLog, prevTerm, repStats);
           });

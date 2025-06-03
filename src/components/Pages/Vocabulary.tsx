@@ -25,7 +25,13 @@ import {
   copyBufferToCacheStore,
   getSynthVoiceBufferToCacheStore,
 } from "../../helper/audioSynthPreCache";
-import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
+import {
+  type ConsoleMessage,
+  DebugLevel,
+  daysSince,
+  spaceRepLog,
+  wasToday,
+} from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getCacheUID,
@@ -73,11 +79,7 @@ import {
   logAudioError,
 } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
-import {
-  DebugLevel,
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
+import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import {
   deleteMetaVocab,
   flipVocabularyPracticeSide,
@@ -94,7 +96,6 @@ import {
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
-import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
@@ -643,10 +644,7 @@ export default function Vocabulary() {
             pronunciation: v.english,
             index,
           },
-        ]).catch((exception) => {
-          // likely getAudio failed
-          logAudioError(dispatch, exception, v.english, "onPreCache");
-        });
+        ]);
       }
 
       updateDailyGoal({
@@ -716,8 +714,10 @@ export default function Vocabulary() {
               }
 
               const repStats = { [uid]: { ...value, lastView: prevDate } };
-              const messageLog = (m: string, l: number) =>
-                dispatch(logger(m, l));
+              const messageLog = (
+                m: ConsoleMessage["msg"],
+                l: ConsoleMessage["lvl"]
+              ) => dispatch(logger(m, l));
               spaceRepLog(messageLog, vocabulary, repStats);
             });
         }

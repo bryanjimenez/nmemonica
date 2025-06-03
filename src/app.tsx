@@ -21,8 +21,8 @@ import { CookiePolicyMeta } from "./components/Terms/CookiePolicy";
 import { PrivacyPolicyMeta } from "./components/Terms/PrivacyPolicy";
 import { TermsAndConditionsMeta } from "./components/Terms/TermsAndConditions";
 import { TermsNotice } from "./components/Terms/TermsNotice";
+import { DebugLevel } from "./helper/consoleHelper";
 import {
-  SWMsgIncoming,
   SwMessage,
   swMessageSubscribe,
   swMessageUnsubscribe,
@@ -31,7 +31,6 @@ import type { AppDispatch, RootState } from "./slices";
 import { dropAudioWorker, initAudioWorker } from "./slices/audioSlice";
 import { appSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
-import { DebugLevel } from "./slices/settingHelper";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const TermsAndConditions = lazy(
   () => import("./components/Terms/TermsAndConditions")
@@ -67,10 +66,8 @@ export default function App() {
     const swMessageHandler = (event: MessageEvent) => {
       const data = event.data as SwMessage;
 
-      if (data.type === SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG) {
-        dispatch(
-          logger(data.msg, data.lvl, SWMsgIncoming.SERVICE_WORKER_LOGGER_MSG)
-        );
+      if (data.type === "SW") {
+        dispatch(logger(data.msg, data.lvl, "SW"));
       }
     };
 
@@ -192,7 +189,7 @@ function ByLocationWorkerLifetime() {
         void dispatch(dropAudioWorker());
         break;
     }
-  }, [location]);
+  }, [dispatch, location]);
 
   return null;
 }

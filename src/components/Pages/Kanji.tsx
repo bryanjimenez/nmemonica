@@ -20,7 +20,13 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { isGroupLevel } from "./SetTermTagList";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
+import {
+  type ConsoleMessage,
+  DebugLevel,
+  daysSince,
+  spaceRepLog,
+  wasToday,
+} from "../../helper/consoleHelper";
 import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getTerm,
@@ -63,14 +69,12 @@ import {
   updateSpaceRepKanji,
 } from "../../slices/kanjiSlice";
 import {
-  DebugLevel,
   TermFilterBy,
   TermSortBy,
   TermSortByLabel,
 } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
-import { type ConsoleMessage } from "../Form/Console";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
@@ -661,8 +665,10 @@ export default function Kanji() {
               }
 
               const repStats = { [uid]: { ...value, lastView: prevDate } };
-              const messageLog = (m: string, l: number) =>
-                dispatch(logger(m, l));
+              const messageLog = (
+                m: ConsoleMessage["msg"],
+                l: ConsoleMessage["lvl"]
+              ) => dispatch(logger(m, l));
 
               spaceRepLog(messageLog, k, repStats);
             });

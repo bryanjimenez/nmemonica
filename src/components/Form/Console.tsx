@@ -2,21 +2,12 @@ import classNames from "classnames";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
+import { type ConsoleMessage, DebugLevel } from "../../helper/consoleHelper";
 import type { RootState } from "../../slices";
-import { DebugLevel } from "../../slices/settingHelper";
 
 const MAX_CONSOLE_MESSAGES = 6;
 const COLLAPSE_T = 3000;
 const SCROLL_COLLAPSE_T = 10000;
-
-export interface ConsoleMessage {
-  msg: string;
-  lvl: number;
-  css?: string;
-  /** Used to distinguish between UI and SW msg */
-  type?: string;
-  time?: number;
-}
 
 interface ConsoleProps {
   connected?: boolean;

@@ -1,8 +1,23 @@
 import type { MetaDataObj } from "nmemonica";
 
-import { type ConsoleMessage } from "../components/Form/Console";
-import { DebugLevel } from "../slices/settingHelper";
 import type { ValuesOf } from "../typings/utils";
+
+// enum
+export const DebugLevel = Object.freeze({
+  OFF: 0,
+  ERROR: 1,
+  WARN: 2,
+  DEBUG: 3,
+});
+
+export interface ConsoleMessage {
+  msg: string;
+  lvl: ValuesOf<typeof DebugLevel>;
+  css?: string;
+  /** Used to distinguish between UI and SW msg */
+  origin?: "UI" | "SW" | "CACHE";
+  time?: number;
+}
 
 /**
  * Trims a string keeping the begining and end.

@@ -5,6 +5,7 @@ import PlusMinus from "./PlusMinus";
 import SettingsSwitch from "./SettingsSwitch";
 import SimpleListMenu from "./SimpleListMenu";
 import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
+import { DebugLevel } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
@@ -20,11 +21,7 @@ import {
   togglePhrasesOrdering,
   togglePhrasesRomaji,
 } from "../../slices/phraseSlice";
-import {
-  DebugLevel,
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
+import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { SetTermGList } from "../Pages/SetTermGList";
 
 export default function SettingsPhrase() {

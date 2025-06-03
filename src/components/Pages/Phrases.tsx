@@ -22,7 +22,13 @@ import {
   copyBufferToCacheStore,
   getSynthVoiceBufferToCacheStore,
 } from "../../helper/audioSynthPreCache";
-import { daysSince, spaceRepLog, wasToday } from "../../helper/consoleHelper";
+import {
+  type ConsoleMessage,
+  DebugLevel,
+  daysSince,
+  spaceRepLog,
+  wasToday,
+} from "../../helper/consoleHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   englishLabel,
@@ -78,14 +84,9 @@ import {
   togglePhraseTag,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
-import {
-  DebugLevel,
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
+import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
-import type { ConsoleMessage } from "../Form/Console";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
@@ -489,10 +490,7 @@ export default function Phrases() {
               pronunciation: curP.english,
               index: reinforcedUID !== null ? undefined : selectedIndex,
             },
-          ]).catch((exception) => {
-            // likely getAudio failed
-            logAudioError(dispatch, exception, curP.english, "onPreCache");
-          });
+          ]);
         }
       }
 
@@ -560,8 +558,10 @@ export default function Phrases() {
               }
 
               const repStats = { [uid]: { ...value, lastView: prevDate } };
-              const messageLog = (m: string, l: number) =>
-                dispatch(logger(m, l));
+              const messageLog = (
+                m: ConsoleMessage["msg"],
+                l: ConsoleMessage["lvl"]
+              ) => dispatch(logger(m, l));
 
               spaceRepLog(messageLog, p, repStats);
             });
