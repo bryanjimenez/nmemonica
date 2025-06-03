@@ -56,6 +56,7 @@ import {
 } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
+import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
@@ -99,6 +100,7 @@ import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
+  AudioLoadingIcon,
   PronunciationWarningBtn,
   ShowHintBtn,
   ToggleAutoVerbViewBtn,
@@ -120,6 +122,7 @@ const VocabularyMeta = {
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
   const { cookies } = useConnectSetting();
+  const { loadingAudio } = useConnectAudio();
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
     useState(false);
@@ -643,15 +646,16 @@ export default function Vocabulary() {
         ]).catch((exception) => {
           // likely getAudio failed
 
+          let msg = JSON.stringify(exception);
           if (exception instanceof Error) {
-            let msg = exception.message;
+            msg = exception.message;
             if (msg === "unreachable") {
               const stack = "at " + getStackInitial(exception);
               const q = vQuery instanceof Error ? vQuery.toString() : vQuery;
               msg = `cache:${v.english} ${q} ${stack}`;
             }
-            dispatch(logger(msg, DebugLevel.ERROR));
           }
+          dispatch(logger(msg, DebugLevel.ERROR));
         });
       }
 
@@ -921,14 +925,27 @@ export default function Vocabulary() {
               >
                 {!cookies ? null : loopSettingBtn}
               </div>
-              <div
-                className={classNames({
-                  "sm-icon-grp": true,
-                  "disabled-color": alreadyReviewed,
-                })}
-              >
-                {!cookies ? null : loopActionBtn}
-              </div>
+              {loopActionBtn && (
+                <div
+                  className={classNames({
+                    "sm-icon-grp": true,
+                    "disabled-color": alreadyReviewed,
+                  })}
+                >
+                  {!cookies ? null : loopActionBtn}
+                </div>
+              )}
+              <AudioLoadingIcon
+                visible={loadingAudio.some((id) => id.startsWith(uid))}
+                notification={
+                  loadingAudio.includes(uid + ".en") &&
+                  loadingAudio.includes(uid)
+                    ? undefined // both
+                    : loadingAudio.includes(uid + ".en")
+                      ? "EN"
+                      : "JA"
+                }
+              />
             </div>
           </div>
           <div className="col">
@@ -1042,6 +1059,7 @@ export default function Vocabulary() {
       loopActionBtn,
       loopSettingBtn,
       sort,
+      loadingAudio,
     ]
   );
 

@@ -50,6 +50,7 @@ import {
 } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
+import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
@@ -91,6 +92,7 @@ import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
+  AudioLoadingIcon,
   ToggleLiteralPhraseBtn,
   TogglePracticeSideBtn,
   ViewLessonsBtn,
@@ -109,6 +111,7 @@ const PhrasesMeta = {
 export default function Phrases() {
   const dispatch = useDispatch<AppDispatch>();
   const { cookies } = useConnectSetting();
+  const { loadingAudio } = useConnectAudio();
 
   const prevReinforcedUID = useRef<string | null>(null);
   const prevSelectedIndex = useRef(0);
@@ -489,14 +492,15 @@ export default function Phrases() {
           ]).catch((exception) => {
             // likely getAudio failed
 
+            let msg = JSON.stringify(exception);
             if (exception instanceof Error) {
-              let msg = exception.message;
+              msg = exception.message;
               if (msg === "unreachable") {
                 const stack = "at " + getStackInitial(exception);
                 msg = `cache:${curP.english} ${inJapanese} ${stack}`;
               }
-              dispatch(logger(msg, DebugLevel.ERROR));
             }
+            dispatch(logger(msg, DebugLevel.ERROR));
           });
         }
       }
@@ -826,6 +830,17 @@ export default function Phrases() {
                 reviewed={alreadyReviewed}
                 toggle={englishSideUp}
                 action={buildAction(dispatch, flipPhrasesPracticeSide)}
+              />
+              <AudioLoadingIcon
+                visible={loadingAudio.some((id) => id.startsWith(uid))}
+                notification={
+                  loadingAudio.includes(uid + ".en") &&
+                  loadingAudio.includes(uid)
+                    ? undefined // both
+                    : loadingAudio.includes(uid + ".en")
+                      ? "EN"
+                      : "JA"
+                }
               />
             </div>
           </div>
