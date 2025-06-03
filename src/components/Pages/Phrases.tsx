@@ -63,6 +63,7 @@ import { playAudio } from "../../slices/audioHelper";
 import {
   type AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
+  logAudioError,
 } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
@@ -82,7 +83,6 @@ import {
   TermSortBy,
   TermSortByLabel,
 } from "../../slices/settingHelper";
-import { getStackInitial } from "../../workers";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import type { ConsoleMessage } from "../Form/Console";
@@ -491,16 +491,7 @@ export default function Phrases() {
             },
           ]).catch((exception) => {
             // likely getAudio failed
-
-            let msg = JSON.stringify(exception);
-            if (exception instanceof Error) {
-              msg = exception.message;
-              if (msg === "unreachable") {
-                const stack = "at " + getStackInitial(exception);
-                msg = `cache:${curP.english} ${inJapanese} ${stack}`;
-              }
-            }
-            dispatch(logger(msg, DebugLevel.ERROR));
+            logAudioError(dispatch, exception, curP.english, "onPreCache");
           });
         }
       }
@@ -1096,34 +1087,15 @@ function buildGameActionsHandler(
               })
             ).unwrap();
 
-            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-              (resolve) => {
-                resolve({
-                  uid: res.uid,
-                  buffer: copyBufferToCacheStore(
-                    audioCacheStore,
-                    res.uid,
-                    res.buffer
-                  ),
-                });
-              }
-            ).then((res) => {
-              if (phrase.uid !== res.uid) {
-                const msg = `No Async Workaround: ${phrase.uid} ${res.uid}`;
-                dispatch(logger(msg, DebugLevel.ERROR));
-                return Promise.reject(new Error(msg));
-              }
-              return playAudio(res.buffer, AbortController);
-            });
+            const cachedAudioBuf = copyBufferToCacheStore(
+              audioCacheStore,
+              res.uid,
+              res.buffer
+            );
+
+            return playAudio(cachedAudioBuf);
           } catch (exception) {
-            if (exception instanceof Error) {
-              let msg = exception.message;
-              if (msg === "unreachable") {
-                const stack = "at " + getStackInitial(exception);
-                msg = `tts:${inJapanese} ${stack}`;
-              }
-              dispatch(logger(msg, DebugLevel.ERROR));
-            }
+            logAudioError(dispatch, exception, inJapanese, "onSwipe");
             return Promise.resolve();
           }
         }
@@ -1147,34 +1119,15 @@ function buildGameActionsHandler(
               })
             ).unwrap();
 
-            actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-              (resolve) => {
-                resolve({
-                  uid: res.uid,
-                  buffer: copyBufferToCacheStore(
-                    audioCacheStore,
-                    res.uid,
-                    res.buffer
-                  ),
-                });
-              }
-            ).then((res) => {
-              if (enUid !== res.uid) {
-                const msg = `No Async Workaround: ${enUid} ${res.uid}`;
-                dispatch(logger(msg, DebugLevel.ERROR));
-                return Promise.reject(new Error(msg));
-              }
-              return playAudio(res.buffer, AbortController);
-            });
+            const cachedAudioBuf = copyBufferToCacheStore(
+              audioCacheStore,
+              res.uid,
+              res.buffer
+            );
+
+            return playAudio(cachedAudioBuf);
           } catch (exception) {
-            if (exception instanceof Error) {
-              let msg = exception.message;
-              if (msg === "unreachable") {
-                const stack = "at " + getStackInitial(exception);
-                msg = `tts:${inEnglish} ${stack}`;
-              }
-              dispatch(logger(msg, DebugLevel.ERROR));
-            }
+            logAudioError(dispatch, exception, inEnglish, "onSwipe");
             return Promise.resolve();
           }
         }

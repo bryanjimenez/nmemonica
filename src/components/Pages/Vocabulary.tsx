@@ -70,6 +70,7 @@ import { playAudio } from "../../slices/audioHelper";
 import {
   AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
+  logAudioError,
 } from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
@@ -92,7 +93,6 @@ import {
   toggleVocabularyTag,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
-import { getStackInitial } from "../../workers";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { ConsoleMessage } from "../Form/Console";
 import { DifficultySlider } from "../Form/DifficultySlider";
@@ -645,17 +645,7 @@ export default function Vocabulary() {
           },
         ]).catch((exception) => {
           // likely getAudio failed
-
-          let msg = JSON.stringify(exception);
-          if (exception instanceof Error) {
-            msg = exception.message;
-            if (msg === "unreachable") {
-              const stack = "at " + getStackInitial(exception);
-              const q = vQuery instanceof Error ? vQuery.toString() : vQuery;
-              msg = `cache:${v.english} ${q} ${stack}`;
-            }
-          }
-          dispatch(logger(msg, DebugLevel.ERROR));
+          logAudioError(dispatch, exception, v.english, "onPreCache");
         });
       }
 
@@ -1327,35 +1317,15 @@ function useBuildGameActionsHandler(
                 })
               ).unwrap();
 
-              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-                (resolve) => {
-                  resolve({
-                    uid: res.uid,
-                    buffer: copyBufferToCacheStore(
-                      audioCacheStore,
-                      res.uid,
-                      res.buffer
-                    ),
-                  });
-                }
-              ).then((res) => {
-                if (vUid !== res.uid) {
-                  const msg = `No Async Workaround: ${vUid} ${res.uid}`;
-                  dispatch(logger(msg, DebugLevel.ERROR));
-                  return Promise.reject(new Error(msg));
-                }
-                return playAudio(res.buffer, AbortController);
-              });
-            } catch (exception) {
-              if (exception instanceof Error) {
-                let msg = exception.message;
-                if (msg === "unreachable") {
-                  const stack = "at " + getStackInitial(exception);
-                  msg = `tts:${vQuery} ${stack}`;
-                }
-                dispatch(logger(msg, DebugLevel.ERROR));
-              }
+              const cachedAudioBuf = copyBufferToCacheStore(
+                audioCacheStore,
+                res.uid,
+                res.buffer
+              );
 
+              return playAudio(cachedAudioBuf);
+            } catch (exception) {
+              logAudioError(dispatch, exception, vQuery, "onSwipe");
               return Promise.resolve();
             }
           }
@@ -1385,35 +1355,15 @@ function useBuildGameActionsHandler(
                 })
               ).unwrap();
 
-              actionPromise = new Promise<{ uid: string; buffer: ArrayBuffer }>(
-                (resolve) => {
-                  resolve({
-                    uid: res.uid,
-                    buffer: copyBufferToCacheStore(
-                      audioCacheStore,
-                      res.uid,
-                      res.buffer
-                    ),
-                  });
-                }
-              ).then((res) => {
-                if (enUid !== res.uid) {
-                  const msg = `No Async Workaround: ${enUid} ${res.uid}`;
-                  dispatch(logger(msg, DebugLevel.ERROR));
-                  return Promise.reject(new Error(msg));
-                }
-                return playAudio(res.buffer, AbortController);
-              });
-            } catch (exception) {
-              if (exception instanceof Error) {
-                let msg = exception.message;
-                if (msg === "unreachable") {
-                  const stack = "at " + getStackInitial(exception);
-                  msg = `tts:${inEnglish} ${stack}`;
-                }
-                dispatch(logger(msg, DebugLevel.ERROR));
-              }
+              const cachedAudioBuf = copyBufferToCacheStore(
+                audioCacheStore,
+                res.uid,
+                res.buffer
+              );
 
+              return playAudio(cachedAudioBuf);
+            } catch (exception) {
+              logAudioError(dispatch, exception, inEnglish, "onSwipe");
               return Promise.resolve();
             }
           }

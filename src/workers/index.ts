@@ -1,7 +1,6 @@
 export const AUDIO_WORKER_JA_NAME = "./voice-worker-ja.js";
 export const AUDIO_WORKER_EN_NAME = "./voice-worker-en.js";
 
-
 /**
  * Parse error stack for originating file
  * @param error
@@ -16,8 +15,10 @@ export function getStackInitial(error: { stack?: string }) {
 /**
  * Convert an unknown exception into Error
  */
-export function exceptionToError(exception: unknown, origin: string) {
-  let error = new Error(`Unknown exception at ${origin}`);
+export function exceptionToError(exception: unknown, origin?: string) {
+  let error = new Error(
+    "Unknown exception" + origin !== undefined ? ` at ${origin}` : ""
+  );
 
   if (exception instanceof Error) {
     error = exception;

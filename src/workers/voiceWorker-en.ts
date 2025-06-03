@@ -3,6 +3,7 @@ import { EnglishVoice, buildSpeech as eBuildSpeech } from "@nmemonica/voice-en";
 import {
   type AudioItemParams,
   type EnglishVoiceType,
+  VoiceError,
 } from "../slices/audioSlice";
 
 import { exceptionToError } from ".";
@@ -70,7 +71,8 @@ function messageHandler(event: MessageEvent) {
       };
       wSelf.postMessage(response);
     } catch (exception) {
-      const error = exceptionToError(exception, "voice-worker-en");
+      const error = exceptionToError(exception) as VoiceError;
+      error.cause.module = "voice-worker-en";
 
       wSelf.postMessage(error);
     }
