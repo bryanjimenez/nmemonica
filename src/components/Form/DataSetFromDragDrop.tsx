@@ -7,14 +7,20 @@ import {
   XIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import React, { ReactElement, useCallback, useMemo, useState } from "react";
+import React, {
+  ReactElement,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSelector } from "react-redux";
 
+import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppSettingState, RootState } from "../../slices";
 import { readCsvToSheet } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
-import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import "../../css/DragDrop.css";
 
 export interface TransferObject {
@@ -35,33 +41,25 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
   const { darkMode } = useSelector(({ global }: RootState) => global);
 
   const [warning, setWarning] = useState<ReactElement[]>([]);
-  const [onHover, setOnHover] = useState<boolean>();
+  const [onHover, setOnHover] = useState<boolean>(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const overElHandler = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    e.stopPropagation();
+
     setOnHover(true);
     return false;
   }, []);
 
-  const dragDropHandler = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setOnHover(undefined);
-
-      const dt = e.dataTransfer;
-
+  const previewSelFiles = useCallback(
+    (files: File[]) => {
       const allowedFiles = Object.values({
         ...workbookSheetNames,
         ...metaDataNames,
       }).map((e) => e.file);
 
-      // multiple file drag drop
-      for (let i = 0; i < dt.items.length; i++) {
-        const fileItem = dt.items[i].getAsFile();
-
+      for (const fileItem of files) {
         if (fileItem === null) {
           continue;
         }
@@ -70,35 +68,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           fileItem.name.toLowerCase() ===
           metaDataNames.settings.file.toLowerCase();
 
-        let w: ReactElement[] = [];
-        if (
-          allowedFiles.find(
-            (ff) => ff.toLowerCase() === fileItem.name.toLowerCase()
-          ) === undefined
-        ) {
-          w = [
-            ...w,
-            <span
-              key={`${fileItem.name}-name`}
-            >{`File (${fileItem.name}) is not correctly named`}</span>,
-          ];
-        }
-        if (!isSettings && fileItem.type !== "text/csv") {
-          w = [
-            ...w,
-            <span
-              key={`${fileItem.name}-type`}
-            >{`${fileItem.name} is not a proper csv file.`}</span>,
-          ];
-        }
-        if (isSettings && fileItem.type !== "application/json") {
-          w = [
-            ...w,
-            <span
-              key={`${fileItem.name}-type`}
-            >{`${fileItem.name} is not a proper json file.`}</span>,
-          ];
-        }
+        let w = initWarnings(fileItem, isSettings, allowedFiles);
 
         if (!isSettings && w.length === 0) {
           const reader = new FileReader();
@@ -135,7 +105,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                   sheet: xObj,
                 });
               }
-            } catch (_err) {
+            } catch {
               w = [
                 ...w,
                 <span
@@ -147,7 +117,6 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
           };
 
           reader.readAsText(fileItem);
-          // reader.readAsArrayBuffer(f);
         } else if (isSettings && w.length === 0) {
           void fileItem
             .text()
@@ -170,7 +139,7 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 });
               }
             })
-            .catch((_err) => {
+            .catch(() => {
               w = [
                 ...w,
                 <span
@@ -185,6 +154,26 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
       }
     },
     [data, updateDataHandler]
+  );
+
+  const dragDropHandler = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+
+      setOnHover(false);
+
+      const {
+        dataTransfer: { items },
+      } = e;
+
+      const files = Array.from(items).reduce<File[]>((acc, f) => {
+        const file = f.getAsFile();
+        return file ? [...acc, file] : acc;
+      }, []);
+
+      previewSelFiles(files);
+    },
+    [previewSelFiles]
   );
 
   const items = useMemo(
@@ -254,16 +243,38 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
         </Alert>
       )}
 
+      <input
+        type="file"
+        ref={fileInputRef}
+        multiple
+        accept=".csv,.json"
+        className="d-none"
+        onChange={(ev) => previewSelFiles(Array.from(ev.target.files ?? []))}
+      />
+
       <div className="text-center m-0 mb-1">
         <div
           className={classNames({
             "drag-area": true,
             "d-flex flex-column border rounded px-3": true,
+            clickable: true,
             "dark-mode": darkMode,
             "dash-border": onHover,
           })}
           onDragOver={overElHandler}
           onDrop={dragDropHandler}
+          onClick={(ev) => {
+            const { parentElement } = ev.target as HTMLInputElement;
+
+            if (
+              parentElement !== null &&
+              // "className" in parentElement &&
+              typeof parentElement.className === "string" &&
+              parentElement?.className.includes("drag-area")
+            ) {
+              fileInputRef.current?.click();
+            }
+          }}
         >
           <div>
             <span
@@ -301,4 +312,43 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
       </div>
     </>
   );
+}
+
+function initWarnings(
+  fileItem: File,
+  isSettings: boolean,
+  allowedFiles: string[]
+) {
+  let w: ReactElement[] = [];
+
+  if (
+    allowedFiles.find(
+      (ff) => ff.toLowerCase() === fileItem.name.toLowerCase()
+    ) === undefined
+  ) {
+    w = [
+      ...w,
+      <span
+        key={`${fileItem.name}-name`}
+      >{`File (${fileItem.name}) is not correctly named`}</span>,
+    ];
+  }
+  if (!isSettings && fileItem.type !== "text/csv") {
+    w = [
+      ...w,
+      <span
+        key={`${fileItem.name}-type`}
+      >{`${fileItem.name} is not a proper csv file.`}</span>,
+    ];
+  }
+  if (isSettings && fileItem.type !== "application/json") {
+    w = [
+      ...w,
+      <span
+        key={`${fileItem.name}-type`}
+      >{`${fileItem.name} is not a proper json file.`}</span>,
+    ];
+  }
+
+  return w;
 }
