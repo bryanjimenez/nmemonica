@@ -37,13 +37,11 @@ export default function VerbMain(props: VerbMainProps) {
   const { verb, linkToOtherTerm, showHint } = props;
 
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
-  const [showRomaji, setShowRomaji] = useState<boolean>(false);
 
   const {
     verbForm,
     swipeThreshold,
     repetition,
-    romajiEnabled,
     englishSideUp,
     hintEnabled,
     verbFormsOrder,
@@ -52,7 +50,6 @@ export default function VerbMain(props: VerbMainProps) {
 
   useLayoutEffect(() => {
     setShowMeaning(false);
-    setShowRomaji(false);
   }, [verb]);
 
   const buildTenseElement = (key: number, tense: VerbFormArray) => {
@@ -111,7 +108,7 @@ export default function VerbMain(props: VerbMainProps) {
     }
   );
 
-  const { inJapanese, inEnglish, romaji, japaneseObj } = getVerbLabelItems(
+  const { inJapanese, inEnglish, japaneseObj } = getVerbLabelItems(
     verb,
     verbForms,
     verbForm,
@@ -213,17 +210,6 @@ export default function VerbMain(props: VerbMainProps) {
           {topValue}
         </Sizable>
 
-        {romajiEnabled && romaji && (
-          <div>
-            <span
-              className="clickable loop-no-interrupt"
-              onClick={() => setShowRomaji((r) => !r)}
-            >
-              {showRomaji ? romaji : "[romaji]"}
-            </span>
-          </div>
-        )}
-
         <Sizable
           breakPoint="md"
           className={{ "loop-no-interrupt": true }}
@@ -282,7 +268,6 @@ function getVerbLabelItems(
   verbColSplit: number,
   furiganaToggable: { furigana: { show?: boolean; toggle?: () => void } } // TODO: refactor? JapaneseText.toHTML
 ) {
-  const romaji = verb.romaji ?? ".";
   const splitIdx = getSplitIdx(verbForms, verbColSplit);
 
   const formResult = verbForms.find((form) => form.name === theForm);
@@ -291,5 +276,5 @@ function getVerbLabelItems(
   let inJapanese = japaneseObj.toHTML(furiganaToggable);
   let inEnglish = <>{verb.english}</>;
 
-  return { inJapanese, inEnglish, romaji, japaneseObj };
+  return { inJapanese, inEnglish, japaneseObj };
 }

@@ -80,6 +80,7 @@ export function swapKana(char: string) {
 }
 
 /**
+ * Convert hiragana to romaji
  * @param particle
  */
 export function romajiParticle(particle: string) {

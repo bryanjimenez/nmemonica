@@ -8,21 +8,16 @@ import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
 export interface Opposite {
   english: string;
   japanese: string;
-  romaji?: string;
 }
 
 export interface OppositeInitSlice {
   value: [Opposite, Opposite][];
   version: string;
-  aRomaji: boolean;
-  qRomaji: boolean;
   fadeInAnswers: boolean;
 }
 const oppositeInitState: OppositeInitSlice = {
   value: [],
   version: "",
-  aRomaji: false,
-  qRomaji: false,
   fadeInAnswers: false,
 };
 
@@ -55,12 +50,10 @@ export function deriveOppositesFromVocabulary(
           const a = {
             english: v.english,
             japanese: v.japanese,
-            romaji: v.romaji,
           };
           const b = {
             english: o.english,
             japanese: o.japanese,
-            romaji: o.romaji,
           };
 
           opposites.push([a, b]);
@@ -93,30 +86,6 @@ const oppositeSlice = createSlice({
     clearOpposites(state) {
       state.value = oppositeInitState.value;
       state.version = oppositeInitState.version;
-    },
-    setOppositesARomaji(state) {
-      const path = "/opposite/";
-      const attr = "aRomaji";
-      const time = new Date();
-
-      const partState = {
-        opposite: state,
-      };
-      void userSettingAttrUpdate(time, partState, path, attr);
-
-      state.aRomaji = !state.aRomaji;
-    },
-
-    setOppositesQRomaji(state) {
-      const path = "/opposite/";
-      const attr = "qRomaji";
-      const time = new Date();
-
-      const partState = {
-        opposite: state,
-      };
-      void userSettingAttrUpdate(time, partState, path, attr, !state.qRomaji);
-      state.qRomaji = !state.qRomaji;
     },
 
     toggleOppositeFadeInAnswers(state, action: { payload?: boolean }) {
@@ -152,20 +121,19 @@ const oppositeSlice = createSlice({
       }
     );
 
-    builder.addCase(oppositeSettingsFromAppStorage.fulfilled, (state, action) => {
-      const storedValue = action.payload;
-      return {
-        ...state,
-        ...storedValue,
-      };
-    });
+    builder.addCase(
+      oppositeSettingsFromAppStorage.fulfilled,
+      (state, action) => {
+        const storedValue = action.payload;
+        return {
+          ...state,
+          ...storedValue,
+        };
+      }
+    );
   },
 });
 
-export const {
-  clearOpposites,
-  setOppositesARomaji,
-  setOppositesQRomaji,
-  toggleOppositeFadeInAnswers,
-} = oppositeSlice.actions;
+export const { clearOpposites, toggleOppositeFadeInAnswers } =
+  oppositeSlice.actions;
 export default oppositeSlice.reducer;

@@ -55,19 +55,21 @@ export function useConnectSetting() {
     (before, after) => before.usage === after.usage
   );
 
-  const [oppositesQRomaji, oppositesARomaji, oppositeFadeInAnswers] =
-    useSelector<RootState, boolean[]>(({ opposite }: RootState) => {
-      const { qRomaji, aRomaji, fadeInAnswers } = opposite;
-      return [qRomaji, aRomaji, fadeInAnswers];
-    }, shallowEqual);
+  const [oppositeFadeInAnswers] = useSelector<RootState, boolean[]>(
+    ({ opposite }: RootState) => {
+      const { fadeInAnswers } = opposite;
+      return [fadeInAnswers];
+    },
+    shallowEqual
+  );
 
-  const [particlesARomaji, particleFadeInAnswer] = useSelector<
-    RootState,
-    boolean[]
-  >(({ particle }: RootState) => {
-    const { aRomaji, fadeInAnswers } = particle.setting;
-    return [aRomaji, fadeInAnswers];
-  }, shallowEqual);
+  const [particleFadeInAnswer] = useSelector<RootState, boolean[]>(
+    ({ particle }: RootState) => {
+      const { fadeInAnswers } = particle.setting;
+      return [fadeInAnswers];
+    },
+    shallowEqual
+  );
 
   return {
     cookies,
@@ -79,11 +81,8 @@ export function useConnectSetting() {
     japaneseVoice,
     englishVoice,
 
-    oppositesQRomaji,
-    oppositesARomaji,
     oppositeFadeInAnswers,
 
-    particlesARomaji,
     particleFadeInAnswer,
   };
 }

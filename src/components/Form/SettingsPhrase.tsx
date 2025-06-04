@@ -19,7 +19,6 @@ import {
   toggleIncludeReviewed,
   togglePhraseActiveGrp,
   togglePhrasesOrdering,
-  togglePhrasesRomaji,
 } from "../../slices/phraseSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { SetTermGList } from "../Pages/SetTermGList";
@@ -31,15 +30,12 @@ export default function SettingsPhrase() {
     phraseList: phrases,
     phraseGroups,
     sortMethod: phraseOrder,
-    romajiActive: phraseRomajiRef,
     difficultyThreshold,
     activeGroup: phraseActive,
     spaRepMaxReviewItem,
     includeNew,
     includeReviewed,
   } = useConnectPhrase();
-
-  const phraseRomaji = phraseRomajiRef.current;
 
   if (phrases.length === 0) {
     void dispatch(getPhrase());
@@ -139,13 +135,6 @@ export default function SettingsPhrase() {
               </div>
             </>
           )}
-          <div className="mb-2">
-            <SettingsSwitch
-              active={phraseRomaji}
-              action={buildAction(dispatch, togglePhrasesRomaji)}
-              statusText="Romaji"
-            />
-          </div>
         </div>
       </div>
     </div>

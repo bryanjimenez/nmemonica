@@ -50,7 +50,6 @@ export interface PhraseInitSlice {
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
     englishSideUp: boolean;
-    romaji: boolean;
     repTID: number;
     repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
@@ -72,7 +71,6 @@ export const phraseInitState: PhraseInitSlice = {
   setting: {
     ordered: 0,
     englishSideUp: false,
-    romaji: false,
     repTID: -1,
     repetition: {},
     spaRepMaxReviewItem: undefined,
@@ -460,17 +458,6 @@ const phraseSlice = createSlice({
       }),
     },
 
-    togglePhrasesRomaji(state) {
-      void userSettingAttrUpdate(
-        new Date(),
-        { phrases: state.setting },
-        "/phrases/",
-        "romaji"
-      );
-
-      state.setting.romaji = !state.setting.romaji;
-    },
-
     togglePhrasesOrdering(
       state,
       action: PayloadAction<ValuesOf<typeof TermSortBy>>
@@ -629,7 +616,6 @@ const phraseSlice = createSlice({
 
 export const {
   clearPhrases,
-  togglePhrasesRomaji,
   togglePhraseActiveGrp,
   toggleIncludeNew,
   toggleIncludeReviewed,

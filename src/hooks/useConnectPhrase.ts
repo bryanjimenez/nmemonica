@@ -39,32 +39,19 @@ export function useConnectPhrase() {
     shallowEqual
   );
 
-  const [ft, rm, difficultyThreshold, spaRepMaxReviewItem, viewGoal] =
-    useSelector<
-      RootState,
-      [
-        ValuesOf<typeof TermFilterBy>,
-        boolean,
-        number,
-        number | undefined,
-        number | undefined,
-      ]
-    >(({ phrases }: RootState) => {
-      const {
-        filter,
-        romaji,
-        difficultyThreshold,
-        spaRepMaxReviewItem,
-        viewGoal,
-      } = phrases.setting;
-      return [
-        filter,
-        romaji,
-        difficultyThreshold,
-        spaRepMaxReviewItem,
-        viewGoal,
-      ];
-    }, shallowEqual);
+  const [ft, difficultyThreshold, spaRepMaxReviewItem, viewGoal] = useSelector<
+    RootState,
+    [
+      ValuesOf<typeof TermFilterBy>,
+      number,
+      number | undefined,
+      number | undefined,
+    ]
+  >(({ phrases }: RootState) => {
+    const { filter, difficultyThreshold, spaRepMaxReviewItem, viewGoal } =
+      phrases.setting;
+    return [filter, difficultyThreshold, spaRepMaxReviewItem, viewGoal];
+  }, shallowEqual);
 
   const sortMethod = useSelector(({ phrases }: RootState) => {
     const { ordered } = phrases.setting;
@@ -84,9 +71,6 @@ export function useConnectPhrase() {
   /** Settings menu selected filter method */
   const filterType = useRef(ft);
   filterType.current = ft;
-
-  const romajiActive = useRef(rm);
-  romajiActive.current = rm;
 
   return {
     // Changing during game
@@ -117,7 +101,6 @@ export function useConnectPhrase() {
     sortMethod,
 
     // Refs ()
-    romajiActive,
     filterType,
   };
 }

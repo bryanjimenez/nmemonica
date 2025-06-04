@@ -24,7 +24,6 @@ export type Kanji = Optional<RawKanji, "uid" | "tags"> & { tag?: string };
 const prettyHeaders = {
   english: ["English"],
   japanese: ["Japanese"],
-  romaji: ["Romaji"],
   grp: ["Group"],
   subGrp: ["Sub Group", "Subgroup"],
   tag: ["Tags"],
@@ -39,7 +38,6 @@ const phraseMinHeaders = {
   japanese: -1,
   english: -1,
   lit: -1,
-  romaji: -1,
   grp: -1,
   subGrp: -1,
   lesson: -1,
@@ -49,7 +47,6 @@ const phraseMinHeaders = {
 const vocabularyMinHeaders = {
   japanese: -1,
   english: -1,
-  romaji: -1,
   grp: -1,
   subGrp: -1,
   pronounce: -1,
@@ -277,7 +274,6 @@ export function sheets_sync_vocabulary(
       if (
         h.english < 0 ||
         h.japanese < 0 ||
-        h.romaji < 0 ||
         h.grp < 0 ||
         h.subGrp < 0 ||
         h.tag < 0 ||
@@ -294,7 +290,6 @@ export function sheets_sync_vocabulary(
       if (i > 0) {
         let vocabulary: Vocabulary = {
           japanese: row[h.japanese],
-          romaji: row[h.romaji],
           english: row[h.english],
         };
 
@@ -318,10 +313,6 @@ export function sheets_sync_vocabulary(
 
         if (row[h.tag] && row[h.tag] !== "") {
           vocabulary.tag = row[h.tag];
-        }
-
-        if (row[h.romaji] && row[h.romaji] !== "") {
-          vocabulary.romaji = row[h.romaji];
         }
 
         if (row[h.opposite] && row[h.opposite] !== "") {
@@ -359,7 +350,6 @@ export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
       if (
         h.english < 0 ||
         h.japanese < 0 ||
-        h.romaji < 0 ||
         h.grp < 0 ||
         h.subGrp < 0 ||
         h.tag < 0 ||
@@ -396,10 +386,6 @@ export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
 
         if (row[h.subGrp] && row[h.subGrp] !== "") {
           phrase.subGrp = row[h.subGrp];
-        }
-
-        if (row[h.romaji] && row[h.romaji] !== "") {
-          phrase.romaji = row[h.romaji];
         }
 
         if (row[h.lesson] && row[h.lesson] !== "") {

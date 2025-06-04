@@ -54,7 +54,6 @@ export interface VocabularyInitSlice {
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
     englishSideUp: boolean;
-    romaji: boolean;
     bareKanji: boolean;
     hintEnabled: boolean;
     filter: ValuesOf<typeof TermFilterBy>;
@@ -81,7 +80,6 @@ export const vocabularyInitState: VocabularyInitSlice = {
   setting: {
     ordered: 0,
     englishSideUp: false,
-    romaji: false,
     bareKanji: false,
     hintEnabled: false,
     filter: 0,
@@ -374,17 +372,6 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.ordered = newOrdered;
-    },
-
-    toggleVocabularyRomaji(state) {
-      void userSettingAttrUpdate(
-        new Date(),
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "romaji"
-      );
-
-      state.setting.romaji = !state.setting.romaji;
     },
 
     toggleVocabularyBareKanji(state) {
@@ -706,7 +693,6 @@ export const {
   toggleVocabularyActiveGrp,
   toggleAutoVerbView,
   toggleVocabularyHint,
-  toggleVocabularyRomaji,
   toggleIncludeNew,
   toggleIncludeReviewed,
   updateVerbColSplit,
