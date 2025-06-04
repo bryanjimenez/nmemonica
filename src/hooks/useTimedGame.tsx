@@ -464,12 +464,12 @@ function interruptTimedPlayToAnswer(
   tpAnimation: number | null,
   setTpAnimation: React.Dispatch<React.SetStateAction<number | null>>,
   setLoopQuitCount: React.Dispatch<React.SetStateAction<number>>,
-  loopQuitTimer: React.MutableRefObject<NodeJS.Timer[] | null>,
-  tpTimeStamp: React.MutableRefObject<number | undefined>,
+  loopQuitTimer: React.RefObject<NodeJS.Timer[] | null>,
+  tpTimeStamp: React.RefObject<number | undefined>,
   abortLoop: () => boolean,
   getElapsedTimedPlay: () => { tpElapsed?: number },
-  tpAnswered: React.MutableRefObject<boolean | undefined>,
-  tpElapsed: React.MutableRefObject<number | undefined>
+  tpAnswered: React.RefObject<boolean | undefined>,
+  tpElapsed: React.RefObject<number | undefined>
 ) {
   let handler = answerHandler;
 

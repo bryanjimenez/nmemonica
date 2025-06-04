@@ -137,7 +137,8 @@ export default function KanaGame() {
   });
 
   const { width, height } = useWindowSize();
-  const isLandscape = width && height ? width > height : true;
+  const isLandscape =
+    width !== undefined && height !== undefined ? width > height : true;
 
   const choiceButton = buildChoiceButton({
     checkAnswer,
@@ -160,9 +161,9 @@ export default function KanaGame() {
     if (hiraganaR.current.length > 0) {
       prepareGameCB();
     }
-  }, [selectedIndex, practiceSide, charSet]);
+  }, [selectedIndex, practiceSide, charSet, prepareGameCB]);
 
-  if (!question) return <NotReady addlStyle="kana" />;
+  if (question === undefined) return <NotReady addlStyle="kana" />;
 
   // console.log(question);
   // console.log(answer);
@@ -408,17 +409,17 @@ export function usePrepareGame({
   charSet: ValuesOf<typeof KanaType>;
   choiceN: number;
   wideMode: boolean;
-  vowelsR: React.MutableRefObject<string[]>;
-  consonantsR: React.MutableRefObject<string[]>;
-  soundsR: React.MutableRefObject<Record<string, string>>;
-  hiraganaR: React.MutableRefObject<string[][]>;
-  katakanaR: React.MutableRefObject<string[][]>;
+  vowelsR: React.RefObject<string[]>;
+  consonantsR: React.RefObject<string[]>;
+  soundsR: React.RefObject<Record<string, string>>;
+  hiraganaR: React.RefObject<string[][]>;
+  katakanaR: React.RefObject<string[][]>;
 
   practiceSide: boolean;
   reinforce: Choice[];
   selectedIndex: number;
 }) {
-  const [question, setQuestion] = useState("undefined");
+  const [question, setQuestion] = useState<string>();
   const [answer, setAnswer] = useState<Choice>({
     val: "",
     hint: "",
@@ -603,12 +604,13 @@ export function buildChoiceButton({
     const isRight = choices[index].val === answer.val && correct;
 
     const choiceCSS = classNames({
-      clickable: !choices[index].q,
+      clickable: choices[index].q !== true,
       "text-center": true,
       "d-flex flex-column justify-content-center": true,
-      "correct-color": isRight || (wideMode && choices[index].q && correct),
+      "correct-color":
+        isRight || (wideMode && choices[index].q === true && correct),
       "incorrect-color": isWrong,
-      "question-color": wideMode && choices[index].q && !correct,
+      "question-color": wideMode && choices[index].q === true && !correct,
     });
 
     const choiceH2CSS = classNames({
@@ -703,7 +705,7 @@ export function buildChoiceButton({
       <div
         key={index}
         onClick={() => {
-          if (!choices[index].q) {
+          if (choices[index].q !== true) {
             checkAnswer(choices[index]);
           }
         }}

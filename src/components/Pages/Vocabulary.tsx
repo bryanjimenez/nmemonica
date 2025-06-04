@@ -33,9 +33,11 @@ import {
   spaceRepLog,
   wasToday,
 } from "../../helper/consoleHelper";
+import { recallSortLogSummary } from "../../helper/consoleSummaryHelper";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import {
   getCacheUID,
+  getPendingReduceFiltered,
   getTerm,
   getTermUID,
   initGoalPending,
@@ -49,7 +51,6 @@ import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { getVerbFormsArray, verbToTargetForm } from "../../helper/JapaneseVerb";
 import { setMediaSessionPlaybackState } from "../../helper/mediaHelper";
 import {
-  getPercentOverdue,
   recallDebugLogHelper,
   recallNotificationHelper,
   spaceRepetitionOrder,
@@ -122,7 +123,9 @@ const VocabularyMeta = {
 
 export default function Vocabulary() {
   const dispatch = useDispatch<AppDispatch>();
-  const { cookies } = useConnectSetting();
+  const { cookies, debug } = useConnectSetting();
+  const debugREF = useRef(debug);
+
   const { loadingAudio } = useConnectAudio();
 
   const [showPageMultiOrderScroller, setShowPageMultiOrderScroller] =
@@ -225,219 +228,199 @@ export default function Vocabulary() {
     top: 10,
   });
 
-  const { filteredVocab } = useMemo(() => {
-    if (vocabList.length === 0) return { filteredVocab: [] };
-    if (Object.keys(metadata.current).length === 0 && activeGroup.length === 0)
-      return { filteredVocab: vocabList };
+  const { filteredVocab, recallGame } = useMemo(
+    function filterMemo() {
+      if (vocabList.length === 0) return { filteredVocab: [], recallGame: -1 };
+      if (
+        Object.keys(metadata.current).length === 0 &&
+        activeGroup.length === 0
+      )
+        return { filteredVocab: vocabList, recallGame: -1 };
 
-    let filtered = termFilterByType(
-      filterTypeREF.current,
-      vocabList,
-      activeGroup
-    );
+      let recallGame = -1;
+      let filtered = termFilterByType(
+        filterTypeREF.current,
+        vocabList,
+        activeGroup
+      );
 
-    // exclude terms with difficulty beyond difficultyThreshold
-    const subFilter = difficultySubFilter(
-      difficultyThresholdREF.current,
-      filtered,
-      metadata.current
-    );
+      // exclude terms with difficulty beyond difficultyThreshold
+      const subFilter = difficultySubFilter(
+        difficultyThresholdREF.current,
+        filtered,
+        metadata.current
+      );
 
-    if (subFilter.length > 0) {
-      filtered = subFilter;
-    } else {
-      setLog((l) => [
-        ...l,
-        {
-          msg: "Excluded all terms. Discarding memorized subfiltering.",
-          lvl: DebugLevel.WARN,
-        },
-      ]);
-    }
-
-    switch (sort) {
-      case TermSortBy.RECALL:
-        // discard the nonPending terms
-        const {
-          failed,
-          overdue,
-          overLimit: leftOver,
-        } = spaceRepetitionOrder(
-          filtered,
-          metadata.current,
-          repMinItemReviewREF.current
-        );
-        // if *just one* overLimit then add to pending now
-        const overLimit = leftOver.length === 1 ? [] : leftOver;
-        const pending =
-          leftOver.length === 1
-            ? [...failed, ...overdue, ...leftOver]
-            : [...failed, ...overdue];
-
-        if (pending.length > 0 && filtered.length !== pending.length) {
-          // reduce filtered
-          filtered = pending.map((p) => filtered[p]);
-        }
-
-        const overdueVals = pending.map((item, i) => {
-          const {
-            accuracyP = 0,
-            lastReview,
-
-            daysBetweenReviews,
-            // metadata includes filtered in Recall sort
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          } = metadata.current[filtered[i].uid]!;
-          const daysSinceReview =
-            lastReview !== undefined ? daysSince(lastReview) : undefined;
-          const p = getPercentOverdue({
-            accuracy: accuracyP,
-            daysSinceReview,
-            daysBetweenReviews,
-          });
-
-          return p.toFixed(2).replace(".00", "").replace("0.", ".");
-        });
-        // console.table(recallInfoTable(pending.map(i=>filteredVocab[i]) ,metadata.current));
-
-        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
-
+      if (subFilter.length > 0) {
+        filtered = subFilter;
+      } else {
         setLog((l) => [
           ...l,
           {
-            msg: `${TermSortByLabel[sort]} (${
-              overdueVals.length
-            })${more} [${overdueVals.toString()}]`,
-            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
+            msg: "Excluded all terms. Discarding memorized subfiltering.",
+            lvl: DebugLevel.WARN,
           },
         ]);
+      }
 
-        break;
-      case TermSortBy.VIEW_DATE:
-        if (!includeNew) {
-          filtered = filtered.filter(
-            (el) => metadata.current[el.uid]?.lastView !== undefined
+      switch (sort) {
+        case TermSortBy.RECALL:
+          // discard the nonPending terms
+          const {
+            failed,
+            overdue,
+            overLimit: leftOver,
+            notPlayed,
+            todayDone,
+          } = spaceRepetitionOrder(
+            filtered,
+            metadata.current,
+            repMinItemReviewREF.current
           );
-        }
 
-        if (!includeReviewed) {
-          filtered = filtered.filter(
-            (el) => metadata.current[el.uid]?.lastReview === undefined
+          const {
+            pending,
+            reducedFiltered,
+            recallGame: rGame,
+          } = getPendingReduceFiltered(
+            leftOver,
+            failed,
+            overdue,
+            notPlayed,
+            todayDone,
+            filtered
           );
-        }
+          filtered = reducedFiltered;
+          recallGame = rGame;
 
-        break;
-    }
+          if (debugREF.current > DebugLevel.WARN) {
+            const overLimit = leftOver.length === 1 ? [] : leftOver;
+            recallSortLogSummary(
+              pending,
+              metadata,
+              filtered,
+              overLimit,
+              setLog,
+              sort
+            );
+          }
 
-    return { filteredVocab: filtered };
-  }, [
-    filterTypeREF,
-    sort,
-    difficultyThresholdREF,
-    vocabList,
-    activeGroup,
-    includeNew,
-    includeReviewed,
-  ]);
+          break;
+        case TermSortBy.VIEW_DATE:
+          if (!includeNew) {
+            filtered = filtered.filter(
+              (el) => metadata.current[el.uid]?.lastView !== undefined
+            );
+          }
+
+          if (!includeReviewed) {
+            filtered = filtered.filter(
+              (el) => metadata.current[el.uid]?.lastReview === undefined
+            );
+          }
+
+          break;
+      }
+
+      return { filteredVocab: filtered, recallGame };
+    },
+    [
+      filterTypeREF,
+      sort,
+      difficultyThresholdREF,
+      vocabList,
+      activeGroup,
+      includeNew,
+      includeReviewed,
+    ]
+  );
 
   const {
     newOrder: order,
     ebare,
     jbare,
-    recallGame,
-  } = useMemo(() => {
-    if (filteredVocab.length === 0) return { newOrder: [], recallGame: -1 };
+  } = useMemo(
+    function orderMemo() {
+      if (filteredVocab.length === 0) return { newOrder: [] };
 
-    let newOrder: number[] = [];
-    let jOrder: undefined | { uid: string; label: string; idx: number }[];
-    let eOrder: undefined | { uid: string; label: string; idx: number }[];
-    let recallGame = -1;
-    switch (sort) {
-      case TermSortBy.RANDOM:
-        newOrder = randomOrder(filteredVocab);
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
+      let newOrder: number[] = [];
+      let jOrder: undefined | { uid: string; label: string; idx: number }[];
+      let eOrder: undefined | { uid: string; label: string; idx: number }[];
+      switch (sort) {
+        case TermSortBy.RANDOM:
+          newOrder = randomOrder(filteredVocab);
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
 
-        break;
-      case TermSortBy.VIEW_DATE:
-        newOrder = dateViewOrder(filteredVocab, metadata.current);
+          break;
+        case TermSortBy.VIEW_DATE:
+          newOrder = dateViewOrder(filteredVocab, metadata.current);
 
-        let newN = 0;
-        let oldDt = NaN;
-        const views = newOrder.map((i) => {
-          const d = metadata.current[filteredVocab[i].uid]?.lastView;
-          newN = d === undefined ? newN + 1 : newN;
-          oldDt = d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
-          return d !== undefined ? daysSince(d) : 0;
-        });
+          let newN = 0;
+          let oldDt = NaN;
+          const views = newOrder.map((i) => {
+            const d = metadata.current[filteredVocab[i].uid]?.lastView;
+            newN = d === undefined ? newN + 1 : newN;
+            oldDt =
+              d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+            return d !== undefined ? daysSince(d) : 0;
+          });
 
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
 
-        break;
+          break;
 
-      case TermSortBy.DIFFICULTY:
-        // exclude vocab with difficulty beyond difficultyThreshold
+        case TermSortBy.DIFFICULTY:
+          // exclude vocab with difficulty beyond difficultyThreshold
 
-        newOrder = difficultyOrder(filteredVocab, metadata.current);
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
+          newOrder = difficultyOrder(filteredVocab, metadata.current);
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
 
-        break;
+          break;
 
-      case TermSortBy.RECALL:
-        const {
-          failed,
-          overdue,
-          notPlayed: nonPending,
-          todayDone,
-        } = spaceRepetitionOrder(filteredVocab, metadata.current);
-        const pending = [...failed, ...overdue];
+        case TermSortBy.RECALL:
+          newOrder = filteredVocab.map((_v, i) => i);
+          break;
 
-        if (pending.length > 0) {
-          newOrder = pending;
-        } else {
-          newOrder = [...nonPending, ...todayDone];
-        }
-        recallGame = pending.length;
+        default: //TermSortBy.ALPHABETIC:
+          ({ order: newOrder, jOrder, eOrder } = alphaOrder(filteredVocab));
 
-        break;
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
+          break;
+      }
 
-      default: //TermSortBy.ALPHABETIC:
-        ({ order: newOrder, jOrder, eOrder } = alphaOrder(filteredVocab));
+      // jbare, // bare min Japanese ordered word list
+      // ebare, // bare min English ordered word list
 
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
-        break;
-    }
+      setScrollJOrder(true);
 
-    // jbare, // bare min Japanese ordered word list
-    // ebare, // bare min English ordered word list
-
-    setScrollJOrder(true);
-
-    return { newOrder, jbare: jOrder, ebare: eOrder, recallGame };
-  }, [sort, filteredVocab]);
+      return { newOrder, jbare: jOrder, ebare: eOrder };
+    },
+    [sort, filteredVocab]
+  );
 
   // Logger messages
   useEffect(() => {
@@ -1254,9 +1237,9 @@ function useBuildGameActionsHandler(
   verbForm: string,
   order: number[],
   filteredVocab: RawVocabulary[],
-  naFlip: React.MutableRefObject<string | undefined>,
+  naFlip: React.RefObject<string | undefined>,
   setWasPlayed: (value: boolean) => void,
-  audioCacheStore: React.MutableRefObject<AudioBufferRecord>
+  audioCacheStore: React.RefObject<AudioBufferRecord>
 ) {
   return useCallback(
     async (direction: SwipeDirection, AbortController?: AbortController) => {
@@ -1394,7 +1377,7 @@ export { VocabularyMeta };
 function partOfSpeechPronunciation(
   vocabulary: RawVocabulary,
   verbForm: string,
-  naFlip: React.MutableRefObject<string | undefined>
+  naFlip: React.RefObject<string | undefined>
 ) {
   let sayObj;
   if (vocabulary.grp === "Verb" && verbForm !== "dictionary") {

@@ -121,7 +121,7 @@ function cacheWindowTrim(
 }
 
 export function copyBufferFromCacheStore(
-  store: React.MutableRefObject<AudioBufferRecord>,
+  store: React.RefObject<AudioBufferRecord>,
   key: string
 ) {
   const precached = store.current[key];
@@ -146,7 +146,7 @@ export function copyBufferFromCacheStore(
 }
 
 export function copyBufferToCacheStore(
-  store: React.MutableRefObject<AudioBufferRecord>,
+  store: React.RefObject<AudioBufferRecord>,
   key: string,
   buffer: ArrayBuffer
 ) {

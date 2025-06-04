@@ -27,8 +27,10 @@ import {
   spaceRepLog,
   wasToday,
 } from "../../helper/consoleHelper";
+import { recallSortLogSummary } from "../../helper/consoleSummaryHelper";
 import { setStateFunction } from "../../helper/eventHandlerHelper";
 import {
+  getPendingReduceFiltered,
   getTerm,
   getTermUID,
   initGoalPending,
@@ -39,7 +41,6 @@ import {
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
 import {
-  getPercentOverdue,
   recallDebugLogHelper,
   recallNotificationHelper,
   spaceRepetitionOrder,
@@ -224,7 +225,8 @@ function buildCompareInformation(term: RawKanji) {
 
 export default function Kanji() {
   const dispatch = useDispatch<AppDispatch>();
-  const { cookies } = useSelector(({ global }: RootState) => global);
+  const { cookies, debug } = useSelector(({ global }: RootState) => global);
+  const debugREF = useRef(debug);
 
   const {
     kanjiList,
@@ -308,190 +310,170 @@ export default function Kanji() {
     setCompare(undefined);
   }, []);
 
-  const filteredTerms = useMemo(() => {
-    if (kanjiList.length === 0) return [];
-    if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
-      return kanjiList;
+  const { filteredTerms, recallGame } = useMemo(
+    function filterMemo() {
+      if (kanjiList.length === 0) return { filteredTerms: [], recallGame: -1 };
+      if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
+        return { filteredTerms: kanjiList, recallGame: -1 };
 
-    let filtered = termFilterByType(
-      filterTypeREF.current,
-      kanjiList,
-      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : []
-    );
+      let recallGame = -1;
+      let filtered = termFilterByType(
+        filterTypeREF.current,
+        kanjiList,
+        filterTypeREF.current === TermFilterBy.TAGS ? activeTags : []
+      );
 
-    // exclude terms with difficulty beyond difficultyThreshold
-    const subFilter = difficultySubFilter(
-      difficultyThresholdREF.current,
-      filtered,
-      metadata.current
-    );
+      // exclude terms with difficulty beyond difficultyThreshold
+      const subFilter = difficultySubFilter(
+        difficultyThresholdREF.current,
+        filtered,
+        metadata.current
+      );
 
-    if (subFilter.length > 0) {
-      filtered = subFilter;
-    } else {
-      setLog((l) => [
-        ...l,
-        {
-          msg: "Excluded all terms. Discarding memorized subfiltering.",
-          lvl: DebugLevel.WARN,
-        },
-      ]);
-    }
+      if (subFilter.length > 0) {
+        filtered = subFilter;
+      } else {
+        setLog((l) => [
+          ...l,
+          {
+            msg: "Excluded all terms. Discarding memorized subfiltering.",
+            lvl: DebugLevel.WARN,
+          },
+        ]);
+      }
 
-    switch (sort) {
-      case TermSortBy.RECALL:
-        // discard the nonPending terms
-        const {
-          failed,
-          overdue,
-          overLimit: leftOver,
-        } = spaceRepetitionOrder(
-          filtered,
-          metadata.current,
-          repMinItemReviewREF.current
-        );
-        // if *just one* overLimit then add to pending now
-        const overLimit = leftOver.length === 1 ? [] : leftOver;
-        const pending =
-          leftOver.length === 1
-            ? [...failed, ...overdue, ...leftOver]
-            : [...failed, ...overdue];
-
-        if (pending.length > 0 && filtered.length !== pending.length) {
-          // reduce filtered
-          filtered = pending.map((p) => filtered[p]);
-        }
-
-        const overdueVals = pending.map((item, i) => {
+      switch (sort) {
+        case TermSortBy.RECALL:
+          // discard the nonPending terms
           const {
-            accuracyP = 0,
-            lastReview,
-            daysBetweenReviews,
-            // metadata includes filtered in Recall sort
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          } = metadata.current[filtered[i].uid]!;
-          const daysSinceReview =
-            lastReview !== undefined ? daysSince(lastReview) : undefined;
-          const p = getPercentOverdue({
-            accuracy: accuracyP,
-            daysSinceReview,
-            daysBetweenReviews,
+            failed,
+            overdue,
+            overLimit: leftOver,
+            notPlayed,
+            todayDone,
+          } = spaceRepetitionOrder(
+            filtered,
+            metadata.current,
+            repMinItemReviewREF.current
+          );
+
+          const {
+            pending,
+            reducedFiltered,
+            recallGame: rGame,
+          } = getPendingReduceFiltered(
+            leftOver,
+            failed,
+            overdue,
+            notPlayed,
+            todayDone,
+            filtered
+          );
+          filtered = reducedFiltered;
+          recallGame = rGame;
+
+          if (debugREF.current > DebugLevel.WARN) {
+            const overLimit = leftOver.length === 1 ? [] : leftOver;
+            recallSortLogSummary(
+              pending,
+              metadata,
+              filtered,
+              overLimit,
+              setLog,
+              sort
+            );
+          }
+
+          break;
+        case TermSortBy.VIEW_DATE:
+          if (!includeNew) {
+            filtered = filtered.filter(
+              (el) => metadata.current[el.uid]?.lastView !== undefined
+            );
+          }
+
+          if (!includeReviewed) {
+            filtered = filtered.filter(
+              (el) => metadata.current[el.uid]?.lastReview === undefined
+            );
+          }
+
+          break;
+      }
+
+      return { filteredTerms: filtered, recallGame };
+    },
+    [
+      filterTypeREF,
+      difficultyThresholdREF,
+      sort,
+      kanjiList,
+      activeTags,
+      includeNew,
+      includeReviewed,
+    ]
+  );
+
+  const order = useMemo(
+    function orderMemo() {
+      if (filteredTerms.length === 0) return [];
+
+      let newOrder: number[];
+      switch (sort) {
+        case TermSortBy.DIFFICULTY:
+          newOrder = difficultyOrder(filteredTerms, metadata.current);
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
+
+          break;
+        case TermSortBy.VIEW_DATE:
+          newOrder = dateViewOrder(filteredTerms, metadata.current);
+
+          let newN = 0;
+          let oldDt = NaN;
+          const views = newOrder.map((i) => {
+            const d = metadata.current[filteredTerms[i].uid]?.lastView;
+            newN = d === undefined ? newN + 1 : newN;
+            oldDt =
+              d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
+            return d !== undefined ? daysSince(d) : 0;
           });
 
-          return p.toFixed(2).replace(".00", "").replace("0.", ".");
-        });
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
 
-        const more = overLimit.length > 0 ? `+${overLimit.length}` : "";
+          break;
+        case TermSortBy.RECALL:
+          newOrder = filteredTerms.map((_k, i) => i);
+          break;
 
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${
-              overdueVals.length
-            })${more} [${overdueVals.toString()}]`,
-            lvl: pending.length === 0 ? DebugLevel.WARN : DebugLevel.DEBUG,
-          },
-        ]);
+        default:
+          /*TermSortBy.RANDOM*/ newOrder = randomOrder(filteredTerms);
+          setLog((l) => [
+            ...l,
+            {
+              msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
+              lvl: DebugLevel.DEBUG,
+            },
+          ]);
 
-        break;
-      case TermSortBy.VIEW_DATE:
-        if (!includeNew) {
-          filtered = filtered.filter(
-            (el) => metadata.current[el.uid]?.lastView !== undefined
-          );
-        }
+          break;
+      }
 
-        if (!includeReviewed) {
-          filtered = filtered.filter(
-            (el) => metadata.current[el.uid]?.lastReview === undefined
-          );
-        }
-
-        break;
-    }
-
-    return filtered;
-  }, [
-    filterTypeREF,
-    difficultyThresholdREF,
-    sort,
-    kanjiList,
-    activeTags,
-    includeNew,
-    includeReviewed,
-  ]);
-
-  const { order, recallGame } = useMemo(() => {
-    if (filteredTerms.length === 0) return { order: [], recallGame: -1 };
-
-    let newOrder: number[];
-    let recallGame = -1;
-    switch (sort) {
-      case TermSortBy.DIFFICULTY:
-        newOrder = difficultyOrder(filteredTerms, metadata.current);
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
-
-        break;
-      case TermSortBy.VIEW_DATE:
-        newOrder = dateViewOrder(filteredTerms, metadata.current);
-
-        let newN = 0;
-        let oldDt = NaN;
-        const views = newOrder.map((i) => {
-          const d = metadata.current[filteredTerms[i].uid]?.lastView;
-          newN = d === undefined ? newN + 1 : newN;
-          oldDt = d !== undefined && Number.isNaN(oldDt) ? daysSince(d) : oldDt;
-          return d !== undefined ? daysSince(d) : 0;
-        });
-
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${views.length}) New:${newN} Old:${oldDt}d`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
-
-        break;
-      case TermSortBy.RECALL:
-        const {
-          failed,
-          overdue,
-          notPlayed: nonPending,
-          todayDone,
-        } = spaceRepetitionOrder(filteredTerms, metadata.current);
-
-        const pending = [...failed, ...overdue];
-        if (pending.length > 0) {
-          newOrder = pending;
-        } else {
-          newOrder = [...nonPending, ...todayDone];
-        }
-        recallGame = pending.length;
-
-        break;
-
-      default:
-        /*TermSortBy.RANDOM*/ newOrder = randomOrder(filteredTerms);
-        setLog((l) => [
-          ...l,
-          {
-            msg: `${TermSortByLabel[sort]} (${newOrder.length})`,
-            lvl: DebugLevel.DEBUG,
-          },
-        ]);
-
-        break;
-    }
-
-    return { order: newOrder, recallGame };
-  }, [sort, filteredTerms]);
+      return newOrder;
+    },
+    [sort, filteredTerms]
+  );
 
   const gotoNext = useCallback(() => {
     const l = filteredTerms.length;
@@ -868,8 +850,7 @@ export default function Kanji() {
               >
                 <div className="d-flex ">
                   <div className="d-flex flex-column w-100">
-                    {(term.pronounce !== undefined && (
-                      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+                    {term.pronounce !== undefined ? (
                       <div
                         style={{ minHeight: "66px" }}
                         className="pronunciation fs-5 p-0 d-flex flex-wrap align-items-end justify-content-center clickable"
@@ -904,7 +885,7 @@ export default function Kanji() {
                           <span>{"[Pronounce]"}</span>
                         )}
                       </div>
-                    )) || (
+                    ) : (
                       <div
                         style={{ minHeight: "68px" }}
                         className="fs-4 pt-0 invisible"
