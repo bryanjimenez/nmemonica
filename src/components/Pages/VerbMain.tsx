@@ -3,6 +3,7 @@ import type { RawVocabulary } from "nmemonica";
 import { useLayoutEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 
+import { type AudioItemParams } from "../../constants/voiceConstants";
 import {
   englishLabel,
   getCacheUID,
@@ -21,7 +22,6 @@ import {
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import type { AppDispatch } from "../../slices";
 import { furiganaToggled, verbFormChanged } from "../../slices/vocabularySlice";
-import { type AudioItemParams } from "../../slices/voiceSlice";
 import AudioItem from "../Form/AudioItem";
 import Sizable from "../Form/Sizable";
 

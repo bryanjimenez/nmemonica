@@ -13,7 +13,10 @@ import { phraseSettingsFromAppStorage } from "./phraseSlice";
 import { toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
-import { type EnglishVoiceType, type JapaneseVoiceType } from "./voiceSlice";
+import type {
+  EnglishVoiceType,
+  JapaneseVoiceType,
+} from "../constants/voiceConstants";
 import {
   type ConsoleMessage,
   DebugLevel,

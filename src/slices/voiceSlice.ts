@@ -1,18 +1,18 @@
 import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { logger } from "./globalSlice";
+import {
+  AudioItemParams,
+  VoiceWorkerResponse,
+} from "../constants/voiceConstants";
 import { DebugLevel, msgInnerTrim, secsSince } from "../helper/consoleHelper";
-import { type ValuesOf } from "../typings/utils";
 import {
   AUDIO_WORKER_EN_NAME,
   AUDIO_WORKER_JA_NAME,
   exceptionToError,
 } from "../workers";
-import { EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
-import {
-  type JaVoiceWorkerQuery,
-  VoiceWorkerResponse,
-} from "../workers/voiceWorker-ja";
+import { type EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
+import { type JaVoiceWorkerQuery } from "../workers/voiceWorker-ja";
 
 import { AppDispatch, RootState } from ".";
 
@@ -23,20 +23,6 @@ const workerQueue = {
   ja: new Map<string, { time: number }>(),
   en: new Map<string, { time: number }>(),
 };
-
-export type JapaneseVoiceType = "default" | ValuesOf<typeof VOICE_KIND_JA>;
-export type EnglishVoiceType = "default" | ValuesOf<typeof VOICE_KIND_EN>;
-export const VOICE_KIND_JA = Object.freeze({
-  HAPPY: "happy",
-  ANGRY: "angry",
-  SAD: "sad",
-  DEEP: "deep",
-});
-
-export const VOICE_KIND_EN = Object.freeze({
-  HUMAN_FEMALE: "HumanFemale",
-  ROBOT_MALE: "RobotMale",
-});
 
 export interface VoiceError extends Error {
   cause: { code: string; module: string };
@@ -104,13 +90,6 @@ export const dropAudioWorker = createAsyncThunk(
     }
   }
 );
-
-export type AudioItemParams = {
-  uid: string;
-  index?: number;
-  tl: "en" | "ja";
-  q: string;
-};
 
 // TODO: @nmemonica/voice-ja not async/parallel
 // TODO: @nmemonica/voice-en not async/parallel

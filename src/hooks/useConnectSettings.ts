@@ -1,7 +1,10 @@
 import { shallowEqual, useSelector } from "react-redux";
 
+import {
+  type EnglishVoiceType,
+  type JapaneseVoiceType,
+} from "../constants/voiceConstants";
 import type { RootState } from "../slices";
-import { EnglishVoiceType, JapaneseVoiceType } from "../slices/voiceSlice";
 
 export function useConnectSetting() {
   const [
