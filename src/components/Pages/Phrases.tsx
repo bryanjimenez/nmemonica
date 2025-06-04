@@ -66,11 +66,6 @@ import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
 import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
-import {
-  type AudioItemParams,
-  getSynthAudioWorkaroundNoAsync,
-  logAudioError,
-} from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import {
   deleteMetaPhrase,
@@ -85,6 +80,11 @@ import {
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import {
+  type AudioItemParams,
+  getSynthAudioWorkaroundNoAsync,
+  logAudioError,
+} from "../../slices/voiceSlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
 import DialogMsg from "../Form/DialogMsg";

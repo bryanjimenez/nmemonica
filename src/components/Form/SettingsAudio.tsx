@@ -3,8 +3,8 @@ import { useDispatch } from "react-redux";
 import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import { VOICE_KIND_EN, VOICE_KIND_JA } from "../../slices/audioSlice";
 import { setEnglishVoice, setJapaneseVoice } from "../../slices/globalSlice";
+import { VOICE_KIND_EN, VOICE_KIND_JA } from "../../slices/voiceSlice";
 import { properCase } from "../Games/KanjiGame";
 
 export default function SettingsAudio() {

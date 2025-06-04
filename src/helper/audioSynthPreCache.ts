@@ -5,7 +5,7 @@ import {
   AudioItemParams,
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
-} from "../slices/audioSlice";
+} from "../slices/voiceSlice";
 
 /**
  * Max absolute difference to keep items cached

@@ -28,9 +28,9 @@ import {
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
-import { dropAudioWorker, initAudioWorker } from "./slices/audioSlice";
 import { appSettingsInitialized, logger } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
+import { dropAudioWorker, initAudioWorker } from "./slices/voiceSlice";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const TermsAndConditions = lazy(
   () => import("./components/Terms/TermsAndConditions")

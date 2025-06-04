@@ -73,11 +73,6 @@ import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
-import {
-  AudioItemParams,
-  getSynthAudioWorkaroundNoAsync,
-  logAudioError,
-} from "../../slices/audioSlice";
 import { logger } from "../../slices/globalSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import {
@@ -95,6 +90,11 @@ import {
   toggleVocabularyTag,
   updateSpaceRepWord,
 } from "../../slices/vocabularySlice";
+import {
+  AudioItemParams,
+  getSynthAudioWorkaroundNoAsync,
+  logAudioError,
+} from "../../slices/voiceSlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
