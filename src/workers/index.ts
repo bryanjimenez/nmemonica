@@ -12,26 +12,45 @@ export function getStackInitial(error: { stack?: string }) {
   );
 }
 
+export interface VoiceErrorObject {
+  name: string;
+  message: string;
+  stack?: string;
+  cause: { code: string; module: string };
+}
+
+export function isVoiceErrorObject(m: unknown): m is VoiceErrorObject {
+  const test = m as VoiceErrorObject;
+  return (
+    (test.name === "Error" || test.name === "RuntimeError") &&
+    typeof test.message === "string" &&
+    typeof test.cause === "object"
+  );
+}
+
 /**
  * Convert an unknown exception into Error
  */
-export function exceptionToError(exception: unknown, origin?: string) {
-  let error = new Error(
-    "Unknown exception" + origin !== undefined ? ` at ${origin}` : ""
-  );
+export function exceptionToErrorObj(exception: unknown, origin?: string) {
+  let error: VoiceErrorObject = {
+    name: "Error",
+    message: "Unknown exception" + origin !== undefined ? ` at ${origin}` : "",
+    cause: {},
+  };
 
-  if (exception instanceof Error) {
-    error = exception;
-  } else if (typeof exception === "string" && exception.length > 0) {
+  if (typeof exception === "string" && exception.length > 0) {
     try {
       // parse a serialized error
-      error = JSON.parse(exception) as Error;
+      error = JSON.parse(exception);
     } catch {
       error.message = exception;
     }
-  } else if (typeof exception === "object" && exception !== null) {
+  } else if (
+    exception instanceof Error ||
+    (typeof exception === "object" && exception !== null)
+  ) {
     if ("name" in exception) {
-      error.name = (exception.name as string) ?? "Unknown error";
+      error.name = (exception.name as string) ?? "Error";
     }
     if ("message" in exception) {
       error.message = exception.message as string;
@@ -39,8 +58,24 @@ export function exceptionToError(exception: unknown, origin?: string) {
     if ("stack" in exception) {
       error.stack = exception.stack as string;
     }
-    if ("cause" in exception) {
-      error.cause = exception.cause;
+    if (
+      "cause" in exception &&
+      exception.cause !== null &&
+      typeof exception.cause === "object"
+    ) {
+      if (
+        "code" in exception.cause &&
+        typeof exception.cause.code === "string"
+      ) {
+        error.cause.code = exception.cause.code;
+      }
+
+      if (
+        "module" in exception.cause &&
+        typeof exception.cause.module === "string"
+      ) {
+        error.cause.module = exception.cause.module;
+      }
     }
   }
 

@@ -3,13 +3,16 @@ import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { logger } from "./globalSlice";
 import {
   AudioItemParams,
+  VoiceErrorCode,
   VoiceWorkerResponse,
 } from "../constants/voiceConstants";
 import { DebugLevel, msgInnerTrim, secsSince } from "../helper/consoleHelper";
 import {
   AUDIO_WORKER_EN_NAME,
   AUDIO_WORKER_JA_NAME,
-  exceptionToError,
+  VoiceErrorObject,
+  exceptionToErrorObj,
+  isVoiceErrorObject,
 } from "../workers";
 import { type EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
 import { type JaVoiceWorkerQuery } from "../workers/voiceWorker-ja";
@@ -24,25 +27,24 @@ const workerQueue = {
   en: new Map<string, { time: number }>(),
 };
 
-export interface VoiceError extends Error {
-  cause: { code: string; module: string };
-}
-
-export const VoiceErrorCode = Object.freeze({
-  MODULE_LOAD_ERROR: "Failed to load module",
-  MAX_RETRY: "Maximum retries exceeded",
-  DUPLICATE_REQUEST: "Duplicate request",
-  UNREACHABLE: "Module panicked",
-  BAD_INPUT: "Invalid Input",
-});
-
 export function logAudioError(
   dispatch: AppDispatch,
   exception: unknown,
   pronunciation: string,
   caughtOrigin?: string
 ) {
-  const error = exceptionToError(exception, caughtOrigin) as VoiceError;
+  const error = exceptionToErrorObj(exception, caughtOrigin);
+
+  const errMsg = error.message.toLowerCase();
+  if (
+    errMsg.startsWith("@nmemonica") &&
+    (errMsg.includes("invalid input") ||
+      errMsg.includes("invalid printable ascii"))
+  ) {
+    const module = error.message.split(" ")[0];
+    error.cause = { code: VoiceErrorCode.BAD_INPUT, module };
+  }
+
   let msg: string;
   switch (error.cause?.code) {
     case VoiceErrorCode.MODULE_LOAD_ERROR:
@@ -138,7 +140,8 @@ async function getSynthAudioWorkaroundNoAsyncFn(
       /* eslint-disable-next-line @typescript-eslint/only-throw-error */
       throw thunkAPI.rejectWithValue(
         JSON.stringify({
-          name: "Previous failed. Retry failed.",
+          name: "Error",
+          message: "Previous failed. Retry failed.",
           cause: {
             code: VoiceErrorCode.MAX_RETRY,
             module: `voice-${tl}`,
@@ -172,7 +175,8 @@ async function getFromVoiceSynth(
       /* eslint-disable-next-line @typescript-eslint/only-throw-error */
       throw thunkAPI.rejectWithValue(
         JSON.stringify({
-          name: "Request already queued",
+          name: "Error",
+          message: "Request already queued",
           cause: {
             code: VoiceErrorCode.DUPLICATE_REQUEST,
             module: `voice-${tl}`,
@@ -207,7 +211,8 @@ async function getFromVoiceSynth(
       /* eslint-disable-next-line @typescript-eslint/only-throw-error */
       throw thunkAPI.rejectWithValue(
         JSON.stringify({
-          name: `Failed to load worker voice-${tl}`,
+          name: "Error",
+          message: `Failed to load worker voice-${tl}`,
           cause: {
             code: VoiceErrorCode.MODULE_LOAD_ERROR,
             module: `voice-${tl}`,
@@ -218,11 +223,14 @@ async function getFromVoiceSynth(
 
     const aWorker = w;
 
-    const wMsgHandler = (event: MessageEvent<VoiceWorkerResponse | Error>) => {
-      if (event.data instanceof Error) {
+    const wMsgHandler = (
+      event: MessageEvent<VoiceWorkerResponse | VoiceErrorObject>
+    ) => {
+      if (isVoiceErrorObject(event.data)) {
         reject(event.data);
         return;
       }
+
       const audio = event.data.buffer;
       workerQueue[tl].delete(event.data.uid);
 
