@@ -120,17 +120,25 @@ function cacheWindowTrim(
   }
 }
 
+export function hasBufferFromCacheStore(
+  store: React.RefObject<AudioBufferRecord>,
+  key: string
+) {
+  const precached = store.current[key];
+
+  return (
+    precached !== undefined &&
+    precached.buffer !== undefined &&
+    precached.buffer.byteLength > 0
+  );
+}
 export function copyBufferFromCacheStore(
   store: React.RefObject<AudioBufferRecord>,
   key: string
 ) {
   const precached = store.current[key];
 
-  if (
-    precached !== undefined &&
-    precached.buffer !== undefined &&
-    precached.buffer.byteLength > 0
-  ) {
+  if (precached !== undefined && hasBufferFromCacheStore(store, key)) {
     const audioBuf = precached.buffer;
 
     const copy = new ArrayBuffer(audioBuf.byteLength);

@@ -18,6 +18,7 @@ import {
   copyBufferFromCacheStore,
   copyBufferToCacheStore,
   getSynthVoiceBufferToCacheStore,
+  hasBufferFromCacheStore,
 } from "../../helper/audioSynthPreCache";
 import {
   type ConsoleMessage,
@@ -439,30 +440,6 @@ export default function Phrases() {
         getTermUID(prevState.selectedIndex, filteredPhrases, order);
 
       const p = getTerm(uid, filteredPhrases, phraseList);
-
-      if (minimumTimeForSpaceRepUpdate(prevState.lastNext)) {
-        const curUid =
-          reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
-        const curP = getTerm(curUid, filteredPhrases, phraseList);
-        const inJapanese = audioPronunciation(curP);
-
-        if (inJapanese instanceof Error === false) {
-          void getSynthVoiceBufferToCacheStore(dispatch, audioCacheStore, [
-            {
-              uid: curP.uid,
-              tl: "ja",
-              pronunciation: inJapanese,
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-            },
-            {
-              uid: curP.uid + ".en",
-              tl: "en",
-              pronunciation: curP.english,
-              index: reinforcedUID !== null ? undefined : selectedIndex,
-            },
-          ]);
-        }
-      }
 
       updateDailyGoal({
         viewGoal,
@@ -1067,10 +1044,10 @@ function buildGameActionsHandler(
               res.buffer
             );
 
-            return playAudio(cachedAudioBuf);
+            actionPromise = playAudio(cachedAudioBuf);
           } catch (exception) {
             logAudioError(dispatch, exception, inJapanese, "onSwipe");
-            return Promise.resolve();
+            actionPromise = Promise.resolve();
           }
         }
       } else {
@@ -1099,16 +1076,89 @@ function buildGameActionsHandler(
               res.buffer
             );
 
-            return playAudio(cachedAudioBuf);
+            actionPromise = playAudio(cachedAudioBuf);
           } catch (exception) {
             logAudioError(dispatch, exception, inEnglish, "onSwipe");
-            return Promise.resolve();
+            actionPromise = Promise.resolve();
           }
         }
       }
     }
-    return actionPromise;
+    return actionPromise.then(() => {
+      if (direction === "up" || direction === "down") {
+        preCacheAudioForNextTerm(
+          dispatch,
+          reinforcedUID,
+          selectedIndex,
+          phrases,
+          order,
+          filteredPhrases,
+          audioCacheStore
+        );
+      }
+    });
   };
 }
 
 export { PhrasesMeta };
+
+function preCacheAudioForNextTerm(
+  dispatch: AppDispatch,
+  reinforcedUID: string | null,
+  selectedIndex: number,
+  phrasesList: RawPhrase[],
+  order: number[],
+  filteredPhrases: RawPhrase[],
+  audioCacheStore: React.RefObject<AudioBufferRecord>
+) {
+  const nextSelectedIndex = (selectedIndex + 1) % order.length;
+  const nextUid =
+    reinforcedUID ?? getTermUID(nextSelectedIndex, filteredPhrases, order);
+
+  const isJACached = hasBufferFromCacheStore(audioCacheStore, nextUid);
+  const isENCached = hasBufferFromCacheStore(audioCacheStore, nextUid + ".en");
+
+  if (isJACached && isENCached) {
+    return;
+  }
+
+  const nextP = getTerm(nextUid, filteredPhrases, phrasesList);
+  const inJapanese = audioPronunciation(nextP);
+
+  if (inJapanese instanceof Error === false) {
+    let cacheQueries: {
+      uid: AudioItemParams["uid"];
+      pronunciation: AudioItemParams["q"];
+      index?: AudioItemParams["index"];
+      tl: AudioItemParams["tl"];
+    }[] = [];
+    if (!isJACached) {
+      cacheQueries = [
+        ...cacheQueries,
+        {
+          uid: nextP.uid,
+          tl: "ja",
+          pronunciation: inJapanese,
+          index: reinforcedUID !== null ? undefined : nextSelectedIndex,
+        },
+      ];
+    }
+    if (!isENCached) {
+      cacheQueries = [
+        ...cacheQueries,
+        {
+          uid: nextP.uid + ".en",
+          tl: "en",
+          pronunciation: nextP.english,
+          index: reinforcedUID !== null ? undefined : nextSelectedIndex,
+        },
+      ];
+    }
+
+    void getSynthVoiceBufferToCacheStore(
+      dispatch,
+      audioCacheStore,
+      cacheQueries
+    );
+  }
+}
