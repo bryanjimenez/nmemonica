@@ -16,7 +16,7 @@ import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { getParticleGame } from "../../slices/particleSlice";
-import { NotReady } from "../Form/NotReady";
+import { NotReady } from "../Pages/NotReady";
 import "../../css/ParticlesGame.css";
 
 export interface ChoiceParticle {

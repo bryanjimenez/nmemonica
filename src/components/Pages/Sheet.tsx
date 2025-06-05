@@ -40,12 +40,12 @@ import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch, AppSettingState, RootState } from "../../slices";
 import { appSettingsInitialized } from "../../slices/globalSlice";
-import { DataSetActionMenu } from "../Form/DataSetActionMenu";
-import { DataSetExport } from "../Form/DataSetExport";
-import { DataSetImport } from "../Form/DataSetImport";
-import { DataSetImportFile } from "../Form/DataSetImportFile";
+import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
+import { DataSetExport } from "../Dialog/DataSetExport";
+import { DataSetImport } from "../Dialog/DataSetImport";
+import { DataSetImportFile } from "../Dialog/DataSetImportFile";
 import { DataSetSharingActions } from "../Form/DataSetSharingActions";
-import { WRTCSignalingQR } from "../Form/WRTCSignalingQR";
+import { WRTCSignalingQR } from "../Dialog/WRTCSignalingQR";
 import "../../css/Sheet.css";
 
 const SheetMeta = {

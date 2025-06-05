@@ -1,10 +1,5 @@
 import { useDispatch } from "react-redux";
 
-import { NotReady } from "./NotReady";
-import PlusMinus from "./PlusMinus";
-import SettingsSwitch from "./SettingsSwitch";
-import SimpleListMenu from "./SimpleListMenu";
-import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
 import { DebugLevel } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
@@ -21,6 +16,11 @@ import {
   togglePhrasesOrdering,
 } from "../../slices/phraseSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import SimpleListMenu from "../Form/SimpleListMenu";
+import PlusMinus from "../Input/PlusMinus";
+import SettingsSwitch from "../Input/SettingsSwitch";
+import { ThresholdFilterSlider } from "../Input/ThresholdFilterSlider";
+import { NotReady } from "../Pages/NotReady";
 import { SetTermGList } from "../Pages/SetTermGList";
 
 export default function SettingsPhrase() {

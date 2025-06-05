@@ -46,10 +46,10 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
-import { DifficultySlider } from "../Form/DifficultySlider";
-import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import { Tooltip } from "../Form/Tooltip";
+import { DifficultySlider } from "../Input/DifficultySlider";
+import { NotReady } from "../Pages/NotReady";
 
 const KanjiGameMeta = {
   location: "/kanji-game/",

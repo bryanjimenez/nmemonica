@@ -2,7 +2,6 @@ import classNames from "classnames";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import PlusMinus from "./PlusMinus";
 import {
   getDifficultyCounts,
   getLastViewCounts,
@@ -19,6 +18,7 @@ import {
   getVocabulary,
   setGoal as setVocabularyGoal,
 } from "../../slices/vocabularySlice";
+import PlusMinus from "../Input/PlusMinus";
 
 export default function SettingsStats() {
   const dispatch = useDispatch<AppDispatch>();

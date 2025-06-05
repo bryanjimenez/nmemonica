@@ -19,7 +19,7 @@ import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import type { AppDispatch, RootState } from "../../slices";
 import { type Opposite, getOpposite } from "../../slices/oppositeSlice";
-import { NotReady } from "../Form/NotReady";
+import { NotReady } from "../Pages/NotReady";
 
 export interface RawOpposite {
   english: string;

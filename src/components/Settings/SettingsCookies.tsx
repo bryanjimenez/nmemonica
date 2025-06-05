@@ -9,7 +9,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 
-import SettingsSwitch from "./SettingsSwitch";
 import {
   cookieAcceptance,
   deleteCookie,
@@ -23,6 +22,7 @@ import {
   setPersistentStorage,
   toggleCookies,
 } from "../../slices/globalSlice";
+import SettingsSwitch from "../Input/SettingsSwitch";
 import { CookiePolicyMeta } from "../Terms/CookiePolicy";
 
 export function CookieOptions() {

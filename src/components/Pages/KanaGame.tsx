@@ -2,6 +2,7 @@ import classNames from "classnames";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
+import { NotReady } from "./NotReady";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { setStateFunction } from "../../helper/eventHandlerHelper";
 import { swapKana } from "../../helper/kanaHelper";
@@ -10,9 +11,8 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 import { RootState } from "../../slices";
 import { KanaType } from "../../slices/settingHelper";
 import type { ValuesOf } from "../../typings/utils";
-import ClickNavBtn from "../Form/ClickNavBtn";
-import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
+import ClickNavBtn from "../Input/ClickNavBtn";
 
 interface Choice {
   val: string;

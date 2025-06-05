@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { NotReady } from "./NotReady";
 import VerbMain from "./VerbMain";
 import VocabularyMain from "./VocabularyMain";
 import { type AudioItemParams } from "../../constants/voiceConstants";
@@ -91,12 +92,8 @@ import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";
-import { ValuesOf } from "../../typings/utils";
-import { AccuracySlider } from "../Form/AccuracySlider";
-import ClickNavBtn from "../Form/ClickNavBtn";
-import { DifficultySlider } from "../Form/DifficultySlider";
+import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
-import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
   AudioLoadingIcon,
@@ -107,10 +104,13 @@ import {
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
-import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
-import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
-import type { BareIdx } from "../Form/VocabularyOrderSlider";
+import { AccuracySlider } from "../Input/AccuracySlider";
+import ClickNavBtn from "../Input/ClickNavBtn";
+import { DifficultySlider } from "../Input/DifficultySlider";
+import VocabularyOrderSlider, {
+  type BareIdx,
+} from "../Input/VocabularyOrderSlider";
 
 const VocabularyMeta = {
   location: "/vocabulary/",

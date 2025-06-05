@@ -9,7 +9,7 @@ import { TermsAndConditionsMeta } from "./TermsAndConditions";
 import { allowedCookies } from "../../helper/cookieHelper";
 import { RootState } from "../../slices";
 import { Notice } from "../Form/Notice";
-import { CookieOptions } from "../Form/SettingsCookies";
+import { CookieOptions } from "../Settings/SettingsCookies";
 
 interface TermsNoticeProps {
   showInPages: string[];

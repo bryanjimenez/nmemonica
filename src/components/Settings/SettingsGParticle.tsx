@@ -1,14 +1,15 @@
 import { useDispatch } from "react-redux";
 
-import SettingsSwitch from "./SettingsSwitch";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import type { AppDispatch } from "../../slices";
-import { toggleOppositeFadeInAnswers } from "../../slices/oppositeSlice";
+import { toggleParticleFadeInAnswers } from "../../slices/particleSlice";
+import SettingsSwitch from "../Input/SettingsSwitch";
 
-export default function SettingsOppositeGame() {
+export default function SettingsParticleGame() {
   const dispatch = useDispatch<AppDispatch>();
-  const { oppositeFadeInAnswers } = useConnectSetting();
+
+  const { particleFadeInAnswer } = useConnectSetting();
 
   const el = (
     <div className="outer">
@@ -17,8 +18,8 @@ export default function SettingsOppositeGame() {
         <div className="column-2 setting-block">
           <div className="mb-2">
             <SettingsSwitch
-              active={oppositeFadeInAnswers}
-              action={buildAction(dispatch, toggleOppositeFadeInAnswers)}
+              active={particleFadeInAnswer}
+              action={buildAction(dispatch, toggleParticleFadeInAnswers)}
               statusText="Fade in answers"
             />
           </div>

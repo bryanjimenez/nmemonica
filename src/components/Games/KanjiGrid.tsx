@@ -22,8 +22,8 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch, RootState } from "../../slices";
 import { getKanji } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
-import { NotReady } from "../Form/NotReady";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
+import { NotReady } from "../Pages/NotReady";
 
 interface KanjiGridChoice extends GameChoice {
   toString: () => string;

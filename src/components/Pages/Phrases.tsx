@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import { useDispatch } from "react-redux";
 
+import { NotReady } from "./NotReady";
 import { type AudioItemParams } from "../../constants/voiceConstants";
 import {
   AudioBufferRecord,
@@ -82,13 +83,9 @@ import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";
-import { AccuracySlider } from "../Form/AccuracySlider";
-import AudioItem from "../Form/AudioItem";
-import ClickNavBtn from "../Form/ClickNavBtn";
-import DialogMsg from "../Form/DialogMsg";
-import { DifficultySlider } from "../Form/DifficultySlider";
+import DialogMsg from "../Dialog/DialogMsg";
+import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
-import { NotReady } from "../Form/NotReady";
 import {
   ApplyTagsBtn,
   AudioLoadingIcon,
@@ -98,8 +95,11 @@ import {
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
-import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
+import { AccuracySlider } from "../Input/AccuracySlider";
+import AudioItem from "../Input/AudioItem";
+import ClickNavBtn from "../Input/ClickNavBtn";
+import { DifficultySlider } from "../Input/DifficultySlider";
 
 const PhrasesMeta = {
   location: "/phrases/",

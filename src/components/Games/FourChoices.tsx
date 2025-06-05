@@ -3,7 +3,7 @@ import { forwardRef, memo, useLayoutEffect, useReducer, useRef } from "react";
 import type React from "react";
 
 import { useFade } from "../../hooks/useFade";
-import ClickNavBtn from "../Form/ClickNavBtn";
+import ClickNavBtn from "../Input/ClickNavBtn";
 
 export interface GameQuestion {
   english?: string;

@@ -1,11 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
-import { NotReady } from "./NotReady";
-import PlusMinus from "./PlusMinus";
-import SettingsSwitch from "./SettingsSwitch";
-import SimpleListMenu from "./SimpleListMenu";
-import { ThresholdFilterSlider } from "./ThresholdFilterSlider";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
@@ -18,15 +13,15 @@ import {
   toggleIncludeNew,
   toggleIncludeReviewed,
   toggleKanjiActiveTag,
-  toggleKanjiFilter,
   toggleKanjiOrdering,
 } from "../../slices/kanjiSlice";
-import {
-  TermFilterBy,
-  TermSortBy,
-  TermSortByLabel,
-} from "../../slices/settingHelper";
+import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import SimpleListMenu from "../Form/SimpleListMenu";
+import PlusMinus from "../Input/PlusMinus";
+import SettingsSwitch from "../Input/SettingsSwitch";
+import { ThresholdFilterSlider } from "../Input/ThresholdFilterSlider";
+import { NotReady } from "../Pages/NotReady";
 import { SetTermTagList } from "../Pages/SetTermTagList";
 
 export default function SettingsKanji() {

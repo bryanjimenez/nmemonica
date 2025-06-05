@@ -1,7 +1,5 @@
 import { useDispatch } from "react-redux";
 
-import ChoiceNumberSlider from "./ChoiceNumberSlider";
-import SettingsSwitch from "./SettingsSwitch";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKana } from "../../hooks/useConnectKana";
@@ -13,6 +11,8 @@ import {
   toggleKanaGameWideMode,
 } from "../../slices/kanaSlice";
 import { KanaType } from "../../slices/settingHelper";
+import ChoiceNumberSlider from "../Input/ChoiceNumberSlider";
+import SettingsSwitch from "../Input/SettingsSwitch";
 
 export default function SettingsKanaGame() {
   const dispatch = useDispatch<AppDispatch>();

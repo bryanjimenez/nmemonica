@@ -2,7 +2,6 @@ import { LinearProgress } from "@mui/material";
 import { type MetaDataObj } from "nmemonica";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { NotReady } from "./NotReady";
 import SimpleListMenu from "./SimpleListMenu";
 import { getLastViewCounts } from "../../helper/statsHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
@@ -10,6 +9,7 @@ import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { ValuesOf } from "../../typings/utils";
+import { NotReady } from "../Pages/NotReady";
 
 interface GoalResumeMessageProps {
   goal: string;

@@ -1,8 +1,5 @@
 import { useDispatch } from "react-redux";
 
-import ChoiceNumberSlider from "./ChoiceNumberSlider";
-import SettingsSwitch from "./SettingsSwitch";
-import SimpleListMenu from "./SimpleListMenu";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import type { AppDispatch } from "../../slices";
@@ -12,6 +9,9 @@ import {
   toggleKanjiOrdering,
 } from "../../slices/kanjiSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import SimpleListMenu from "../Form/SimpleListMenu";
+import ChoiceNumberSlider from "../Input/ChoiceNumberSlider";
+import SettingsSwitch from "../Input/SettingsSwitch";
 
 export default function SettingsKanjiGame() {
   const dispatch = useDispatch<AppDispatch>();
