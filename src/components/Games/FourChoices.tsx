@@ -1,10 +1,9 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import { forwardRef, memo, useLayoutEffect, useReducer, useRef } from "react";
 import type React from "react";
 
 import { useFade } from "../../hooks/useFade";
-import StackNavButton from "../Form/StackNavButton";
+import ClickNavBtn from "../Form/ClickNavBtn";
 
 export interface GameQuestion {
   english?: string;
@@ -121,9 +120,7 @@ export function FourChoices(
 
   return (
     <div ref={optionalRef} className="pick4game main-panel h-100 d-flex">
-      <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-        <ChevronLeftIcon size={16} />
-      </StackNavButton>
+      <ClickNavBtn direction="previous" action={gotoPrev} />
       <div className="container">
         <div className="row row-cols-1 row-cols-sm-2 h-100">
           <div
@@ -203,9 +200,7 @@ export function FourChoices(
           </div>
         </div>
       </div>
-      <StackNavButton ariaLabel="Next" action={gotoNext}>
-        <ChevronRightIcon size={16} />
-      </StackNavButton>
+      <ClickNavBtn direction="next" action={gotoNext} />
     </div>
   );
 }

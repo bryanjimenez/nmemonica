@@ -1,10 +1,5 @@
 import { Avatar, Grow, LinearProgress } from "@mui/material";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PulseIcon,
-  TrashIcon,
-} from "@primer/octicons-react";
+import { PulseIcon, TrashIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawVocabulary } from "nmemonica";
 import React, {
@@ -40,12 +35,10 @@ import {
   getPendingReduceFiltered,
   getTerm,
   getTermUID,
-  initGoalPending,
   minimumTimeForSpaceRepUpdate,
   minimumTimeForTimedPlay,
   termFilterByType,
   toggleFuriganaSettingHelper,
-  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { getVerbFormsArray, verbToTargetForm } from "../../helper/JapaneseVerb";
@@ -68,6 +61,7 @@ import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
+import { updateDailyGoal, useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -97,6 +91,7 @@ import {
   logAudioError,
 } from "../../slices/voiceSlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
+import ClickNavBtn from "../Form/ClickNavBtn";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
@@ -110,7 +105,6 @@ import {
   TogglePracticeSideBtn,
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
-import StackNavButton from "../Form/StackNavButton";
 import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 import VocabularyOrderSlider from "../Form/VocabularyOrderSlider";
@@ -142,7 +136,7 @@ export default function Vocabulary() {
   const [lastNext, setLastNext] = useState(Date.now()); // timestamp of last swipe
   const prevLastNext = useRef<number>(Date.now());
   const [selectedIndex, setSelectedIndex] = useState(0);
-
+  const [showMeaning, setShowMeaning] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<string | undefined>(undefined);
 
   const naFlip = useRef<"-na" | undefined>(undefined);
@@ -203,10 +197,8 @@ export default function Vocabulary() {
     setTagMenu(true);
   }, []);
 
-  /** Number of review items still pending (negative: goal already met)*/
-  const goalPending = useRef<number>(-1);
-  const [goalProgress, setGoalProgress] = useState<number | null>(null);
-  const userSetGoal = useRef(viewGoal);
+  const { goalPendingREF, progressBarColor, goalProgress, setGoalProgress } =
+    useGoalProgress(viewGoal, metadata);
 
   const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
@@ -217,11 +209,6 @@ export default function Vocabulary() {
   useEffect(() => {
     const { current: populateDataSets } = populateDataSetsRef;
     populateDataSets();
-
-    goalPending.current = initGoalPending(
-      userSetGoal.current,
-      metadata.current
-    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
@@ -470,6 +457,8 @@ export default function Vocabulary() {
     filteredVocab,
     naFlip,
     setWasPlayed,
+    englishSideUp,
+    setShowMeaning,
     audioCacheStore
   );
 
@@ -638,7 +627,7 @@ export default function Vocabulary() {
         prevSelectedIndex: prevState.selectedIndex,
         prevTimestamp: prevState.lastNext,
         progressTotal: filteredVocab.length,
-        goalPending,
+        goalPending: goalPendingREF,
         setGoalProgress,
         setText,
       });
@@ -714,6 +703,8 @@ export default function Vocabulary() {
       }
 
       setShowHint(undefined);
+      setShowMeaning(false);
+
       prevSelectedIndex.current = selectedIndex;
       prevReinforcedUID.current = reinforcedUID;
       accuracyModifiedRef.current = undefined;
@@ -738,6 +729,8 @@ export default function Vocabulary() {
     lastNext,
 
     verbForm,
+    goalPendingREF,
+    setGoalProgress,
   ]);
 
   const getInnerPage = useCallback(
@@ -772,7 +765,7 @@ export default function Vocabulary() {
           </div>
           <div
             ref={blastElRef}
-            className="text-nowrap fs-display-6 question-color"
+            className="text-nowrap fs-display-6 correct-color"
           >
             {text}
           </div>
@@ -806,27 +799,23 @@ export default function Vocabulary() {
             ref={HTMLDivElementSwipeRef}
             className="d-flex justify-content-between h-100"
           >
-            <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-              <ChevronLeftIcon size={16} />
-            </StackNavButton>
-
+            <ClickNavBtn direction="previous" action={gotoPrev} />
             {isVerb && autoVerbView ? (
               <VerbMain
                 verb={vocabulary}
                 linkToOtherTerm={(uid) => setReinforcedUID(uid)}
                 showHint={showHint === uid}
+                showMeaningSwipe={showMeaning}
               />
             ) : (
               <VocabularyMain
                 vocabulary={vocabulary}
                 showHint={showHint === uid}
                 wasPlayed={wasPlayed}
+                showMeaningSwipe={showMeaning}
               />
             )}
-
-            <StackNavButton ariaLabel="Next" action={gotoNext}>
-              <ChevronRightIcon size={16} />
-            </StackNavButton>
+            <ClickNavBtn direction="next" action={gotoNext} />
           </div>
         </div>
       );
@@ -839,6 +828,7 @@ export default function Vocabulary() {
       HTMLDivElementSwipeRef,
       autoVerbView,
       showHint,
+      showMeaning,
       wasPlayed,
       blastElRef,
       text,
@@ -1192,7 +1182,7 @@ export default function Vocabulary() {
         }
         value={goalProgress === null && tpAnimation === null ? progress : 0}
         valueBuffer={tpAnimation ?? goalProgress ?? undefined}
-        color={goalProgress === null ? "primary" : "warning"}
+        color={progressBarColor}
       />
     </div>
   );
@@ -1239,6 +1229,8 @@ function useBuildGameActionsHandler(
   filteredVocab: RawVocabulary[],
   naFlip: React.RefObject<string | undefined>,
   setWasPlayed: (value: boolean) => void,
+  englishSideUp: boolean,
+  setShowMeaning: React.Dispatch<React.SetStateAction<boolean>>,
   audioCacheStore: React.RefObject<AudioBufferRecord>
 ) {
   return useCallback(
@@ -1266,6 +1258,13 @@ function useBuildGameActionsHandler(
         const vocabulary = getTerm(uid, vocabList);
 
         setWasPlayed(true);
+
+        if (
+          (englishSideUp && direction === "up") ||
+          (!englishSideUp && direction === "down")
+        ) {
+          setShowMeaning(true);
+        }
 
         if (direction === "up") {
           setMediaSessionPlaybackState("playing");
@@ -1366,6 +1365,8 @@ function useBuildGameActionsHandler(
       filteredVocab,
       naFlip,
       setWasPlayed,
+      englishSideUp,
+      setShowMeaning,
 
       audioCacheStore,
     ]

@@ -1,9 +1,5 @@
 import { LinearProgress } from "@mui/material";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  TrashIcon,
-} from "@primer/octicons-react";
+import { TrashIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import orderBy from "lodash/orderBy";
 import md5 from "md5";
@@ -33,10 +29,8 @@ import {
   getPendingReduceFiltered,
   getTerm,
   getTermUID,
-  initGoalPending,
   minimumTimeForSpaceRepUpdate,
   termFilterByType,
-  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText } from "../../helper/JapaneseText";
 import { isKatakana } from "../../helper/kanaHelper";
@@ -55,6 +49,7 @@ import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
+import { updateDailyGoal, useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
@@ -76,12 +71,12 @@ import {
 } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
+import ClickNavBtn from "../Form/ClickNavBtn";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { NotReady } from "../Form/NotReady";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
-import StackNavButton from "../Form/StackNavButton";
 import { Tooltip } from "../Form/Tooltip";
 import { oneFromList, splitToList } from "../Games/KanjiGame";
 
@@ -245,10 +240,12 @@ export default function Kanji() {
 
   const { vocabList } = useConnectVocabulary();
 
-  /** Number of review items still pending (-1: no goal or already met)*/
-  const goalPending = useRef<number>(-1);
-  const [goalProgress, setGoalProgress] = useState<number | null>(null);
-  const userSetGoal = useRef(viewGoal);
+  /** metadata table ref */
+  const metadata = useRef(repetition);
+  metadata.current = repetition;
+
+  const { goalPendingREF, progressBarColor, goalProgress, setGoalProgress } =
+    useGoalProgress(viewGoal, metadata);
 
   const populateDataSetsRef = useRef(() => {
     if (vocabList.length === 0) {
@@ -264,20 +261,11 @@ export default function Kanji() {
   useEffect(() => {
     const { current: populateDataSets } = populateDataSetsRef;
     populateDataSets();
-
-    goalPending.current = initGoalPending(
-      userSetGoal.current,
-      metadata.current
-    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
     top: 10,
   });
-
-  /** metadata table ref */
-  const metadata = useRef(repetition);
-  metadata.current = repetition;
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [reinforcedUID, setReinforcedUID] = useState<string | null>(null);
@@ -574,7 +562,7 @@ export default function Kanji() {
         prevSelectedIndex: prevState.selectedIndex,
         prevTimestamp: prevState.lastNext,
         progressTotal: filteredTerms.length,
-        goalPending,
+        goalPending: goalPendingREF,
         setGoalProgress,
         setText,
       });
@@ -663,6 +651,9 @@ export default function Kanji() {
     setText,
     viewGoal,
     lastNext,
+
+    goalPendingREF,
+    setGoalProgress,
   ]);
 
   // Logger messages
@@ -797,7 +788,7 @@ export default function Kanji() {
         </div>
         <div
           ref={blastElRef}
-          className="text-nowrap fs-display-6 question-color"
+          className="text-nowrap fs-display-6 correct-color"
         >
           {text}
         </div>
@@ -824,9 +815,7 @@ export default function Kanji() {
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
         >
-          <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-            <ChevronLeftIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="previous" action={gotoPrev} />
           <div className="container">
             <div className="row row-cols-1 row-cols-sm-2 h-100">
               <div
@@ -976,9 +965,7 @@ export default function Kanji() {
               </div>
             </div>
           </div>
-          <StackNavButton ariaLabel="Next" action={gotoNext}>
-            <ChevronRightIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="next" action={gotoNext} />
         </div>
       </div>
       <div
@@ -1052,7 +1039,7 @@ export default function Kanji() {
           variant={goalProgress === null ? "determinate" : "buffer"}
           value={goalProgress === null ? progress : 0}
           valueBuffer={goalProgress ?? undefined}
-          color={goalProgress === null ? "primary" : "warning"}
+          color={progressBarColor}
         />
       </div>
     </React.Fragment>

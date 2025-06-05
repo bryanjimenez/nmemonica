@@ -1,9 +1,5 @@
 import { LinearProgress } from "@mui/material";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  TrashIcon,
-} from "@primer/octicons-react";
+import { TrashIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import type { RawPhrase } from "nmemonica";
 import React, {
@@ -38,12 +34,10 @@ import {
   getPendingReduceFiltered,
   getTerm,
   getTermUID,
-  initGoalPending,
   japaneseLabel,
   labelPlacementHelper,
   minimumTimeForSpaceRepUpdate,
   termFilterByType,
-  updateDailyGoal,
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import {
@@ -62,6 +56,7 @@ import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 // import { useDeviceMotionActions } from "../../hooks/useDeviceMotionActions";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
+import { updateDailyGoal, useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
@@ -88,6 +83,7 @@ import {
 } from "../../slices/voiceSlice";
 import { AccuracySlider } from "../Form/AccuracySlider";
 import AudioItem from "../Form/AudioItem";
+import ClickNavBtn from "../Form/ClickNavBtn";
 import DialogMsg from "../Form/DialogMsg";
 import { DifficultySlider } from "../Form/DifficultySlider";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
@@ -101,7 +97,6 @@ import {
 } from "../Form/OptionsBar";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
 import Sizable from "../Form/Sizable";
-import StackNavButton from "../Form/StackNavButton";
 import { TagEditMenu } from "../Form/TagEditMenu";
 import { Tooltip } from "../Form/Tooltip";
 
@@ -178,10 +173,8 @@ export default function Phrases() {
     setTagMenu(true);
   }, []);
 
-  /** Number of review items still pending (-1: no goal or already met)*/
-  const goalPending = useRef<number>(-1);
-  const [goalProgress, setGoalProgress] = useState<number | null>(null);
-  const userSetGoal = useRef(viewGoal);
+  const { goalPendingREF, progressBarColor, goalProgress, setGoalProgress } =
+    useGoalProgress(viewGoal, metadata);
 
   const [lesson, setLesson] = useState(false);
 
@@ -198,11 +191,6 @@ export default function Phrases() {
   useEffect(() => {
     const { current: populateDataSets } = populateDataSetsRef;
     populateDataSets();
-
-    goalPending.current = initGoalPending(
-      userSetGoal.current,
-      metadata.current
-    );
   }, []);
 
   const { blastElRef, text, setText } = useBlast({
@@ -405,6 +393,8 @@ export default function Phrases() {
     phraseList,
     order,
     filteredPhrases,
+    englishSideUp,
+    setShowMeaning,
     audioCacheStore
   );
 
@@ -482,7 +472,7 @@ export default function Phrases() {
         prevSelectedIndex: prevState.selectedIndex,
         prevTimestamp: prevState.lastNext,
         progressTotal: filteredPhrases.length,
-        goalPending,
+        goalPending: goalPendingREF,
         setGoalProgress,
         setText,
       });
@@ -573,6 +563,9 @@ export default function Phrases() {
     setText,
     viewGoal,
     lastNext,
+
+    goalPendingREF,
+    setGoalProgress,
   ]);
 
   // Logger messages
@@ -709,7 +702,7 @@ export default function Phrases() {
       >
         <div
           ref={blastElRef}
-          className="text-nowrap fs-display-6 question-color"
+          className="text-nowrap fs-display-6 correct-color"
         >
           {text}
         </div>
@@ -749,9 +742,8 @@ export default function Phrases() {
           ref={HTMLDivElementSwipeRef}
           className="d-flex justify-content-between h-100"
         >
-          <StackNavButton ariaLabel="Previous" action={gotoPrev}>
-            <ChevronLeftIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="previous" action={gotoPrev} />
+
           <div
             className={classNames({
               "pt-3 d-flex flex-column justify-content-around text-center":
@@ -777,9 +769,7 @@ export default function Phrases() {
             </Sizable>
             <div className="d-flex justify-content-center">{playButton}</div>
           </div>
-          <StackNavButton ariaLabel="Next" action={gotoNext}>
-            <ChevronRightIcon size={16} />
-          </StackNavButton>
+          <ClickNavBtn direction="next" action={gotoNext} />
         </div>
       </div>
       <div
@@ -895,7 +885,7 @@ export default function Phrases() {
           valueBuffer={goalProgress ?? undefined}
           // value={progress}
           // color={phrase_reinforce ? "secondary" : "primary"}
-          color={goalProgress === null ? "primary" : "warning"}
+          color={progressBarColor}
         />
       </div>
     </>
@@ -1010,6 +1000,8 @@ function buildGameActionsHandler(
   phrases: RawPhrase[],
   order: number[],
   filteredPhrases: RawPhrase[],
+  englishSideUp: boolean,
+  setShowMeaning: React.Dispatch<React.SetStateAction<boolean>>,
   audioCacheStore: React.RefObject<AudioBufferRecord>
 ) {
   return async function gameActionHandler(
@@ -1037,6 +1029,13 @@ function buildGameActionsHandler(
       const uid =
         reinforcedUID ?? getTermUID(selectedIndex, filteredPhrases, order);
       const phrase = getTerm(uid, phrases);
+
+      if (
+        (englishSideUp && direction === "up") ||
+        (!englishSideUp && direction === "down")
+      ) {
+        setShowMeaning(true);
+      }
 
       if (direction === "up") {
         const cachedAudioBuf = copyBufferFromCacheStore(

@@ -24,6 +24,7 @@ import Sizable from "../Form/Sizable";
 interface VocabularyMainProps {
   vocabulary: RawVocabulary;
   showHint: boolean;
+  showMeaningSwipe: boolean;
   /** was audio played? */
   wasPlayed: boolean;
 }
@@ -31,7 +32,7 @@ interface VocabularyMainProps {
 export default function VocabularyMain(props: VocabularyMainProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { vocabulary, showHint, wasPlayed } = props;
+  const { vocabulary, showHint, wasPlayed, showMeaningSwipe } = props;
 
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
   const [naFlip, setNaFlip] = useState<"-na" | undefined>(undefined);
@@ -206,7 +207,9 @@ export default function VocabularyMain(props: VocabularyMainProps) {
             : setStateFunction(setShowMeaning, (m) => !m)
         }
       >
-        {showMeaning || showBareKanji ? bottomValue : bottomLabel}
+        {showMeaning || showMeaningSwipe || showBareKanji
+          ? bottomValue
+          : bottomLabel}
       </Sizable>
 
       <div className="d-flex justify-content-center">{playButton}</div>

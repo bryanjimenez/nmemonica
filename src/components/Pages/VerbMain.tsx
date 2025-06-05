@@ -28,13 +28,14 @@ import Sizable from "../Form/Sizable";
 interface VerbMainProps {
   verb: RawVocabulary;
   showHint: boolean;
+  showMeaningSwipe: boolean;
   linkToOtherTerm: (uid: string) => void;
 }
 
 export default function VerbMain(props: VerbMainProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { verb, linkToOtherTerm, showHint } = props;
+  const { verb, linkToOtherTerm, showHint, showMeaningSwipe } = props;
 
   const [showMeaning, setShowMeaning] = useState<boolean>(false);
 
@@ -219,7 +220,7 @@ export default function VerbMain(props: VerbMainProps) {
           largeClassName={{ "fs-display-6": true }}
           onClick={() => setShowMeaning((m) => !m)}
         >
-          {showMeaning ? bottomValue : bottomLabel}
+          {showMeaning || showMeaningSwipe ? bottomValue : bottomLabel}
         </Sizable>
         <div className="d-flex justify-content-center">{playButton}</div>
       </div>
