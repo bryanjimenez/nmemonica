@@ -23,9 +23,7 @@ export function recallSortLogSummary<Term extends { uid: string }>(
       accuracyP = 0,
       lastReview,
       daysBetweenReviews,
-      // metadata includes filtered in Recall sort
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    } = metadata.current[filtered[i].uid]!;
+    } = metadata.current[filtered[i].uid] ?? {};
     const daysSinceReview =
       lastReview !== undefined ? daysSince(lastReview) : undefined;
     const p = getPercentOverdue({

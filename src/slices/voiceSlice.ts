@@ -7,6 +7,7 @@ import {
   VoiceWorkerResponse,
 } from "../constants/voiceConstants";
 import { DebugLevel, msgInnerTrim, secsSince } from "../helper/consoleHelper";
+import { type ValuesOf } from "../typings/utils";
 import {
   AUDIO_WORKER_EN_NAME,
   AUDIO_WORKER_JA_NAME,
@@ -45,20 +46,22 @@ export function logAudioError(
     error.cause = { code: VoiceErrorCode.BAD_INPUT, module };
   }
 
-  let msg: string;
+  let lvl: ValuesOf<typeof DebugLevel> = DebugLevel.ERROR;
+  let msg = `${error.cause.code} at ${error.cause.module} with ${msgInnerTrim(pronunciation, 20)}`;
   switch (error.cause?.code) {
     case VoiceErrorCode.MODULE_LOAD_ERROR:
     case VoiceErrorCode.UNREACHABLE:
     case VoiceErrorCode.BAD_INPUT:
-    case VoiceErrorCode.DUPLICATE_REQUEST:
     case VoiceErrorCode.MAX_RETRY:
-      msg = `${error.cause.code} at ${error.cause.module} with ${msgInnerTrim(pronunciation, 20)}`;
+      break;
+    case VoiceErrorCode.DUPLICATE_REQUEST:
+      lvl = DebugLevel.WARN;
       break;
     default:
       msg = JSON.stringify(exception);
   }
 
-  dispatch(logger(msg, DebugLevel.ERROR));
+  dispatch(logger(msg, lvl));
 }
 
 /**
