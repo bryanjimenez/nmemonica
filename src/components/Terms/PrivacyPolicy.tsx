@@ -54,23 +54,33 @@ export default function PrivacyPolicy() {
             <h2 className={headerCss}>Sharing user generated content</h2>
             <p className="m-0 ps-2">
               The application enables users to share their UGC with other users.
-              This can be done by importing and exporting the UGC as files to
-              and from their device or through the in-App &quot;Sync&quot;
-              service (in the &quot;Edit&quot; data sheets page). The
-              &quot;Sync&quot; sharing service is not a third party service. End
-              to end encryption is used when a sharing transaction happens
-              between two users. The service is a data relay between two users
-              and no data nor any user identifying information is kept on the
-              service any longer than the sharing transaction between the two
-              users. Any user can share their UGC by providing a one-time share
-              id and an encryption key to the receiving user. The available
-              items that can be shared are the user`&apos;s Datasets and their
-              App`&apos;s user settings. Datasets are shared as a whole, partial
-              Dataset sharing is not possible via the Sync service. User
-              settings contain metadata including individual term view counts,
-              frequency, and other time related information. You are responsible
-              for the UGC entered into the application and with whom you share
-              it with.
+              The connection is done via WebRTC (the Web Real Time Connection)
+              framework. This can be done by importing and exporting the UGC as
+              files to and from their device or through the in-App
+              &quot;Connection&quot; feature (in the &quot;Edit&quot; data sheets
+              page). The &quot;Connection&quot; feature is not a third party
+              service. End to end encryption is used when a sharing transaction
+              happens between two users. The Connection feature directly relays the UGC to the
+              other user. The available items that can be shared are the
+              user&apos;s Datasets and their App&apos;s user settings. Datasets
+              are shared as a whole, partial Dataset sharing is not possible via
+              &quot;Connection&quot;. User settings contain metadata including
+              individual term view counts, frequency, and other time related
+              information. You are responsible for the UGC entered into the
+              application and with whom you share it with.
+            </p>
+
+            <h2 className={headerCss}>Access to device camera</h2>
+            <p className="m-0 ps-2">
+              Connection initialization parameters are exchanged by means of QR
+              Code between the peers. QR Code reading requires explicit user
+              permission to enable the device&apos;s camera. Video images
+              captured by the application do not leave your device and are not
+              stored beyond the time span needed to decode the QR Code.
+              <br />
+              <br />
+              &quot;QR Code&quot; is a registered trademark of DENSO WAVE
+              INCORPORATED
             </p>
 
             <h2 className={headerCss}>Cookies</h2>

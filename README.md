@@ -176,18 +176,14 @@ For example:
 #### Dataset Action Menu
 > Dataset save and share actions can be found here.  
 
-> [!Important]  
-> Sync Service under development. Sharing currently possible only among geographically local peers (dependent on Wasmer Edge hosting service).
-
-The Sync Service is a [WebRTC](webrtc.org) connection-information relay (Data is not exchanged over the service) between two users. Any user can share their UGC (User Generated Content) by providing a one-time share id and an encryption key to the receiving user.
+Users can share their UGC (User Generated Content) or backup to another device by linking the two devices. Selecting the **Connection** action and exchanging QR Codes with a peer (the receiving user) will temporarily link the devices. Once devices are linked UGC can be exchanged via a secure peer-to-peer [WebRTC](webrtc.org) connection.
 
 | Action | Description | Icon |
 | ----- | -------- | ----------- |
 | Save Changes | Saves your changes | ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/database-24.svg "Save Button") |
 | Import from File | Import Datasets or settings from file system| ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/file-binary-24.svg "File Button") |
-| Import from Sync | Import shared Datasets from Peer (need: share ID and Key)| ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Import Button") |
 | Export to File | Backup your Datasets and settings to the file system | ![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/file-zip-24.svg "Export Button")|
-| Export to Sync | Export and share Datasets with Peer (provide the recipiant the share ID and Key) |![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/cloud-24.svg "Export Button") |
+| Connection | Share UGC with a peer (Import/Export) |![Image](https://raw.githubusercontent.com/primer/octicons/main/icons/arrow-switch-24.svg "Connect Button") |
 
 </details>
 

@@ -12,7 +12,8 @@ import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
-import { jtox, sheetDataToJSON } from "../../helper/jsonHelper";
+import { WebRTCProvider } from "../../context/webRTC";
+import { sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getActiveSheet,
   getWorkbookFromIndexDB,
@@ -40,9 +41,11 @@ import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch, AppSettingState, RootState } from "../../slices";
 import { appSettingsInitialized } from "../../slices/globalSlice";
 import { DataSetActionMenu } from "../Form/DataSetActionMenu";
-import { DataSetExportSync } from "../Form/DataSetExportSync";
+import { DataSetExport } from "../Form/DataSetExport";
+import { DataSetImport } from "../Form/DataSetImport";
 import { DataSetImportFile } from "../Form/DataSetImportFile";
-import { DataSetImportSync } from "../Form/DataSetImportSync";
+import { DataSetSharingActions } from "../Form/DataSetSharingActions";
+import { WRTCSignalingQR } from "../Form/WRTCSignalingQR";
 import "../../css/Sheet.css";
 
 const SheetMeta = {
@@ -207,7 +210,6 @@ export default function Sheet() {
       oldList,
       newList
     );
-    // TODO: use changedUID to remove or update? audio assets
 
     // store workbook in indexedDB
     // (keep ordering and notes)
@@ -377,7 +379,13 @@ export default function Sheet() {
   }, []);
 
   const [dataAction, setDataAction] = useState<
-    "menu" | "importSync" | "exportSync" | "importFile"
+    | "menu"
+    | "importSync"
+    | "exportSync"
+    | "importFile"
+    | "signaling"
+    | "import"
+    | "export"
   >();
   const closeDataAction = useCallback(() => {
     setDataAction(undefined);
@@ -388,11 +396,8 @@ export default function Sheet() {
   const openImportFileCB = useCallback(() => {
     setDataAction("importFile");
   }, []);
-  const openImportSyncCB = useCallback(() => {
-    setDataAction("importSync");
-  }, []);
-  const openExportSyncCB = useCallback(() => {
-    setDataAction("exportSync");
+  const openSignalingCB = useCallback(() => {
+    setDataAction("signaling");
   }, []);
 
   /**
@@ -415,46 +420,50 @@ export default function Sheet() {
       }
 
       if (importWorkbook && importWorkbook.length > 0) {
-        const allSheetRequired = Object.keys(workbookSheetNames).map(k=>k as keyof typeof workbookSheetNames)
-        const workbookP = getWorkbookFromIndexDB(allSheetRequired).then((dbWorkbook) => {
-          const trimmed = Object.values(workbookSheetNames).map((w) => {
-            const { prettyName: prettyName } = w;
+        const allSheetRequired = Object.keys(workbookSheetNames).map(
+          (k) => k as keyof typeof workbookSheetNames
+        );
+        const workbookP = getWorkbookFromIndexDB(allSheetRequired).then(
+          (dbWorkbook) => {
+            const trimmed = Object.values(workbookSheetNames).map((w) => {
+              const { prettyName: prettyName } = w;
 
-            const fileSheet = importWorkbook.find(
-              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-            );
-            if (fileSheet) {
-              return removeLastRowIfBlank(fileSheet);
-            }
+              const fileSheet = importWorkbook.find(
+                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+              );
+              if (fileSheet) {
+                return removeLastRowIfBlank(fileSheet);
+              }
 
-            // dbWorkbook guarantees to contain sheet
-            const dbSheetIdx = dbWorkbook.findIndex(
-              (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-            );
-            // keep existing or blank placeholder
-            return dbWorkbook[dbSheetIdx];
-          });
-
-          // store workbook in indexedDB
-          // update cached json objects
-          return openIDB()
-            .then((db) =>
-              putIDBItem(
-                { db, store: IDBStores.WORKBOOK },
-                { key: "0", workbook: trimmed }
-              )
-            )
-            .then(() => {
-              // reload workbook (update useEffect)
-              setWorkbookImported(Date.now());
-
-              trimmed.forEach((sheet) => {
-                updateStateAfterWorkbookEdit(dispatch, sheet.name);
-              });
-
-              return;
+              // dbWorkbook guarantees to contain sheet
+              const dbSheetIdx = dbWorkbook.findIndex(
+                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+              );
+              // keep existing or blank placeholder
+              return dbWorkbook[dbSheetIdx];
             });
-        });
+
+            // store workbook in indexedDB
+            // update cached json objects
+            return openIDB()
+              .then((db) =>
+                putIDBItem(
+                  { db, store: IDBStores.WORKBOOK },
+                  { key: "0", workbook: trimmed }
+                )
+              )
+              .then(() => {
+                // reload workbook (update useEffect)
+                setWorkbookImported(Date.now());
+
+                trimmed.forEach((sheet) => {
+                  updateStateAfterWorkbookEdit(dispatch, sheet.name);
+                });
+
+                return;
+              });
+          }
+        );
 
         importCompleteP = [...importCompleteP, workbookP];
       }
@@ -472,25 +481,30 @@ export default function Sheet() {
           close={closeDataAction}
           saveChanges={saveSheetHandlerCB}
           importFromFile={openImportFileCB}
-          importFromSync={openImportSyncCB}
           exportToFile={exportAppDataToFileHandlerCB}
-          exportToSync={openExportSyncCB}
+          signaling={openSignalingCB}
         />
         <DataSetImportFile
           visible={dataAction === "importFile"}
           close={closeDataAction}
           updateDataHandler={importDataHandlerCB}
         />
-        <DataSetExportSync
-          visible={dataAction === "exportSync"}
-          close={closeDataAction}
-        />
-        <DataSetImportSync
-          visible={dataAction === "importSync"}
-          close={closeDataAction}
-          downloadFileHandler={downloadFileHandlerCB}
-          updateDataHandler={importDataHandlerCB}
-        />
+
+        {dataAction === "signaling" && (
+          <WebRTCProvider>
+            {/* <WRTCSignalingText close={closeDataAction} /> */}
+            <WRTCSignalingQR close={closeDataAction} />
+            <DataSetSharingActions>
+              <DataSetExport action="export" close={closeDataAction} />
+              <DataSetImport
+                action="import"
+                close={closeDataAction}
+                downloadFileHandler={downloadFileHandlerCB}
+                updateDataHandler={importDataHandlerCB}
+              />
+            </DataSetSharingActions>
+          </WebRTCProvider>
+        )}
 
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
@@ -507,21 +521,6 @@ export default function Sheet() {
               <GearIcon size="small" />
             </Fab>
           </div>
-          {/* {externalSource === ExternalSourceType.LocalService &&
-            !probablyMobile && (
-              <div className="pt-1 pe-1">
-                <Fab
-                  aria-label="Push to subscribers"
-                  variant="extended"
-                  size="small"
-                  onClick={pushSheetCB}
-                  className="m-0 z-index-unset"
-                  tabIndex={4}
-                >
-                  <RssIcon size="small" />
-                </Fab>
-              </div>
-            )} */}
           <div className="d-flex">
             <div>
               <form

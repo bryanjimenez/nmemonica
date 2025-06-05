@@ -1,6 +1,7 @@
 import { Button, Dialog, DialogContent } from "@mui/material";
 import {
   ArrowDownLeftIcon,
+  ArrowSwitchIcon,
   ArrowUpRightIcon,
   CloudIcon,
   DatabaseIcon,
@@ -15,9 +16,8 @@ interface DataSetActionMenuProps {
   close: () => void;
   saveChanges: () => void;
   importFromFile: () => void;
-  importFromSync: () => void;
   exportToFile: () => void;
-  exportToSync: () => void;
+  signaling: ()=> void;
 }
 
 export function DataSetActionMenu(props: DataSetActionMenuProps) {
@@ -26,9 +26,8 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
     close,
     saveChanges,
     importFromFile,
-    importFromSync,
     exportToFile,
-    exportToSync,
+    signaling,
   } = props;
 
   const saveChangesCB = useCallback(() => {
@@ -40,18 +39,14 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
     importFromFile();
   }, [importFromFile]);
 
-  const importFromSyncCB = useCallback(() => {
-    importFromSync();
-  }, [importFromSync]);
-
   const exportToFileCB = useCallback(() => {
     exportToFile();
     close();
   }, [close, exportToFile]);
 
-  const exportToSyncCB = useCallback(() => {
-    exportToSync();
-  }, [exportToSync]);
+  const signalingCB = useCallback(() => {
+    signaling();
+  }, [signaling]);
 
   return (
     <Dialog
@@ -77,24 +72,17 @@ export function DataSetActionMenu(props: DataSetActionMenuProps) {
               ),
             },
             {
-              name: "Import from Sync",
-              handler: importFromSyncCB,
-              icon0: (p: Record<string, string>) => <CloudIcon {...p} />,
-              icon1: (p: Record<string, string>) => (
-                <ArrowDownLeftIcon {...p} />
-              ),
-            },
-            {
               name: "Export to file",
               handler: exportToFileCB,
               icon0: (p: Record<string, string>) => <FileZipIcon {...p} />,
               icon1: (p: Record<string, string>) => <ArrowUpRightIcon {...p} />,
             },
             {
-              name: "Export to Sync",
-              handler: exportToSyncCB,
-              icon0: (p: Record<string, string>) => <CloudIcon {...p} />,
-              icon1: (p: Record<string, string>) => <ArrowUpRightIcon {...p} />,
+              name: "Connection",
+              handler: signalingCB,
+              icon0: (p: Record<string, string>) => <ArrowSwitchIcon {...p} />,
+              icon1: ()=>null,
+              // icon1: (p: Record<string, string>) => <ArrowUpRightIcon {...p} />,
             },
           ].map((el) => {
             const primaryIcoProps = {
