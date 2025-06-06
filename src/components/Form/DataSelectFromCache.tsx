@@ -1,3 +1,5 @@
+import { faCircleNotch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   DatabaseIcon,
   DiamondIcon,
@@ -5,38 +7,62 @@ import {
   XIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { TransferObject } from "./DataSetFromDragDrop";
-import { getUserSettings } from "../../helper/userSettingsHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
+import {
+  type SyncDataFile,
+  dataTransferAggregator,
+} from "../../helper/transferHelper";
 
-interface DataSetFromAppCacheProps {
-  data: TransferObject[];
+interface DataSelectFromCacheProps {
+  data: SyncDataFile[];
   updateDataHandler: (names: string) => void;
 }
 
-export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
+export function DataSelectFromCache(props: DataSelectFromCacheProps) {
   const { updateDataHandler, data } = props;
 
-  const [hasUsrSettings, setUserSettings] = useState(false);
+  const [available, setAvailable] = useState<string[]>([]);
+  const [rows, setRows] = useState<Partial<Record<string, string>>>({});
+
+  const dataLen = useRef(data.length);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void getUserSettings().then((ls) => {
-      setUserSettings(ls instanceof Object);
-    });
+    // TODO: compare what is in data vs what needs estimates
+    if (dataLen.current > 0) {
+      setLoading(false);
+      return;
+    }
+
+    void dataTransferAggregator()
+      .then((files) => {
+        files.forEach((fileItem) => {
+          const dot = fileItem.fileName.indexOf(".");
+          const name = fileItem.fileName
+            .slice(0, dot > -1 ? dot : undefined)
+            .toLowerCase();
+
+          setRows((prev) => ({ ...prev, [name]: fileItem.size }));
+          setAvailable((prev) => [...prev.filter((p) => p !== name), name]);
+        });
+      })
+      .then(() => setLoading(false));
   }, []);
 
   const addRemoveItemCB = useCallback(
-    (name: string, prettyName: string) => () => {
+    (prettyName: string) => () => {
+      const name = prettyName.toLowerCase();
       if (
-        name !== metaDataNames.settings.prettyName.toLowerCase() ||
-        hasUsrSettings
+        (name !== metaDataNames.progress.prettyName.toLowerCase() &&
+          name !== metaDataNames.settings.prettyName.toLowerCase()) ||
+        available.includes(name)
       ) {
         updateDataHandler(prettyName);
       }
     },
-    [updateDataHandler, hasUsrSettings]
+    [updateDataHandler, available]
   );
 
   const items = useMemo(
@@ -64,7 +90,8 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
             <div>
               <div className="row">
                 <span className="col px-1">
-                  {dataItem?.sheet ? dataItem.sheet.rows.len : ""}
+                  {dataItem?.origin === "AppCache" &&
+                    rows[dataItem.name.toLowerCase()]}
                 </span>
                 <div className="col px-1">
                   {dataItem?.origin === "AppCache" && <DatabaseIcon />}
@@ -73,7 +100,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
 
                 <div
                   className="col px-1 clickable"
-                  onClick={addRemoveItemCB(name, prettyName)}
+                  onClick={addRemoveItemCB(prettyName)}
                 >
                   {dataItem ? (
                     <XIcon />
@@ -81,10 +108,7 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
                     <DiamondIcon
                       className={classNames({
                         "rotate-45 px-0": true,
-                        "disabled opacity-25":
-                          name ===
-                            metaDataNames.settings.prettyName.toLowerCase() &&
-                          !hasUsrSettings,
+                        "disabled opacity-25": !available.includes(name),
                       })}
                     />
                   )}
@@ -94,11 +118,21 @@ export function DataSetFromAppCache(props: DataSetFromAppCacheProps) {
           </div>
         );
       }),
-    [data, hasUsrSettings, addRemoveItemCB]
+    [data, available, rows, addRemoveItemCB]
   );
 
   return (
     <div className="text-center m-0 mb-1">
+      {loading && (
+        <FontAwesomeIcon
+          className="position-absolute top-50 end-50 opacity-50"
+          aria-labelledby="processing"
+          icon={faCircleNotch}
+          spin={true}
+          size="2x"
+        />
+      )}
+
       <div
         className={classNames({
           "d-flex flex-column border rounded px-3": true,

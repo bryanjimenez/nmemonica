@@ -1,5 +1,6 @@
+import "jsdom-global/register"
 import { expect } from "chai";
-import sinon, { stub } from "sinon";
+import sinon from "sinon";
 import {
   getLocalStorageUserSettings,
   setLocalStorageUserSettings,
@@ -19,19 +20,18 @@ type DescribableFn = {
 };
 describe("localStorage", function () {
   let myStub;
-  const userSettingsKey = "doesntmatter";
 
   const lsMock: DescribableFn = function mockLS() {
     if (typeof mockLS.data === "undefined") {
-      mockLS.data = { userSettings: null };
+      mockLS.data = { };
     }
 
     return {
       localStorage: {
         setItem: (key, val) => {
-          mockLS.data.userSettings = val;
+          mockLS.data[key] = val;
         },
-        getItem: (key) => mockLS.data.userSettings,
+        getItem: (key) => mockLS.data[key],
       },
     };
   };
@@ -47,11 +47,11 @@ describe("localStorage", function () {
 
   describe("setLocalStorageUserSettings", function () {
     it("setLocalStorageUserSettings", function () {
-      const expected = { a: 1, b: 2 };
-      setLocalStorageUserSettings(userSettingsKey, expected);
+      const expected = { global: {darkMode: true, swipeThreshold: 1} };
+      setLocalStorageUserSettings(expected);
       // setLocalStorageUserSettings does not return value
-      const r = getLocalStorageUserSettings(userSettingsKey);
-      expect(r).to.deep.eq({ a: 1, b: 2 });
+      const r = getLocalStorageUserSettings();
+      expect(r).to.deep.eq(expected);
     });
 
     it("setLocalStorageUserSettings (unsupported)", function () {
@@ -59,7 +59,7 @@ describe("localStorage", function () {
       // myStub.restore()
       // myStub = sinon.stub(theModule, "getWindow").callsFake(()=>({}));
 
-      // return setLocalStorageUserSettings(userSettingsKey, 'someValue').catch((e) => {
+      // return setLocalStorageUserSettings(, 'someValue').catch((e) => {
       //   expect(e)
       //     .be.an("error")
       //     .with.property("message", "Cannot read properties of undefined (reading 'setItem')");
@@ -70,19 +70,20 @@ describe("localStorage", function () {
 
   describe("getLocalStorageUserSettings", function () {
     it("valid data", function () {
-      const expected = { a: 1, b: 2 };
+      const expected = { global: {darkMode: true, swipeThreshold: 1} };
+
 
       // preload with expected value
-      lsMock().localStorage.setItem(userSettingsKey, JSON.stringify(expected));
+      lsMock().localStorage.setItem("global",JSON.stringify(expected.global));
 
-      const r = getLocalStorageUserSettings(userSettingsKey);
+      const r = getLocalStorageUserSettings();
       expect(r).to.deep.eq(expected);
     });
 
     it("empty localStorage value", function () {
-      const expected = null;
+      const expected = {};
 
-      const r = getLocalStorageUserSettings(userSettingsKey);
+      const r = getLocalStorageUserSettings();
       expect(r).to.deep.eq(expected);
     });
   });

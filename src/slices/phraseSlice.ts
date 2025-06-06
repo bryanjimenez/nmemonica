@@ -37,21 +37,25 @@ import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
   userSettingAttrUpdate,
+  userStudyProgressAttrUpdate,
 } from "../helper/userSettingsHelper";
+import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 
+const SLICE_NAME = "phrases";
 export interface PhraseInitSlice {
   value: RawPhrase[];
   version: string;
   grpObj: GroupListMap;
 
+  metadata: Record<string, MetaDataObj | undefined>;
+  metadataID: number;
+
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
     englishSideUp: boolean;
-    repTID: number;
-    repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
     filter: ValuesOf<typeof TermFilterBy>;
@@ -68,11 +72,12 @@ export const phraseInitState: PhraseInitSlice = {
   version: "",
   grpObj: {},
 
+  metadata: {},
+  metadataID: -1,
+
   setting: {
     ordered: 0,
     englishSideUp: false,
-    repTID: -1,
-    repetition: {},
     spaRepMaxReviewItem: undefined,
     activeGroup: [],
     filter: 0,
@@ -150,10 +155,9 @@ export function buildPhraseArray<T extends SourcePhrase>(
  * Fetch phrases
  */
 export const getPhrase = createAsyncThunk(
-  "phrase/getPhrase",
+  `${SLICE_NAME}/getPhrase`,
   async (_arg, thunkAPI) => {
-    // TODO: rename state.phrases -> state.phrase
-    return getSheetFromIndexDB("phrases").then((sheet) => {
+    return getSheetFromIndexDB(SLICE_NAME).then((sheet) => {
       const { data: jsonValue, hash: version } = sheetDataToJSON(sheet) as {
         data: Record<string, SourcePhrase>;
         hash: string;
@@ -172,8 +176,20 @@ export const getPhrase = createAsyncThunk(
   }
 );
 
+/**
+ * Pull Phrase metadata from indexedDB
+ */
+export const getPhraseMeta = createAsyncThunk(
+  `${SLICE_NAME}/getPhraseMeta`,
+  async () => {
+    return getIndexDBStudyProgress(SLICE_NAME).then((data) => {
+      return data ?? {};
+    });
+  }
+);
+
 export const phraseSettingsFromAppStorage = createAsyncThunk(
-  "phrase/phraseSettingsFromAppStorage",
+  `${SLICE_NAME}/phraseSettingsFromAppStorage`,
   (arg: typeof phraseInitState.setting) => {
     const initValues = arg;
 
@@ -181,55 +197,8 @@ export const phraseSettingsFromAppStorage = createAsyncThunk(
   }
 );
 
-export const deleteMetaPhrase = createAsyncThunk(
-  "phrase/deleteMetaPhrase",
-  (uidList: string[], thunkAPI) => {
-    const state = (thunkAPI.getState() as RootState).phrases;
-    const spaceRep = state.setting.repetition;
-
-    return deleteMetadata(uidList, spaceRep);
-  }
-);
-
-export const updateSpaceRepPhrase = createAsyncThunk(
-  "phrase/updateSpaceRepPhrase",
-  (arg: { uid: string; shouldIncrement: boolean }, thunkAPI) => {
-    const { uid, shouldIncrement } = arg;
-    const state = (thunkAPI.getState() as RootState).phrases;
-
-    const spaceRep = state.setting.repetition;
-
-    return updateSpaceRepTerm(uid, spaceRep, {
-      count: shouldIncrement,
-      date: true,
-    });
-  }
-);
-
-export const removeFromSpaceRepetition = createAsyncThunk(
-  "phrase/removeFromSpaceRepetition",
-  (arg: { uid: string }, thunkAPI) => {
-    const { uid } = arg;
-    const state = (thunkAPI.getState() as RootState).phrases;
-
-    const spaceRep = state.setting.repetition;
-    return removeAction(uid, spaceRep);
-  }
-);
-
-export const setSpaceRepetitionMetadata = createAsyncThunk(
-  "phrase/setSpaceRepetitionMetadata",
-  (arg: { uid: string }, thunkAPI) => {
-    const { uid } = arg;
-    const state = (thunkAPI.getState() as RootState).phrases;
-
-    const spaceRep = state.setting.repetition;
-    return updateAction(uid, spaceRep);
-  }
-);
-
 export const togglePhraseTag = createAsyncThunk(
-  "phrase/togglePhraseTag",
+  `${SLICE_NAME}/togglePhraseTag`,
   (arg: { query: string; tag: string }, _thunkAPI) => {
     const { query, tag } = arg;
     // const dispatch = thunkAPI.dispatch as AppDispatch;
@@ -271,7 +240,7 @@ export const togglePhraseTag = createAsyncThunk(
 );
 
 export const getPhraseTags = createAsyncThunk(
-  "phrase/getPhraseTags",
+  `${SLICE_NAME}/getPhraseTags`,
   (arg: { query: string }, thunkAPI) => {
     const { query } = arg;
     const sheetName = workbookSheetNames.phrases.prettyName;
@@ -298,9 +267,9 @@ export const getPhraseTags = createAsyncThunk(
 );
 
 export const flipPhrasesPracticeSide = createAsyncThunk(
-  "phrase/flipPhrasesPracticeSide",
+  `${SLICE_NAME}/flipPhrasesPracticeSide`,
   (arg: { query: string }, thunkAPI) => {
-    const state = (thunkAPI.getState() as RootState).phrases;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
     return userSettingAttrUpdate(
       { phrases: state.setting },
@@ -310,8 +279,124 @@ export const flipPhrasesPracticeSide = createAsyncThunk(
   }
 );
 
+export const setPhraseAccuracy = createAsyncThunk(
+  `${SLICE_NAME}/setPhraseAccuracy`,
+  ({ uid, accuracy }: { uid: string; accuracy: number | null }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        set: { accuracyP: accuracy },
+      }
+    );
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
+  }
+);
+
+export const setPhraseDifficulty = createAsyncThunk(
+  `${SLICE_NAME}/setPhraseDifficulty`,
+  (
+    { uid, difficulty }: { uid: string; difficulty: number | null },
+    thunkAPI
+  ) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        set: { difficultyP: difficulty },
+      }
+    );
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
+  }
+);
+
+export const updateSpaceRepPhrase = createAsyncThunk(
+  `${SLICE_NAME}/updateSpaceRepPhrase`,
+  (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const spaceRep = state.metadata;
+
+    const value = updateSpaceRepTerm(uid, spaceRep, {
+      count: shouldIncrement,
+      date: true,
+    });
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, value.record).then(
+      () => value
+    );
+  }
+);
+
+export const setSpaceRepetitionMetadata = createAsyncThunk(
+  `${SLICE_NAME}/setSpaceRepetitionMetadata`,
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const spaceRep = state.metadata;
+    const value = updateAction(uid, spaceRep);
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, value.newValue).then(
+      () => value
+    );
+  }
+);
+
+export const removeFromSpaceRepetition = createAsyncThunk(
+  `${SLICE_NAME}/removeFromSpaceRepetition`,
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const spaceRep = state.metadata;
+    const newValue = removeAction(uid, spaceRep);
+
+    if (newValue) {
+      return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+        () => newValue
+      );
+    } else {
+      return Promise.resolve(newValue);
+    }
+  }
+);
+
+export const batchRepetitionUpdate = createAsyncThunk(
+  `${SLICE_NAME}/batchRepetitionUpdate`,
+  (payload: Record<string, MetaDataObj | undefined>, _thunkAPI) =>
+    userStudyProgressAttrUpdate(SLICE_NAME, payload).then(() => payload)
+);
+
+export const deleteMetaPhrase = createAsyncThunk(
+  `${SLICE_NAME}/deleteMetaPhrase`,
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+    const spaceRep = state.metadata;
+
+    const newValue = deleteMetadata(uidList, spaceRep);
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue.record).then(
+      () => newValue
+    );
+  }
+);
+
 const phraseSlice = createSlice({
-  name: "phrase",
+  name: SLICE_NAME,
   initialState: phraseInitState,
   reducers: {
     clearPhrases(state) {
@@ -351,44 +436,6 @@ const phraseSlice = createSlice({
       state.setting.difficultyThreshold = threshold;
     },
 
-    setPhraseDifficulty: {
-      reducer: (
-        state: PhraseInitSlice,
-        action: { payload: { uid: string; value: number | null } }
-      ) => {
-        const { uid, value } = action.payload;
-
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          state.setting.repetition,
-          { count: false, date: false },
-          {
-            set: { difficultyP: value },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          { phrases: state.setting },
-          "/phrases/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      },
-      prepare: (uid: string, value: number | null) => ({
-        payload: { uid, value },
-      }),
-    },
-    batchRepetitionUpdate(
-      state,
-      action: { payload: Record<string, MetaDataObj | undefined> }
-    ) {
-      void userSettingAttrUpdate({}, "/phrases/", "repetition", action.payload);
-
-      state.setting.repetition = action.payload;
-    },
     /**
      * Space Repetition maximum item review
      * per session
@@ -411,37 +458,6 @@ const phraseSlice = createSlice({
         state.setting.spaRepMaxReviewItem = maxItems;
       }
     },
-    setPhraseAccuracy: {
-      reducer: (
-        state: PhraseInitSlice,
-        action: { payload: { uid: string; value: number | null } }
-      ) => {
-        const { uid, value } = action.payload;
-
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          state.setting.repetition,
-          { count: false, date: false },
-          {
-            set: { accuracyP: value },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          { phrases: state.setting },
-          "/phrases/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      },
-      prepare: (uid: string, value: number | null) => ({
-        payload: { uid, value },
-      }),
-    },
-
     togglePhrasesOrdering(
       state,
       action: PayloadAction<ValuesOf<typeof TermSortBy>>
@@ -518,6 +534,12 @@ const phraseSlice = createSlice({
       state.value = values;
       state.version = version;
     });
+    builder.addCase(getPhraseMeta.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
 
     builder.addCase(phraseSettingsFromAppStorage.fulfilled, (state, action) => {
       const storedValue = action.payload;
@@ -528,64 +550,54 @@ const phraseSlice = createSlice({
         setting: { ...mergedSettings, repTID: Date.now() },
       };
     });
+
+    builder.addCase(flipPhrasesPracticeSide.fulfilled, (state) => {
+      state.setting.englishSideUp = !state.setting.englishSideUp;
+    });
+
+    builder.addCase(setPhraseAccuracy.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
+    builder.addCase(setPhraseDifficulty.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
     builder.addCase(updateSpaceRepPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        void userSettingAttrUpdate(
-          { phrases: state.setting },
-          "/phrases/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
+        state.metadataID = Date.now();
+        state.metadata = newValue;
       }
     });
+    builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
+      const newValue = action.payload;
 
+      // state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
     builder.addCase(deleteMetaPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
-    });
-
-    builder.addCase(flipPhrasesPracticeSide.fulfilled, (state) => {
-      state.setting.englishSideUp = !state.setting.englishSideUp;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
   },
 });
@@ -595,13 +607,10 @@ export const {
   togglePhraseActiveGrp,
   toggleIncludeNew,
   toggleIncludeReviewed,
-  setPhraseDifficulty,
-  setPhraseAccuracy,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
   setGoal,
 
   togglePhrasesOrdering,
-  batchRepetitionUpdate,
 } = phraseSlice.actions;
 export default phraseSlice.reducer;

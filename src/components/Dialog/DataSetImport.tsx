@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Dialog,
   DialogContent,
@@ -21,17 +20,21 @@ import {
   useState,
 } from "react";
 
+import { Warnings } from "./DialogMsg";
 import { WebRTCContext } from "../../context/webRTC";
+import { toMemorySize } from "../../helper/consoleHelper";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
-import { CSVErrorCause } from "../../helper/csvHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
-  SharingMessageErrorCause,
   type SyncDataFile,
+  parseSettingsAndProgress,
+  parseSheet,
+} from "../../helper/transferHelper";
+import {
+  SharingMessageErrorCause,
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
-import { AppSettingState } from "../../slices";
-import { readCsvToSheet, readJsonSettings } from "../../slices/sheetSlice";
+import { type AppProgressState, type AppSettingState } from "../../slices";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
@@ -43,12 +46,11 @@ export interface CryptoMessage {
 
 interface DataSetImportProps extends DataSetSharingAction {
   close: () => void;
-  downloadFileHandler: (
-    files: { fileName: string; text: string }[]
-  ) => Promise<void>;
-  updateDataHandler: (
-    importWorkbook?: FilledSheetData[],
-    importSettings?: Partial<AppSettingState>
+  downloadHandler: (files: SyncDataFile[]) => Promise<void>;
+  importHandler: (
+    workbook?: FilledSheetData[],
+    settings?: Partial<AppSettingState>,
+    progress?: Partial<AppProgressState>
   ) => Promise<void>;
 }
 
@@ -64,7 +66,7 @@ function errorHandler(ev: RTCErrorEvent) {
 }
 
 export function DataSetImport(props: DataSetImportProps) {
-  const { close, updateDataHandler, downloadFileHandler } = props;
+  const { close, importHandler, downloadHandler } = props;
 
   const { peer, rtcChannel, direction, closeWebRTC } =
     useContext(WebRTCContext);
@@ -98,10 +100,9 @@ export function DataSetImport(props: DataSetImportProps) {
   const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
     setWarning([]);
-    close();
     setMsgBuffer(null);
-
     closeWebRTC();
+    close();
   }, [close, closeWebRTC]);
 
   const [msgBuffer, setMsgBuffer] = useState<ArrayBuffer | null>(null);
@@ -145,68 +146,28 @@ export function DataSetImport(props: DataSetImportProps) {
   );
 
   const saveToFileHandlerWStatus = useCallback(
-    (
-      files: {
-        fileName: string;
-        text: string;
-      }[]
-    ) =>
-      downloadFileHandler(files).then(() => {
+    (files: SyncDataFile[]) =>
+      downloadHandler(files).then(() => {
         setStatus("successStatus");
         setTimeout(closeHandlerCB, 1000);
       }),
-    [downloadFileHandler, setStatus, closeHandlerCB]
+    [downloadHandler, setStatus, closeHandlerCB]
   );
 
   const importToAppHandlerCB = useCallback(
     (
       dataObj: FilledSheetData[],
-      settings: Partial<AppSettingState> | undefined
+      settings?: Partial<AppSettingState>,
+      progress?: Partial<AppProgressState>
     ) => {
-      const d = dataObj.length === 0 ? undefined : dataObj;
+      const workbook = dataObj.length === 0 ? undefined : dataObj;
 
-      return updateDataHandler(d, settings).then(() => {
+      return importHandler(workbook, settings, progress).then(() => {
         setStatus("successStatus");
         setTimeout(closeHandlerCB, 1000);
       });
     },
-    [updateDataHandler, setStatus, closeHandlerCB]
-  );
-
-  const toDataSetAndSettingsCB = useCallback(
-    (fileObj: SyncDataFile[]) => {
-      return fileObj.reduce(
-        (acc, o) => {
-          if (o.fileName.toLowerCase().endsWith(".csv")) {
-            const dot = o.fileName.indexOf(".");
-            const sheetName = properCase(
-              o.fileName.slice(0, dot > -1 ? dot : undefined)
-            );
-
-            const csvFile = readCsvToSheet(o.text, sheetName);
-
-            return { ...acc, data: [...(acc.data ?? []), csvFile] };
-          } else {
-            let s = readJsonSettings(o.text);
-            if (!(s instanceof Error)) {
-              return { ...acc, settings: s };
-            }
-
-            setStatus("dataError");
-            addWarning(
-              SharingMessageErrorCause.BadPayload,
-              "Failed to parse Settings"
-            );
-          }
-          return acc;
-        },
-        { data: [] } as {
-          data: Promise<FilledSheetData>[];
-          settings?: Partial<AppSettingState>;
-        }
-      );
-    },
-    [setStatus, addWarning]
+    [importHandler, setStatus, closeHandlerCB]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -273,53 +234,41 @@ export function DataSetImport(props: DataSetImportProps) {
 
     // const fileObj = decryptMsgIntoDecryptedFilesCB(TEMP_FAKE_KEY, msgBuf);
     const fileObj = parseMsgIntoPlainFilesCB(msgBuf);
-    const { data: dataP, settings } = toDataSetAndSettingsCB(fileObj);
 
-    Promise.all(dataP)
-      .then((dataObj) => {
-        if (destination === "save") {
-          return saveToFileHandlerWStatus(fileObj);
-        }
+    if (destination === "save") {
+      void saveToFileHandlerWStatus(fileObj);
+      return;
+    }
 
-        return importToAppHandlerCB(dataObj, settings);
-      })
-      .catch((exception) => {
-        let key: string = SharingMessageErrorCause.BadPayload;
-        let msg = "Failed to parse DataSet";
+    const { settings, progress, errors } = parseSettingsAndProgress(fileObj);
 
-        if (exception instanceof Error && "cause" in exception) {
-          const errData = exception.cause as {
-            code: CSVErrorCause;
-            details: Set<string>;
-            sheetName: string;
-          };
+    errors.forEach((error) => {
+      const { key, msg } = error.cause;
+      setStatus("dataError");
+      addWarning(key, msg);
+    });
 
-          if (errData.code === CSVErrorCause.BadFileContent) {
-            // failed csv character sanitize
-            let details: string[] = [];
-            errData.details.forEach((d) => {
-              const { u } = JSON.parse(d) as { u: string };
-              details = [...details, "u" + u];
-            });
-
-            key = `${errData.sheetName}-sanitize`;
-            msg = `${errData.sheetName}.csv contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
-          } else if (errData.code === CSVErrorCause.MissingRequiredHeader) {
-            // missing required header
-            key = `${errData.sheetName}-header`;
-            msg = `${exception.message}`;
+    void parseSheet(fileObj)
+      .then((sheetPromiseArr) =>
+        sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
+          if (r.status !== "fulfilled") {
+            return acc;
           }
-        }
 
-        setStatus("dataError");
-        addWarning(key, msg);
-      });
+          if (r.value instanceof Error) {
+            return acc;
+          }
+
+          const { sheet } = r.value;
+          return [...acc, sheet];
+        }, [])
+      )
+      .then((workbook) => importToAppHandlerCB(workbook, settings, progress));
   }, [
     destination,
     saveToFileHandlerWStatus,
     setStatus,
     addWarning,
-    toDataSetAndSettingsCB,
     parseMsgIntoPlainFilesCB,
     importToAppHandlerCB,
     msgBuffer,
@@ -376,20 +325,9 @@ export function DataSetImport(props: DataSetImportProps) {
           </div>
 
           <FormControl className="mt-2 w-100">
-            {warning.length > 0 && (
-              <Alert severity="warning" className="py-0 mb-2">
-                <div className="p-0 d-flex flex-column">
-                  <ul className="mb-0">
-                    {warning.map((el) => (
-                      <li key={el.key}>{el}</li>
-                    ))}
-                  </ul>
-                </div>
-              </Alert>
-            )}
-
+            <Warnings fileWarning={warning} clearWarnings={setWarning} />
             {msgBuffer !== null && (
-              <div className="fw-bold mb-2">{`Data Received: ${msgBuffer.byteLength}`}</div>
+              <div className="fw-bold mb-2">{`Data Received: ~${toMemorySize(msgBuffer.byteLength)}`}</div>
             )}
 
             <Button
@@ -443,7 +381,7 @@ function parseFileObject(
           cause: { code: SharingMessageErrorCause.BadFileName },
         });
       }
-      if (!("text" in f) || typeof f.text !== "string") {
+      if (!("file" in f) || typeof f.file !== "string") {
         throw new Error("Unexpected file content", {
           cause: { code: SharingMessageErrorCause.BadFileContent },
         });

@@ -6,7 +6,7 @@ export const appDBVersion = 1;
 
 export const IDBStores = Object.freeze({
   MEDIA: "media",
-  STATE: "state",
+  PROGRESS: "progress",
   SETTINGS: "settings",
   WORKBOOK: "workbook",
 });
@@ -17,7 +17,7 @@ export const IDBErrorCause = Object.freeze({
 
 interface StoreMap {
   [IDBStores.MEDIA]: MediaEntry;
-  [IDBStores.STATE]: StateEntry;
+  [IDBStores.PROGRESS]: ProgressEntry;
   [IDBStores.SETTINGS]: SettingsEntry;
   [IDBStores.WORKBOOK]: WorkbookEntry;
 }
@@ -27,7 +27,7 @@ interface MediaEntry {
   blob: Blob;
 }
 
-interface StateEntry {
+interface ProgressEntry {
   key: string;
   value: unknown;
 }
@@ -82,7 +82,7 @@ export function openIDB({
               };
             });
 
-            const stateStore = db.createObjectStore(IDBStores.STATE, {
+            const stateStore = db.createObjectStore(IDBStores.PROGRESS, {
               keyPath: "key",
             });
 

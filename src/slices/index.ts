@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import type { MetaDataObj } from "nmemonica";
 
 import globalReducer, { type GlobalInitSlice } from "./globalSlice";
 import kanaReducer, { type KanaInitSlice } from "./kanaSlice";
@@ -47,24 +48,45 @@ export interface AppSettingState {
   particle: ParticleInitSlice["setting"];
 }
 
+export interface AppProgressState {
+  vocabulary: Record<string, MetaDataObj>;
+  phrases: Record<string, MetaDataObj>;
+  kanji: Record<string, MetaDataObj>;
+}
+
+export const settingsKeys = [
+  "global",
+  "vocabulary",
+  "phrases",
+  "kanji",
+  "kana",
+  "opposite",
+  "particle",
+] as const;
+
 /**
  * Validator for AppSettingState Object
  */
 export function isValidAppSettingsState(
   settingObj: object
 ): settingObj is Partial<AppSettingState> {
-  return Object.keys(settingObj).every((key) =>
-    [
-      "global",
-      "vocabulary",
-      "phrases",
-      "kanji",
-      "kana",
-      "opposites",
-      "particle",
+  // TODO: require deeper checks
 
-      "lastModified",
-    ].includes(key)
+  return Object.keys(settingObj).every((key) =>
+    // @ts-expect-error key is string settingsKeys is const
+    settingsKeys.includes(key)
+  );
+}
+
+/**
+ * Validator for AppProgressState Object
+ */
+export function isValidStudyProgress(
+  studyProgressObj: object
+): studyProgressObj is Partial<AppProgressState> {
+  // TODO: require deeper checks
+  return Object.keys(studyProgressObj).every((key) =>
+    ["vocabulary", "phrases", "kanji"].includes(key)
   );
 }
 

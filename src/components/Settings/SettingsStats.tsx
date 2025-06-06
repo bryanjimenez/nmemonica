@@ -12,10 +12,19 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { AppDispatch } from "../../slices";
-import { getKanji, setGoal as setKanjiGoal } from "../../slices/kanjiSlice";
-import { getPhrase, setGoal as setPhraseGoal } from "../../slices/phraseSlice";
+import {
+  getKanji,
+  getKanjiMeta,
+  setGoal as setKanjiGoal,
+} from "../../slices/kanjiSlice";
+import {
+  getPhrase,
+  getPhraseMeta,
+  setGoal as setPhraseGoal,
+} from "../../slices/phraseSlice";
 import {
   getVocabulary,
+  getVocabularyMeta,
   setGoal as setVocabularyGoal,
 } from "../../slices/vocabularySlice";
 import PlusMinus from "../Input/PlusMinus";
@@ -40,17 +49,23 @@ export default function SettingsStats() {
   } = useConnectKanji();
 
   const populateDataSetsRef = useRef(() => {
-    if (phraseList.length === 0) {
-      void dispatch(getPhrase());
-    }
+    void dispatch(getPhraseMeta()).then(() => {
+      if (phraseList.length === 0) {
+        void dispatch(getPhrase());
+      }
+    });
 
-    if (vocabList.length === 0) {
-      void dispatch(getVocabulary());
-    }
+    void dispatch(getVocabularyMeta()).then(() => {
+      if (vocabList.length === 0) {
+        void dispatch(getVocabulary());
+      }
+    });
 
-    if (kanjiList.length === 0) {
-      void dispatch(getKanji());
-    }
+    void dispatch(getKanjiMeta()).then(() => {
+      if (kanjiList.length === 0) {
+        void dispatch(getKanji());
+      }
+    });
   });
 
   const [loading, setLoading] = useState(false);

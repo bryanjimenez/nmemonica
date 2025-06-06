@@ -70,6 +70,7 @@ import {
   deleteMetaPhrase,
   flipPhrasesPracticeSide,
   getPhrase,
+  getPhraseMeta,
   getPhraseTags,
   removeFromSpaceRepetition,
   setPhraseAccuracy,
@@ -184,9 +185,11 @@ export default function Phrases() {
   }, []);
 
   const populateDataSetsRef = useRef(() => {
-    if (phraseList.length === 0) {
-      void dispatch(getPhrase());
-    }
+    void dispatch(getPhraseMeta()).then(() => {
+      if (phraseList.length === 0) {
+        void dispatch(getPhrase());
+      }
+    });
   });
 
   useEffect(() => {
@@ -802,7 +805,7 @@ export default function Phrases() {
                   difficulty={metadata.current[uid]?.difficultyP}
                   resetOn={uid}
                   onChange={(difficulty: number | null) => {
-                    dispatch(setPhraseDifficulty(uid, difficulty));
+                    void dispatch(setPhraseDifficulty({ uid, difficulty }));
                   }}
                 />
                 <AccuracySlider
@@ -810,7 +813,7 @@ export default function Phrases() {
                   resetOn={uid}
                   onChange={(accuracy: number | null) => {
                     if (accuracy !== undefined) {
-                      dispatch(setPhraseAccuracy(uid, accuracy));
+                      void dispatch(setPhraseAccuracy({ uid, accuracy }));
                       accuracyModifiedRef.current = accuracy;
                     }
                   }}

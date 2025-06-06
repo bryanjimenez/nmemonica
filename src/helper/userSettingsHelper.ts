@@ -1,13 +1,20 @@
+import type { MetaDataObj } from "nmemonica";
+
 import {
+  getIndexDBStudyProgress,
   getIndexDBUserSettings,
   indexDBUserSettingAttrDelete,
   indexDBUserSettingAttrUpdate,
+  indexDBUserStudyProgressAttrUpdate,
+  setIndexDBStudyProgress,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
-import { type AppSettingState } from "../slices";
-import { localStoreUserSettingAttrUpdate } from "./userSettingsLocalStorageHelper";
-
-export const localStorageKey = "userSettings";
+import { type AppProgressState, type AppSettingState } from "../slices";
+import { dataSetNames } from "./sheetHelper";
+import {
+  localStoreUserSettingAttrUpdate,
+  setLocalStorageUserSettings,
+} from "./userSettingsLocalStorageHelper";
 
 /**
  * Reads a value from storage
@@ -82,6 +89,13 @@ export function userSettingAttrUpdate<T>(
   return indexDBUserSettingAttrUpdate(state, path, attr, value);
 }
 
+export function userStudyProgressAttrUpdate(
+  path: (typeof dataSetNames)[number],
+  value: Record<string, MetaDataObj | undefined>
+) {
+  return indexDBUserStudyProgressAttrUpdate(path, value);
+}
+
 /**
  * Modifies an attribute or toggles the existing value
  */
@@ -92,7 +106,12 @@ export function userSettingAttrDelete(path: string, attr: string) {
 /**
  * Store a whole settings object
  */
-export function setUserSetting(value: unknown) {
+export function setUserSetting(value: Partial<AppSettingState>) {
+  const _localStoreMirror = new Promise<void>((resolve) => {
+    setLocalStorageUserSettings(value);
+    resolve();
+  });
+
   return setIndexDBUserSettings(value);
 }
 
@@ -101,4 +120,40 @@ export function setUserSetting(value: unknown) {
  */
 export function getUserSettings() {
   return getIndexDBUserSettings();
+}
+
+/**
+ * Store a whole study progress object
+ */
+export function setStudyProgress(value: Partial<AppProgressState>) {
+  return Promise.all(
+    dataSetNames.reduce((acc, name) => {
+      if (value[name] !== undefined) {
+        return [...acc, setIndexDBStudyProgress(name, value[name])];
+      }
+      return acc;
+    }, [] as Promise<unknown>[])
+  ).then(() => {});
+}
+
+/**
+ * Retrieve study progress
+ */
+export function getStudyProgress() {
+  return Promise.all(
+    dataSetNames.map((name) => getIndexDBStudyProgress(name))
+  ).then((states) =>
+    states.reduce(
+      (acc, state, i) => {
+        if (state !== null && Object.keys(state).length > 0) {
+          return { ...acc, [dataSetNames[i]]: state };
+        }
+
+        return acc;
+      },
+      {} as Partial<
+        Record<(typeof dataSetNames)[number], Record<string, MetaDataObj>>
+      >
+    )
+  );
 }

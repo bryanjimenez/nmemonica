@@ -23,7 +23,6 @@ import { sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getActiveSheet,
   getWorkbookFromIndexDB,
-  metaDataNames,
   removeLastRowIfBlank,
   searchInSheet,
   sheetAddExtraRow,
@@ -32,20 +31,28 @@ import {
   updateStateAfterWorkbookEdit,
   validateInSheet,
   workbookSheetNames,
-  xObjectToCsvText,
 } from "../../helper/sheetHelper";
 import {
   type FilledSheetData,
   isFilledSheetData,
 } from "../../helper/sheetHelperImport";
 import {
-  getUserSettings,
+  SyncDataFile,
+  dataTransferAggregator,
+} from "../../helper/transferHelper";
+import {
+  setStudyProgress,
   setUserSetting,
 } from "../../helper/userSettingsHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import { AppDispatch, AppSettingState, RootState } from "../../slices";
+import {
+  AppDispatch,
+  AppProgressState,
+  AppSettingState,
+  RootState,
+} from "../../slices";
 import { appSettingsInitialized } from "../../slices/globalSlice";
 import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
 import { DataSetExport } from "../Dialog/DataSetExport";
@@ -320,64 +327,41 @@ export default function Sheet() {
       });
   }, [dispatch, phraseList, vocabList, kanjiList]);
 
-  const downloadFileHandlerCB = useCallback(
-    (files: { fileName: string; text: string }[]) => {
-      files.forEach(({ fileName, text }) => {
-        const file = new Blob([text], {
-          type: "application/plaintext; charset=utf-8",
-        });
-        // const file = new Blob(['csv.file'],{type:"octet/stream"})
-        // const f = new File([file], './file.csv', {type:"octet/stream"})
-
-        const dlUrl = URL.createObjectURL(file);
-        // window.location.assign(dlUrl)
-
-        // URL.revokeObjectURL()
-        // browser.downloads.download(URL.createObjectURL(file))
-        const a = document.createElement("a");
-        a.download = fileName;
-        a.href = dlUrl;
-        // document.body.appendChild(a)
-        a.click();
-
-        setTimeout(() => {
-          // document.body.removeChild(a)
-          URL.revokeObjectURL(dlUrl);
-        }, 0);
+  const downloadFileHandlerCB = useCallback((files: SyncDataFile[]) => {
+    files.forEach(({ fileName, file: text }) => {
+      const file = new Blob([text], {
+        type: "application/plaintext; charset=utf-8",
       });
+      // const file = new Blob(['csv.file'],{type:"octet/stream"})
+      // const f = new File([file], './file.csv', {type:"octet/stream"})
 
-      return Promise.resolve();
-    },
-    []
-  );
+      const dlUrl = URL.createObjectURL(file);
+      // window.location.assign(dlUrl)
 
-  const exportAppDataToFileHandlerCB = useCallback(() => {
+      // URL.revokeObjectURL()
+      // browser.downloads.download(URL.createObjectURL(file))
+      const a = document.createElement("a");
+      a.download = fileName;
+      a.href = dlUrl;
+      // document.body.appendChild(a)
+      a.click();
+
+      setTimeout(() => {
+        // document.body.removeChild(a)
+        URL.revokeObjectURL(dlUrl);
+      }, 0);
+    });
+
+    return Promise.resolve();
+  }, []);
+
+  /**
+   * Export data, settings, and progress to file system
+   */
+  const exportToFileHandlerCB = useCallback(() => {
     // TODO: should zip and include settings?
 
-    // TODO: should be from indexedDB (what's saved) unless nothing avail
-    const xObj = wbRef.current?.exportValues() as FilledSheetData[];
-
-    // send AppCache UserSettings
-    void getUserSettings().then((ls) => {
-      let appSettings: { fileName: string; name: string; text: string }[] = [];
-
-      if (ls) {
-        appSettings = [
-          {
-            fileName: metaDataNames.settings.file,
-            name: metaDataNames.settings.prettyName,
-            text: JSON.stringify(ls),
-          },
-        ];
-      }
-
-      void xObjectToCsvText(xObj).then((fileDataSet) =>
-        downloadFileHandlerCB([
-          ...fileDataSet.map((f) => ({ fileName: f.name + ".csv", ...f })),
-          ...appSettings,
-        ])
-      );
-    });
+    void dataTransferAggregator().then(downloadFileHandlerCB);
   }, [downloadFileHandlerCB]);
 
   const doSearchCB = useCallback(() => {
@@ -520,7 +504,8 @@ export default function Sheet() {
   const importDataHandlerCB = useCallback(
     (
       importWorkbook?: FilledSheetData[],
-      importSettings?: Partial<AppSettingState>
+      importSettings?: Partial<AppSettingState>,
+      importProgress?: Partial<AppProgressState>
     ) => {
       let importCompleteP: Promise<unknown>[] = [];
       if (importSettings && Object.keys(importSettings).length > 0) {
@@ -532,7 +517,13 @@ export default function Sheet() {
 
         importCompleteP = [...importCompleteP, settingsP];
       }
-
+      if (
+        importProgress !== undefined &&
+        Object.keys(importProgress).length > 0
+      ) {
+        // write to device's local storage
+        void setStudyProgress(importProgress);
+      }
       if (importWorkbook && importWorkbook.length > 0) {
         const allSheetRequired = Object.keys(workbookSheetNames).map(
           (k) => k as keyof typeof workbookSheetNames
@@ -595,13 +586,13 @@ export default function Sheet() {
           close={closeDataAction}
           saveChanges={saveSheetHandlerCB}
           importFromFile={openImportFileCB}
-          exportToFile={exportAppDataToFileHandlerCB}
+          exportToFile={exportToFileHandlerCB}
           signaling={openSignalingCB}
         />
         <DataSetImportFile
           visible={dataAction === "importFile"}
           close={closeDataAction}
-          updateDataHandler={importDataHandlerCB}
+          importHandler={importDataHandlerCB}
         />
 
         {dataAction === "signaling" && (
@@ -613,8 +604,8 @@ export default function Sheet() {
               <DataSetImport
                 action="import"
                 close={closeDataAction}
-                downloadFileHandler={downloadFileHandlerCB}
-                updateDataHandler={importDataHandlerCB}
+                downloadHandler={downloadFileHandlerCB}
+                importHandler={importDataHandlerCB}
               />
             </DataSetSharingActions>
           </WebRTCProvider>

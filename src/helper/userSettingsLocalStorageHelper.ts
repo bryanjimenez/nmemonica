@@ -1,10 +1,6 @@
 import { getWindow } from "./browserGlobal";
-import {
-  localStorageKey,
-  usingPathRead,
-  usingPathWrite,
-} from "./userSettingsHelper";
-import type { AppSettingState } from "../slices";
+import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
+import { type AppSettingState, settingsKeys } from "../slices";
 
 // TODO: implement using promises to match userSettingsIndexDBHelper (fallback method)
 
@@ -21,8 +17,7 @@ export function localStoreUserSettingAttrUpdate<T>(
   attr: string,
   value?: T
 ) {
-  let locStoSettings = (getLocalStorageUserSettings(localStorageKey) ??
-    {}) as AppSettingState;
+  let locStoSettings = getLocalStorageUserSettings();
 
   const cleanPath = [
     ...path.split("/").filter((p) => p !== ""),
@@ -42,7 +37,7 @@ export function localStoreUserSettingAttrUpdate<T>(
   );
   const modifiedValue = usingPathRead<T>(modifiedLocalStorage, cleanPath);
 
-  setLocalStorageUserSettings(localStorageKey, {
+  setLocalStorageUserSettings({
     ...modifiedLocalStorage,
   });
 
@@ -52,8 +47,11 @@ export function localStoreUserSettingAttrUpdate<T>(
 /**
  * Modifies an attribute or toggles the existing value
  */
-export function localStoreUserSettingAttrDelete(path: string, attr: string) {
-  const locStoSettings = getLocalStorageUserSettings(localStorageKey) ?? {};
+export function localStoreUserSettingAttrDelete(
+  path: string,
+  attr: string
+) {
+  const locStoSettings = getLocalStorageUserSettings();
   const cleanPath = [
     ...path.split("/").filter((p) => p !== ""),
     attr,
@@ -65,7 +63,7 @@ export function localStoreUserSettingAttrDelete(path: string, attr: string) {
     undefined
   );
 
-  setLocalStorageUserSettings(localStorageKey, {
+  setLocalStorageUserSettings({
     ...modifiedLocalStorage,
   });
 }
@@ -73,38 +71,33 @@ export function localStoreUserSettingAttrDelete(path: string, attr: string) {
 /**
  * Store a whole settings object to the localStorage
  */
-export function setLocalStorageUserSettings(
-  localStorageKey: string,
-  value: unknown
-) {
+export function setLocalStorageUserSettings(value: Partial<AppSettingState>) {
   const { localStorage } = getWindow();
 
-  return localStorage.setItem(localStorageKey, JSON.stringify(value));
+  (Object.keys(value) as (keyof AppSettingState)[]).forEach((key) => {
+    localStorage.setItem(key, JSON.stringify(value[key]));
+  });
 }
 
 /**
  * Retrieve the settings object stored in localStorage
  */
-export function getLocalStorageUserSettings(localStorageKey: string) {
-  let localStorageValue: AppSettingState | null = null;
-
+export function getLocalStorageUserSettings() {
   const { localStorage } = getWindow();
 
-  const textSettings = localStorage.getItem(localStorageKey);
+  const resultObj = settingsKeys.reduce((acc, key) => {
+    const partialSetting = localStorage.getItem(key);
 
-  let resultObj: AppSettingState | null = null;
+    if (partialSetting !== null) {
+      try {
+        return { ...acc, [key]: JSON.parse(partialSetting) };
+      } catch {
+        // TODO: warn localStorage is corrupt
+      }
+    }
 
-  if (textSettings !== null) {
-    resultObj = JSON.parse(textSettings) as AppSettingState;
-  }
+    return acc;
+  }, {} as Partial<AppSettingState>);
 
-  if (
-    typeof resultObj === "object" &&
-    !Array.isArray(resultObj) &&
-    resultObj !== null
-  ) {
-    localStorageValue = resultObj;
-  }
-
-  return localStorageValue;
+  return resultObj;
 }

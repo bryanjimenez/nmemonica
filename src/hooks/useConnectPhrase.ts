@@ -26,9 +26,9 @@ export function useConnectPhrase() {
     (before, after) => before.version === after.version
   );
 
-  const { repetition } = useSelector(
-    ({ phrases }: RootState) => phrases.setting,
-    (before, after) => before.repTID === after.repTID
+  const { metadata: repetition } = useSelector(
+    ({ phrases }: RootState) => phrases,
+    (before, after) => before.metadataID === after.metadataID
   );
 
   const [englishSideUp, includeNew, includeReviewed] = useSelector(

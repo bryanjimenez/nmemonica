@@ -40,16 +40,22 @@ import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
   userSettingAttrUpdate,
+  userStudyProgressAttrUpdate,
 } from "../helper/userSettingsHelper";
+import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { ValuesOf } from "../typings/utils";
 
 import type { RootState } from ".";
 
+const SLICE_NAME = "vocabulary";
 export interface VocabularyInitSlice {
   value: RawVocabulary[];
   version: string;
   grpObj: GroupListMap;
   verbForm: string;
+
+  metadata: Record<string, MetaDataObj | undefined>;
+  metadataID: number;
 
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
@@ -58,8 +64,6 @@ export interface VocabularyInitSlice {
     hintEnabled: boolean;
     filter: ValuesOf<typeof TermFilterBy>;
     difficultyThreshold: number;
-    repTID: number;
-    repetition: Record<string, MetaDataObj | undefined>;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
     autoVerbView: boolean;
@@ -77,6 +81,9 @@ export const vocabularyInitState: VocabularyInitSlice = {
   grpObj: {},
   verbForm: "dictionary",
 
+  metadata: {},
+  metadataID: -1,
+
   setting: {
     ordered: 0,
     englishSideUp: false,
@@ -84,8 +91,6 @@ export const vocabularyInitState: VocabularyInitSlice = {
     hintEnabled: false,
     filter: 0,
     difficultyThreshold: MEMORIZED_THRLD,
-    repTID: -1,
-    repetition: {},
     spaRepMaxReviewItem: undefined,
     activeGroup: [],
     autoVerbView: false,
@@ -102,9 +107,9 @@ export const vocabularyInitState: VocabularyInitSlice = {
  * Fetch vocabulary
  */
 export const getVocabulary = createAsyncThunk(
-  "vocabulary/getVocabulary",
+  `${SLICE_NAME}/getVocabulary`,
   async () => {
-    return getSheetFromIndexDB("vocabulary").then((sheet) => {
+    return getSheetFromIndexDB(SLICE_NAME).then((sheet) => {
       const { data: value, hash: version } = sheetDataToJSON(sheet) as {
         data: Record<string, Vocabulary>;
         hash: string;
@@ -115,8 +120,20 @@ export const getVocabulary = createAsyncThunk(
   }
 );
 
+/**
+ * Pull Vocabulary metadata from indexedDB
+ */
+export const getVocabularyMeta = createAsyncThunk(
+  `${SLICE_NAME}/getVocabularyMeta`,
+  async () => {
+    return getIndexDBStudyProgress(SLICE_NAME).then((data) => {
+      return data ?? {};
+    });
+  }
+);
+
 export const vocabularySettingsFromAppStorage = createAsyncThunk(
-  "vocabulary/vocabularySettingsFromAppStorage",
+  `${SLICE_NAME}/vocabularySettingsFromAppStorage`,
   (arg: (typeof vocabularyInitState)["setting"]) => {
     const initValues = arg;
 
@@ -124,55 +141,8 @@ export const vocabularySettingsFromAppStorage = createAsyncThunk(
   }
 );
 
-export const deleteMetaVocab = createAsyncThunk(
-  "vocabulary/deleteMetaVocab",
-  (uidList: string[], thunkAPI) => {
-    const state = (thunkAPI.getState() as RootState).vocabulary;
-    const spaceRep = state.setting.repetition;
-
-    return deleteMetadata(uidList, spaceRep);
-  }
-);
-
-export const updateSpaceRepWord = createAsyncThunk(
-  "vocabulary/updateSpaceRepWord",
-  (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
-    const { uid, shouldIncrement } = arg;
-    const state = (thunkAPI.getState() as RootState).vocabulary;
-
-    const spaceRep = state.setting.repetition;
-
-    return updateSpaceRepTerm(uid, spaceRep, {
-      count: shouldIncrement,
-      date: true,
-    });
-  }
-);
-
-export const removeFromSpaceRepetition = createAsyncThunk(
-  "vocabulary/removeFromSpaceRepetition",
-  (arg: { uid: string }, thunkAPI) => {
-    const { uid } = arg;
-    const state = (thunkAPI.getState() as RootState).vocabulary;
-
-    const spaceRep = state.setting.repetition;
-    return removeAction(uid, spaceRep);
-  }
-);
-
-export const setSpaceRepetitionMetadata = createAsyncThunk(
-  "vocabulary/setSpaceRepetitionMetadata",
-  (arg: { uid: string }, thunkAPI) => {
-    const { uid } = arg;
-    const state = (thunkAPI.getState() as RootState).vocabulary;
-
-    const spaceRep = state.setting.repetition;
-    return updateAction(uid, spaceRep);
-  }
-);
-
 export const toggleVocabularyTag = createAsyncThunk(
-  "vocabulary/toggleVocabularyTag",
+  `${SLICE_NAME}/toggleVocabularyTag`,
   (arg: { query: string; tag: string }) => {
     const { query, tag } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
@@ -213,7 +183,7 @@ export const toggleVocabularyTag = createAsyncThunk(
 );
 
 export const getVocabularyTags = createAsyncThunk(
-  "vocabulary/getVocabularyTags",
+  `${SLICE_NAME}/getVocabularyTags`,
   (arg: { query: string }, thunkAPI) => {
     const { query } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
@@ -240,9 +210,9 @@ export const getVocabularyTags = createAsyncThunk(
 );
 
 export const flipVocabularyPracticeSide = createAsyncThunk(
-  "vocabulary/flipVocabularyPracticeSide",
+  `${SLICE_NAME}/flipVocabularyPracticeSide`,
   (_arg, thunkAPI) => {
-    const state = (thunkAPI.getState() as RootState).vocabulary;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
     return userSettingAttrUpdate(
       { vocabulary: state.setting },
@@ -252,8 +222,164 @@ export const flipVocabularyPracticeSide = createAsyncThunk(
   }
 );
 
+export const setWordAccuracy = createAsyncThunk(
+  `${SLICE_NAME}/setWordAccuracy`,
+  ({ uid, accuracy }: { uid: string; accuracy: number | null }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        set: { accuracyP: accuracy },
+      }
+    );
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
+  }
+);
+
+export const setWordDifficulty = createAsyncThunk(
+  `${SLICE_NAME}/setWordDifficulty`,
+  (
+    { uid, difficulty }: { uid: string; difficulty: number | null },
+    thunkAPI
+  ) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        set: { difficultyP: difficulty },
+      }
+    );
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
+  }
+);
+
+export const furiganaToggled = createAsyncThunk(
+  `${SLICE_NAME}/furiganaToggled`,
+  (uid: string, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        toggle: ["f"],
+      }
+    );
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
+  }
+);
+
+export const setPitchAccentData = createAsyncThunk(
+  `${SLICE_NAME}/setPitchAccentData`,
+  ({ uid, value }: { uid: string; value: true | null }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        set: { pron: value },
+      }
+    );
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+      () => newValue
+    );
+  }
+);
+
+export const updateSpaceRepWord = createAsyncThunk(
+  `${SLICE_NAME}/updateSpaceRepWord`,
+  (arg: { uid: string; shouldIncrement?: boolean }, thunkAPI) => {
+    const { uid, shouldIncrement } = arg;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const spaceRep = state.metadata;
+
+    const value = updateSpaceRepTerm(uid, spaceRep, {
+      count: shouldIncrement,
+      date: true,
+    });
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, value.record).then(
+      () => value
+    );
+  }
+);
+
+export const setSpaceRepetitionMetadata = createAsyncThunk(
+  `${SLICE_NAME}/setSpaceRepetitionMetadata`,
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const spaceRep = state.metadata;
+    const value = updateAction(uid, spaceRep);
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, value.newValue).then(
+      () => value
+    );
+  }
+);
+
+export const removeFromSpaceRepetition = createAsyncThunk(
+  `${SLICE_NAME}/removeFromSpaceRepetition`,
+  (arg: { uid: string }, thunkAPI) => {
+    const { uid } = arg;
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const spaceRep = state.metadata;
+    const newValue = removeAction(uid, spaceRep);
+
+    if (newValue) {
+      return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
+        () => newValue
+      );
+    } else {
+      return Promise.resolve(newValue);
+    }
+  }
+);
+
+export const batchRepetitionUpdate = createAsyncThunk(
+  `${SLICE_NAME}/batchRepetitionUpdate`,
+  (payload: Record<string, MetaDataObj | undefined>, _thunkAPI) =>
+    userStudyProgressAttrUpdate(SLICE_NAME, payload).then(() => payload)
+);
+
+export const deleteMetaVocab = createAsyncThunk(
+  `${SLICE_NAME}/deleteMetaVocab`,
+  (uidList: string[], thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+    const spaceRep = state.metadata;
+
+    const newValue = deleteMetadata(uidList, spaceRep);
+
+    return userStudyProgressAttrUpdate(SLICE_NAME, newValue.record).then(
+      () => newValue
+    );
+  }
+);
+
 const vocabularySlice = createSlice({
-  name: "vocabulary",
+  name: SLICE_NAME,
   initialState: vocabularyInitState,
   reducers: {
     clearVocabulary(state) {
@@ -288,55 +414,6 @@ const vocabularySlice = createSlice({
       );
 
       state.setting.activeGroup = newValue;
-    },
-
-    furiganaToggled(state, action: { payload: string }) {
-      const uid = action.payload;
-
-      const { record: newValue } = updateSpaceRepTerm(
-        uid,
-        state.setting.repetition,
-        { count: false, date: false },
-        {
-          toggle: ["f"],
-        }
-      );
-
-      void userSettingAttrUpdate(
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
-    },
-
-    setPitchAccentData(
-      state,
-      action: { payload: { uid: string; value: true | null } }
-    ) {
-      const { uid, value } = action.payload;
-
-      const { record: newValue } = updateSpaceRepTerm(
-        uid,
-        state.setting.repetition,
-        { count: false, date: false },
-        {
-          set: { pron: value },
-        }
-      );
-
-      void userSettingAttrUpdate(
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
     },
 
     toggleVocabularyOrdering(
@@ -436,51 +513,6 @@ const vocabularySlice = createSlice({
       state.setting.difficultyThreshold = threshold;
     },
 
-    setWordDifficulty: {
-      reducer: (
-        state: VocabularyInitSlice,
-        action: PayloadAction<{ uid: string; value: null | number }>
-      ) => {
-        const { uid, value } = action.payload;
-
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          state.setting.repetition,
-          { count: false, date: false },
-          {
-            set: { difficultyP: value },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      },
-      prepare: (uid: string, value: null | number) => ({
-        payload: { uid, value },
-      }),
-    },
-
-    batchRepetitionUpdate(
-      state,
-      action: { payload: Record<string, MetaDataObj | undefined> }
-    ) {
-      void userSettingAttrUpdate(
-        {},
-        "/vocabulary/",
-        "repetition",
-        action.payload
-      );
-
-      state.setting.repetition = action.payload;
-    },
-
     /**
      * Space Repetition maximum item review
      * per session
@@ -502,36 +534,6 @@ const vocabularySlice = createSlice({
 
         state.setting.spaRepMaxReviewItem = maxItems;
       }
-    },
-    setWordAccuracy: {
-      reducer: (
-        state: VocabularyInitSlice,
-        action: PayloadAction<{ uid: string; value: null | number }>
-      ) => {
-        const { uid, value } = action.payload;
-
-        const { record: newValue } = updateSpaceRepTerm(
-          uid,
-          state.setting.repetition,
-          { count: false, date: false },
-          {
-            set: { accuracyP: value },
-          }
-        );
-
-        void userSettingAttrUpdate(
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
-      },
-      prepare: (uid: string, value: null | number) => ({
-        payload: { uid, value },
-      }),
     },
     toggleIncludeNew(state) {
       void userSettingAttrUpdate(
@@ -593,66 +595,71 @@ const vocabularySlice = createSlice({
       state.value = buildVocabularyArray(value);
       state.version = version;
     });
+    builder.addCase(getVocabularyMeta.fulfilled, (state, action) => {
+      const value = action.payload;
 
+      state.metadataID = Date.now();
+      state.metadata = value;
+    });
+    builder.addCase(flipVocabularyPracticeSide.fulfilled, (state) => {
+      state.setting.englishSideUp = !state.setting.englishSideUp;
+    });
+
+    builder.addCase(setWordAccuracy.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
+    builder.addCase(setWordDifficulty.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
+    builder.addCase(furiganaToggled.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
+    builder.addCase(setPitchAccentData.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
     builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      void userSettingAttrUpdate(
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
-
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
-      void userSettingAttrUpdate(
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       if (newValue) {
-        void userSettingAttrUpdate(
-          { vocabulary: state.setting },
-          "/vocabulary/",
-          "repetition",
-          newValue
-        );
-
-        state.setting.repTID = Date.now();
-        state.setting.repetition = newValue;
+        state.metadataID = Date.now();
+        state.metadata = newValue;
       }
     });
+    builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
+      const newValue = action.payload;
 
+      // state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
     builder.addCase(deleteMetaVocab.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
-      void userSettingAttrUpdate(
-        { vocabulary: state.setting },
-        "/vocabulary/",
-        "repetition",
-        newValue
-      );
-
-      state.setting.repTID = Date.now();
-      state.setting.repetition = newValue;
-    });
-
-    builder.addCase(flipVocabularyPracticeSide.fulfilled, (state) => {
-      state.setting.englishSideUp = !state.setting.englishSideUp;
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
   },
 });
@@ -660,8 +667,6 @@ const vocabularySlice = createSlice({
 export const {
   clearVocabulary,
   verbFormChanged,
-  furiganaToggled,
-  setPitchAccentData,
   setVerbFormsOrder,
   toggleVocabularyOrdering,
   toggleVocabularyActiveGrp,
@@ -672,11 +677,8 @@ export const {
   updateVerbColSplit,
   toggleVocabularyBareKanji,
 
-  setWordDifficulty,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
-  setWordAccuracy,
   setGoal,
-  batchRepetitionUpdate,
 } = vocabularySlice.actions;
 export default vocabularySlice.reducer;

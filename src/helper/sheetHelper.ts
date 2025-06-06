@@ -32,16 +32,26 @@ import {
 } from "../slices/vocabularySlice";
 
 /**
+ * Dataset names
+ */
+export const dataSetNames = ["phrases", "vocabulary", "kanji"] as const;
+
+/**
  * Keep all naming and order
  */
 export const workbookSheetNames = Object.freeze({
-  phrases: { index: 0, file: "Phrases.csv", prettyName: "Phrases" },
-  vocabulary: { index: 1, file: "Vocabulary.csv", prettyName: "Vocabulary" },
-  kanji: { index: 2, file: "Kanji.csv", prettyName: "Kanji" },
+  [dataSetNames[0]]: { index: 0, fileName: "Phrases.csv", prettyName: "Phrases" },
+  [dataSetNames[1]]: {
+    index: 1,
+    fileName: "Vocabulary.csv",
+    prettyName: "Vocabulary",
+  },
+  [dataSetNames[2]]: { index: 2, fileName: "Kanji.csv", prettyName: "Kanji" },
 });
 
 export const metaDataNames = Object.freeze({
-  settings: { file: "Settings.json", prettyName: "Settings" },
+  settings: { fileName: "Settings.json", prettyName: "Settings" },
+  progress: { fileName: "Progress.json", prettyName: "Progress" },
 });
 
 export function getActiveSheet(workbook: Spreadsheet) {
@@ -181,7 +191,7 @@ export function xObjectToCsvText(xObj: SheetData[]) {
       },
     };
 
-    const csvP = new Promise<{ name: string; text: string }>(
+    const csvP = new Promise<{ name: string; text: string; len: number }>(
       (resolve, _reject) => {
         let file = "";
         fileSim.on("write", (line) => {
@@ -189,7 +199,11 @@ export function xObjectToCsvText(xObj: SheetData[]) {
         });
 
         fileSim.on("end", () => {
-          resolve({ name: xObjSheet.name, text: file });
+          resolve({
+            name: xObjSheet.name,
+            text: file,
+            len: xObjSheet.rows?.len ?? 0,
+          });
         });
       }
     );
@@ -663,21 +677,21 @@ export function updateStateAfterWorkbookEdit(
     case workbookSheetNames.kanji.prettyName:
       dispatch(clearKanji());
       if (metaUpdatedUids) {
-        dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
+        void dispatch(kanjiBatchMetaUpdate(metaUpdatedUids));
       }
       break;
     case workbookSheetNames.vocabulary.prettyName:
       dispatch(clearVocabulary());
       dispatch(clearOpposites());
       if (metaUpdatedUids) {
-        dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
+        void dispatch(vocabularyBatchMetaUpdate(metaUpdatedUids));
       }
       break;
     case workbookSheetNames.phrases.prettyName:
       dispatch(clearPhrases());
       dispatch(clearParticleGame());
       if (metaUpdatedUids) {
-        dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
+        void dispatch(phraseBatchMetaUpdate(metaUpdatedUids));
       }
       break;
     default:

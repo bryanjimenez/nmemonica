@@ -25,7 +25,6 @@ import {
 import { allowedCookies } from "../helper/cookieHelper";
 import {
   getUserSettings,
-  localStorageKey,
   userSettingAttrUpdate,
 } from "../helper/userSettingsHelper";
 import { getLocalStorageUserSettings } from "../helper/userSettingsLocalStorageHelper";
@@ -124,7 +123,7 @@ export const appSettingsInitializedLocalStorage = createAsyncThunk(
   (_arg, _thunkAPI) => {
     let globalInitStateAndCookies = getGlobalInitState();
     let tempSettings = globalInitStateAndCookies;
-    const appSettings = getLocalStorageUserSettings(localStorageKey);
+    const appSettings = getLocalStorageUserSettings();
 
     if (appSettings !== null) {
       // use merge to prevent losing defaults not found in App Storage
@@ -143,38 +142,41 @@ export const appSettingsInitialized = createAsyncThunk(
     let mergedGlobalSettings = getGlobalInitState();
     return getUserSettings()
       .then((appSettings) => {
-        if (appSettings !== null) {
+        if (appSettings.opposite !== undefined) {
           void thunkAPI.dispatch(
             oppositeSettingsFromAppStorage(appSettings.opposite)
           );
+        }
+        if (appSettings.phrases !== undefined) {
           void thunkAPI.dispatch(
             phraseSettingsFromAppStorage(appSettings.phrases)
           );
+        }
+        if (appSettings.kanji !== undefined) {
           void thunkAPI.dispatch(
             kanjiSettingsFromAppStorage(appSettings.kanji)
           );
+        }
+        if (appSettings.kana !== undefined) {
           void thunkAPI.dispatch(kanaSettingsFromAppStorage(appSettings.kana));
+        }
+        if (appSettings.particle !== undefined) {
           void thunkAPI.dispatch(
             particleSettingsFromAppStorage(appSettings.particle)
           );
+        }
+        if (appSettings.vocabulary !== undefined) {
           void thunkAPI.dispatch(
             vocabularySettingsFromAppStorage(appSettings.vocabulary)
           );
+        }
 
-          const globalInitStateAndCookies = getGlobalInitState();
+        const globalInitStateAndCookies = getGlobalInitState();
+        if (appSettings.global !== undefined) {
           // use merge to prevent losing defaults not found in App Storage
           mergedGlobalSettings = merge(globalInitStateAndCookies, {
             ...appSettings.global,
           });
-
-          // Batch update localstate settings
-          // setTimeout(()=>{
-          //   const now = new Date('2023-07-25T001:21:00.000Z');
-          //   void thunkAPI.dispatch(logger("Batch update ...", DebugLevel.ERROR));
-          //   const done = renameVocabularyLastView(lsSettings, now);
-          //   // const done = flipVocabularyDifficulty(lsSettings);
-          //   void thunkAPI.dispatch(logger("modified: "+done, DebugLevel.ERROR));
-          // }, 15000);
         }
 
         return mergedGlobalSettings;

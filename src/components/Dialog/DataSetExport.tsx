@@ -7,20 +7,33 @@ import {
   FileDirectoryIcon,
   UploadIcon,
 } from "@primer/octicons-react";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  ReactElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { DataSetFromAppCache } from "../Form/DataSetFromAppCache";
-import { DataSetFromDragDrop, TransferObject } from "../Form/DataSetFromDragDrop";
+import { Warnings } from "./DialogMsg";
+import { WebRTCContext } from "../../context/webRTC";
+import { workbookSheetNames } from "../../helper/sheetHelper";
+import {
+  SyncDataFile,
+  dataTransferAggregator,
+} from "../../helper/transferHelper";
+import {
+  plainTransfer,
+  sendChunkedMessage,
+} from "../../helper/webRTCDataTrans";
+import { DataSelectFromCache } from "../Form/DataSelectFromCache";
+import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import {
   type DataSetSharingAction,
   RTCTransferRequired,
 } from "../Form/DataSetSharingActions";
-import { WebRTCContext } from "../../context/webRTC";
-import {
-  dataTransferAggregator,
-  plainTransfer,
-  sendChunkedMessage,
-} from "../../helper/webRTCDataTrans";
+import { properCase } from "../Games/KanjiGame";
 
 interface DataSetExportProps extends DataSetSharingAction {
   close: () => void;
@@ -48,6 +61,10 @@ export function DataSetExport(props: DataSetExportProps) {
   const { peer, rtcChannel, direction, maxMsgSize, closeWebRTC } =
     useContext(WebRTCContext);
   const connection = useRef({ channel: rtcChannel, peer: peer.current });
+
+  const [fileData, setFileData] = useState<SyncDataFile[]>([]);
+  const [fileWarning, setFileWarning] = useState<ReactElement[]>([]);
+  const [finished, setFinished] = useState(false);
 
   useEffect(
     () => {
@@ -93,43 +110,38 @@ export function DataSetExport(props: DataSetExportProps) {
     setSource("AppCache");
   }, []);
 
-  const [fileData, setFileData] = useState<TransferObject[]>([]);
-  const [finished, setFinished] = useState(false);
-
   const closeHandlerCB = useCallback(() => {
     setFileData([]);
-    close();
+    setFileWarning([]);
     setFinished(false);
     closeWebRTC();
+    close();
   }, [close, closeWebRTC]);
 
   const fromAppCacheUpdateDataCB = useCallback((name: string) => {
     setFileData((prev) => {
-      let newPrev: TransferObject[] = [];
+      let newPrev: SyncDataFile[] = [];
       // if is not in state add it
       if (prev.find((p) => p.name === name) === undefined) {
+        const ext = Object.keys(workbookSheetNames).includes(name.toLowerCase())
+          ? "csv"
+          : "json";
         // text is added for all on final action trigger (btn)
-        newPrev = [...prev, { name, origin: "AppCache", text: "" }];
+        newPrev = [
+          ...prev,
+          {
+            name,
+            fileName: `${properCase(name)}.${ext}`,
+            origin: "AppCache",
+            file: "",
+            size: "0",
+          },
+        ];
       } else {
         newPrev = prev.filter((p) => p.name !== name);
       }
 
       return newPrev;
-    });
-  }, []);
-
-  const fromFileSysUpdateDataCB = useCallback((item: TransferObject) => {
-    setFileData((prev) => {
-      if (
-        prev.find((p) => p.name.toLowerCase() === item.name.toLowerCase()) ===
-        undefined
-      ) {
-        return [...prev, item];
-      } else {
-        return prev.filter(
-          (p) => p.name.toLowerCase() !== item.name.toLowerCase()
-        );
-      }
     });
   }, []);
 
@@ -177,16 +189,18 @@ export function DataSetExport(props: DataSetExportProps) {
               </div>
             )}
           </div>
+          <Warnings fileWarning={fileWarning} clearWarnings={setFileWarning} />
           {source === "AppCache" && (
-            <DataSetFromAppCache
+            <DataSelectFromCache
               data={fileData}
               updateDataHandler={fromAppCacheUpdateDataCB}
             />
           )}
           {source === "FileSystem" && (
-            <DataSetFromDragDrop
+            <DataSelectFromFile
               data={fileData}
-              updateDataHandler={fromFileSysUpdateDataCB}
+              addWarning={setFileWarning}
+              updateDataHandler={setFileData}
             />
           )}
 

@@ -1,12 +1,5 @@
-import { type TransferObject } from "../components/Form/DataSetFromDragDrop";
+import { type SyncDataFile } from "./transferHelper";
 import { encryptAES256GCM } from "../helper/cryptoHelper";
-import {
-  getWorkbookFromIndexDB,
-  metaDataNames,
-  xObjectToCsvText,
-} from "../helper/sheetHelper";
-import { FilledSheetData } from "../helper/sheetHelperImport";
-import { getUserSettings } from "../helper/userSettingsHelper";
 
 /** Default size if not set */
 const DEFAULT_MAX_MESSAGE_SIZE = 1024 * 10;
@@ -36,83 +29,9 @@ export interface CryptoMessage {
   tag: string;
 }
 
-export interface SyncDataFile {
-  fileName: string;
-  text: string;
-}
-
 export interface SyncDataMsg {
   event_name: string;
   payload: object;
-}
-
-/**
- * Gathers datasets from file system or app memory
- * @param fileData file descriptor object (w/ info about location)
- * @returns returns an array of files
- */
-export function dataTransferAggregator(fileData: TransferObject[]) {
-  let transferData = Promise.resolve(
-    fileData.map((f) => ({
-      name: f.name,
-      text: f.text,
-    }))
-  );
-
-  const fromApp = fileData.filter((f) => f.origin === "AppCache");
-  if (fromApp.length > 0) {
-    transferData = getWorkbookFromIndexDB()
-      .then((xObj) => getUserSettings().then((usrSets) => ({ xObj, usrSets })))
-      .then(({ xObj, usrSets }) => {
-        const included = xObj.filter(
-          (o) =>
-            fromApp.find(
-              (a) => a.name.toLowerCase() === o.name.toLowerCase()
-            ) !== undefined
-        ) as FilledSheetData[];
-
-        // send AppCache UserSettings if selected
-        const appSettings = fileData.reduce<{ name: string; text: string }[]>(
-          (acc, f) => {
-            if (
-              f.origin === "AppCache" &&
-              f.name.toLowerCase() ===
-                metaDataNames.settings.prettyName.toLowerCase()
-            ) {
-              if (usrSets) {
-                return [
-                  ...acc,
-                  {
-                    name: metaDataNames.settings.prettyName,
-                    text: JSON.stringify(usrSets),
-                  },
-                ];
-              }
-            }
-            return acc;
-          },
-          []
-        );
-
-        return xObjectToCsvText(included).then((dBtoCsv) => [
-          // any filesystem imports (already text)
-          ...fileData.filter((f) => f.origin === "FileSystem"),
-          // converted AppCache to csv text
-          ...dBtoCsv,
-          // converted UserSettings to json text
-          ...appSettings,
-        ]);
-      });
-  }
-
-  return transferData.then((d) => {
-    const m: SyncDataFile[] = d.map((p) => ({
-      fileName: `${p.name}.${p.name.toLowerCase() === metaDataNames.settings.prettyName.toLowerCase() ? "json" : "csv"}`,
-      text: p.text,
-    }));
-
-    return m;
-  });
 }
 
 export function sendChunkedMessage(

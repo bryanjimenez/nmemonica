@@ -26,9 +26,9 @@ export function useConnectVocabulary() {
     (before, after) => before.version === after.version
   );
 
-  const { repetition } = useSelector(
-    ({ vocabulary }: RootState) => vocabulary.setting,
-    (before, after) => before.repTID === after.repTID
+  const { metadata: repetition } = useSelector(
+    ({ vocabulary }: RootState) => vocabulary,
+    (before, after) => before.metadataID === after.metadataID
   );
 
   const [

@@ -481,7 +481,7 @@ export default function KanjiGame() {
                 <DifficultySlider
                   difficulty={metadata.current[kanji.uid]?.difficultyP}
                   onChange={buildAction(dispatch, (value: number) =>
-                    setKanjiDifficulty(kanji.uid, value)
+                    setKanjiDifficulty({ uid: kanji.uid, difficulty: value })
                   )}
                   resetOn={kanji.uid}
                 />
