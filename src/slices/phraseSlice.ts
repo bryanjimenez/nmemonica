@@ -303,7 +303,6 @@ export const flipPhrasesPracticeSide = createAsyncThunk(
     const state = (thunkAPI.getState() as RootState).phrases;
 
     return userSettingAttrUpdate(
-      new Date(),
       { phrases: state.setting },
       "/phrases/",
       "englishSideUp"
@@ -330,7 +329,6 @@ const phraseSlice = createSlice({
       const newValue: string[] = grpParse(groups, activeGroup);
 
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "activeGroup",
@@ -344,7 +342,6 @@ const phraseSlice = createSlice({
       const threshold = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "difficultyThreshold",
@@ -371,7 +368,6 @@ const phraseSlice = createSlice({
         );
 
         void userSettingAttrUpdate(
-          new Date(),
           { phrases: state.setting },
           "/phrases/",
           "repetition",
@@ -389,13 +385,7 @@ const phraseSlice = createSlice({
       state,
       action: { payload: Record<string, MetaDataObj | undefined> }
     ) {
-      void userSettingAttrUpdate(
-        new Date(),
-        {},
-        "/phrases/",
-        "repetition",
-        action.payload
-      );
+      void userSettingAttrUpdate({}, "/phrases/", "repetition", action.payload);
 
       state.setting.repetition = action.payload;
     },
@@ -407,16 +397,11 @@ const phraseSlice = createSlice({
       const max = action.payload;
 
       if (max === undefined) {
-        void userSettingAttrDelete(
-          new Date(),
-          "/phrases/",
-          "spaRepMaxReviewItem"
-        );
+        void userSettingAttrDelete("/phrases/", "spaRepMaxReviewItem");
         state.setting.spaRepMaxReviewItem = undefined;
       } else {
         const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
         void userSettingAttrUpdate(
-          new Date(),
           { phrases: state.setting },
           "/phrases/",
           "spaRepMaxReviewItem",
@@ -443,7 +428,6 @@ const phraseSlice = createSlice({
         );
 
         void userSettingAttrUpdate(
-          new Date(),
           { phrases: state.setting },
           "/phrases/",
           "repetition",
@@ -478,7 +462,6 @@ const phraseSlice = createSlice({
       ) as ValuesOf<typeof TermSortBy>;
 
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "ordered",
@@ -489,7 +472,6 @@ const phraseSlice = createSlice({
     },
     toggleIncludeNew(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "includeNew"
@@ -499,7 +481,6 @@ const phraseSlice = createSlice({
     },
     toggleIncludeReviewed(state) {
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "includeReviewed"
@@ -516,7 +497,6 @@ const phraseSlice = createSlice({
 
       if (goal !== undefined) {
         void userSettingAttrUpdate(
-          new Date(),
           { phrases: state.setting },
           "/phrases/",
           "viewGoal",
@@ -526,7 +506,7 @@ const phraseSlice = createSlice({
         state.setting.viewGoal = goal;
       } else {
         state.setting.viewGoal = undefined;
-        void userSettingAttrDelete(new Date(), "/phrases/", "viewGoal");
+        void userSettingAttrDelete("/phrases/", "viewGoal");
       }
     },
   },
@@ -552,7 +532,6 @@ const phraseSlice = createSlice({
       const { record: newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "repetition",
@@ -566,7 +545,6 @@ const phraseSlice = createSlice({
       const { newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "repetition",
@@ -581,7 +559,6 @@ const phraseSlice = createSlice({
 
       if (newValue) {
         void userSettingAttrUpdate(
-          new Date(),
           { phrases: state.setting },
           "/phrases/",
           "repetition",
@@ -597,7 +574,6 @@ const phraseSlice = createSlice({
       const { record: newValue } = action.payload;
 
       void userSettingAttrUpdate(
-        new Date(),
         { phrases: state.setting },
         "/phrases/",
         "repetition",

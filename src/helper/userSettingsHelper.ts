@@ -50,14 +50,12 @@ export function usingPathWrite(
 }
 
 export function userSettingAttrUpdate(
-  time: Date,
   state: Partial<AppSettingState>,
   path: string,
   attr: string
 ): Promise<boolean>;
 
 export function userSettingAttrUpdate<T>(
-  time: Date,
   state: Partial<AppSettingState>,
   path: string,
   attr: string,
@@ -65,14 +63,12 @@ export function userSettingAttrUpdate<T>(
 ): Promise<T>;
 /**
  * Modifies an attribute or toggles the existing value
- * @param time
  * @param state required when toggling `attr` for prev value
  * @param path
  * @param attr
  * @param value optional if absent `attr` will be toggled
  */
 export function userSettingAttrUpdate<T>(
-  time: Date,
   state: Partial<AppSettingState>,
   path: string,
   attr: string,
@@ -80,17 +76,17 @@ export function userSettingAttrUpdate<T>(
 ) {
   // Anything under global duplicate in localStorage
   if (path === "/global/") {
-    localStoreUserSettingAttrUpdate(time, state, path, attr, value);
+    localStoreUserSettingAttrUpdate(state, path, attr, value);
   }
 
-  return indexDBUserSettingAttrUpdate(time, state, path, attr, value);
+  return indexDBUserSettingAttrUpdate(state, path, attr, value);
 }
 
 /**
  * Modifies an attribute or toggles the existing value
  */
-export function userSettingAttrDelete(time: Date, path: string, attr: string) {
-  return indexDBUserSettingAttrDelete(time, path, attr);
+export function userSettingAttrDelete(path: string, attr: string) {
+  return indexDBUserSettingAttrDelete(path, attr);
 }
 
 /**

@@ -94,10 +94,9 @@ describe("localStorage", function () {
       const path = "/a/";
       const attr = "choices";
       const value = 8;
-      const expected = { a: { choices: 8 }, lastModified: time };
+      const expected = { a: { choices: 8 } };
 
       const r = localStoreUserSettingAttrUpdate(
-        time,
         initialState,
         path,
         attr,
@@ -111,9 +110,9 @@ describe("localStorage", function () {
       const time = new Date();
       const path = "/a/";
       const attr = "hint";
-      const expected = { a: { hint: false }, lastModified: time };
+      const expected = { a: { hint: false } };
 
-      const r = localStoreUserSettingAttrUpdate(time, initialState, path, attr);
+      const r = localStoreUserSettingAttrUpdate(initialState, path, attr);
       expect(r).to.deep.equal(expected.a.hint);
     });
 
@@ -123,29 +122,17 @@ describe("localStorage", function () {
 
       const expected1 = {
         a: { hint: false },
-        lastModified: time,
       };
 
       const expected2 = {
         a: { hint: false },
         b: { order: false },
-        lastModified: time,
       };
 
-      const r1 = localStoreUserSettingAttrUpdate(
-        time,
-        initialState,
-        "/a/",
-        "hint"
-      );
+      const r1 = localStoreUserSettingAttrUpdate(initialState, "/a/", "hint");
       expect(r1).to.deep.equal(expected1.a.hint);
 
-      const r2 = localStoreUserSettingAttrUpdate(
-        time,
-        initialState,
-        "/b/",
-        "order"
-      );
+      const r2 = localStoreUserSettingAttrUpdate(initialState, "/b/", "order");
       expect(r2).to.deep.equal(expected2.b.order);
     });
   });
