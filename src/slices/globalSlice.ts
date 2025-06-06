@@ -13,6 +13,7 @@ import { phraseSettingsFromAppStorage } from "./phraseSlice";
 import { toggleAFilter } from "./settingHelper";
 import { memoryStorageStatus, persistStorage } from "./storageHelper";
 import { vocabularySettingsFromAppStorage } from "./vocabularySlice";
+import { localStorageKey } from "../helper/userSettingsHelper";
 import type {
   EnglishVoiceType,
   JapaneseVoiceType,
@@ -27,6 +28,7 @@ import {
   getUserSettings,
   userSettingAttrUpdate,
 } from "../helper/userSettingsHelper";
+import { getLocalStorageUserSettings } from "../helper/userSettingsLocalStorageHelper";
 import type { ValuesOf } from "../typings/utils";
 
 export interface MemoryDataObject {
@@ -113,9 +115,31 @@ export const setPersistentStorage = createAsyncThunk(
   }
 );
 
+/**
+ * Load anything saved on localStorage (Faster)
+ * All global settings duplicated on localStorage for added speedy initial load advantage
+ */
+export const appSettingsInitializedLocalStorage = createAsyncThunk(
+  "setting/appSettingsInitializedLocalStorage",
+  (_arg, _thunkAPI) => {
+    let globalInitStateAndCookies = getGlobalInitState();
+    let tempSettings = globalInitStateAndCookies;
+    const appSettings = getLocalStorageUserSettings(localStorageKey);
+
+    if (appSettings !== null) {
+      // use merge to prevent losing defaults not found in App Storage
+      tempSettings = merge(globalInitStateAndCookies, {
+        ...appSettings.global,
+      });
+    }
+
+    return tempSettings;
+  }
+);
+
 export const appSettingsInitialized = createAsyncThunk(
   "setting/appSettingsInitialized",
-  (arg, thunkAPI) => {
+  (_arg, thunkAPI) => {
     let mergedGlobalSettings = getGlobalInitState();
     return getUserSettings()
       .then((appSettings) => {
@@ -179,6 +203,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "darkMode";
       const time = new Date();
+
       void userSettingAttrUpdate(
         time,
         { global: state },
@@ -194,6 +219,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "swipeThreshold";
       const time = new Date();
+
       void userSettingAttrUpdate(time, { global: state }, path, attr, override);
 
       state.swipeThreshold = override;
@@ -204,6 +230,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "motionThreshold";
       const time = new Date();
+
       void userSettingAttrUpdate(time, { global: state }, path, attr, override);
 
       state.motionThreshold = override;
@@ -214,6 +241,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "japaneseVoice";
       const time = new Date();
+
       void userSettingAttrUpdate(time, { global: state }, path, attr, override);
 
       state.japaneseVoice = override;
@@ -224,6 +252,7 @@ const globalSlice = createSlice({
       const path = "/global/";
       const attr = "englishVoice";
       const time = new Date();
+
       void userSettingAttrUpdate(time, { global: state }, path, attr, override);
 
       state.englishVoice = override;
@@ -234,6 +263,10 @@ const globalSlice = createSlice({
         state,
         action: PayloadAction<ValuesOf<typeof DebugLevel> | undefined>
       ) => {
+        const time = new Date();
+        const path = "/global/";
+        const attr = "debug";
+
         const override = action.payload;
         const newDebug: number = toggleAFilter(
           state.debug + 1,
@@ -242,10 +275,10 @@ const globalSlice = createSlice({
         );
 
         void userSettingAttrUpdate(
-          new Date(),
+          time,
           { global: state },
-          "/global/",
-          "debug",
+          path,
+          attr,
           newDebug
         );
 
@@ -304,6 +337,18 @@ const globalSlice = createSlice({
         ...mergedSettings,
       };
     });
+
+    builder.addCase(
+      appSettingsInitializedLocalStorage.fulfilled,
+      (state, action) => {
+        const mergedSettings = action.payload;
+        // mergedSettings is a multi-level deep object
+        return {
+          ...mergedSettings,
+        };
+      }
+    );
+
     builder.addCase(getMemoryStorageStatus.fulfilled, (state, action) => {
       const { quota, usage, persistent } =
         action.payload as GlobalInitSlice["memory"];

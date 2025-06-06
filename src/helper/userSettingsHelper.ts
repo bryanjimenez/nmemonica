@@ -5,6 +5,7 @@ import {
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
 import { type AppSettingState } from "../slices";
+import { localStoreUserSettingAttrUpdate } from "./userSettingsLocalStorageHelper";
 
 export const localStorageKey = "userSettings";
 
@@ -77,6 +78,11 @@ export function userSettingAttrUpdate<T>(
   attr: string,
   value?: T
 ) {
+  // Anything under global duplicate in localStorage
+  if (path === "/global/") {
+    localStoreUserSettingAttrUpdate(time, state, path, attr, value);
+  }
+
   return indexDBUserSettingAttrUpdate(time, state, path, attr, value);
 }
 

@@ -28,7 +28,11 @@ import {
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
-import { appSettingsInitialized, logger } from "./slices/globalSlice";
+import {
+  appSettingsInitialized,
+  appSettingsInitializedLocalStorage,
+  logger,
+} from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { dropAudioWorker, initAudioWorker } from "./slices/voiceSlice";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
@@ -72,23 +76,26 @@ export default function App() {
     };
 
     if (cookies) {
-      void dispatch(appSettingsInitialized()).then(
-        () =>
-          void dispatch(serviceWorkerRegistered())
-            .unwrap()
-            .then((swStatus) => {
-              swMessageSubscribe(swMessageHandler);
+      // localStorage is fast.. avoids initial background flash
+      void dispatch(appSettingsInitializedLocalStorage()).then(() => {
+        void dispatch(appSettingsInitialized()).then(
+          () =>
+            void dispatch(serviceWorkerRegistered())
+              .unwrap()
+              .then((swStatus) => {
+                swMessageSubscribe(swMessageHandler);
 
-              dispatch(logger(`SW status: ${swStatus}`, DebugLevel.DEBUG));
-            })
-            .catch((e: Error) => {
-              dispatch(logger(e.message, DebugLevel.ERROR));
-              // eslint-disable-next-line no-console
-              console.log("service worker not running");
-              // eslint-disable-next-line no-console
-              console.log(e.message);
-            })
-      );
+                dispatch(logger(`SW status: ${swStatus}`, DebugLevel.DEBUG));
+              })
+              .catch((e: Error) => {
+                dispatch(logger(e.message, DebugLevel.ERROR));
+                // eslint-disable-next-line no-console
+                console.log("service worker not running");
+                // eslint-disable-next-line no-console
+                console.log(e.message);
+              })
+        );
+      });
     } else {
       // eslint-disable-next-line no-console
       console.log("cookies are disabled");
