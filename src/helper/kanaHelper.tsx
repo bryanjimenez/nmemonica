@@ -1,44 +1,49 @@
+import {
+  eNumber,
+  eSymbol,
+  hiragana,
+  jFP,
+  jHP,
+  kanji,
+  kanjirare,
+  katakana,
+  noma,
+  yoon,
+} from "./unicodeHelper";
 import data from "../../res/json/kana.json";
 
 /**
  * @param char the character to check against the Kanji table
  */
 export function isKanji(char: string) {
-  const common = "\u4E00-\u9FAF";
-  const rare = "\u3400-\u4DBF";
-  const exception = "\u3005"; // noma repeater from isPunctuation
-  return new RegExp("[" + common + rare + exception + "]").test(char);
+  return new RegExp("[" + kanji + kanjirare + noma + "]").test(char);
 }
 
 /**
  * @param char the character to check against the Hiragana table
  */
 export function isHiragana(char: string) {
-  return new RegExp("[\u3041-\u309F]").test(char);
+  return new RegExp("[" + hiragana + "]").test(char);
 }
 
 /**
  * @param char the character to check against the Katakana table
  */
 export function isKatakana(char: string) {
-  const fullWidth = "\u30A0-\u30FF";
-  return new RegExp("[" + fullWidth + "]").test(char);
+  return new RegExp("[" + katakana + "]").test(char);
 }
 
 /**
  * @param char character to check if is little
  */
 export function isYoon(char: string) {
-  return new RegExp("^[ゃャゅュょョ]$").test(char);
+  return new RegExp("^[" + yoon + "]$").test(char);
 }
 
 /**
  * @param char the character to check against the punctuation table
  */
 export function isFullWNumber(char: string) {
-  // English
-  const eNumber = "\uFF10-\uFF19";
-
   return new RegExp("[" + eNumber + "]").test(char);
 }
 
@@ -46,13 +51,6 @@ export function isFullWNumber(char: string) {
  * @param char the character to check against the punctuation table
  */
 export function isPunctuation(char: string) {
-  // English
-  const eSymbol = "\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF5E";
-  const eLetter = "\uFF21-\uFF3A\uFF41-\uFF5A"; /* eslint-disable-line */
-
-  // Japanese
-  const jFP = "\u3000-\u3004\u3006-\u303F"; // full width punctuation
-  const jHP = "\uFF61-\uFF65"; // half width
   return new RegExp("[" + jFP + jHP + eSymbol + "]").test(char);
 }
 

@@ -16,10 +16,11 @@ import React, {
 } from "react";
 import { useSelector } from "react-redux";
 
+import { CSVErrorCause } from "../../helper/csvHelper";
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import { AppSettingState, RootState } from "../../slices";
-import { readCsvToSheet } from "../../slices/sheetSlice";
+import { readCsvToSheet, readJsonSettings } from "../../slices/sheetSlice";
 import { properCase } from "../Games/KanjiGame";
 import "../../css/DragDrop.css";
 
@@ -88,8 +89,6 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 fileItem.name.slice(0, dot > -1 ? dot : undefined)
               );
               const xObj = await readCsvToSheet(text, sheetName);
-              // TODO: verify xObj (headers) prevent bad data sharing
-              // sheetDataToJSON()
 
               if (
                 data.find(
@@ -105,41 +104,47 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                   sheet: xObj,
                 });
               }
-            } catch {
-              w = [
-                ...w,
-                <span
-                  key={`${fileItem.name}-parse`}
-                >{`Failed to parse (${fileItem.name})`}</span>,
-              ];
-              setWarning((warn) => [...warn, ...w]);
+            } catch (exception) {
+              // default message
+              let key = `${fileItem.name}-parse`;
+              let msg = `Failed to parse (${fileItem.name})`;
+
+              if (exception instanceof Error && "cause" in exception) {
+                const errData = exception.cause as {
+                  code: CSVErrorCause;
+                  details: Set<string>;
+                };
+
+                if (errData.code === CSVErrorCause.BadFileContent) {
+                  // failed csv character sanitize
+                  let details: string[] = [];
+                  errData.details.forEach((d) => {
+                    const { u } = JSON.parse(d) as { u: string };
+                    details = [...details, "u" + u];
+                  });
+
+                  key = `${fileItem.name}-sanitize`;
+                  msg = `${fileItem.name} contains invalid character${details.length === 0 ? "" : "s"}: ${details.toString()}`;
+                } else if (
+                  errData.code === CSVErrorCause.MissingRequiredHeader
+                ) {
+                  // missing required header
+                  key = `${fileItem.name}-header`;
+                  msg = exception.message;
+                }
+              }
+
+              const errMsg = <span key={key}>{msg}</span>;
+
+              setWarning((warn) => [...warn, ...w, errMsg]);
             }
           };
 
           reader.readAsText(fileItem);
         } else if (isSettings && w.length === 0) {
-          void fileItem
-            .text()
-            .then((text) => {
-              const s = JSON.parse(text) as Partial<AppSettingState>;
-              // TODO: settings.json verify is AppSettingState
-
-              if (
-                data.find(
-                  (to) =>
-                    to.name === metaDataNames.settings.prettyName &&
-                    JSON.stringify(to.setting) === JSON.stringify(s)
-                ) === undefined
-              ) {
-                updateDataHandler({
-                  name: metaDataNames.settings.prettyName,
-                  origin: "FileSystem",
-                  text,
-                  setting: s,
-                });
-              }
-            })
-            .catch(() => {
+          void fileItem.text().then((text) => {
+            const s = readJsonSettings(text);
+            if (s instanceof Error) {
               w = [
                 ...w,
                 <span
@@ -147,7 +152,24 @@ export function DataSetFromDragDrop(props: DataSetFromDragDropProps) {
                 >{`Failed to parse (${fileItem.name})`}</span>,
               ];
               setWarning((warn) => [...warn, ...w]);
-            });
+              return;
+            }
+
+            if (
+              data.find(
+                (to) =>
+                  to.name === metaDataNames.settings.prettyName &&
+                  JSON.stringify(to.setting) === JSON.stringify(s)
+              ) === undefined
+            ) {
+              updateDataHandler({
+                name: metaDataNames.settings.prettyName,
+                origin: "FileSystem",
+                text,
+                setting: s,
+              });
+            }
+          });
         } else {
           setWarning((warn) => [...warn, ...w]);
         }

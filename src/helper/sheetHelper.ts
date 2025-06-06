@@ -271,30 +271,76 @@ export function sheetAddExtraRow(sheet: SheetData): SheetData {
   return withExtraRow;
 }
 
-export function searchInSheet(sheet: SheetData, query: string) {
+export function searchInSheet(
+  sheet: SheetData,
+  query: string
+): { ri: number; ci: number; text: string }[] {
   if (!sheet.rows) {
     return [];
   }
 
-  const result = Object.values(sheet.rows).reduce<[number, number, string][]>(
-    (acc, row: RowData, x) => {
-      if (typeof row !== "number" && "cells" in row) {
-        const find = Object.keys(row.cells).find((c) =>
-          row.cells[Number(c)].text?.toLowerCase().includes(query.toLowerCase())
-        );
-        if (find === undefined) return acc;
+  const result = Object.values(sheet.rows).reduce<
+    { ri: number; ci: number; text: string }[]
+  >((acc, row: RowData, y) => {
+    if (typeof row !== "number" && "cells" in row) {
+      const find = Object.keys(row.cells).find((c) => {
+        const { text } = row.cells[Number(c)];
+        if (text === undefined) {
+          return false;
+        }
+        return text.toLowerCase().includes(query.toLowerCase());
+      });
+      if (find === undefined) return acc;
 
-        const text = row.cells[Number(find)].text;
-        if (text === undefined) return acc;
+      const text = row.cells[Number(find)].text;
+      if (text === undefined) return acc;
 
-        const y = Number(find);
-        acc = [...acc, [x, y, text]];
-      }
+      const x = Number(find);
+      acc = [...acc, { ri: y, ci: x, text }];
+    }
 
-      return acc;
-    },
-    []
-  );
+    return acc;
+  }, []);
+
+  return result;
+}
+
+/**
+ * Validate a sheet cell by cell with a validator function
+ * @param sheet
+ * @param validator
+ */
+export function validateInSheet(
+  sheet: SheetData,
+  validator: (text: string) => Set<unknown>
+): { ri: number; ci: number; invalid: Set<unknown> }[] {
+  if (!sheet.rows) {
+    return [];
+  }
+
+  const result = Object.values(sheet.rows).reduce<
+    { ri: number; ci: number; invalid: Set<unknown> }[]
+  >((acc, row: RowData, y) => {
+    if (typeof row !== "number" && "cells" in row) {
+      const failedCells = Object.keys(row.cells).reduce<
+        { ri: number; ci: number; invalid: Set<unknown> }[]
+      >((acc, c) => {
+        const x = Number(c);
+        const { text } = row.cells[x];
+        if (text !== undefined) {
+          const invalid = validator(text);
+          if (invalid.size > 0) {
+            return [...acc, { ri: y, ci: x, invalid }];
+          }
+        }
+        return acc;
+      }, []);
+
+      acc = [...acc, ...failedCells];
+    }
+
+    return acc;
+  }, []);
 
   return result;
 }
@@ -592,7 +638,7 @@ function parseTagColumn(s: SheetData, termRow: number, tagCol: number) {
             ? (JSON.parse(text.trim()) as Record<string, string[]>)
             : { tags: [] };
       }
-    } catch (err) {
+    } catch {
       throw new Error("Failed to parse tags from sheet cell");
     }
   } else {

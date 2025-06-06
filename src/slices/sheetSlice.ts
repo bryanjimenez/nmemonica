@@ -3,15 +3,21 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getKanji } from "./kanjiSlice";
 import { getPhrase } from "./phraseSlice";
 import { getVocabulary } from "./vocabularySlice";
-import { csvToObject } from "../helper/csvHelper";
-import { jtox } from "../helper/jsonHelper";
-import { type FilledSheetData } from "../helper/sheetHelperImport";
+import {
+  CSVErrorCause,
+  SettingsErrorCause,
+  csvToObject,
+  validateCSVSheet,
+  validateJSONSettings,
+} from "../helper/csvHelper";
+import { jtox, sheetDataToJSON } from "../helper/jsonHelper";
 import { workbookSheetNames } from "../helper/sheetHelper";
-import { AppDispatch } from ".";
+import { type FilledSheetData } from "../helper/sheetHelperImport";
+import { unusualApostrophe } from "../helper/unicodeHelper";
 
-export interface SheetInitSlice {}
+import { AppDispatch, AppSettingState, isValidAppSettingsState } from ".";
 
-const initialState: SheetInitSlice = {};
+const initialState = {};
 
 class LineReadSimulator extends EventTarget {
   line(value: string) {
@@ -52,6 +58,23 @@ class LineReadSimulator extends EventTarget {
  * @param sheetName name of sheet
  */
 export function readCsvToSheet(text: string, sheetName: string) {
+  // replace unsual, but valid symbols with common ones
+  text = text.replaceAll(unusualApostrophe, "'");
+
+  const invalidInput = validateCSVSheet(text);
+
+  if (invalidInput.size > 0) {
+    return Promise.reject(
+      new Error("CSV contains invalid characters", {
+        cause: {
+          code: CSVErrorCause.BadFileContent,
+          details: invalidInput,
+          sheetName,
+        },
+      })
+    );
+  }
+
   const lrSimulator = new LineReadSimulator();
   lrSimulator.addEventListener("line", () => {});
 
@@ -65,7 +88,44 @@ export function readCsvToSheet(text: string, sheetName: string) {
 
   lrSimulator.close();
 
-  return objP;
+  return objP.then((sheet) => {
+    sheetDataToJSON(sheet);
+    // TODO: check csv column contains expected datatypes
+    return sheet;
+  });
+}
+
+/**
+ * Settings text to json parser
+ * @param text settings
+ * @throws when text contains invalid characters or if json is malformed
+ */
+export function readJsonSettings(text: string) {
+  try {
+    const invalidInput = validateJSONSettings(text);
+
+    if (invalidInput.size > 0) {
+      return new Error("Settings contains invalid characters", {
+        cause: {
+          code: SettingsErrorCause.BadFileContent,
+          details: invalidInput,
+        },
+      });
+    }
+
+    const settingsObject = JSON.parse(text) as Partial<AppSettingState>;
+    if (!isValidAppSettingsState(settingsObject)) {
+      return new Error("Unrecognized Settings", {
+        cause: { code: SettingsErrorCause.InvalidSettings },
+      });
+    }
+
+    return settingsObject;
+  } catch {
+    return new Error("Malformed JSON", {
+      cause: { code: SettingsErrorCause.InvalidJSONStructure },
+    });
+  }
 }
 
 export const importDatasets = createAsyncThunk(

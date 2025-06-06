@@ -8,6 +8,7 @@ import type {
   SourceVocabulary,
 } from "nmemonica";
 
+import { CSVErrorCause } from "./csvHelper";
 import { type FilledSheetData } from "./sheetHelperImport";
 import { Optional } from "../typings/utils";
 
@@ -279,12 +280,7 @@ export function sheets_sync_vocabulary(
         h.tag < 0 ||
         h.pronounce < 0
       ) {
-        const theHeaders = Object.entries(h);
-        const missIdx = theHeaders.findIndex(([_k, v]) => v < 0);
-        const name = 0;
-        throw new Error(
-          `Missing or incorrect header '${theHeaders[missIdx][name]}' in ${sheetName}.csv`
-        );
+        throw buildMissingHeaderError(sheetName, h);
       }
 
       if (i > 0) {
@@ -294,7 +290,15 @@ export function sheets_sync_vocabulary(
         };
 
         if (!vocabulary.japanese) {
-          throw new Error(`Missing first cell [${1},${i + 1}] in ${sheetName}`);
+          throw new Error(
+            `Missing first cell [${1},${i + 1}] in ${sheetName}`,
+            {
+              cause: {
+                code: CSVErrorCause.MissingFirstCell,
+                sheetName,
+              },
+            }
+          );
         }
 
         const key: string = md5(vocabulary.japanese);
@@ -356,12 +360,7 @@ export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
         h.lit < 0 ||
         h.lesson < 0
       ) {
-        const theHeaders = Object.entries(h);
-        const missIdx = theHeaders.findIndex(([_k, v]) => v < 0);
-        const name = 0;
-        throw new Error(
-          `Missing or incorrect header '${theHeaders[missIdx][name]}' in ${sheetName}.csv`
-        );
+        throw buildMissingHeaderError(sheetName, h);
       }
 
       if (i > 0) {
@@ -371,7 +370,15 @@ export function sheets_sync_phrases(sheetName: string, sheetData: string[][]) {
         };
 
         if (!phrase.japanese) {
-          throw new Error(`Missing first cell [${1},${i + 1}] in ${sheetName}`);
+          throw new Error(
+            `Missing first cell [${1},${i + 1}] in ${sheetName}`,
+            {
+              cause: {
+                code: CSVErrorCause.MissingFirstCell,
+                sheetName,
+              },
+            }
+          );
         }
 
         const key = md5(phrase.japanese);
@@ -425,12 +432,7 @@ export function sheets_sync_kanji(sheetName: string, sheetData: string[][]) {
     }
 
     if (h.english < 0 || h.kanji < 0 || h.pronounce < 0 || h.tag < 0) {
-      const theHeaders = Object.entries(h);
-      const missIdx = theHeaders.findIndex(([_k, v]) => v < 0);
-      const name = 0;
-      throw new Error(
-        `Missing or incorrect header '${theHeaders[missIdx][name]}' in ${sheetName}.csv`
-      );
+      throw buildMissingHeaderError(sheetName, h);
     }
 
     if (i > 0) {
@@ -441,7 +443,12 @@ export function sheets_sync_kanji(sheetName: string, sheetData: string[][]) {
       };
 
       if (!kanji.kanji) {
-        throw new Error(`Missing first cell [${1},${i + 1}] in ${sheetName}`);
+        throw new Error(`Missing first cell [${1},${i + 1}] in ${sheetName}`, {
+          cause: {
+            code: CSVErrorCause.MissingFirstCell,
+            sheetName,
+          },
+        });
       }
 
       const key = md5(kanji.kanji);
@@ -462,4 +469,29 @@ export function sheets_sync_kanji(sheetName: string, sheetData: string[][]) {
 
   const hash = md5(JSON.stringify(kanjiRecord)).slice(0, 4);
   return { hash, kanjiRecord };
+}
+
+function buildMissingHeaderError(
+  sheetName: string,
+  h: Partial<Record<keyof typeof prettyHeaders, number>>
+) {
+  const theHeaders = Object.entries(h) as [
+    keyof typeof prettyHeaders,
+    number,
+  ][];
+  // const missIdx = theHeaders.findIndex(([_k, v]) => v < 0);
+  const missing = theHeaders.filter(([_k, v]) => v < 0);
+  const prettyMissing = missing.map((el) => `${prettyHeaders[el[0]][0]}`);
+
+  return new Error(
+    // `Missing or incorrect header '${theHeaders[missIdx][name]}' in ${sheetName}.csv`,
+    `Missing or incorrect header '${prettyMissing.join(", ")}' in ${sheetName}.csv`,
+    {
+      cause: {
+        code: CSVErrorCause.MissingRequiredHeader,
+        details: prettyMissing,
+        sheetName,
+      },
+    }
+  );
 }

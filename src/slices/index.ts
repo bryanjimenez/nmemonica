@@ -47,4 +47,25 @@ export interface AppSettingState {
   particle: ParticleInitSlice["setting"];
 }
 
+/**
+ * Validator for AppSettingState Object
+ */
+export function isValidAppSettingsState(
+  settingObj: object
+): settingObj is Partial<AppSettingState> {
+  return Object.keys(settingObj).every((key) =>
+    [
+      "global",
+      "vocabulary",
+      "phrases",
+      "kanji",
+      "kana",
+      "opposites",
+      "particle",
+
+      "lastModified",
+    ].includes(key)
+  );
+}
+
 export default store;
