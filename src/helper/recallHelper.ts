@@ -2,7 +2,12 @@ import clamp from "lodash/clamp";
 import orderBy from "lodash/orderBy";
 import type { MetaDataObj } from "nmemonica";
 
-import { DebugLevel, daysSince, msgInnerTrim } from "./consoleHelper";
+import {
+  DebugLevel,
+  daysSince,
+  msgInnerTrim,
+  toMemorySize,
+} from "./consoleHelper";
 import { AppDispatch } from "../slices";
 import { logger } from "../slices/globalSlice";
 
@@ -457,9 +462,14 @@ export function recallNotificationHelper(
 
   const revSince = lastReview !== undefined ? daysSince(lastReview) : 0;
   const revInterval = daysBetweenReviews ?? 0;
-  const revDiff = (revInterval - revSince).toFixed(0);
-  const revNotification =
-    lastReview !== undefined ? revDiff.toString() : undefined;
+
+  const value = revInterval - revSince;
+  // const revDiff = (revInterval - revSince).toFixed(0);
+  // add metric postfix (SI)
+  const isNegative = value < 0;
+  const maybeBigValue = toMemorySize(Math.abs(value)).slice(0, -1);
+  const revDiff = (isNegative ? "-" : "") + maybeBigValue;
+  const revNotification = lastReview !== undefined ? revDiff : undefined;
 
   return revNotification;
 }

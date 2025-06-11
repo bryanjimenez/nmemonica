@@ -45,6 +45,10 @@ export function toMemorySize(value: number) {
     throw new Error("Expected a positive value");
   }
 
+  if (value < 1) {
+    return "0b";
+  }
+
   const exp = value.toExponential();
   const [man, exponent] = exp.split("e+").map((str) => Number(str));
   const rem = exponent % 3;
