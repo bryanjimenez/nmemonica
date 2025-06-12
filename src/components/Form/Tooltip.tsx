@@ -94,6 +94,13 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
     hiding.current = READY;
   }, []);
 
+  const onNotificationClickCB = useCallback(
+    (ev: React.MouseEvent<HTMLSpanElement>) => {
+      ev.preventDefault();
+    },
+    []
+  );
+
   return (
     <>
       <div
@@ -118,7 +125,9 @@ export function Tooltip(props: PropsWithChildren<TooltipProps>) {
           <FontAwesomeIcon icon={faBullseye} />
         </div>
         {props.notification !== undefined && (
-          <span className="notification">{props.notification}</span>
+          <span className="notification" onClick={onNotificationClickCB}>
+            {props.notification}
+          </span>
         )}
       </div>
       <ClickAwayListener
