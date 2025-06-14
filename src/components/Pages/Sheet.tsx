@@ -200,6 +200,15 @@ export default function Sheet() {
             cellStyleNames.warn
           );
 
+        errorStyle =
+          errorStyle ??
+          validateKanjiOneChar(
+            activeSheetName,
+            header,
+            replacedText,
+            cellStyleNames.warn
+          );
+
         const thisError =
           errorStyle !== undefined
             ? [{ ri, ci, name: activeSheetName }]
@@ -743,6 +752,32 @@ export default function Sheet() {
       </div>
     </>
   );
+}
+
+/**
+ * Validate Kanji cell has only one character *the kanji*
+ * @param activeSheetName
+ * @param cellHeader
+ * @param cellText
+ * @param errorStyle style to be set on error
+ */
+function validateKanjiOneChar(
+  activeSheetName: string,
+  cellHeader: string,
+  cellText: string,
+  errorStyle: cellStyleNames
+) {
+  let hasError: cellStyleNames | undefined = undefined;
+
+  if (
+    activeSheetName === workbookSheetNames.kanji.prettyName &&
+    prettyHeaders.kanji.includes(cellHeader) &&
+    cellText.length > 1
+  ) {
+    hasError = errorStyle;
+  }
+
+  return hasError;
 }
 
 /**
