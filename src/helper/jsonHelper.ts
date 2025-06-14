@@ -22,7 +22,7 @@ export type Phrase = Omit<
 export type Vocabulary = Omit<RawVocabulary, "uid" | "tags"> & { tag?: string };
 export type Kanji = Optional<RawKanji, "uid" | "tags"> & { tag?: string };
 
-const prettyHeaders = {
+export const prettyHeaders = {
   english: ["English"],
   japanese: ["Japanese"],
   grp: ["Group"],
