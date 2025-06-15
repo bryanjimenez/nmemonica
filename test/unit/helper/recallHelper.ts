@@ -1,3 +1,4 @@
+import "jsdom-global/register";
 import { expect } from "chai";
 import {
   SR_CORRECT_TRESHHOLD,
@@ -6,6 +7,7 @@ import {
   getPercentOverdue,
   calculateDaysBetweenReviews,
   spaceRepetitionOrder,
+  recallNotificationHelper,
 } from "../../../src/helper/recallHelper";
 import {
   xAgoDate,
@@ -418,6 +420,57 @@ describe("recallHelper", function () {
 
         expect(overdue, "lastView oldest first").to.deep.equal(expected);
       });
+    });
+  });
+
+  describe("recallNotificationHelper", function () {
+    const twoDaysAgo = xAgoDate(2);
+    it("undefined", function () {
+      const daysBetweenReviews = undefined;
+      const lastReview = twoDaysAgo;
+
+      const actual = recallNotificationHelper(daysBetweenReviews, lastReview);
+      expect(actual).to.equal(undefined);
+    });
+
+    it("big value", function () {
+      const daysBetweenReviews = 1004;
+      const lastReview = twoDaysAgo;
+
+      const expected = "1k";
+      const actual = recallNotificationHelper(daysBetweenReviews, lastReview);
+      expect(actual).to.be.string;
+      expect(actual).to.equal(expected);
+    });
+
+    it("small value", function () {
+      const daysBetweenReviews = 4;
+      const lastReview = twoDaysAgo;
+
+      const expected = "2";
+      const actual = recallNotificationHelper(daysBetweenReviews, lastReview);
+      expect(actual).to.be.string;
+      expect(actual).to.equal(expected);
+    });
+
+    it("negtive decimal value", function () {
+      const daysBetweenReviews = 1.99;
+      const lastReview = twoDaysAgo;
+
+      const expected = "-0";
+      const actual = recallNotificationHelper(daysBetweenReviews, lastReview);
+      expect(actual).to.be.string;
+      expect(actual).to.equal(expected);
+    });
+
+    it("negtive value", function () {
+      const daysBetweenReviews = 1;
+      const lastReview = twoDaysAgo;
+
+      const expected = "-1";
+      const actual = recallNotificationHelper(daysBetweenReviews, lastReview);
+      expect(actual).to.be.string;
+      expect(actual).to.equal(expected);
     });
   });
 });
