@@ -19,7 +19,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { WebRTCProvider } from "../../context/webRTC";
 import { validateCSVSheet } from "../../helper/csvHelper";
-import { sheetDataToJSON } from "../../helper/jsonHelper";
+import { furiganaParse } from "../../helper/JapaneseText";
+import { prettyHeaders, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
   getActiveSheet,
   getWorkbookFromIndexDB,
@@ -171,15 +172,58 @@ export default function Sheet() {
       grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
 
       // replace typed '\n' with newline inside cell
-      grid.on("cell-edited-done", (text, _ri, _ci) => {
-        grid.sheet.data.setSelectedCellText(
-          // characters to replace with \n
-          //    literal '\n'
-          //    two or more japanese spaces
-          //    two or more english spaces
-          text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n"),
-          "finished"
-        );
+      grid.on("cell-edited-done", (text, ri, ci) => {
+        let errorStyle: cellStyleNames | undefined = undefined;
+        const cell = grid.sheet.data.getCell(ri, ci);
+
+        // characters to replace with \n
+        //    literal '\n'
+        //    two or more japanese spaces
+        //    two or more english spaces
+        const replacedText = text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n");
+        grid.sheet.data.setSelectedCellText(replacedText, "finished");
+
+        const { activeSheetName } = getActiveSheet(grid);
+
+        // FIXME: can't access row directly...
+        const header = grid.sheet.data.rows._[0].cells[ci].text;
+        if (header === undefined) {
+          return;
+        }
+
+        errorStyle =
+          errorStyle ??
+          validateFuriganaParse(
+            activeSheetName,
+            header,
+            replacedText,
+            cellStyleNames.warn
+          );
+
+        errorStyle =
+          errorStyle ??
+          validateKanjiOneChar(
+            activeSheetName,
+            header,
+            replacedText,
+            cellStyleNames.warn
+          );
+
+        const thisError =
+          errorStyle !== undefined
+            ? [{ ri, ci, name: activeSheetName }]
+            : [
+                /** no error found */
+              ];
+        setHasError((prev) => [
+          ...prev.filter(
+            (e) => !(e.ri === ri && e.ci === ci && e.name === activeSheetName)
+          ),
+          ...thisError,
+        ]);
+
+        //@ts-expect-error nmemonica/x-spreadsheet todo
+        cell.style = errorStyle;
       });
 
       // store the coordinates
@@ -708,6 +752,64 @@ export default function Sheet() {
       </div>
     </>
   );
+}
+
+/**
+ * Validate Kanji cell has only one character *the kanji*
+ * @param activeSheetName
+ * @param cellHeader
+ * @param cellText
+ * @param errorStyle style to be set on error
+ */
+function validateKanjiOneChar(
+  activeSheetName: string,
+  cellHeader: string,
+  cellText: string,
+  errorStyle: cellStyleNames
+) {
+  let hasError: cellStyleNames | undefined = undefined;
+
+  if (
+    activeSheetName === workbookSheetNames.kanji.prettyName &&
+    prettyHeaders.kanji.includes(cellHeader) &&
+    cellText.length > 1
+  ) {
+    hasError = errorStyle;
+  }
+
+  return hasError;
+}
+
+/**
+ * Validate furigana parse for current cell text
+ * @param activeSheetName
+ * @param cellHeader
+ * @param cellText
+ * @param errorStyle style to be set on error
+ */
+function validateFuriganaParse(
+  activeSheetName: string,
+  cellHeader: string,
+  cellText: string,
+  errorStyle: cellStyleNames
+) {
+  let hasError: cellStyleNames | undefined = undefined;
+
+  if (
+    (activeSheetName === workbookSheetNames.phrases.prettyName ||
+      activeSheetName === workbookSheetNames.vocabulary.prettyName) &&
+    prettyHeaders.japanese.includes(cellHeader) &&
+    cellText.includes("\n")
+  ) {
+    const [pronunciation, ortography] = cellText.split("\n");
+
+    const result = furiganaParse(pronunciation, ortography);
+    if (result instanceof Error) {
+      hasError = errorStyle;
+    }
+  }
+
+  return hasError;
 }
 
 export { SheetMeta };
