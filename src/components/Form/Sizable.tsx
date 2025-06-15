@@ -24,16 +24,16 @@ interface SizableProps {
 
 export default function Sizable(props: SizableProps) {
   let largeValue, smallValue;
-  if (props.children) {
+  if (props.children !== undefined) {
     largeValue = props.children;
     smallValue = props.children;
   }
 
-  if (props.largeValue) {
+  if (props.largeValue !== undefined) {
     largeValue = props.largeValue;
   }
 
-  if (props.smallValue) {
+  if (props.smallValue !== undefined) {
     smallValue = props.smallValue;
   }
 
@@ -41,7 +41,7 @@ export default function Sizable(props: SizableProps) {
     (props.rootClassName !== undefined && classNames(props.rootClassName)) ||
     undefined;
   const unconditionalClass =
-    (props.className !== undefined && props.className) || {};
+    (props.className !== undefined && props.className !== undefined) || {};
 
   const largeViewClass =
     "d-none d-" +
@@ -58,7 +58,8 @@ export default function Sizable(props: SizableProps) {
       ? " " + classNames(props.smallClassName)
       : "");
 
-  const onClickHandler = () => {
+  const onClickHandler = (ev: React.MouseEvent<HTMLSpanElement>) => {
+    ev.preventDefault();
     if (typeof props.onClick === "function") {
       props.onClick();
     }

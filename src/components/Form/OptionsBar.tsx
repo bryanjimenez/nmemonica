@@ -38,11 +38,13 @@ export function ToggleFuriganaBtn(props: ToggleFuriganaBtnProps) {
         clickable: active,
         "sm-kanji": active,
       })}
-      onClick={
-        active && disabled !== true
-          ? () => toggleFurigana(vocabulary.uid)
-          : undefined
-      }
+      onClick={(ev: React.MouseEvent<HTMLDivElement>) => {
+        ev.preventDefault();
+
+        if (active && disabled !== true) {
+          toggleFurigana(vocabulary.uid);
+        }
+      }}
       aria-label="Toggle furigana"
     >
       {active ? (
