@@ -9,7 +9,7 @@ This repo contains the UI's source code for [Nmemonica](https://bryanjimenez.git
 
 
 ## User Documentation
-If you want documentation on how to use the application check out the [User Guide](https://bryanjimenez.github.io/docs/)
+If you want documentation on how to use the application check out the [User Guide](https://bryanjimenez.github.io/nmemonica/docs/)
 
 ## Installation (for development)
 ### *Prerequisites*
