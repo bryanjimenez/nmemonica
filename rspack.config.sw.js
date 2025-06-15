@@ -62,7 +62,6 @@ export default function rspackConfig(
             {
               loader: "builtin:swc-loader",
               options: {
-                sourceMap: true,
                 jsc: {
                   parser: {
                     syntax: "typescript",
