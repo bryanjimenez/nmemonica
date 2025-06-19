@@ -1,4 +1,4 @@
-import { SheetData } from "@nmemonica/x-spreadsheet";
+import { type SheetData } from "@nmemonica/x-spreadsheet";
 import {
   type PayloadAction,
   createAsyncThunk,
@@ -8,7 +8,7 @@ import merge from "lodash/fp/merge";
 import type { GroupListMap, MetaDataObj, RawVocabulary } from "nmemonica";
 
 import { logger } from "./globalSlice";
-import { getSheetFromIndexDB } from "./indexedDBSlice";
+import { getSheetFromIndexDB, getWorkbookFromIndexDB } from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -32,7 +32,6 @@ import {
 } from "../helper/reducerHelper";
 import {
   getTagsFromSheet,
-  getWorkbookFromIndexDB,
   setTagsFromSheet,
   workbookSheetNames,
 } from "../helper/sheetHelper";
@@ -146,12 +145,14 @@ export const vocabularySettingsFromAppStorage = createAsyncThunk(
 
 export const toggleVocabularyTag = createAsyncThunk(
   `${SLICE_NAME}/toggleVocabularyTag`,
-  (arg: { query: string; tag: string }) => {
+  (arg: { query: string; tag: string }, thunkAPI) => {
     const { query, tag } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB(["vocabulary"]).then(
-      (sheetArr: SheetData[]) => {
+    return thunkAPI
+      .dispatch(getWorkbookFromIndexDB(["vocabulary"]))
+      .unwrap()
+      .then((sheetArr: SheetData[]) => {
         // Get current tags for term
         const vIdx = sheetArr.findIndex(
           (s) => s.name.toLowerCase() === sheetName.toLowerCase()
@@ -180,8 +181,7 @@ export const toggleVocabularyTag = createAsyncThunk(
             // TODO: update json?
             // TODO: update state
           });
-      }
-    );
+      });
   }
 );
 
@@ -191,7 +191,9 @@ export const getVocabularyTags = createAsyncThunk(
     const { query } = arg;
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
-    return getWorkbookFromIndexDB(["vocabulary"])
+    return thunkAPI
+      .dispatch(getWorkbookFromIndexDB(["vocabulary"]))
+      .unwrap()
       .then((sheetArr: SheetData[]) => {
         // Get current tags for term
         const vIdx = sheetArr.findIndex(

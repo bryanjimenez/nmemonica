@@ -7,14 +7,7 @@ import { MetaDataObj } from "nmemonica";
 
 import { isNumber } from "./arrayHelper";
 import { objectToCSV } from "./csvHelper";
-import { jtox } from "./jsonHelper";
 import { getLastCellIdx } from "./sheetHelperImport";
-import {
-  IDBErrorCause,
-  IDBStores,
-  getIDBItem,
-  openIDB,
-} from "../../pwa/helper/idbHelper";
 import { deleteMetadata } from "../slices/settingHelper";
 
 /**
@@ -66,82 +59,6 @@ export function getActiveSheet(workbook: Spreadsheet) {
   }
 
   return activeSheetName;
-}
-
-// TODO: move this to indexedDBWorker
-/**
- * Retrieves worksheet from:
- * indexedDB
- * cache
- * or creates placeholders
- *
- * @param required List of required sheets in workbook. Any missing are created (placeholders).
- */
-export function getWorkbookFromIndexDB(
-  required?: (keyof typeof workbookSheetNames)[]
-) {
-  return openIDB()
-    .then((db) => {
-      // if indexedDB has stored workbook
-      const stores = Array.from(db.objectStoreNames);
-
-      const ErrorWorkbookMissing = new Error("Workbook not stored", {
-        cause: { code: IDBErrorCause.NoResult },
-      });
-      if (!stores.includes(IDBStores.WORKBOOK)) {
-        throw ErrorWorkbookMissing;
-      }
-
-      // use stored workbook
-      return getIDBItem({ db, store: IDBStores.WORKBOOK }, "0").then((res) => {
-        if (!(IDBStores.WORKBOOK in res) || res.workbook.length === 0) {
-          throw ErrorWorkbookMissing;
-        }
-
-        required?.forEach((sheetName) => {
-          const sheet = res.workbook.find(
-            (s) =>
-              s.name.toLowerCase() ===
-              workbookSheetNames[sheetName].prettyName.toLowerCase()
-          );
-          if (sheet === undefined) {
-            // insert an empty required sheet
-            res.workbook.push(
-              jtox(
-                {
-                  /** no data just headers */
-                },
-                workbookSheetNames[sheetName].prettyName
-              )
-            );
-          }
-        });
-
-        return res.workbook;
-      });
-    })
-    .catch(() => {
-      return [
-        jtox(
-          {
-            /** no data just headers */
-          },
-          workbookSheetNames.phrases.prettyName
-        ),
-        jtox(
-          {
-            /** no data just headers */
-          },
-          workbookSheetNames.vocabulary.prettyName
-        ),
-        jtox(
-          {
-            /** no data just headers */
-          },
-          workbookSheetNames.kanji.prettyName
-        ),
-      ];
-    });
 }
 
 /**

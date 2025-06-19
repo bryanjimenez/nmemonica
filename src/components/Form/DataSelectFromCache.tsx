@@ -8,12 +8,14 @@ import {
 } from "@primer/octicons-react";
 import classNames from "classnames";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 
 import { metaDataNames, workbookSheetNames } from "../../helper/sheetHelper";
 import {
   type SyncDataFile,
   dataTransferAggregator,
 } from "../../helper/transferHelper";
+import type { AppDispatch } from "../../typings/slices";
 
 interface DataSelectFromCacheProps {
   data: SyncDataFile[];
@@ -21,6 +23,7 @@ interface DataSelectFromCacheProps {
 }
 
 export function DataSelectFromCache(props: DataSelectFromCacheProps) {
+  const dispatch = useDispatch<AppDispatch>();
   const { updateDataHandler, data } = props;
 
   const [available, setAvailable] = useState<string[]>([]);
@@ -36,7 +39,7 @@ export function DataSelectFromCache(props: DataSelectFromCacheProps) {
       return;
     }
 
-    void dataTransferAggregator()
+    void dataTransferAggregator(dispatch)
       .then((files) => {
         files.forEach((fileItem) => {
           const dot = fileItem.fileName.indexOf(".");
@@ -49,7 +52,7 @@ export function DataSelectFromCache(props: DataSelectFromCacheProps) {
         });
       })
       .then(() => setLoading(false));
-  }, []);
+  }, [dispatch]);
 
   const addRemoveItemCB = useCallback(
     (prettyName: string) => () => {

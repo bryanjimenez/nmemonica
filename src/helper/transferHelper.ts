@@ -9,17 +9,21 @@ import {
 } from "./csvHelper";
 import { sheetDataToJSON } from "./jsonHelper";
 import {
-  getWorkbookFromIndexDB,
   metaDataNames,
   workbookSheetNames,
   xObjectToCsvText,
 } from "./sheetHelper";
-import { FilledSheetData } from "./sheetHelperImport";
+import { type FilledSheetData } from "./sheetHelperImport";
 import { unusualApostrophe } from "./unicodeHelper";
 import { getStudyProgress, getUserSettings } from "./userSettingsHelper";
 import { properCase } from "../components/Games/KanjiGame";
+import { getWorkbookFromIndexDB } from "../slices/indexedDBSlice";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
-import type { AppProgressState, AppSettingState } from "../typings/slices";
+import type {
+  AppDispatch,
+  AppProgressState,
+  AppSettingState,
+} from "../typings/slices";
 
 export interface SyncDataFile {
   name: string;
@@ -300,6 +304,7 @@ export function parseJSONToStudyProgress(jsonText: string) {
  * Gathers datasets from file system or app memory
  */
 export function dataTransferAggregator(
+  dispatch: AppDispatch,
   fileData?: SyncDataFile[]
 ): Promise<SyncDataFile[]> {
   // get everything if left unspecified
@@ -345,7 +350,8 @@ export function dataTransferAggregator(
       const workbookText = new Promise<SyncDataFile[]>(
         (bookResolve, bookReject) => {
           if (workbookReq.length > 0) {
-            getWorkbookFromIndexDB()
+            dispatch(getWorkbookFromIndexDB())
+              .unwrap()
               .then(
                 (workbook) =>
                   workbook.filter((sheet) =>

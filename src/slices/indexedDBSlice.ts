@@ -1,3 +1,4 @@
+import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 import { workbookSheetNames } from "../helper/sheetHelper";
@@ -6,14 +7,13 @@ import { type FilledSheetData } from "../helper/sheetHelperImport";
 const INDEXDB_WORKER_NAME = "indexed-db-worker.js";
 
 export interface IndexedDBWorkerReq {
-  action: "sheet" | "workbook";
-  sheetName?: keyof typeof workbookSheetNames;
-  required?: (keyof typeof workbookSheetNames)[];
+  getSheet?: { sheetName: keyof typeof workbookSheetNames };
+  getWorkbook?: { required?: (keyof typeof workbookSheetNames)[] };
 }
 
 function workerConnection(worker: Worker, req: IndexedDBWorkerReq) {
-  return new Promise<FilledSheetData>((resolve, reject) => {
-    const wMsgHandler = (event: MessageEvent<FilledSheetData | Error>) => {
+  return new Promise<unknown>((resolve, reject) => {
+    const wMsgHandler = (event: MessageEvent<unknown>) => {
       if (event.data instanceof Error) {
         reject(event.data);
       } else {
@@ -42,20 +42,26 @@ function workerConnection(worker: Worker, req: IndexedDBWorkerReq) {
  */
 export const getSheetFromIndexDB = createAsyncThunk(
   "indexedDB/getSheetFromIndexDB",
-  async (sheetName: keyof typeof workbookSheetNames) => {
-    const req: IndexedDBWorkerReq = { action: "sheet", sheetName };
+  (sheetName: keyof typeof workbookSheetNames) => {
+    const req: IndexedDBWorkerReq = { getSheet: { sheetName } };
     const worker = new Worker(INDEXDB_WORKER_NAME);
 
-    return workerConnection(worker, req);
+    return workerConnection(worker, req) as Promise<FilledSheetData>;
   }
 );
 
-export const getWorkbookFromIndexDBAsync = createAsyncThunk(
+/**
+ * Retrieves workbook from:
+ * indexedDB
+ * cache
+ * or creates placeholders
+ */
+export const getWorkbookFromIndexDB = createAsyncThunk(
   "indexedDB/getWorkbookFromIndexDB",
-  async (required: (keyof typeof workbookSheetNames)[]) => {
-    const req: IndexedDBWorkerReq = { action: "workbook", required };
+  (required?: (keyof typeof workbookSheetNames)[]) => {
+    const req: IndexedDBWorkerReq = { getWorkbook: { required } };
     const worker = new Worker(INDEXDB_WORKER_NAME);
 
-    return workerConnection(worker, req);
+    return workerConnection(worker, req) as Promise<SheetData[]>;
   }
 );

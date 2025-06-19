@@ -110,17 +110,19 @@ const wSelf = globalThis.self as unknown as Worker;
 wSelf.addEventListener("message", messageHandler);
 
 function messageHandler(event: MessageEvent) {
-  const { action, sheetName, required } = event.data as IndexedDBWorkerReq;
+  const req = event.data as IndexedDBWorkerReq;
 
   try {
-    if (action === "sheet") {
+    if (req.getSheet !== undefined) {
+      const { sheetName } = req.getSheet;
       if (sheetName === undefined) {
         throw new Error("Required sheetName");
       }
       void getSheetFromIndexDB(sheetName).then((sheet) =>
         wSelf.postMessage(sheet)
       );
-    } else {
+    } else if (req.getWorkbook !== undefined) {
+      const { required } = req.getWorkbook;
       void getWorkbookFromIndexDB(required).then((workbook) =>
         wSelf.postMessage(workbook)
       );

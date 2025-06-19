@@ -1,11 +1,11 @@
 import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+import { getWorkbookFromIndexDB } from "./indexedDBSlice";
 import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { csvToObject } from "../helper/csvHelper";
 import { sheetDataToJSON } from "../helper/jsonHelper";
 import {
-  getWorkbookFromIndexDB,
   removeLastRowIfBlank,
   updateEditedUID,
   workbookSheetNames,
@@ -156,8 +156,10 @@ export const importWorkbook = createAsyncThunk(
     const allSheetRequired = Object.keys(workbookSheetNames).map(
       (k) => k as keyof typeof workbookSheetNames
     );
-    const workbookP = getWorkbookFromIndexDB(allSheetRequired).then(
-      (dbWorkbook) => {
+    const workbookP = thunkAPI
+      .dispatch(getWorkbookFromIndexDB(allSheetRequired))
+      .unwrap()
+      .then((dbWorkbook) => {
         const trimmed = Object.values(workbookSheetNames).map((w) => {
           const { prettyName: prettyName } = w;
 
@@ -195,8 +197,7 @@ export const importWorkbook = createAsyncThunk(
 
             return;
           });
-      }
-    );
+      });
 
     return workbookP;
   }

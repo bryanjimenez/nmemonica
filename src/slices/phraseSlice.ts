@@ -1,4 +1,4 @@
-import { SheetData } from "@nmemonica/x-spreadsheet";
+import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import type {
@@ -9,7 +9,7 @@ import type {
 } from "nmemonica";
 
 import { logger } from "./globalSlice";
-import { getSheetFromIndexDB } from "./indexedDBSlice";
+import { getSheetFromIndexDB, getWorkbookFromIndexDB } from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -29,7 +29,6 @@ import {
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import {
   getTagsFromSheet,
-  getWorkbookFromIndexDB,
   setTagsFromSheet,
   workbookSheetNames,
 } from "../helper/sheetHelper";
@@ -201,43 +200,46 @@ export const phraseSettingsFromAppStorage = createAsyncThunk(
 
 export const togglePhraseTag = createAsyncThunk(
   `${SLICE_NAME}/togglePhraseTag`,
-  (arg: { query: string; tag: string }, _thunkAPI) => {
+  (arg: { query: string; tag: string }, thunkAPI) => {
     const { query, tag } = arg;
     // const dispatch = thunkAPI.dispatch as AppDispatch;
     const sheetName = workbookSheetNames.phrases.prettyName;
 
-    return getWorkbookFromIndexDB(["phrases"]).then((sheetArr: SheetData[]) => {
-      // Get current tags for term
-      const vIdx = sheetArr.findIndex(
-        (s) => s.name.toLowerCase() === sheetName.toLowerCase()
-      );
+    return thunkAPI
+      .dispatch(getWorkbookFromIndexDB(["phrases"]))
+      .unwrap()
+      .then((sheetArr: SheetData[]) => {
+        // Get current tags for term
+        const vIdx = sheetArr.findIndex(
+          (s) => s.name.toLowerCase() === sheetName.toLowerCase()
+        );
 
-      const s = { ...sheetArr[vIdx] };
+        const s = { ...sheetArr[vIdx] };
 
-      const updatedSheet = setTagsFromSheet(s, query, tag);
+        const updatedSheet = setTagsFromSheet(s, query, tag);
 
-      const wb = [
-        ...sheetArr.filter(
-          (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
-        ),
-        updatedSheet,
-      ];
+        const wb = [
+          ...sheetArr.filter(
+            (s) => s.name.toLowerCase() !== sheetName.toLowerCase()
+          ),
+          updatedSheet,
+        ];
 
-      // Save to indexedDB
-      return openIDB()
-        .then((db) =>
-          putIDBItem(
-            { db, store: IDBStores.WORKBOOK },
-            { key: "0", workbook: wb }
+        // Save to indexedDB
+        return openIDB()
+          .then((db) =>
+            putIDBItem(
+              { db, store: IDBStores.WORKBOOK },
+              { key: "0", workbook: wb }
+            )
           )
-        )
-        .then(() => {
-          // TODO: update state
-          // wb.forEach(s=>{
-          //   refreshAfterUpdate(dispatch,s.name)
-          // })
-        });
-    });
+          .then(() => {
+            // TODO: update state
+            // wb.forEach(s=>{
+            //   refreshAfterUpdate(dispatch,s.name)
+            // })
+          });
+      });
   }
 );
 
@@ -247,7 +249,9 @@ export const getPhraseTags = createAsyncThunk(
     const { query } = arg;
     const sheetName = workbookSheetNames.phrases.prettyName;
 
-    return getWorkbookFromIndexDB(["phrases"])
+    return thunkAPI
+      .dispatch(getWorkbookFromIndexDB(["phrases"]))
+      .unwrap()
       .then((sheetArr: SheetData[]) => {
         // Get current tags for term
         const vIdx = sheetArr.findIndex(
