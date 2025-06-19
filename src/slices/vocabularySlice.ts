@@ -8,6 +8,7 @@ import merge from "lodash/fp/merge";
 import type { GroupListMap, MetaDataObj, RawVocabulary } from "nmemonica";
 
 import { logger } from "./globalSlice";
+import { getSheetFromIndexDB } from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -30,7 +31,6 @@ import {
   buildVocabularyArray,
 } from "../helper/reducerHelper";
 import {
-  getSheetFromIndexDB,
   getTagsFromSheet,
   getWorkbookFromIndexDB,
   setTagsFromSheet,
@@ -107,15 +107,19 @@ export const vocabularyInitState: VocabularyInitSlice = {
  */
 export const getVocabulary = createAsyncThunk(
   `${SLICE_NAME}/getVocabulary`,
-  async () => {
-    return getSheetFromIndexDB(SLICE_NAME).then((sheet) => {
-      const { data: value, hash: version } = sheetDataToJSON(sheet) as {
-        data: Record<string, Vocabulary>;
-        hash: string;
-      };
+  async (_, thunkAPI) => {
+    return thunkAPI
+      .dispatch(getSheetFromIndexDB(SLICE_NAME))
+      .unwrap()
 
-      return { value, version };
-    });
+      .then((sheet) => {
+        const { data: value, hash: version } = sheetDataToJSON(sheet) as {
+          data: Record<string, Vocabulary>;
+          hash: string;
+        };
+
+        return { value, version };
+      });
   }
 );
 

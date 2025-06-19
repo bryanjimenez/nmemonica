@@ -49,6 +49,10 @@ export default function rspackConfig(
         filename: "voice-worker-en.js",
         import: "./src/workers/voiceWorker-en.ts",
       },
+      "indexed-db-worker": {
+        filename: "indexed-db-worker.js",
+        import: "./src/workers/indexedDBWorker.ts",
+      },
     },
     output: {
       filename: "[name].[chunkhash:8].js",

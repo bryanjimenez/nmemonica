@@ -8,9 +8,9 @@ import {
   getWorkbookFromIndexDB,
   removeLastRowIfBlank,
   updateEditedUID,
-  updateStateAfterWorkbookEdit,
   workbookSheetNames,
 } from "../helper/sheetHelper";
+import { updateStateAfterWorkbookEdit } from "../helper/sheetHelperExtras";
 import {
   type FilledSheetData,
   isFilledSheetData,

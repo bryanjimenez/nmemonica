@@ -9,6 +9,7 @@ import type {
 } from "nmemonica";
 
 import { logger } from "./globalSlice";
+import { getSheetFromIndexDB } from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -27,7 +28,6 @@ import {
 } from "../helper/recallHelper";
 import { buildGroupObject, getPropsFromTags } from "../helper/reducerHelper";
 import {
-  getSheetFromIndexDB,
   getTagsFromSheet,
   getWorkbookFromIndexDB,
   setTagsFromSheet,
@@ -156,22 +156,25 @@ export function buildPhraseArray<T extends SourcePhrase>(
 export const getPhrase = createAsyncThunk(
   `${SLICE_NAME}/getPhrase`,
   async (_arg, thunkAPI) => {
-    return getSheetFromIndexDB(SLICE_NAME).then((sheet) => {
-      const { data: jsonValue, hash: version } = sheetDataToJSON(sheet) as {
-        data: Record<string, SourcePhrase>;
-        hash: string;
-      };
+    return thunkAPI
+      .dispatch(getSheetFromIndexDB(SLICE_NAME))
+      .unwrap()
+      .then((sheet) => {
+        const { data: jsonValue, hash: version } = sheetDataToJSON(sheet) as {
+          data: Record<string, SourcePhrase>;
+          hash: string;
+        };
 
-      const groups = buildGroupObject(jsonValue);
-      const { values, errors } = buildPhraseArray(jsonValue);
-      if (errors) {
-        errors.forEach((e) => {
-          thunkAPI.dispatch(logger(e, DebugLevel.WARN));
-        });
-      }
+        const groups = buildGroupObject(jsonValue);
+        const { values, errors } = buildPhraseArray(jsonValue);
+        if (errors) {
+          errors.forEach((e) => {
+            thunkAPI.dispatch(logger(e, DebugLevel.WARN));
+          });
+        }
 
-      return { version, value: jsonValue, values, groups };
-    });
+        return { version, value: jsonValue, values, groups };
+      });
   }
 );
 

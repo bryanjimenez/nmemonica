@@ -4,6 +4,7 @@ import md5 from "md5";
 import type { MetaDataObj, RawKanji } from "nmemonica";
 
 import { logger } from "./globalSlice";
+import { getSheetFromIndexDB } from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -24,7 +25,6 @@ import {
   buildTagObject,
   getPropsFromTags,
 } from "../helper/reducerHelper";
-import { getSheetFromIndexDB } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
@@ -89,12 +89,14 @@ export const kanjiInitState: KanjiInitSlice = {
 };
 
 /**
- * Fetch vocabulary
+ * Fetch kanji
  */
 export const getKanji = createAsyncThunk(
   `${SLICE_NAME}/getKanji`,
   async (_, thunkAPI) => {
-    return getSheetFromIndexDB(SLICE_NAME)
+    return thunkAPI
+      .dispatch(getSheetFromIndexDB(SLICE_NAME))
+      .unwrap()
       .then((sheet) => {
         const { data: value, hash: version } = sheetDataToJSON(sheet) as {
           data: Record<string, Kanji>;
