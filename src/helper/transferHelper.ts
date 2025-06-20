@@ -15,9 +15,12 @@ import {
 } from "./sheetHelper";
 import { type FilledSheetData } from "./sheetHelperImport";
 import { unusualApostrophe } from "./unicodeHelper";
-import { getStudyProgress, getUserSettings } from "./userSettingsHelper";
+import { getUserSettings } from "./userSettingsHelper";
 import { properCase } from "../components/Games/KanjiGame";
-import { getWorkbookFromIndexDB } from "../slices/indexedDBSlice";
+import {
+  getUserProgress,
+  getWorkbookFromIndexDB,
+} from "../slices/indexedDBSlice";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
 import type {
   AppDispatch,
@@ -409,7 +412,8 @@ export function dataTransferAggregator(
       const progressText = new Promise<SyncDataFile[]>(
         (progResolve, progReject) => {
           if (progressReq.length > 0) {
-            getStudyProgress()
+            dispatch(getUserProgress())
+              .unwrap()
               .then((progress) => {
                 if (Object.keys(progress).length === 0) {
                   return [];

@@ -9,7 +9,11 @@ import type {
 } from "nmemonica";
 
 import { logger } from "./globalSlice";
-import { getSheetFromIndexDB, getWorkbookFromIndexDB } from "./indexedDBSlice";
+import {
+  getSheetFromIndexDB,
+  getWorkbookFromIndexDB,
+  updateUserProgress,
+} from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -36,7 +40,6 @@ import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
   userSettingAttrUpdate,
-  userStudyProgressAttrUpdate,
 } from "../helper/userSettingsHelper";
 import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { RootState } from "../typings/slices";
@@ -299,9 +302,10 @@ export const setPhraseAccuracy = createAsyncThunk(
       }
     );
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
   }
 );
 
@@ -322,9 +326,10 @@ export const setPhraseDifficulty = createAsyncThunk(
       }
     );
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
   }
 );
 
@@ -341,9 +346,10 @@ export const updateSpaceRepPhrase = createAsyncThunk(
       date: true,
     });
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, value.record).then(
-      () => value
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: value.record }))
+      .unwrap()
+      .then(() => value);
   }
 );
 
@@ -356,9 +362,10 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const spaceRep = state.metadata;
     const value = updateAction(uid, spaceRep);
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, value.newValue).then(
-      () => value
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: value.newValue }))
+      .unwrap()
+      .then(() => value);
   }
 );
 
@@ -372,9 +379,10 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const newValue = removeAction(uid, spaceRep);
 
     if (newValue) {
-      return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-        () => newValue
-      );
+      return thunkAPI
+        .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+        .unwrap()
+        .then(() => newValue);
     } else {
       return Promise.resolve(newValue);
     }
@@ -383,8 +391,11 @@ export const removeFromSpaceRepetition = createAsyncThunk(
 
 export const batchRepetitionUpdate = createAsyncThunk(
   `${SLICE_NAME}/batchRepetitionUpdate`,
-  (payload: Record<string, MetaDataObj | undefined>, _thunkAPI) =>
-    userStudyProgressAttrUpdate(SLICE_NAME, payload).then(() => payload)
+  (payload: Record<string, MetaDataObj | undefined>, thunkAPI) =>
+    thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: payload }))
+      .unwrap()
+      .then(() => payload)
 );
 
 export const deleteMetaPhrase = createAsyncThunk(
@@ -395,9 +406,12 @@ export const deleteMetaPhrase = createAsyncThunk(
 
     const newValue = deleteMetadata(uidList, spaceRep);
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue.record).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(
+        updateUserProgress({ path: SLICE_NAME, value: newValue.record })
+      )
+      .unwrap()
+      .then(() => newValue);
   }
 );
 

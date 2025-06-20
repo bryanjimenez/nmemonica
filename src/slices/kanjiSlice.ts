@@ -4,7 +4,7 @@ import md5 from "md5";
 import type { MetaDataObj, RawKanji } from "nmemonica";
 
 import { logger } from "./globalSlice";
-import { getSheetFromIndexDB } from "./indexedDBSlice";
+import { getSheetFromIndexDB, updateUserProgress } from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -29,7 +29,6 @@ import { MEMORIZED_THRLD } from "../helper/sortHelper";
 import {
   userSettingAttrDelete,
   userSettingAttrUpdate,
-  userStudyProgressAttrUpdate,
 } from "../helper/userSettingsHelper";
 import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { RootState } from "../typings/slices";
@@ -150,9 +149,10 @@ export const setKanjiAccuracy = createAsyncThunk(
       }
     );
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
   }
 );
 
@@ -173,9 +173,10 @@ export const setKanjiDifficulty = createAsyncThunk(
       }
     );
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
   }
 );
 
@@ -192,9 +193,10 @@ export const updateSpaceRepKanji = createAsyncThunk(
       date: true,
     });
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, value.record).then(
-      () => value
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: value.record }))
+      .unwrap()
+      .then(() => value);
   }
 );
 
@@ -207,9 +209,10 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const spaceRep = state.metadata;
     const value = updateAction(uid, spaceRep);
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, value.newValue).then(
-      () => value
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: value.newValue }))
+      .unwrap()
+      .then(() => value);
   }
 );
 
@@ -223,9 +226,10 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const newValue = removeAction(uid, spaceRep);
 
     if (newValue) {
-      return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-        () => newValue
-      );
+      return thunkAPI
+        .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+        .unwrap()
+        .then(() => newValue);
     } else {
       return Promise.resolve(newValue);
     }
@@ -234,8 +238,12 @@ export const removeFromSpaceRepetition = createAsyncThunk(
 
 export const batchRepetitionUpdate = createAsyncThunk(
   `${SLICE_NAME}/batchRepetitionUpdate`,
-  (payload: Record<string, MetaDataObj | undefined>, _thunkAPI) =>
-    userStudyProgressAttrUpdate(SLICE_NAME, payload).then(() => payload)
+  (payload: Record<string, MetaDataObj | undefined>, thunkAPI) =>
+    thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: payload }))
+      .unwrap()
+
+      .then(() => payload)
 );
 
 export const deleteMetaKanji = createAsyncThunk(
@@ -246,9 +254,12 @@ export const deleteMetaKanji = createAsyncThunk(
 
     const newValue = deleteMetadata(uidList, spaceRep);
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue.record).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(
+        updateUserProgress({ path: SLICE_NAME, value: newValue.record })
+      )
+      .unwrap()
+      .then(() => newValue);
   }
 );
 

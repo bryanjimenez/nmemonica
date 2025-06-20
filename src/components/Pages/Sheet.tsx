@@ -45,12 +45,12 @@ import {
   parseSettingsAndProgress,
   parseWorkbook,
 } from "../../helper/transferHelper";
-import {
-  setStudyProgress,
-  setUserSetting,
-} from "../../helper/userSettingsHelper";
+import { setUserSetting } from "../../helper/userSettingsHelper";
 import { appSettingsInitialized } from "../../slices/globalSlice";
-import { getWorkbookFromIndexDB } from "../../slices/indexedDBSlice";
+import {
+  getWorkbookFromIndexDB,
+  setUserProgress,
+} from "../../slices/indexedDBSlice";
 import { importWorkbook, saveSheet } from "../../slices/sheetSlice";
 import type { AppDispatch, RootState } from "../../typings/slices";
 import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
@@ -376,7 +376,7 @@ export default function Sheet() {
       }
       if (progress !== undefined && Object.keys(progress).length > 0) {
         // write to device's local storage
-        const progressP = setStudyProgress(progress);
+        const progressP = dispatch(setUserProgress(progress)).unwrap();
 
         importCompleteP = [...importCompleteP, progressP];
       }

@@ -1,20 +1,14 @@
-import type { MetaDataObj } from "nmemonica";
-
-import { dataSetNames } from "./sheetHelper";
 import {
-  getIndexDBStudyProgress,
   getIndexDBUserSettings,
   indexDBUserSettingAttrDelete,
   indexDBUserSettingAttrUpdate,
-  indexDBUserStudyProgressAttrUpdate,
-  setIndexDBStudyProgress,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
 import {
   localStoreUserSettingAttrUpdate,
   setLocalStorageUserSettings,
 } from "./userSettingsLocalStorageHelper";
-import type { AppProgressState, AppSettingState } from "../typings/slices";
+import type { AppSettingState } from "../typings/slices";
 
 /**
  * Reads a value from storage
@@ -89,13 +83,6 @@ export function userSettingAttrUpdate<T>(
   return indexDBUserSettingAttrUpdate(state, path, attr, value);
 }
 
-export function userStudyProgressAttrUpdate(
-  path: (typeof dataSetNames)[number],
-  value: Record<string, MetaDataObj | undefined>
-) {
-  return indexDBUserStudyProgressAttrUpdate(path, value);
-}
-
 /**
  * Modifies an attribute or toggles the existing value
  */
@@ -120,40 +107,4 @@ export function setUserSetting(value: Partial<AppSettingState>) {
  */
 export function getUserSettings() {
   return getIndexDBUserSettings();
-}
-
-/**
- * Store a whole study progress object
- */
-export function setStudyProgress(value: Partial<AppProgressState>) {
-  return Promise.all(
-    dataSetNames.reduce((acc, name) => {
-      if (value[name] !== undefined) {
-        return [...acc, setIndexDBStudyProgress(name, value[name])];
-      }
-      return acc;
-    }, [] as Promise<unknown>[])
-  ).then(() => {});
-}
-
-/**
- * Retrieve study progress
- */
-export function getStudyProgress() {
-  return Promise.all(
-    dataSetNames.map((name) => getIndexDBStudyProgress(name))
-  ).then((states) =>
-    states.reduce(
-      (acc, state, i) => {
-        if (state !== null && Object.keys(state).length > 0) {
-          return { ...acc, [dataSetNames[i]]: state };
-        }
-
-        return acc;
-      },
-      {} as Partial<
-        Record<(typeof dataSetNames)[number], Record<string, MetaDataObj>>
-      >
-    )
-  );
 }
