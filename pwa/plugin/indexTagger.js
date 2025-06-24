@@ -1,5 +1,4 @@
 import * as fs from "node:fs";
-import ts from "typescript";
 
 // https://webpack.js.org/contribute/writing-a-plugin/
 
@@ -35,20 +34,7 @@ export async function indexTagHelperPlugin(compiler) {
             throw new Error("Missing main.css");
           }
 
-          const isProduction = process.env.NODE_ENV === "production";
-          const envFileName = isProduction
-            ? "./environment.production.ts"
-            : "./environment.development.ts";
-          const envFile = fs.readFileSync(envFileName, "utf8");
-
-          const { outputText: envSource } = ts.transpileModule(envFile, {
-            compilerOptions: { module: ts.ModuleKind.ESNext },
-          });
-
-          const dataUri = "data:text/javascript;charset=utf-8,";
-          const { signalingService } = await import(
-            dataUri + encodeURIComponent(envSource)
-          );
+          const _isProduction = process.env.NODE_ENV === "production";
 
           const ContentSecurityPolicy = "<!--Content-Security-Policy-->";
           const ContentSecurityPolicyTag =
@@ -57,8 +43,6 @@ export async function indexTagHelperPlugin(compiler) {
             `; script-src 'self' 'wasm-unsafe-eval'` +
             `; img-src 'self' data: https:` +
             `; connect-src 'self' ` +
-            " " +
-            signalingService +
             `; style-src 'self' 'unsafe-inline';" />`;
 
           // FIXME: remove unsafe-inline ^^^
