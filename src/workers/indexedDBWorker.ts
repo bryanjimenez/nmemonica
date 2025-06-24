@@ -386,6 +386,21 @@ const wSelf = globalThis.self as unknown as Worker;
 
 wSelf.addEventListener("message", messageHandler);
 
+/**
+ * Send caller and Error anytime exceptions occur
+ * @param exception
+ */
+function exceptionHandler(exception: unknown) {
+  if (
+    exception instanceof Error ||
+    (exception instanceof Object && "message" in exception)
+  ) {
+    wSelf.postMessage(exception);
+  } else {
+    wSelf.postMessage(new Error(JSON.stringify(exception)));
+  }
+}
+
 function messageHandler(event: MessageEvent) {
   const req = event.data as IndexedDBWorkerReq;
 
@@ -408,40 +423,40 @@ function messageHandler(event: MessageEvent) {
       if (sheetName === undefined) {
         throw new Error("Required sheetName");
       }
-      void getSheetFromIndexDB(sheetName).then((sheet) =>
-        wSelf.postMessage(sheet)
-      );
+      void getSheetFromIndexDB(sheetName)
+        .then((sheet) => wSelf.postMessage(sheet))
+        .catch(exceptionHandler);
     } else if (getWorkbook !== undefined) {
       const { required } = getWorkbook;
-      void getWorkbookFromIndexDB(required).then((workbook) =>
-        wSelf.postMessage(workbook)
-      );
+      void getWorkbookFromIndexDB(required)
+        .then((workbook) => wSelf.postMessage(workbook))
+        .catch(exceptionHandler);
     } else if (setWorkbook !== undefined) {
       const { workbook } = setWorkbook;
 
-      void setWorkbookFromIndexDB(workbook).then(() =>
-        wSelf.postMessage(workbook)
-      );
+      void setWorkbookFromIndexDB(workbook)
+        .then(() => wSelf.postMessage(workbook))
+        .catch(exceptionHandler);
     } else if (getSettings === true) {
-      void getIndexDBUserSettings().then((settings) =>
-        wSelf.postMessage(settings)
-      );
+      void getIndexDBUserSettings()
+        .then((settings) => wSelf.postMessage(settings))
+        .catch(exceptionHandler);
     } else if (setSettings !== undefined) {
       const { value } = setSettings;
-      void setIndexDBUserSettings(value).then((settings) =>
-        wSelf.postMessage(settings)
-      );
+      void setIndexDBUserSettings(value)
+        .then((settings) => wSelf.postMessage(settings))
+        .catch(exceptionHandler);
     } else if (updateSettings !== undefined) {
       const { state, path, attr, value } = updateSettings;
-      void indexDBUserSettingAttrUpdate(state, path, attr, value).then(
-        (settings) => wSelf.postMessage(settings)
-      );
+      void indexDBUserSettingAttrUpdate(state, path, attr, value)
+        .then((settings) => wSelf.postMessage(settings))
+        .catch(exceptionHandler);
     } else if (deleteSettings !== undefined) {
       const { path, attr } = deleteSettings;
 
-      void indexDBUserSettingAttrDelete(path, attr).then(() =>
-        wSelf.postMessage(undefined)
-      );
+      void indexDBUserSettingAttrDelete(path, attr)
+        .then(() => wSelf.postMessage(undefined))
+        .catch(exceptionHandler);
     } else if (getProgress !== undefined) {
       const { path } = getProgress;
 
@@ -469,12 +484,13 @@ function messageHandler(event: MessageEvent) {
             >
           )
         )
-        .then((progress) => wSelf.postMessage(progress));
+        .then((progress) => wSelf.postMessage(progress))
+        .catch(exceptionHandler);
     } else if (updateProgress !== undefined) {
       const { path, value } = updateProgress;
-      void indexDBUserStudyProgressAttrUpdate(path, value).then((progress) =>
-        wSelf.postMessage(progress)
-      );
+      void indexDBUserStudyProgressAttrUpdate(path, value)
+        .then((progress) => wSelf.postMessage(progress))
+        .catch(exceptionHandler);
     } else if (setProgress !== undefined) {
       const { value } = setProgress;
 
@@ -485,9 +501,11 @@ function messageHandler(event: MessageEvent) {
           }
           return acc;
         }, [] as Promise<unknown>[])
-      ).then((result) => {
-        wSelf.postMessage(result);
-      });
+      )
+        .then((result) => wSelf.postMessage(result))
+        .catch(exceptionHandler);
+    } else {
+      throw new Error("Unexpected message from app");
     }
   } catch (exception) {
     wSelf.postMessage(exception);
