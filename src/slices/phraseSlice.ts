@@ -1,5 +1,5 @@
 import { type SheetData } from "@nmemonica/x-spreadsheet";
-import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import type {
   GroupListMap,
@@ -10,9 +10,12 @@ import type {
 
 import { logger } from "./globalSlice";
 import {
+  deleteUserSettings,
   getSheetFromIndexDB,
+  getUserProgress,
   getWorkbookFromIndexDB,
   updateUserProgress,
+  updateUserSettings,
 } from "./indexedDBSlice";
 import {
   TermFilterBy,
@@ -37,15 +40,12 @@ import {
   workbookSheetNames,
 } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import {
-  userSettingAttrDelete,
-  userSettingAttrUpdate,
-} from "../helper/userSettingsHelper";
-import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { RootState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
 
 const SLICE_NAME = "phrases";
+const path = "/phrases/";
+
 export interface PhraseInitSlice {
   value: RawPhrase[];
   version: string;
@@ -185,10 +185,13 @@ export const getPhrase = createAsyncThunk(
  */
 export const getPhraseMeta = createAsyncThunk(
   `${SLICE_NAME}/getPhraseMeta`,
-  async () => {
-    return getIndexDBStudyProgress(SLICE_NAME).then((data) => {
-      return data ?? {};
-    });
+  (_arg, thunkAPI) => {
+    return thunkAPI
+      .dispatch(getUserProgress(SLICE_NAME))
+      .unwrap()
+      .then((data) => {
+        return (data ?? {}) as Record<string, MetaDataObj>;
+      });
   }
 );
 
@@ -280,11 +283,15 @@ export const flipPhrasesPracticeSide = createAsyncThunk(
   (arg: { query: string }, thunkAPI) => {
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
-    return userSettingAttrUpdate(
-      { phrases: state.setting },
-      "/phrases/",
-      "englishSideUp"
-    );
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: state.setting },
+          path,
+          attr: "englishSideUp",
+        })
+      )
+      .unwrap();
   }
 );
 
@@ -415,6 +422,164 @@ export const deleteMetaPhrase = createAsyncThunk(
   }
 );
 
+export const togglePhraseActiveGrp = createAsyncThunk(
+  `${SLICE_NAME}/togglePhraseActiveGrp`,
+  (grpName: string | string[], thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { activeGroup } = setting;
+
+    const groups = Array.isArray(grpName) ? grpName : [grpName];
+    const newValue: string[] = grpParse(groups, activeGroup);
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "activeGroup",
+          value: newValue,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setMemorizedThreshold = createAsyncThunk(
+  `${SLICE_NAME}/setMemorizedThreshold`,
+  (threshold: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "difficultyThreshold",
+          value: threshold,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setSpaRepMaxItemReview = createAsyncThunk(
+  `${SLICE_NAME}/setSpaRepMaxItemReview`,
+  (max: number | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    if (max === undefined) {
+      return thunkAPI
+        .dispatch(
+          deleteUserSettings({
+            path: "/phrases/",
+            attr: "spaRepMaxReviewItem",
+          })
+        )
+        .unwrap();
+    } else {
+      const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+      return thunkAPI
+        .dispatch(
+          updateUserSettings({
+            state: { [SLICE_NAME]: setting },
+            path,
+            attr: "spaRepMaxReviewItem",
+            value: maxItems,
+          })
+        )
+        .unwrap();
+    }
+  }
+);
+
+export const togglePhrasesOrdering = createAsyncThunk(
+  `${SLICE_NAME}/togglePhrasesOrdering`,
+  (override: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+    const { ordered } = setting;
+
+    const allowed = [
+      TermSortBy.RANDOM,
+      TermSortBy.VIEW_DATE,
+      TermSortBy.RECALL,
+    ];
+
+    let newOrdered = toggleAFilter(ordered + 1, allowed, override) as ValuesOf<
+      typeof TermSortBy
+    >;
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "ordered",
+          value: newOrdered,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleIncludeNew = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeNew`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "includeNew",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleIncludeReviewed = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeReviewed`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "includeReviewed",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setGoal = createAsyncThunk(
+  `${SLICE_NAME}/setGoal`,
+  (goal: number | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    if (goal !== undefined) {
+      return thunkAPI
+        .dispatch(
+          updateUserSettings({
+            state: { [SLICE_NAME]: setting },
+            path,
+            attr: "viewGoal",
+            value: goal,
+          })
+        )
+        .unwrap();
+    } else {
+      return thunkAPI
+        .dispatch(deleteUserSettings({ path, attr: "viewGoal" }))
+        .unwrap();
+    }
+  }
+);
+
 const phraseSlice = createSlice({
   name: SLICE_NAME,
   initialState: phraseInitState,
@@ -425,126 +590,126 @@ const phraseSlice = createSlice({
       state.grpObj = phraseInitState.grpObj;
     },
 
-    togglePhraseActiveGrp(state, action: { payload: string }) {
-      const grpName = action.payload;
+    // togglePhraseActiveGrp(state, action: { payload: string }) {
+    //   const grpName = action.payload;
 
-      const { activeGroup } = state.setting;
+    //   const { activeGroup } = state.setting;
 
-      const groups = Array.isArray(grpName) ? grpName : [grpName];
-      const newValue: string[] = grpParse(groups, activeGroup);
+    //   const groups = Array.isArray(grpName) ? grpName : [grpName];
+    //   const newValue: string[] = grpParse(groups, activeGroup);
 
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "activeGroup",
-        newValue
-      );
+    //   void updateUserSettings(
+    //     { [SLICE_NAME]: state.setting },
+    //     "/phrases/",
+    //     "activeGroup",
+    //     newValue
+    //   );
 
-      state.setting.activeGroup = newValue;
-    },
+    //   state.setting.activeGroup = newValue;
+    // },
 
-    setMemorizedThreshold(state, action: { payload: number }) {
-      const threshold = action.payload;
+    // setMemorizedThreshold(state, action: { payload: number }) {
+    //   const threshold = action.payload;
 
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "difficultyThreshold",
-        threshold
-      );
+    //   void updateUserSettings(
+    //     { [SLICE_NAME]: state.setting },
+    //     "/phrases/",
+    //     "difficultyThreshold",
+    //     threshold
+    //   );
 
-      state.setting.difficultyThreshold = threshold;
-    },
+    //   state.setting.difficultyThreshold = threshold;
+    // },
 
-    /**
-     * Space Repetition maximum item review
-     * per session
-     */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
-      const max = action.payload;
+    // /**
+    //  * Space Repetition maximum item review
+    //  * per session
+    //  */
+    // setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+    //   const max = action.payload;
 
-      if (max === undefined) {
-        void userSettingAttrDelete("/phrases/", "spaRepMaxReviewItem");
-        state.setting.spaRepMaxReviewItem = undefined;
-      } else {
-        const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
-        void userSettingAttrUpdate(
-          { phrases: state.setting },
-          "/phrases/",
-          "spaRepMaxReviewItem",
-          maxItems
-        );
+    //   if (max === undefined) {
+    //     void deleteUserSettings("/phrases/", "spaRepMaxReviewItem");
+    //     state.setting.spaRepMaxReviewItem = undefined;
+    //   } else {
+    //     const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+    //     void updateUserSettings(
+    //       { [SLICE_NAME]: state.setting },
+    //       "/phrases/",
+    //       "spaRepMaxReviewItem",
+    //       maxItems
+    //     );
 
-        state.setting.spaRepMaxReviewItem = maxItems;
-      }
-    },
-    togglePhrasesOrdering(
-      state,
-      action: PayloadAction<ValuesOf<typeof TermSortBy>>
-    ) {
-      const allowed = [
-        TermSortBy.RANDOM,
-        TermSortBy.VIEW_DATE,
-        TermSortBy.RECALL,
-      ];
-      const override = action.payload;
+    //     state.setting.spaRepMaxReviewItem = maxItems;
+    //   }
+    // },
+    // togglePhrasesOrdering(
+    //   state,
+    //   action: PayloadAction<ValuesOf<typeof TermSortBy>>
+    // ) {
+    //   const allowed = [
+    //     TermSortBy.RANDOM,
+    //     TermSortBy.VIEW_DATE,
+    //     TermSortBy.RECALL,
+    //   ];
+    //   const override = action.payload;
 
-      const { ordered } = state.setting;
+    //   const { ordered } = state.setting;
 
-      let newOrdered = toggleAFilter(
-        ordered + 1,
-        allowed,
-        override
-      ) as ValuesOf<typeof TermSortBy>;
+    //   let newOrdered = toggleAFilter(
+    //     ordered + 1,
+    //     allowed,
+    //     override
+    //   ) as ValuesOf<typeof TermSortBy>;
 
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "ordered",
-        newOrdered
-      );
+    //   void updateUserSettings(
+    //     { [SLICE_NAME]: state.setting },
+    //     "/phrases/",
+    //     "ordered",
+    //     newOrdered
+    //   );
 
-      state.setting.ordered = newOrdered;
-    },
-    toggleIncludeNew(state) {
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "includeNew"
-      );
+    //   state.setting.ordered = newOrdered;
+    // },
+    // toggleIncludeNew(state) {
+    //   void updateUserSettings(
+    //     { [SLICE_NAME]: state.setting },
+    //     "/phrases/",
+    //     "includeNew"
+    //   );
 
-      state.setting.includeNew = !state.setting.includeNew;
-    },
-    toggleIncludeReviewed(state) {
-      void userSettingAttrUpdate(
-        { phrases: state.setting },
-        "/phrases/",
-        "includeReviewed"
-      );
+    //   state.setting.includeNew = !state.setting.includeNew;
+    // },
+    // toggleIncludeReviewed(state) {
+    //   void updateUserSettings(
+    //     { [SLICE_NAME]: state.setting },
+    //     "/phrases/",
+    //     "includeReviewed"
+    //   );
 
-      state.setting.includeReviewed = !state.setting.includeReviewed;
-    },
+    //   state.setting.includeReviewed = !state.setting.includeReviewed;
+    // },
 
-    setGoal(
-      state,
-      action: PayloadAction<PhraseInitSlice["setting"]["viewGoal"]>
-    ) {
-      const goal = action.payload;
+    // setGoal(
+    //   state,
+    //   action: PayloadAction<PhraseInitSlice["setting"]["viewGoal"]>
+    // ) {
+    //   const goal = action.payload;
 
-      if (goal !== undefined) {
-        void userSettingAttrUpdate(
-          { phrases: state.setting },
-          "/phrases/",
-          "viewGoal",
-          goal
-        );
+    //   if (goal !== undefined) {
+    //     void updateUserSettings(
+    //       { [SLICE_NAME]: state.setting },
+    //       "/phrases/",
+    //       "viewGoal",
+    //       goal
+    //     );
 
-        state.setting.viewGoal = goal;
-      } else {
-        state.setting.viewGoal = undefined;
-        void userSettingAttrDelete("/phrases/", "viewGoal");
-      }
-    },
+    //     state.setting.viewGoal = goal;
+    //   } else {
+    //     state.setting.viewGoal = undefined;
+    //     void deleteUserSettings("/phrases/", "viewGoal");
+    //   }
+    // },
   },
 
   extraReducers: (builder) => {
@@ -619,18 +784,43 @@ const phraseSlice = createSlice({
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
+    builder.addCase(togglePhraseActiveGrp.fulfilled, (state, action) => {
+      const activeGroup = action.payload;
+      state.setting.activeGroup = activeGroup;
+    });
+
+    builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
+      const difficultyThreshold = action.payload;
+      state.setting.difficultyThreshold = difficultyThreshold;
+    });
+
+    builder.addCase(setSpaRepMaxItemReview.fulfilled, (state, action) => {
+      const spaRepMaxReviewItem = action.payload;
+      state.setting.spaRepMaxReviewItem = spaRepMaxReviewItem;
+    });
+
+    builder.addCase(togglePhrasesOrdering.fulfilled, (state, action) => {
+      const ordered = action.payload;
+      state.setting.ordered = ordered;
+    });
+
+    builder.addCase(toggleIncludeNew.fulfilled, (state, action) => {
+      const includeNew = action.payload;
+      state.setting.includeNew = includeNew;
+    });
+
+    builder.addCase(toggleIncludeReviewed.fulfilled, (state, action) => {
+      const includeReviewed = action.payload;
+      state.setting.includeReviewed = includeReviewed;
+    });
+
+    builder.addCase(setGoal.fulfilled, (state, action) => {
+      const viewGoal = action.payload;
+      state.setting.viewGoal = viewGoal;
+    });
   },
 });
 
-export const {
-  clearPhrases,
-  togglePhraseActiveGrp,
-  toggleIncludeNew,
-  toggleIncludeReviewed,
-  setMemorizedThreshold,
-  setSpaRepMaxItemReview,
-  setGoal,
-
-  togglePhrasesOrdering,
-} = phraseSlice.actions;
+export const { clearPhrases } = phraseSlice.actions;
 export default phraseSlice.reducer;

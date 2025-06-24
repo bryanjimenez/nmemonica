@@ -15,10 +15,10 @@ import {
 } from "./sheetHelper";
 import { type FilledSheetData } from "./sheetHelperImport";
 import { unusualApostrophe } from "./unicodeHelper";
-import { getUserSettings } from "./userSettingsHelper";
 import { properCase } from "../components/Games/KanjiGame";
 import {
   getUserProgress,
+  getUserSettings,
   getWorkbookFromIndexDB,
 } from "../slices/indexedDBSlice";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
@@ -384,7 +384,8 @@ export function dataTransferAggregator(
       const settingText = new Promise<SyncDataFile[]>(
         (settingResolve, settingReject) => {
           if (settingReq.length > 0) {
-            getUserSettings()
+            dispatch(getUserSettings())
+              .unwrap()
               .then((setting) => {
                 if (Object.keys(setting).length === 0) {
                   return [];

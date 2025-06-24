@@ -4,16 +4,29 @@ import { type MetaDataObj } from "nmemonica";
 
 import { dataSetNames, workbookSheetNames } from "../helper/sheetHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
-
-import { type AppProgressState } from ".";
+import type { AppProgressState, AppSettingState } from "../typings/slices";
 
 const INDEXDB_WORKER_NAME = "indexed-db-worker.js";
 const SLICE_NAME = "indexedDB";
 
-export interface IndexedDBWorkerReq {
+export interface IndexedDBWorkerReq<T = never> {
   getSheet?: { sheetName: keyof typeof workbookSheetNames };
   getWorkbook?: { required?: (keyof typeof workbookSheetNames)[] };
-  getProgress?: true;
+  getSettings?: true;
+  setSettings?: {
+    value: Partial<AppSettingState>;
+  };
+  updateSettings?: {
+    state: Partial<AppSettingState>;
+    path: string;
+    attr: string;
+    value?: T;
+  };
+  deleteSettings?: {
+    path: string;
+    attr: string;
+  };
+  getProgress?: { path?: (typeof dataSetNames)[number] };
   updateProgress?: {
     path: (typeof dataSetNames)[number];
     value: Record<string, MetaDataObj | undefined>;
@@ -23,7 +36,7 @@ export interface IndexedDBWorkerReq {
   };
 }
 
-function workerConnection(worker: Worker, req: IndexedDBWorkerReq) {
+function workerConnection<T>(worker: Worker, req: IndexedDBWorkerReq<T>) {
   return new Promise<unknown>((resolve, reject) => {
     const wMsgHandler = (event: MessageEvent<unknown>) => {
       if (event.data instanceof Error) {
@@ -78,10 +91,63 @@ export const getWorkbookFromIndexDB = createAsyncThunk(
   }
 );
 
+export const getUserSettings = createAsyncThunk(
+  `${SLICE_NAME}/getUserSettings`,
+  () => {
+    const req: IndexedDBWorkerReq = { getSettings: true };
+    const worker = new Worker(INDEXDB_WORKER_NAME);
+
+    return workerConnection(worker, req) as Promise<Partial<AppSettingState>>;
+  }
+);
+
+export const setUserSettings = createAsyncThunk(
+  `${SLICE_NAME}/setUserSettings`,
+  (value: NonNullable<IndexedDBWorkerReq["setSettings"]>["value"]) => {
+    const req: IndexedDBWorkerReq = { setSettings: { value } };
+    const worker = new Worker(INDEXDB_WORKER_NAME);
+
+    return workerConnection(worker, req) as Promise<Partial<AppSettingState>>;
+  }
+);
+
+export function updateUserSettings<T = boolean>(
+  arg: NonNullable<IndexedDBWorkerReq<T>["updateSettings"]>
+) {
+  return createAsyncThunk(
+    `${SLICE_NAME}/updateUserSettings`,
+    ({
+      state,
+      path,
+      attr,
+      value,
+    }: NonNullable<IndexedDBWorkerReq<T>["updateSettings"]>) => {
+      const req: IndexedDBWorkerReq<T> = {
+        updateSettings: { state, path, attr, value },
+      };
+      const worker = new Worker(INDEXDB_WORKER_NAME);
+
+      return workerConnection(worker, req) as Promise<T>;
+    }
+  )(arg);
+}
+
+export const deleteUserSettings = createAsyncThunk(
+  `${SLICE_NAME}/deleteUserSettings`,
+  ({ path, attr }: NonNullable<IndexedDBWorkerReq["deleteSettings"]>) => {
+    const req: IndexedDBWorkerReq = {
+      deleteSettings: { path, attr },
+    };
+    const worker = new Worker(INDEXDB_WORKER_NAME);
+
+    return workerConnection(worker, req) as Promise<undefined>;
+  }
+);
+
 export const getUserProgress = createAsyncThunk(
   `${SLICE_NAME}/getUserProgress`,
-  () => {
-    const req: IndexedDBWorkerReq = { getProgress: true };
+  (path: NonNullable<IndexedDBWorkerReq["getProgress"]>["path"]) => {
+    const req: IndexedDBWorkerReq = { getProgress: { path } };
     const worker = new Worker(INDEXDB_WORKER_NAME);
 
     return workerConnection(worker, req) as Promise<

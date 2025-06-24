@@ -45,11 +45,11 @@ import {
   parseSettingsAndProgress,
   parseWorkbook,
 } from "../../helper/transferHelper";
-import { setUserSetting } from "../../helper/userSettingsHelper";
 import { appSettingsInitialized } from "../../slices/globalSlice";
 import {
   getWorkbookFromIndexDB,
   setUserProgress,
+  setUserSettings,
 } from "../../slices/indexedDBSlice";
 import { importWorkbook, saveSheet } from "../../slices/sheetSlice";
 import type { AppDispatch, RootState } from "../../typings/slices";
@@ -367,7 +367,7 @@ export default function Sheet() {
       let importCompleteP: Promise<unknown>[] = [];
       if (settings && Object.keys(settings).length > 0) {
         // write to device's local storage
-        void setUserSetting(settings);
+        void dispatch(setUserSettings(settings));
 
         // initialize app setttings from local storage
         const settingsP = dispatch(appSettingsInitialized());

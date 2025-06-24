@@ -1,10 +1,16 @@
-import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import md5 from "md5";
 import type { MetaDataObj, RawKanji } from "nmemonica";
 
 import { logger } from "./globalSlice";
-import { getSheetFromIndexDB, updateUserProgress } from "./indexedDBSlice";
+import {
+  deleteUserSettings,
+  getSheetFromIndexDB,
+  getUserProgress,
+  updateUserProgress,
+  updateUserSettings,
+} from "./indexedDBSlice";
 import {
   TermFilterBy,
   TermSortBy,
@@ -26,15 +32,11 @@ import {
   getPropsFromTags,
 } from "../helper/reducerHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import {
-  userSettingAttrDelete,
-  userSettingAttrUpdate,
-} from "../helper/userSettingsHelper";
-import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { RootState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
 
 const SLICE_NAME = "kanji";
+const path = "/kanji/";
 export interface KanjiInitSlice {
   value: RawKanji[];
   version: string;
@@ -119,10 +121,13 @@ export const getKanji = createAsyncThunk(
  */
 export const getKanjiMeta = createAsyncThunk(
   `${SLICE_NAME}/getKanjiMeta`,
-  async () => {
-    return getIndexDBStudyProgress(SLICE_NAME).then((data) => {
-      return data ?? {};
-    });
+  (_arg, thunkAPI) => {
+    return thunkAPI
+      .dispatch(getUserProgress(SLICE_NAME))
+      .unwrap()
+      .then((data) => {
+        return (data ?? {}) as Record<string, MetaDataObj>;
+      });
   }
 );
 
@@ -263,6 +268,252 @@ export const deleteMetaKanji = createAsyncThunk(
   }
 );
 
+export const toggleKanjiActiveTag = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiActiveTag`,
+  (tagName: string, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { activeTags } = setting;
+
+    let newValue;
+    if (activeTags.includes(tagName)) {
+      newValue = activeTags.filter((a) => a !== tagName);
+    } else {
+      newValue = [...activeTags, tagName];
+    }
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "activeTags",
+          value: newValue,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleKanjiActiveGrp = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiActiveGrp`,
+  (grpName: string | string[], thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const groups = Array.isArray(grpName) ? grpName : [grpName];
+    const { activeGroup } = setting;
+    const newValue = grpParse(groups, activeGroup);
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "activeGroup",
+          value: newValue,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleKanjiOrdering = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiOrdering`,
+  (override: ValuesOf<typeof TermSortBy>, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { ordered } = setting;
+
+    const allowed = [
+      // TermSortBy.ALPHABETIC,
+      TermSortBy.DIFFICULTY,
+      TermSortBy.RANDOM,
+      TermSortBy.VIEW_DATE,
+      TermSortBy.RECALL,
+    ];
+    const newOrdered = toggleAFilter(
+      ordered + 1,
+      allowed,
+      override
+    ) as ValuesOf<typeof TermSortBy>;
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "ordered",
+          value: newOrdered,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setMemorizedThreshold = createAsyncThunk(
+  `${SLICE_NAME}/setMemorizedThreshold`,
+  (threshold: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "difficultyThreshold",
+          value: threshold,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setSpaRepMaxItemReview = createAsyncThunk(
+  `${SLICE_NAME}/setSpaRepMaxItemReview`,
+  (max: number | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    if (max === undefined) {
+      return thunkAPI
+        .dispatch(deleteUserSettings({ path, attr: "spaRepMaxReviewItem" }))
+        .unwrap();
+    } else {
+      const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+
+      return thunkAPI
+        .dispatch(
+          updateUserSettings({
+            state: { kanji: setting },
+            path,
+            attr: "spaRepMaxReviewItem",
+            value: maxItems,
+          })
+        )
+        .unwrap();
+    }
+  }
+);
+
+export const setKanjiBtnN = createAsyncThunk(
+  `${SLICE_NAME}/setKanjiBtnN`,
+  (choice: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "choiceN",
+          value: choice,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleKanjiFadeInAnswers = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiFadeInAnswers`,
+  (override: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "fadeInAnswers",
+          value: override,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleKanjiFilter = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiFilter`,
+  (override: ValuesOf<typeof TermFilterBy>, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { filter } = setting;
+
+    const newFilter = toggleAFilter(
+      filter + 1,
+      [TermFilterBy.TAGS],
+      override
+    ) as ValuesOf<typeof TermFilterBy>;
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "filter",
+          value: newFilter,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleIncludeNew = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeNew`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { kanji: setting },
+          path,
+          attr: "includeNew",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleIncludeReviewed = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeReviewed`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { kanji: setting },
+          path,
+          attr: "includeReviewed",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setGoal = createAsyncThunk(
+  `${SLICE_NAME}/setGoal`,
+  (goal: number | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    if (goal !== undefined) {
+      return thunkAPI
+        .dispatch(
+          updateUserSettings({
+            state: { kanji: setting },
+            path,
+            attr: "viewGoal",
+            value: goal,
+          })
+        )
+        .unwrap();
+    } else {
+      return thunkAPI
+        .dispatch(deleteUserSettings({ path, attr: "viewGoal" }))
+        .unwrap();
+    }
+  }
+);
+
 const kanjiSlice = createSlice({
   name: SLICE_NAME,
   initialState: kanjiInitState,
@@ -273,192 +524,192 @@ const kanjiSlice = createSlice({
       state.tagObj = kanjiInitState.tagObj;
     },
 
-    toggleKanjiActiveTag(state, action: { payload: string }) {
-      const tagName: string = action.payload;
+    // toggleKanjiActiveTag(state, action: { payload: string }) {
+    //   const tagName: string = action.payload;
 
-      const { activeTags } = state.setting;
+    //   const { activeTags } = state.setting;
 
-      let newValue;
-      if (activeTags.includes(tagName)) {
-        newValue = activeTags.filter((a) => a !== tagName);
-      } else {
-        newValue = [...activeTags, tagName];
-      }
+    //   let newValue;
+    //   if (activeTags.includes(tagName)) {
+    //     newValue = activeTags.filter((a) => a !== tagName);
+    //   } else {
+    //     newValue = [...activeTags, tagName];
+    //   }
 
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "activeTags",
-        newValue
-      );
-      state.setting.activeTags = newValue;
-    },
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "activeTags",
+    //     newValue
+    //   );
+    //   state.setting.activeTags = newValue;
+    // },
 
-    toggleKanjiActiveGrp: (state, action: { payload: string }) => {
-      const grpName = action.payload;
+    // toggleKanjiActiveGrp: (state, action: { payload: string }) => {
+    //   const grpName = action.payload;
 
-      const { activeGroup } = state.setting;
+    //   const { activeGroup } = state.setting;
 
-      const groups = Array.isArray(grpName) ? grpName : [grpName];
-      const newValue = grpParse(groups, activeGroup);
+    //   const groups = Array.isArray(grpName) ? grpName : [grpName];
+    //   const newValue = grpParse(groups, activeGroup);
 
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "activeGroup",
-        newValue
-      );
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "activeGroup",
+    //     newValue
+    //   );
 
-      state.setting.activeGroup = newValue;
-    },
+    //   state.setting.activeGroup = newValue;
+    // },
 
-    toggleKanjiOrdering(
-      state,
-      action: { payload: ValuesOf<typeof TermSortBy> }
-    ) {
-      const { ordered } = state.setting;
-      const override = action.payload;
+    // toggleKanjiOrdering(
+    //   state,
+    //   action: { payload: ValuesOf<typeof TermSortBy> }
+    // ) {
+    //   const { ordered } = state.setting;
+    //   const override = action.payload;
 
-      const allowed = [
-        // TermSortBy.ALPHABETIC,
-        TermSortBy.DIFFICULTY,
-        TermSortBy.RANDOM,
-        TermSortBy.VIEW_DATE,
-        TermSortBy.RECALL,
-      ];
-      const newOrdered = toggleAFilter(
-        ordered + 1,
-        allowed,
-        override
-      ) as ValuesOf<typeof TermSortBy>;
+    //   const allowed = [
+    //     // TermSortBy.ALPHABETIC,
+    //     TermSortBy.DIFFICULTY,
+    //     TermSortBy.RANDOM,
+    //     TermSortBy.VIEW_DATE,
+    //     TermSortBy.RECALL,
+    //   ];
+    //   const newOrdered = toggleAFilter(
+    //     ordered + 1,
+    //     allowed,
+    //     override
+    //   ) as ValuesOf<typeof TermSortBy>;
 
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "ordered",
-        newOrdered
-      );
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "ordered",
+    //     newOrdered
+    //   );
 
-      state.setting.ordered = newOrdered;
-    },
+    //   state.setting.ordered = newOrdered;
+    // },
 
-    setMemorizedThreshold(state, action: PayloadAction<number>) {
-      const threshold = action.payload;
+    // setMemorizedThreshold(state, action: PayloadAction<number>) {
+    //   const threshold = action.payload;
 
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "difficultyThreshold",
-        threshold
-      );
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "difficultyThreshold",
+    //     threshold
+    //   );
 
-      state.setting.difficultyThreshold = threshold;
-    },
-    /**
-     * Space Repetition maximum item review
-     * per session
-     */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
-      const max = action.payload;
+    //   state.setting.difficultyThreshold = threshold;
+    // },
+    // /**
+    //  * Space Repetition maximum item review
+    //  * per session
+    //  */
+    // setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
+    //   const max = action.payload;
 
-      if (max === undefined) {
-        void userSettingAttrDelete("/kanji/", "spaRepMaxReviewItem");
-        state.setting.spaRepMaxReviewItem = undefined;
-      } else {
-        const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
-        void userSettingAttrUpdate(
-          { kanji: state.setting },
-          "/kanji/",
-          "spaRepMaxReviewItem",
-          maxItems
-        );
+    //   if (max === undefined) {
+    //     void userSettingAttrDelete("/kanji/", "spaRepMaxReviewItem");
+    //     state.setting.spaRepMaxReviewItem = undefined;
+    //   } else {
+    //     const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+    //     void updateUserSettings(
+    //       { kanji: state.setting },
+    //       "/kanji/",
+    //       "spaRepMaxReviewItem",
+    //       maxItems
+    //     );
 
-        state.setting.spaRepMaxReviewItem = maxItems;
-      }
-    },
-    setKanjiBtnN(state, action: { payload: number }) {
-      const number = action.payload;
+    //     state.setting.spaRepMaxReviewItem = maxItems;
+    //   }
+    // },
+    // setKanjiBtnN(state, action: { payload: number }) {
+    //   const number = action.payload;
 
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "choiceN",
-        number
-      );
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "choiceN",
+    //     number
+    //   );
 
-      state.setting.choiceN = number;
-    },
-    toggleKanjiFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload ?? false;
+    //   state.setting.choiceN = number;
+    // },
+    // toggleKanjiFadeInAnswers(state, action: { payload?: boolean }) {
+    //   const override = action.payload ?? false;
 
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "fadeInAnswers",
-        override
-      );
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "fadeInAnswers",
+    //     override
+    //   );
 
-      state.setting.fadeInAnswers = override;
-    },
+    //   state.setting.fadeInAnswers = override;
+    // },
 
-    toggleKanjiFilter(state, action: { payload?: number }) {
-      const override = action.payload;
-      const { filter } = state.setting;
+    // toggleKanjiFilter(state, action: { payload?: number }) {
+    //   const override = action.payload;
+    //   const { filter } = state.setting;
 
-      const newFilter = toggleAFilter(
-        filter + 1,
-        [TermFilterBy.TAGS],
-        override
-      ) as ValuesOf<typeof TermFilterBy>;
+    //   const newFilter = toggleAFilter(
+    //     filter + 1,
+    //     [TermFilterBy.TAGS],
+    //     override
+    //   ) as ValuesOf<typeof TermFilterBy>;
 
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "filter",
-        newFilter
-      );
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "filter",
+    //     newFilter
+    //   );
 
-      state.setting.filter = newFilter;
-    },
+    //   state.setting.filter = newFilter;
+    // },
 
-    toggleIncludeNew(state) {
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "includeNew"
-      );
+    // toggleIncludeNew(state) {
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "includeNew"
+    //   );
 
-      state.setting.includeNew = !state.setting.includeNew;
-    },
-    toggleIncludeReviewed(state) {
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "includeReviewed"
-      );
+    //   state.setting.includeNew = !state.setting.includeNew;
+    // },
+    // toggleIncludeReviewed(state) {
+    //   void updateUserSettings(
+    //     { kanji: state.setting },
+    //     "/kanji/",
+    //     "includeReviewed"
+    //   );
 
-      state.setting.includeReviewed = !state.setting.includeReviewed;
-    },
-    setGoal(
-      state,
-      action: PayloadAction<KanjiInitSlice["setting"]["viewGoal"]>
-    ) {
-      const goal = action.payload;
+    //   state.setting.includeReviewed = !state.setting.includeReviewed;
+    // },
+    // setGoal(
+    //   state,
+    //   action: PayloadAction<KanjiInitSlice["setting"]["viewGoal"]>
+    // ) {
+    //   const goal = action.payload;
 
-      if (goal !== undefined) {
-        void userSettingAttrUpdate(
-          { kanji: state.setting },
-          "/kanji/",
-          "viewGoal",
-          goal
-        );
+    //   if (goal !== undefined) {
+    //     void updateUserSettings(
+    //       { kanji: state.setting },
+    //       "/kanji/",
+    //       "viewGoal",
+    //       goal
+    //     );
 
-        state.setting.viewGoal = goal;
-      } else {
-        state.setting.viewGoal = undefined;
-        void userSettingAttrDelete("/kanji/", "viewGoal");
-      }
-    },
+    //     state.setting.viewGoal = goal;
+    //   } else {
+    //     state.setting.viewGoal = undefined;
+    //     void userSettingAttrDelete("/kanji/", "viewGoal");
+    //   }
+    // },
   },
 
   extraReducers: (builder) => {
@@ -582,21 +833,6 @@ const kanjiSlice = createSlice({
   },
 });
 
-export const {
-  clearKanji,
-  toggleKanjiActiveTag,
-  toggleKanjiActiveGrp,
-  toggleKanjiOrdering,
-  setMemorizedThreshold,
-
-  setSpaRepMaxItemReview,
-  toggleKanjiFilter,
-  toggleIncludeNew,
-  toggleIncludeReviewed,
-
-  setKanjiBtnN,
-  toggleKanjiFadeInAnswers,
-  setGoal,
-} = kanjiSlice.actions;
+export const { clearKanji } = kanjiSlice.actions;
 
 export default kanjiSlice.reducer;
