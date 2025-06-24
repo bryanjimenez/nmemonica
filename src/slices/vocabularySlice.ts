@@ -9,6 +9,7 @@ import {
   getSheetFromIndexDB,
   getUserProgress,
   getWorkbookFromIndexDB,
+  setWorkbookFromIndexDB,
   updateUserProgress,
   updateUserSettings,
 } from "./indexedDBSlice";
@@ -20,7 +21,6 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { DebugLevel } from "../helper/consoleHelper";
 import { getVerbFormsArray } from "../helper/JapaneseVerb";
 import { type Vocabulary, sheetDataToJSON } from "../helper/jsonHelper";
@@ -172,13 +172,9 @@ export const toggleVocabularyTag = createAsyncThunk(
         ];
 
         // Save to indexedDB
-        return openIDB()
-          .then((db) =>
-            putIDBItem(
-              { db, store: IDBStores.WORKBOOK },
-              { key: "0", workbook: wb }
-            )
-          )
+        return thunkAPI
+          .dispatch(setWorkbookFromIndexDB(wb))
+          .unwrap()
           .then(() => {
             // TODO: update json?
             // TODO: update state

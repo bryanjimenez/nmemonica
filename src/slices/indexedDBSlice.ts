@@ -12,6 +12,7 @@ const SLICE_NAME = "indexedDB";
 export interface IndexedDBWorkerReq<T = never> {
   getSheet?: { sheetName: keyof typeof workbookSheetNames };
   getWorkbook?: { required?: (keyof typeof workbookSheetNames)[] };
+  setWorkbook?: { workbook: SheetData[] };
   getSettings?: true;
   setSettings?: {
     value: Partial<AppSettingState>;
@@ -85,6 +86,21 @@ export const getWorkbookFromIndexDB = createAsyncThunk(
   `${SLICE_NAME}/getWorkbookFromIndexDB`,
   (required?: NonNullable<IndexedDBWorkerReq["getWorkbook"]>["required"]) => {
     const req: IndexedDBWorkerReq = { getWorkbook: { required } };
+    const worker = new Worker(INDEXDB_WORKER_NAME);
+
+    return workerConnection(worker, req) as Promise<SheetData[]>;
+  }
+);
+
+/**
+ * Stores worksheet to indexedDB
+ *
+ * @param workbook
+ */
+export const setWorkbookFromIndexDB = createAsyncThunk(
+  `${SLICE_NAME}/setWorkbookFromIndexDB`,
+  (workbook: NonNullable<IndexedDBWorkerReq["setWorkbook"]>["workbook"]) => {
+    const req: IndexedDBWorkerReq = { setWorkbook: { workbook } };
     const worker = new Worker(INDEXDB_WORKER_NAME);
 
     return workerConnection(worker, req) as Promise<SheetData[]>;

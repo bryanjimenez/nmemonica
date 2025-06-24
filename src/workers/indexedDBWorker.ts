@@ -1,3 +1,4 @@
+import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { type MetaDataObj } from "nmemonica";
 
 import {
@@ -137,6 +138,17 @@ export function getWorkbookFromIndexDB(
         ),
       ];
     });
+}
+
+/**
+ * Stores worksheet to indexedDB
+ *
+ * @param workbook
+ */
+export function setWorkbookFromIndexDB(workbook: SheetData[]) {
+  return openIDB().then((db) =>
+    putIDBItem({ db, store: IDBStores.WORKBOOK }, { key: "0", workbook })
+  );
 }
 
 /**
@@ -377,23 +389,40 @@ wSelf.addEventListener("message", messageHandler);
 function messageHandler(event: MessageEvent) {
   const req = event.data as IndexedDBWorkerReq;
 
-  const { getProgress, setSettings, updateSettings, deleteSettings } = req;
+  const {
+    getSheet,
+    getWorkbook,
+    setWorkbook,
+    getSettings,
+    setSettings,
+    updateSettings,
+    deleteSettings,
+    getProgress,
+    setProgress,
+    updateProgress,
+  } = req;
 
   try {
-    if (req.getSheet !== undefined) {
-      const { sheetName } = req.getSheet;
+    if (getSheet !== undefined) {
+      const { sheetName } = getSheet;
       if (sheetName === undefined) {
         throw new Error("Required sheetName");
       }
       void getSheetFromIndexDB(sheetName).then((sheet) =>
         wSelf.postMessage(sheet)
       );
-    } else if (req.getWorkbook !== undefined) {
-      const { required } = req.getWorkbook;
+    } else if (getWorkbook !== undefined) {
+      const { required } = getWorkbook;
       void getWorkbookFromIndexDB(required).then((workbook) =>
         wSelf.postMessage(workbook)
       );
-    } else if (req.getSettings === true) {
+    } else if (setWorkbook !== undefined) {
+      const { workbook } = setWorkbook;
+
+      void setWorkbookFromIndexDB(workbook).then(() =>
+        wSelf.postMessage(workbook)
+      );
+    } else if (getSettings === true) {
       void getIndexDBUserSettings().then((settings) =>
         wSelf.postMessage(settings)
       );
@@ -441,13 +470,13 @@ function messageHandler(event: MessageEvent) {
           )
         )
         .then((progress) => wSelf.postMessage(progress));
-    } else if (req.updateProgress !== undefined) {
-      const { path, value } = req.updateProgress;
+    } else if (updateProgress !== undefined) {
+      const { path, value } = updateProgress;
       void indexDBUserStudyProgressAttrUpdate(path, value).then((progress) =>
         wSelf.postMessage(progress)
       );
-    } else if (req.setProgress !== undefined) {
-      const { value } = req.setProgress;
+    } else if (setProgress !== undefined) {
+      const { value } = setProgress;
 
       void Promise.all(
         dataSetNames.reduce((acc, name) => {

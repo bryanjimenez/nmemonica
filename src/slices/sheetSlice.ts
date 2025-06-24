@@ -1,8 +1,10 @@
 import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { getWorkbookFromIndexDB } from "./indexedDBSlice";
-import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
+import {
+  getWorkbookFromIndexDB,
+  setWorkbookFromIndexDB,
+} from "./indexedDBSlice";
 import { csvToObject } from "../helper/csvHelper";
 import { sheetDataToJSON } from "../helper/jsonHelper";
 import {
@@ -135,13 +137,8 @@ export const saveSheet = createAsyncThunk(
 
     // store workbook in indexedDB
     // (keep ordering and notes)
-    void openIDB()
-      .then((db) =>
-        putIDBItem(
-          { db, store: IDBStores.WORKBOOK },
-          { key: "0", workbook: trimmed }
-        )
-      )
+    void dispatch(setWorkbookFromIndexDB(trimmed))
+      .unwrap()
       .then(() => {
         updateStateAfterWorkbookEdit(dispatch, name, metaUpdatedUids);
       });
@@ -180,13 +177,8 @@ export const importWorkbook = createAsyncThunk(
 
         // store workbook in indexedDB
         // update cached json objects
-        return openIDB()
-          .then((db) =>
-            putIDBItem(
-              { db, store: IDBStores.WORKBOOK },
-              { key: "0", workbook: trimmed }
-            )
-          )
+        return dispatch(setWorkbookFromIndexDB(trimmed))
+          .unwrap()
           .then(() => {
             // reload workbook (update useEffect)
             // setWorkbookImported(Date.now());

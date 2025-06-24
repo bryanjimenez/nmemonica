@@ -14,6 +14,7 @@ import {
   getSheetFromIndexDB,
   getUserProgress,
   getWorkbookFromIndexDB,
+  setWorkbookFromIndexDB,
   updateUserProgress,
   updateUserSettings,
 } from "./indexedDBSlice";
@@ -25,7 +26,6 @@ import {
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
-import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { DebugLevel } from "../helper/consoleHelper";
 import { sheetDataToJSON } from "../helper/jsonHelper";
 import {
@@ -232,13 +232,10 @@ export const togglePhraseTag = createAsyncThunk(
         ];
 
         // Save to indexedDB
-        return openIDB()
-          .then((db) =>
-            putIDBItem(
-              { db, store: IDBStores.WORKBOOK },
-              { key: "0", workbook: wb }
-            )
-          )
+        return thunkAPI
+          .dispatch(setWorkbookFromIndexDB(wb))
+          .unwrap()
+
           .then(() => {
             // TODO: update state
             // wb.forEach(s=>{
