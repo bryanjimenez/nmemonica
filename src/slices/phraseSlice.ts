@@ -208,11 +208,10 @@ export const togglePhraseTag = createAsyncThunk(
   `${SLICE_NAME}/togglePhraseTag`,
   (arg: { query: string; tag: string }, thunkAPI) => {
     const { query, tag } = arg;
-    // const dispatch = thunkAPI.dispatch as AppDispatch;
     const sheetName = workbookSheetNames.phrases.prettyName;
 
     return thunkAPI
-      .dispatch(getWorkbookFromIndexDB(["phrases"]))
+      .dispatch(getWorkbookFromIndexDB([SLICE_NAME]))
       .unwrap()
       .then((sheetArr: SheetData[]) => {
         // Get current tags for term
@@ -235,7 +234,6 @@ export const togglePhraseTag = createAsyncThunk(
         return thunkAPI
           .dispatch(setWorkbookFromIndexDB(wb))
           .unwrap()
-
           .then(() => {
             // TODO: update state
             // wb.forEach(s=>{
@@ -253,7 +251,7 @@ export const getPhraseTags = createAsyncThunk(
     const sheetName = workbookSheetNames.phrases.prettyName;
 
     return thunkAPI
-      .dispatch(getWorkbookFromIndexDB(["phrases"]))
+      .dispatch(getWorkbookFromIndexDB([SLICE_NAME]))
       .unwrap()
       .then((sheetArr: SheetData[]) => {
         // Get current tags for term
@@ -277,7 +275,7 @@ export const getPhraseTags = createAsyncThunk(
 
 export const flipPhrasesPracticeSide = createAsyncThunk(
   `${SLICE_NAME}/flipPhrasesPracticeSide`,
-  (arg: { query: string }, thunkAPI) => {
+  (_arg, thunkAPI) => {
     const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
     return thunkAPI
@@ -420,7 +418,7 @@ export const deleteMetaPhrase = createAsyncThunk(
 );
 
 /**
- * Toggle a phrase's **group** in or out of the view criteria list
+ * Toggle a Phrase's **group** in or out of the view criteria list
  * @param grpName group to be selected/ignored
  */
 export const togglePhraseActiveGrp = createAsyncThunk(
@@ -431,7 +429,7 @@ export const togglePhraseActiveGrp = createAsyncThunk(
     const { activeGroup } = setting;
 
     const groups = Array.isArray(grpName) ? grpName : [grpName];
-    const newValue: string[] = grpParse(groups, activeGroup);
+    const newValue = grpParse(groups, activeGroup);
 
     return thunkAPI
       .dispatch(
@@ -440,6 +438,37 @@ export const togglePhraseActiveGrp = createAsyncThunk(
           path,
           attr: "activeGroup",
           value: newValue,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const togglePhrasesOrdering = createAsyncThunk(
+  `${SLICE_NAME}/togglePhrasesOrdering`,
+  (override: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+    const { ordered } = setting;
+
+    const allowed = [
+      TermSortBy.RANDOM,
+      TermSortBy.VIEW_DATE,
+      TermSortBy.RECALL,
+    ];
+
+    const newOrdered = toggleAFilter(
+      ordered + 1,
+      allowed,
+      override
+    ) as ValuesOf<typeof TermSortBy>;
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "ordered",
+          value: newOrdered,
         })
       )
       .unwrap();
@@ -464,6 +493,10 @@ export const setMemorizedThreshold = createAsyncThunk(
   }
 );
 
+/**
+ * Space Repetition maximum item review
+ * per session
+ */
 export const setSpaRepMaxItemReview = createAsyncThunk(
   `${SLICE_NAME}/setSpaRepMaxItemReview`,
   (max: number | undefined, thunkAPI) => {
@@ -473,13 +506,14 @@ export const setSpaRepMaxItemReview = createAsyncThunk(
       return thunkAPI
         .dispatch(
           deleteUserSettings({
-            path: "/phrases/",
+            path,
             attr: "spaRepMaxReviewItem",
           })
         )
         .unwrap();
     } else {
       const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+
       return thunkAPI
         .dispatch(
           updateUserSettings({
@@ -491,35 +525,6 @@ export const setSpaRepMaxItemReview = createAsyncThunk(
         )
         .unwrap();
     }
-  }
-);
-
-export const togglePhrasesOrdering = createAsyncThunk(
-  `${SLICE_NAME}/togglePhrasesOrdering`,
-  (override: number, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-    const { ordered } = setting;
-
-    const allowed = [
-      TermSortBy.RANDOM,
-      TermSortBy.VIEW_DATE,
-      TermSortBy.RECALL,
-    ];
-
-    let newOrdered = toggleAFilter(ordered + 1, allowed, override) as ValuesOf<
-      typeof TermSortBy
-    >;
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings({
-          state: { [SLICE_NAME]: setting },
-          path,
-          attr: "ordered",
-          value: newOrdered,
-        })
-      )
-      .unwrap();
   }
 );
 
@@ -590,143 +595,9 @@ const phraseSlice = createSlice({
       state.version = phraseInitState.version;
       state.grpObj = phraseInitState.grpObj;
     },
-
-    // togglePhraseActiveGrp(state, action: { payload: string }) {
-    //   const grpName = action.payload;
-
-    //   const { activeGroup } = state.setting;
-
-    //   const groups = Array.isArray(grpName) ? grpName : [grpName];
-    //   const newValue: string[] = grpParse(groups, activeGroup);
-
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/phrases/",
-    //     "activeGroup",
-    //     newValue
-    //   );
-
-    //   state.setting.activeGroup = newValue;
-    // },
-
-    // setMemorizedThreshold(state, action: { payload: number }) {
-    //   const threshold = action.payload;
-
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/phrases/",
-    //     "difficultyThreshold",
-    //     threshold
-    //   );
-
-    //   state.setting.difficultyThreshold = threshold;
-    // },
-
-    // /**
-    //  * Space Repetition maximum item review
-    //  * per session
-    //  */
-    // setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
-    //   const max = action.payload;
-
-    //   if (max === undefined) {
-    //     void deleteUserSettings("/phrases/", "spaRepMaxReviewItem");
-    //     state.setting.spaRepMaxReviewItem = undefined;
-    //   } else {
-    //     const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
-    //     void updateUserSettings(
-    //       { [SLICE_NAME]: state.setting },
-    //       "/phrases/",
-    //       "spaRepMaxReviewItem",
-    //       maxItems
-    //     );
-
-    //     state.setting.spaRepMaxReviewItem = maxItems;
-    //   }
-    // },
-    // togglePhrasesOrdering(
-    //   state,
-    //   action: PayloadAction<ValuesOf<typeof TermSortBy>>
-    // ) {
-    //   const allowed = [
-    //     TermSortBy.RANDOM,
-    //     TermSortBy.VIEW_DATE,
-    //     TermSortBy.RECALL,
-    //   ];
-    //   const override = action.payload;
-
-    //   const { ordered } = state.setting;
-
-    //   let newOrdered = toggleAFilter(
-    //     ordered + 1,
-    //     allowed,
-    //     override
-    //   ) as ValuesOf<typeof TermSortBy>;
-
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/phrases/",
-    //     "ordered",
-    //     newOrdered
-    //   );
-
-    //   state.setting.ordered = newOrdered;
-    // },
-    // toggleIncludeNew(state) {
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/phrases/",
-    //     "includeNew"
-    //   );
-
-    //   state.setting.includeNew = !state.setting.includeNew;
-    // },
-    // toggleIncludeReviewed(state) {
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/phrases/",
-    //     "includeReviewed"
-    //   );
-
-    //   state.setting.includeReviewed = !state.setting.includeReviewed;
-    // },
-
-    // setGoal(
-    //   state,
-    //   action: PayloadAction<PhraseInitSlice["setting"]["viewGoal"]>
-    // ) {
-    //   const goal = action.payload;
-
-    //   if (goal !== undefined) {
-    //     void updateUserSettings(
-    //       { [SLICE_NAME]: state.setting },
-    //       "/phrases/",
-    //       "viewGoal",
-    //       goal
-    //     );
-
-    //     state.setting.viewGoal = goal;
-    //   } else {
-    //     state.setting.viewGoal = undefined;
-    //     void deleteUserSettings("/phrases/", "viewGoal");
-    //   }
-    // },
   },
 
   extraReducers: (builder) => {
-    builder.addCase(getPhrase.fulfilled, (state, action) => {
-      const { version, values, groups } = action.payload;
-      state.grpObj = groups;
-      state.value = values;
-      state.version = version;
-    });
-    builder.addCase(getPhraseMeta.fulfilled, (state, action) => {
-      const newValue = action.payload;
-
-      state.metadataID = Date.now();
-      state.metadata = newValue;
-    });
-
     builder.addCase(phraseSettingsFromAppStorage.fulfilled, (state, action) => {
       const storedValue = action.payload;
       const mergedSettings = merge(phraseInitState.setting, storedValue);
@@ -735,6 +606,20 @@ const phraseSlice = createSlice({
         ...state,
         setting: { ...mergedSettings, repTID: Date.now() },
       };
+    });
+
+    builder.addCase(getPhrase.fulfilled, (state, action) => {
+      const { version, values, groups } = action.payload;
+      state.grpObj = groups;
+      state.value = values;
+      state.version = version;
+    });
+
+    builder.addCase(getPhraseMeta.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
 
     builder.addCase(flipPhrasesPracticeSide.fulfilled, (state) => {
@@ -747,24 +632,28 @@ const phraseSlice = createSlice({
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setPhraseDifficulty.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(updateSpaceRepPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
@@ -773,35 +662,39 @@ const phraseSlice = createSlice({
         state.metadata = newValue;
       }
     });
+
     builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       // state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(deleteMetaPhrase.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(togglePhraseActiveGrp.fulfilled, (state, action) => {
       const activeGroup = action.payload;
       state.setting.activeGroup = activeGroup;
     });
+
+    builder.addCase(togglePhrasesOrdering.fulfilled, (state, action) => {
+      const ordered = action.payload;
+      state.setting.ordered = ordered;
+    });
+
     builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
       const difficultyThreshold = action.payload;
       state.setting.difficultyThreshold = difficultyThreshold;
     });
 
     builder.addCase(setSpaRepMaxItemReview.fulfilled, (state, action) => {
-      const spaRepMaxReviewItem = action.payload;
-      state.setting.spaRepMaxReviewItem = spaRepMaxReviewItem;
-    });
-
-    builder.addCase(togglePhrasesOrdering.fulfilled, (state, action) => {
-      const ordered = action.payload;
-      state.setting.ordered = ordered;
+      const maxItems = action.payload;
+      state.setting.spaRepMaxReviewItem = maxItems;
     });
 
     builder.addCase(toggleIncludeNew.fulfilled, (state, action) => {

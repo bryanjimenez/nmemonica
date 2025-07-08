@@ -45,9 +45,9 @@ export interface KanjiInitSlice {
 
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
-    difficultyThreshold: number;
     spaRepMaxReviewItem?: number;
     activeTags: string[];
+    difficultyThreshold: number;
     includeNew: boolean;
     includeReviewed: boolean;
 
@@ -69,9 +69,9 @@ export const kanjiInitState: KanjiInitSlice = {
 
   setting: {
     ordered: 0,
-    difficultyThreshold: MEMORIZED_THRLD,
     spaRepMaxReviewItem: undefined,
     activeTags: [],
+    difficultyThreshold: MEMORIZED_THRLD,
     includeNew: true,
     includeReviewed: true,
 
@@ -241,7 +241,6 @@ export const batchRepetitionUpdate = createAsyncThunk(
     thunkAPI
       .dispatch(updateUserProgress({ path: SLICE_NAME, value: payload }))
       .unwrap()
-
       .then(() => payload)
 );
 
@@ -283,7 +282,7 @@ export const toggleKanjiActiveTag = createAsyncThunk(
     return thunkAPI
       .dispatch(
         updateUserSettings({
-          state: { kanji: setting },
+          state: { [SLICE_NAME]: setting },
           path,
           attr: "activeTags",
           value: newValue,
@@ -297,7 +296,6 @@ export const toggleKanjiOrdering = createAsyncThunk(
   `${SLICE_NAME}/toggleKanjiOrdering`,
   (override: ValuesOf<typeof TermSortBy>, thunkAPI) => {
     const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
     const { ordered } = setting;
 
     const allowed = [
@@ -307,6 +305,7 @@ export const toggleKanjiOrdering = createAsyncThunk(
       TermSortBy.VIEW_DATE,
       TermSortBy.RECALL,
     ];
+
     const newOrdered = toggleAFilter(
       ordered + 1,
       allowed,
@@ -316,7 +315,7 @@ export const toggleKanjiOrdering = createAsyncThunk(
     return thunkAPI
       .dispatch(
         updateUserSettings({
-          state: { kanji: setting },
+          state: { [SLICE_NAME]: setting },
           path,
           attr: "ordered",
           value: newOrdered,
@@ -334,7 +333,7 @@ export const setMemorizedThreshold = createAsyncThunk(
     return thunkAPI
       .dispatch(
         updateUserSettings({
-          state: { kanji: setting },
+          state: { [SLICE_NAME]: setting },
           path,
           attr: "difficultyThreshold",
           value: threshold,
@@ -355,7 +354,12 @@ export const setSpaRepMaxItemReview = createAsyncThunk(
 
     if (max === undefined) {
       return thunkAPI
-        .dispatch(deleteUserSettings({ path, attr: "spaRepMaxReviewItem" }))
+        .dispatch(
+          deleteUserSettings({
+            path,
+            attr: "spaRepMaxReviewItem",
+          })
+        )
         .unwrap();
     } else {
       const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
@@ -363,12 +367,70 @@ export const setSpaRepMaxItemReview = createAsyncThunk(
       return thunkAPI
         .dispatch(
           updateUserSettings({
-            state: { kanji: setting },
+            state: { [SLICE_NAME]: setting },
             path,
             attr: "spaRepMaxReviewItem",
             value: maxItems,
           })
         )
+        .unwrap();
+    }
+  }
+);
+
+export const toggleIncludeNew = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeNew`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "includeNew",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleIncludeReviewed = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeReviewed`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "includeReviewed",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setGoal = createAsyncThunk(
+  `${SLICE_NAME}/setGoal`,
+  (goal: number | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    if (goal !== undefined) {
+      return thunkAPI
+        .dispatch(
+          updateUserSettings({
+            state: { [SLICE_NAME]: setting },
+            path,
+            attr: "viewGoal",
+            value: goal,
+          })
+        )
+        .unwrap();
+    } else {
+      return thunkAPI
+        .dispatch(deleteUserSettings({ path, attr: "viewGoal" }))
         .unwrap();
     }
   }
@@ -410,64 +472,6 @@ export const toggleKanjiFadeInAnswers = createAsyncThunk(
   }
 );
 
-export const toggleIncludeNew = createAsyncThunk(
-  `${SLICE_NAME}/toggleIncludeNew`,
-  (_arg, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings<boolean>({
-          state: { kanji: setting },
-          path,
-          attr: "includeNew",
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const toggleIncludeReviewed = createAsyncThunk(
-  `${SLICE_NAME}/toggleIncludeReviewed`,
-  (_arg, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings<boolean>({
-          state: { kanji: setting },
-          path,
-          attr: "includeReviewed",
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const setGoal = createAsyncThunk(
-  `${SLICE_NAME}/setGoal`,
-  (goal: number | undefined, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    if (goal !== undefined) {
-      return thunkAPI
-        .dispatch(
-          updateUserSettings({
-            state: { kanji: setting },
-            path,
-            attr: "viewGoal",
-            value: goal,
-          })
-        )
-        .unwrap();
-    } else {
-      return thunkAPI
-        .dispatch(deleteUserSettings({ path, attr: "viewGoal" }))
-        .unwrap();
-    }
-  }
-);
-
 const kanjiSlice = createSlice({
   name: SLICE_NAME,
   initialState: kanjiInitState,
@@ -480,6 +484,16 @@ const kanjiSlice = createSlice({
   },
 
   extraReducers: (builder) => {
+    builder.addCase(kanjiSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(kanjiInitState.setting, storedValue);
+
+      return {
+        ...state,
+        setting: { ...mergedSettings, repTID: Date.now() },
+      };
+    });
+
     builder.addCase(getKanji.fulfilled, (state, action) => {
       const { value: v, version } = action.payload;
 
@@ -535,21 +549,12 @@ const kanjiSlice = createSlice({
       state.value = kanjiArr;
       state.version = version;
     });
+
     builder.addCase(getKanjiMeta.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
-    });
-
-    builder.addCase(kanjiSettingsFromAppStorage.fulfilled, (state, action) => {
-      const storedValue = action.payload;
-      const mergedSettings = merge(kanjiInitState.setting, storedValue);
-
-      return {
-        ...state,
-        setting: { ...mergedSettings, repTID: Date.now() },
-      };
     });
 
     builder.addCase(setKanjiAccuracy.fulfilled, (state, action) => {
@@ -558,24 +563,28 @@ const kanjiSlice = createSlice({
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setKanjiDifficulty.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
@@ -584,22 +593,31 @@ const kanjiSlice = createSlice({
         state.metadata = newValue;
       }
     });
+
     builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       // state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(deleteMetaKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(toggleKanjiActiveTag.fulfilled, (state, action) => {
       const tagName = action.payload;
       state.setting.activeTags = tagName;
     });
+
+    builder.addCase(toggleKanjiOrdering.fulfilled, (state, action) => {
+      const ordered = action.payload;
+      state.setting.ordered = ordered;
+    });
+
     builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
       const difficultyThreshold = action.payload;
       state.setting.difficultyThreshold = difficultyThreshold;
@@ -608,11 +626,6 @@ const kanjiSlice = createSlice({
     builder.addCase(setSpaRepMaxItemReview.fulfilled, (state, action) => {
       const maxItems = action.payload;
       state.setting.spaRepMaxReviewItem = maxItems;
-    });
-
-    builder.addCase(toggleKanjiOrdering.fulfilled, (state, action) => {
-      const ordered = action.payload;
-      state.setting.ordered = ordered;
     });
 
     builder.addCase(toggleIncludeNew.fulfilled, (state, action) => {
@@ -643,5 +656,4 @@ const kanjiSlice = createSlice({
 });
 
 export const { clearKanji } = kanjiSlice.actions;
-
 export default kanjiSlice.reducer;

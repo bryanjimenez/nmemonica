@@ -56,20 +56,21 @@ export interface VocabularyInitSlice {
   setting: {
     ordered: ValuesOf<typeof TermSortBy>;
     englishSideUp: boolean;
-    bareKanji: boolean;
-    hintEnabled: boolean;
-    difficultyThreshold: number;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
+    difficultyThreshold: number;
+    includeNew: boolean;
+    includeReviewed: boolean;
+    bareKanji: boolean;
+    hintEnabled: boolean;
     autoVerbView: boolean;
     verbColSplit: number;
     verbFormsOrder: string[];
-    includeNew: boolean;
-    includeReviewed: boolean;
 
     viewGoal?: number;
   };
 }
+
 export const vocabularyInitState: VocabularyInitSlice = {
   value: [],
   version: "",
@@ -82,18 +83,19 @@ export const vocabularyInitState: VocabularyInitSlice = {
   setting: {
     ordered: 0,
     englishSideUp: false,
-    bareKanji: false,
-    hintEnabled: false,
-    difficultyThreshold: MEMORIZED_THRLD,
     spaRepMaxReviewItem: undefined,
     activeGroup: [],
-    autoVerbView: false,
-    verbColSplit: 0,
-    verbFormsOrder: getVerbFormsArray().map((f) => f.name),
+    difficultyThreshold: MEMORIZED_THRLD,
     includeNew: true,
     includeReviewed: true,
 
     viewGoal: undefined,
+
+    bareKanji: false,
+    hintEnabled: false,
+    autoVerbView: false,
+    verbColSplit: 0,
+    verbFormsOrder: getVerbFormsArray().map((f) => f.name),
   },
 };
 
@@ -102,11 +104,10 @@ export const vocabularyInitState: VocabularyInitSlice = {
  */
 export const getVocabulary = createAsyncThunk(
   `${SLICE_NAME}/getVocabulary`,
-  async (_, thunkAPI) => {
+  async (_arg, thunkAPI) => {
     return thunkAPI
       .dispatch(getSheetFromIndexDB(SLICE_NAME))
       .unwrap()
-
       .then((sheet) => {
         const { data: value, hash: version } = sheetDataToJSON(sheet) as {
           data: Record<string, Vocabulary>;
@@ -135,13 +136,16 @@ export const getVocabularyMeta = createAsyncThunk(
 
 export const vocabularySettingsFromAppStorage = createAsyncThunk(
   `${SLICE_NAME}/vocabularySettingsFromAppStorage`,
-  (arg: (typeof vocabularyInitState)["setting"]) => {
+  (arg: typeof vocabularyInitState.setting) => {
     const initValues = arg;
 
     return initValues;
   }
 );
 
+/**
+ * Update the Vocab's tag metadata in the sheet
+ */
 export const toggleVocabularyTag = createAsyncThunk(
   `${SLICE_NAME}/toggleVocabularyTag`,
   (arg: { query: string; tag: string }, thunkAPI) => {
@@ -149,7 +153,7 @@ export const toggleVocabularyTag = createAsyncThunk(
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
     return thunkAPI
-      .dispatch(getWorkbookFromIndexDB(["vocabulary"]))
+      .dispatch(getWorkbookFromIndexDB([SLICE_NAME]))
       .unwrap()
       .then((sheetArr: SheetData[]) => {
         // Get current tags for term
@@ -187,7 +191,7 @@ export const getVocabularyTags = createAsyncThunk(
     const sheetName = workbookSheetNames.vocabulary.prettyName;
 
     return thunkAPI
-      .dispatch(getWorkbookFromIndexDB(["vocabulary"]))
+      .dispatch(getWorkbookFromIndexDB([SLICE_NAME]))
       .unwrap()
       .then((sheetArr: SheetData[]) => {
         // Get current tags for term
@@ -218,7 +222,7 @@ export const flipVocabularyPracticeSide = createAsyncThunk(
       .dispatch(
         updateUserSettings({
           state: { [SLICE_NAME]: state.setting },
-          path: "/vocabulary/",
+          path,
           attr: "englishSideUp",
         })
       )
@@ -261,48 +265,6 @@ export const setWordDifficulty = createAsyncThunk(
       { count: false, date: false },
       {
         set: { difficultyP: difficulty },
-      }
-    );
-
-    return thunkAPI
-      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
-      .unwrap()
-      .then(() => newValue);
-  }
-);
-
-export const furiganaToggled = createAsyncThunk(
-  `${SLICE_NAME}/furiganaToggled`,
-  (uid: string, thunkAPI) => {
-    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    const { record: newValue } = updateSpaceRepTerm(
-      uid,
-      state.metadata,
-      { count: false, date: false },
-      {
-        toggle: ["f"],
-      }
-    );
-
-    return thunkAPI
-      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
-      .unwrap()
-      .then(() => newValue);
-  }
-);
-
-export const setPitchAccentData = createAsyncThunk(
-  `${SLICE_NAME}/setPitchAccentData`,
-  ({ uid, value }: { uid: string; value: true | null }, thunkAPI) => {
-    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    const { record: newValue } = updateSpaceRepTerm(
-      uid,
-      state.metadata,
-      { count: false, date: false },
-      {
-        set: { pron: value },
       }
     );
 
@@ -395,6 +357,10 @@ export const deleteMetaVocab = createAsyncThunk(
   }
 );
 
+/**
+ * Toggle a Vocab's **group** in or out of the view criteria list
+ * @param grpName group to be selected/ignored
+ */
 export const toggleVocabularyActiveGrp = createAsyncThunk(
   `${SLICE_NAME}/toggleVocabularyActiveGrp`,
   (grpName: string | string[], thunkAPI) => {
@@ -431,6 +397,7 @@ export const toggleVocabularyOrdering = createAsyncThunk(
       TermSortBy.VIEW_DATE,
       TermSortBy.RECALL,
     ];
+
     const newOrdered = toggleAFilter(
       ordered + 1,
       allowed,
@@ -444,94 +411,6 @@ export const toggleVocabularyOrdering = createAsyncThunk(
           path,
           attr: "ordered",
           value: newOrdered,
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const toggleVocabularyBareKanji = createAsyncThunk(
-  `${SLICE_NAME}/toggleVocabularyBareKanji`,
-  (_arg, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings<boolean>({
-          state: { [SLICE_NAME]: setting },
-          path,
-          attr: "bareKanji",
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const toggleVocabularyHint = createAsyncThunk(
-  `${SLICE_NAME}/toggleVocabularyHint`,
-  (_arg, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings<boolean>({
-          state: { [SLICE_NAME]: setting },
-          path,
-          attr: "hintEnabled",
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const setVerbFormsOrder = createAsyncThunk(
-  `${SLICE_NAME}/setVerbFormsOrder`,
-  (order: string[], thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings({
-          state: { [SLICE_NAME]: setting },
-          path,
-          attr: "verbFormsOrder",
-          value: order,
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const toggleAutoVerbView = createAsyncThunk(
-  `${SLICE_NAME}/toggleAutoVerbView`,
-  (order: boolean, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings({
-          state: { [SLICE_NAME]: setting },
-          path,
-          attr: "autoVerbView",
-          value: order,
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const updateVerbColSplit = createAsyncThunk(
-  `${SLICE_NAME}/updateVerbColSplit`,
-  (split: number, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings({
-          state: { [SLICE_NAME]: setting },
-          path,
-          attr: "verbColSplit",
-          value: split,
         })
       )
       .unwrap();
@@ -556,6 +435,10 @@ export const setMemorizedThreshold = createAsyncThunk(
   }
 );
 
+/**
+ * Space Repetition maximum item review
+ * per session
+ */
 export const setSpaRepMaxItemReview = createAsyncThunk(
   `${SLICE_NAME}/setSpaRepMaxItemReview`,
   (max: number | undefined, thunkAPI) => {
@@ -563,7 +446,12 @@ export const setSpaRepMaxItemReview = createAsyncThunk(
 
     if (max === undefined) {
       return thunkAPI
-        .dispatch(deleteUserSettings({ path, attr: "spaRepMaxReviewItem" }))
+        .dispatch(
+          deleteUserSettings({
+            path,
+            attr: "spaRepMaxReviewItem",
+          })
+        )
         .unwrap();
     } else {
       const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
@@ -640,6 +528,151 @@ export const setGoal = createAsyncThunk(
   }
 );
 
+/**
+ * Display or hide furigana on Vocab
+ */
+export const furiganaToggled = createAsyncThunk(
+  `${SLICE_NAME}/furiganaToggled`,
+  (uid: string, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        toggle: ["f"],
+      }
+    );
+
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
+  }
+);
+
+/**
+ * Show pitch accent data information
+ */
+export const setPitchAccentData = createAsyncThunk(
+  `${SLICE_NAME}/setPitchAccentData`,
+  ({ uid, value }: { uid: string; value: true | null }, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { record: newValue } = updateSpaceRepTerm(
+      uid,
+      state.metadata,
+      { count: false, date: false },
+      {
+        set: { pron: value },
+      }
+    );
+
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
+  }
+);
+
+/**
+ * When English is shown also show Kanji (no furigana)
+ */
+export const toggleVocabularyBareKanji = createAsyncThunk(
+  `${SLICE_NAME}/toggleVocabularyBareKanji`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "bareKanji",
+        })
+      )
+      .unwrap();
+  }
+);
+
+/**
+ * If available show a pronunciation hint
+ */
+export const toggleVocabularyHint = createAsyncThunk(
+  `${SLICE_NAME}/toggleVocabularyHint`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "hintEnabled",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setVerbFormsOrder = createAsyncThunk(
+  `${SLICE_NAME}/setVerbFormsOrder`,
+  (order: string[], thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "verbFormsOrder",
+          value: order,
+        })
+      )
+      .unwrap();
+  }
+);
+
+/**
+ * If Vocab is a verb display available forms
+ */
+export const toggleAutoVerbView = createAsyncThunk(
+  `${SLICE_NAME}/toggleAutoVerbView`,
+  (order: boolean, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "autoVerbView",
+          value: order,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const updateVerbColSplit = createAsyncThunk(
+  `${SLICE_NAME}/updateVerbColSplit`,
+  (split: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "verbColSplit",
+          value: split,
+        })
+      )
+      .unwrap();
+  }
+);
+
 const vocabularySlice = createSlice({
   name: SLICE_NAME,
   initialState: vocabularyInitState,
@@ -656,185 +689,6 @@ const vocabularySlice = createSlice({
         verbForm: action.payload,
       };
     },
-
-    // toggleVocabularyActiveGrp: (
-    //   state,
-    //   action: { payload: string[] | string }
-    // ) => {
-    //   const grpName = action.payload;
-
-    //   const { activeGroup } = state.setting;
-
-    //   const groups = Array.isArray(grpName) ? grpName : [grpName];
-    //   const newValue = grpParse(groups, activeGroup);
-
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "activeGroup",
-    //     newValue
-    //   );
-
-    //   state.setting.activeGroup = newValue;
-    // },
-
-    // toggleVocabularyOrdering(
-    //   state,
-    //   action: { payload: ValuesOf<typeof TermSortBy> }
-    // ) {
-    //   const { ordered } = state.setting;
-    //   const override = action.payload;
-
-    //   const allowed = [
-    //     TermSortBy.ALPHABETIC,
-    //     TermSortBy.DIFFICULTY,
-    //     TermSortBy.RANDOM,
-    //     TermSortBy.VIEW_DATE,
-    //     TermSortBy.RECALL,
-    //   ];
-    //   const newOrdered = toggleAFilter(
-    //     ordered + 1,
-    //     allowed,
-    //     override
-    //   ) as ValuesOf<typeof TermSortBy>;
-
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "ordered",
-    //     newOrdered
-    //   );
-
-    //   state.setting.ordered = newOrdered;
-    // },
-
-    // toggleVocabularyBareKanji(state) {
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "bareKanji"
-    //   );
-
-    //   state.setting.bareKanji = !state.setting.bareKanji;
-    // },
-
-    // toggleVocabularyHint(state) {
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "hintEnabled"
-    //   );
-
-    //   state.setting.hintEnabled = !state.setting.hintEnabled;
-    // },
-
-    // setVerbFormsOrder(state, action: { payload: string[] }) {
-    //   const order = action.payload;
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "verbFormsOrder",
-    //     order
-    //   );
-
-    //   state.setting.verbFormsOrder = order;
-    // },
-
-    // toggleAutoVerbView(state) {
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "autoVerbView"
-    //   );
-
-    //   state.setting.autoVerbView = !state.setting.autoVerbView;
-    // },
-
-    // updateVerbColSplit(state, action: { payload: number }) {
-    //   const split = action.payload;
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "verbColSplit",
-    //     split
-    //   );
-
-    //   state.setting.verbColSplit = split;
-    // },
-
-    // setMemorizedThreshold(state, action: { payload: number }) {
-    //   const threshold = action.payload;
-
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "difficultyThreshold",
-    //     threshold
-    //   );
-
-    //   state.setting.difficultyThreshold = threshold;
-    // },
-
-    // /**
-    //  * Space Repetition maximum item review
-    //  * per session
-    //  */
-    // setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
-    //   const max = action.payload;
-
-    //   if (max === undefined) {
-    //     return deleteUserSettings({path:"/vocabulary/", attr:"spaRepMaxReviewItem"});
-    //     state.setting.spaRepMaxReviewItem = undefined;
-    //   } else {
-    //     const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
-    //     void updateUserSettings(
-    //       { [SLICE_NAME]: state.setting },
-    //       "/vocabulary/",
-    //       "spaRepMaxReviewItem",
-    //       maxItems
-    //     );
-
-    //     state.setting.spaRepMaxReviewItem = maxItems;
-    //   }
-    // },
-    // toggleIncludeNew(state) {
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "includeNew"
-    //   );
-
-    //   state.setting.includeNew = !state.setting.includeNew;
-    // },
-    // toggleIncludeReviewed(state) {
-    //   void updateUserSettings(
-    //     { [SLICE_NAME]: state.setting },
-    //     "/vocabulary/",
-    //     "includeReviewed"
-    //   );
-
-    //   state.setting.includeReviewed = !state.setting.includeReviewed;
-    // },
-    // setGoal(
-    //   state,
-    //   action: PayloadAction<VocabularyInitSlice["setting"]["viewGoal"]>
-    // ) {
-    //   const goal = action.payload;
-
-    //   if (goal !== undefined) {
-    //     void updateUserSettings(
-    //       { [SLICE_NAME]: state.setting },
-    //       "/vocabulary/",
-    //       "viewGoal",
-    //       goal
-    //     );
-
-    //     state.setting.viewGoal = goal;
-    //   } else {
-    //     state.setting.viewGoal = undefined;
-    //     void userSettingAttrDelete("/vocabulary/", "viewGoal");
-    //   }
-    // },
   },
 
   extraReducers: (builder) => {
@@ -857,12 +711,14 @@ const vocabularySlice = createSlice({
       state.value = buildVocabularyArray(value);
       state.version = version;
     });
+
     builder.addCase(getVocabularyMeta.fulfilled, (state, action) => {
-      const value = action.payload;
+      const newValue = action.payload;
 
       state.metadataID = Date.now();
-      state.metadata = value;
+      state.metadata = newValue;
     });
+
     builder.addCase(flipVocabularyPracticeSide.fulfilled, (state) => {
       state.setting.englishSideUp = !state.setting.englishSideUp;
     });
@@ -873,36 +729,28 @@ const vocabularySlice = createSlice({
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setWordDifficulty.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
-    builder.addCase(furiganaToggled.fulfilled, (state, action) => {
-      const newValue = action.payload;
 
-      state.metadataID = Date.now();
-      state.metadata = newValue;
-    });
-    builder.addCase(setPitchAccentData.fulfilled, (state, action) => {
-      const newValue = action.payload;
-
-      state.metadataID = Date.now();
-      state.metadata = newValue;
-    });
     builder.addCase(updateSpaceRepWord.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
@@ -911,12 +759,14 @@ const vocabularySlice = createSlice({
         state.metadata = newValue;
       }
     });
+
     builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       // state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(deleteMetaVocab.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
@@ -932,6 +782,45 @@ const vocabularySlice = createSlice({
     builder.addCase(toggleVocabularyOrdering.fulfilled, (state, action) => {
       const ordered = action.payload;
       state.setting.ordered = ordered;
+    });
+
+    builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
+      const difficultyThreshold = action.payload;
+      state.setting.difficultyThreshold = difficultyThreshold;
+    });
+
+    builder.addCase(setSpaRepMaxItemReview.fulfilled, (state, action) => {
+      const maxItems = action.payload;
+      state.setting.spaRepMaxReviewItem = maxItems;
+    });
+
+    builder.addCase(toggleIncludeNew.fulfilled, (state, action) => {
+      const includeNew = action.payload;
+      state.setting.includeNew = includeNew;
+    });
+
+    builder.addCase(toggleIncludeReviewed.fulfilled, (state, action) => {
+      const includeReviewed = action.payload;
+      state.setting.includeReviewed = includeReviewed;
+    });
+
+    builder.addCase(setGoal.fulfilled, (state, action) => {
+      const viewGoal = action.payload;
+      state.setting.viewGoal = viewGoal;
+    });
+
+    builder.addCase(setPitchAccentData.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
+    });
+
+    builder.addCase(furiganaToggled.fulfilled, (state, action) => {
+      const newValue = action.payload;
+
+      state.metadataID = Date.now();
+      state.metadata = newValue;
     });
 
     builder.addCase(toggleVocabularyBareKanji.fulfilled, (state, action) => {
@@ -957,31 +846,6 @@ const vocabularySlice = createSlice({
     builder.addCase(updateVerbColSplit.fulfilled, (state, action) => {
       const verbColSplit = action.payload;
       state.setting.verbColSplit = verbColSplit;
-    });
-
-    builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
-      const difficultyThreshold = action.payload;
-      state.setting.difficultyThreshold = difficultyThreshold;
-    });
-
-    builder.addCase(setSpaRepMaxItemReview.fulfilled, (state, action) => {
-      const spaRepMaxReviewItem = action.payload;
-      state.setting.spaRepMaxReviewItem = spaRepMaxReviewItem;
-    });
-
-    builder.addCase(toggleIncludeNew.fulfilled, (state, action) => {
-      const includeNew = action.payload;
-      state.setting.includeNew = includeNew;
-    });
-
-    builder.addCase(toggleIncludeReviewed.fulfilled, (state, action) => {
-      const includeReviewed = action.payload;
-      state.setting.includeReviewed = includeReviewed;
-    });
-
-    builder.addCase(setGoal.fulfilled, (state, action) => {
-      const viewGoal = action.payload;
-      state.setting.viewGoal = viewGoal;
     });
   },
 });
