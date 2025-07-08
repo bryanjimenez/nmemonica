@@ -15,7 +15,6 @@ import {
   TermFilterBy,
   TermSortBy,
   deleteMetadata,
-  grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
@@ -46,11 +45,9 @@ export interface KanjiInitSlice {
   metadataID: number;
 
   setting: {
-    filter: ValuesOf<typeof TermFilterBy>;
     ordered: ValuesOf<typeof TermSortBy>;
     difficultyThreshold: number;
     spaRepMaxReviewItem?: number;
-    activeGroup: string[];
     activeTags: string[];
     includeNew: boolean;
     includeReviewed: boolean;
@@ -72,11 +69,9 @@ export const kanjiInitState: KanjiInitSlice = {
   metadataID: -1,
 
   setting: {
-    filter: 2,
     ordered: 0,
     difficultyThreshold: MEMORIZED_THRLD,
     spaRepMaxReviewItem: undefined,
-    activeGroup: [],
     activeTags: [],
     includeNew: true,
     includeReviewed: true,
@@ -268,6 +263,10 @@ export const deleteMetaKanji = createAsyncThunk(
   }
 );
 
+/**
+ * Toggle a Kanji's **Tag** in or out of the view criteria list
+ * @param tagName tag to be selected/ignored
+ */
 export const toggleKanjiActiveTag = createAsyncThunk(
   `${SLICE_NAME}/toggleKanjiActiveTag`,
   (tagName: string, thunkAPI) => {
@@ -288,28 +287,6 @@ export const toggleKanjiActiveTag = createAsyncThunk(
           state: { kanji: setting },
           path,
           attr: "activeTags",
-          value: newValue,
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const toggleKanjiActiveGrp = createAsyncThunk(
-  `${SLICE_NAME}/toggleKanjiActiveGrp`,
-  (grpName: string | string[], thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    const groups = Array.isArray(grpName) ? grpName : [grpName];
-    const { activeGroup } = setting;
-    const newValue = grpParse(groups, activeGroup);
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings({
-          state: { kanji: setting },
-          path,
-          attr: "activeGroup",
           value: newValue,
         })
       )
@@ -368,6 +345,10 @@ export const setMemorizedThreshold = createAsyncThunk(
   }
 );
 
+/**
+ * Space Repetition maximum item review
+ * per session
+ */
 export const setSpaRepMaxItemReview = createAsyncThunk(
   `${SLICE_NAME}/setSpaRepMaxItemReview`,
   (max: number | undefined, thunkAPI) => {
@@ -414,7 +395,7 @@ export const setKanjiBtnN = createAsyncThunk(
 
 export const toggleKanjiFadeInAnswers = createAsyncThunk(
   `${SLICE_NAME}/toggleKanjiFadeInAnswers`,
-  (override: number, thunkAPI) => {
+  (override: boolean, thunkAPI) => {
     const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
 
     return thunkAPI
@@ -424,32 +405,6 @@ export const toggleKanjiFadeInAnswers = createAsyncThunk(
           path,
           attr: "fadeInAnswers",
           value: override,
-        })
-      )
-      .unwrap();
-  }
-);
-
-export const toggleKanjiFilter = createAsyncThunk(
-  `${SLICE_NAME}/toggleKanjiFilter`,
-  (override: ValuesOf<typeof TermFilterBy>, thunkAPI) => {
-    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
-
-    const { filter } = setting;
-
-    const newFilter = toggleAFilter(
-      filter + 1,
-      [TermFilterBy.TAGS],
-      override
-    ) as ValuesOf<typeof TermFilterBy>;
-
-    return thunkAPI
-      .dispatch(
-        updateUserSettings({
-          state: { kanji: setting },
-          path,
-          attr: "filter",
-          value: newFilter,
         })
       )
       .unwrap();
@@ -523,193 +478,6 @@ const kanjiSlice = createSlice({
       state.version = kanjiInitState.version;
       state.tagObj = kanjiInitState.tagObj;
     },
-
-    // toggleKanjiActiveTag(state, action: { payload: string }) {
-    //   const tagName: string = action.payload;
-
-    //   const { activeTags } = state.setting;
-
-    //   let newValue;
-    //   if (activeTags.includes(tagName)) {
-    //     newValue = activeTags.filter((a) => a !== tagName);
-    //   } else {
-    //     newValue = [...activeTags, tagName];
-    //   }
-
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "activeTags",
-    //     newValue
-    //   );
-    //   state.setting.activeTags = newValue;
-    // },
-
-    // toggleKanjiActiveGrp: (state, action: { payload: string }) => {
-    //   const grpName = action.payload;
-
-    //   const { activeGroup } = state.setting;
-
-    //   const groups = Array.isArray(grpName) ? grpName : [grpName];
-    //   const newValue = grpParse(groups, activeGroup);
-
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "activeGroup",
-    //     newValue
-    //   );
-
-    //   state.setting.activeGroup = newValue;
-    // },
-
-    // toggleKanjiOrdering(
-    //   state,
-    //   action: { payload: ValuesOf<typeof TermSortBy> }
-    // ) {
-    //   const { ordered } = state.setting;
-    //   const override = action.payload;
-
-    //   const allowed = [
-    //     // TermSortBy.ALPHABETIC,
-    //     TermSortBy.DIFFICULTY,
-    //     TermSortBy.RANDOM,
-    //     TermSortBy.VIEW_DATE,
-    //     TermSortBy.RECALL,
-    //   ];
-    //   const newOrdered = toggleAFilter(
-    //     ordered + 1,
-    //     allowed,
-    //     override
-    //   ) as ValuesOf<typeof TermSortBy>;
-
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "ordered",
-    //     newOrdered
-    //   );
-
-    //   state.setting.ordered = newOrdered;
-    // },
-
-    // setMemorizedThreshold(state, action: PayloadAction<number>) {
-    //   const threshold = action.payload;
-
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "difficultyThreshold",
-    //     threshold
-    //   );
-
-    //   state.setting.difficultyThreshold = threshold;
-    // },
-    // /**
-    //  * Space Repetition maximum item review
-    //  * per session
-    //  */
-    // setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
-    //   const max = action.payload;
-
-    //   if (max === undefined) {
-    //     void userSettingAttrDelete("/kanji/", "spaRepMaxReviewItem");
-    //     state.setting.spaRepMaxReviewItem = undefined;
-    //   } else {
-    //     const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
-    //     void updateUserSettings(
-    //       { kanji: state.setting },
-    //       "/kanji/",
-    //       "spaRepMaxReviewItem",
-    //       maxItems
-    //     );
-
-    //     state.setting.spaRepMaxReviewItem = maxItems;
-    //   }
-    // },
-    // setKanjiBtnN(state, action: { payload: number }) {
-    //   const number = action.payload;
-
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "choiceN",
-    //     number
-    //   );
-
-    //   state.setting.choiceN = number;
-    // },
-    // toggleKanjiFadeInAnswers(state, action: { payload?: boolean }) {
-    //   const override = action.payload ?? false;
-
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "fadeInAnswers",
-    //     override
-    //   );
-
-    //   state.setting.fadeInAnswers = override;
-    // },
-
-    // toggleKanjiFilter(state, action: { payload?: number }) {
-    //   const override = action.payload;
-    //   const { filter } = state.setting;
-
-    //   const newFilter = toggleAFilter(
-    //     filter + 1,
-    //     [TermFilterBy.TAGS],
-    //     override
-    //   ) as ValuesOf<typeof TermFilterBy>;
-
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "filter",
-    //     newFilter
-    //   );
-
-    //   state.setting.filter = newFilter;
-    // },
-
-    // toggleIncludeNew(state) {
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "includeNew"
-    //   );
-
-    //   state.setting.includeNew = !state.setting.includeNew;
-    // },
-    // toggleIncludeReviewed(state) {
-    //   void updateUserSettings(
-    //     { kanji: state.setting },
-    //     "/kanji/",
-    //     "includeReviewed"
-    //   );
-
-    //   state.setting.includeReviewed = !state.setting.includeReviewed;
-    // },
-    // setGoal(
-    //   state,
-    //   action: PayloadAction<KanjiInitSlice["setting"]["viewGoal"]>
-    // ) {
-    //   const goal = action.payload;
-
-    //   if (goal !== undefined) {
-    //     void updateUserSettings(
-    //       { kanji: state.setting },
-    //       "/kanji/",
-    //       "viewGoal",
-    //       goal
-    //     );
-
-    //     state.setting.viewGoal = goal;
-    //   } else {
-    //     state.setting.viewGoal = undefined;
-    //     void userSettingAttrDelete("/kanji/", "viewGoal");
-    //   }
-    // },
   },
 
   extraReducers: (builder) => {
@@ -768,7 +536,6 @@ const kanjiSlice = createSlice({
       state.value = kanjiArr;
       state.version = version;
     });
-
     builder.addCase(getKanjiMeta.fulfilled, (state, action) => {
       const newValue = action.payload;
 
@@ -829,6 +596,49 @@ const kanjiSlice = createSlice({
 
       state.metadataID = Date.now();
       state.metadata = newValue;
+    });
+    builder.addCase(toggleKanjiActiveTag.fulfilled, (state, action) => {
+      const tagName = action.payload;
+      state.setting.activeTags = tagName;
+    });
+    builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
+      const difficultyThreshold = action.payload;
+      state.setting.difficultyThreshold = difficultyThreshold;
+    });
+
+    builder.addCase(setSpaRepMaxItemReview.fulfilled, (state, action) => {
+      const maxItems = action.payload;
+      state.setting.spaRepMaxReviewItem = maxItems;
+    });
+
+    builder.addCase(toggleKanjiOrdering.fulfilled, (state, action) => {
+      const ordered = action.payload;
+      state.setting.ordered = ordered;
+    });
+
+    builder.addCase(toggleIncludeNew.fulfilled, (state, action) => {
+      const includeNew = action.payload;
+      state.setting.includeNew = includeNew;
+    });
+
+    builder.addCase(toggleIncludeReviewed.fulfilled, (state, action) => {
+      const includeReviewed = action.payload;
+      state.setting.includeReviewed = includeReviewed;
+    });
+
+    builder.addCase(setGoal.fulfilled, (state, action) => {
+      const viewGoal = action.payload;
+      state.setting.viewGoal = viewGoal;
+    });
+
+    builder.addCase(toggleKanjiFadeInAnswers.fulfilled, (state, action) => {
+      const fade = action.payload;
+      state.setting.fadeInAnswers = fade;
+    });
+
+    builder.addCase(setKanjiBtnN.fulfilled, (state, action) => {
+      const number = action.payload;
+      state.setting.choiceN = number;
     });
   },
 });

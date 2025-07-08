@@ -427,7 +427,7 @@ export function updateEditedUID<T extends { uid: string; english: string }>(
   return { updatedMeta, changedUID: changed };
 }
 
-/*
+/**
  * Toggles a tag for a term in a sheet (modifies workbook)
  * @param sheet Sheet to search in
  * @param query A search query to match on
