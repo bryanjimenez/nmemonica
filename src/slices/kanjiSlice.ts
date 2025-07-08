@@ -12,7 +12,6 @@ import {
   updateUserSettings,
 } from "./indexedDBSlice";
 import {
-  TermFilterBy,
   TermSortBy,
   deleteMetadata,
   toggleAFilter,

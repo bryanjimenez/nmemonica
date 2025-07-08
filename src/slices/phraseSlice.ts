@@ -19,7 +19,6 @@ import {
   updateUserSettings,
 } from "./indexedDBSlice";
 import {
-  TermFilterBy,
   TermSortBy,
   deleteMetadata,
   grpParse,
@@ -59,7 +58,6 @@ export interface PhraseInitSlice {
     englishSideUp: boolean;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
-    filter: ValuesOf<typeof TermFilterBy>;
     difficultyThreshold: number;
     includeNew: boolean;
     includeReviewed: boolean;
@@ -81,7 +79,6 @@ export const phraseInitState: PhraseInitSlice = {
     englishSideUp: false,
     spaRepMaxReviewItem: undefined,
     activeGroup: [],
-    filter: 0,
     difficultyThreshold: MEMORIZED_THRLD,
     includeNew: true,
     includeReviewed: true,
@@ -204,6 +201,9 @@ export const phraseSettingsFromAppStorage = createAsyncThunk(
   }
 );
 
+/**
+ * Update the Phrase's tag metadata in the sheet
+ */
 export const togglePhraseTag = createAsyncThunk(
   `${SLICE_NAME}/togglePhraseTag`,
   (arg: { query: string; tag: string }, thunkAPI) => {
@@ -419,6 +419,10 @@ export const deleteMetaPhrase = createAsyncThunk(
   }
 );
 
+/**
+ * Toggle a phrase's **group** in or out of the view criteria list
+ * @param grpName group to be selected/ignored
+ */
 export const togglePhraseActiveGrp = createAsyncThunk(
   `${SLICE_NAME}/togglePhraseActiveGrp`,
   (grpName: string | string[], thunkAPI) => {
@@ -781,12 +785,10 @@ const phraseSlice = createSlice({
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
-
     builder.addCase(togglePhraseActiveGrp.fulfilled, (state, action) => {
       const activeGroup = action.payload;
       state.setting.activeGroup = activeGroup;
     });
-
     builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
       const difficultyThreshold = action.payload;
       state.setting.difficultyThreshold = difficultyThreshold;

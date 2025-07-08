@@ -71,7 +71,11 @@ import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { playAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
-import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import {
+  TermFilterBy,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import {
   deleteMetaVocab,
   flipVocabularyPracticeSide,
@@ -161,7 +165,6 @@ export default function Vocabulary() {
     sortMethod,
 
     // Refs
-    filterType: filterTypeREF,
     hintEnabled: hintEnabledREF,
     activeGroup,
     includeNew,
@@ -231,7 +234,7 @@ export default function Vocabulary() {
 
       let recallGame = -1;
       let filtered = termFilterByType(
-        filterTypeREF.current,
+        TermFilterBy.GROUP,
         vocabList,
         activeGroup
       );
@@ -317,7 +320,6 @@ export default function Vocabulary() {
       return { filteredVocab: filtered, recallGame };
     },
     [
-      filterTypeREF,
       sort,
       difficultyThresholdREF,
       vocabList,
@@ -579,7 +581,13 @@ export default function Vocabulary() {
           const meta = newValue[uid];
           const oldMeta = oldValue[uid];
 
-          recallDebugLogHelper(dispatch, meta, oldMeta, vocabulary.english, logger);
+          recallDebugLogHelper(
+            dispatch,
+            meta,
+            oldMeta,
+            vocabulary.english,
+            logger
+          );
         }
 
         // after space rep updates

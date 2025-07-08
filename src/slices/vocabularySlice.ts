@@ -14,7 +14,6 @@ import {
   updateUserSettings,
 } from "./indexedDBSlice";
 import {
-  TermFilterBy,
   TermSortBy,
   deleteMetadata,
   grpParse,
@@ -59,7 +58,6 @@ export interface VocabularyInitSlice {
     englishSideUp: boolean;
     bareKanji: boolean;
     hintEnabled: boolean;
-    filter: ValuesOf<typeof TermFilterBy>;
     difficultyThreshold: number;
     spaRepMaxReviewItem?: number;
     activeGroup: string[];
@@ -86,7 +84,6 @@ export const vocabularyInitState: VocabularyInitSlice = {
     englishSideUp: false,
     bareKanji: false,
     hintEnabled: false,
-    filter: 0,
     difficultyThreshold: MEMORIZED_THRLD,
     spaRepMaxReviewItem: undefined,
     activeGroup: [],

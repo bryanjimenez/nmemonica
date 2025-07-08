@@ -78,7 +78,6 @@ export default function KanjiGrid() {
     activeTags,
     repetition,
 
-    filterType: filterTypeRef,
     choiceN,
   } = useConnectKanji();
 
@@ -108,21 +107,15 @@ export default function KanjiGrid() {
     if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
       return kanjiList;
 
-    let filtered = termFilterByType(
-      filterTypeRef.current,
-      kanjiList,
-      filterTypeRef.current === TermFilterBy.TAGS ? activeTags : []
-    );
+    let filtered = termFilterByType(TermFilterBy.TAGS, kanjiList, activeTags);
 
-    if (filterTypeRef.current === TermFilterBy.TAGS) {
-      const filteredList = filtered.map((k) => k.uid);
-      const additional = kanjiList.filter((k) => !filteredList.includes(k.uid));
+    const filteredList = filtered.map((k) => k.uid);
+    const additional = kanjiList.filter((k) => !filteredList.includes(k.uid));
 
-      filtered = [...filtered, ...additional];
-    }
+    filtered = [...filtered, ...additional];
 
     return filtered;
-  }, [kanjiList, activeTags, filterTypeRef]);
+  }, [kanjiList, activeTags]);
 
   const order = useMemo(() => randomOrder(filteredTerms), [filteredTerms]);
 

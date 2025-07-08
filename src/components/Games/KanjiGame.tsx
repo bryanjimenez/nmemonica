@@ -152,7 +152,6 @@ export default function KanjiGame() {
     fadeInAnswers,
     difficultyThreshold,
 
-    filterType: filterTypeREF,
     sortMethod,
   } = useConnectKanji();
 
@@ -184,18 +183,12 @@ export default function KanjiGame() {
     if (Object.keys(metadata.current).length === 0 && activeTags.length === 0)
       return kanjiList;
 
-    let filtered = termFilterByType(
-      filterTypeREF.current,
-      kanjiList,
-      filterTypeREF.current === TermFilterBy.TAGS ? activeTags : []
-    );
+    let filtered = termFilterByType(TermFilterBy.TAGS, kanjiList, activeTags);
 
-    if (filterTypeREF.current === TermFilterBy.TAGS) {
-      const filteredList = filtered.map((k) => k.uid);
-      const additional = kanjiList.filter((k) => !filteredList.includes(k.uid));
+    const filteredList = filtered.map((k) => k.uid);
+    const additional = kanjiList.filter((k) => !filteredList.includes(k.uid));
 
-      filtered = [...filtered, ...additional];
-    }
+    filtered = [...filtered, ...additional];
 
     // exclude terms with difficulty beyond difficultyThreshold
     const subFilter = difficultySubFilter(
@@ -212,7 +205,7 @@ export default function KanjiGame() {
     }
 
     return filtered;
-  }, [filterTypeREF, difficultyThresholdREF, kanjiList, activeTags]);
+  }, [difficultyThresholdREF, kanjiList, activeTags]);
 
   const order = useMemo(() => {
     const repetition = metadata.current;

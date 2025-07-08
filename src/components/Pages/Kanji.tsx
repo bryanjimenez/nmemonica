@@ -216,7 +216,6 @@ export default function Kanji() {
   const {
     kanjiList,
 
-    filterType: filterTypeREF,
     difficultyThreshold,
     activeTags,
     sortMethod,
@@ -297,11 +296,7 @@ export default function Kanji() {
         return { filteredTerms: kanjiList, recallGame: -1 };
 
       let recallGame = -1;
-      let filtered = termFilterByType(
-        filterTypeREF.current,
-        kanjiList,
-        filterTypeREF.current === TermFilterBy.TAGS ? activeTags : []
-      );
+      let filtered = termFilterByType(TermFilterBy.TAGS, kanjiList, activeTags);
 
       // exclude terms with difficulty beyond difficultyThreshold
       const subFilter = difficultySubFilter(
@@ -384,7 +379,6 @@ export default function Kanji() {
       return { filteredTerms: filtered, recallGame };
     },
     [
-      filterTypeREF,
       difficultyThresholdREF,
       sort,
       kanjiList,

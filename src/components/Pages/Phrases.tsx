@@ -78,7 +78,11 @@ import {
   togglePhraseTag,
   updateSpaceRepPhrase,
 } from "../../slices/phraseSlice";
-import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import {
+  TermFilterBy,
+  TermSortBy,
+  TermSortByLabel,
+} from "../../slices/settingHelper";
 import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
@@ -147,7 +151,6 @@ export default function Phrases() {
     sortMethod,
 
     // Refs ()
-    filterType: filterTypeREF,
     viewGoal,
   } = useConnectPhrase();
 
@@ -210,7 +213,7 @@ export default function Phrases() {
 
       let recallGame = -1;
       let filtered = termFilterByType(
-        filterTypeREF.current,
+        TermFilterBy.GROUP,
         phraseList,
         activeGroup
       );
@@ -298,7 +301,6 @@ export default function Phrases() {
       return { filtered, recallGame };
     },
     [
-      filterTypeREF,
       sort,
       difficultyThresholdREF,
       phraseList,
