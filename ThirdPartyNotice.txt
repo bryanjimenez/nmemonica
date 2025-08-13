@@ -744,7 +744,7 @@ undefined
 
 
 --------------------------------------------------------------------------------
-@nmemonica/voice-ja v0.1.0 - undefined
+@nmemonica/voice-ja v0.1.1 - undefined
 https://github.com/bryanjimenez/nmemonica-voice-ja
 --------------------------------------------------------------------------------
 
