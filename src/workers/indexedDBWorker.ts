@@ -8,22 +8,12 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
+import { settingsKeys } from "../constants/sliceConstants";
 import { jtox } from "../helper/jsonHelper";
 import { dataSetNames, workbookSheetNames } from "../helper/sheetHelper";
 import { IndexedDBWorkerReq } from "../slices/indexedDBSlice";
 import type { AppSettingState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
-
-// TODO: from slices
-const settingsKeys = [
-  "global",
-  "vocabulary",
-  "phrases",
-  "kanji",
-  "kana",
-  "opposite",
-  "particle",
-] as const;
 
 /**
  * Reads a value from storage
@@ -73,7 +63,7 @@ export function usingPathWrite(
  *
  * @param required List of required sheets in workbook. Any missing are created (placeholders).
  */
-export function getWorkbookFromIndexDB(
+function getWorkbookFromIndexDB(
   required?: (keyof typeof workbookSheetNames)[]
 ) {
   return openIDB()
@@ -145,7 +135,7 @@ export function getWorkbookFromIndexDB(
  *
  * @param workbook
  */
-export function setWorkbookFromIndexDB(workbook: SheetData[]) {
+function setWorkbookFromIndexDB(workbook: SheetData[]) {
   return openIDB().then((db) =>
     putIDBItem({ db, store: IDBStores.WORKBOOK }, { key: "0", workbook })
   );
@@ -157,9 +147,7 @@ export function setWorkbookFromIndexDB(workbook: SheetData[]) {
  * cache
  * or creates placeholders
  */
-export function getSheetFromIndexDB(
-  sheetName: keyof typeof workbookSheetNames
-) {
+function getSheetFromIndexDB(sheetName: keyof typeof workbookSheetNames) {
   return getWorkbookFromIndexDB().then((workbook) => {
     const sheet = workbook.find(
       (s) =>
@@ -176,7 +164,7 @@ export function getSheetFromIndexDB(
 /**
  * Retrieve the settings object stored in IndexDB
  */
-export function getIndexDBUserSettings(): Promise<Partial<AppSettingState>> {
+function getIndexDBUserSettings(): Promise<Partial<AppSettingState>> {
   return Promise.allSettled(
     settingsKeys.map((key) =>
       openIDB().then((db) => {
@@ -221,7 +209,7 @@ export function getIndexDBUserSettings(): Promise<Partial<AppSettingState>> {
 /**
  * Store a whole settings object
  */
-export function setIndexDBUserSettings(value: Partial<AppSettingState>) {
+function setIndexDBUserSettings(value: Partial<AppSettingState>) {
   return Promise.all(
     (Object.keys(value) as (keyof AppSettingState)[]).map((key) =>
       openIDB().then((db) =>
@@ -234,13 +222,13 @@ export function setIndexDBUserSettings(value: Partial<AppSettingState>) {
   ).then(() => {});
 }
 
-export function indexDBUserSettingAttrUpdate(
+function indexDBUserSettingAttrUpdate(
   state: Partial<AppSettingState>,
   path: string,
   attr: string
 ): Promise<boolean>;
 
-export function indexDBUserSettingAttrUpdate<T>(
+function indexDBUserSettingAttrUpdate<T>(
   state: Partial<AppSettingState>,
   path: string,
   attr: string,
@@ -253,7 +241,7 @@ export function indexDBUserSettingAttrUpdate<T>(
  * @param attr
  * @param value optional if absent `attr` will be toggled
  */
-export function indexDBUserSettingAttrUpdate<T>(
+function indexDBUserSettingAttrUpdate<T>(
   state: Partial<AppSettingState>,
   path: string,
   attr: string,
@@ -289,7 +277,7 @@ export function indexDBUserSettingAttrUpdate<T>(
 /**
  * Modifies an attribute or toggles the existing value
  */
-export function indexDBUserSettingAttrDelete(path: string, attr: string) {
+function indexDBUserSettingAttrDelete(path: string, attr: string) {
   return getIndexDBUserSettings().then((res) => {
     const initialState = res ?? {};
     const cleanPath = [
@@ -312,7 +300,7 @@ export function indexDBUserSettingAttrDelete(path: string, attr: string) {
 /**
  * Retrieve the study progress object stored in IndexDB
  */
-export function getIndexDBStudyProgress(path: (typeof dataSetNames)[number]) {
+function getIndexDBStudyProgress(path: (typeof dataSetNames)[number]) {
   return openIDB()
     .then((db) => {
       // if indexedDB has stored
@@ -359,7 +347,7 @@ export function getIndexDBStudyProgress(path: (typeof dataSetNames)[number]) {
 /**
  * Store a whole study-state object
  */
-export function setIndexDBStudyProgress(
+function setIndexDBStudyProgress(
   path: (typeof dataSetNames)[number],
   value: Record<string, MetaDataObj | undefined>
 ) {
@@ -368,7 +356,7 @@ export function setIndexDBStudyProgress(
   );
 }
 
-export function indexDBUserStudyProgressAttrUpdate(
+function indexDBUserStudyProgressAttrUpdate(
   path: (typeof dataSetNames)[number],
   value: Record<string, MetaDataObj | undefined>
 ) {

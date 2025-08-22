@@ -9,6 +9,7 @@ import phrasesReducer from "./phraseSlice";
 import serviceWorkerReducer from "./serviceWorkerSlice";
 import vocabularyReducer from "./vocabularySlice";
 import audioReducer from "./voiceSlice";
+import { settingsKeys } from "../constants/sliceConstants";
 import type { AppProgressState, AppSettingState } from "../typings/slices";
 
 // https://redux-toolkit.js.org/tutorials/typescript#define-root-state-and-dispatch-types
@@ -36,16 +37,6 @@ export const store = configureStore({
       },
     }),
 });
-
-export const settingsKeys = [
-  "global",
-  "vocabulary",
-  "phrases",
-  "kanji",
-  "kana",
-  "opposite",
-  "particle",
-] as const;
 
 /**
  * Validator for AppSettingState Object
