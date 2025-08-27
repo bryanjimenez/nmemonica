@@ -1756,7 +1756,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
-cipher-base v1.0.4 - Calvin Metcalf <calvin.metcalf@gmail.com>
+cipher-base v1.0.6 - Calvin Metcalf <calvin.metcalf@gmail.com>
 git+https://github.com/crypto-browserify/cipher-base.git
 --------------------------------------------------------------------------------
 
@@ -3591,7 +3591,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-sha.js v2.4.11 - Dominic Tarr <dominic.tarr@gmail.com> (dominictarr.com)
+sha.js v2.4.12 - Dominic Tarr <dominic.tarr@gmail.com> (dominictarr.com)
 git://github.com/crypto-browserify/sha.js.git
 --------------------------------------------------------------------------------
 
