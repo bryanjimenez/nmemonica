@@ -1,7 +1,7 @@
 # Kanji
 URL: `/#/kanji`  
 
-This page is similar to the vocabulary and phrases. The list of Kanji each has (if available) a kunyomi and onyomi reading, the symbol's meaning and example usage.
+This page is similar to the vocabulary and phrases page. Kanji will be displayed for the user to recall and recognize. By swiping vertically additional information will be revealed for the shown Kanji. Swiping horizontally traverses the deck. Each Kanji has (if available) a kunyomi and onyomi reading, the symbol's meaning and example usage.
 
 Kanji can be tagged with the basic categories or special indicators (indicated here by highlighted text under the Tags column):
 
