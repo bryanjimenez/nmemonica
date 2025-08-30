@@ -493,7 +493,9 @@ function messageHandler(event: MessageEvent) {
         .then((result) => wSelf.postMessage(result))
         .catch(exceptionHandler);
     } else {
-      throw new Error("Unexpected message from app");
+      // unknown request
+      // eslint-disable-next-line no-console
+      console.warn(req);
     }
   } catch (exception) {
     wSelf.postMessage(exception);
