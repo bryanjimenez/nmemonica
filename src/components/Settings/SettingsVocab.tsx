@@ -4,7 +4,7 @@ import {
   XCircleIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useDispatch } from "react-redux";
 
 import { DebugLevel } from "../../helper/consoleHelper";
@@ -84,17 +84,23 @@ export default function SettingsVocab() {
     return [shown, hidden];
   }, [verbFormsOrder]);
 
+  // oneTimeREF to Prevent
+  // Warning: Cannot update a component X while rendering a different Y
+  const stale = getStaleGroups(vocabGroups, vocabActive);
+  const oneTimeREF = useRef(true);
+  useEffect(() => {
+    if (stale.length > 0 && oneTimeREF.current) {
+      const error = new Error("Stale vocabulary active group", {
+        cause: { code: "StaleVocabActiveGrp", value: stale },
+      });
+      dispatch(logger(error.message, DebugLevel.ERROR));
+      dispatch(logger(JSON.stringify(stale), DebugLevel.ERROR));
+      oneTimeREF.current = false;
+    }
+  }, [dispatch, stale]);
+
   if (vocabulary.length < 1 || Object.keys(vocabGroups).length < 1)
     return <NotReady addlStyle="vocabulary-settings" />;
-
-  const stale = getStaleGroups(vocabGroups, vocabActive);
-  if (stale.length > 0) {
-    const error = new Error("Stale vocabulary active group", {
-      cause: { code: "StaleVocabActiveGrp", value: stale },
-    });
-    dispatch(logger(error.message, DebugLevel.ERROR));
-    dispatch(logger(JSON.stringify(stale), DebugLevel.ERROR));
-  }
 
   const el = (
     <div className="outer">

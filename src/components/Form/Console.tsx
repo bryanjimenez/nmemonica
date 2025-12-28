@@ -64,7 +64,13 @@ export default function Console(props: ConsoleProps) {
 
   const start = -window - scroll;
   const end = scroll > 0 ? -1 * scroll : undefined;
-  const m = messages.slice(start, end);
+
+  // Deduplicate w/ Map to avoid react-key collisions
+  const m = Array.from(
+    new Map(
+      messages.slice(start, end).map((e) => [`${e.time}+${e.msg}+${e.lvl}`, e])
+    )
+  ).map(([_k, v]) => v);
 
   const scrollUp = useCallback(() => {
     const max = messages.length - window > -1 ? messages.length - window : 0;
