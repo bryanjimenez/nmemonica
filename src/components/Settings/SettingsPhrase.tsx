@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 
 import { DebugLevel } from "../../helper/consoleHelper";
@@ -41,17 +42,25 @@ export default function SettingsPhrase() {
     void dispatch(getPhrase());
   }
 
+  // oneTimeREF to Prevent
+  // Warning: Cannot update a component X while rendering a different Y
+  const stale = getStaleGroups(phraseGroups, phraseActive);
+  const oneTimeREF = useRef(true);
+  useEffect(() => {
+    if (stale.length > 0 && oneTimeREF.current) {
+      const error = new Error("Stale phrases active group", {
+        cause: { code: "StalePhraseActiveGrp", value: stale },
+      });
+
+      dispatch(logger(error.message, DebugLevel.ERROR));
+      dispatch(logger(JSON.stringify(stale), DebugLevel.ERROR));
+
+      oneTimeREF.current = false;
+    }
+  }, [dispatch, stale]);
+
   if (phrases.length < 1 || Object.keys(phraseGroups).length < 1)
     return <NotReady addlStyle="phrases-settings" />;
-
-  const stale = getStaleGroups(phraseGroups, phraseActive);
-  if (stale.length > 0) {
-    const error = new Error("Stale phrases active group", {
-      cause: { code: "StalePhraseActiveGrp", value: stale },
-    });
-    dispatch(logger(error.message, DebugLevel.ERROR));
-    dispatch(logger(JSON.stringify(stale), DebugLevel.ERROR));
-  }
 
   const el = (
     <div className="outer">
