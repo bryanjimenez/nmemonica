@@ -1,24 +1,15 @@
 version: 2
 updates:
 
-  # Maintain dependencies for client code
+  # Enable Security Alerts
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "wednesday"
+    allow:
+      - dependency-type: "production"
     commit-message:
-      prefix: "ui npm"
+      prefix: "npm"
       include: "scope"
-    open-pull-requests-limit: 3
-
-  # Maintain dependencies for services code
-  - package-ecosystem: "npm"
-    directory: "/lambda/sheets"
-    schedule:
-      interval: "weekly"
-      day: "wednesday"
-    commit-message:
-      prefix: "fn npm"
-      include: "scope"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
