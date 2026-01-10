@@ -38,6 +38,15 @@ export function appendLicense(lic /*:{dependencies:DependencyBlock[]}*/) {
     licenseText: fromComment("./src/helper/TouchSwipe.ts"),
   };
 
+  const base64ToUint8ArrayFromServiceWorkerCookbook = {
+    name: "serviceworker-cookbook",
+    version: "0.1.0",
+    author: "Harald Kirschner <npm@digitarald.com> (http://digitarald.de/)",
+    repository: "https://github.com/mdn/serviceworker-cookbook",
+    licenseName: "MIT",
+    licenseText: fromComment("./src/helper/cryptoHelperTools.ts"),
+  };
+
   const hts_voice_nitech_jp_atr503_m001_1_05_lic = readFileSync(
     "./res/models/hts_voice_nitech_jp_atr503_m001-1.05/COPYING",
     { encoding: "utf-8" }
@@ -68,6 +77,7 @@ export function appendLicense(lic /*:{dependencies:DependencyBlock[]}*/) {
     dependencies: [
       ...lic.dependencies,
       reactSlickBlock,
+      base64ToUint8ArrayFromServiceWorkerCookbook,
       hts_voice_nitech_jp_atr503_m001_1_05,
       htsvoice_tohoku_f01,
     ],
