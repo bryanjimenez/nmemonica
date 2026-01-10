@@ -1,26 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
-/**
- * Borrowed from MDN serviceworker cookbook
- * @link https://github.com/mdn/serviceworker-cookbook/blob/master/tools.js
- */
-export function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, "+")
-    .replace(/_/g, "/");
-  const rawData = Buffer.from(base64, "base64");
-  let outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    const d = rawData.at(i);
-    if (d !== undefined) {
-      outputArray[i] = d;
-    }
-  }
-
-  return outputArray;
-}
+import { urlBase64ToUint8Array } from "./cryptoHelperTools";
 
 export function generateAES192CBCKey() {
   return Buffer.from(randomBytes(24)).toString("base64");
