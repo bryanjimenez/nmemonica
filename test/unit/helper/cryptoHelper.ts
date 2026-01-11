@@ -5,15 +5,24 @@ import {
   decryptAES256GCM,
   encryptAES256GCM,
 } from "../../../src/helper/cryptoHelper";
+import { KeyObject, subtle } from "crypto";
 
 describe("cryptoHelper", function () {
   describe("aes-192-cbc", function () {
-    it("encrypt decrypt", function () {
+    it("encrypt decrypt", async function () {
       const algorithm = "aes-192-cbc";
-      const key = "kkNIbueD0VlqU6HZ0Zk4dY60pTypBhOQ";
+      const key = await subtle.generateKey(
+        {
+          name: "AES-CBC",
+          length: 192,
+        },
+        true,
+        ["encrypt", "decrypt"]
+      );
+      const password = KeyObject.from(key).export().toString("base64");
       const plainText = "super secret";
 
-      const actualEncrypted = encryptAES192CBC(algorithm, key, plainText);
+      const actualEncrypted = encryptAES192CBC(algorithm, password, plainText);
       expect(actualEncrypted).include.keys(["iv", "encrypted"]);
       const { iv, encrypted } = actualEncrypted;
       expect(typeof iv).to.eq("string");
@@ -21,7 +30,7 @@ describe("cryptoHelper", function () {
 
       const actualDecrypted = decryptAES192CBC(
         algorithm,
-        key,
+        password,
         actualEncrypted.iv,
         actualEncrypted.encrypted
       );
@@ -29,14 +38,20 @@ describe("cryptoHelper", function () {
     });
   });
   describe("aes-256-gcm", function () {
-    it("encrypt decrypt", function () {
+    it("encrypt decrypt", async function () {
       const algorithm = "aes-256-gcm";
-      // const key = Buffer.from(randomBytes(32)).toString("base64");
-      const key = "dJGFClbJOmluFe7z/SAAv4o1fhDnSqOUUzIH0bjrMG8=";
-
+      const key = await subtle.generateKey(
+        {
+          name: "AES-GCM",
+          length: 256,
+        },
+        true,
+        ["encrypt", "decrypt"]
+      );
+      const password = KeyObject.from(key).export().toString("base64");
       const plainText = "super secret";
 
-      const actualEncrypted = encryptAES256GCM(algorithm, key, plainText);
+      const actualEncrypted = encryptAES256GCM(algorithm, password, plainText);
       expect(actualEncrypted).include.keys(["iv", "encrypted", "tag"]);
       const { iv, encrypted } = actualEncrypted;
       expect(typeof iv).to.eq("string");
@@ -44,7 +59,7 @@ describe("cryptoHelper", function () {
 
       const actualDecrypted = decryptAES256GCM(
         algorithm,
-        key,
+        password,
         actualEncrypted.iv,
         actualEncrypted.tag,
         actualEncrypted.encrypted

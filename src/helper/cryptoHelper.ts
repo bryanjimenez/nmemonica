@@ -1,6 +1,9 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
-
-import { urlBase64ToUint8Array } from "./cryptoHelperTools";
+import {
+  KeyObject,
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+} from "crypto";
 
 export function generateAES192CBCKey() {
   return Buffer.from(randomBytes(24)).toString("base64");
@@ -22,10 +25,11 @@ export function encryptAES256GCM(
   password: string,
   plainText: string
 ) {
-  const key = urlBase64ToUint8Array(password);
-
+  // @ts-expect-error note: KeyObject from string
+  const keyObject: KeyObject = Buffer.from(password, "base64");
   const iv = Buffer.from(randomBytes(12));
-  const cipher = createCipheriv(algorithm, key, iv);
+
+  const cipher = createCipheriv(algorithm, keyObject, iv);
 
   let encrypted = cipher.update(plainText, "utf8", "base64");
   encrypted += cipher.final("base64");
@@ -47,15 +51,17 @@ export function encryptAES256GCM(
  */
 export function decryptAES256GCM(
   algorithm: "aes-256-gcm",
-  key: string,
+  password: string,
   iv: string,
   authTag: string,
   encryptedText: string
 ) {
-  const keyUint8Arr = urlBase64ToUint8Array(key);
-  const ivUint8Arr = urlBase64ToUint8Array(iv);
-  const tagUint8Arr = urlBase64ToUint8Array(authTag);
-  const decipher = createDecipheriv(algorithm, keyUint8Arr, ivUint8Arr);
+  // @ts-expect-error note: KeyObject from string
+  const keyObject: KeyObject = Buffer.from(password, "base64");
+  const ivUint8Arr = Buffer.from(iv, "base64");
+  const tagUint8Arr = Buffer.from(authTag, "base64");
+
+  const decipher = createDecipheriv(algorithm, keyObject, ivUint8Arr);
   decipher.setAuthTag(tagUint8Arr);
 
   let decrypted = decipher.update(encryptedText, "base64", "utf8");
@@ -74,13 +80,15 @@ export function encryptAES192CBC(
   password: string,
   plainText: string
 ) {
-  const key = urlBase64ToUint8Array(password);
+  // @ts-expect-error note: KeyObject from string
+  const keyObject: KeyObject = Buffer.from(password, "base64");
+
   // see: https://gist.github.com/rjz/15baffeab434b8125ca4d783f4116d81
   const iv = Buffer.from(randomBytes(16));
-  const cipher = createCipheriv(algorithm, key, iv);
+  const cipher = createCipheriv(algorithm, keyObject, iv);
 
-  let encrypted = cipher.update(plainText, "utf8", "hex");
-  encrypted += cipher.final("hex");
+  let encrypted = cipher.update(plainText, "utf8", "base64");
+  encrypted += cipher.final("base64");
 
   return { encrypted, iv: iv.toString("base64") };
 }
@@ -94,15 +102,16 @@ export function encryptAES192CBC(
  */
 export function decryptAES192CBC(
   algorithm: "aes-192-cbc",
-  key: string,
+  password: string,
   iv: string,
   encryptedText: string
 ) {
-  const keyUint8Arr = urlBase64ToUint8Array(key);
-  const ivUint8Arr = urlBase64ToUint8Array(iv);
-  const decipher = createDecipheriv(algorithm, keyUint8Arr, ivUint8Arr);
+  // @ts-expect-error note: KeyObject from string
+  const keyObject: KeyObject = Buffer.from(password, "base64");
+  const ivUint8Arr = Buffer.from(iv, "base64");
+  const decipher = createDecipheriv(algorithm, keyObject, ivUint8Arr);
 
-  let decrypted = decipher.update(encryptedText, "hex", "utf8");
+  let decrypted = decipher.update(encryptedText, "base64", "utf8");
   decrypted += decipher.final("utf8");
   return decrypted;
 }
