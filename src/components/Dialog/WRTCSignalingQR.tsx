@@ -9,7 +9,6 @@ import { Warnings } from "./DialogMsg";
 import { VideoDevicesPermission } from "./VideoDevicesPermission";
 import { WebRTCContext } from "../../context/webRTC";
 import { DebugLevel } from "../../helper/consoleHelper";
-import { urlBase64ToUint8Array } from "../../helper/cryptoHelper";
 import { sdpExpand, sdpShrink } from "../../helper/webRTCMiniSDP";
 import { useQRCode } from "../../hooks/useQRCode";
 import { useWebRTCSignaling } from "../../hooks/useWebRTCSignaling";
@@ -332,7 +331,7 @@ export function WRTCSignalingQR(props: WRTCSignalingQRProps) {
 }
 
 async function qrToSDP(qrMsgBase64: string) {
-  const compressedBuf = urlBase64ToUint8Array(qrMsgBase64);
+  const compressedBuf = Buffer.from(qrMsgBase64, "base64");
   const bytesBuf = (await brotli).decompress(Buffer.from(compressedBuf));
   const sdpStr = Buffer.from(bytesBuf).toString();
 
