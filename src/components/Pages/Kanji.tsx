@@ -81,7 +81,7 @@ import { AccuracySlider } from "../Input/AccuracySlider";
 import ClickNavBtn from "../Input/ClickNavBtn";
 import { DifficultySlider } from "../Input/DifficultySlider";
 
-const KanjiMeta = {
+const KanjiNav = {
   location: "/kanji/",
   label: "Kanji",
 };
@@ -1049,4 +1049,4 @@ export default function Kanji() {
   );
 }
 
-export { KanjiMeta };
+export { KanjiNav };

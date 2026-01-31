@@ -27,7 +27,7 @@ interface Mora {
   vowel: number;
 }
 
-const KanaGameMeta = {
+const KanaGameNav = {
   location: "/kana/",
   label: ["平仮名 Game", "片仮名 Game", "仮名 Game"],
 };
@@ -714,4 +714,4 @@ export function buildChoiceButton({
   };
 }
 
-export { KanaGameMeta };
+export { KanaGameNav };

@@ -23,7 +23,7 @@ import {
   toggleCookies,
 } from "../../slices/globalSlice";
 import SettingsSwitch from "../Input/SettingsSwitch";
-import { CookiePolicyMeta } from "../Terms/CookiePolicy";
+import { CookiePolicyNav } from "../Terms/CookiePolicy";
 
 export function CookieOptions() {
   const dispatch = useDispatch();
@@ -108,7 +108,7 @@ export default function SettingsCookies() {
 
         <div className="text-end">
           <p>
-            Read our <Link to={CookiePolicyMeta.location}>Cookie Policy</Link>.
+            Read our <Link to={CookiePolicyNav.location}>Cookie Policy</Link>.
           </p>
         </div>
 
@@ -155,7 +155,7 @@ export default function SettingsCookies() {
                   you&apos;d like to prioritize the storage of this app&apos;s
                   data. Data storage lifetime depends on your browser&apos;s
                   implementation. See Persistent Storage under our{" "}
-                  <Link to={CookiePolicyMeta.location}>Cookie Policy</Link> for
+                  <Link to={CookiePolicyNav.location}>Cookie Policy</Link> for
                   more details.
                 </span>
               </p>

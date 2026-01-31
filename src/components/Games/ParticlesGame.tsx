@@ -38,7 +38,7 @@ export interface ParticleGamePhrase {
   literal?: string;
 }
 
-const ParticlesGameMeta = {
+const ParticlesGameNav = {
   location: "/particles/",
   label: "Particles Game",
 };
@@ -221,4 +221,4 @@ const buildQuestionElement = (
   );
 };
 
-export { ParticlesGameMeta };
+export { ParticlesGameNav };

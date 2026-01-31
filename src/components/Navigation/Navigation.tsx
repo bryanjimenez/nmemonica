@@ -15,15 +15,15 @@ import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 import type { RootState } from "../../slices";
 import { toggleKana } from "../../slices/kanaSlice";
-import { KanjiGameMeta } from "../Games/KanjiGame";
-import { OppositesGameMeta } from "../Games/OppositesGame";
-import { ParticlesGameMeta } from "../Games/ParticlesGame";
-import { KanaGameMeta } from "../Pages/KanaGame";
-import { KanjiMeta } from "../Pages/Kanji";
-import { PhrasesMeta } from "../Pages/Phrases";
-import { SettingsMeta } from "../Pages/Settings";
-import { SheetMeta } from "../Pages/Sheet";
-import { VocabularyMeta } from "../Pages/Vocabulary";
+import { KanjiGameNav } from "../Games/KanjiGame";
+import { OppositesGameNav } from "../Games/OppositesGame";
+import { ParticlesGameNav } from "../Games/ParticlesGame";
+import { KanaGameNav } from "../Pages/KanaGame";
+import { KanjiNav } from "../Pages/Kanji";
+import { PhraseNav } from "../Pages/Phrases";
+import { SettingsNav } from "../Pages/Settings";
+import { SheetNav } from "../Pages/Sheet";
+import { VocabularyNav } from "../Pages/Vocabulary";
 import "../../css/Navigation.css";
 
 export default function Navigation() {
@@ -80,8 +80,8 @@ export default function Navigation() {
     () => [
       {
         meta: {
-          ...KanaGameMeta,
-          label: labelOptions(charSet, KanaGameMeta.label),
+          ...KanaGameNav,
+          label: labelOptions(charSet, KanaGameNav.label),
         },
         icon: (
           <div className="not-a-real-icon">
@@ -98,11 +98,11 @@ export default function Navigation() {
         ),
       },
       {
-        meta: OppositesGameMeta,
+        meta: OppositesGameNav,
         icon: <FontAwesomeIcon icon={faYinYang} size="2x" />,
       },
       {
-        meta: [VocabularyMeta, PhrasesMeta][vocabType],
+        meta: [VocabularyNav, PhraseNav][vocabType],
         icon: <FontAwesomeIcon icon={faFont} size="2x" />,
         wrap: (child: string) => (
           <div
@@ -116,7 +116,7 @@ export default function Navigation() {
         ),
       },
       {
-        meta: ParticlesGameMeta,
+        meta: ParticlesGameNav,
         icon: <FontAwesomeIcon icon={faAtom} size="2x" />,
       },
       // {
@@ -129,7 +129,7 @@ export default function Navigation() {
       //   ),
       // },
       {
-        meta: [KanjiMeta, KanjiGameMeta][kanjiType],
+        meta: [KanjiNav, KanjiGameNav][kanjiType],
         icon: (
           <div className="not-a-real-icon">
             {labelOptions(kanjiType, ["漢", "G"])}
@@ -147,11 +147,11 @@ export default function Navigation() {
         ),
       },
       {
-        meta: SettingsMeta,
+        meta: SettingsNav,
         icon: <FontAwesomeIcon icon={faWrench} size="2x" />,
       },
       {
-        meta: { location: SheetMeta.location, label: "Edit" },
+        meta: { location: SheetNav.location, label: "Edit" },
         icon: <TableIcon size="medium" />,
       },
     ],
