@@ -1,7 +1,8 @@
 import EventEmitter from "events";
 
 import { type SheetData, type Spreadsheet } from "@nmemonica/x-spreadsheet";
-import { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
+import type { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
+import type DataProxy from "@nmemonica/x-spreadsheet/types/core/data_proxy";
 import { MetaDataObj } from "nmemonica";
 
 import { isNumber } from "./arrayHelper";
@@ -40,7 +41,11 @@ export const dataSetNames = ["phrases", "vocabulary", "kanji"] as const;
  * Keep all naming and order
  */
 export const workbookSheetNames = Object.freeze({
-  [dataSetNames[0]]: { index: 0, fileName: "Phrases.csv", prettyName: "Phrases" },
+  [dataSetNames[0]]: {
+    index: 0,
+    fileName: "Phrases.csv",
+    prettyName: "Phrases",
+  },
   [dataSetNames[1]]: {
     index: 1,
     fileName: "Vocabulary.csv",
@@ -54,26 +59,28 @@ export const metaDataNames = Object.freeze({
   progress: { fileName: "Progress.json", prettyName: "Progress" },
 });
 
+/**
+ * Take a DataProxy and build a SheetData
+ */
+export function dataProxyToSheet(proxy: DataProxy) {
+  const sheet = {
+    name: proxy.name,
+    rows: {
+      ...proxy.rows._,
+      len: Object.keys(proxy.rows._).length,
+    },
+  } as SheetData;
+
+  return sheet;
+}
+
 export function getActiveSheet(workbook: Spreadsheet) {
-  const sheets = workbook.exportValues();
-
-  if (sheets.length === 1) {
-    const name = sheets[0].name;
-    const data = removeLastRowIfBlank(sheets[0]);
-
-    return { activeSheetName: name, activeSheetData: data };
-  }
-
   const activeSheetName = workbook.bottombar?.activeEl?.el.innerHTML;
-  if (activeSheetName === undefined) {
+  if (activeSheetName === undefined || activeSheetName.trim() === "") {
     throw new Error("Expected Sheet name");
   }
-  const activeSheetData =
-    sheets.find((sheet) => sheet.name === activeSheetName) ?? sheets[0];
 
-  const data = removeLastRowIfBlank(activeSheetData);
-
-  return { activeSheetName, activeSheetData: data };
+  return activeSheetName;
 }
 
 /**

@@ -22,6 +22,7 @@ import { validateCSVSheet } from "../../helper/csvHelper";
 import { furiganaParse } from "../../helper/JapaneseText";
 import { prettyHeaders, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
+  dataProxyToSheet,
   getActiveSheet,
   getWorkbookFromIndexDB,
   removeLastRowIfBlank,
@@ -183,7 +184,7 @@ export default function Sheet() {
         const replacedText = text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n");
         grid.sheet.data.setSelectedCellText(replacedText, "finished");
 
-        const { activeSheetName } = getActiveSheet(grid);
+        const activeSheetName = getActiveSheet(grid);
 
         // FIXME: can't access row directly...
         const header = grid.sheet.data.rows._[0].cells[ci].text;
@@ -318,8 +319,8 @@ export default function Sheet() {
       throw new Error("Expected workbook");
     }
 
-    const { activeSheetName } = getActiveSheet(wbRef.current);
-    const w = wbRef.current?.exportValues();
+    const activeSheetName = getActiveSheet(wbRef.current);
+    const w = wbRef.current.exportValues();
     const trimmed = w.map((w) => removeLastRowIfBlank(w));
     const sheet = trimmed.find((s) => s.name === activeSheetName);
 
@@ -414,8 +415,11 @@ export default function Sheet() {
     if (search === null || workbook === null || search.trim() === "") return;
 
     if (resultIdx.current === null) {
-      const { activeSheetData } = getActiveSheet(workbook);
-      if (!activeSheetData.rows) {
+      const activeSheetName = getActiveSheet(workbook);
+      const [activeSheetData] = workbook.datas
+        .filter((d) => d.name === activeSheetName)
+        .map(dataProxyToSheet);
+      if (activeSheetData === undefined || !activeSheetData.rows) {
         return;
       }
 
