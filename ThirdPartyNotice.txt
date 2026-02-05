@@ -750,7 +750,7 @@ git+https://github.com/bryanjimenez/nmemonica-voice-ja.git
 
 
 --------------------------------------------------------------------------------
-@nmemonica/x-spreadsheet v0.1.6 - bryan
+@nmemonica/x-spreadsheet v0.1.7 - bryan
 git+https://github.com/bryanjimenez/x-spreadsheet.git
 --------------------------------------------------------------------------------
 
