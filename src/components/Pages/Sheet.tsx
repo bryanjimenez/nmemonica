@@ -18,10 +18,11 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { WebRTCProvider } from "../../context/webRTC";
-import { validateCSVSheet } from "../../helper/csvHelper";
+import { CSVErrorCause, validateCSVSheet } from "../../helper/csvHelper";
 import { furiganaParse } from "../../helper/JapaneseText";
 import { prettyHeaders, sheetDataToJSON } from "../../helper/jsonHelper";
 import {
+  dataProxyToSheet,
   getActiveSheet,
   getWorkbookFromIndexDB,
   removeLastRowIfBlank,
@@ -59,6 +60,7 @@ import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
 import { DataSetExport } from "../Dialog/DataSetExport";
 import { DataSetImport } from "../Dialog/DataSetImport";
 import { DataSetImportFile } from "../Dialog/DataSetImportFile";
+import DialogMsg, { Warnings } from "../Dialog/DialogMsg";
 import { WRTCSignalingQR } from "../Dialog/WRTCSignalingQR";
 import { DataSetSharingActions } from "../Form/DataSetSharingActions";
 import "../../css/Sheet.css";
@@ -129,6 +131,10 @@ export default function Sheet() {
   const [resultBadge, setResultBadge] = useState(0);
   const prevResult = useRef<{ ri: number; ci: number; text: string }[]>([]);
   const resultIdx = useRef<number | null>(null);
+
+  const [warnings, setWarnings] = useState<React.ReactElement[]>([]);
+  const clearWarningsHandler = useCallback(() => setWarnings([]), []);
+
   const warningIdx = useRef<number>(undefined);
   const searchValue = useRef<string | null>(null);
   const resetSearchCB = useCallback(() => {
@@ -183,10 +189,10 @@ export default function Sheet() {
         const replacedText = text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n");
         grid.sheet.data.setSelectedCellText(replacedText, "finished");
 
-        const { activeSheetName } = getActiveSheet(grid);
+        const activeSheetName = getActiveSheet(grid);
 
         // FIXME: can't access row directly...
-        const header = grid.sheet.data.rows._[0].cells[ci].text;
+        const header = grid.sheet.data.rows._[0].cells[ci]?.text;
         if (header === undefined) {
           return;
         }
@@ -248,7 +254,6 @@ export default function Sheet() {
         if (cell !== undefined) {
           // some cell input change event
           // validate cell
-
           const { text } = cell;
           if (text !== undefined) {
             const invalid = validateCSVSheet(text);
@@ -318,8 +323,8 @@ export default function Sheet() {
       throw new Error("Expected workbook");
     }
 
-    const { activeSheetName } = getActiveSheet(wbRef.current);
-    const w = wbRef.current?.exportValues();
+    const activeSheetName = getActiveSheet(wbRef.current);
+    const w = wbRef.current.exportValues();
     const trimmed = w.map((w) => removeLastRowIfBlank(w));
     const sheet = trimmed.find((s) => s.name === activeSheetName);
 
@@ -344,9 +349,37 @@ export default function Sheet() {
       },
     };
     const { meta, list: oldList } = selectedData[name];
-    const { data } = sheetDataToJSON(sheet) as {
-      data: Record<string, { uid: string; english: string }>;
-    };
+    let data: Record<
+      string,
+      {
+        uid: string;
+        english: string;
+      }
+    > = {};
+
+    try {
+      const { data: d } = sheetDataToJSON(sheet) as {
+        data: Record<string, { uid: string; english: string }>;
+      };
+
+      data = d;
+    } catch (exception) {
+      if (
+        exception instanceof Error &&
+        typeof exception.cause === "object" &&
+        exception.cause !== null &&
+        "code" in exception.cause &&
+        typeof exception.cause.code === "string" &&
+        Object.values(CSVErrorCause).includes(
+          exception.cause.code as CSVErrorCause
+        )
+      ) {
+        setWarnings((prev) => [
+          ...prev,
+          <span key={exception.message}>{exception.message}</span>,
+        ]);
+      }
+    }
 
     const newList: { uid: string; english: string }[] = Object.keys(data).map(
       (k) => ({ uid: k, english: data[k].english })
@@ -414,8 +447,11 @@ export default function Sheet() {
     if (search === null || workbook === null || search.trim() === "") return;
 
     if (resultIdx.current === null) {
-      const { activeSheetData } = getActiveSheet(workbook);
-      if (!activeSheetData.rows) {
+      const activeSheetName = getActiveSheet(workbook);
+      const [activeSheetData] = workbook.datas
+        .filter((d) => d.name === activeSheetName)
+        .map(dataProxyToSheet);
+      if (activeSheetData === undefined || !activeSheetData.rows) {
         return;
       }
 
@@ -654,6 +690,20 @@ export default function Sheet() {
             </DataSetSharingActions>
           </WebRTCProvider>
         )}
+        <DialogMsg
+          open={warnings.length > 0}
+          title={""}
+          onClose={clearWarningsHandler}
+          ariaLabelledby="warning"
+        >
+          <div className="pb-2">
+            <span>Could not continue</span>
+          </div>
+          <Warnings
+            fileWarning={warnings}
+            clearWarnings={clearWarningsHandler}
+          />
+        </DialogMsg>
 
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">

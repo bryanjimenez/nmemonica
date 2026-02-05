@@ -31,7 +31,7 @@ const singleQuoteValue = '"';
 const singleQuoteToken = '"';
 const lineEndToken = "\r\n";
 
-export const enum CSVErrorCause {
+export enum CSVErrorCause {
   MissingRequiredHeader = "csv-missing-required-header",
   MissingFirstCell = "csv-missing-first-cell",
 }
