@@ -1,0 +1,37 @@
+name: Publish to gh-pages
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/job-build.yml
+
+  test:
+    uses: ./.github/workflows/job-test.yml
+
+  publish:
+    needs: [build, test]
+    environment: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - uses: actions/download-artifact@v6
+        with:
+          name: dist
+          path: dist
+      - name: Install mdBook
+        run: |
+          curl -fsSLO https://github.com/rust-lang/mdBook/releases/download/v0.5.2/mdbook-v0.5.2-x86_64-unknown-linux-gnu.tar.gz
+          echo "084e4342ba564db270108763e404a7d1f309d932651a22484e93c0dc1a071f6d ./mdbook-v0.5.2-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c
+          tar -xvzf mdbook-v0.5.2-x86_64-unknown-linux-gnu.tar.gz -C ./docs/
+      - run: npm run deploy
