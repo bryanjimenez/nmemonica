@@ -6,7 +6,7 @@ import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import LicenseCheckerWebpackPlugin from "license-checker-webpack-plugin";
-import { appendLicense } from "./dep-license-writer.js";
+import { appendLicense } from "./dep-licen-helper.js";
 import { indexTagHelperPlugin } from "./pwa/plugin/indexTagger.js";
 import { serviceWorkerCacheHelperPlugin } from "./pwa/plugin/swPlugin.js";
 
