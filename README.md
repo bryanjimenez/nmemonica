@@ -1,29 +1,15 @@
-# [Nmemonica](https://bryanjimenez.github.io/nmemonica)
-> English - Japanese language learning app  
+# Nmemonica
+<a href="https://bryanjimenez.github.io/nmemonica/docs/" target="_blank">![user docs](https://shields.io/badge/-user%20guide-603663)</a>
 
-> [!Note]  
-> Nmemonica is a PWA and uses the Service Worker API [(MDN docs)](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) which is only enabled over HTTPS.  
-> Nmemonica uses local storage and indexedDB (cookie technologies) to store user app data.
+
+English - Japanese language learning app
+
 
 This repo contains the UI's source code for [Nmemonica](https://bryanjimenez.github.io/nmemonica).
 
+## Feedback
 
-## User Documentation
-If you want documentation on how to use the application check out the [User Guide](https://bryanjimenez.github.io/nmemonica/docs/)
-
-## Installation (for development)
-### *Prerequisites*
-1. [Git](https://git-scm.com/)
-1. [Node](https://nodejs.org)
-
-### App (website/PWA)
-1. `git clone https://github.com/bryanjimenez/nmemonica.git` 
-1. `cd ./nmemonica`
-1. `npm install`
-
-### Running locally
-1. `npm run start`
-1. Open a browser to https://localhost:8080
+* [File an issue](https://github.com/bryanjimenez/nmemonica/issues)
 
 ## Credits
 Thanks to:
