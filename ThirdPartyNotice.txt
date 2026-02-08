@@ -219,7 +219,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@emotion/styled v11.14.0 - undefined
+@emotion/styled v11.14.1 - undefined
 https://github.com/emotion-js/emotion/tree/main/packages/styled
 --------------------------------------------------------------------------------
 
@@ -354,7 +354,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/core v1.6.0 - atomiks
+@floating-ui/core v1.7.4 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -380,7 +380,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/dom v1.6.3 - atomiks
+@floating-ui/dom v1.7.5 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -406,7 +406,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/react-dom v2.1.3 - atomiks
+@floating-ui/react-dom v2.1.7 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -432,7 +432,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-@floating-ui/utils v0.2.1 - atomiks
+@floating-ui/utils v0.2.10 - atomiks
 https://github.com/floating-ui/floating-ui.git
 --------------------------------------------------------------------------------
 
@@ -778,39 +778,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@popperjs/core v2.11.8 - Federico Zivolo <federico.zivolo@gmail.com>
-github:popperjs/popper-core
---------------------------------------------------------------------------------
-
-The MIT License (MIT)
-
-Copyright (c) 2019 Federico Zivolo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
---------------------------------------------------------------------------------
-@primer/octicons-react v19.15.2 - GitHub, Inc.
+@primer/octicons-react v19.21.2 - GitHub, Inc.
 primer/octicons
 --------------------------------------------------------------------------------
 
 MIT License
 
-Copyright (c) 2025 GitHub Inc.
+Copyright (c) 2026 GitHub Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -831,7 +805,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-@reduxjs/toolkit v2.8.2 - Mark Erikson <mark@isquaredsoftware.com>
+@reduxjs/toolkit v2.11.2 - Mark Erikson <mark@isquaredsoftware.com>
 git+https://github.com/reduxjs/redux-toolkit.git
 --------------------------------------------------------------------------------
 
@@ -1221,7 +1195,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-bootstrap v5.3.6 - The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
+bootstrap v5.3.8 - The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
 git+https://github.com/twbs/bootstrap.git
 --------------------------------------------------------------------------------
 
@@ -1836,7 +1810,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-cookie v0.7.1 - Roman Shtylman <shtylman@gmail.com>
+cookie v0.7.2 - Roman Shtylman <shtylman@gmail.com>
 jshttp/cookie
 --------------------------------------------------------------------------------
 
@@ -2066,32 +2040,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
---------------------------------------------------------------------------------
-dom-helpers v5.2.1 - Jason Quense
-git+https://github.com/react-bootstrap/dom-helpers.git
---------------------------------------------------------------------------------
-
-The MIT License (MIT)
-
-Copyright (c) 2015 Jason Quense
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 --------------------------------------------------------------------------------
 dunder-proto v1.0.1 - Jordan Harband <ljharb@gmail.com>
 git+https://github.com/es-shims/dunder-proto.git
@@ -2611,7 +2559,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
-immer v10.1.1 - Michel Weststrate <info@michel.codes>
+immer v11.1.3 - Michel Weststrate <info@michel.codes>
 https://github.com/immerjs/immer.git
 --------------------------------------------------------------------------------
 
@@ -3119,7 +3067,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react v19.2.0 - undefined
+react v19.2.4 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -3146,7 +3094,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-dom v19.2.0 - undefined
+react-dom v19.2.4 - undefined
 https://github.com/facebook/react.git
 --------------------------------------------------------------------------------
 
@@ -3227,7 +3175,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router v7.12.0 - Remix Software <hello@remix.run>
+react-router v7.13.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -3256,7 +3204,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router-dom v7.12.0 - Remix Software <hello@remix.run>
+react-router-dom v7.13.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
