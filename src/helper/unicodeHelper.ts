@@ -34,6 +34,7 @@ export const eNumber = "\uFF10-\uFF19";
 
 /** Japanese Punctuations (wide) */
 export const jFP = "\u3000-\u3004\u3006-\u303F";
+export const ideographicSpace = "\u3000";
 /** Noma Repeater Symbol (wide)*/
 export const noma = "\u3005";
 

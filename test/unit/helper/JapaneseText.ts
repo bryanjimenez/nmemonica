@@ -5,6 +5,7 @@ import {
   furiganaParseRetry,
   JapaneseText,
   furiganaParse,
+  jaStrToCharArray,
 } from "../../../src/helper/JapaneseText";
 
 describe("JapanseText", function () {
@@ -67,7 +68,39 @@ describe("JapanseText", function () {
       expect(screen.getByText("つ").tagName).to.equal("SPAN");
     });
   });
+  describe("japaneseStrToCharacters", function () {
+    it("BMP Japanese char", function () {
+      const person = "人";
+      const actual = jaStrToCharArray(person);
 
+      expect(actual.length).to.eq(1);
+    });
+    it("BMP Japanese code point", function () {
+      const person = "\u4EBA";
+      const actual = jaStrToCharArray(person);
+
+      expect(actual.length).to.eq(1);
+    });
+    it("BMP English chars", function () {
+      // english also works
+      const person = "person";
+      const actual = jaStrToCharArray(person);
+
+      expect(actual.length).to.eq(6);
+    });
+    it("BMP non English/Japanese", function () {
+      const zeroWidthSpace = "\u200b";
+      const actual = jaStrToCharArray(zeroWidthSpace);
+
+      expect(actual.length).to.eq(1);
+    });
+    it("non-BMP", function () {
+      const smiley = "\uD83D\uDE00";
+      const actual = jaStrToCharArray(smiley);
+
+      expect(actual.length).to.eq(1);
+    });
+  });
   describe("furiganaParse", function () {
     it("non matching input returns Error", function () {
       // TODO: do more edge case testing
