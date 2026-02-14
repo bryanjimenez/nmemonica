@@ -33,4 +33,4 @@ docs/mdbook
 *.xcf
 
 # lighthouse reports
-test/lighthouse/*.html
+test/lighthouse
