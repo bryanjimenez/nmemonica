@@ -1,3 +1,4 @@
+import { jaStrToCharArray } from "./JapaneseText";
 import {
   eNumber,
   eSymbol,
@@ -97,8 +98,7 @@ export function romajiParticle(particle: string) {
       romaji = "tte";
       break;
     default:
-      romaji = particle
-        .split("")
+      romaji = jaStrToCharArray(particle)
         .map((char) => swapToRomaji(char))
         .join("");
   }

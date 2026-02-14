@@ -11,6 +11,7 @@ import {
   toEnglishNumber,
 } from "./kanaHelper";
 import { buildRubyElement, getParseObjectMask, wrap } from "./kanjiHelper";
+import { ideographicSpace } from "./unicodeHelper";
 import type { kanaHintBuilder as kanaHintBuilderType } from "../helper/kanaHelper";
 import type { furiganaHintBuilder as furiganaHintBuilderType } from "../helper/kanjiHelper";
 
@@ -109,9 +110,9 @@ export class JapaneseText {
    */
   getSpelling() {
     if (this._kanji !== undefined) {
-      return this._kanji.replaceAll(" ", "");
+      return removeAllWorkaroundSpaces(this._kanji);
     } else {
-      return this._furigana.replaceAll(" ", "");
+      return removeAllWorkaroundSpaces(this._furigana);
     }
   }
 
@@ -173,12 +174,10 @@ export class JapaneseText {
   isHintable(minimumMora = 3) {
     let hint = true;
 
-    const isKanaOrKanjiOnly = this.toString()
-      .split("")
-      .every(
-        (char) =>
-          isKanji(char) || isHiragana(char) || isKatakana(char) || char === "\n"
-      );
+    const isKanaOrKanjiOnly = jaStrToCharArray(this.toString()).every(
+      (char) =>
+        isKanji(char) || isHiragana(char) || isKatakana(char) || char === "\n"
+    );
     if (!isKanaOrKanjiOnly) return false;
 
     if (this.hasFurigana()) {
@@ -363,12 +362,15 @@ function japaneseTextParse(
 
 /**
  * @returns object containing parse info or Error if the two phrases do not match or if the parsed output is invalid.
- * @param pronunciation (hiragana)
- * @param ortography (kanji)
+ * @param pronunciationStr (hiragana)
+ * @param ortographyStr (kanji)
  */
-export function furiganaParseRetry(pronunciation: string, ortography: string) {
+export function furiganaParseRetry(
+  pronunciationStr: string,
+  ortographyStr: string
+) {
   let kanjis, furiganas, okuriganas, startsWKana;
-  const parseTry = furiganaParse(pronunciation, ortography);
+  const parseTry = furiganaParse(pronunciationStr, ortographyStr);
   if (parseTry instanceof Error) {
     // don't retry unless parse error
     const cause = parseTry.cause as { code: string };
@@ -376,8 +378,8 @@ export function furiganaParseRetry(pronunciation: string, ortography: string) {
     if (cause?.code === "ParseError") {
       // reverse try
 
-      const rP = pronunciation.split("").reverse().join("");
-      const rW = ortography.split("").reverse().join("");
+      const rP = jaStrToCharArray(pronunciationStr).reverse().join("");
+      const rW = jaStrToCharArray(ortographyStr).reverse().join("");
 
       const parseRevTry = furiganaParse(rP, rW);
       if (parseRevTry instanceof Error) {
@@ -385,10 +387,14 @@ export function furiganaParseRetry(pronunciation: string, ortography: string) {
       }
       const { kanjis: rk, furiganas: rf, okuriganas: ro } = parseRevTry;
 
-      kanjis = rk.map((v) => v.split("").reverse().join("")).reverse();
-      furiganas = rf.map((v) => v.split("").reverse().join("")).reverse();
-      okuriganas = ro.map((v) => v.split("").reverse().join("")).reverse();
-      startsWKana = !isKanji(ortography.charAt(0));
+      kanjis = rk.map((v) => jaStrToCharArray(v).reverse().join("")).reverse();
+      furiganas = rf
+        .map((v) => jaStrToCharArray(v).reverse().join(""))
+        .reverse();
+      okuriganas = ro
+        .map((v) => jaStrToCharArray(v).reverse().join(""))
+        .reverse();
+      startsWKana = !isKanji(ortographyStr.charAt(0));
 
       return { kanjis, furiganas, okuriganas, startsWKana };
     }
@@ -406,10 +412,10 @@ export function furiganaParseRetry(pronunciation: string, ortography: string) {
  */
 export function isNumericCounter(
   pos: number,
-  pronunciation: string,
-  orthography: string
+  pronunciation: string[],
+  orthography: string[]
 ) {
-  const char = orthography.charAt(pos);
+  const char = orthography[pos];
 
   return (
     (Number.isInteger(toEnglishNumber(char)) || // is Japanese arabic number char
@@ -422,27 +428,120 @@ export function isNumericCounter(
   );
 }
 /**
- * @returns object containing parse info or Error if the two phrases do not match or if the parsed output is invalid.
- * @param pronunciation (furigana)
- * @param orthography (kanji)
+ * Japanese string to character array
+ *
+ * This will provide a proper length (unicode code point len) and
+ * an array of Japanese characters (Kanji, and/or Kana as unicode code points)
+ *
+ * `Array.from` and spread operator `[...str]` split at character boundary
+ * `string.prototype.split("")` splits at the utf-16 code unit boundary **not** character boundary
  */
-export function furiganaParse(pronunciation: string, orthography: string) {
-  if (orthography.split("").every((c) => isKanji(c) || isPunctuation(c))) {
+export function jaStrToCharArray(utf16String: string) {
+  return Array.from(utf16String);
+}
+
+/**
+ * Any whitespace including ideographic space also tabs
+ */
+const anySpace = new RegExp(/\s/);
+
+/**
+ * When there is ambiguitity aligning furigana,  
+ * spacing is added to characters of  
+ * the pronunciation and orthography  
+ *
+ * ascii space and cjk space
+ */
+const workaroundSpace = new RegExp("[" + "\u0020" + ideographicSpace + "]");
+
+export function removeAllWorkaroundSpaces(some: string) {
+  // global regexp have several pitfalls
+  const globalWSpace = new RegExp(workaroundSpace.source, "g");
+
+  return some.replace(globalWSpace, "");
+}
+
+/**
+ * Accumulate furigana by iterating until `limitChar` is found
+ * @param limitChar
+ * @param pronunciation
+ * @param pronIdx
+ * @param fword
+ *
+ * @param hasWhiteSpace Error info
+ * @param orthography Error info
+ * @param kanjis Error info
+ * @param furiganas Error info
+ * @param okuriganas Error info
+ */
+function iterPronuncUntilOrtographLimit(
+  limitChar: string,
+  pronunciation: string[],
+  pronIdx: number,
+  fword: string,
+
+  hasWhiteSpace: boolean,
+  orthography: string[],
+  kanjis: string[],
+  furiganas: string[],
+  okuriganas: string[]
+) {
+  while (pronunciation[pronIdx] !== limitChar) {
+    if (!workaroundSpace.test(pronunciation[pronIdx])) {
+      fword += pronunciation[pronIdx];
+    }
+    pronIdx++;
+
+    if (pronIdx > pronunciation.length) {
+      const msg =
+        "The two phrases do not match" +
+        (hasWhiteSpace ? " (contains white space)" : "");
+
+      return new Error(msg, {
+        cause: {
+          code: "InputError",
+          info: {
+            input: { pronunciation, orthography },
+            kanjis,
+            furiganas,
+            okuriganas,
+          },
+        },
+      });
+    }
+  }
+
+  return { last: pronIdx, acc: fword };
+}
+
+/**
+ * @returns object containing parse info or Error if the two phrases do not match or if the parsed output is invalid.
+ * @param pronunciationStr (furigana)
+ * @param orthographyStr (kanji)
+ */
+export function furiganaParse(
+  pronunciationStr: string,
+  orthographyStr: string
+) {
+  const pronunciation = jaStrToCharArray(pronunciationStr);
+  const orthography = jaStrToCharArray(orthographyStr);
+
+  if (orthography.every((c) => isKanji(c) || isPunctuation(c))) {
     return {
-      kanjis: [orthography],
-      furiganas: [pronunciation],
+      kanjis: [orthographyStr],
+      furiganas: [pronunciationStr],
       okuriganas: [],
       startsWKana: false,
     };
   }
 
-  const space = new RegExp(/\s/g);
-  const hasWhiteSpace = space.test(pronunciation) || space.test(orthography);
+  const hasWhiteSpace =
+    anySpace.test(pronunciationStr) || anySpace.test(orthographyStr);
 
   const startsWKana =
-    !isKanji(orthography.charAt(0)) && !isFullWNumber(orthography.charAt(0));
+    !isKanji(orthography[0]) && !isFullWNumber(orthography[0]);
 
-  let start = 0;
+  let pronIdx = 0;
   let furiganas: string[] = [];
   let kanjis: string[] = [];
   let okuriganas: string[] = [];
@@ -451,82 +550,78 @@ export function furiganaParse(pronunciation: string, orthography: string) {
   let oword = "";
   let prevWasKanji = false;
 
-  let i = 0;
-  for (let thisChar of orthography.split("")) {
+  let ortIdx = 0;
+  for (let ortChar of orthography) {
     if (
-      !isKanji(thisChar) &&
-      !isNumericCounter(i, pronunciation, orthography)
+      !isKanji(ortChar) &&
+      !isNumericCounter(ortIdx, pronunciation, orthography)
     ) {
       //kana
       if (prevWasKanji) {
-        while (pronunciation.charAt(start) !== thisChar) {
-          if (pronunciation.charAt(start) !== " ") {
-            fword += pronunciation.charAt(start);
-          }
-          start++;
+        const result = iterPronuncUntilOrtographLimit(
+          ortChar,
+          pronunciation,
+          pronIdx,
+          fword,
 
-          if (start > pronunciation.length) {
-            const eMsg =
-              "The two phrases do not match" +
-              (hasWhiteSpace ? " (contains white space)" : "");
+          // error info
+          hasWhiteSpace,
+          orthography,
+          kanjis,
+          furiganas,
+          okuriganas
+        );
 
-            const e = new Error(eMsg, {
-              cause: {
-                code: "InputError",
-                info: {
-                  input: { pronunciation, orthography },
-                  kanjis,
-                  furiganas,
-                  okuriganas,
-                },
-              },
-            });
-            return e;
-          }
+        if (result instanceof Error) {
+          return result;
         }
-        furiganas.push(fword);
+        const { last, acc } = result;
+        pronIdx = last;
+        furiganas.push(acc);
         fword = "";
       }
-      if (thisChar !== " ") {
-        oword += thisChar;
+      if (!workaroundSpace.test(ortChar)) {
+        oword += ortChar;
       }
 
-      if (kword !== "") {
+      if (kword.length > 0) {
         kanjis.push(kword);
         kword = "";
       }
 
-      start++;
+      pronIdx++;
       prevWasKanji = false;
     } else {
       // kanji
-      if (pronunciation.charAt(start) !== " ") {
-        fword += pronunciation.charAt(start);
+      if (!workaroundSpace.test(pronunciation[pronIdx])) {
+        fword += pronunciation[pronIdx];
       }
-      if (thisChar !== " ") {
-        kword += thisChar;
+      if (!workaroundSpace.test(ortChar)) {
+        kword += ortChar;
       }
       prevWasKanji = true;
-      start++;
-      if (oword !== "") {
+      pronIdx++;
+      if (oword.length > 0) {
         okuriganas.push(oword);
         oword = "";
       }
 
-      if (orthography.length - i === 1) {
+      if (orthography.length - ortIdx === 1) {
         // (this) last character is a kanji
-        if (pronunciation.slice(start) !== " ") {
-          fword += pronunciation.slice(start);
-        }
+
+        // aggregate all remaining pronunciation w/o spaces
+        const remainFword = pronunciation.slice(pronIdx).join("");
+        fword += removeAllWorkaroundSpaces(remainFword);
         furiganas.push(fword);
         kanjis.push(kword);
       }
     }
-    i++;
+    ortIdx++;
   }
 
-  if (oword !== "") {
-    okuriganas.push(oword);
+  if (oword.length > 0) {
+    const remainOword = removeAllWorkaroundSpaces(oword);
+    okuriganas.push(remainOword);
   }
 
   const [pronunciationOutput, orthographyOutput] = validateParseFurigana(
@@ -537,18 +632,18 @@ export function furiganaParse(pronunciation: string, orthography: string) {
   );
 
   // remove spaces which are used as a workaround for parsing failure due to repeated chars
-  const pronunciationNoSpace = pronunciation.replaceAll(" ", "");
-  const ortographyNoSpace = orthography.replaceAll(" ", "");
+  const pronunciationNoSpace = removeAllWorkaroundSpaces(pronunciationStr);
+  const ortographyNoSpace = removeAllWorkaroundSpaces(orthographyStr);
 
   if (
     pronunciationOutput !== pronunciationNoSpace ||
     orthographyOutput !== ortographyNoSpace
   ) {
-    const eMsg =
+    const msg =
       "Failed to parse text to build furigana" +
       (hasWhiteSpace ? " (contains white space)" : "");
 
-    const e = new Error(eMsg, {
+    return new Error(msg, {
       cause: {
         code: "ParseError",
         info: {
@@ -560,8 +655,6 @@ export function furiganaParse(pronunciation: string, orthography: string) {
         },
       },
     });
-
-    return e;
   }
 
   return { kanjis, furiganas, okuriganas, startsWKana };
@@ -607,9 +700,9 @@ export function validateParseFurigana(
 export function audioPronunciation(vocabulary: RawJapanese) {
   let q;
   if (vocabulary.pronounce !== undefined) {
-    const isAllKana = vocabulary.pronounce
-      .split("")
-      .every((c) => isHiragana(c) || isKatakana(c));
+    const isAllKana = jaStrToCharArray(vocabulary.pronounce).every(
+      (c) => isHiragana(c) || isKatakana(c)
+    );
 
     if (isAllKana) {
       q = vocabulary.pronounce;
@@ -622,7 +715,7 @@ export function audioPronunciation(vocabulary: RawJapanese) {
     const w = JapaneseText.parse(vocabulary);
     const spelling = w.getSpelling();
     // remove workaround-spaces
-    q = spelling.replaceAll(" ", "");
+    q = removeAllWorkaroundSpaces(spelling);
   }
   return q;
 }

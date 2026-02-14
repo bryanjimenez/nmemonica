@@ -1,6 +1,6 @@
 import type { RawJapanese } from "nmemonica";
 
-import { JapaneseText } from "./JapaneseText";
+import { JapaneseText, removeAllWorkaroundSpaces } from "./JapaneseText";
 import { getConsonantVowel } from "./kanaHelper";
 import data from "../../res/json/kana.json";
 

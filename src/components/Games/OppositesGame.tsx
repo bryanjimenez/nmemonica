@@ -12,7 +12,7 @@ import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 import { FourChoicesWRef, type GameChoice } from "./FourChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
-import { JapaneseText } from "../../helper/JapaneseText";
+import { JapaneseText, jaStrToCharArray } from "../../helper/JapaneseText";
 import { swapToRomaji } from "../../helper/kanaHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
@@ -136,9 +136,8 @@ export default function OppositesGame() {
 }
 
 function deriveRomaji(obj: RawJapanese) {
-  return JapaneseText.parse(obj)
-    .getPronunciation()
-    .split("")
+  return jaStrToCharArray(JapaneseText.parse(obj)
+    .getPronunciation())
     .map((mora) => swapToRomaji(mora))
     .join("");
 }
