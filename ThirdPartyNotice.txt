@@ -1170,7 +1170,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-bn.js v5.2.2 - Fedor Indutny <fedor@indutny.com>
+bn.js v5.2.3 - Fedor Indutny <fedor@indutny.com>
 git@github.com:indutny/bn.js
 --------------------------------------------------------------------------------
 
