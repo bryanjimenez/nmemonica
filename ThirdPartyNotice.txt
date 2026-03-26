@@ -2210,8 +2210,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-for-each v0.3.3 - Raynos <raynos2@gmail.com>
-git://github.com/Raynos/for-each.git
+for-each v0.3.5 - Raynos <raynos2@gmail.com>
+https://github.com/Raynos/for-each.git
 --------------------------------------------------------------------------------
 
 The MIT License (MIT)
@@ -3863,7 +3863,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --------------------------------------------------------------------------------
-which-typed-array v1.1.18 - Jordan Harband
+which-typed-array v1.1.20 - Jordan Harband
 git://github.com/inspect-js/which-typed-array.git
 --------------------------------------------------------------------------------
 
