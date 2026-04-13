@@ -37,6 +37,20 @@ export function initAudioContext() {
 }
 
 /**
+ * Warm up
+ */
+export function warmAudio() {
+  if (audioCtx === null) {
+    throw new Error("AudioContext was not initialized initAudioContext");
+  }
+
+  const audiobuf = audioCtx.createBuffer(2, 10, 48000);
+  const channeld = audiobuf.getChannelData(0);
+
+  channeld[0] = 0;
+}
+
+/**
  * Play an audio (can be interrupted)
  */
 export async function playAudio(
