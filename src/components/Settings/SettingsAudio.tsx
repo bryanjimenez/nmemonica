@@ -1,5 +1,6 @@
 import { CircularProgress } from "@mui/material";
 import { UnmuteIcon } from "@primer/octicons-react";
+import classNames from "classnames";
 import {
   type RefObject,
   useCallback,
@@ -215,14 +216,26 @@ export default function SettingsAudio() {
       );
     }
 
-    return notification !== audioType ? (
-      <UnmuteIcon className="clickable" size="medium" aria-label="Try voice" />
-    ) : (
-      <div className="mt-2 me-4 disabled-color" aria-label="Loading audio">
-        <UnmuteIcon className="clickable" size="medium" />
-        <span className="notification" style={{ top: -20 }}>
-          {<CircularProgress size={"10px"} thickness={6} />}
-        </span>
+    return (
+      <div
+        className={classNames({
+          "mt-2 me-4": true,
+          "disabled-color": notification === audioType,
+        })}
+        aria-label={notification === audioType ? "Loading audio" : "Try voice"}
+      >
+        <UnmuteIcon
+          className={classNames({
+            "clickable rotate-transition": true,
+            "rotate-315": notification !== audioType,
+          })}
+          size="medium"
+        />
+        {notification === audioType && (
+          <span className="notification" style={{ top: -20 }}>
+            <CircularProgress size={"10px"} thickness={6} />
+          </span>
+        )}
       </div>
     );
   };

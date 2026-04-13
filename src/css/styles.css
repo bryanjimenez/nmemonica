@@ -255,6 +255,12 @@ a {
   transform: rotate(270deg);
 }
 
+.rotate-315 {
+  -webkit-transform: rotate(315deg);
+  -ms-transform: rotate(315deg);
+  transform: rotate(315deg);
+}
+
 .translate-center-y {
   transform: translate(0, -50%);
 }
