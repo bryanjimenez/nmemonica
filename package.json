@@ -38,7 +38,7 @@
     "@floating-ui/react-dom": "^2.1.7",
     "@mui/material": "^5.11.5",
     "@nmemonica/voice-en": "file:../nmemonica-wasm-voice-en/pkg/nmemonica-voice-en-0.0.1.tgz",
-    "@nmemonica/voice-ja": "^0.1.5",
+    "@nmemonica/voice-ja": "^0.1.6",
     "@nmemonica/x-spreadsheet": "^0.1.7",
     "@popperjs/core": "^2.11.6",
     "@primer/octicons-react": "^19.21.2",
