@@ -7,6 +7,16 @@
   border: unset;
 }
 
+.guidelines-bar {
+  justify-content: unset;
+}
+/* Large devices (laptops)*/
+@media (width >= 992px) {
+  .guidelines-bar {
+    justify-content: end;
+  }
+}
+
 #notice {
   background: #f5f5f5;
   border-radius: 8px;
