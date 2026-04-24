@@ -5,8 +5,8 @@
   max-width: 300px;
 }
 
-/* Small devices (landscape phones, 576px and up)*/
-@media (min-width: 576px) {
+/* Small devices (landscape phones)*/
+@media (width >= 576px) {
   .verb-form-slider-root > span/*.MuiSlider-root*/ {
     position: relative;
     right: unset;
