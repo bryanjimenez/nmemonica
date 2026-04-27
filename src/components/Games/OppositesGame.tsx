@@ -27,7 +27,7 @@ export interface RawOpposite {
   toHTML: (correct: boolean) => React.JSX.Element;
 }
 
-const OppositesGameMeta = {
+const OppositesGameNav = {
   location: "/opposites/",
   label: "Opposites Game",
 };
@@ -227,4 +227,4 @@ function prepareGame(
   return { question, answer, choices };
 }
 
-export { OppositesGameMeta };
+export { OppositesGameNav };

@@ -1,4 +1,4 @@
-const TermsAndConditionsMeta = {
+const TermsAndConditionsNav = {
   location: "/terms/",
   label: "TermsAndConditions",
 };
@@ -77,4 +77,4 @@ export default function TermsAndConditions() {
   );
 }
 
-export { TermsAndConditionsMeta };
+export { TermsAndConditionsNav };

@@ -6,20 +6,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { HashRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import Console from "./components/Form/Console";
-import { KanjiGameMeta } from "./components/Games/KanjiGame";
-import { KanjiGridMeta } from "./components/Games/KanjiGrid";
-import { OppositesGameMeta } from "./components/Games/OppositesGame";
-import { ParticlesGameMeta } from "./components/Games/ParticlesGame";
+import { KanjiGameNav } from "./components/Games/KanjiGame";
+import { KanjiGridNav } from "./components/Games/KanjiGrid";
+import { OppositesGameNav } from "./components/Games/OppositesGame";
+import { ParticlesGameNav } from "./components/Games/ParticlesGame";
 import Navigation from "./components/Navigation/Navigation";
-import { KanaGameMeta } from "./components/Pages/KanaGame";
-import { KanjiMeta } from "./components/Pages/Kanji";
-import { PhrasesMeta } from "./components/Pages/Phrases";
-import { SettingsMeta } from "./components/Pages/Settings";
-import { SheetMeta } from "./components/Pages/Sheet";
-import { VocabularyMeta } from "./components/Pages/Vocabulary";
-import { CookiePolicyMeta } from "./components/Terms/CookiePolicy";
-import { PrivacyPolicyMeta } from "./components/Terms/PrivacyPolicy";
-import { TermsAndConditionsMeta } from "./components/Terms/TermsAndConditions";
+import { KanaGameNav } from "./components/Pages/KanaGame";
+import { KanjiNav } from "./components/Pages/Kanji";
+import { PhraseNav } from "./components/Pages/Phrases";
+import { SettingsNav } from "./components/Pages/Settings";
+import { SheetNav } from "./components/Pages/Sheet";
+import { VocabularyNav } from "./components/Pages/Vocabulary";
+import { CookiePolicyNav } from "./components/Terms/CookiePolicy";
+import { PrivacyPolicyNav } from "./components/Terms/PrivacyPolicy";
+import { TermsAndConditionsNav } from "./components/Terms/TermsAndConditions";
 import { TermsNotice } from "./components/Terms/TermsNotice";
 import { DebugLevel } from "./helper/consoleHelper";
 import {
@@ -116,19 +116,19 @@ export default function App() {
    * pages where cookie notification should display
    */
   const cookieNoticePages = [
-    PhrasesMeta.location,
-    VocabularyMeta.location,
-    OppositesGameMeta.location,
-    KanaGameMeta.location,
-    KanjiMeta.location,
-    KanjiGameMeta.location,
-    KanjiGridMeta.location,
-    ParticlesGameMeta.location,
-    SheetMeta.location,
-    // SettingsMeta.location,
-    // TermsAndConditionsMeta.location,
-    // CookiePolicyMeta.location,
-    // PrivacyPolicyMeta.location,
+    PhraseNav.location,
+    VocabularyNav.location,
+    OppositesGameNav.location,
+    KanaGameNav.location,
+    KanjiNav.location,
+    KanjiGameNav.location,
+    KanjiGridNav.location,
+    ParticlesGameNav.location,
+    SheetNav.location,
+    // SettingsNav.location,
+    // TermsAndConditionsNav.location,
+    // CookiePolicyNav.location,
+    // PrivacyPolicyNav.location,
   ];
 
   return (
@@ -143,34 +143,34 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Vocabulary />} />
               <Route
-                path={TermsAndConditionsMeta.location}
+                path={TermsAndConditionsNav.location}
                 element={<TermsAndConditions />}
               />
               <Route
-                path={CookiePolicyMeta.location}
+                path={CookiePolicyNav.location}
                 element={<CookiePolicy />}
               />
               <Route
-                path={PrivacyPolicyMeta.location}
+                path={PrivacyPolicyNav.location}
                 element={<PrivacyPolicy />}
               />
 
-              <Route path={PhrasesMeta.location} element={<Phrases />} />
-              <Route path={VocabularyMeta.location} element={<Vocabulary />} />
+              <Route path={PhraseNav.location} element={<Phrases />} />
+              <Route path={VocabularyNav.location} element={<Vocabulary />} />
               <Route
-                path={OppositesGameMeta.location}
+                path={OppositesGameNav.location}
                 element={<OppositesGame />}
               />
-              <Route path={KanaGameMeta.location} element={<KanaGame />} />
-              <Route path={KanjiMeta.location} element={<Kanji />} />
-              <Route path={KanjiGameMeta.location} element={<KanjiGame />} />
-              <Route path={KanjiGridMeta.location} element={<KanjiGrid />} />
+              <Route path={KanaGameNav.location} element={<KanaGame />} />
+              <Route path={KanjiNav.location} element={<Kanji />} />
+              <Route path={KanjiGameNav.location} element={<KanjiGame />} />
+              <Route path={KanjiGridNav.location} element={<KanjiGrid />} />
               <Route
-                path={ParticlesGameMeta.location}
+                path={ParticlesGameNav.location}
                 element={<ParticlesGame />}
               />
-              <Route path={SheetMeta.location} element={<Sheet />} />
-              <Route path={SettingsMeta.location} element={<Settings />} />
+              <Route path={SheetNav.location} element={<Sheet />} />
+              <Route path={SettingsNav.location} element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
@@ -187,8 +187,8 @@ function ByLocationWorkerLifetime() {
   useEffect(() => {
     switch (location.pathname) {
       // where @nmemonica/voice-ja should be initialized
-      case VocabularyMeta.location:
-      case PhrasesMeta.location:
+      case VocabularyNav.location:
+      case PhraseNav.location:
         void dispatch(initAudioWorker());
         break;
 

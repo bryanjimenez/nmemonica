@@ -65,7 +65,7 @@ import { WRTCSignalingQR } from "../Dialog/WRTCSignalingQR";
 import { DataSetSharingActions } from "../Form/DataSetSharingActions";
 import "../../css/Sheet.css";
 
-const SheetMeta = {
+const SheetNav = {
   location: "/sheet/",
   label: "Sheet",
 };
@@ -862,4 +862,4 @@ function validateFuriganaParse(
   return hasError;
 }
 
-export { SheetMeta };
+export { SheetNav };

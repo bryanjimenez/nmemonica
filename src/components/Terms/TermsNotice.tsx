@@ -3,9 +3,9 @@ import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 
-import { CookiePolicyMeta } from "./CookiePolicy";
-import { PrivacyPolicyMeta } from "./PrivacyPolicy";
-import { TermsAndConditionsMeta } from "./TermsAndConditions";
+import { CookiePolicyNav } from "./CookiePolicy";
+import { PrivacyPolicyNav } from "./PrivacyPolicy";
+import { TermsAndConditionsNav } from "./TermsAndConditions";
 import { allowedCookies } from "../../helper/cookieHelper";
 import { RootState } from "../../slices";
 import { Notice } from "../Form/Notice";
@@ -63,10 +63,10 @@ export function TermsNotice(props: TermsNoticeProps) {
         <div>
           <p className="text-wrap m-0 ps-2">
             Please take a moment to read our{" "}
-            <Link to={TermsAndConditionsMeta.location}>
+            <Link to={TermsAndConditionsNav.location}>
               Terms and Conditions
             </Link>{" "}
-            and <Link to={PrivacyPolicyMeta.location}>Privacy Policy</Link>.
+            and <Link to={PrivacyPolicyNav.location}>Privacy Policy</Link>.
           </p>
         </div>
         <div className="pb-1">
@@ -76,7 +76,7 @@ export function TermsNotice(props: TermsNoticeProps) {
           <p className="text-wrap m-0 ps-2">
             By clicking &quot;Accept Cookies&quot;, you agree Nmemonica can
             store cookies on your device and use cookies in accordance with our{" "}
-            <Link to={CookiePolicyMeta.location}>Cookie Policy</Link>.
+            <Link to={CookiePolicyNav.location}>Cookie Policy</Link>.
           </p>
           <div>
             <div className="setting-block">

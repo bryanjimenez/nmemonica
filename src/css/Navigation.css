@@ -4,13 +4,21 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  flex-direction: row-reverse;
 }
 
-.mobile li {
+/* smaller devices (smaller than laptop)*/
+@media (width < 992px) {
+  .my-navbar .desktop {
+    display: none;
+  }
+}
+
+.gray-menu li {
   list-style-type: none;
 }
 
-.mobile a {
+.gray-menu a {
   text-decoration: none;
 }
 
@@ -21,7 +29,7 @@
   top: -10px;
 }
 
-.mobile .caption {
+.gray-menu .caption {
   font-size: x-small;
   margin: auto;
   width: fit-content;
@@ -37,12 +45,37 @@
   padding: 0 0.5rem;
 }
 
+.gray-menu {
+  position: absolute;
+  z-index: 999;
+  width: 100vw;
+  height: 100vh;
+  color: white;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Large devices (laptops)*/
+@media (width >= 992px) {
+  .gray-menu {
+    /* position: unset;
+    z-index: unset; */
+    width: 33vw;
+    /* height: unset;
+    color: unset;
+    background: unset; */
+  }
+
+  .my-navbar {
+    flex-direction: unset;
+  }
+}
+
+/* NAV Menu Button */
 .nav-menu-btn {
   padding: 0.5rem;
   border: 0;
   background-color: transparent;
 }
-
 .nav-menu-btn:not(.collapsed) .nav-btn-line:nth-of-type(1) {
   -webkit-transform: translateY(8px) rotate(45deg);
   -ms-transform: translateY(8px) rotate(45deg);
@@ -50,6 +83,9 @@
   background: white;
   z-index: 1000;
   position: absolute;
+}
+.nav-menu-btn:not(.collapsed, .darkmode) .nav-btn-line:nth-of-type(1) {
+  background: black;
 }
 .nav-menu-btn:not(.collapsed) .nav-btn-line:nth-of-type(2) {
   -webkit-transform: translateY(8px);
@@ -65,7 +101,9 @@
   z-index: 1000;
   background: white;
 }
-
+.nav-menu-btn:not(.collapsed, .darkmode) .nav-btn-line:nth-of-type(3) {
+  background: black;
+}
 .nav-btn-line {
   width: 25px;
   height: 3px;
@@ -77,25 +115,4 @@
   display: block;
   background-color: #000;
   margin-bottom: 5px;
-}
-
-.mobile {
-  position: absolute;
-  z-index: 999;
-  width: 100vw;
-  height: 100vh;
-  color: white;
-  background: rgba(0, 0, 0, 0.7);
-}
-
-/* Large devices (desktops, 992px and up)*/
-@media (min-width: 992px) {
-  .mobile {
-    position: unset;
-    z-index: unset;
-    width: unset;
-    height: unset;
-    color: unset;
-    background: unset;
-  }
 }

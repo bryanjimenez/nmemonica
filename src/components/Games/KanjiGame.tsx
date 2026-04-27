@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import { FourChoicesWRef, type GameQuestion } from "./FourChoices";
-import { KanjiGridMeta } from "./KanjiGrid";
+import { KanjiGridNav } from "./KanjiGrid";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { type ConsoleMessage, spaceRepLog } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
@@ -51,7 +51,7 @@ import { Tooltip } from "../Form/Tooltip";
 import { DifficultySlider } from "../Input/DifficultySlider";
 import { NotReady } from "../Pages/NotReady";
 
-const KanjiGameMeta = {
+const KanjiGameNav = {
   location: "/kanji-game/",
   label: "Kanji Game",
 };
@@ -470,7 +470,7 @@ export default function KanjiGame() {
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
-              <Link to={KanjiGridMeta.location}>
+              <Link to={KanjiGridNav.location}>
                 <TogglePracticeSideBtn toggle={true} />
               </Link>
             </div>
@@ -683,4 +683,4 @@ export function choiceToHtml<T extends { english: string }>(c: T) {
   };
 }
 
-export { KanjiGameMeta };
+export { KanjiGameNav };

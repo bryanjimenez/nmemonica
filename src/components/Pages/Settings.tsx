@@ -40,8 +40,8 @@ import SettingsSwitch from "../Input/SettingsSwitch";
 import SettingsCookies from "../Settings/SettingsCookies";
 import "../../css/Settings.css";
 import "../../css/spin.css";
-import { PrivacyPolicyMeta } from "../Terms/PrivacyPolicy";
-import { TermsAndConditionsMeta } from "../Terms/TermsAndConditions";
+import { PrivacyPolicyNav } from "../Terms/PrivacyPolicy";
+import { TermsAndConditionsNav } from "../Terms/TermsAndConditions";
 const SettingsAudio = lazy(() => import("../Settings/SettingsAudio"));
 const SettingsKanji = lazy(() => import("../Settings/SettingsKanji"));
 const SettingsPhrase = lazy(() => import("../Settings/SettingsPhrase"));
@@ -56,7 +56,7 @@ const SettingsParticleGame = lazy(
 );
 const SettingsStats = lazy(() => import("../Settings/SettingsStats"));
 
-const SettingsMeta = {
+const SettingsNav = {
   location: "/settings/",
   label: "Settings",
 };
@@ -288,7 +288,7 @@ export default function Settings() {
           <div className="text-end">
             <p>
               Read our{" "}
-              <Link to={TermsAndConditionsMeta.location}>
+              <Link to={TermsAndConditionsNav.location}>
                 Terms and Conditions
               </Link>
               .
@@ -303,7 +303,7 @@ export default function Settings() {
           <div className="text-end">
             <p>
               Read our{" "}
-              <Link to={PrivacyPolicyMeta.location}>Privacy Policy</Link>.
+              <Link to={PrivacyPolicyNav.location}>Privacy Policy</Link>.
             </p>
           </div>
         </div>
@@ -633,4 +633,4 @@ export default function Settings() {
   );
 }
 
-export { SettingsMeta };
+export { SettingsNav };

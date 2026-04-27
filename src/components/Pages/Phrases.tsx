@@ -102,7 +102,7 @@ import AudioItem from "../Input/AudioItem";
 import ClickNavBtn from "../Input/ClickNavBtn";
 import { DifficultySlider } from "../Input/DifficultySlider";
 
-const PhrasesMeta = {
+const PhraseNav = {
   location: "/phrases/",
   label: "Phrases",
 };
@@ -1103,8 +1103,6 @@ function buildGameActionsHandler(
   };
 }
 
-export { PhrasesMeta };
-
 function preCacheAudioForNextTerm(
   dispatch: AppDispatch,
   reinforcedUID: string | null,
@@ -1165,3 +1163,5 @@ function preCacheAudioForNextTerm(
     );
   }
 }
+
+export { PhraseNav };

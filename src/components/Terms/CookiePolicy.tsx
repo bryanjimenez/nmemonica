@@ -1,6 +1,6 @@
 import { cookieAcceptance } from "../../helper/cookieHelper";
 
-const CookiePolicyMeta = {
+const CookiePolicyNav = {
   location: "/cookies/",
   label: "CookiePolicy",
 };
@@ -154,4 +154,4 @@ export default function CookiePolicy() {
   );
 }
 
-export { CookiePolicyMeta };
+export { CookiePolicyNav as CookiePolicyNav };

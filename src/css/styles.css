@@ -7,12 +7,14 @@ body {
   overflow: hidden;
 }
 
-/* Large devices (desktops, 992px and up)*/
-@media (min-width: 992px) {
+/*
+Large devices (laptops)
+@media (width >= 992px) {
   .no-scroll {
     overflow: unset;
   }
 }
+*/
 
 .h-0 {
   height: 0;
@@ -125,8 +127,8 @@ a {
   padding-left: 20px;
 }
 
-/* xx small devices (576px and down)*/
-@media (max-width: 576px) {
+/* xx small devices (Portrait)*/
+@media (width < 576px) {
   .options-bar .col {
     /* split-width-view avoid options-bar break */
     width: unset;
@@ -208,8 +210,12 @@ a {
   line-height: 1;
 }
 
-/* Large devices (desktops, 992px and up)*/
-@media (min-width: 992px) {
+.lh-xxs {
+  line-height: 0.9;
+}
+
+/* Large devices (laptops) */
+@media (width >= 992px) {
   .app-sm-fs-xx-small {
     font-size: unset;
   }

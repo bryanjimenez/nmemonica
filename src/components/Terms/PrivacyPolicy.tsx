@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { CookiePolicyMeta } from "./CookiePolicy";
+import { CookiePolicyNav } from "./CookiePolicy";
 
 const githubProject = "https://github.com/bryanjimenez/nmemonica";
 const githubPolicyHistory =
@@ -8,7 +8,7 @@ const githubPolicyHistory =
 const githubReadMe =
   "https://github.com/bryanjimenez/nmemonica/blob/main/README.md";
 
-const PrivacyPolicyMeta = {
+const PrivacyPolicyNav = {
   location: "/privacy/",
   label: "PrivacyPolicy",
 };
@@ -86,7 +86,7 @@ export default function PrivacyPolicy() {
             <h2 className={headerCss}>Cookies</h2>
             <p className="m-0 ps-2">
               Please refer to our{" "}
-              <Link to={CookiePolicyMeta.location}>Cookie Policy</Link>.
+              <Link to={CookiePolicyNav.location}>Cookie Policy</Link>.
             </p>
             <h2 className={headerCss}>Opting out</h2>
             <p className="m-0 ps-2">
@@ -126,4 +126,4 @@ export default function PrivacyPolicy() {
   );
 }
 
-export { PrivacyPolicyMeta };
+export { PrivacyPolicyNav };

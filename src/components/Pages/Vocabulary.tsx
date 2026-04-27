@@ -113,7 +113,7 @@ import VocabularyOrderSlider, {
   type BareIdx,
 } from "../Input/VocabularyOrderSlider";
 
-const VocabularyMeta = {
+const VocabularyNav = {
   location: "/vocabulary/",
   label: "Vocabulary",
 };
@@ -1307,8 +1307,6 @@ function useBuildGameActionsHandler(
   );
 }
 
-export { VocabularyMeta };
-
 function partOfSpeechPronunciation(
   vocabulary: RawVocabulary,
   verbForm: string,
@@ -1475,3 +1473,5 @@ function preCacheAudioForNextTerm(
     ...englishQuery,
   ]);
 }
+
+export { VocabularyNav };

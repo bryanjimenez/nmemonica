@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 import type { GameChoice, GameQuestion } from "./FourChoices";
-import { KanjiGameMeta, oneFromList } from "./KanjiGame";
+import { KanjiGameNav, oneFromList } from "./KanjiGame";
 import XChoices from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { getTerm, getTermUID, termFilterByType } from "../../helper/gameHelper";
@@ -29,7 +29,7 @@ interface KanjiGridChoice extends GameChoice {
   toString: () => string;
 }
 
-const KanjiGridMeta = {
+const KanjiGridNav = {
   location: "/kanji-grid/",
   label: "Kanji Grid Game",
 };
@@ -227,7 +227,7 @@ export default function KanjiGrid() {
         <div className="row opts-max-h">
           <div className="col">
             <div className="d-flex justify-content-start">
-              <Link to={KanjiGameMeta.location}>
+              <Link to={KanjiGameNav.location}>
                 <TogglePracticeSideBtn toggle={false} />
               </Link>
             </div>
@@ -351,4 +351,4 @@ function buildIsCorrect(
   return isCorrect;
 }
 
-export { KanjiGridMeta };
+export { KanjiGridNav };

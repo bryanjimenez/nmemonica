@@ -100,7 +100,8 @@ export function Notice(props: PropsWithChildren<NoticeProps>) {
       <div
         ref={refs.setReference}
         className={classNames({
-          "sm-icon-grp": true,
+          "guidelines-bar d-flex": true,
+          "px-3": true,
         })}
         aria-label={props.label}
       >
