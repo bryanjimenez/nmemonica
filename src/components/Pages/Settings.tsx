@@ -133,10 +133,15 @@ export function collapseExpandToggler(
   toggleSection: (arg0: (arg1: boolean) => boolean) => void,
   disabled?: boolean
 ) {
-  const icon = name ? (
-    <XCircleIcon className="clickable" size="medium" aria-label="collapse" />
-  ) : (
-    <PlusCircleIcon className="clickable" size="medium" aria-label="expand" />
+  const icon = (
+    <PlusCircleIcon
+      className={classNames({
+        "clickable rotate-transition": true,
+        "rotate-45": name,
+      })}
+      size="medium"
+      aria-label={name ? "collapse" : "expand"}
+    />
   );
 
   return (

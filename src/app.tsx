@@ -28,6 +28,7 @@ import {
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
 import type { AppDispatch, RootState } from "./slices";
+import { initAudioContext } from "./slices/audioHelper";
 import {
   appSettingsInitialized,
   appSettingsInitializedLocalStorage,
@@ -76,6 +77,8 @@ export default function App() {
     };
 
     if (cookies) {
+      initAudioContext();
+
       // localStorage is fast.. avoids initial background flash
       void dispatch(appSettingsInitializedLocalStorage()).then(() => {
         void dispatch(appSettingsInitialized()).then(

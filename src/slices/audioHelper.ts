@@ -32,19 +32,42 @@ function fadeOut(audio: HTMLAudioElement) {
 
 // Single instance of AudioContext https://web.dev/webaudio-intro/#toc-play
 let audioCtx: AudioContext | null = null;
+export function initAudioContext() {
+  audioCtx = new AudioContext();
+}
+
+/**
+ * Warm up
+ */
+export function warmAudio() {
+  if (audioCtx === null) {
+    throw new Error("AudioContext was not initialized initAudioContext");
+  }
+
+  const audiobuf = audioCtx.createBuffer(2, 10, 48000);
+  const channeld = audiobuf.getChannelData(0);
+
+  channeld[0] = 0;
+}
 
 /**
  * Play an audio (can be interrupted)
  */
-export function playAudio(
+export async function playAudio(
   buffer: ArrayBuffer,
   AbortController?: AbortController
 ) {
   if (audioCtx === null) {
-    // To prevent:
-    // An AudioContext was prevented from starting automatically.
-    // It must be created or resumed after a user gesture on the page.
-    audioCtx = new AudioContext();
+    throw new Error("AudioContext was not initialized initAudioContext");
+  }
+
+  // To prevent:
+  // no sound on first run
+  if (audioCtx.state === "interrupted" || audioCtx.state === "suspended") {
+    // allow warmup time
+    await audioCtx
+      .resume()
+      .then(() => new Promise((resolve) => setTimeout(resolve, 2000)));
   }
 
   const source = audioCtx.createBufferSource();
