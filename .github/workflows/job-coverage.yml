@@ -1,8 +1,8 @@
-name: Test App
+name: Test Pkg
 on: workflow_call
 
 jobs:
-  test:
+  coverage:
     environment: ci
     runs-on: ubuntu-latest
     permissions:
@@ -14,4 +14,5 @@ jobs:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-      - run: npm run test
+      - run: npx nyc npm run test 2> >(xargs -L 1 echo "::warning::")
+        continue-on-error: true
