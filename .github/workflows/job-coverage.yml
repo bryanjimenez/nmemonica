@@ -1,4 +1,6 @@
-name: Test Pkg
+name: Coverage
+run-name: Coverage
+
 on: workflow_call
 
 jobs:
