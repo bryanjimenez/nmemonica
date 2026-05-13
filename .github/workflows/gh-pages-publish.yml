@@ -12,6 +12,7 @@ jobs:
     uses: ./.github/workflows/job-test.yml
 
   coverage:
+    needs: test
     uses: ./.github/workflows/job-coverage.yml
 
   publish:
