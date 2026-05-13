@@ -1,0 +1,28 @@
+{
+  "extends": "@istanbuljs/nyc-config-typescript",
+  "all": true,
+  "check-coverage": true,
+
+  "exclude": [
+    "nyc_output/**",
+    "test/**",
+    "dist/**",
+    ".tsc-dist/**",
+
+    "**/*.d.ts",
+    "res",
+    "pwa/plugin/**",
+
+    "dep-licen-helper.js",
+    "environment-dep-replace.cjs",
+    "environment.development.ts",
+    "environment.production.ts",
+    "eslint.config.js",
+    "rspack.config.js",
+    "rspack.config.sw.js"
+  ],
+
+  "lines": 90,
+  "branches": 90,
+  "statements": 90
+}
