@@ -34,3 +34,6 @@ docs/mdbook
 
 # lighthouse reports
 test/lighthouse
+
+# nyc config
+!.nycrc
