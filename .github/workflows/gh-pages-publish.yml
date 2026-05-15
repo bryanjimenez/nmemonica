@@ -29,13 +29,16 @@ jobs:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: dist
           path: dist
       - name: Install mdBook
         run: |
-          curl -fsSLO https://github.com/rust-lang/mdBook/releases/download/v0.5.2/mdbook-v0.5.2-x86_64-unknown-linux-gnu.tar.gz
-          echo "084e4342ba564db270108763e404a7d1f309d932651a22484e93c0dc1a071f6d ./mdbook-v0.5.2-x86_64-unknown-linux-gnu.tar.gz" | sha256sum -c
-          tar -xvzf mdbook-v0.5.2-x86_64-unknown-linux-gnu.tar.gz -C ./docs/
+          target="x86_64-unknown-linux-gnu"
+          mdbook_ver="v0.5.2"
+          mdbook_sha="084e4342ba564db270108763e4:s04a7d1f309d932651a22484e93c0dc1a071f6d"
+          curl -fsSLO "https://github.com/rust-lang/mdBook/releases/download/$mdbook_ver/mdbook-$mdbook_ver-$target.tar.gz"
+          echo "$mdbook_sha ./mdbook-$mdbook_ver-$target.tar.gz" | sha256sum -c
+          tar -xvzf "mdbook-$mdbook_ver-$target.tar.gz" -C ./docs/
       - run: npm run deploy
