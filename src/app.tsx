@@ -113,6 +113,7 @@ export default function App() {
   const pClass = classNames({
     "d-flex flex-column": true,
     "dark-mode": darkMode,
+    "no-select": true,
   });
 
   /**
