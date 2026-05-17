@@ -63,7 +63,6 @@ import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 // import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 // import { useTimedGame } from "../../hooks/useTimedGame";
-import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import {
@@ -84,6 +83,7 @@ import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";
+import type { AppDispatch } from "../../typings/slices";
 import DialogMsg from "../Dialog/DialogMsg";
 import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
@@ -726,8 +726,7 @@ export default function Phrases() {
 
           <div
             className={classNames({
-              "pt-3 d-flex flex-column justify-content-around text-center":
-                true,
+              "pt-3 d-flex flex-column justify-content-around text-center": true,
               "px-3": hidden,
             })}
           >

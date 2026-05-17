@@ -7,6 +7,7 @@ import {
   VoiceWorkerResponse,
 } from "../constants/voiceConstants";
 import { DebugLevel, msgInnerTrim, secsSince } from "../helper/consoleHelper";
+import type { AppDispatch, RootState } from "../typings/slices";
 import { type ValuesOf } from "../typings/utils";
 import {
   AUDIO_WORKER_EN_NAME,
@@ -17,8 +18,6 @@ import {
 } from "../workers";
 import { type EnVoiceWorkerQuery } from "../workers/voiceWorker-en";
 import { type JaVoiceWorkerQuery } from "../workers/voiceWorker-ja";
-
-import { AppDispatch, RootState } from ".";
 
 // global worker variable
 let workerJa: Worker | null = null;

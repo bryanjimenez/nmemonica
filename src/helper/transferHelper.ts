@@ -1,9 +1,4 @@
-import {
-  AppProgressState,
-  AppSettingState,
-  isValidAppSettingsState,
-  isValidStudyProgress,
-} from "../slices";
+import { isValidAppSettingsState, isValidStudyProgress } from "../slices";
 import { toMemorySize } from "./consoleHelper";
 import {
   FileErrorCause,
@@ -24,6 +19,7 @@ import { unusualApostrophe } from "./unicodeHelper";
 import { getStudyProgress, getUserSettings } from "./userSettingsHelper";
 import { properCase } from "../components/Games/KanjiGame";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
+import type { AppProgressState, AppSettingState } from "../typings/slices";
 
 export interface SyncDataFile {
   name: string;
@@ -271,13 +267,15 @@ export function dataTransferAggregator(
   let req: SyncDataFile[] =
     fileData !== undefined
       ? fileData
-      : Object.values({...workbookSheetNames, ...metaDataNames}).map(({ prettyName, fileName }) => ({
-          name: prettyName,
-          origin: "AppCache",
-          file: "",
-          size: "0",
-          fileName,
-        }));
+      : Object.values({ ...workbookSheetNames, ...metaDataNames }).map(
+          ({ prettyName, fileName }) => ({
+            name: prettyName,
+            origin: "AppCache",
+            file: "",
+            size: "0",
+            fileName,
+          })
+        );
 
   const fromFileSystem = req.filter(({ origin }) => origin === "FileSystem");
 

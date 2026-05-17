@@ -34,7 +34,7 @@ import {
   SharingMessageErrorCause,
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
-import { type AppProgressState, type AppSettingState } from "../../slices";
+import type { AppProgressState, AppSettingState } from "../../typings/slices";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 

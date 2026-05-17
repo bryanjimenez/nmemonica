@@ -12,8 +12,7 @@ import { DebugLevel } from "../helper/consoleHelper";
 import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
 import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
-
-import type { RootState } from ".";
+import type { RootState } from "../typings/slices";
 
 export interface ParticleInitSlice {
   particleGame: {

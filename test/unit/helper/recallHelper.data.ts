@@ -1,4 +1,4 @@
-export function xAgoDate(days) {
+export function xAgoDate(days: number) {
   const t = new Date();
   const xAgoDate = new Date(t.setDate(t.getDate() - days)).toJSON();
   return xAgoDate;

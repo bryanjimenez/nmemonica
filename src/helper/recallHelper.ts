@@ -8,8 +8,8 @@ import {
   msgInnerTrim,
   toMemorySize,
 } from "./consoleHelper";
-import { AppDispatch } from "../slices";
 import { logger } from "../slices/globalSlice";
+import type { AppDispatch } from "../typings/slices";
 
 /** Cutoff value between right/wrong
  *

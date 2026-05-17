@@ -1,6 +1,7 @@
 import { getWindow } from "./browserGlobal";
 import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
-import { type AppSettingState, settingsKeys } from "../slices";
+import { settingsKeys } from "../slices";
+import type { AppSettingState } from "../typings/slices";
 
 // TODO: implement using promises to match userSettingsIndexDBHelper (fallback method)
 
@@ -47,10 +48,7 @@ export function localStoreUserSettingAttrUpdate<T>(
 /**
  * Modifies an attribute or toggles the existing value
  */
-export function localStoreUserSettingAttrDelete(
-  path: string,
-  attr: string
-) {
+export function localStoreUserSettingAttrDelete(path: string, attr: string) {
   const locStoSettings = getLocalStorageUserSettings();
   const cleanPath = [
     ...path.split("/").filter((p) => p !== ""),

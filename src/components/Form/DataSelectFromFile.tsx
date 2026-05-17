@@ -16,7 +16,7 @@ import {
   parseSettingsAndProgress,
   parseSheet,
 } from "../../helper/transferHelper";
-import { type RootState } from "../../slices";
+import type { RootState } from "../../typings/slices";
 import "../../css/DragDrop.css";
 
 interface DataSelectFromFileProps {

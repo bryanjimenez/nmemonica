@@ -16,8 +16,8 @@ import {
 } from "../../helper/gameHelper";
 import { JapaneseText, audioPronunciation } from "../../helper/JapaneseText";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import type { AppDispatch } from "../../slices";
 import { furiganaToggled } from "../../slices/vocabularySlice";
+import type { AppDispatch } from "../../typings/slices";
 import Sizable from "../Form/Sizable";
 import AudioItem from "../Input/AudioItem";
 

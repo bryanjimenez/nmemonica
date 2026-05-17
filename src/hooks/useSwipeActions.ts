@@ -8,7 +8,7 @@ import {
   swipeStart,
 } from "../helper/TouchSwipe";
 import type { Spec, SwipeDirection } from "../helper/TouchSwipe";
-import type { RootState } from "../slices";
+import type { RootState } from "../typings/slices";
 
 export type GameActionHandler = (
   direction: SwipeDirection,

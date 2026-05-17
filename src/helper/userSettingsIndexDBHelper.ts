@@ -8,8 +8,9 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import { type AppSettingState, settingsKeys } from "../slices";
+import { settingsKeys } from "../slices";
 import { dataSetNames } from "./sheetHelper";
+import type { AppSettingState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
 
 export function indexDBUserSettingAttrUpdate(

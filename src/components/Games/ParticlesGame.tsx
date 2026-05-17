@@ -14,8 +14,8 @@ import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
-import type { AppDispatch, RootState } from "../../slices";
 import { getParticleGame } from "../../slices/particleSlice";
+import type { AppDispatch, RootState } from "../../typings/slices";
 import { NotReady } from "../Pages/NotReady";
 import "../../css/ParticlesGame.css";
 

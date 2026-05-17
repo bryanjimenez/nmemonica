@@ -3,7 +3,6 @@ import { useDispatch } from "react-redux";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKana } from "../../hooks/useConnectKana";
-import type { AppDispatch } from "../../slices";
 import {
   setKanaBtnN,
   toggleKana,
@@ -11,6 +10,7 @@ import {
   toggleKanaGameWideMode,
 } from "../../slices/kanaSlice";
 import { KanaType } from "../../slices/settingHelper";
+import type { AppDispatch } from "../../typings/slices";
 import ChoiceNumberSlider from "../Input/ChoiceNumberSlider";
 import SettingsSwitch from "../Input/SettingsSwitch";
 

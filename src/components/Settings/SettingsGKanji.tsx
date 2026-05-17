@@ -2,13 +2,13 @@ import { useDispatch } from "react-redux";
 
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
-import type { AppDispatch } from "../../slices";
 import {
   setKanjiBtnN,
   toggleKanjiFadeInAnswers,
   toggleKanjiOrdering,
 } from "../../slices/kanjiSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import type { AppDispatch } from "../../typings/slices";
 import SimpleListMenu from "../Form/SimpleListMenu";
 import ChoiceNumberSlider from "../Input/ChoiceNumberSlider";
 import SettingsSwitch from "../Input/SettingsSwitch";

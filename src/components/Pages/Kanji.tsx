@@ -54,7 +54,6 @@ import { updateDailyGoal, useGoalProgress } from "../../hooks/useGoalProgress";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   deleteMetaKanji,
@@ -72,6 +71,7 @@ import {
   TermSortByLabel,
 } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import type { AppDispatch, RootState } from "../../typings/slices";
 import DialogMsg from "../Dialog/DialogMsg";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import { RecallIntervalPreviewInfo } from "../Form/RecallIntervalPreviewInfo";
@@ -823,8 +823,7 @@ export default function Kanji() {
             <div className="row row-cols-1 row-cols-sm-2 h-100">
               <div
                 className={classNames({
-                  "col question d-flex flex-column justify-content-top text-center":
-                    true,
+                  "col question d-flex flex-column justify-content-top text-center": true,
                 })}
               >
                 <div className="d-flex ">
@@ -903,8 +902,7 @@ export default function Kanji() {
 
                       <div
                         className={classNames({
-                          "col p-0 phonetic-radical d-flex flex-column justify-content-center":
-                            true,
+                          "col p-0 phonetic-radical d-flex flex-column justify-content-center": true,
                           invisible:
                             term.phoneticKanji?.p === undefined ||
                             term.phoneticKanji.p === term.kanji,

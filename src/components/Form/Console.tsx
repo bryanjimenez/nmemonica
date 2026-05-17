@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { type ConsoleMessage, DebugLevel } from "../../helper/consoleHelper";
-import type { RootState } from "../../slices";
+import type { RootState } from "../../typings/slices";
 
 const MAX_CONSOLE_MESSAGES = 6;
 const COLLAPSE_T = 3000;

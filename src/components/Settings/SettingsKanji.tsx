@@ -5,7 +5,6 @@ import { buildAction } from "../../helper/eventHandlerHelper";
 import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import type { AppDispatch } from "../../slices";
 import {
   getKanji,
   setMemorizedThreshold,
@@ -17,6 +16,7 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import type { AppDispatch } from "../../typings/slices";
 import SimpleListMenu from "../Form/SimpleListMenu";
 import PlusMinus from "../Input/PlusMinus";
 import SettingsSwitch from "../Input/SettingsSwitch";

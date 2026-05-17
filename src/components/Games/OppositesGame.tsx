@@ -17,8 +17,8 @@ import { swapToRomaji } from "../../helper/kanaHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
-import type { AppDispatch, RootState } from "../../slices";
 import { type Opposite, getOpposite } from "../../slices/oppositeSlice";
+import type { AppDispatch, RootState } from "../../typings/slices";
 import { NotReady } from "../Pages/NotReady";
 
 export interface RawOpposite {
@@ -136,8 +136,7 @@ export default function OppositesGame() {
 }
 
 function deriveRomaji(obj: RawJapanese) {
-  return jaStrToCharArray(JapaneseText.parse(obj)
-    .getPronunciation())
+  return jaStrToCharArray(JapaneseText.parse(obj).getPronunciation())
     .map((mora) => swapToRomaji(mora))
     .join("");
 }

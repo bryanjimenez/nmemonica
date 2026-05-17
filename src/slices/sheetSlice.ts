@@ -7,8 +7,7 @@ import { csvToObject } from "../helper/csvHelper";
 import { jtox } from "../helper/jsonHelper";
 import { workbookSheetNames } from "../helper/sheetHelper";
 import { type FilledSheetData } from "../helper/sheetHelperImport";
-
-import { AppDispatch } from ".";
+import type { AppDispatch } from "../typings/slices";
 
 const initialState = {};
 

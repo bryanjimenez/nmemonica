@@ -40,9 +40,8 @@ import {
   userStudyProgressAttrUpdate,
 } from "../helper/userSettingsHelper";
 import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
+import type { RootState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
-
-import type { RootState } from ".";
 
 const SLICE_NAME = "phrases";
 export interface PhraseInitSlice {

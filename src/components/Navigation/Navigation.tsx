@@ -15,8 +15,8 @@ import { Link } from "react-router-dom";
 import { buildAction, setStateFunction } from "../../helper/eventHandlerHelper";
 import { labelOptions, toggleOptions } from "../../helper/gameHelper";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import type { RootState } from "../../slices";
 import { toggleKana } from "../../slices/kanaSlice";
+import type { RootState } from "../../typings/slices";
 import { KanjiGameNav } from "../Games/KanjiGame";
 import { OppositesGameNav } from "../Games/OppositesGame";
 import { ParticlesGameNav } from "../Games/ParticlesGame";
@@ -170,10 +170,7 @@ export default function Navigation() {
   // );
 
   const navButton = (
-    <div
-      className="button m-2"
-      onClick={menuToggle}
-    >
+    <div className="button m-2" onClick={menuToggle}>
       <button
         className={classNames({
           "nav-menu-btn": true,

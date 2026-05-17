@@ -2,8 +2,8 @@ import { useDispatch } from "react-redux";
 
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import type { AppDispatch } from "../../slices";
 import { toggleParticleFadeInAnswers } from "../../slices/particleSlice";
+import type { AppDispatch } from "../../typings/slices";
 import SettingsSwitch from "../Input/SettingsSwitch";
 
 export default function SettingsParticleGame() {

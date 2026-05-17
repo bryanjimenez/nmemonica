@@ -37,7 +37,6 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
-import type { AppDispatch, RootState } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   getKanji,
@@ -46,6 +45,7 @@ import {
 } from "../../slices/kanjiSlice";
 import { TermFilterBy, TermSortBy } from "../../slices/settingHelper";
 import { getVocabulary } from "../../slices/vocabularySlice";
+import type { AppDispatch, RootState } from "../../typings/slices";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import { Tooltip } from "../Form/Tooltip";
 import { DifficultySlider } from "../Input/DifficultySlider";
