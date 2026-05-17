@@ -598,7 +598,7 @@ export default function Kanji() {
           const meta = newValue[uid];
           const oldMeta = oldValue[uid];
 
-          recallDebugLogHelper(dispatch, meta, oldMeta, k.english);
+          recallDebugLogHelper(dispatch, meta, oldMeta, k.english, logger);
         }
 
         // after space rep updates

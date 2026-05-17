@@ -483,7 +483,7 @@ export default function Phrases() {
           const meta = newValue[uid];
           const oldMeta = oldValue[uid];
 
-          recallDebugLogHelper(dispatch, meta, oldMeta, p.english);
+          recallDebugLogHelper(dispatch, meta, oldMeta, p.english, logger);
         }
 
         // prevent updates when quick scrolling

@@ -579,7 +579,7 @@ export default function Vocabulary() {
           const meta = newValue[uid];
           const oldMeta = oldValue[uid];
 
-          recallDebugLogHelper(dispatch, meta, oldMeta, vocabulary.english);
+          recallDebugLogHelper(dispatch, meta, oldMeta, vocabulary.english, logger);
         }
 
         // after space rep updates
