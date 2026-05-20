@@ -8,8 +8,8 @@ import { setStateFunction } from "../../helper/eventHandlerHelper";
 import { swapKana } from "../../helper/kanaHelper";
 import { useConnectKana } from "../../hooks/useConnectKana";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import { RootState } from "../../slices";
 import { KanaType } from "../../slices/settingHelper";
+import type { RootState } from "../../typings/slices";
 import type { ValuesOf } from "../../typings/utils";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import ClickNavBtn from "../Input/ClickNavBtn";
@@ -186,8 +186,7 @@ export default function KanaGame() {
             {!wideMode.current && (
               <div
                 className={classNames({
-                  "pt-3 d-flex flex-column justify-content-center text-center w-100 h-100":
-                    true,
+                  "pt-3 d-flex flex-column justify-content-center text-center w-100 h-100": true,
                   "correct-color": correct,
                 })}
               >

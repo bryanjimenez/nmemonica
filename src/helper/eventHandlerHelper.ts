@@ -5,7 +5,7 @@ import type {
 } from "@reduxjs/toolkit";
 import type React from "react";
 
-import type { AppDispatch } from "../slices";
+import type { AppDispatch } from "../typings/slices";
 
 /**
  * State setter from event

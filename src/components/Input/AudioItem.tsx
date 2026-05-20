@@ -8,10 +8,10 @@ import {
   copyBufferToCacheStore,
 } from "../../helper/audioSynthPreCache";
 import { DebugLevel } from "../../helper/consoleHelper";
-import { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import { getSynthAudioWorkaroundNoAsync } from "../../slices/voiceSlice";
+import type { AppDispatch } from "../../typings/slices";
 
 interface AudioItemProps {
   visible: boolean;

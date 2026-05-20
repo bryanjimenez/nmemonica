@@ -1,8 +1,8 @@
 import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
-import type { RootState } from "../slices";
 import { TermFilterBy } from "../slices/settingHelper";
+import type { RootState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
 
 /**

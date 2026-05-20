@@ -27,7 +27,6 @@ import {
   swMessageSubscribe,
   swMessageUnsubscribe,
 } from "./helper/serviceWorkerHelper";
-import type { AppDispatch, RootState } from "./slices";
 import { initAudioContext } from "./slices/audioHelper";
 import {
   appSettingsInitialized,
@@ -36,6 +35,7 @@ import {
 } from "./slices/globalSlice";
 import { serviceWorkerRegistered } from "./slices/serviceWorkerSlice";
 import { dropAudioWorker, initAudioWorker } from "./slices/voiceSlice";
+import type { AppDispatch, RootState } from "./typings/slices";
 const NotFound = lazy(() => import("./components/Navigation/NotFound"));
 const TermsAndConditions = lazy(
   () => import("./components/Terms/TermsAndConditions")

@@ -1,8 +1,8 @@
 import EventEmitter from "events";
 
 import { type SheetData, type Spreadsheet } from "@nmemonica/x-spreadsheet";
-import type { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
 import type DataProxy from "@nmemonica/x-spreadsheet/dist/types/core/data_proxy";
+import type { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
 import { MetaDataObj } from "nmemonica";
 
 import { isNumber } from "./arrayHelper";
@@ -15,7 +15,6 @@ import {
   getIDBItem,
   openIDB,
 } from "../../pwa/helper/idbHelper";
-import { AppDispatch } from "../slices";
 import {
   clearKanji,
   batchRepetitionUpdate as kanjiBatchMetaUpdate,
@@ -31,6 +30,7 @@ import {
   clearVocabulary,
   batchRepetitionUpdate as vocabularyBatchMetaUpdate,
 } from "../slices/vocabularySlice";
+import type { AppDispatch } from "../typings/slices";
 
 /**
  * Dataset names

@@ -1,5 +1,6 @@
 import type { MetaDataObj } from "nmemonica";
 
+import { dataSetNames } from "./sheetHelper";
 import {
   getIndexDBStudyProgress,
   getIndexDBUserSettings,
@@ -9,12 +10,11 @@ import {
   setIndexDBStudyProgress,
   setIndexDBUserSettings,
 } from "./userSettingsIndexDBHelper";
-import { type AppProgressState, type AppSettingState } from "../slices";
-import { dataSetNames } from "./sheetHelper";
 import {
   localStoreUserSettingAttrUpdate,
   setLocalStorageUserSettings,
 } from "./userSettingsLocalStorageHelper";
+import type { AppProgressState, AppSettingState } from "../typings/slices";
 
 /**
  * Reads a value from storage

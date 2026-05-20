@@ -13,7 +13,7 @@ import {
 import { loopN, pause } from "../helper/gameHelper";
 import { setMediaSessionPlaybackState } from "../helper/mediaHelper";
 import { SwipeDirection } from "../helper/TouchSwipe";
-import type { AppDispatch } from "../slices";
+import type { AppDispatch } from "../typings/slices";
 // import {
 //   setWordTPCorrect,
 //   setWordTPIncorrect,

@@ -20,8 +20,8 @@ import {
   getVerbFormsArray,
 } from "../../helper/JapaneseVerb";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import type { AppDispatch } from "../../slices";
 import { furiganaToggled, verbFormChanged } from "../../slices/vocabularySlice";
+import type { AppDispatch } from "../../typings/slices";
 import Sizable from "../Form/Sizable";
 import AudioItem from "../Input/AudioItem";
 

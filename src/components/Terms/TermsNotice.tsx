@@ -7,7 +7,7 @@ import { CookiePolicyNav } from "./CookiePolicy";
 import { PrivacyPolicyNav } from "./PrivacyPolicy";
 import { TermsAndConditionsNav } from "./TermsAndConditions";
 import { allowedCookies } from "../../helper/cookieHelper";
-import { RootState } from "../../slices";
+import type { RootState } from "../../typings/slices";
 import { Notice } from "../Form/Notice";
 import { CookieOptions } from "../Settings/SettingsCookies";
 

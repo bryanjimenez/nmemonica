@@ -69,7 +69,6 @@ import { useMediaSession } from "../../hooks/useMediaSession";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useTimedGame } from "../../hooks/useTimedGame";
 import { useWindowSize } from "../../hooks/useWindowSize";
-import type { AppDispatch } from "../../slices";
 import { playAudio } from "../../slices/audioHelper";
 import { logger } from "../../slices/globalSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
@@ -93,6 +92,7 @@ import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../../slices/voiceSlice";
+import type { AppDispatch } from "../../typings/slices";
 import { TagEditMenu } from "../Dialog/TagEditMenu";
 import { GoalResumeMessage } from "../Form/GoalResumeMessage";
 import {
@@ -579,7 +579,7 @@ export default function Vocabulary() {
           const meta = newValue[uid];
           const oldMeta = oldValue[uid];
 
-          recallDebugLogHelper(dispatch, meta, oldMeta, vocabulary.english);
+          recallDebugLogHelper(dispatch, meta, oldMeta, vocabulary.english, logger);
         }
 
         // after space rep updates

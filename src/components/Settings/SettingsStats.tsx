@@ -11,7 +11,6 @@ import {
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import { AppDispatch } from "../../slices";
 import {
   getKanji,
   getKanjiMeta,
@@ -27,6 +26,7 @@ import {
   getVocabularyMeta,
   setGoal as setVocabularyGoal,
 } from "../../slices/vocabularySlice";
+import { AppDispatch } from "../../typings/slices";
 import PlusMinus from "../Input/PlusMinus";
 
 export default function SettingsStats() {

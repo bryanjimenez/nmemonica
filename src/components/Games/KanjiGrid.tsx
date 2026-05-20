@@ -19,9 +19,9 @@ import { getTerm, getTermUID, termFilterByType } from "../../helper/gameHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
-import type { AppDispatch, RootState } from "../../slices";
 import { getKanji } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
+import type { AppDispatch, RootState } from "../../typings/slices";
 import { TogglePracticeSideBtn } from "../Form/OptionsBar";
 import { NotReady } from "../Pages/NotReady";
 

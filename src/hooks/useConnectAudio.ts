@@ -1,6 +1,6 @@
 import { shallowEqual, useSelector } from "react-redux";
 
-import type { RootState } from "../slices";
+import type { RootState } from "../typings/slices";
 
 export function useConnectAudio() {
   const loading = useSelector<RootState, string[]>(({ audio }: RootState) => {

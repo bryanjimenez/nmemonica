@@ -365,4 +365,5 @@ export const {
   debugToggled,
   logger,
 } = globalSlice.actions;
+export type loggerType = typeof logger;
 export default globalSlice.reducer;

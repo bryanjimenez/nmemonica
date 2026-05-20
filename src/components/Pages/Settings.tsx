@@ -1,4 +1,4 @@
-import { InfoIcon, PlusCircleIcon, XCircleIcon } from "@primer/octicons-react";
+import { InfoIcon, PlusCircleIcon } from "@primer/octicons-react";
 import classNames from "classnames";
 import React, {
   Suspense,
@@ -26,7 +26,6 @@ import {
 } from "../../helper/serviceWorkerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
 import { useSWMessageVersionEventHandler } from "../../hooks/useServiceWorkerHelper";
-import type { AppDispatch } from "../../slices";
 import {
   debugToggled,
   logger,
@@ -36,6 +35,7 @@ import {
 } from "../../slices/globalSlice";
 import { togglePhraseActiveGrp } from "../../slices/phraseSlice";
 import { toggleVocabularyActiveGrp } from "../../slices/vocabularySlice";
+import type { AppDispatch } from "../../typings/slices";
 import SettingsSwitch from "../Input/SettingsSwitch";
 import SettingsCookies from "../Settings/SettingsCookies";
 import "../../css/Settings.css";

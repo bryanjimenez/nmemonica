@@ -4,7 +4,7 @@ import {
   type EnglishVoiceType,
   type JapaneseVoiceType,
 } from "../constants/voiceConstants";
-import type { RootState } from "../slices";
+import type { RootState } from "../typings/slices";
 
 export function useConnectSetting() {
   const [

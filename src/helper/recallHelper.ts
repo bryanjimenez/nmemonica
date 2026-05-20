@@ -8,8 +8,8 @@ import {
   msgInnerTrim,
   toMemorySize,
 } from "./consoleHelper";
-import { AppDispatch } from "../slices";
-import { logger } from "../slices/globalSlice";
+import type { loggerType } from "../slices/globalSlice";
+import type { AppDispatch } from "../typings/slices";
 
 /** Cutoff value between right/wrong
  *
@@ -422,7 +422,8 @@ export function recallDebugLogHelper(
   dispatch: AppDispatch,
   meta: MetaDataObj | undefined,
   oldMeta: MetaDataObj | undefined,
-  english: string
+  english: string,
+  logger: loggerType,
 ) {
   const lastReviewDate = oldMeta?.lastReview;
   const lastReview =

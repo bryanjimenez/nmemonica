@@ -26,7 +26,6 @@ import { buildAction } from "../../helper/eventHandlerHelper";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import { AppDispatch } from "../../slices";
 import { playAudio, warmAudio } from "../../slices/audioHelper";
 import { setEnglishVoice, setJapaneseVoice } from "../../slices/globalSlice";
 import {
@@ -34,6 +33,7 @@ import {
   getSynthAudioWorkaroundNoAsync,
   initAudioWorker,
 } from "../../slices/voiceSlice";
+import { AppDispatch } from "../../typings/slices";
 import SimpleListMenu from "../Form/SimpleListMenu";
 import { properCase } from "../Games/KanjiGame";
 

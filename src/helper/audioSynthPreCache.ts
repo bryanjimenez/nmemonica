@@ -1,11 +1,11 @@
 import partition from "lodash/partition";
 
 import { type AudioItemParams } from "../constants/voiceConstants";
-import { AppDispatch } from "../slices";
 import {
   getSynthAudioWorkaroundNoAsync,
   logAudioError,
 } from "../slices/voiceSlice";
+import type { AppDispatch } from "../typings/slices";
 
 /**
  * Max absolute difference to keep items cached

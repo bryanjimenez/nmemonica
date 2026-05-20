@@ -16,12 +16,12 @@ import {
 } from "../../helper/cookieHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import { AppDispatch } from "../../slices";
 import {
   getMemoryStorageStatus,
   setPersistentStorage,
   toggleCookies,
 } from "../../slices/globalSlice";
+import { AppDispatch } from "../../typings/slices";
 import SettingsSwitch from "../Input/SettingsSwitch";
 import { CookiePolicyNav } from "../Terms/CookiePolicy";
 

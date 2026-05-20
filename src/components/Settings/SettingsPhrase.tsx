@@ -5,7 +5,6 @@ import { DebugLevel } from "../../helper/consoleHelper";
 import { buildAction } from "../../helper/eventHandlerHelper";
 import { getStaleGroups } from "../../helper/gameHelper";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
-import type { AppDispatch } from "../../slices";
 import { logger } from "../../slices/globalSlice";
 import {
   getPhrase,
@@ -17,6 +16,7 @@ import {
   togglePhrasesOrdering,
 } from "../../slices/phraseSlice";
 import { TermSortBy, TermSortByLabel } from "../../slices/settingHelper";
+import type { AppDispatch } from "../../typings/slices";
 import SimpleListMenu from "../Form/SimpleListMenu";
 import PlusMinus from "../Input/PlusMinus";
 import SettingsSwitch from "../Input/SettingsSwitch";

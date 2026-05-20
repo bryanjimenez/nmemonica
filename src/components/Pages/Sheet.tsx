@@ -49,13 +49,13 @@ import {
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectPhrase } from "../../hooks/useConnectPhrase";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
-import {
+import { appSettingsInitialized } from "../../slices/globalSlice";
+import type {
   AppDispatch,
   AppProgressState,
   AppSettingState,
   RootState,
-} from "../../slices";
-import { appSettingsInitialized } from "../../slices/globalSlice";
+} from "../../typings/slices";
 import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
 import { DataSetExport } from "../Dialog/DataSetExport";
 import { DataSetImport } from "../Dialog/DataSetImport";

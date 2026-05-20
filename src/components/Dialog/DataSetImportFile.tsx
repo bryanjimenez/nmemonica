@@ -20,7 +20,7 @@ import {
   parseSettingsAndProgress,
   parseSheet,
 } from "../../helper/transferHelper";
-import { AppProgressState, AppSettingState } from "../../slices";
+import { AppProgressState, AppSettingState } from "../../typings/slices";
 import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import "../../css/DragDrop.css";
 
