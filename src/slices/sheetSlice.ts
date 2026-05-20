@@ -1,13 +1,21 @@
+import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { getKanji } from "./kanjiSlice";
-import { getPhrase } from "./phraseSlice";
-import { getVocabulary } from "./vocabularySlice";
+import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
 import { csvToObject } from "../helper/csvHelper";
-import { jtox } from "../helper/jsonHelper";
-import { workbookSheetNames } from "../helper/sheetHelper";
-import { type FilledSheetData } from "../helper/sheetHelperImport";
-import type { AppDispatch } from "../typings/slices";
+import { sheetDataToJSON } from "../helper/jsonHelper";
+import {
+  getWorkbookFromIndexDB,
+  removeLastRowIfBlank,
+  updateEditedUID,
+  updateStateAfterWorkbookEdit,
+  workbookSheetNames,
+} from "../helper/sheetHelper";
+import {
+  type FilledSheetData,
+  isFilledSheetData,
+} from "../helper/sheetHelperImport";
+import type { AppDispatch, RootState } from "../typings/slices";
 
 const initialState = {};
 
@@ -67,38 +75,130 @@ export function readCsvToSheet_INTERNAL(text: string, sheetName: string) {
   return objP;
 }
 
-export const importDatasets = createAsyncThunk(
-  "sheet/importDatasets",
-  async (arg, thunkAPI) => {
-    // fetch cache.json then ...
-    const dataP = getCachedDataset(thunkAPI.dispatch as AppDispatch);
+export const saveSheet = createAsyncThunk(
+  "sheet/saveSheet",
+  (
+    arg: {
+      activeSheetName: string;
+      workbook: SheetData[];
+    },
+    thunkAPI
+  ) => {
+    const { activeSheetName, workbook } = arg;
+    const trimmed = workbook.map((w) => removeLastRowIfBlank(w));
 
-    return dataP;
+    const sheet = workbook.find((s) => s.name === activeSheetName);
+    if (!sheet || !isFilledSheetData(sheet)) {
+      throw new Error("No Worksheet");
+    }
+
+    const dispatch = thunkAPI.dispatch as AppDispatch;
+
+    const state = thunkAPI.getState() as RootState;
+    const phraseList = state.phrases.value;
+    const vocabList = state.vocabulary.value;
+    const kanjiList = state.kanji.value;
+
+    const pMeta = state.phrases.metadata;
+    const vMeta = state.vocabulary.metadata;
+    const kMeta = state.kanji.metadata;
+
+    // update metadata for existing, but edited records (uid)
+    const name = sheet.name as keyof typeof selectedData;
+    const selectedData = {
+      Phrases: {
+        meta: pMeta,
+        list: phraseList,
+      },
+      Vocabulary: {
+        meta: vMeta,
+        list: vocabList,
+      },
+      Kanji: {
+        meta: kMeta,
+        list: kanjiList,
+      },
+    };
+    const { meta, list: oldList } = selectedData[name];
+    const { data } = sheetDataToJSON(sheet) as {
+      data: Record<string, { uid: string; english: string }>;
+    };
+
+    const newList: { uid: string; english: string }[] = Object.keys(data).map(
+      (k) => ({ uid: k, english: data[k].english })
+    );
+    const { updatedMeta: metaUpdatedUids } = updateEditedUID(
+      meta,
+      oldList,
+      newList
+    );
+
+    // store workbook in indexedDB
+    // (keep ordering and notes)
+    void openIDB()
+      .then((db) =>
+        putIDBItem(
+          { db, store: IDBStores.WORKBOOK },
+          { key: "0", workbook: trimmed }
+        )
+      )
+      .then(() => {
+        updateStateAfterWorkbookEdit(dispatch, name, metaUpdatedUids);
+      });
   }
 );
 
-function getCachedDataset(dispatch: AppDispatch) {
-  const vocabP = dispatch(getVocabulary()).unwrap();
-  const phraseP = dispatch(getPhrase()).unwrap();
-  const kanjiP = dispatch(getKanji()).unwrap();
+export const importWorkbook = createAsyncThunk(
+  "sheet/importWorkbook",
+  async (workbook: FilledSheetData[], thunkAPI) => {
+    const dispatch = thunkAPI.dispatch as AppDispatch;
 
-  const sheets = [
-    workbookSheetNames.phrases.prettyName,
-    workbookSheetNames.vocabulary.prettyName,
-    workbookSheetNames.kanji.prettyName,
-  ];
+    const allSheetRequired = Object.keys(workbookSheetNames).map(
+      (k) => k as keyof typeof workbookSheetNames
+    );
+    const workbookP = getWorkbookFromIndexDB(allSheetRequired).then(
+      (dbWorkbook) => {
+        const trimmed = Object.values(workbookSheetNames).map((w) => {
+          const { prettyName: prettyName } = w;
 
-  return Promise.all([phraseP, vocabP, kanjiP]).then((arr) =>
-    arr.reduce<FilledSheetData[]>((acc, { value }, i) => {
-      return [...acc, jtox(value, sheets[i])];
-    }, [])
-  );
-}
+          const fileSheet = workbook.find(
+            (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+          );
+          if (fileSheet) {
+            return removeLastRowIfBlank(fileSheet);
+          }
 
-export const getDatasets = createAsyncThunk(
-  "sheet/getDatasets",
-  async (arg, thunkAPI) => {
-    return getCachedDataset(thunkAPI.dispatch as AppDispatch);
+          // dbWorkbook guarantees to contain sheet
+          const dbSheetIdx = dbWorkbook.findIndex(
+            (d) => d.name.toLowerCase() === prettyName.toLowerCase()
+          );
+          // keep existing or blank placeholder
+          return dbWorkbook[dbSheetIdx];
+        });
+
+        // store workbook in indexedDB
+        // update cached json objects
+        return openIDB()
+          .then((db) =>
+            putIDBItem(
+              { db, store: IDBStores.WORKBOOK },
+              { key: "0", workbook: trimmed }
+            )
+          )
+          .then(() => {
+            // reload workbook (update useEffect)
+            // setWorkbookImported(Date.now());
+
+            trimmed.forEach((sheet) => {
+              updateStateAfterWorkbookEdit(dispatch, sheet.name);
+            });
+
+            return;
+          });
+      }
+    );
+
+    return workbookP;
   }
 );
 

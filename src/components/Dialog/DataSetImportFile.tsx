@@ -14,24 +14,22 @@ import { ReactElement, useCallback, useRef, useState } from "react";
 
 import { Warnings } from "./DialogMsg";
 import { metaDataNames } from "../../helper/sheetHelper";
-import { type FilledSheetData } from "../../helper/sheetHelperImport";
-import {
-  SyncDataFile,
-  parseSettingsAndProgress,
-  parseSheet,
-} from "../../helper/transferHelper";
-import { AppProgressState, AppSettingState } from "../../typings/slices";
+import { SyncDataFile } from "../../helper/transferHelper";
 import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import "../../css/DragDrop.css";
 
 interface DataSetImportFileProps {
   visible?: boolean;
   close: () => void;
-  importHandler: (
-    workbook?: FilledSheetData[],
-    settings?: Partial<AppSettingState>,
-    progress?: Partial<AppProgressState>
-  ) => Promise<void>;
+  importHandler: (fileObj: SyncDataFile[]) => Promise<
+    | undefined
+    | (Error & {
+        cause: {
+          key: string;
+          msg: string;
+        };
+      })[]
+  >;
 }
 
 export function DataSetImportFile(props: DataSetImportFileProps) {
@@ -68,34 +66,15 @@ export function DataSetImportFile(props: DataSetImportFileProps) {
     setImportStatus(undefined);
     const fileObj = fileData;
 
-    const { settings, progress } = parseSettingsAndProgress(fileObj);
-
-    void parseSheet(fileObj)
-      .then((sheetPromiseArr) =>
-        sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
-          if (r.status !== "fulfilled") {
-            return acc;
-          }
-
-          if (r.value instanceof Error) {
-            // const { key, msg } = r.value.cause as { key: string; msg: string };
-            return acc;
-          }
-
-          const { sheet } = r.value;
-          return [...acc, sheet];
-        }, [])
-      )
-      .then((workbook) =>
-        importHandler(workbook, settings, progress)
-          .then(() => {
-            setImportStatus(true);
-            setTimeout(closeHandlerCB, 1000);
-          })
-          .catch(() => {
-            setImportStatus(false);
-          })
-      );
+    // error checking is done at file picker component (DataSelectFromFile)
+    void importHandler(fileObj).then((result) => {
+      if (!Array.isArray(result)) {
+        setImportStatus(true);
+        setTimeout(closeHandlerCB, 1000);
+      } else {
+        setImportStatus(false);
+      }
+    });
   }, [fileData, importHandler, closeHandlerCB]);
 
   return (

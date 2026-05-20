@@ -12,50 +12,46 @@ import {
   SearchIcon,
 } from "@primer/octicons-react";
 import classNames from "classnames";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import "@nmemonica/x-spreadsheet/dist/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
-import { IDBStores, openIDB, putIDBItem } from "../../../pwa/helper/idbHelper";
 import { WebRTCProvider } from "../../context/webRTC";
-import { CSVErrorCause, validateCSVSheet } from "../../helper/csvHelper";
+import { buildMsgCSVError, validateCSVSheet } from "../../helper/csvHelper";
 import { furiganaParse } from "../../helper/JapaneseText";
-import { prettyHeaders, sheetDataToJSON } from "../../helper/jsonHelper";
+import { prettyHeaders } from "../../helper/jsonHelper";
 import {
   dataProxyToSheet,
   getActiveSheet,
   getWorkbookFromIndexDB,
-  removeLastRowIfBlank,
   searchInSheet,
   sheetAddExtraRow,
   touchScreenCheck,
-  updateEditedUID,
-  updateStateAfterWorkbookEdit,
   validateInSheet,
   workbookSheetNames,
+  xObjectToCsvText,
 } from "../../helper/sheetHelper";
-import {
-  type FilledSheetData,
-  isFilledSheetData,
-} from "../../helper/sheetHelperImport";
 import {
   SyncDataFile,
   dataTransferAggregator,
+  downloadFileHandler,
+  parseCsvToSheet,
+  parseSettingsAndProgress,
+  parseWorkbook,
 } from "../../helper/transferHelper";
 import {
   setStudyProgress,
   setUserSetting,
 } from "../../helper/userSettingsHelper";
-import { useConnectKanji } from "../../hooks/useConnectKanji";
-import { useConnectPhrase } from "../../hooks/useConnectPhrase";
-import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import { appSettingsInitialized } from "../../slices/globalSlice";
-import type {
-  AppDispatch,
-  AppProgressState,
-  AppSettingState,
-  RootState,
-} from "../../typings/slices";
+import { importWorkbook, saveSheet } from "../../slices/sheetSlice";
+import type { AppDispatch, RootState } from "../../typings/slices";
 import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
 import { DataSetExport } from "../Dialog/DataSetExport";
 import { DataSetImport } from "../Dialog/DataSetImport";
@@ -110,19 +106,6 @@ const cellStyles: Record<cellStyleNames, CellStyle> = {
 
 export default function Sheet() {
   const dispatch = useDispatch<AppDispatch>();
-
-  const { phraseList, repetition: pRep } = useConnectPhrase();
-  const { vocabList, repetition: vRep } = useConnectVocabulary();
-  const { kanjiList, repetition: kRep } = useConnectKanji();
-
-  const pMeta = useRef(pRep);
-  pMeta.current = pRep;
-
-  const vMeta = useRef(vRep);
-  vMeta.current = vRep;
-
-  const kMeta = useRef(kRep);
-  kMeta.current = kRep;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wbRef = useRef<Spreadsheet | null>(null);
@@ -318,128 +301,112 @@ export default function Sheet() {
     };
   }, [dispatch, resetSearchCB, workbookImported]);
 
+  /**
+   * Save workbook to app
+   */
   const saveSheetHandlerCB = useCallback(() => {
     if (wbRef.current === null) {
       throw new Error("Expected workbook");
     }
 
     const activeSheetName = getActiveSheet(wbRef.current);
-    const w = wbRef.current.exportValues();
-    const trimmed = w.map((w) => removeLastRowIfBlank(w));
-    const sheet = trimmed.find((s) => s.name === activeSheetName);
+    const workbook = wbRef.current.exportValues();
 
-    if (!sheet || !isFilledSheetData(sheet)) {
-      throw new Error("No Worksheet");
-    }
-
-    // update metadata for existing, but edited records (uid)
-    const name = sheet.name as keyof typeof selectedData;
-    const selectedData = {
-      Phrases: {
-        meta: pMeta.current,
-        list: phraseList,
-      },
-      Vocabulary: {
-        meta: vMeta.current,
-        list: vocabList,
-      },
-      Kanji: {
-        meta: kMeta.current,
-        list: kanjiList,
-      },
-    };
-    const { meta, list: oldList } = selectedData[name];
-    let data: Record<
-      string,
-      {
-        uid: string;
-        english: string;
-      }
-    > = {};
-
-    try {
-      const { data: d } = sheetDataToJSON(sheet) as {
-        data: Record<string, { uid: string; english: string }>;
-      };
-
-      data = d;
-    } catch (exception) {
-      if (
-        exception instanceof Error &&
-        typeof exception.cause === "object" &&
-        exception.cause !== null &&
-        "code" in exception.cause &&
-        typeof exception.cause.code === "string" &&
-        Object.values(CSVErrorCause).includes(
-          exception.cause.code as CSVErrorCause
-        )
-      ) {
-        setWarnings((prev) => [
-          ...prev,
-          <span key={exception.message}>{exception.message}</span>,
-        ]);
-      }
-    }
-
-    const newList: { uid: string; english: string }[] = Object.keys(data).map(
-      (k) => ({ uid: k, english: data[k].english })
-    );
-    const { updatedMeta: metaUpdatedUids } = updateEditedUID(
-      meta,
-      oldList,
-      newList
-    );
-
-    // store workbook in indexedDB
-    // (keep ordering and notes)
-    void openIDB()
-      .then((db) =>
-        putIDBItem(
-          { db, store: IDBStores.WORKBOOK },
-          { key: "0", workbook: trimmed }
-        )
+    // validation
+    xObjectToCsvText(workbook)
+      .then((result) =>
+        Promise.all(result.map(({ text, name }) => parseCsvToSheet(text, name)))
       )
       .then(() => {
-        updateStateAfterWorkbookEdit(dispatch, name, metaUpdatedUids);
+        void dispatch(
+          saveSheet({
+            activeSheetName,
+            workbook,
+          })
+        );
+      })
+      .catch((exception) => {
+        let key = `${activeSheetName}-parse`;
+        let msg = `Failed to parse (${activeSheetName})`;
+
+        if (exception instanceof Error && "cause" in exception) {
+          ({ key, msg } = buildMsgCSVError(activeSheetName, exception));
+        }
+
+        setWarnings((prev) => [...prev, <span key={key}>{msg}</span>]);
       });
-  }, [dispatch, phraseList, vocabList, kanjiList]);
-
-  const downloadFileHandlerCB = useCallback((files: SyncDataFile[]) => {
-    files.forEach(({ fileName, file: text }) => {
-      const file = new Blob([text], {
-        type: "application/plaintext; charset=utf-8",
-      });
-      // const file = new Blob(['csv.file'],{type:"octet/stream"})
-      // const f = new File([file], './file.csv', {type:"octet/stream"})
-
-      const dlUrl = URL.createObjectURL(file);
-      // window.location.assign(dlUrl)
-
-      // URL.revokeObjectURL()
-      // browser.downloads.download(URL.createObjectURL(file))
-      const a = document.createElement("a");
-      a.download = fileName;
-      a.href = dlUrl;
-      // document.body.appendChild(a)
-      a.click();
-
-      setTimeout(() => {
-        // document.body.removeChild(a)
-        URL.revokeObjectURL(dlUrl);
-      }, 0);
-    });
-
-    return Promise.resolve();
-  }, []);
+  }, [dispatch]);
 
   /**
-   * Export data, settings, and progress to file system
+   * Imports workbook, settings, and progress to app
+   */
+  const importDataHandlerCB = useCallback(
+    async (fileObj: SyncDataFile[]) => {
+      const {
+        settings,
+        progress,
+        errors: metaErrors,
+      } = parseSettingsAndProgress(fileObj);
+      const { workbook: dataObj, errors: dataErrors } =
+        await parseWorkbook(fileObj);
+      const workbook = dataObj.length === 0 ? undefined : dataObj;
+
+      let errors = [...metaErrors, ...dataErrors];
+
+      if (errors.length > 0) {
+        // provide errors to other displayed component
+        return Promise.resolve(errors);
+      }
+
+      let importCompleteP: Promise<unknown>[] = [];
+      if (settings && Object.keys(settings).length > 0) {
+        // write to device's local storage
+        void setUserSetting(settings);
+
+        // initialize app setttings from local storage
+        const settingsP = dispatch(appSettingsInitialized());
+
+        importCompleteP = [...importCompleteP, settingsP];
+      }
+      if (progress !== undefined && Object.keys(progress).length > 0) {
+        // write to device's local storage
+        const progressP = setStudyProgress(progress);
+
+        importCompleteP = [...importCompleteP, progressP];
+      }
+      if (workbook && workbook.length > 0) {
+        const workbookP = dispatch(importWorkbook(workbook))
+          .unwrap()
+          .then(() => {
+            // reload workbook (update useEffect)
+            setWorkbookImported(Date.now());
+          });
+
+        importCompleteP = [...importCompleteP, workbookP];
+      }
+
+      return Promise.all(importCompleteP).then(() =>
+        Promise.resolve(undefined)
+      );
+    },
+    [dispatch]
+  );
+
+  /**
+   * Export workbook, settings, and progress to file system
    */
   const exportToFileHandlerCB = useCallback(() => {
-    // TODO: should zip and include settings?
-
-    void dataTransferAggregator().then(downloadFileHandlerCB);
-  }, [downloadFileHandlerCB]);
+    void dataTransferAggregator()
+      .then(downloadFileHandler)
+      .then((result) => {
+        if (Array.isArray(result)) {
+          result.forEach((exception) => {
+            const { key, msg } = exception.cause;
+            setWarnings((prev) => [...prev, <span key={key}>{msg}</span>]);
+          });
+        }
+      });
+  }, []);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -578,86 +545,6 @@ export default function Sheet() {
     setDataAction("signaling");
   }, []);
 
-  /**
-   * Imports datasets and settings to app
-   */
-  const importDataHandlerCB = useCallback(
-    (
-      importWorkbook?: FilledSheetData[],
-      importSettings?: Partial<AppSettingState>,
-      importProgress?: Partial<AppProgressState>
-    ) => {
-      let importCompleteP: Promise<unknown>[] = [];
-      if (importSettings && Object.keys(importSettings).length > 0) {
-        // write to device's local storage
-        void setUserSetting(importSettings);
-
-        // initialize app setttings from local storage
-        const settingsP = dispatch(appSettingsInitialized());
-
-        importCompleteP = [...importCompleteP, settingsP];
-      }
-      if (
-        importProgress !== undefined &&
-        Object.keys(importProgress).length > 0
-      ) {
-        // write to device's local storage
-        void setStudyProgress(importProgress);
-      }
-      if (importWorkbook && importWorkbook.length > 0) {
-        const allSheetRequired = Object.keys(workbookSheetNames).map(
-          (k) => k as keyof typeof workbookSheetNames
-        );
-        const workbookP = getWorkbookFromIndexDB(allSheetRequired).then(
-          (dbWorkbook) => {
-            const trimmed = Object.values(workbookSheetNames).map((w) => {
-              const { prettyName: prettyName } = w;
-
-              const fileSheet = importWorkbook.find(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-              );
-              if (fileSheet) {
-                return removeLastRowIfBlank(fileSheet);
-              }
-
-              // dbWorkbook guarantees to contain sheet
-              const dbSheetIdx = dbWorkbook.findIndex(
-                (d) => d.name.toLowerCase() === prettyName.toLowerCase()
-              );
-              // keep existing or blank placeholder
-              return dbWorkbook[dbSheetIdx];
-            });
-
-            // store workbook in indexedDB
-            // update cached json objects
-            return openIDB()
-              .then((db) =>
-                putIDBItem(
-                  { db, store: IDBStores.WORKBOOK },
-                  { key: "0", workbook: trimmed }
-                )
-              )
-              .then(() => {
-                // reload workbook (update useEffect)
-                setWorkbookImported(Date.now());
-
-                trimmed.forEach((sheet) => {
-                  updateStateAfterWorkbookEdit(dispatch, sheet.name);
-                });
-
-                return;
-              });
-          }
-        );
-
-        importCompleteP = [...importCompleteP, workbookP];
-      }
-
-      return Promise.all(importCompleteP).then(() => Promise.resolve());
-    },
-    [dispatch]
-  );
-
   return (
     <>
       <div className="sheet main-panel pt-2">
@@ -684,7 +571,6 @@ export default function Sheet() {
               <DataSetImport
                 action="import"
                 close={closeDataAction}
-                downloadHandler={downloadFileHandlerCB}
                 importHandler={importDataHandlerCB}
               />
             </DataSetSharingActions>
@@ -692,19 +578,14 @@ export default function Sheet() {
         )}
         <DialogMsg
           open={warnings.length > 0}
-          title={""}
           onClose={clearWarningsHandler}
           ariaLabelledby="warning"
         >
           <div className="pb-2">
             <span>Could not continue</span>
           </div>
-          <Warnings
-            fileWarning={warnings}
-            clearWarnings={clearWarningsHandler}
-          />
+          <Warnings fileWarning={warnings} />
         </DialogMsg>
-
         <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
           <div className="pt-1 pe-1">
             <Badge

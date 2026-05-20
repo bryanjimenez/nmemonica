@@ -24,17 +24,14 @@ import { Warnings } from "./DialogMsg";
 import { WebRTCContext } from "../../context/webRTC";
 import { toMemorySize } from "../../helper/consoleHelper";
 import { decryptAES256GCM } from "../../helper/cryptoHelper";
-import { type FilledSheetData } from "../../helper/sheetHelperImport";
 import {
   type SyncDataFile,
-  parseSettingsAndProgress,
-  parseSheet,
+  downloadFileHandler,
 } from "../../helper/transferHelper";
 import {
   SharingMessageErrorCause,
   receiveChunkedMessageBuilder,
 } from "../../helper/webRTCDataTrans";
-import type { AppProgressState, AppSettingState } from "../../typings/slices";
 import { type DataSetSharingAction } from "../Form/DataSetSharingActions";
 import { properCase } from "../Games/KanjiGame";
 
@@ -46,12 +43,15 @@ export interface CryptoMessage {
 
 interface DataSetImportProps extends DataSetSharingAction {
   close: () => void;
-  downloadHandler: (files: SyncDataFile[]) => Promise<void>;
-  importHandler: (
-    workbook?: FilledSheetData[],
-    settings?: Partial<AppSettingState>,
-    progress?: Partial<AppProgressState>
-  ) => Promise<void>;
+  importHandler: (fileObj: SyncDataFile[]) => Promise<
+    | undefined
+    | (Error & {
+        cause: {
+          key: string;
+          msg: string;
+        };
+      })[]
+  >;
 }
 
 function errorHandler(ev: RTCErrorEvent) {
@@ -66,7 +66,7 @@ function errorHandler(ev: RTCErrorEvent) {
 }
 
 export function DataSetImport(props: DataSetImportProps) {
-  const { close, importHandler, downloadHandler } = props;
+  const { close, importHandler } = props;
 
   const { peer, rtcChannel, direction, closeWebRTC } =
     useContext(WebRTCContext);
@@ -82,24 +82,24 @@ export function DataSetImport(props: DataSetImportProps) {
 
   const [status, setStatus] = useState<"successStatus" | "dataError">();
 
-  const [warning, setWarning] = useState<ReactElement[]>([]);
+  const [warnings, setWarnings] = useState<ReactElement[]>([]);
   const addWarning = useCallback(
     (warnKey?: string, warnMsg?: string) => {
       if (warnKey === undefined && warnMsg === undefined) {
-        setWarning([]);
+        setWarnings([]);
         return;
       }
 
-      if (warning.find((w) => w.key === warnKey) === undefined) {
-        setWarning((w) => [...w, <span key={warnKey}>{warnMsg}</span>]);
+      if (warnings.find((w) => w.key === warnKey) === undefined) {
+        setWarnings((w) => [...w, <span key={warnKey}>{warnMsg}</span>]);
       }
     },
-    [warning, setWarning]
+    [warnings, setWarnings]
   );
 
   const closeHandlerCB = useCallback(() => {
     setStatus(undefined);
-    setWarning([]);
+    setWarnings([]);
     setMsgBuffer(null);
     closeWebRTC();
     close();
@@ -143,31 +143,6 @@ export function DataSetImport(props: DataSetImportProps) {
     [
       /** only on mount dismount */
     ]
-  );
-
-  const saveToFileHandlerWStatus = useCallback(
-    (files: SyncDataFile[]) =>
-      downloadHandler(files).then(() => {
-        setStatus("successStatus");
-        setTimeout(closeHandlerCB, 1000);
-      }),
-    [downloadHandler, setStatus, closeHandlerCB]
-  );
-
-  const importToAppHandlerCB = useCallback(
-    (
-      dataObj: FilledSheetData[],
-      settings?: Partial<AppSettingState>,
-      progress?: Partial<AppProgressState>
-    ) => {
-      const workbook = dataObj.length === 0 ? undefined : dataObj;
-
-      return importHandler(workbook, settings, progress).then(() => {
-        setStatus("successStatus");
-        setTimeout(closeHandlerCB, 1000);
-      });
-    },
-    [importHandler, setStatus, closeHandlerCB]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -236,42 +211,45 @@ export function DataSetImport(props: DataSetImportProps) {
     const fileObj = parseMsgIntoPlainFilesCB(msgBuf);
 
     if (destination === "save") {
-      void saveToFileHandlerWStatus(fileObj);
-      return;
+      void downloadFileHandler(fileObj).then((result) => {
+        if (!Array.isArray(result)) {
+          setStatus("successStatus");
+          setTimeout(closeHandlerCB, 1000);
+        } else {
+          setStatus("dataError");
+          result.forEach((exception) => {
+            const { key, msg } = exception.cause;
+            addWarning(key, msg);
+          });
+        }
+      });
+    } else {
+      void importHandler(fileObj).then((result) => {
+        if (!Array.isArray(result)) {
+          setStatus("successStatus");
+          setTimeout(closeHandlerCB, 1000);
+        } else {
+          const errors = result;
+          errors.forEach((error) => {
+            const { key, msg } = error.cause;
+            setStatus("dataError");
+            addWarning(key, msg);
+          });
+        }
+
+        return result;
+      });
     }
-
-    const { settings, progress, errors } = parseSettingsAndProgress(fileObj);
-
-    errors.forEach((error) => {
-      const { key, msg } = error.cause;
-      setStatus("dataError");
-      addWarning(key, msg);
-    });
-
-    void parseSheet(fileObj)
-      .then((sheetPromiseArr) =>
-        sheetPromiseArr.reduce<FilledSheetData[]>((acc, r) => {
-          if (r.status !== "fulfilled") {
-            return acc;
-          }
-
-          if (r.value instanceof Error) {
-            return acc;
-          }
-
-          const { sheet } = r.value;
-          return [...acc, sheet];
-        }, [])
-      )
-      .then((workbook) => importToAppHandlerCB(workbook, settings, progress));
   }, [
+    msgBuffer,
+    parseMsgIntoPlainFilesCB,
+
     destination,
-    saveToFileHandlerWStatus,
+    importHandler,
+
     setStatus,
     addWarning,
-    parseMsgIntoPlainFilesCB,
-    importToAppHandlerCB,
-    msgBuffer,
+    closeHandlerCB,
   ]);
 
   if (direction === "outgoing") {
@@ -325,7 +303,7 @@ export function DataSetImport(props: DataSetImportProps) {
           </div>
 
           <FormControl className="mt-2 w-100">
-            <Warnings fileWarning={warning} clearWarnings={setWarning} />
+            <Warnings fileWarning={warnings} />
             {msgBuffer !== null && (
               <div className="fw-bold mb-2">{`Data Received: ~${toMemorySize(msgBuffer.byteLength)}`}</div>
             )}

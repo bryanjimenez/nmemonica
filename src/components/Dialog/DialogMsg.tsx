@@ -4,7 +4,7 @@ import { PropsWithChildren, ReactElement } from "react";
 interface DialogProps {
   open: boolean;
   onClose: () => void;
-  title: string | React.ReactNode;
+  title?: string | React.ReactNode;
   ariaLabel?: string;
   ariaLabelledby?: string;
 }
@@ -27,7 +27,7 @@ export default function DialogMsg(props: PropsWithChildren<DialogProps>) {
 
 export function Warnings(props: {
   fileWarning: ReactElement[];
-  clearWarnings: React.Dispatch<React.SetStateAction<any[]>>;
+  clearWarnings?: React.Dispatch<React.SetStateAction<any[]>>;
 }) {
   const { fileWarning, clearWarnings } = props;
 
@@ -36,7 +36,9 @@ export function Warnings(props: {
       severity="warning"
       variant="outlined"
       className="py-0 mb-1"
-      onClose={() => clearWarnings([])}
+      onClose={
+        clearWarnings === undefined ? undefined : () => clearWarnings([])
+      }
     >
       <div className="p-0 d-flex flex-column">{fileWarning}</div>
     </Alert>
