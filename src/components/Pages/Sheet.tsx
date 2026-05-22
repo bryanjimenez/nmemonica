@@ -30,7 +30,6 @@ import { prettyHeaders } from "../../helper/jsonHelper";
 import {
   dataProxyToSheet,
   getActiveSheet,
-  getWorkbookFromIndexDB,
   searchInSheet,
   sheetAddExtraRow,
   touchScreenCheck,
@@ -46,11 +45,12 @@ import {
   parseSettingsAndProgress,
   parseWorkbook,
 } from "../../helper/transferHelper";
-import {
-  setStudyProgress,
-  setUserSetting,
-} from "../../helper/userSettingsHelper";
 import { appSettingsInitialized } from "../../slices/globalSlice";
+import {
+  getWorkbookFromIndexDB,
+  setUserProgress,
+  setUserSettings,
+} from "../../slices/indexedDBSlice";
 import { importWorkbook, saveSheet } from "../../slices/sheetSlice";
 import type { AppDispatch, RootState } from "../../typings/slices";
 import { DataSetActionMenu } from "../Dialog/DataSetActionMenu";
@@ -138,159 +138,161 @@ export default function Sheet() {
   useEffect(() => {
     const gridEl = document.createElement("div");
 
-    void getWorkbookFromIndexDB().then((sheetArr) => {
-      // Preserve display sheet ordering
-      const data = [
-        workbookSheetNames.phrases.prettyName,
-        workbookSheetNames.vocabulary.prettyName,
-        workbookSheetNames.kanji.prettyName,
-      ].reduce<SheetData[]>((acc, name) => {
-        const s = sheetArr.find(
-          (s) => s.name.toLowerCase() === name.toLowerCase()
-        );
-        if (s !== undefined) {
-          //@ts-expect-error nmemonica/x-spreadsheet todo
-          s.styles = cellStyles;
-          acc = [...acc, sheetAddExtraRow(s)];
-        }
-        return acc;
-      }, []);
-
-      const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
-
-      // console.log(grid.bottombar.activeEl.el.innerHTML);
-
-      grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
-
-      // replace typed '\n' with newline inside cell
-      grid.on("cell-edited-done", (text, ri, ci) => {
-        let errorStyle: cellStyleNames | undefined = undefined;
-        const cell = grid.sheet.data.getCell(ri, ci);
-
-        // characters to replace with \n
-        //    literal '\n'
-        //    two or more japanese spaces
-        //    two or more english spaces
-        const replacedText = text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n");
-        grid.sheet.data.setSelectedCellText(replacedText, "finished");
-
-        const activeSheetName = getActiveSheet(grid);
-
-        // FIXME: can't access row directly...
-        const header = grid.sheet.data.rows._[0].cells[ci]?.text;
-        if (header === undefined) {
-          return;
-        }
-
-        errorStyle =
-          errorStyle ??
-          validateFuriganaParse(
-            activeSheetName,
-            header,
-            replacedText,
-            cellStyleNames.warn
+    void dispatch(getWorkbookFromIndexDB())
+      .unwrap()
+      .then((sheetArr) => {
+        // Preserve display sheet ordering
+        const data = [
+          workbookSheetNames.phrases.prettyName,
+          workbookSheetNames.vocabulary.prettyName,
+          workbookSheetNames.kanji.prettyName,
+        ].reduce<SheetData[]>((acc, name) => {
+          const s = sheetArr.find(
+            (s) => s.name.toLowerCase() === name.toLowerCase()
           );
-
-        errorStyle =
-          errorStyle ??
-          validateKanjiOneChar(
-            activeSheetName,
-            header,
-            replacedText,
-            cellStyleNames.warn
-          );
-
-        const thisError =
-          errorStyle !== undefined
-            ? [{ ri, ci, name: activeSheetName }]
-            : [
-                /** no error found */
-              ];
-        setHasError((prev) => [
-          ...prev.filter(
-            (e) => !(e.ri === ri && e.ci === ci && e.name === activeSheetName)
-          ),
-          ...thisError,
-        ]);
-
-        //@ts-expect-error nmemonica/x-spreadsheet todo
-        cell.style = errorStyle;
-      });
-
-      // store the coordinates
-      grid.on("cell-selected", (_cell, ri, ci) => {
-        selectedCell.current = { ri, ci };
-      });
-
-      // validate input
-      grid.on("change", (sheet: SheetData) => {
-        let errorStyle: cellStyleNames | undefined = undefined;
-        const { ri, ci } = selectedCell.current;
-
-        let cell = undefined;
-        if (
-          sheet.rows !== undefined &&
-          sheet.rows[ri] !== undefined &&
-          sheet.rows[ri].cells[ci] !== undefined
-        ) {
-          cell = sheet.rows[ri].cells[ci];
-        }
-
-        if (cell !== undefined) {
-          // some cell input change event
-          // validate cell
-          const { text } = cell;
-          if (text !== undefined) {
-            const invalid = validateCSVSheet(text);
-
-            if (invalid.size > 0) {
-              errorStyle = cellStyleNames.warn;
-            }
+          if (s !== undefined) {
+            //@ts-expect-error nmemonica/x-spreadsheet todo
+            s.styles = cellStyles;
+            acc = [...acc, sheetAddExtraRow(s)];
           }
+          return acc;
+        }, []);
+
+        const grid = new Spreadsheet(gridEl, defaultOp).loadData(data);
+
+        // console.log(grid.bottombar.activeEl.el.innerHTML);
+
+        grid.freeze(0, 1, 0).freeze(1, 1, 0).freeze(2, 1, 0).reRender();
+
+        // replace typed '\n' with newline inside cell
+        grid.on("cell-edited-done", (text, ri, ci) => {
+          let errorStyle: cellStyleNames | undefined = undefined;
+          const cell = grid.sheet.data.getCell(ri, ci);
+
+          // characters to replace with \n
+          //    literal '\n'
+          //    two or more japanese spaces
+          //    two or more english spaces
+          const replacedText = text.replace(/\\n|\u3000{2,}|[ ]{2,}/g, "\n");
+          grid.sheet.data.setSelectedCellText(replacedText, "finished");
+
+          const activeSheetName = getActiveSheet(grid);
+
+          // FIXME: can't access row directly...
+          const header = grid.sheet.data.rows._[0].cells[ci]?.text;
+          if (header === undefined) {
+            return;
+          }
+
+          errorStyle =
+            errorStyle ??
+            validateFuriganaParse(
+              activeSheetName,
+              header,
+              replacedText,
+              cellStyleNames.warn
+            );
+
+          errorStyle =
+            errorStyle ??
+            validateKanjiOneChar(
+              activeSheetName,
+              header,
+              replacedText,
+              cellStyleNames.warn
+            );
 
           const thisError =
             errorStyle !== undefined
-              ? [{ ri, ci, name: sheet.name }]
+              ? [{ ri, ci, name: activeSheetName }]
               : [
                   /** no error found */
                 ];
           setHasError((prev) => [
             ...prev.filter(
-              (e) => !(e.ri === ri && e.ci === ci && e.name === sheet.name)
+              (e) => !(e.ri === ri && e.ci === ci && e.name === activeSheetName)
             ),
             ...thisError,
           ]);
 
-          // TODO: implement like grid.sheet.data.addStyle()
           //@ts-expect-error nmemonica/x-spreadsheet todo
           cell.style = errorStyle;
-        } else {
-          // some non cell input change event
-          // validate whole sheet
+        });
 
-          const { name } = sheet;
-          const invalid = validateInSheet(sheet, validateCSVSheet);
-          setHasError((prev) => [
-            ...prev.filter((e) => e.name !== name),
-            ...invalid.map(({ ri, ci }) => ({ ri, ci, name })),
-          ]);
-        }
+        // store the coordinates
+        grid.on("cell-selected", (_cell, ri, ci) => {
+          selectedCell.current = { ri, ci };
+        });
 
-        setIsSaved(false);
-        resetSearchCB();
-        grid.reRender();
+        // validate input
+        grid.on("change", (sheet: SheetData) => {
+          let errorStyle: cellStyleNames | undefined = undefined;
+          const { ri, ci } = selectedCell.current;
+
+          let cell = undefined;
+          if (
+            sheet.rows !== undefined &&
+            sheet.rows[ri] !== undefined &&
+            sheet.rows[ri].cells[ci] !== undefined
+          ) {
+            cell = sheet.rows[ri].cells[ci];
+          }
+
+          if (cell !== undefined) {
+            // some cell input change event
+            // validate cell
+            const { text } = cell;
+            if (text !== undefined) {
+              const invalid = validateCSVSheet(text);
+
+              if (invalid.size > 0) {
+                errorStyle = cellStyleNames.warn;
+              }
+            }
+
+            const thisError =
+              errorStyle !== undefined
+                ? [{ ri, ci, name: sheet.name }]
+                : [
+                    /** no error found */
+                  ];
+            setHasError((prev) => [
+              ...prev.filter(
+                (e) => !(e.ri === ri && e.ci === ci && e.name === sheet.name)
+              ),
+              ...thisError,
+            ]);
+
+            // TODO: implement like grid.sheet.data.addStyle()
+            //@ts-expect-error nmemonica/x-spreadsheet todo
+            cell.style = errorStyle;
+          } else {
+            // some non cell input change event
+            // validate whole sheet
+
+            const { name } = sheet;
+            const invalid = validateInSheet(sheet, validateCSVSheet);
+            setHasError((prev) => [
+              ...prev.filter((e) => e.name !== name),
+              ...invalid.map(({ ri, ci }) => ({ ri, ci, name })),
+            ]);
+          }
+
+          setIsSaved(false);
+          resetSearchCB();
+          grid.reRender();
+        });
+
+        // reset search when switching sheet
+        grid.bottombar?.menuEl.on("click", resetSearchCB);
+
+        // TODO: x-spreadsheet grid.setMaxCols()
+        // grid.setMaxCols(0, sheet1Cols);
+        // grid.setMaxCols(1, sheet2Cols);
+        // grid.setMaxCols(2, sheet3Cols);
+
+        wbRef.current = grid;
       });
-
-      // reset search when switching sheet
-      grid.bottombar?.menuEl.on("click", resetSearchCB);
-
-      // TODO: x-spreadsheet grid.setMaxCols()
-      // grid.setMaxCols(0, sheet1Cols);
-      // grid.setMaxCols(1, sheet2Cols);
-      // grid.setMaxCols(2, sheet3Cols);
-
-      wbRef.current = grid;
-    });
 
     containerRef.current?.appendChild(gridEl);
 
@@ -365,7 +367,7 @@ export default function Sheet() {
       let importCompleteP: Promise<unknown>[] = [];
       if (settings && Object.keys(settings).length > 0) {
         // write to device's local storage
-        void setUserSetting(settings);
+        void dispatch(setUserSettings(settings));
 
         // initialize app setttings from local storage
         const settingsP = dispatch(appSettingsInitialized());
@@ -374,7 +376,7 @@ export default function Sheet() {
       }
       if (progress !== undefined && Object.keys(progress).length > 0) {
         // write to device's local storage
-        const progressP = setStudyProgress(progress);
+        const progressP = dispatch(setUserProgress(progress)).unwrap();
 
         importCompleteP = [...importCompleteP, progressP];
       }
@@ -400,7 +402,7 @@ export default function Sheet() {
    * Export workbook, settings, and progress to file system
    */
   const exportToFileHandlerCB = useCallback(() => {
-    void dataTransferAggregator()
+    void dataTransferAggregator(dispatch)
       .then(downloadFileHandler)
       .then((result) => {
         if (Array.isArray(result)) {
@@ -410,7 +412,7 @@ export default function Sheet() {
           });
         }
       });
-  }, []);
+  }, [dispatch]);
 
   const doSearchCB = useCallback(() => {
     const search = searchValue.current;
@@ -756,7 +758,7 @@ function validateFuriganaParse(
 }
 
 /**
- * Display a warning border around `children` 
+ * Display a warning border around `children`
  */
 function NotSavedWarningBorder({
   children,

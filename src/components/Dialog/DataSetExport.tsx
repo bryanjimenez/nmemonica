@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useDispatch } from "react-redux";
 
 import { Warnings } from "./DialogMsg";
 import { WebRTCContext } from "../../context/webRTC";
@@ -27,6 +28,7 @@ import {
   plainTransfer,
   sendChunkedMessage,
 } from "../../helper/webRTCDataTrans";
+import type { AppDispatch } from "../../typings/slices";
 import { DataSelectFromCache } from "../Form/DataSelectFromCache";
 import { DataSelectFromFile } from "../Form/DataSelectFromFile";
 import {
@@ -56,6 +58,8 @@ function errorHandler(ev: RTCErrorEvent) {
 // }
 
 export function DataSetExport(props: DataSetExportProps) {
+  const dispatch = useDispatch<AppDispatch>();
+
   const { close } = props;
 
   const { peer, rtcChannel, direction, maxMsgSize, closeWebRTC } =
@@ -151,14 +155,14 @@ export function DataSetExport(props: DataSetExportProps) {
       throw new Error(RTCTransferRequired.channel);
     }
 
-    void dataTransferAggregator(fileData)
+    void dataTransferAggregator(dispatch, fileData)
       // .then((msg) => encryptTransfer(TEMP_FAKE_KEY, msg))
       .then((msg) => plainTransfer(msg))
       .then((buffer) => sendChunkedMessage(channel, buffer, maxMsgSize))
       .then(() => {
         setFinished(true);
       });
-  }, [fileData, maxMsgSize]);
+  }, [dispatch, fileData, maxMsgSize]);
 
   if (direction === "incoming") {
     return null;

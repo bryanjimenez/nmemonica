@@ -1,9 +1,6 @@
-import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
-import type { TermFilterBy } from "../slices/settingHelper";
 import type { RootState } from "../typings/slices";
-import { ValuesOf } from "../typings/utils";
 
 /**
  * Kanji app-state props
@@ -29,7 +26,6 @@ export function useConnectKanji() {
   );
 
   const [
-    ft,
     difficultyThreshold,
     choiceN,
     fadeInAnswers,
@@ -40,7 +36,6 @@ export function useConnectKanji() {
   ] = useSelector<
     RootState,
     [
-      ValuesOf<typeof TermFilterBy>,
       number,
       number,
       boolean,
@@ -51,7 +46,6 @@ export function useConnectKanji() {
     ]
   >(({ kanji }: RootState) => {
     const {
-      filter,
       difficultyThreshold,
       choiceN,
       fadeInAnswers,
@@ -62,7 +56,6 @@ export function useConnectKanji() {
     } = kanji.setting;
 
     return [
-      filter,
       difficultyThreshold,
       choiceN,
       fadeInAnswers,
@@ -86,10 +79,6 @@ export function useConnectKanji() {
     },
     shallowEqual
   );
-
-  /** Settings menu selected filter method */
-  const filterType = useRef(ft);
-  filterType.current = ft;
 
   return {
     // Changing during game
@@ -118,8 +107,5 @@ export function useConnectKanji() {
     viewGoal,
 
     sortMethod,
-
-    // Refs ()
-    filterType,
   };
 }

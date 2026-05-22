@@ -3,6 +3,7 @@ import merge from "lodash/fp/merge";
 import type { RawPhrase } from "nmemonica";
 
 import { logger } from "./globalSlice";
+import { updateUserSettings } from "./indexedDBSlice";
 import { getPhrase } from "./phraseSlice";
 import type {
   ChoiceParticle,
@@ -11,8 +12,10 @@ import type {
 import { DebugLevel } from "../helper/consoleHelper";
 import { JapaneseText } from "../helper/JapaneseText";
 import { romajiParticle } from "../helper/kanaHelper";
-import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
 import type { RootState } from "../typings/slices";
+
+const SLICE_NAME = "particleGame";
+const path = "/particle/";
 
 export interface ParticleInitSlice {
   particleGame: {
@@ -37,7 +40,7 @@ export const particleInitState: ParticleInitSlice = {
 };
 
 export const getParticleGame = createAsyncThunk(
-  "particle/getParticleGame",
+  `${SLICE_NAME}/getParticleGame`,
   async (arg, thunkAPI) => {
     const state = (thunkAPI.getState() as RootState).particle;
     const phrases = (thunkAPI.getState() as RootState).phrases.value;
@@ -95,7 +98,7 @@ export const getParticleGame = createAsyncThunk(
 );
 
 export const particleSettingsFromAppStorage = createAsyncThunk(
-  "particleGame/particleSettingsFromAppStorage",
+  `${SLICE_NAME}/particleSettingsFromAppStorage`,
   (arg: typeof particleInitState.setting) => {
     const initValues = arg;
 
@@ -173,26 +176,31 @@ export function buildParticleGame(rawPhrases: RawPhrase[]) {
   };
 }
 
+export const toggleParticleFadeInAnswers = createAsyncThunk(
+  `${SLICE_NAME}/toggleParticleFadeInAnswers`,
+  (override: boolean | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)["particle"];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { particle: setting },
+          path,
+          attr: "fadeInAnswers",
+          value: override,
+        })
+      )
+      .unwrap();
+  }
+);
+
 const particleSlice = createSlice({
-  name: "particleGame",
+  name: SLICE_NAME,
   initialState: particleInitState,
   reducers: {
     clearParticleGame(state) {
       state.particleGame.particles = particleInitState.particleGame.particles;
       state.particleGame.phrases = particleInitState.particleGame.phrases;
-    },
-
-    toggleParticleFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload ?? false;
-
-      void userSettingAttrUpdate(
-        { particle: state.setting },
-        "/particle/",
-        "fadeInAnswers",
-        override
-      );
-
-      state.setting.fadeInAnswers = override;
     },
   },
 
@@ -217,9 +225,13 @@ const particleSlice = createSlice({
         };
       }
     );
+
+    builder.addCase(toggleParticleFadeInAnswers.fulfilled, (state, action) => {
+      const fadeInAnswers = action.payload;
+      state.setting.fadeInAnswers = fadeInAnswers;
+    });
   },
 });
 
-export const { clearParticleGame, toggleParticleFadeInAnswers } =
-  particleSlice.actions;
+export const { clearParticleGame } = particleSlice.actions;
 export default particleSlice.reducer;

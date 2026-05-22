@@ -1,7 +1,7 @@
 import { getWindow } from "./browserGlobal";
-import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
-import { settingsKeys } from "../slices";
+import { settingsKeys } from "../constants/sliceConstants";
 import type { AppSettingState } from "../typings/slices";
+import { usingPathRead, usingPathWrite } from "../workers/indexedDBWorker";
 
 // TODO: implement using promises to match userSettingsIndexDBHelper (fallback method)
 

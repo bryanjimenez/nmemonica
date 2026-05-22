@@ -1,9 +1,6 @@
-import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
-import { TermFilterBy } from "../slices/settingHelper";
 import type { RootState } from "../typings/slices";
-import type { ValuesOf } from "../typings/utils";
 
 /**
  * Phrase app-state props
@@ -39,18 +36,13 @@ export function useConnectPhrase() {
     shallowEqual
   );
 
-  const [ft, difficultyThreshold, spaRepMaxReviewItem, viewGoal] = useSelector<
+  const [difficultyThreshold, spaRepMaxReviewItem, viewGoal] = useSelector<
     RootState,
-    [
-      ValuesOf<typeof TermFilterBy>,
-      number,
-      number | undefined,
-      number | undefined,
-    ]
+    [number, number | undefined, number | undefined]
   >(({ phrases }: RootState) => {
-    const { filter, difficultyThreshold, spaRepMaxReviewItem, viewGoal } =
+    const { difficultyThreshold, spaRepMaxReviewItem, viewGoal } =
       phrases.setting;
-    return [filter, difficultyThreshold, spaRepMaxReviewItem, viewGoal];
+    return [difficultyThreshold, spaRepMaxReviewItem, viewGoal];
   }, shallowEqual);
 
   const sortMethod = useSelector(({ phrases }: RootState) => {
@@ -67,10 +59,6 @@ export function useConnectPhrase() {
     },
     shallowEqual
   );
-
-  /** Settings menu selected filter method */
-  const filterType = useRef(ft);
-  filterType.current = ft;
 
   return {
     // Changing during game
@@ -99,8 +87,5 @@ export function useConnectPhrase() {
 
     /** Settings menu selected sort method */
     sortMethod,
-
-    // Refs ()
-    filterType,
   };
 }

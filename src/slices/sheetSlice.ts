@@ -1,16 +1,18 @@
 import { type SheetData } from "@nmemonica/x-spreadsheet";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { IDBStores, openIDB, putIDBItem } from "../../pwa/helper/idbHelper";
+import {
+  getWorkbookFromIndexDB,
+  setWorkbookFromIndexDB,
+} from "./indexedDBSlice";
 import { csvToObject } from "../helper/csvHelper";
 import { sheetDataToJSON } from "../helper/jsonHelper";
 import {
-  getWorkbookFromIndexDB,
   removeLastRowIfBlank,
   updateEditedUID,
-  updateStateAfterWorkbookEdit,
   workbookSheetNames,
 } from "../helper/sheetHelper";
+import { updateStateAfterWorkbookEdit } from "../helper/sheetHelperExtras";
 import {
   type FilledSheetData,
   isFilledSheetData,
@@ -135,13 +137,8 @@ export const saveSheet = createAsyncThunk(
 
     // store workbook in indexedDB
     // (keep ordering and notes)
-    void openIDB()
-      .then((db) =>
-        putIDBItem(
-          { db, store: IDBStores.WORKBOOK },
-          { key: "0", workbook: trimmed }
-        )
-      )
+    void dispatch(setWorkbookFromIndexDB(trimmed))
+      .unwrap()
       .then(() => {
         updateStateAfterWorkbookEdit(dispatch, name, metaUpdatedUids);
       });
@@ -156,8 +153,10 @@ export const importWorkbook = createAsyncThunk(
     const allSheetRequired = Object.keys(workbookSheetNames).map(
       (k) => k as keyof typeof workbookSheetNames
     );
-    const workbookP = getWorkbookFromIndexDB(allSheetRequired).then(
-      (dbWorkbook) => {
+    const workbookP = thunkAPI
+      .dispatch(getWorkbookFromIndexDB(allSheetRequired))
+      .unwrap()
+      .then((dbWorkbook) => {
         const trimmed = Object.values(workbookSheetNames).map((w) => {
           const { prettyName: prettyName } = w;
 
@@ -178,13 +177,8 @@ export const importWorkbook = createAsyncThunk(
 
         // store workbook in indexedDB
         // update cached json objects
-        return openIDB()
-          .then((db) =>
-            putIDBItem(
-              { db, store: IDBStores.WORKBOOK },
-              { key: "0", workbook: trimmed }
-            )
-          )
+        return dispatch(setWorkbookFromIndexDB(trimmed))
+          .unwrap()
           .then(() => {
             // reload workbook (update useEffect)
             // setWorkbookImported(Date.now());
@@ -195,8 +189,7 @@ export const importWorkbook = createAsyncThunk(
 
             return;
           });
-      }
-    );
+      });
 
     return workbookP;
   }

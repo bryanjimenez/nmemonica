@@ -2,8 +2,12 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import md5 from "md5";
 import type { SourceVocabulary } from "nmemonica";
 
+import { updateUserSettings } from "./indexedDBSlice";
 import { getVocabulary } from "./vocabularySlice";
-import { userSettingAttrUpdate } from "../helper/userSettingsHelper";
+import type { RootState } from "../typings/slices";
+
+const SLICE_NAME = "opposite";
+const path = "/opposite/";
 
 export interface Opposite {
   english: string;
@@ -25,7 +29,7 @@ const oppositeInitState: OppositeInitSlice = {
  * Get app data versions file
  */
 export const getOpposite = createAsyncThunk(
-  "opposite/getOpposite",
+  `${SLICE_NAME}/getOpposite`,
   async (_arg, thunkAPI) => {
     // TODO: avoid fetch if vocabulary already in state
     const { value: vocabulary } = await thunkAPI
@@ -70,7 +74,7 @@ export function deriveOppositesFromVocabulary(
 }
 
 export const oppositeSettingsFromAppStorage = createAsyncThunk(
-  "opposite/oppositeSettingsFromAppStorage",
+  `${SLICE_NAME}/oppositeSettingsFromAppStorage`,
   (arg: typeof oppositeInitState) => {
     const initValues = arg;
 
@@ -78,27 +82,32 @@ export const oppositeSettingsFromAppStorage = createAsyncThunk(
   }
 );
 
+export const toggleOppositeFadeInAnswers = createAsyncThunk(
+  `${SLICE_NAME}/toggleOppositeFadeInAnswers`,
+  (override: boolean, thunkAPI) => {
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { opposite: state },
+          path,
+          attr: "fadeInAnswers",
+          value: override,
+        })
+      )
+      .unwrap();
+  }
+);
+
 const oppositeSlice = createSlice({
-  name: "opposite",
+  name: SLICE_NAME,
   initialState: oppositeInitState,
 
   reducers: {
     clearOpposites(state) {
       state.value = oppositeInitState.value;
       state.version = oppositeInitState.version;
-    },
-
-    toggleOppositeFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload ?? false;
-
-      void userSettingAttrUpdate(
-        { opposite: state },
-        "/opposite/",
-        "fadeInAnswers",
-        override
-      );
-
-      state.fadeInAnswers = override;
     },
   },
 
@@ -130,9 +139,13 @@ const oppositeSlice = createSlice({
         };
       }
     );
+
+    builder.addCase(toggleOppositeFadeInAnswers.fulfilled, (state, action) => {
+      const fadeInAnswers = action.payload;
+      state.fadeInAnswers = fadeInAnswers;
+    });
   },
 });
 
-export const { clearOpposites, toggleOppositeFadeInAnswers } =
-  oppositeSlice.actions;
+export const { clearOpposites } = oppositeSlice.actions;
 export default oppositeSlice.reducer;

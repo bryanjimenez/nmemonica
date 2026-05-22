@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 import { buildAction } from "../../helper/eventHandlerHelper";
-import { labelOptions } from "../../helper/gameHelper";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import {
@@ -29,7 +28,6 @@ export default function SettingsKanji() {
 
   const { vocabList: vocabulary } = useConnectVocabulary();
   const {
-    filterType: kanjiFilterREF,
     sortMethod,
     difficultyThreshold,
     activeTags: kanjiActive,
@@ -40,7 +38,6 @@ export default function SettingsKanji() {
     includeReviewed,
   } = useConnectKanji();
 
-  const kanjiFilter = kanjiFilterREF.current;
   const kanjiOrder = sortMethod;
 
   useEffect(() => {
@@ -66,9 +63,7 @@ export default function SettingsKanji() {
     <div className="outer">
       <div className="d-flex flex-row justify-content-between">
         <div className="column-1">
-          <span className="fs-5 fw-light">
-            {labelOptions(kanjiFilter, ["Kanji Group", "Tags"])}
-          </span>
+          <span className="fs-5 fw-light">Tags</span>
           {/* <div className="mb-2">
             <SettingsSwitch
               active={kanjiFilter % 2 === 0}
@@ -110,7 +105,7 @@ export default function SettingsKanji() {
               <PlusMinus
                 value={spaRepMaxReviewItem}
                 onChange={(value) => {
-                  dispatch(setSpaRepMaxItemReview(value));
+                  void dispatch(setSpaRepMaxItemReview(value));
                 }}
               >
                 <div className="text-nowrap">Max review items</div>
@@ -118,7 +113,7 @@ export default function SettingsKanji() {
                   <span
                     className="clickable"
                     onClick={() => {
-                      dispatch(setSpaRepMaxItemReview(0));
+                      void dispatch(setSpaRepMaxItemReview(0));
                     }}
                   >
                     <b>m</b>in
@@ -127,7 +122,7 @@ export default function SettingsKanji() {
                   <span
                     className="clickable"
                     onClick={() => {
-                      dispatch(setSpaRepMaxItemReview(undefined));
+                      void dispatch(setSpaRepMaxItemReview(undefined));
                     }}
                   >
                     <b>M</b>ax

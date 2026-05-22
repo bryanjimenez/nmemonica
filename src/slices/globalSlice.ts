@@ -5,6 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 
+import { getUserSettings, updateUserSettings } from "./indexedDBSlice";
 import { kanaSettingsFromAppStorage } from "./kanaSlice";
 import { kanjiSettingsFromAppStorage } from "./kanjiSlice";
 import { oppositeSettingsFromAppStorage } from "./oppositeSlice";
@@ -23,12 +24,11 @@ import {
   squashSeqMsgs,
 } from "../helper/consoleHelper";
 import { allowedCookies } from "../helper/cookieHelper";
-import {
-  getUserSettings,
-  userSettingAttrUpdate,
-} from "../helper/userSettingsHelper";
 import { getLocalStorageUserSettings } from "../helper/userSettingsLocalStorageHelper";
-import type { ValuesOf } from "../typings/utils";
+import type { RootState } from "../typings/slices";
+
+const SLICE_NAME = "global";
+const path = "/global/";
 
 export interface MemoryDataObject {
   quota: number;
@@ -75,8 +75,8 @@ function getGlobalInitState() {
 }
 
 export const getMemoryStorageStatus = createAsyncThunk(
-  "setting/getMemoryStorageStatus",
-  async (arg, thunkAPI) => {
+  `${SLICE_NAME}/getMemoryStorageStatus`,
+  async (_arg, thunkAPI) => {
     return memoryStorageStatus().catch((e) => {
       if (e instanceof Error) {
         thunkAPI.dispatch(
@@ -91,8 +91,8 @@ export const getMemoryStorageStatus = createAsyncThunk(
 );
 
 export const setPersistentStorage = createAsyncThunk(
-  "setting/setPersistentStorage",
-  async (arg, thunkAPI) => {
+  `${SLICE_NAME}/setPersistentStorage`,
+  async (_arg, thunkAPI) => {
     return persistStorage()
       .then((resInfo) => {
         const { warning } = resInfo;
@@ -119,7 +119,7 @@ export const setPersistentStorage = createAsyncThunk(
  * All global settings duplicated on localStorage for added speedy initial load advantage
  */
 export const appSettingsInitializedLocalStorage = createAsyncThunk(
-  "setting/appSettingsInitializedLocalStorage",
+  `${SLICE_NAME}/appSettingsInitializedLocalStorage`,
   (_arg, _thunkAPI) => {
     let globalInitStateAndCookies = getGlobalInitState();
     let tempSettings = globalInitStateAndCookies;
@@ -136,11 +136,133 @@ export const appSettingsInitializedLocalStorage = createAsyncThunk(
   }
 );
 
+export const toggleDarkMode = createAsyncThunk(
+  `${SLICE_NAME}/toggleDarkMode`,
+  (_arg, thunkAPI) => {
+    const attr = "darkMode";
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { global: state },
+          path,
+          attr,
+          value: !state.darkMode,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setSwipeThreshold = createAsyncThunk(
+  `${SLICE_NAME}/setSwipeThreshold`,
+  (override: number, thunkAPI) => {
+    const attr = "swipeThreshold";
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { global: state },
+          path,
+          attr,
+          value: override,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setMotionThreshold = createAsyncThunk(
+  `${SLICE_NAME}/setMotionThreshold`,
+  (override: number, thunkAPI) => {
+    const attr = "motionThreshold";
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { global: state },
+          path,
+          attr,
+          value: override,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setJapaneseVoice = createAsyncThunk(
+  `${SLICE_NAME}/setJapaneseVoice`,
+  (override: JapaneseVoiceType, thunkAPI) => {
+    const attr = "japaneseVoice";
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { global: state },
+          path,
+          attr,
+          value: override,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setEnglishVoice = createAsyncThunk(
+  `${SLICE_NAME}/setEnglishVoice`,
+  (override: EnglishVoiceType, thunkAPI) => {
+    const attr = "englishVoice";
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { global: state },
+          path,
+          attr,
+          value: override,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const debugToggled = createAsyncThunk(
+  `${SLICE_NAME}/debugToggled`,
+  (override: number, thunkAPI) => {
+    const attr = "debug";
+    const state = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const newDebug: number = toggleAFilter(
+      state.debug + 1,
+      Object.values(DebugLevel),
+      override
+    );
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { global: state },
+          path,
+          attr,
+          value: newDebug,
+        })
+      )
+      .unwrap();
+  }
+);
+
 export const appSettingsInitialized = createAsyncThunk(
-  "setting/appSettingsInitialized",
+  `${SLICE_NAME}/appSettingsInitialized`,
   (_arg, thunkAPI) => {
     let mergedGlobalSettings = getGlobalInitState();
-    return getUserSettings()
+    return thunkAPI
+      .dispatch(getUserSettings())
+      .unwrap()
       .then((appSettings) => {
         if (appSettings.opposite !== undefined) {
           void thunkAPI.dispatch(
@@ -190,7 +312,7 @@ export const appSettingsInitialized = createAsyncThunk(
 );
 
 const globalSlice = createSlice({
-  name: "setting",
+  name: SLICE_NAME,
   initialState: globalInitState,
   reducers: {
     toggleCookies(state, action: PayloadAction<boolean>) {
@@ -200,83 +322,6 @@ const globalSlice = createSlice({
         state.cookies = !state.cookies;
       }
       state.cookieRefresh = Date.now();
-    },
-    toggleDarkMode(state) {
-      const path = "/global/";
-      const attr = "darkMode";
-
-      void userSettingAttrUpdate(
-        { global: state },
-        path,
-        attr,
-        !state.darkMode
-      );
-      state.darkMode = !state.darkMode;
-    },
-    setSwipeThreshold(state, action: PayloadAction<number>) {
-      let override = action.payload;
-
-      const path = "/global/";
-      const attr = "swipeThreshold";
-
-      void userSettingAttrUpdate({ global: state }, path, attr, override);
-
-      state.swipeThreshold = override;
-    },
-    setMotionThreshold(state, action: { payload: number }) {
-      let override = action.payload;
-
-      const path = "/global/";
-      const attr = "motionThreshold";
-
-      void userSettingAttrUpdate({ global: state }, path, attr, override);
-
-      state.motionThreshold = override;
-    },
-    setJapaneseVoice(state, action: { payload: JapaneseVoiceType }) {
-      let override = action.payload;
-
-      const path = "/global/";
-      const attr = "japaneseVoice";
-
-      void userSettingAttrUpdate({ global: state }, path, attr, override);
-
-      state.japaneseVoice = override;
-    },
-    setEnglishVoice(state, action: { payload: EnglishVoiceType }) {
-      let override = action.payload;
-
-      const path = "/global/";
-      const attr = "englishVoice";
-
-      void userSettingAttrUpdate({ global: state }, path, attr, override);
-
-      state.englishVoice = override;
-    },
-
-    debugToggled: {
-      reducer: (
-        state,
-        action: PayloadAction<ValuesOf<typeof DebugLevel> | undefined>
-      ) => {
-        const path = "/global/";
-        const attr = "debug";
-
-        const override = action.payload;
-        const newDebug: number = toggleAFilter(
-          state.debug + 1,
-          Object.values(DebugLevel),
-          override
-        );
-
-        void userSettingAttrUpdate({ global: state }, path, attr, newDebug);
-
-        state.debug = newDebug;
-      },
-
-      prepare: (override: ValuesOf<typeof DebugLevel>) => ({
-        payload: override,
-      }),
     },
 
     logger: {
@@ -351,19 +396,39 @@ const globalSlice = createSlice({
 
       state.memory = { quota, usage, persistent };
     });
+
+    builder.addCase(toggleDarkMode.fulfilled, (state, action) => {
+      const darkMode = action.payload;
+      state.darkMode = darkMode;
+    });
+
+    builder.addCase(setSwipeThreshold.fulfilled, (state, action) => {
+      const swipeThreshold = action.payload;
+      state.swipeThreshold = swipeThreshold;
+    });
+
+    builder.addCase(setMotionThreshold.fulfilled, (state, action) => {
+      const motionThreshold = action.payload;
+      state.motionThreshold = motionThreshold;
+    });
+
+    builder.addCase(setJapaneseVoice.fulfilled, (state, action) => {
+      const japaneseVoice = action.payload;
+      state.japaneseVoice = japaneseVoice;
+    });
+
+    builder.addCase(setEnglishVoice.fulfilled, (state, action) => {
+      const englishVoice = action.payload;
+      state.englishVoice = englishVoice;
+    });
+
+    builder.addCase(debugToggled.fulfilled, (state, action) => {
+      const debug = action.payload;
+      state.debug = debug;
+    });
   },
 });
 
-export const {
-  toggleCookies,
-  toggleDarkMode,
-  setMotionThreshold,
-  setSwipeThreshold,
-  setJapaneseVoice,
-  setEnglishVoice,
-
-  debugToggled,
-  logger,
-} = globalSlice.actions;
+export const { toggleCookies, logger } = globalSlice.actions;
 export type loggerType = typeof logger;
 export default globalSlice.reducer;

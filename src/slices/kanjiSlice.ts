@@ -1,14 +1,19 @@
-import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import merge from "lodash/fp/merge";
 import md5 from "md5";
 import type { MetaDataObj, RawKanji } from "nmemonica";
 
 import { logger } from "./globalSlice";
 import {
-  TermFilterBy,
+  deleteUserSettings,
+  getSheetFromIndexDB,
+  getUserProgress,
+  updateUserProgress,
+  updateUserSettings,
+} from "./indexedDBSlice";
+import {
   TermSortBy,
   deleteMetadata,
-  grpParse,
   toggleAFilter,
   updateSpaceRepTerm,
 } from "./settingHelper";
@@ -24,18 +29,12 @@ import {
   buildTagObject,
   getPropsFromTags,
 } from "../helper/reducerHelper";
-import { getSheetFromIndexDB } from "../helper/sheetHelper";
 import { MEMORIZED_THRLD } from "../helper/sortHelper";
-import {
-  userSettingAttrDelete,
-  userSettingAttrUpdate,
-  userStudyProgressAttrUpdate,
-} from "../helper/userSettingsHelper";
-import { getIndexDBStudyProgress } from "../helper/userSettingsIndexDBHelper";
 import type { RootState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
 
 const SLICE_NAME = "kanji";
+const path = "/kanji/";
 export interface KanjiInitSlice {
   value: RawKanji[];
   version: string;
@@ -45,12 +44,10 @@ export interface KanjiInitSlice {
   metadataID: number;
 
   setting: {
-    filter: ValuesOf<typeof TermFilterBy>;
     ordered: ValuesOf<typeof TermSortBy>;
-    difficultyThreshold: number;
     spaRepMaxReviewItem?: number;
-    activeGroup: string[];
     activeTags: string[];
+    difficultyThreshold: number;
     includeNew: boolean;
     includeReviewed: boolean;
 
@@ -71,12 +68,10 @@ export const kanjiInitState: KanjiInitSlice = {
   metadataID: -1,
 
   setting: {
-    filter: 2,
     ordered: 0,
-    difficultyThreshold: MEMORIZED_THRLD,
     spaRepMaxReviewItem: undefined,
-    activeGroup: [],
     activeTags: [],
+    difficultyThreshold: MEMORIZED_THRLD,
     includeNew: true,
     includeReviewed: true,
 
@@ -89,12 +84,14 @@ export const kanjiInitState: KanjiInitSlice = {
 };
 
 /**
- * Fetch vocabulary
+ * Fetch kanji
  */
 export const getKanji = createAsyncThunk(
   `${SLICE_NAME}/getKanji`,
   async (_, thunkAPI) => {
-    return getSheetFromIndexDB(SLICE_NAME)
+    return thunkAPI
+      .dispatch(getSheetFromIndexDB(SLICE_NAME))
+      .unwrap()
       .then((sheet) => {
         const { data: value, hash: version } = sheetDataToJSON(sheet) as {
           data: Record<string, Kanji>;
@@ -118,10 +115,13 @@ export const getKanji = createAsyncThunk(
  */
 export const getKanjiMeta = createAsyncThunk(
   `${SLICE_NAME}/getKanjiMeta`,
-  async () => {
-    return getIndexDBStudyProgress(SLICE_NAME).then((data) => {
-      return data ?? {};
-    });
+  (_arg, thunkAPI) => {
+    return thunkAPI
+      .dispatch(getUserProgress(SLICE_NAME))
+      .unwrap()
+      .then((data) => {
+        return (data ?? {}) as Record<string, MetaDataObj>;
+      });
   }
 );
 
@@ -148,9 +148,10 @@ export const setKanjiAccuracy = createAsyncThunk(
       }
     );
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
   }
 );
 
@@ -171,9 +172,10 @@ export const setKanjiDifficulty = createAsyncThunk(
       }
     );
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+      .unwrap()
+      .then(() => newValue);
   }
 );
 
@@ -190,9 +192,10 @@ export const updateSpaceRepKanji = createAsyncThunk(
       date: true,
     });
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, value.record).then(
-      () => value
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: value.record }))
+      .unwrap()
+      .then(() => value);
   }
 );
 
@@ -205,9 +208,10 @@ export const setSpaceRepetitionMetadata = createAsyncThunk(
     const spaceRep = state.metadata;
     const value = updateAction(uid, spaceRep);
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, value.newValue).then(
-      () => value
-    );
+    return thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: value.newValue }))
+      .unwrap()
+      .then(() => value);
   }
 );
 
@@ -221,9 +225,10 @@ export const removeFromSpaceRepetition = createAsyncThunk(
     const newValue = removeAction(uid, spaceRep);
 
     if (newValue) {
-      return userStudyProgressAttrUpdate(SLICE_NAME, newValue).then(
-        () => newValue
-      );
+      return thunkAPI
+        .dispatch(updateUserProgress({ path: SLICE_NAME, value: newValue }))
+        .unwrap()
+        .then(() => newValue);
     } else {
       return Promise.resolve(newValue);
     }
@@ -232,8 +237,11 @@ export const removeFromSpaceRepetition = createAsyncThunk(
 
 export const batchRepetitionUpdate = createAsyncThunk(
   `${SLICE_NAME}/batchRepetitionUpdate`,
-  (payload: Record<string, MetaDataObj | undefined>, _thunkAPI) =>
-    userStudyProgressAttrUpdate(SLICE_NAME, payload).then(() => payload)
+  (payload: Record<string, MetaDataObj | undefined>, thunkAPI) =>
+    thunkAPI
+      .dispatch(updateUserProgress({ path: SLICE_NAME, value: payload }))
+      .unwrap()
+      .then(() => payload)
 );
 
 export const deleteMetaKanji = createAsyncThunk(
@@ -244,9 +252,223 @@ export const deleteMetaKanji = createAsyncThunk(
 
     const newValue = deleteMetadata(uidList, spaceRep);
 
-    return userStudyProgressAttrUpdate(SLICE_NAME, newValue.record).then(
-      () => newValue
-    );
+    return thunkAPI
+      .dispatch(
+        updateUserProgress({ path: SLICE_NAME, value: newValue.record })
+      )
+      .unwrap()
+      .then(() => newValue);
+  }
+);
+
+/**
+ * Toggle a Kanji's **Tag** in or out of the view criteria list
+ * @param tagName tag to be selected/ignored
+ */
+export const toggleKanjiActiveTag = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiActiveTag`,
+  (tagName: string, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { activeTags } = setting;
+
+    let newValue;
+    if (activeTags.includes(tagName)) {
+      newValue = activeTags.filter((a) => a !== tagName);
+    } else {
+      newValue = [...activeTags, tagName];
+    }
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "activeTags",
+          value: newValue,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleKanjiOrdering = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiOrdering`,
+  (override: ValuesOf<typeof TermSortBy>, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+    const { ordered } = setting;
+
+    const allowed = [
+      // TermSortBy.ALPHABETIC,
+      TermSortBy.DIFFICULTY,
+      TermSortBy.RANDOM,
+      TermSortBy.VIEW_DATE,
+      TermSortBy.RECALL,
+    ];
+
+    const newOrdered = toggleAFilter(
+      ordered + 1,
+      allowed,
+      override
+    ) as ValuesOf<typeof TermSortBy>;
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "ordered",
+          value: newOrdered,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setMemorizedThreshold = createAsyncThunk(
+  `${SLICE_NAME}/setMemorizedThreshold`,
+  (threshold: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "difficultyThreshold",
+          value: threshold,
+        })
+      )
+      .unwrap();
+  }
+);
+
+/**
+ * Space Repetition maximum item review
+ * per session
+ */
+export const setSpaRepMaxItemReview = createAsyncThunk(
+  `${SLICE_NAME}/setSpaRepMaxItemReview`,
+  (max: number | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    if (max === undefined) {
+      return thunkAPI
+        .dispatch(
+          deleteUserSettings({
+            path,
+            attr: "spaRepMaxReviewItem",
+          })
+        )
+        .unwrap();
+    } else {
+      const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
+
+      return thunkAPI
+        .dispatch(
+          updateUserSettings({
+            state: { [SLICE_NAME]: setting },
+            path,
+            attr: "spaRepMaxReviewItem",
+            value: maxItems,
+          })
+        )
+        .unwrap();
+    }
+  }
+);
+
+export const toggleIncludeNew = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeNew`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "includeNew",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleIncludeReviewed = createAsyncThunk(
+  `${SLICE_NAME}/toggleIncludeReviewed`,
+  (_arg, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings<boolean>({
+          state: { [SLICE_NAME]: setting },
+          path,
+          attr: "includeReviewed",
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const setGoal = createAsyncThunk(
+  `${SLICE_NAME}/setGoal`,
+  (goal: number | undefined, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    if (goal !== undefined) {
+      return thunkAPI
+        .dispatch(
+          updateUserSettings({
+            state: { [SLICE_NAME]: setting },
+            path,
+            attr: "viewGoal",
+            value: goal,
+          })
+        )
+        .unwrap();
+    } else {
+      return thunkAPI
+        .dispatch(deleteUserSettings({ path, attr: "viewGoal" }))
+        .unwrap();
+    }
+  }
+);
+
+export const setKanjiBtnN = createAsyncThunk(
+  `${SLICE_NAME}/setKanjiBtnN`,
+  (choice: number, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "choiceN",
+          value: choice,
+        })
+      )
+      .unwrap();
+  }
+);
+
+export const toggleKanjiFadeInAnswers = createAsyncThunk(
+  `${SLICE_NAME}/toggleKanjiFadeInAnswers`,
+  (override: boolean, thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          state: { kanji: setting },
+          path,
+          attr: "fadeInAnswers",
+          value: override,
+        })
+      )
+      .unwrap();
   }
 );
 
@@ -259,196 +481,19 @@ const kanjiSlice = createSlice({
       state.version = kanjiInitState.version;
       state.tagObj = kanjiInitState.tagObj;
     },
-
-    toggleKanjiActiveTag(state, action: { payload: string }) {
-      const tagName: string = action.payload;
-
-      const { activeTags } = state.setting;
-
-      let newValue;
-      if (activeTags.includes(tagName)) {
-        newValue = activeTags.filter((a) => a !== tagName);
-      } else {
-        newValue = [...activeTags, tagName];
-      }
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "activeTags",
-        newValue
-      );
-      state.setting.activeTags = newValue;
-    },
-
-    toggleKanjiActiveGrp: (state, action: { payload: string }) => {
-      const grpName = action.payload;
-
-      const { activeGroup } = state.setting;
-
-      const groups = Array.isArray(grpName) ? grpName : [grpName];
-      const newValue = grpParse(groups, activeGroup);
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "activeGroup",
-        newValue
-      );
-
-      state.setting.activeGroup = newValue;
-    },
-
-    toggleKanjiOrdering(
-      state,
-      action: { payload: ValuesOf<typeof TermSortBy> }
-    ) {
-      const { ordered } = state.setting;
-      const override = action.payload;
-
-      const allowed = [
-        // TermSortBy.ALPHABETIC,
-        TermSortBy.DIFFICULTY,
-        TermSortBy.RANDOM,
-        TermSortBy.VIEW_DATE,
-        TermSortBy.RECALL,
-      ];
-      const newOrdered = toggleAFilter(
-        ordered + 1,
-        allowed,
-        override
-      ) as ValuesOf<typeof TermSortBy>;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "ordered",
-        newOrdered
-      );
-
-      state.setting.ordered = newOrdered;
-    },
-
-    setMemorizedThreshold(state, action: PayloadAction<number>) {
-      const threshold = action.payload;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "difficultyThreshold",
-        threshold
-      );
-
-      state.setting.difficultyThreshold = threshold;
-    },
-    /**
-     * Space Repetition maximum item review
-     * per session
-     */
-    setSpaRepMaxItemReview(state, action: PayloadAction<number | undefined>) {
-      const max = action.payload;
-
-      if (max === undefined) {
-        void userSettingAttrDelete("/kanji/", "spaRepMaxReviewItem");
-        state.setting.spaRepMaxReviewItem = undefined;
-      } else {
-        const maxItems = Math.max(SR_MIN_REV_ITEMS, max);
-        void userSettingAttrUpdate(
-          { kanji: state.setting },
-          "/kanji/",
-          "spaRepMaxReviewItem",
-          maxItems
-        );
-
-        state.setting.spaRepMaxReviewItem = maxItems;
-      }
-    },
-    setKanjiBtnN(state, action: { payload: number }) {
-      const number = action.payload;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "choiceN",
-        number
-      );
-
-      state.setting.choiceN = number;
-    },
-    toggleKanjiFadeInAnswers(state, action: { payload?: boolean }) {
-      const override = action.payload ?? false;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "fadeInAnswers",
-        override
-      );
-
-      state.setting.fadeInAnswers = override;
-    },
-
-    toggleKanjiFilter(state, action: { payload?: number }) {
-      const override = action.payload;
-      const { filter } = state.setting;
-
-      const newFilter = toggleAFilter(
-        filter + 1,
-        [TermFilterBy.TAGS],
-        override
-      ) as ValuesOf<typeof TermFilterBy>;
-
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "filter",
-        newFilter
-      );
-
-      state.setting.filter = newFilter;
-    },
-
-    toggleIncludeNew(state) {
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "includeNew"
-      );
-
-      state.setting.includeNew = !state.setting.includeNew;
-    },
-    toggleIncludeReviewed(state) {
-      void userSettingAttrUpdate(
-        { kanji: state.setting },
-        "/kanji/",
-        "includeReviewed"
-      );
-
-      state.setting.includeReviewed = !state.setting.includeReviewed;
-    },
-    setGoal(
-      state,
-      action: PayloadAction<KanjiInitSlice["setting"]["viewGoal"]>
-    ) {
-      const goal = action.payload;
-
-      if (goal !== undefined) {
-        void userSettingAttrUpdate(
-          { kanji: state.setting },
-          "/kanji/",
-          "viewGoal",
-          goal
-        );
-
-        state.setting.viewGoal = goal;
-      } else {
-        state.setting.viewGoal = undefined;
-        void userSettingAttrDelete("/kanji/", "viewGoal");
-      }
-    },
   },
 
   extraReducers: (builder) => {
+    builder.addCase(kanjiSettingsFromAppStorage.fulfilled, (state, action) => {
+      const storedValue = action.payload;
+      const mergedSettings = merge(kanjiInitState.setting, storedValue);
+
+      return {
+        ...state,
+        setting: { ...mergedSettings, repTID: Date.now() },
+      };
+    });
+
     builder.addCase(getKanji.fulfilled, (state, action) => {
       const { value: v, version } = action.payload;
 
@@ -512,40 +557,34 @@ const kanjiSlice = createSlice({
       state.metadata = newValue;
     });
 
-    builder.addCase(kanjiSettingsFromAppStorage.fulfilled, (state, action) => {
-      const storedValue = action.payload;
-      const mergedSettings = merge(kanjiInitState.setting, storedValue);
-
-      return {
-        ...state,
-        setting: { ...mergedSettings, repTID: Date.now() },
-      };
-    });
-
     builder.addCase(setKanjiAccuracy.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setKanjiDifficulty.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(updateSpaceRepKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(setSpaceRepetitionMetadata.fulfilled, (state, action) => {
       const { newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(removeFromSpaceRepetition.fulfilled, (state, action) => {
       const newValue = action.payload;
 
@@ -554,36 +593,67 @@ const kanjiSlice = createSlice({
         state.metadata = newValue;
       }
     });
+
     builder.addCase(batchRepetitionUpdate.fulfilled, (state, action) => {
       const newValue = action.payload;
 
       // state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
     builder.addCase(deleteMetaKanji.fulfilled, (state, action) => {
       const { record: newValue } = action.payload;
 
       state.metadataID = Date.now();
       state.metadata = newValue;
     });
+
+    builder.addCase(toggleKanjiActiveTag.fulfilled, (state, action) => {
+      const tagName = action.payload;
+      state.setting.activeTags = tagName;
+    });
+
+    builder.addCase(toggleKanjiOrdering.fulfilled, (state, action) => {
+      const ordered = action.payload;
+      state.setting.ordered = ordered;
+    });
+
+    builder.addCase(setMemorizedThreshold.fulfilled, (state, action) => {
+      const difficultyThreshold = action.payload;
+      state.setting.difficultyThreshold = difficultyThreshold;
+    });
+
+    builder.addCase(setSpaRepMaxItemReview.fulfilled, (state, action) => {
+      const maxItems = action.payload;
+      state.setting.spaRepMaxReviewItem = maxItems;
+    });
+
+    builder.addCase(toggleIncludeNew.fulfilled, (state, action) => {
+      const includeNew = action.payload;
+      state.setting.includeNew = includeNew;
+    });
+
+    builder.addCase(toggleIncludeReviewed.fulfilled, (state, action) => {
+      const includeReviewed = action.payload;
+      state.setting.includeReviewed = includeReviewed;
+    });
+
+    builder.addCase(setGoal.fulfilled, (state, action) => {
+      const viewGoal = action.payload;
+      state.setting.viewGoal = viewGoal;
+    });
+
+    builder.addCase(toggleKanjiFadeInAnswers.fulfilled, (state, action) => {
+      const fade = action.payload;
+      state.setting.fadeInAnswers = fade;
+    });
+
+    builder.addCase(setKanjiBtnN.fulfilled, (state, action) => {
+      const number = action.payload;
+      state.setting.choiceN = number;
+    });
   },
 });
 
-export const {
-  clearKanji,
-  toggleKanjiActiveTag,
-  toggleKanjiActiveGrp,
-  toggleKanjiOrdering,
-  setMemorizedThreshold,
-
-  setSpaRepMaxItemReview,
-  toggleKanjiFilter,
-  toggleIncludeNew,
-  toggleIncludeReviewed,
-
-  setKanjiBtnN,
-  toggleKanjiFadeInAnswers,
-  setGoal,
-} = kanjiSlice.actions;
-
+export const { clearKanji } = kanjiSlice.actions;
 export default kanjiSlice.reducer;

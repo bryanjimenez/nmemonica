@@ -1,6 +1,6 @@
 import type { MetaDataObj } from "nmemonica";
 
-import { usingPathRead, usingPathWrite } from "./userSettingsHelper";
+import { dataSetNames } from "./sheetHelper";
 import {
   IDBErrorCause,
   IDBStores,
@@ -8,10 +8,10 @@ import {
   openIDB,
   putIDBItem,
 } from "../../pwa/helper/idbHelper";
-import { settingsKeys } from "../slices";
-import { dataSetNames } from "./sheetHelper";
+import { settingsKeys } from "../constants/sliceConstants";
 import type { AppSettingState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
+import { usingPathRead, usingPathWrite } from "../workers/indexedDBWorker";
 
 export function indexDBUserSettingAttrUpdate(
   state: Partial<AppSettingState>,

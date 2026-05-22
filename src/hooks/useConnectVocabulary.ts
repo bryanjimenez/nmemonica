@@ -1,9 +1,7 @@
 import { useRef } from "react";
 import { shallowEqual, useSelector } from "react-redux";
 
-import { TermFilterBy } from "../slices/settingHelper";
 import type { RootState } from "../typings/slices";
-import type { ValuesOf } from "../typings/utils";
 
 /**
  * Vocabulary app-state props
@@ -74,19 +72,14 @@ export function useConnectVocabulary() {
     ];
   }, shallowEqual);
 
-  const [difficultyThreshold, ft, he, bareKanji, verbColSplit] = useSelector<
+  const [difficultyThreshold, he, bareKanji, verbColSplit] = useSelector<
     RootState,
-    [number, ValuesOf<typeof TermFilterBy>, boolean, boolean, number]
+    [number, boolean, boolean, number]
   >(({ vocabulary }: RootState) => {
-    const {
-      difficultyThreshold,
-      filter,
-      hintEnabled,
-      bareKanji,
-      verbColSplit,
-    } = vocabulary.setting;
+    const { difficultyThreshold, hintEnabled, bareKanji, verbColSplit } =
+      vocabulary.setting;
 
-    return [difficultyThreshold, filter, hintEnabled, bareKanji, verbColSplit];
+    return [difficultyThreshold, hintEnabled, bareKanji, verbColSplit];
   }, shallowEqual);
 
   const sortMethod = useSelector(({ vocabulary }: RootState) => {
@@ -111,9 +104,6 @@ export function useConnectVocabulary() {
     shallowEqual
   );
 
-  /** Settings menu selected filter method */
-  const filterType = useRef(ft);
-  filterType.current = ft;
   const hintEnabled = useRef(he);
   hintEnabled.current = he;
 
@@ -152,6 +142,5 @@ export function useConnectVocabulary() {
 
     // Refs ()
     hintEnabled,
-    filterType,
   };
 }

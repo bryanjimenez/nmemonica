@@ -9,17 +9,24 @@ import {
 } from "./csvHelper";
 import { sheetDataToJSON } from "./jsonHelper";
 import {
-  getWorkbookFromIndexDB,
   metaDataNames,
   workbookSheetNames,
   xObjectToCsvText,
 } from "./sheetHelper";
-import { FilledSheetData } from "./sheetHelperImport";
+import { type FilledSheetData } from "./sheetHelperImport";
 import { unusualApostrophe } from "./unicodeHelper";
-import { getStudyProgress, getUserSettings } from "./userSettingsHelper";
 import { properCase } from "../components/Games/KanjiGame";
+import {
+  getUserProgress,
+  getUserSettings,
+  getWorkbookFromIndexDB,
+} from "../slices/indexedDBSlice";
 import { readCsvToSheet_INTERNAL } from "../slices/sheetSlice";
-import type { AppProgressState, AppSettingState } from "../typings/slices";
+import type {
+  AppDispatch,
+  AppProgressState,
+  AppSettingState,
+} from "../typings/slices";
 
 export interface SyncDataFile {
   name: string;
@@ -300,6 +307,7 @@ export function parseJSONToStudyProgress(jsonText: string) {
  * Gathers datasets from file system or app memory
  */
 export function dataTransferAggregator(
+  dispatch: AppDispatch,
   fileData?: SyncDataFile[]
 ): Promise<SyncDataFile[]> {
   // get everything if left unspecified
@@ -345,7 +353,8 @@ export function dataTransferAggregator(
       const workbookText = new Promise<SyncDataFile[]>(
         (bookResolve, bookReject) => {
           if (workbookReq.length > 0) {
-            getWorkbookFromIndexDB()
+            dispatch(getWorkbookFromIndexDB())
+              .unwrap()
               .then(
                 (workbook) =>
                   workbook.filter((sheet) =>
@@ -375,7 +384,8 @@ export function dataTransferAggregator(
       const settingText = new Promise<SyncDataFile[]>(
         (settingResolve, settingReject) => {
           if (settingReq.length > 0) {
-            getUserSettings()
+            dispatch(getUserSettings())
+              .unwrap()
               .then((setting) => {
                 if (Object.keys(setting).length === 0) {
                   return [];
@@ -403,7 +413,8 @@ export function dataTransferAggregator(
       const progressText = new Promise<SyncDataFile[]>(
         (progResolve, progReject) => {
           if (progressReq.length > 0) {
-            getStudyProgress()
+            dispatch(getUserProgress())
+              .unwrap()
               .then((progress) => {
                 if (Object.keys(progress).length === 0) {
                   return [];
