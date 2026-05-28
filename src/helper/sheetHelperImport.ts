@@ -1,5 +1,5 @@
 import type { CellData, SheetData } from "@nmemonica/x-spreadsheet";
-import { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
+import { RowData } from "@nmemonica/x-spreadsheet/types/core/row";
 
 export interface FilledSheetData extends SheetData {
   name: string;

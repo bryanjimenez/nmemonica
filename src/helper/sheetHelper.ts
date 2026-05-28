@@ -1,8 +1,8 @@
 import EventEmitter from "events";
 
 import { type SheetData, type Spreadsheet } from "@nmemonica/x-spreadsheet";
-import type DataProxy from "@nmemonica/x-spreadsheet/dist/types/core/data_proxy";
-import type { RowData } from "@nmemonica/x-spreadsheet/dist/types/core/row";
+import type DataProxy from "@nmemonica/x-spreadsheet/types/core/data_proxy";
+import type { RowData } from "@nmemonica/x-spreadsheet/types/core/row";
 import { MetaDataObj } from "nmemonica";
 
 import { isNumber } from "./arrayHelper";
