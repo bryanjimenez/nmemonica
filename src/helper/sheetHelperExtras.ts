@@ -1,6 +1,6 @@
 import { MetaDataObj } from "nmemonica";
 
-import { AppDispatch } from "../slices";
+import type { AppDispatch } from "../typings/slices";
 import { workbookSheetNames } from "./sheetHelper";
 import {
   clearKanji,
