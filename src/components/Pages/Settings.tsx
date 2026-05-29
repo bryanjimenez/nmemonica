@@ -623,10 +623,10 @@ export default function Settings() {
                   }}
                 >
                   <div className="pe-2">
-                    <div>{"Version:"}</div>
+                    <span>{"Version:"}</span>
                   </div>
-                  <div>
-                    <div>{version}</div>
+                  <div className="text-nowrap">
+                    <span>{version}</span>
                   </div>
                 </div>
               </div>
