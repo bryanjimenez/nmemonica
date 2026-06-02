@@ -332,6 +332,27 @@ export default function Sheet() {
 
     containerRef.current?.appendChild(gridEl);
 
+    const sheetDoneLoadingCB = () => {
+      if (
+        containerRef.current?.children &&
+        containerRef.current?.children.length >= 2 &&
+        containerRef.current?.children[1].children?.length > 0 &&
+        containerRef.current.firstChild
+      ) {
+        containerRef.current.removeChild(containerRef.current.firstChild);
+      }
+
+      observer.disconnect();
+    };
+
+    const observer = new MutationObserver(sheetDoneLoadingCB);
+
+    observer.observe(gridEl, {
+      attributes: false,
+      childList: true,
+      subtree: false,
+    });
+
     const c = containerRef.current;
 
     return () => {
@@ -726,7 +747,16 @@ export default function Sheet() {
               "sheet-container": true,
               "disabled-color": !cookies,
             })}
-          />
+          >
+            <div
+              className="initializing d-flex justify-content-center"
+              style={{
+                paddingTop: `${document.documentElement.clientHeight / 2 - navBarHeight - searchBarHeight - 20 /**circular_prog h/2 */}px`,
+              }}
+            >
+              <CircularProgress color="primary" />
+            </div>
+          </div>
         </NotSavedWarningBorder>
       </div>
     </>
