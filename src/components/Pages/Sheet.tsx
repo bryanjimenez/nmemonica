@@ -20,7 +20,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import "@nmemonica/x-spreadsheet/dist/index.css";
+import "@nmemonica/x-spreadsheet/index.css";
 import { useDispatch, useSelector } from "react-redux";
 
 import { WebRTCProvider } from "../../context/webRTC";
