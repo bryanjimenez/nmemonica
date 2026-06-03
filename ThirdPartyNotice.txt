@@ -750,7 +750,7 @@ git+https://github.com/bryanjimenez/nmemonica-voice-ja.git
 
 
 --------------------------------------------------------------------------------
-@nmemonica/x-spreadsheet v0.1.7 - bryan
+@nmemonica/x-spreadsheet v0.1.8-alpha.0 - bryan
 git+https://github.com/bryanjimenez/x-spreadsheet.git
 --------------------------------------------------------------------------------
 
@@ -1543,7 +1543,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-browserify-sign v4.2.5 - undefined
+browserify-sign v4.2.6 - undefined
 https://github.com/crypto-browserify/browserify-sign.git
 --------------------------------------------------------------------------------
 
