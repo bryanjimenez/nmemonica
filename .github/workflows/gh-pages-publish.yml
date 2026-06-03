@@ -8,15 +8,11 @@ jobs:
   build:
     uses: ./.github/workflows/job-build.yml
 
-  test:
-    uses: ./.github/workflows/job-test.yml
-
   coverage:
-    needs: test
     uses: ./.github/workflows/job-coverage.yml
 
   publish:
-    needs: [build, test]
+    needs: [build, coverage]
     environment: ci
     runs-on: ubuntu-latest
     permissions:
