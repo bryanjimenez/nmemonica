@@ -145,9 +145,10 @@ export function removeLastRowIfBlank<T extends SheetData>(sheet: T) {
 
 /**
  * Appends an empty row to a sheet
+ * **NOTE:** modifies `sheet` (adds row)
  * @param sheet
  */
-export function sheetAddExtraRow(sheet: SheetData): SheetData {
+export function sheetAppendExtraRow(sheet: SheetData): SheetData {
   let rows = sheet.rows;
   if (!rows) {
     const name = sheet.name ?? "sheet";
@@ -160,17 +161,14 @@ export function sheetAddExtraRow(sheet: SheetData): SheetData {
 
   const last = getLastCellIdx(rows);
 
-  const withExtraRow = {
-    ...sheet,
-    rows: {
-      ...rows,
-      [String(last + 1)]: { cells: {} },
-      // @ts-expect-error SheetData.rows.len
-      len: rows.len + 1,
-    },
+  sheet.rows = {
+    ...rows,
+    [String(last + 1)]: { cells: {} },
+    // @ts-expect-error SheetData.rows.len
+    len: rows.len + 1,
   };
 
-  return withExtraRow;
+  return sheet;
 }
 
 export function searchInSheet(

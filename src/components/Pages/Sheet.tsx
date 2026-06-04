@@ -1,7 +1,14 @@
-import { Badge, Fab, LinearProgress, TextField } from "@mui/material";
+import {
+  Badge,
+  CircularProgress,
+  Fab,
+  LinearProgress,
+  TextField,
+} from "@mui/material";
 import { linearProgressClasses } from "@mui/material/LinearProgress";
 import {
   type CellStyle,
+  type InitConfig,
   type SheetData,
   Spreadsheet,
 } from "@nmemonica/x-spreadsheet";
@@ -31,7 +38,7 @@ import {
   dataProxyToSheet,
   getActiveSheet,
   searchInSheet,
-  sheetAddExtraRow,
+  sheetAppendExtraRow,
   touchScreenCheck,
   validateInSheet,
   workbookSheetNames,
@@ -67,24 +74,51 @@ const SheetNav = {
   label: "Sheet",
 };
 
-const defaultOp = {
-  mode: "edit", // edit | read
-  // showToolbar: true,
-  // showGrid: true,
-  // showContextmenu: true,
-  autoFocus: false,
+const navBarHeight = 40;
+const searchBarHeight = 38;
+const warningBorderPx = 1;
+
+/**
+ * Row 0 contains headers
+ * **NOTE:** modifies `sheet` cells height property
+ */
+function sheetSetRowZeroHeight(sheet: SheetData) {
+  if (
+    sheet.rows === undefined ||
+    sheet.rows[0] === undefined ||
+    defaultOp.row === undefined ||
+    defaultOp.row.indexHeight === undefined
+  ) {
+    return sheet;
+  }
+  const DATA_HEADER_HEIGHT = defaultOp.row.indexHeight + 4;
+
+  sheet.rows[0] = { ...sheet.rows[0], height: DATA_HEADER_HEIGHT };
+  return sheet;
+}
+const defaultOp: InitConfig = {
+  mode: "edit",
   view: {
-    height: () => document.documentElement.clientHeight - 65,
-    width: () => document.documentElement.clientWidth - 15,
+    height: () =>
+      document.documentElement.clientHeight -
+      (navBarHeight + searchBarHeight + warningBorderPx),
+    width: () => document.documentElement.clientWidth,
   },
+  toolbar: {
+    show: false,
+  },
+  bottombar: {
+    height: 25,
+  },
+
   row: {
-    len: 3000, //   100,
-    height: 35, //  25,
+    height: 30, //  25,
+    indexHeight: 11,
   },
   col: {
-    len: 10, //     26:Z
+    len: 6, //     26:Z
     width: 150,
-    indexWidth: 60,
+    indexWidth: 35,
     minWidth: 60,
   },
 } as const;
@@ -153,7 +187,9 @@ export default function Sheet() {
           if (s !== undefined) {
             //@ts-expect-error nmemonica/x-spreadsheet todo
             s.styles = cellStyles;
-            acc = [...acc, sheetAddExtraRow(s)];
+            sheetSetRowZeroHeight(s);
+            sheetAppendExtraRow(s);
+            acc = [...acc, s];
           }
           return acc;
         }, []);
@@ -295,6 +331,27 @@ export default function Sheet() {
       });
 
     containerRef.current?.appendChild(gridEl);
+
+    const sheetDoneLoadingCB = () => {
+      if (
+        containerRef.current?.children &&
+        containerRef.current?.children.length >= 2 &&
+        containerRef.current?.children[1].children?.length > 0 &&
+        containerRef.current.firstChild
+      ) {
+        containerRef.current.removeChild(containerRef.current.firstChild);
+      }
+
+      observer.disconnect();
+    };
+
+    const observer = new MutationObserver(sheetDoneLoadingCB);
+
+    observer.observe(gridEl, {
+      attributes: false,
+      childList: true,
+      subtree: false,
+    });
 
     const c = containerRef.current;
 
@@ -555,7 +612,7 @@ export default function Sheet() {
     <>
       <div
         className={classNames({
-          "sheet main-panel pt-2": true,
+          "sheet main-panel": true,
           "sheet-no-save-state": !isSaved,
         })}
       >
@@ -597,8 +654,8 @@ export default function Sheet() {
           </div>
           <Warnings fileWarning={warnings} />
         </DialogMsg>
-        <div className="d-flex flex-row justify-content-end pt-2 px-3 w-100">
-          <div className="pt-1 pe-1">
+        <div className="sheet-settings-search d-flex flex-row justify-content-end px-3 w-100">
+          <div className="pe-1">
             <Badge
               badgeContent={hasError.length}
               color={hasError.length > 0 ? "error" : "success"}
@@ -649,7 +706,7 @@ export default function Sheet() {
                 />
               </form>
             </div>
-            <div className="pt-1 ps-1">
+            <div className="ps-1">
               <Badge
                 badgeContent={resultBadge < 0 ? "!" : resultBadge}
                 color={resultBadge < 0 ? "error" : "success"}
@@ -668,7 +725,7 @@ export default function Sheet() {
               </Badge>
             </div>
             {probablyMobile && (
-              <div className="pt-1 ps-1">
+              <div className="ps-1">
                 <Fab
                   aria-label="Show context menu"
                   variant="extended"
@@ -683,17 +740,24 @@ export default function Sheet() {
             )}
           </div>
         </div>
-        <div className="pt-2">
-          <NotSavedWarningBorder isSaved={isSaved}>
+        <NotSavedWarningBorder isSaved={isSaved}>
+          <div
+            ref={containerRef}
+            className={classNames({
+              "sheet-container": true,
+              "disabled-color": !cookies,
+            })}
+          >
             <div
-              ref={containerRef}
-              className={classNames({
-                "sheet-container": true,
-                "disabled-color": !cookies,
-              })}
-            />
-          </NotSavedWarningBorder>
-        </div>
+              className="initializing d-flex justify-content-center"
+              style={{
+                paddingTop: `${document.documentElement.clientHeight / 2 - navBarHeight - searchBarHeight - 20 /**circular_prog h/2 */}px`,
+              }}
+            >
+              <CircularProgress color="primary" />
+            </div>
+          </div>
+        </NotSavedWarningBorder>
       </div>
     </>
   );
