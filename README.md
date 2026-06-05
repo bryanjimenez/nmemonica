@@ -1,5 +1,5 @@
 # Nmemonica
-<a href="https://bryanjimenez.github.io/nmemonica/docs/" target="_blank">![user docs](https://shields.io/badge/-user%20guide-603663)</a>
+[![user docs](https://shields.io/badge/-user%20guide-603663)](https://bryanjimenez.github.io/nmemonica/docs/)
 
 
 English - Japanese language learning app
