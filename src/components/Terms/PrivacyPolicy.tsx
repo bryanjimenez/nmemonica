@@ -99,7 +99,7 @@ export default function PrivacyPolicy() {
             <p className="m-0 ps-2">
               The latest Privacy Policy will be accessible here. Previous
               versions will be archived on the{" "}
-              <Link to={githubPolicyHistory} target="_blank" rel="noreferer">
+              <Link to={githubPolicyHistory} target="_blank" rel="noopener noreferrer">
                 Github
               </Link>{" "}
               repository.
@@ -107,14 +107,14 @@ export default function PrivacyPolicy() {
             <h2 className={headerCss}>Questions?</h2>
             <p className="m-0 ps-2">
               Questions on how our app works? See our project&apos;s{" "}
-              <Link to={githubReadMe} target="_blank" rel="noreferer">
+              <Link to={githubReadMe} target="_blank" rel="noopener noreferrer">
                 README
               </Link>{" "}
               Page.
             </p>
             <p className="m-0 ps-2">
               For now you can contact us via{" "}
-              <Link to={githubProject} target="_blank" rel="noreferer">
+              <Link to={githubProject} target="_blank" rel="noopener noreferrer">
                 Github
               </Link>
               .

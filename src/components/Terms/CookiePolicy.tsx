@@ -29,7 +29,7 @@ export default function CookiePolicy() {
               <a
                 href="https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#what_technologies_store_data_in_the_browser"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 MDN Storage_API
               </a>
@@ -64,7 +64,7 @@ export default function CookiePolicy() {
               <a
                 href="https://support.google.com/chrome/answer/95647?hl=en"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Chrome
               </a>
@@ -73,7 +73,7 @@ export default function CookiePolicy() {
               <a
                 href="https://support.mozilla.org/en-US/kb/delete-cookies-remove-info-websites-stored"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Firefox
               </a>
@@ -82,7 +82,7 @@ export default function CookiePolicy() {
               <a
                 href="https://support.microsoft.com/en-us/help/17442/windows-internet-explorer-delete-manage-cookies"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Microsoft Edge
               </a>
@@ -142,7 +142,7 @@ export default function CookiePolicy() {
               <a
                 href="https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria#does_browser-stored_data_persist"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Does browser-stored data persist?
               </a>
