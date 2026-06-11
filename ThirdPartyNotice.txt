@@ -3175,7 +3175,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router v7.13.0 - Remix Software <hello@remix.run>
+react-router v7.17.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
@@ -3204,7 +3204,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-react-router-dom v7.13.0 - Remix Software <hello@remix.run>
+react-router-dom v7.17.0 - Remix Software <hello@remix.run>
 https://github.com/remix-run/react-router
 --------------------------------------------------------------------------------
 
