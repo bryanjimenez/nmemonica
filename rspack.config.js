@@ -189,7 +189,7 @@ export default function rspackConfig(
       // },
 
       port: 8080, // Port Number
-      // host: config.service.hostname, //"0.0.0.0", //external facing server
+      host: "localhost",
       static: [{ directory: path.resolve(__dirname, "dist") }],
     },
   };

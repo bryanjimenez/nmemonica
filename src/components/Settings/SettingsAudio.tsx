@@ -22,11 +22,10 @@ import {
   copyBufferFromCacheStore,
   copyBufferToCacheStore,
 } from "../../helper/audioSynthPreCache";
-import { buildAction } from "../../helper/eventHandlerHelper";
 import { audioPronunciation } from "../../helper/JapaneseText";
 import { useConnectAudio } from "../../hooks/useConnectAudio";
 import { useConnectSetting } from "../../hooks/useConnectSettings";
-import { playAudio, warmAudio } from "../../slices/audioHelper";
+import { playAudio } from "../../slices/audioHelper";
 import { setEnglishVoice, setJapaneseVoice } from "../../slices/globalSlice";
 import {
   dropAudioWorker,
@@ -36,29 +35,6 @@ import {
 import { AppDispatch } from "../../typings/slices";
 import SimpleListMenu from "../Form/SimpleListMenu";
 import { properCase } from "../Games/KanjiGame";
-
-async function init(dispatch: AppDispatch) {
-  await Promise.all([
-    dispatch(
-      getSynthAudioWorkaroundNoAsync({
-        key: "INIT.en",
-        index: undefined,
-        tl: "en",
-        q: "s",
-      })
-    ),
-
-    dispatch(
-      getSynthAudioWorkaroundNoAsync({
-        key: "INIT",
-        index: undefined,
-        tl: "ja",
-        q: "s",
-      })
-    ),
-  ]);
-  warmAudio();
-}
 
 async function tryJAVoice(
   dispatch: AppDispatch,
@@ -153,16 +129,16 @@ export default function SettingsAudio() {
   const [warmup, setwarmup] = useState(false);
 
   const initializeVoiceWorkerRef = useRef(() => {
-    void dispatch(initAudioWorker()).then(() => {
-      setTimeout(() => {
-        if (onlyOnce.current === false) {
-          void init(dispatch).then(() => {
-            setwarmup(true);
-          });
-        }
-        onlyOnce.current = true;
-      }, 2000);
-    });
+    // will initialize and warmup the worker thread
+    const asyncBlock = async () => {
+      if (onlyOnce.current === false) {
+        await dispatch(initAudioWorker());
+        setwarmup(true);
+      }
+      onlyOnce.current = true;
+    };
+
+    void asyncBlock();
 
     return () => {
       void dispatch(dropAudioWorker());

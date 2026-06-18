@@ -1,5 +1,6 @@
 import { GetThunkAPI, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
+import { warmAudio } from "./audioHelper";
 import { logger } from "./globalSlice";
 import {
   AudioItemParams,
@@ -68,12 +69,26 @@ export function logAudioError(
  */
 export const initAudioWorker = createAsyncThunk(
   "voice/initAudioWorker",
-  (_arg, _thunkAPI) => {
+  async (_arg, thunkAPI) => {
+    let wasUninitialized = true;
     if (workerJa === null) {
       workerJa = new Worker(AUDIO_WORKER_JA_NAME);
+    } else {
+      wasUninitialized = false;
     }
     if (workerEn === null) {
       workerEn = new Worker(AUDIO_WORKER_EN_NAME);
+    } else {
+      wasUninitialized = false;
+    }
+
+    if (wasUninitialized) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000);
+      });
+
+      await initializeAudioWorkers(thunkAPI.dispatch as AppDispatch);
+      warmAudio();
     }
   }
 );
@@ -94,6 +109,31 @@ export const dropAudioWorker = createAsyncThunk(
     }
   }
 );
+
+/**
+ * Make a small request to audio workers
+ */
+async function initializeAudioWorkers(dispatch: AppDispatch) {
+  await Promise.all([
+    dispatch(
+      getSynthAudioWorkaroundNoAsync({
+        key: "INIT.en",
+        index: undefined,
+        tl: "en",
+        q: "s",
+      })
+    ),
+
+    dispatch(
+      getSynthAudioWorkaroundNoAsync({
+        key: "INIT",
+        index: undefined,
+        tl: "ja",
+        q: "s",
+      })
+    ),
+  ]);
+}
 
 // TODO: @nmemonica/voice-ja not async/parallel
 // TODO: @nmemonica/voice-en not async/parallel
