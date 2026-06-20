@@ -744,13 +744,13 @@ git+https://github.com/bryanjimenez/nmemonica-voice-en.git
 
 
 --------------------------------------------------------------------------------
-@nmemonica/voice-ja v0.1.7 - undefined
+@nmemonica/voice-ja v0.1.8 - undefined
 git+https://github.com/bryanjimenez/nmemonica-voice-ja.git
 --------------------------------------------------------------------------------
 
 
 --------------------------------------------------------------------------------
-@nmemonica/x-spreadsheet v0.1.8-alpha.0 - bryan
+@nmemonica/x-spreadsheet v0.1.8-alpha.1 - bryan
 git+https://github.com/bryanjimenez/x-spreadsheet.git
 --------------------------------------------------------------------------------
 
