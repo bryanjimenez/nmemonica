@@ -40,7 +40,7 @@
     "@emotion/styled": "^11.14.1",
     "@floating-ui/react-dom": "^2.1.7",
     "@mui/material": "^5.11.5",
-    "@nmemonica/voice-ja": "^0.1.8",
+    "@nmemonica/voice-ja": "^0.1.9",
     "@nmemonica/x-spreadsheet": "^0.1.8-alpha.1",
     "@popperjs/core": "^2.11.6",
     "@primer/octicons-react": "^19.21.2",
