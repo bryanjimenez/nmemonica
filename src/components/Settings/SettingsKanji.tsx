@@ -6,6 +6,7 @@ import { useConnectKanji } from "../../hooks/useConnectKanji";
 import { useConnectVocabulary } from "../../hooks/useConnectVocabulary";
 import {
   getKanji,
+  removeStaleKanjiTag,
   setMemorizedThreshold,
   setSpaRepMaxItemReview,
   toggleIncludeNew,
@@ -44,8 +45,7 @@ export default function SettingsKanji() {
     if (vocabulary.length === 0) {
       void dispatch(getVocabulary());
     }
-
-    if (Object.keys(kanjiTags).length === 0) {
+    if (kanji.length === 0) {
       void dispatch(getKanji());
     }
     // react-hooks/exhaustive-deps **mount only**
@@ -81,6 +81,7 @@ export default function SettingsKanji() {
             termsTags={kanjiTags}
             termsActive={kanjiActive}
             toggleTermActive={buildAction(dispatch, toggleKanjiActiveTag)}
+            removeStaleTerms={buildAction(dispatch, removeStaleKanjiTag)}
           />
         </div>
         <div className="column-2 setting-block">

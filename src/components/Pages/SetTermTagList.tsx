@@ -8,6 +8,7 @@ interface SetTermTagListProps {
   termsTags: string[]; //List of all available tags
   termsActive: string[]; //List of tags that are selected
   toggleTermActive: (grp: string) => void;
+  removeStaleTerms: (list: string[]) => void;
   selectedCount?: number; //Number of terms currently selected by filter
 }
 
@@ -25,16 +26,21 @@ export function isGroupLevel(groupName: string) {
  * Group and subgroup list
  */
 export function SetTermTagList(props: SetTermTagListProps) {
-  const { termsActive, termsTags, toggleTermActive, selectedCount } = props;
+  const {
+    termsActive,
+    termsTags,
+    toggleTermActive,
+    selectedCount,
+    removeStaleTerms,
+  } = props;
 
   useEffect(() => {
     // remove stale active tags
-    termsActive.forEach((term) => {
-      if (!termsTags.includes(term)) {
-        toggleTermActive(term);
-      }
-    });
-  }, [termsActive, termsTags, toggleTermActive]);
+    const stale = termsActive.filter((term) => !termsTags.includes(term));
+    if (stale.length > 0) {
+      removeStaleTerms(stale);
+    }
+  }, [termsActive, termsTags, toggleTermActive, removeStaleTerms]);
 
   const [numericTags, alphaTags] = partition(termsTags, (t) => isGroupLevel(t));
 
