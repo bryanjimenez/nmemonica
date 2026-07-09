@@ -296,7 +296,10 @@ export default function Kanji() {
         return { filteredTerms: kanjiList, recallGame: -1 };
 
       let recallGame = -1;
-      let filtered = termFilterByType(TermFilterBy.TAGS, kanjiList, activeTags);
+      let filtered =
+        activeTags.length === 0
+          ? kanjiList
+          : termFilterByType(TermFilterBy.TAGS, kanjiList, activeTags);
 
       // exclude terms with difficulty beyond difficultyThreshold
       const subFilter = difficultySubFilter(
