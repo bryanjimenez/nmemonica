@@ -292,6 +292,32 @@ export const toggleKanjiActiveTag = createAsyncThunk(
   }
 );
 
+/**
+ * Remove Kanji's **Tag** out of the view criteria list
+ * @param listTags tags to be selected/ignored
+ */
+export const removeStaleKanjiTag = createAsyncThunk(
+  `${SLICE_NAME}/removeStaleKanjiTag`,
+  (tagName: string[], thunkAPI) => {
+    const { setting } = (thunkAPI.getState() as RootState)[SLICE_NAME];
+
+    const { activeTags } = setting;
+    const attr: keyof KanjiInitSlice["setting"] = "activeTags" as const;
+
+    const newValue = activeTags.filter((a) => !tagName.includes(a));
+
+    return thunkAPI
+      .dispatch(
+        updateUserSettings({
+          path,
+          attr,
+          value: newValue,
+        })
+      )
+      .unwrap();
+  }
+);
+
 export const toggleKanjiOrdering = createAsyncThunk(
   `${SLICE_NAME}/toggleKanjiOrdering`,
   (override: ValuesOf<typeof TermSortBy>, thunkAPI) => {
@@ -609,6 +635,11 @@ const kanjiSlice = createSlice({
     });
 
     builder.addCase(toggleKanjiActiveTag.fulfilled, (state, action) => {
+      const tagName = action.payload;
+      state.setting.activeTags = tagName;
+    });
+
+    builder.addCase(removeStaleKanjiTag.fulfilled, (state, action) => {
       const tagName = action.payload;
       state.setting.activeTags = tagName;
     });
