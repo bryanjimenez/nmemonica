@@ -32,6 +32,7 @@ export interface GameChoice {
 }
 
 interface FourChoicesProps {
+  classN?: string;
   question: GameQuestion;
   hint?: string;
   choices: GameChoice[];
@@ -76,7 +77,7 @@ export function FourChoices(
   const timerStart = useRef(Date.now());
   const timerStop = useRef<number | undefined>(undefined);
 
-  const { gotoNext, gotoPrev, isCorrect, fadeInAnswers } = props;
+  const { gotoNext, gotoPrev, isCorrect, fadeInAnswers, classN } = props;
   const { correct, incorrect } = state;
 
   useLayoutEffect(() => {
@@ -190,8 +191,11 @@ export function FourChoices(
   const optionalRef =
     forParentRef?.current === undefined ? undefined : forParentRef;
 
+  const classNamesOrDefault =
+    classN === undefined ? "pick4game main-panel h-100 d-flex" : classN;
+
   return (
-    <div ref={optionalRef} className="pick4game main-panel h-100 d-flex">
+    <div ref={optionalRef} className={classNamesOrDefault}>
       <ClickNavBtn direction="previous" action={gotoPrev} />
       <div className="container">
         <div className="row row-cols-1 row-cols-sm-2 h-100">

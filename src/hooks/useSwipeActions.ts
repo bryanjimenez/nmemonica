@@ -20,6 +20,7 @@ export type GameActionHandler = (
  */
 export function useSwipeActions(
   gameActionHandler: GameActionHandler,
+  ref?: React.RefObject<HTMLDivElement | null>,
   timedPlayAnswerHandlerWrapper?: (
     direction: SwipeDirection,
     handler: GameActionHandler
@@ -33,7 +34,10 @@ export function useSwipeActions(
   const swiping = useRef<Spec>({});
 
   /** HTMLElement ref */
-  const HTMLDivElementSwipeRef = useRef<HTMLDivElement | null>(null);
+  let HTMLDivElementSwipeRef = useRef<HTMLDivElement | null>(null);
+  if (ref !== undefined) {
+    HTMLDivElementSwipeRef = ref;
+  }
 
   useEffect(() => {
     const startMove = buildStartMove(swipeThreshold, swiping);

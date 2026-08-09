@@ -56,6 +56,8 @@ const KanjiGameNav = {
   label: "Kanji Game",
 };
 
+const NOOP_FN = () => {};
+
 function prepareGame(
   kanji: RawKanji,
   kanjiList: RawKanji[],
@@ -142,8 +144,26 @@ function prepareGame(
 }
 
 export default function KanjiGame() {
+  /** HTMLElement ref */
+  const HTMLDivElementSwipeRef = useRef<HTMLDivElement | null>(null);
+
+  return (
+    <div
+      ref={HTMLDivElementSwipeRef}
+      className="main-panel h-100 d-flex flex-column"
+    >
+      <KanjiGameInner swipeElRef={HTMLDivElementSwipeRef} />
+    </div>
+  );
+}
+
+export function KanjiGameInner(props: {
+  swipeElRef: React.RefObject<HTMLDivElement | null>;
+}) {
   const dispatch = useDispatch<AppDispatch>();
   const { cookies } = useSelector(({ global }: RootState) => global);
+
+  const { swipeElRef } = props;
 
   const {
     kanjiList,
@@ -416,13 +436,9 @@ export default function KanjiGame() {
     [gotoPrev, gotoNext]
   );
 
-  const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
+  useKeyboardActions(swipeHandler, NOOP_FN);
 
-  useKeyboardActions(swipeHandler, () => {
-    // TODO: flip practice side
-    // navigate to
-    // <Link to={KanjiGridMeta.location}>
-  });
+  useSwipeActions(swipeHandler, swipeElRef);
 
   const checkAnswer = useCallback(
     (answered: { compare: string }) => answered.compare === game?.answer,
@@ -446,7 +462,7 @@ export default function KanjiGame() {
   return (
     <>
       <FourChoicesWRef
-        ref={HTMLDivElementSwipeRef}
+        classN="pick4game h-100 d-flex"
         question={game.question}
         isCorrect={checkAnswer}
         choices={game.choices}
