@@ -5,6 +5,7 @@ import type { GameChoice, GameQuestion } from "./FourChoices";
 import ClickNavBtn from "../Input/ClickNavBtn";
 
 interface XChoicesProps {
+  classN?: string;
   question: GameQuestion;
   hint?: string; // a hint to be displayed if provided
   choices: GameChoice[];
@@ -39,7 +40,7 @@ export default function XChoices(props: XChoicesProps) {
     dispatch({ showMeaning: false, correct: -1, incorrect: [] });
   }, [dispatch]);
 
-  const { isCorrect, choices, gotoNext, gotoPrev } = props;
+  const { classN, isCorrect, choices, gotoNext, gotoPrev } = props;
 
   const checkAnswer = (answered: GameChoice, i: number) => {
     const [wasCorrect, correctIdx] = isCorrect(answered);
@@ -116,7 +117,7 @@ export default function XChoices(props: XChoicesProps) {
     gotoNext();
   }, [clearAnswers, gotoNext]);
   const mainPanel = classNames({
-    "pickXgame main-panel h-100": true,
+    [classN === undefined ? "pickXgame main-panel h-100" : classN]: true,
   });
 
   return (

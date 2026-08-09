@@ -7,6 +7,8 @@ import {
 } from "../../../src/helper/csvHelper";
 import { type FilledSheetData } from "../../../src/helper/sheetHelperImport";
 
+const NOOP_FN = () => {};
+
 /**
  * **Simulate** fs readline
  * @param sheetName name of the simulated CSV file
@@ -41,7 +43,7 @@ export function sheetDataToCsvStrArr(
     write: (line: string) => {
       fileSim.emit("write", line);
     },
-    end: () => {},
+    end: NOOP_FN,
   };
 
   let acc: string[] = [];

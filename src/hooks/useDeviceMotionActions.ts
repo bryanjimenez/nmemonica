@@ -5,6 +5,8 @@ import {
   motionThresholdCondition,
 } from "../helper/gameHelper";
 
+const NOOP_FN = () => {};
+
 /**
  * Attaches devicemotion action to component
  *
@@ -36,7 +38,7 @@ export function useDeviceMotionActions(motionThreshold: number) {
               window.addEventListener("devicemotion", motionListener);
             },
             // FIXME: componentDidCatch
-            () => {}
+            NOOP_FN
           );
         }
       }

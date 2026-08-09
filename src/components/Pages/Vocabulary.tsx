@@ -496,6 +496,7 @@ export default function Vocabulary() {
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(
     gameActionHandler,
+    undefined,
     timedPlayAnswerHandlerWrapper
   );
 

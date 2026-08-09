@@ -2,6 +2,8 @@ const userAbortError = new Error("User interrupted audio playback.", {
   cause: { code: "UserAborted" },
 });
 
+const NOOP_FN = () => {};
+
 function fadeOut(audio: HTMLAudioElement) {
   return new Promise<void>((resolve) => {
     const fade = () => {
@@ -102,7 +104,7 @@ export async function playAudio(
     AbortController?.signal.addEventListener("abort", listener);
   });
 
-  return Promise.all([interruptP, playP]);
+  return Promise.all([interruptP, playP]).then(NOOP_FN);
 }
 
 /**

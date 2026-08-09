@@ -16,6 +16,7 @@ import { JapaneseText, jaStrToCharArray } from "../../helper/JapaneseText";
 import { swapToRomaji } from "../../helper/kanaHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { type Opposite, getOpposite } from "../../slices/oppositeSlice";
 import type { AppDispatch, RootState } from "../../typings/slices";
@@ -31,6 +32,8 @@ const OppositesGameNav = {
   location: "/opposites/",
   label: "Opposites Game",
 };
+
+const NOOP_FN = () => {};
 
 export default function OppositesGame() {
   const dispatch = useDispatch<AppDispatch>();
@@ -101,6 +104,8 @@ export default function OppositesGame() {
     },
     [gotoPrev, gotoNext]
   );
+
+  useKeyboardActions(swipeHandler, NOOP_FN);
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
 

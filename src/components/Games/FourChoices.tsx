@@ -1,9 +1,19 @@
 import classNames from "classnames";
-import { forwardRef, memo, useLayoutEffect, useReducer, useRef } from "react";
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import type React from "react";
 
 import { useFade } from "../../hooks/useFade";
 import ClickNavBtn from "../Input/ClickNavBtn";
+
+const FADE_IN_MS = 1000;
 
 export interface GameQuestion {
   english?: string;
@@ -22,6 +32,7 @@ export interface GameChoice {
 }
 
 interface FourChoicesProps {
+  classN?: string;
   question: GameQuestion;
   hint?: string;
   choices: GameChoice[];
@@ -66,37 +77,41 @@ export function FourChoices(
   const timerStart = useRef(Date.now());
   const timerStop = useRef<number | undefined>(undefined);
 
-  const { gotoNext, gotoPrev } = props;
+  const { gotoNext, gotoPrev, isCorrect, fadeInAnswers, classN } = props;
+  const { correct, incorrect } = state;
 
   useLayoutEffect(() => {
-    if (props.fadeInAnswers !== false) {
+    if (fadeInAnswers !== false) {
       timerStart.current = Date.now();
       timerStop.current = undefined;
     }
     dispatch({ showMeaning: false, correct: false, incorrect: [] });
-  }, [props.question, props.fadeInAnswers]);
+  }, [props.question, fadeInAnswers]);
 
-  const checkAnswer = (answered: GameChoice, i: number) => {
-    // Already correctly answered
-    if (state.correct) return;
+  const checkAnswer = useCallback(
+    (answered: GameChoice, i: number) => {
+      // Already correctly answered
+      if (correct) return;
 
-    if (props.isCorrect(answered)) {
-      // console.log("RIGHT!");
-      timerStop.current = Date.now();
-      dispatch({ correct: true, showMeaning: true });
-    } else if (state.incorrect.length === 2) {
-      // console.log("WRONG");
-      dispatch({
-        incorrect: [...state.incorrect, i],
-        correct: true,
-        showMeaning: true,
-      });
-    } else {
-      // console.log("WRONG");
-      // navigator.vibrate(30)
-      dispatch({ incorrect: [...state.incorrect, i] });
-    }
-  };
+      if (isCorrect(answered)) {
+        // console.log("RIGHT!");
+        timerStop.current = Date.now();
+        dispatch({ correct: true, showMeaning: true });
+      } else if (incorrect.length === 2) {
+        // console.log("WRONG");
+        dispatch({
+          incorrect: [...incorrect, i],
+          correct: true,
+          showMeaning: true,
+        });
+      } else {
+        // console.log("WRONG");
+        // navigator.vibrate(30)
+        dispatch({ incorrect: [...incorrect, i] });
+      }
+    },
+    [isCorrect, correct, incorrect]
+  );
 
   const question = props.question;
   const choices = props.choices;
@@ -114,19 +129,79 @@ export function FourChoices(
     }
   }
 
+  const choiceEl = useMemo(
+    () =>
+      choices.map((c, i) => {
+        const isRight = isCorrect(c) && correct;
+        const isWrong = incorrect.findIndex((x) => x === i) > -1;
+
+        let aChoice;
+
+        const elapsed = Math.abs(
+          (timerStop.current ?? Date.now()) - timerStart.current
+        );
+
+        if (fadeInAnswers === true && correct) {
+          // Don't check any more answers
+          // Don't show remaining options
+
+          if (isRight || isWrong || (i + 1) * 1000 < elapsed) {
+            // Right or wrong or
+            // Choice showed before picking answer
+            aChoice = (
+              <AChoice
+                key={String(timerStart.current) + c.compare}
+                css={!isRight ? "disabled-color" : undefined}
+                fadeIn={false}
+                c={c}
+                i={i}
+                isRight={isRight}
+                isWrong={isWrong}
+              />
+            );
+          } else {
+            // Choice showed after picking answer
+            aChoice = (
+              <div key={c.compare} className="invisible w-50 h-50 pt-3">
+                {c.toHTML()}
+              </div>
+            );
+          }
+        } else {
+          aChoice = (
+            <AChoice
+              key={String(timerStart.current) + c.compare}
+              c={c}
+              i={i}
+              isRight={isRight}
+              isWrong={isWrong}
+              checkAnswer={checkAnswer}
+              fadeIn={fadeInAnswers}
+              elapsed={elapsed}
+            />
+          );
+        }
+
+        return aChoice;
+      }),
+    [choices, checkAnswer, isCorrect, correct, incorrect, fadeInAnswers]
+  );
+
   // optional forwardRef by default undefined
   const optionalRef =
     forParentRef?.current === undefined ? undefined : forParentRef;
 
+  const classNamesOrDefault =
+    classN === undefined ? "pick4game main-panel h-100 d-flex" : classN;
+
   return (
-    <div ref={optionalRef} className="pick4game main-panel h-100 d-flex">
+    <div ref={optionalRef} className={classNamesOrDefault}>
       <ClickNavBtn direction="previous" action={gotoPrev} />
       <div className="container">
         <div className="row row-cols-1 row-cols-sm-2 h-100">
           <div
             className={classNames({
-              "col question d-flex flex-column justify-content-center text-center":
-                true,
+              "col question d-flex flex-column justify-content-center text-center": true,
             })}
           >
             <div>{question.toHTML(state.correct)}</div>
@@ -144,59 +219,7 @@ export function FourChoices(
             )}
           </div>
           <div className="col choices d-flex justify-content-around flex-wrap">
-            {choices.map((c, i) => {
-              const isRight = props.isCorrect(choices[i]) && state.correct;
-              const isWrong = state.incorrect.includes(i);
-
-              let aChoice;
-
-              const elapsed = Math.abs(
-                (timerStop.current ?? Date.now()) - timerStart.current
-              );
-
-              if (props.fadeInAnswers === true && state.correct) {
-                // Don't check any more answers
-                // Don't show remaining options
-
-                if (isRight || isWrong || (i + 1) * 1000 < elapsed) {
-                  // Right or wrong or
-                  // Choice showed before picking answer
-                  aChoice = (
-                    <AChoice
-                      key={String(timerStart.current) + c.compare}
-                      css={!isRight ? "disabled-color" : undefined}
-                      fadeIn={false}
-                      c={c}
-                      i={i}
-                      isRight={isRight}
-                      isWrong={isWrong}
-                    />
-                  );
-                } else {
-                  // Choice showed after picking answer
-                  aChoice = (
-                    <div key={c.compare} className="invisible w-50 h-50 pt-3">
-                      {c.toHTML()}
-                    </div>
-                  );
-                }
-              } else {
-                aChoice = (
-                  <AChoice
-                    key={String(timerStart.current) + c.compare}
-                    c={c}
-                    i={i}
-                    isRight={isRight}
-                    isWrong={isWrong}
-                    checkAnswer={checkAnswer}
-                    fadeIn={props.fadeInAnswers}
-                    elapsed={elapsed}
-                  />
-                );
-              }
-
-              return aChoice;
-            })}
+            {choiceEl}
           </div>
         </div>
       </div>
@@ -217,7 +240,6 @@ interface AChoiceProps {
 }
 
 function AChoice(props: AChoiceProps) {
-  const FADE_IN_MS = 1000;
   const { c, i, isRight, isWrong, checkAnswer, fadeIn, elapsed } = props;
 
   let delay = (i + 1) * FADE_IN_MS;

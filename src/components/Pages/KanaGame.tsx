@@ -6,7 +6,10 @@ import { NotReady } from "./NotReady";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { setStateFunction } from "../../helper/eventHandlerHelper";
 import { swapKana } from "../../helper/kanaHelper";
+import { SwipeDirection } from "../../helper/TouchSwipe";
 import { useConnectKana } from "../../hooks/useConnectKana";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { KanaType } from "../../slices/settingHelper";
 import type { RootState } from "../../typings/slices";
@@ -31,6 +34,8 @@ const KanaGameNav = {
   location: "/kana/",
   label: ["平仮名 Game", "片仮名 Game", "仮名 Game"],
 };
+
+const NOOP_FN = () => {};
 
 export default function KanaGame() {
   const {
@@ -162,6 +167,26 @@ export default function KanaGame() {
     }
   }, [selectedIndex, practiceSide, charSet, prepareGameCB]);
 
+  const swipeHandler = useCallback(
+    (direction: SwipeDirection) => {
+      switch (direction) {
+        case "left":
+          gotoNext();
+          break;
+
+        default:
+          break;
+      }
+
+      return Promise.resolve(/** interrupt, fetch */);
+    },
+    [gotoNext]
+  );
+
+  useKeyboardActions(swipeHandler, NOOP_FN);
+
+  const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
+
   if (question === undefined) return <NotReady addlStyle="kana" />;
 
   // console.log(question);
@@ -179,7 +204,7 @@ export default function KanaGame() {
 
   return (
     <>
-      <div className={mainPanel}>
+      <div ref={HTMLDivElementSwipeRef} className={mainPanel}>
         <div className="d-flex justify-content-between w-100 h-100">
           <ClickNavBtn direction="previous" action={gotoPrev} />
           <div className="d-flex flex-column flex-sm-row justify-content-around w-100">
