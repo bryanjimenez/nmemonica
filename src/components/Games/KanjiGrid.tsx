@@ -17,8 +17,11 @@ import XChoices from "./XChoices";
 import { shuffleArray } from "../../helper/arrayHelper";
 import { getTerm, getTermUID, termFilterByType } from "../../helper/gameHelper";
 import { randomOrder } from "../../helper/sortHelper";
+import { type SwipeDirection } from "../../helper/TouchSwipe";
 import { useBlast } from "../../hooks/useBlast";
 import { useConnectKanji } from "../../hooks/useConnectKanji";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { getKanji } from "../../slices/kanjiSlice";
 import { TermFilterBy } from "../../slices/settingHelper";
 import type { AppDispatch, RootState } from "../../typings/slices";
@@ -33,6 +36,8 @@ const KanjiGridNav = {
   location: "/kanji-grid/",
   label: "Kanji Grid Game",
 };
+
+const NOOP_FN = () => {};
 
 /**
  * @param kanji
@@ -165,7 +170,28 @@ export default function KanjiGrid() {
   const fadeTimerRef = useRef(-1);
   const { blastElRef, text, setText } = useBlast();
 
-  if (order.length === 0) return <NotReady addlStyle="main-panel" />;
+  const swipeHandler = useCallback(
+    (direction: SwipeDirection) => {
+      switch (direction) {
+        case "left":
+          gotoNext();
+          break;
+
+        default:
+          break;
+      }
+
+      return Promise.resolve(/** interrupt, fetch */);
+    },
+    [gotoNext]
+  );
+
+  useKeyboardActions(swipeHandler, NOOP_FN);
+
+  const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
+
+  if (filteredTerms.length < 1 || order.length < 1)
+    return <NotReady addlStyle="main-panel" />;
 
   const uid = reinforcedUID ?? getTermUID(selectedIndex, filteredTerms, order);
   const kanji = getTerm(uid, kanjiList);
@@ -201,39 +227,45 @@ export default function KanjiGrid() {
 
   return (
     <>
-      <div ref={blastElRef} className="text-wrap fs-display-6 fw-bolder">
-        {text}
-      </div>
-      <XChoices
-        question={game.question}
-        isCorrect={isCorrect}
-        choices={game.choices}
-        gotoPrev={gotoPrev}
-        gotoNext={gotoNext}
-      />
       <div
-        className={classNames({
-          "options-bar mb-3 flex-shrink-1": true,
-          "disabled-color": !cookies,
-        })}
+        ref={HTMLDivElementSwipeRef}
+        className="main-panel d-flex flex-column h-100"
       >
-        <div className="row opts-max-h">
-          <div className="col">
-            <div className="d-flex justify-content-start">
-              <Link to={KanjiGameNav.location}>
-                <TogglePracticeSideBtn toggle={false} />
-              </Link>
+        <div ref={blastElRef} className="text-wrap fs-display-6 fw-bolder">
+          {text}
+        </div>
+        <XChoices
+          classN="pickXgame h-100"
+          question={game.question}
+          isCorrect={isCorrect}
+          choices={game.choices}
+          gotoPrev={gotoPrev}
+          gotoNext={gotoNext}
+        />
+        <div
+          className={classNames({
+            "options-bar mb-3 flex-shrink-1": true,
+            "disabled-color": !cookies,
+          })}
+        >
+          <div className="row opts-max-h">
+            <div className="col">
+              <div className="d-flex justify-content-start">
+                <Link to={KanjiGameNav.location}>
+                  <TogglePracticeSideBtn toggle={false} />
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className="col">
-            <div className="d-flex justify-content-end pe-2 pe-sm-0">
-              <span>{game.question.toHTML(false)}</span>
+            <div className="col">
+              <div className="d-flex justify-content-end pe-2 pe-sm-0">
+                <span>{game.question.toHTML(false)}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className="progress-line flex-shrink-1">
-        <LinearProgress variant="determinate" value={progress} />
+        <div className="progress-line flex-shrink-1">
+          <LinearProgress variant="determinate" value={progress} />
+        </div>
       </div>
     </>
   );
