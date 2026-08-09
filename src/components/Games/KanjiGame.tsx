@@ -357,33 +357,6 @@ export function KanjiGameInner(props: {
     setReinforcedUID(null);
   }, [filteredTerms, selectedIndex, lastNext /*, errorSkipIndex*/]);
 
-  const gotoPrev = useCallback(() => {
-    const l = filteredTerms.length;
-    const i = selectedIndex - 1;
-
-    let newSel;
-    if (reinforcedUID !== undefined) {
-      newSel = selectedIndex;
-    } else {
-      newSel = (l + i) % l;
-    }
-
-    // if (newSel === errorSkipIndex) {
-    //   newSel = (l + newSel - 1) % l;
-    // }
-
-    prevLastNext.current = lastNext;
-    setLastNext(Date.now());
-    prevSelectedIndex.current = selectedIndex;
-    setSelectedIndex(newSel);
-    setReinforcedUID(null);
-  }, [
-    filteredTerms,
-    selectedIndex,
-    reinforcedUID,
-    lastNext /*, errorSkipIndex*/,
-  ]);
-
   const { kanji, game } = useMemo(() => {
     if (order.length === 0 || exampleList.length === 0) return {};
     const uid =
@@ -420,9 +393,6 @@ export function KanjiGameInner(props: {
   const swipeHandler = useCallback(
     (direction: SwipeDirection) => {
       switch (direction) {
-        case "right":
-          gotoPrev();
-          break;
         case "left":
           gotoNext();
           break;
@@ -433,7 +403,7 @@ export function KanjiGameInner(props: {
 
       return Promise.resolve(/** interrupt, fetch */);
     },
-    [gotoPrev, gotoNext]
+    [gotoNext]
   );
 
   useKeyboardActions(swipeHandler, NOOP_FN);
@@ -466,7 +436,7 @@ export function KanjiGameInner(props: {
         question={game.question}
         isCorrect={checkAnswer}
         choices={game.choices}
-        gotoPrev={gotoPrev}
+        gotoPrev={NOOP_FN}
         gotoNext={gotoNext}
         fadeInAnswers={fadeInAnswers}
       />
