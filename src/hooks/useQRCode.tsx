@@ -2,6 +2,8 @@ import { BrowserQRCodeReader, BrowserQRCodeSvgWriter } from "@zxing/browser";
 import classNames from "classnames";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+const NOOP_FN = () => {};
+
 interface QRCodeProps {
   w: number;
   h: number;
@@ -163,8 +165,7 @@ async function getMediaPermission() {
 
   try {
     // works in chrome only
-    const { state } = await navigator.permissions
-      .query({ name: "camera" });
+    const { state } = await navigator.permissions.query({ name: "camera" });
 
     if (state !== "granted") {
       return navigator.mediaDevices
@@ -172,7 +173,7 @@ async function getMediaPermission() {
           audio: false,
           video: true,
         })
-        .then(() => {});
+        .then(NOOP_FN);
     }
 
     return Promise.resolve(/** already granted */);
@@ -184,7 +185,7 @@ async function getMediaPermission() {
         audio: false,
         video: true,
       })
-      .then(() => {});
+      .then(NOOP_FN);
     // return Promise.reject(err)
   }
 }

@@ -13,6 +13,8 @@ import type { AppSettingState } from "../typings/slices";
 import type { ValuesOf } from "../typings/utils";
 import { usingPathRead, usingPathWrite } from "../workers/indexedDBWorker";
 
+const NOOP_FN = () => {};
+
 export function indexDBUserSettingAttrUpdate(
   state: Partial<AppSettingState>,
   path: string,
@@ -116,7 +118,7 @@ export function setIndexDBUserSettings(value: Partial<AppSettingState>) {
         )
       )
     )
-  ).then(() => {});
+  ).then(NOOP_FN);
 }
 
 /**
@@ -211,7 +213,7 @@ export function getIndexDBStudyProgress(path: (typeof dataSetNames)[number]) {
         const errData = err.cause as { code: string };
         if (errData.code === "IDBNoResults") {
           // study progress not yet initialized
-          return {} as Record<string, MetaDataObj | undefined>;
+          return {};
         }
       }
 

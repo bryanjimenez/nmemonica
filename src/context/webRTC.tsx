@@ -3,6 +3,8 @@ import { createContext, useCallback, useRef, useState } from "react";
 // https://legacy.reactjs.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down
 // https://react.dev/reference/react/createContext
 
+const NOOP_FN = () => {};
+
 export const WebRTCContext = createContext<{
   peer: React.RefObject<RTCPeerConnection | null>;
   rtcChannel: RTCDataChannel | null;
@@ -17,13 +19,13 @@ export const WebRTCContext = createContext<{
   // defaultValue only used if context not within provider
   peer: { current: null },
   rtcChannel: null,
-  setRtcChannel: () => {},
+  setRtcChannel: NOOP_FN,
   direction: "outgoing",
-  setDirection: () => {},
-  pushMsg: () => {},
+  setDirection: NOOP_FN,
+  pushMsg: NOOP_FN,
   maxMsgSize: 0,
-  setMaxMsgSize: () => {},
-  closeWebRTC: () => {},
+  setMaxMsgSize: NOOP_FN,
+  closeWebRTC: NOOP_FN,
 });
 
 export function WebRTCProvider(props: React.PropsWithChildren) {

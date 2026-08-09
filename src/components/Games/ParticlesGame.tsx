@@ -13,6 +13,7 @@ import { JapaneseText } from "../../helper/JapaneseText";
 import { kanjiOkuriganaSpliceApplyCss } from "../../helper/kanjiHelper";
 import { randomOrder } from "../../helper/sortHelper";
 import { SwipeDirection } from "../../helper/TouchSwipe";
+import { useKeyboardActions } from "../../hooks/useKeyboardActions";
 import { useSwipeActions } from "../../hooks/useSwipeActions";
 import { getParticleGame } from "../../slices/particleSlice";
 import type { AppDispatch, RootState } from "../../typings/slices";
@@ -42,6 +43,8 @@ const ParticlesGameNav = {
   location: "/particles/",
   label: "Particles Game",
 };
+
+const NOOP_FN = () => {};
 
 export default function ParticlesGame() {
   const dispatch = useDispatch<AppDispatch>();
@@ -145,6 +148,8 @@ export default function ParticlesGame() {
     },
     [gotoPrev, gotoNext]
   );
+
+  useKeyboardActions(swipeHandler, NOOP_FN);
 
   const { HTMLDivElementSwipeRef } = useSwipeActions(swipeHandler);
 
