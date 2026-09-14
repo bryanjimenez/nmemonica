@@ -32,5 +32,7 @@ jobs:
           for commit in "${pr_commits[@]}"; do commit_sha=$(echo $commit | jq -r ".sha"); echo $commit | jq -r ".message" | grep "Signed-off-by:" | xargs echo "${commit_sha:0:8} - " >> summary.md; done
           echo -e "</pre>" >> summary.md
           cat summary.md >> $GITHUB_STEP_SUMMARY
+          set -e
+          for commit in "${pr_commits[@]}"; do echo $commit | jq -r ".message" | grep "Signed-off-by:"; done
         env:
           GH_TOKEN: ${{ github.token }}
