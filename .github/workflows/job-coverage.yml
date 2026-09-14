@@ -2,11 +2,7 @@ name: Coverage
 permissions:
   contents: read
 
-on:
-  workflow_call:
-  pull_request:
-    branches:
-      - main
+on: workflow_call
 
 jobs:
   test:

@@ -1,0 +1,23 @@
+name: Pull Request CI
+permissions: {}
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-dco-signoff:
+    uses: ./.github/workflows/job-dco-signoff.yml
+    permissions:
+      contents: read
+
+  build:
+    needs: [check-dco-signoff]
+    uses: ./.github/workflows/job-build.yml
+
+  coverage:
+    needs: [check-dco-signoff]
+    uses: ./.github/workflows/job-coverage.yml
+    permissions:
+      contents: read
