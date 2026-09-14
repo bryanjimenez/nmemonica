@@ -15,27 +15,22 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Check DCO Signoff
         run: |
-          echo "ref: $GITHUB_REF_NAME"
           head_sha=${{ github.sha }}
           init_sha=${head_sha:0:8}
           main_sha=$(gh api repos/${{ github.repository }}/commits/main | jq -r '.sha')
-          commit_range=$(gh api repos/${{ github.repository }}/compare/${main_sha}...${head_sha} | jq -r ".commits")
-          commits_details=$(echo $commit_range | jq -c ".[] | { sha: .sha, name: .commit.author.name, email: .commit.author.email, date: .commit.author.date, message: .commit.message}")
-          echo "details: $commits_details"
+          commits_details=$(gh api repos/${{ github.repository }}/compare/${main_sha}...${head_sha} | jq -r ".commits[] | { sha: .sha, name: .commit.author.name, email: .commit.author.email, date: .commit.author.date, message: .commit.message}")
           readarray -t pr_commits < <(echo $commits_details | jq -c ".")
-          echo "pr_commits len: ${#pr_commits[@]}"
           touch summary.md
-          item_separator="---"
-          echo "# Contribution Commits ${#pr_commits[@]}" >> summary.md
-          for commit in "${pr_commits[@]}"; do echo "$item_separator" >> summary.md; echo $commit | jq -r "." >> summary.md; done
-          echo "$item_separator" >> summary.md;
-          echo "" >> summary.md;
-          echo "```javascript" >> summary.md;
-          echo "let a = 1;" >> summary.md;
-          echo "```" >> summary.md;
-          # echo "```" >> summary.md;
+          echo "# $GITHUB_REF_NAME Commits ${#pr_commits[@]}" >> summary.md
+          echo "##### Commit Details" >> summary.md
+          echo "<pre>" >> summary.md
+          for commit in "${pr_commits[@]}"; do echo $commit | jq -r '"commit \(.sha)\nAuthor: \(.name) <\(.email)>\nDate: \(.date)\n\(.message)\n"' >> summary.md; done
+          echo "</pre>" >> summary.md
+          echo -e "\n---\n" >> summary.md;
+          echo "##### DCO Summary" >> summary.md
+          echo "<pre>" >> summary.md
           for commit in "${pr_commits[@]}"; do commit_sha=$(echo $commit | jq -r ".sha"); echo $commit | jq -r ".message" | grep "Signed-off-by:" | xargs echo "${commit_sha:0:8} - " >> summary.md; done
-          # echo "```" >> summary.md;
+          echo -e "</pre>" >> summary.md
           cat summary.md >> $GITHUB_STEP_SUMMARY
         env:
           GH_TOKEN: ${{ github.token }}
