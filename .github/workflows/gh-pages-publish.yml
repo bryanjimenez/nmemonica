@@ -1,4 +1,6 @@
 name: Main to gh-pages
+permissions: {}
+
 on:
   push:
     branches:
