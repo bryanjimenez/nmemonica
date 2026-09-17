@@ -1,0 +1,85 @@
+on: workflow_call
+permissions:
+  contents: read
+
+jobs:
+  check-dco-signoff:
+    environment: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #actions/checkout@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 #actions/setup-node@v7
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - name: Get PR Details
+        id: get_pr_detail
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.sha }}
+          COMMIT_TEMPLATE: "[.commits[] | { sha: .sha, author: .commit.author.name, email: .commit.author.email, commiter: .commit.committer.email, date: .commit.author.date, message: .commit.message}]"
+        run: |
+          commit_details=$(gh api repos/$GH_REPO/compare/main...$HEAD_SHA | jq -r "$COMMIT_TEMPLATE")
+          echo "details: $commit_details"
+          echo "pr_commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$commit_details" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Filter Commit Details
+        id: filter_pr_detail
+        env:
+          PR_BRANCH: ${{ github.event.ref }}
+          PR_COMMITS: ${{ steps.get_pr_detail.outputs.pr_commits }}
+          PR_COMMIT_LIMIT: 50
+          GH_PR_HELPER: 'web-flow'
+          GH_PR_HELPER_EMAIL: 'noreply@github.com'
+        run: |
+          readarray -t pr_commits < <(echo $PR_COMMITS | jq -c ".[]")
+          pr_over_limit=$(( ${#pr_commits[@]} > $PR_COMMIT_LIMIT ))
+          [[ "$pr_over_limit" == 1 ]] && echo "::error title=PR Exceeds Commit Limit::$PR_BRANCH has ${#pr_commits[@]} commits" && exit 1;
+          filtered_commits=()
+          for commit in "${pr_commits[@]}"; do pr_commiter=$(echo $commit | jq -r '.commiter'); [[ $pr_commiter !=  $GH_PR_HELPER_EMAIL ]] && filtered_commits+=$commit; done
+          commit_details=$(echo "$filtered_commits" | jq -s '.')
+          echo "details: $commit_details"
+          echo "pr_commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$commit_details" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Display Commit Details
+        env:
+          PR_BRANCH: ${{ github.event.ref }}
+          PR_COMMITS: ${{ steps.filter_pr_detail.outputs.pr_commits }}
+        run: |
+          readarray -t pr_commits < <(echo $PR_COMMITS | jq -c ".[]")
+          touch commit_summary.md
+          echo "# $PR_BRANCH ${#pr_commits[@]} commits" >> commit_summary.md
+          echo "##### Commit Details" >> commit_summary.md
+          echo "<pre>" >> commit_summary.md
+          for commit in "${pr_commits[@]}"; do echo $commit | jq -r '"commit \(.sha)\nAuthor: \(.author) <\(.email)>\nDate: \(.date)\n\(.message)\n"' >> commit_summary.md; done
+          echo "</pre>" >> commit_summary.md
+          cat commit_summary.md >> $GITHUB_STEP_SUMMARY
+      - name: Display DCO Signoff
+        env:
+          PR_COMMITS: ${{ steps.filter_pr_detail.outputs.pr_commits }}
+        run: |
+          readarray -t pr_commits < <(echo "$PR_COMMITS" | jq -c ".[]")
+          touch dco_summary.md
+          echo "##### DCO Summary" >> dco_summary.md
+          echo "<pre>" >> dco_summary.md
+          for commit in "${pr_commits[@]}"; do commit_sha=$(echo $commit | jq -r ".sha"); echo $commit | jq -r ".message" | grep "Signed-off-by:" | xargs echo "${commit_sha:0:8} - " >> dco_summary.md; done
+          echo -e "</pre>" >> dco_summary.md
+          cat dco_summary.md >> $GITHUB_STEP_SUMMARY
+      - name: Check DCO Signoff
+        env:
+          PR_ACTOR: ${{ github.actor }}
+          PR_TRIGGER_ACTOR: ${{ github.triggering_actor }}
+          PR_USER: ${{ github.event.pull_request.user.login }}
+          PR_COMMITS: ${{ steps.filter_pr_detail.outputs.pr_commits }}
+        run: |
+          set -e
+          echo "actor: $PR_ACTOR"
+          echo "triggering_actor: $PR_TRIGGER_ACTOR"
+          echo "PR user: $PR_USER"
+          readarray -t pr_commits < <(echo "$PR_COMMITS" | jq -c ".[]")
+          for commit in "${pr_commits[@]}"; do echo $commit | jq -r ".message" | grep -q "Signed-off-by:"; done 
