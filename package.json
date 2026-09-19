@@ -33,7 +33,7 @@
     "url": "https://github.com/bryanjimenez/nmemonica"
   },
   "optionalDependencies": {
-    "@nmemonica/voice-en": "file:../nmemonica-wasm-voice-en/pkg/nmemonica-voice-en-0.0.1.tgz"
+    "@nmemonica/voice-en": "file:../nmemonica-voice-en/pkg/nmemonica-voice-en-0.0.1.tgz"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
