@@ -1,0 +1,85 @@
+on:
+  workflow_call:
+    secrets:
+      NMEMONICA_BUILD_PRIVATE_KEY:
+        required: true
+permissions: {}
+
+jobs:
+  build-deps:
+    environment: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 #actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ vars.NMEMONICA_BUILD_CLIENT_ID }}
+          private-key: ${{ secrets.NMEMONICA_BUILD_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #actions/checkout@v7
+        with:
+          repository: bryanjimenez/nmemonica-voice-en
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+          submodules: 'recursive'
+          ref: ${{ vars.DEP_VOICE_EN_REF }}
+
+      - uses: actions-rs/toolchain@b2417cde72dcf67f306c0ae8e0828a81bf0b189f #actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: wasm32-unknown-unknown
+
+      # TODO: dedicated action cargo-license https://github.com/onur/cargo-license/issues/45
+      - uses: actions-rs/install@9da1d2adcfe5e7c16992e8242ca33a56b6d9b101 #actions-rs/installv0.1
+        with:
+          crate: cargo-license
+          version: latest
+
+      # TODO: dedicated action wasm-pack
+      - uses: actions-rs/install@9da1d2adcfe5e7c16992e8242ca33a56b6d9b101 #actions-rs/installv0.1
+        with:
+          crate: wasm-pack
+          version: latest
+
+      - name: install-wasi-sdk
+        id: install-wasi-sdk
+        uses: bytecodealliance/setup-wasi-sdk-action@77d09f3df1e8da344d8403cf8631af8977938b4c #bytecodealliance/setup-wasi-sdk-action@v1
+        with:
+          version: '34'
+
+      - name: build-release
+        env:
+          CC: ${{ steps.install-wasi-sdk.outputs.wasi-sdk-path }}/bin/clang
+          AR: ${{ steps.install-wasi-sdk.outputs.wasi-sdk-path }}/bin/llvm-ar
+        run: cargo build --release --target wasm32-unknown-unknown
+
+      - name: build-wasm
+        run: wasm-pack build ./voice-en --out-dir ../pkg --scope nmemonica --release
+
+      # TODO: update pkg_helper.js to not use cargo-license (one less dep)
+      - name: tgz-wasm
+        run: |
+          node ./pkg_helper.js third-party
+          wasm-pack pack
+
+      - name: Build Summary
+        if: vars.CI_DEBUG == 'true'
+        run: |
+          touch build_summary.md
+          echo "# Build Summary" >> build_summary.md
+          echo "#### @nmemonica/voice-en" >> build_summary.md
+          echo "tar -tzvf ./pkg/nmemonica-voice-en-0.0.1.tgz" >> build_summary.md
+          echo "<pre>" >> build_summary.md
+          tar -tzvf ./pkg/nmemonica-voice-en-0.0.1.tgz >> build_summary.md
+          echo "</pre>" >> build_summary.md
+          cat build_summary.md >> $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #actions/upload-artifact@v7
+        with:
+          name: nmemonica-voice-en
+          path: pkg/
+          compression-level: 0
+          retention-days: 1
+

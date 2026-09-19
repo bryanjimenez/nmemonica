@@ -1,45 +1,58 @@
 name: Main to gh-pages
-permissions: {}
+permissions:
+  pages: write      # deploy to gh-pages
+  id-token: write   # verify deploy source
 
 on:
   push:
     branches:
       - main
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build:
-    uses: ./.github/workflows/job-build.yml
+  build-deps:
+    uses: ./.github/workflows/job-build-deps.yml
+    secrets: inherit
+
+  build-app:
+    needs: [build-deps]
+    uses: ./.github/workflows/job-build-app.yml
+
+  build-docs:
+    uses: ./.github/workflows/job-build-docs.yml
 
   coverage:
     uses: ./.github/workflows/job-coverage.yml
 
   publish:
-    needs: [build, coverage]
-    environment: ci
+    needs: [build-app, build-docs, coverage]
+    environment: github-pages
     runs-on: ubuntu-latest
+    permissions:
+      pages: write      # deploy to gh-pages
+      id-token: write   # verify deploy source
     steps:
-      - name: gh-pages dry-run deploy
-        run: echo "::warning::gh-pages deploy dry-run successful"
-    # permissions:
-    #   contents: write
-    #   pages: write
-    # steps:
-    #   - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #actions/checkout@v7
-    #   - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 #actions/setup-node@v7
-    #     with:
-    #       node-version: 20
-    #       registry-url: 'https://registry.npmjs.org'
-    #   - run: npm ci
-    #   - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #actions/download-artifact@v8
-    #     with:
-    #       name: dist
-    #       path: dist
-    #   - name: Install mdBook
-    #     run: |
-    #       target="x86_64-unknown-linux-gnu"
-    #       mdbook_ver="v0.5.2"
-    #       mdbook_sha="084e4342ba564db270108763e4:s04a7d1f309d932651a22484e93c0dc1a071f6d"
-    #       curl -fsSLO "https://github.com/rust-lang/mdBook/releases/download/$mdbook_ver/mdbook-$mdbook_ver-$target.tar.gz"
-    #       echo "$mdbook_sha ./mdbook-$mdbook_ver-$target.tar.gz" | sha256sum -c
-    #       tar -xvzf "mdbook-$mdbook_ver-$target.tar.gz" -C ./docs/
-    #   - run: npm run deploy
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #actions/download-artifact@v8
+        with:
+          name: docs
+          path: dist/docs
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 #actions/upload-pages-artifact@v5
+        with: 
+          name: github_pages
+          path: dist/
+          include-hidden-files: false
+          retention-days: 1
+
+      - name: Deploy to gh-pages
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 #actions/deploy-pages@v5
+        with:
+          artifact_name: "github_pages"

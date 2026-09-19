@@ -1,0 +1,26 @@
+on: workflow_call
+permissions: {}
+
+jobs:
+  build-docs:
+    environment: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #actions/checkout@v7
+
+      # TODO: dedicated action mdbook
+      - uses: actions-rs/install@9da1d2adcfe5e7c16992e8242ca33a56b6d9b101 #actions-rs/installv0.1
+        with:
+          crate: mdbook
+          version: latest
+
+      - run: |
+          mkdir ./dist
+          mdbook build ./docs -d ./dist/docs
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #actions/upload-artifact@v7
+        with:
+          name: docs
+          path: dist/docs/
+          compression-level: 0
+          retention-days: 1
