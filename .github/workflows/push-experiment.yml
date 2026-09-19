@@ -1,0 +1,49 @@
+on: push
+permissions:
+  pages: write      # deploy to gh-pages
+  id-token: write   # verify deploy source
+
+jobs:
+  build-deps:
+    uses: ./.github/workflows/job-build-deps.yml
+    secrets: inherit
+
+  build-app:
+    needs: [build-deps]
+    uses: ./.github/workflows/job-build-app.yml
+
+  build-docs:
+    uses: ./.github/workflows/job-build-docs.yml
+
+  coverage:
+    uses: ./.github/workflows/job-coverage.yml
+
+  publish:
+    needs: [build-app, build-docs, coverage]
+    environment: ci
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write      # deploy to gh-pages
+      id-token: write   # verify deploy source
+    steps:
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #actions/download-artifact@v8
+        with:
+          name: docs
+          path: dist/docs
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 #actions/upload-pages-artifact@v5
+        with: 
+          name: github_pages
+          path: dist/
+          include-hidden-files: false
+          retention-days: 1
+
+      - name: Deploy to gh-pages
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 #actions/deploy-pages@v5
+        with:
+          artifact_name: "github_pages"
