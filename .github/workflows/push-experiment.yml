@@ -93,6 +93,13 @@ jobs:
           npm run build
 
       - run: |
+          pwd
+          ls
+          echo "-----"
+          ls ./nmemonica
+          echo "-----"
+          ls ./nmemonica-voice-en
+          echo "-----"
           touch build_summary.md
           echo "# Build Summary" >> build_summary.md
           echo "#### nmemonica" >> build_summary.md
