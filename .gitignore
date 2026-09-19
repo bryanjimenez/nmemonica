@@ -17,7 +17,7 @@ node_modules/
 dist/
 
 # environment variables file
-environment.*
+environment.development*
 
 # notes
 *.txt
