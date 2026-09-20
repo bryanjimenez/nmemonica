@@ -84,15 +84,22 @@ export function serviceWorkerCacheHelperPlugin(compiler) {
             });
           }
 
-          console.log(
-            chalk.green(
-              JSON.stringify({
-                swVersion,
-                jsVersion: mainVersion,
-                bundleVersion,
-              })
-            )
+          const versions = JSON.stringify(
+            {
+              swVersion,
+              jsVersion: mainVersion,
+              bundleVersion,
+            },
+            null,
+            2
           );
+
+          compilation.emitAsset(
+            "component_versions.json",
+            new RawSource(versions),
+            {}
+          );
+          console.log("nmemonica components:", chalk.green(versions));
         }
       );
     }

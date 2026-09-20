@@ -39,6 +39,21 @@ jobs:
           echo "<pre>" >> build_summary.md
           ls -hal ./nmemonica/dist >> build_summary.md
           echo "</pre>" >> build_summary.md
+          echo "#### version" >> build_summary.md
+          echo "<pre>" >> build_summary.md
+          cat ./nmemonica/dist/component_versions.json >> build_summary.md
+          echo "</pre>" >> build_summary.md
+          cat build_summary.md >> $GITHUB_STEP_SUMMARY
+
+      - name: App Version
+        if: vars.CI_DEBUG != 'true'
+        run: |
+          touch build_summary.md
+          echo "# Build Summary" >> build_summary.md
+          echo "#### version" >> build_summary.md
+          echo "<pre>" >> build_summary.md
+          cat ./nmemonica/dist/component_versions.json >> build_summary.md
+          echo "</pre>" >> build_summary.md
           cat build_summary.md >> $GITHUB_STEP_SUMMARY
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #actions/upload-artifact@v7
